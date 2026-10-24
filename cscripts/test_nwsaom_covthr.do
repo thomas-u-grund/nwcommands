@@ -2,7 +2,6 @@
 * altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx; the observed statistics and the estimates equal siena07 (s50, dev/saom_rsiena_covthr.R)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

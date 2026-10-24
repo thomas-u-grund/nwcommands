@@ -2,7 +2,6 @@
 * targets and the estimates agree (s50, dev/saom_rsiena_covtriad.{R,do}); here: every option fits natively on synthetic data, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

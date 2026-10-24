@@ -2,7 +2,6 @@
 * degree effects), plugin protocol 54; siena07 agreement (s50, symmetric waves for jout): dev/saom_rsiena_dg.{R,do}, dev/saom_rsiena_symdg.R
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

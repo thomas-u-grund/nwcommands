@@ -352,7 +352,7 @@ program define nwsaom_estat_gof, rclass
 		// it silently overwrites the SAME Mata variable `td' still
 		// points to, corrupting the model out from under it (confirmed:
 		// this manifested as "[6,6] found where scalar required" inside
-		// change_mutual() - a real ErgmTermData variable had been
+		// sn_change_mutual() - a real SaomTermData variable had been
 		// clobbered with a to_dense() 6x6 matrix by exactly this
 		// mechanism). Explicit, namespaced Mata names side-step the
 		// entire Stata-tempname-recycling risk.
@@ -427,7 +427,7 @@ program define nwsaom_estat_gof, rclass
 			mata: __nwsaom_gof_row_`__gof_s' = J(1, `__gof_k`__gof_s'', 0)
 		}
 		forvalues __pd = 1/`nperiods' {
-			mata: __nwsaom_gof_Gwork = ErgmGraph()
+			mata: __nwsaom_gof_Gwork = SaomGraph()
 			mata: SaomCopyGraph(__nwsaom_last_G`__pd', __nwsaom_gof_Gwork)
 			if `__gof_coev' {
 				// N-wave extension: seed THIS period's own simulation from
@@ -1095,7 +1095,7 @@ program define nwsaom_estat_mems, rclass
 		forvalues __mems_s = 1/`nsim' {
 			mata: __nwsaom_mems_theta_s = st_matrix("__mems_theta")[`__mems_s',.]
 			mata: __nwsaom_mems_theta_s[1,`__mems_effpos'] = __nwsaom_mems_theta_s[1,`__mems_effpos'] * (`__mems_ival')
-			mata: __nwsaom_mems_Gwork = ErgmGraph()
+			mata: __nwsaom_mems_Gwork = SaomGraph()
 			mata: SaomCopyGraph(__nwsaom_last_G1, __nwsaom_mems_Gwork)
 			// the fitted model (endowment/creation, structural(),
 			// ratecov(), present()), native when the plugin covers it

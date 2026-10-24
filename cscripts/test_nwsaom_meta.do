@@ -1,7 +1,6 @@
 * nwsaom_meta: the multi-group meta-analysis (RSiena siena08). Mata port checked against RSiena 1.6.6 (dev/saom_meta_check.{R,do}), real fits below.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * 1. made-up group estimates: the numbers RSiena's iwlsm/maxlik/confint.mu/confint.sig give (R: dev/saom_meta_check.R)

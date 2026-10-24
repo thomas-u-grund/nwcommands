@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Covariate effects for several variables (2026-10-01): naming, order,

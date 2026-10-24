@@ -3,7 +3,6 @@
 * the targets of the cross effect, summed over the periods). Estimates against siena07 (two seeds): dev/saom_rsiena_mn2m.R / .do (two-mode) and dev/saom_rsiena_mn1m.R / .do.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

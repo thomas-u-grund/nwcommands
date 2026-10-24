@@ -2,7 +2,6 @@
 * the estimates equal siena07 (s50 + alcohol, dev/saom_rsiena_behnet.{R,do}); here: every token fits natively and the refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

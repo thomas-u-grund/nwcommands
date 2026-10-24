@@ -4,7 +4,6 @@
 * below are siena07's); estimates agree with siena07 in dev/saom_rsiena_mnbeh.R/.do.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 * the data (siena07's s50 friendship waves, a second network, a non-directed network, alcohol, smoking): cscripts/mnbeh_ties.csv (net: 1 friendship, 2 second, 3 non-directed; wave; i; j)

@@ -2,7 +2,6 @@
 * equal siena07 (s50, dev/saom_rsiena_dyadx.{R,do}); here: every effect fits natively, names, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

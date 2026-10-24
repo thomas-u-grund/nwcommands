@@ -2,7 +2,6 @@
 * effects (native only). siena07 agreement: dev/saom_rsiena_tm_extra.R (40 x 20; observed statistics identical, estimates within noise).
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 mata:

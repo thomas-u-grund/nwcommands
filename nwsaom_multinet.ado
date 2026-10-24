@@ -7,9 +7,9 @@ capture mata: mata drop __nwsaom_mn_avgsq()
 mata:
 /* nwsaom multinet (protocol 52): collects the wave graphs of one network (slot 1 or 2) and posts the fit */
 void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	class ErgmGraph scalar G
-	G = ErgmGraph()
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	class SaomGraph scalar G
+	G = SaomGraph()
 	G.init(n, 1)
 	__nwsaom_bridge_from_netobj(netobj, G)
 	if (slot == 1) __nwsaom_mn_Gs1 = (__nwsaom_mn_Gs1, &(G))
@@ -17,8 +17,8 @@ void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar
 }
 /* average degree over all waves of network `slot' (RSiena NetworkLongitudinalData::averageInDegree()) */
 real scalar __nwsaom_mn_avg(real scalar slot) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	pointer(class ErgmGraph scalar) rowvector Gs
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	pointer(class SaomGraph scalar) rowvector Gs
 	real scalar w, tot, n
 	Gs = (slot == 1 ? __nwsaom_mn_Gs1 : __nwsaom_mn_Gs2)
 	tot = 0
@@ -28,8 +28,8 @@ real scalar __nwsaom_mn_avg(real scalar slot) {
 }
 /* average squared in-degree over all waves of network `slot' */
 real scalar __nwsaom_mn_avgsq(real scalar slot) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	pointer(class ErgmGraph scalar) rowvector Gs
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	pointer(class SaomGraph scalar) rowvector Gs
 	real scalar w, tot, n, k
 	real colvector d
 	real matrix e
@@ -46,8 +46,8 @@ real scalar __nwsaom_mn_avgsq(real scalar slot) {
 }
 void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg, real scalar sym1, real scalar sym2,
 	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname, string scalar targetname) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external class SaomModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
 	struct SaomMNFit scalar fit
 	real scalar p, P
 	real rowvector t1, t2
@@ -71,8 +71,8 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 /* nwsaom multinet with a behavior (protocol 64) */
 void __nwsaom_mnb_post(real rowvector theta01, real rowvector theta02, real rowvector thetab0, real scalar K0, real scalar K3, real scalar firstg, real scalar sym1, real scalar sym2,
 	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname, string scalar targetname) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external class SaomModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
 	external class SaomBehaviorModel scalar __nwsaom_mn_Mbeh
 	external pointer(real colvector) rowvector __nwsaom_mn_Bw
 	external real rowvector __nwsaom_mn_net2flag
@@ -267,7 +267,7 @@ program define nwsaom_multinet, eclass
 	if "`eff2'" == "" local eff2 = cond("`sym2'" != "" | `__tm2', "outdegree", "outdegree reciprocity")
 	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
 	forvalues __s = 1/2 {
-		mata: __nwsaom_mn_M`__s' = ErgmModel()
+		mata: __nwsaom_mn_M`__s' = SaomModel()
 		mata: __nwsaom_mn_M`__s'.init()
 		foreach __t of local eff`__s' {
 			gettoken __e __v : __t, parse(":")

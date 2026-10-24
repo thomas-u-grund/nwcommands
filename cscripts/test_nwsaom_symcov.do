@@ -2,7 +2,6 @@
 * triad / popularity / activity and the threshold / contrast families. siena07 agreement: dev/saom_rsiena_symcov.R, dev/saom_rsiena_symtv.R.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

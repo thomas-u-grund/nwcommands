@@ -4,7 +4,6 @@
 cscript
 adopath ++ "."
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 
@@ -46,10 +45,10 @@ matrix W2 = (0,1,0,1\1,0,1,0\1,0,0,0\0,0,1,0)
 matrix W3 = (0,0,1,1\1,0,0,0\0,1,0,1\1,0,0,0)
 mata:
 mata set matastrict off
-class ErgmGraph scalar tb_graph(real matrix Wm) {
-	class ErgmGraph scalar Gt
+class SaomGraph scalar tb_graph(real matrix Wm) {
+	class SaomGraph scalar Gt
 	real scalar i, j
-	Gt = ErgmGraph()
+	Gt = SaomGraph()
 	Gt.init(4, 1)
 	for (i=1; i<=4; i++) for (j=1; j<=4; j++) if (Wm[i,j] != 0) Gt.toggle(i, j)
 	return(Gt)

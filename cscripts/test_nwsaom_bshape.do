@@ -2,7 +2,6 @@
 * siena07 (s50 + alcohol, dev/saom_rsiena_bshape.{R,do}); here: every effect fits natively, names, refusals. (constant equals minus the rate statistic: singular, rc 505)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

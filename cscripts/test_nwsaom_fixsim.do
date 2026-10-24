@@ -1,7 +1,6 @@
 * fix(), estat simulate and nwsaom simulate (network-only and co-evolution)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwwebuse glasgow, nwclear
 

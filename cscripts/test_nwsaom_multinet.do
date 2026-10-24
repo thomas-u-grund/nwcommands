@@ -2,7 +2,6 @@
 * dev/saom_rsiena_mn.R / .do (s50 friendship + a second network); here: every cross-network effect runs natively, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

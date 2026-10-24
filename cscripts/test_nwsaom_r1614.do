@@ -3,7 +3,6 @@
 * The statistics are the targets of the effect, summed over the periods.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

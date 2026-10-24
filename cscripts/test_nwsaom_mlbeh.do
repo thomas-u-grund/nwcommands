@@ -4,7 +4,6 @@
 cscript
 adopath ++ "."
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 nwwebuse glasgow, nwclear
@@ -12,10 +11,10 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity behegox behavior
 assert e(has_behavior) == 1
 mata:
 mata set matastrict off
-class ErgmGraph scalar tb_graph(real matrix Wm) {
-	class ErgmGraph scalar Gt
+class SaomGraph scalar tb_graph(real matrix Wm) {
+	class SaomGraph scalar Gt
 	real scalar i, j
-	Gt = ErgmGraph()
+	Gt = SaomGraph()
 	Gt.init(3, 1)
 	for (i=1; i<=3; i++) for (j=1; j<=3; j++) if (Wm[i,j] != 0) Gt.toggle(i, j)
 	return(Gt)

@@ -3,7 +3,6 @@
 * estimates within noise): dev/saom_rsiena_cov2.{R,do}.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

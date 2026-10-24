@@ -2,7 +2,6 @@
 * (s50 + alcohol, estimates within noise of siena07, dev/saom_rsiena_behsel.{R,do}); here the statistics against a hand count and the refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear
@@ -37,8 +36,8 @@ assert "`e(engine)'" == "native" & colsof(e(b)) == 4
 capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear quadratic) behegox behaltx behegoplusalt k0(10) k3(30) seed(3)
 mata:
 void bs_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G2
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G2
 	real colvector z, ze
 	real matrix ties
 	real scalar m, k, e1, e2, e3

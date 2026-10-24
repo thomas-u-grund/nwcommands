@@ -2,7 +2,6 @@
 * siena07 (symmetric s50 waves + alcohol, dev/saom_rsiena_symnetbeh.R/.do); here: every effect fits natively
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

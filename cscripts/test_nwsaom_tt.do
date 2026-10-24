@@ -4,7 +4,6 @@
 *  1.16 / 1.26 / 1.10 (seeds 1-3), sienaTimeTest 0.29 / 0.28 / 0.33; nwsaom 1.23 / 1.30 / 1.12 and, with fixrates, in the sienaTimeTest range.)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

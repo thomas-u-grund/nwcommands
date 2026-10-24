@@ -3,23 +3,17 @@
 	core for nwcommands (nwsaom).
 
 	See docs/SAOM_ROADMAP.md (scope/status) and docs/SAOM_ARCHITECTURE.md
-	(design reference) for the full account. Summary: this file reuses
-	`nwergm`'s own ErgmGraph/ErgmModel/ErgmTermData classes and stat_X/
-	change_X term functions (defined in unw_ergm.do) READ-ONLY - never
-	edits that file - because a SAOM ministep's per-alternative
-	objective-function delta is, for every v1 effect (outdegree,
-	reciprocity, nodematch), mathematically identical to nwergm's own
-	dyad-local change statistic for that same term. See
-	docs/SAOM_ARCHITECTURE.md's "The reuse is not a shortcut - it is
-	mathematically exact" section for the derivation.
+	(design reference) for the full account. Summary: this file contains its
+	own copy of the graph/model/term classes SaomGraph/SaomModel/SaomTermData
+	and the sn_stat_X/sn_change_X term functions (copied from nwergm's
+	unw_ergm.do and renamed, see the section right after `mata:`), because a
+	SAOM ministep's per-alternative objective-function delta is, for every
+	v1 effect (outdegree, reciprocity, nodematch), mathematically identical
+	to the dyad-local change statistic of the same ERGM term. nwsaom does
+	not need nwergm to be installed.
 
-	Compiled into the same lnwcommands.mlib as unw_core.do/unw_ergm.do
-	once both this initiative and the concurrent nwergm work are merged
-	(see lib/build.do). Until then, dev/testing sources this file live:
-	`do unw_ergm.do` then `do unw_saom.do`, matching every existing
-	cscripts/test_nwergm_*.do script's own convention - never rebuilds
-	lib/lnwcommands.mlib, which is currently mid-edit by a concurrent
-	session working on nwergm.
+	Compiled into lnwcommands.mlib (see lib/build.do). For development and
+	tests, `do unw_core.do` then `do unw_saom.do`.
 
 	Clean-room implementation against the published SAOM statistical
 	definition (Snijders 1996, 2001, 2005 "Models for Longitudinal
@@ -33,6 +27,1961 @@
 set matastrict on
 
 mata:
+
+/* ===================================================================
+   Graph / model / term machinery used by the SAOM code below.
+
+   Copied from nwergm's unw_ergm.do (same author; nwergm is GPL-3 and
+   its term definitions follow the Statnet `ergm` R package) so that
+   nwsaom is self-contained and can be installed with or without
+   nwergm. Renamed so that both libraries can be loaded side by side:
+   SaomGraph/SaomModel/SaomTermData -> SaomGraph/SaomModel/SaomTermData,
+   stat_X()/change_X() -> sn_stat_X()/sn_change_X(), ergm_X() -> sn_X(),
+   _ergm_X() -> _sn_X(). Behaviour is identical to the originals; the
+   SAOM-specific terms are the change_saom_* functions further down.
+   =================================================================== */
+
+/* ===================================================================
+   SaomGraph: mutable, toggle-friendly binary graph state for MCMC.
+   =================================================================== */
+class SaomGraph {
+	real scalar n
+	real scalar directed
+	pointer rowvector adjout	// adjout[i]: asarray handle; keys = neighbors reachable via an outgoing tie from i (out-neighbors if directed, all neighbors if undirected); values unused (always 1)
+	pointer rowvector adjin		// directed only; adjin[i]: asarray handle of in-neighbors of i
+	real colvector dout		// out-degree (directed) or degree (undirected)
+	real colvector din		// in-degree (directed only; unused/left at 0 for undirected)
+	real scalar nties		// number of ties: arcs (directed) or edges (undirected)
+	real matrix elist		// live-edge array: rows 1..nties hold canonical (i,j)
+					// pairs for every current tie (directed: (tail,head)
+					// as toggled; undirected: (min,max)); rows beyond
+					// nties are stale capacity, never read. Maintained
+					// incrementally by toggle() (O(1)-amortized append
+					// via capacity doubling, O(1) removal via swap-
+					// with-last) so TNT's own tie-pick never has to
+					// rebuild the tie list from scratch - see
+					// ergm_propose_tnt()'s own header comment and
+					// docs/CERTIFICATION.md's harmonisation-unit-80
+					// entry for the benchmarked payoff (this replaced
+					// an O(n+nties)-per-proposal cost measured at
+					// ~185x the uniform proposal's own cost).
+	pointer scalar edgepos		// asarray("real",2): canonical (i,j) -> row
+					// index (1..nties) in elist, for O(1) removal.
+	real scalar sp_cache_enabled	// 0 unless enable_sp_cache() has been
+					// called (opt-in - see that method's own
+					// header comment for why); toggle() checks
+					// this once (a single boolean test) before
+					// doing any shared-partner bookkeeping, so
+					// models that never use gwesp pay nothing.
+	pointer scalar sp_counts	// asarray("real",2), only allocated when
+					// sp_cache_enabled: canonical (a,b) -> current
+					// shared-partner count. Sparse - pairs with a
+					// count of 0 are simply absent, never stored.
+	real scalar bipartite		// 0 (default, one-mode) or 1 - set once via
+					// set_bipartite(), never touched by init()
+					// itself, mirroring sp_cache_enabled's own
+					// "opt-in, called once after init" contract.
+	real colvector mode		// n x 1, 1/2 per node - only meaningful when
+					// bipartite==1. Deliberately NOT the R/Statnet
+					// convention of "mode-1 nodes are a contiguous
+					// 1..bipartite prefix" - every other part of
+					// this package (nodecov/nodematch/edgecov/...)
+					// already assumes node index i is exactly
+					// nwset's own row/label order with no
+					// reordering anywhere, so this field is a
+					// general, non-contiguous per-node label
+					// instead (see docs/ERGM_ROADMAP.md's own
+					// bipartite-terms planning note for the full
+					// reasoning).
+	real colvector mode1nodes	// cached node indices with mode==1, built
+	real colvector mode2nodes	// once by set_bipartite() - every bipartite
+					// dyad-space computation (proposal, MPLE
+					// design matrix, brute-force certification)
+					// works off these two lists, never re-scans
+					// `mode` itself.
+	real scalar has_dyadmask	// 0 (default) or 1 - set once via
+					// set_dyadmask() (constraints, first piece -
+					// docs/ERGM_ROADMAP.md's "Constraints beyond
+					// v1's free binary dyad space" row), mirroring
+					// bipartite/sp_cache_enabled's own "opt-in flag,
+					// never touched by init() again" contract.
+					// Read ONLY by the proposal layer
+					// (ergm_propose_uniform_masked(),
+					// ErgmNativeSetup()'s own native-ineligibility
+					// check) - full_statistic()/MPLE's own design-
+					// matrix build never consult it, deliberately:
+					// a "fixed" dyad still contributes its true
+					// observed state to every term's sufficient
+					// statistic, only the MCMC proposal is barred
+					// from ever touching it.
+	real matrix freedyadmat		// n x n boolean (1 = eligible/free, 0 =
+					// fixed at its current observed value);
+					// only meaningful when has_dyadmask==1.
+	real scalar nfreedyads		// total FREE dyad count over the canonical
+					// dyad space (bipartite/directed/undirected,
+					// same walk _sn_count_free_onemode()/
+					// _sn_count_free_bipartite() use) - a
+					// constant, computed once by set_dyadmask()
+					// (dyad ELIGIBILITY never changes mid-fit,
+					// only which free dyads are currently tied
+					// does) - ergm_propose_tnt_masked()'s own D.
+	real matrix freeelist		// live list of CURRENTLY TIED dyads that
+					// are ALSO free, same (i,j)-canonical/
+					// O(1)-amortized-append/O(1)-swap-removal
+					// contract as elist above, restricted to
+					// the free subspace - only meaningful when
+					// has_dyadmask==1, maintained by
+					// set_dyadmask() (initial population from
+					// the observed network) and toggle() (kept
+					// current thereafter, gated on
+					// freedyadmat[.] so a toggle on a fixed
+					// dyad - never proposed during masked MCMC,
+					// but not assumed impossible - cannot
+					// corrupt it). ergm_propose_tnt_masked()'s
+					// own "pick a random existing FREE tie"
+					// branch needs this: G.elist also holds
+					// FIXED ties, which must never be proposed
+					// for removal.
+	pointer scalar freeedgepos	// asarray("real",2): canonical (i,j) -> row
+					// index (1..nfreeties) in freeelist, for
+					// O(1) removal - the freeelist analogue of
+					// edgepos above.
+	real scalar nfreeties		// current count of live rows in freeelist
+					// (<=nties always, since every free tie is
+					// also a tie) - ergm_propose_tnt_masked()'s
+					// own E.
+
+	void init()
+	void set_bipartite()
+	void set_dyadmask()
+	real scalar has_edge()
+	void toggle()
+	real rowvector neighbors_out()
+	real rowvector neighbors_in()
+	real scalar degree_out()
+	real scalar degree_in()
+	real scalar degree_total()
+	real scalar common_neighbors()
+	real matrix all_ties()
+	real matrix to_dense()
+	void enable_sp_cache()
+	void sp_adjust()
+	real scalar shared_partners()
+	real scalar shared_partners_otp()
+	real scalar shared_partners_itp()
+	real scalar shared_partners_osp()
+	real scalar shared_partners_isp()
+	real scalar common_neighbors_in()
+	real scalar shared_partners_rtp()
+	real rowvector mutual_neighbors()
+}
+
+
+void SaomGraph::init(real scalar n0, real scalar directed0){
+	real scalar i
+
+	n = n0
+	directed = directed0
+	dout = J(n, 1, 0)
+	din  = J(n, 1, 0)
+	nties = 0
+	elist = J(8, 2, 0)
+	edgepos = &(asarray_create("real", 2))
+	sp_cache_enabled = 0
+	bipartite = 0
+	has_dyadmask = 0
+	nfreedyads = 0
+	nfreeties = 0
+
+	adjout = J(1, n, NULL)
+	for (i=1; i<=n; i++) adjout[i] = &(asarray_create("real", 1))
+
+	if (directed) {
+		adjin = J(1, n, NULL)
+		for (i=1; i<=n; i++) adjin[i] = &(asarray_create("real", 1))
+	}
+	else {
+		adjin = adjout	// undirected: a tie is stored symmetrically in both
+				// endpoints' own adjout, so "in" and "out" coincide -
+				// aliasing avoids a second, redundant set of arrays.
+	}
+}
+
+/*
+	Opt-in bipartite marking (harmonisation unit 155 - see
+	docs/ERGM_ROADMAP.md's own bipartite-terms plan), called once
+	right after init(), mirroring enable_sp_cache()'s own contract.
+	Deliberately does NOT reorder nodes or touch `directed` - a
+	bipartite network is always undirected (nwergm.ado's own caller
+	enforces this before ever reaching here, matching a real hard
+	limit in R ergm itself, not a v1 simplification) - this method
+	only records which of the two modes each existing node index
+	belongs to. `modevec' is a real colvector, one entry per node,
+	each either 1 or 2 - the exact numeric form nwergm.ado builds from
+	NWdef::get_modes()'s own "1"/"2" string vector. Every downstream
+	bipartite dyad-space computation (ergm_total_dyads(),
+	ergm_propose_uniform(), SaomModel::build_mple_data(),
+	ErgmCertifyChangeStat()) reads mode1nodes/mode2nodes, built once
+	here via selectindex(), never modevec directly.
+*/
+void SaomGraph::set_bipartite(real colvector modevec){
+	bipartite = 1
+	mode = modevec
+	// BUGFIX (harmonisation unit 155): selectindex() PRESERVES its
+	// input's own orientation (a colvector argument returns a
+	// colvector of indices, not a rowvector) - confirmed directly via
+	// a standalone Mata repro, since this is easy to get backwards.
+	// The original code here transposed the (already-correct) colvector
+	// result, silently turning mode1nodes/mode2nodes into ROW vectors;
+	// every caller's own rows(G.mode1nodes)/rows(G.mode2nodes) (the
+	// mode-1/mode-2 node COUNT) then read as 1 regardless of the true
+	// node counts, collapsing ergm_total_dyads()'s own bipartite branch
+	// to always report 1 total dyad - caught via a real end-to-end
+	// smoke test on an actual bipartite network (6x4 nodes), not by
+	// inspection.
+	mode1nodes = selectindex(modevec :== 1)
+	mode2nodes = selectindex(modevec :== 2)
+}
+
+
+void SaomGraph::set_dyadmask(real matrix freemat){
+	real scalar i, j, a, b
+	real matrix obs
+
+	has_dyadmask = 1
+	freedyadmat = freemat
+	if (sum(freemat) == 0) {
+		errprintf("freedyads()/blockdiag(): the given dyad-eligibility mask leaves no free dyad at all (freedyads(): an all-untied network; blockdiag(): every node in its own singleton block) - every dyad would be fixed, leaving no dyad for the MCMC proposal to ever toggle.\n")
+		exit(error(198))
+	}
+
+	// nfreedyads: total free-dyad count over the SAME canonical dyad-space
+	// walk _sn_count_free_onemode()/_sn_count_free_bipartite() already
+	// use for build_mple_data()'s own preallocation - inlined here rather
+	// than called (those two are free functions taking G as a parameter;
+	// a method has no "self" handle to pass itself as one) rather than
+	// duplicated logic drifting from theirs, since both walks are the
+	// exact same canonical-dyad enumeration this file already establishes
+	// elsewhere (ergm_total_dyads(), all_ties(), build_mple_data()).
+	nfreedyads = 0
+	if (bipartite) {
+		for (a=1; a<=rows(mode1nodes); a++) {
+			for (b=1; b<=rows(mode2nodes); b++) {
+				if (freedyadmat[mode1nodes[a], mode2nodes[b]]) nfreedyads++
+			}
+		}
+	}
+	else {
+		for (i=1; i<=n; i++) {
+			for (j=1; j<=n; j++) {
+				if (i==j) continue
+				if (!directed && j<i) continue
+				if (freedyadmat[i,j]) nfreedyads++
+			}
+		}
+	}
+
+	// Live free-tie list (ergm_propose_tnt_masked()'s own "pick a random
+	// existing FREE tie" branch) - populated from the network's CURRENT
+	// ties, which at this point are exactly the OBSERVED ties (this
+	// method is always called immediately after the graph is built from
+	// the observed network, before any MCMC toggle ever runs).
+	freeelist = J(8, 2, 0)
+	freeedgepos = &(asarray_create("real", 2))
+	nfreeties = 0
+	obs = all_ties()
+	for (i=1; i<=rows(obs); i++) {
+		if (freedyadmat[obs[i,1], obs[i,2]]) {
+			nfreeties++
+			if (nfreeties > rows(freeelist)) freeelist = freeelist \ J(rows(freeelist), 2, 0)
+			freeelist[nfreeties, .] = obs[i, .]
+			asarray(*freeedgepos, (obs[i,1], obs[i,2]), nfreeties)
+		}
+	}
+}
+
+
+real scalar SaomGraph::has_edge(real scalar i, real scalar j){
+	return(asarray_contains(*adjout[i], j))
+}
+
+
+void SaomGraph::toggle(real scalar i, real scalar j){
+	real scalar ci, cj, k, was_edge, m, x
+	real rowvector nbi, nbj
+
+	ci = directed ? i : min((i,j))
+	cj = directed ? j : max((i,j))
+	was_edge = has_edge(i, j)
+
+	// Shared-partner cache bookkeeping needs i's and j's own neighbor
+	// sets exactly as they stand BEFORE this toggle mutates anything
+	// below - captured here, once, regardless of add/remove, then
+	// applied after the normal adjacency/elist bookkeeping (see
+	// enable_sp_cache()'s own header comment for why this update is
+	// correct and why it is a SEPARATE derivation from that method's
+	// own from-scratch initialization formula).
+	if (sp_cache_enabled) {
+		nbi = neighbors_out(i)
+		nbj = neighbors_out(j)
+	}
+
+	if (was_edge) {
+		asarray_remove(*adjout[i], j)
+		dout[i] = dout[i] - 1
+		if (directed) {
+			asarray_remove(*adjin[j], i)
+			din[j] = din[j] - 1
+		}
+		else {
+			asarray_remove(*adjout[j], i)
+			dout[j] = dout[j] - 1
+		}
+		// O(1) removal from the live edge list: move the CURRENT LAST
+		// live row into the removed edge's own slot (unless it already
+		// IS the last row), then shrink the live count - never shifts
+		// or rebuilds the rest of the array.
+		k = asarray(*edgepos, (ci,cj))
+		if (k != nties) {
+			elist[k, .] = elist[nties, .]
+			asarray(*edgepos, (elist[k,1], elist[k,2]), k)
+		}
+		asarray_remove(*edgepos, (ci,cj))
+		nties = nties - 1
+		// freedyads() follow-on (masked TNT, docs/ERGM_ROADMAP.md's
+		// "Constraints beyond v1's free binary dyad space" row): mirror
+		// the SAME O(1) swap-removal into freeelist/freeedgepos, but
+		// ONLY for a free dyad - gated on has_dyadmask (a single cheap
+		// flag check, mirroring sp_cache_enabled's own "pay nothing when
+		// unused" contract) and freedyadmat[ci,cj] (masked MCMC only
+		// ever toggles free dyads, but this method has no way to assume
+		// that of every caller - e.g. a future code path calling
+		// toggle() directly on a fixed dyad must never corrupt this
+		// list, so the check stays explicit rather than assumed).
+		if (has_dyadmask) if (freedyadmat[ci,cj]) {
+			k = asarray(*freeedgepos, (ci,cj))
+			if (k != nfreeties) {
+				freeelist[k, .] = freeelist[nfreeties, .]
+				asarray(*freeedgepos, (freeelist[k,1], freeelist[k,2]), k)
+			}
+			asarray_remove(*freeedgepos, (ci,cj))
+			nfreeties = nfreeties - 1
+		}
+	}
+	else {
+		asarray(*adjout[i], j, 1)
+		dout[i] = dout[i] + 1
+		if (directed) {
+			asarray(*adjin[j], i, 1)
+			din[j] = din[j] + 1
+		}
+		else {
+			asarray(*adjout[j], i, 1)
+			dout[j] = dout[j] + 1
+		}
+		nties = nties + 1
+		// O(1)-amortized append: double elist's own capacity only when
+		// the live count would exceed it (standard dynamic-array
+		// doubling - each doubling costs O(current capacity) but
+		// happens only log2(nties) times in total), rather than
+		// reallocating on every single toggle.
+		if (nties > rows(elist)) elist = elist \ J(rows(elist), 2, 0)
+		elist[nties, .] = (ci, cj)
+		asarray(*edgepos, (ci,cj), nties)
+		if (has_dyadmask) if (freedyadmat[ci,cj]) {
+			nfreeties = nfreeties + 1
+			if (nfreeties > rows(freeelist)) freeelist = freeelist \ J(rows(freeelist), 2, 0)
+			freeelist[nfreeties, .] = (ci, cj)
+			asarray(*freeedgepos, (ci,cj), nfreeties)
+		}
+	}
+
+	// Adding tie (i,j) makes j a NEW shared-partner contributor for
+	// every pair (i,x) where x is (already) a neighbor of j - and
+	// symmetrically i for every pair (j,x); removing (i,j) undoes
+	// exactly that. O(deg_i + deg_j) per toggle, not O(min(deg_i,deg_j))
+	// per LOOKUP the way on-demand common_neighbors() costs when this
+	// cache is not enabled.
+	if (sp_cache_enabled) {
+		m = was_edge ? -1 : 1
+		for (x=1; x<=cols(nbj); x++) {
+			if (nbj[x] != i) sp_adjust(i, nbj[x], m)
+		}
+		for (x=1; x<=cols(nbi); x++) {
+			if (nbi[x] != j) sp_adjust(j, nbi[x], m)
+		}
+	}
+}
+
+
+real rowvector SaomGraph::neighbors_out(real scalar i){
+	return(asarray_keys(*adjout[i])')
+}
+
+
+real rowvector SaomGraph::neighbors_in(real scalar i){
+	if (directed) return(asarray_keys(*adjin[i])')
+	return(asarray_keys(*adjout[i])')
+}
+
+
+real scalar SaomGraph::degree_out(real scalar i){
+	return(dout[i])
+}
+
+
+real scalar SaomGraph::degree_in(real scalar i){
+	if (directed) return(din[i])
+	return(dout[i])
+}
+
+
+real scalar SaomGraph::degree_total(real scalar i){
+	if (directed) return(dout[i] + din[i])
+	return(dout[i])
+}
+
+/*
+	Number of nodes k that are neighbors of BOTH i and j (undirected
+	sense: k s.t. has_edge(i,k) and has_edge(j,k)) - the "shared
+	partner" count GWESP needs. Iterates whichever of i/j has the
+	smaller neighbor set, checking membership in the other's set -
+	O(min(deg_i,deg_j)), not O(n).
+*/
+real scalar SaomGraph::common_neighbors(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, cnt, a, b
+
+	if (degree_out(i) <= degree_out(j)) {
+		a = i; b = j
+	}
+	else {
+		a = j; b = i
+	}
+	nb = neighbors_out(a)
+	cnt = 0
+	for (k=1; k<=cols(nb); k++) {
+		if (nb[k] != b && has_edge(b, nb[k])) cnt++
+	}
+	return(cnt)
+}
+
+/*
+	Enables the incremental shared-partner cache (Part XXV performance
+	work, docs/CERTIFICATION.md harmonisation unit 82): builds
+	`sp_counts' from scratch in O(sum_i deg_i^2) = O(m*davg) - for each
+	node i, every UNORDERED PAIR of i's own neighbors gains i as exactly
+	one shared partner. This specific "iterate pairs of one node's own
+	neighbors" formulation is deliberate, not incidental: an earlier,
+	independently-prototyped version of this same cache (during this
+	project's own initial development, before v1 shipped) instead tried
+	to build it by iterating over EDGES ("for edge (i,j), for every
+	other neighbor k of i: sp(j,k)+=1; for every other neighbor k of j:
+	sp(i,k)+=1") and that formulation DOUBLE-COUNTS every pair of a
+	shared node's own two edges - confirmed by direct comparison against
+	brute-force common_neighbors() at the time, which is exactly why v1
+	shipped with the on-demand version instead of this cache. Opt-in
+	(never called automatically by init()) because it costs real memory
+	and one-time setup work that only pays off for models that actually
+	use gwesp - `nwergm.ado' calls this only when a gwesp() term is
+	requested, immediately after bridging the graph and before any MCMC
+	runs. Once enabled, toggle() maintains `sp_counts' incrementally
+	forever after (see its own comment) - this method is meant to be
+	called exactly once, right after the graph's own initial ties are in
+	place, not repeatedly.
+*/
+void SaomGraph::enable_sp_cache(){
+	real scalar i, j1, j2, m
+	real rowvector nb
+
+	sp_counts = &(asarray_create("real", 2))
+	for (i=1; i<=n; i++) {
+		nb = neighbors_out(i)
+		m = cols(nb)
+		for (j1=1; j1<=m-1; j1++) {
+			for (j2=j1+1; j2<=m; j2++) {
+				sp_adjust(nb[j1], nb[j2], 1)
+			}
+		}
+	}
+	sp_cache_enabled = 1
+}
+
+/*
+	Adds `delta' to the cached shared-partner count for canonical pair
+	(a,b), keeping `sp_counts' sparse (a pair whose count reaches exactly
+	0 is removed rather than stored as an explicit zero - `nties' itself
+	can reach into the hundreds of thousands, and most dyads never share
+	a partner at all, so this matters for memory at scale).
+*/
+void SaomGraph::sp_adjust(real scalar a, real scalar b, real scalar delta){
+	real scalar ca, cb, cur
+
+	ca = min((a,b))
+	cb = max((a,b))
+	if (asarray_contains(*sp_counts, (ca,cb))) {
+		cur = asarray(*sp_counts, (ca,cb)) + delta
+	}
+	else {
+		cur = delta
+	}
+	if (cur == 0) asarray_remove(*sp_counts, (ca,cb))
+	else asarray(*sp_counts, (ca,cb), cur)
+}
+
+/*
+	O(1) shared-partner count when the cache is enabled; otherwise falls
+	back to on-demand common_neighbors() (O(min(deg_i,deg_j))) - the
+	exact same value either way, just a different cost. sn_stat_gwesp()/
+	change_gwesp() call this instead of common_neighbors() directly so
+	they automatically benefit once a caller enables the cache, with zero
+	change needed to either function.
+*/
+real scalar SaomGraph::shared_partners(real scalar a, real scalar b){
+	real scalar ca, cb
+
+	if (!sp_cache_enabled) return(common_neighbors(a,b))
+	ca = min((a,b))
+	cb = max((a,b))
+	if (asarray_contains(*sp_counts, (ca,cb))) return(asarray(*sp_counts, (ca,cb)))
+	return(0)
+}
+
+/*
+	Directed "outgoing two-path" (OTP) shared-partner count for the
+	ORDERED pair (i,j): #{k : i->k and k->j} - i.e. the number of nodes
+	k such that i-k-j forms a two-step directed path FROM i TO j
+	(harmonisation unit 91, term-expansion wave 5). This is R ergm's own
+	default shared-partner definition for directed networks (fresh-
+	checked against `R/InitErgmTerm.dgw_sp.R`'s own `type="OTP"`
+	default) - NOT symmetric in (i,j) the way the undirected
+	`shared_partners()' above is (SP_OTP(i,j) != SP_OTP(j,i) in
+	general), so it deliberately gets its own dedicated function rather
+	than trying to generalize the existing one in place. No incremental
+	cache (unlike `shared_partners()' above) - matches this session's
+	own "decide term by term through profiling" discipline (unit 82's
+	UTP cache was added only after evidence, not preemptively; the same
+	standard applies here until evidence says otherwise). ITP/OSP/ISP/RTP
+	(the other four directed shared-partner definitions R ergm supports
+	via the same `type=' argument) are implemented in their own dedicated
+	functions below (`shared_partners_itp()'/`_osp()'/`_isp()'/`_rtp()').
+*/
+real scalar SaomGraph::shared_partners_otp(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, m, cnt
+
+	nb = neighbors_out(i)
+	cnt = 0
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		if (has_edge(k,j)) cnt++
+	}
+	return(cnt)
+}
+
+/*
+	Directed "incoming two-path" (ITP) shared-partner count for the
+	ORDERED pair (i,j): #{k : j->k and k->i} - i.e. the mirror image of
+	shared_partners_otp() above (fresh-checked against the real
+	`statnet/ergm` C source, `src/changestats_dgw_sp.h`'s own type
+	comment "ITP - Incoming two-path (i<-k<-j)", which reads exactly as
+	`j->k->i`): ITP(i,j) = OTP(j,i) by construction, so this is a one-
+	line reuse of the already-certified OTP function with its arguments
+	swapped, not a second independent traversal.
+*/
+real scalar SaomGraph::shared_partners_itp(real scalar i, real scalar j){
+	return(shared_partners_otp(j, i))
+}
+
+/*
+	Directed "outgoing shared partner" (OSP) count for (i,j): #{k :
+	i->k and j->k} - fresh-checked against the real `statnet/ergm` C
+	source's type comment "OSP - Outgoing shared partner (i->k<-j)".
+	UNLIKE OTP/ITP, this is SYMMETRIC in (i,j) (swapping i and j leaves
+	the defining set unchanged) - and turns out to be EXACTLY what
+	common_neighbors() above already computes when called on a directed
+	graph (it always traverses via neighbors_out()/has_edge() in the
+	"out" direction, regardless of `directed`), so this is a pure alias,
+	not new traversal code.
+*/
+real scalar SaomGraph::shared_partners_osp(real scalar i, real scalar j){
+	return(common_neighbors(i, j))
+}
+
+/*
+	Directed "incoming shared partner" (ISP) count for (i,j): #{k :
+	k->i and k->j} - fresh-checked against the real `statnet/ergm` C
+	source's type comment "ISP - Incoming shared partner (i<-k->j)".
+	Also symmetric in (i,j), like OSP, but needs its own traversal
+	(common_neighbors_in(), below) since it walks IN-neighbors/checks
+	arcs INTO the candidate k, the mirror image of common_neighbors()'s
+	own out-neighbor/has_edge(b,k) discipline.
+*/
+real scalar SaomGraph::shared_partners_isp(real scalar i, real scalar j){
+	return(common_neighbors_in(i, j))
+}
+
+/*
+	Number of nodes k that point to BOTH i and j (k s.t. has_edge(k,i)
+	and has_edge(k,j)) - the in-neighbor mirror of common_neighbors()
+	above, needed for shared_partners_isp(). Same "iterate the smaller
+	in-neighbor set, test membership in the other's" discipline,
+	O(min(indeg_i,indeg_j)).
+*/
+real scalar SaomGraph::common_neighbors_in(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, cnt, a, b
+
+	if (degree_in(i) <= degree_in(j)) {
+		a = i; b = j
+	}
+	else {
+		a = j; b = i
+	}
+	nb = neighbors_in(a)
+	cnt = 0
+	for (k=1; k<=cols(nb); k++) {
+		if (nb[k] != b && has_edge(nb[k], b)) cnt++
+	}
+	return(cnt)
+}
+
+/*
+	Directed "reciprocated two-path" (RTP) count for (i,j): #{k : i<->k
+	and k<->j} (k != j), where a<->b means BOTH has_edge(a,b) and
+	has_edge(b,a) - i.e. k is a shared partner only through a MUTUAL tie
+	on each leg, not a bare one-directional arc. This is R ergm's fifth
+	and last directed shared-partner definition, fresh-checked against
+	the real `statnet/ergm` C source's own `espRTP_change` comment
+	("configurations for edge i->j such that i<->k and j<->k (with
+	k!=j)", `src/changestats_dgw_sp.h`) - deliberately NOT derived from
+	the type comment alone, same standard OTP/ITP/OSP/ISP were held to.
+	SYMMETRIC in (i,j) like OSP/ISP (mutual() is itself symmetric), so
+	RTP(i,j) == RTP(j,i) always - confirmed by construction, not just
+	assumed, since both legs are mutual-tie tests with no directional
+	asymmetry between i and j.
+*/
+real scalar SaomGraph::shared_partners_rtp(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, m, cnt
+
+	nb = neighbors_out(i)
+	cnt = 0
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		if (!has_edge(k,i)) continue		// require i<->k (mutual)
+		if (has_edge(k,j) & has_edge(j,k)) cnt++	// require k<->j (mutual)
+	}
+	return(cnt)
+}
+
+/*
+	Nodes with a MUTUAL (reciprocated) tie to x: #{k : x<->k}, as a row
+	vector - the RTP analogue of `neighbors_out()'/`neighbors_in()',
+	needed by `change_gwesp_rtp()'/`change_gwdsp_rtp()'/
+	`change_esp_rtp()'/`change_dsp_rtp()' below to enumerate the dyads
+	RTP-based statistics changed by an (i,j) toggle without rescanning
+	every node in the graph. O(degree_out(x)), same cost class as
+	`common_neighbors()'.
+*/
+real rowvector SaomGraph::mutual_neighbors(real scalar x){
+	real rowvector nb, out
+	real scalar m, k, cnt
+
+	nb = neighbors_out(x)
+	out = J(1, cols(nb), 0)
+	cnt = 0
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (has_edge(k,x)) {
+			cnt++
+			out[cnt] = k
+		}
+	}
+	return(cnt ? out[1..cnt] : J(1,0,0))
+}
+
+/*
+	All current ties as an nties x 2 matrix of (i,j) pairs. Directed:
+	one row per arc. Undirected: one row per edge, canonicalized i<j.
+	O(nties) - a direct slice of the live edge array toggle() already
+	maintains incrementally (elist rows 1..nties); this used to be an
+	O(n+nties) neighbor-set reconstruction (iterating every node's own
+	adjacency to rebuild the list from scratch) before elist existed.
+*/
+real matrix SaomGraph::all_ties(){
+	if (nties == 0) return(J(0, 2, 0))
+	return(elist[1::nties, .])
+}
+
+/*
+	Dense n x n 0/1 adjacency matrix (1 = tie present), matching the
+	shape `nwset, mat(...)' expects - used only by nwergm's own `estat
+	gof' (Part XX) to materialize a simulated network back into a real
+	nw_def object so the package's own already-tested nwgeodesic/nwtriads
+	commands can compute genuine goodness-of-fit comparison statistics on
+	it, rather than reimplementing geodesic distance/triad census a
+	second time. Not used anywhere in the MCMC inner loop itself - O(n +
+	nties), called at most `nsim' times per `estat gof' call, the same
+	"materialize outside the hot loop" discipline all_ties() already
+	follows.
+*/
+real matrix SaomGraph::to_dense(){
+	real matrix out
+	real rowvector nb
+	real scalar i, k
+
+	out = J(n, n, 0)
+	for (i=1; i<=n; i++) {
+		nb = neighbors_out(i)
+		for (k=1; k<=cols(nb); k++) out[i, nb[k]] = 1
+	}
+	return(out)
+}
+
+/* ===================================================================
+   SaomTermData: generic per-term-instance parameter container.
+
+   One instance per term appearing in a fitted model. Rather than a
+   distinct Mata class per term (impossible to dispatch polymorphically
+   in Mata anyway - see the function-pointer design below), every term
+   instance carries the same, small set of possible auxiliary fields;
+   each term's own statistic()/change() function reads only the fields
+   it actually needs. This is the "C struct" alternative the design
+   brief explicitly permits in place of C++ virtual classes.
+   =================================================================== */
+class SaomTermData {
+	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree/gwdsp
+	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov/absdist/nodefactor/nodemix: node-indexed covariate (already numeric-coded)
+	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
+	real matrix edgecovpd		// nwsaom changing dyadic covariates: n x (n * periods), the period p matrix in columns (p-1)*n+1..p*n (td.edgecovmat holds the current period's matrix); 0 x 0 for every other term
+	real matrix attrpd		// nwsaom time-varying covariates: n x periods, column p = the values used in period p (td.attr holds the current period's column); 0 x 0 for every other term
+	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
+	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic
+	string scalar sptype		// gwesp/gwdsp/gwnsp/esp/dsp: shared-partner definition on a DIRECTED network - "" (default) means the undirected/UTP definition (used as-is for undirected networks); one of "OTP"/"ITP"/"OSP"/"ISP"/"RTP" selects the corresponding directed definition (harmonisation unit 91 wave 5 added OTP; a later wave added ITP/OSP/ISP; RTP (reciprocated two-path) added last - all five of R ergm's own directed shared-partner types are now implemented).
+	real scalar center		// nwsaom behsim (unw_saom.do): the behavior variable's similarity mean, subtracted from every tie's similarity (RSiena's simX centering). Unused by every other term.
+	pointer(class SaomGraph scalar) scalar xnet	// nwsaom multiplex's crprod (unw_saom.do): a LIVE pointer to the OTHER co-evolving network's own current SaomGraph, re-pointed by SaomEstimateRMCoevNetNet()/SaomSimulateIntervalCoevNetNet() every time a fresh working copy of that other network is created (a fresh G1work/G2work per Robbins-Monro replicate) - addterm() stores &td0 (a POINTER into the caller's own td0 storage, not a copy), so mutating td.xnet through that same pointer from inside the estimator is visible to the registered term instance immediately, no re-registration needed. NULL/unused by every other term (nwergm never sets or reads it).
+}
+
+/* ===================================================================
+   Term API: each term is a pair of Mata functions with a fixed
+   signature, registered by name (see ErgmTermRegistry below). Adding a
+   new term means writing one such pair (plus a short registry entry
+   and Stata-side argument parsing in nwergm.ado) - the sampler, MPLE
+   builder, and MCMLE controller never reference a term by name and
+   never need to change.
+
+     statistic:  real rowvector fn(class SaomGraph scalar G,
+                                    class SaomTermData scalar td)
+                 -> current value of this term's statistic(s) (length
+                    = this term's own npar) on the whole graph G.
+
+     change:     real rowvector fn(class SaomGraph scalar G,
+                                    real scalar i, real scalar j,
+                                    class SaomTermData scalar td)
+                 -> the signed effect on this term's statistic(s) of
+                    toggling dyad (i,j) on graph G (G is NOT yet
+                    toggled when this is called - has_edge(i,j) still
+                    reflects the pre-toggle state).
+   =================================================================== */
+real rowvector sn_stat_edges(class SaomGraph scalar G, class SaomTermData scalar td){
+	return(G.nties)
+}
+
+
+real rowvector sn_change_edges(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Reciprocated-tie count (directed only). Toggling (i,j) can only
+	affect the mutual count if the reverse tie (j,i) already exists;
+	otherwise the toggle is change=0 for this term, exactly as
+	confirmed from ergm's own c_mutual (src/changestats.c:2239) during
+	the Part I study.
+*/
+real rowvector sn_stat_mutual(class SaomGraph scalar G, class SaomTermData scalar td){
+	real scalar i, j, cnt
+	real rowvector nb
+
+	cnt = 0
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		for (j=1; j<=cols(nb); j++) {
+			if (nb[j] > i && G.has_edge(nb[j], i)) cnt++
+		}
+	}
+	return(cnt)
+}
+
+
+real rowvector sn_change_mutual(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	if (!G.has_edge(j,i)) return(0)
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Homophily on a single categorical node attribute (exact match,
+	v1 scope - see docs/ERGM_ARCHITECTURE.md for the diff=/levels
+	extension already anticipated by this same td.attr field). Counts
+	ties whose two endpoints share the same (already numeric-coded)
+	attribute value.
+*/
+real rowvector sn_stat_nodematch(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, cnt
+
+	ties = G.all_ties()
+	cnt = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) cnt++
+	}
+	return(cnt)
+}
+
+
+real rowvector sn_change_nodematch(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	if (td.attr[i] != td.attr[j]) return(0)
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Continuous node covariate (main effect): sum over ties of
+	attr[i]+attr[j] - the same symmetric-sum definition Statnet's own
+	nodecov uses for both directed and undirected networks (directional
+	decomposition is nodeicov/nodeocov below, not a variant of plain
+	nodecov itself - confirmed from the Part I study).
+*/
+real rowvector sn_stat_nodecov(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] + td.attr[ties[k,2]]
+	return(tot)
+}
+
+
+real rowvector sn_change_nodecov(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	real scalar v
+	v = td.attr[i] + td.attr[j]
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+/*
+	Directed sender covariate: sum over arcs of the SENDER's covariate
+	value (attr[tail]) - equivalently attr . outdegree. Directed only.
+*/
+real rowvector sn_stat_nodeocov(class SaomGraph scalar G, class SaomTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + td.attr[i]*G.degree_out(i)
+	return(tot)
+}
+
+
+real rowvector sn_change_nodeocov(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	return(G.has_edge(i,j) ? -td.attr[i] : td.attr[i])
+}
+
+/*
+	Directed receiver covariate: sum over arcs of the RECEIVER's
+	covariate value (attr[head]) - equivalently attr . indegree.
+	Directed only.
+*/
+real rowvector sn_stat_nodeicov(class SaomGraph scalar G, class SaomTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + td.attr[i]*G.degree_in(i)
+	return(tot)
+}
+
+
+real rowvector sn_change_nodeicov(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
+	return(G.has_edge(i,j) ? -td.attr[j] : td.attr[j])
+}
+
+/*
+	Shared weighting kernel used by both the GWESP and GW(o/i)degree
+	families (Hunter 2007): w(d) = exp(decay)*(1-(1-exp(-decay))^d),
+	the contribution a single node/edge with "local count" d (a degree
+	or a shared-partner count) makes to the sum. Both families are
+	exactly "sum of w(local count) over some set of graph elements" -
+	they differ only in which elements and which local count, which is
+	exactly what makes k-star-family fixed-decay terms cheap additions
+	once one of them exists (Stage 6/7 of the roadmap).
+*/
+real scalar sn_gw_kernel(real scalar d, real scalar decay){
+	return(exp(decay) * (1 - (1-exp(-decay))^d))
+}
+
+/* ===================================================================
+   Curved-parameter support (harmonisation unit 133, first slice):
+   the theta -> eta map and its Jacobian for the geometrically weighted
+   decay family, shared by every GW term (gwesp/gwdsp/gwnsp/gwdegree/
+   gwodegree/gwidegree) when the decay itself is estimated rather than
+   fixed. v1's own fixed-decay GW terms collapse the whole weighted sum
+   into ONE canonical (eta-space) statistic per term, computed directly
+   by sn_stat_gwesp()/change_gwesp() etc. below - a curved (free-decay)
+   term instead needs the FULL vector of per-count statistics (e.g.
+   esp(1), esp(2), ..., esp(n-2) for gwesp), each with its own eta
+   value, related to the term's two THETA parameters (an overall
+   weight, and the decay itself) via this nonlinear map. This is a
+   deliberately standalone, independently certifiable first slice -
+   NOT YET wired into SaomTermData/SaomModel/MPLE/MCMLE (a curved model
+   cannot be requested through nwergm.ado yet); that wiring is later
+   work once this piece is certified on its own.
+
+   Clean-room reimplementation from the published Hunter (2007)
+   geometrically-weighted construction, cross-checked numerically
+   (not copied) against the installed R `ergm' package's own internal
+   `ergm:::ergm_GWDECAY' object (ergm 4.13.0, confirmed via direct
+   inspection, harmonisation unit 133) - see
+   cscripts/test_nwergm_curved.do for the exact transcribed reference
+   values. That inspection resolved a real ambiguity left open in
+   docs/ERGM_STATNET_STUDY.md's own earlier transcription (which was
+   unsure whether ergm_GWDECAY's second free parameter is the decay
+   alpha itself or log(alpha)): confirmed directly, by matching
+   ergm_GWDECAY$map() against the closed-form GWESP weighted-sum
+   formula to machine precision, that it is alpha itself, matching
+   this project's own existing fixed-decay `td.decay' convention
+   exactly (no extra log/exp reparameterization needed when a term
+   transitions from fixed to curved).
+
+   eta_i(theta_w, alpha) = theta_w * exp(alpha) * (1 - (1-exp(-alpha))^i),
+   i = 1..n - i.e. theta_w is the usual GW term's own overall
+   coefficient, exactly as reported today for a FIXED-decay term, and
+   fixing alpha at a caller-chosen value collapses this whole vector
+   back into a scalar multiple of v1's own single combined eta
+   statistic (confirmed as an identity below, not merely plausible).
+   =================================================================== */
+
+/*
+	Numerically stable log(1-exp(-a)) for a>0 (the standard two-branch
+	form: expm1() avoids the catastrophic cancellation of computing
+	1-exp(-a) directly when a is small and exp(-a) is close to 1;
+	log1p() avoids a similar loss computing log(1-x) directly when x
+	is close to 0, i.e. when a is large and exp(-a) is already small -
+	both expm1()/log1p() confirmed as genuine Mata built-ins, not
+	polyfilled, harmonisation unit 133). a<=0 is a caller error (alpha
+	must be positive - ergm_GWDECAY's own minpar enforces alpha>=0)
+	and returns missing rather than silently producing a wrong value.
+*/
+real scalar sn_log1mexp(real scalar a){
+	if (a <= 0) return(.)
+	if (a <= ln(2)) return(ln(-expm1(-a)))
+	return(log1p(-exp(-a)))
+}
+
+/*
+	theta -> eta map for the GW decay family: theta_w (overall weight,
+	unconstrained) and alpha (decay, must be >0) -> an n-vector of
+	canonical (eta-space) statistics, one per achievable shared-
+	partner/degree count 1..n. Certified against R's own
+	ergm:::ergm_GWDECAY$map() - see cscripts/test_nwergm_curved.do.
+*/
+real rowvector sn_gwdecay_map(real scalar theta_w, real scalar alpha, real scalar n){
+	real scalar a, k
+	real rowvector eta
+
+	// a = log(1-exp(-alpha)), always < 0 for alpha>0 - deliberately a
+	// SINGLE call on alpha itself, then reused (times k) inside the
+	// per-k log1mexp call below. Collapsing this into one direct
+	// sn_log1mexp(alpha*k) call per k is WRONG - that computes
+	// exp(alpha)*(1-exp(-alpha*k)), not the required
+	// exp(alpha)*(1-(1-exp(-alpha))^k) - caught only by tracing R's own
+	// two-step `a <- log1mexp(x[2])` / `log1mexp(-a*i)' structure
+	// literally rather than assuming a single substitution would do.
+	a = sn_log1mexp(alpha)
+	eta = J(1, n, .)
+	for (k=1; k<=n; k++) eta[k] = theta_w * exp(alpha + sn_log1mexp(-a * k))
+	return(eta)
+}
+
+/*
+	Jacobian of sn_gwdecay_map() above: a 2 x n matrix, row 1 =
+	d(eta_i)/d(theta_w), row 2 = d(eta_i)/d(alpha). Certified against
+	R's own ergm:::ergm_GWDECAY$gradient() - see
+	cscripts/test_nwergm_curved.do. Used later (curved MCMLE) both to
+	project an eta-space Newton step back onto the 2-parameter theta
+	space and, via the delta method, to transform eta's own sandwich
+	covariance into a theta-space one.
+*/
+real matrix sn_gwdecay_gradient(real scalar theta_w, real scalar alpha, real scalar n){
+	real scalar a, k
+	real rowvector w, d_alpha
+
+	a = sn_log1mexp(alpha)
+	w = J(1, n, .)
+	for (k=1; k<=n; k++) w[k] = exp(alpha + sn_log1mexp(-a * k))
+	d_alpha = J(1, n, .)
+	// exp(a*(k-1)) = (1-exp(-alpha))^(k-1) since exp(a) = 1-exp(-alpha)
+	// by construction (a = log of exactly that quantity) - matches the
+	// analytic derivative of eta_k = exp(alpha)*(1-(1-exp(-alpha))^k)
+	// w.r.t. alpha term-for-term with R's own gradient() source.
+	for (k=1; k<=n; k++) d_alpha[k] = theta_w * (w[k] - k * exp(a * (k-1)))
+	return(w \ d_alpha)
+}
+
+/*
+	Geometrically weighted edgewise shared partners (GWESP; Hunter
+	2007). Undirected only in v1 (directed OTP/ITP/OSP/ISP variants -
+	see the Part I study - are a roadmap item, not a cheap extension of
+	this one: they need a directed common-neighbor definition this
+	term does not compute). Statistic: exp(decay) * sum over edges
+	(i,j) of [1-(1-exp(-decay))^p_ij], p_ij = number of shared
+	partners of the tied dyad (i,j) - i.e. sum of sn_gw_kernel(p_ij,decay)
+	over edges, same kernel as GWdegree, applied to shared-partner
+	counts instead of degrees.
+
+	Change statistic for toggling (i,j) has TWO parts, computed on the
+	graph BEFORE the toggle (has_edge/common_neighbors both read
+	pre-toggle state, matching every other change() function's own
+	contract):
+	  (1) the toggled dyad's own contribution, evaluated at its current
+	      shared-partner count p_ij (this does not depend on whether
+	      (i,j) itself is tied - shared partners are common neighbors,
+	      unrelated to the direct tie).
+	  (2) for every node k that is CURRENTLY a common neighbor of both
+	      i and j, the two edges (i,k) and (j,k) already exist and each
+	      have their own shared-partner count shift by +-1 (matching
+	      the sign of the (i,j) toggle) - their contribution to the sum
+	      changes accordingly. No other edge in the graph is affected.
+	This is the standard published GWESP change-statistic construction
+	(confirmed against ergm's own espOTP_change macro structure during
+	the Part I study, though that C code additionally maintains a
+	shared-partner cache for performance). v1 originally used
+	common_neighbors() directly here (O(min(deg_i,deg_j)) per lookup,
+	deemed sufficient at v1's own target scale); a real R-vs-Stata
+	benchmark subsequently showed GWESP-involving models 40-68x slower
+	than Statnet's own ergm() where GWESP-free models of similar or
+	larger size were only ~3x slower (docs/CERTIFICATION.md harmonisation
+	unit 81), pinning the gap specifically on this shared-partner
+	machinery - both functions below now call SaomGraph::shared_partners()
+	instead, which is O(1) once a caller has enabled the incremental
+	cache (unit 82) and falls back to the identical common_neighbors()
+	computation otherwise, so this is a pure performance change with no
+	effect on either function's own return value.
+*/
+real rowvector sn_stat_gwesp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	if (td.sptype == "OTP") return(sn_stat_gwesp_otp(G, td))
+	if (td.sptype == "ITP") return(sn_stat_gwesp_itp(G, td))
+	if (td.sptype == "OSP") return(sn_stat_gwesp_osp(G, td))
+	if (td.sptype == "ISP") return(sn_stat_gwesp_isp(G, td))
+	if (td.sptype == "RTP") return(sn_stat_gwesp_rtp(G, td))
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+/*
+	Directed OTP variants of GWESP/GWDSP (harmonisation unit 91,
+	term-expansion wave 5) - dispatched to from `sn_stat_gwesp()'/
+	`change_gwesp()'/`stat_gwdsp()'/`change_gwdsp()' above whenever
+	`td.sptype == "OTP"' (set by `nwergm.ado' automatically whenever the
+	network is directed, matching R ergm's own default `type="OTP"' for
+	directed shared-partner terms - fresh-checked against
+	`R/InitErgmTerm.dgw_sp.R'). `gwnsp' needs NO separate OTP variant:
+	it is already a thin composition of gwdsp/gwesp (`stat_gwnsp() =
+	stat_gwdsp(G,td) - sn_stat_gwesp(G,td)'), which will call the OTP
+	dispatch above automatically once `td.sptype' is set - the
+	composition itself is completely direction-agnostic.
+
+	SP_OTP(a,b) = #{k : a->k and k->b} (see `SaomGraph::shared_partners_
+	otp()' above) is NOT symmetric in (a,b), so toggling arc i->j
+	affects two structurally DIFFERENT sets of other ordered pairs,
+	unlike the undirected case's single symmetric neighbor loop:
+	  (A) for every a with a->i (a is an IN-neighbor of i): i can serve
+	      as the "k" connecting a->i->j, so SP_OTP(a,j) changes by
+	      delta whenever arc i->j toggles.
+	  (B) for every b with j->b (b is an OUT-neighbor of j): j can serve
+	      as the "k" connecting i->j->b, so SP_OTP(i,b) changes by
+	      delta.
+	This is the same "own dyad term (esp only) + two adjustment loops"
+	shape as the undirected functions, just with `neighbors_in(i)'/
+	`neighbors_out(j)' replacing the undirected `neighbors_out(i)' used
+	symmetrically for both loops there, and GWDSP's own dyad-space
+	genuinely doubling in size (ALL n*(n-1) ORDERED pairs i != j, not
+	just the n*(n-1)/2 unordered ones - SP_OTP(i,j) != SP_OTP(j,i) in
+	general, so both directions must be enumerated separately).
+*/
+real rowvector sn_stat_gwesp_otp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_otp(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+/*
+	Directed ITP/OSP/ISP variants of GWESP/GWDSP (term-expansion "directed
+	shared-partner types" wave, following the OTP wave above), fresh-
+	derived from - and cross-checked line-by-line against - the real
+	`statnet/ergm` C source (`src/changestats_dgw_sp.h`'s own
+	`espITP_change`/`espOSP_change`/`espISP_change`/`dspITP_change`/
+	`dspOSP_change`/`dspISP_change` macros, plus `src/changestats_dgw_sp.c`'s
+	`all_calcs`/`all_calcs2` dispatch table), not just the one-line R-level
+	type comment - getting a directed shared-partner definition backwards
+	would silently corrupt every estimate that uses it.
+
+	ITP(i,j) := OTP(j,i) (shared_partners_itp() above) - so ITP's change
+	statistics are OTP's own two loops with every dyad MIRRORED: OTP's
+	"(A) a in neighbors_in(i): adjust dyad (a,j) using OTP(a,j)" / "(B) b
+	in neighbors_out(j): adjust dyad (i,b) using OTP(i,b)" become, for
+	ITP, "(A') k in neighbors_in(i): adjust dyad (j,k) using OTP(k,j)" /
+	"(B') k in neighbors_out(j): adjust dyad (k,i) using OTP(i,k)" -
+	confirmed against `espITP_change'/`dspITP_change' directly (their own
+	"hk"/"kt" dyad labels are exactly these mirrored pairs, traced through
+	the C macro's own GETDDMUI cache-index arguments).
+
+	OSP(i,j) := #{k: i->k, j->k} and ISP(i,j) := #{k: k->i, k->j} (both
+	above) are SYMMETRIC in (i,j), unlike OTP/ITP - so toggling arc i->j
+	affects exactly ONE family of other dyads for each (not two): OSP(i,q)
+	for q in neighbors_in(j) (mirrored for ISP: ISP(p,j) for p in
+	neighbors_out(i)). GWESP only sums over TIED arcs, and OSP(i,q) ==
+	OSP(q,i) could be attributed to EITHER the (i,q) arc or the (q,i) arc
+	independently (both, one, or neither may exist) - `change_gwesp_osp()'/
+	`change_gwesp_isp()' therefore check has_edge() in BOTH directions per
+	affected node, confirmed against `espOSP_change'/`espISP_change''s own
+	two `IS_OUTEDGE()' guards. `change_gwdsp_osp()'/`change_gwdsp_isp()'
+	need no such guard (GWDSP counts every dyad regardless of tie status)
+	but must instead DOUBLE each loop iteration's contribution, since a
+	single pass only ever visits the affected UNORDERED dyad {i,q} once
+	while GWDSP's own statistic - like OTP/ITP's - counts BOTH ordered
+	instances (i,q) and (q,i) (confirmed against the real C source's own
+	`all_calcs2`/`gw_calc2` macros, which apply this exact `*2`
+	specifically to OSP/ISP/RTP and nowhere else) - the direct-enumeration
+	`stat_gwdsp()' (harmonisation unit 151) no longer materializes this
+	unordered-pairs-doubled loop itself (it now sums `change_gwdsp_osp()'/
+	`change_gwdsp_isp()' incrementally instead - see that function's own
+	header comment), but the `*2' convention documented here is exactly
+	what makes that telescoping sum land on the same total.
+*/
+real rowvector sn_stat_gwesp_itp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_itp(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+
+real rowvector sn_stat_gwesp_osp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_osp(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+
+real rowvector sn_stat_gwesp_isp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_isp(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+/*
+	Directed RTP variant of GWESP - term-expansion "RTP" wave, following
+	OTP/ITP/OSP/ISP above. RTP(a,b) is SYMMETRIC (like OSP/ISP) but,
+	unlike OSP/ISP, toggling arc i->j leaves every OTHER dyad's RTP
+	value COMPLETELY UNCHANGED unless the REVERSE arc j->i already
+	exists: RTP is defined purely on the derived MUTUAL-tie graph
+	(a<->b), and if j->i is absent, dyad (i,j) is never mutual regardless
+	of i->j's own state, so toggling i->j cannot add or remove any edge
+	of that mutual-tie graph - confirmed against `espRTP_change''s own
+	`htedge=IS_OUTEDGE(head,tail)' gate in the real `statnet/ergm' C
+	source, and structurally identical to this file's own
+	`sn_change_mutual()' gate (`if (!G.has_edge(j,i)) return(0)') above -
+	RTP's own gate is the same fact, just consequential for a whole
+	family of OTHER dyads' shared-partner counts here rather than for
+	the toggled dyad's own contribution to a DIFFERENT term.
+
+	When j->i DOES exist, toggling i->j flips whether j is a mutual
+	partner of i (equivalently i a mutual partner of j) - i.e. adds or
+	removes exactly one edge of the mutual-tie graph. That single edge
+	change affects RTP(a,b) for two DISTINCT families of other dyads
+	(unlike OSP/ISP's single family - RTP is not "one-sided" the way a
+	shared OUTGOING or INCOMING target is, because the flipped mutual
+	edge is itself symmetric and newly shared from BOTH i's and j's own
+	side): (1) every k mutually tied to j gains/loses i as a shared
+	RTP-partner for dyad (k,i)/(i,k), and (2) every k mutually tied to i
+	gains/loses j as a shared RTP-partner for dyad (k,j)/(j,k) - fresh-
+	derived from, and matching, `espRTP_change''s own four
+	`L2kt'/`L2tk'/`L2kh'/`L2hk' loops (the first two collapse to family
+	(1) here, the last two to family (2); each pair of C loops become
+	one loop here with two `has_edge()' guards, the same
+	one-loop-two-guard pattern `change_gwesp_osp()'/`change_gwesp_isp()'
+	already use above for their own single family).
+*/
+real rowvector sn_stat_gwesp_rtp(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_rtp(ties[k,1], ties[k,2])
+		tot = tot + sn_gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+
+/*
+	transitiveties/cyclicalties (harmonisation unit 91, term-expansion
+	wave 6, directed only) - fresh-checked against R ergm's own current
+	`R/InitErgmTerm.transitiveties.R` (a file search found these two are
+	NOT in the main `InitErgmTerm.R` dispatcher list any more - they get
+	their own dedicated file, easy to miss without checking): R's own
+	stated definitions are "the number of ties i->j such that there
+	exists a two-path from i to j" (transitiveties) and "...from j to i"
+	(cyclicalties). Both are threshold/existence indicators built
+	directly on the OTP shared-partner machinery wave 5 just added:
+
+	  transitiveties = sum over existing arcs (i,j) of I(SP_OTP(i,j)>=1)
+	  cyclicalties   = sum over existing arcs (i,j) of I(SP_OTP(j,i)>=1)
+	                   (SP_OTP(j,i) counts k with j->k and k->i - a
+	                   two-path from j back to i, which together with
+	                   the existing arc i->j closes a directed 3-cycle,
+	                   hence the name)
+
+	Change statistic for toggling arc (i,j), delta = has_edge(i,j)?-1:1:
+	the SAME two families of affected shared-partner counts as
+	`change_gwesp_otp()'/`change_gwdsp_otp()' above (SP_OTP(a,j) for a in
+	neighbors_in(i); SP_OTP(i,b) for b in neighbors_out(j)) - but now
+	each affected count only contributes to the sum through a THRESHOLD
+	CROSSING (0->1 or 1->0), and only when the AFFECTED ARC ITSELF
+	exists (both terms sum over existing arcs only), and — critically —
+	transitiveties/cyclicalties read that threshold off DIFFERENT
+	directed arcs than gwesp/gwdsp did, because each term uses a
+	different orientation of SP_OTP as its own per-arc statistic:
+	  - transitiveties needs SP_OTP(a,j) attributed to arc a->j itself
+	    (`has_edge(a,j)'), and SP_OTP(i,b) attributed to arc i->b itself
+	    (`has_edge(i,b)').
+	  - cyclicalties needs SP_OTP(a,j) attributed to the REVERSED arc
+	    j->a (`has_edge(j,a)', since cyclicalties(p,q) reads SP_OTP(q,p)
+	    - here q=a,p=j means the arc in question is (p,q)=(j,a)), and
+	    SP_OTP(i,b) attributed to the reversed arc b->i (`has_edge(b,i)').
+	Own-arc term for transitiveties uses SP_OTP(i,j) itself (unaffected
+	by toggling i-j, same reasoning as every shared-partner term above);
+	for cyclicalties it uses SP_OTP(j,i) (also unaffected - i-j does not
+	appear inside the SP_OTP(j,i) definition, since that function's own
+	internal `k==i'/`k==j' guards exclude i and j as candidate
+	intermediaries of their own endpoint pair).
+*/
+real rowvector sn_stat_transitiveties(class SaomGraph scalar G, class SaomTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (G.shared_partners_otp(ties[k,1], ties[k,2]) >= 1) tot++
+	}
+	return(tot)
+}
+
+/* ===================================================================
+   SaomModel: an ordered list of term instances (name, npar, function
+   pointers, SaomTermData). This is the ONLY place that knows a model
+   is "a list of terms" - the sampler, MPLE builder and MCMLE
+   controller (below) only ever call full_statistic()/full_change(),
+   never a term by name, so adding a term to the registry (see
+   nwergm.ado's own Stata-side dispatch) never requires touching them.
+   =================================================================== */
+class SaomModel {
+	real scalar nterms
+	string rowvector names		// one entry per term INSTANCE (not per coefficient)
+	real rowvector npar		// coefficients contributed by each term instance
+	pointer rowvector statfn	// pointer(real rowvector function) scalar, one per instance
+	pointer rowvector chgfn	// pointer(real rowvector function) scalar, one per instance
+	pointer rowvector td		// pointer(class SaomTermData scalar) scalar, one per instance
+	string rowvector coefnames	// flat, length = sum(npar)
+
+	// Native (C) MCMC backend config (harmonisation unit 83) - NOT part
+	// of "what a model is" in any statistical sense; carried on SaomModel
+	// purely because M already flows through every relevant call site
+	// (ErgmNativeSetup(), ErgmMCMCSample(), ErgmMCMCSampleDiag(),
+	// ErgmMCMLE()) and Mata class instances exhibit reference semantics
+	// across function calls (the same property SaomGraph's own toggle()
+	// already relies on for MCMLE's sequential design) - this avoids
+	// needing genuine Mata "global" variables, which set matastrict on
+	// does not support declaring inside function bodies the way this
+	// unit's own first draft assumed (confirmed by direct trial). See
+	// this file's own "Native (C) MCMC backend" section for the full
+	// design.
+	real scalar native_enabled
+	real rowvector native_termcodes	// one entry per OUTPUT COLUMN (not per term instance - a multi-column term instance like nodefactor(3 levels) expands into 3 consecutive slots, one per level)
+	real rowvector native_attridx		// per-slot: 1-based index into native_attrmat's own columns (0 = no attribute needed)
+	real rowvector native_p1		// per-slot: generic scalar parameter #1 (decay for gw* terms; target level for nodefactor-family; low level for nodemix)
+	real rowvector native_p2		// per-slot: generic scalar parameter #2 (high level for nodemix only; unused - left 0 - by every other term)
+	real matrix native_attrmat		// one column per distinct attribute array actually needed across the model's own terms (native_attridx indexes into THIS, not into any one term's own td.attr)
+	real rowvector native_covidx		// per-slot: 1-based index into native_covmatstack's own n-column BLOCKS (0 = no dyadic covariate matrix needed) - edgecov()/hamming() only; every other term leaves this 0, mirroring native_attridx's own "0 = unused" convention
+	real matrix native_covmatstack		// distinct dense n x n dyadic covariate matrices needed across the model's own terms, horizontally concatenated as n-column blocks (block k = columns ((k-1)*n+1)..(k*n)) - a genuinely different shape from native_attrmat's own one-column-per-array convention (a dyadic covariate is one value per DYAD, not per node), so it cannot reuse that mechanism; native_covidx's block index times n tells the wire-protocol callers which columns to slice out and send as their own new dataset variables (see ErgmNativeSampleCore()'s own header comment on this)
+	real scalar native_proposal
+	real scalar native_lastaccept
+	real scalar native_enabled_sample	// harmonisation unit 168 (freedyads() masked TNT native port): native_enabled itself stays FORCED TO 0 for a masked model (ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() have no mask awareness at all - MPLE keeps using its own already-correct Mata free-dyad-only path), but MCMC SAMPLING now has a real native masked proposal - this SEPARATE flag gates ONLY the two ErgmMCMCSample()/ErgmMCMCSampleDiag() call sites. For an UNMASKED model this is always set equal to native_enabled (byte-identical old behavior, single shared flag in practice) - the split only ever does anything for a masked model.
+	real matrix native_maskmat		// G.freedyadmat, copied here only when native_enabled_sample==1 for a masked model - ErgmNativeSampleCore()'s own wire-protocol payload for the new dense n x n mask field, mirroring native_covmatstack's own "stash on M, read back by the wire-building function" contract
+
+	real scalar fixed_density		// R ergm's own `constraints=~edges` (nwergm's `fixdensity` option): 0 (default, explicitly set by ErgmNativeSetup(), which runs for every model) or 1 - when 1, ErgmMCMCSample()/ErgmMCMCSampleDiag() dispatch to ErgmMCMCSampleSwap()/ErgmMCMCSampleDiagSwap() instead of their own ordinary single-toggle loop; not a dyad-eligibility mask like has_dyadmask above (that restricts WHICH dyads may be proposed; this changes the PROPOSAL SHAPE itself to a tie/non-tie swap that holds the total tie count invariant) - see those functions' own header comments. Native (C) port not attempted (v1 Mata-only, matching this option's own initial scope) - set alongside native_enabled/native_enabled_sample being forced to 0 for a fixed-density model in nwergm.ado.
+
+	// Curved-parameter support (harmonisation unit 134, second slice -
+	// generalizes unit 133's own single-term theta->eta map/gradient to
+	// a full, possibly-mixed model). `curved' is 0 for every ordinary
+	// term instance (theta IS eta, one-to-one) and 1 for a term whose
+	// npar[t] eta-space columns are instead generated by a 2-parameter
+	// (weight, decay) curved map - v1 scope is exactly
+	// sn_gwdecay_map()/sn_gwdecay_gradient() for every curved term,
+	// so no per-term function pointer is needed (unlike statfn/chgfn
+	// above, which genuinely differ term to term). MPLE/MCMLE/SE wiring
+	// that actually CONSUMES theta_to_eta()/theta_to_eta_jacobian()
+	// below is later, separate work - not yet done.
+	real rowvector curved
+
+	// Fixed-coefficient (offset) support (harmonisation unit 183,
+	// docs/ERGM_ROADMAP.md's own "Offsets/fixed-coefficient terms" row) -
+	// PER COEFFICIENT/eta-column (length nparam(), same indexing as
+	// `coefnames' - NOT per term instance like `curved' above, since a
+	// single multi-column term instance, e.g. a 3-level `nodefactor()',
+	// can have just ONE of its columns fixed while the others are still
+	// estimated). `isfixed[k]==1' holds `coefnames[k]''s own coefficient
+	// at `fixedvalue[k]' throughout MPLE/MCMLE rather than estimating
+	// it, matching R ergm's own `offset()' formula wrapper - reported,
+	// not estimated (SE exactly 0, matching R's own real output,
+	// confirmed directly: `vcov(fit)' has an entirely zero row/column
+	// for an offset coefficient, not merely a small value). v1 scope:
+	// ordinary (non-curved) coefficients only - rejected at the
+	// `nwergm.ado' validation stage for a curved term's own columns,
+	// not silently mishandled here.
+	real rowvector isfixed
+
+	// Missing-dyad (observational) support: when obs_active==1 the MCMLE
+	// draws a second, constrained sample (only the missing dyads free,
+	// every observed dyad held fixed) from obs_G and estimates with the
+	// difference of the two samples, as R ergm does for a network with NA dyads.
+	real scalar obs_active
+	pointer scalar obs_G
+	pointer scalar obs_propfn
+	real matrix obs_mask
+	real rowvector fixedvalue
+	// statistic transforms (R's Log()/Exp() operators), per coefficient
+	// column: opkind 0 = none, 1 = log, 2 = exp; opparam = log0.  Empty
+	// (0 columns) unless nwergm's logstat()/expstat() set them.
+	real rowvector opkind
+	real rowvector opparam
+
+	void init()
+	void addterm()
+	void mark_curved()
+	void mark_fixed()
+	real rowvector freeidx()
+	real scalar findcoef()
+	real scalar nparam()
+	real scalar ntheta()
+	real rowvector theta_to_eta()
+	real matrix theta_to_eta_jacobian()
+	real rowvector project_eta_to_theta()
+	string rowvector theta_coefnames()
+	real rowvector full_statistic()
+	real rowvector full_change()
+	real rowvector change_toward_one()
+	real matrix build_mple_data()
+}
+
+
+void SaomModel::init(){
+	nterms = 0
+	names = J(1, 0, "")
+	npar = J(1, 0, .)
+	statfn = J(1, 0, NULL)
+	chgfn = J(1, 0, NULL)
+	td = J(1, 0, NULL)
+	coefnames = J(1, 0, "")
+	native_enabled = 0
+	native_enabled_sample = 0
+	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
+	obs_active = 0
+	curved = J(1, 0, .)
+	isfixed = J(1, 0, .)
+	fixedvalue = J(1, 0, .)
+	opkind = J(1, 0, .)
+	opparam = J(1, 0, .)
+}
+
+/*
+	Register one term instance. `cnames' must have length `npar' -
+	the caller (nwergm.ado's term-dispatch code) is responsible for
+	generating the right coefficient name(s) for this instance (e.g.
+	"nodematch_sex" for a single-category match, or multiple names for
+	a future diff=TRUE expansion) - the model object itself is
+	agnostic to what a term "means", only how many numbers it produces.
+*/
+void SaomModel::addterm(string scalar name, real scalar npar0,
+	pointer(real rowvector function) scalar sfn,
+	pointer(real rowvector function) scalar cfn,
+	class SaomTermData scalar td0,
+	string rowvector cnames){
+
+	nterms++
+	names = (names, name)
+	npar = (npar, npar0)
+	statfn = (statfn, sfn)
+	chgfn = (chgfn, cfn)
+	td = (td, &td0)
+	coefnames = (coefnames, cnames)
+	curved = (curved, 0)
+	isfixed = (isfixed, J(1, npar0, 0))
+	fixedvalue = (fixedvalue, J(1, npar0, 0))
+}
+
+/*
+	Marks the LAST-added term instance as curved (2 free theta
+	parameters - weight and decay - generating its npar[nterms] eta
+	columns via sn_gwdecay_map()). Deliberately "the last one added",
+	not an arbitrary index - nwergm.ado's own term-dispatch code always
+	calls this (if at all) immediately after the matching addterm(),
+	mirroring how every other per-instance annotation in this codebase
+	is set right at construction time, not patched in later by index.
+*/
+void SaomModel::mark_curved(){
+	curved[nterms] = 1
+}
+
+/*
+	Marks eta-space column `colidx' (1-based, into `coefnames'/`isfixed'/
+	`fixedvalue' - NOT a term-instance index like mark_curved()'s own
+	implicit "last term" convention, since a specific COLUMN, not term
+	instance, is what a user names via offset()) as fixed at `value'.
+	Called from `nwergm.ado' once per (coefname,value) pair in the
+	user's own `offset()' option, after resolving each name against
+	`coefnames' - this method itself does no name resolution, matching
+	the existing division of labor (the Stata layer parses/validates
+	user-facing option syntax; the Mata layer only ever indexes by
+	position).
+*/
+void SaomModel::mark_fixed(real scalar colidx, real scalar value){
+	isfixed[colidx] = 1
+	fixedvalue[colidx] = value
+}
+
+/*
+	1-based column indices of the NOT-fixed eta-space coefficients, in
+	their original order - the reduced index set MPLE/MCMLE restrict
+	their own estimating equations to when one or more coefficients are
+	held fixed via offset(). Equals (1..nparam()) unchanged whenever no
+	coefficient is fixed (the ordinary case, `isfixed' all zero).
+*/
+real rowvector SaomModel::freeidx(){
+	return(selectindex(!isfixed))
+}
+
+/*
+	1-based position of `cname' in `coefnames' (harmonisation unit 183,
+	offset() support) - 0 if not found. `nwergm.ado' uses this to
+	resolve each user-supplied "coefname value" pair in offset() to the
+	eta-space column `mark_fixed()' actually needs, with a clear error
+	on a typo'd name rather than a silent no-op.
+*/
+real scalar SaomModel::findcoef(string scalar cname){
+	real scalar k
+	for (k=1; k<=cols(coefnames); k++) if (coefnames[k]==cname) return(k)
+	return(0)
+}
+
+
+real scalar SaomModel::nparam(){
+	return(sum(npar))
+}
+
+/*
+	Theta-space dimension: same as nparam() (eta-space dimension) for a
+	model with no curved terms, strictly SMALLER whenever a curved term
+	is present (its npar[t] eta columns collapse to exactly 2 theta
+	parameters). Curved MPLE/MCMLE optimize in this smaller space;
+	theta_to_eta() below maps a point in it back to the full eta vector
+	every existing statistic/change/MCMC machinery already understands.
+*/
+real scalar SaomModel::ntheta(){
+	real scalar t, tot
+
+	tot = 0
+	for (t=1; t<=nterms; t++) tot = tot + (curved[t] ? 2 : npar[t])
+	return(tot)
+}
+
+/*
+	Assembles the full eta-space vector (length nparam()) from a
+	theta-space vector (length ntheta()): identity for every ordinary
+	term's own theta value(s), sn_gwdecay_map() for a curved term's
+	own (weight, decay) pair. Order matches coefnames/npar exactly (term
+	by term, in registration order) - the same ordering convention every
+	other flat vector in this class already uses.
+*/
+real rowvector SaomModel::theta_to_eta(real rowvector theta){
+	real rowvector eta
+	real scalar t, tpos, epos
+
+	eta = J(1, nparam(), .)
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			eta[(epos..epos+npar[t]-1)] = sn_gwdecay_map(theta[tpos], theta[tpos+1], npar[t])
+			tpos = tpos + 2
+		}
+		else {
+			eta[(epos..epos+npar[t]-1)] = theta[(tpos..tpos+npar[t]-1)]
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(eta)
+}
+
+/*
+	Jacobian of theta_to_eta() above: nparam() x ntheta(), J[i,j] =
+	d(eta_i)/d(theta_j). Block-diagonal by term (a curved term's own 2
+	theta columns only ever affect ITS OWN eta rows, never another
+	term's) - an ordinary term's own block is simply the identity
+	(d(eta)/d(theta) = 1 when eta IS theta), a curved term's own block is
+	sn_gwdecay_gradient()'s own 2 x npar[t] output, transposed to
+	npar[t] x 2 to match this matrix's own (eta-row, theta-col)
+	convention. Deliberately named `Jac', not `J' - `J' is Mata's own
+	matrix-constant function (J(r,c,val)), used inside this very function
+	to allocate the zero matrix below; shadowing it with a same-named
+	local would be exactly the kind of subtle self-inflicted bug this
+	project's own certification discipline exists to catch before it
+	ships, not after.
+*/
+real matrix SaomModel::theta_to_eta_jacobian(real rowvector theta){
+	real matrix Jac, g
+	real scalar t, tpos, epos, k
+
+	Jac = J(nparam(), ntheta(), 0)
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			g = sn_gwdecay_gradient(theta[tpos], theta[tpos+1], npar[t])
+			Jac[(epos..epos+npar[t]-1), (tpos..tpos+1)] = g'
+			tpos = tpos + 2
+		}
+		else {
+			for (k=1; k<=npar[t]; k++) Jac[epos+k-1, tpos+k-1] = 1
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(Jac)
+}
+
+/*
+	Given a target point in eta-space (`eta_target', length nparam())
+	and a weight matrix `W' (nparam() x nparam() - typically an inverse
+	covariance, e.g. from a preceding closed-form logit fit's own
+	cov.unscaled, or from an MCMLE iteration's own sample covariance)
+	and a starting theta (length ntheta()), finds the theta minimizing
+	the weighted sum of squares (eta_target - theta_to_eta(theta))' W
+	(eta_target - theta_to_eta(theta)) - the shared core numerical step
+	BOTH curved MPLE (later work: an initial value from an unconstrained
+	logit fit) and curved MCMLE (later work: projecting each iteration's
+	own eta-space Newton-step target back onto the smaller theta space)
+	will reduce to; built once here so both can call the same certified
+	routine rather than each reimplementing it.
+
+	DECOUPLES EXACTLY by term, not merely as a convenient approximation:
+	an ORDINARY term's own theta_to_eta() is the identity, so its block
+	of the objective can always be driven to EXACTLY ZERO by setting
+	that block of theta to that block of eta_target, regardless of what
+	the curved block's own theta is chosen to be - i.e. the ordinary
+	blocks never trade off against the curved block in the joint
+	objective (completing the square in the ordinary block's own theta
+	always has a zero-residual solution available, independent of the
+	curved block), so minimizing the FULL joint weighted objective is
+	identical to minimizing each term's own block independently. Each
+	curved term's own 2-parameter block is solved by Gauss-Newton using
+	the exact analytic Jacobian from theta_to_eta_jacobian() (no numeric
+	differencing, no external optimizer needed for a 2-parameter
+	problem with a closed-form derivative already in hand) - projecting
+	`alpha' back to a small positive value if a step would drive it
+	non-positive (`sn_gwdecay_map'/`_gradient' are only defined for
+	alpha>0, matching R ergm's own `ergm_GWDECAY$minpar` constraint).
+*/
+real rowvector SaomModel::project_eta_to_theta(real rowvector eta_target, real matrix W,
+	real rowvector theta_start, real scalar maxit, real scalar tol){
+
+	real rowvector theta, target_block, resid, resid_try, delta, theta_try
+	real matrix Jb, Wb
+	real scalar t, tpos, epos, iter, obj0, obj1, step, halvings, found
+
+	theta = J(1, ntheta(), .)
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			theta[(tpos..tpos+1)] = theta_start[(tpos..tpos+1)]
+			target_block = eta_target[(epos..epos+npar[t]-1)]
+			Wb = W[(epos..epos+npar[t]-1), (epos..epos+npar[t]-1)]
+			resid = target_block - sn_gwdecay_map(theta[tpos], theta[tpos+1], npar[t])
+			obj0 = resid * Wb * resid'
+			for (iter=1; iter<=maxit; iter++) {
+				Jb = sn_gwdecay_gradient(theta[tpos], theta[tpos+1], npar[t])'
+				delta = (invsym(Jb' * Wb * Jb) * Jb' * Wb * resid')'
+
+				// Damped Gauss-Newton (backtracking line search): an
+				// undamped step here can overshoot just as badly as
+				// ErgmCurvedMPLEFit()'s own analogous fix (unit 137)
+				// found - measured directly running this function
+				// INSIDE curved MCMLE's own per-iteration loop
+				// (harmonisation unit 138), where the eta-space
+				// Newton step's own raw target can be far from the
+				// achievable curved manifold, especially early on:
+				// an undamped projection drove decay to 105 and the
+				// whole MCMC chain into a 0%-acceptance degenerate
+				// region on a real test network. Halve the step
+				// (up to 30 times) until it both keeps decay
+				// positive AND does not increase the weighted
+				// residual norm - the exact same textbook fix, just
+				// checking improvement in the least-squares objective
+				// here instead of a log-likelihood, since this
+				// function solves a weighted-least-squares problem,
+				// not a likelihood maximization.
+				step = 1
+				found = 0
+				for (halvings=1; halvings<=30; halvings++) {
+					theta_try = theta[(tpos..tpos+1)] + step :* delta
+					if (theta_try[2] > 1e-6) {
+						resid_try = target_block - sn_gwdecay_map(theta_try[1], theta_try[2], npar[t])
+						obj1 = resid_try * Wb * resid_try'
+						if (obj1 <= obj0) {
+							found = 1
+							break
+						}
+					}
+					step = step / 2
+				}
+				if (!found) {
+					// no improving, decay-positive step exists even
+					// after 30 halvings - graceful boundary stop
+					// (clamp decay to its floor, keep weight at its
+					// own last valid value), matching
+					// ErgmCurvedMPLEFit()'s own identical fix.
+					theta[tpos+1] = 1e-6
+					break
+				}
+				theta[(tpos..tpos+1)] = theta_try
+				resid = resid_try
+				if (obj0 - obj1 < tol) break
+				obj0 = obj1
+			}
+			tpos = tpos + 2
+		}
+		else {
+			theta[(tpos..tpos+npar[t]-1)] = eta_target[(epos..epos+npar[t]-1)]
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(theta)
+}
+
+/*
+	Theta-space coefficient names (length ntheta()): an ordinary term's
+	own eta-space names unchanged (theta IS eta there), a curved term's
+	own npar[t] internal eta-space names (e.g. "gwespfree_1".."_maxd" -
+	never shown to the user) replaced by exactly 2 fixed display names,
+	"gwesp_weight"/"gwesp_decay". Hardcoding that specific pair is a
+	deliberate v1 simplification, not a general curved-term-naming
+	scheme - matching this same file's own existing "not a fully
+	independent per-term thing" convention for v1-scope simplifications
+	(e.g. type() applying uniformly to every shared-partner term in a
+	model rather than per-term) - v1 supports at most one curved term
+	per model, and it is always this same weight/decay pair.
+*/
+string rowvector SaomModel::theta_coefnames(){
+	string rowvector out
+	real scalar t, tpos, epos
+
+	out = J(1, ntheta(), "")
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			// names[t] is the underlying statistic family the curved
+			// term was registered under (harmonisation unit 139: "esp"
+			// for gwespfree(), "degree" for gwdegreefree() - each
+			// reusing that family's own already-certified statistic/
+			// change functions directly, exactly as their own
+			// addterm() call sites do) - used here only to pick the
+			// right pair of DISPLAY names; v1 still supports at most
+			// one curved term per model (nwergm.ado's own mutual-
+			// exclusivity checks enforce this), so no per-model
+			// disambiguation beyond this lookup is needed.
+			if (names[t] == "degree") {
+				out[tpos] = "gwdegree_weight"
+				out[tpos+1] = "gwdegree_decay"
+			}
+			else if (names[t] == "dsp") {
+				out[tpos] = "gwdsp_weight"
+				out[tpos+1] = "gwdsp_decay"
+			}
+			else if (names[t] == "nsp") {
+				out[tpos] = "gwnsp_weight"
+				out[tpos+1] = "gwnsp_decay"
+			}
+			else if (names[t] == "odegree") {
+				out[tpos] = "gwodegree_weight"
+				out[tpos+1] = "gwodegree_decay"
+			}
+			else if (names[t] == "idegree") {
+				out[tpos] = "gwidegree_weight"
+				out[tpos+1] = "gwidegree_decay"
+			}
+			else {
+				out[tpos] = "gwesp_weight"
+				out[tpos+1] = "gwesp_decay"
+			}
+			tpos = tpos + 2
+		}
+		else {
+			out[(tpos..tpos+npar[t]-1)] = coefnames[(epos..epos+npar[t]-1)]
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(out)
+}
+
+
+real scalar _sn_op_apply(real scalar kind, real scalar param, real scalar x){
+	if (kind == 1) return(x == 0 ? param : ln(x))
+	return(exp(x))
+}
+
+
+real rowvector SaomModel::full_statistic(class SaomGraph scalar G){
+	real rowvector out, part
+	real scalar t, pos, k
+
+	out = J(1, nparam(), 0)
+	pos = 1
+	for (t=1; t<=nterms; t++) {
+		part = (*statfn[t])(G, *td[t])
+		for (k=1; k<=npar[t]; k++) {
+			if (cols(opkind) >= pos) {
+				if (opkind[pos] > 0) part[k] = _sn_op_apply(opkind[pos], opparam[pos], part[k])
+			}
+			out[pos] = part[k]
+			pos++
+		}
+	}
+	return(out)
+}
+
+
+real rowvector SaomModel::full_change(class SaomGraph scalar G, real scalar i, real scalar j){
+	real rowvector out, part, raw
+	real scalar t, pos, k
+
+	out = J(1, nparam(), 0)
+	pos = 1
+	for (t=1; t<=nterms; t++) {
+		part = (*chgfn[t])(G, i, j, *td[t])
+		if (cols(opkind) > 0) {
+			if (any(opkind[pos..(pos+npar[t]-1)] :> 0)) raw = (*statfn[t])(G, *td[t])
+			for (k=1; k<=npar[t]; k++) {
+				if (opkind[pos+k-1] > 0) {
+					if (part[k] == 0) part[k] = 0
+					else part[k] = _sn_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k] + part[k]) - _sn_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k])
+				}
+			}
+		}
+		for (k=1; k<=npar[t]; k++) {
+			out[pos] = part[k]
+			pos++
+		}
+	}
+	return(out)
+}
+
+/* ===================================================================
+   MPLE (maximum pseudolikelihood estimation; Hunter & Handcock 2006 -
+   see docs/ERGM_STATNET_STUDY.md Appendix A section 5). For every dyad
+   (i,j), the change statistic "toward tie present" (NOT the raw
+   change() value, which is signed by the dyad's CURRENT state - a tied
+   dyad's own change() returns the REMOVAL effect, the negative of the
+   addition effect) is used as a row of covariates; the observed tie
+   indicator is the response. Fitting
+       logit P(Y_ij=1 | Y_-ij) = theta' * covariates_ij
+   by ordinary logistic regression on this design (done in Stata, via
+   nwergm.ado, not here - see Part XII of the governing task brief: use
+   Stata's own logit rather than reimplementing IRLS) recovers the MPLE
+   theta. This is exactly the MLE when every term is dyad-independent
+   AND the sample space itself is unconstrained (the "MPLE_is_MLE"
+   shortcut Statnet itself also takes - see docs/ERGM_STATNET_STUDY.md
+   section 1 step 5); it is the STARTING VALUE for MCMLE otherwise.
+   =================================================================== */
+
+/*
+	Change statistic for dyad (i,j) in the "toward tie present"
+	direction, regardless of the dyad's current state - i.e. Δg_ij
+	always means "value of g if Y_ij were set to 1", not "value of g if
+	the CURRENT tie were toggled". change() itself is antisymmetric in
+	the toggle direction (removing an existing tie is exactly the
+	negative of adding it back), so this is simply change() negated
+	when the dyad is currently tied.
+*/
+real rowvector SaomModel::change_toward_one(class SaomGraph scalar G, real scalar i, real scalar j){
+	real rowvector chg
+
+	chg = full_change(G, i, j)
+	if (G.has_edge(i,j)) return(-chg)
+	return(chg)
+}
+
+/*
+	Build the MPLE design: one row per dyad (ordered pairs for a
+	directed graph, i<j unordered pairs for undirected), columns =
+	change_toward_one()'s own nparam() covariates, final column = the
+	observed tie indicator (the response). Returned as a single real
+	matrix - nwergm.ado splits it into a Stata dataset (covariates +
+	response variable) and calls `logit ..., noconstant` (noconstant:
+	the edges term already plays the role of an intercept; adding a
+	second, redundant constant would make the design rank-deficient).
+*/
+real matrix SaomModel::build_mple_data(class SaomGraph scalar G){
+	real matrix out
+	real scalar i, j, ndyads, pos, p, a, b, masked
+
+	p = nparam()
+	masked = G.has_dyadmask
+
+	// freedyads() (constraints, first piece - docs/ERGM_ROADMAP.md's
+	// "Constraints beyond v1's free binary dyad space" row): a FIXED
+	// dyad's own likelihood contribution is a constant given theta under
+	// R ergm's own `constraints=~fixallbut(free)' (its tie state can
+	// never differ from its observed value, so it drops entirely out of
+	// the pseudolikelihood's dependence on theta) - confirmed directly
+	// against real, installed R ergm 4.12.0 (`estimate="MPLE"' under
+	// `fixallbut()' on a hand-built 6-node/15-dyad network with a 5-dyad
+	// free mask reproduced R's OWN reported coefficient, -0.4054651,
+	// EXACTLY logit(2/5) - the free-dyads-ONLY closed form - not
+	// logit(8/15) (0.1335314, the unconstrained full-network density).
+	// This means MPLE must skip fixed dyads' rows entirely, unlike
+	// SaomModel::full_statistic() (used as MCMLE's own OBSERVED target,
+	// deliberately unmasked - see that method's own comment) - a fixed
+	// dyad still contributes its true observed value to the FULL
+	// network's sufficient statistic that a constrained MCMLE fit is
+	// solving to match, it just never appears as its own row in the
+	// per-dyad pseudolikelihood design matrix.
+
+	// harmonisation unit 155 (bipartite support, docs/ERGM_ROADMAP.md):
+	// a bipartite model's own valid dyad space is ONLY cross-mode pairs
+	// (mode1nodes x mode2nodes), never the full n(n-1)/2 undirected
+	// space - iterating the ordinary loop below would silently include
+	// same-mode pairs no toggle/proposal ever visits, corrupting the
+	// pseudolikelihood with rows for dyads that can never actually be
+	// tied.
+	if (G.bipartite) {
+		if (masked) ndyads = _sn_count_free_bipartite(G)
+		else ndyads = rows(G.mode1nodes) * rows(G.mode2nodes)
+		out = J(ndyads, p+1, 0)
+		pos = 1
+		for (a=1; a<=rows(G.mode1nodes); a++) {
+			for (b=1; b<=rows(G.mode2nodes); b++) {
+				i = G.mode1nodes[a]
+				j = G.mode2nodes[b]
+				if (masked) if (!G.freedyadmat[i,j]) continue
+				out[pos, (1..p)] = change_toward_one(G, i, j)
+				out[pos, p+1] = G.has_edge(i,j)
+				pos++
+			}
+		}
+		return(out)
+	}
+
+	if (G.directed) ndyads = G.n * (G.n - 1)
+	else ndyads = G.n * (G.n - 1) / 2
+	if (masked) ndyads = _sn_count_free_onemode(G)
+
+	out = J(ndyads, p+1, 0)
+	pos = 1
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed && j<i) continue
+			if (masked) if (!G.freedyadmat[i,j]) continue
+			out[pos, (1..p)] = change_toward_one(G, i, j)
+			out[pos, p+1] = G.has_edge(i,j)
+			pos++
+		}
+	}
+	return(out)
+}
+
+// Free-dyad counters for build_mple_data()'s own preallocation above -
+// split out rather than inlined so the exact same canonical dyad-space
+// walk (one-mode vs bipartite) is never duplicated/risking drift between
+// a counting pass and the real data-filling pass.
+real scalar _sn_count_free_onemode(class SaomGraph scalar G){
+	real scalar i, j, cnt
+	cnt = 0
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed && j<i) continue
+			if (G.freedyadmat[i,j]) cnt++
+		}
+	}
+	return(cnt)
+}
+
+
+real scalar _sn_count_free_bipartite(class SaomGraph scalar G){
+	real scalar a, b, i, j, cnt
+	cnt = 0
+	for (a=1; a<=rows(G.mode1nodes); a++) {
+		for (b=1; b<=rows(G.mode2nodes); b++) {
+			i = G.mode1nodes[a]
+			j = G.mode2nodes[b]
+			if (G.freedyadmat[i,j]) cnt++
+		}
+	}
+	return(cnt)
+}
+
 
 /* ===================================================================
    SaomMinistep: one actor's single-tie-change opportunity.
@@ -69,14 +2018,14 @@ mata:
    endowment/creation) - the network-side analogue of
    SaomBehaviorModel::full_change()'s own `fntype' direction gating
    above, but deliberately built as a SEPARATE, SAOM-owned wrapper
-   around ErgmModel::full_change() rather than a new field on
-   ErgmModel itself - ErgmModel is also nwergm's own static-ERGM
+   around SaomModel::full_change() rather than a new field on
+   SaomModel itself - SaomModel is also nwergm's own static-ERGM
    estimation class, which has no "before/after direction" concept at
    all (a static ERGM has no ministep, only tie-present-or-not), so a
    `fntype'-style field added directly there would leak SAOM-only
    semantics into every nwergm code path forever. `fntype' here is
    instead an ordinary parameter, threaded through by whichever SAOM
-   caller needs it - ErgmModel/unw_ergm.do is untouched by this unit.
+   caller needs it - SaomModel/unw_ergm.do is untouched by this unit.
 
    Gating rule verified directly against real RSiena C++ source
    (`NetworkVariable.cpp`'s own `calculateTieFlipContributions()`,
@@ -89,8 +2038,8 @@ mata:
    mirroring the behavior-side gate's own "is this ministep a value
    increase or decrease" check on `diff's sign. An eval-type term
    (fntype=0) is unaffected, exactly as on the behavior side. */
-real rowvector SaomNetworkFullChangeGated(class ErgmModel scalar M, real rowvector fntype,
-	class ErgmGraph scalar G, real scalar i, real scalar j){
+real rowvector SaomNetworkFullChangeGated(class SaomModel scalar M, real rowvector fntype,
+	class SaomGraph scalar G, real scalar i, real scalar j){
 
 	real rowvector out, full
 	real scalar t, creation
@@ -114,8 +2063,8 @@ real rowvector SaomNetworkFullChangeGated(class ErgmModel scalar M, real rowvect
    despite being declared structurally fixed, a real data/declaration
    mismatch nwsaom.ado rejects with a clear error rather than silently
    simulating from an inconsistent starting assumption. */
-real scalar SaomStructuralMatchesWaves(class ErgmGraph scalar Gstart,
-	class ErgmGraph scalar Gend, real matrix structural) {
+real scalar SaomStructuralMatchesWaves(class SaomGraph scalar Gstart,
+	class SaomGraph scalar Gend, real matrix structural) {
 
 	real scalar n, i, j
 
@@ -130,7 +2079,7 @@ real scalar SaomStructuralMatchesWaves(class ErgmGraph scalar Gstart,
 	return(1)
 }
 
-real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
+real scalar SaomMinistep(class SaomGraph scalar G, class SaomModel scalar M,
 	real rowvector theta, real scalar i, | real colvector present, real rowvector fntype,
 	real matrix structural) {
 
@@ -225,7 +2174,7 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
    to every actor being present - a true no-op for every pre-existing
    call site.
    =================================================================== */
-real scalar SaomSimulateInterval(class ErgmGraph scalar G, class ErgmModel scalar M,
+real scalar SaomSimulateInterval(class SaomGraph scalar G, class SaomModel scalar M,
 	real rowvector theta, real scalar rate, | real colvector present) {
 
 	real scalar t, steps, i, picked, haspresent, npresent
@@ -271,8 +2220,8 @@ real scalar SaomSimulateInterval(class ErgmGraph scalar G, class ErgmModel scala
    SaomBatchRun(), as a simulation utility; cscripts/test_nwsaom_native.do
    checks the native version against it.
    =================================================================== */
-real scalar SaomSimulateConditionalTime(class ErgmGraph scalar G, class ErgmGraph scalar Gstart,
-	class ErgmModel scalar M, real rowvector theta, real scalar targetChange) {
+real scalar SaomSimulateConditionalTime(class SaomGraph scalar G, class SaomGraph scalar Gstart,
+	class SaomModel scalar M, real rowvector theta, real scalar targetChange) {
 
 	real scalar t, simDist, i, picked
 
@@ -329,8 +2278,8 @@ struct SaomScoredResult {
 	real rowvector rcscore		// one entry per ratecov() variable (2026-10-01: several); harmonisation unit 172 - covariate-rate coefficient's own SCORE (a compensated-counting-process martingale score, NOT a moment statistic), ONLY populated by SaomSimIntScoredRateCov(); see that function's own header comment for the real-RSiena-verified formula this reproduces (DependentVariable.cpp's accumulateRateScores())
 }
 
-struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
+struct SaomScoredResult scalar SaomSimulateIntervalScored(class SaomGraph scalar G,
+	class SaomModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
 	real rowvector fntype, real matrix structural, real scalar condtarget, real matrix distmask) {
 
 	struct SaomScoredResult scalar res
@@ -474,8 +2423,8 @@ struct SaomCountedResult {
 	real rowvector rcscore		// one entry per ratecov() variable; ratecov (native-first) - the covariate-rate coefficient's own martingale score, ONLY populated by SaomSimulateIntervalNative() when called with a genuine ratecov (hasratecov) request AND want_score=1; matches SaomScoredResult's own identical-purpose field (SaomSimIntScoredRateCov(), the Mata reference this native path reproduces)
 }
 
-struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
+struct SaomCountedResult scalar SaomSimulateIntervalCounted(class SaomGraph scalar G,
+	class SaomModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
 	real rowvector fntype, real matrix structural, real scalar condtarget, real matrix distmask) {
 
 	struct SaomCountedResult scalar res
@@ -586,8 +2535,8 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
    by whichever actors are currently present, it does not change any
    actor's own underlying rate).
    =================================================================== */
-struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate,
+struct SaomCountedResult scalar SaomSimIntCountedRateCov(class SaomGraph scalar G,
+	class SaomModel scalar M, real rowvector theta, real scalar rate,
 	real matrix ratecovattr, real rowvector ratecoef, | real colvector present,
 	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
@@ -671,8 +2620,8 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 	return(res)
 }
 
-struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate,
+struct SaomScoredResult scalar SaomSimIntScoredRateCov(class SaomGraph scalar G,
+	class SaomModel scalar M, real rowvector theta, real scalar rate,
 	real matrix ratecovattr, real rowvector ratecoef, | real colvector present,
 	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
@@ -849,8 +2798,8 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 /* ===================================================================
    SAOM-native effect library: unlike unit 1's effects (outdegree,
    reciprocity, nodematch - and unit 2's nodecov/nodeicov/nodeocov,
-   registered directly from nwsaom.ado using nwergm's own stat_nodecov/
-   change_nodecov etc.), these two effects are NOT reused from
+   registered directly from nwsaom.ado using nwergm's own sn_stat_nodecov/
+   sn_change_nodecov etc.), these two effects are NOT reused from
    unw_ergm.do - see docs/SAOM_ARCHITECTURE.md's "The reuse is not a
    shortcut" section for why the reuse argument only holds for effects
    whose global ERGM statistic is a simple sum of single-actor-local
@@ -897,14 +2846,14 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
    matching unit 1's own reciprocity/nodematch (both meaningful only on
    a directed relation, per docs/SAOM_ROADMAP.md's v1 scope).
 */
-real rowvector stat_saom_indegpop(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_indegpop(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar j, tot
 
 	tot = 0
 	for (j=1; j<=G.n; j++) tot = tot + G.din[j]^1.5
 	return(tot)
 }
-real rowvector change_saom_indegpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_indegpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	d = G.din[j]
@@ -933,34 +2882,34 @@ real rowvector change_saom_indegpop(class ErgmGraph scalar G, real scalar i, rea
 
 /* RSiena inPop / outPop / inAct / outActSqrt (protocol 22): actor i's evaluation terms are sum_j x_ij x_+j, sum_j x_ij x_j+,
    x_i+ x_+i and x_i+^1.5 */
-real rowvector stat_saom_inpop(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_inpop(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(sum(G.din :^ 2))
 }
-real rowvector change_saom_inpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_inpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = G.din[j]
 	return(G.has_edge(i,j) ? -d : d + 1)
 }
-real rowvector stat_saom_outpoplin(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outpoplin(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(sum(G.dout :* G.din))
 }
-real rowvector change_saom_outpoplin(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outpoplin(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = G.dout[j]
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_inactlin(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_inactlin(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(sum(G.dout :* G.din))
 }
-real rowvector change_saom_inactlin(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_inactlin(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = G.din[i]
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_outactsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outactsqrt(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(sum(G.dout :^ 1.5))
 }
-real rowvector change_saom_outactsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outactsqrt(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = G.dout[i]
 	return(G.has_edge(i,j) ? -(d^1.5 - (d-1)^1.5) : ((d+1)^1.5 - d^1.5))
@@ -970,7 +2919,7 @@ real rowvector change_saom_outactsqrt(class ErgmGraph scalar G, real scalar i, r
    reciprocal degree of j, or its square root) and reciAct / reciAct with parameter 2 (sum over ties i->j of the reciprocal degree of i, or its square root). RSiena's
    calculateContribution() is NOT the change of that statistic (it ignores the indegrees whose terms change when a dyad becomes mutual); the simulation uses the
    contribution, the target and the simulated statistic use the statistic, so both are copied separately. reciprocal degree = number of mutual ties of an actor. */
-real scalar _saom_recdeg(class ErgmGraph scalar G, real scalar j) {
+real scalar _saom_recdeg(class SaomGraph scalar G, real scalar j) {
 	real rowvector nb
 	real scalar k, c
 	nb = G.neighbors_out(j)
@@ -978,7 +2927,7 @@ real scalar _saom_recdeg(class ErgmGraph scalar G, real scalar j) {
 	for (k=1; k<=cols(nb); k++) if (G.has_edge(nb[k], j)) c++
 	return(c)
 }
-real scalar _saom_recistat(class ErgmGraph scalar G, real scalar kind) {
+real scalar _saom_recistat(class SaomGraph scalar G, real scalar kind) {
 	real scalar j, rd, tot
 	tot = 0
 	for (j=1; j<=G.n; j++) {
@@ -990,7 +2939,7 @@ real scalar _saom_recistat(class ErgmGraph scalar G, real scalar kind) {
 	}
 	return(tot)
 }
-real scalar _saom_recichange(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar kind) {
+real scalar _saom_recichange(class SaomGraph scalar G, real scalar i, real scalar j, real scalar kind) {
 	real scalar tied, back, rd, ch, rr, outd, dif
 	tied = G.has_edge(i, j)
 	back = G.has_edge(j, i)
@@ -1016,20 +2965,20 @@ real scalar _saom_recichange(class ErgmGraph scalar G, real scalar i, real scala
 	}
 	return(tied ? -ch : ch)
 }
-real rowvector stat_saom_recipop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 1))
-real rowvector change_saom_recipop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 1))
-real rowvector stat_saom_recipopsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 2))
-real rowvector change_saom_recipopsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 2))
-real rowvector stat_saom_reciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 3))
-real rowvector change_saom_reciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 3))
-real rowvector stat_saom_reciactsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 4))
-real rowvector change_saom_reciactsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 4))
+real rowvector stat_saom_recipop(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_recistat(G, 1))
+real rowvector change_saom_recipop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_recichange(G, i, j, 1))
+real rowvector stat_saom_recipopsqrt(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_recistat(G, 2))
+real rowvector change_saom_recipopsqrt(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_recichange(G, i, j, 2))
+real rowvector stat_saom_reciact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_recistat(G, 3))
+real rowvector change_saom_reciact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_recichange(G, i, j, 3))
+real rowvector stat_saom_reciactsqrt(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_recistat(G, 4))
+real rowvector change_saom_reciactsqrt(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_recichange(G, i, j, 4))
 
 /* RSiena's gwdspFF / gwdspFB (geometrically weighted dyadwise shared partners; statistic: sum over ordered pairs (i,h), h != i, of the weight of the number of
    two-paths i->k->h (FF) or of common out-neighbours i->k<-h (FB); decay = 0.01 * RSiena's parameter) and betweenness (number of open two-paths h->i->j,
    h != j, no tie h->j). As reciPop, RSiena's calculateContribution() is only the change in the ego's own row (and for betweenness omits the closed paths), so the
    statistic and the contribution are coded separately. */
-real scalar _saom_gwdsp_stat(class ErgmGraph scalar G, real scalar decay, real scalar fb) {
+real scalar _saom_gwdsp_stat(class SaomGraph scalar G, real scalar decay, real scalar fb) {
 	real scalar i, k, h, a, b, tot
 	real rowvector nk, nh
 	real colvector cnt
@@ -1045,11 +2994,11 @@ real scalar _saom_gwdsp_stat(class ErgmGraph scalar G, real scalar decay, real s
 				if (h != i) cnt[h] = cnt[h] + 1
 			}
 		}
-		for (h=1; h<=G.n; h++) if (cnt[h] > 0) tot = tot + gw_kernel(cnt[h], decay)
+		for (h=1; h<=G.n; h++) if (cnt[h] > 0) tot = tot + sn_gw_kernel(cnt[h], decay)
 	}
 	return(tot)
 }
-real scalar _saom_gwdsp_change(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar decay, real scalar fb) {
+real scalar _saom_gwdsp_change(class SaomGraph scalar G, real scalar i, real scalar j, real scalar decay, real scalar fb) {
 	real scalar tied, a, h, c, contr
 	real rowvector nh
 	tied = G.has_edge(i, j)
@@ -1059,16 +3008,16 @@ real scalar _saom_gwdsp_change(class ErgmGraph scalar G, real scalar i, real sca
 		h = nh[a]
 		if (h == i) continue
 		c = (fb ? G.shared_partners_osp(i, h) : G.shared_partners_otp(i, h))
-		if (tied) contr = contr + gw_kernel(c, decay) - gw_kernel(c - 1, decay)
-		else contr = contr + gw_kernel(c + 1, decay) - gw_kernel(c, decay)
+		if (tied) contr = contr + sn_gw_kernel(c, decay) - sn_gw_kernel(c - 1, decay)
+		else contr = contr + sn_gw_kernel(c + 1, decay) - sn_gw_kernel(c, decay)
 	}
 	return(tied ? -contr : contr)
 }
-real rowvector stat_saom_gwdspff(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 0))
-real rowvector change_saom_gwdspff(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 0))
-real rowvector stat_saom_gwdspfb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 1))
-real rowvector change_saom_gwdspfb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 1))
-real rowvector stat_saom_between(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real rowvector stat_saom_gwdspff(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 0))
+real rowvector change_saom_gwdspff(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 0))
+real rowvector stat_saom_gwdspfb(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 1))
+real rowvector change_saom_gwdspfb(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 1))
+real rowvector stat_saom_between(class SaomGraph scalar G, class SaomTermData scalar td) {
 	real matrix ties
 	real scalar k, tot, i, j
 	ties = G.all_ties()
@@ -1080,15 +3029,15 @@ real rowvector stat_saom_between(class ErgmGraph scalar G, class ErgmTermData sc
 	}
 	return(tot)
 }
-real rowvector change_saom_between(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+real rowvector change_saom_between(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) {
 	real scalar c
 	c = G.din[i] - G.has_edge(j, i) - G.shared_partners_isp(i, j)
 	return(G.has_edge(i, j) ? -c : c)
 }
 
-/* RSiena's gwespFB / gwespBF / gwespBB / gwespRR: sum over ties i->j of gw_kernel(count, decay) with count = common out-neighbours of i and j (FB), common
+/* RSiena's gwespFB / gwespBF / gwespBB / gwespRR: sum over ties i->j of sn_gw_kernel(count, decay) with count = common out-neighbours of i and j (FB), common
    in-neighbours (BF), two-paths j->h->i (BB), or actors m with i<->m<->j (RR); RSiena's contribution is just the kernel of the tie (no neighbour adjustment) */
-real scalar _saom_gwesp_count(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar kind) {
+real scalar _saom_gwesp_count(class SaomGraph scalar G, real scalar i, real scalar j, real scalar kind) {
 	real scalar m, c
 	if (kind == 1) return(G.shared_partners_osp(i, j))
 	if (kind == 2) return(G.shared_partners_isp(i, j))
@@ -1100,31 +3049,31 @@ real scalar _saom_gwesp_count(class ErgmGraph scalar G, real scalar i, real scal
 	}
 	return(c)
 }
-real scalar _saom_gwesp_stat(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind) {
+real scalar _saom_gwesp_stat(class SaomGraph scalar G, class SaomTermData scalar td, real scalar kind) {
 	real matrix ties
 	real scalar k, tot
 	ties = G.all_ties()
 	tot = 0
-	for (k=1; k<=rows(ties); k++) tot = tot + gw_kernel(_saom_gwesp_count(G, ties[k,1], ties[k,2], kind), td.decay)
+	for (k=1; k<=rows(ties); k++) tot = tot + sn_gw_kernel(_saom_gwesp_count(G, ties[k,1], ties[k,2], kind), td.decay)
 	return(tot)
 }
-real scalar _saom_gwesp_change(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td, real scalar kind) {
+real scalar _saom_gwesp_change(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td, real scalar kind) {
 	real scalar d
-	d = gw_kernel(_saom_gwesp_count(G, i, j, kind), td.decay)
+	d = sn_gw_kernel(_saom_gwesp_count(G, i, j, kind), td.decay)
 	return(G.has_edge(i, j) ? -d : d)
 }
-real rowvector stat_saom_gwespfb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 1))
-real rowvector change_saom_gwespfb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 1))
-real rowvector stat_saom_gwespbf(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 2))
-real rowvector change_saom_gwespbf(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 2))
-real rowvector stat_saom_gwespbb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 3))
-real rowvector change_saom_gwespbb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 3))
-real rowvector stat_saom_gwesprr(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 4))
-real rowvector change_saom_gwesprr(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 4))
+real rowvector stat_saom_gwespfb(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwesp_stat(G, td, 1))
+real rowvector change_saom_gwespfb(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 1))
+real rowvector stat_saom_gwespbf(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwesp_stat(G, td, 2))
+real rowvector change_saom_gwespbf(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 2))
+real rowvector stat_saom_gwespbb(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwesp_stat(G, td, 3))
+real rowvector change_saom_gwespbb(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 3))
+real rowvector stat_saom_gwesprr(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_gwesp_stat(G, td, 4))
+real rowvector change_saom_gwesprr(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 4))
 
 /* RSiena's nbrDist2 (c = 1) and nbrDist2twice (c = 2): the number of actors h at distance two from some i (no tie i->h, h != i) with at least c two-paths i->k->h;
    RSiena's contribution only follows the ego's own row */
-real scalar _saom_nbrdist2_stat(class ErgmGraph scalar G, real scalar c) {
+real scalar _saom_nbrdist2_stat(class SaomGraph scalar G, real scalar c) {
 	real scalar i, a, b, h, tot
 	real rowvector nk, nh
 	real colvector cnt
@@ -1140,7 +3089,7 @@ real scalar _saom_nbrdist2_stat(class ErgmGraph scalar G, real scalar c) {
 	}
 	return(tot)
 }
-real scalar _saom_nbrdist2_change(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar c) {
+real scalar _saom_nbrdist2_change(class SaomGraph scalar G, real scalar i, real scalar j, real scalar c) {
 	real scalar tied, ch, crit, a, h
 	real rowvector nh
 	tied = G.has_edge(i, j)
@@ -1154,10 +3103,10 @@ real scalar _saom_nbrdist2_change(class ErgmGraph scalar G, real scalar i, real 
 	}
 	return(tied ? -ch : ch)
 }
-real rowvector stat_saom_nbrdist2(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_nbrdist2_stat(G, 1))
-real rowvector change_saom_nbrdist2(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 1))
-real rowvector stat_saom_nbrdist2twice(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_nbrdist2_stat(G, 2))
-real rowvector change_saom_nbrdist2twice(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 2))
+real rowvector stat_saom_nbrdist2(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_nbrdist2_stat(G, 1))
+real rowvector change_saom_nbrdist2(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 1))
+real rowvector stat_saom_nbrdist2twice(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_nbrdist2_stat(G, 2))
+real rowvector change_saom_nbrdist2twice(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 2))
 
 
 /* ===================================================================
@@ -1485,38 +3434,38 @@ real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {
 	if (kind == 4) return(1 / (d + c))
 	return(1 / ((d + c) * (d + c + 1)))
 }
-real scalar _saom_degfun_stat(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind) {
+real scalar _saom_degfun_stat(class SaomGraph scalar G, class SaomTermData scalar td, real scalar kind) {
 	real scalar i, tot
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + _saom_degfun(kind, G.dout[i], td.decay)
 	return(tot)
 }
-real scalar _saom_degfun_change(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td, real scalar kind) {
+real scalar _saom_degfun_change(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td, real scalar kind) {
 	real scalar tied, dwo, diff
 	tied = G.has_edge(i, j)
 	dwo = G.dout[i] - tied
 	diff = _saom_degfun(kind, dwo + 1, td.decay) - _saom_degfun(kind, dwo, td.decay)
 	return(tied ? -diff : diff)
 }
-real rowvector stat_saom_outtrunc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 1))
-real rowvector change_saom_outtrunc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 1))
-real rowvector stat_saom_outmore(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 2))
-real rowvector change_saom_outmore(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 2))
-real rowvector stat_saom_outthreshold(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 3))
-real rowvector change_saom_outthreshold(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 3))
-real rowvector stat_saom_outinv(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 4))
-real rowvector change_saom_outinv(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 4))
-real rowvector stat_saom_outsqinv(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 5))
-real rowvector change_saom_outsqinv(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 5))
+real rowvector stat_saom_outtrunc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_degfun_stat(G, td, 1))
+real rowvector change_saom_outtrunc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_degfun_change(G, i, j, td, 1))
+real rowvector stat_saom_outmore(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_degfun_stat(G, td, 2))
+real rowvector change_saom_outmore(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_degfun_change(G, i, j, td, 2))
+real rowvector stat_saom_outthreshold(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_degfun_stat(G, td, 3))
+real rowvector change_saom_outthreshold(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_degfun_change(G, i, j, td, 3))
+real rowvector stat_saom_outinv(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_degfun_stat(G, td, 4))
+real rowvector change_saom_outinv(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_degfun_change(G, i, j, td, 4))
+real rowvector stat_saom_outsqinv(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_degfun_stat(G, td, 5))
+real rowvector change_saom_outsqinv(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_degfun_change(G, i, j, td, 5))
 
-real rowvector stat_saom_outactivity(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outactivity(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + G.dout[i]^2
 	return(tot)
 }
-real rowvector change_saom_outactivity(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outactivity(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	d = G.degree_out(i)
@@ -1538,7 +3487,7 @@ real rowvector change_saom_outactivity(class ErgmGraph scalar G, real scalar i, 
    read directly too, not guessed) then NEGATES whenever the toggle is
    actually a WITHDRAWAL (outTieExists(alter) true) - reconciling that
    raw source with this codebase's own "signed delta already reflects
-   current state" change() convention (see change_edges()'s own
+   current state" change() convention (see sn_change_edges()'s own
    identical pattern in unw_ergm.do) confirms the simplification below.
 
    IMPORTANT ASYMMETRY (expected, not a bug - the SAME kind this
@@ -1574,14 +3523,14 @@ real rowvector change_saom_outactivity(class ErgmGraph scalar G, real scalar i, 
          outdegree(i)-1; becomes an isolate afterward iff
          outdegree(i)==1 before the toggle.
 */
-real rowvector stat_saom_isolatenet(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_isolatenet(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]==0 & G.dout[i]==0)
 	return(tot)
 }
-real rowvector change_saom_isolatenet(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_isolatenet(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar cur_isolate, new_isolate
 
 	if (G.din[i] != 0) return(0)
@@ -1620,14 +3569,14 @@ real rowvector change_saom_isolatenet(class ErgmGraph scalar G, real scalar i, r
        becomes an isolate afterward iff outdegree(i)==1 before the
        toggle.
 */
-real rowvector stat_saom_outiso(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outiso(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.dout[i]==0)
 	return(tot)
 }
-real rowvector change_saom_outiso(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outiso(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar cur_isolate, new_isolate
 
 	cur_isolate = (G.dout[i] == 0)
@@ -1761,14 +3710,14 @@ real rowvector change_saom_outiso(class ErgmGraph scalar G, real scalar i, real 
    condition than antiIso's own indegree>=1, not the same statistic
    despite the identical per-toggle change formula.
 */
-real rowvector stat_saom_antiiso(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_antiiso(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]>=1 & G.dout[i]<=0)
 	return(tot)
 }
-real rowvector change_saom_antiiso(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_antiiso(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d, tied, cond
 
 	d = G.din[j]
@@ -1778,14 +3727,14 @@ real rowvector change_saom_antiiso(class ErgmGraph scalar G, real scalar i, real
 	return(0)
 }
 
-real rowvector stat_saom_antiiniso(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_antiiniso(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]>=1)
 	return(tot)
 }
-real rowvector change_saom_antiiniso(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_antiiniso(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d, tied, cond
 
 	d = G.din[j]
@@ -1794,14 +3743,14 @@ real rowvector change_saom_antiiniso(class ErgmGraph scalar G, real scalar i, re
 	return(cond ? (tied ? -1 : 1) : 0)
 }
 
-real rowvector stat_saom_antiiniso2(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_antiiniso2(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]>=2)
 	return(tot)
 }
-real rowvector change_saom_antiiniso2(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_antiiniso2(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d, tied, cond
 
 	d = G.din[j]
@@ -1810,14 +3759,14 @@ real rowvector change_saom_antiiniso2(class ErgmGraph scalar G, real scalar i, r
 	return(cond ? (tied ? -1 : 1) : 0)
 }
 
-real rowvector stat_saom_isolatepop(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_isolatepop(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar j, tot
 
 	tot = 0
 	for (j=1; j<=G.n; j++) tot = tot + (G.din[j]==1 & G.dout[j]==0)
 	return(tot)
 }
-real rowvector change_saom_isolatepop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_isolatepop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d, tied, cond
 
 	d = G.din[j]
@@ -1917,7 +3866,7 @@ real rowvector change_saom_isolatepop(class ErgmGraph scalar G, real scalar i, r
        Matches `pRBTable`'s own real semantics ("i<->h<-j": h mutually
        tied to i, and j->h) exactly.
 */
-real rowvector stat_saom_transrectrip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_transrectrip(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -1928,7 +3877,7 @@ real rowvector stat_saom_transrectrip(class ErgmGraph scalar G, class ErgmTermDa
 	}
 	return(tot)
 }
-real rowvector change_saom_transrectrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_transrectrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, delta, h, k
 	real rowvector outnbrs
 
@@ -1970,7 +3919,7 @@ real rowvector change_saom_transrectrip(class ErgmGraph scalar G, real scalar i,
    (neighborDegreeSum - outdeg(j)). Matches the source's own
    "outTieExists" branch exactly.
 */
-real rowvector stat_saom_outoutass(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outoutass(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -1979,7 +3928,7 @@ real rowvector stat_saom_outoutass(class ErgmGraph scalar G, class ErgmTermData 
 	for (k=1; k<=rows(ties); k++) tot = tot + G.degree_out(ties[k,1]) * G.degree_out(ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_outoutass(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outoutass(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, ldegree, alterdeg, neighborsum, delta, k
 	real rowvector outnbrs
 
@@ -2024,7 +3973,7 @@ real rowvector change_saom_outoutass(class ErgmGraph scalar G, real scalar i, re
    removal already includes this very tie) - matches the source's own
    "outTieExists" branch, which leaves alterDegree unincremented.
 */
-real rowvector stat_saom_ininass(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_ininass(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2033,7 +3982,7 @@ real rowvector stat_saom_ininass(class ErgmGraph scalar G, class ErgmTermData sc
 	for (k=1; k<=rows(ties); k++) tot = tot + G.degree_in(ties[k,1]) * G.degree_in(ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_ininass(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_ininass(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, egodeg, alterdeg, delta
 
 	tied = G.has_edge(i,j)
@@ -2094,7 +4043,7 @@ real rowvector change_saom_ininass(class ErgmGraph scalar G, real scalar i, real
    naive graph-wide before/after test is the wrong certification
    methodology for this whole effect family.
 */
-real rowvector stat_saom_outinass(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outinass(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2103,7 +4052,7 @@ real rowvector stat_saom_outinass(class ErgmGraph scalar G, class ErgmTermData s
 	for (k=1; k<=rows(ties); k++) tot = tot + G.degree_out(ties[k,1]) * G.degree_in(ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_outinass(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outinass(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, ldegree, alterdeg, neighborsum, delta, k
 	real rowvector outnbrs
 
@@ -2145,7 +4094,7 @@ real rowvector change_saom_outinass(class ErgmGraph scalar G, real scalar i, rea
    confirmed here to be shared by this direction too, not merely
    assumed by analogy).
 */
-real rowvector stat_saom_inoutass(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_inoutass(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2154,7 +4103,7 @@ real rowvector stat_saom_inoutass(class ErgmGraph scalar G, class ErgmTermData s
 	for (k=1; k<=rows(ties); k++) tot = tot + G.degree_in(ties[k,1]) * G.degree_out(ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_inoutass(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_inoutass(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, egodeg, alterdeg, delta
 
 	tied = G.has_edge(i,j)
@@ -2177,7 +4126,7 @@ real rowvector change_saom_inoutass(class ErgmGraph scalar G, real scalar i, rea
    by which factor the toggled arc (i,j) supplies -
      - as the "i->j" factor (summation index j itself): contributes
        x_ij * |{h in N_out(i): h->j}| = x_ij * OTP(i,j), reusing
-       ErgmGraph's own already-certified shared_partners_otp() (unit
+       SaomGraph's own already-certified shared_partners_otp() (unit
        91/93, docs/ERGM_ROADMAP.md) rather than a fresh traversal - OTP
        is EXACTLY "count of i's out-neighbors h with h->j" by its own
        definition (#{k: i->k, k->j}).
@@ -2198,7 +4147,7 @@ real rowvector change_saom_inoutass(class ErgmGraph scalar G, real scalar i, rea
    of shared_partners_isp(h,j), again pure reuse of an existing
    certified primitive, no new traversal.
 */
-real rowvector stat_saom_transtrip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_transtrip(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2207,7 +4156,7 @@ real rowvector stat_saom_transtrip(class ErgmGraph scalar G, class ErgmTermData 
 	for (k=1; k<=rows(ties); k++) tot = tot + G.shared_partners_isp(ties[k,1], ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_transtrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_transtrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = G.shared_partners_otp(i,j) + G.shared_partners_osp(i,j)
@@ -2238,7 +4187,7 @@ real rowvector change_saom_transtrip(class ErgmGraph scalar G, real scalar i, re
    create/withdraw distinction outside individual effect classes, not a
    discrepancy with this file's internal toggle-delta representation.
 */
-real rowvector stat_saom_transmedtrip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_transmedtrip(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2247,7 +4196,7 @@ real rowvector stat_saom_transmedtrip(class ErgmGraph scalar G, class ErgmTermDa
 	for (k=1; k<=rows(ties); k++) tot = tot + G.shared_partners_isp(ties[k,1], ties[k,2])
 	return(tot)
 }
-real rowvector change_saom_transmedtrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_transmedtrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = G.shared_partners_isp(i,j)
@@ -2263,14 +4212,14 @@ real rowvector change_saom_transmedtrip(class ErgmGraph scalar G, real scalar i,
    the change function only fires when the TOGGLED alter's own indegree
    crosses the threshold, never touching any third actor's own count).
 */
-real rowvector stat_saom_in3plus(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_in3plus(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]>=3)
 	return(tot)
 }
-real rowvector change_saom_in3plus(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_in3plus(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d, tied, cond
 
 	d = G.din[j]
@@ -2364,7 +4313,7 @@ real rowvector change_saom_in3plus(class ErgmGraph scalar G, real scalar i, real
    (j->h->i) is exactly OTP(j,i) - so S(x) = sum over existing arcs
    (i,j) of shared_partners_otp(j,i).
 */
-real rowvector stat_saom_cycle3(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_cycle3(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2373,7 +4322,7 @@ real rowvector stat_saom_cycle3(class ErgmGraph scalar G, class ErgmTermData sca
 	for (k=1; k<=rows(ties); k++) tot = tot + G.shared_partners_otp(ties[k,2], ties[k,1])
 	return(tot)
 }
-real rowvector change_saom_cycle3(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_cycle3(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = G.shared_partners_otp(j,i)
@@ -2461,7 +4410,7 @@ real rowvector change_saom_cycle3(class ErgmGraph scalar G, real scalar i, real 
    graph-wide before/after diff, which would fail exactly the way
    `outOutAss'/`inInAss' first did.
 */
-real scalar _saom_cycle4_threepaths(class ErgmGraph scalar G, real scalar i, real scalar j){
+real scalar _saom_cycle4_threepaths(class SaomGraph scalar G, real scalar i, real scalar j){
 	real scalar h, k, hidx, kidx, tot
 	real rowvector houts, kins
 
@@ -2482,7 +4431,7 @@ real scalar _saom_cycle4_threepaths(class ErgmGraph scalar G, real scalar i, rea
 /* RSiena cycle4 / sharedPop with parameter 2 (FourCyclesEffect, lroot): statistic = sum over ties of 0.5 * sqrt(three-paths i->h<-k->j); contribution =
    |sqrt(new cycle count) - sqrt(current cycle count)| with the ego's current count = floor(sum over its out-ties of the three-paths / 2), the new count
    current -/+ the alter's three-paths (not halved: RSiena's own arithmetic; a negative count has the square root 0, as RSiena's table lookup effectively gives) */
-real rowvector stat_saom_cycle4sqrt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_cycle4sqrt(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 	ties = G.all_ties()
@@ -2490,7 +4439,7 @@ real rowvector stat_saom_cycle4sqrt(class ErgmGraph scalar G, class ErgmTermData
 	for (k=1; k<=rows(ties); k++) tot = tot + 0.5 * sqrt(_saom_cycle4_threepaths(G, ties[k,1], ties[k,2]))
 	return(tot)
 }
-real rowvector change_saom_cycle4sqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_cycle4sqrt(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar tied, cur, newc, tp, a, ch
 	real rowvector nb
 	tied = G.has_edge(i, j)
@@ -2504,7 +4453,7 @@ real rowvector change_saom_cycle4sqrt(class ErgmGraph scalar G, real scalar i, r
 	return(tied ? -ch : ch)
 }
 
-real rowvector stat_saom_cycle4(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_cycle4(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2513,7 +4462,7 @@ real rowvector stat_saom_cycle4(class ErgmGraph scalar G, class ErgmTermData sca
 	for (k=1; k<=rows(ties); k++) tot = tot + _saom_cycle4_threepaths(G, ties[k,1], ties[k,2])
 	return(tot * 0.25)
 }
-real rowvector change_saom_cycle4(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_cycle4(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = _saom_cycle4_threepaths(G, i, j)
@@ -2539,15 +4488,15 @@ real rowvector change_saom_cycle4(class ErgmGraph scalar G, real scalar i, real 
    ties of a per-dyad value read from a second source - except the
    "source" here is a LIVE second network's current adjacency, not a
    static covariate matrix, which is exactly what `td.xnet` (a pointer
-   the estimator keeps re-pointed at whichever ErgmGraph copy is
+   the estimator keeps re-pointed at whichever SaomGraph copy is
    currently "the other network" for this simulation replicate - see
-   its own field comment on ErgmTermData) is for. No third-party/
+   its own field comment on SaomTermData) is for. No third-party/
    multi-actor spillover: toggling (i,j) in G changes only (i,j)'s own
    contribution, since (*td.xnet).has_edge(i,j) does not depend on G at
    all - the SAME dyad-independent shape edgecov() already has, so no
    ego-local-statistic certification subtlety applies here (unlike
    isolateNet/transRecTrip/outOutAss and friends). */
-real rowvector stat_crprod(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_crprod(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2556,7 +4505,7 @@ real rowvector stat_crprod(class ErgmGraph scalar G, class ErgmTermData scalar t
 	for (k=1; k<=rows(ties); k++) tot = tot + (*td.xnet).has_edge(ties[k,1], ties[k,2])
 	return(tot)
 }
-real rowvector change_crprod(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_crprod(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar v
 
 	v = (*td.xnet).has_edge(i, j)
@@ -2581,14 +4530,14 @@ real rowvector change_crprod(class ErgmGraph scalar G, real scalar i, real scala
    s_i(x) = sum_{j: x_ij=1} sqrt(outdegree(j)); global
    S(x) = sum_j sqrt(outdegree(j)) * indegree(j).
 */
-real rowvector stat_saom_outpop(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_outpop(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar j, tot
 
 	tot = 0
 	for (j=1; j<=G.n; j++) tot = tot + sqrt(G.dout[j]) * G.din[j]
 	return(tot)
 }
-real rowvector change_saom_outpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_outpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = sqrt(G.dout[j])
@@ -2605,14 +4554,14 @@ real rowvector change_saom_outpop(class ErgmGraph scalar G, real scalar i, real 
    s_i(x) = sum_{j: x_ij=1} sqrt(indegree(i)) = outdegree(i)*sqrt(indegree(i));
    global S(x) = sum_i outdegree(i)*sqrt(indegree(i)).
 */
-real rowvector stat_saom_inact(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_inact(class SaomGraph scalar G, class SaomTermData scalar td){
 	real scalar i, tot
 
 	tot = 0
 	for (i=1; i<=G.n; i++) tot = tot + G.dout[i] * sqrt(G.din[i])
 	return(tot)
 }
-real rowvector change_saom_inact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_inact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = sqrt(G.din[i])
@@ -2633,12 +4582,12 @@ real rowvector change_saom_inact(class ErgmGraph scalar G, real scalar i, real s
    changes how density and simX's own coefficients split credit for the
    overall tie count, not whether the model can represent the data;
    both parameters remain jointly identified. `td.decay` (otherwise
-   unused by this term - a generic scalar slot ErgmTermData already
+   unused by this term - a generic scalar slot SaomTermData already
    carries for nwergm's own gwesp-family terms) is repurposed to cache
    `range = max(attr)-min(attr)`, computed once at term-registration
    time rather than recomputed on every change-statistic call.
 */
-real rowvector stat_saom_simcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_simcov(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2649,7 +4598,7 @@ real rowvector stat_saom_simcov(class ErgmGraph scalar G, class ErgmTermData sca
 	}
 	return(tot)
 }
-real rowvector change_saom_simcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_simcov(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	// RSiena's simX: similarity minus its mean over all pairs (td.center,
@@ -2670,7 +4619,7 @@ real rowvector change_saom_simcov(class ErgmGraph scalar G, real scalar i, real 
    Encoding: td.attr = imputed (and, for the three, centred) values, td.levels = 0/1
    mask (1 = missing); simcov also td.decay (range) and td.center (simMean). The
    ministep change functions are the ordinary ones. SaomRegCov() registers. */
-real rowvector stat_saom_nodematch_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_nodematch_m(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, cnt
 
@@ -2683,7 +4632,7 @@ real rowvector stat_saom_nodematch_m(class ErgmGraph scalar G, class ErgmTermDat
 	}
 	return(cnt)
 }
-real rowvector stat_saom_nodeicov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_nodeicov_m(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2694,7 +4643,7 @@ real rowvector stat_saom_nodeicov_m(class ErgmGraph scalar G, class ErgmTermData
 	}
 	return(tot)
 }
-real rowvector stat_saom_nodeocov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_nodeocov_m(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2705,10 +4654,10 @@ real rowvector stat_saom_nodeocov_m(class ErgmGraph scalar G, class ErgmTermData
 	}
 	return(tot)
 }
-real rowvector stat_saom_nodecov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_nodecov_m(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(stat_saom_nodeicov_m(G, td) + stat_saom_nodeocov_m(G, td))
 }
-real rowvector stat_saom_simcov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_simcov_m(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2744,7 +4693,7 @@ real scalar SaomSimMeanObs(real colvector x, real colvector miss) {
    XRecip: the same, but only when the reverse tie j -> i exists. */
 /* RSiena diffX, higher, egoSqX, altSqX, sameXRecip, simRecipX (protocol 23): a value per tie from the (centred) covariate
    td.attr; the Recip effects count only reciprocated ties (a tie i->j adds the value times x_ji) */
-real scalar _saom_cov2val(string scalar nm, real scalar vi, real scalar vj, class ErgmTermData scalar td) {
+real scalar _saom_cov2val(string scalar nm, real scalar vi, real scalar vj, class SaomTermData scalar td) {
 	if (nm == "diffx") return(vj - vi)
 	if (nm == "higher") return(vi > vj ? 1 : (vi == vj ? 0.5 : 0))		// RSiena: ties count half
 	if (nm == "egosqx") return(vi^2)
@@ -2752,7 +4701,7 @@ real scalar _saom_cov2val(string scalar nm, real scalar vi, real scalar vj, clas
 	if (nm == "samexrecip") return(vi == vj)
 	return(1 - abs(vi - vj) / td.decay - td.center)		// simrecipx
 }
-real scalar _saom_cov2stat(string scalar nm, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real scalar _saom_cov2stat(string scalar nm, class SaomGraph scalar G, class SaomTermData scalar td) {
 	real matrix ties
 	real scalar k, tot, rec
 
@@ -2781,7 +4730,7 @@ real scalar _saom_cov2stat(string scalar nm, class ErgmGraph scalar G, class Erg
 	}
 	return(tot)
 }
-real scalar _saom_cov2chg(string scalar nm, class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+real scalar _saom_cov2chg(string scalar nm, class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) {
 	real scalar v
 
 	v = _saom_cov2val(nm, td.attr[i], td.attr[j], td)
@@ -2789,45 +4738,45 @@ real scalar _saom_cov2chg(string scalar nm, class ErgmGraph scalar G, real scala
 	if (nm == "samexrecip" | nm == "simrecipx") if (!G.has_edge(j, i)) v = 0
 	return(G.has_edge(i,j) ? -v : v)
 }
-real rowvector stat_saom_diffx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_diffx(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("diffx", G, td))
 }
-real rowvector change_saom_diffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_diffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("diffx", G, i, j, td))
 }
-real rowvector stat_saom_higher(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_higher(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("higher", G, td))
 }
-real rowvector change_saom_higher(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_higher(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("higher", G, i, j, td))
 }
-real rowvector stat_saom_egosqx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_egosqx(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("egosqx", G, td))
 }
-real rowvector change_saom_egosqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_egosqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("egosqx", G, i, j, td))
 }
-real rowvector stat_saom_altsqx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_altsqx(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("altsqx", G, td))
 }
-real rowvector change_saom_altsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_altsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("altsqx", G, i, j, td))
 }
-real rowvector stat_saom_samexrecip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_samexrecip(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("samexrecip", G, td))
 }
-real rowvector change_saom_samexrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_samexrecip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("samexrecip", G, i, j, td))
 }
-real rowvector stat_saom_simrecipx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_simrecipx(class SaomGraph scalar G, class SaomTermData scalar td){
 	return(_saom_cov2stat("simrecipx", G, td))
 }
-real rowvector change_saom_simrecipx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_simrecipx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	return(_saom_cov2chg("simrecipx", G, i, j, td))
 }
 
 /* absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j) on centred covariate values (td.attr) */
-real rowvector stat_saom_absdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_absdiffx(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2839,13 +4788,13 @@ real rowvector stat_saom_absdiffx(class ErgmGraph scalar G, class ErgmTermData s
 	}
 	return(tot)
 }
-real rowvector change_saom_absdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_absdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	d = abs(td.attr[j] - td.attr[i])
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_egoxaltx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_egoxaltx(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2857,7 +4806,7 @@ real rowvector stat_saom_egoxaltx(class ErgmGraph scalar G, class ErgmTermData s
 	}
 	return(tot)
 }
-real rowvector change_saom_egoxaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_egoxaltx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	d = td.attr[i] * td.attr[j]
@@ -2892,7 +4841,7 @@ real matrix SaomDyadPrepTm(real matrix X, real colvector ia, real colvector ie, 
 	for (r=1; r<=rows(X); r++) for (c=1; c<=cols(X); c++) W[ia[r], ie[c]] = V[r, c]
 	return(W)
 }
-real rowvector stat_saom_dyadcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_dyadcov(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2901,13 +4850,13 @@ real rowvector stat_saom_dyadcov(class ErgmGraph scalar G, class ErgmTermData sc
 	for (k=1; k<=rows(ties); k++) tot = tot + td.edgecovmat[ties[k,1], ties[k,2]]
 	return(tot)
 }
-real rowvector change_saom_dyadcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_dyadcov(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	d = td.edgecovmat[i,j]
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_dyadcovrecip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_dyadcovrecip(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -2916,7 +4865,7 @@ real rowvector stat_saom_dyadcovrecip(class ErgmGraph scalar G, class ErgmTermDa
 	for (k=1; k<=rows(ties); k++) if (G.has_edge(ties[k,2], ties[k,1])) tot = tot + td.edgecovmat[ties[k,1], ties[k,2]]
 	return(tot)
 }
-real rowvector change_saom_dyadcovrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_dyadcovrecip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 
 	if (!G.has_edge(j,i)) return(0)
@@ -2933,7 +4882,7 @@ real scalar _saom_cxsum(real colvector a, real rowvector nb) {
 	for (m=1; m<=cols(nb); m++) t = t + a[nb[m]]
 	return(t)
 }
-real scalar _saom_cxcnt(class ErgmGraph scalar G, real colvector a, real scalar i, real scalar j, real scalar v, real scalar p1) {
+real scalar _saom_cxcnt(class SaomGraph scalar G, real colvector a, real scalar i, real scalar j, real scalar v, real scalar p1) {
 	real rowvector nb
 	real scalar m, h, c, same
 	c = 0
@@ -2986,7 +4935,7 @@ real scalar _saom_cxcnt(class ErgmGraph scalar G, real colvector a, real scalar 
 	for (m=1; m<=cols(nb); m++) c = c + (_saom_cxsame(a, nb[m], i) == same)
 	return(c)
 }
-real scalar _saom_cxstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real scalar _saom_cxstat(real scalar v, class SaomGraph scalar G, class SaomTermData scalar td) {
 	real matrix ties
 	real scalar k, tot, a1
 	ties = G.all_ties()
@@ -2999,43 +4948,43 @@ real rowvector _saom_cxchg(string scalar nm) {
 	exit(198)
 	return(0)
 }
-real rowvector stat_saom_samextranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(0, G, td))
-real rowvector change_saom_samextranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samextranstrip"))
-real rowvector stat_saom_diffxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(1, G, td))
-real rowvector change_saom_diffxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxtranstrip"))
-real rowvector stat_saom_simxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(2, G, td))
-real rowvector change_saom_simxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("simxtranstrip"))
-real rowvector stat_saom_homxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(3, G, td))
-real rowvector change_saom_homxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("homxtranstrip"))
-real rowvector stat_saom_samexoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(4, G, td))
-real rowvector change_saom_samexoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexoutact"))
-real rowvector stat_saom_diffxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(5, G, td))
-real rowvector change_saom_diffxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxoutact"))
-real rowvector stat_saom_samexreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(6, G, td))
-real rowvector change_saom_samexreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexreciact"))
-real rowvector stat_saom_diffxreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(7, G, td))
-real rowvector change_saom_diffxreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxreciact"))
-real rowvector stat_saom_homxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(8, G, td))
-real rowvector change_saom_homxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("homxoutact"))
-real rowvector stat_saom_altxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(9, G, td))
-real rowvector change_saom_altxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("altxoutact"))
-real rowvector stat_saom_inpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(10, G, td))
-real rowvector change_saom_inpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("inpopx"))
-real rowvector stat_saom_outpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(11, G, td))
-real rowvector change_saom_outpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("outpopx"))
-real rowvector stat_saom_inactx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(12, G, td))
-real rowvector change_saom_inactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("inactx"))
-real rowvector stat_saom_outactx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(13, G, td))
-real rowvector change_saom_outactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("outactx"))
-real rowvector stat_saom_samexinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(14, G, td))
-real rowvector change_saom_samexinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexinpop"))
-real rowvector stat_saom_diffxinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(15, G, td))
-real rowvector change_saom_diffxinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxinpop"))
+real rowvector stat_saom_samextranstrip(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(0, G, td))
+real rowvector change_saom_samextranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("samextranstrip"))
+real rowvector stat_saom_diffxtranstrip(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(1, G, td))
+real rowvector change_saom_diffxtranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("diffxtranstrip"))
+real rowvector stat_saom_simxtranstrip(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(2, G, td))
+real rowvector change_saom_simxtranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("simxtranstrip"))
+real rowvector stat_saom_homxtranstrip(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(3, G, td))
+real rowvector change_saom_homxtranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("homxtranstrip"))
+real rowvector stat_saom_samexoutact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(4, G, td))
+real rowvector change_saom_samexoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("samexoutact"))
+real rowvector stat_saom_diffxoutact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(5, G, td))
+real rowvector change_saom_diffxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("diffxoutact"))
+real rowvector stat_saom_samexreciact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(6, G, td))
+real rowvector change_saom_samexreciact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("samexreciact"))
+real rowvector stat_saom_diffxreciact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(7, G, td))
+real rowvector change_saom_diffxreciact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("diffxreciact"))
+real rowvector stat_saom_homxoutact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(8, G, td))
+real rowvector change_saom_homxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("homxoutact"))
+real rowvector stat_saom_altxoutact(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(9, G, td))
+real rowvector change_saom_altxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("altxoutact"))
+real rowvector stat_saom_inpopx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(10, G, td))
+real rowvector change_saom_inpopx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("inpopx"))
+real rowvector stat_saom_outpopx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(11, G, td))
+real rowvector change_saom_outpopx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("outpopx"))
+real rowvector stat_saom_inactx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(12, G, td))
+real rowvector change_saom_inactx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("inactx"))
+real rowvector stat_saom_outactx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(13, G, td))
+real rowvector change_saom_outactx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("outactx"))
+real rowvector stat_saom_samexinpop(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(14, G, td))
+real rowvector change_saom_samexinpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("samexinpop"))
+real rowvector stat_saom_diffxinpop(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_cxstat(15, G, td))
+real rowvector change_saom_diffxinpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_cxchg("diffxinpop"))
 
 /* protocol 40: centred / combined degree effects and transTriads (RSiena inPop.c, outPop.c, outAct.c, inAct.c, degPlus, degPlus.c, avDeg,
    transTriads). NATIVE ONLY: Mata evaluates the observed statistic (arcs of the graph, td.decay = the centring constant); the simulation
    needs the plugin (protocol 40). */
-real scalar _saom_dfstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real scalar _saom_dfstat(real scalar v, class SaomGraph scalar G, class SaomTermData scalar td) {
 	real rowvector nb, nbj, nbi
 	real colvector dout, din
 	real scalar i, m, j, tot, n, D, h, c
@@ -3074,26 +5023,26 @@ real rowvector _saom_dfchg(string scalar nm) {
 	exit(198)
 	return(0)
 }
-real rowvector stat_saom_inpopc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(0, G, td))
-real rowvector change_saom_inpopc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("inpopc"))
-real rowvector stat_saom_outpopc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(1, G, td))
-real rowvector change_saom_outpopc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("outpopc"))
-real rowvector stat_saom_outactc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(2, G, td))
-real rowvector change_saom_outactc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("outactc"))
-real rowvector stat_saom_inactc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(3, G, td))
-real rowvector change_saom_inactc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("inactc"))
-real rowvector stat_saom_degplus(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(4, G, td))
-real rowvector change_saom_degplus(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("degplus"))
-real rowvector stat_saom_degplusc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(5, G, td))
-real rowvector change_saom_degplusc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("degplusc"))
-real rowvector stat_saom_avdeg(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(6, G, td))
-real rowvector change_saom_avdeg(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("avdeg"))
-real rowvector stat_saom_transtriads(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(7, G, td))
-real rowvector change_saom_transtriads(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("transtriads"))
+real rowvector stat_saom_inpopc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(0, G, td))
+real rowvector change_saom_inpopc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("inpopc"))
+real rowvector stat_saom_outpopc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(1, G, td))
+real rowvector change_saom_outpopc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("outpopc"))
+real rowvector stat_saom_outactc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(2, G, td))
+real rowvector change_saom_outactc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("outactc"))
+real rowvector stat_saom_inactc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(3, G, td))
+real rowvector change_saom_inactc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("inactc"))
+real rowvector stat_saom_degplus(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(4, G, td))
+real rowvector change_saom_degplus(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("degplus"))
+real rowvector stat_saom_degplusc(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(5, G, td))
+real rowvector change_saom_degplusc(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("degplusc"))
+real rowvector stat_saom_avdeg(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(6, G, td))
+real rowvector change_saom_avdeg(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("avdeg"))
+real rowvector stat_saom_transtriads(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_dfstat(7, G, td))
+real rowvector change_saom_transtriads(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_dfchg("transtriads"))
 
 /* protocol 41: covariate threshold / contrast effects (RSiena egoPlusAltSqX ... degNegDiffX). NATIVE ONLY: Mata evaluates the observed statistic;
    td.attr = the centred covariate, td.decay = the threshold. */
-real scalar _saom_ctstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real scalar _saom_ctstat(real scalar v, class SaomGraph scalar G, class SaomTermData scalar td) {
 	real rowvector nb
 	real colvector a
 	real scalar i, m, j, tot, xi, xj, thr, x, dd
@@ -3131,30 +5080,30 @@ real rowvector _saom_ctchg(string scalar nm) {
 	exit(198)
 	return(0)
 }
-real rowvector stat_saom_egoplusaltsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(0, G, td))
-real rowvector change_saom_egoplusaltsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egoplusaltsqx"))
-real rowvector stat_saom_diffsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(1, G, td))
-real rowvector change_saom_diffsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("diffsqx"))
-real rowvector stat_saom_egodiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(2, G, td))
-real rowvector change_saom_egodiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egodiffx"))
-real rowvector stat_saom_althigheregox(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(3, G, td))
-real rowvector change_saom_althigheregox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("althigheregox"))
-real rowvector stat_saom_unequalx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(4, G, td))
-real rowvector change_saom_unequalx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("unequalx"))
-real rowvector stat_saom_egolthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(5, G, td))
-real rowvector change_saom_egolthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egolthresholdx"))
-real rowvector stat_saom_egorthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(6, G, td))
-real rowvector change_saom_egorthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egorthresholdx"))
-real rowvector stat_saom_altlthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(7, G, td))
-real rowvector change_saom_altlthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("altlthresholdx"))
-real rowvector stat_saom_altrthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(8, G, td))
-real rowvector change_saom_altrthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("altrthresholdx"))
-real rowvector stat_saom_degabsdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(9, G, td))
-real rowvector change_saom_degabsdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degabsdiffx"))
-real rowvector stat_saom_degposdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(10, G, td))
-real rowvector change_saom_degposdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degposdiffx"))
-real rowvector stat_saom_degnegdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(11, G, td))
-real rowvector change_saom_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degnegdiffx"))
+real rowvector stat_saom_egoplusaltsqx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(0, G, td))
+real rowvector change_saom_egoplusaltsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("egoplusaltsqx"))
+real rowvector stat_saom_diffsqx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(1, G, td))
+real rowvector change_saom_diffsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("diffsqx"))
+real rowvector stat_saom_egodiffx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(2, G, td))
+real rowvector change_saom_egodiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("egodiffx"))
+real rowvector stat_saom_althigheregox(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(3, G, td))
+real rowvector change_saom_althigheregox(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("althigheregox"))
+real rowvector stat_saom_unequalx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(4, G, td))
+real rowvector change_saom_unequalx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("unequalx"))
+real rowvector stat_saom_egolthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(5, G, td))
+real rowvector change_saom_egolthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("egolthresholdx"))
+real rowvector stat_saom_egorthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(6, G, td))
+real rowvector change_saom_egorthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("egorthresholdx"))
+real rowvector stat_saom_altlthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(7, G, td))
+real rowvector change_saom_altlthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("altlthresholdx"))
+real rowvector stat_saom_altrthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(8, G, td))
+real rowvector change_saom_altrthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("altrthresholdx"))
+real rowvector stat_saom_degabsdiffx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(9, G, td))
+real rowvector change_saom_degabsdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("degabsdiffx"))
+real rowvector stat_saom_degposdiffx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(10, G, td))
+real rowvector change_saom_degposdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("degposdiffx"))
+real rowvector stat_saom_degnegdiffx(class SaomGraph scalar G, class SaomTermData scalar td) return(_saom_ctstat(11, G, td))
+real rowvector change_saom_degnegdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(_saom_ctchg("degnegdiffx"))
 
 /* two-mode: the centred covariate of one mode (rows idx of the full-length vector, mean-imputed), 0 for the other mode's nodes */
 real colvector SaomCovPrepIdx(real colvector xfull, real colvector idx, real scalar center, real scalar m) {
@@ -3191,9 +5140,9 @@ void SaomRateTVAdd(real scalar col, string scalar vlist, real scalar n, real sca
 	external real rowvector __saom_rctvcol
 	external real matrix __saom_rctvval
 	external real scalar __saom_rctvnper
-	class ErgmTermData scalar td
+	class SaomTermData scalar td
 	real scalar m
-	td = ErgmTermData()
+	td = SaomTermData()
 	if (args() >= 6) SaomCovTVAttr(td, vlist, n, nper, center, m, idx)
 	else SaomCovTVAttr(td, vlist, n, nper, center, m)
 	__saom_rctvcol = __saom_rctvcol, col
@@ -3263,9 +5212,9 @@ real scalar SaomBRDataConst(string scalar var, real scalar n, real scalar center
 	return(SaomBRAddData(SaomCovPrep(st_data(1::n, var), center, m)))
 }
 real scalar SaomBRDataTV(string scalar vlist, real scalar n, real scalar nper, real scalar center) {
-	class ErgmTermData scalar td
+	class SaomTermData scalar td
 	real scalar m
-	td = ErgmTermData()
+	td = SaomTermData()
 	SaomCovTVAttr(td, vlist, n, nper, center, m)
 	return(SaomBRAddData(td.attrpd))
 }
@@ -3315,7 +5264,7 @@ string scalar SaomBRTrailer() {
 	return(s)
 }
 /* start-of-period values of the structural rate covariates (types as in sr_value() of native/saom_sim.c): n x S */
-real matrix SaomStructRateAttr(class ErgmGraph scalar G, real rowvector types) {
+real matrix SaomStructRateAttr(class SaomGraph scalar G, real rowvector types) {
 	real matrix A
 	real colvector dout, din, rd
 	real rowvector nb
@@ -3353,7 +5302,7 @@ string scalar SaomSRTrailer() {
 	return(" " + strofreal(cols(t)) + " " + invtokens(strofreal(t)))
 }
 /* time-varying covariate of one of the native covariate effects: td.attrpd = the (pooled-mean centred) values of the periods, td.attr = period 1 */
-void SaomCovTVAttr(class ErgmTermData scalar td, string scalar vlist, real scalar n, real scalar nper, real scalar center, real scalar m, | real colvector idx) {
+void SaomCovTVAttr(class SaomTermData scalar td, string scalar vlist, real scalar n, real scalar nper, real scalar center, real scalar m, | real colvector idx) {
 	string rowvector vv
 	real matrix X, Xi
 	real colvector oth
@@ -3404,7 +5353,7 @@ real scalar change_saom_bv(string scalar nm) {
 	exit(198)
 	return(0)
 }
-real rowvector stat_saom_bv_samex(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real rowvector stat_saom_bv_samex(class SaomGraph scalar G, class SaomTermData scalar td) {
 	real matrix ties
 	real scalar k, cnt
 	ties = G.all_ties()
@@ -3412,321 +5361,321 @@ real rowvector stat_saom_bv_samex(class ErgmGraph scalar G, class ErgmTermData s
 	for (k=1; k<=rows(ties); k++) if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) cnt++
 	return(cnt)
 }
-real rowvector change_saom_bv_samex(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samex"))
-real rowvector stat_saom_bv_diffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samex(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samex"))
+real rowvector stat_saom_bv_diffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffx(G, t2))
 }
-real rowvector change_saom_bv_diffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffx"))
-real rowvector stat_saom_bv_higher(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffx"))
+real rowvector stat_saom_bv_higher(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_higher(G, t2))
 }
-real rowvector change_saom_bv_higher(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("higher"))
-real rowvector stat_saom_bv_egosqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_higher(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("higher"))
+real rowvector stat_saom_bv_egosqx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egosqx(G, t2))
 }
-real rowvector change_saom_bv_egosqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egosqx"))
-real rowvector stat_saom_bv_altsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egosqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egosqx"))
+real rowvector stat_saom_bv_altsqx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_altsqx(G, t2))
 }
-real rowvector change_saom_bv_altsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altsqx"))
-real rowvector stat_saom_bv_samexrecip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_altsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("altsqx"))
+real rowvector stat_saom_bv_samexrecip(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_samexrecip(G, t2))
 }
-real rowvector change_saom_bv_samexrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexrecip"))
-real rowvector stat_saom_bv_absdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samexrecip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samexrecip"))
+real rowvector stat_saom_bv_absdiffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_absdiffx(G, t2))
 }
-real rowvector change_saom_bv_absdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("absdiffx"))
-real rowvector stat_saom_bv_egoxaltx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_absdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("absdiffx"))
+real rowvector stat_saom_bv_egoxaltx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egoxaltx(G, t2))
 }
-real rowvector change_saom_bv_egoxaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egoxaltx"))
-real rowvector stat_saom_bv_samextranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egoxaltx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egoxaltx"))
+real rowvector stat_saom_bv_samextranstrip(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_samextranstrip(G, t2))
 }
-real rowvector change_saom_bv_samextranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samextranstrip"))
-real rowvector stat_saom_bv_diffxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samextranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samextranstrip"))
+real rowvector stat_saom_bv_diffxtranstrip(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffxtranstrip(G, t2))
 }
-real rowvector change_saom_bv_diffxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxtranstrip"))
-real rowvector stat_saom_bv_homxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffxtranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffxtranstrip"))
+real rowvector stat_saom_bv_homxtranstrip(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_homxtranstrip(G, t2))
 }
-real rowvector change_saom_bv_homxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("homxtranstrip"))
-real rowvector stat_saom_bv_samexoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_homxtranstrip(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("homxtranstrip"))
+real rowvector stat_saom_bv_samexoutact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_samexoutact(G, t2))
 }
-real rowvector change_saom_bv_samexoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexoutact"))
-real rowvector stat_saom_bv_diffxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samexoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samexoutact"))
+real rowvector stat_saom_bv_diffxoutact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffxoutact(G, t2))
 }
-real rowvector change_saom_bv_diffxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxoutact"))
-real rowvector stat_saom_bv_samexreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffxoutact"))
+real rowvector stat_saom_bv_samexreciact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_samexreciact(G, t2))
 }
-real rowvector change_saom_bv_samexreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexreciact"))
-real rowvector stat_saom_bv_diffxreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samexreciact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samexreciact"))
+real rowvector stat_saom_bv_diffxreciact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffxreciact(G, t2))
 }
-real rowvector change_saom_bv_diffxreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxreciact"))
-real rowvector stat_saom_bv_homxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffxreciact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffxreciact"))
+real rowvector stat_saom_bv_homxoutact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_homxoutact(G, t2))
 }
-real rowvector change_saom_bv_homxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("homxoutact"))
-real rowvector stat_saom_bv_altxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_homxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("homxoutact"))
+real rowvector stat_saom_bv_altxoutact(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_altxoutact(G, t2))
 }
-real rowvector change_saom_bv_altxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altxoutact"))
-real rowvector stat_saom_bv_inpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_altxoutact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("altxoutact"))
+real rowvector stat_saom_bv_inpopx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_inpopx(G, t2))
 }
-real rowvector change_saom_bv_inpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("inpopx"))
-real rowvector stat_saom_bv_outpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_inpopx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("inpopx"))
+real rowvector stat_saom_bv_outpopx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_outpopx(G, t2))
 }
-real rowvector change_saom_bv_outpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("outpopx"))
-real rowvector stat_saom_bv_inactx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_outpopx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("outpopx"))
+real rowvector stat_saom_bv_inactx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_inactx(G, t2))
 }
-real rowvector change_saom_bv_inactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("inactx"))
-real rowvector stat_saom_bv_outactx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_inactx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("inactx"))
+real rowvector stat_saom_bv_outactx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_outactx(G, t2))
 }
-real rowvector change_saom_bv_outactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("outactx"))
-real rowvector stat_saom_bv_samexinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_outactx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("outactx"))
+real rowvector stat_saom_bv_samexinpop(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_samexinpop(G, t2))
 }
-real rowvector change_saom_bv_samexinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexinpop"))
-real rowvector stat_saom_bv_diffxinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_samexinpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("samexinpop"))
+real rowvector stat_saom_bv_diffxinpop(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffxinpop(G, t2))
 }
-real rowvector change_saom_bv_diffxinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxinpop"))
-real rowvector stat_saom_bv_egoplusaltsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffxinpop(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffxinpop"))
+real rowvector stat_saom_bv_egoplusaltsqx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egoplusaltsqx(G, t2))
 }
-real rowvector change_saom_bv_egoplusaltsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egoplusaltsqx"))
-real rowvector stat_saom_bv_diffsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egoplusaltsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egoplusaltsqx"))
+real rowvector stat_saom_bv_diffsqx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_diffsqx(G, t2))
 }
-real rowvector change_saom_bv_diffsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffsqx"))
-real rowvector stat_saom_bv_egodiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_diffsqx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("diffsqx"))
+real rowvector stat_saom_bv_egodiffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egodiffx(G, t2))
 }
-real rowvector change_saom_bv_egodiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egodiffx"))
-real rowvector stat_saom_bv_althigheregox(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egodiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egodiffx"))
+real rowvector stat_saom_bv_althigheregox(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_althigheregox(G, t2))
 }
-real rowvector change_saom_bv_althigheregox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("althigheregox"))
-real rowvector stat_saom_bv_unequalx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_althigheregox(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("althigheregox"))
+real rowvector stat_saom_bv_unequalx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_unequalx(G, t2))
 }
-real rowvector change_saom_bv_unequalx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("unequalx"))
-real rowvector stat_saom_bv_egolthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_unequalx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("unequalx"))
+real rowvector stat_saom_bv_egolthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egolthresholdx(G, t2))
 }
-real rowvector change_saom_bv_egolthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egolthresholdx"))
-real rowvector stat_saom_bv_egorthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egolthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egolthresholdx"))
+real rowvector stat_saom_bv_egorthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_egorthresholdx(G, t2))
 }
-real rowvector change_saom_bv_egorthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egorthresholdx"))
-real rowvector stat_saom_bv_altlthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_egorthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("egorthresholdx"))
+real rowvector stat_saom_bv_altlthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_altlthresholdx(G, t2))
 }
-real rowvector change_saom_bv_altlthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altlthresholdx"))
-real rowvector stat_saom_bv_altrthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_altlthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("altlthresholdx"))
+real rowvector stat_saom_bv_altrthresholdx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_altrthresholdx(G, t2))
 }
-real rowvector change_saom_bv_altrthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altrthresholdx"))
-real rowvector stat_saom_bv_degabsdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_altrthresholdx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("altrthresholdx"))
+real rowvector stat_saom_bv_degabsdiffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_degabsdiffx(G, t2))
 }
-real rowvector change_saom_bv_degabsdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degabsdiffx"))
-real rowvector stat_saom_bv_degposdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_degabsdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("degabsdiffx"))
+real rowvector stat_saom_bv_degposdiffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_degposdiffx(G, t2))
 }
-real rowvector change_saom_bv_degposdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degposdiffx"))
-real rowvector stat_saom_bv_degnegdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
-	class ErgmTermData scalar t2
-	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+real rowvector change_saom_bv_degposdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("degposdiffx"))
+real rowvector stat_saom_bv_degnegdiffx(class SaomGraph scalar G, class SaomTermData scalar td) {
+	class SaomTermData scalar t2
+	t2 = SaomTermData()		// a class assignment is a reference: build a fresh object
 	t2.attr = td.attr :- td.center
 	t2.decay = td.decay
 	t2.levels = J(0, 1, 0)
 	return(stat_saom_degnegdiffx(G, t2))
 }
-real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degnegdiffx"))
+real rowvector change_saom_bv_degnegdiffx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) return(change_saom_bv("degnegdiffx"))
 /* protocol 46: the generic bridge for NATIVE-ONLY network terms. The observed statistic is evaluated by the plugin (command NETSTAT, the same
    saom_stat_term() the simulation uses), so a new native term needs no Mata twin. A term "nat_<effect>" (static or tvcov covariate) or "natb_<effect>"
    (the dependent behavior as covariate: td.attr = raw behavior, td.center = its overall mean) carries td.levels = (term code \ dynamic flag), td.attr
    the covariate (td.attrpd per period for a changing covariate) and td.decay = p1 (similarity mean, the parameter c, ...). */
-real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd, real scalar scale) {
-	external pointer(class ErgmGraph scalar) rowvector __saom_sg
+real scalar SaomNativeNetStat(class SaomGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd, real scalar scale) {
+	external pointer(class SaomGraph scalar) rowvector __saom_sg
 	external real scalar __saom_curpd
-	class ErgmGraph scalar G0
+	class SaomGraph scalar G0
 	real matrix E, E0
 	real scalar ne0
 	real rowvector nb
@@ -3771,7 +5720,7 @@ real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real s
 	stata("capture frame drop __saom_netstat")
 	return(st_numscalar("__saom_netstat_val"))
 }
-real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+real rowvector stat_saom_nat(class SaomGraph scalar G, class SaomTermData scalar td) {
 	real colvector a
 	real scalar dyn
 	dyn = (td.levels[2] != 0)
@@ -3792,20 +5741,20 @@ real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar
 	if (dyn & rows(td.levels) >= 3) return(SaomNativeNetStat(G, td.levels[1] + 1000, td.decay, a, J(0, 0, 0), td.levels[3]))
 	return(SaomNativeNetStat(G, td.levels[1] + (dyn ? 1000 : 0), td.decay, a))
 }
-real rowvector change_saom_nat(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+real rowvector change_saom_nat(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td) {
 	errprintf("nwsaom: this network effect needs the native plugin (protocol 46 or later); there is no Mata implementation of its simulation.\n")
 	exit(198)
 	return(0)
 }
 /* registers a native-only covariate network effect. kind: "c" centred covariate, "r" raw values (categories), "s" similarity type (centred /
    range, p1 = the similarity mean). vlist: one variable, or the per-period variables of a tvcov covariate. */
-void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar kind, string scalar label, string scalar vlist,
+void SaomRegNat(class SaomModel scalar M, string scalar eff, real scalar code, string scalar kind, string scalar label, string scalar vlist,
 	real scalar n, real scalar nper, real scalar center, real scalar p1, | real colvector idx, real colvector idx2) {
-	class ErgmTermData scalar td
+	class SaomTermData scalar td
 	string rowvector vv
 	real matrix X
 	real scalar m, rng
-	td = ErgmTermData()
+	td = SaomTermData()
 	vv = tokens(vlist)
 	td.levels = (code \ 0)
 	td.decay = p1
@@ -3915,11 +5864,11 @@ real matrix SaomDycTVPrep(string scalar stem, real scalar P, real scalar n, real
 	return(W)
 }
 /* registers a changing dyadic covariate effect: kind "dyadcov", "dyadcovrecip" or a W effect code (3250 + v) */
-void SaomRegDycTV(class ErgmModel scalar M, string scalar kind, real scalar code, string scalar stem, real scalar n, real scalar P, real scalar center) {
-	class ErgmTermData scalar td
+void SaomRegDycTV(class SaomModel scalar M, string scalar kind, real scalar code, string scalar stem, real scalar n, real scalar P, real scalar center) {
+	class SaomTermData scalar td
 	real matrix W, X, ok
 	real scalar m, pd, i
-	td = ErgmTermData()
+	td = SaomTermData()
 	W = SaomDycTVPrep(stem, P, n, 0, m)
 	if (center) {
 		// centre the non-missing off-diagonal cells by the overall mean (a missing cell stays 0)
@@ -3943,9 +5892,9 @@ void SaomRegDycTV(class ErgmModel scalar M, string scalar kind, real scalar code
 
 /* protocol 54: an own-network effect without a covariate (codes 260 + v); the term carries the average degree (over all waves) and the average reciprocal degree
    in its dummy attribute column */
-void SaomRegDg(class ErgmModel scalar M, string scalar eff, real scalar v, real scalar p1, real scalar n, real scalar avDeg, real scalar avRec, | real scalar sm) {
-	class ErgmTermData scalar td
-	td = ErgmTermData()
+void SaomRegDg(class SaomModel scalar M, string scalar eff, real scalar v, real scalar p1, real scalar n, real scalar avDeg, real scalar avRec, | real scalar sm) {
+	class SaomTermData scalar td
+	td = SaomTermData()
 	td.levels = (260 + v \ 0)
 	td.decay = p1
 	td.attr = J(n, 1, 0)
@@ -3955,8 +5904,8 @@ void SaomRegDg(class ErgmModel scalar M, string scalar eff, real scalar v, real 
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff))
 }
 /* protocol 59: two integer covariates (sameXV / sameXVInPop): attr = 64 * first + second (raw categories 0 .. 20), code 260 + v */
-void SaomRegDc(class ErgmModel scalar M, string scalar eff, real scalar v, string scalar var1, string scalar var2, real scalar n, real scalar p1) {
-	class ErgmTermData scalar td
+void SaomRegDc(class SaomModel scalar M, string scalar eff, real scalar v, string scalar var1, string scalar var2, real scalar n, real scalar p1) {
+	class SaomTermData scalar td
 	real colvector x1, x2
 	x1 = st_data(1::n, var1)
 	x2 = st_data(1::n, var2)
@@ -3964,14 +5913,14 @@ void SaomRegDc(class ErgmModel scalar M, string scalar eff, real scalar v, strin
 		errprintf("nwsaom: " + eff + "(): " + var1 + " and " + var2 + " must be integer categories 0 .. 20 without missing values.\n")
 		exit(198)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (260 + v \ 0)
 	td.decay = p1
 	td.attr = 64 :* round(x1) :+ round(x2)
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + var1 + "_" + var2))
 }
 /* netx(samexv:var1:var2[:#]): returns the display name, "" when the token is another netx effect */
-string scalar SaomRegDcAll(class ErgmModel scalar M, string scalar opt, real scalar n) {
+string scalar SaomRegDcAll(class SaomModel scalar M, string scalar opt, real scalar n) {
 	string rowvector tk, parts
 	string scalar nm, eff
 	real scalar k, p1
@@ -3993,10 +5942,10 @@ string scalar SaomRegDcAll(class ErgmModel scalar M, string scalar opt, real sca
 	return(nm)
 }
 /* protocol 49: a native-only network effect of a dyadic covariate: W is the raw n x n matrix (missing and the diagonal 0, never centred) */
-void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
-	class ErgmTermData scalar td
+void SaomRegNatDy(class SaomModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
+	class SaomTermData scalar td
 	real scalar m
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (code \ 0)
 	td.decay = 0
 	td.edgecovmat = SaomDyadPrep(st_matrix(matname), 0, m)
@@ -4004,15 +5953,15 @@ void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code,
 }
 /* protocol 130: dyadx() effects in a two-mode network and WXZX. mat1 = W (WXX: actors x actors; XWX XWX1 XWX2: events x events in a two-mode network), mat2 = Z (WXZX only, events x events
    in a two-mode network); the matrices are embedded in the n x n graph at the nodes ia (actors) / ie (events); a one-mode network has tm = 0 (all matrices n x n). WXZX (code 259) carries W and Z stacked. */
-void SaomRegNatDy2(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar mat1, string scalar mat2, real scalar n, real scalar tm, | real colvector ia, real colvector ie) {
-	class ErgmTermData scalar td
+void SaomRegNatDy2(class SaomModel scalar M, string scalar eff, real scalar code, string scalar mat1, string scalar mat2, real scalar n, real scalar tm, | real colvector ia, real colvector ie) {
+	class SaomTermData scalar td
 	real matrix W, Z
 	real scalar m
 	if ((code == 259 | tm) & (!SaomNativeAvailable() | SaomNativePluginVersion() < 130)) {
 		errprintf("nwsaom: dyadx(" + eff + ") needs the native plugin of a newer version; rebuild or update it.\n")
 		exit(198)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (code \ 0)
 	td.decay = 0
 	W = SaomDyadPrep(st_matrix(mat1), 0, m)
@@ -4040,9 +5989,9 @@ void SaomRegNatDy2(class ErgmModel scalar M, string scalar eff, real scalar code
 	}
 }
 /* the dependent behavior (first one, raw start values behw1, overall mean bmean) as the covariate */
-void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, | real scalar scale) {
-	class ErgmTermData scalar td
-	td = ErgmTermData()
+void SaomRegNatBeh(class SaomModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, | real scalar scale) {
+	class SaomTermData scalar td
+	td = SaomTermData()
 	td.levels = (code \ 1)
 	if (args() >= 7) td.levels = (code \ 1 \ scale)
 	td.attr = behw1
@@ -4052,9 +6001,9 @@ void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code
 }
 /* a two-mode network: the dependent behavior of the actors (first behavior, start values behw1, overall mean bmean) as the covariate of RSiena's crossXOutAct (code 220),
    avGroupEgoX (243) or totGroupEgoX (244); map[v] = for an event node the actor node of the same index within its mode, else 0; p1 = the number of events */
-void SaomRegNatBehTm(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, real colvector map) {
-	class ErgmTermData scalar td
-	td = ErgmTermData()
+void SaomRegNatBehTm(class SaomModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, real colvector map) {
+	class SaomTermData scalar td
+	td = SaomTermData()
 	td.levels = (code \ 2 \ 0 \ map)
 	td.attr = behw1
 	td.center = bmean
@@ -4062,7 +6011,7 @@ void SaomRegNatBehTm(class ErgmModel scalar M, string scalar eff, real scalar co
 	M.addterm("natb_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("natb_" + eff))
 }
 /* is this term instance a covariate effect with a missing-value mask? */
-real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
+real scalar _saom_cov_masked(class SaomTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
 		nm == "diffx" | nm == "higher" | nm == "egosqx" | nm == "altsqx" | nm == "samexrecip" | nm == "simrecipx") & n > 0 & rows(td.levels) == n)
 }
@@ -4074,9 +6023,9 @@ real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, rea
 /* time-varying covariates (RSiena varCovar): a term whose covariate differs by period carries the n x periods
    values in td.attrpd; SaomTVSync() sets td.attr to the values of period `pd' (the period's START wave) before that
    period's targets/simulation are evaluated in Mata. The plugin gets the per-period values by the batch frame. */
-real scalar SaomModelHasTV(class ErgmModel scalar M) {
+real scalar SaomModelHasTV(class SaomModel scalar M) {
 	real scalar t
-	pointer(class ErgmTermData scalar) scalar pt
+	pointer(class SaomTermData scalar) scalar pt
 	for (t=1; t<=M.nterms; t++) {
 		pt = M.td[t]
 		if (rows(pt->attrpd) > 0) return(1)
@@ -4086,11 +6035,11 @@ real scalar SaomModelHasTV(class ErgmModel scalar M) {
 	return(0)
 }
 
-void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
+void SaomTVSync(class SaomModel scalar M, real scalar pd) {
 	external real scalar __saom_curpd
 	real scalar t
 	__saom_curpd = pd
-	pointer(class ErgmTermData scalar) scalar pt
+	pointer(class SaomTermData scalar) scalar pt
 	for (t=1; t<=M.nterms; t++) {
 		pt = M.td[t]
 		if (rows(pt->attrpd) > 0) pt->attr = pt->attrpd[., pd]
@@ -4101,8 +6050,8 @@ void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
 /* registers a time-varying covariate effect (nodematch, nodecov, nodeicov, nodeocov, simcov): `vlist' = one variable
    per period (the period's start wave); centred (nodecov/nodeicov/nodeocov) by the mean of ALL the values, as RSiena
    centres a varCovar; simX's range and similarity mean pool all periods. Missing values are refused. */
-void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vlist, real scalar n,
-	real scalar nper, real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m, | real colvector idx) {
+void SaomRegCovTV(class SaomModel scalar M, string scalar kind, string scalar vlist, real scalar n,
+	real scalar nper, real scalar center, class SaomTermData scalar td, string rowvector coefname, real scalar m, | real colvector idx) {
 
 	string rowvector vv
 	real matrix X, Xc, Xi
@@ -4153,10 +6102,10 @@ void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vl
 		td.center = tot / cnt
 		if (max(vec(X)) == min(vec(X))) td.center = 0
 	}
-	if (kind == "nodematch") M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, coefname)
-	else if (kind == "nodecov") M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td, coefname)
-	else if (kind == "nodeicov") M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td, coefname)
-	else if (kind == "nodeocov") M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td, coefname)
+	if (kind == "nodematch") M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td, coefname)
+	else if (kind == "nodecov") M.addterm("nodecov", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td, coefname)
+	else if (kind == "nodeicov") M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td, coefname)
+	else if (kind == "nodeocov") M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td, coefname)
 	else M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td, coefname)
 }
 
@@ -4174,10 +6123,10 @@ string scalar _saom_covsplit_base(string scalar nm) {
 	return("")
 }
 
-/* registers the endowment and the creation term of a covariate effect (td1, td2: separate ErgmTermData objects); missing values
+/* registers the endowment and the creation term of a covariate effect (td1, td2: separate SaomTermData objects); missing values
    are not supported for the split effects */
-void SaomRegCovSplit(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n, real scalar center,
-	class ErgmTermData scalar td1, class ErgmTermData scalar td2, string rowvector coefname, real scalar m) {
+void SaomRegCovSplit(class SaomModel scalar M, string scalar kind, string scalar vn, real scalar n, real scalar center,
+	class SaomTermData scalar td1, class SaomTermData scalar td2, string rowvector coefname, real scalar m) {
 
 	real colvector x
 	real scalar usecenter
@@ -4197,20 +6146,20 @@ void SaomRegCovSplit(class ErgmModel scalar M, string scalar kind, string scalar
 	td2.decay = td1.decay
 	td2.center = td1.center
 	if (kind == "nodematch") {
-		M.addterm("nodematchendow", 1, &stat_nodematch(), &change_nodematch(), td1, (coefname[1]))
-		M.addterm("nodematchcreation", 1, &stat_nodematch(), &change_nodematch(), td2, (coefname[2]))
+		M.addterm("nodematchendow", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td1, (coefname[1]))
+		M.addterm("nodematchcreation", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td2, (coefname[2]))
 	}
 	else if (kind == "nodecov") {
-		M.addterm("nodecovendow", 1, &stat_nodecov(), &change_nodecov(), td1, (coefname[1]))
-		M.addterm("nodecovcreation", 1, &stat_nodecov(), &change_nodecov(), td2, (coefname[2]))
+		M.addterm("nodecovendow", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td1, (coefname[1]))
+		M.addterm("nodecovcreation", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td2, (coefname[2]))
 	}
 	else if (kind == "nodeicov") {
-		M.addterm("nodeicovendow", 1, &stat_nodeicov(), &change_nodeicov(), td1, (coefname[1]))
-		M.addterm("nodeicovcreation", 1, &stat_nodeicov(), &change_nodeicov(), td2, (coefname[2]))
+		M.addterm("nodeicovendow", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td1, (coefname[1]))
+		M.addterm("nodeicovcreation", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td2, (coefname[2]))
 	}
 	else if (kind == "nodeocov") {
-		M.addterm("nodeocovendow", 1, &stat_nodeocov(), &change_nodeocov(), td1, (coefname[1]))
-		M.addterm("nodeocovcreation", 1, &stat_nodeocov(), &change_nodeocov(), td2, (coefname[2]))
+		M.addterm("nodeocovendow", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td1, (coefname[1]))
+		M.addterm("nodeocovcreation", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td2, (coefname[2]))
 	}
 	else {
 		M.addterm("simcovendow", 1, &stat_saom_simcov(), &change_saom_simcov(), td1, (coefname[1]))
@@ -4218,8 +6167,8 @@ void SaomRegCovSplit(class ErgmModel scalar M, string scalar kind, string scalar
 	}
 }
 
-void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n,
-	real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m,
+void SaomRegCov(class SaomModel scalar M, string scalar kind, string scalar vn, real scalar n,
+	real scalar center, class SaomTermData scalar td, string rowvector coefname, real scalar m,
 	| real colvector idx) {
 
 	real colvector x, miss, xs, ys
@@ -4242,8 +6191,8 @@ void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, 
 		td.attr[idx] = ys
 		miss = J(n, 1, 0)
 		masked = 0
-		if (kind == "nodeicov") M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td, coefname)
-		else if (kind == "nodeocov") M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td, coefname)
+		if (kind == "nodeicov") M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td, coefname)
+		else if (kind == "nodeocov") M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td, coefname)
 		else {
 			errprintf("nwsaom: the covariate effect " + kind + " is not available for two-mode networks (only nodeocov() = egoX on the actors and nodeicov() = altX on the events).\n")
 			exit(198)
@@ -4260,20 +6209,20 @@ void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, 
 	}
 	if (masked) td.levels = miss
 	if (kind == "nodematch") {
-		if (masked) M.addterm("nodematch", 1, &stat_saom_nodematch_m(), &change_nodematch(), td, coefname)
-		else M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, coefname)
+		if (masked) M.addterm("nodematch", 1, &stat_saom_nodematch_m(), &sn_change_nodematch(), td, coefname)
+		else M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td, coefname)
 	}
 	else if (kind == "nodecov") {
-		if (masked) M.addterm("nodecov", 1, &stat_saom_nodecov_m(), &change_nodecov(), td, coefname)
-		else M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td, coefname)
+		if (masked) M.addterm("nodecov", 1, &stat_saom_nodecov_m(), &sn_change_nodecov(), td, coefname)
+		else M.addterm("nodecov", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td, coefname)
 	}
 	else if (kind == "nodeicov") {
-		if (masked) M.addterm("nodeicov", 1, &stat_saom_nodeicov_m(), &change_nodeicov(), td, coefname)
-		else M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td, coefname)
+		if (masked) M.addterm("nodeicov", 1, &stat_saom_nodeicov_m(), &sn_change_nodeicov(), td, coefname)
+		else M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td, coefname)
 	}
 	else if (kind == "nodeocov") {
-		if (masked) M.addterm("nodeocov", 1, &stat_saom_nodeocov_m(), &change_nodeocov(), td, coefname)
-		else M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td, coefname)
+		if (masked) M.addterm("nodeocov", 1, &stat_saom_nodeocov_m(), &sn_change_nodeocov(), td, coefname)
+		else M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td, coefname)
 	}
 	else {
 		if (masked) M.addterm("simcov", 1, &stat_saom_simcov_m(), &change_saom_simcov(), td, coefname)
@@ -4304,7 +6253,7 @@ void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, 
    period's STARTING behavior before computing a statistic.
    td.decay = range, td.center = simMean.
 */
-real rowvector stat_saom_behsim(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_behsim(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 
@@ -4315,7 +6264,7 @@ real rowvector stat_saom_behsim(class ErgmGraph scalar G, class ErgmTermData sca
 	}
 	return(tot)
 }
-real rowvector change_saom_behsim(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_behsim(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
 	delta = 1 - abs(td.attr[i] - td.attr[j]) / td.decay - td.center
@@ -4332,9 +6281,9 @@ real rowvector change_saom_behsim(class ErgmGraph scalar G, real scalar i, real 
 real scalar _saom_isdynname(string scalar nm) {
 	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt" | substr(nm, 1, 3) == "bv_" | substr(nm, 1, 5) == "natb_")
 }
-void SaomBehSimSync(class ErgmModel scalar M, real colvector vals){
+void SaomBehSimSync(class SaomModel scalar M, real colvector vals){
 	real scalar t
-	pointer(class ErgmTermData scalar) scalar ptd
+	pointer(class SaomTermData scalar) scalar ptd
 
 	for (t=1; t<=M.nterms; t++) {
 		if (!_saom_isdynname(M.names[t])) continue
@@ -4342,10 +6291,10 @@ void SaomBehSimSync(class ErgmModel scalar M, real colvector vals){
 		(*ptd).attr = vals
 	}
 }
-void SaomBehSimSetValue(class ErgmModel scalar M, real scalar i, real scalar v){
+void SaomBehSimSetValue(class SaomModel scalar M, real scalar i, real scalar v){
 	real scalar t
 	real colvector a
-	pointer(class ErgmTermData scalar) scalar ptd
+	pointer(class SaomTermData scalar) scalar ptd
 
 	for (t=1; t<=M.nterms; t++) {
 		if (!_saom_isdynname(M.names[t])) continue
@@ -4355,13 +6304,13 @@ void SaomBehSimSetValue(class ErgmModel scalar M, real scalar i, real scalar v){
 		(*ptd).attr = a
 	}
 }
-real scalar SaomHasBehSim(class ErgmModel scalar M){
+real scalar SaomHasBehSim(class SaomModel scalar M){
 	real scalar t
 	for (t=1; t<=M.nterms; t++) if (_saom_isdynname(M.names[t])) return(1)
 	return(0)
 }
 /* RSiena egoX / altX / egoPlusAltX with the dependent behavior as the covariate: the value is the current behavior minus its overall mean (td.center) */
-real rowvector stat_saom_behegox(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_behegox(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 	ties = G.all_ties()
@@ -4369,12 +6318,12 @@ real rowvector stat_saom_behegox(class ErgmGraph scalar G, class ErgmTermData sc
 	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] - td.center
 	return(tot)
 }
-real rowvector change_saom_behegox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_behegox(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = td.attr[i] - td.center
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_behaltx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_behaltx(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 	ties = G.all_ties()
@@ -4382,12 +6331,12 @@ real rowvector stat_saom_behaltx(class ErgmGraph scalar G, class ErgmTermData sc
 	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,2]] - td.center
 	return(tot)
 }
-real rowvector change_saom_behaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_behaltx(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = td.attr[j] - td.center
 	return(G.has_edge(i,j) ? -d : d)
 }
-real rowvector stat_saom_behegoplusalt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_behegoplusalt(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, tot
 	ties = G.all_ties()
@@ -4395,7 +6344,7 @@ real rowvector stat_saom_behegoplusalt(class ErgmGraph scalar G, class ErgmTermD
 	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] + td.attr[ties[k,2]] - 2 * td.center
 	return(tot)
 }
-real rowvector change_saom_behegoplusalt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_behegoplusalt(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar d
 	d = td.attr[i] + td.attr[j] - 2 * td.center
 	return(G.has_edge(i,j) ? -d : d)
@@ -4428,18 +6377,18 @@ real rowvector change_saom_behegoplusalt(class ErgmGraph scalar G, real scalar i
 	geometrically-weighted terms, not a bug in nwergm - each package's
 	own construction is internally consistent, they are just genuinely
 	DIFFERENT mathematical objects for this specific effect).
-	stat_gwesp()/stat_gwesp_otp() (unw_ergm.do, reused UNCHANGED for the
+	sn_stat_gwesp()/sn_stat_gwesp_otp() (unw_ergm.do, reused UNCHANGED for the
 	GLOBAL/observed statistic - RSiena's own `tieStatistic()` DOES match
 	that formula exactly, confirmed separately and unaffected by this
 	correction) are still reused directly; only the MINISTEP/change
-	formula below is SAOM-specific, reusing just the gw_kernel() helper
+	formula below is SAOM-specific, reusing just the sn_gw_kernel() helper
 	(also unaffected - the kernel itself was always correct), not the
 	full change_gwesp_otp() function.
 */
-real rowvector change_saom_gwesp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_gwesp(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta
 
-	delta = gw_kernel(G.shared_partners_otp(i,j), td.decay)
+	delta = sn_gw_kernel(G.shared_partners_otp(i,j), td.decay)
 	return(G.has_edge(i,j) ? -delta : delta)
 }
 
@@ -4492,7 +6441,7 @@ real rowvector change_saom_gwesp(class ErgmGraph scalar G, real scalar i, real s
 	this term's own certification, which uses the standard ego-level
 	brute-force methodology successfully, unlike gwesp()'s own).
 */
-real rowvector change_saom_transties(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_transties(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar delta, chg, b, m, oldb
 	real rowvector nb
 
@@ -4582,8 +6531,8 @@ real rowvector change_saom_transties(class ErgmGraph scalar G, real scalar i, re
    [(n-2)*b0 - D(i,j)]` - confirmed to actually pass, not merely assumed
    (`cscripts/test_nwsaom_mata.do`'s own unit 25 certify test).
 */
-real scalar saom_balance_mean(pointer(class ErgmGraph scalar) rowvector Gbases, | pointer(real matrix) rowvector masks){
-	class ErgmGraph scalar G
+real scalar saom_balance_mean(pointer(class SaomGraph scalar) rowvector Gbases, | pointer(real matrix) rowvector masks){
+	class SaomGraph scalar G
 	real scalar k, K, n, h, indeg, tempra, temprb, m, ones, hasmask
 	real matrix X, Mk
 	real colvector ok
@@ -4618,7 +6567,7 @@ real scalar saom_balance_mean(pointer(class ErgmGraph scalar) rowvector Gbases, 
 	return(tempra/temprb)
 }
 
-real rowvector stat_saom_balance(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_balance(class SaomGraph scalar G, class SaomTermData scalar td){
 	real matrix ties
 	real scalar k, i, j, n, b0, D, tot
 
@@ -4730,7 +6679,7 @@ void SaomCheckCovarianceFinite(real matrix V) {
 	}
 }
 
-real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_balance(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	real scalar n, b0, val
 
 	n = G.n
@@ -4761,15 +6710,15 @@ real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real
    and its saom_tie_stat()/saom_eval_change() header comments for the
    parallel account.
 
-   Wire-protocol note: unw_ergm.do's own ErgmModel::addterm()/
-   ErgmModel::full_change()/full_statistic() dispatch every term through
+   Wire-protocol note: unw_ergm.do's own SaomModel::addterm()/
+   SaomModel::full_change()/full_statistic() dispatch every term through
    a UNIFORM (G,[i,j,]td) signature with no access to the surrounding
    model M - so an interaction term cannot reach its own two component
    effects' chgfn/statfn pointers or td objects through that generic
    path (and unw_ergm.do is READ ONLY for this initiative - see this
    file's own header comment). Instead, EVERYTHING an interaction needs
    is packed into its OWN td at registration time (nwsaom.ado), reusing
-   three existing ErgmTermData fields no SAOM main-effect term needs for
+   three existing SaomTermData fields no SAOM main-effect term needs for
    anything else: td.sptype holds "nameA|nameB" (both component names,
    split on "|"); td.levels holds (decayA \ decayB) (2x1 - only
    gwesp/simcov/balance ever read a decay); td.attr holds (attrA \ attrB)
@@ -4836,7 +6785,7 @@ real scalar _saom_degsplit_code(string scalar nm) {
 	return(0)
 }
 
-real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
+real scalar _saom_tiestat(class SaomGraph scalar G, string scalar nm,
 	real colvector a, real scalar decay, real scalar ego, real scalar alter, | real scalar center){
 
 	real scalar nterm, b0, D
@@ -4873,7 +6822,7 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	if (nm == "outinass") return(G.degree_out(ego) * G.degree_in(alter))
 	if (nm == "inoutass") return(G.degree_in(ego) * G.degree_out(alter))
 	if (nm == "cycle4") return(0.25 * _saom_cycle4_threepaths(G, ego, alter))
-	if (nm == "gwesp") return(gw_kernel(G.shared_partners_otp(ego, alter), decay))
+	if (nm == "gwesp") return(sn_gw_kernel(G.shared_partners_otp(ego, alter), decay))
 	if (nm == "transties") return(G.shared_partners_otp(ego, alter) >= 1 ? 1 : 0)
 	if (nm == "balance") {
 		nterm = G.n - 2
@@ -4892,7 +6841,7 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
    balance) genuinely have and _saom_tiestat() above deliberately does
    NOT (see this section's own header comment for why these are two
    different functions, per RSiena's own real source). */
-real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
+real scalar _saom_tiechange(class SaomGraph scalar G, string scalar nm,
 	real colvector a, real scalar decay, real scalar i, real scalar j, | real scalar center){
 
 	real scalar tied, delta, chg, egodeg, alterdeg, ldegree, neighborsum, oldb, b0, n, val, k, h
@@ -4991,7 +6940,7 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
 		return(tied ? -delta : delta)
 	}
 	if (nm == "gwesp") {
-		delta = gw_kernel(G.shared_partners_otp(i, j), decay)
+		delta = sn_gw_kernel(G.shared_partners_otp(i, j), decay)
 		return(tied ? -delta : delta)
 	}
 	if (nm == "transties") {
@@ -5042,7 +6991,7 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
    ...), which names one instance when a covariate effect is given for
    several variables (2026-10-01). Returns the instance index; *type
    receives the instance's effect type. */
-real scalar _SaomInteractComponent(class ErgmModel scalar M, string scalar nm, string scalar type) {
+real scalar _SaomInteractComponent(class SaomModel scalar M, string scalar nm, string scalar type) {
 	real scalar si, found, nfound, ci
 
 	found = 0
@@ -5072,7 +7021,7 @@ real scalar _SaomInteractComponent(class ErgmModel scalar M, string scalar nm, s
 	return(found)
 }
 
-real scalar _saom_center0(class ErgmTermData scalar td) {
+real scalar _saom_center0(class SaomTermData scalar td) {
 	return(td.center < . ? td.center : 0)
 }
 
@@ -5092,12 +7041,12 @@ real scalar SaomSimMean(real colvector x) {
 	return(tot / (n * (n - 1)))
 }
 
-void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
-	string scalar nameA, string scalar nameB, string scalar nameC, class ErgmTermData scalar tdout){
+void SaomBuildInteractTd(class SaomModel scalar M, real scalar n,
+	string scalar nameA, string scalar nameB, string scalar nameC, class SaomTermData scalar tdout){
 
 	real scalar subA, subB, subC, threeway
 	string scalar tA, tB, tC
-	class ErgmTermData scalar tdA, tdB, tdC
+	class SaomTermData scalar tdA, tdB, tdC
 
 	threeway = (nameC != "")
 	tA = ""
@@ -5159,14 +7108,14 @@ void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
 /* the c-th component's centering constant (simcov's similarity mean),
    stored after the decays and instance indices in td.levels; 0 for
    interactions registered before 2026-10-01 */
-real scalar _saom_ixcenter(class ErgmTermData scalar td, real scalar c, real scalar threeway) {
+real scalar _saom_ixcenter(class SaomTermData scalar td, real scalar c, real scalar threeway) {
 	real scalar k
 	k = (threeway ? 3 : 2)
 	if (rows(td.levels) < 3*k) return(0)
 	return(td.levels[2*k + c])
 }
 
-real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
+real rowvector stat_saom_interact(class SaomGraph scalar G, class SaomTermData scalar td){
 	string rowvector nms, comp
 	real scalar n, k, c, e, tot, nc, nego, ne, v, s_e
 	real matrix A
@@ -5225,7 +7174,7 @@ real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData s
 real scalar _saom_isegoeffect(string scalar nm) {
 	return(nm == "nodeocov" | nm == "outdegree")
 }
-real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+real rowvector change_saom_interact(class SaomGraph scalar G, real scalar i, real scalar j, class SaomTermData scalar td){
 	string rowvector nms
 	real scalar n, threeway
 	real colvector aA, aB, aC
@@ -5252,14 +7201,14 @@ real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, rea
 }
 
 /* ===================================================================
-   SaomCopyGraph: deep-copy an ErgmGraph's edge structure onto a fresh
+   SaomCopyGraph: deep-copy an SaomGraph's edge structure onto a fresh
    graph of the same size/directedness - SaomEstimateRM needs a clean
    restart from the OBSERVED starting-wave network for every phase-2/
-   phase-3 simulation run (runs are never chained), and ErgmGraph has
+   phase-3 simulation run (runs are never chained), and SaomGraph has
    reference semantics (asarray-backed), so a plain `Gcopy = G` would
    alias the same underlying adjacency storage, not copy it.
    =================================================================== */
-void SaomCopyGraph(class ErgmGraph scalar Gsrc, class ErgmGraph scalar Gdst) {
+void SaomCopyGraph(class SaomGraph scalar Gsrc, class SaomGraph scalar Gdst) {
 	real matrix ties
 	real scalar k
 
@@ -5280,7 +7229,7 @@ void SaomCopyGraph(class ErgmGraph scalar Gsrc, class ErgmGraph scalar Gdst) {
    directly here rather than via that command since only the scalar
    count is needed, not its full per-node/Jaccard reporting.
    =================================================================== */
-real scalar SaomCountDiffering(class ErgmGraph scalar G1, class ErgmGraph scalar G2) {
+real scalar SaomCountDiffering(class SaomGraph scalar G1, class SaomGraph scalar G2) {
 	real matrix t1, t2
 	real scalar k, cnt
 
@@ -5321,7 +7270,7 @@ real scalar SaomCountDiffering(class ErgmGraph scalar G1, class ErgmGraph scalar
    `M.full_statistic(Gwork)' (a final-state snapshot, not an
    accumulator) already works for the eval parameters' own deviation).
    =================================================================== */
-real rowvector SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGraph scalar G2,
+real rowvector SaomCovariateDifferingSum(class SaomGraph scalar G1, class SaomGraph scalar G2,
 	real matrix ratecovattr, | real matrix missMask) {
 
 	real matrix t1, t2
@@ -5390,7 +7339,7 @@ real rowvector SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGr
    count - matching RSiena's own "valid at both endpoint waves" rule
    applied to the rate's own target/simulated statistic, not just the
    eval-parameter one. */
-real scalar SaomCountDifferingMasked(class ErgmGraph scalar G1, class ErgmGraph scalar G2,
+real scalar SaomCountDifferingMasked(class SaomGraph scalar G1, class SaomGraph scalar G2,
 	real matrix missMaskPeriod) {
 
 	real matrix t1, t2
@@ -5456,12 +7405,12 @@ real matrix SaomMaskToDyadList(real matrix missMask) {
    unrelated (behavior-unmasked) actor's own avAlt reading via its
    alters' true (masked) ties - see SaomMaskedBehaviorStatistic()'s own
    header comment for the full account. */
-class ErgmGraph scalar SaomBuildMaskedGraph(class ErgmGraph scalar G, real matrix missMaskPeriod) {
-	class ErgmGraph scalar Gm
+class SaomGraph scalar SaomBuildMaskedGraph(class SaomGraph scalar G, real matrix missMaskPeriod) {
+	class SaomGraph scalar Gm
 	real scalar n, i, j
 
 	n = G.n
-	Gm = ErgmGraph()
+	Gm = SaomGraph()
 	SaomCopyGraph(G, Gm)
 	for (i=1; i<=n; i++) {
 		for (j=1; j<=n; j++) {
@@ -5472,7 +7421,7 @@ class ErgmGraph scalar SaomBuildMaskedGraph(class ErgmGraph scalar G, real matri
 	return(Gm)
 }
 
-real rowvector SaomMaskedStatistic(class ErgmGraph scalar G, class ErgmModel scalar M,
+real rowvector SaomMaskedStatistic(class SaomGraph scalar G, class SaomModel scalar M,
 	real matrix missMaskPeriod) {
 
 	return(M.full_statistic(SaomBuildMaskedGraph(G, missMaskPeriod)))
@@ -5492,12 +7441,12 @@ real rowvector SaomMaskedStatistic(class ErgmGraph scalar G, class ErgmModel sca
    creation) - each dyad visited exactly once (no double-toggle risk),
    directed/undirected branching matching stat_hamming()'s own established
    dyad-enumeration convention in unw_ergm.do. */
-class ErgmGraph scalar SaomBuildLostTiesGraph(class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend) {
-	class ErgmGraph scalar Gl
+class SaomGraph scalar SaomBuildLostTiesGraph(class SaomGraph scalar Gstart, class SaomGraph scalar Gend) {
+	class SaomGraph scalar Gl
 	real scalar n, i, j
 
 	n = Gstart.n
-	Gl = ErgmGraph()
+	Gl = SaomGraph()
 	SaomCopyGraph(Gstart, Gl)
 	if (Gl.directed) {
 		for (i=1; i<=n; i++) {
@@ -5517,12 +7466,12 @@ class ErgmGraph scalar SaomBuildLostTiesGraph(class ErgmGraph scalar Gstart, cla
 	return(Gl)
 }
 
-class ErgmGraph scalar SaomBuildGainedTiesGraph(class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend) {
-	class ErgmGraph scalar Gg
+class SaomGraph scalar SaomBuildGainedTiesGraph(class SaomGraph scalar Gstart, class SaomGraph scalar Gend) {
+	class SaomGraph scalar Gg
 	real scalar n, i, j
 
 	n = Gend.n
-	Gg = ErgmGraph()
+	Gg = SaomGraph()
 	SaomCopyGraph(Gend, Gg)
 	if (Gg.directed) {
 		for (i=1; i<=n; i++) {
@@ -5562,7 +7511,7 @@ class ErgmGraph scalar SaomBuildGainedTiesGraph(class ErgmGraph scalar Gstart, c
    made its phase-1 derivative negative.) */
 /* the endowment (1) / creation (2) role of every network term, from the term names
    ("...endow" / "...creation"); 0 = evaluation. Independent of the order the terms were registered in. */
-real rowvector SaomFntypeFromNames(class ErgmModel scalar M) {
+real rowvector SaomFntypeFromNames(class SaomModel scalar M) {
 	real rowvector f
 	real scalar t, l
 	string scalar nm
@@ -5579,7 +7528,7 @@ real rowvector SaomFntypeFromNames(class ErgmModel scalar M) {
 
 /* does the model carry a balance endowment/creation term? (its tie statistic depends on the missing-data mask,
    which the native plugin knows from protocol 17 on) */
-real scalar SaomHasBalanceSplit(class ErgmModel scalar M, real rowvector fntype) {
+real scalar SaomHasBalanceSplit(class SaomModel scalar M, real rowvector fntype) {
 	real scalar t
 
 	for (t=1; t<=M.nterms; t++) if (fntype[t] != 0) if (strpos(M.names[t], "balance") == 1) return(1)
@@ -5588,7 +7537,7 @@ real scalar SaomHasBalanceSplit(class ErgmModel scalar M, real rowvector fntype)
 
 /* RSiena's BalanceEffect::tieStatistic() with missing data: sum over the actors h (not ego/alter, with no missing
    tie from ego or alter in either wave of the period) of (b0 - |x_ih - x_jh|) */
-real scalar _saom_balance_tiestat_masked(class ErgmGraph scalar G, real scalar b0, real scalar ego,
+real scalar _saom_balance_tiestat_masked(class SaomGraph scalar G, real scalar b0, real scalar ego,
 	real scalar alter, real matrix missMask) {
 	real scalar h, nvalid, ndiff
 
@@ -5603,17 +7552,17 @@ real scalar _saom_balance_tiestat_masked(class ErgmGraph scalar G, real scalar b
 	return(nvalid * b0 - ndiff)
 }
 
-real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowvector fntype,
-	real rowvector stat, class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend, | real matrix missMask) {
+real rowvector SaomNetworkPatchEndowCreation(class SaomModel scalar M, real rowvector fntype,
+	real rowvector stat, class SaomGraph scalar Gstart, class SaomGraph scalar Gend, | real matrix missMask) {
 	real scalar usemask
-	class ErgmGraph scalar Gcm
+	class SaomGraph scalar Gcm
 
-	class ErgmGraph scalar Glost, Ggained
+	class SaomGraph scalar Glost, Ggained
 	real rowvector out, part
 	real matrix ties
 	real scalar t, k, pos, built_lost, built_gained, recip, v
 	string scalar nm, base
-	class ErgmTermData scalar td
+	class SaomTermData scalar td
 
 	usemask = (args() >= 6) ? (rows(missMask) > 0) : 0
 	Gcm = (usemask ? SaomBuildMaskedGraph(Gend, missMask) : Gend)
@@ -5687,8 +7636,8 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
    Called once per wave, in temporal order, by the .ado data-prep
    layer - not relied on inside any estimator, since starting graphs
    are built once, before estimation, exactly like every other
-   ErgmGraph this file's estimators receive already-built. */
-real matrix SaomImputeNetworkWave(class ErgmGraph scalar G, real matrix missMask,
+   SaomGraph this file's estimators receive already-built. */
+real matrix SaomImputeNetworkWave(class SaomGraph scalar G, real matrix missMask,
 	real matrix lastObserved) {
 
 	real scalar n, i, j, curval
@@ -5913,8 +7862,8 @@ struct SaomFit {
    two-network estimator SaomEstimateRMCoevNetNet().
    =================================================================== */
 struct SaomNetCtx {
-	pointer(class ErgmGraph scalar) rowvector Gwaves
-	pointer(class ErgmModel scalar) scalar Mp	// set by SaomEstimateNet()
+	pointer(class SaomGraph scalar) rowvector Gwaves
+	pointer(class SaomModel scalar) scalar Mp	// set by SaomEstimateNet()
 	struct SaomNativeConfig scalar cfg
 	real scalar use_native, use_batch, native_netdist
 	real scalar cond		// 1: conditional estimation (set by the caller before SaomNetCtxInit(); 0 under composition change)
@@ -6085,13 +8034,13 @@ real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real c
 	return(SaomTimedIntegralG(C.presentPd[., pd], *C.compEv[pd], w))
 }
 
-void SaomSetTie(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar v) {
+void SaomSetTie(class SaomGraph scalar G, real scalar i, real scalar j, real scalar v) {
 	if (G.has_edge(i, j) != v) G.toggle(i, j)
 }
 
 /* a joiner (type 1) or leaver (type 2); type 3: put the ties of actor a
    back to their values at the start of the period (end of period) */
-void SaomTimedApply(class ErgmGraph scalar G, class ErgmGraph scalar G0, real scalar a, real scalar type, real colvector act) {
+void SaomTimedApply(class SaomGraph scalar G, class SaomGraph scalar G0, real scalar a, real scalar type, real colvector act) {
 	real scalar j
 
 	if (type == 1) act[a] = 1
@@ -6118,12 +8067,12 @@ void SaomTimedApply(class ErgmGraph scalar G, class ErgmGraph scalar G0, real sc
 }
 
 /* one period of a model with composition change at fractional times */
-void SaomPeriodTimed(struct SaomNetCtx scalar C, class ErgmModel scalar M, real rowvector theta, real scalar rate,
+void SaomPeriodTimed(struct SaomNetCtx scalar C, class SaomModel scalar M, real rowvector theta, real scalar rate,
 	real rowvector ratecoef, real scalar pd, real scalar want_score, real scalar K,
 	real rowvector stat, real scalar netdist, real scalar steps, real rowvector scpd,
-	real rowvector rcstat, real rowvector rcscore, | class ErgmGraph Gout) {
+	real rowvector rcstat, real rowvector rcscore, | class SaomGraph Gout) {
 
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
 	real colvector act
@@ -6132,7 +8081,7 @@ void SaomPeriodTimed(struct SaomNetCtx scalar C, class ErgmModel scalar M, real 
 
 	ev = *C.compEv[pd]
 	act = (C.presentPd[., pd] :!= 0)
-	Gwork = ErgmGraph()
+	Gwork = SaomGraph()
 	SaomCopyGraph(*C.Gwaves[pd], Gwork)
 	mdy = J(0, 2, 0)
 	if (C.use_native & C.hasmiss) {
@@ -6191,8 +8140,8 @@ void SaomPeriodTimed(struct SaomNetCtx scalar C, class ErgmModel scalar M, real 
 
 /* Fills the context: targets, native dispatch. presentPd is n x P (or
    0 x 0), missMaskPd one n x n mask per period (or empty). */
-void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) rowvector Gwaves,
-	class ErgmModel scalar M, real matrix presentPd, pointer(real matrix) rowvector missMaskPd,
+void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class SaomGraph scalar) rowvector Gwaves,
+	class SaomModel scalar M, real matrix presentPd, pointer(real matrix) rowvector missMaskPd,
 	real rowvector fntype, real matrix ratecovattr, real scalar symtype, real matrix structural) {
 	string scalar why
 
@@ -6331,12 +8280,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 /* One replicate over every period at parameter vector `par' (internal
    order): deviations from the targets in `dev', scores in `sco'
    (1 x ptot each; scores only when want_score). */
-void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
+void SaomNetReplicate(struct SaomNetCtx scalar C, class SaomModel scalar M,
 	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco, | real matrix devp, real matrix scop) {
 
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	real rowvector theta, stat
 	real colvector pres, presNat, pmask
 	real matrix mdy
@@ -6375,7 +8324,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			}
 			rebuild = C.hasratecov | !C.native_netdist
 			if (rebuild) {
-				Gwork = ErgmGraph()
+				Gwork = SaomGraph()
 				SaomCopyGraph(*C.Gwaves[pd], Gwork)
 				if (C.hasratecov) cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate, 1, want_score, mdy, presNat, C.symtype, C.ratecovattr, ratecoef)
 				else cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate, 1, want_score, mdy, presNat, C.symtype)
@@ -6396,7 +8345,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			if (want_score) scpd = cres.score
 		}
 		else {
-			Gwork = ErgmGraph()
+			Gwork = SaomGraph()
 			SaomCopyGraph(*C.Gwaves[pd], Gwork)
 			if (want_score) {
 				if (C.hasratecov) sres = SaomSimIntScoredRateCov(Gwork, M, theta, rate, C.ratecovattr, ratecoef, pres, C.fntype)
@@ -6506,13 +8455,13 @@ void SaomSymRateToRSiena(struct SaomFit scalar fit, struct SaomNetCtx scalar C, 
    estimation, C.cond == 1): every period is simulated at rate 1 until the
    distance from its starting observation reaches the observed distance;
    `par' = (theta, [ratecoef]); the elapsed times go to `tim' (1 x P). */
-void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
+void SaomNetReplicateCond(struct SaomNetCtx scalar C, class SaomModel scalar M,
 	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco,
 	real rowvector tim, | real matrix devp, real matrix scop) {
 
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	real rowvector theta, stat, fnarg
 	real colvector pres, presNat
 	real matrix rcattr
@@ -6546,7 +8495,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		dm = (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0))
 		rcstat = J(1, max((K, 1)), 0)
 		rcscore = J(1, max((K, 1)), 0)
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		if (C.use_native) {
 			mdy = J(0, 2, 0)
 			if (C.hasmiss) {
@@ -6600,7 +8549,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 }
 
 /* K replicates at `par': K x ptot deviations `Z' and scores `S'. */
-void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
+void SaomNetSimMany(struct SaomNetCtx scalar C, class SaomModel scalar M,
 	real rowvector par, real scalar K, real scalar want_score, real matrix Z, real matrix S) {
 
 	real matrix out, devp, scop
@@ -6993,7 +8942,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	return(fit)
 }
 
-struct SaomNetFit scalar SaomEstimateNet(struct SaomNetCtx scalar C, class ErgmModel scalar M,
+struct SaomNetFit scalar SaomEstimateNet(struct SaomNetCtx scalar C, class SaomModel scalar M,
 	real rowvector par0, real scalar K0, real scalar K3, real scalar firstg) {
 
 	struct SaomNetFit scalar fit
@@ -7038,7 +8987,7 @@ real scalar SaomRateStart(real scalar nactive, real scalar distance) {
    both clamped to [.02, .98]; periods are weighted by the precision
    4/(p00/n01 + p11/n10); the result is clamped to [-3, 3]. `symmetric':
    every tie is stored in both directions, counted once. */
-real scalar SaomOutdegreeStart(pointer(class ErgmGraph scalar) rowvector Gwaves,
+real scalar SaomOutdegreeStart(pointer(class SaomGraph scalar) rowvector Gwaves,
 	| real scalar symmetric, real scalar ndyads) {
 
 	real matrix A, B
@@ -7088,8 +9037,8 @@ real scalar SaomOutdegreeStart(pointer(class ErgmGraph scalar) rowvector Gwaves,
      starting value), symtype (0 directed, 1 BJOINT, 2 BFORCE, 3 BAGREE, 4 AFORCE, 5 AAGREE),
      structural (n x n, 1 = structurally fixed dyad).
    =================================================================== */
-struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
-	class ErgmGraph scalar Gobs_end, class ErgmModel scalar M,
+struct SaomFit scalar SaomEstimateRM(class SaomGraph scalar Gobs_start,
+	class SaomGraph scalar Gobs_end, class SaomModel scalar M,
 	real rowvector theta0, real scalar rate0,
 	real scalar K0, real scalar K3, real scalar firstg, | real colvector present,
 	real matrix missMask, real rowvector fntype,
@@ -7182,8 +9131,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
    per period; empty or missing entries: the closed form). Placeholders
    to reach a later argument: J(0,0,0) and J(1,0,NULL).
    =================================================================== */
-struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvector Gwaves,
-	class ErgmModel scalar M, real rowvector theta0, real scalar K0, real scalar K3,
+struct SaomFit scalar SaomEstimateRMMulti(pointer(class SaomGraph scalar) rowvector Gwaves,
+	class SaomModel scalar M, real rowvector theta0, real scalar K0, real scalar K3,
 	real scalar firstg, | real matrix presentMat, pointer(real matrix) rowvector missMaskPd,
 	real rowvector rates0, real rowvector fntype, real scalar symtype,
 	real matrix ratecovattr, real rowvector ratecoef, real matrix structural) {
@@ -7295,9 +9244,9 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
    model, the gap this codebase's own docs/book chapter explicitly
    disclosed as not yet implemented.
 
-   SaomBehavior: the behavior-side analogue of ErgmGraph - owns the
+   SaomBehavior: the behavior-side analogue of SaomGraph - owns the
    actor-level current values (mutated in place by ministeps, exactly
-   like ErgmGraph.toggle() mutates edges) plus the fixed, observed-data-
+   like SaomGraph.toggle() mutates edges) plus the fixed, observed-data-
    derived constants (min/max/range/overallMean) every behavior effect
    below needs. `values' uses real (not integer) storage for uniformity
    with every other Mata numeric array in this codebase, but every value
@@ -7355,7 +9304,7 @@ real scalar SaomBehavior::centeredValue(real scalar i){
    quadratic never touch G - avAlt needs it, and a uniform signature
    lets SaomBehaviorModel below dispatch through one function-pointer
    type regardless of which specific effect is wired in, matching
-   ErgmModel's own established "uniform signature across genuinely
+   SaomModel's own established "uniform signature across genuinely
    different terms" convention.
 */
 
@@ -7368,10 +9317,10 @@ real scalar SaomBehavior::centeredValue(real scalar i){
    the UNCENTERED sum of every actor's own current value
    (egoStatistic() returns currentValues[ego] directly, no centering).
 */
-real rowvector stat_saom_linear(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+real rowvector stat_saom_linear(class SaomBehavior scalar Beh, class SaomGraph scalar G){
 	return(sum(Beh.values))
 }
-real scalar change_saom_linear(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+real scalar change_saom_linear(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff){
 	return(diff)
 }
 
@@ -7390,10 +9339,10 @@ real scalar change_saom_linear(class SaomBehavior scalar Beh, class ErgmGraph sc
    for the same effect, both needed, matching RSiena's own real numbers
    being this codebase's own certification standard throughout.
 */
-real rowvector stat_saom_quadratic(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+real rowvector stat_saom_quadratic(class SaomBehavior scalar Beh, class SaomGraph scalar G){
 	return(sum(Beh.values :* Beh.values))
 }
-real scalar change_saom_quadratic(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+real scalar change_saom_quadratic(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff){
 	return((2*Beh.centeredValue(i) + diff) * diff)
 }
 
@@ -7421,7 +9370,7 @@ real scalar change_saom_quadratic(class SaomBehavior scalar Beh, class ErgmGraph
    diff*zbar for every actor WITH out-ties only, a different model. Checked
    against RSiena 1.6.6's target statistic on s50 (31.8586 for period 1,
    which only the centered formula reproduces). */
-real rowvector stat_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+real rowvector stat_saom_avalt(class SaomBehavior scalar Beh, class SaomGraph scalar G){
 	real scalar i, tot
 	real rowvector nb
 
@@ -7433,7 +9382,7 @@ real rowvector stat_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph sc
 	}
 	return(tot)
 }
-real scalar change_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+real scalar change_saom_avalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff){
 	real rowvector nb
 
 	nb = G.neighbors_out(i)
@@ -7485,7 +9434,7 @@ real scalar change_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph sca
    `statistic' at its initial value 0, matching `avalt''s own identical
    convention above).
 */
-real rowvector stat_saom_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+real rowvector stat_saom_avsim(class SaomBehavior scalar Beh, class SaomGraph scalar G){
 	real scalar i, tot, od, vego, sumabs, k
 	real rowvector nb
 
@@ -7501,7 +9450,7 @@ real rowvector stat_saom_avsim(class SaomBehavior scalar Beh, class ErgmGraph sc
 	}
 	return(tot)
 }
-real scalar change_saom_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+real scalar change_saom_avsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff){
 	real rowvector nb
 	real scalar od, vego, nhigh, nlow, k
 
@@ -7574,19 +9523,19 @@ real scalar saom_similarity_mean(pointer(real colvector) rowvector Behwaves, rea
 }
 
 /* ===================================================================
-   SaomBehaviorModel: the behavior-side analogue of ErgmModel - a
+   SaomBehaviorModel: the behavior-side analogue of SaomModel - a
    minimal term registry (no curved-parameter support, no native-backend
    plumbing, no MPLE - none of those apply to a v1 behavior model),
-   mirroring ErgmModel's own addterm()/nparam()/full_statistic()/
+   mirroring SaomModel's own addterm()/nparam()/full_statistic()/
    full_change() pattern exactly for the parts that DO carry over.
    =================================================================== */
 class SaomBehaviorModel {
 	real scalar nterms
 	string rowvector names
-	pointer rowvector statfn	// pointer(real rowvector function(SaomBehavior, ErgmGraph)) scalar
-	pointer rowvector chgfn	// pointer(real scalar function(SaomBehavior, ErgmGraph, real scalar, real scalar)) scalar
+	pointer rowvector statfn	// pointer(real rowvector function(SaomBehavior, SaomGraph)) scalar
+	pointer rowvector chgfn	// pointer(real scalar function(SaomBehavior, SaomGraph, real scalar, real scalar)) scalar
 	string rowvector coefnames	// one per term (every v1 behavior effect is single-parameter)
-	real scalar simMean		// avsim's own data-derived constant, computed ONCE by nwsaom.ado (saom_similarity_mean()) and stored here - mirrors ErgmTermData's own td.decay convention for balance's data-derived mean; 0 (harmless) whenever avsim is not in the model
+	real scalar simMean		// avsim's own data-derived constant, computed ONCE by nwsaom.ado (saom_similarity_mean()) and stored here - mirrors SaomTermData's own td.decay convention for balance's data-derived mean; 0 (harmless) whenever avsim is not in the model
 	real rowvector fntype		// harmonisation unit 28 - one per term: 0=eval (default, every existing v1 effect), 1=endowment, 2=creation - see full_change()'s own header comment for the direction-gating this drives
 
 	void init()
@@ -7628,7 +9577,7 @@ real scalar SaomBehaviorModel::nparam(){
 	return(nterms)
 }
 
-real rowvector SaomBehaviorModel::full_statistic(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+real rowvector SaomBehaviorModel::full_statistic(class SaomBehavior scalar Beh, class SaomGraph scalar G){
 	real rowvector out
 	real scalar t
 
@@ -7671,7 +9620,7 @@ real rowvector SaomBehaviorModel::full_statistic(class SaomBehavior scalar Beh, 
    pure no-op (SaomBuildMaskedGraph() returns an unmodified copy) in
    that case, at the cost of one harmless extra graph copy. */
 real rowvector SaomMaskedBehaviorStatistic(class SaomBehavior scalar Beh,
-	class ErgmGraph scalar G, class SaomBehaviorModel scalar Mbeh,
+	class SaomGraph scalar G, class SaomBehaviorModel scalar Mbeh,
 	real colvector missMaskPeriodBeh, real matrix missMaskPeriodNet) {
 
 	class SaomBehavior scalar Bm
@@ -7707,7 +9656,7 @@ real rowvector SaomMaskedBehaviorStatistic(class SaomBehavior scalar Beh,
    derivation) - NOT a generic claim true of every possible effect,
    which is exactly why v1 scope is `linear' only (see nwsaom.ado's own
    validation). */
-real rowvector SaomBehaviorModel::full_change(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+real rowvector SaomBehaviorModel::full_change(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff){
 	real rowvector out
 	real scalar t
 
@@ -7744,10 +9693,10 @@ real rowvector SaomBehaviorModel::full_change(class SaomBehavior scalar Beh, cla
    (initial, current) pairing real RSiena's own construction uses). */
 real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbeh, real rowvector stat,
 	real scalar pNet, real colvector startvals, real colvector currentvals,
-	| pointer(class ErgmGraph scalar) scalar Gp, real scalar overallMean, real colvector missvec){
+	| pointer(class SaomGraph scalar) scalar Gp, real scalar overallMean, real colvector missvec){
 
 	real scalar t, n, havegraph
-	class ErgmGraph scalar G0
+	class SaomGraph scalar G0
 	real colvector c, dd, miss
 	string scalar nm
 
@@ -7765,7 +9714,7 @@ real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbe
 	miss = (args() >= 8 ? (rows(missvec) == n ? missvec : J(n, 1, 0)) : J(n, 1, 0))
 	havegraph = 0
 	if (args() >= 6) havegraph = (Gp != NULL)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	c = (currentvals :- (args() >= 7 ? overallMean : 0)) :* (miss :== 0)
 	dd = (startvals - currentvals) :* (miss :== 0)
 	// protocol 51: RSiena's constant effect, minus the sum of the absolute changes of the period (start vs current values)
@@ -7799,7 +9748,7 @@ real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbe
      avsim      (sum_j |c_j - c_i| - sum_j |c_j + dd_j - c_i - dd_i|) / n_i
    j over i's out-ties in G; avsim skips missing actors (n_i: the
    non-missing alters). */
-real scalar _SaomBehEndowStat(string scalar nm, class ErgmGraph scalar G, real colvector c,
+real scalar _SaomBehEndowStat(string scalar nm, class SaomGraph scalar G, real colvector c,
 	real colvector dd, real colvector miss) {
 
 	real scalar n, i, k, s, a, b, nb
@@ -7884,7 +9833,7 @@ real colvector SaomMaskCoevEndowCreationValues(real colvector currentvals,
    via Beh.setvalue() if a real change is drawn. Returns the chosen
    diff (-1, 0, or +1).
    =================================================================== */
-real scalar SaomBehaviorMinistep(class SaomBehavior scalar Beh, class ErgmGraph scalar G,
+real scalar SaomBehaviorMinistep(class SaomBehavior scalar Beh, class SaomGraph scalar G,
 	class SaomBehaviorModel scalar Mbeh, real rowvector theta, real scalar i) {
 
 	real scalar cur, uDown, uUp, maxu, denom, draw, diff
@@ -8075,7 +10024,7 @@ struct SaomCoevResult {
 }
 
 struct SaomCoevResult scalar SaomSimulateIntervalCoev(
-	class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+	class SaomGraph scalar G, class SaomModel scalar M, real rowvector thetaNet,
 	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
 	real scalar rateNet, real scalar rateBeh, | real colvector present) {
 
@@ -8176,7 +10125,7 @@ struct SaomCoevScoredResult {
 }
 
 struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
-	class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+	class SaomGraph scalar G, class SaomModel scalar M, real rowvector thetaNet,
 	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
 	real scalar rateNet, real scalar rateBeh, | real colvector present, real rowvector fntype) {
 
@@ -8348,11 +10297,11 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
    (SaomEstimateRMCoev() above) and network+network (here) are the exact
    SAME underlying process in real RSiena, just instantiated with
    different variable types. nwsaom's own SaomEstimateRMCoev() is
-   hardcoded for exactly one ErgmModel + one SaomBehaviorModel rather
+   hardcoded for exactly one SaomModel + one SaomBehaviorModel rather
    than a true N-variable list; rather than generalize that (a
    materially larger refactor touching the already-certified,
    heavily-relied-on net+behavior path), this is a PARALLEL
-   implementation for exactly two ErgmModel/ErgmGraph instances -
+   implementation for exactly two SaomModel/SaomGraph instances -
    simpler in some ways than the net+behavior case, since both
    "variables" are the identical class (no SaomBehavior-specific
    min/max-value clamping, endowment/creation patching, or
@@ -8407,7 +10356,7 @@ struct SaomNNNativeConfig {
 	real rowvector termcodes1, p1_1, termcodes2, p1_2
 	real scalar eligible
 }
-struct SaomNNNativeConfig scalar SaomNativeSetupNN(class ErgmModel scalar M1, class ErgmModel scalar M2){
+struct SaomNNNativeConfig scalar SaomNativeSetupNN(class SaomModel scalar M1, class SaomModel scalar M2){
 	struct SaomNNNativeConfig scalar cfg
 	real scalar t
 	string scalar nm
@@ -8470,7 +10419,7 @@ struct SaomNNNativeConfig scalar SaomNativeSetupNN(class ErgmModel scalar M1, cl
 struct SaomNNFrameSetup {
 	real matrix ties1, ties2
 }
-struct SaomNNFrameSetup scalar SaomSetupNNFrame(class ErgmGraph scalar G1, class ErgmGraph scalar G2){
+struct SaomNNFrameSetup scalar SaomSetupNNFrame(class SaomGraph scalar G1, class SaomGraph scalar G2){
 	struct SaomNNFrameSetup scalar nn
 	real scalar n, nties1, nties2, neededrows, junk
 	string scalar origframe
@@ -8586,8 +10535,8 @@ struct SaomCoevNetNetScoredResult scalar SaomSimIntCoevNNNative(
 }
 
 struct SaomCoevNetNetScoredResult scalar SaomSimulateIntervalCoevNetNet(
-	class ErgmGraph scalar G1, class ErgmModel scalar M1, real rowvector theta1,
-	class ErgmGraph scalar G2, class ErgmModel scalar M2, real rowvector theta2,
+	class SaomGraph scalar G1, class SaomModel scalar M1, real rowvector theta1,
+	class SaomGraph scalar G2, class SaomModel scalar M2, real rowvector theta2,
 	real scalar rate1, real scalar rate2) {
 
 	struct SaomCoevNetNetScoredResult scalar res
@@ -8754,8 +10703,8 @@ real scalar SaomMNDefaultParam(string scalar eff) {
 	return(0)
 }
 /* a native-only cross-network term; code = 3000 + v */
-void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1, real scalar avOther, real scalar avOwn, real scalar avSqOther, | real scalar avOutOther, real scalar mOther) {
-	class ErgmTermData scalar td
+void SaomMNAddCross(class SaomModel scalar M, string scalar eff, real scalar n, real scalar p1, real scalar avOther, real scalar avOwn, real scalar avSqOther, | real scalar avOutOther, real scalar mOther) {
+	class SaomTermData scalar td
 	real scalar k, v
 	string rowvector nm
 	nm = SaomMNCrossNames()
@@ -8766,7 +10715,7 @@ void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, 
 		errprintf("nwsaom multinet: unknown cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
 		exit(198)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (3000 + v \ 0)
 	td.decay = p1
 	td.attr = J(max((n, 8)), 1, 0)
@@ -8785,8 +10734,8 @@ string rowvector SaomMNCovNames() return(("samewwclosure", "diffwwclosure", "jum
 	"samexwclosure", "diffxwclosure", "covnetnet", "homcovnetnet", "contrastcovnetnet", "alldifcovnetnet", "covnetnetin", "homcovnetnetin", "contrastcovnetnetin", "alldifcovnetnetin", ///
 	"inpopintnx", "inactintnx", "outpopintnx", "outactintnx", "samexinpopintn", "samexinactintn", "samexoutpopintn", "samexoutactintn", "altdist2w", "totdist2w", "simdist2w", ///
 	"altindist2w", "totindist2w", "simegodist2w", "simegoindist2w"))
-void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
-	class ErgmTermData scalar td
+void SaomMNAddCrossCov(class SaomModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
+	class SaomTermData scalar td
 	string rowvector nm
 	real colvector X, XE
 	real scalar k, w, rng, sm, nact
@@ -8834,7 +10783,7 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 			errprintf("nwsaom multinet: " + eff + "(): a covariate of the events needs at least as many events as actors (RSiena reads it with the index of an actor).\n")
 			exit(198)
 		}
-		td = ErgmTermData()
+		td = SaomTermData()
 		td.levels = (3100 + w \ 0)
 		td.decay = p1
 		td.attr = J(nact, 1, 0) \ (XE :- mean(XE))
@@ -8853,7 +10802,7 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 		errprintf("nwsaom multinet: " + eff + "(): " + vn + " has missing values (not supported).\n")
 		exit(198)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (3100 + w \ 0)
 	td.decay = p1
 	td.attr = (X :- mean(X)) \ J(n - nact, 1, 0)
@@ -8868,8 +10817,8 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 /* protocol 90: cross-network effects with a dyadic covariate (a Stata matrix; centred by its mean as RSiena): toU (code 3200), sharedToU (3201), avAltU.2M.tie (3202); eff:matrix[:#] */
 string rowvector SaomMNDyNames() return(("tou", "sharedtou", "avaltutie"))
 real scalar SaomMNDyDefaultParam(string scalar eff) return(eff == "tou" ? 0 : 1)
-void SaomMNAddCrossDy(class ErgmModel scalar M, string scalar eff, string scalar matname, real scalar n, real scalar p1, real scalar coloff) {
-	class ErgmTermData scalar td
+void SaomMNAddCrossDy(class SaomModel scalar M, string scalar eff, string scalar matname, real scalar n, real scalar p1, real scalar coloff) {
+	class SaomTermData scalar td
 	string rowvector nm
 	real matrix X, W
 	real scalar k, w, m, nact, ncol
@@ -8899,15 +10848,15 @@ void SaomMNAddCrossDy(class ErgmModel scalar M, string scalar eff, string scalar
 		W = X :- m
 	}
 	if (nact < n) W = (J(nact, coloff, 0), W, J(nact, n - coloff - cols(W), 0)) \ J(n - nact, n, 0)
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.levels = (3200 + w \ 0)
 	td.decay = p1
 	td.edgecovmat = W
 	M.addterm("nat_xd" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xd_" + eff + "_" + matname))
 }
 /* a CHANGING covariate (RSiena varCovar: one variable per period, vlist = the variables of the periods) in a cross-network covariate effect; centred by the mean of all periods' values */
-void SaomMNAddCrossCovTV(class ErgmModel scalar M, string scalar eff, string scalar vlist, real scalar n, real scalar p1, real scalar nper) {
-	class ErgmTermData scalar td
+void SaomMNAddCrossCovTV(class SaomModel scalar M, string scalar eff, string scalar vlist, real scalar n, real scalar p1, real scalar nper) {
+	class SaomTermData scalar td
 	string rowvector nm
 	string colvector md
 	real colvector ia
@@ -8925,7 +10874,7 @@ void SaomMNAddCrossCovTV(class ErgmModel scalar M, string scalar eff, string sca
 	}
 	nact = n
 	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) nact = *findexternal("__nwsaom_mn_nA")
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.decay = p1
 	if (nact == n) SaomCovTVAttr(td, vlist, n, nper, 1, m)
 	else if (st_nobs() == nact) {
@@ -8947,12 +10896,12 @@ void SaomMNAddCrossCovTV(class ErgmModel scalar M, string scalar eff, string sca
 	M.addterm("nat_xc" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xc_" + eff + "_" + tokens(vlist)[1]))
 }
 /* the within-network effects: structural ones by name, covariate ones by (name, variable) */
-void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
-	class ErgmTermData scalar td
+void SaomMNAddEff(class SaomModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
+	class SaomTermData scalar td
 	real scalar m
-	td = ErgmTermData()
-	if (eff == "outdegree") M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td, ("outdegree"))
-	else if (eff == "reciprocity") M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td, ("reciprocity"))
+	td = SaomTermData()
+	if (eff == "outdegree") M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td, ("outdegree"))
+	else if (eff == "reciprocity") M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td, ("reciprocity"))
 	else if (eff == "transtrip") M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td, ("transtrip"))
 	else if (eff == "cycle3") M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td, ("cycle3"))
 	else if (eff == "transmedtrip") M.addterm("transmedtrip", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), td, ("transmedtrip"))
@@ -9007,13 +10956,13 @@ void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn,
    =================================================================== */
 /* a wave of the member `slot': a one-mode network (nOne nodes; embedded in n) or a two-mode one (actors of mode actmode first) */
 void SaomMNAddWave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot, real scalar tm, real scalar actmode, real scalar nOne) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
-	class ErgmGraph scalar G
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	class SaomGraph scalar G
 	real rowvector isact, ia, ie, inv
 	string rowvector modes
 	real matrix nb
 	real scalar i, k, nA
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	if (tm) {
 		modes = netobj->get_modes()
@@ -9091,9 +11040,9 @@ void SaomMNSetNSR(real scalar n, real scalar nA, real scalar tm1, real scalar tm
 }
 /* RSiena's average in-degree, out-degree and squared in-degree over all waves, the numbers of senders and receivers: (avIn, avOut, avSqIn, nS, nR) */
 real rowvector SaomMNDeg(real scalar slot) {
-	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external pointer(class SaomGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
 	external real rowvector __nwsaom_mn_nsr
-	pointer(class ErgmGraph scalar) rowvector Gs
+	pointer(class SaomGraph scalar) rowvector Gs
 	real scalar w, k, tot, sq, nS, nR, n
 	real colvector d
 	real matrix e
@@ -9120,10 +11069,10 @@ real rowvector SaomMNDeg(real scalar slot) {
 }
 /* nwsaom multinet: network effects with the dependent behavior as the covariate (RSiena's effects of a behavior variable on tie formation), spec = effect[:#] with the
    parameter # of the threshold effects (egolthresholdx ... degnegdiffx) or of outxmore; the first wave of the behavior is the covariate, centred by its pooled mean */
-void SaomMNAddNetBeh(class ErgmModel scalar M, string scalar spec) {
+void SaomMNAddNetBeh(class SaomModel scalar M, string scalar spec) {
 	external pointer(real colvector) rowvector __nwsaom_mn_Bw
 	external class SaomBehaviorModel scalar __nwsaom_mn_Mbeh
-	class ErgmTermData scalar td
+	class SaomTermData scalar td
 	string scalar eff
 	string rowvector nbn_names
 	real rowvector nbn_codes, pp
@@ -9160,7 +11109,7 @@ void SaomMNAddNetBeh(class ErgmModel scalar M, string scalar spec) {
 		SaomRegNatBeh(M, eff, nbn_codes[i], *__nwsaom_mn_Bw[1], bmean, pp[1], pp[2])
 		return
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.attr = *__nwsaom_mn_Bw[1]
 	td.center = bmean
 	td.decay = (par < . ? par : 0)
@@ -9239,7 +11188,7 @@ real matrix SaomMNRun(real scalar P, real scalar K, real scalar want_score, real
 	return(out)
 }
 /* the observed statistics of the end networks: P x (p1 + p2) and the distances (P x 2) */
-void SaomMNObs(pointer(class ErgmGraph scalar) rowvector G1, pointer(class ErgmGraph scalar) rowvector G2, real scalar P, real scalar p1, real scalar p2,
+void SaomMNObs(pointer(class SaomGraph scalar) rowvector G1, pointer(class SaomGraph scalar) rowvector G2, real scalar P, real scalar p1, real scalar p2,
 	real matrix target, real rowvector tr1, real rowvector tr2) {
 	real matrix E, e, rowv
 	real scalar pd, ne, W, i, junk, c
@@ -9321,8 +11270,8 @@ void SaomMNSimManyCB(struct SaomMNCtx scalar C, real rowvector par, real scalar 
 		Sp[., (pd-1)*ptot+p+P+pd] = S[., p+P+pd]
 	}
 }
-struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector G1, class ErgmModel scalar M1,
-	pointer(class ErgmGraph scalar) rowvector G2, class ErgmModel scalar M2,
+struct SaomMNFit scalar SaomEstimateMN(pointer(class SaomGraph scalar) rowvector G1, class SaomModel scalar M1,
+	pointer(class SaomGraph scalar) rowvector G2, class SaomModel scalar M2,
 	real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg, | real scalar sym1, real scalar sym2) {
 	struct SaomMNFit scalar fit
 	struct SaomMNCtx scalar C
@@ -9501,8 +11450,8 @@ void SaomMNBSimManyCB(struct SaomMNBCtx scalar C, real rowvector par, real scala
 		Sp[., (pd-1)*ptot+p+2*P+pd] = S[., p+2*P+pd]
 	}
 }
-struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvector G1, class ErgmModel scalar M1,
-	pointer(class ErgmGraph scalar) rowvector G2, class ErgmModel scalar M2,
+struct SaomMNBFit scalar SaomEstimateMNB(pointer(class SaomGraph scalar) rowvector G1, class SaomModel scalar M1,
+	pointer(class SaomGraph scalar) rowvector G2, class SaomModel scalar M2,
 	pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax, class SaomBehaviorModel scalar Mbeh, real rowvector net2flag,
 	real rowvector theta01, real rowvector theta02, real rowvector thetab0, real scalar K0, real scalar K3, real scalar firstg, real scalar sym1, real scalar sym2) {
 	struct SaomMNBFit scalar fit
@@ -9639,7 +11588,7 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 
 /* protocol 100: behavior effects of two networks (RSiena FFDeg BBDeg FBDeg FRDeg BRDeg BFDeg indegMixedPop outdegMixedPop). code = 20000 + 100*swap + 10*f + sub
    (see native/saom_sim.c): the observed statistic sum_i (z_i - mean) * D_i of the end behavior z on the STARTING networks. */
-real colvector SaomMNBothDeg(class ErgmGraph scalar Ga, class ErgmGraph scalar Gb, real scalar code) {
+real colvector SaomMNBothDeg(class SaomGraph scalar Ga, class SaomGraph scalar Gb, real scalar code) {
 	real scalar n, f, sub, swap, r
 	real matrix A1, A2, e
 	real colvector D
@@ -9663,7 +11612,7 @@ real colvector SaomMNBothDeg(class ErgmGraph scalar Ga, class ErgmGraph scalar G
 	if (sub & f < 6) D = D - ((f == 0 | f == 2 | f == 3) ? rowsum(A1) : colsum(A1)')
 	return(D)
 }
-real scalar SaomMNBothStat(real colvector z, class ErgmGraph scalar G1, class ErgmGraph scalar G2, real scalar code, real scalar zmean) {
+real scalar SaomMNBothStat(real colvector z, class SaomGraph scalar G1, class SaomGraph scalar G2, real scalar code, real scalar zmean) {
 	if (mod(floor((code - 20000) / 100), 10) == 1) return(sum((z :- zmean) :* SaomMNBothDeg(G2, G1, code)))
 	return(sum((z :- zmean) :* SaomMNBothDeg(G1, G2, code)))
 }
@@ -9710,7 +11659,7 @@ string scalar SaomMNAddBoth(class SaomBehaviorModel scalar Mbeh, string scalar t
 
 /* protocol 103: the observed statistic of an interaction of behavior effects (RSiena BehaviorInteractionEffect::egoStatistic()): sum_i s_a(i) s_b(i) [s_c(i)] / z_i^(ncomp-1),
    z the centred end behavior, s the ego statistics of the components (linear quadratic avalt avsim) on the STARTING network of the period (net 2 for the flagged components) */
-real colvector SaomMNEgoStat(real colvector z, class ErgmGraph scalar G, real scalar base, real scalar mean, real scalar rng, real scalar simMean) {
+real colvector SaomMNEgoStat(real colvector z, class SaomGraph scalar G, real scalar base, real scalar mean, real scalar rng, real scalar simMean) {
 	real scalar n, r
 	real matrix A, e
 	real colvector zc, od, sa
@@ -9726,7 +11675,7 @@ real colvector SaomMNEgoStat(real colvector z, class ErgmGraph scalar G, real sc
 	sa = rowsum(A :* abs(J(n, 1, 1) * z' :- z * J(1, n, 1)))
 	return((od :> 0) :* (1 :- (sa :/ rng) :/ (od :+ (od :== 0)) :- simMean))
 }
-real scalar SaomMNIntStat(real colvector z, class ErgmGraph scalar G1, class ErgmGraph scalar G2, real rowvector codes, real rowvector net2flag, real scalar k, real scalar mean, real scalar rng, real scalar simMean) {
+real scalar SaomMNIntStat(real colvector z, class SaomGraph scalar G1, class SaomGraph scalar G2, real rowvector codes, real rowvector net2flag, real scalar k, real scalar mean, real scalar rng, real scalar simMean) {
 	real scalar code, nc, q, r
 	real rowvector idx
 	real colvector pr, zc
@@ -9854,8 +11803,8 @@ struct SaomCoevNetNetFit {
 }
 
 struct SaomNNCtx {
-	pointer(class ErgmGraph scalar) scalar G1s, G2s
-	pointer(class ErgmModel scalar) scalar M1, M2
+	pointer(class SaomGraph scalar) scalar G1s, G2s
+	pointer(class SaomModel scalar) scalar M1, M2
 	struct SaomNNNativeConfig scalar nncfg
 	struct SaomNNFrameSetup scalar nnframe
 	real scalar use_native, n, p1, p2
@@ -9864,10 +11813,10 @@ struct SaomNNCtx {
 }
 
 /* points every crprod term of M1 at network x1 and of M2 at x2 */
-void SaomNNPointCrprod(class ErgmModel scalar M1, class ErgmModel scalar M2,
-	pointer(class ErgmGraph scalar) scalar x1, pointer(class ErgmGraph scalar) scalar x2) {
+void SaomNNPointCrprod(class SaomModel scalar M1, class SaomModel scalar M2,
+	pointer(class SaomGraph scalar) scalar x1, pointer(class SaomGraph scalar) scalar x2) {
 
-	pointer(class ErgmTermData scalar) scalar tdp	// M.td is an untyped pointer rowvector: go through a typed pointer (matastrict)
+	pointer(class SaomTermData scalar) scalar tdp	// M.td is an untyped pointer rowvector: go through a typed pointer (matastrict)
 	real scalar k
 
 	for (k=1; k<=M1.nterms; k++) {
@@ -9889,7 +11838,7 @@ void SaomNNSimManyCB(struct SaomNNCtx scalar C, real rowvector par, real scalar 
 	real scalar want_score, real matrix Z, real matrix S, | real matrix Zp, real matrix Sp) {
 
 	struct SaomCoevNetNetScoredResult scalar sres
-	class ErgmGraph scalar G1work, G2work
+	class SaomGraph scalar G1work, G2work
 	real rowvector th1, th2, simstat
 	real scalar k, p, r1, r2, d1, d2
 
@@ -9908,9 +11857,9 @@ void SaomNNSimManyCB(struct SaomNNCtx scalar C, real rowvector par, real scalar 
 			d2 = sres.dist2
 		}
 		else {
-			G1work = ErgmGraph()
+			G1work = SaomGraph()
 			SaomCopyGraph(*C.G1s, G1work)
-			G2work = ErgmGraph()
+			G2work = SaomGraph()
 			SaomCopyGraph(*C.G2s, G2work)
 			SaomNNPointCrprod(*C.M1, *C.M2, &G2work, &G1work)	// ministeps: current state
 			sres = SaomSimulateIntervalCoevNetNet(G1work, *C.M1, th1, G2work, *C.M2, th2, r1, r2)
@@ -9929,8 +11878,8 @@ void SaomNNSimManyCB(struct SaomNNCtx scalar C, real rowvector par, real scalar 
 }
 
 struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
-	class ErgmGraph scalar G1obs_start, class ErgmGraph scalar G1obs_end, class ErgmModel scalar M1,
-	class ErgmGraph scalar G2obs_start, class ErgmGraph scalar G2obs_end, class ErgmModel scalar M2,
+	class SaomGraph scalar G1obs_start, class SaomGraph scalar G1obs_end, class SaomModel scalar M1,
+	class SaomGraph scalar G2obs_start, class SaomGraph scalar G2obs_end, class SaomModel scalar M2,
 	real rowvector theta01, real rowvector theta02,
 	real scalar K0, real scalar K3, real scalar firstg) {
 	string scalar why
@@ -10032,8 +11981,8 @@ struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
 struct SaomCoevCtx {
 	real scalar hasnetgate		// network endowment/creation terms in the model
 	real scalar symtype		// non-directed relation: RSiena model type code (0 = directed), see SaomEstimateRMMulti()
-	pointer(class ErgmGraph scalar) rowvector Gwaves
-	pointer(class ErgmGraph scalar) rowvector GpStat	// per period: the starting network the behavior statistics are evaluated on (masked when missing data are present)
+	pointer(class SaomGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector GpStat	// per period: the starting network the behavior statistics are evaluated on (masked when missing data are present)
 	pointer(real colvector) rowvector Behwaves
 	pointer(real matrix) rowvector missMaskNetPd
 	struct SaomNativeConfig scalar cfg
@@ -10057,7 +12006,7 @@ struct SaomCoevCtx {
 /* behavior statistics on a given (lagged) network, missing actors set to
    the overall mean (SaomMaskedBehaviorStatistic()'s rule, without
    rebuilding the masked graph on every call) */
-real rowvector SaomCoevStatBeh(class SaomBehavior scalar Beh, class ErgmGraph scalar Gstat,
+real rowvector SaomCoevStatBeh(class SaomBehavior scalar Beh, class SaomGraph scalar Gstat,
 	class SaomBehaviorModel scalar Mbeh, real colvector missBeh) {
 
 	class SaomBehavior scalar Bm
@@ -10073,20 +12022,20 @@ real rowvector SaomCoevStatBeh(class SaomBehavior scalar Beh, class ErgmGraph sc
 /* one period of a co-evolution model with composition change at fractional times, see SaomPeriodTimed(): segments of constant
    composition by the ordinary engines (rate*duration), the network joiner/leaver rules between them, the behavior of an inactive
    actor put back to its starting value at the end of a period with events. The statistics are evaluated here, on the final state. */
-void SaomCoevPeriodTimed(struct SaomCoevCtx scalar C, class ErgmModel scalar M, class SaomBehaviorModel scalar Mbeh,
+void SaomCoevPeriodTimed(struct SaomCoevCtx scalar C, class SaomModel scalar M, class SaomBehaviorModel scalar Mbeh,
 	real rowvector thetaNet, real rowvector thetaBeh, real scalar rateNet, real scalar rateBeh, real scalar pd,
 	class SaomBehavior scalar Behwork, real colvector behStart, real colvector missBeh,
 	struct SaomCoevScoredResult scalar sres, real rowvector statNet, real rowvector statBeh, real scalar distNet) {
 
 	struct SaomCoevScoredResult scalar seg
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	real colvector act
 	real matrix ev, mdy
 	real scalar t, s, tend, d, j
 
 	ev = *C.compEv[pd]
 	act = (C.presentPd[., pd] :!= 0)
-	Gwork = ErgmGraph()
+	Gwork = SaomGraph()
 	SaomCopyGraph(*C.Gwaves[pd], Gwork)
 	mdy = J(0, 2, 0)
 	if (C.use_native & rows(C.missDyadsPd) > 0) {
@@ -10132,12 +12081,12 @@ void SaomCoevPeriodTimed(struct SaomCoevCtx scalar C, class ErgmModel scalar M, 
 /* One simulated replicate over every period at parameter vector `theta'
    (internal order, see above). Returns the deviation from the targets in
    `dev' and the score in `sco' (both 1 x ptot). */
-void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
+void SaomCoevReplicate(struct SaomCoevCtx scalar C, class SaomModel scalar M,
 	class SaomBehaviorModel scalar Mbeh, real rowvector theta,
 	real rowvector dev, real rowvector sco, | real matrix devp, real matrix scop) {
 
 	struct SaomCoevScoredResult scalar sres
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	class SaomBehavior scalar Behwork
 	real rowvector thetaNet, thetaBeh, statNet, statBeh, simstat
 	real colvector behStart, missBeh
@@ -10178,7 +12127,7 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 			distNet = sres.netdist
 		}
 		else {
-			Gwork = ErgmGraph()
+			Gwork = SaomGraph()
 			SaomCopyGraph(*C.Gwaves[pd], Gwork)
 			if (C.hasnetgate) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh, (C.haspresent ? C.presentPd[., pd] : J(C.n, 1, 1)), C.cfg.fntype)
 			else if (C.haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh, C.presentPd[., pd])
@@ -10220,7 +12169,7 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 /* K replicates at `theta' (internal order): K x ptot deviations `Z' and
    scores `S'. Batch (threaded native) path when available, otherwise K
    calls of SaomCoevReplicate(). */
-void SaomCoevSimMany(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
+void SaomCoevSimMany(struct SaomCoevCtx scalar C, class SaomModel scalar M,
 	class SaomBehaviorModel scalar Mbeh, real rowvector theta, real scalar K,
 	real scalar want_score, real matrix Z, real matrix S, | real matrix Zp, real matrix Sp) {
 
@@ -10352,8 +12301,8 @@ void SaomCfgStruct(struct SaomNativeConfig scalar cfg) {
 	cfg.structpairs = SaomMaskToDyadList(__nwsaom_coev_struct :== 1)
 }
 struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
-	pointer(class ErgmGraph scalar) rowvector Gwaves,
-	class ErgmModel scalar M,
+	pointer(class SaomGraph scalar) rowvector Gwaves,
+	class SaomModel scalar M,
 	pointer(real colvector) rowvector Behwaves, real scalar behminval, real scalar behmaxval,
 	class SaomBehaviorModel scalar Mbeh,
 	real rowvector theta0Net, real rowvector theta0Beh,
@@ -10365,7 +12314,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 
 	struct SaomCoevMultiFit scalar fit
 	struct SaomCoevCtx scalar C
-	class ErgmGraph scalar Gp, Gpend
+	class SaomGraph scalar Gp, Gpend
 	class SaomBehavior scalar Behpend
 	real matrix Zdev, Zsco, Ddev, Dsco, Dhat, temp, Dinv, msf, sfinvcov, Zphase3, Zsco3
 	real matrix Ddev3, Dsco3, Dhat3, Dinv3, missDyadsPdTmp, S3, Z1, S1, Zp1, Sp1, Zp3, Sp3
@@ -10819,7 +12768,7 @@ struct SaomCoevFit {
 }
 
 struct SaomCoevFit scalar SaomEstimateRMCoev(
-	class ErgmGraph scalar Gobs_start, class ErgmGraph scalar Gobs_end, class ErgmModel scalar M,
+	class SaomGraph scalar Gobs_start, class SaomGraph scalar Gobs_end, class SaomModel scalar M,
 	real colvector Behobs_start_values, real colvector Behobs_end_values,
 	real scalar behminval, real scalar behmaxval, class SaomBehaviorModel scalar Mbeh,
 	real rowvector theta0Net, real rowvector theta0Beh,
@@ -10828,7 +12777,7 @@ struct SaomCoevFit scalar SaomEstimateRMCoev(
 
 	struct SaomCoevFit scalar fit
 	struct SaomCoevMultiFit scalar mf
-	pointer(class ErgmGraph scalar) rowvector Gw
+	pointer(class SaomGraph scalar) rowvector Gw
 	pointer(real colvector) rowvector Bw
 	pointer(real matrix) rowvector mnp
 	pointer(real colvector) rowvector mbp
@@ -11005,7 +12954,7 @@ real scalar SaomNativeAvailable(){
    plugin. */
 /* changing dyadic covariates (RSiena varDyadCovar): the n attribute columns of the matrix (column i = row i) are time-varying: column nextattr + i holds
    row i of the period matrices, one frame column per period */
-void SaomDycTVCfg(struct SaomNativeConfig scalar cfg, class ErgmTermData scalar td, real scalar nextattr) {
+void SaomDycTVCfg(struct SaomNativeConfig scalar cfg, class SaomTermData scalar td, real scalar nextattr) {
 	real scalar n, P, i, pd
 	real matrix blk
 	n = rows(td.edgecovmat)
@@ -11017,9 +12966,9 @@ void SaomDycTVCfg(struct SaomNativeConfig scalar cfg, class ErgmTermData scalar 
 		cfg.tvmat = (cols(cfg.tvmat)==0 ? blk : (cfg.tvmat, blk))
 	}
 }
-struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
+struct SaomNativeConfig scalar SaomNativeSetup(class SaomModel scalar M){
 	struct SaomNativeConfig scalar cfg
-	class ErgmTermData scalar tdt
+	class SaomTermData scalar tdt
 	real scalar needv80
 	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45, needv46, needv49
 	string scalar nm, nmb
@@ -11788,7 +13737,7 @@ string scalar SaomTrailer11(struct SaomNativeConfig scalar cfg, real scalar nter
 	return(s)
 }
 
-struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scalar G, class ErgmModel scalar M,
+struct SaomCountedResult scalar SaomSimulateIntervalNative(class SaomGraph scalar G, class SaomModel scalar M,
 	struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar rate, real scalar rebuild_g,
 	real scalar want_score, | real matrix missDyads, real colvector present, real scalar symtype,
 	real matrix ratecovattr, real rowvector ratecoef, real scalar condtarget){
@@ -12032,8 +13981,8 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
    stopping rule. Not used by the estimators; certified against the Mata
    version in cscripts/test_nwsaom_native.do.
    =================================================================== */
-real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph scalar Gstart,
-	class ErgmModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar targetChange) {
+real scalar SaomSimulateCondTimeNative(class SaomGraph scalar G, class SaomGraph scalar Gstart,
+	class SaomModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar targetChange) {
 
 	real matrix ties
 	real scalar n, nties, nattr, i, rngseed, neededrows, neededvars, __junk, condtime
@@ -12145,7 +14094,7 @@ real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph
    toggle loop this flag controls).
 */
 struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
-	class ErgmGraph scalar G, class ErgmModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta,
+	class SaomGraph scalar G, class SaomModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta,
 	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, struct SaomBehaviorNativeConfig scalar cfgBeh,
 	real rowvector thetaBeh, real scalar rateNet, real scalar rateBeh, real scalar rebuild_g,
 	| real matrix missDyads, real colvector missMaskBeh, real colvector present){
@@ -12462,11 +14411,11 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	return(coef)
 }
 
-string scalar SaomRSienaLabels(class ErgmModel scalar M, real scalar symmetric, string scalar behname, | pointer(class SaomBehaviorModel scalar) scalar Mbp) {
+string scalar SaomRSienaLabels(class SaomModel scalar M, real scalar symmetric, string scalar behname, | pointer(class SaomBehaviorModel scalar) scalar Mbp) {
 	string rowvector lab, nms
 	string scalar out, nm, base, l
 	real scalar t, ci, k, idx, pass, isego
-	class ErgmTermData scalar tdt
+	class SaomTermData scalar tdt
 
 	lab = J(1, M.nterms, "")
 	ci = 0
@@ -12764,16 +14713,16 @@ void SaomImpPeriod(pointer(real matrix) rowvector Cm, real rowvector theta, real
 	rh = mean(cert[valid])
 }
 
-void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta) {
+void SaomImportanceRun(pointer(class SaomGraph scalar) rowvector Gstart, real scalar P, class SaomModel scalar M, real rowvector theta) {
 	class SaomBehaviorModel scalar Md
 	Md = SaomBehaviorModel()
 	SaomImportanceCore(Gstart, P, M, theta, Md, J(1, 0, NULL), 0, 0, J(1, 0, 0), 0)
 }
-void SaomImportanceRunB(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta,
+void SaomImportanceRunB(pointer(class SaomGraph scalar) rowvector Gstart, real scalar P, class SaomModel scalar M, real rowvector theta,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax, real rowvector thetab) {
 	SaomImportanceCore(Gstart, P, M, theta, Mbeh, Behwaves, behmin, behmax, thetab, 1)
 }
-void SaomImportanceCore(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta,
+void SaomImportanceCore(pointer(class SaomGraph scalar) rowvector Gstart, real scalar P, class SaomModel scalar M, real rowvector theta,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax, real rowvector thetab, real scalar coev) {
 	struct SaomNativeConfig scalar cfg
 	struct SaomBehaviorNativeConfig scalar cfgB
@@ -12894,7 +14843,7 @@ real rowvector SaomSimSummary(real matrix A, real scalar pd, real scalar behmean
 	return((., pd, sum(B), sum(B :* B') / 2, sum((B * B) :* B), behmean))
 }
 
-real scalar SaomGofSimNet(class ErgmGraph scalar G, class ErgmModel scalar M,
+real scalar SaomGofSimNet(class SaomGraph scalar G, class SaomModel scalar M,
 	real rowvector theta, real scalar rate, real scalar symtype,
 	real matrix rcattr, real rowvector rccoef) {
 
@@ -12931,7 +14880,7 @@ real scalar SaomGofSimNet(class ErgmGraph scalar G, class ErgmModel scalar M,
 	return(0)
 }
 
-real scalar SaomGofSimCoev(class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+real scalar SaomGofSimCoev(class SaomGraph scalar G, class SaomModel scalar M, real rowvector thetaNet,
 	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
 	real scalar rateNet, real scalar rateBeh) {
 
@@ -13014,7 +14963,7 @@ real scalar SaomCores(){
 	return(*p)
 }
 
-void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scalar P,
+void SaomBatchSetup(pointer(class SaomGraph scalar) rowvector Gwaves, real scalar P,
 	struct SaomNativeConfig scalar cfg, real rowvector behtermcodes,
 	pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real scalar simMean, real scalar overallMean, real scalar hasmiss, real matrix missDyadsPd,
@@ -13212,7 +15161,7 @@ struct SaomMBResult {
 
 /* the scored joint simulator for one network and nb behaviors; the network branch is the one of
    SaomSimulateIntervalCoevScored(), the behavior branch its 3-alternative logic for the behavior drawn by rate */
-struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, class ErgmModel scalar M,
+struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class SaomGraph scalar G, class SaomModel scalar M,
 	real rowvector thetaNet, pointer(class SaomBehavior scalar) rowvector Behs,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs, real rowvector thetaBeh, real rowvector off,
 	real scalar rateNet, real rowvector ratesBeh, | real colvector present) {
@@ -13364,7 +15313,7 @@ struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, 
 /* BATCHSETUP for the plugin (protocol 19) with several behaviors: behavior 1 in the legacy fields, behaviors
    2..nb in the trailer; no missing data, composition change, symmetric networks or ratecov(). `codes', `fnt' are the
    native term codes / endowment-creation codes of all behaviors concatenated, `pB' the number of terms of each. */
-void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real scalar P,
+void SaomBatchSetupMB(pointer(class SaomGraph scalar) rowvector Gwaves, real scalar P,
 	struct SaomNativeConfig scalar cfg, real rowvector codes, real rowvector fnt, real rowvector pB,
 	pointer(real colvector) matrix Bw, real rowvector bmin, real rowvector bmax, real rowvector bsim,
 	real rowvector bover, | real scalar hastimed, real matrix presentPd, pointer(real matrix) rowvector compEv) {
@@ -13487,8 +15436,8 @@ real matrix SaomBatchRunMB(real scalar P, real scalar pNet, real rowvector pB, r
 }
 
 struct SaomMBCtx {
-	pointer(class ErgmGraph scalar) rowvector Gwaves
-	pointer(class ErgmModel scalar) scalar Mp
+	pointer(class SaomGraph scalar) rowvector Gwaves
+	pointer(class SaomModel scalar) scalar Mp
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs
 	pointer(real colvector) matrix Behwaves		// nb x (P+1)
 	struct SaomNativeConfig scalar cfg
@@ -13510,7 +15459,7 @@ struct SaomMBCtx {
 /* one period of the several-behaviors model with composition change at fractional times (see SaomCoevPeriodTimed()) */
 void SaomMBPeriodTimed(struct SaomMBCtx scalar C, real rowvector thetaNet, real rowvector thetaBeh, real scalar rateNet,
 	real rowvector ratesBehPd, real scalar pd, pointer(class SaomBehavior scalar) rowvector Behs,
-	class ErgmGraph scalar Gwork, struct SaomMBResult scalar sres) {
+	class SaomGraph scalar Gwork, struct SaomMBResult scalar sres) {
 
 	struct SaomMBResult scalar seg
 	real colvector act
@@ -13554,7 +15503,7 @@ void SaomMBReplicate(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 	real rowvector dev, real rowvector sco, real matrix devp, real matrix scop) {
 
 	struct SaomMBResult scalar sres
-	class ErgmGraph scalar Gwork
+	class SaomGraph scalar Gwork
 	pointer(class SaomBehavior scalar) rowvector Behs
 	class SaomBehavior scalar Bl
 	real rowvector thetaNet, thetaBeh, ratesNet, ratesB, simstat, statB, stb
@@ -13578,7 +15527,7 @@ void SaomMBReplicate(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 	for (pd=1; pd<=P; pd++) {
 		if (C.hastv) SaomTVSync(*C.Mp, pd)
 		SaomBehCovPd(pd)
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(*C.Gwaves[pd], Gwork)
 		Behs = J(1, nb, NULL)
 		for (b=1; b<=nb; b++) {
@@ -13697,7 +15646,7 @@ struct SaomCoevMBFit {
 }
 
 struct SaomMBCtx scalar SaomMBInit(
-	pointer(class ErgmGraph scalar) rowvector Gwaves, class ErgmModel scalar M,
+	pointer(class SaomGraph scalar) rowvector Gwaves, class SaomModel scalar M,
 	pointer(real colvector) matrix Behwaves, real rowvector behmin, real rowvector behmax,
 	real rowvector simMean, real rowvector overallMean,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs,
@@ -13706,7 +15655,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	struct SaomMBCtx scalar C
 	struct SaomBehaviorNativeConfig scalar cb
 	class SaomBehavior scalar Bend
-	class ErgmGraph scalar Gend
+	class SaomGraph scalar Gend
 	real rowvector ratesNet0, stb
 	real matrix ratesBeh0
 	real colvector zero
@@ -13800,7 +15749,7 @@ struct SaomMBCtx scalar SaomMBInit(
 }
 
 struct SaomCoevMBFit scalar SaomEstimateRMCoevMB(
-	pointer(class ErgmGraph scalar) rowvector Gwaves, class ErgmModel scalar M,
+	pointer(class SaomGraph scalar) rowvector Gwaves, class SaomModel scalar M,
 	pointer(real colvector) matrix Behwaves, real rowvector behmin, real rowvector behmax,
 	real rowvector simMean, real rowvector overallMean,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs,
@@ -13849,7 +15798,7 @@ struct SaomCoevMBFit scalar SaomEstimateRMCoevMB(
    in the alter-popularity counts of SimilarityEffect an equal alter is added to the HIGHER count (lnumberAlterEqualPop is never incremented).
    =================================================================== */
 real scalar _sb_c(class SaomBehavior scalar Beh, real scalar j) return(Beh.values[j] - Beh.overallMean)
-real rowvector stat_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar kind) {
+real rowvector stat_saom_bdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar kind) {
 	real scalar i, tot, w
 	tot = 0
 	for (i=1; i<=G.n; i++) {
@@ -13862,7 +15811,7 @@ real rowvector stat_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph sca
 	}
 	return(tot)
 }
-real scalar change_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar kind) {
+real scalar change_saom_bdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real scalar kind) {
 	real scalar w
 	if (kind == 1) w = G.din[i]
 	else if (kind == 2) w = G.dout[i]
@@ -13871,19 +15820,19 @@ real scalar change_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph scal
 	else w = (G.dout[i] == 0)
 	return(diff * w)
 }
-real rowvector stat_saom_indeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 1))
-real scalar change_saom_indeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 1))
-real rowvector stat_saom_outdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 2))
-real scalar change_saom_outdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 2))
-real rowvector stat_saom_recipdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 3))
-real scalar change_saom_recipdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 3))
-real rowvector stat_saom_isolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 4))
-real scalar change_saom_isolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 4))
-real rowvector stat_saom_outisolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 5))
-real scalar change_saom_outisolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 5))
+real rowvector stat_saom_indeg(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bdeg(Beh, G, 1))
+real scalar change_saom_indeg(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 1))
+real rowvector stat_saom_outdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bdeg(Beh, G, 2))
+real scalar change_saom_outdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 2))
+real rowvector stat_saom_recipdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bdeg(Beh, G, 3))
+real scalar change_saom_recipdeg(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 3))
+real rowvector stat_saom_isolate(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bdeg(Beh, G, 4))
+real scalar change_saom_isolate(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 4))
+real rowvector stat_saom_outisolate(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bdeg(Beh, G, 5))
+real scalar change_saom_outisolate(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 5))
 
 /* totAlt (divide = 0), avAltPop / totAltPop (alterPop = 1) */
-real rowvector stat_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar divide, real scalar pop) {
+real rowvector stat_saom_balter(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar divide, real scalar pop) {
 	real scalar i, k, s, nb, tot
 	real rowvector nbr
 	tot = 0
@@ -13899,7 +15848,7 @@ real rowvector stat_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph s
 	}
 	return(tot)
 }
-real scalar change_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar divide, real scalar pop) {
+real scalar change_saom_balter(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real scalar divide, real scalar pop) {
 	real scalar k, nb, ch, tota, popsum
 	real rowvector nbr
 	nbr = G.neighbors_out(i)
@@ -13918,15 +15867,15 @@ real scalar change_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph sc
 	}
 	return(ch)
 }
-real rowvector stat_saom_totalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 0, 0))
-real scalar change_saom_totalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 0))
-real rowvector stat_saom_avaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 1, 1))
-real scalar change_saom_avaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 1, 1))
-real rowvector stat_saom_totaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 0, 1))
-real scalar change_saom_totaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 1))
+real rowvector stat_saom_totalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_balter(Beh, G, 0, 0))
+real scalar change_saom_totalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 0))
+real rowvector stat_saom_avaltpop(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_balter(Beh, G, 1, 1))
+real scalar change_saom_avaltpop(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 1, 1))
+real rowvector stat_saom_totaltpop(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_balter(Beh, G, 0, 1))
+real scalar change_saom_totaltpop(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 1))
 
 /* maxAlt (minim = 0) / minAlt (minim = 1) */
-real rowvector stat_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar minim) {
+real rowvector stat_saom_bmaxalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar minim) {
 	real scalar i, k, m, tot, v
 	real rowvector nbr
 	tot = 0
@@ -13942,7 +15891,7 @@ real rowvector stat_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph 
 	}
 	return(tot)
 }
-real scalar change_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar minim) {
+real scalar change_saom_bmaxalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real scalar minim) {
 	real scalar k, m, v
 	real rowvector nbr
 	nbr = G.neighbors_out(i)
@@ -13954,13 +15903,13 @@ real scalar change_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph s
 	}
 	return(m * diff)
 }
-real rowvector stat_saom_maxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 0))
-real scalar change_saom_maxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 0))
-real rowvector stat_saom_minalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 1))
-real scalar change_saom_minalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 1))
+real rowvector stat_saom_maxalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 0))
+real scalar change_saom_maxalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 0))
+real rowvector stat_saom_minalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 1))
+real scalar change_saom_minalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 1))
 
 /* avRecAlt (divide = 1) / totRecAlt: the reciprocated alters */
-real scalar _sb_recalts(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar cnt) {
+real scalar _sb_recalts(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar cnt) {
 	real rowvector nbr
 	real scalar k, s
 	nbr = G.neighbors_out(i)
@@ -13974,7 +15923,7 @@ real scalar _sb_recalts(class SaomBehavior scalar Beh, class ErgmGraph scalar G,
 	}
 	return(s)
 }
-real rowvector stat_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar divide) {
+real rowvector stat_saom_brecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar divide) {
 	real scalar i, s, cnt, tot
 	tot = 0
 	for (i=1; i<=G.n; i++) {
@@ -13987,7 +15936,7 @@ real rowvector stat_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph 
 	}
 	return(tot)
 }
-real scalar change_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar divide) {
+real scalar change_saom_brecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real scalar divide) {
 	real scalar s, cnt, ch
 	s = _sb_recalts(Beh, G, i, cnt)
 	ch = 0
@@ -13997,13 +15946,13 @@ real scalar change_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph s
 	}
 	return(ch)
 }
-real rowvector stat_saom_avrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_brecalt(Beh, G, 1))
-real scalar change_saom_avrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 1))
-real rowvector stat_saom_totrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_brecalt(Beh, G, 0))
-real scalar change_saom_totrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 0))
+real rowvector stat_saom_avrecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_brecalt(Beh, G, 1))
+real scalar change_saom_avrecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 1))
+real rowvector stat_saom_totrecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_brecalt(Beh, G, 0))
+real scalar change_saom_totrecalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 0))
 
 /* RSiena SimilarityEffect(average, alterPopularity, egoPopularity, hi, lo); flags in the 5-vector fl */
-real rowvector stat_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real rowvector fl) {
+real rowvector stat_saom_bsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real rowvector fl) {
 	real scalar i, k, nb, tot, st, dif, cnt, totc
 	real rowvector nbr
 	tot = 0
@@ -14030,7 +15979,7 @@ real rowvector stat_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph sca
 	}
 	return(tot)
 }
-real scalar change_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real rowvector fl) {
+real scalar change_saom_bsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real rowvector fl) {
 	real scalar k, nb, nh, nl, ne, nhp, nlp, nep, vego, vj, tc, ch
 	real rowvector nbr
 	nbr = G.neighbors_out(i)
@@ -14085,22 +16034,22 @@ real scalar change_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph scal
 	if (fl[3]) ch = ch * G.din[i]
 	return(ch)
 }
-real rowvector stat_saom_totsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,1)))
-real scalar change_saom_totsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,1)))
-real rowvector stat_saom_avatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,1,0)))
-real scalar change_saom_avatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,1,0)))
-real rowvector stat_saom_avattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,0,1)))
-real scalar change_saom_avattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,0,1)))
-real rowvector stat_saom_totatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,0)))
-real scalar change_saom_totatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,0)))
-real rowvector stat_saom_totattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,0,1)))
-real scalar change_saom_totattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,0,1)))
-real rowvector stat_saom_avsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,1,0,1,1)))
-real scalar change_saom_avsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,1,0,1,1)))
-real rowvector stat_saom_totsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,1,0,1,1)))
-real scalar change_saom_totsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,1,0,1,1)))
-real rowvector stat_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,1,1,1)))
-real scalar change_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,1,1,1)))
+real rowvector stat_saom_totsim(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,1)))
+real scalar change_saom_totsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,1)))
+real rowvector stat_saom_avatthigher(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,1,0)))
+real scalar change_saom_avatthigher(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,1,0)))
+real rowvector stat_saom_avattlower(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,0,1)))
+real scalar change_saom_avattlower(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,0,1)))
+real rowvector stat_saom_totatthigher(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,0)))
+real scalar change_saom_totatthigher(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,0)))
+real rowvector stat_saom_totattlower(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,0,1)))
+real scalar change_saom_totattlower(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,0,1)))
+real rowvector stat_saom_avsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (1,1,0,1,1)))
+real scalar change_saom_avsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,1,0,1,1)))
+real rowvector stat_saom_totsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (0,1,0,1,1)))
+real scalar change_saom_totsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,1,0,1,1)))
+real rowvector stat_saom_avsimpopego(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,1,1,1)))
+real scalar change_saom_avsimpopego(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,1,1,1)))
 
 /* protocol 36: effFrom. The covariates live in the global matrix __saom_behcov (n x ncov, centred, set by nwsaom.ado);
    term effcovJ is RSiena's MainCovariateEffect on covariate column J: contribution diff * x_i, statistic z_i * x_i */
@@ -14223,7 +16172,7 @@ void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars
 /* protocol 37: avXAlt / avSameXAlt / totXAlt / totSameXAlt (RSiena AltersCovariateAverageEffect) on covariate column j of __saom_behcov:
    contribution diff * T_i, statistic z_i * T_i, T_i = average (av) or sum (tot) over i's out-alters of the centred covariate (X)
    or of the indicator "same covariate value as ego" (SameX), 0 without out-ties */
-real scalar _sb_xaltT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar j, real scalar v) {
+real scalar _sb_xaltT(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar j, real scalar v) {
 	external real matrix __saom_behcov
 	real scalar k, t, nb, a
 	real rowvector al
@@ -14238,79 +16187,79 @@ real scalar _sb_xaltT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, r
 	}
 	return(v <= 1 ? t / nb : t)
 }
-real rowvector stat_saom_xalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar j, real scalar v) {
+real rowvector stat_saom_xalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar j, real scalar v) {
 	real scalar i, tot
 	tot = 0
 	for (i=1; i<=Beh.n; i++) tot = tot + _sb_c(Beh, i) * _sb_xaltT(Beh, G, i, j, v)
 	return(tot)
 }
-real scalar change_saom_xalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar j, real scalar v) {
+real scalar change_saom_xalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff, real scalar j, real scalar v) {
 	return(diff * _sb_xaltT(Beh, G, i, j, v))
 }
-real rowvector stat_saom_avxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 0))
-real scalar change_saom_avxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 0))
-real rowvector stat_saom_avxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 0))
-real scalar change_saom_avxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 0))
-real rowvector stat_saom_avxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 0))
-real scalar change_saom_avxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 0))
-real rowvector stat_saom_avxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 0))
-real scalar change_saom_avxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 0))
-real rowvector stat_saom_avxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 0))
-real scalar change_saom_avxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 0))
-real rowvector stat_saom_avxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 0))
-real scalar change_saom_avxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 0))
-real rowvector stat_saom_avxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 0))
-real scalar change_saom_avxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 0))
-real rowvector stat_saom_avxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 0))
-real scalar change_saom_avxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 0))
-real rowvector stat_saom_avsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 1))
-real scalar change_saom_avsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 1))
-real rowvector stat_saom_avsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 1))
-real scalar change_saom_avsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 1))
-real rowvector stat_saom_avsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 1))
-real scalar change_saom_avsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 1))
-real rowvector stat_saom_avsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 1))
-real scalar change_saom_avsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 1))
-real rowvector stat_saom_avsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 1))
-real scalar change_saom_avsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 1))
-real rowvector stat_saom_avsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 1))
-real scalar change_saom_avsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 1))
-real rowvector stat_saom_avsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 1))
-real scalar change_saom_avsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 1))
-real rowvector stat_saom_avsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 1))
-real scalar change_saom_avsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 1))
-real rowvector stat_saom_totxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 2))
-real scalar change_saom_totxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 2))
-real rowvector stat_saom_totxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 2))
-real scalar change_saom_totxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 2))
-real rowvector stat_saom_totxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 2))
-real scalar change_saom_totxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 2))
-real rowvector stat_saom_totxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 2))
-real scalar change_saom_totxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 2))
-real rowvector stat_saom_totxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 2))
-real scalar change_saom_totxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 2))
-real rowvector stat_saom_totxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 2))
-real scalar change_saom_totxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 2))
-real rowvector stat_saom_totxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 2))
-real scalar change_saom_totxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 2))
-real rowvector stat_saom_totxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 2))
-real scalar change_saom_totxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 2))
-real rowvector stat_saom_totsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 3))
-real scalar change_saom_totsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 3))
-real rowvector stat_saom_totsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 3))
-real scalar change_saom_totsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 3))
-real rowvector stat_saom_totsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 3))
-real scalar change_saom_totsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 3))
-real rowvector stat_saom_totsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 3))
-real scalar change_saom_totsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 3))
-real rowvector stat_saom_totsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 3))
-real scalar change_saom_totsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 3))
-real rowvector stat_saom_totsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 3))
-real scalar change_saom_totsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 3))
-real rowvector stat_saom_totsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 3))
-real scalar change_saom_totsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 3))
-real rowvector stat_saom_totsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 3))
-real scalar change_saom_totsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 3))
+real rowvector stat_saom_avxalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 0))
+real scalar change_saom_avxalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 0))
+real rowvector stat_saom_avxalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 0))
+real scalar change_saom_avxalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 0))
+real rowvector stat_saom_avxalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 0))
+real scalar change_saom_avxalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 0))
+real rowvector stat_saom_avxalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 0))
+real scalar change_saom_avxalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 0))
+real rowvector stat_saom_avxalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 0))
+real scalar change_saom_avxalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 0))
+real rowvector stat_saom_avxalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 0))
+real scalar change_saom_avxalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 0))
+real rowvector stat_saom_avxalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 0))
+real scalar change_saom_avxalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 0))
+real rowvector stat_saom_avxalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 0))
+real scalar change_saom_avxalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 0))
+real rowvector stat_saom_avsamexalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 1))
+real scalar change_saom_avsamexalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 1))
+real rowvector stat_saom_avsamexalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 1))
+real scalar change_saom_avsamexalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 1))
+real rowvector stat_saom_avsamexalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 1))
+real scalar change_saom_avsamexalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 1))
+real rowvector stat_saom_avsamexalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 1))
+real scalar change_saom_avsamexalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 1))
+real rowvector stat_saom_avsamexalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 1))
+real scalar change_saom_avsamexalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 1))
+real rowvector stat_saom_avsamexalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 1))
+real scalar change_saom_avsamexalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 1))
+real rowvector stat_saom_avsamexalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 1))
+real scalar change_saom_avsamexalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 1))
+real rowvector stat_saom_avsamexalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 1))
+real scalar change_saom_avsamexalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 1))
+real rowvector stat_saom_totxalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 2))
+real scalar change_saom_totxalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 2))
+real rowvector stat_saom_totxalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 2))
+real scalar change_saom_totxalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 2))
+real rowvector stat_saom_totxalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 2))
+real scalar change_saom_totxalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 2))
+real rowvector stat_saom_totxalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 2))
+real scalar change_saom_totxalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 2))
+real rowvector stat_saom_totxalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 2))
+real scalar change_saom_totxalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 2))
+real rowvector stat_saom_totxalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 2))
+real scalar change_saom_totxalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 2))
+real rowvector stat_saom_totxalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 2))
+real scalar change_saom_totxalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 2))
+real rowvector stat_saom_totxalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 2))
+real scalar change_saom_totxalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 2))
+real rowvector stat_saom_totsamexalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 3))
+real scalar change_saom_totsamexalt1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 3))
+real rowvector stat_saom_totsamexalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 3))
+real scalar change_saom_totsamexalt2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 3))
+real rowvector stat_saom_totsamexalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 3))
+real scalar change_saom_totsamexalt3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 3))
+real rowvector stat_saom_totsamexalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 3))
+real scalar change_saom_totsamexalt4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 3))
+real rowvector stat_saom_totsamexalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 3))
+real scalar change_saom_totsamexalt5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 3))
+real rowvector stat_saom_totsamexalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 3))
+real scalar change_saom_totsamexalt6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 3))
+real rowvector stat_saom_totsamexalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 3))
+real scalar change_saom_totsamexalt7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 3))
+real rowvector stat_saom_totsamexalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 3))
+real scalar change_saom_totsamexalt8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 3))
 /* term name "avxalt3" etc. -> (variant 0..3, slot 1..8), or (-1, 0) */
 real rowvector _sb_xaltparse(string scalar nm) {
 	string rowvector pf
@@ -14341,26 +16290,26 @@ string scalar SaomBehCovTrailer(real scalar n) {
 	for (j=1; j<=cols(__saom_behcovoff); j++) out = out + " " + strofreal(findexternal("__saom_behcovdyn") == NULL ? 0 : max((__saom_behcovdyn[j] - 1, 0)))
 	return(out)
 }
-real rowvector stat_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 1))
-real scalar change_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 1))
-real rowvector stat_saom_effcov2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 2))
-real scalar change_saom_effcov2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 2))
-real rowvector stat_saom_effcov3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 3))
-real scalar change_saom_effcov3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 3))
-real rowvector stat_saom_effcov4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 4))
-real scalar change_saom_effcov4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 4))
-real rowvector stat_saom_effcov5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 5))
-real scalar change_saom_effcov5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 5))
-real rowvector stat_saom_effcov6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 6))
-real scalar change_saom_effcov6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 6))
-real rowvector stat_saom_effcov7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 7))
-real scalar change_saom_effcov7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 7))
-real rowvector stat_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 8))
-real scalar change_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 8))
+real rowvector stat_saom_effcov1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 1))
+real scalar change_saom_effcov1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 1))
+real rowvector stat_saom_effcov2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 2))
+real scalar change_saom_effcov2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 2))
+real rowvector stat_saom_effcov3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 3))
+real scalar change_saom_effcov3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 3))
+real rowvector stat_saom_effcov4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 4))
+real scalar change_saom_effcov4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 4))
+real rowvector stat_saom_effcov5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 5))
+real scalar change_saom_effcov5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 5))
+real rowvector stat_saom_effcov6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 6))
+real scalar change_saom_effcov6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 6))
+real rowvector stat_saom_effcov7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 7))
+real scalar change_saom_effcov7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 7))
+real rowvector stat_saom_effcov8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_effcov(Beh, 8))
+real scalar change_saom_effcov8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 8))
 
 /* protocol 43: behavior effects of the network x a covariate (RSiena avXInAlt ... degNegContrX; see bs_T() in native/saom_sim.c). NATIVE ONLY:
    Mata evaluates the observed statistic. bs<f>_<slot> = family f on covariate slot `slot'. */
-real colvector _sb_bsalters(class ErgmGraph scalar G, real scalar i, real scalar set) {
+real colvector _sb_bsalters(class SaomGraph scalar G, real scalar i, real scalar set) {
 	real rowvector nb
 	real colvector out
 	real scalar m
@@ -14371,7 +16320,7 @@ real colvector _sb_bsalters(class ErgmGraph scalar G, real scalar i, real scalar
 	for (m=1; m<=cols(nb); m++) if (G.has_edge(nb[m], i)) out = out \ nb[m]
 	return(out)
 }
-real scalar _sb_bsT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl, real scalar i) {
+real scalar _sb_bsT(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar f, real scalar sl, real scalar i) {
 	external real rowvector __saom_behcovmean
 	real colvector al
 	real scalar kindX, kindSame, kindZS, kindZX, div, set, m, j, nalt, t, same, best, c
@@ -14418,7 +16367,7 @@ real scalar _sb_bsT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, rea
 	if (nalt == 0) return(0)
 	return(div ? t / nalt : t)
 }
-real scalar _sb_bsego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl, real scalar i) {
+real scalar _sb_bsego(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar f, real scalar sl, real scalar i) {
 	real rowvector nb
 	real scalar st, m, j, xi, c, deg
 	if (f >= 17) {
@@ -14441,337 +16390,337 @@ real scalar _sb_bsego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, r
 	}
 	return(_sb_c(Beh, i) * _sb_bsT(Beh, G, f, sl, i))
 }
-real rowvector stat_saom_bs(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl) {
+real rowvector stat_saom_bs(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar f, real scalar sl) {
 	real scalar i, tot
 	tot = 0
 	for (i=1; i<=Beh.n; i++) tot = tot + _sb_bsego(Beh, G, f, sl, i)
 	return(tot)
 }
-real scalar change_saom_bs(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) {
+real scalar change_saom_bs(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) {
 	errprintf("nwsaom: this behavior effect needs the native plugin (protocol 43 or later); there is no Mata implementation of its simulation.\n")
 	exit(198)
 	return(0)
 }
-real rowvector stat_saom_bs0_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 1))
-real scalar change_saom_bs0_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 2))
-real scalar change_saom_bs0_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 3))
-real scalar change_saom_bs0_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 4))
-real scalar change_saom_bs0_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 5))
-real scalar change_saom_bs0_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 6))
-real scalar change_saom_bs0_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 7))
-real scalar change_saom_bs0_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs0_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 8))
-real scalar change_saom_bs0_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 1))
-real scalar change_saom_bs1_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 2))
-real scalar change_saom_bs1_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 3))
-real scalar change_saom_bs1_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 4))
-real scalar change_saom_bs1_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 5))
-real scalar change_saom_bs1_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 6))
-real scalar change_saom_bs1_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 7))
-real scalar change_saom_bs1_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs1_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 8))
-real scalar change_saom_bs1_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 1))
-real scalar change_saom_bs2_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 2))
-real scalar change_saom_bs2_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 3))
-real scalar change_saom_bs2_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 4))
-real scalar change_saom_bs2_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 5))
-real scalar change_saom_bs2_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 6))
-real scalar change_saom_bs2_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 7))
-real scalar change_saom_bs2_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs2_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 8))
-real scalar change_saom_bs2_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 1))
-real scalar change_saom_bs3_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 2))
-real scalar change_saom_bs3_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 3))
-real scalar change_saom_bs3_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 4))
-real scalar change_saom_bs3_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 5))
-real scalar change_saom_bs3_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 6))
-real scalar change_saom_bs3_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 7))
-real scalar change_saom_bs3_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs3_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 8))
-real scalar change_saom_bs3_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 1))
-real scalar change_saom_bs4_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 2))
-real scalar change_saom_bs4_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 3))
-real scalar change_saom_bs4_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 4))
-real scalar change_saom_bs4_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 5))
-real scalar change_saom_bs4_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 6))
-real scalar change_saom_bs4_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 7))
-real scalar change_saom_bs4_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs4_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 8))
-real scalar change_saom_bs4_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 1))
-real scalar change_saom_bs5_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 2))
-real scalar change_saom_bs5_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 3))
-real scalar change_saom_bs5_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 4))
-real scalar change_saom_bs5_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 5))
-real scalar change_saom_bs5_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 6))
-real scalar change_saom_bs5_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 7))
-real scalar change_saom_bs5_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs5_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 8))
-real scalar change_saom_bs5_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 1))
-real scalar change_saom_bs6_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 2))
-real scalar change_saom_bs6_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 3))
-real scalar change_saom_bs6_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 4))
-real scalar change_saom_bs6_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 5))
-real scalar change_saom_bs6_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 6))
-real scalar change_saom_bs6_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 7))
-real scalar change_saom_bs6_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs6_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 8))
-real scalar change_saom_bs6_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 1))
-real scalar change_saom_bs7_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 2))
-real scalar change_saom_bs7_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 3))
-real scalar change_saom_bs7_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 4))
-real scalar change_saom_bs7_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 5))
-real scalar change_saom_bs7_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 6))
-real scalar change_saom_bs7_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 7))
-real scalar change_saom_bs7_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs7_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 8))
-real scalar change_saom_bs7_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 1))
-real scalar change_saom_bs8_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 2))
-real scalar change_saom_bs8_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 3))
-real scalar change_saom_bs8_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 4))
-real scalar change_saom_bs8_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 5))
-real scalar change_saom_bs8_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 6))
-real scalar change_saom_bs8_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 7))
-real scalar change_saom_bs8_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs8_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 8))
-real scalar change_saom_bs8_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 1))
-real scalar change_saom_bs9_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 2))
-real scalar change_saom_bs9_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 3))
-real scalar change_saom_bs9_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 4))
-real scalar change_saom_bs9_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 5))
-real scalar change_saom_bs9_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 6))
-real scalar change_saom_bs9_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 7))
-real scalar change_saom_bs9_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs9_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 8))
-real scalar change_saom_bs9_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 1))
-real scalar change_saom_bs10_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 2))
-real scalar change_saom_bs10_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 3))
-real scalar change_saom_bs10_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 4))
-real scalar change_saom_bs10_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 5))
-real scalar change_saom_bs10_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 6))
-real scalar change_saom_bs10_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 7))
-real scalar change_saom_bs10_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs10_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 8))
-real scalar change_saom_bs10_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 1))
-real scalar change_saom_bs11_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 2))
-real scalar change_saom_bs11_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 3))
-real scalar change_saom_bs11_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 4))
-real scalar change_saom_bs11_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 5))
-real scalar change_saom_bs11_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 6))
-real scalar change_saom_bs11_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 7))
-real scalar change_saom_bs11_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs11_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 8))
-real scalar change_saom_bs11_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 1))
-real scalar change_saom_bs12_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 2))
-real scalar change_saom_bs12_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 3))
-real scalar change_saom_bs12_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 4))
-real scalar change_saom_bs12_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 5))
-real scalar change_saom_bs12_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 6))
-real scalar change_saom_bs12_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 7))
-real scalar change_saom_bs12_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs12_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 8))
-real scalar change_saom_bs12_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 1))
-real scalar change_saom_bs13_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 2))
-real scalar change_saom_bs13_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 3))
-real scalar change_saom_bs13_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 4))
-real scalar change_saom_bs13_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 5))
-real scalar change_saom_bs13_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 6))
-real scalar change_saom_bs13_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 7))
-real scalar change_saom_bs13_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs13_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 8))
-real scalar change_saom_bs13_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 1))
-real scalar change_saom_bs14_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 2))
-real scalar change_saom_bs14_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 3))
-real scalar change_saom_bs14_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 4))
-real scalar change_saom_bs14_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 5))
-real scalar change_saom_bs14_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 6))
-real scalar change_saom_bs14_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 7))
-real scalar change_saom_bs14_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs14_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 8))
-real scalar change_saom_bs14_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 1))
-real scalar change_saom_bs15_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 2))
-real scalar change_saom_bs15_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 3))
-real scalar change_saom_bs15_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 4))
-real scalar change_saom_bs15_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 5))
-real scalar change_saom_bs15_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 6))
-real scalar change_saom_bs15_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 7))
-real scalar change_saom_bs15_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs15_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 8))
-real scalar change_saom_bs15_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 1))
-real scalar change_saom_bs16_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 2))
-real scalar change_saom_bs16_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 3))
-real scalar change_saom_bs16_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 4))
-real scalar change_saom_bs16_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 5))
-real scalar change_saom_bs16_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 6))
-real scalar change_saom_bs16_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 7))
-real scalar change_saom_bs16_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs16_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 8))
-real scalar change_saom_bs16_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 1))
-real scalar change_saom_bs17_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 2))
-real scalar change_saom_bs17_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 3))
-real scalar change_saom_bs17_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 4))
-real scalar change_saom_bs17_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 5))
-real scalar change_saom_bs17_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 6))
-real scalar change_saom_bs17_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 7))
-real scalar change_saom_bs17_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs17_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 8))
-real scalar change_saom_bs17_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 1))
-real scalar change_saom_bs18_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 2))
-real scalar change_saom_bs18_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 3))
-real scalar change_saom_bs18_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 4))
-real scalar change_saom_bs18_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 5))
-real scalar change_saom_bs18_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 6))
-real scalar change_saom_bs18_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 7))
-real scalar change_saom_bs18_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs18_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 8))
-real scalar change_saom_bs18_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 1))
-real scalar change_saom_bs19_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 2))
-real scalar change_saom_bs19_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 3))
-real scalar change_saom_bs19_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 4))
-real scalar change_saom_bs19_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 5))
-real scalar change_saom_bs19_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 6))
-real scalar change_saom_bs19_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 7))
-real scalar change_saom_bs19_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 8))
-real scalar change_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 1))
+real scalar change_saom_bs0_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 2))
+real scalar change_saom_bs0_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 3))
+real scalar change_saom_bs0_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 4))
+real scalar change_saom_bs0_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 5))
+real scalar change_saom_bs0_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 6))
+real scalar change_saom_bs0_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 7))
+real scalar change_saom_bs0_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 0, 8))
+real scalar change_saom_bs0_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 1))
+real scalar change_saom_bs1_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 2))
+real scalar change_saom_bs1_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 3))
+real scalar change_saom_bs1_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 4))
+real scalar change_saom_bs1_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 5))
+real scalar change_saom_bs1_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 6))
+real scalar change_saom_bs1_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 7))
+real scalar change_saom_bs1_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 1, 8))
+real scalar change_saom_bs1_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 1))
+real scalar change_saom_bs2_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 2))
+real scalar change_saom_bs2_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 3))
+real scalar change_saom_bs2_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 4))
+real scalar change_saom_bs2_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 5))
+real scalar change_saom_bs2_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 6))
+real scalar change_saom_bs2_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 7))
+real scalar change_saom_bs2_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 2, 8))
+real scalar change_saom_bs2_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 1))
+real scalar change_saom_bs3_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 2))
+real scalar change_saom_bs3_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 3))
+real scalar change_saom_bs3_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 4))
+real scalar change_saom_bs3_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 5))
+real scalar change_saom_bs3_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 6))
+real scalar change_saom_bs3_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 7))
+real scalar change_saom_bs3_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 3, 8))
+real scalar change_saom_bs3_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 1))
+real scalar change_saom_bs4_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 2))
+real scalar change_saom_bs4_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 3))
+real scalar change_saom_bs4_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 4))
+real scalar change_saom_bs4_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 5))
+real scalar change_saom_bs4_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 6))
+real scalar change_saom_bs4_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 7))
+real scalar change_saom_bs4_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 4, 8))
+real scalar change_saom_bs4_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 1))
+real scalar change_saom_bs5_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 2))
+real scalar change_saom_bs5_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 3))
+real scalar change_saom_bs5_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 4))
+real scalar change_saom_bs5_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 5))
+real scalar change_saom_bs5_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 6))
+real scalar change_saom_bs5_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 7))
+real scalar change_saom_bs5_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 5, 8))
+real scalar change_saom_bs5_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 1))
+real scalar change_saom_bs6_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 2))
+real scalar change_saom_bs6_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 3))
+real scalar change_saom_bs6_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 4))
+real scalar change_saom_bs6_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 5))
+real scalar change_saom_bs6_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 6))
+real scalar change_saom_bs6_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 7))
+real scalar change_saom_bs6_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 6, 8))
+real scalar change_saom_bs6_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 1))
+real scalar change_saom_bs7_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 2))
+real scalar change_saom_bs7_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 3))
+real scalar change_saom_bs7_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 4))
+real scalar change_saom_bs7_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 5))
+real scalar change_saom_bs7_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 6))
+real scalar change_saom_bs7_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 7))
+real scalar change_saom_bs7_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 7, 8))
+real scalar change_saom_bs7_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 1))
+real scalar change_saom_bs8_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 2))
+real scalar change_saom_bs8_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 3))
+real scalar change_saom_bs8_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 4))
+real scalar change_saom_bs8_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 5))
+real scalar change_saom_bs8_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 6))
+real scalar change_saom_bs8_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 7))
+real scalar change_saom_bs8_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 8, 8))
+real scalar change_saom_bs8_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 1))
+real scalar change_saom_bs9_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 2))
+real scalar change_saom_bs9_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 3))
+real scalar change_saom_bs9_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 4))
+real scalar change_saom_bs9_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 5))
+real scalar change_saom_bs9_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 6))
+real scalar change_saom_bs9_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 7))
+real scalar change_saom_bs9_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 9, 8))
+real scalar change_saom_bs9_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 1))
+real scalar change_saom_bs10_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 2))
+real scalar change_saom_bs10_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 3))
+real scalar change_saom_bs10_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 4))
+real scalar change_saom_bs10_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 5))
+real scalar change_saom_bs10_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 6))
+real scalar change_saom_bs10_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 7))
+real scalar change_saom_bs10_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 10, 8))
+real scalar change_saom_bs10_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 1))
+real scalar change_saom_bs11_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 2))
+real scalar change_saom_bs11_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 3))
+real scalar change_saom_bs11_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 4))
+real scalar change_saom_bs11_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 5))
+real scalar change_saom_bs11_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 6))
+real scalar change_saom_bs11_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 7))
+real scalar change_saom_bs11_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 11, 8))
+real scalar change_saom_bs11_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 1))
+real scalar change_saom_bs12_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 2))
+real scalar change_saom_bs12_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 3))
+real scalar change_saom_bs12_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 4))
+real scalar change_saom_bs12_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 5))
+real scalar change_saom_bs12_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 6))
+real scalar change_saom_bs12_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 7))
+real scalar change_saom_bs12_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 12, 8))
+real scalar change_saom_bs12_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 1))
+real scalar change_saom_bs13_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 2))
+real scalar change_saom_bs13_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 3))
+real scalar change_saom_bs13_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 4))
+real scalar change_saom_bs13_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 5))
+real scalar change_saom_bs13_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 6))
+real scalar change_saom_bs13_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 7))
+real scalar change_saom_bs13_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 13, 8))
+real scalar change_saom_bs13_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 1))
+real scalar change_saom_bs14_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 2))
+real scalar change_saom_bs14_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 3))
+real scalar change_saom_bs14_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 4))
+real scalar change_saom_bs14_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 5))
+real scalar change_saom_bs14_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 6))
+real scalar change_saom_bs14_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 7))
+real scalar change_saom_bs14_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 14, 8))
+real scalar change_saom_bs14_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 1))
+real scalar change_saom_bs15_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 2))
+real scalar change_saom_bs15_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 3))
+real scalar change_saom_bs15_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 4))
+real scalar change_saom_bs15_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 5))
+real scalar change_saom_bs15_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 6))
+real scalar change_saom_bs15_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 7))
+real scalar change_saom_bs15_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 15, 8))
+real scalar change_saom_bs15_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 1))
+real scalar change_saom_bs16_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 2))
+real scalar change_saom_bs16_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 3))
+real scalar change_saom_bs16_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 4))
+real scalar change_saom_bs16_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 5))
+real scalar change_saom_bs16_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 6))
+real scalar change_saom_bs16_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 7))
+real scalar change_saom_bs16_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 16, 8))
+real scalar change_saom_bs16_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 1))
+real scalar change_saom_bs17_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 2))
+real scalar change_saom_bs17_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 3))
+real scalar change_saom_bs17_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 4))
+real scalar change_saom_bs17_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 5))
+real scalar change_saom_bs17_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 6))
+real scalar change_saom_bs17_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 7))
+real scalar change_saom_bs17_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 17, 8))
+real scalar change_saom_bs17_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 1))
+real scalar change_saom_bs18_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 2))
+real scalar change_saom_bs18_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 3))
+real scalar change_saom_bs18_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 4))
+real scalar change_saom_bs18_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 5))
+real scalar change_saom_bs18_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 6))
+real scalar change_saom_bs18_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 7))
+real scalar change_saom_bs18_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 18, 8))
+real scalar change_saom_bs18_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_1(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 1))
+real scalar change_saom_bs19_1(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_2(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 2))
+real scalar change_saom_bs19_2(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_3(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 3))
+real scalar change_saom_bs19_3(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_4(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 4))
+real scalar change_saom_bs19_4(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_5(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 5))
+real scalar change_saom_bs19_5(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_6(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 6))
+real scalar change_saom_bs19_6(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_7(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 7))
+real scalar change_saom_bs19_7(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_8(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bs(Beh, G, 19, 8))
+real scalar change_saom_bs19_8(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
 string rowvector _sb_bsfamilies() {
 	return(("avxinalt", "totxinalt", "avxrecalt", "totxrecalt", "avsamexinalt", "totsamexinalt", "avsamexrecalt", "totsamexrecalt", "avaltsamex", "totaltsamex", "avrecaltsamex", "totrecaltsamex", "avaltaltx", "avsimaltx", "totsimaltx", "minxalt", "maxxalt", "degabscontrx", "degposcontrx", "degnegcontrx", "avxaltdist2", "totxaltdist2", "avtxaltdist2", "totaxaltdist2", "avxinaltdist2", "totxinaltdist2", "avtxinaltdist2", "totaxinaltdist2", "avsimegox", "totsimegox", "avaltegox", "totaltegox"))
 }
@@ -14788,7 +16737,7 @@ real rowvector _sb_bsparse(string scalar nm) {
 }
 
 /* protocol 44: behavior effects of the network without a covariate (avinsim ... totinalt, see beh_bq_ego_stat() in native/saom_sim.c). NATIVE ONLY. */
-real scalar _sb_bqego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar i) {
+real scalar _sb_bqego(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar f, real scalar i) {
 	real colvector al
 	real scalar m, j, st, nb, avg, pop, t, zi, ts
 	zi = _sb_c(Beh, i)
@@ -14823,41 +16772,41 @@ real scalar _sb_bqego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, r
 	if (f == 10) st = st / rows(al)
 	return(st)
 }
-real rowvector stat_saom_bq(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f) {
+real rowvector stat_saom_bq(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar f) {
 	real scalar i, tot
 	tot = 0
 	for (i=1; i<=Beh.n; i++) tot = tot + _sb_bqego(Beh, G, f, i)
 	return(tot)
 }
-real rowvector stat_saom_avinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 0))
-real scalar change_saom_avinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 1))
-real scalar change_saom_totinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_avinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 2))
-real scalar change_saom_avinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 3))
-real scalar change_saom_totinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_avsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 4))
-real scalar change_saom_avsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 5))
-real scalar change_saom_totsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_avsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 6))
-real scalar change_saom_avsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 7))
-real scalar change_saom_totsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_popalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 8))
-real scalar change_saom_popalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 9))
-real scalar change_saom_totpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_avinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 10))
-real scalar change_saom_avinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
-real rowvector stat_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 11))
-real scalar change_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avinsim(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 0))
+real scalar change_saom_avinsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinsim(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 1))
+real scalar change_saom_totinsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avinsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 2))
+real scalar change_saom_avinsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 3))
+real scalar change_saom_totinsimpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avsimrecip(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 4))
+real scalar change_saom_avsimrecip(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totsimrecip(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 5))
+real scalar change_saom_totsimrecip(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avsimrecpop(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 6))
+real scalar change_saom_avsimrecpop(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totsimrecpop(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 7))
+real scalar change_saom_totsimrecpop(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_popalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 8))
+real scalar change_saom_popalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 9))
+real scalar change_saom_totpopalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avinalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 10))
+real scalar change_saom_avinalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinalt(class SaomBehavior scalar Beh, class SaomGraph scalar G) return(stat_saom_bq(Beh, G, 11))
+real scalar change_saom_totinalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
 string rowvector _sb_bqtokens() return(("avinsim", "totinsim", "avinsimpopalt", "totinsimpopalt", "avsimrecip", "totsimrecip", "avsimrecpop", "totsimrecpop", "popalt", "totpopalt", "avinalt", "totinalt"))
 
 /* protocol 47: the generic bridge for native-only BEHAVIOR terms: bn_<code>_<slot>. The observed statistic comes from the plugin (BEHSTAT); the term name is
    made known to the statistic function through the external string __sb_cur_name that SaomBehaviorModel::full_statistic() sets. */
-real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar code, real scalar sl, | real matrix Wd) {
+real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar code, real scalar sl, | real matrix Wd) {
 	real matrix E
 	real rowvector nb
 	real scalar i, m, ne, n, junk
@@ -14888,7 +16837,7 @@ real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph sca
 	stata("capture frame drop __saom_behstat")
 	return(st_numscalar("__saom_behstat_val"))
 }
-real rowvector stat_saom_bn(class SaomBehavior scalar Beh, class ErgmGraph scalar G) {
+real rowvector stat_saom_bn(class SaomBehavior scalar Beh, class SaomGraph scalar G) {
 	external string scalar __sb_cur_name
 	string scalar nm
 	real scalar u
@@ -15474,7 +17423,7 @@ string scalar SaomMBCoefNames(pointer(class SaomBehaviorModel scalar) rowvector 
 	return(out)
 }
 
-string scalar SaomMBLabels(class ErgmModel scalar M, real scalar symmetric, string scalar namestr,
+string scalar SaomMBLabels(class SaomModel scalar M, real scalar symmetric, string scalar namestr,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs) {
 	string scalar out, nm, base, l
 	string rowvector names
@@ -15503,7 +17452,7 @@ string scalar SaomMBLabels(class ErgmModel scalar M, real scalar symmetric, stri
 
 /* testing aid: K replicates at `theta' (internal order) with the native batch engine and with the Mata engine;
    prints, per parameter, the mean and sd of the statistics (deviation + target) and of the scores for both. */
-void SaomMBEngineCheck(pointer(class ErgmGraph scalar) rowvector Gwaves, class ErgmModel scalar M,
+void SaomMBEngineCheck(pointer(class SaomGraph scalar) rowvector Gwaves, class SaomModel scalar M,
 	pointer(real colvector) matrix Behwaves, real rowvector behmin, real rowvector behmax,
 	real rowvector simMean, real rowvector overallMean,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs, real rowvector theta, real scalar K) {
@@ -15532,7 +17481,7 @@ void SaomMBEngineCheck(pointer(class ErgmGraph scalar) rowvector Gwaves, class E
 
 /* ownx() / instructeq averages (were in nwsaom.ado; Mata functions of an ado-file are private to that file, so _nwsaom_nx.ado cannot see them) */
 /* ownx(): accumulate the number of ties and of reciprocated out-ties of one wave (for the averages over all waves) */
-void __nwsaom_dg_acc(class ErgmGraph scalar G) {
+void __nwsaom_dg_acc(class SaomGraph scalar G) {
 	external real scalar __nwsaom_dg_ties, __nwsaom_dg_rec
 	real matrix e
 	real scalar k, r
@@ -15543,7 +17492,7 @@ void __nwsaom_dg_acc(class ErgmGraph scalar G) {
 	__nwsaom_dg_rec = __nwsaom_dg_rec + r
 }
 /* inStructEq: RSiena calcStructmeanGroup(), the sums over the waves 1 .. W-1 (2 * outdegree * (n - 1 - outdegree) and n * (n - 1) * (n - 2)) */
-void __nwsaom_sm_acc(class ErgmGraph scalar G) {
+void __nwsaom_sm_acc(class SaomGraph scalar G) {
 	external real scalar __nwsaom_dg_sma, __nwsaom_dg_smb
 	real scalar i, d, n
 	n = G.n
@@ -15556,7 +17505,7 @@ void __nwsaom_sm_acc(class ErgmGraph scalar G) {
 /* the bridges of nwsaom.ado and the multiplex fit (Mata functions of an ado-file are private to that file; nwsaom_multinet.ado / nwsaom_multiplex.ado / _nwsaom_nx.ado need them) */
 /* two-mode: the ties actor -> event only (the network is stored symmetrically over all nodes) */
 void __nwsaom_bridge_twomode(pointer(class nw_def scalar) scalar netobj,
-	class ErgmGraph scalar G, real rowvector isactor){
+	class SaomGraph scalar G, real rowvector isactor){
 	real scalar i, k
 	real matrix nb
 
@@ -15570,7 +17519,7 @@ void __nwsaom_bridge_twomode(pointer(class nw_def scalar) scalar netobj,
 }
 
 void __nwsaom_bridge_from_netobj(pointer(class nw_def scalar) scalar netobj,
-	class ErgmGraph scalar G){
+	class SaomGraph scalar G){
 	real scalar i, k
 	real matrix nb
 
@@ -15590,30 +17539,30 @@ void __nwsaom_mp_fit_and_post(
 	string scalar bname, string scalar Vname, string scalar rate1name, string scalar rate2name,
 	string scalar ncoefname) {
 
-	class ErgmGraph scalar G1a, G1b, G2a, G2b
-	class ErgmModel scalar M1, M2
-	class ErgmTermData scalar td1a, td1b, td1c, td2a, td2b, td2c
+	class SaomGraph scalar G1a, G1b, G2a, G2b
+	class SaomModel scalar M1, M2
+	class SaomTermData scalar td1a, td1b, td1c, td2a, td2b, td2c
 	struct SaomCoevNetNetFit scalar fit
 
-	G1a = ErgmGraph()
+	G1a = SaomGraph()
 	G1a.init(n, 1)
 	__nwsaom_bridge_from_netobj(netobj1a, G1a)
-	G1b = ErgmGraph()
+	G1b = SaomGraph()
 	G1b.init(n, 1)
 	__nwsaom_bridge_from_netobj(netobj1b, G1b)
-	G2a = ErgmGraph()
+	G2a = SaomGraph()
 	G2a.init(n, 1)
 	__nwsaom_bridge_from_netobj(netobj2a, G2a)
-	G2b = ErgmGraph()
+	G2b = SaomGraph()
 	G2b.init(n, 1)
 	__nwsaom_bridge_from_netobj(netobj2b, G2b)
 
-	M1 = ErgmModel()
+	M1 = SaomModel()
 	M1.init()
-	td1a = ErgmTermData()
-	M1.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1a, ("outdegree"))
-	td1b = ErgmTermData()
-	M1.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td1b, ("reciprocity"))
+	td1a = SaomTermData()
+	M1.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1a, ("outdegree"))
+	td1b = SaomTermData()
+	M1.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td1b, ("reciprocity"))
 	// crprod (Stage 2): net1's own effect list gets a term reading net2's
 	// CURRENT tie state - td1c.xnet itself is left NULL here; it is
 	// re-pointed at whichever G2 working copy is "live" for a given
@@ -15622,18 +17571,18 @@ void __nwsaom_mp_fit_and_post(
 	// since G2a/G2b (the OBSERVED start/end networks) are never what a
 	// ministep actually reads mid-simulation.
 	if (wantcrprod) {
-		td1c = ErgmTermData()
+		td1c = SaomTermData()
 		M1.addterm("crprod", 1, &stat_crprod(), &change_crprod(), td1c, ("crprod"))
 	}
 
-	M2 = ErgmModel()
+	M2 = SaomModel()
 	M2.init()
-	td2a = ErgmTermData()
-	M2.addterm("outdegree", 1, &stat_edges(), &change_edges(), td2a, ("outdegree"))
-	td2b = ErgmTermData()
-	M2.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2b, ("reciprocity"))
+	td2a = SaomTermData()
+	M2.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td2a, ("outdegree"))
+	td2b = SaomTermData()
+	M2.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2b, ("reciprocity"))
 	if (wantcrprodb) {
-		td2c = ErgmTermData()
+		td2c = SaomTermData()
 		M2.addterm("crprod", 1, &stat_crprod(), &change_crprod(), td2c, ("crprod"))
 	}
 
@@ -15708,13 +17657,13 @@ void SaomBayesSummary(string scalar frname, real scalar K, real scalar Kp, real 
 /* nwsaom bayes / nwsaom ..., ml: set up the plugin's resident model (the starting networks and behaviors of the periods) and the input frame of
    the sampler: columns 1-3 the end ties (period, i, j), columns 4-6 the end behavior (period, actor, value); nextra further columns follow.
    Returns the number of end-tie rows nE and of end-behavior rows nBE and the number of rows the frame needs (at least nrowsmin). */
-void SaomChainPrepare(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+void SaomChainPrepare(pointer(class SaomGraph scalar) rowvector Gall, real scalar P, class SaomModel scalar M, real scalar coev,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	string scalar frname, string rowvector extranames, real scalar nrowsmin, real scalar nE, real scalar nBE)
 {
 	struct SaomNativeConfig scalar cfg
 	struct SaomBehaviorNativeConfig scalar cfgB
-	pointer(class ErgmGraph scalar) rowvector Gstart
+	pointer(class SaomGraph scalar) rowvector Gstart
 	pointer(real matrix) rowvector noev
 	real matrix E, BE, t
 	real colvector allb
@@ -15767,7 +17716,7 @@ void SaomChainPrepare(pointer(class ErgmGraph scalar) rowvector Gall, real scala
 
 /* nwsaom bayes: the Bayesian sampler of the plugin (BAYESRUN). theta holds the network effects, then the behavior effects; rho0 and the rate arguments
    the network rates of the periods, then the behavior rates. The draws are stored in frame frname; returns their number. */
-real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+real scalar SaomBayesRun(pointer(class SaomGraph scalar) rowvector Gall, real scalar P, class SaomModel scalar M, real scalar coev,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd,
 	real rowvector ratepm, real rowvector ratepsd, real scalar pshape, real scalar prate, real rowvector rsd,
@@ -15826,7 +17775,7 @@ real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real sc
 
 /* nwsaom ..., ml: maximum likelihood estimation by the plugin (MLRUN) for the model of the last nwsaom fit. Returns a (KT+NR) x (3+KT+NR) matrix:
    the estimates (effects, then the rates of the periods: network, then behavior), the convergence t-ratios, the covariance matrix, the mean score of phase 3. */
-real matrix SaomMLRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+real matrix SaomMLRun(pointer(class SaomGraph scalar) rowvector Gall, real scalar P, class SaomModel scalar M, real scalar coev,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real rowvector theta, real rowvector rho0, real scalar n1, real scalar nsub, real scalar n2start, real scalar n3,
 	real scalar nmh, real scalar seed, real scalar mult, real scalar gain, real scalar geo)

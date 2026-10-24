@@ -150,7 +150,7 @@ program define nwsaom_estat_simulate, rclass
 	forvalues s = 1/`nsim' {
 		forvalues pd = 1/`nperiods' {
 			local ++row
-			mata: __nwsaom_sim_G = ErgmGraph()
+			mata: __nwsaom_sim_G = SaomGraph()
 			mata: SaomCopyGraph(__nwsaom_last_G`pd', __nwsaom_sim_G)
 			if `coev' {
 				mata: __nwsaom_sim_B = SaomBehavior()

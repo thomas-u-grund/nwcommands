@@ -1,6 +1,5 @@
 cscript
 
-do unw_ergm.do
 do unw_saom.do
 
 * Certifies the native (C) SAOM backend (native/saom_sim.c, harmonisation
@@ -16,17 +15,17 @@ do unw_saom.do
 mata:
 mata set matastrict off
 
-void saom_native_build_model(class ErgmModel M, real colvector attr) {
-	class ErgmTermData scalar td1, td2, td3
+void saom_native_build_model(class SaomModel M, real colvector attr) {
+	class SaomTermData scalar td1, td2, td3
 
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
-	td3 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
+	td3 = SaomTermData()
 	td3.attr = attr
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("nodematch"))
 }
 
 /* -------------------------------------------------------------------
@@ -38,11 +37,11 @@ void saom_native_build_model(class ErgmModel M, real colvector attr) {
    incomplete/wrong native computation for a term it cannot handle.
    ------------------------------------------------------------------- */
 void saom_test_native_eligibility(real scalar n, real colvector attr) {
-	class ErgmModel scalar M
-	class ErgmTermData scalar td4
+	class SaomModel scalar M
+	class SaomTermData scalar td4
 	struct SaomNativeConfig scalar cfg
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
@@ -54,7 +53,7 @@ void saom_test_native_eligibility(real scalar n, real colvector attr) {
 	// correctly for a genuinely unrecognized (synthetic, future) term
 	// name, using indegpopularity's own already-certified stat/change
 	// functions just as a stand-in payload under a fake name.
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	M.addterm("aFutureEffectNotYetPortedToNative", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td4, ("futureeffect"))
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 0)
@@ -71,8 +70,8 @@ void saom_test_native_eligibility(real scalar n, real colvector attr) {
    already one fully independent simulated interval).
    ------------------------------------------------------------------- */
 void saom_test_native_equivalence(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
@@ -80,14 +79,14 @@ void saom_test_native_equivalence(real scalar n, real colvector attr, real scala
 	real rowvector mmata, mnative, semata, senative, zstat
 	struct SaomCountedResult scalar cres
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(555111)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -102,7 +101,7 @@ void saom_test_native_equivalence(real scalar n, real colvector attr, real scala
 	Zmata = J(nruns, p, 0)
 	rseed(24681)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		steps = SaomSimulateInterval(Gwork, M, theta, 3)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -111,7 +110,7 @@ void saom_test_native_equivalence(real scalar n, real colvector attr, real scala
 	Znative = J(nruns, p, 0)
 	rseed(97531)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 3, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -155,9 +154,9 @@ void saom_test_native_equivalence(real scalar n, real colvector attr, real scala
    cycle3) end to end. Same two-sample z-test methodology as above.
    ------------------------------------------------------------------- */
 void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvector attr2, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
@@ -165,26 +164,26 @@ void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvec
 	real rowvector mmata, mnative, semata, senative, zstat
 	struct SaomCountedResult scalar cres
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	td2.attr = attr1
-	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td2, ("nodecov"))
-	td3 = ErgmTermData()
+	M.addterm("nodecov", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td2, ("nodecov"))
+	td3 = SaomTermData()
 	M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td3, ("indegpopularity"))
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td4, ("outactivity"))
-	td5 = ErgmTermData()
+	td5 = SaomTermData()
 	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td5, ("outpopularity"))
-	td6 = ErgmTermData()
+	td6 = SaomTermData()
 	M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td6, ("inactivity"))
-	td7 = ErgmTermData()
+	td7 = SaomTermData()
 	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td7, ("transtrip"))
-	td8 = ErgmTermData()
+	td8 = SaomTermData()
 	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td8, ("cycle3"))
-	td9 = ErgmTermData()
+	td9 = SaomTermData()
 	rng = max(attr2) - min(attr2)
 	td9.attr = attr2
 	td9.decay = rng
@@ -195,7 +194,7 @@ void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvec
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(246810)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -211,7 +210,7 @@ void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvec
 	Zmata = J(nruns, p, 0)
 	rseed(11223)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalCounted(Gwork, M, theta, 10)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -220,7 +219,7 @@ void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvec
 	Znative = J(nruns, p, 0)
 	rseed(33445)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 10, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -266,45 +265,45 @@ void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvec
    loosened bar.
    ------------------------------------------------------------------- */
 void saom_test_native_stat_match(real scalar n, real colvector attr1, real colvector attr2, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9, td10, td11, td12, td13
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9, td10, td11, td12, td13
 	struct SaomNativeConfig scalar cfg
 	struct SaomCountedResult scalar cres
 	real rowvector theta, statvec, maxerr
 	real scalar r, k, i, j, nedges0, rng, p
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
-	td3 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
+	td3 = SaomTermData()
 	td3.attr = attr1
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
-	td4 = ErgmTermData()
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("nodematch"))
+	td4 = SaomTermData()
 	td4.attr = attr1
-	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td4, ("nodecov"))
-	td5 = ErgmTermData()
+	M.addterm("nodecov", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td4, ("nodecov"))
+	td5 = SaomTermData()
 	td5.attr = attr2
-	M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td5, ("nodeicov"))
-	td6 = ErgmTermData()
+	M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td5, ("nodeicov"))
+	td6 = SaomTermData()
 	td6.attr = attr2
-	M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td6, ("nodeocov"))
-	td7 = ErgmTermData()
+	M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td6, ("nodeocov"))
+	td7 = SaomTermData()
 	M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td7, ("indegpopularity"))
-	td8 = ErgmTermData()
+	td8 = SaomTermData()
 	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td8, ("outactivity"))
-	td9 = ErgmTermData()
+	td9 = SaomTermData()
 	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td9, ("outpopularity"))
-	td10 = ErgmTermData()
+	td10 = SaomTermData()
 	M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td10, ("inactivity"))
-	td11 = ErgmTermData()
+	td11 = SaomTermData()
 	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td11, ("transtrip"))
-	td12 = ErgmTermData()
+	td12 = SaomTermData()
 	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td12, ("cycle3"))
-	td13 = ErgmTermData()
+	td13 = SaomTermData()
 	rng = max(attr2) - min(attr2)
 	td13.attr = attr2
 	td13.decay = rng
@@ -315,7 +314,7 @@ void saom_test_native_stat_match(real scalar n, real colvector attr1, real colve
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(556677)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -330,7 +329,7 @@ void saom_test_native_stat_match(real scalar n, real colvector attr1, real colve
 
 	maxerr = J(1, p, 0)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
 		statvec = M.full_statistic(Gwork)
@@ -362,8 +361,8 @@ void saom_test_native_stat_match(real scalar n, real colvector attr1, real colve
    parameter's own mean deviation AND mean score.
    ------------------------------------------------------------------- */
 void saom_test_native_score_equiv(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	struct SaomNativeConfig scalar cfg
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
@@ -372,14 +371,14 @@ void saom_test_native_score_equiv(real scalar n, real colvector attr, real scala
 	real scalar r, k, p, i, j, nedges0
 	real rowvector mdev_m, mdev_n, msco_m, msco_n, sedev_m, sedev_n, sesco_m, sesco_n, zdev, zsco
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(998877)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -396,7 +395,7 @@ void saom_test_native_score_equiv(real scalar n, real colvector attr, real scala
 	Zsco_mata = J(nruns, p, 0)
 	rseed(112233)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		sres = SaomSimulateIntervalScored(Gwork, M, theta, 3)
 		Zdev_mata[r,.] = M.full_statistic(Gwork) - target
@@ -448,13 +447,13 @@ void saom_test_native_score_equiv(real scalar n, real colvector attr, real scala
    name must correctly flip cfgBeh.eligible back to 0.
    ------------------------------------------------------------------- */
 void saom_test_coev_native_elig(real colvector attr) {
-	class ErgmModel scalar M
+	class SaomModel scalar M
 	class SaomBehaviorModel scalar Mbeh
-	class ErgmTermData scalar td4
+	class SaomTermData scalar td4
 	struct SaomNativeConfig scalar cfg
 	struct SaomBehaviorNativeConfig scalar cfgBeh
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
@@ -475,8 +474,8 @@ void saom_test_coev_native_elig(real colvector attr) {
 }
 
 void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	class SaomBehavior scalar Beh0, Behwork
 	class SaomBehaviorModel scalar Mbeh
 	struct SaomNativeConfig scalar cfg
@@ -489,7 +488,7 @@ void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar
 	real rowvector mdev_m, mdev_n, msco_m, msco_n, mdevb_m, mdevb_n, mscob_m, mscob_n
 	real rowvector zdev, zsco, zdevb, zscob
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
@@ -510,7 +509,7 @@ void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(864213)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -533,7 +532,7 @@ void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar
 	ZscoBeh_m = J(nruns, pBeh, 0)
 	rseed(112233)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
@@ -561,7 +560,7 @@ void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar
 	maxstatbehdiff = 0
 	rseed(445566)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
@@ -632,26 +631,26 @@ void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar
    actually needs) rather than an end-of-interval statistic vector.
    ------------------------------------------------------------------- */
 void saom_test_native_condtime_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real colvector tMata, tNative
 	real scalar r, k, i, j, nedges0, target, mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(864213)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.12 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -666,7 +665,7 @@ void saom_test_native_condtime_equiv(real scalar n, real scalar nruns) {
 	tMata = J(nruns, 1, 0)
 	rseed(24681)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		tMata[r] = SaomSimulateConditionalTime(Gwork, G0, M, theta, target)
 	}
@@ -707,46 +706,46 @@ void saom_test_native_condtime_equiv(real scalar n, real scalar nruns) {
    term's own native/Mata correspondence again.
    ------------------------------------------------------------------- */
 void saom_test_native_missnet_stat(real scalar n, real colvector attr1, real colvector attr2, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9, td10, td11, td12, td13
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9, td10, td11, td12, td13
 	struct SaomNativeConfig scalar cfg
 	struct SaomCountedResult scalar cres
 	real rowvector theta, statvec, maxerr
 	real matrix missMaskNet
 	real scalar r, k, i, j, nedges0, rng, p
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
-	td3 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
+	td3 = SaomTermData()
 	td3.attr = attr1
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
-	td4 = ErgmTermData()
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("nodematch"))
+	td4 = SaomTermData()
 	td4.attr = attr1
-	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td4, ("nodecov"))
-	td5 = ErgmTermData()
+	M.addterm("nodecov", 1, &sn_stat_nodecov(), &sn_change_nodecov(), td4, ("nodecov"))
+	td5 = SaomTermData()
 	td5.attr = attr2
-	M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td5, ("nodeicov"))
-	td6 = ErgmTermData()
+	M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td5, ("nodeicov"))
+	td6 = SaomTermData()
 	td6.attr = attr2
-	M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td6, ("nodeocov"))
-	td7 = ErgmTermData()
+	M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td6, ("nodeocov"))
+	td7 = SaomTermData()
 	M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td7, ("indegpopularity"))
-	td8 = ErgmTermData()
+	td8 = SaomTermData()
 	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td8, ("outactivity"))
-	td9 = ErgmTermData()
+	td9 = SaomTermData()
 	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td9, ("outpopularity"))
-	td10 = ErgmTermData()
+	td10 = SaomTermData()
 	M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td10, ("inactivity"))
-	td11 = ErgmTermData()
+	td11 = SaomTermData()
 	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td11, ("transtrip"))
-	td12 = ErgmTermData()
+	td12 = SaomTermData()
 	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td12, ("cycle3"))
-	td13 = ErgmTermData()
+	td13 = SaomTermData()
 	rng = max(attr2) - min(attr2)
 	td13.attr = attr2
 	td13.decay = rng
@@ -757,7 +756,7 @@ void saom_test_native_missnet_stat(real scalar n, real colvector attr1, real col
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(778899)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -781,7 +780,7 @@ void saom_test_native_missnet_stat(real scalar n, real colvector attr1, real col
 
 	maxerr = J(1, p, 0)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0, SaomMaskToDyadList(missMaskNet))
 		statvec = SaomMaskedStatistic(Gwork, M, missMaskNet)
@@ -810,8 +809,8 @@ void saom_test_native_missnet_stat(real scalar n, real colvector attr1, real col
    SaomMaskedBehaviorStatistic()'s own header comment in unw_saom.do).
    ------------------------------------------------------------------- */
 void saom_test_native_missbeh_stat(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	class SaomBehavior scalar Beh0, Behwork
 	class SaomBehaviorModel scalar Mbeh
 	struct SaomNativeConfig scalar cfg
@@ -822,7 +821,7 @@ void saom_test_native_missbeh_stat(real scalar n, real colvector attr, real scal
 	real colvector startvals, missMaskBeh
 	real scalar r, k, pNet, pBeh, i, j, nedges0, rateNet, rateBeh, simMean
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
@@ -839,7 +838,7 @@ void saom_test_native_missbeh_stat(real scalar n, real colvector attr, real scal
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(998877)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -870,7 +869,7 @@ void saom_test_native_missbeh_stat(real scalar n, real colvector attr, real scal
 	maxerrbeh = J(1, pBeh, 0)
 	rseed(556677)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
@@ -903,8 +902,8 @@ void saom_test_native_missbeh_stat(real scalar n, real colvector attr, real scal
    per backend, two-sample z-test on each statistic's own mean.
    ------------------------------------------------------------------- */
 void saom_test_native_present_equiv(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
@@ -913,14 +912,14 @@ void saom_test_native_present_equiv(real scalar n, real colvector attr, real sca
 	struct SaomCountedResult scalar cres
 	real colvector present
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(224466)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -940,7 +939,7 @@ void saom_test_native_present_equiv(real scalar n, real colvector attr, real sca
 	Zmata = J(nruns, p, 0)
 	rseed(35792)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		steps = SaomSimulateInterval(Gwork, M, theta, 3, present)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -949,7 +948,7 @@ void saom_test_native_present_equiv(real scalar n, real colvector attr, real sca
 	Znative = J(nruns, p, 0)
 	rseed(19357)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 3, 1, 0, J(0,2,0), present)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -986,8 +985,8 @@ void saom_test_native_present_equiv(real scalar n, real colvector attr, real sca
    actor pool (see native/saom_sim.c's own "COMPOSITION CHANGE" header
    section) - same statistical-equivalence methodology. */
 void saom_test_coev_native_present(real scalar n, real colvector attr, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
 	class SaomBehavior scalar Beh0, Behwork
 	class SaomBehaviorModel scalar Mbeh
 	struct SaomNativeConfig scalar cfg
@@ -999,7 +998,7 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
 	real colvector startvals, present
 	real rowvector mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_native_build_model(M, attr)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1)
@@ -1016,7 +1015,7 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
 	assert(SaomNativeAvailable() == 1)
 
 	rseed(667788)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1041,7 +1040,7 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
 	Zdev_m = J(nruns, pNet+pBeh, 0)
 	rseed(882211)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
@@ -1052,7 +1051,7 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
 	Zdev_n = J(nruns, pNet+pBeh, 0)
 	rseed(331122)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
@@ -1099,22 +1098,22 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
    interval on both backends.
    ------------------------------------------------------------------- */
 void saom_test_native_isoiso_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
 	real scalar r, k, p, i, j, nedges0
 	real rowvector mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("isolatenet", 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), td2, ("isolatenet"))
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	M.addterm("outiso", 1, &stat_saom_outiso(), &change_saom_outiso(), td3, ("outiso"))
 
 	cfg = SaomNativeSetup(M)
@@ -1124,7 +1123,7 @@ void saom_test_native_isoiso_equiv(real scalar n, real scalar nruns) {
 	assert(cfg.termcodes[3] == 15)
 
 	rseed(148163264)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.03 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1139,7 +1138,7 @@ void saom_test_native_isoiso_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(51413)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 5)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1148,7 +1147,7 @@ void saom_test_native_isoiso_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(31415)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 5, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1198,24 +1197,24 @@ void saom_test_native_isoiso_equiv(real scalar n, real scalar nruns) {
    all, unlike outOutAss/inInAss which are nonzero for any tie).
    ------------------------------------------------------------------- */
 void saom_test_native_unit37_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
 	real scalar r, k, p, i, j, nedges0
 	real rowvector mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("transrectrip", 1, &stat_saom_transrectrip(), &change_saom_transrectrip(), td2, ("transrectrip"))
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	M.addterm("outoutass", 1, &stat_saom_outoutass(), &change_saom_outoutass(), td3, ("outoutass"))
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	M.addterm("ininass", 1, &stat_saom_ininass(), &change_saom_ininass(), td4, ("ininass"))
 
 	cfg = SaomNativeSetup(M)
@@ -1226,7 +1225,7 @@ void saom_test_native_unit37_equiv(real scalar n, real scalar nruns) {
 	assert(cfg.termcodes[4] == 18)
 
 	rseed(271828182)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1241,7 +1240,7 @@ void saom_test_native_unit37_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(161718)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 5)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1250,7 +1249,7 @@ void saom_test_native_unit37_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(192021)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 5, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1286,22 +1285,22 @@ void saom_test_native_unit37_equiv(real scalar n, real scalar nruns) {
    above, one combined model exercising both new termcodes at once.
    ------------------------------------------------------------------- */
 void saom_test_native_unit165_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
 	real scalar r, k, p, i, j, nedges0
 	real rowvector mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outinass", 1, &stat_saom_outinass(), &change_saom_outinass(), td2, ("outinass"))
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	M.addterm("inoutass", 1, &stat_saom_inoutass(), &change_saom_inoutass(), td3, ("inoutass"))
 
 	cfg = SaomNativeSetup(M)
@@ -1311,7 +1310,7 @@ void saom_test_native_unit165_equiv(real scalar n, real scalar nruns) {
 	assert(cfg.termcodes[3] == 20)
 
 	rseed(314159265)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1326,7 +1325,7 @@ void saom_test_native_unit165_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(112358)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 5)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1335,7 +1334,7 @@ void saom_test_native_unit165_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(132134)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 5, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1361,20 +1360,20 @@ void saom_test_native_unit165_equiv(real scalar n, real scalar nruns) {
 }
 
 void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
 	real scalar r, k, p, i, j, nedges0
 	real rowvector mmata, mnative, semata, senative, zstat
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), td2, ("cycle4"))
 
 	cfg = SaomNativeSetup(M)
@@ -1386,7 +1385,7 @@ void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
 	// meaningfully more ties present before any exist to count at all
 	// (same reasoning as this term's own Mata-side direction test).
 	rseed(271828182)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.30 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1401,7 +1400,7 @@ void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(161803398)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 5)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1410,7 +1409,7 @@ void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(141421356)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 5, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1446,18 +1445,18 @@ void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
    uses - no new wire-protocol field needed.
    ------------------------------------------------------------------- */
 void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
 	real scalar r, k, p, i, j, nedges0, b0
 	real rowvector mmata, mnative, semata, senative, zstat
-	pointer(class ErgmGraph scalar) rowvector Gbases
+	pointer(class SaomGraph scalar) rowvector Gbases
 
 	rseed(31415926)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.22 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1468,20 +1467,20 @@ void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
 	Gbases = (&G0)
 	b0 = saom_balance_mean(Gbases)
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("antiiniso", 1, &stat_saom_antiiniso(), &change_saom_antiiniso(), td2, ("antiiniso"))
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	M.addterm("antiiniso2", 1, &stat_saom_antiiniso2(), &change_saom_antiiniso2(), td3, ("antiiniso2"))
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	td4.decay = 0.6
-	M.addterm("gwesp", 1, &stat_gwesp(), &change_saom_gwesp(), td4, ("gwesp"))
-	td5 = ErgmTermData()
-	M.addterm("transties", 1, &stat_transitiveties(), &change_saom_transties(), td5, ("transties"))
-	td6 = ErgmTermData()
+	M.addterm("gwesp", 1, &sn_stat_gwesp(), &change_saom_gwesp(), td4, ("gwesp"))
+	td5 = SaomTermData()
+	M.addterm("transties", 1, &sn_stat_transitiveties(), &change_saom_transties(), td5, ("transties"))
+	td6 = SaomTermData()
 	td6.decay = b0
 	M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), td6, ("balance"))
 
@@ -1502,7 +1501,7 @@ void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(271828183)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 4)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1511,7 +1510,7 @@ void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(161803399)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1545,9 +1544,9 @@ void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
    Same one-term-plus-outdegree, two-sample z-test shape as
    saom_test_native_5effects_equiv() above. ------------------------- */
 void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
@@ -1555,7 +1554,7 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
 	real rowvector mmata, mnative, semata, senative, zstat
 
 	rseed(24681012)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.22 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1564,11 +1563,11 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("in3plus", 1, &stat_saom_in3plus(), &change_saom_in3plus(), td2, ("in3plus"))
 
 	cfg = SaomNativeSetup(M)
@@ -1582,7 +1581,7 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
 	Zmata = J(nruns, p, 0)
 	rseed(555666777)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 4)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1591,7 +1590,7 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
 	Znative = J(nruns, p, 0)
 	rseed(888999000)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1622,9 +1621,9 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
    effect may be given for several variables (one term and attribute
    array each). Native and Mata simulations must agree. */
 void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvector attr2, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6
 	struct SaomNativeConfig scalar cfg
 	real rowvector theta
 	real matrix Zmata, Znative
@@ -1632,7 +1631,7 @@ void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvecto
 	real rowvector mmata, mnative, zstat
 
 	rseed(97531)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -1640,21 +1639,21 @@ void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvecto
 		j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("antiiso", 1, &stat_saom_antiiso(), &change_saom_antiiso(), td2, ("antiiso"))
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	M.addterm("isolatepop", 1, &stat_saom_isolatepop(), &change_saom_isolatepop(), td3, ("isolatepop"))
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	td4.attr = attr
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td4, ("samex_a"))
-	td5 = ErgmTermData()
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td4, ("samex_a"))
+	td5 = SaomTermData()
 	td5.attr = attr2
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td5, ("samex_b"))
-	td6 = ErgmTermData()
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td5, ("samex_b"))
+	td6 = SaomTermData()
 	td6.attr = attr2
 	td6.decay = max(attr2) - min(attr2)
 	td6.center = SaomSimMean(attr2)
@@ -1674,7 +1673,7 @@ void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvecto
 	Zmata = J(nruns, p, 0)
 	rseed(1212)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateInterval(Gwork, M, theta, 4)
 		Zmata[r,.] = M.full_statistic(Gwork)
@@ -1682,7 +1681,7 @@ void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvecto
 	Znative = J(nruns, p, 0)
 	rseed(3434)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
 		Znative[r,.] = M.full_statistic(Gwork)
@@ -1700,7 +1699,7 @@ void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvecto
 	printf("native v9 equivalence PASS (antiiso, isolatepop, two samex, centred simx)\n")
 }
 
-real scalar _test_simsum(class ErgmGraph scalar G, real colvector a, real scalar r) {
+real scalar _test_simsum(class SaomGraph scalar G, real colvector a, real scalar r) {
 	real matrix ties
 	real scalar k, s
 	ties = G.all_ties()
@@ -1729,11 +1728,11 @@ real rowvector _v11_z(real matrix A, real matrix B) {
 	return(z)
 }
 
-class ErgmGraph scalar _v11_graph(real scalar n, real scalar dens, real scalar sd) {
-	class ErgmGraph scalar G
+class SaomGraph scalar _v11_graph(real scalar n, real scalar dens, real scalar sd) {
+	class SaomGraph scalar G
 	real scalar k, i, j
 	rseed(sd)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (k=1; k<=round(dens*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n)
@@ -1744,9 +1743,9 @@ class ErgmGraph scalar _v11_graph(real scalar n, real scalar dens, real scalar s
 }
 
 void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvector attr2, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5, td6
 	struct SaomNativeConfig scalar cfg
 	struct SaomScoredResult scalar sres
 	struct SaomCountedResult scalar cres
@@ -1757,14 +1756,14 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	G0 = _v11_graph(n, 0.15, 4711)
 
 	// (1) endowment/creation: outdegree, reciprocity endowment, creation
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocityendow"))
-	td3 = ErgmTermData()
-	M.addterm("reciprocitycreation", 1, &stat_mutual(), &change_mutual(), td3, ("reciprocitycreation"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocityendow", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocityendow"))
+	td3 = SaomTermData()
+	M.addterm("reciprocitycreation", 1, &sn_stat_mutual(), &sn_change_mutual(), td3, ("reciprocitycreation"))
 	fn = (0, 1, 2)
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1 & cfg.needv11 == 1)
@@ -1774,7 +1773,7 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
 	rseed(101)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4, J(n, 1, 1), fn)
 		Zm[r,.] = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gwork), G0, Gwork)
@@ -1791,12 +1790,12 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	assert(max(abs(z)) < 4)
 
 	// (2) structural(): outdegree, reciprocity, a block of fixed dyads
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 	st = J(n, n, 0)
 	st[1..6, 1..6] = 1 :- I(6)
 	cfg = SaomNativeSetup(M)
@@ -1806,7 +1805,7 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
 	rseed(303)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4, J(n, 1, 1), J(1, 0, 0), st)
 		Zm[r,.] = M.full_statistic(Gwork)
@@ -1814,7 +1813,7 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	}
 	rseed(404)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 1)
 		Zn[r,.] = M.full_statistic(Gwork)
@@ -1827,19 +1826,19 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	assert(max(abs(z)) < 4)
 
 	// (3) three-way interaction: nodematch x reciprocity x nodeocov
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
-	td3 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
+	td3 = SaomTermData()
 	td3.attr = attr
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("samex_a"))
-	td4 = ErgmTermData()
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("samex_a"))
+	td4 = SaomTermData()
 	td4.attr = attr2
-	M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td4, ("egox_b"))
-	td5 = ErgmTermData()
+	M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td4, ("egox_b"))
+	td5 = SaomTermData()
 	SaomBuildInteractTd(M, n, "nodematch", "reciprocity", "nodeocov", td5)
 	M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), td5, ("ix3"))
 	cfg = SaomNativeSetup(M)
@@ -1849,7 +1848,7 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
 	rseed(505)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4)
 		Zm[r,.] = M.full_statistic(Gwork)
@@ -1876,9 +1875,9 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
    are checked against these formulas in Mata and in the plugin, and
    the plugin's simulations against Mata's at fixed parameters. */
 void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2, td3, td4, td5
 	struct SaomNativeConfig scalar cfg
 	struct SaomScoredResult scalar sres
 	struct SaomCountedResult scalar cres
@@ -1898,16 +1897,16 @@ void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns)
 	for (i=1; i<=n; i++) for (j=1; j<=n; j++) if (A[i,j]) for (h=1; h<=n; h++) if (h != i & h != j) tt[i] = tt[i] + A[i,h] * A[h,j]
 	comp = ("outiso", "indegpopularity", "outactivity", "inactivity", "outpopularity", "egox3", "isolatenet", "isolatepop")
 	for (c=1; c<=cols(comp); c++) {
-		M = ErgmModel()
+		M = SaomModel()
 		M.init()
-		td1 = ErgmTermData()
-		M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-		td2 = ErgmTermData()
-		M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
-		td3 = ErgmTermData()
+		td1 = SaomTermData()
+		M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+		td2 = SaomTermData()
+		M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
+		td3 = SaomTermData()
 		td3.attr = x
-		M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td3, ("egox_x"))
-		td4 = ErgmTermData()
+		M.addterm("nodeocov", 1, &sn_stat_nodeocov(), &sn_change_nodeocov(), td3, ("egox_x"))
+		td4 = SaomTermData()
 		nm = comp[c]
 		if (nm == "outiso") M.addterm(nm, 1, &stat_saom_outiso(), &change_saom_outiso(), td4, (nm))
 		else if (nm == "indegpopularity") M.addterm(nm, 1, &stat_saom_indegpop(), &change_saom_indegpop(), td4, (nm))
@@ -1916,9 +1915,9 @@ void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns)
 		else if (nm == "isolatenet") M.addterm(nm, 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), td4, (nm))
 		else if (nm == "isolatepop") M.addterm(nm, 1, &stat_saom_isolatepop(), &change_saom_isolatepop(), td4, (nm))
 		else M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td4, ("inactivity"))
-		td5 = ErgmTermData()
+		td5 = SaomTermData()
 		if (nm == "egox3") {
-			M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), ErgmTermData(), ("transtrip"))
+			M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), SaomTermData(), ("transtrip"))
 			SaomBuildInteractTd(M, n, "nodeocov", "inactivity", "transtrip", td5)
 			want = sum(x :* sqrt(din) :* tt)
 		}
@@ -1946,7 +1945,7 @@ void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns)
 		Zm = J(nruns, M.nterms, 0); Sm = Zm; Zn = Zm; Sn = Zm
 		rseed(700 + c)
 		for (r=1; r<=nruns; r++) {
-			Gwork = ErgmGraph()
+			Gwork = SaomGraph()
 			SaomCopyGraph(G0, Gwork)
 			sres = SaomSimulateIntervalScored(Gwork, M, theta, 4)
 			Zm[r,.] = M.full_statistic(Gwork)
@@ -1969,9 +1968,9 @@ void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns)
 }
 
 void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehavior scalar Behwork
 	class SaomBehaviorModel scalar Mbeh
 	struct SaomNativeConfig scalar cfg
@@ -1985,12 +1984,12 @@ void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 	G0 = _v11_graph(n, 0.15, 8080)
 	rseed(9090)
 	startvals = ceil(runiform(n,1)*5)
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
 	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
@@ -2009,7 +2008,7 @@ void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 	Zn = J(nruns, 2 + 7 + 7, 0)
 	rseed(1111)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), 0)
@@ -2018,7 +2017,7 @@ void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 	}
 	rseed(2222)
 	for (r=1; r<=nruns; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), 0)

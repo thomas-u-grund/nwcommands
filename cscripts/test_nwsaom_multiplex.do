@@ -9,22 +9,21 @@ clear all
 * run from the repository root, like the other cscripts (a hardcoded cd to
 * the main checkout here used to test that checkout's Mata code instead)
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 mata:
 mata set matastrict off
 
-void multiplex_build_model(class ErgmModel M) {
-	class ErgmTermData scalar td1, td2
+void multiplex_build_model(class SaomModel M) {
+	class SaomTermData scalar td1, td2
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 }
 
-void multiplex_random_graph(class ErgmGraph scalar G, real scalar n, real scalar density) {
+void multiplex_random_graph(class SaomGraph scalar G, real scalar n, real scalar density) {
 	real scalar nedges0, i, j, k
 	G.init(n, 1)
 	nedges0 = round(density * n * (n-1))
@@ -36,16 +35,16 @@ void multiplex_random_graph(class ErgmGraph scalar G, real scalar n, real scalar
 }
 
 void test_multiplex_stage1(real scalar n) {
-	class ErgmGraph scalar G1wave1, G1wave2, G2wave1, G2wave2
-	class ErgmModel scalar M1, M2
+	class SaomGraph scalar G1wave1, G1wave2, G2wave1, G2wave2
+	class SaomModel scalar M1, M2
 	real rowvector theta1_true, theta2_true, theta0
 	real scalar discard
 	struct SaomFit scalar fit1_solo, fit2_solo
 	struct SaomCoevNetNetFit scalar fitjoint
 
-	M1 = ErgmModel()
+	M1 = SaomModel()
 	multiplex_build_model(M1)
-	M2 = ErgmModel()
+	M2 = SaomModel()
 	multiplex_build_model(M2)
 
 	// Two INDEPENDENT networks - network 2's own generating process shares
@@ -57,15 +56,15 @@ void test_multiplex_stage1(real scalar n) {
 	theta1_true = (-1.6, 1.4)
 	theta2_true = (-1.2, 2.0)
 
-	G1wave1 = ErgmGraph()
+	G1wave1 = SaomGraph()
 	multiplex_random_graph(G1wave1, n, 0.15)
-	G1wave2 = ErgmGraph()
+	G1wave2 = SaomGraph()
 	SaomCopyGraph(G1wave1, G1wave2)
 	discard = SaomSimulateInterval(G1wave2, M1, theta1_true, 2.5)
 
-	G2wave1 = ErgmGraph()
+	G2wave1 = SaomGraph()
 	multiplex_random_graph(G2wave1, n, 0.15)
-	G2wave2 = ErgmGraph()
+	G2wave2 = SaomGraph()
 	SaomCopyGraph(G2wave1, G2wave2)
 	discard = SaomSimulateInterval(G2wave2, M2, theta2_true, 2.5)
 

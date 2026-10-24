@@ -3,7 +3,6 @@
 * simulation agreement at fixed parameters (5 scenarios): dev/saom_rsiena_tc_scen.R, dev/check_timed_fixed.do.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 nwclear

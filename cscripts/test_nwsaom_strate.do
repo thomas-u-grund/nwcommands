@@ -2,7 +2,6 @@
 * (RSiena outRate ... recipRateLog). Rate covariates that follow the network: estimates agree with siena07 (conditional, s50; dev/saom_rsiena_strate.R).
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

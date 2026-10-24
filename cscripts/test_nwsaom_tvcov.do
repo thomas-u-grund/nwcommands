@@ -3,7 +3,6 @@
 * within noise): dev/saom_rsiena_tvcov.{R,do}.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 nwclear

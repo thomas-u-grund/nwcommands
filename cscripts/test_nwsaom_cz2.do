@@ -2,7 +2,6 @@
 * siena07 agreement (observed statistics and estimates): dev/saom_rsiena_nx2.{R,do} equivalents (s50 age, _tv, alcohol, symmetric waves)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

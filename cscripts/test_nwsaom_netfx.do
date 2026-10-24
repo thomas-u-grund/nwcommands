@@ -5,7 +5,6 @@
 cscript
 adopath ++ "."
 qui do unw_core.do
-qui do unw_ergm.do
 qui do unw_saom.do
 nwclear
 

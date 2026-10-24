@@ -2,7 +2,6 @@
 * ratecov() for a two-mode network. Estimates agree with siena07 (dev/saom_rsiena_rates_sym.R, dev/saom_rsiena_rates_tm.R).
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

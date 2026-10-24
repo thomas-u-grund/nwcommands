@@ -1,6 +1,5 @@
 cscript
 
-do unw_ergm.do
 do unw_saom.do
 
 * Certifies unw_saom.do's ministep sampler, interval simulator, and
@@ -21,20 +20,20 @@ do unw_saom.do
 mata:
 mata set matastrict off
 
-void saom_build_model(class ErgmModel M, real colvector attr) {
-	class ErgmTermData scalar td1, td2, td3
+void saom_build_model(class SaomModel M, real colvector attr) {
+	class SaomTermData scalar td1, td2, td3
 
 	M.init()
 
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
 
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	td3.attr = attr
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("nodematch"))
 }
 
 /* -------------------------------------------------------------------
@@ -46,12 +45,12 @@ void saom_build_model(class ErgmModel M, real colvector attr) {
    from any estimator-level noise.
    ------------------------------------------------------------------- */
 void saom_test_unit1a(real scalar n, real colvector attr) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
+	class SaomGraph scalar G
+	class SaomModel scalar M
 	real rowvector theta_lo, theta_hi
 	real scalar ties_lo, ties_hi, maxties, steps
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_build_model(M, attr)
 	maxties = n*(n-1)
 
@@ -60,14 +59,14 @@ void saom_test_unit1a(real scalar n, real colvector attr) {
 	// density within one simulated time unit, regardless of theta (the
 	// rate, not theta, would be the binding constraint - not what this
 	// check is meant to test).
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta_lo = (-6, 0, 0)
 	steps = SaomSimulateInterval(G, M, theta_lo, 15)
 	ties_lo = G.nties
 	assert(ties_lo / maxties < 0.15)
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta_hi = (6, 0, 0)
 	steps = SaomSimulateInterval(G, M, theta_hi, 15)
@@ -86,15 +85,15 @@ void saom_test_unit1a(real scalar n, real colvector attr) {
    independent of Robbins-Monro.
    ------------------------------------------------------------------- */
 void saom_test_unit1b(real scalar n, real colvector attr) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
+	class SaomGraph scalar G
+	class SaomModel scalar M
 	real rowvector theta_recip
 	real scalar recip_ties, single_ties, i, j, steps
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_build_model(M, attr)
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta_recip = (-3, 5, 0)
 	steps = SaomSimulateInterval(G, M, theta_recip, 15)
@@ -126,16 +125,16 @@ void saom_test_unit1b(real scalar n, real colvector attr) {
    docs/SAOM_ROADMAP.md).
    ------------------------------------------------------------------- */
 void saom_test_unit1c(real scalar n, real colvector attr) {
-	class ErgmGraph scalar Gwave1, Gwave2
-	class ErgmModel scalar M
+	class SaomGraph scalar Gwave1, Gwave2
+	class SaomModel scalar M
 	real rowvector theta_true, theta0
 	real scalar nedges0, i, j, k, discard
 	struct SaomFit scalar fit
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_build_model(M, attr)
 
-	Gwave1 = ErgmGraph()
+	Gwave1 = SaomGraph()
 	Gwave1.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (k=1; k<=nedges0; k++) {
@@ -145,7 +144,7 @@ void saom_test_unit1c(real scalar n, real colvector attr) {
 	}
 
 	theta_true = (-1.6, 1.4, 0.9)
-	Gwave2 = ErgmGraph()
+	Gwave2 = SaomGraph()
 	SaomCopyGraph(Gwave1, Gwave2)
 	discard = SaomSimulateInterval(Gwave2, M, theta_true, 2.5)
 
@@ -172,7 +171,7 @@ void saom_test_unit1c(real scalar n, real colvector attr) {
 
 /* -------------------------------------------------------------------
    Unit 2: nodecov/nodeicov/nodeocov - direct reuse of nwergm's own
-   change_nodecov()/change_nodeicov()/change_nodeocov() (see
+   sn_change_nodecov()/sn_change_nodeicov()/sn_change_nodeocov() (see
    docs/SAOM_ARCHITECTURE.md's reuse argument - each is a genuine
    single-actor-local SAOM effect: nodeocov is the standard RSiena
    "ego" effect, nodeicov the standard "alter" effect, nodecov their
@@ -180,29 +179,29 @@ void saom_test_unit1c(real scalar n, real colvector attr) {
    unit 1a/1b: a strongly positive nodeicov (alter) coefficient should
    make actor ties concentrate on high-covariate-value nodes.
    ------------------------------------------------------------------- */
-void saom_build_model_cov(class ErgmModel M, real colvector attr, real colvector cov) {
-	class ErgmTermData scalar td1, td2, td3, td4
+void saom_build_model_cov(class SaomModel M, real colvector attr, real colvector cov) {
+	class SaomTermData scalar td1, td2, td3, td4
 
 	M.init()
 
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
 
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
-	td3 = ErgmTermData()
+	td3 = SaomTermData()
 	td3.attr = attr
-	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
+	M.addterm("nodematch", 1, &sn_stat_nodematch(), &sn_change_nodematch(), td3, ("nodematch"))
 
-	td4 = ErgmTermData()
+	td4 = SaomTermData()
 	td4.attr = cov
-	M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td4, ("nodeicov"))
+	M.addterm("nodeicov", 1, &sn_stat_nodeicov(), &sn_change_nodeicov(), td4, ("nodeicov"))
 }
 
 void saom_test_unit2(real scalar n, real colvector attr) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
+	class SaomGraph scalar G
+	class SaomModel scalar M
 	real colvector cov
 	real rowvector theta
 	real scalar i, j, steps, tot_hi, tot_lo, nhi, nties
@@ -211,10 +210,10 @@ void saom_test_unit2(real scalar n, real colvector attr) {
 	for (i=1; i<=n; i++) cov[i] = i	// increasing covariate, node n has the highest value
 	nhi = ceil(n/2)			// "high covariate" = top half of nodes by cov value
 
-	M = ErgmModel()
+	M = SaomModel()
 	saom_build_model_cov(M, attr, cov)
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-3, 0, 0, 2.5)	// outdegree, reciprocity, nodematch, nodeicov (alter) - strongly favors tying to high-cov alters
 	steps = SaomSimulateInterval(G, M, theta, 15)
@@ -248,7 +247,7 @@ void saom_test_unit2(real scalar n, real colvector attr) {
    not a delta of the whole-network stat_saom_X() (see unw_saom.do's
    own header comment on this asymmetry).
    ------------------------------------------------------------------- */
-real scalar saom_ego_indegpop(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_indegpop(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 
@@ -258,20 +257,20 @@ real scalar saom_ego_indegpop(class ErgmGraph scalar G, real scalar i) {
 	return(tot)
 }
 
-real scalar saom_ego_outactivity(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_outactivity(class SaomGraph scalar G, real scalar i) {
 	return(G.degree_out(i)^2)
 }
 
 void saom_test_unit3_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before_pop, after_pop, before_act, after_act, pred_pop, pred_act, maxerr
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=400; t++) {
@@ -301,25 +300,25 @@ void saom_test_unit3_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit3_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, i, sumsq_hi, sumsq_lo
 	real colvector outdeg
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td2, ("outactivity"))
 
 	// strongly positive outactivity: actors who already send ties should
 	// send disproportionately MORE - i.e. out-degree variance should be
 	// much higher than a comparable model with outactivity switched off
 	// (theta=0), a "rich get richer" concentration signature.
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-3, 1.2)
 	steps = SaomSimulateInterval(G, M, theta, 15)
@@ -327,7 +326,7 @@ void saom_test_unit3_direction(real scalar n) {
 	for (i=1; i<=n; i++) outdeg[i] = G.degree_out(i)
 	sumsq_hi = variance(outdeg)
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-3, 0)
 	steps = SaomSimulateInterval(G, M, theta, 15)
@@ -341,13 +340,13 @@ void saom_test_unit3_direction(real scalar n) {
 
 /* -------------------------------------------------------------------
    Unit 4: transitive triplets (change_saom_transtrip, unw_saom.do) -
-   freshly derived, reusing ErgmGraph's own already-certified
+   freshly derived, reusing SaomGraph's own already-certified
    shared_partners_otp()/_osp()/_isp() PRIMITIVES (not term functions).
    Certified via independent ego-level brute-force recomputation of
    s_i(x) = sum_j sum_h x_ij*x_ih*x_hj, matching unit 3's own
    methodology exactly.
    ------------------------------------------------------------------- */
-real scalar saom_ego_transtrip(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_transtrip(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar a, b, tot
 
@@ -363,15 +362,15 @@ real scalar saom_ego_transtrip(class ErgmGraph scalar G, real scalar i) {
 }
 
 void saom_test_unit4_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before, after, pred, maxerr
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=400; t++) {
@@ -394,17 +393,17 @@ void saom_test_unit4_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit4_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, tt_hi, tt_lo
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td2, ("transtrip"))
 
 	// outdegree deliberately close to 0 (not strongly negative like
@@ -415,13 +414,13 @@ void saom_test_unit4_direction(real scalar n) {
 	// within a reasonable simulated interval (found by direct trial:
 	// theta=(-2,0.8) at rate 20 produced ZERO transitive triplets in
 	// EITHER condition on n=16).
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 1.2)
 	steps = SaomSimulateInterval(G, M, theta, 40)
 	tt_hi = stat_saom_transtrip(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 0)
 	steps = SaomSimulateInterval(G, M, theta, 40)
@@ -439,7 +438,7 @@ void saom_test_unit4_direction(real scalar n) {
    easy-to-get-backwards detail). Same ego-level brute-force
    certification methodology.
    ------------------------------------------------------------------- */
-real scalar saom_ego_cycle3(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_cycle3(class SaomGraph scalar G, real scalar i) {
 	real rowvector nbi, nbj
 	real scalar a, b, j, h, tot
 
@@ -458,15 +457,15 @@ real scalar saom_ego_cycle3(class ErgmGraph scalar G, real scalar i) {
 }
 
 void saom_test_unit5_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before, after, pred, maxerr
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=400; t++) {
@@ -489,29 +488,29 @@ void saom_test_unit5_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit5_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, c3_hi, c3_lo
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td2, ("cycle3"))
 
 	// same reasoning as unit 4's own direction test: a near-zero
 	// outdegree baseline (not strongly negative) so enough two-paths
 	// exist for the cycle3 effect to have material to act on.
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 1.5)
 	steps = SaomSimulateInterval(G, M, theta, 40)
 	c3_hi = stat_saom_cycle3(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 0)
 	steps = SaomSimulateInterval(G, M, theta, 40)
@@ -528,7 +527,7 @@ void saom_test_unit5_direction(real scalar n) {
    unw_saom.do's own header comments for the exact file/formula).
    Same ego-level brute-force certification methodology as units 3-5.
    ------------------------------------------------------------------- */
-real scalar saom_ego_outpop(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_outpop(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 
@@ -538,11 +537,11 @@ real scalar saom_ego_outpop(class ErgmGraph scalar G, real scalar i) {
 	return(tot)
 }
 
-real scalar saom_ego_inact(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_inact(class SaomGraph scalar G, real scalar i) {
 	return(G.degree_out(i) * sqrt(G.din[i]))
 }
 
-real scalar saom_ego_simcov(class ErgmGraph scalar G, real scalar i, real colvector attr, real scalar rng) {
+real scalar saom_ego_simcov(class SaomGraph scalar G, real scalar i, real colvector attr, real scalar rng) {
 	real rowvector nb
 	real scalar k, tot
 
@@ -553,15 +552,15 @@ real scalar saom_ego_simcov(class ErgmGraph scalar G, real scalar i, real colvec
 }
 
 void saom_test_unit9_certify(real scalar n, real scalar seed, real colvector attr) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before, after, pred, maxerr_pop, maxerr_act, maxerr_sim, rng
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	rng = max(attr) - min(attr)
 	maxerr_pop = 0
 	maxerr_act = 0
@@ -607,27 +606,27 @@ void saom_test_unit9_certify(real scalar n, real scalar seed, real colvector att
 }
 
 void saom_test_unit9_direction(real scalar n, real colvector attr) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, hi, lo
 
 	// --- outpopularity direction: ties concentrate on high-outdegree alters
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td2, ("outpopularity"))
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 0.8)
 	steps = SaomSimulateInterval(G, M, theta, 30)
 	hi = stat_saom_outpop(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 0)
 	steps = SaomSimulateInterval(G, M, theta, 30)
@@ -638,22 +637,22 @@ void saom_test_unit9_direction(real scalar n, real colvector attr) {
 
 	// --- simcov direction: strong positive coefficient concentrates ties
 	// among actors with SIMILAR covariate values
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	td2.attr = attr
 	td2.decay = max(attr) - min(attr)
 	M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td2, ("simcov"))
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 3)
 	steps = SaomSimulateInterval(G, M, theta, 30)
 	hi = stat_saom_simcov(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-0.3, 0)
 	steps = SaomSimulateInterval(G, M, theta, 30)
@@ -682,20 +681,20 @@ void saom_test_unit9_direction(real scalar n, real colvector attr) {
    both the two-wave and three-wave paths).
    ------------------------------------------------------------------- */
 void saom_test_unit18_cov(real scalar n) {
-	class ErgmGraph scalar G1, G2
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomFit scalar fit
 	real scalar k, i, j, p
 
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (k=1; k<=round(0.15*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n)
 		j = ceil(runiform(1,1)*n)
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	G2.init(n, 1)
 	for (k=1; k<=round(0.20*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n)
@@ -703,12 +702,12 @@ void saom_test_unit18_cov(real scalar n) {
 		if (i!=j & !G2.has_edge(i,j)) G2.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	fit = SaomEstimateRM(G1, G2, M, J(1,2,0), 2, 30, 200, 0.2)
 	p = M.nparam()
@@ -731,7 +730,7 @@ void saom_test_unit18_cov(real scalar n) {
 
 /* -------------------------------------------------------------------
    Harmonisation unit 22: GWESP reuse verification. DIRECT reuse of
-   nwergm's own already-certified stat_gwesp()/change_gwesp()
+   nwergm's own already-certified sn_stat_gwesp()/change_gwesp()
    (unw_ergm.do, td.sptype="OTP" - verified against real RSiena source
    to match RSiena's own `gwespFF' effect exactly by name, definition,
    and kernel formula before wiring this at all, see
@@ -742,9 +741,9 @@ void saom_test_unit18_cov(real scalar n) {
    just an ERGM one) - via the SAME "change function predicts the global
    statistic's own before/after difference" identity every other SAOM
    effect in this file is certified against, just measured against the
-   GLOBAL stat_gwesp() (reused directly, no new "ego-level" helper
+   GLOBAL sn_stat_gwesp() (reused directly, no new "ego-level" helper
    needed) rather than an ego-local partial recomputation, since GWESP's
-   own reused stat_gwesp() already computes exactly this.
+   own reused sn_stat_gwesp() already computes exactly this.
    ------------------------------------------------------------------- */
 /* -------------------------------------------------------------------
    Harmonisation unit 22 (corrected): certifying change_saom_gwesp().
@@ -756,7 +755,7 @@ void saom_test_unit18_cov(real scalar n) {
    against directly toggling the graph and recomputing SOME local
    statistic's own before/after difference) does NOT apply to GWESP.
    Tried it first: defined s_i(x) = sum over i's own existing ties h of
-   gw_kernel(OTP(i,h)) and checked change_saom_gwesp() against
+   sn_gw_kernel(OTP(i,h)) and checked change_saom_gwesp() against
    s_i(after)-s_i(before) - this FAILED (error ~3.0, nowhere near
    machine epsilon), because adding tie i->j can also change OTP(i,h)
    for i's OWN OTHER existing ties h (whenever j->h also exists - the
@@ -774,24 +773,24 @@ void saom_test_unit18_cov(real scalar n) {
    codebase's own established change-function sign convention) -
    verified below via a HAND-COMPUTED kernel value (the RSiena formula
    `exp(decay)*(1-(1-exp(-decay))^p)' written out directly in the test,
-   not by calling gw_kernel() itself, so this is not merely checking
+   not by calling sn_gw_kernel() itself, so this is not merely checking
    the code against itself) on a graph with an INDEPENDENTLY-VERIFIABLE
    shared-partner count.
    ------------------------------------------------------------------- */
 void saom_test_unit22_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar decay, p, expected, got, i, j, k, otp_manual, m, h
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (k=1; k<=round(0.15*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n)
 		j = ceil(runiform(1,1)*n)
 		if (i!=j & !G.has_edge(i,j)) G.toggle(i,j)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	decay = .69
 	td.decay = decay
 
@@ -799,7 +798,7 @@ void saom_test_unit22_certify(real scalar n, real scalar seed) {
 	// count first (not trusting the primitive blindly, even though it
 	// is independently certified elsewhere) for several random (i,j)
 	// pairs, THEN check change_saom_gwesp() against a hand-written
-	// (not gw_kernel()-calling) copy of RSiena's own exact formula.
+	// (not sn_gw_kernel()-calling) copy of RSiena's own exact formula.
 	for (k=1; k<=100; k++) {
 		i = ceil(runiform(1,1)*n)
 		j = ceil(runiform(1,1)*n)
@@ -837,37 +836,37 @@ void saom_test_unit22_certify(real scalar n, real scalar seed) {
    stronger theta AND averages over several replicates so the
    assertion is genuinely robust, not tuned to pass once. */
 void saom_test_unit22_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, r, sum_hi, sum_lo, nrep
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	td2.decay = .69
 	td2.sptype = "OTP"
-	M.addterm("gwesp", 1, &stat_gwesp(), &change_saom_gwesp(), td2, ("gwesp"))
+	M.addterm("gwesp", 1, &sn_stat_gwesp(), &change_saom_gwesp(), td2, ("gwesp"))
 
 	rseed(2468)
 	nrep = 8
 	sum_hi = 0
 	sum_lo = 0
 	for (r=1; r<=nrep; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.0, 2.5)
 		steps = SaomSimulateInterval(G, M, theta, 30)
-		sum_hi = sum_hi + stat_gwesp(G, td2)[1]
+		sum_hi = sum_hi + sn_stat_gwesp(G, td2)[1]
 
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.0, 0)
 		steps = SaomSimulateInterval(G, M, theta, 30)
-		sum_lo = sum_lo + stat_gwesp(G, td2)[1]
+		sum_lo = sum_lo + sn_stat_gwesp(G, td2)[1]
 	}
 	printf("unit 22 direction: avg gwesp statistic over %g replicates, effect on %8.2f, off %8.2f\n", nrep, sum_hi/nrep, sum_lo/nrep)
 	assert(sum_hi/nrep > sum_lo/nrep)
@@ -887,7 +886,7 @@ void saom_test_unit22_direction(real scalar n) {
    different case. Tried and CONFIRMED to pass cleanly (not assumed) -
    see this test's own result.
    ------------------------------------------------------------------- */
-real scalar saom_ego_transties(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_transties(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar m, h, tot
 
@@ -901,20 +900,20 @@ real scalar saom_ego_transties(class ErgmGraph scalar G, real scalar i) {
 }
 
 void saom_test_unit23_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before, after, pred, maxerr
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (t=1; t<=round(0.15*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
 		j = ceil(runiform(1,1)*n)
 		if (i!=j & !G.has_edge(i,j)) G.toggle(i,j)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 
 	maxerr = 0
 	for (t=1; t<=400; t++) {
@@ -937,31 +936,31 @@ void saom_test_unit23_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit23_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, hi, lo
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("transties", 1, &stat_transitiveties(), &change_saom_transties(), td2, ("transties"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("transties", 1, &sn_stat_transitiveties(), &change_saom_transties(), td2, ("transties"))
 
 	rseed(13579)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-1.2, 1.5)
 	steps = SaomSimulateInterval(G, M, theta, 30)
-	hi = stat_transitiveties(G, td2)[1]
+	hi = sn_stat_transitiveties(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-1.2, 0)
 	steps = SaomSimulateInterval(G, M, theta, 30)
-	lo = stat_transitiveties(G, td2)[1]
+	lo = sn_stat_transitiveties(G, td2)[1]
 
 	printf("unit 23 direction: transties statistic with effect on %8.2f, off %8.2f\n", hi, lo)
 	assert(hi > lo)
@@ -983,12 +982,12 @@ void saom_test_unit23_direction(real scalar n) {
    effect" approximation like gwesp()); (3) a direction check.
    ------------------------------------------------------------------- */
 void saom_test_unit25_meancheck() {
-	class ErgmGraph scalar G1, G2
-	pointer(class ErgmGraph scalar) rowvector Gb
+	class SaomGraph scalar G1, G2
+	pointer(class SaomGraph scalar) rowvector Gb
 	real scalar n, h, i, indeg, tempra, temprb, want, got
 
 	n = 5
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	G1.toggle(1,2)
 	G1.toggle(1,3)
@@ -998,7 +997,7 @@ void saom_test_unit25_meancheck() {
 	G1.toggle(4,5)
 	G1.toggle(5,2)
 
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	G2.init(n, 1)
 	G2.toggle(2,1)
 	G2.toggle(3,1)
@@ -1040,7 +1039,7 @@ void saom_test_unit25_meancheck() {
 	printf("unit 25 PASS: saom_balance_mean() matches independent hand computation, pooled by summing numerators/denominators across both graphs THEN dividing once (real RSiena's own calcBalmean() convention, not an average of per-graph ratios)\n")
 }
 
-real scalar saom_ego_balance(class ErgmGraph scalar G, real scalar i, class ErgmTermData scalar td) {
+real scalar saom_ego_balance(class SaomGraph scalar G, real scalar i, class SaomTermData scalar td) {
 	real rowvector nb
 	real scalar m, j, n, b0, D, tot
 
@@ -1057,20 +1056,20 @@ real scalar saom_ego_balance(class ErgmGraph scalar G, real scalar i, class Ergm
 }
 
 void saom_test_unit25_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before, after, pred, maxerr
 	real rowvector chg
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (t=1; t<=round(0.15*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
 		j = ceil(runiform(1,1)*n)
 		if (i!=j & !G.has_edge(i,j)) G.toggle(i,j)
 	}
-	td = ErgmTermData()
+	td = SaomTermData()
 	td.decay = 0.37	// arbitrary fixed test constant - change_saom_balance()'s own correctness does not depend on b0's true data-derived value (saom_balance_mean() is certified separately above)
 
 	maxerr = 0
@@ -1094,28 +1093,28 @@ void saom_test_unit25_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit25_direction(real scalar n) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar steps, hi, lo
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	td2.decay = 0.5	// fixed test constant - direction check does not need the true data-derived balanceMean either
 	M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), td2, ("balance"))
 
 	rseed(24681357)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-1.2, 1.5)
 	steps = SaomSimulateInterval(G, M, theta, 30)
 	hi = stat_saom_balance(G, td2)[1]
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	theta = (-1.2, 0)
 	steps = SaomSimulateInterval(G, M, theta, 30)
@@ -1151,11 +1150,11 @@ void saom_test_unit25_direction(real scalar n) {
    ------------------------------------------------------------------- */
 void saom_test_unit26_linear_certify(real scalar n, real scalar seed) {
 	class SaomBehavior scalar Beh
-	class ErgmGraph scalar G
+	class SaomGraph scalar G
 	real scalar t, i, diff, before, after, pred, maxerr, v
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	Beh = SaomBehavior()
 	Beh.init(ceil(runiform(n,1)*5), 1, 5, 3)
@@ -1181,11 +1180,11 @@ void saom_test_unit26_linear_certify(real scalar n, real scalar seed) {
 
 void saom_test_unit26_quad_certify(real scalar n, real scalar seed) {
 	class SaomBehavior scalar Beh
-	class ErgmGraph scalar G
+	class SaomGraph scalar G
 	real scalar t, i, diff, beforeC, afterC, beforeR, afterR, predC, maxerrC, v, mn
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	Beh = SaomBehavior()
 	Beh.init(ceil(runiform(n,1)*5), 1, 5, 3)
@@ -1230,7 +1229,7 @@ void saom_test_unit26_quad_certify(real scalar n, real scalar seed) {
 	printf("unit 26 PASS: confirmed change_saom_quadratic()'s own ministep delta genuinely differs from the raw statistic's own difference when overallMean!=0, matching real RSiena's own documented (not internally 'fixed') behavior\n")
 }
 
-real scalar saom_ego_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_avalt(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 
 	nb = G.neighbors_out(i)
@@ -1240,11 +1239,11 @@ real scalar saom_ego_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar
 
 void saom_test_unit26_avalt_certify(real scalar n, real scalar seed) {
 	class SaomBehavior scalar Beh
-	class ErgmGraph scalar G
+	class SaomGraph scalar G
 	real scalar t, i, diff, v, before, after, pred, maxerr
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (t=1; t<=round(0.2*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1273,7 +1272,7 @@ void saom_test_unit26_avalt_certify(real scalar n, real scalar seed) {
 	printf("unit 26 PASS: change_saom_avalt() matches ego-level brute-force recomputation (myopic-actor restricted - changing i's own value also changes OTHER actors' own avAlt statistic whenever i is their alter, correctly excluded from this ministep's own delta)\n")
 }
 
-real scalar saom_ego_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_avsim(class SaomBehavior scalar Beh, class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar od, vego, sumabs, k
 
@@ -1288,11 +1287,11 @@ real scalar saom_ego_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar
 
 void saom_test_unit26_avsim_certify(real scalar n, real scalar seed) {
 	class SaomBehavior scalar Beh
-	class ErgmGraph scalar G
+	class SaomGraph scalar G
 	real scalar t, i, diff, v, before, after, pred, maxerr
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (t=1; t<=round(0.2*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1367,13 +1366,13 @@ void saom_test_unit26_simmean_certify(real scalar n, real scalar seed) {
 
 void saom_test_unit26_ministep_dir(real scalar n) {
 	class SaomBehavior scalar Beh
-	class ErgmGraph scalar G
+	class SaomGraph scalar G
 	class SaomBehaviorModel scalar Mbeh
 	real rowvector theta
 	real scalar i, t, picked, spreadHi, spreadLo
 
 	rseed(975318)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	// a single connected chain, so influence has somewhere to flow
 	for (i=1; i<=n-1; i++) {
@@ -1446,11 +1445,11 @@ void saom_test_unit26_ministep_dir(real scalar n) {
    n=16-20 scale.
    ------------------------------------------------------------------- */
 void saom_test_unit26_coev_recover(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2
-	class ErgmModel scalar M
+	class SaomGraph scalar G1, G2
+	class SaomModel scalar M
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh
-	class ErgmTermData scalar td1, td2
+	class SaomTermData scalar td1, td2
 	struct SaomCoevResult scalar res
 	struct SaomCoevFit scalar fit
 	real rowvector thetaNetTrue, thetaBehTrue
@@ -1458,7 +1457,7 @@ void saom_test_unit26_coev_recover(real scalar n, real scalar seed) {
 	real scalar i, j, t
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.1*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1466,19 +1465,19 @@ void saom_test_unit26_coev_recover(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
 	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
 
 	startvals = ceil(runiform(n,1)*5)
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	Beh = SaomBehavior()
 	Beh.init(startvals, 1, 5, mean(startvals))
@@ -1520,21 +1519,21 @@ void saom_test_unit26_coev_recover(real scalar n, real scalar seed) {
    variables (a separate network AND behavior rate per period).
    ------------------------------------------------------------------- */
 void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G3
-	class ErgmModel scalar M
+	class SaomGraph scalar G1, G2, G3
+	class SaomModel scalar M
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh12, Beh23
-	class ErgmTermData scalar td1, td2
+	class SaomTermData scalar td1, td2
 	struct SaomCoevResult scalar res
 	struct SaomCoevMultiFit scalar fit
 	real rowvector thetaNetTrue, thetaBehTrue
 	real colvector wave1vals, wave2vals, wave3vals
-	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector Gwaves
 	pointer(real colvector) rowvector Behwaves
 	real scalar i, j, t
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.1*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1542,12 +1541,12 @@ void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
@@ -1559,7 +1558,7 @@ void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
 	wave1vals = ceil(runiform(n,1)*5)
 
 	// period 1: wave1 -> wave2
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	Beh12 = SaomBehavior()
 	Beh12.init(wave1vals, 1, 5, mean(wave1vals))
@@ -1567,7 +1566,7 @@ void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
 	wave2vals = Beh12.values
 
 	// period 2: wave2 -> wave3 (chained from wave2's own simulated end state)
-	G3 = ErgmGraph()
+	G3 = SaomGraph()
 	SaomCopyGraph(G2, G3)
 	Beh23 = SaomBehavior()
 	Beh23.init(wave2vals, 1, 5, mean(wave2vals))
@@ -1614,16 +1613,16 @@ void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
    invariant, checked exactly, not statistically.
    ------------------------------------------------------------------- */
 void saom_test_unit33_presence(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G0, Gwork
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G0, Gwork
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomScoredResult scalar sres
 	real colvector present
 	real rowvector theta
 	real scalar i, j, t, r, nedges0, steps
 
 	rseed(seed)
-	G0 = ErgmGraph()
+	G0 = SaomGraph()
 	G0.init(n, 1)
 	nedges0 = round(0.15 * n * (n-1))
 	for (t=1; t<=nedges0; t++) {
@@ -1632,12 +1631,12 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	// mark actors 1, 2, and n absent (present=0) - everyone else present.
 	present = J(n, 1, 1)
@@ -1648,7 +1647,7 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 	theta = (-1.0, 1.0)
 
 	for (r=1; r<=100; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		steps = SaomSimulateInterval(Gwork, M, theta, 3, present)
 		assert(steps > 0)
@@ -1663,7 +1662,7 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 	printf("unit 33 PASS: SaomSimulateInterval() with present() never toggles an absent actor's own dyads, over 100 replicates\n")
 
 	for (r=1; r<=100; r++) {
-		Gwork = ErgmGraph()
+		Gwork = SaomGraph()
 		SaomCopyGraph(G0, Gwork)
 		sres = SaomSimulateIntervalScored(Gwork, M, theta, 3, present)
 		assert(sres.steps > 0)
@@ -1681,7 +1680,7 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 	// backward-compatibility check: omitting `present' entirely still
 	// behaves exactly as before (every pre-existing call site) - a
 	// smoke check, not a new invariant.
-	Gwork = ErgmGraph()
+	Gwork = SaomGraph()
 	SaomCopyGraph(G0, Gwork)
 	steps = SaomSimulateInterval(Gwork, M, theta, 3)
 	assert(steps > 0)
@@ -1699,16 +1698,16 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
    itself (not just in the isolated invariant check above).
    ------------------------------------------------------------------- */
 void saom_test_unit33_recover(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomFit scalar fit
 	real colvector present
 	real rowvector thetaTrue
 	real scalar i, j, t, steps
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.12*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1716,18 +1715,18 @@ void saom_test_unit33_recover(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	present = J(n, 1, 1)
 	present[1] = 0
 	present[n] = 0
 
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	thetaTrue = (-1.5, 1.2)
 	steps = SaomSimulateInterval(G2, M, thetaTrue, 4, present)
@@ -1762,18 +1761,18 @@ void saom_test_unit33_recover(real scalar n, real scalar seed) {
    `presentMat' input.
    ------------------------------------------------------------------- */
 void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G3
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G3
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomFit scalar fit
-	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector Gwaves
 	real matrix presentMat
 	real rowvector thetaTrue
 	real colvector present1
 	real scalar i, j, t
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.12*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1781,12 +1780,12 @@ void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	thetaTrue = (-1.4, 1.1)
 
@@ -1800,14 +1799,14 @@ void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
 	presentMat[1,3] = 0
 
 	present1 = presentMat[.,1] :* presentMat[.,2]		// period 1's own presence
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	SaomSimulateInterval(G2, M, thetaTrue, 4, present1)
 	// actor 1's own row/col frozen at wave1's own value going forward -
 	// wave2's own data must show that (matches the "carry-forward"
 	// convention this package documents, docs/SAOM_ROADMAP.md unit-33).
 
-	G3 = ErgmGraph()
+	G3 = SaomGraph()
 	SaomCopyGraph(G2, G3)
 	SaomSimulateInterval(G3, M, thetaTrue, 4, present1)		// period 2: same presence (still absent)
 
@@ -1834,9 +1833,9 @@ void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
    restriction (SaomSimulateIntervalCoevScored()'s own `present').
    ------------------------------------------------------------------- */
 void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh
 	struct SaomCoevFit scalar fit
@@ -1845,7 +1844,7 @@ void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
 	real scalar i, j, t
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.1*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1853,12 +1852,12 @@ void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
@@ -1868,7 +1867,7 @@ void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
 	present[n] = 0
 
 	startvals = ceil(runiform(n,1)*5)
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	Beh = SaomBehavior()
 	Beh.init(startvals, 1, 5, mean(startvals))
@@ -1903,13 +1902,13 @@ void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
    scope decision, docs/SAOM_ROADMAP.md's own unit-33 entry).
    ------------------------------------------------------------------- */
 void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G3
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G3
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh
 	struct SaomCoevMultiFit scalar fit
-	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector Gwaves
 	pointer(real colvector) rowvector Behwaves
 	real matrix presentMat
 	real colvector present1, bv1, bv2, bv3
@@ -1917,7 +1916,7 @@ void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
 	real scalar i, j, t
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.1*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -1925,12 +1924,12 @@ void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
@@ -1949,13 +1948,13 @@ void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
 	bv1 = ceil(runiform(n,1)*5)
 	Beh = SaomBehavior()
 	Beh.init(bv1, 1, 5, mean(bv1))
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3, present1)
 	bv2 = Beh.values
 	assert(bv2[n] == bv1[n])
 
-	G3 = ErgmGraph()
+	G3 = SaomGraph()
 	SaomCopyGraph(G2, G3)
 	SaomSimulateIntervalCoev(G3, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3, present1)		// still absent
 	bv3 = Beh.values
@@ -1997,19 +1996,19 @@ void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
    global-recompute one, which is only valid for single-actor-local
    effects.
    ------------------------------------------------------------------- */
-real scalar saom_ego_isolatenet(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_isolatenet(class SaomGraph scalar G, real scalar i) {
 	return((G.din[i]==0 & G.dout[i]==0))
 }
 
 void saom_test_unit34_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, before_iso, after_iso, before_oiso, after_oiso, pred_iso, pred_oiso, maxerr
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=400; t++) {
@@ -2036,9 +2035,9 @@ void saom_test_unit34_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit34_direction(real scalar n, real scalar R) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar r, steps, meaniso_neg, meaniso_zero, meanoiso_neg, meanoiso_zero
 
@@ -2054,17 +2053,17 @@ void saom_test_unit34_direction(real scalar n, real scalar R) {
 	// instead, the same "response-surface sweep" discipline this
 	// project's own SAOM diagnostics already use elsewhere for noisy
 	// count statistics.
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("isolatenet", 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), td2, ("isolatenet"))
 
 	rseed(24681012)
 	meaniso_neg = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.2, -3)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2075,7 +2074,7 @@ void saom_test_unit34_direction(real scalar n, real scalar R) {
 	rseed(24681012)
 	meaniso_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.2, 0)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2087,17 +2086,17 @@ void saom_test_unit34_direction(real scalar n, real scalar R) {
 	assert(meaniso_neg < meaniso_zero)
 
 	// outIso: same logic, own-outdegree-only condition.
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outiso", 1, &stat_saom_outiso(), &change_saom_outiso(), td2, ("outiso"))
 
 	rseed(97315115)
 	meanoiso_neg = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.2, -3)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2108,7 +2107,7 @@ void saom_test_unit34_direction(real scalar n, real scalar R) {
 	rseed(97315115)
 	meanoiso_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.2, 0)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2142,10 +2141,10 @@ void saom_test_unit34_direction(real scalar n, real scalar R) {
    (outIso/isolateNet/indegpop) each one's own statistic actually has -
    not one uniform test for all four.
    ------------------------------------------------------------------- */
-real scalar saom_alter_antiiso(class ErgmGraph scalar G, real scalar j) {
+real scalar saom_alter_antiiso(class SaomGraph scalar G, real scalar j) {
 	return((G.din[j]>=1 & G.dout[j]<=0))
 }
-real scalar saom_ego_isolatepop(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_ego_isolatepop(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 	nb = G.neighbors_out(i)
@@ -2155,8 +2154,8 @@ real scalar saom_ego_isolatepop(class ErgmGraph scalar G, real scalar i) {
 }
 
 void saom_test_unit36_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, maxerr
 	real scalar before_ains, after_ains, pred_ains		// antiInIso: full global recompute (no spillover)
 	real scalar before_ains2, after_ains2, pred_ains2	// antiInIso2: full global recompute (no spillover)
@@ -2164,9 +2163,9 @@ void saom_test_unit36_certify(real scalar n, real scalar seed) {
 	real scalar before_ipop, after_ipop, pred_ipop		// isolatePop: ego i's own local sum (indegpop-style)
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=1500; t++) {
@@ -2202,9 +2201,9 @@ void saom_test_unit36_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit36_direction(real scalar n, real scalar R) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar r, steps, mean_pos, mean_zero
 
@@ -2215,17 +2214,17 @@ void saom_test_unit36_direction(real scalar n, real scalar R) {
 	// starting from an empty graph (mirrors unit 34's own empty-start,
 	// averaged-over-replicates methodology for a noisy small-integer
 	// count statistic).
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("antiiniso", 1, &stat_saom_antiiniso(), &change_saom_antiiniso(), td2, ("antiiniso"))
 
 	rseed(19283746)
 	mean_pos = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (0.5, 3)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2236,7 +2235,7 @@ void saom_test_unit36_direction(real scalar n, real scalar R) {
 	rseed(19283746)
 	mean_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (0.5, 0)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2259,9 +2258,9 @@ void saom_test_unit36_direction(real scalar n, real scalar R) {
    "runs without error".
    =================================================================== */
 void saom_test_unit35_masking(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G, Gcheck
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G, Gcheck
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehavior scalar Beh, Bcheck
 	class SaomBehaviorModel scalar Mbeh
 	real matrix missMask
@@ -2270,14 +2269,14 @@ void saom_test_unit35_masking(real scalar n, real scalar seed) {
 	real scalar i, j, before
 
 	rseed(seed)
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), td2, ("mutual"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("mutual", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("mutual"))
 
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
 	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
 		if (i==j) continue
@@ -2292,7 +2291,7 @@ void saom_test_unit35_masking(real scalar n, real scalar seed) {
 	}
 
 	// brute-force expected: copy G, force masked dyads to 0, compute stat directly
-	Gcheck = ErgmGraph()
+	Gcheck = SaomGraph()
 	SaomCopyGraph(G, Gcheck)
 	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
 		if (i==j) continue
@@ -2340,13 +2339,13 @@ void saom_test_unit35_masking(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit35_impute_network(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G3
+	class SaomGraph scalar G1, G2, G3
 	real matrix miss1, miss2, miss3, last
 
 	rseed(seed)
-	G1 = ErgmGraph(); G1.init(n, 1)
-	G2 = ErgmGraph(); G2.init(n, 1)
-	G3 = ErgmGraph(); G3.init(n, 1)
+	G1 = SaomGraph(); G1.init(n, 1)
+	G2 = SaomGraph(); G2.init(n, 1)
+	G3 = SaomGraph(); G3.init(n, 1)
 
 	// dyad (1,2): observed at wave1 (tie present), missing at wave2, observed at wave3 (no tie)
 	G1.toggle(1,2)
@@ -2428,9 +2427,9 @@ void saom_test_unit35_impute_behavior(real scalar n, real scalar seed) {
    that it runs without error.
    ------------------------------------------------------------------- */
 void saom_test_unit35_recover(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G2corrupt
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G2corrupt
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomFit scalar fitMasked, fitNaive
 	real colvector present
 	real rowvector thetaTrue
@@ -2438,7 +2437,7 @@ void saom_test_unit35_recover(real scalar n, real scalar seed) {
 	real scalar i, j, t, steps, errMasked, errNaive
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.12*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -2446,14 +2445,14 @@ void saom_test_unit35_recover(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	thetaTrue = (-1.5, 1.2)
 	steps = SaomSimulateInterval(G2, M, thetaTrue, 4)
@@ -2467,7 +2466,7 @@ void saom_test_unit35_recover(real scalar n, real scalar seed) {
 	// dominate ordinary estimation noise (an earlier, smaller 4-actor
 	// block left the naive fit's own bias too small to separate from
 	// noise on some seeds - a real, measured finding, not assumed).
-	G2corrupt = ErgmGraph()
+	G2corrupt = SaomGraph()
 	SaomCopyGraph(G2, G2corrupt)
 	missMask = J(n, n, 0)
 	for (i=1; i<=12; i++) {
@@ -2505,18 +2504,18 @@ void saom_test_unit35_recover(real scalar n, real scalar seed) {
    than the unmasked one.
    ------------------------------------------------------------------- */
 void saom_test_unit35_recover_multi(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G3, G3corrupt
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G3, G3corrupt
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	struct SaomFit scalar fitMasked, fitNaive
-	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector Gwaves
 	pointer(real matrix) rowvector missMaskPd
 	real matrix presentMat, mask1, mask2
 	real rowvector thetaTrue
 	real scalar i, j, t, errMasked, errNaive
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.12*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -2524,24 +2523,24 @@ void saom_test_unit35_recover_multi(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	thetaTrue = (-1.4, 1.1)
 
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	SaomSimulateInterval(G2, M, thetaTrue, 4)
 
-	G3 = ErgmGraph()
+	G3 = SaomGraph()
 	SaomCopyGraph(G2, G3)
 	SaomSimulateInterval(G3, M, thetaTrue, 4)
 
-	G3corrupt = ErgmGraph()
+	G3corrupt = SaomGraph()
 	SaomCopyGraph(G3, G3corrupt)
 	mask1 = J(n, n, 0)			// period 1 fully observed
 	mask2 = J(n, n, 0)
@@ -2583,9 +2582,9 @@ void saom_test_unit35_recover_multi(real scalar n, real scalar seed) {
    the network-side masking already certified above.
    ------------------------------------------------------------------- */
 void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G1, G2, G2corrupt
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G2corrupt
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh
 	struct SaomCoevFit scalar fitMasked, fitNaive
@@ -2595,7 +2594,7 @@ void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
 	real scalar i, j, t, errMasked, errNaive
 
 	rseed(seed)
-	G1 = ErgmGraph()
+	G1 = SaomGraph()
 	G1.init(n, 1)
 	for (t=1; t<=round(0.1*n*(n-1)); t++) {
 		i = ceil(runiform(1,1)*n)
@@ -2603,19 +2602,19 @@ void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
 		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
 	}
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
 	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
 
 	startvals = ceil(runiform(n,1)*5)
-	G2 = ErgmGraph()
+	G2 = SaomGraph()
 	SaomCopyGraph(G1, G2)
 	Beh = SaomBehavior()
 	Beh.init(startvals, 1, 5, mean(startvals))
@@ -2627,7 +2626,7 @@ void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
 
 	// corrupt: force a dyad block tied, force actors 13-17's own ending
 	// behavior value to the extreme (5), unrelated to the true dynamics.
-	G2corrupt = ErgmGraph()
+	G2corrupt = SaomGraph()
 	SaomCopyGraph(G2, G2corrupt)
 	missMaskNet = J(n, n, 0)
 	for (i=1; i<=10; i++) {
@@ -2690,13 +2689,13 @@ void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
    (unit 34's own 40-replicate direction-averaging).
    ------------------------------------------------------------------- */
 void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar R) {
-	class ErgmGraph scalar G1, G2, G3, G3corrupt
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G1, G2, G3, G3corrupt
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	class SaomBehaviorModel scalar Mbeh
 	class SaomBehavior scalar Beh
 	struct SaomCoevMultiFit scalar fitMasked, fitNaive
-	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(class SaomGraph scalar) rowvector Gwaves
 	pointer(real colvector) rowvector Behwaves
 	pointer(real matrix) rowvector missMaskNetPd
 	pointer(real colvector) rowvector missMaskBehPd
@@ -2708,18 +2707,18 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 	// r(498)) can be caught: since the rates are estimated (2026-09-30) the
 	// unmasked fit can run away on the corrupted block, which is the naive
 	// fit failing, i.e. doing worse than the masked one
-	external pointer(class ErgmGraph scalar) rowvector __t35_Gw
+	external pointer(class SaomGraph scalar) rowvector __t35_Gw
 	external pointer(real colvector) rowvector __t35_Bw
-	external class ErgmModel scalar __t35_M
+	external class SaomModel scalar __t35_M
 	external class SaomBehaviorModel scalar __t35_Mbeh
 	external struct SaomCoevMultiFit scalar __t35_fit
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
-	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
+	M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), td2, ("reciprocity"))
 
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
@@ -2734,7 +2733,7 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 	errMaskedTot = 0
 	errNaiveTot = 0
 	for (r=1; r<=R; r++) {
-		G1 = ErgmGraph()
+		G1 = SaomGraph()
 		G1.init(n, 1)
 		for (t=1; t<=round(0.1*n*(n-1)); t++) {
 			i = ceil(runiform(1,1)*n)
@@ -2745,17 +2744,17 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 		bv1 = ceil(runiform(n,1)*5)
 		Beh = SaomBehavior()
 		Beh.init(bv1, 1, 5, mean(bv1))
-		G2 = ErgmGraph()
+		G2 = SaomGraph()
 		SaomCopyGraph(G1, G2)
 		SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3)
 		bv2 = Beh.values
 
-		G3 = ErgmGraph()
+		G3 = SaomGraph()
 		SaomCopyGraph(G2, G3)
 		SaomSimulateIntervalCoev(G3, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3)
 		bv3 = Beh.values
 
-		G3corrupt = ErgmGraph()
+		G3corrupt = SaomGraph()
 		SaomCopyGraph(G3, G3corrupt)
 		maskNet1 = J(n, n, 0)
 		maskNet2 = J(n, n, 0)
@@ -2833,7 +2832,7 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
    unit 36's own isolateNet-shape precedent, not unit 4/5's own
    transtrip/cycle3-shape (graph-wide) precedent.
    ------------------------------------------------------------------- */
-real scalar saom_local_transrectrip(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_local_transrectrip(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot, h
 	nb = G.neighbors_out(i)
@@ -2844,7 +2843,7 @@ real scalar saom_local_transrectrip(class ErgmGraph scalar G, real scalar i) {
 	}
 	return(tot)
 }
-real scalar saom_local_outoutass(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_local_outoutass(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 	nb = G.neighbors_out(i)
@@ -2852,7 +2851,7 @@ real scalar saom_local_outoutass(class ErgmGraph scalar G, real scalar i) {
 	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_out(i)*G.degree_out(nb[k])
 	return(tot)
 }
-real scalar saom_local_ininass(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_local_ininass(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 	nb = G.neighbors_out(i)
@@ -2867,7 +2866,7 @@ real scalar saom_local_ininass(class ErgmGraph scalar G, real scalar i) {
    header comment for why a naive graph-wide before/after test is the
    wrong methodology for this whole effect family.
    ------------------------------------------------------------------- */
-real scalar saom_local_outinass(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_local_outinass(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 	nb = G.neighbors_out(i)
@@ -2875,7 +2874,7 @@ real scalar saom_local_outinass(class ErgmGraph scalar G, real scalar i) {
 	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_out(i)*G.degree_in(nb[k])
 	return(tot)
 }
-real scalar saom_local_inoutass(class ErgmGraph scalar G, real scalar i) {
+real scalar saom_local_inoutass(class SaomGraph scalar G, real scalar i) {
 	real rowvector nb
 	real scalar k, tot
 	nb = G.neighbors_out(i)
@@ -2885,15 +2884,15 @@ real scalar saom_local_inoutass(class ErgmGraph scalar G, real scalar i) {
 }
 
 void saom_test_unit37_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, maxerr
 	real scalar b1, a1, p1, b2, a2, p2, b3, a3, p3
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=3000; t++) {
@@ -2925,9 +2924,9 @@ void saom_test_unit37_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit37_direction(real scalar n, real scalar R) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar r, steps, mean_pos, mean_zero
 
@@ -2936,17 +2935,17 @@ void saom_test_unit37_direction(real scalar n, real scalar R) {
 	// baseline run, starting from an empty graph, averaged over
 	// independent replicates (same noisy-small-integer-count
 	// methodology unit 34's own direction test established).
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outoutass", 1, &stat_saom_outoutass(), &change_saom_outoutass(), td2, ("outoutass"))
 
 	rseed(24681012)
 	mean_pos = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.5, 1.2)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2956,7 +2955,7 @@ void saom_test_unit37_direction(real scalar n, real scalar R) {
 
 	mean_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.5, 0)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -2970,15 +2969,15 @@ void saom_test_unit37_direction(real scalar n, real scalar R) {
 }
 
 void saom_test_unit165_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, maxerr
 	real scalar b1, a1, p1, b2, a2, p2
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=3000; t++) {
@@ -3006,26 +3005,26 @@ void saom_test_unit165_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit165_direction(real scalar n, real scalar R) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar r, steps, mean_pos, mean_zero
 
 	// A strongly positive outinass coefficient should raise the
 	// population's own outinass statistic relative to a theta=0
 	// baseline run, same methodology as unit 37's own direction test.
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("outinass", 1, &stat_saom_outinass(), &change_saom_outinass(), td2, ("outinass"))
 
 	rseed(35792468)
 	mean_pos = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.5, 1.2)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -3035,7 +3034,7 @@ void saom_test_unit165_direction(real scalar n, real scalar R) {
 
 	mean_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-1.5, 0)
 		steps = SaomSimulateInterval(G, M, theta, 3)
@@ -3091,7 +3090,7 @@ void saom_test_unit165_direction(real scalar n, real scalar R) {
    own definition via a completely separate triple-nested-loop
    implementation that shares no code with it.
    ------------------------------------------------------------------- */
-real scalar saom_cycle4_bf_threepaths(class ErgmGraph scalar G, real scalar n, real scalar i, real scalar j) {
+real scalar saom_cycle4_bf_threepaths(class SaomGraph scalar G, real scalar n, real scalar i, real scalar j) {
 	real scalar h, k, tot
 	tot = 0
 	for (h=1; h<=n; h++) {
@@ -3107,16 +3106,16 @@ real scalar saom_cycle4_bf_threepaths(class ErgmGraph scalar G, real scalar n, r
 }
 
 void saom_test_cycle4_certify(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmTermData scalar td
+	class SaomGraph scalar G
+	class SaomTermData scalar td
 	real scalar t, i, j, maxerr, claimed, bruteforce, expected
 	real matrix ties
 	real scalar kk, gtot
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	td = ErgmTermData()
+	td = SaomTermData()
 	maxerr = 0
 
 	for (t=1; t<=3000; t++) {
@@ -3154,9 +3153,9 @@ void saom_test_cycle4_certify(real scalar n, real scalar seed) {
 }
 
 void saom_test_cycle4_direction(real scalar n, real scalar R) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1, td2
 	real rowvector theta
 	real scalar r, steps, mean_pos, mean_zero
 
@@ -3166,17 +3165,17 @@ void saom_test_cycle4_direction(real scalar n, real scalar R) {
 	// A denser starting density (higher outdegree intercept) than
 	// those tests use, since a real 4-node motif needs meaningfully
 	// more ties present before any exist to count at all.
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
-	td2 = ErgmTermData()
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
+	td2 = SaomTermData()
 	M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), td2, ("cycle4"))
 
 	rseed(46813579)
 	mean_pos = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-0.5, 0.8)
 		steps = SaomSimulateInterval(G, M, theta, 6)
@@ -3186,7 +3185,7 @@ void saom_test_cycle4_direction(real scalar n, real scalar R) {
 
 	mean_zero = 0
 	for (r=1; r<=R; r++) {
-		G = ErgmGraph()
+		G = SaomGraph()
 		G.init(n, 1)
 		theta = (-0.5, 0)
 		steps = SaomSimulateInterval(G, M, theta, 6)
@@ -3209,19 +3208,19 @@ void saom_test_cycle4_direction(real scalar n, real scalar R) {
    end-to-end .ado-level coverage (cscripts/test_nwsaom_ado.do).
    =================================================================== */
 void saom_test_unit167_gating(real scalar n, real scalar seed) {
-	class ErgmGraph scalar G
-	class ErgmModel scalar M
-	class ErgmTermData scalar td1
+	class SaomGraph scalar G
+	class SaomModel scalar M
+	class SaomTermData scalar td1
 	real rowvector fntype_endow, fntype_creation, fntype_eval
 	real scalar i, j, t, creation_before, chg_matching, chg_other, chg_eval
 
 	rseed(seed)
-	G = ErgmGraph()
+	G = SaomGraph()
 	G.init(n, 1)
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	td1 = ErgmTermData()
-	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td1 = SaomTermData()
+	M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td1, ("outdegree"))
 
 	fntype_endow = (1)
 	fntype_creation = (2)
@@ -3257,9 +3256,9 @@ void saom_test_unit167_gating(real scalar n, real scalar seed) {
 }
 
 void saom_test_unit167_patch(real scalar seed) {
-	class ErgmGraph scalar Gstart, Gend
-	class ErgmModel scalar M
-	class ErgmTermData scalar tdA, tdB
+	class SaomGraph scalar Gstart, Gend
+	class SaomModel scalar M
+	class SaomTermData scalar tdA, tdB
 	real rowvector fntype, raw, patched
 
 	rseed(seed)
@@ -3268,22 +3267,22 @@ void saom_test_unit167_patch(real scalar seed) {
 	// patch) statistic, the endowment target, and the creation target
 	// are three genuinely different values, ruling out a coincidental
 	// pass.
-	Gstart = ErgmGraph()
+	Gstart = SaomGraph()
 	Gstart.init(5, 1)
 	Gstart.toggle(1,3)
 	Gstart.toggle(4,5)		// an unrelated tie present in BOTH waves - must not appear in either derived graph
 
-	Gend = ErgmGraph()
+	Gend = SaomGraph()
 	Gend.init(5, 1)
 	Gend.toggle(1,2)
 	Gend.toggle(4,5)
 
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	tdA = ErgmTermData()
-	tdB = ErgmTermData()
-	M.addterm("outdegreeendow", 1, &stat_edges(), &change_edges(), tdA, ("outdegreeendow"))
-	M.addterm("outdegreecreation", 1, &stat_edges(), &change_edges(), tdB, ("outdegreecreation"))
+	tdA = SaomTermData()
+	tdB = SaomTermData()
+	M.addterm("outdegreeendow", 1, &sn_stat_edges(), &sn_change_edges(), tdA, ("outdegreeendow"))
+	M.addterm("outdegreecreation", 1, &sn_stat_edges(), &sn_change_edges(), tdB, ("outdegreecreation"))
 	fntype = (1, 2)
 
 	raw = M.full_statistic(Gend)			// both slots read Gend's own raw total (2 ties) before patching
@@ -3301,30 +3300,30 @@ void saom_test_unit167_patch(real scalar seed) {
 	// derived graph - confirms SaomBuildLostTiesGraph()/
 	// SaomBuildGainedTiesGraph() genuinely isolate the CHANGED dyads,
 	// not just copy one wave wholesale.
-	assert(stat_edges(SaomBuildLostTiesGraph(Gstart, Gend), tdA)[1] == 1)
-	assert(stat_edges(SaomBuildGainedTiesGraph(Gstart, Gend), tdB)[1] == 1)
+	assert(sn_stat_edges(SaomBuildLostTiesGraph(Gstart, Gend), tdA)[1] == 1)
+	assert(sn_stat_edges(SaomBuildGainedTiesGraph(Gstart, Gend), tdB)[1] == 1)
 
 	// reciprocity: tie statistic x_ji. Start: 1<->3 mutual, 2->1; end: 3->1
 	// kept, 1->3 lost (reciprocated at the start: endowment -1), 1->2
 	// gained (reciprocated by 2->1 at the end: creation +1), 4->5 gained
 	// (not reciprocated: 0)
-	Gstart = ErgmGraph()
+	Gstart = SaomGraph()
 	Gstart.init(5, 1)
 	Gstart.toggle(1,3)
 	Gstart.toggle(3,1)
 	Gstart.toggle(2,1)
-	Gend = ErgmGraph()
+	Gend = SaomGraph()
 	Gend.init(5, 1)
 	Gend.toggle(3,1)
 	Gend.toggle(2,1)
 	Gend.toggle(1,2)
 	Gend.toggle(4,5)
-	M = ErgmModel()
+	M = SaomModel()
 	M.init()
-	tdA = ErgmTermData()
-	tdB = ErgmTermData()
-	M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), tdA, ("reciprocityendow"))
-	M.addterm("reciprocitycreation", 1, &stat_mutual(), &change_mutual(), tdB, ("reciprocitycreation"))
+	tdA = SaomTermData()
+	tdB = SaomTermData()
+	M.addterm("reciprocityendow", 1, &sn_stat_mutual(), &sn_change_mutual(), tdA, ("reciprocityendow"))
+	M.addterm("reciprocitycreation", 1, &sn_stat_mutual(), &sn_change_mutual(), tdB, ("reciprocitycreation"))
 	patched = SaomNetworkPatchEndowCreation(M, (1, 2), M.full_statistic(Gend), Gstart, Gend)
 	printf("unit 167 patch (reciprocity): patched=(%g,%g) - expect (-1, 1)\n", patched[1], patched[2])
 	assert(patched[1] == -1)

@@ -2,7 +2,6 @@
 * (observed statistics equal, estimates within noise): dev/saom_rsiena_tmx.R / .do (40 actors x 20 events); here: every effect fits natively, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 mata:

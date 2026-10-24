@@ -2,7 +2,6 @@
 * siena07 agreement (s50 + alcohol): dev/saom_rsiena_bu.{R,do}; here: every effect fits natively, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

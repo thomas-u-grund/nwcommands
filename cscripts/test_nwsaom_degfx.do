@@ -2,7 +2,6 @@
 * (s50, 3 waves; targets 798, 676, 676, 416.092; estimates within noise): dev/saom_rsiena_degfx.{R,do}.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear
@@ -49,8 +48,8 @@ capture nwsaom, waves(dg1 dg2) outdegree reciprocity endow(inpop outactsqrt) cre
 mata:
 mata set matastrict off
 void dg_split_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G1, __nwsaom_last_G2
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G1, __nwsaom_last_G2
 	real rowvector st
 	real matrix ties1, ties2
 	real scalar k, e1, c1, e2, c2
@@ -90,8 +89,8 @@ assert colsof(e(b)) == 5 & !missing(el(e(b),1,3), el(e(b),1,5)) & "`e(engine)'" 
 mata:
 mata set matastrict off
 void dg_fun_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G3
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G3
 	real rowvector st
 	real colvector d
 	st = __nwsaom_last_M.full_statistic(__nwsaom_last_G3)
@@ -112,8 +111,8 @@ assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4)) & "`e(engine)'" 
 mata:
 mata set matastrict off
 void dg_reci_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G3
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G3
 	real rowvector st
 	real colvector rd
 	real scalar j, k, nb
@@ -135,8 +134,8 @@ assert colsof(e(b)) == 5 & !missing(el(e(b),1,3), el(e(b),1,5)) & "`e(engine)'" 
 mata:
 mata set matastrict off
 void dg_gwdsp_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G3
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G3
 	real rowvector st
 	real scalar n, i, h, k, ff, fb, bt, cff, cfb
 	n = __nwsaom_last_G3.n
@@ -152,8 +151,8 @@ void dg_gwdsp_check() {
 				if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, h)) cff++
 				if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(h, k)) cfb++
 			}
-			ff = ff + gw_kernel(cff, 0.69)
-			fb = fb + gw_kernel(cfb, 0.69)
+			ff = ff + sn_gw_kernel(cff, 0.69)
+			fb = fb + sn_gw_kernel(cfb, 0.69)
 			if (__nwsaom_last_G3.has_edge(h, i)) {
 				for (k=1; k<=n; k++) if (k != i & k != h & __nwsaom_last_G3.has_edge(i, k) & !__nwsaom_last_G3.has_edge(h, k)) bt++
 			}
@@ -174,8 +173,8 @@ assert colsof(e(b)) == 7 & !missing(el(e(b),1,3), el(e(b),1,7)) & "`e(engine)'" 
 mata:
 mata set matastrict off
 void dg_gwesp2_check() {
-	external class ErgmModel scalar __nwsaom_last_M
-	external class ErgmGraph scalar __nwsaom_last_G3
+	external class SaomModel scalar __nwsaom_last_M
+	external class SaomGraph scalar __nwsaom_last_G3
 	real rowvector st
 	real scalar n, i, j, k, fb, rr, nd1, nd2, c, c4
 	real colvector cnt
@@ -191,10 +190,10 @@ void dg_gwesp2_check() {
 			if (i == j) continue
 			c = 0
 			for (k=1; k<=n; k++) if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(j, k)) c++
-			if (__nwsaom_last_G3.has_edge(i, j)) fb = fb + gw_kernel(c, 0.69)
+			if (__nwsaom_last_G3.has_edge(i, j)) fb = fb + sn_gw_kernel(c, 0.69)
 			c = 0
 			for (k=1; k<=n; k++) if (k != i & k != j & __nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, i) & __nwsaom_last_G3.has_edge(j, k) & __nwsaom_last_G3.has_edge(k, j)) c++
-			if (__nwsaom_last_G3.has_edge(i, j)) rr = rr + gw_kernel(c, 0.69)
+			if (__nwsaom_last_G3.has_edge(i, j)) rr = rr + sn_gw_kernel(c, 0.69)
 			c = 0
 			for (k=1; k<=n; k++) if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, j)) c++
 			if (c >= 1 & !__nwsaom_last_G3.has_edge(i, j)) nd1++

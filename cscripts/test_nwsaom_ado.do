@@ -1,11 +1,10 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * End-to-end smoke test for nwsaom.ado (harmonisation units 1-5):
-* exercises the full NWdef -> ErgmGraph bridge (__nwsaom_bridge_from_netobj)
+* exercises the full NWdef -> SaomGraph bridge (__nwsaom_bridge_from_netobj)
 * and ereturn layer on real nwset-built directed networks, not just the
 * pure-Mata toy graphs cscripts/test_nwsaom_mata.do already certifies the
 * estimator's own math against.
@@ -59,7 +58,7 @@ assert colsof(b2) == 3
 di as text "nwsaom.ado units 2-3 (nodeicov+outactivity) end-to-end smoke test PASS"
 
 * --- units 4/5: transtrip + cycle3 (freshly-derived structural
-* effects, reusing ErgmGraph's own shared_partners_otp()/_osp()
+* effects, reusing SaomGraph's own shared_partners_otp()/_osp()
 * primitives internally) through the real command, on a slightly
 * denser pair of toy waves so both effects have two-paths/cycles to
 * act on (matching the tuning cscripts/test_nwsaom_mata.do's own unit
@@ -272,9 +271,9 @@ assert _rc == 198
 di as text "nwsaom.ado unit 162 (estat gof, join(off): separate per-period tests + join() validation) end-to-end smoke test PASS"
 
 * --- harmonisation unit 22: gwesp() option, through the real command -
-* direct reuse of nwergm's own stat_gwesp()/change_gwesp() (mata-level
+* direct reuse of nwergm's own sn_stat_gwesp()/change_gwesp() (mata-level
 * wiring already certified in cscripts/test_nwsaom_mata.do's own unit
-* 22) exercised end to end via the real NWdef -> ErgmGraph bridge and
+* 22) exercised end to end via the real NWdef -> SaomGraph bridge and
 * st_data() options-parsing path, same denser toy waves units 4/5/9
 * already use (transtrip/cycle3 need two-paths to act on; gwesp needs
 * the same).
@@ -292,7 +291,7 @@ di as text "nwsaom.ado unit 22 (gwesp() reuse) end-to-end smoke test PASS"
 * --- harmonisation unit 23: transties option, through the real command -
 * change_saom_transties() (mata-level wiring certified in
 * cscripts/test_nwsaom_mata.do's own unit 23) exercised end to end via
-* the real NWdef -> ErgmGraph bridge and st_data() options-parsing
+* the real NWdef -> SaomGraph bridge and st_data() options-parsing
 * path, same denser toy waves units 4/5/9/22 already use (transitive
 * ties need two-paths to act on).
 nwclear
@@ -342,11 +341,11 @@ di as text "nwsaom.ado unit 24 (egox/nodeocov duplicate-specification error) end
 * --- harmonisation unit 25: balance, through the real command -
 * change_saom_balance()/stat_saom_balance() (mata-level wiring
 * certified in cscripts/test_nwsaom_mata.do's own unit 25) exercised
-* end to end via the real NWdef -> ErgmGraph bridge, on the wave1()/
+* end to end via the real NWdef -> SaomGraph bridge, on the wave1()/
 * wave2() (single-period) path - this ALSO exercises the
 * __nwsaom_last_Gbases pointer-array assembly (unconditional, built
 * right after the per-wave graphs) and saom_balance_mean()'s own
-* st_data()-free, pure-ErgmGraph pooling path for the first time
+* st_data()-free, pure-SaomGraph pooling path for the first time
 * end-to-end.
 nwclear
 nwwebuse glasgow, nwclear
@@ -380,7 +379,7 @@ di as text "nwsaom.ado unit 25 (balance reuse, waves() 3-wave path, pooled balan
 * through the real command - change_saom_linear()/change_saom_avalt()/
 * SaomEstimateRMCoev() (mata-level wiring certified in
 * cscripts/test_nwsaom_mata.do's own unit 26) exercised end to end via
-* the real NWdef -> ErgmGraph bridge and st_data()-based behavior()
+* the real NWdef -> SaomGraph bridge and st_data()-based behavior()
 * reading, on the same denser toy waves units 4/5/9/22/23 already use
 * (structural effects need two-paths to act on). Checks that the
 * coefficient table clearly distinguishes network from behavior
@@ -1214,8 +1213,8 @@ di as text "nwsaom.ado symtype(force)/symtype(agree) (native-first, no Mata fall
 * includeInteraction()) - see unw_saom.do's own "Interaction effects"
 * header comment (right after change_saom_balance()) for the full
 * design/derivation account. The underlying formulas were independently
-* hand-verified (against pre-existing, already-certified change_mutual()/
-* change_saom_transtrip()/stat_mutual()/stat_saom_transtrip() calls, NOT
+* hand-verified (against pre-existing, already-certified sn_change_mutual()/
+* change_saom_transtrip()/sn_stat_mutual()/stat_saom_transtrip() calls, NOT
 * the new interaction dispatcher itself) on a small hand-built graph, and
 * cross-checked native-vs-Mata on real 50-actor RSiena s501/s502 data
 * (both converge to statistically consistent coefficients - not
@@ -1262,8 +1261,8 @@ di as text "nwsaom.ado interact() (two-way interaction effects) PASS"
 * (NetworkInteractionEffect::tieStatistic() simply multiplies in a
 * third component's own tieStatistic() when present). The underlying
 * formula was independently hand-verified against pre-existing,
-* already-certified change_edges()/change_mutual()/change_nodecov()/
-* stat_edges()/stat_mutual()/stat_nodecov() calls directly, NOT the
+* already-certified sn_change_edges()/sn_change_mutual()/sn_change_nodecov()/
+* sn_stat_edges()/sn_stat_mutual()/sn_stat_nodecov() calls directly, NOT the
 * interaction dispatcher itself, on both the global statistic and the
 * ministep change contribution (dev/saom_interact3_crosscheck.do) -
 * only the .ado-level option-parsing/eligibility contract is re-tested

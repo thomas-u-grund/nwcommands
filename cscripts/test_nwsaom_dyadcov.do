@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Dyadic covariates dyadcov() / dyadcovrecip() (RSiena X / XRecip): the native statistic equals the Mata one
@@ -11,9 +10,9 @@ do unw_saom.do
 mata:
 mata set matastrict off
 void dyad_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real matrix X, W
@@ -26,21 +25,21 @@ void dyad_test() {
 	// centring: mean of the non-missing off-diagonal cells, missing cells and the diagonal are 0
 	assert(all(diagonal(W) :== 0))
 	assert(all(W :< .))
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); t2.edgecovmat = W; M.addterm("dyadcov", 1, &stat_saom_dyadcov(), &change_saom_dyadcov(), t2, ("dyadcov_X"))
-	t3 = ErgmTermData(); t3.edgecovmat = W; M.addterm("dyadcovrecip", 1, &stat_saom_dyadcovrecip(), &change_saom_dyadcovrecip(), t3, ("dyadcovrecip_X"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); t2.edgecovmat = W; M.addterm("dyadcov", 1, &stat_saom_dyadcov(), &change_saom_dyadcov(), t2, ("dyadcov_X"))
+	t3 = SaomTermData(); t3.edgecovmat = W; M.addterm("dyadcovrecip", 1, &stat_saom_dyadcovrecip(), &change_saom_dyadcovrecip(), t3, ("dyadcovrecip_X"))
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
 	assert(cfg.termcodes == (1, 40, 41))
 	assert(cols(cfg.attrmat) == 2 * n)
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	for (r=1; r<=15; r++) {
-		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, 0.3, 0.2), 3, 1, 0)
 		assert(max(abs(res.stat - M.full_statistic(Gw))) < 1e-8)
 	}
@@ -91,9 +90,9 @@ assert _rc == 111
 mata:
 mata set matastrict off
 void absdiff_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real colvector x
@@ -101,20 +100,20 @@ void absdiff_test() {
 	n = 40
 	rseed(62)
 	x = SaomCovPrep(floor(runiform(n, 1) * 5), 1, m)
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); t2.attr = x; M.addterm("absdiffx", 1, &stat_saom_absdiffx(), &change_saom_absdiffx(), t2, ("absdiffx_x"))
-	t3 = ErgmTermData(); t3.attr = x; M.addterm("egoxaltx", 1, &stat_saom_egoxaltx(), &change_saom_egoxaltx(), t3, ("egoxaltx_x"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); t2.attr = x; M.addterm("absdiffx", 1, &stat_saom_absdiffx(), &change_saom_absdiffx(), t2, ("absdiffx_x"))
+	t3 = SaomTermData(); t3.attr = x; M.addterm("egoxaltx", 1, &stat_saom_egoxaltx(), &change_saom_egoxaltx(), t3, ("egoxaltx_x"))
 	cfg = SaomNativeSetup(M)
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
 	assert(cfg.termcodes == (1, 42, 43))
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	for (r=1; r<=15; r++) {
-		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, 0.3, 0.2), 3, 1, 0)
 		assert(max(abs(res.stat - M.full_statistic(Gw))) < 1e-8)
 	}

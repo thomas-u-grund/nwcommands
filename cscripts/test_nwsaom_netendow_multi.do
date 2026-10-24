@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Network endowment/creation split of reciprocity (outdegree + reciprocityendow +
@@ -15,19 +14,19 @@ mata set matastrict off
 void simwaves() {
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
-	class ErgmModel scalar M
-	class ErgmGraph scalar G
-	class ErgmTermData scalar t1, t2, t3
+	class SaomModel scalar M
+	class SaomGraph scalar G
+	class SaomTermData scalar t1, t2, t3
 	n = 60
 	rseed(31415)
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), t2, ("reciprocityendow"))
-	t3 = ErgmTermData(); M.addterm("reciprocitycreation", 1, &stat_mutual(), &change_mutual(), t3, ("reciprocitycreation"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); M.addterm("reciprocityendow", 1, &sn_stat_mutual(), &sn_change_mutual(), t2, ("reciprocityendow"))
+	t3 = SaomTermData(); M.addterm("reciprocitycreation", 1, &sn_stat_mutual(), &sn_change_mutual(), t3, ("reciprocitycreation"))
 	cfg = SaomNativeSetup(M)
 	cfg.fntype = (0, 1, 2)
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
-	G = ErgmGraph(); G.init(n, 1)
+	G = SaomGraph(); G.init(n, 1)
 	for (k=1; k<=round(0.08*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G.has_edge(i,j)) G.toggle(i,j)
@@ -135,33 +134,33 @@ nwclear
 mata:
 mata set matastrict off
 void tte_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3, t4
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3, t4
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real rowvector fn, mst, maxerr
 	real scalar n, k, i, j, r
 	n = 40
 	rseed(77)
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), t2, ("reciprocity"))
-	t3 = ErgmTermData(); M.addterm("transtiesendow", 1, &stat_transitiveties(), &change_saom_transties(), t3, ("transtiesendow"))
-	t4 = ErgmTermData(); M.addterm("transtiescreation", 1, &stat_transitiveties(), &change_saom_transties(), t4, ("transtiescreation"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); M.addterm("reciprocity", 1, &sn_stat_mutual(), &sn_change_mutual(), t2, ("reciprocity"))
+	t3 = SaomTermData(); M.addterm("transtiesendow", 1, &sn_stat_transitiveties(), &change_saom_transties(), t3, ("transtiesendow"))
+	t4 = SaomTermData(); M.addterm("transtiescreation", 1, &sn_stat_transitiveties(), &change_saom_transties(), t4, ("transtiescreation"))
 	fn = SaomFntypeFromNames(M)
 	assert(fn == (0, 0, 1, 2))
 	cfg = SaomNativeSetup(M)
 	cfg.fntype = fn
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	maxerr = J(1, 4, 0)
 	for (r=1; r<=20; r++) {
-		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, 1.5, -0.3, 1.0), 3, 1, 0)
 		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
 		maxerr = colmax(abs(res.stat \ mst) )
@@ -224,33 +223,33 @@ di as text "endow()/creation() syntax PASS"
 mata:
 mata set matastrict off
 void gwc_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3, t4, t5
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3, t4, t5
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real rowvector fn, mst
 	real scalar n, k, i, j, r
 	n = 40
 	rseed(55)
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); t2.decay = 0.69; t2.sptype = "OTP"; M.addterm("gwespendow", 1, &stat_gwesp(), &change_saom_gwesp(), t2, ("gwespendow"))
-	t3 = ErgmTermData(); t3.decay = 0.69; t3.sptype = "OTP"; M.addterm("gwespcreation", 1, &stat_gwesp(), &change_saom_gwesp(), t3, ("gwespcreation"))
-	t4 = ErgmTermData(); M.addterm("cycle4endow", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t4, ("cycle4endow"))
-	t5 = ErgmTermData(); M.addterm("cycle4creation", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t5, ("cycle4creation"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); t2.decay = 0.69; t2.sptype = "OTP"; M.addterm("gwespendow", 1, &sn_stat_gwesp(), &change_saom_gwesp(), t2, ("gwespendow"))
+	t3 = SaomTermData(); t3.decay = 0.69; t3.sptype = "OTP"; M.addterm("gwespcreation", 1, &sn_stat_gwesp(), &change_saom_gwesp(), t3, ("gwespcreation"))
+	t4 = SaomTermData(); M.addterm("cycle4endow", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t4, ("cycle4endow"))
+	t5 = SaomTermData(); M.addterm("cycle4creation", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t5, ("cycle4creation"))
 	fn = SaomFntypeFromNames(M)
 	assert(fn == (0, 1, 2, 1, 2))
 	cfg = SaomNativeSetup(M)
 	cfg.fntype = fn
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	for (r=1; r<=15; r++) {
-		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.2, 0.5, 0.1, 0.3), 3, 1, 0)
 		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
 		assert(max(abs(res.stat - mst)) < 1e-8)
@@ -261,31 +260,31 @@ end
 mata:
 mata set matastrict off
 void bal_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real rowvector fn, mst
 	real scalar n, k, i, j, r
 	n = 40
 	rseed(56)
-	M = ErgmModel(); M.init()
-	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
-	t2 = ErgmTermData(); t2.decay = 0.09; M.addterm("balanceendow", 1, &stat_saom_balance(), &change_saom_balance(), t2, ("balanceendow"))
-	t3 = ErgmTermData(); t3.decay = 0.09; M.addterm("balancecreation", 1, &stat_saom_balance(), &change_saom_balance(), t3, ("balancecreation"))
+	M = SaomModel(); M.init()
+	t1 = SaomTermData(); M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
+	t2 = SaomTermData(); t2.decay = 0.09; M.addterm("balanceendow", 1, &stat_saom_balance(), &change_saom_balance(), t2, ("balanceendow"))
+	t3 = SaomTermData(); t3.decay = 0.09; M.addterm("balancecreation", 1, &stat_saom_balance(), &change_saom_balance(), t3, ("balancecreation"))
 	fn = SaomFntypeFromNames(M)
 	assert(fn == (0, 1, 2))
 	cfg = SaomNativeSetup(M)
 	cfg.fntype = fn
 	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	for (r=1; r<=15; r++) {
-		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.1, 0.5), 3, 1, 0)
 		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
 		assert(max(abs(res.stat - mst)) < 1e-7)
@@ -296,9 +295,9 @@ end
 mata:
 mata set matastrict off
 void triad_test() {
-	class ErgmModel scalar M
-	class ErgmGraph scalar G0, Gw
-	class ErgmTermData scalar t1, t2, t3
+	class SaomModel scalar M
+	class SaomGraph scalar G0, Gw
+	class SaomTermData scalar t1, t2, t3
 	struct SaomCountedResult scalar res
 	struct SaomNativeConfig scalar cfg
 	real rowvector fn, mst
@@ -307,15 +306,15 @@ void triad_test() {
 	n = 40
 	rseed(57)
 	nms = ("transtrip", "cycle3", "transmedtrip", "transrectrip")
-	G0 = ErgmGraph(); G0.init(n, 1)
+	G0 = SaomGraph(); G0.init(n, 1)
 	for (k=1; k<=round(0.12*n*(n-1)); k++) {
 		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
 		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
 	}
 	for (q=1; q<=4; q++) {
-		M = ErgmModel(); M.init()
-		t1 = ErgmTermData(); t2 = ErgmTermData(); t3 = ErgmTermData()
-		M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+		M = SaomModel(); M.init()
+		t1 = SaomTermData(); t2 = SaomTermData(); t3 = SaomTermData()
+		M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), t1, ("outdegree"))
 		if (q==1) {
 			M.addterm("transtripendow", 1, &stat_saom_transtrip(), &change_saom_transtrip(), t2, ("a"))
 			M.addterm("transtripcreation", 1, &stat_saom_transtrip(), &change_saom_transtrip(), t3, ("b"))
@@ -338,7 +337,7 @@ void triad_test() {
 		cfg.fntype = fn
 		assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
 		for (r=1; r<=10; r++) {
-			Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+			Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 			res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.1, 0.3), 3, 1, 0)
 			mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
 			assert(max(abs(res.stat - mst)) < 1e-7)

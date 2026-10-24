@@ -2,7 +2,6 @@
 * validated against siena07 (targets and estimates, dev/saom_rsiena_symm.R, dev/saom_rsiena_degfam.R); here: they fit natively + refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

@@ -2,7 +2,6 @@
 * (statistics and estimates, directed s50 and symmetric s50 waves): dev/saom_rsiena_tvdyad.{R,do}, dev/saom_rsiena_symdyad.{R,do}; here: every effect fits natively
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

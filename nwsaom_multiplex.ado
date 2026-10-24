@@ -14,8 +14,8 @@
 
    Mata engine: SaomSimulateIntervalCoevNetNet()/SaomEstimateRMCoevNetNet()
    (unw_saom.do) - a parallel implementation of SaomEstimateRMCoev()'s
-   own three-phase joint Robbins-Monro structure for two ErgmModel/
-   ErgmGraph instances instead of one ErgmModel + one SaomBehaviorModel,
+   own three-phase joint Robbins-Monro structure for two SaomModel/
+   SaomGraph instances instead of one SaomModel + one SaomBehaviorModel,
    verified against RSiena's own real EpochSimulation.cpp source
    (chooseVariable()/chooseActor(): a rate-proportional choice among ALL
    of a model's dependent variables is a fully generic mechanism -
@@ -120,7 +120,7 @@ program define nwsaom_multiplex, eclass
 
 	// Coefficient names/count now vary with crprod()/crprodb() (Mata's
 	// own M1.coefnames/M2.coefnames, the actual source of truth for what
-	// each ErgmModel really contains) rather than the old fixed 4-column
+	// each SaomModel really contains) rather than the old fixed 4-column
 	// literal - posted back as a Stata global (cleared immediately after
 	// reading) since `matrix colnames' needs a plain token list, not a
 	// Mata return value directly.

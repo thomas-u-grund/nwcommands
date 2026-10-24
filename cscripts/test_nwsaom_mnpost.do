@@ -1,7 +1,6 @@
 * nwsaom multinet: fix(), theta0(), estat score and estat timetest after several networks (and a behavior)
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

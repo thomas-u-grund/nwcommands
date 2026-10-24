@@ -3,7 +3,6 @@
 * dev/saom_rsiena_twomode_sim.R / dev/saom_rsiena_twomode.do.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 nwclear

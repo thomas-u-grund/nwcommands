@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Which simulator a fit used: e(engine) is "native" (the C plugin) or

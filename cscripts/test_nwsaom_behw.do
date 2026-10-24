@@ -2,7 +2,6 @@
 * the estimates equal siena07 (s50 + alcohol, dev/saom_rsiena_behw.{R,do}); here: every family fits natively, names, refusals
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 clear

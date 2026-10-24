@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Covariates with missing values: masked statistics (Mata) and their native (C)
@@ -14,9 +13,9 @@ void covmiss_test() {
 struct SaomCountedResult scalar res
 real scalar mu
 struct SaomNativeConfig scalar cfg
-class ErgmModel scalar M
-class ErgmGraph scalar G0, Gw
-class ErgmTermData scalar td0, td1, td2, td3, td4, td5
+class SaomModel scalar M
+class SaomGraph scalar G0, Gw
+class SaomTermData scalar td0, td1, td2, td3, td4, td5
 n = 30
 mu = 0
 nruns = 600
@@ -35,15 +34,15 @@ st_store((1::n), st_addvar("double", "xc"), xc)
 st_store((1::n), st_addvar("double", "xd"), xd)
 st_store((1::n), st_addvar("double", "xe"), xe)
 
-M = ErgmModel()
+M = SaomModel()
 M.init()
-td0 = ErgmTermData()
-M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td0, ("outdegree"))
-td1 = ErgmTermData(); SaomRegCov(M, "nodematch", "xb", n, 0, td1, ("nodematch_xb"), mu)
-td2 = ErgmTermData(); SaomRegCov(M, "nodecov", "xc", n, 0, td2, ("nodecov_xc"), mu)
-td3 = ErgmTermData(); SaomRegCov(M, "nodeicov", "xa", n, 0, td3, ("nodeicov_xa"), mu)
-td4 = ErgmTermData(); SaomRegCov(M, "nodeocov", "xd", n, 0, td4, ("nodeocov_xd"), mu)
-td5 = ErgmTermData(); SaomRegCov(M, "simcov", "xe", n, 0, td5, ("simcov_xe"), mu)
+td0 = SaomTermData()
+M.addterm("outdegree", 1, &sn_stat_edges(), &sn_change_edges(), td0, ("outdegree"))
+td1 = SaomTermData(); SaomRegCov(M, "nodematch", "xb", n, 0, td1, ("nodematch_xb"), mu)
+td2 = SaomTermData(); SaomRegCov(M, "nodecov", "xc", n, 0, td2, ("nodecov_xc"), mu)
+td3 = SaomTermData(); SaomRegCov(M, "nodeicov", "xa", n, 0, td3, ("nodeicov_xa"), mu)
+td4 = SaomTermData(); SaomRegCov(M, "nodeocov", "xd", n, 0, td4, ("nodeocov_xd"), mu)
+td5 = SaomTermData(); SaomRegCov(M, "simcov", "xe", n, 0, td5, ("simcov_xe"), mu)
 
 cfg = SaomNativeSetup(M)
 assert(cfg.eligible == 1)
@@ -51,7 +50,7 @@ assert(SaomNativeAvailable() == 1)
 assert(cfg.termcodes == (1, 35, 36, 37, 38, 39))
 assert(cols(cfg.attrmat) == 10)
 
-G0 = ErgmGraph()
+G0 = SaomGraph()
 G0.init(n, 1)
 for (k=1; k<=round(0.15*n*(n-1)); k++) {
 	i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
@@ -64,13 +63,13 @@ Zm = J(nruns, p, 0); Zn = J(nruns, p, 0)
 maxerr = 0
 rseed(1)
 for (r=1; r<=nruns; r++) {
-	Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+	Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 	junk = SaomSimulateInterval(Gw, M, theta, 3)
 	Zm[r,.] = M.full_statistic(Gw)
 }
 rseed(2)
 for (r=1; r<=nruns; r++) {
-	Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+	Gw = SaomGraph(); SaomCopyGraph(G0, Gw)
 	res = SaomSimulateIntervalNative(Gw, M, cfg, theta, 3, 1, 0)
 	Zn[r,.] = M.full_statistic(Gw)
 	maxerr = max((maxerr, max(abs(res.stat - Zn[r,.]))))

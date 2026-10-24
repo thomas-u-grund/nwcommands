@@ -1,7 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 * Regression test: nwsaom co-evolution (network + behavior) against RSiena.

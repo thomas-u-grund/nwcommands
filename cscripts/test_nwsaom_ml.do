@@ -5,7 +5,6 @@
 cscript
 adopath ++ "."
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 nwclear
 forvalues w = 1/3 {
@@ -27,10 +26,10 @@ assert e(tconv_max_ml) < 1
 * --- exact check of the score
 mata:
 mata set matastrict off
-class ErgmGraph scalar tb_graph(real matrix Wm) {
-	class ErgmGraph scalar Gt
+class SaomGraph scalar tb_graph(real matrix Wm) {
+	class SaomGraph scalar Gt
 	real scalar i, j
-	Gt = ErgmGraph()
+	Gt = SaomGraph()
 	Gt.init(4, 1)
 	for (i=1; i<=4; i++) for (j=1; j<=4; j++) if (Wm[i,j] != 0) Gt.toggle(i, j)
 	return(Gt)

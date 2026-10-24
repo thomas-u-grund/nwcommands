@@ -2,7 +2,6 @@
 * Real-data agreement with RSiena (s50 + alcohol + smoking): dev/saom_rsiena_multibeh.{R,do}.
 cscript
 do unw_core.do
-do unw_ergm.do
 do unw_saom.do
 
 nwclear
