@@ -292,12 +292,22 @@ program define nwsaom_multinet, eclass
 				local __os = 3 - `__s'
 				if `__tmany' {
 					if `__tm`__os'' local __co = `__nA1'
+					if `__tm`__os'' & "`__e'" == "tou" & `nodes' - `__nA1' > `__nA1' {
+						di "{err}tou needs at most as many events as actors when the other network is two-mode (the effect indexes both networks by the same node number)."
+						error 198
+					}
 				}
 				mata: SaomMNAddCrossDy(__nwsaom_mn_M`__s', "`__e'", "`__cv'", `nodes', `__pp', `__co')
 				continue
 			}
 			mata: st_local("__iscov", strofreal(anyof(SaomMNCovNames(), "`__e'")))
 			if `__iscov' {
+				if `__tmany' {
+					if `__tm`__s'' & inlist("`__e'", "altdist2w", "totdist2w", "simdist2w", "altindist2w", "totindist2w", "simegodist2w", "simegoindist2w") & `nodes' - `__nA1' > `__nA1' {
+						di "{err}`__e' needs at most as many events as actors when the own network is two-mode (the effect indexes the other network by the event number)."
+						error 198
+					}
+				}
 				gettoken __cv __pp : __pp, parse(":")
 				local __pp = subinstr("`__pp'", ":", "", 1)
 				if "`__pp'" == "" local __pp 1

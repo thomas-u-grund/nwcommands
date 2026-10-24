@@ -1,5 +1,5 @@
 * nwsaom multinet with a TWO-MODE member (actors choose among events) and with non-directed networks: the observed cross-network statistics equal siena07's targets.
-* The networks are given by formulas (no random numbers) and built identically by dev/saom_rsiena_mnnet.R, which printed the reference values below (siena07, RSiena 1.6.6;
+* The networks are given by formulas (no random numbers) and built identically by dev/saom_rsiena_mnnet.R, which printed the reference values below (siena07, RSiena 1.6.6, and 1.6.14 for the toU rows (RSiena 1.6.12 corrected the order of the two networks in toU);
 * the targets of the cross effect, summed over the periods). Estimates against siena07 (two seeds): dev/saom_rsiena_mn2m.R / .do (two-mode) and dev/saom_rsiena_mn1m.R / .do.
 cscript
 do unw_core.do
@@ -118,7 +118,7 @@ local refs `refs' FS|both|both|-7.480000
 local refs `refs' FS|avAlt.2M.tie:2|avalt2mtie:2|17.972489
 local refs `refs' FS|from.w.ind:1:Fd|fromwindow:1|175.000000
 local refs `refs' FS|from.w.ind:1:Sd|fromwindoo:1|194.000000
-local refs `refs' FS|toU:0:dy|tou:__dy:0|-8.421053
+local refs `refs' FS|toU:0:dy|tou:__dy:0|8.421053
 local refs `refs' FS|to|to|58.000000
 local refs `refs' FS|sharedTo|sharedto|-20.508772
 local refs `refs' SF|toAny|toany|39.000000
@@ -126,14 +126,14 @@ local refs `refs' SF|betweenPop|betweenpop|389.580188
 local refs `refs' SF|from.w.ind:1:Sd|fromwindow:1|204.000000
 local refs `refs' SF|from.w.ind:1:Fd|fromwindoo:1|240.000000
 local refs `refs' SF|avAlt.2M.tie:2|avalt2mtie:2|14.774770
-local refs `refs' SF|toU:0:dy|tou:__dy:0|-11.368421
+local refs `refs' SF|toU:0:dy|tou:__dy:0|7.631579
 local refs `refs' SF|to|to|49.000000
 local refs `refs' SF|sharedTo|sharedto|-25.136842
 local refs `refs' FH|toAny|toany|71.000000
 local refs `refs' FH|betweenPop|betweenpop|440.404470
 local refs `refs' FH|from.w.ind:1:Fd|fromwindow:1|241.000000
 local refs `refs' FH|from.w.ind:1:Hd|fromwindoo:1|278.000000
-local refs `refs' FH|toU:0:dy|tou:__dy:0|15.578947
+local refs `refs' FH|toU:0:dy|tou:__dy:0|1.210526
 local refs `refs' FHo|from.w.ind:1:Hd:Fd|fromwindwo:1|344.000000
 local refs `refs' BS|to|to|86.000000
 local refs `refs' BS|toAny|toany|56.000000

@@ -1537,6 +1537,277 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 	return (double)cnt;
 }
 
+/* ===================================================================
+   Generic bipartite family (Stage 5): TERMCODE = 3000 + kind, direct
+   ports of _bx_one() in unw_ergm.do, written as change statistics
+   (state BEFORE the toggle; delta = +1 add / -1 remove). Packed
+   parameters: p = a + 131072*b + 131072^2*c (see _bx_pack()).
+   =================================================================== */
+static void bx_unpack(double p, double *a, double *b, double *c) {
+	double cc = floor(p / 17179869184.0);
+	double bb = floor((p - cc * 17179869184.0) / 131072.0);
+	*c = cc; *b = bb; *a = p - cc * 17179869184.0 - bb * 131072.0;
+}
+static double bx_g(double c, double e) {
+	if (c < 1.0) return 0.0;
+	if (e == 0.0) return (c == 1.0) ? 0.0 : 0.5 * c;
+	return 0.5 * c * pow(c - 1.0, e);
+}
+static double change_bipx(graph_t *g, int kind, double p1, double p2, double *attr, double delta, long i, long j) {
+	long m = (long)p2;
+	long nm, oth, q;
+	double chg = 0.0;
+	adjlist_t *nb;
+	/* kind-specific mode: kinds with mode in p2 use it; others handled below */
+	if (kind == 14) {
+		long n1node = (g->mode[i] == 1) ? i : j;
+		long n2node = (n1node == i) ? j : i;
+		return (attr[n1node] == p1 && attr[n2node] == p2) ? delta : 0.0;
+	}
+	if (kind == 6) {
+		long node = (long)p1;
+		return (i == node || j == node) ? delta : 0.0;
+	}
+	if (kind == 9) {
+		long film = (g->mode[i] == 2) ? i : j;
+		long act = (film == i) ? j : i;
+		long other;
+		if (film != (long)p1 && film != (long)p2) return 0.0;
+		other = (film == (long)p1) ? (long)p2 : (long)p1;
+		return has_edge(g, act, other) ? delta : 0.0;
+	}
+	if (kind == 12) {
+		double A, B, ty, e = p2;
+		double code, ao;
+		bx_unpack(p1, &A, &B, &ty);
+		m = 1 + (long)(ty / 2.0);
+		ty = ty - 2.0 * (double)(m - 1);
+		nm = (g->mode[i] == m) ? i : j; oth = (nm == i) ? j : i;
+		code = attr[nm]; ao = attr[oth];
+		if (A > 0 && A != code) return 0.0;
+		if (B > 0 && B != ao) return 0.0;
+		nb = &g->adj[oth];
+		if (ty == 0.0) {
+			long cnt = 0;
+			for (q = 0; q < nb->len; q++) { long v = nb->nb[q]; if (v != nm && attr[v] == code) cnt++; }
+			return delta * (bx_g((double)cnt + 1.0, e) - bx_g((double)cnt, e));
+		}
+		else {
+			adjlist_t *nn = &g->adj[nm];
+			for (q = 0; q < nb->len; q++) {
+				long v = nb->nb[q], r;
+				long cnt = 0;
+				if (v == nm || attr[v] != code) continue;
+				for (r = 0; r < nn->len; r++) {
+					long w = nn->nb[r];
+					if (w == oth) continue;
+					if (B > 0 && attr[w] != ao) continue;
+					if (has_edge(g, v, w)) cnt++;
+				}
+				chg += (cnt == 0) ? 1.0 : pow((double)cnt + 1.0, e) - pow((double)cnt, e);
+			}
+			return delta * chg;
+		}
+	}
+	if (kind == 13) { double z, l13, m13; bx_unpack(p2, &m13, &l13, &z); m = (long)m13; }
+	nm = (g->mode[i] == m) ? i : j; oth = (nm == i) ? j : i;
+	nb = (g->adj != NULL) ? &g->adj[nm] : NULL;
+	switch (kind) {
+		case 1: case 2: {
+			double from, to, lev, d;
+			bx_unpack(p1, &from, &to, &lev);
+			if (to >= 131071.0) to = 1e12;
+			if (kind == 1) {
+				if (lev > 0 && attr[nm] != lev) return 0.0;
+				d = (double)g->deg[nm];
+			}
+			else {
+				if (attr[nm] != attr[oth]) return 0.0;
+				d = 0.0;
+				for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[nm]) d += 1.0;
+			}
+			return (double)((d + delta >= from && d + delta < to) - (d >= from && d < to));
+		}
+		case 3: {
+			double d = 0.0;
+			if (attr[nm] != attr[oth]) return 0.0;
+			for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[nm]) d += 1.0;
+			return ergm_choose(d + delta, p1) - ergm_choose(d, p1);
+		}
+		case 4: {
+			double omin = 1e300, omax = -1e300, nmin = 1e300, nmax = -1e300, v;
+			for (q = 0; q < nb->len; q++) {
+				long u = nb->nb[q];
+				v = attr[u];
+				if (v < omin) omin = v; if (v > omax) omax = v;
+				if (!(delta < 0 && u == oth)) { if (v < nmin) nmin = v; if (v > nmax) nmax = v; }
+			}
+			if (delta > 0) { v = attr[oth]; if (v < nmin) nmin = v; if (v > nmax) nmax = v; }
+			return (nmax < -1e299 ? 0.0 : nmax - nmin) - (omax < -1e299 ? 0.0 : omax - omin);
+		}
+		case 5: {
+			long cnt = 0;
+			if (attr[oth] <= 0) return 0.0;
+			for (q = 0; q < nb->len; q++) if (nb->nb[q] != oth && attr[nb->nb[q]] == attr[oth]) cnt++;
+			return cnt == 0 ? delta : 0.0;
+		}
+		case 7: {
+			double k, t, h, d = 0.0;
+			bx_unpack(p1, &k, &t, &h);
+			if (attr[nm] != t) return 0.0;
+			if (h > 0 && attr[oth] != h) return 0.0;
+			for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[oth]) d += 1.0;
+			return ergm_choose(d + delta, k) - ergm_choose(d, k);
+		}
+		case 8: {
+			double t, lo, hi, ao = attr[oth], nlo = 0.0, nhi = 0.0;
+			bx_unpack(p1, &t, &lo, &hi);
+			if (attr[nm] != t) return 0.0;
+			if (ao != lo && ao != hi) return 0.0;
+			for (q = 0; q < nb->len; q++) {
+				long u = nb->nb[q];
+				if (u == oth) continue;
+				if (attr[u] == lo) nlo += 1.0;
+				if (attr[u] == hi) nhi += 1.0;
+			}
+			if (lo == hi) return delta * nlo;
+			return delta * ((ao == lo) ? nhi : nlo);
+		}
+		case 10: case 11: {
+			adjlist_t *no = &g->adj[oth];
+			for (q = 0; q < no->len; q++) {
+				long k = no->nb[q];
+				double pk;
+				if (k == nm) continue;
+				pk = (double)common_neighbors(g, nm, k);
+				if (kind == 10) chg += ind_kernel(pk + delta, p1) - ind_kernel(pk, p1);
+				else chg += gw_kernel(pk + delta, p1) - gw_kernel(pk, p1);
+			}
+			return chg;
+		}
+		case 13: {
+			double mm, lev, z;
+			bx_unpack(p2, &mm, &lev, &z);
+			if (lev > 0 && attr[nm] != lev) return 0.0;
+			return gw_kernel((double)g->deg[nm] + delta, p1) - gw_kernel((double)g->deg[nm], p1);
+		}
+	}
+	return 0.0;
+}
+
+/* ===================================================================
+   Covariate terms added by agent E4 (term codes 2000-2999). All of
+   them are dispatched from the tail of change_term() below through
+   change_term_cov(), so the main switch is untouched.
+   =================================================================== */
+#define TERMCODE_NODEMIXD       2001  /* directed nodemix: ordered cell (attr[tail]==p1, attr[head]==p2) */
+
+#define TERMCODE_ABSDIFFPOW     2002  /* absdiff(attr, pow): delta*|a_i-a_j|^p1 */
+#define TERMCODE_ABSDIFFCAT     2003  /* absdiffcat: |a_i-a_j| == p1 (>0) */
+#define TERMCODE_DIFF           2004  /* diff(attr,pow,dir,sign.action): p1=pow, p2 = signcode (+10 if dir is h-t) */
+#define TERMCODE_SMALLDIFF      2005  /* smalldiff: |a_i-a_j| <= p1 */
+#define TERMCODE_DYADCOV_MUT    2007  /* directed dyadcov: mutual / "utri" / "ltri" columns, see stat_dyadcov() in unw_ergm.do */
+#define TERMCODE_DYADCOV_U      2008
+#define TERMCODE_DYADCOV_L      2009
+#define TERMCODE_NODECOVRANGE   2010  /* range of neighbors' covariate: node (both parts) / out / in, then nodefactordistinct likewise (2013-2015) */
+#define TERMCODE_NODEOCOVRANGE  2011
+#define TERMCODE_NODEICOVRANGE  2012
+#define TERMCODE_NFD            2013
+#define TERMCODE_NODEOFD        2014
+#define TERMCODE_NODEIFD        2015
+#define TERMCODE_SOCIALITY      2006  /* sociality: node p1 is an endpoint (p2=1: only if attr[i]==attr[j]) */
+
+/* change in range(x over a node's neighbor list) when node w is toggled in/out of it (R's c_nodecovrange) */
+static double cov_range_change(adjlist_t *nb, long w, double *x, int present) {
+	double lo = INFINITY, hi = -INFINITY, lo2, hi2;
+	long m;
+	for (m = 0; m < nb->len; m++) {
+		long u = nb->nb[m];
+		if (u == w) continue;
+		if (x[u] < lo) lo = x[u];
+		if (x[u] > hi) hi = x[u];
+	}
+	lo2 = (x[w] < lo) ? x[w] : lo;
+	hi2 = (x[w] > hi) ? x[w] : hi;
+	{
+		double rwo = isinf(hi) ? 0.0 : hi - lo;
+		double rw = hi2 - lo2;
+		return present ? rwo - rw : rw - rwo;
+	}
+}
+/* nodefactordistinct part: change in [count of neighbors of v (list a1 plus optional a2) in category c is nonzero] */
+static double nfd_part(adjlist_t *a1, adjlist_t *a2, double *cat, double c, double delta) {
+	long cnt = 0, m;
+	if (c <= 0.0) return 0.0;
+	for (m = 0; m < a1->len; m++) if (cat[a1->nb[m]] == c) cnt++;
+	if (a2) for (m = 0; m < a2->len; m++) if (cat[a2->nb[m]] == c) cnt++;
+	return (double)(((double)cnt + delta) != 0.0) - (double)(cnt != 0);
+}
+
+static double change_term_cov(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	switch (termcode) {
+		case TERMCODE_NODEMIXD:
+			return (attr[i] == p1 && attr[j] == p2) ? delta : 0.0;
+		case TERMCODE_ABSDIFFPOW:
+			return delta * pow(fabs(attr[i] - attr[j]), p1);
+		case TERMCODE_ABSDIFFCAT: {
+			double d = fabs(attr[i] - attr[j]);
+			return (d > 0.0 && d == p1) ? delta : 0.0;
+		}
+		case TERMCODE_DIFF: {
+			long t = i, h = j;
+			int code = (int)p2;
+			double mul = (code >= 10) ? -1.0 : 1.0, ch;
+			if (!g->directed && i > j) { t = j; h = i; }
+			if (code >= 10) code -= 10;
+			ch = (attr[t] - attr[h]) * mul;
+			if (code == 2) ch = fabs(ch);
+			else if (code == 3) ch = (ch < 0.0) ? 0.0 : ch;
+			else if (code == 4) ch = (ch > 0.0) ? 0.0 : ch;
+			if (p1 == 0.0) ch = (ch > 0.0) - (ch < 0.0);
+			else if (p1 != 1.0) ch = pow(ch, p1);
+			return delta * ch;
+		}
+		case TERMCODE_SMALLDIFF:
+			return (fabs(attr[i] - attr[j]) <= p1) ? delta : 0.0;
+		case TERMCODE_DYADCOV_MUT: case TERMCODE_DYADCOV_U: case TERMCODE_DYADCOV_L: {
+			double v = cm[(j-1)*n + (i-1)];
+			int ref = has_edge(g, j, i);
+			if (termcode == TERMCODE_DYADCOV_MUT) return ref ? delta * v : 0.0;
+			if (termcode == TERMCODE_DYADCOV_U) return ref ? ((j > i) ? -delta * v : 0.0) : ((j < i) ? delta * v : 0.0);
+			return ref ? ((j < i) ? -delta * v : 0.0) : ((j > i) ? delta * v : 0.0);
+		}
+		case TERMCODE_NODECOVRANGE: case TERMCODE_NODEOCOVRANGE: case TERMCODE_NODEICOVRANGE: {
+			int present = (delta < 0.0);
+			double ch = 0.0;
+			if (!g->directed) {
+				ch = cov_range_change(&g->adj[i], j, attr, present) + cov_range_change(&g->adj[j], i, attr, present);
+			}
+			else {
+				if (termcode != TERMCODE_NODEICOVRANGE) ch += cov_range_change(&g->outadj[i], j, attr, present);
+				if (termcode != TERMCODE_NODEOCOVRANGE) ch += cov_range_change(&g->inadj[j], i, attr, present);
+			}
+			return ch;
+		}
+		case TERMCODE_NFD: case TERMCODE_NODEOFD: case TERMCODE_NODEIFD: {
+			double ch = 0.0;
+			if (!g->directed) {
+				ch = nfd_part(&g->adj[i], NULL, attr, attr[j], delta) + nfd_part(&g->adj[j], NULL, attr, attr[i], delta);
+			}
+			else {
+				if (termcode == TERMCODE_NFD) ch = nfd_part(&g->outadj[i], &g->inadj[i], attr, attr[j], delta) + nfd_part(&g->outadj[j], &g->inadj[j], attr, attr[i], delta);
+				else if (termcode == TERMCODE_NODEOFD) ch = nfd_part(&g->outadj[i], NULL, attr, attr[j], delta);
+				else ch = nfd_part(&g->inadj[j], NULL, attr, attr[i], delta);
+			}
+			return ch;
+		}
+		case TERMCODE_SOCIALITY:
+			if (p2 != 0.0 && attr[i] != attr[j]) return 0.0;
+			return ((double)i == p1 || (double)j == p1) ? delta : 0.0;
+	}
+	return 0.0;
+}
+
 /*
 	`delta' (+1 if the toggle ADDS the dyad, -1 if it REMOVES it) is
 	computed ONCE per toggle by the caller (harmonisation unit 91
@@ -1555,7 +1826,10 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 	header comment there for the exact Mata source each was checked
 	against before porting.
 */
+#include "ergm_struct.h"
 static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	if (termcode >= 1000 && termcode < 2000) return change_struct(g, termcode, p1, p2, attr, cm, n, delta, i, j);
+	if (termcode >= 3000 && termcode < 4000) return change_bipx(g, termcode - 3000, p1, p2, attr, delta, i, j);
 	switch (termcode) {
 		case TERMCODE_EDGES:
 			return delta;
@@ -1836,7 +2110,7 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			return gw_kernel(d2 + delta, p1) - gw_kernel(d2, p1);
 		}
 	}
-	return 0.0;
+	return change_term_cov(g, termcode, p1, p2, attr, cm, n, delta, i, j);
 }
 
 /* ===================================================================
@@ -2018,9 +2292,32 @@ static long next_long(void) {
 	return (long)next_double();
 }
 
-#define MAXTERMS 64  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
+#define MAXTERMS 256  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
 #define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
 #define MAXCOVMAT 8  /* must match unw_ergm.do's own ErgmNativeSetup() maxcovmat (harmonisation unit 160) - distinct dense n x n edgecov()/hamming() matrices are far heavier per slot (n^2 doubles, not n) than an attribute array, so this cap is deliberately much smaller than MAXATTR */
+
+/* ---- statistic transforms (R's Log()/Exp(), agent E4) -------------------
+   A model column can be declared a transformed column: the slot's raw
+   change comes from change_term() and is turned into the change of
+   f(raw statistic) using the raw statistic tracked in g_raw[] (kept in
+   step on every accepted toggle).  kind 1 = log (value log0 at zero),
+   2 = exp.  All other slots pass through untouched. */
+static int g_opkind[MAXTERMS];
+static double g_opparam[MAXTERMS], g_raw[MAXTERMS], g_rawchg[MAXTERMS];
+
+static double op_f(int kind, double param, double x) {
+	if (kind == 1) return (x == 0.0) ? param : log(x);
+	return exp(x);
+}
+static double change_slot(long k, graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	double c = change_term(g, termcode, p1, p2, attr, cm, n, delta, i, j);
+	if (g_opkind[k]) {
+		g_rawchg[k] = c;
+		if (c == 0.0) return 0.0;
+		return op_f(g_opkind[k], g_opparam[k], g_raw[k] + c) - op_f(g_opkind[k], g_opparam[k], g_raw[k]);
+	}
+	return c;
+}
 
 /* eta = theta_to_eta(theta): the first (nterms-ncurved) eta slots equal
    the corresponding theta values one-for-one (an ordinary term IS its
@@ -2076,198 +2373,263 @@ static double curved_loglik_c(const double *X, const double *y, long ndyads, lon
    undefined in that case - a real but exceedingly unlikely failure
    mode on a well-posed problem that already survived 100 Newton
    iterations without it). */
+/* ---- R's curved MPLE (ergm.logitreg -> trust::trust), agent E4 ----------
+   Line-by-line port of the trust-region optimiser R uses (rinit=1,
+   rmax=100, fterm=mterm=sqrt(eps), maximisation), started at theta=0
+   with the decay at sqrt(eps) (ergm's .constrain_init lower bound 0 +
+   sqrt(eps)), the objective -Inf (here -1e300) for decay < 0.  On flat or
+   weakly identified likelihoods the path R takes ends at a point that is
+   not the optimum; reproducing the algorithm reproduces that end point.
+   Mirrors ErgmCurvedMPLEFit() in unw_ergm.do. */
+typedef struct {
+	const double *X, *y;
+	long nd, nterms, ntheta, ncurved;
+} cobj_t;
+
+static void curved_obj_c(cobj_t *o, const double *theta, double *val, double *grad, double *H) {
+	long nterms = o->nterms, ntheta = o->ntheta, ncurved = o->ncurved, nord = nterms - ncurved;
+	long i, j, k;
+	double eta[MAXTERMS], dw[MAXTERMS], dalpha[MAXTERMS];
+	double *Jac = (double *)calloc((size_t)nterms * (size_t)ntheta, sizeof(double));
+	double *XJ = (double *)malloc((size_t)ntheta * sizeof(double));
+	double ll = 0.0;
+	if (theta[ntheta-1] < 0.0) { *val = -1e300; free(Jac); free(XJ); return; }
+	theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
+	for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
+	if (ncurved > 0) {
+		gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
+		for (k = 0; k < ncurved; k++) {
+			Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
+			Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
+		}
+	}
+	for (i = 0; i < ntheta; i++) grad[i] = 0.0;
+	for (i = 0; i < ntheta * ntheta; i++) H[i] = 0.0;
+	for (i = 0; i < o->nd; i++) {
+		const double *xi = o->X + (size_t)i * (size_t)nterms;
+		double xb = 0.0, p, w;
+		for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
+		if (xb != xb) continue;
+		p = 1.0 / (1.0 + exp(-xb));
+		w = p * (1.0 - p);
+		ll += (o->y[i] != 0.0) ? log(p) : log(1.0 - p);
+		for (k = 0; k < ntheta; k++) {
+			double s = 0.0;
+			for (j = 0; j < nterms; j++) s += xi[j] * Jac[j*ntheta+k];
+			XJ[k] = s;
+		}
+		for (j = 0; j < ntheta; j++) {
+			grad[j] += XJ[j] * (o->y[i] - p);
+			if (XJ[j] == 0.0) continue;
+			for (k = j; k < ntheta; k++) H[j*ntheta+k] -= w * XJ[j] * XJ[k];
+		}
+	}
+	for (j = 0; j < ntheta; j++)
+		for (k = j+1; k < ntheta; k++) H[k*ntheta+j] = H[j*ntheta+k];
+	*val = ll;
+	free(Jac); free(XJ);
+}
+
+/* symmetric eigendecomposition (cyclic Jacobi); eigenvalues returned in
+   decreasing order, eigenvectors as columns of V (row-major n x n) */
+static void sym_eigen(const double *A0, long n, double *vals, double *V) {
+	double *A = (double *)malloc((size_t)n * (size_t)n * sizeof(double));
+	long i, j, k, sweep;
+	long *ord = (long *)malloc((size_t)n * sizeof(long));
+	for (i = 0; i < n*n; i++) A[i] = A0[i];
+	for (i = 0; i < n; i++) for (j = 0; j < n; j++) V[i*n+j] = (i == j) ? 1.0 : 0.0;
+	for (sweep = 0; sweep < 100; sweep++) {
+		double off = 0.0;
+		for (i = 0; i < n; i++) for (j = i+1; j < n; j++) off += A[i*n+j] * A[i*n+j];
+		if (off < 1e-300) break;
+		for (i = 0; i < n-1; i++) {
+			for (j = i+1; j < n; j++) {
+				double apq = A[i*n+j], theta, t, c, s;
+				if (fabs(apq) < 1e-300) continue;
+				theta = (A[j*n+j] - A[i*n+i]) / (2.0 * apq);
+				t = ((theta >= 0.0) ? 1.0 : -1.0) / (fabs(theta) + sqrt(theta*theta + 1.0));
+				c = 1.0 / sqrt(t*t + 1.0);
+				s = t * c;
+				for (k = 0; k < n; k++) {
+					double akp = A[k*n+i], akq = A[k*n+j];
+					A[k*n+i] = c*akp - s*akq;
+					A[k*n+j] = s*akp + c*akq;
+				}
+				for (k = 0; k < n; k++) {
+					double apk = A[i*n+k], aqk = A[j*n+k];
+					A[i*n+k] = c*apk - s*aqk;
+					A[j*n+k] = s*apk + c*aqk;
+				}
+				for (k = 0; k < n; k++) {
+					double vkp = V[k*n+i], vkq = V[k*n+j];
+					V[k*n+i] = c*vkp - s*vkq;
+					V[k*n+j] = s*vkp + c*vkq;
+				}
+			}
+		}
+	}
+	for (i = 0; i < n; i++) { vals[i] = A[i*n+i]; ord[i] = i; }
+	for (i = 0; i < n-1; i++) for (j = i+1; j < n; j++) if (vals[ord[j]] > vals[ord[i]]) { long t = ord[i]; ord[i] = ord[j]; ord[j] = t; }
+	{
+		double *vs = (double *)malloc((size_t)n * sizeof(double)), *Vs = (double *)malloc((size_t)n * (size_t)n * sizeof(double));
+		for (i = 0; i < n; i++) { vs[i] = vals[ord[i]]; for (k = 0; k < n; k++) Vs[k*n+i] = V[k*n+ord[i]]; }
+		for (i = 0; i < n; i++) vals[i] = vs[i];
+		for (i = 0; i < n*n; i++) V[i] = Vs[i];
+		free(vs); free(Vs);
+	}
+	free(A); free(ord);
+}
+
+static double trust_fred(double beep, const double *gq, const double *beta, long n, double r, double C1, double C2) {
+	long i;
+	double sum = 0.0;
+	if (beep == 0.0) return (C2 > 0.0) ? -1.0/r : sqrt(1.0/C1) - 1.0/r;
+	for (i = 0; i < n; i++) { double t = gq[i] / (beta[i] + beep); sum += t*t; }
+	return sqrt(1.0/sum) - 1.0/r;
+}
+/* R_zeroin2 (Brent) as used by uniroot(), tol = eps^0.25 */
+static double trust_uniroot(double ax, double bx, const double *gq, const double *beta, long n, double r, double C1, double C2) {
+	double EPS = 2.220446049250313e-16, tol = pow(EPS, 0.25);
+	double a = ax, b = bx, c, fa, fb, fc, prev_step, tol_act, new_step, cb, t1, t2, p, q;
+	long maxit = 1001;
+	fa = trust_fred(a, gq, beta, n, r, C1, C2);
+	fb = trust_fred(b, gq, beta, n, r, C1, C2);
+	c = a; fc = fa;
+	if (fa == 0.0) return a;
+	if (fb == 0.0) return b;
+	while (maxit-- > 0) {
+		prev_step = b - a;
+		if (fabs(fc) < fabs(fb)) { a = b; b = c; c = a; fa = fb; fb = fc; fc = fa; }
+		tol_act = 2.0*EPS*fabs(b) + tol/2.0;
+		new_step = (c - b)/2.0;
+		if (fabs(new_step) <= tol_act || fb == 0.0) return b;
+		if (fabs(prev_step) >= tol_act && fabs(fa) > fabs(fb)) {
+			cb = c - b;
+			if (a == c) { t1 = fb/fa; p = cb*t1; q = 1.0 - t1; }
+			else {
+				q = fa/fc; t1 = fb/fc; t2 = fb/fa;
+				p = t2*(cb*q*(q - t1) - (b - a)*(t1 - 1.0));
+				q = (q - 1.0)*(t1 - 1.0)*(t2 - 1.0);
+			}
+			if (p > 0.0) q = -q; else p = -p;
+			if (p < (0.75*cb*q - fabs(tol_act*q)/2.0) && p < fabs(prev_step*q/2.0)) new_step = p/q;
+		}
+		if (fabs(new_step) < tol_act) new_step = (new_step > 0.0) ? tol_act : -tol_act;
+		a = b; fa = fb;
+		b += new_step;
+		fb = trust_fred(b, gq, beta, n, r, C1, C2);
+		if ((fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0)) { c = a; fc = fa; }
+	}
+	return b;
+}
+
 static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long nterms,
 		long ncurved, double curved_decay_start,
 		double *theta_out, double *V_out, long *converged_out) {
 	long ntheta = (nterms - ncurved) + 2;
-	long decay_pos = ntheta - 1;
-	long maxit = 100;
-	double tol = 1e-10;
-	double theta[MAXTERMS], theta_try[MAXTERMS];
-	double eta[MAXTERMS];
-	double g_eta[MAXTERMS], g_theta[MAXTERMS];
-	double delta[MAXTERMS];
-	double *I_eta, *I_theta, *Jac;
-	double ll0, ll1;
-	long iter, i, j, k, halvings, found, converged;
-	double step, maxabs;
-
-	for (i = 0; i < ntheta - 2; i++) theta[i] = 0.0;
-	theta[ntheta-2] = 0.0;
-	theta[ntheta-1] = curved_decay_start;
-
-	I_eta = (double *)malloc((size_t)nterms * (size_t)nterms * sizeof(double));
-	I_theta = (double *)malloc((size_t)ntheta * (size_t)ntheta * sizeof(double));
-	Jac = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-
-	ll0 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta);
-	converged = 0;
-
+	long n = ntheta, i, j, k, iter, maxit = 10000;
+	double EPS = 2.220446049250313e-16, fterm = sqrt(EPS), mterm = sqrt(EPS);
+	cobj_t o;
+	double *theta = (double *)calloc((size_t)n, sizeof(double)), *theta_try = (double *)calloc((size_t)n, sizeof(double));
+	double *grad = (double *)calloc((size_t)n, sizeof(double)), *gradt = (double *)calloc((size_t)n, sizeof(double));
+	double *H = (double *)calloc((size_t)n*n, sizeof(double)), *Ht = (double *)calloc((size_t)n*n, sizeof(double));
+	double *B = (double *)calloc((size_t)n*n, sizeof(double)), *g = (double *)calloc((size_t)n, sizeof(double));
+	double *ev = (double *)calloc((size_t)n, sizeof(double)), *V = (double *)calloc((size_t)n*n, sizeof(double));
+	double *gq = (double *)calloc((size_t)n, sizeof(double)), *ptry = (double *)calloc((size_t)n, sizeof(double));
+	double *beta = (double *)calloc((size_t)n, sizeof(double)), *wtry = (double *)calloc((size_t)n, sizeof(double));
+	double r = 1.0, rmax = 100.0, val, valt, f = 0.0, ftry, rho, preddiff;
+	int accept = 1, isnewton, term, conv = 0;
+	(void)curved_decay_start; /* R ignores a user decay start in the MPLE (decay= has no effect when fixed=FALSE) */
+	o.X = X; o.y = y; o.nd = ndyads; o.nterms = nterms; o.ntheta = ntheta; o.ncurved = ncurved;
+	theta[n-1] = sqrt(EPS);
+	curved_obj_c(&o, theta, &val, grad, H);
 	for (iter = 1; iter <= maxit; iter++) {
-		double dw[MAXTERMS], dalpha[MAXTERMS];
-		long nord = nterms - ncurved;
-
-		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
-
-		/* Jacobian: nterms x ntheta, row-major. Ordinary block =
-		   identity (d eta_i/d theta_i = 1); curved block = gwdecay_
-		   gradient()'s own 2 x ncurved output, transposed. */
-		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
-		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
-		if (ncurved > 0) {
-			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
-			for (k = 0; k < ncurved; k++) {
-				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
-				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
-			}
+		if (accept) {
+			for (i = 0; i < n*n; i++) B[i] = -H[i];
+			for (i = 0; i < n; i++) g[i] = -grad[i];
+			f = -val;
+			sym_eigen(B, n, ev, V);
+			for (i = 0; i < n; i++) { double s = 0.0; for (k = 0; k < n; k++) s += V[k*n+i] * g[k]; gq[i] = s; }
 		}
-
-		for (i = 0; i < nterms; i++) g_eta[i] = 0.0;
-		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
-		for (i = 0; i < ndyads; i++) {
-			const double *xi = X + (size_t)i * (size_t)nterms;
-			double xb = 0.0, p, w;
-			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
-			p = 1.0 / (1.0 + exp(-xb));
-			w = p * (1.0 - p);
-			for (k = 0; k < nterms; k++) g_eta[k] += xi[k] * (y[i] - p);
-			for (j = 0; j < nterms; j++) {
-				double wxj = w * xi[j];
-				if (wxj == 0.0) continue;
-				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
-			}
-		}
-		/* I_eta is symmetric - only the upper triangle was accumulated
-		   above (halves the inner work); mirror it before use. */
-		for (j = 0; j < nterms; j++)
-			for (k = j+1; k < nterms; k++)
-				I_eta[k*nterms+j] = I_eta[j*nterms+k];
-
-		/* g_theta = g_eta * Jac  [1 x ntheta] */
-		for (k = 0; k < ntheta; k++) {
-			g_theta[k] = 0.0;
-			for (i = 0; i < nterms; i++) g_theta[k] += g_eta[i] * Jac[i*ntheta+k];
-		}
-		/* I_theta = Jac' * I_eta * Jac  [ntheta x ntheta] - via the
-		   nterms x ntheta intermediate M = I_eta * Jac, then
-		   Jac' * M, avoiding ever materializing a second nterms x
-		   nterms temporary. */
+		isnewton = 0;
 		{
-			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-			for (i = 0; i < nterms; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
-					M[i*ntheta+k] = s;
+			int allpos = 1;
+			for (i = 0; i < n; i++) if (!(ev[i] > 0.0)) allpos = 0;
+			if (allpos) {
+				double nrm = 0.0;
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * (gq[i] / ev[i]); ptry[k] = -s; nrm += ptry[k]*ptry[k]; }
+				if (sqrt(nrm) <= r) isnewton = 1;
+			}
+		}
+		if (!isnewton) {
+			double lmin = ev[0], C1 = 0.0, C2 = 0.0, C3 = 0.0;
+			int *imin = (int *)calloc((size_t)n, sizeof(int));
+			for (i = 1; i < n; i++) if (ev[i] < lmin) lmin = ev[i];
+			for (i = 0; i < n; i++) { beta[i] = ev[i] - lmin; imin[i] = (beta[i] == 0.0); }
+			for (i = 0; i < n; i++) {
+				if (!imin[i]) { double t = gq[i]/beta[i]; C1 += t*t; }
+				else C2 += gq[i]*gq[i];
+				C3 += gq[i]*gq[i];
+			}
+			if (C2 > 0.0 || C1 > r*r) {
+				double bdn = sqrt(C2)/r, bup = sqrt(C3)/r, root;
+				if (trust_fred(bup, gq, beta, n, r, C1, C2) <= 0.0) root = bup;
+				else if (trust_fred(bdn, gq, beta, n, r, C1, C2) >= 0.0) root = bdn;
+				else root = trust_uniroot(bdn, bup, gq, beta, n, r, C1, C2);
+				for (i = 0; i < n; i++) wtry[i] = gq[i] / (beta[i] + root);
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * wtry[i]; ptry[k] = -s; }
+			}
+			else {
+				double ss = 0.0, utry;
+				for (i = 0; i < n; i++) wtry[i] = imin[i] ? 0.0 : gq[i]/beta[i];
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * wtry[i]; ptry[k] = -s; ss += ptry[k]*ptry[k]; }
+				utry = sqrt(r*r - ss);
+				if (utry > 0.0) {
+					long first = 0;
+					for (i = 0; i < n; i++) if (imin[i]) { first = i; break; }
+					for (k = 0; k < n; k++) ptry[k] += utry * V[k*n+first];
 				}
 			}
-			for (i = 0; i < ntheta; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
-					I_theta[i*ntheta+k] = s;
-				}
+			free(imin);
+		}
+		preddiff = 0.0;
+		for (i = 0; i < n; i++) {
+			double Bp = 0.0;
+			for (k = 0; k < n; k++) Bp += B[i*n+k] * ptry[k];
+			preddiff += ptry[i] * (g[i] + Bp/2.0);
+		}
+		for (i = 0; i < n; i++) theta_try[i] = theta[i] + ptry[i];
+		curved_obj_c(&o, theta_try, &valt, gradt, Ht);
+		ftry = -valt;
+		rho = (ftry - f)/preddiff;
+		if (ftry < 1e299) term = (fabs(ftry - f) < fterm || fabs(preddiff) < mterm);
+		else { term = 0; rho = -1e300; }
+		if (term) {
+			if (ftry < f) {
+				accept = 1;
+				for (i = 0; i < n; i++) theta[i] = theta_try[i];
+				val = valt; for (i = 0; i < n; i++) grad[i] = gradt[i]; for (i = 0; i < n*n; i++) H[i] = Ht[i];
 			}
-			free(M);
 		}
-
-		/* delta = invsym(I_theta) * g_theta' - a generalized-inverse
-		   solve, not solve_linear()'s old hard-failing Gauss-Jordan
-		   solve, exactly matching ErgmCurvedMPLEFit()'s own
-		   invsym()-based delta in unw_ergm.do (see invert_matrix()'s
-		   own header comment for why this is required, not optional,
-		   on the curved gwesp decay->0 boundary). */
-		invert_matrix(I_theta, ntheta);
-		for (i = 0; i < ntheta; i++) {
-			double s = 0.0;
-			for (j = 0; j < ntheta; j++) s += I_theta[i*ntheta+j] * g_theta[j];
-			delta[i] = s;
-		}
-
-		step = 1.0;
-		found = 0;
-		for (halvings = 1; halvings <= 30; halvings++) {
-			for (i = 0; i < ntheta; i++) theta_try[i] = theta[i] + step * delta[i];
-			if (theta_try[decay_pos] > 1e-6) {
-				ll1 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta_try);
-				if (ll1 >= ll0) { found = 1; break; }
+		else {
+			if (rho < 0.25) { accept = 0; r = r/4.0; }
+			else {
+				accept = 1;
+				for (i = 0; i < n; i++) theta[i] = theta_try[i];
+				val = valt; for (i = 0; i < n; i++) grad[i] = gradt[i]; for (i = 0; i < n*n; i++) H[i] = Ht[i];
+				if (rho > 0.75 && !isnewton) r = (2.0*r < rmax) ? 2.0*r : rmax;
 			}
-			step = step / 2.0;
 		}
-		if (!found) {
-			theta[decay_pos] = 1e-6;
-			converged = 1;
-			break;
-		}
-		for (i = 0; i < ntheta; i++) theta[i] = theta_try[i];
-		ll0 = ll1;
-		maxabs = 0.0;
-		for (i = 0; i < ntheta; i++) {
-			double d = fabs(step * delta[i]);
-			if (d > maxabs) maxabs = d;
-		}
-		if (maxabs < tol) { converged = 1; break; }
+		if (term) { conv = 1; break; }
 	}
-
-	/* Final Fisher information at the converged (or last-tried) theta -
-	   recomputed fresh, not reused from the last iteration's own
-	   pre-update value, matching ErgmCurvedMPLEFit()'s own identical
-	   convention in unw_ergm.do. */
-	{
-		long nord = nterms - ncurved;
-		double dw[MAXTERMS], dalpha[MAXTERMS];
-		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
-		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
-		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
-		if (ncurved > 0) {
-			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
-			for (k = 0; k < ncurved; k++) {
-				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
-				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
-			}
-		}
-		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
-		for (i = 0; i < ndyads; i++) {
-			const double *xi = X + (size_t)i * (size_t)nterms;
-			double xb = 0.0, p, w;
-			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
-			p = 1.0 / (1.0 + exp(-xb));
-			w = p * (1.0 - p);
-			for (j = 0; j < nterms; j++) {
-				double wxj = w * xi[j];
-				if (wxj == 0.0) continue;
-				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
-			}
-		}
-		for (j = 0; j < nterms; j++)
-			for (k = j+1; k < nterms; k++)
-				I_eta[k*nterms+j] = I_eta[j*nterms+k];
-		{
-			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-			for (i = 0; i < nterms; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
-					M[i*ntheta+k] = s;
-				}
-			}
-			for (i = 0; i < ntheta; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
-					I_theta[i*ntheta+k] = s;
-				}
-			}
-			free(M);
-		}
-	}
-
-	for (i = 0; i < ntheta; i++) theta_out[i] = theta[i];
-	invert_matrix(I_theta, ntheta);
-	for (i = 0; i < ntheta * ntheta; i++) V_out[i] = I_theta[i];
-	*converged_out = converged;
-
-	free(I_eta); free(I_theta); free(Jac);
+	curved_obj_c(&o, theta, &val, grad, H);
+	for (i = 0; i < n; i++) theta_out[i] = theta[i];
+	for (i = 0; i < n*n; i++) V_out[i] = -H[i];
+	invert_matrix(V_out, n);
+	*converged_out = conv;
+	free(theta); free(theta_try); free(grad); free(gradt); free(H); free(Ht); free(B); free(g);
+	free(ev); free(V); free(gq); free(ptry); free(beta); free(wtry);
+	(void)j;
 	return 0;
 }
 
@@ -2361,11 +2723,16 @@ STDLL stata_call(int argc, char *argv[]) {
 		p1[i] = next_double();
 		p2[i] = next_double();
 		covidx[i] = (int)next_long();
+		if (termcodes[i] >= 1000 && termcodes[i] < 2000) { need_adj = 1; need_outin = 1; need_dirsp = 1; }
 		switch (termcodes[i]) {
 			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
 			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
 			case TERMCODE_NSP: case TERMCODE_B1NODEMATCH: case TERMCODE_B2NODEMATCH:
 				need_adj = 1;
+		}
+		if (termcodes[i] >= 3000 && termcodes[i] < 4000) {
+			int bk = termcodes[i] - 3000;
+			if (bk != 1 && bk != 6 && bk != 9) need_adj = 1;
 		}
 		switch (termcodes[i]) {
 			case TERMCODE_GWODEGREE: case TERMCODE_GWIDEGREE:
@@ -2397,6 +2764,11 @@ STDLL stata_call(int argc, char *argv[]) {
 				need_dirsp = 1;
 		}
 	}
+	for (i = 0; i < nterms; i++) {
+		if (termcodes[i] >= TERMCODE_NODECOVRANGE && termcodes[i] <= TERMCODE_NODEIFD) {
+			if (directed) need_dirsp = 1; else need_adj = 1;
+		}
+	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	for (i = 0; i < nterms; i++) obs[i] = next_double();
 	/* mode=2 only (harmonisation unit 146): how many of the LAST
@@ -2415,6 +2787,17 @@ STDLL stata_call(int argc, char *argv[]) {
 	   decay - for the whole block). */
 	ncurved = (long)next_double();
 	curved_decay_start = next_double();
+	/* optional trailing block (agent E4): nops, then per transformed slot: slot index (0-based), kind, parameter, raw observed statistic */
+	for (i = 0; i < MAXTERMS; i++) { g_opkind[i] = 0; g_opparam[i] = 0.0; g_raw[i] = 0.0; g_rawchg[i] = 0.0; }
+	{
+		long nops = (long)next_double(), oi;
+		for (oi = 0; oi < nops; oi++) {
+			long sl = (long)next_double();
+			int kd = (int)next_double();
+			double prm = next_double(), rw = next_double();
+			if (sl >= 0 && sl < nterms) { g_opkind[sl] = kd; g_opparam[sl] = prm; g_raw[sl] = rw; }
+		}
+	}
 	/* E6 block: optional constraint/proposal parameters at the very end of the
 	   argument string (absent for the older callers: strtok returns NULL and
 	   next_double() yields 0). */
@@ -2668,7 +3051,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i2, j2);
+					double chg = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i2, j2);
 					double chg_toward_one = tied ? -chg : chg;
 					SF_vstore((int)(outcol_base + k), pos, chg_toward_one);
 				}
@@ -2701,6 +3084,42 @@ STDLL stata_call(int argc, char *argv[]) {
 		return(0);
 	}
 
+	if (mode == 3) {
+		/* observed statistics by build-up (as R's summary() does for terms
+		   without a dedicated s_ function): empty the graph, then add the
+		   observed ties one by one, summing each slot's change statistic.
+		   Result goes to row 1 of the output columns. */
+		long ne = g.nties;
+		long *ti = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		long *tj = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		double acc[MAXTERMS];
+		long e;
+		for (e = 0; e < ne; e++) { ti[e] = g.elist_i[e]; tj[e] = g.elist_j[e]; }
+		for (e = 0; e < ne; e++) toggle(&g, ti[e], tj[e]);
+		for (k = 0; k < nterms; k++) acc[k] = 0.0;
+		for (e = 0; e < ne; e++) {
+			for (k = 0; k < nterms; k++) {
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				acc[k] += change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, ti[e], tj[e]);
+			}
+			toggle(&g, ti[e], tj[e]);
+		}
+		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), 1, acc[k]);
+		free(ti); free(tj);
+		for (k = 0; k < nattr; k++) free(attrs[k]);
+		for (k = 0; k < ncovmat; k++) free(covmats[k]);
+		free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
+		free(g.deg); free(g.outdeg); free(g.indeg);
+		ht_free(&g.ht);
+		free(g.elist_i); free(g.elist_j);
+		free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
+		if (g.adj) { for (i = 0; i <= n; i++) free(g.adj[i].nb); free(g.adj); }
+		if (g.outadj) { for (i = 0; i <= n; i++) free(g.outadj[i].nb); free(g.outadj); }
+		if (g.inadj) { for (i = 0; i <= n; i++) free(g.inadj[i].nb); free(g.inadj); }
+		return(0);
+	}
+
 	if (mode == 2) {
 		/* Curved MPLE, entirely native (harmonisation unit 146): build
 		   the SAME design matrix mode=1 builds (identical per-dyad
@@ -2715,7 +3134,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		   (theta, the covariance matrix, a converged flag) cross back
 		   via SF_scal_save() - the dyad-scale design matrix itself
 		   never needs to leave this call at all. */
-		long ndyads = directed ? n * (n - 1) : n * (n - 1) / 2;
+		long ndyads = bipartite ? g.n1 * g.n2 : (directed ? n * (n - 1) : n * (n - 1) / 2);
 		long ntheta = (nterms - ncurved) + 2;
 		double *X, *Y;
 		double theta_out[MAXTERMS], V_out[MAXTERMS*MAXTERMS];
@@ -2732,13 +3151,14 @@ STDLL stata_call(int argc, char *argv[]) {
 				double *xrow;
 				if (i == j) continue;
 				if (!directed && j < i) continue;
+				if (bipartite && g.mode[i] == g.mode[j]) continue;
 				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
 				delta = tied ? -1.0 : 1.0;
 				xrow = X + (size_t)pos * (size_t)nterms;
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i, j);
+					double chg = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i, j);
 					xrow[k] = tied ? -chg : chg;
 				}
 				Y[pos] = tied;
@@ -2828,13 +3248,13 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+				chg1[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
 			}
 			toggle(&g, t1, h1);
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+				chg2[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
 				cutoff += theta[k] * (chg1[k] + chg2[k]);
 			}
 			if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
@@ -2857,13 +3277,13 @@ STDLL stata_call(int argc, char *argv[]) {
 		for (k = 0; k < nterms; k++) {
 			double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 			double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-			chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
+			chg[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 			cutoff += theta[k] * chg[k];
 		}
 		cutoff += logratio;
 		if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
 			toggle(&g, pi, pj);
-			for (k = 0; k < nterms; k++) cur[k] += chg[k];
+			for (k = 0; k < nterms; k++) { cur[k] += chg[k]; g_raw[k] += g_rawchg[k]; }
 		}
 	}
 
@@ -2887,13 +3307,13 @@ STDLL stata_call(int argc, char *argv[]) {
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+					chg1[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
 				}
 				toggle(&g, t1, h1);
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+					chg2[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
 					cutoff += theta[k] * (chg1[k] + chg2[k]);
 				}
 				ntried++;
@@ -2918,14 +3338,14 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
+				chg[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 				cutoff += theta[k] * chg[k];
 			}
 			cutoff += logratio;
 			ntried++;
 			if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
 				toggle(&g, pi, pj);
-				for (k = 0; k < nterms; k++) cur[k] += chg[k];
+				for (k = 0; k < nterms; k++) { cur[k] += chg[k]; g_raw[k] += g_rawchg[k]; }
 				naccept++;
 			}
 		}

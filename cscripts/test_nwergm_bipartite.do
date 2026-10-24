@@ -615,18 +615,25 @@ assert reldif(_b[edges], `true_logodds') < 1e-6
 * rejected on a bipartite network - never silently misapplied to a dyad
 * space its change statistic was never derived for. The dyad-dependent
 * bipartite family (Stage 3) does not exist yet either.
-foreach __t in mutual triangle ctriple concurrent transitiveties cyclicalties {
+* (R's ergm refuses the directed-only terms on a bipartite network, and the one-mode degree
+* distribution terms; it accepts the undirected one-mode terms such as triangle, concurrent,
+* nodecov, gwesp, degree, kstar - those are certified against R in test_nwergm_bip.do)
+foreach __t in mutual ctriple transitiveties cyclicalties sender receiver {
 	capture noisily nwergm bipnet, edges `__t'
 	assert _rc == 198
 }
-capture noisily nwergm bipnet, edges nodecov(x)
+capture noisily nwergm bipnet, edges odegree(1)
 assert _rc == 198
-capture noisily nwergm bipnet, edges gwesp(.5)
+capture noisily nwergm bipnet, edges gwdegree(.5)
 assert _rc == 198
-capture noisily nwergm bipnet, edges degree(2)
+capture noisily nwergm bipnet, edges nodeicov(x)
 assert _rc == 198
-capture noisily nwergm bipnet, edges kstar(2)
-assert _rc == 198
+foreach __t in triangle concurrent {
+	capture noisily nwergm bipnet, edges `__t' method(mple)
+	assert _rc == 0
+}
+capture noisily nwergm bipnet, edges degree(2) method(mple)
+assert _rc == 0
 
 di "=== bipartite (two-mode) Stage 1 foundation: all certifications passed ==="
 

@@ -1,0 +1,7 @@
+id,n,kind,nw,r,truecoef
+M1,50,und,"degree1.5","degree1.5","-2.2,-0.02"
+M2,50,und,"altkstar(lambda=0.8 fixed) triangle","altkstar(0.8,fixed=TRUE) + triangle","-2.5,0.3,0.1"
+M3,40,und,"cycle(k=4) triangle","cycle(4) + triangle","-2.6,0.05,0.2"
+M4,30,dir,"transitive","transitive","-2.6,0.0"
+M5,30,dir,"m2star cycle(k=3)","m2star + cycle(3)","-2.3,-0.05,0.3"
+M6,30,dir,"ttriple odegree1.5","ttriple + odegree1.5","-2.8,0.04,-0.01"

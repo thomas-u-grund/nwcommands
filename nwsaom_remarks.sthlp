@@ -528,7 +528,10 @@ RSiena for such a pair: for a two-mode network that depends on a one-mode networ
 dist2outinactintn outoutdist2actintn avalt2mtot to toback torecip sharedto avalt2mtie inpopoutw ndist2actintn toany joutmix gwespfbmix} and the covariate effect {cmd:samewxclosure:}{it:var};
 for a one-mode network that depends on a two-mode one {cmd:outpopintn outactintn divoutegointn divoutaltintn avdegintn outoutactintn outoutavintn dist2outinactintn absoutdiffintn from fromany sharedto
 avalt2mtie inpopoutw ndist2actintn joutmix gwespmix}; and, with a dyadic covariate (actors by actors for a one-mode other network, actors by events for a two-mode one),
-{cmd:sharedtou avaltutie} and {cmd:fromwindoo} (a two-mode other network for both roles). A covariate of the actors is read from the first observations of the dataset (one per actor) or from the
+{cmd:tou sharedtou avaltutie} and {cmd:fromwindoo} (a two-mode other network for both roles). 
+For a one-mode network that depends on a two-mode one, a covariate of the events (a variable of the node data that is missing for the actors) is available for {cmd:altdist2w totdist2w simdist2w} and, with at least as many events as actors, {cmd:outactintnx outpopintnx};
+for a two-mode network that depends on a one-mode one, {cmd:diffwxclosure inactintnx outactintnx samexinactintn samexoutactintn altdist2w totdist2w simdist2w} are available with a covariate of the actors
+(the dist-2 effects with at most as many events as actors). A covariate of the actors is read from the first observations of the dataset (one per actor) or from the
 node rows of the two-mode network ({cmd:_nwmode}). Some effects of RSiena index both networks by the same node number (the alters of the two-mode network are events, not actors):
 divinaltintn, joutmix and gwespfbmix of a two-mode network, and outoutactintn and outoutavintn of a one-mode network that depends on a two-mode one; they are available if there are not more events than actors,
 as in RSiena. avalt2mtie needs the parameter 1 or 2 (RSiena refuses the centred versions); give it as {cmd:avalt2mtie:2}. A co-evolving {opt behavior()} is not available with a two-mode network.
@@ -1052,6 +1055,22 @@ Method-of-Moments convention), while each period has its own rate, reported as
 e(rates)/e(rates_se)/e(rate_tratios) (1 x (nwaves-1) matrices) rather than the scalars
 e(rate)/e(rate_se)/e(rate_tratio) of the two-wave {opt wave1()}/{opt wave2()} path.
 
+
+{marker ml}{...}
+{title:Maximum likelihood}
+
+{pstd}
+With the option {opt ml} {cmd:nwsaom} first runs the method of moments (its estimates are the starting values) and then estimates the model by maximum likelihood, as RSiena's {cmd:siena07} with {cmd:maxlike = TRUE} (Snijders, Koskinen and Schweinberger 2010).
+The unobserved sequence of ministeps between the waves is simulated by Metropolis-Hastings steps; the complete-data score of the effects and rates is averaged by a Robbins-Monro algorithm.
+{cmd:e(b)}, {cmd:e(V)} and the rates {cmd:e(rates)} are replaced by the maximum likelihood estimates, their standard errors (mean complete-data information minus the covariance matrix of the scores) and the rates with their standard errors;
+{cmd:e(rates_ml)} also has the convergence t-ratio of every rate and {cmd:e(tconv_max_ml)} the largest t-ratio of all scores (below 0.1 is good).
+
+{pstd}
+Controls in {opt mloptions()}: {opt n1(#)} iterations of phase 1 (default 50), {opt nsub(#)} subphases of phase 2 (4) with {opt nstart2(#)} iterations in the first (100, then times 2.52 each), {opt n3(#)} iterations of phase 3 (1000), {opt mult(#)}
+Metropolis-Hastings steps per iteration as a multiple of the number of tie changes (5), {opt gain(#)} the initial gain (0.2), {opt seed(#)}.
+The estimator covers one directed one-mode network, with or without one co-evolving behavior (behavior ministeps and their rates are part of the augmented data; {cmd:e(rates_beh)}, {cmd:e(rates_beh_ml)}), without endowment/creation effects, rate covariates, structural zeros,
+missing data or composition change. It takes several minutes for the default controls.
+The same estimates are available as {cmd:nwsaom_ml} after an {cmd:nwsaom} fit. The Bayesian estimator of the same model is {helpb nwsaom_bayes:nwsaom bayes}.
 
 {title:See also}
 

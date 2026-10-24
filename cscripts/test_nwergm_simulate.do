@@ -282,8 +282,8 @@ assert "`directed'" == "true"
 
 * --- multi-coefficient node-covariate families combined in one call:
 * nodematchdiff() (2 coefficients, one per level of `grp'),
-* nodefactor() (1 coefficient, base level dropped), nodemix() (3
-* coefficients, one per unordered level pair) - exercises theta()
+* nodefactor() (1 coefficient, base level dropped), nodemix() (2
+* coefficients: R's upper-triangle cells with the first cell dropped) - exercises theta()
 * ordering across several multi-coefficient terms at once, not just a
 * single-coefficient term after a multi-coefficient one (the combosim
 * case above only combined single-coefficient terms).
@@ -293,7 +293,7 @@ set obs 10
 gen grp = mod(_n,2)
 set seed 6004
 qui nwergm simulate 10, edges nodematchdiff(grp) nodefactor(grp) nodemix(grp) ///
-	theta(-1.5 .5 -.5 .3 .1 .2 .1) nsim(1) mcmcburnin(3000) generate(covsim3)
+	theta(-1.5 .5 -.5 .3 .1 .2) nsim(1) mcmcburnin(3000) generate(covsim3)
 qui _nwsyntax covsim3, max(1)
 assert `nodes' == 10
 assert "`directed'" == "false"

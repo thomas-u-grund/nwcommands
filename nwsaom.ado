@@ -78,6 +78,13 @@ program nwsaom, eclass
 		nwsaom_meta `0'
 		exit
 	}
+	if `"`1'"' == "describe" | `"`1'"' == "describe," {
+		gettoken __saom_sub 0 : 0
+		local __saom_rest = trim(`"`0'"')
+		if substr(`"`__saom_rest'"', 1, 1) == "," local __saom_rest = substr(`"`__saom_rest'"', 2, .)
+		nwsaom_describe , `__saom_rest'
+		exit
+	}
 	if `"`1'"' == "bayes" | `"`1'"' == "bayes," {
 		// nwsaom bayes: Bayesian estimation of the last fitted model (same program as nwsaom_bayes)
 		gettoken __saom_sub 0 : 0
@@ -105,7 +112,7 @@ program nwsaom, eclass
 		nwsaom_multiplex , `0'
 		exit
 	}
-	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
+	syntax [, ML MLOPTIONS(string) WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		GWESPFB(string) GWESPBF(string) GWESPBB(string) GWESPRR(string) SQRTCYCLE4 DBLNBRDIST2 NBRDIST2 GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
@@ -463,7 +470,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric joinat leaveat missnet missbeh structural  nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher samexrecip simrecipx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -3951,6 +3958,7 @@ program nwsaom, eclass
 	// in e(rsiena_labels), e(covmeans) and e(tconv); shown with detail
 	if "`detail'" != "" _nwsaom_rsnotes
 	_nwsaom_tconvtable, `detail'
+	if "`ml'" != "" nwsaom_ml, `mloptions'
 end
 
 
