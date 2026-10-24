@@ -16,7 +16,7 @@ Install Stata menu/dialogs
 ```stata
 nwinstall
 [,
-permanently
+gui
 remove 
 help
 ado
@@ -30,12 +30,16 @@ all
 path(string)
 localcopy
 from(string)
-dest(string)]
+dest(string)
+models
+modelpkg(namelist)
+release(string)
+modelsfrom(string)]
 ```
 
 | | |
 |---|---|
-| `permanently` | install the menu/dialogs permanently on your Stata |
+| `gui` | install the "Network Analysis" menu and the dialog boxes permanently on your Stata (the older name `permanently` still works) |
 | `remove` | remove the "Network Analysis" menu from your Stata |
 | `help` | download the help files |
 | `ado` | download the core command (.ado) files |
@@ -50,6 +54,10 @@ dest(string)]
 | `localcopy` | install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see [Computers without internet access or admin rights](nwinstall) below |
 | `from(string)` | with `localcopy`: the local folder to copy nwcommands files from; default: the current directory |
 | `dest(string)` | with `localcopy`: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case) |
+| `models` | also install the four model packages `nwsaom`, `nwergm`, `nwdynam` and `nwrem` (see below); with `remove` they are uninstalled |
+| `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
+| `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
+| `modelsfrom(string)` | with `models`: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs) |
 
 ## Description
 
