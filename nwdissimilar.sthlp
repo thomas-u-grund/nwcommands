@@ -154,3 +154,6 @@ so it can be compared directly against the source network node-for-node.
 {title:See also}
 
 	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -61,3 +61,6 @@ with the same node attribute, the node attribute of the {it:using dataset} is us
         {help nwuse}, {help nwwebuse}, {help nwsave}, {help append}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

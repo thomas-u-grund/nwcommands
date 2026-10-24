@@ -183,3 +183,6 @@ collapses the network to use only nodes from either level 1 or level 2.
 	{help nwset} (whose own {opt twomode}/{opt bipartite} options can also declare a two-mode network directly), {help nw2fromedge}, {help nwload}, {help nw2project} ({help nwproject})
 
 last certified : 28 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

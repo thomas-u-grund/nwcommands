@@ -184,6 +184,7 @@ program _nwdeploy
 					"{col 8}   {c BLC}{hline 24}{c BRC}" _n ///
 					"" _n
 	_nwdeploy_modelsintro `topical'
+	file write `topical' "" _n
 	file write `topical' "{p2colset 12 35 36 2}" _n
 	foreach m in nwsaom nwergm nwdynam nwrem {
 		_nwdeploy_modelline `m'
@@ -214,6 +215,7 @@ program _nwdeploy
 		file write `versionlog' `"echo "*! v`version' __ `c(current_date)' __ `c(current_time)'" >> `file'"'  _n
 	}
 	
+	_nwdeploy_footer `topical' `version' "`longdate'"
 	file close `topical'
 	restore
 	
@@ -261,6 +263,7 @@ program _nwdeploy
 	file write `alphabetical' "{p2colreset}{...}" _n "" _n
 	_nwdeploy_modelsintro `alphabetical'
 
+	_nwdeploy_footer `alphabetical' `version' "`longdate'"
 	file close `alphabetical'
 
 	// Same "package file too long" fix as nwcommands-ado above -
@@ -532,6 +535,14 @@ program _nwdeploy_modelline, rclass
 	return local link `"{browse "https://nwcommands.org/`m'/":`m'}"'
 end
 
+capture program drop _nwdeploy_footer
+program _nwdeploy_footer
+	// every help file ends with the package version (tools/set_version.py writes the same footer into the other help files)
+	args fh version longdate
+	file write `fh' _n "{hline}" _n ///
+		"{pstd}{it:nwcommands version `version', `longdate'} ({help nwversion:check your installed version}){p_end}{* nwversion}" _n
+end
+
 capture program drop _nwdeploy_modelsintro
 program _nwdeploy_modelsintro
 	// install line and package guide shared by nwtopical and nwalphabetical
@@ -540,7 +551,7 @@ program _nwdeploy_modelsintro
 		"The statistical network models are separate packages that need the core. Install them with" _n ///
 		`"{stata "nwinstall, models":nwinstall, models}"' " (see {help nwinstall}; {help nwversion} shows which are installed)." _n ///
 		`"Which package do you need? See {browse "https://nwcommands.org/which-package/"}."' _n ///
-		"{p_end}" _n "" _n
+		"{p_end}" _n
 end
 
 capture program drop _write_nwcommands
@@ -590,7 +601,7 @@ program _write_nwcommands
 `"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"' _n ///
 "" _n ///
 "{hline}" _n ///
-"{pstd}{it:nwcommands version `version', `longrel'}{p_end}{* nwversion}" _n
+`"{pstd}{it:nwcommands version `version', `longrel'} ({help nwversion:check your installed version}){p_end}{* nwversion}"' _n
 	file close `nw'
 end
 

@@ -189,3 +189,6 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwplot}
 	{help nwrem}
 	{help nwset}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

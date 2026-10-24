@@ -96,3 +96,6 @@ distance in bipartite graphs. {it:Computational & Mathematical Organization Theo
 	{help nwclustering}, {help nw2project}, {help nw2degree}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -169,4 +169,5 @@ selectors as the normal network install ({opt ext} is accepted but does nothing,
 without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcopy dialog}
 copies only the dialog boxes.
 
-
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

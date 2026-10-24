@@ -442,3 +442,5 @@ in the package's own visualization roadmap rather than fixed here.
 {title:See also}
 		{help nwplotmatrix}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

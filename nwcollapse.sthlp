@@ -55,3 +55,6 @@ This collapses the first and the second node of a random network. The collapsed 
 
 	{help collapse}
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

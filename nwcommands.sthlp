@@ -1,8 +1,6 @@
 {smcl}
 {* *! version 3.1.1  24oct2026}{...}
 
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026}{p_end}
-
 {pstd}
 New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
 (core commands, help files, dialog boxes) - see {help nwinstall}.
@@ -35,9 +33,10 @@ version and which model packages are installed.
 nwcommands is free software under the GNU General Public License, version 3, as are the model packages.
 {p_end}
 
-               *! Date        :  24 October 2026
-               *! Version     : 3.1.1
                *! Authors     : Thomas U. Grund 
                *! Contact     : thomas.u.grund@gmail.com
                *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}
                *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

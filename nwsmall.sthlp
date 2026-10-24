@@ -123,3 +123,5 @@ In the second example, there are exactly three shortcuts.
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

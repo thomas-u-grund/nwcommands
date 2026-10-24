@@ -45,3 +45,6 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 	{bf:r(tryname)}		network name that is validated
 	{bf:r(validname)}	valid name in case the tryname already exists
 last certified : 25 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

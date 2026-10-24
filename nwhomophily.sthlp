@@ -144,3 +144,6 @@ The program requires some additional programs ({bf:gsample, moremata}) that it w
 {title:See also}
 
 	{help nwdyadprob}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

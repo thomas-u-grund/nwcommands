@@ -183,3 +183,6 @@ additional line here, and, if {opt generate()} is specified, stores each node's 
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

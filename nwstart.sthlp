@@ -1,7 +1,6 @@
 {smcl}
 {* *! version 3.1.1  24oct2026}{...}
 
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026}{p_end}
 {phang}
 {help nwcommands:NW-4 start}
 {hline 2} Getting started
@@ -234,3 +233,6 @@ Another set of commands calculates {help nwpath:paths between network nodes}, th
 
 {pstd}
 A further group of commands work on connectivity and flow: {help nwmaxflow:maximum flow and minimum cut}, {help nwmatching:bipartite matching}, {help nwlambda:edge connectivity and lambda sets}, {help nwfactions:UCINET-style faction partitioning}, and {help nwmotifs:the 4-node motif census}.
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -87,3 +87,6 @@ this page for an unrelated situation.
 {title:See also}
 
 {help nwcommands}, {help nwtopical}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

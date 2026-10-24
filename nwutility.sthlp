@@ -84,4 +84,5 @@ Jackson, M. and Wollinsky, A. (1996) A Strategic Model of Social and Economic Ne
 {pstd}
 When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij = {it:cost}, and w_ii = 0 (i.e. {opt intrvalue()} is not given).
 
-
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

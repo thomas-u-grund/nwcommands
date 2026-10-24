@@ -59,3 +59,6 @@ allowed. The system maximum is 9999.
 {title:See also}
 
 	{help unab}, {help nwds}, {help _nwsyntax}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

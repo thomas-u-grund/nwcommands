@@ -422,6 +422,13 @@ SECTION_ORDER = [
 def convert_file(path: Path):
     text = path.read_text(errors="replace")
     stem = path.stem
+    # the version footer at the end of every help file ({hline} + one {pstd} line, marker {* nwversion}) is
+    # taken out of the text and written as a plain last line
+    footer_md = ""
+    fm = re.search(r"\n\{hline\}[ \t]*\r?\n\{pstd\}\{it:(nwcommands version [^}]*)\}[^\n]*\{\* nwversion\}[ \t]*\r?\n?\s*\Z", text)
+    if fm:
+        text = text[:fm.start()] + "\n"
+        footer_md = f"*{fm.group(1)}* ([check your installed version](nwversion))"
 
     title_m = re.search(r"\{p2col\s*:\s*(\S+)\s*\{hline\s*\d*\}\}(.*?)\{p_end\}", text)
     if title_m:
@@ -472,6 +479,8 @@ def convert_file(path: Path):
         md.append(body)
         md.append("")
 
+    if footer_md:
+        md += ["---", "", footer_md]
     return cmd_name, short_desc, "\n".join(md).strip() + "\n"
 
 

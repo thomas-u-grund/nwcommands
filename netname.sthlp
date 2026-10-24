@@ -59,3 +59,6 @@ to change the current network use {it: {help nwcurrent}}.
 {phang}{cmd:. nwset}{p_end}
 {phang}{cmd:. nwdegree flobusiness}{p_end}
 {phang}{cmd:. nwcomponents *marriage}{p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
