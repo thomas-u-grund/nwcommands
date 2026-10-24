@@ -102,9 +102,15 @@ sparse power iteration - it only ever needed the dominant eigenpair, not a full 
 solve, not simulation), {help nwmaxflow} and {help nwmatching} (Edmonds-Karp max-flow on a sparse vertex-split
 representation), {help nwlambda} (edge connectivity, the same sparse max-flow primitive), and anything built on
 them - operate on a genuinely sparse internal representation. They do {bf:not} allocate memory proportional to
-the square of the node count, only to the number of actual ties, and have been benchmarked directly at 100,000
-nodes / 1,000,000 ties (full connected-components analysis in well under 10 seconds; degree/neighbor lookups
-near-instant). Networks at this scale, or considerably beyond it, are practical for these commands specifically.
+the square of the node count, only to the number of actual ties. Measured end to end in Stata/BE (not MP), on a
+shared computer, for a random directed network with 10 ties per node: {help nwfromedge} builds 10,000 / 25,000 /
+40,000 / 100,000 nodes in 0.3 / 0.8 / 1.2 / 3.7 seconds (with automatic directed/undirected detection, i.e. without
+{opt directed}: 0.3 / 0.9 / 1.5 / 8.8 seconds; {opt forceundirected} at 100,000 nodes: 14 seconds). At 100,000 nodes /
+1,000,000 ties, {help nwdegree} takes 0.5, {help nwcomponents} 0.5, {help nwneighbor} (one node) 0.4 and
+{help nwclustering} 16 seconds (at 25,000 nodes: 0.13, 0.12, 0.13 and 2.0 seconds). Building the network from an edge
+list ({help nwfromedge}, {cmd:nwset, edgelist}, {help nwimport} type(edgelist)) never allocates the dense matrix.
+{help nwgeodesic} is {bf:not} in this group at the command level: it returns the full matrix of distances between
+all pairs, which is dense (10,000 nodes: 19 seconds; refused above 20,000 nodes).
 ({help nwfactions} and {help nwmotifs} are combinatorial rather than sparse-traversal in nature - see their own
 help files for their own, different scaling characteristics.)
 
@@ -118,7 +124,9 @@ is guarded at 20,000 nodes: attempting to build it above that size raises a clea
 silently exhausting memory (at 20,000 nodes the matrix alone is already several gigabytes of numbers). In
 practice, comfortable, responsive use of these specific commands is closer to a few thousand nodes than to the
 20,000-node hard ceiling - memory and running time both grow with the SQUARE of the node count for anything that
-touches this matrix directly. ({help nwspectral}'s own Laplacian-spectrum analysis is a deliberate exception in
+touches this matrix directly. Among the commands people reach for with big data, {help nwgeodesic}, {help nwsummarize},
+{help nwtoedge} and {help nwsave} (which writes edge lists with {cmd:nwtoedge}) are in this group: at 25,000 nodes
+{cmd:nwtoedge} was refused after about a minute. ({help nwspectral}'s own Laplacian-spectrum analysis is a deliberate exception in
 this same category even though it is newer - it genuinely needs the full eigenspectrum, not just a dominant
 pair, so there is no sparse equivalent available the way there now is for {help nwevcent}.)
 

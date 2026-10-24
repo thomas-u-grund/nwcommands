@@ -15,7 +15,7 @@ program nwload
 		local generate "`nw_included'"
 	}
 	// maybe it is already a view
-	mata: st_numscalar("r(isview)", isview(*`netobj'->get_matrix()))
+	mata: st_numscalar("r(isview)", `netobj'->is_dense_built() ? isview(*`netobj'->get_matrix()) : 0)
 	if (`r(isview)' == 1) {
 		di "{txt}Network is already a view."
 		exit
@@ -44,7 +44,7 @@ program nwload
 	}
 	
 	// maybe it is already a view
-	mata: st_numscalar("r(isview)", isview(*`netobj'->get_matrix()))
+	mata: st_numscalar("r(isview)", `netobj'->is_dense_built() ? isview(*`netobj'->get_matrix()) : 0)
 	if (`r(isview)' == 1) {
 		_nwdatasync `netname'
 		exit

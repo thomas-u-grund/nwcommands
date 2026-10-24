@@ -39,6 +39,15 @@ program _nwnodeid
 		mata: st_global("r(nodelab)", "`nodelab'")
 		local i = 1
 		local found = 0
+		// r(labs) is empty for networks too big for a macro (see
+		// nw_labs_string() in unw_core.do): look the label up in Mata
+		if "`labs'" == "" {
+			mata: st_local("__nwid", strofreal(first_index_match(`netobj'->get_nodenames(), "`nodelab'")))
+			if `__nwid' > 0 {
+				mata: st_numscalar("r(nodeid)", `__nwid')
+				exit 1
+			}
+		}
 		 capture foreach onelab in `labs' {
 			noi if "`onelab'" == "`nodelab'"{
 				mata: st_numscalar("r(nodeid)", `i')

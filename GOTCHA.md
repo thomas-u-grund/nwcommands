@@ -282,3 +282,34 @@ because it ran with such an adopath entry. Fix: no `shell` for file edits; write
 with Stata's `copy`, restore on failure. **Lesson:** never erase a file before its replacement is verified in place,
 never interpolate `c(adopath)`/`c(pwd)`/paths into a shell string, and prefer Stata's `copy`/`erase`/`mkdir` over `shell`.
 Also: subprograms of an ado-file are not callable from a do-file (the test defines its own line counter).
+
+## Big networks: never put per-node lists in a Stata macro, and "sparse-native" ends where a helper touches the dense matrix (fixed 2026-10-24)
+
+`nwfromedge` was documented as proven at 100,000 nodes / 1,000,000 ties, but in Stata/BE it failed with
+`r(920)` (macro substitution results in line that is too long) from about 40,000 nodes and with the
+dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_sparse` +
+`set_edge_from_triplets`) was never the problem; everything *around* it was:
+
+- **BE's maximum macro length is 264,408 characters.** Any `st_local`/`st_global` of "all node labels"
+  (`_nwsyntax`'s `labs`, `nwname`'s `r(labs)`, `nwsync`'s `r(vars)`, a `forvalues` loop that appends a
+  label per node) breaks the first time a later line expands it. Pass lists through Mata variables
+  (`putmata`/`getmata`) and use `nw_labs_string()` where a macro is unavoidable (it returns "" above
+  200,000 characters; callers that need a label read it from Mata).
+- **A single helper can silently turn a sparse network dense.** The usual suspects were `isview(*get_matrix())`
+  in `nwload`, `check_symmetry()`/`symmetrize()` (auto-symmetrize in `nwfromedge`), `get_missing_edges()`
+  and `get_selfloops_number()` (called by every `nwname`). Test with `p->is_dense_built()` after the
+  command: it must still be 0. `cscripts/test_nwfromedge_large.do` does this.
+- **Quadratic Mata idioms hide in small-network tests**: `result = result + ...` string building
+  (`get_modes_labeled_string`, 1.5 s per `nwname` call at 40,000 nodes), `queue = queue[2::n]` as a BFS
+  pop (`calculate_components`, 27 s at 100,000 nodes), all-pairs duplicate-label checks. Profile with
+  `timer on/off` around stages and Mata `timer_on()`, not by reading the code.
+- `selectindex()` of a 1x1 or empty condition returns a ROW vector, `1::0` is the vector (1,0), and Mata
+  passes arguments by reference (assigning to a function argument changes the caller's variable).
+  All three bit the sparse `symmetrize` while it was written.
+- In a git worktree `lib/lnwcommands.mlib` is not on the adopath of a plain Stata session; load the core
+  with `do unw_core.do` from the worktree root (what every cscript does) and put the worktree on the
+  adopath explicitly. Parallel test runs that share one PLUS directory can collide while an ado such as
+  `gsample` is being installed (a one-off `r(499)` in `test_nwhomophily`); rerun before suspecting code.
+- `nwtoedge` (and so `nwsave`) still builds the full N x N list of dyads in `get_edgelist()`, even with
+  `compress`; above 20,000 nodes it is refused (after about a minute at 25,000 nodes). That is a separate
+  limit from the one fixed here.

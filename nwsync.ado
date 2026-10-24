@@ -9,8 +9,14 @@ program def nwsync
 		_nwdatasync `netname'
 	}
 	
-	mata: st_global("r(vars)", `netobj'->get_nodesvar_string())
-	capture confirm variable `r(vars)'
+	// The node variables are looked up in Mata, never through one macro:
+	// a big network's node-variable list (one name per node) is far longer
+	// than Stata's macro limit (r(920)), and cannot all exist as dataset
+	// variables anyway.
+	mata: st_local("hasvars", strofreal(cols(`netobj'->get_nodesvar()) > 0 ? all(_st_varindex(`netobj'->get_nodesvar()) :!= .) : 0))
+	if `hasvars' {
+		mata: st_global("r(vars)", `netobj'->get_nodesvar_string())
+	}
 	// BUGFIX: used to branch on `_rc' directly with no `else' clause -
 	// on the (very common) path where a network has no Stata-variable
 	// sync to do at all (never `nwload'ed), the failed `capture confirm
@@ -24,7 +30,6 @@ program def nwsync
 	// an explicit `exit 0' at the end marks genuine, full success -
 	// safe because any real failure in `nwload'/`drop'/`set_edge' below
 	// would already have interrupted execution before reaching it.
-	local hasvars = (_rc == 0)
 	if `hasvars' {
 		if "`fromstata'" == "" {
 			drop `r(vars)'
