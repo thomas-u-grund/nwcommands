@@ -1,7 +1,7 @@
 \chapter{Estimation and diagnostics}\label{ch:estimation}
 
 This chapter explains what \nwsaom{} does when it fits a model, which options steer the algorithm, how to decide whether a fit has converged, what the error messages mean, and which results are available afterwards. \section{The algorithm in brief}
-Coefficients are estimated by the method of moments with Robbins--Monro stochastic approximation, which is also the default of RSiena's \texttt{siena07}. It is \emph{not} maximum likelihood and not a Bayesian method (Section~\ref{sec:est-notimpl}). The estimation runs in three phases.
+Coefficients are estimated by the method of moments with Robbins--Monro stochastic approximation, which is also the default of RSiena's \texttt{siena07}. It is not maximum likelihood and not a Bayesian method; these two estimators are available as the option \opt{ml} and the subcommand \texttt{nwsaom bayes} and are described at the end of this chapter (Sections~\ref{sec:ml} and~\ref{sec:bayes}). The estimation runs in three phases.
 \begin{description}[leftmargin=0pt,labelindent=0pt]
 \item[Phase 1] estimates the Jacobian, that is, the sensitivity of each expected statistic to each parameter, from \opt{k0()} independent simulated replicates at the starting values (score-function derivative estimator), and ends with a partial quasi-Newton step.
 \item[Phase 2] performs the Robbins--Monro updates in RSiena's default of four sub-phases with diminishing gain (\texttt{nsub=4}, \opt{firstg()} default 0.2, \texttt{reduceg=0.5}, RSiena's per-sub-phase minimum and maximum iteration schedule).
@@ -177,6 +177,61 @@ estat mems, effect(reciprocity) macro(myDensity) nsim(500) seed(42)
 The algorithm draws \opt{nsim()} coefficient vectors (default 500) from a multivariate normal whose sample mean and covariance equal \texttt{e(b)} and \texttt{e(V)} exactly (achieved by a Cholesky whitening, not by \texttt{MASS}'s SVD, so the random numbers differ from R's). For each multiplier in \opt{interval()} (default \texttt{0 1}: ``as if the effect did not operate'' versus ``at its fitted strength'') the effect's coefficient is scaled, a network is simulated forward from the fitted model's observed start wave, and the macro statistic is evaluated. The paired difference between the last and first multiplier gives the MEMS estimate, its Monte Carlo standard deviation, a 95\% percentile interval and a Monte Carlo $p$-value (the proportion of draws whose sign is opposite to the mean effect, not doubled). It stores \texttt{r(mems)}, \texttt{r(mems\_sd)}, \texttt{r(mems\_lb)}, \texttt{r(mems\_ub)}, \texttt{r(mems\_p)} and \texttt{r(propchange)} (the difference as a proportion of the macro value at the last multiplier; a point estimate only, as in \texttt{netmediate}).
 
 \paragraph{Scope.} Version~1 handles exactly two waves (\opt{wave1()}/\opt{wave2()}) and network-only fits; co-evolution, \opt{waves()}, \opt{symmetric} and multiplex fits are rejected with a message. The VanderWeele E-value sensitivity bound of \texttt{netmediate} is not implemented. The theta draw is shared across a row's interval values, but each simulation draws fresh randomness (no common random numbers).
+
+\section{Maximum likelihood: \opt{ml}}\label{sec:ml}
+With the option \opt{ml}, \nwsaom{} first runs the method of moments, whose estimates are the starting values, and then estimates the model by maximum likelihood, as \texttt{siena07} does with \texttt{maxlike = TRUE} (Snijders, Koskinen and Schweinberger 2010). The unobserved sequence of ministeps between two waves (who was selected, which tie was considered, including the ministeps without a change) is part of the data that are augmented. It is simulated by Metropolis--Hastings steps: inserting and deleting a ministep that changes nothing, permuting ministeps, and inserting or deleting a pair of ministeps that cancel. The complete-data score of the effects and of the rates is averaged by a Robbins--Monro algorithm, with the same three phases as the method of moments. The estimates and the covariance matrix replace \texttt{e(b)} and \texttt{e(V)}; the standard errors come from the mean complete-data information minus the covariance matrix of the scores. The rates are estimated along and stored in \texttt{e(rates)}; \texttt{e(rates\_ml)} adds the convergence $t$-ratio of every rate, and \texttt{e(tconv\_max\_ml)} is the largest $t$-ratio of all scores (below 0.1 is good).
+
+The estimator covers one directed one-mode network, with or without one co-evolving behavior (its ministeps and its rates are part of the augmented data), and no endowment or creation effects, rate covariates, structural zeros, missing data or composition change. Non-directed and two-mode networks and several networks are not covered. The controls are given in \opt{mloptions()}: \opt{n1(\#)} iterations of phase 1 (default 50), \opt{nsub(\#)} subphases of phase 2 (4) with \opt{nstart2(\#)} iterations in the first (100, then 2.52 times as many in each further subphase), \opt{n3(\#)} iterations of phase 3 (1\,000), \opt{mult(\#)} Metropolis--Hastings steps per iteration as a multiple of the number of tie changes (5), \opt{gain(\#)} the initial gain (0.2) and \opt{seed(\#)}. The same estimates are available after an \nwsaom{} fit as \texttt{nwsaom\_ml}.
+\begin{lstlisting}
+. nwwebuse glasgow, nwclear
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip k3(500) seed(1) ml mloptions(n3(4000) nstart2(200) seed(2))
+Maximum likelihood estimates (Robbins-Monro on the score of the augmented data)
+------------------------------------------------------------------------------
+glasgow1_t~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.513991   .1344354   -18.70   0.000     -2.77748   -2.250503
+ reciprocity |   1.950255   .2270613     8.59   0.000     1.505223    2.395287
+   transtrip |   .6844643   .0905317     7.56   0.000     .5070253    .8619032
+------------------------------------------------------------------------------
+Rate parameters (one per inter-wave period):
+       period1
+ rate   6.2036
+   se   0.8409
+tconv   0.0084
+Overall maximum t-ratio of the scores: 0.055 (good; below 0.1)
+\end{lstlisting}
+The method-of-moments fit of the same model, which is printed first and used as the starting point, has $-2.53$, $2.15$ and $0.59$. With the default controls this example takes about one minute and ends with a largest $t$-ratio of 0.52, which the output flags as poor; the longer phases above (about two minutes) bring it below 0.1, and the output tells you to run longer when this happens. Estimates from different seeds differ by simulation noise. Against \texttt{siena07} with \texttt{maxlike = TRUE} the estimates of this model are $-2.65$, $2.22$ to $2.24$ and $0.69$ to $0.70$ in \nwsaom{} (several runs) and $-2.66$ and $-2.63$, $2.22$ and $2.19$, $0.71$ and $0.70$ in two runs of RSiena. With a co-evolving behavior the estimates are within 0.1 standard errors of RSiena's.
+
+\section{Bayesian estimation: \texttt{nwsaom bayes}}\label{sec:bayes}
+\texttt{nwsaom bayes} samples the posterior distribution of the model that was just fitted, by data augmentation. It is run \emph{after} an \nwsaom{} fit for a directed one-mode network, with or without one co-evolving behavior, and takes the network waves, the effects and the covariates from that fit. The estimates of the fit are the starting values and its covariance matrix is the proposal distribution of the effects. The algorithm and the names of its controls follow \texttt{multi\_siena} (\texttt{sienaBayes}) of the R package multiSiena (Snijders, Koskinen and Ripley) for one group. One batch consists of
+\begin{enumerate}[nosep]
+\item Metropolis--Hastings steps on the sequences of ministeps of all periods, with the moves of RSiena's maximum likelihood chain (insertion and deletion of a ministep without change, permutation of consecutive ministeps, insertion or deletion of a pair of cancelling ministeps combined with a permutation);
+\item one Metropolis step for the rates, with a normal prior around the rates of the fit (standard deviation 1);
+\item \opt{nsampconst()} random-walk Metropolis steps for the effects, with the covariance matrix of the fit and, by default, a flat prior.
+\end{enumerate}
+The proposal scale factors are tuned in rounds of \opt{nimprovemh()} batches before and after the warming phase, as in \texttt{improveMH} of multiSiena, towards the acceptance probability \opt{targetmh()} (0.25). The schedule is: pre-warming (\opt{nprewarm()}, default 50), tuning, warming (\opt{nwarm()}, 50), tuning and the main run (\opt{nmain()}, 250 iterations, one draw saved per iteration with \opt{nrunmh()} (20) batches in between). \opt{mult()} (5) sets the number of Metropolis--Hastings steps on the sequences as a multiple of the observed number of tie changes. The priors are set with \opt{priormeaneta()} and \opt{priorsigeta()} (the effects) and \opt{ratepriormean()} and \opt{ratepriorsd()} (the rates); \opt{gibbsrates} draws the rates from their gamma full conditional instead.
+
+The following example uses a short run to keep the time low (50 seconds); the draws are strongly autocorrelated, as the effective sample sizes (ESS) show.
+\begin{lstlisting}
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip k3(500) seed(1)
+. nwsaom bayes, nprewarm(20) nwarm(20) nmain(100) nimprovemh(40) seed(1)
+Bayesian SAOM (data augmentation)                Number of actors  =       50
+Waves: glasgow1 glasgow2                         Saved draws       =      100
+Pre-warm 20, warm 20, main 100 x 20              Mean chain length =    315.5
+-----------------------------------------------------------------------------
+      Effect |Post. mean  Post. sd[95% interval]             Median      ESS
+-------------+---------------------------------------------------------------
+   outdegree |   -2.5318    0.1162   -2.7870   -2.3412   -2.5164       44
+ reciprocity |    1.9803    0.2428    1.5025    2.4021    1.9806       46
+   transtrip |    0.6880    0.0917    0.5121    0.8624    0.6957       46
+rate_period1 |    6.2702    0.6865    5.1368    7.6435    6.2086       45
+-----------------------------------------------------------------------------
+\end{lstlisting}
+The result replaces the estimates of the fit (\texttt{estimates store} first to keep them): \texttt{e(b)} and \texttt{e(V)} are the posterior means and covariance matrix, \texttt{e(rates)} the posterior mean and standard deviation of the rates, \texttt{e(interval)} the interval limits and median, \texttt{e(ess)} the effective sample sizes, and \texttt{e(post\_frame)} the name of the frame that holds the draws (one row per main iteration). The acceptance rates of all steps are in \texttt{e(accept\_effects)}, \texttt{e(accept\_rates)} and the \texttt{e(accept\_}\emph{step}\texttt{)} results, the tuned scale factors in \texttt{e(scale\_effects)}.
+
+\paragraph{Validation.} On a case with four actors the expected numbers of ministeps of the sampler are 16.249 and 32.385 against the exact values 16.258 and 32.344 from complete enumeration. On the Glasgow data (waves 1 to 3) with outdegree, reciprocity and transitive triplets the posterior means are $-2.656$, $2.256$ and $0.686$ (posterior standard deviations $0.109$, $0.175$, $0.069$), against the maximum likelihood estimates of \texttt{siena07} $-2.661$, $2.224$, $0.713$ (standard errors $0.139$, $0.181$, $0.083$) and $-2.632$, $2.187$, $0.702$ in a second run. With the alcohol covariates the posterior means are within one maximum-likelihood standard error. A run with the default controls takes about five minutes and gives effective sample sizes of 67 to 152 out of 250 draws; for inference increase \opt{nmain()} or \opt{nrunmh()}.
+
+\paragraph{Differences from \texttt{multi\_siena} and limits.} Only one group is supported: there is no group-level mean and covariance matrix, no randomly varying effects and no hierarchical prior (with one group \texttt{multi\_siena} itself keeps the rate prior fixed, which is the default here). The starting values and the proposal covariance come from the \nwsaom{} fit, where \texttt{multi\_siena} first runs a short method-of-moments estimation of its own. The Metropolis--Hastings moves on the sequences were written from the published description, not from the code, and the length of a permuted block is kept fixed in the main run. Not available: several behaviors, several networks or groups, missing data, composition change, rate covariates, endowment and creation effects, and non-directed and two-mode networks. With these limits the posterior of the effects under a flat prior is close to the maximum likelihood estimate and its standard error.
 
 \section{Run time}
 With the native engine, fit time grows roughly with the cube of the number of actors above about 1,000 actors. For a plain model (outdegree, reciprocity, transitive triplets; three waves; about ten ties per actor; \texttt{k0(30) k3(200)}) it takes 1.5~s for 250 actors, 2.6~s for 500, 10~s for 1,000, 67~s for 2,000 and 520~s for 4,000; a full-length run costs several times more. Timings on one 18-core machine: the \texttt{s50} three-wave model \texttt{outdegree reciprocity transtrip} 0.33~s, and the \texttt{s50} three-wave co-evolution model 0.63~s. Beyond roughly 10,000 actors the model itself (every ministep considers all possible alters) is the limit. Stata's own limits matter for matrices passed to \nwsaom{} (\opt{dyadcov()}, \opt{missnet()}): 800$\times$800 in Stata/BE, 11,000$\times$11,000 in Stata/SE.

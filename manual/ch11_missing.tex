@@ -62,7 +62,7 @@ nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip ///
 \paragraph{Scope.} \opt{structural()} is implemented for the two-wave path \opt{wave1()}/\opt{wave2()}, for network-only models, and it is not combinable with \opt{symmetric}, \opt{ratecov()} or the network endowment/creation split; each of these combinations is rejected outright. For users the option is limited to the two-wave path; it is used with \opt{waves()} only internally, for two-mode networks. It runs in the native plugin.
 
 \section{What RSiena has that \nwsaom{} does not (yet)}\label{sec:notimpl}
-RSiena's effects table, as returned by \texttt{getEffects()} for 12 data configurations of RSiena 1.6.6, has \nTotal{} rows (a row is one RSiena short name for one variable type and interaction context). The developer compared every row with \nwsaom{} by reading the code and the documentation, and by running models against \texttt{siena07} where they were implemented. Of these rows:
+RSiena's effects table, as returned by \texttt{getEffects()} for 12 data configurations of RSiena 1.6.14, has \nTotal{} rows (a row is one RSiena short name for one variable type and interaction context). Every row was compared with \nwsaom{} by reading the code and the documentation, and by running models against \texttt{siena07} where they were implemented. Of these rows:
 \begin{itemize}
 \item \nImpl{} are implemented, \nPartial{} is partly implemented;
 \item \nNotImpl{} are \emph{not implemented};
@@ -71,29 +71,49 @@ RSiena's effects table, as returned by \texttt{getEffects()} for 12 data configu
 Of the \nPlannable{} rows that are not out of scope, \pctImpl\% are implemented. The percentage is by \emph{rows}, not by how often an effect is used: the effects most often used in applied papers are largely covered, and the missing rows are concentrated in a few groups. The groups follow; the row-level list is at the end of the chapter.
 
 \subsection{Effects not implemented, by reason}
+The \nImpl{} implemented rows are \pctImpl\% of the plannable ones. The \nNotImpl{} rows that are not implemented are of five kinds.
 \begin{description}[leftmargin=0pt,labelindent=0pt]
-\item[The generalised method of moments (31 rows).] RSiena's GMoM estimator uses its own statistics (the effects named like \texttt{egoX\_gmm}, \texttt{avAlt\_gmm}, \texttt{crprod\_gmm}, and related placeholders). \nwsaom{} implements the standard method of moments only, so these are not applicable.
-\item[The settings model (12 rows).] The \texttt{setting*} effects (\texttt{settingSizeAct}, \texttt{settingOppAct} and relatives) belong to RSiena's settings model, a different simulation procedure in which actors choose within settings. \nwsaom{} has the standard tie-change model only.
-\item[Two-mode members in multi-network models (25 rows).] \texttt{nwsaom multinet} supports directed and non-directed members only. Cross-network effects with a two-mode network are not offered.
-\item[Rate effects for behaviors and two-mode networks, exposure and infection effects (36 rows).] \nwsaom{} has an estimated constant rate, \opt{ratecov()} with constant node covariates, and the structural rate effects of one-mode networks (\opt{outrate}, \opt{inrate}, \opt{reciprate} and their inverse and logarithmic versions). Rate covariates for two-mode networks and for behaviors, the structural rate effects of behaviors, \texttt{RateX} with a changing covariate, and the exposure and infection effects (\texttt{susceptAvCovar}, \texttt{infectCovar}) are not implemented.
-\item[Behavior effects of two networks (8 rows).] For example \texttt{FFDeg}, \texttt{BBDeg}, \texttt{indegMixedPop}: behavior effects that need two other networks.
-\item[Effects where \nwsaom{} and \texttt{siena07} disagree, or that are not validated (8 + part of 32 rows).] Rows for a non-directed network with another network (\texttt{outOutActIntn}, \texttt{outOutAvIntn}, \texttt{both}, \ldots), \texttt{degAbsDiffX}, \texttt{degPosDiffX} with the dependent behavior in a non-directed network, and similar cases are described in Chapter~\ref{ch:validation}. The same chapter lists effects where \texttt{siena07} itself crashes (for example \texttt{sameXOutAct} and \texttt{diffXOutAct} in a two-mode network, \texttt{inPop\_ego} for bipartite data), so there is nothing to validate against; \nwsaom{} does not offer them.
-\item[Other (32 rows).] Individual effects, among them \texttt{unspInt} in two-mode or non-directed networks (\opt{interact()} is refused there), \texttt{constant} for behaviors (it is collinear with the behavior rate), \texttt{behUnspInt} (no interactions of behavior effects), \texttt{minXAlt} and \texttt{maxXAlt} in non-directed networks, and \texttt{from.w.ind}.
-\item[Continuous behavior (80 rows).] Continuous (stochastic differential equation) dependent variables and all effects that involve them are out of scope.
+\item[The generalised method of moments (31 rows).] RSiena's GMoM estimator uses its own statistics (the effects named like \texttt{egoX\_gmm}, \texttt{avAlt\_gmm}, \texttt{crprod\_gmm}, and related placeholders). \nwsaom{} implements the standard method of moments, and maximum likelihood and Bayesian estimation, but not the generalised method of moments.
+\item[The settings model (12 rows).] The \texttt{setting*} effects (\texttt{settingSizeAct}, \texttt{settingOppAct} and relatives) belong to RSiena's settings model, a separate model family with setting steps and a rate for each setting; \nwsaom{} has the standard tie-change model only. There is also nothing to validate against by estimation: in \texttt{siena07} eight of the twelve effects have a statistic that is constant under simulation (the estimate stays 0 and has no standard error), and the four variants with the suffix D have a zero derivative and are fixed at 0.
+\item[Effects that RSiena cannot evaluate or does not offer (15 rows).] \texttt{siena07} stops or returns nothing useful for these combinations, so there is nothing to compare with and \nwsaom{} refuses them with an error message (Table below and Section~\ref{sec:cannoteval}).
+\item[Placeholders (2 rows).] \texttt{minXAlt} and \texttt{maxXAlt} in a non-directed network with unspecified variables are entries of RSiena's effects table that \texttt{siena07} does not offer.
+\item[Two further effects.] \texttt{sameWXClosure} for a two-mode network together with a co-evolving behavior inside \texttt{nwsaom multinet} (a two-mode member and a behavior cannot be combined there), and \texttt{RateX} for a continuous behavior variable (continuous behavior is not planned).
 \end{description}
-\noindent The grouping is that of the generated list; a row appears under the reason that applied when the manual was written. Where a row's note speaks of \texttt{nwsaom multiplex} or of options that take only fixed Stata variables, the wording may predate later additions (for example \texttt{nwsaom multinet}, \opt{netbeh()}); the heading under which the row is listed, and the counts, are the authoritative statement.
+\noindent In addition \nNotPlanned{} rows are out of scope: continuous (stochastic differential equation) dependent variables and all effects that involve them.
+
+\subsection{Effects that RSiena cannot evaluate}\label{sec:cannoteval}
+\begin{center}\small
+\begin{tabular}{@{}p{4.2cm}p{10.4cm}@{}}
+\toprule
+Effect & What \texttt{siena07} does\\
+\midrule
+\texttt{inPop\_ego}, two-mode network & stops with a C++ exception\\
+\texttt{sameXOutAct}, \texttt{diffXOutAct}, two-mode network, with a constant covariate, a changing covariate or a behavior & the R process aborts\\
+\texttt{avGroupEgoX}, \texttt{totGroupEgoX}, two-mode network, constant covariate & reports the effect as not meaningful (available with a changing covariate)\\
+\texttt{homXOutAct2} with a behavior & reports the effect as not implemented for behavioral variables\\
+\texttt{inRateInv}, \texttt{inRateLog}, two-mode network & stops with an error (the receivers of ties are not the actors)\\
+\texttt{susceptAvCovar}, \texttt{infectCovar} with a behavior as covariate & no such effect exists (the covariate is a constant or changing covariate)\\
+\texttt{outOutDist2AvIntn} & listed in the effects table, but there is no implementation\\
+\texttt{toU} for a one-mode network that depends on a two-mode one & rejected\\
+\texttt{avAlt.2M.tie} with RSiena's default parameter 3 & throws an error; \nwsaom{} offers the parameters 1 and 2\\
+\bottomrule
+\end{tabular}
+\end{center}
+Further, \opt{higher} in a non-directed network equals the density statistic and is not identified: RSiena returns a standard error of NA and \nwsaom{} stops.
 
 \subsection{RSiena features beyond effects}\label{sec:est-notimpl}
 Besides effects, RSiena provides estimation and analysis tools. This is how they compare.
 \begin{description}[leftmargin=0pt,labelindent=0pt]
 \item[Method of moments (\texttt{siena07}).] Implemented, conditional and unconditional, with the same phase structure (Chapter~\ref{ch:estimation}).
-\item[Maximum likelihood and Bayesian estimation (\texttt{sienaBayes}).] Not implemented and not planned for now. The reason is that they need the full chain of ministeps (insert, delete and permute moves, ministep probabilities) in the plugin and in Mata, weeks of work, and are slow and tuning-sensitive in RSiena, while the open method-of-moments items reach more users. If a likelihood method is added later, maximum likelihood would come first.
+\item[Maximum likelihood and Bayesian estimation (\texttt{siena07} with \texttt{maxlike = TRUE}, \texttt{multi\_siena}).] Available for a directed one-mode network, with or without one co-evolving behavior: the option \opt{ml} and the subcommand \texttt{nwsaom bayes} (Chapter~\ref{ch:estimation}). Not available for non-directed and two-mode networks, several networks, missing data, composition change and rate covariates. The hierarchical Bayesian analysis of several groups (\texttt{multi\_siena} with several groups) and Bayesian estimation of a behavior alone are not implemented.
 \item[Multi-group analysis (\texttt{siena08}).] The meta-analysis of separate fits is available as \texttt{nwsaom meta} (random-effects pooling by robust IWLS, heterogeneity tests, Fisher combination, maximum-likelihood mean and between-group sd with profile intervals). RSiena's joint multi-group \emph{estimation} (\texttt{sienaGroupCreate}, one model fitted to several groups at once) is not offered: fit each group separately and pool.
 \item[Goodness of fit (\texttt{sienaGOF}).] Available as \texttt{estat gof} (Chapter~\ref{ch:estimation}), with the differences listed there, and not for fits with several co-evolving behaviors.
-\item[Composition change.] Available, including fractional join/leave times (\opt{joinat()}/\opt{leaveat()}) as in \texttt{sienaCompositionChange()}.
+\item[Composition change.] Available, including fractional join/leave times (\opt{joinat()}/\opt{leaveat()}) as in \texttt{sienaCompositionChange()}. Composition change and missing ties are not available inside \texttt{nwsaom multinet}.
 \item[Continuous behavior.] Not implemented (out of scope).
-\item[Simulation only, time-heterogeneity tests, score-type tests, effect importance.] RSiena offers a mode for simulation without estimation, \texttt{sienaTimeTest}, score-type tests, and measures of the relative importance of effects. \nwsaom{} has no counterpart to these. (Two consequences: simulating from a chosen parameter vector is done only inside \texttt{estat gof} and \texttt{estat mems}; and the Wald-type tests of Stata, for example \texttt{test} and \texttt{lincom}, work on the posted \texttt{e(b)} and \texttt{e(V)}.)
-\item[Fixing and testing individual parameters.] RSiena lets you fix an effect's parameter at a value and test it (\texttt{fix}, \texttt{test} arguments of \texttt{includeEffects()}). In \nwsaom{} the starting values are set with \opt{theta0()}, but there is no documented option to hold a chosen effect fixed during estimation (a parameter is held fixed only automatically when its derivative is non-positive, Chapter~\ref{ch:estimation}).
+\item[Simulation only, time-heterogeneity tests, score-type tests, effect importance.] Available: \texttt{nwsaom simulate}, \texttt{estat timetest}, \texttt{estat score} and \texttt{estat importance} (Chapter~\ref{ch:tools}). After \texttt{nwsaom multinet} the tests are available, but not \texttt{estat gof}, \texttt{estat importance} and \texttt{estat simulate}.
+\item[Fixing and testing individual parameters.] Available: \opt{fix()} holds an effect at its \opt{theta0()} value (RSiena's \texttt{fix}), and \texttt{estat score} tests it, also after \texttt{nwsaom multinet}.
+\item[The generalised method of moments.] Not implemented (31 statistics).
+\item[The settings model.] Not implemented (12 effects).
 \item[Model types for non-directed relations.] Offered by name or RSiena's modelType number (\opt{symtype()}: forcing, confirmation, force, agree, joint; modelType 2, 3, 4, 5, 6).
 \end{description}
 

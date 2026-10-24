@@ -62,16 +62,20 @@ def reason(x):
     name = x["RSiena_shortName"]
     if t.startswith("gmm") or "gmm" in name.lower():
         return "GMoM statistics (the generalised method of moments estimator is not implemented)"
+    if re.search(r"siena07 itself|siena07 crashes|RSiena reports|RSiena has no such|siena07 stops", n or ""):
+        return "effects that RSiena cannot evaluate or does not offer"
+    if "Placeholder" in (n or ""):
+        return "placeholder rows of RSiena's effects table"
     if x["section"].startswith("O."):
         return "RSiena's settings model (a different simulation procedure)"
     if "another network" in c and ("behavior" in c.lower() and "behavior variable" in c):
         return "cross-network effects that also involve a behavior variable (needs behavior inside nwsaom multinet)"
     if t.startswith("two-mode") and "another network" in c:
-        return "several networks with a two-mode member (nwsaom multinet supports directed and non-directed members only)"
+        return "several networks with a two-mode member and a behavior (not available in nwsaom multinet)"
     if t.startswith("non-directed") and "another network" in c:
         return "non-directed network with another network: not validated or differs from siena07 (see the notes)"
     if t.startswith("rate"):
-        return "rate effects (covariates on the rate of two-mode networks and behaviors, exposure and infection effects)"
+        return "rate effects of continuous behavior (not planned)"
     if t.startswith("behavior") and ("another network + another network" in c or "another network" in c):
         return "behavior effects of two networks / further behavior-network effects"
     return "other (see the effect notes)"
@@ -81,7 +85,7 @@ for x in miss:
     groups.setdefault(reason(x), []).append(x)
 with open("gen_missing.tex", "w") as f:
     for g, xs in sorted(groups.items(), key=lambda kv: -len(kv[1])):
-        f.write("\\subsection*{%s (%d rows)}\n" % (tex(g[0].upper() + g[1:]), len(xs)))
+        f.write("\\subsection*{%s (%d %s)}\n" % (tex(g[0].upper() + g[1:]), len(xs), "row" if len(xs) == 1 else "rows"))
         f.write("\\footnotesize\n\\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}\n\\toprule\nRSiena name & Network / context & Note\\\\\n\\midrule\n\\endhead\n")
         for x in xs:
             ctx = x["variable_type"] + ((" + " + x["interaction_context"]) if x["interaction_context"] else "")

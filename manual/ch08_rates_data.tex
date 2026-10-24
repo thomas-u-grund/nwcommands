@@ -89,6 +89,40 @@ Pupils with more friends are slightly faster, but the effect is not significant 
 
 Validation (s50, conditional estimation, two \texttt{siena07} seeds): all nine effects agree, for example \texttt{outRate} rates 2.81/2.15 against 2.79/2.10 and coefficient 0.297 against 0.300, \texttt{inRate} 0.370 against 0.379/0.377, \texttt{outRateInv} $-1.096$ against $-1.12/-1.14$.
 
+\section{Rate effects in non-directed and two-mode networks}\label{sec:rate-newtypes}
+
+The structural rate effects \opt{outrate}, \opt{outrateinv} and \opt{outratelog} are also available for non-directed and two-mode networks, where they are the only degree versions, as in RSiena. In a two-mode network \opt{ratecov()} is available as well, with constant covariates, with changing covariates (the stems declared in \opt{tvcov()} are written inside \opt{ratecov()}) and with the behavior of the actors as the covariate (this needs \opt{behavior()} and \opt{waves()}). The simulated $40\times20$ data of Section~\ref{sec:twomode}:
+\begin{lstlisting}
+. nwsaom, waves(tm1 tm2 tm3) outdegree cycle4 ratecov(age) outrate seed(1) k0(100) k3(1000)
+   outdegree |  -.9821048   .1289259    -7.62   0.000    -1.234795   -.7294147
+      cycle4 |   .0821058   .0346814     2.37   0.018     .0141315    .1500801
+Rate parameters (estimated, one per inter-wave period):
+        rate |    3.0268     3.2638 
+          se |    0.4424     0.4402 
+Covariate-rate coefficient (age):    0.1887 (se 0.1027)
+Covariate-rate coefficient (outrate):   -0.1548 (se 0.1098)
+Overall maximum convergence ratio: 0.103 (good; all t-ratios below 0.1)
+\end{lstlisting}
+The effects \texttt{inRateInv} and \texttt{inRateLog} do not exist for two-mode networks (\texttt{siena07} stops, because the receivers of the ties are not the actors), and the pairwise non-directed model types are refused with rate effects and a behavior (\texttt{siena07} fails there).
+
+\section{Rate effects of the behavior}\label{sec:behrate}
+
+In a co-evolution model the rate of the behavior can depend on actor characteristics as the rate of the network does. With \opt{behavior()} and \opt{waves()}, the rate of actor $i$ in a period is the period's behavior rate times $\exp(\sum_k b_k x_k[i])$. \opt{behratecov(varlist)} takes constant covariates, changing covariates declared in \opt{tvcov()} and the name of the behavior itself (its current value; RSiena's \texttt{RateX}). \opt{behrate(list)} takes the rate effects of the position in the network and of the exposure to the behavior of the alters: \texttt{outrate inrate reciprate} (out-degree, in-degree, reciprocated degree), \texttt{totexposure} and \texttt{avexposure} (sum and mean of the alters' behavior values), \texttt{susceptavin} (mean exposure times the in-degree), \texttt{infectin} and \texttt{infectout} (sum of the alters' values times their in- or out-degree; \texttt{infectdeg} in a non-directed network), \texttt{avtinexposuredist2 totinexposuredist2 totainexposuredist2 anyinexposuredist2} (exposure through the in-neighbours of the alters), and \texttt{susceptavcovar(}\emph{var}\texttt{)} and \texttt{infectcovar(}\emph{var}\texttt{)} (the same with a covariate of the actors, which may be a changing covariate). A threshold, RSiena's internal effect parameter, is set with \emph{effect}\texttt{=}\emph{\#}: with $\#>0$ the exposure counts only if at least $\#$ alters have a behavior value of 0.5 or more, with $\#<0$ it is also capped at $|\#|$. A non-directed network has \texttt{outrate avexposure totexposure infectdeg} and the two covariate effects. \opt{behratecoef(numlist)} gives starting values.
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behavior(smoke1 smoke2 smoke3 : linear quadratic avalt) behratecov(alcohol1) behrate(outrate) k0(100) k3(1000) seed(1)
+Rate parameters (estimated, one per inter-wave period):
+             |   period1    period2 
+-------------+---------------------
+network_rate |    6.4756     5.2785 
+          se |    1.1609     0.8483 
+behavior_r~e |    1.1722     1.1098 
+          se |    1.2612     0.9582 
+Rate effect of the behavior (alcohol1):    0.4314 (se 0.2642)
+Rate effect of the behavior (outrate):    0.3316 (se 0.2901)
+Overall maximum convergence ratio: 0.186 (good; all t-ratios below 0.1)
+\end{lstlisting}
+The coefficients are returned in \texttt{e(behratecoefs)}, \texttt{e(behratecoefs\_se)} and \texttt{e(behratecoefs\_tratio)}, the observed statistics in \texttt{e(rc\_target)}. The options cannot be combined with \opt{present()}, \opt{joinat()}, \opt{missnet()}, \opt{missbeh()}, several behaviors, the structural rate effects of the network, a two-mode network or the pairwise non-directed model types, and no \texttt{estat} command is available afterwards. They need the native plugin. \texttt{RateX} of a continuous behavior is not planned, and \texttt{susceptAvCovar} and \texttt{infectCovar} with the behavior itself as the covariate do not exist in RSiena.
+
 \section{Composition change}\label{sec:compchange}
 
 Actors may join or leave the network during the study. RSiena handles this with the ``joiners and leavers'' method (Huisman and Snijders 2003; Section~5.3.3 of the RSiena manual): the actor set is fixed over the whole study, and each actor is marked as present or absent. \nwsaom{} offers two ways.
@@ -194,9 +228,9 @@ A dash means the combination is not determined.
 \section{Limits}\label{sec:rates-limits}
 
 \begin{itemize}
-\item \textbf{Rate effects.} Only constant-covariate \opt{ratecov()} and the nine structural rate effects exist. RSiena's rate effect with a \emph{changing} covariate is a stated open item. There is no rate effect that depends on the behavior or on another covariate-by-network interaction, and no period-specific covariate-rate coefficient (as in RSiena, \texttt{RateX} has no period index).
-\item \textbf{\opt{ratecov()} with co-evolution is refused} (``ratecov() is not yet supported for co-evolution models''), also with several behaviors and in two-mode networks (error 198).
-\item \textbf{Structural rate effects} are restricted to directed one-mode relations and plain waves: no \opt{behavior()}, \opt{present()}, \opt{missnet()}, \opt{symmetric} and no two-mode networks (error 198 for the last two and for \opt{present()}). No \opt{endow()}/\opt{creation()}. They run in the plugin only. Combining several structural rate effects can fail (see above).
+\item \textbf{Rate effects.} \opt{ratecov()}, the nine structural rate effects of directed networks, the degree versions for non-directed and two-mode networks, and the rate effects of the behavior are implemented (Sections~\ref{sec:rate-newtypes} and~\ref{sec:behrate}). There is no period-specific covariate-rate coefficient (as in RSiena, \texttt{RateX} has no period index).
+\item \textbf{\opt{ratecov()} with co-evolution} for the network rate of a one-mode network is refused (``ratecov() is not yet supported for co-evolution models''); the rate of the behavior is modelled with \opt{behratecov()}.
+\item \textbf{Structural rate effects} of directed networks are restricted to plain waves: no \opt{behavior()}, \opt{present()}, \opt{missnet()}, \opt{symmetric} (use the non-directed versions above) and no \opt{endow()}/\opt{creation()}. They run in the plugin only. Combining several structural rate effects can fail (see above).
 \item \textbf{Composition change.}
   \begin{itemize}[nosep]
   \item RSiena's composition-change options 2--4 (other treatments of the data of absent actors) and several intervals per actor are not offered: only RSiena option~1 with one interval per actor.
@@ -206,6 +240,6 @@ A dash means the combination is not determined.
   \item Conditional estimation is not possible with composition change.
   \item The user must code absent actors' tie data consistently (see above); \nwsaom{} neither derives nor checks it.
   \end{itemize}
-\item \textbf{Multinet and two-mode.} \texttt{nwsaom multinet} has no composition change; two-mode networks with composition change are untested.
+\item \textbf{Multinet and two-mode.} \texttt{nwsaom multinet} has no composition change and no missing ties; two-mode networks with composition change are untested.
 \end{itemize}
 \endgroup

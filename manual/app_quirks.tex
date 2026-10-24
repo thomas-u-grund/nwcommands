@@ -58,6 +58,36 @@ Each was found by comparing the observed statistics (the targets) with those of
 \item \texttt{homXOutAct2} has the default parameter 3 in a bipartite network.
 \item \texttt{outInAss}/\texttt{outOutAss} and their relatives use the square
   roots that RSiena uses as the two-mode default (parameter 2).
+\item In \texttt{nwsaom multinet}, \texttt{divInAltIntn}, \texttt{JoutMix} and
+  \texttt{gwespFBMix} of a two-mode dependent network, and
+  \texttt{outOutActIntn}/\texttt{outOutAvIntn} of a one-mode network that depends on a
+  two-mode one, index the other network by the node number of the \emph{event}. \nwsaom{}
+  copies this and refuses these effects when the events outnumber the actors.
+\item \texttt{netbeh(totgroupegox)}, \texttt{netbeh(avgroupegox)} and
+  \texttt{netbeh(crossxoutact)} in a two-mode network use the behavior of the actors for
+  the events as well (the events mirror the actors' behavior), which needs at least as many actors
+  as events.
+\end{itemize}
+
+\section*{Other effects}
+
+\begin{itemize}
+\item \textbf{\texttt{toU}.} In RSiena 1.6.12 and later \texttt{toU} counts, for the ego $i$
+  and the alter $j$, the actors $q$ with a tie $i\to q$ in the \emph{other} network and a
+  tie $q\to j$ in the \emph{own} network, each weighted by the dyadic covariate value $D(i,q)$.
+  \texttt{sharedToU} and \texttt{avAltU} are read in the same way.
+\item \textbf{\opt{higher} in a non-directed network} equals the density statistic.
+  The effect is not identified; RSiena returns a standard error of NA and \nwsaom{} stops with
+  an error message.
+\item \textbf{The shape effect \texttt{constant}} of a behavior is confounded with the
+  behavior rate (RSiena gives a standard error of NA), so a fit that includes it stops.
+\item \textbf{The five double-degree behavior effects} (\texttt{FFDeg}, \texttt{BBDeg},
+  \texttt{FBDeg}, \texttt{FRDeg}, \texttt{BRDeg}) together are not identified, in RSiena as well.
+\item \textbf{\texttt{netbeh(indties)}} differs from \texttt{siena07} and is refused in
+  \texttt{nwsaom multinet}.
+\item \textbf{Internal parameters.} In the current RSiena \texttt{outPop.c}, \texttt{outPopSqrt},
+  \texttt{inAct.c}, \texttt{inActSqrt}, \texttt{outPopMore} and relatives have the internal
+  parameter 1 by default; \nwsaom{} follows.
 \end{itemize}
 
 \section*{Where \nwsaom{} deliberately differs}
@@ -72,10 +102,8 @@ Each was found by comparing the observed statistics (the targets) with those of
 \item \textbf{Refusal instead of noise.} Some combinations are not reproduced
   because RSiena itself fails or returns noise: \texttt{sameXOutAct} and
   \texttt{diffXOutAct} in a two-mode network abort \texttt{siena07}; \texttt{inPop\_ego}
-  and \texttt{homXOutAct2} with a behavior throw an exception in RSiena;
+  in a two-mode network throws an exception in RSiena and \texttt{homXOutAct2} with a behavior is not implemented there;
   the non-directed \texttt{higher} effect is collinear with density. \nwsaom{}
-  refuses these with an error message instead (Chapter~\ref{ch:missing}).
+  refuses these with an error message instead (Section~\ref{sec:cannoteval}).
 \end{itemize}
 
-The repository records each case with the data and the statistics that were
-compared.

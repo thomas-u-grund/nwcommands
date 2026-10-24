@@ -19,39 +19,47 @@ A good agreement does not make an effect \emph{correct} in every setting: the ch
 Two test files in \texttt{cscripts/} embed RSiena reference numbers and run with the package: \texttt{test\_nwsaom\_rsiena.do} (network-only models) and \texttt{test\_nwsaom\_coev\_rsiena.do} (co-evolution). Their reference values are means over five RSiena seeds of \texttt{siena07} runs on \texttt{s50} (restarted with \texttt{prevAns} while the convergence ratio exceeded 0.25), and the tests require every estimate, the rates included, to lie within 0.25 RSiena standard errors of the reference, standard errors within a factor of 1.5, and the overall convergence ratio below 0.3. The five-seed validation behind them found at most 0.06 standard errors for network-only models (Chapter~\ref{ch:estimation}). The script \texttt{cscripts/run\_nwsaom\_tests.sh} runs a \texttt{quick} tier (about a minute) or the \texttt{full} tier (about 35 minutes sequentially, including these RSiena tests).
 
 \section{Summary of what was validated}
-Table~\ref{tab:validated} lists the families that were checked, with one or two numbers as examples. ``Target'' is the observed statistic, ``est.'' the estimates in the order given, with \nwsaom{} first. All agree within seed noise unless stated in the section on differences below. The last column names the source of the numbers.
+Table~\ref{tab:validated} lists the families that were checked, with one or two numbers as examples. ``Target'' is the observed statistic, ``est.'' the estimates in the order given, with \nwsaom{} first. All agree within seed noise unless stated in the section on differences below.
 
 {\small
-\begin{longtable}{@{}p{3.3cm}p{8.4cm}p{1.2cm}@{}}
+\begin{longtable}{@{}p{3.6cm}p{11.4cm}@{}}
 \caption{Families validated against \texttt{siena07}, with example numbers.}\label{tab:validated}\\
 \toprule
-Family & Example result & Log\\
+Family & Example result\\
 \midrule
 \endfirsthead
 \toprule
-Family & Example result & Log\\
+Family & Example result\\
 \midrule
 \endhead
-Estimation algorithm, network-only & Five models on \texttt{s50}, five seeds each: every parameter, rates included, within 0.07 RSiena s.e. of RSiena's default (conditional) output; within 0.06 of \texttt{cond = FALSE} with \opt{unconditional}. Conditional and unconditional RSiena estimates differ by up to 0.3 s.e. from each other. & remarks\\
-Estimation, co-evolution & Joint rate estimation: within 0.05 s.e. of RSiena's default. Real-data outdegree $-2.760$ in both programs after the per-period Jacobian change. & remarks, 27\\
-Endowment and creation, network & gwesp targets $-67.98/80.71$, cycle4 $-19.75/32.5$; balance $-155.469/185.886$, estimates density $-1.73$, reciprocity $2.33$, endow $-0.11$, creation $0.72$ within seed noise; transTrip $-74/94$, cycle3 $-17.333/31$, transMedTrip $-74/93$, transRecTrip $-41/61$. & 8, 16, 19\\
-Balance with missing ties & Targets $-114.016/128.649$ against RSiena's $-114.02/128.65$; rates $5.97/5.02$ against $5.93$--$6.02/5.05$--$5.10$; endow $0.11$ against $0.13$--$0.15$, creation $0.57$ against $0.55$--$0.57$. & 25\\
-Missing covariate values & Eight of 50 covariate values missing: density, reciprocity, altX, egoX and simX agree; simX $0.79$ against RSiena's $0.78$ (it was $1.02$ before missing values were handled). & remarks\\
-Composition change (joiners, leavers) & Estimates within noise over three seeds, with and without a rate covariate, for fractional join/leave times. & 42\\
-Covariate effects, one-mode & absDiffX and egoXaltX: targets 216 and 134.387; estimates $-0.141$ to $-0.146$ against RSiena's $-0.145$ to $-0.149$. & 22\\
-Covariate $\times$ triad, popularity, activity & Port of \texttt{calculateContribution()} and \texttt{tieStatistic()} including their quirks; targets and estimates equal. & 61\\
-Structural rate effects & Nine effects, two seeds each: outRate coefficient $0.297$ against $0.300$, outdegree $-2.180$ against $-2.176$; targets 594, 592, 340, 70.63, 272.67, 78.20, 261.51, 106.27, 185.94. & 65\\
-Reciprocated-degree effects & Four targets (532, 335.803, 505, 319.113); estimates e.g.\ $-2.19/3.22/-0.238$ against $-2.19/3.23/-0.243$. & 52\\
-Own-network effects (\opt{ownx()}) & 19 effects agree (statistics 42.19, 44.252, 225, 184, 266, 206\ldots equal the targets). & 82\\
-Dyadic covariates & Targets and estimates, including missing cells. & 20\\
-Two-mode networks & Statistics equal siena07's targets on the $40\times20$ data (22 statistics for the extra effects); estimates and rates agree. With a co-evolving behavior: rates $4.31/3.44$ against $4.32/3.42$, simEgoInDist2 $-1.13$ against $-1.135$. & 29, 64, 97\\
-Non-directed networks & 31 constant-covariate and 7 changing-covariate effects, e.g.\ egoSqX $-0.231/0.230$ against $-0.223/0.219$, sameXOutAct $0.177/-0.071$ against $0.165/-0.073$. & 69\\
-Several behaviors & 15 parameters (alcohol and smoking, outdegree, reciprocity, transTrip, linear, quadratic, avAlt) within noise over three seeds; weakest: smoking avAlt $1.92$--$1.97$ against $2.01$--$2.06$ (s.e.\ about 0.5). & 28\\
-Behavior effects & quad\_cc: linear $1.791$, quadratic $-0.448$, avAlt $1.057$ against $1.790/-0.450/1.071$; avXAlt, totXAlt, avSameXAlt and effFrom agree; 30 behavior-as-covariate network effects in symmetric networks agree. & 77 (shape), 59, 81, 75\\
-Behavior as covariate, selection & netbeh(samex): $-2.53/2.79/0.556$ against $-2.52/2.78/0.554$. & 75\\
-Several dependent networks (multinet) & Targets equal, estimates agree within seed noise, with the exceptions listed below; 20 effects validated for non-directed members. & 78, 79, 84, 96\\
-Symmetric co-evolution & Simulation study, 40 replicates from known parameters: network rate $0.612$ (true $0.6$), behavior rate $1.60$ ($1.5$), outdegree $-1.44$ ($-1.4$), linear median $0.37$ ($0.3$), avAlt median $1.29$ ($1.5$). & 26\\
-Multi-group meta-analysis (\texttt{nwsaom meta}) & 17 numbers identical to five decimals with RSiena's functions. & 55\\
+Estimation algorithm, network-only & Five models on \texttt{s50}, five seeds each: every parameter, rates included, within 0.07 RSiena s.e. of RSiena's default (conditional) output; within 0.06 of \texttt{cond = FALSE} with \opt{unconditional}. Conditional and unconditional RSiena estimates differ by up to 0.3 s.e. from each other.\\
+Estimation, co-evolution & Joint rate estimation: within 0.05 s.e. of RSiena's default. Real-data outdegree $-2.760$ in both programs after the per-period Jacobian change.\\
+Endowment and creation, network & gwesp targets $-67.98/80.71$, cycle4 $-19.75/32.5$; balance $-155.469/185.886$, estimates density $-1.73$, reciprocity $2.33$, endow $-0.11$, creation $0.72$ within seed noise; transTrip $-74/94$, cycle3 $-17.333/31$, transMedTrip $-74/93$, transRecTrip $-41/61$.\\
+Balance with missing ties & Targets $-114.016/128.649$ against RSiena's $-114.02/128.65$; rates $5.97/5.02$ against $5.93$--$6.02/5.05$--$5.10$; endow $0.11$ against $0.13$--$0.15$, creation $0.57$ against $0.55$--$0.57$.\\
+Missing covariate values & Eight of 50 covariate values missing: density, reciprocity, altX, egoX and simX agree; simX $0.79$ against RSiena's $0.78$ (it was $1.02$ before missing values were handled).\\
+Composition change (joiners, leavers) & Estimates within noise over three seeds, with and without a rate covariate, for fractional join/leave times.\\
+Covariate effects, one-mode & absDiffX and egoXaltX: targets 216 and 134.387; estimates $-0.141$ to $-0.146$ against RSiena's $-0.145$ to $-0.149$.\\
+Covariate $\times$ triad, popularity, activity & Port of \texttt{calculateContribution()} and \texttt{tieStatistic()} including their quirks; targets and estimates equal.\\
+Structural rate effects & Nine effects, two seeds each: outRate coefficient $0.297$ against $0.300$, outdegree $-2.180$ against $-2.176$; targets 594, 592, 340, 70.63, 272.67, 78.20, 261.51, 106.27, 185.94.\\
+Reciprocated-degree effects & Four targets (532, 335.803, 505, 319.113); estimates e.g.\ $-2.19/3.22/-0.238$ against $-2.19/3.23/-0.243$.\\
+Own-network effects (\opt{ownx()}) & 19 effects agree (statistics 42.19, 44.252, 225, 184, 266, 206\ldots equal the targets).\\
+Dyadic covariates & Targets and estimates, including missing cells.\\
+Two-mode networks & Statistics equal siena07's targets on the $40\times20$ data (22 statistics for the extra effects); estimates and rates agree. With a co-evolving behavior: rates $4.31/3.44$ against $4.32/3.42$, simEgoInDist2 $-1.13$ against $-1.135$.\\
+Non-directed networks & 31 constant-covariate and 7 changing-covariate effects, e.g.\ egoSqX $-0.231/0.230$ against $-0.223/0.219$, sameXOutAct $0.177/-0.071$ against $0.165/-0.073$.\\
+Several behaviors & 15 parameters (alcohol and smoking, outdegree, reciprocity, transTrip, linear, quadratic, avAlt) within noise over three seeds; weakest: smoking avAlt $1.92$--$1.97$ against $2.01$--$2.06$ (s.e.\ about 0.5).\\
+Behavior effects & quad\_cc: linear $1.791$, quadratic $-0.448$, avAlt $1.057$ against $1.790/-0.450/1.071$; avXAlt, totXAlt, avSameXAlt and effFrom agree; 30 behavior-as-covariate network effects in symmetric networks agree.\\
+Behavior as covariate, selection & netbeh(samex): $-2.53/2.79/0.556$ against $-2.52/2.78/0.554$.\\
+Several dependent networks (multinet) & Targets equal, estimates agree within seed noise, with the exceptions listed below; 20 effects validated for non-directed members.\\
+Symmetric co-evolution & Simulation study, 40 replicates from known parameters: network rate $0.612$ (true $0.6$), behavior rate $1.60$ ($1.5$), outdegree $-1.44$ ($-1.4$), linear median $0.37$ ($0.3$), avAlt median $1.29$ ($1.5$).\\
+Multi-group meta-analysis (\texttt{nwsaom meta}) & 17 numbers identical to five decimals with RSiena's functions.\\
+Rate effects of behaviors and two-mode networks & Structural rate effects of two-mode and non-directed networks, \texttt{ratecov()} with changing covariates and with the behavior as covariate, and the rate effects of a co-evolving behavior (\texttt{behrate()}, \opt{behratecov()}): observed statistics equal \texttt{siena07}'s and estimates within seed noise.\\
+Two-mode member in \texttt{nwsaom multinet} & The 21 two-mode cross effects of RSiena and their counterparts for a one-mode network that depends on a two-mode one: targets equal, estimates within the Monte Carlo error of both programs.\\
+Behavior in \texttt{nwsaom multinet} & Behavior effects of both networks, covariate and shape effects, endowment and creation of behavior effects, interactions of behavior effects, missing behavior values, and \texttt{netbeh:} effects (53 of 54 equal \texttt{siena07}'s estimates).\\
+\texttt{estat importance} & Agrees with \texttt{sienaRI} to four decimals for one-mode, non-directed (forcing model) and two-mode networks and for the behavior effects of co-evolution fits.\\
+\texttt{estat score} after \texttt{nwsaom multinet} & Cross-network effect fixed at 0: $\chi^2$ 0.14 to 0.25 against RSiena's 0.19 to 0.25; behavior \texttt{avAlt} fixed: 11.4 to 14.0 against 11.9 to 13.5.\\
+\texttt{estat timetest} & With \opt{fixrates} equal to \texttt{sienaTimeTest}; by default equal to the score test of a fitted fixed time dummy. After \texttt{nwsaom multinet} the joint test and the tests of all effects agree in this way; the separate test of the second network's outdegree differs between the two variants (default $1.1$ to $1.3$, with \opt{fixrates} $0.2$ to $0.35$) because that effect is strongly correlated with the rate.\\
+Maximum likelihood (\opt{ml}) & Glasgow waves 1 and 2, outdegree, reciprocity and transitive triplets: $-2.65$, $2.22$ to $2.24$, $0.69$ to $0.70$ against RSiena's $-2.66$ and $-2.63$, $2.22$ and $2.19$, $0.71$ and $0.70$. With a co-evolving behavior the estimates are within 0.1 standard errors.\\
+Bayesian estimation (\texttt{nwsaom bayes}) & Exact enumeration on a four-actor case: expected numbers of ministeps 16.249 and 32.385 against the exact 16.258 and 32.344. Glasgow, outdegree, reciprocity and transitive triplets: posterior means $-2.656$, $2.256$, $0.686$ (standard deviations $0.109$, $0.175$, $0.069$) against \texttt{siena07} maximum likelihood $-2.661$, $2.224$, $0.713$ (standard errors $0.139$, $0.181$, $0.083$) and $-2.632$, $2.187$, $0.702$; with alcohol covariates the posterior means are within one maximum-likelihood standard error.\\
 \bottomrule
 \end{longtable}}
 
@@ -60,7 +68,7 @@ The following cases are the honest edge of the validation. They fall into four k
 
 \subsection{Effects where RSiena crashes or throws}
 \begin{itemize}
-\item \texttt{sameXOutAct} and \texttt{diffXOutAct} in a \emph{two-mode} network: \texttt{siena07} aborts the R process. They are not offered for two-mode networks. (The log gives this as the reason; the appendix list may show an older wording.)
+\item \texttt{sameXOutAct} and \texttt{diffXOutAct} in a \emph{two-mode} network: \texttt{siena07} aborts the R process. They are not offered for two-mode networks.
 \item \texttt{avGroupEgoX} and \texttt{totGroupEgoX} with a constant covariate in a two-mode network: RSiena throws an exception. They are available with a changing covariate.
 \item \texttt{inPop\_ego} for bipartite data throws a C++ exception in \texttt{siena07}; it is not offered.
 \item \texttt{avAlt.2M.tie} with its default parameter (3) throws an error in R; with parameter 1 or 2 it works. For a non-directed network with a second network \texttt{siena07} throws.
@@ -81,9 +89,8 @@ The following cases are the honest edge of the validation. They fall into four k
 
 \subsection{Open disagreements (not claimed as validated)}
 \begin{itemize}
-\item \texttt{degAbsDiffX} and \texttt{degPosDiffX} in a non-directed network \emph{with the dependent behavior as covariate}: the observed statistic is equal (417), but the estimates differ ($-0.72$ against $-0.22$). The dynamic-behavior simulation in the pairwise (symmetric) model differs. In earlier versions these effects ended in a singular phase-3 Jacobian (rc 505) while \texttt{siena07} estimated them ($0.018$, $0.022$, $0.025$). This is listed as open in the log.
-\item \texttt{outMore(2)} in a \emph{non-directed} network: the same target (578), but \nwsaom{} estimates $0.27$--$0.49$ and $-0.20$ to $-0.42$ where \texttt{siena07} gets $0.11$--$0.14$ and $-0.06$ to $-0.12$. The ego-degree contribution in the pairwise ministep needs a look. Open.
-\item Multinet with a non-directed member: \texttt{outOutActIntn} (estimate $+0.02$ against $-0.03$, equal statistic), \texttt{outOutAvIntn} ($0.09$ against $-0.30$, the contribution differs for a non-directed network) and \texttt{both} (statistic 194 against 25.5) are not claimed.
+\item \texttt{degAbsDiffX} and \texttt{degPosDiffX} in a non-directed network \emph{with the dependent behavior as covariate}: the observed statistics equal \texttt{siena07}'s (814 and 812) and the behavior parameters agree. The estimates of the two effects themselves are badly determined in both programs (standard errors of 0.9 to 3.4), so that they differ between seeds by more than the standard error; only the statistics are claimed.
+\item \texttt{outMore(2)} in a \emph{non-directed} network: the observed statistic equals \texttt{siena07}'s (578), but \texttt{siena07} reaches its \texttt{thetaBound} on the test data, so the estimates cannot be compared.
 \item Cycle4 endowment/creation estimates differ from RSiena by less than 0.1 with a standard error of 0.55 (six seeds each), judged to be noise.
 \item \texttt{estat gof}: RSiena reuses networks stored during the fit; \nwsaom{} simulates afresh (Chapter~\ref{ch:estimation}). The p-value of the correlation diagnostic in \texttt{nwsaom meta} uses the $t$ approximation, RSiena the exact (Edgeworth) value.
 \item The simulated statistic of a few endowment/creation effects uses the union of the dyads missing at either wave, where RSiena treats start-missing and end-missing dyads differently. The observed target is exact; the simulated statistic differs for a handful of ties. This is a stated approximation.
@@ -98,10 +105,10 @@ Robustness is part of validation. RSiena fails on a share of seeds for sparse ef
 \section{How to reproduce}
 The scripts that produced these comparisons (named \texttt{dev/saom\_rsiena\_*.R} and \texttt{.do}, one pair per effect family, plus \texttt{dev/saom\_sim\_*} for the simulation studies) are \emph{not} part of the repository. They are not part of the installed package, and some depend on RSiena installed locally. What is public is the recipe, and it is short.
 \begin{enumerate}
-\item Install RSiena 1.6.6. Build the data with \texttt{sienaDataCreate()} from \texttt{s501}--\texttt{s503}, \texttt{s50a}, \texttt{s50s}; add covariates as \texttt{coCovar} or \texttt{varCovar}.
+\item Install RSiena 1.6.14. Build the data with \texttt{sienaDataCreate()} from \texttt{s501}--\texttt{s503}, \texttt{s50a}, \texttt{s50s}; add covariates as \texttt{coCovar} or \texttt{varCovar}.
 \item Fit the model with \texttt{siena07(sienaAlgorithmCreate(projname = NULL, seed = s, cond = FALSE))} for several seeds \texttt{s}, with \texttt{batch = TRUE}; restart with \texttt{prevAns} while \texttt{tconv.max} exceeds 0.25. Keep the targets (\texttt{ans\$targets}), the estimates, the standard errors and the rates.
 \item Fit the corresponding \nwsaom{} model on \texttt{nwwebuse glasgow} (and, for behaviors, the alcohol or smoking variables), with several seeds. Use \opt{unconditional} where the RSiena run used \texttt{cond = FALSE}.
 \item Compare: the statistics of the observed waves must agree exactly with the targets; estimates, standard errors and rates must agree within seed noise and a fraction of RSiena's standard error.
-\item For a family where you have an RSiena fit that fails, compare instead by simulation: simulate data sets from known parameters with RSiena (the log does not record the exact call), then re-estimate each with \nwsaom{} and check recovery of the true values.
+\item For a family where you have an RSiena fit that fails, compare instead by simulation: simulate data sets from known parameters with RSiena, then re-estimate each with \nwsaom{} and check recovery of the true values.
 \end{enumerate}
 The two regression tests named above reproduce steps~2--4 for network-only and co-evolution models without needing R, because the RSiena means are stored in the test files. The tier runner is \texttt{cscripts/run\_nwsaom\_tests.sh} (\texttt{quick} or \texttt{full}). Before testing a rebuilt plugin, put its directory first on the \texttt{adopath}: a stale plugin in Stata's PLUS folder shadows the repository build.

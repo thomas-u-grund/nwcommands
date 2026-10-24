@@ -40,7 +40,7 @@ RSiena name & Network / context & Note\\
 \end{longtable}
 \normalsize
 
-\subsection*{Other (see the effect notes) (13 rows)}
+\subsection*{Effects that RSiena cannot evaluate or does not offer (15 rows)}
 \footnotesize
 \begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
 \toprule
@@ -58,8 +58,10 @@ RSiena name & Network / context & Note\\
 \texttt{sameXOutAct} & two-mode network + a behavior variable & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
 \texttt{diffXOutAct} & two-mode network + a behavior variable & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
 \texttt{homXOutAct2} & non-directed network + a behavior variable & Not implemented: RSiena reports the effect as not implemented for a behavior variable.\\
-\texttt{minXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
-\texttt{maxXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
+\texttt{susceptAvCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
+\texttt{infectCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
+\texttt{inRateInv} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
+\texttt{inRateLog} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -87,7 +89,20 @@ RSiena name & Network / context & Note\\
 \end{longtable}
 \normalsize
 
-\subsection*{Cross-network effects that also involve a behavior variable (needs behavior inside nwsaom multinet) (3 rows)}
+\subsection*{Placeholder rows of RSiena's effects table (2 rows)}
+\footnotesize
+\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
+\toprule
+RSiena name & Network / context & Note\\
+\midrule
+\endhead
+\texttt{minXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
+\texttt{maxXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{Cross-network effects that also involve a behavior variable (needs behavior inside nwsaom multinet) (1 row)}
 \footnotesize
 \begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
 \toprule
@@ -95,21 +110,17 @@ RSiena name & Network / context & Note\\
 \midrule
 \endhead
 \texttt{sameWXClosure} & two-mode network + another network + a behavior variable & Not implemented in nwsaom multinet: a two-mode member together with a co-evolving behavior.\\
-\texttt{susceptAvCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
-\texttt{infectCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
 \bottomrule
 \end{longtable}
 \normalsize
 
-\subsection*{Rate effects (covariates on the rate of two-mode networks and behaviors, exposure and infection effects) (3 rows)}
+\subsection*{Rate effects of continuous behavior (not planned) (1 row)}
 \footnotesize
 \begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
 \toprule
 RSiena name & Network / context & Note\\
 \midrule
 \endhead
-\texttt{inRateInv} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
-\texttt{inRateLog} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
 \texttt{RateX} & rate (one-mode network) + continuous variable & Not implemented: continuous (stochastic differential equation) behavior variables are not planned.\\
 \bottomrule
 \end{longtable}

@@ -134,9 +134,10 @@ Composition change implies unconditional estimation. Data preparation (coding of
 
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{10.8cm}@{}}
 \toprule Option & Meaning \\ \midrule \endhead
-\opt{ratecov(varlist)} & Covariates that change the rate: actor $i$'s rate is the period rate times $\exp(\sum b_k x_k[i])$. One coefficient per variable, shared by all periods. Works with \opt{waves()} and \opt{symmetric}. Not with co-evolution. \\
+\opt{ratecov(varlist)} & Covariates that change the rate: actor $i$'s rate is the period rate times $\exp(\sum b_k x_k[i])$. One coefficient per variable, shared by all periods. Works with \opt{waves()}, \opt{symmetric} and two-mode networks (with changing covariates and with the behavior as the covariate). Not with co-evolution of a one-mode network (use \opt{behratecov()} for the rate of the behavior). \\
 \opt{ratecovcoef(numlist)} & Starting values of these coefficients, one per variable or one for all. Default 0. \\
-\opt{outrate}, \opt{inrate}, \opt{reciprate} and their \texttt{inv}/\texttt{log} versions (\opt{outrateinv}, \opt{outratelog}, \ldots) & Structural rate effects: the rate depends on the actor's current out-, in- or reciprocated degree (or its inverse or logarithm). Each adds a covariate-rate coefficient. Directed one-mode relations, plain waves only. Native. \\
+\opt{outrate}, \opt{inrate}, \opt{reciprate} and their \texttt{inv}/\texttt{log} versions (\opt{outrateinv}, \opt{outratelog}, \ldots) & Structural rate effects: the rate depends on the actor's current out-, in- or reciprocated degree (or its inverse or logarithm). Each adds a covariate-rate coefficient. Directed one-mode relations, plain waves only; non-directed and two-mode networks have \opt{outrate}, \opt{outrateinv}, \opt{outratelog}. Native. \\
+\opt{behratecov(varlist)}, \opt{behrate(list)}, \opt{behratecoef(numlist)} & Rate of the behavior in a co-evolution model: covariates (constant, changing, or the behavior itself) and rate effects of the network and of the exposure to the behavior of the alters (Section~\ref{sec:behrate}). \\
 \bottomrule
 \end{longtable}
 
@@ -153,6 +154,7 @@ Composition change implies unconditional estimation. Data preparation (coding of
 
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{10.8cm}@{}}
 \toprule Option & Meaning \\ \midrule \endhead
+\opt{ml}, \opt{mloptions(\emph{string})} & Maximum likelihood instead of the method of moments, for one directed one-mode network with or without one behavior; controls \opt{n1()}, \opt{nsub()}, \opt{nstart2()}, \opt{n3()}, \opt{mult()}, \opt{gain()}, \opt{seed()} (Section~\ref{sec:ml}). \\
 \opt{unconditional} & Unconditional method of moments for a network-only model; the rates become method-of-moments parameters. The default for a network-only model is conditional estimation. Co-evolution, \texttt{nwsaom multinet} and \texttt{nwsaom multiplex} models are always unconditional. \\
 \opt{rate0(numlist)} & Starting value(s) of the rate(s) of an unconditional network-only fit: one value or one per period. Default: RSiena's closed-form value from the data. Not used under conditional estimation. \\
 \opt{theta0(numlist)} & Starting values of the coefficients, one per effect in the order of \texttt{e(b)} (the error message lists the order if the argument is missing or has the wrong length). Default all zero, except that \opt{outdegree} of a network-only model starts at RSiena's data-derived value. \\
@@ -168,14 +170,19 @@ Composition change implies unconditional estimation. Data preparation (coding of
 
 \begin{lstlisting}
 nwsaom multinet, net1(namelist) net2(namelist) [eff1(effects) eff2(effects)
-        cross1(effects) cross2(effects) sym1 sym2 k0(#) k3(#) firstg(#) seed(#)]
+        cross1(effects) cross2(effects) sym1 sym2 actormode(#) tvcov(groups)
+        behavior(namelist) beheff1(effects) beheff2(effects) beheff12(effects)
+        beheff21(effects) behint(interactions) missbeh(namelist)
+        theta0(numlist) fix(namelist) k0(#) k3(#) firstg(#) seed(#)]
 \end{lstlisting}
-Two directed one-mode networks on the same actors evolve together (RSiena's two dependent network variables); estimation is unconditional, with a rate per network and period. Native only.
+Two networks on the same actors evolve together (RSiena's two dependent network variables); estimation is unconditional, with a rate per network and period. Native only.
 \begin{itemize}[nosep]
-  \item \opt{net1()} and \opt{net2()} list the waves of the two networks; the number of waves is the same, at least two.
-  \item \opt{eff1()} and \opt{eff2()} give the within-network effects of each network; default \texttt{outdegree reciprocity}. Possible are \texttt{outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact} and, with a variable, \texttt{egox:}\emph{var}, \texttt{altx:}\emph{var}, \texttt{samex:}\emph{var}, \texttt{simx:}\emph{var}.
-  \item \opt{cross1()} lists the cross-network effects of network 1 that depend on network 2, \opt{cross2()} those of network 2 on network 1 (\texttt{crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw}, and many further families with and without a covariate; a parameter follows a colon, for example \texttt{from:2}). The cross-network statistics read the other network at the start of the period, the simulation its current state, as RSiena does.
+  \item \opt{net1()} and \opt{net2()} list the waves of the two networks; the number of waves is the same, at least two. One of the networks may be two-mode (detected from the data); \opt{actormode()} says which mode acts.
+  \item \opt{eff1()} and \opt{eff2()} give the within-network effects of each network; default \texttt{outdegree reciprocity}. Possible are \texttt{outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact} and, with a variable, \texttt{egox:}\emph{var}, \texttt{altx:}\emph{var}, \texttt{samex:}\emph{var}, \texttt{simx:}\emph{var}, and \texttt{netbeh:}\emph{effect} for the behavior as covariate.
+  \item \opt{cross1()} lists the cross-network effects of network 1 that depend on network 2, \opt{cross2()} those of network 2 on network 1 (the basic ones are \texttt{crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw}; there are many further families, with a covariate, a changing covariate (\opt{tvcov()}) or a dyadic covariate matrix; a parameter follows a colon, for example \texttt{from:2}). The cross-network statistics read the other network at the start of the period, the simulation its current state, as RSiena does.
   \item \opt{sym1} and \opt{sym2} declare the first, respectively second network non-directed.
+  \item \opt{behavior()} adds one behavior; \opt{beheff1()} and \opt{beheff2()} give its effects driven by the first and by the second network, \opt{beheff12()} and \opt{beheff21()} the effects of both networks, \opt{behint()} interactions of behavior effects and \opt{missbeh()} flags missing behavior values (Section~\ref{sec:mn-behavior}).
+  \item \opt{theta0()} and \opt{fix()} give the starting values and hold effects fixed; \texttt{estat score} and \texttt{estat timetest} are available afterwards.
 \end{itemize}
 
 \section{Postestimation commands}
@@ -183,6 +190,9 @@ Two directed one-mode networks on the same actors evolve together (RSiena's two 
 \begin{description}[nosep,style=nextline]
   \item[\texttt{estat gof}] Goodness of fit with RSiena's Mahalanobis-distance test for the outdegree, indegree and geodesic distributions. Options and the returned \texttt{r()} results are in \texttt{help nwsaom\_estat}.
   \item[\texttt{estat mems}] Micro effects on macro structure sensitivity analysis (Duxbury); \texttt{help nwsaom\_estat}.
+  \item[\texttt{estat score}, \texttt{estat timetest}, \texttt{estat importance}, \texttt{estat simulate}] Score-type tests, the test of time heterogeneity (with \opt{fixrates} as RSiena's \texttt{sienaTimeTest}), relative importance of effects and simulation from the fit; Chapter~\ref{ch:tools}.
+  \item[\texttt{nwsaom bayes}] Bayesian estimation after a fit; Section~\ref{sec:bayes}.
+  \item[\texttt{nwsaom describe}] Description of the waves before a fit; Section~\ref{sec:describe}.
   \item[\texttt{nwsaom meta}] Combines the same model fitted to several networks, the counterpart of RSiena's \texttt{siena08}; \texttt{help nwsaom\_meta}.
 \end{description}
 
