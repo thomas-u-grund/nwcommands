@@ -3,7 +3,7 @@ capture program drop _nwergm_cov
 program _nwergm_cov, rclass
 	version 14
 	syntax anything(name=term), SPEC(string) NODES(integer) DIRECTED(string) [TWOMODE(string)]
-	if "`twomode'" == "true" {
+	if "`twomode'" == "true" & !inlist("`term'", "nodecov", "nodefactor", "nodematch", "nodematchdiff", "absdist", "edgecov") {
 		di "{err}{bf:`term'()} is not available for two-mode networks."
 		error 198
 	}
@@ -167,7 +167,7 @@ program _nwergm_covattr, rclass
 	if r(N) > 0 {
 		capture drop __nwergm_tmpattr
 		di "{err}In term {bf:`term'}: attribute {bf:`nm'} has missing data, which is not currently supported."
-		error 198
+		error 416
 	}
 	return local var "`v'"
 	return local name "`nm'"

@@ -226,8 +226,8 @@ else di "ok  directed gwdegree is rejected as in R"
 * R: attributes with missing values are rejected
 qui replace x = . in 3
 capture nwergm D, edges nodecov(x) method(mple)
-if _rc != 198 {
-	di as err "FAIL missing attribute values should be an error (rc 198), got rc " _rc
+if _rc != 416 {
+	di as err "FAIL missing attribute values should be an error (rc 416), got rc " _rc
 	local ++nfaile
 }
 else di "ok  missing attribute values are rejected as in R"
