@@ -9,7 +9,7 @@ description: "nwergm: exponential-family random graph models (ERGM), in the sepa
 
 # `nwergm`
 
-`nwergm` fits exponential-family random graph models to a network, after R's `ergm`: maximum pseudolikelihood where the model is dyad-independent and Monte Carlo maximum likelihood otherwise.
+`nwergm` fits exponential-family random graph models to a network, after the R package `ergm` (statnet): maximum pseudolikelihood where the model is dyad-independent and Monte Carlo maximum likelihood otherwise.
 
 `nwergm` is not part of the core `nwcommands`. It is a package of its own, released under the
 GNU General Public License, version 3, and it needs the core installed first.

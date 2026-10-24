@@ -9,7 +9,7 @@ description: "nwdynam: Dynamic Network Actor Models (DyNAM), in the separate nwd
 
 # `nwdynam`
 
-`nwdynam` fits dynamic network actor models to a timestamped sequence of events, after R's `goldfish`: a rate sub-model for who acts next and a choice sub-model for whom the actor chooses (plus a coordination variant for undirected events).
+`nwdynam` fits dynamic network actor models to a timestamped sequence of events, after the R package `goldfish`: a rate sub-model for who acts next and a choice sub-model for whom the actor chooses (plus a coordination variant for undirected events).
 
 `nwdynam` is not part of the core `nwcommands`. It is a package of its own, released under the
 GNU General Public License, version 3, and it needs the core installed first.

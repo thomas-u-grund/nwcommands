@@ -9,7 +9,7 @@ description: "nwrem: relational event models (REM), in the separate nwrem packag
 
 # `nwrem`
 
-`nwrem` fits relational event models to a timestamped sequence of events by maximizing the ordinal partial likelihood, after R's `relevent`.
+`nwrem` fits relational event models to a timestamped sequence of events by maximizing the ordinal partial likelihood, after the R package `relevent`.
 
 `nwrem` is not part of the core `nwcommands`. It is a package of its own, released under the
 GNU General Public License, version 3, and it needs the core installed first.
