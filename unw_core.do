@@ -1211,7 +1211,9 @@ real matrix Factions(real matrix net, real scalar K, real scalar maxiter){
 	idx = selectindex(vec(mask))
 
 	deg = rowsum(net) :+ colsum(net)'
-	byDeg = sort((( 1::n), deg), -2)		// column 1 = node index, sorted by descending degree (column 2)
+	// ties in degree are broken by node number (sort() on a single key breaks ties at random, using the
+	// random-number stream, so the old partitions were not reproducible); canonical order: degree descending, node ascending
+	byDeg = sort((( 1::n), deg), (-2,1))		// column 1 = node index, sorted by descending degree (column 2)
 	groups = J(n,1,.)
 	for (i=1; i<=n; i++) {
 		groups[byDeg[i,1],1] = mod(i-1, K) + 1
@@ -2932,6 +2934,416 @@ real matrix CohesionHierarchy(real matrix origadj, real rowvector nodeset){
 }
 
 
+/* -------------------------------------------------------------------- */
+/*
+	Native combinatorial kernels (native/nwcomb.h, nwcomb2.h): dispatcher and
+	thin wrappers for nwcohesion, nwfactions, nwlambda, nwmotifs,
+	nw2clustering, nwnclique, nwnclan and nwkplex. The NWdef methods and
+	nw2clustering.ado call the kernels when nwg_comb_ok() says the plugin
+	of this platform has them, and keep their older Mata code otherwise
+	(a platform whose plugin has not been rebuilt yet still works, only
+	slowly).
+
+	nwg_comb(alg, n, ties, nodevals, par, aux, status) sends the ties (rows
+	ego, alter[, weight]; 1-based) and optional per-node values to the
+	plugin in a scratch frame and returns the result matrix; aux receives
+	the scalars __nwg_a1..a4 the kernel published and status its status
+	(0 ok, 1 result limit exceeded, 2 out of memory, 3 time limit).
+*/
+real scalar nwg_comb_ok()
+{
+	external real scalar nwg_comb_state
+	real scalar rc
+
+	if (nwg_comb_state != .) return(nwg_comb_state)
+	nwg_comb_state = 0
+	if (!NativeGraphAvailable()) return(0)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	st_numscalar("__nwg_ver", .)
+	rc = _stata("capture plugin call nwgraph_native, " + char(34) + "100 0 0 0 0" + char(34), 1)
+	if (nwg_scalar("__nwg_ver") != .) {
+		if (nwg_scalar("__nwg_ver") >= 2) nwg_comb_state = 1
+	}
+	return(nwg_comb_state)
+}
+
+real scalar nwg_scalar(string scalar nm)
+{
+	real matrix x
+
+	x = st_numscalar(nm)
+	return(length(x) == 1 ? x : .)
+}
+
+real matrix nwg_comb(real scalar alg, real scalar n, real matrix ties, real colvector nv,
+		real rowvector par, real rowvector aux, real scalar status)
+{
+	string scalar origframe, argstr, vl
+	real scalar nties, nr, nc, j
+	real rowvector junk
+	string rowvector vn
+	real matrix res
+
+	aux = J(1, 4, .)
+	status = 2
+	res = J(0, 0, .)
+	nties = rows(ties)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_comb")
+	stata("frame create __nwgraph_comb")
+	st_framecurrent("__nwgraph_comb")
+	st_addobs(max((n, nties, 1)))
+	junk = st_addvar("double", ("v1", "v2", "v3", "v4"))
+	if (nties > 0) {
+		st_store((1::nties), ("v1", "v2"), ties[., (1, 2)])
+		st_store((1::nties), "v3", (cols(ties) >= 3 ? ties[., 3] : J(nties, 1, 1)))
+	}
+	if (rows(nv) > 0) st_store((1::n), "v4", nv)
+
+	argstr = strofreal(alg) + " " + strofreal(n) + " " + strofreal(nties)
+	for (j = 1; j <= cols(par); j++) argstr = argstr + " " + strofreal(par[j], "%21.0g")
+	st_numscalar("__nwg_status", .)
+	st_numscalar("__nwg_rows", .)
+	st_numscalar("__nwg_cols", .)
+	for (j = 1; j <= 4; j++) st_numscalar("__nwg_a" + strofreal(j), .)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	if (_stata("plugin call nwgraph_native v1 v2 v3 v4, " + char(34) + argstr + char(34), 1) == 0) {
+		status = nwg_scalar("__nwg_status")
+		if (status == .) status = 2
+		for (j = 1; j <= 4; j++) aux[j] = nwg_scalar("__nwg_a" + strofreal(j))
+		nr = nwg_scalar("__nwg_rows")
+		nc = nwg_scalar("__nwg_cols")
+		if (status == 0 & nr != . & nr > 0 & nc > 0) {
+			if (st_nobs() < nr) st_addobs(nr - st_nobs())
+			vn = J(1, nc, "")
+			vl = "v1 v2 v3 v4"
+			for (j = 1; j <= nc; j++) {
+				vn[j] = "v" + strofreal(4 + j)
+				vl = vl + " " + vn[j]
+			}
+			junk = st_addvar("double", vn)
+			if (_stata("plugin call nwgraph_native " + vl + ", " + char(34) + "99 0 0 " + strofreal(nc) + char(34), 1) == 0) {
+				res = st_data((1::nr), vn)
+			}
+			else status = 2
+		}
+		else if (status == 0) res = J(0, (nc == . ? 0 : nc), .)
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_comb")
+	return(res)
+}
+
+void nwg_fail(real scalar status, string scalar what)
+{
+	errprintf("%s: the native kernel ran out of memory or failed (status %g).\n", what, status)
+	exit(error(3900))
+}
+
+/*
+	Symmetric 0/1 tie list of an edgelist() result: one row (i,j) in each
+	direction for every pair with a positive tie in either direction, no
+	loops, sorted by i then j and without duplicates - the sparse form of
+	get_matrix_mod(0,0) with the diagonal cleared.
+*/
+real matrix nwg_sym01(real matrix el)
+{
+	real matrix p
+
+	if (rows(el) == 0) return(J(0, 2, 0))
+	p = select(el, (el[., 3] :> 0) :& (el[., 3] :< .) :& (el[., 1] :!= el[., 2]))
+	if (rows(p) == 0) return(J(0, 2, 0))
+	return(uniqrows(p[., (1, 2)] \ p[., (2, 1)]))
+}
+
+/* cohesive blocks: nblocks x (n+1), column 1 the block's connectivity, then 0/1 membership */
+real matrix nwg_cohesion(real scalar n, real matrix pairs)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+	real colvector out
+
+	res = nwg_comb(3, n, pairs, J(0, 1, .), (0), aux, st)
+	if (st != 0) nwg_fail(st, "nwcohesion")
+	out = J(aux[1] * (n + 1), 1, 0)
+	if (rows(res) > 0) {
+		out[(res[., 1] :- 1) :* (n + 1) :+ 1] = res[., 3]
+		out[(res[., 1] :- 1) :* (n + 1) :+ res[., 2] :+ 1] = J(rows(res), 1, 1)
+	}
+	return(colshape(out, n + 1))
+}
+
+/* n x n edge-connectivity matrix from the equivalent-flow tree the kernel returns */
+real matrix nwg_lambda(real scalar n, real matrix pairs)
+{
+	real rowvector aux, v
+	real scalar st, s, p, f
+	real matrix res, lam
+
+	lam = J(n, n, 0)
+	if (n <= 1) return(lam)
+	res = nwg_comb(5, n, pairs, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwlambda")
+	for (s = 2; s <= n; s++) {
+		p = res[s, 1]
+		f = res[s, 2]
+		v = lam[p, 1..(s-1)]
+		v[p] = f
+		v = (f :< v) :* f :+ (f :>= v) :* v
+		lam[s, 1..(s-1)] = v
+		lam[1..(s-1), s] = v'
+	}
+	return(lam)
+}
+
+/*
+	Symmetrised tie weights as get_matrix_mod(val, 0) defines them, as a
+	sparse (i, j, w) list with both directions and no loops: for an
+	undirected network the stored weights (binarised when they are valued
+	and val is 0); for a directed one max(w_ij, w_ji) with an absent tie
+	counting 0 (or 0/1 when val is 0).
+*/
+real matrix nwg_symw(real matrix el, real scalar isdirect, real scalar isvalued, real scalar val)
+{
+	real matrix p, q
+	real colvector key, first, cnt
+	real scalar m
+
+	if (rows(el) == 0) return(J(0, 3, 0))
+	p = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :< .) :& (el[., 3] :!= 0))
+	if (rows(p) == 0) return(J(0, 3, 0))
+	if (isdirect == 0) {
+		if (val == 1 | isvalued == 0) return(p)
+		p = select(p, p[., 3] :> 0)
+		p[., 3] = J(rows(p), 1, 1)
+		return(p)
+	}
+	if (val == 0) {
+		q = nwg_sym01(el)
+		return((q, J(rows(q), 1, 1)))
+	}
+	q = p \ (p[., 2], p[., 1], p[., 3])
+	q = sort(q, (1, 2, -3))
+	m = rows(q)
+	key = q[., 1] :* (max(q[., (1, 2)]) + 1) :+ q[., 2]
+	first = J(m, 1, 1)
+	cnt = J(m, 1, 0)
+	if (m > 1) {
+		first[2::m] = (key[2::m] :!= key[1::(m-1)])
+		/* cnt = 1 on the first row of a pair that is listed in both directions */
+		cnt[1::(m-1)] = first[1::(m-1)] :* (key[2::m] :== key[1::(m-1)])
+	}
+	/* a pair listed in both directions keeps its larger weight; a pair listed once pairs with an absent tie (0) */
+	q = select(q, first :& ((cnt :== 1) :| (q[., 3] :> 0)))
+	return(q)
+}
+
+/*
+	Factions on the sparse symmetrised weights: the starting partition (nodes
+	sorted by weighted degree, dealt out to the groups round-robin) is built here
+	with the same Mata sort() as Factions(), so ties among equal degrees are
+	broken identically; the relocation sweeps run in the kernel with an
+	incremental fitness (the correlation is rebuilt from the within-group tie
+	weight and the number of same-group ordered pairs, O(degree + groups) per
+	candidate instead of O(n^2)). Returns the n group labels and, in row n+1, the
+	fitness (agrees with the dense computation to rounding, about 1e-15).
+*/
+real matrix nwg_factions(real scalar K, real scalar val, real scalar maxiter, real matrix el,
+		real scalar n, real scalar isdirect, real scalar isvalued)
+{
+	real matrix sw, byDeg, info, res
+	real colvector deg, groups
+	real rowvector aux
+	real scalar st
+
+	sw = nwg_symw(el, isdirect, isvalued, val)
+	if (rows(sw) == 0) {
+		errprintf("Factions detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	if (max(sw[., 3]) <= 0) {
+		errprintf("Factions detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	if (K < 2 | K > n) {
+		errprintf("Factions requires groups() to be between 2 and the number of nodes.\n")
+		exit(error(6556))
+	}
+	deg = J(n, 1, 0)
+	info = panelsetup(sw[., 1], 1)
+	deg[sw[info[., 1], 1]] = panelsum(sw[., 3], info)
+	deg = deg :+ deg
+	byDeg = sort(((1::n), deg), (-2,1))
+	groups = J(n, 1, .)
+	groups[byDeg[., 1]] = mod((1::n) :- 1, K) :+ 1
+	res = nwg_comb(4, n, sw, groups, (K, maxiter), aux, st)
+	if (st != 0) nwg_fail(st, "nwfactions")
+	return(res \ aux[1])
+}
+
+/*
+	nwinduced, measure(degree): induced(v) = (sum of the degrees) - (sum of the degrees of the network
+	without v) = 2 * (stored ties of v) - 1 if v carries a self-tie. Matches the leave-one-out loop,
+	which counts stored ties (nwdegree with alpha 0).
+*/
+real colvector nwg_induced_degree(real matrix el, real scalar n)
+{
+	real colvector k, ego, lp
+	real matrix info
+
+	k = J(n, 1, 0)
+	lp = J(n, 1, 0)
+	if (rows(el) > 0) {
+		ego = sort(el[., 1], 1)
+		info = panelsetup(ego, 1)
+		k[ego[info[., 1]]] = info[., 2] - info[., 1] :+ 1
+		ego = select(el[., 1], el[., 1] :== el[., 2])
+		if (rows(ego) > 0) lp[ego] = J(rows(ego), 1, 1)
+	}
+	return(2 :* k - lp)
+}
+
+/* 4-node motif census (1 x 7): path, star, cycle, paw, diamond, k4, disconnected */
+real rowvector nwg_motif4(real scalar n, real matrix pairs)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(6, n, pairs, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwmotifs")
+	return(res)
+}
+
+/* Mata classes of the combinatorial searches: summary of the last enumeration */
+void nwg_enum_opts(real scalar mc, real scalar co, real scalar mw)
+{
+	external real scalar nwg_maxcliques, nwg_countonly, nwg_maxwork
+
+	mc = (nwg_maxcliques == . ? 100000 : nwg_maxcliques)
+	co = (nwg_countonly == . ? 0 : nwg_countonly)
+	mw = (nwg_maxwork == . ? 60 : nwg_maxwork)         // seconds of search
+}
+
+/* sets the summary of the last enumeration from a 0/1 set matrix when the kernel did not (Mata fallback) */
+void nwg_enum_summary(real matrix M)
+{
+	external real scalar nwg_enum_count, nwg_enum_max
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+	real colvector sz, u
+	real scalar i
+
+	if (nwg_enum_count != .) {
+		if (rows(nwg_enum_hist) == 0) nwg_enum_hist = J(1, 2, 0)
+		return
+	}
+	nwg_enum_nodevar = (rows(M) > 0 ? editvalue(colmax(M :* rowsum(M))', 0, .) : J(cols(M), 1, .))
+	nwg_enum_count = rows(M)
+	if (rows(M) == 0) {
+		nwg_enum_max = 0
+		nwg_enum_hist = J(1, 2, 0)
+		return
+	}
+	sz = rowsum(M)
+	nwg_enum_max = max(sz)
+	u = uniqrows(sz)
+	nwg_enum_hist = (u, J(rows(u), 1, 0))
+	for (i = 1; i <= rows(u); i++) nwg_enum_hist[i, 2] = sum(sz :== u[i])
+}
+
+void nwg_enum_reset(real scalar maxcliques, real scalar countonly, | real scalar maxwork, real scalar nomatrix)
+{
+	external real scalar nwg_maxcliques, nwg_countonly, nwg_maxwork, nwg_nomatrix, nwg_enum_count, nwg_enum_max
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+
+	nwg_maxcliques = maxcliques
+	nwg_countonly = countonly
+	nwg_maxwork = (args() >= 3 ? maxwork : .)
+	nwg_nomatrix = (args() >= 4 ? nomatrix : .)
+	nwg_enum_nodevar = J(0, 1, .)
+	nwg_enum_count = .
+	nwg_enum_max = .
+	nwg_enum_hist = J(0, 2, .)
+}
+
+/* per-node largest size of a set containing the node (missing if none), from the (set, node) pairs of the kernel */
+real colvector nwg_enum_nodemax(real matrix res, real scalar n)
+{
+	real colvector sz, nv, ord, first
+	real matrix info
+	real scalar m
+
+	nv = J(n, 1, .)
+	m = rows(res)
+	if (m == 0) return(nv)
+	info = panelsetup(res[., 1], 1)
+	sz = (info[., 2] - info[., 1] :+ 1)[res[., 1]]
+	ord = order((res[., 2], -sz), (1, 2))
+	first = J(m, 1, 1)
+	if (m > 1) first[2::m] = (res[ord[2::m], 2] :!= res[ord[1::(m-1)], 2])
+	nv[res[select(ord, first), 2]] = sz[select(ord, first)]
+	return(nv)
+}
+
+/*
+	Runs an exhaustive search kernel (alg 8: n-cliques, n-clans; alg 9:
+	k-plexes) and returns the maximal sets as a 0/1 matrix, one row per set,
+	n columns, in the order the Mata routines produced them. With the
+	countonly setting it returns an empty matrix and leaves the size
+	histogram in nwg_enum_hist; the number of sets in nwg_enum_count and the
+	largest size in nwg_enum_max in both modes.
+*/
+real matrix nwg_enum(string scalar what, real scalar alg, real scalar n, real matrix ties,
+		real rowvector par, real rowvector extra, string scalar optname)
+{
+	external real scalar nwg_enum_count, nwg_enum_max, nwg_nomatrix
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+	real rowvector aux
+	real scalar st, cells, maxcliques, countonly, maxwork
+	real matrix res, out
+
+	nwg_enum_opts(maxcliques, countonly, maxwork)
+	res = nwg_comb(alg, n, ties, J(0, 1, .), (par, maxcliques, countonly, extra, maxwork), aux, st)
+	if (st == 1) {
+		if (what == "nwnclan") {
+			errprintf("%s: more than %g maximal n-cliques had to be examined while looking for n-clans; stopped.\n", what, maxcliques)
+			errprintf("  Raise the limit with option %s(#) (each examined n-clique costs a few microseconds), or lower n().\n", optname)
+		}
+		else {
+			errprintf("%s: more than %g maximal sets (size >= minsize) found; stopped to protect memory.\n", what, maxcliques)
+			errprintf("  Raise the limit with option %s(#) (the result matrix needs sets x nodes numbers; option nomatrix skips it), or count only with option countonly.\n", optname)
+		}
+		exit(error(484))
+	}
+	if (st == 3) {
+		errprintf("%s: the search was stopped after %g seconds without finishing (%g sets found so far).\n", what, maxwork, aux[1])
+		errprintf("  The number of maximal sets, and so the search time, grows exponentially with network size and density (and with k or n).\n")
+		errprintf("  Raise the limit with option maxtime(#) (seconds), or reduce n()/k() or the network.\n")
+		exit(error(484))
+	}
+	if (st != 0) nwg_fail(st, what)
+	nwg_enum_count = aux[1]
+	nwg_enum_max = aux[2]
+	if (countonly) {
+		nwg_enum_hist = (rows(res) > 0 ? res : J(1, 2, 0))
+		return(J(0, n, 0))
+	}
+	if (nwg_nomatrix == 1) {
+		nwg_enum_nodevar = nwg_enum_nodemax(res, n)
+		return(J(0, n, 0))
+	}
+	cells = aux[1] * n
+	if (cells > 5e7) {
+		errprintf("%s: the result matrix (%g sets x %g nodes = %g numbers, several copies of it are made) is too large to build.\n", what, aux[1], n, cells)
+		errprintf("  Use option nomatrix (per-node variable and counts only) or countonly.\n")
+		exit(error(484))
+	}
+	out = J(aux[1] * n, 1, 0)
+	if (rows(res) > 0) out[(res[., 1] :- 1) :* n :+ res[., 2]] = J(rows(res), 1, 1)
+	return(colshape(out, n))
+}
+
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
 
@@ -4230,6 +4642,7 @@ real matrix `NWdef'::calculate_factions(real scalar k, | real scalar valued, rea
 
 	val = (args() >= 2 ? valued : 1)
 	iter = (args() == 3 ? maxiter : 100)
+	if (nwg_comb_ok()) return(nwg_factions(k, val, iter, edgelist(), get_nodes(), isdirect, isvalued))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 
@@ -4657,6 +5070,8 @@ real matrix `NWdef'::calculate_kplex(real scalar k){
 real matrix `NWdef'::calculate_kplex_filtered(real scalar k, real scalar minsize){
 	real matrix kplex, sizes
 
+	// native search (native/nwcomb2.h), same visiting order as KPlex(); caps the number of sets kept
+	if (nwg_comb_ok()) return(nwg_enum("nwkplex", 9, get_nodes(), nwg_sym01(edgelist()), (k, minsize), J(1, 0, .), "maxplexes"))
 	kplex = calculate_kplex(k)
 	sizes = rowsum(kplex)
 	return(select(kplex, sizes :>= minsize))
@@ -4742,6 +5157,8 @@ real matrix `NWdef'::calculate_nclique(real scalar n){
 real matrix `NWdef'::calculate_nclique_filtered(real scalar n, real scalar minsize){
 	real matrix ncliq, sizes
 
+	// native search (native/nwcomb2.h): distance-<=n graph as bitsets, Bron-Kerbosch with the same pivot rule
+	if (nwg_comb_ok()) return(nwg_enum("nwnclique", 8, get_nodes(), edgelist(), (n, minsize), (0), "maxcliques"))
 	ncliq = calculate_nclique(n)
 	sizes = rowsum(ncliq)
 	return(select(ncliq, sizes :>= minsize))
@@ -4765,6 +5182,8 @@ real matrix `NWdef'::calculate_nclan_filtered(real scalar n, real scalar minsize
 	real matrix ncliq, adj, keep
 	real scalar i
 
+	// native: the diameter check is done inside the search, so the maximal n-cliques are never stored
+	if (nwg_comb_ok()) return(nwg_enum("nwnclan", 8, get_nodes(), edgelist(), (n, minsize), (1), "maxcliques"))
 	ncliq = calculate_nclique_filtered(n, minsize)
 	if (rows(ncliq) == 0) return(ncliq)
 
@@ -4814,6 +5233,8 @@ real matrix `NWdef'::calculate_cohesion_hierarchy(){
 	real scalar n
 
 	n = get_nodes()
+	// native kernel (native/nwcomb.h), exact port of the Mata recursion below
+	if (nwg_comb_ok()) return(nwg_cohesion(n, nwg_sym01(edgelist())))
 	adj = (*get_matrix_mod(0,0)) :!= 0
 	_diag(adj, 0)
 
@@ -5033,6 +5454,8 @@ real matrix `NWdef'::calculate_lambda(){
 	real rowvector parent
 
 	n = get_nodes()
+	// native: Gusfield's equivalent-flow tree (n-1 maximum flows) instead of n(n-1)/2
+	if (nwg_comb_ok()) return(nwg_lambda(n, nwg_sym01(edgelist())))
 	adj = *get_matrix_mod(0, 0)
 	lambda = J(n, n, 0)
 
@@ -5414,6 +5837,8 @@ real matrix `NWdef'::calculate_motif4(){
 		errprintf("nwmotifs requires at least 4 nodes.\n")
 		exit(error(6556))
 	}
+	// native: subgraph counts from degrees, triangles and common neighbours (O(m * max degree))
+	if (nwg_comb_ok()) return(nwg_motif4(n, nwg_sym01(edgelist())))
 	A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
 	_editmissing(A, 0)

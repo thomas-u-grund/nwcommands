@@ -2,7 +2,7 @@
 capture program drop nwnclan
 program nwnclan, rclass
 	version 12
-	syntax [anything(name=netname)][, n(int 2) GENerate(string) replace minsize(int 3) silent]
+	syntax [anything(name=netname)][, n(int 2) GENerate(string) replace minsize(int 3) MAXcliques(real 1000000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
 
 	if `n' < 2 {
@@ -12,6 +12,14 @@ program nwnclan, rclass
 
 	if `minsize' < 1 {
 		di "{err}minsize() must be a positive integer."
+		error 198
+	}
+	if `maxcliques' < 1 {
+		di "{err}maxcliques() must be a positive number."
+		error 198
+	}
+	if `maxtime' <= 0 {
+		di "{err}maxtime() must be a positive number."
 		error 198
 	}
 
@@ -24,16 +32,18 @@ program nwnclan, rclass
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 
-		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+		if "`generate'" == "" & "`countonly'" == "" {
+			di "{err}option {bf:generate()} required (or {bf:countonly})."
 			error 198
 		}
 		local netgenerate "`generate'"
 
-		capture confirm variable `netgenerate'`i', exact
-		if _rc == 0 & "`replace'" == "" {
-			noi di "{err}Variable {bf:`netgenerate'`i'} already exists; specify {bf:replace}"
-			err 99
+		if "`netgenerate'" != "" {
+			capture confirm variable `netgenerate'`i', exact
+			if _rc == 0 & "`replace'" == "" {
+				noi di "{err}Variable {bf:`netgenerate'`i'} already exists; specify {bf:replace}"
+				err 99
+			}
 		}
 
 		mata: st_rclear()
@@ -43,7 +53,57 @@ program nwnclan, rclass
 		_nwsyntax `netname_temp'
 
 		tempname __nw_nclan __nw_sizes __nw_nclannum
+		mata: nwg_enum_reset(`maxcliques', `=("`countonly'" != "")', `maxtime', `=("`nomatrix'" != "")')
 		mata: `__nw_nclan' = `netobj'->calculate_nclan_filtered(`n', `minsize')
+		mata: nwg_enum_summary(`__nw_nclan')
+		if "`countonly'" != "" {
+			mata: st_numscalar("nw_nnwnclan", nwg_enum_count)
+			mata: st_numscalar("nw_maxnwnclan", nwg_enum_max)
+			mata: st_matrix("nw_tabnwnclan", nwg_enum_hist)
+			mata: mata drop `__nw_nclan'
+			mata: nwg_enum_reset(., .)
+			return scalar nclans = nw_nnwnclan
+			return scalar maxsize = nw_maxnwnclan
+			matrix colnames nw_tabnwnclan = size count
+			return matrix size_table = nw_tabnwnclan
+			local lcount = nw_nnwnclan
+			if "`silent'" == "" {
+				noi di "{hline 40}"
+				noi di "{txt}  Network name: {res}`netname_temp'"
+				noi di "{txt}  Maximal `n'-clans (size >= `minsize'): {res}`lcount'"
+				noi di " "
+			}
+			local i = `=`i' + 1'
+			continue
+		}
+		if "`nomatrix'" != "" {
+			// no sets-by-nodes matrix (it needs memory for sets x nodes numbers): the per-node
+			// variable and the counts only
+			mata: st_numscalar("nw_nnwnclan", nwg_enum_count)
+			mata: st_numscalar("nw_maxnwnclan", nwg_enum_max)
+			mata: st_matrix("nw_tabnwnclan", nwg_enum_hist)
+			capture drop `netgenerate'`i'
+			gen `netgenerate'`i' = .
+			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
+			mata: mata drop `__nw_nclan'
+			mata: nwg_enum_reset(., .)
+			return scalar nclans = nw_nnwnclan
+			return scalar maxsize = nw_maxnwnclan
+			matrix colnames nw_tabnwnclan = size count
+			return matrix size_table = nw_tabnwnclan
+			local lcount = nw_nnwnclan
+			capture confirm variable `netgenerate'`i', exact
+			if "`silent'" == "" {
+				noi di "{hline 40}"
+				noi di "{txt}  Network name: {res}`netname_temp'"
+				noi di "{txt}  Maximal sets (size >= `minsize'): {res}`lcount'"
+				noi sum `netgenerate'`i'
+				noi di " "
+			}
+			local i = `=`i' + 1'
+			continue
+		}
+		mata: nwg_enum_reset(., .)
 		mata: `__nw_sizes' = rowsum(`__nw_nclan')
 		mata: st_numscalar("nw_nnclan", rows(`__nw_nclan'))
 		mata: st_matrix("nw_nclanmatrix", (rows(`__nw_nclan') > 0 ? `__nw_nclan' : J(1, `nodes', 0)))
