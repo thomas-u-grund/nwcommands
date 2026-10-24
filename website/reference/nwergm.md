@@ -3,15 +3,39 @@ title: "nwergm"
 parent: "Command reference"
 nav_exclude: true
 search_exclude: false
-description: "nwergm has moved to its own package"
+description: "nwergm: exponential-family random graph models (ERGM), in the separate nwergm package (GPL-3)."
 ---
 
 # `nwergm`
 
-`nwergm` (exponential-family random graph models (ERGM)) has moved to its own package, licensed under GPL-3.
+`nwergm` fits exponential-family random graph models to a network, after R's `ergm`: maximum pseudolikelihood where the model is dyad-independent and Monte Carlo maximum likelihood otherwise.
+
+`nwergm` is not part of the core `nwcommands`. It is a package of its own, released under the
+GNU General Public License, version 3, and it needs the core installed first.
+
+| | |
+|---|---|
+| Current version | 1.0.1 |
+| License | GPL-3 |
+| Repository | [github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm) |
+| Install | `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)` |
+| Or from the core | `nwinstall, modelpkg(nwergm)` |
+| Specific release | `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/v1.0.1/) replace` |
+
+`nwergm version` shows the installed release and `nwversion` lists all model packages. Updating the
+core never overwrites the package; to update the package, repeat the `net install` line with
+`replace`. Inside Stata, `help nwergm` gives the complete syntax, options and examples.
+
+What it offers:
+
+- a large set of terms: covariate, homophily and mixing terms, degree and star terms, geometrically weighted terms (fixed and curved), directed and two-mode (bipartite) terms
+- missing dyads are handled as in R, constraints, offsets, `predict`, and simulation from a fit
+- postestimation: `estat gof`, `estat mcmcdiag`, `estat ic`
+
+A first model:
 
 ```stata
-net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
+. nwergm flomarriage, edges nodecov(wealth)
 ```
 
-The package requires the core `nwcommands`. Repository: https://github.com/thomas-u-grund/nwergm
+Tutorial: [Intro to ERGM in Stata](../tutorials/09-intro-ergm/).

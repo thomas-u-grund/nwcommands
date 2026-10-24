@@ -34,7 +34,8 @@ data commands.
   subgroups, community detection, structural equivalence, QAP, and more
 - **Statistical network models** — available as separate GPL-3 packages that build on the core:
   `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
-  models), and `nwdynam` (Dynamic Network Actor Models)
+  models), and `nwdynam` (Dynamic Network Actor Models); see the
+  [ERGM](tutorials/09-intro-ergm/) and [longitudinal models](tutorials/10-intro-longitudinal-models/) tutorials
 - **Visualization** — static plots and network movies (`nwplot`, `nwmovie`)
 - **Dialog boxes** — around 120 GUI dialogs covering nearly every command, reachable via
   Stata's own "Network Analysis" menu, for anyone who prefers point-and-click to typing syntax
@@ -44,6 +45,8 @@ variables when you want to, but this is opt-in, not automatic, so building and a
 network never has to spend Stata's own variable budget unless you ask it to.
 
 ## Installation
+
+The core, version 3.0.0:
 
 ```stata
 . net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
@@ -56,8 +59,22 @@ all` then downloads everything else — every command, all help files, and every
 and installs them permanently. Add `nwinstall, permanently` to also add a "Network Analysis"
 menu to Stata's own User menu.
 
+The statistical network models are separate GPL-3 packages (each currently at version 1.0.1) that
+need the core. Install all four with `nwinstall, models`, or one by one:
+
+```stata
+. net install nwsaom,  from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)
+. net install nwergm,  from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
+. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
+. net install nwrem,   from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)
+```
+
+`nwversion` shows the core version and which model packages are installed. To update, repeat the
+`net install ... replace` line; updating the core never overwrites a model package. To install a
+particular release, use its tag in the URL, for example `.../nwsaom/v1.0.1/`.
+
 See the [Installation & Setup](tutorials/01-installation-setup/) tutorial for a full walkthrough,
-including options for computers without internet access or admin rights.
+including choosing a release and options for computers without internet access or admin rights.
 
 ## Learn
 
