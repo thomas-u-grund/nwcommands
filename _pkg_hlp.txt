@@ -76,6 +76,7 @@ f nwhomophily.sthlp
 f nwimport.sthlp
 f nwinduced.sthlp
 f nwinstall.sthlp
+f nwversion.sthlp
 f nwissymmetric.sthlp
 f nwkatz.sthlp
 f nwkcomponents.sthlp

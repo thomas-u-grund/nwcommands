@@ -78,6 +78,7 @@ f nwimport.ado
 f nwinduced.ado
 f nwinstall.ado
 f nwinstall_models.ado
+f nwversion.ado
 f nwissymmetric.ado
 f nwkatz.ado
 f nwkcomponents.ado

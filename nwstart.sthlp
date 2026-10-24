@@ -1,5 +1,7 @@
 {smcl}
-{* *! version  30nov2014}{...}
+{* *! version 3.0.0  24oct2026}{...}
+
+{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
 {phang}
 {help nwcommands:NW-4 start}
 {hline 2} Getting started

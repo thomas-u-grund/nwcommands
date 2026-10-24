@@ -8,6 +8,16 @@ program _nwdeploy
 	
 	set more off
 	local d = lower(subinstr(c(current_date)," ","",.))
+	// the release version and date come from the file VERSION (see RELEASING.md); without it the package files carry no Version line
+	global NW_VERSION ""
+	capture file open __nwvf using "VERSION", read text
+	if _rc == 0 {
+		file read __nwvf __nwv1
+		file read __nwvf __nwv2
+		file close __nwvf
+		global NW_VERSION "`__nwv1'"
+		if "`__nwv2'" != "" local d "`__nwv2'"
+	}
 	// BUGFIX: a monolithic nwcommands-ado.pkg (117 f-lines, ~122 lines
 	// total with its own header) silently fails "net install" with
 	// "package file too long" - a real, previously-undiscovered Stata
@@ -236,6 +246,7 @@ program _nwdeploy
 	file write deploy_boot "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
 	file write deploy_boot "d email: thomas.u.grund@gmail.com" _n
 	file write deploy_boot "d Distribution-Date: `d'" _n
+	if "$NW_VERSION" != "" file write deploy_boot "d Version: $NW_VERSION" _n
 
 	file open _pkg_boot1 using _pkg_boot.txt, read
 	file read _pkg_boot1 _pkg_boot1_line
@@ -300,7 +311,7 @@ program _nwdeploy
 	tempname toc
 	file open `toc' using stata.toc, replace write
 	file write `toc' "v 3" _n
-	file write `toc' "d nwcommands: Network Analysis for Stata" _n
+	file write `toc' "d nwcommands: Network Analysis for Stata`=cond("$NW_VERSION" != "", " (version $NW_VERSION, `d')", "")'" _n
 	file write `toc' _n "p nwcommands" _n "d nwcommands. Start here - net install this first, then run nwinstall, all" _n
 	forvalues i = 1/`nadochunks' {
 		file write `toc' _n "p nwcommands-ado`i'" _n "d nwcommands-ado. Social Network Analysis Using Stata (part `i' of `nadochunks')" _n
@@ -340,6 +351,7 @@ program nwdeploy_writepkgchunks, rclass
 			file write `fh' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
 			file write `fh' "d email: `email'" _n
 			file write `fh' "d Distribution-Date: `date'" _n
+			if "$NW_VERSION" != "" file write `fh' "d Version: $NW_VERSION" _n
 			local linecount = 0
 		}
 		file write `fh' "`line'" _n
