@@ -320,3 +320,17 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
   the way to move long strings, and `set_modes_from_labeled_string()` was O(n^2).
 - An `.ado` file's extra programs (`_nwimport_edgelist` in `nwimport.ado`) are private to that file: a
   cscript cannot call them directly, only through the command.
+
+## Scaling audit harness (`tools/scale_audit/`): three measurement traps
+
+- **An empty scratch PLUS makes some commands download packages.** `nwdyadprob` (and `nwhomophily` through it)
+  `ssc install`s gsample and moremata, `nwplot` installs labellist, `nwtabulate` installs tabplot, on first use.
+  With the fresh PLUS the test convention requires, the first call measures about 20 s of download (and fails
+  offline). The harness seeds a PLUS once and copies it per run. Found 2026-10-25: nwdyadprob "took 23 s" for a
+  30-node network.
+- **`quietly` hides `display as error` messages**, so `capture quietly cmd` leaves rc 999 with no explanation
+  in the log. The harness times `capture quietly cmd` and, only for a quick failure, reruns it with output on
+  to read the message. `set output error` is not a substitute (it changed timings).
+- **Stata `-e` puts the batch log in the directory named by the `PWD` environment variable**, not the process
+  cwd. Launching from Python with `cwd=d` but an inherited PWD wrote `audit.log` into the repo root and the
+  do-file was not found. Set `env PWD=d` as well.
