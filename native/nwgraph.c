@@ -95,10 +95,12 @@
 #include "stplugin.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define ALG_BETWEENNESS 1
 #define ALG_BFS_DISTANCES 2
 #define ALG_KCONN_SEARCH 20
+#define ALG_KK_STRESS 21
 
 /* ===================================================================
    Betweenness centrality (Brandes 2001), unweighted/dichotomized.
@@ -437,6 +439,113 @@ done:
 }
 
 /* ===================================================================
+   Kamada-Kawai layout by stress majorization (ALG_KK_STRESS): the
+   compiled counterpart to `kklayout()' (and the `distance()' it calls) in
+   unw_core.do, which spends O(n^3) time on matrix powers for the graph
+   distances and then Iter sweeps of n^2 interpreted steps.  Same
+   quantities, same arithmetic, same order of the sums:
+     distances   shortest-path hop counts by breadth-first search from every
+                 node (what the matrix-power loop of distance() finds), with
+                 distance() 's two quirks kept: a pair in different
+                 components gets maxdist + 1, where maxdist is the largest
+                 entry of the distance matrix INCLUDING its diagonal (the
+                 diagonal holds 2 for a node that has a neighbour, 1 for a
+                 node with a loop, because the loop over walk lengths also
+                 fills the diagonal; only when n >= 3);
+     weights     w_ij = 1 / d_ij^2, computed when used;
+     sweeps      Gauss-Seidel: node i moves to
+                 sum_j w_ij (x_j + d_ij (x_i - x_j)/|x_i - x_j|) / sum_j w_ij
+                 using the positions already updated in this sweep.
+   Two nodes closer than 1e-8 would make the Mata function draw random
+   numbers; the plugin cannot, so it stops and reports status 1 (v5, row 1)
+   and the Mata caller runs the interpreted loop instead.
+   Input: v1, v2 the arcs of the symmetrised 0/1 matrix (loops included),
+   v3, v4 the start coordinates; output: v3, v4 the coordinates, v5 the
+   status.  Distances are kept as 16-bit integers (n up to 60,000).
+   =================================================================== */
+
+static int kk_stress(long n, long *ei, long *ej, long m, long iter) {
+	long i, j, k, t, e, maxfinite = 0, maxdist, maxdiag = 0;
+	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL, *queue = NULL;
+	unsigned short *D = NULL;
+	char *loop = NULL;
+	double *px = NULL, *py = NULL;
+	int rc = 0, status = 0;
+
+	if (n > 60000) { SF_error("nwgraph: too many nodes for the layout\n"); return 198; }
+	deg = (long *)calloc((size_t)(n + 2), sizeof(long));
+	loop = (char *)calloc((size_t)(n + 1), 1);
+	for (e = 0; e < m; e++) { if (ei[e] == ej[e]) loop[ei[e]] = 1; else deg[ei[e]]++; }
+	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr[1] = 0;
+	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
+	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
+	colidx = (long *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(long));
+	for (e = 0; e < m; e++) if (ei[e] != ej[e]) colidx[cursor[ei[e]]++] = ej[e];
+	queue = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	D = (unsigned short *)malloc((size_t)n * (size_t)n * sizeof(unsigned short));
+	px = (double *)malloc((size_t)(n + 1) * sizeof(double));
+	py = (double *)malloc((size_t)(n + 1) * sizeof(double));
+	if (!deg || !loop || !rowptr || !cursor || !colidx || !queue || !D || !px || !py) { rc = 909; goto cleanup; }
+
+	for (i = 1; i <= n; i++) {
+		unsigned short *Di = D + (size_t)(i - 1) * (size_t)n;
+		long qh = 0, qt = 0;
+		for (j = 0; j < n; j++) Di[j] = 0xFFFF;
+		Di[i - 1] = 0;
+		queue[qt++] = i;
+		while (qh < qt) {
+			long v = queue[qh++];
+			for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
+				long w = colidx[k];
+				if (Di[w - 1] == 0xFFFF) {
+					Di[w - 1] = (unsigned short)(Di[v - 1] + 1);
+					if ((long)Di[w - 1] > maxfinite) maxfinite = Di[w - 1];
+					queue[qt++] = w;
+				}
+			}
+		}
+		if (n >= 3) {
+			if (loop[i]) { if (maxdiag < 1) maxdiag = 1; }
+			else if (deg[i] > 0) { if (maxdiag < 2) maxdiag = 2; }
+		} else if (loop[i] && maxdiag < 1) maxdiag = 1;
+	}
+	maxdist = maxfinite > maxdiag ? maxfinite : maxdiag;
+
+	for (i = 1; i <= n; i++) { ST_double v; SF_vdata(3, i, &v); px[i] = v; SF_vdata(4, i, &v); py[i] = v; }
+
+	for (t = 1; t <= iter && !status; t++) {
+		for (i = 1; i <= n; i++) {
+			unsigned short *Di = D + (size_t)(i - 1) * (size_t)n;
+			double nx = 0.0, ny = 0.0, wsum = 0.0, xi = px[i], yi = py[i];
+			for (j = 1; j <= n; j++) {
+				double dx, dy, dij, d, w;
+				if (j == i) continue;
+				dx = xi - px[j]; dy = yi - py[j];
+				dij = sqrt(dx * dx + dy * dy);
+				if (dij < 1e-8) { status = 1; break; }
+				d = (Di[j - 1] == 0xFFFF) ? (double)(maxdist + 1) : (double)Di[j - 1];
+				w = 1.0 / (d * d);
+				nx = nx + w * (px[j] + d * (dx / dij));
+				ny = ny + w * (py[j] + d * (dy / dij));
+				wsum = wsum + w;
+			}
+			if (status) break;
+			px[i] = nx / wsum;
+			py[i] = ny / wsum;
+		}
+	}
+
+	if (!status) for (i = 1; i <= n; i++) { SF_vstore(3, i, px[i]); SF_vstore(4, i, py[i]); }
+	SF_vstore(5, 1, (double)status);
+
+cleanup:
+	free(deg); free(loop); free(rowptr); free(cursor); free(colidx); free(queue); free(D); free(px); free(py);
+	return rc;
+}
+
+/* ===================================================================
    Plugin entry point
    =================================================================== */
 
@@ -461,7 +570,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	/* ALG_BFS_DISTANCES carries one further argument (source), read
 	   before freeing argbuf - strtok() state lives inside it. */
 	source   = (algcode == ALG_BFS_DISTANCES) ? next_long() : 0;
-	if (algcode == ALG_KCONN_SEARCH) target = next_long();
+	if (algcode == ALG_KCONN_SEARCH || algcode == ALG_KK_STRESS) target = next_long();
 	free(argbuf);
 
 	if (nties > 0) {
@@ -480,6 +589,9 @@ STDLL stata_call(int argc, char *argv[]) {
 			break;
 		case ALG_BFS_DISTANCES:
 			rc = bfs_distances_from(n, ei, ej, nties, source);
+			break;
+		case ALG_KK_STRESS:
+			rc = kk_stress(n, ei, ej, nties, target);
 			break;
 		case ALG_KCONN_SEARCH:
 			rc = kconn_search(n, ei, ej, nties, target);

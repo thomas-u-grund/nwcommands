@@ -24,7 +24,7 @@
 #        /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
 
 CC = clang
-CFLAGS = -O2 -Wall -Ispi
+CFLAGS = -O2 -ffp-contract=off -Wall -Ispi
 
 .PHONY: macos unix clean macos-nwgraph unix-nwgraph
 

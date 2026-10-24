@@ -10241,27 +10241,76 @@ end
 // nwplot.ado's own `frucht' layout, but using shortest-path distances as
 // ideal spring lengths. Reuses `distance()' (above) for graph-theoretic
 // shortest paths.
+capture mata: mata drop nw_kk_native()
+mata:
+// kklayout()'s sweeps in native/nwgraph.c (ALG_KK_STRESS).  Pos holds the
+// start coordinates and, when the status is 0, the result.  Status: 0 done,
+// 1 two nodes coincided (the interpreted loop must run: it draws random
+// numbers), -1 no plugin or the call failed.
+real scalar nw_kk_native(real matrix M, real matrix Pos, real scalar Iter)
+{
+	real scalar n, m, nobs, status, junk
+	real matrix T
+	real colvector nz, ei, ej
+	string scalar origframe
+
+	if (!NativeGraphAvailable()) return(-1)
+	n = rows(M)
+	if (n < 2 | n > 60000) return(-1)
+	T = M + M'
+	nz = selectindex((vec(T) :!= 0) :& (vec(T) :< .))
+	T = .
+	if (length(nz) > 0) {
+		ei = mod(nz :- 1, n) :+ 1
+		ej = floor((nz :- 1) :/ n) :+ 1
+	}
+	else {
+		ei = J(0, 1, 0)
+		ej = J(0, 1, 0)
+	}
+	nz = .
+	m = rows(ei)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	nobs = max((n, m, 1))
+	st_addobs(nobs)
+	junk = st_addvar("double", "v1")
+	junk = st_addvar("double", "v2")
+	junk = st_addvar("double", "v3")
+	junk = st_addvar("double", "v4")
+	junk = st_addvar("double", "v5")
+	if (m > 0) st_store((1::m), ("v1","v2"), (ei, ej))
+	st_store((1::n), ("v3","v4"), Pos)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("capture plugin call nwgraph_native v1 v2 v3 v4 v5, " + char(34) + "21 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(Iter) + char(34))
+	status = -1
+	if (st_numscalar("c(rc)") == 0) {
+		status = st_data(1, "v5")
+		if (status == 0) Pos = st_data((1::n), ("v3","v4"))
+	}
+	// distance() symmetrises and dichotomises its argument in place, which
+	// the code after the sweeps (and the caller) rely on
+	if (status == 0) {
+		M = (M + M') :/ (M + M')
+		_editmissing(M, 0)
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(status)
+}
+end
+
 capture mata: mata drop kklayout()
 mata:
 real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Start)
 {
 	real matrix D, W, Pos, delta
-	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k
+	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k, status
 	real rowvector numer, nonisolates
 
 	V = rows(M)
-	D = distance(M)
-	_diag(D, 0)
-
-	// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
-	// should be far apart in the layout get proportionally less pull
-	// toward their exact target distance than close pairs do)
-	W = J(V, V, 0)
-	for (i=1; i<=V; i++) {
-		for (j=1; j<=V; j++) {
-			if (i != j) W[i,j] = 1 / (D[i,j]^2)
-		}
-	}
 
 	// `Start' (optional) warm-starts the iteration from a caller-given
 	// configuration instead of a random jittered circle - used by
@@ -10285,6 +10334,26 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 		// netplotmds() above, not an arbitrary independent choice
 		Pos = jumble(circlelayout(V))
 	}
+
+	// The distances and the sweeps in compiled code when the plugin is there
+	// (same numbers; see nw_kk_native()); the interpreted code below runs
+	// when it is not, or when two nodes coincide (it then draws random
+	// numbers, which the plugin cannot).
+	status = nw_kk_native(M, Pos, Iter)
+	if (status != 0) {
+		// the start configuration again: the failed attempt left it as it was
+		D = distance(M)
+		_diag(D, 0)
+
+		// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
+		// should be far apart in the layout get proportionally less pull
+		// toward their exact target distance than close pairs do)
+		W = J(V, V, 0)
+		for (i=1; i<=V; i++) {
+			for (j=1; j<=V; j++) {
+				if (i != j) W[i,j] = 1 / (D[i,j]^2)
+			}
+		}
 
 	// Gauss-Seidel stress majorization: each node i is moved directly to
 	// its own closed-form optimum given every OTHER node's CURRENT
@@ -10313,6 +10382,7 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 			}
 			Pos[i,.] = numer :/ wsum
 		}
+	}
 	}
 
 	// rescale into this file's own established [~0.25,1.25] x [0,1]
