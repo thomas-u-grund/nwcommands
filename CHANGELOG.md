@@ -5,6 +5,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
 ## [Unreleased]
+### Fixed
+- Neighbor lists are returned in sorted order independent of earlier session state. `neighbors(i)`, `neighbors_in(i)` and `edgelist()` of a network built through `set_edge_from_triplets()` (`nwfromedge`, `nwset` from an edge list, `nw2project`, `nwattime`) now always list the nodes in ascending order; before, the order of tied sort keys varied with the session, which changed seeded results of MCMC-based commands.
 ### Changed
 - License: nwcommands is now distributed under the GNU General Public License, version 3 (previously a use-only license). `LICENSE` is the GPL-3 text; `NOTICE.md` states the copyright.
 

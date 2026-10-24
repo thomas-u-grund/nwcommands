@@ -6165,7 +6165,11 @@ void `NWdef'::build_reverse_index(real matrix rowidx, real scalar nnz){
 		return
 	}
 
-	perm = order(colidx, 1)
+	// Mata's order() does NOT keep the input order of tied keys, so ordering by
+	// the target alone left each node's in-neighbors in an arbitrary,
+	// session-dependent order. A single combined key (target, then source;
+	// exact as a double for n < 9e7) gives ascending sources per target.
+	perm = order(colidx :* (n + 1) :+ rowidx[.,1], 1)
 	colidx_in = rowidx[perm,1]
 	edgeid_in = perm
 	sorted_target = colidx[perm,1]
@@ -6290,7 +6294,11 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 		cweight = J(0,1,0)
 	}
 	else {
-		ord = order(ego, 1)
+		// Sort by (ego, alter) with one combined key: order() on ego alone does
+		// not keep the input order of ties, which made every node's neighbor
+		// list come out in an arbitrary, session-dependent order. This way the
+		// CSR rows are always sorted ascending by node index.
+		ord = order(ego :* (n + 1) :+ alter, 1)
 		sorted_ego = ego[ord,1]
 		sorted_alter = alter[ord,1]
 		sorted_weight = weight[ord,1]
