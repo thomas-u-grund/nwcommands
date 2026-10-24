@@ -47,7 +47,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwgen`](nwgen) --- Network extensions to generate
 - [`nwgenerate`](nwgenerate) --- Network extensions to generate
 - [`nwgenvar`](nwgenvar) --- Network extensions to generate
-- [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between
+- [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between nodes
 - [`nwhomophily`](nwhomophily) --- Generate a homophily network
 - [`nwlattice`](nwlattice) --- Generate a lattice network
 - [`nwpath`](nwpath) --- Calculate paths between nodes
@@ -154,7 +154,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 - [`nwaltergen`](nwaltergen) --- Generate a variable from alter/neighbor attributes
 - [`nwego`](nwego) --- Ego-network size and density
-- [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between
+- [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between nodes
 - [`nwmaxflow`](nwmaxflow) --- Maximum flow and minimum cut between two nodes
 - [`nwneighbor`](nwneighbor) --- Extract the network neighbors of a node
 - [`nwpath`](nwpath) --- Calculate paths between nodes

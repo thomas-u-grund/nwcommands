@@ -4,6 +4,7 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
+description: "Naming rules for a new network (newnetname)."
 ---
 
 # `newnetname`

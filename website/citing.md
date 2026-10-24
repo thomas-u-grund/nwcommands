@@ -33,8 +33,8 @@ example `nwsaom version`.
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
 The model packages follow established R packages and methods papers, which you should cite as well.
-Each section lists them: [nwsaom](nwsaom/citation/), [nwdynam](nwdynam/citation/),
-[nwrem](nwrem/citation/) and [nwergm](nwergm/).
+Each section lists them: [nwsaom](../nwsaom/citation/), [nwdynam](../nwdynam/citation/),
+[nwrem](../nwrem/citation/) and [nwergm](../nwergm/).
 
 ## Licenses
 
@@ -63,7 +63,7 @@ Each package has its own releases on GitHub:
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
 example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.1/) replace`.
-See [Installation & Setup](tutorials/01-installation-setup/).
+See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments
 

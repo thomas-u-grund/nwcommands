@@ -4,6 +4,7 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
+description: "What a network name (netname) is and how to abbreviate it."
 ---
 
 # `netname`
