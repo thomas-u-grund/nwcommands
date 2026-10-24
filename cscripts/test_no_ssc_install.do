@@ -76,7 +76,11 @@ nwset, mat((0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)) name(n4) undirected
 nwplot n4, color(grp)
 graph drop _all
 
-* 4. nwtabulate without plot works; plot without tabplot gives a clear error
+* 4. the plot options (formerly tabplot) draw with the built-in plot
+foreach c in tabplot {
+	capture which `c'
+	assert _rc != 0
+}
 nwclear
 clear
 set obs 3
@@ -84,10 +88,19 @@ gen grp = mod(_n,2)
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(a) undirected
 nwset, mat((0,1,0\1,0,0\0,0,0)) name(b) undirected
 nwtabulate a b
-capture noisily nwtabulate a b, plot
-assert _rc == 199
-capture noisily nwmixing a, attribute(grp) plot
-assert _rc == 199
+graph drop _all
+nwtabulate a b, plot
+quietly graph dir, memory
+assert `: word count `r(list)'' >= 1
+graph drop _all
+nwtabulate a, attribute(grp) plot
+quietly graph dir, memory
+assert `: word count `r(list)'' >= 1
+graph drop _all
+nwmixing a, attribute(grp) plot
+quietly graph dir, memory
+assert `: word count `r(list)'' >= 1
+graph drop _all
 
 * nothing was installed
 _nwcountfiles "`plus'"

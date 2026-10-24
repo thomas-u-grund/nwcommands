@@ -231,10 +231,8 @@ The intution and usage of these network extensions is very similar to what one i
 The core commands need nothing beyond Stata itself (Stata 14 or later) and the files of this package: no
 user-written package from SSC, no internet connection after installation, and nothing is ever installed into your
 PLUS directory behind your back. (Earlier versions downloaded {bf:gsample}, {bf:moremata}, {bf:labellist} and
-{bf:tabplot} on first use; that is gone.) The one optional exception is the {opt plot} option of
-{help nwtabulate:nwtab2}, {help nwtabulate:nwtab3} and {help nwmixing}, which draws with the user-written command
-{bf:tabplot} ({stata ssc install tabplot}); if it is missing the command stops with a message telling you so. The
-statistical model packages ({bf:nwergm}, {bf:nwsaom}, {bf:nwrem}, {bf:nwdynam}) are separate downloads.
+{bf:tabplot} on first use; that is gone, all four are replaced by built-in code.) The statistical model packages
+({bf:nwergm}, {bf:nwsaom}, {bf:nwrem}, {bf:nwdynam}) are separate downloads.
 
 
 {marker feedback}{...}

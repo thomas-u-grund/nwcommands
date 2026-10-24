@@ -29,7 +29,7 @@ f _nwedgelabs.ado
 f _nwexpnetexp.ado
 f _nwgsample.ado
 f _nwname.ado
-f _nwrequire.ado
+f _nwtabplot.ado
 f _nwopenviewer.ado
 f _nwsyntax.ado
 f _nwtomata.ado

@@ -12,9 +12,6 @@ program nwmixing
 	// tie counts) - a real feature addition, not a bug fix, and out of
 	// scope for this pass.
 	syntax [anything(name=netname)] , attribute(varname) [eiplot eiplotoptions(string) plot plotoptions(string) permutations(integer 100) save(string) * ]
-	if "`plot'" != "" {
-		_nwrequire tabplot
-	}
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
 	// low-level Stata error ("variable not found") from inside
@@ -88,7 +85,7 @@ program nwmixing
 	tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
 
 	if "`plot'" != "" {
-		tabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 

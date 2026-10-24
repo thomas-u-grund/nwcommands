@@ -329,9 +329,7 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
   `_nwgsample.ado` (same algorithm and same random-number stream as `gsample ..., wor`: random order via
   `uniform(N,2)`, then systematic sampling along the cumulated weights; verified identical samples, errors and
   RNG state against the real package on 300 random inputs), the `labellist` call in `nwplot`'s
-  `_getvaluelabel` is a direct `st_vlload()` lookup, and `tabplot` (only the `plot` option of nwtab2, nwtab3,
-  nwmixing) is an explicit requirement checked by `_nwrequire.ado` (stops with rc 199, never installs).
-  `cscripts/test_no_ssc_install.do` fails if a new `ssc install` sneaks in. The harness no longer needs the
+  `_getvaluelabel` is a direct `st_vlload()` lookup, and `tabplot` is replaced by the built-in `_nwtabplot.ado` (the same `twoway scatter || rbar` construction; PNG and SVG exports byte-identical to the real tabplot in 24 random cases; by(), separate(), frame(), recast(), bar#() are not supported and give a clear error). Exporting a graph from a batch do-file needs an absolute path: the relative path is resolved against the log directory (`PWD`), and a failed PNG export shows as `--Break--`. `cscripts/test_no_ssc_install.do` fails if a new `ssc install` sneaks in. The harness no longer needs the
   seeded PLUS for these commands (it is harmless). Do not reintroduce `ssc install` in core code. Mata trap met
   on the way: a one-line `mata: for (...) { ... }` is "invalid expression" in Stata (braces need separate
   lines), so loops inside an ado must be vectorised or live in a compiled function.

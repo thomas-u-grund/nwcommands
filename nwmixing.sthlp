@@ -101,13 +101,10 @@ not checked. Two-mode: not checked.
 Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises: An experimental
 simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 
-{title:Requirements}
+{title:Remarks on plot}
 
 {pstd}
-The {opt plot} option draws the table with the user-written command {help tabplot} (Nick Cox, SSC). It is the only
-part of this command that needs an additional package. {cmd:nwcommands} never installs it for you: if {cmd:tabplot}
-is missing, the command stops with a message before doing anything, and you install it yourself with
-{stata ssc install tabplot}. Without {opt plot}, nothing external is needed.
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}.
 
 
 {title:See also}

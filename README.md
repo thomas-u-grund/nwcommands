@@ -23,10 +23,8 @@ data commands.
   subgroups, community detection, structural equivalence, QAP, and more (see
   `help nwtopical` once installed for the full, organized command index).
 - **No external packages.** The core commands need nothing but Stata (14 or later) and this package: no SSC
-  packages (`gsample`, `moremata`, `labellist` are no longer used; they used to be installed silently on first
-  use), no internet after installation, and nothing is written to your PLUS directory. The only optional
-  exception is the `plot` option of `nwtab2`, `nwtab3` and `nwmixing`, which calls the user-written `tabplot`
-  (`ssc install tabplot`); without it the command stops with a clear message and never installs anything itself.
+  packages (`gsample`, `moremata`, `labellist` and `tabplot` are replaced by built-in code; they used to be
+  installed silently on first use), no internet after installation, and nothing is written to your PLUS directory.
 - **Statistical network models** live in separate packages that build on this one (all GPL-3):
   `nwergm` (exponential-family random graph models), `nwsaom` (stochastic actor-oriented
   models), `nwrem` (relational event models) and `nwdynam` (Dynamic Network Actor Models).
