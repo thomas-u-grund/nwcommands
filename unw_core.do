@@ -3090,6 +3090,9 @@ class `NWdef' {
 	real scalar get_nodeid_from_nodename()
 
 	string matrix get_edgelist()
+	string matrix get_edgelist_sparse()
+	real scalar edgelist_sparse_ok()
+	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
 	real matrix get_indegree()
@@ -3109,6 +3112,9 @@ class `NWdef' {
 	void invalidate_sparse()
 	void set_edge_from_triplets()
 	void ensure_dense_built()
+	real scalar is_dense_built()
+	real colvector csr_rows()
+	void symmetrize_sparse()
 	real matrix neighbors()
 	real matrix neighbors_in()
 	real scalar degree()
@@ -3393,39 +3399,86 @@ string matrix get_node_suffix(real scalar nodes){
 	return(S)
 }
 
+/*
+	Column vector of the positions where the (column vector) condition m is
+	true; 0x1 when none.  selectindex() returns a ROW vector for a 1x1 or
+	empty condition, which breaks stacking with "\".
+*/
+real colvector nw_which(real colvector m){
+	if (rows(m) == 0) return(J(0,1,0))
+	if (!any(m)) return(J(0,1,0))
+	return(colshape(selectindex(m), 1))
+}
+
+/*
+	Collapses duplicate (ego,alter) rows to one, keeping the row with the
+	highest rank (the last one in the order the edge list was given), and
+	leaves the rows sorted by (ego, alter).  ego/alter/weight are changed
+	in place.  An empty rank means "no duplicates possible" (nothing done).
+*/
+void nw_triplets_lastwins(real colvector ego, real colvector alter, real colvector weight, real colvector rank){
+	real colvector key, ord, sk
+
+	if (rows(rank) != rows(ego) | rows(ego) < 2) return
+	key = ego :* (max((ego \ alter)) + 1) :+ alter
+	ord = order((key, rank), (1, 2))
+	sk = key[ord]
+	ord = ord[colshape(selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1), 1)]
+	ego = ego[ord]
+	alter = alter[ord]
+	weight = weight[ord]
+}
+
 string matrix get_nodenames_from_string(string scalar s, real scalar z, string scalar def){
-	string matrix nodenames, nodenamesrest
-	real scalar invalid, i, j
+	string matrix nodenames
 
 	nodenames = (tokens(s,","))'
 	nodenames = select(nodenames, (J(rows(nodenames),1, ","):!= nodenames))
-	invalid = 0
+	return(get_nodenames_from_vector(nodenames, z, def))
+}
 
-	// check for duplicates
-	for (i = 1; i<= (rows(nodenames)-1); i++){
-		for (j = i + 1; j <= rows(nodenames); j++){
-			if (nodenames[i] == nodenames[j]){
-				invalid = 1
-				i = rows(nodenames) + 1
-				j = rows(nodenames) + 1
-			}
+/*
+	Same rules as get_nodenames_from_string(), for a label column vector
+	that is already in Mata (so nwfromedge never has to pass node labels
+	through a Stata macro, which BE caps at 264,408 characters): duplicate
+	labels -> default names def+1..z; too few -> padded with default names;
+	too many -> truncated to z. The duplicate check sorts (O(n log n))
+	instead of comparing every pair (O(n^2)).
+*/
+string matrix get_nodenames_from_vector(string colvector nodenames, real scalar z, string scalar def){
+	string matrix nodenamesrest
+	string colvector sorted
+
+	if (rows(nodenames) > 1){
+		sorted = sort(nodenames, 1)
+		if (any(sorted[2::rows(sorted)] :== sorted[1::rows(sorted)-1])){
+			return(J(z,1,def) + get_node_suffix(z))
 		}
-	}
-
-	if (invalid == 1){
-		nodenames =(J(z,1,def) + get_node_suffix(z))
-		return(nodenames)
 	}
 
 	if (rows(nodenames)< z){
 		nodenamesrest = (J(z,1,def) + get_node_suffix(z))
-		nodenamesrest[(1::rows(nodenames))] = nodenames
+		if (rows(nodenames) > 0) nodenamesrest[(1::rows(nodenames))] = nodenames
 		return(nodenamesrest)
 	}
 	if (rows(nodenames)> z){
 		return(nodenames[(1::z)])
 	}
 	return(nodenames)
+}
+
+/*
+	Node-label string for the Stata macros _nwsyntax (`labs') and _nwname
+	(r(labs)) export: comma-joined, or "" when the result would come near
+	Stata's macro length limit (264,408 characters in Stata/BE), because
+	an over-long macro makes every later `macro' substitution on that line
+	fail with r(920).  Commands that need the labels of a big network
+	read them from Mata.
+*/
+string scalar nw_labs_string(string rowvector names){
+	if (cols(names) == 0) return("")
+	if (sum(strlen(names)) + cols(names) > 200000) return("")
+	return(invtokens(names, ","))
 }
 
 /*
@@ -6009,17 +6062,24 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 	out-plus-in behavior exactly.
 */
 real matrix `NWdef'::calculate_components(){
-	real scalar ncomp, next, i, numnodes, cur, qn
-	real matrix visited, comp, queue, nb
+	real scalar ncomp, next, i, numnodes, cur, head, tail, nvisited
+	real matrix visited, comp, nb
+	real colvector queue
 
 	numnodes = get_nodes()
 	visited = J(numnodes,1,0)
 	comp = J(numnodes,1,0)
 	ncomp = 1
 	next = 1
+	nvisited = 0
+	// every node enters the queue at most once, so one preallocated array
+	// with head/tail indices suffices.  (The former queue = queue[2::n]
+	// copy on every pop made a big component O(n^2): 11 s at 100,000
+	// nodes / 1,000,000 ties; and sum(visited) was recomputed per component.)
+	queue = J(numnodes,1,0)
 
 	// as long as not everybody has been visited
-	while (sum(visited) != numnodes){
+	while (nvisited != numnodes){
 		// find next not visited node
 		while (visited[next,1]==1) {
 			next = next + 1
@@ -6027,18 +6087,15 @@ real matrix `NWdef'::calculate_components(){
 
 		// bfs from next, assign component id to everybody reachable
 		visited[next,1] = 1
+		nvisited = nvisited + 1
 		comp[next,1] = ncomp
-		queue = next
+		head = 1
+		tail = 1
+		queue[1] = next
 
-		while (rows(queue) > 0){
-			cur = queue[1,1]
-			qn = rows(queue)
-			if (qn > 1){
-				queue = queue[(2::qn),1]
-			}
-			else {
-				queue = J(0,1,0)
-			}
+		while (head <= tail){
+			cur = queue[head]
+			head = head + 1
 			nb = neighbors(cur)
 			if (isdirect){
 				nb = nb \ neighbors_in(cur)
@@ -6046,8 +6103,10 @@ real matrix `NWdef'::calculate_components(){
 			for (i = 1; i <= rows(nb); i++){
 				if (visited[nb[i,1],1]==0){
 					visited[nb[i,1],1] = 1
+					nvisited = nvisited + 1
 					comp[nb[i,1],1] = ncomp
-					queue = queue \ nb[i,1]
+					tail = tail + 1
+					queue[tail] = nb[i,1]
 				}
 			}
 		}
@@ -6227,6 +6286,7 @@ void `NWdef'::invalidate_sparse(){
 void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real matrix weight, real scalar directed){
 	real scalar n, nnz, i, pos
 	real matrix ord, sorted_ego, sorted_alter, sorted_weight, keep
+	real colvector key, ordk, sk
 
 	n = get_nodes()
 	isdirect = directed
@@ -6277,7 +6337,29 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// has_edge(i,i) (true, wrongly) against the dense matrix's own
 	// diagonal (correctly 0) and confirming a forced invalidate_sparse()
 	// + rebuild fixed it, before finding the actual root cause here.
+	// Duplicate (ego,alter) rows collapse to ONE tie, the last row in the
+	// input winning - the value a cell-by-cell fill of a dense matrix
+	// would have ended with.  This runs before the zero/self-loop filter
+	// below so that "5 then 0" still means "no tie", as it did densely.
+	// The rows come out sorted by (ego, alter), so the CSR rows are always
+	// sorted ascending by node index (order() alone does not keep the
+	// input order of equal keys, hence the row number as 2nd sort key
+	// when, and only when, duplicates exist).
 	if (rows(ego) > 0){
+		key = ego :* (n + 1) :+ alter
+		ordk = order(key, 1)
+		sk = key[ordk]
+		if (rows(sk) > 1){
+			if (any(sk[2::rows(sk)] :== sk[1::rows(sk)-1])){
+				ordk = order((key, (1::rows(key))), (1, 2))
+				sk = key[ordk]
+				ordk = ordk[selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1)]
+			}
+		}
+		ego = ego[ordk,1]
+		alter = alter[ordk,1]
+		weight = weight[ordk,1]
+
 		keep = selectindex((weight :!= 0) :& (isselfloop :== 1 :| ego :!= alter))
 		ego = ego[keep,1]
 		alter = alter[keep,1]
@@ -6294,14 +6376,9 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 		cweight = J(0,1,0)
 	}
 	else {
-		// Sort by (ego, alter) with one combined key: order() on ego alone does
-		// not keep the input order of ties, which made every node's neighbor
-		// list come out in an arbitrary, session-dependent order. This way the
-		// CSR rows are always sorted ascending by node index.
-		ord = order(ego :* (n + 1) :+ alter, 1)
-		sorted_ego = ego[ord,1]
-		sorted_alter = alter[ord,1]
-		sorted_weight = weight[ord,1]
+		sorted_ego = ego
+		sorted_alter = alter
+		sorted_weight = weight
 
 		rowptr = J(n+1,1,0)
 		colidx = sorted_alter
@@ -7535,12 +7612,10 @@ string scalar `NWdef'::get_modes_labeled_string(){
 	real scalar i
 
 	m = get_modes()
-	result = ""
-	for (i=1; i<=cols(nodes); i++) {
-		if (i > 1) result = result + ","
-		result = result + nodes[i] + "=" + m[i]
-	}
-	return(result)
+	// one invtokens() call: the old pairwise string concatenation was O(n^2)
+	// and cost ~1.5 s per nwname call at 40,000 nodes
+	if (cols(nodes) == 0) return("")
+	return(invtokens(nodes :+ "=" :+ m[|1,1 \ 1,cols(nodes)|], ","))
 }
 
 /*
@@ -7563,28 +7638,32 @@ string scalar `NWdef'::get_modes_labeled_string(){
 	nwuse.ado's own new2mode() handling already follows for is2mode.
 */
 void `NWdef'::set_modes_from_labeled_string(string scalar s){
-	string scalar remaining, onepair, lab, md
-	real scalar idx, eqpos, commapos
+	string rowvector pairs
+	string scalar lab, md, onepair
+	real scalar idx, eqpos, i
+	transmorphic scalar t, pos
 
 	if (s == "") return
 	get_modes()
-	remaining = s
-	while (strlen(remaining) > 0) {
-		commapos = strpos(remaining, ",")
-		if (commapos == 0) {
-			onepair = remaining
-			remaining = ""
-		}
-		else {
-			onepair = substr(remaining, 1, commapos-1)
-			remaining = substr(remaining, commapos+1, .)
-		}
+	// Split at every comma (no whitespace splitting) and look labels up in a
+	// hash of the node names: the former character-by-character scan with a
+	// linear label search was O(n^2), minutes at 40,000 nodes.
+	t = tokeninit("", ",", "", 0, 0)
+	tokenset(t, s)
+	pairs = tokengetall(t)
+	pos = asarray_create("string")
+	for (i = cols(nodes); i >= 1; i--) asarray(pos, nodes[i], i)
+	for (i = 1; i <= cols(pairs); i++) {
+		onepair = pairs[i]
+		if (onepair == ",") continue
 		eqpos = strpos(onepair, "=")
 		if (eqpos > 0) {
 			lab = substr(onepair, 1, eqpos-1)
 			md = substr(onepair, eqpos+1, .)
-			idx = first_index_match(nodes, lab)
-			if (idx > 0) modes[idx] = md
+			if (asarray_contains(pos, lab)) {
+				idx = asarray(pos, lab)
+				modes[idx] = md
+			}
 		}
 	}
 }
@@ -7671,6 +7750,96 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 	return(select((vec(sender), vec(receiver), strofreal(vec(e)), strofreal(vec(z)), strofreal(vec(e')),strofreal(vec(sender_num)), strofreal(vec(receiver_num))), vec(z)))
 }
 
+
+/*
+	The rows of get_edgelist() whose cell is not exactly 0, computed from the
+	stored ties (O(nnz) time and memory, no N x N matrix).  Same 7 columns as
+	get_edgelist() (sender, receiver, value, in-selection flag "1", reverse
+	cell value, sender index, receiver index), rows in no particular order.
+	The blanked diagonal of a network without self-loops (value ".") is
+	listed exactly as get_edgelist() lists it; with `undirected' only the
+	lower triangle including the diagonal is listed.  Cells of value 0 are
+	left out - callers that need them (the uncompressed edge list) use
+	get_edgelist().
+*/
+string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
+	real colvector r, c, w, keep, k1, k2, tag, K, ord, tg, wrev, hit, dg
+	real scalar n, m
+	string colvector rv
+
+	ensure_sparse_built()
+	n = get_nodes()
+	r = csr_rows()
+	c = colidx
+	w = cweight
+	// reverse cell value of every stored tie: look up (c,r) among the keys (r,c)
+	m = rows(r)
+	wrev = J(m, 1, 0)
+	if (m > 0){
+		k1 = r :* (n + 1) :+ c
+		k2 = c :* (n + 1) :+ r
+		K = k1 \ k2
+		tag = J(m, 1, 1) \ J(m, 1, 2)
+		ord = order((K, tag), (1, 2))
+		tg = tag[ord]
+		hit = selectindex(tg[2::2*m] :== 2 :& tg[1::2*m-1] :== 1 :& K[ord][2::2*m] :== K[ord][1::2*m-1])
+		if (rows(hit) > 0){
+			// position (in the stacked vector) of the probe row, and of its match just before it
+			wrev[ord[hit :+ 1] :- m] = w[ord[hit]]
+		}
+	}
+	if (undirected){
+		keep = nw_which(r :>= c)
+		r = r[keep,1]; c = c[keep,1]; w = w[keep,1]; wrev = wrev[keep,1]
+	}
+	if (isselfloop == 0){
+		dg = (1::n)
+		r = r \ dg
+		c = c \ dg
+		w = w \ J(n, 1, .)
+		wrev = wrev \ J(n, 1, .)
+	}
+	m = rows(r)
+	if (m == 0) return(J(0, 7, ""))
+	rv = strofreal(r)
+	return((nodes[r]', nodes[c]', strofreal(w), J(m, 1, "1"), strofreal(wrev), rv, strofreal(c)))
+}
+
+/*
+	TRUE when get_edgelist_sparse() lists exactly the non-zero cells of
+	get_edgelist(): the network was never expanded to a dense matrix, or
+	its dense matrix holds no missing cell besides the blanked diagonal
+	(a missing cell - e.g. the same-mode dyads of a cleaned two-mode
+	network - is not part of the sparse tie store).
+*/
+real scalar `NWdef'::edgelist_sparse_ok(){
+	if (edge_dense_built == `False') return(1)
+	return(sum(edge :== .) == (isselfloop == 0 ? get_nodes() : 0))
+}
+
+/*
+	The ";"-delimited node list nwtoedge stores in the edge list dataset
+	(characteristic _dta[nwtoedge_nodes]) so that nwfromedge can restore the
+	isolates: all node names when that fits a Stata characteristic (67,784
+	characters), otherwise only the names of the isolated nodes (appended
+	after the tied nodes on reload), otherwise "".
+*/
+string scalar `NWdef'::get_isolate_source_string(){
+	string scalar all
+	real colvector dout, din
+	real scalar n
+
+	all = get_nodenames_string()
+	if (strlen(all) <= 60000) return(all)
+	ensure_sparse_built()
+	n = get_nodes()
+	dout = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+	if (isdirect) din = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+	else din = dout
+	all = invtokens(select(nodes, (dout :== 0 :& din :== 0)'), ";")
+	if (strlen(all) <= 60000) return(all)
+	return("")
+}
 
 void `NWdef'::drop_nodes(rowvector d){
 	keep_nodes(d:==0)
@@ -7803,8 +7972,58 @@ void `NWdef'::set_2mode(real scalar d){
 	is2mode = d
 }
 
+/*
+	TRUE unless `edge' is still the empty placeholder of a sparse-natively
+	built network (see ensure_dense_built()).  Lets callers ask "is this
+	matrix a view / is it filled" without forcing the N x N allocation.
+*/
+real scalar `NWdef'::is_dense_built(){
+	return(edge_dense_built != `False')
+}
+
+/*
+	Row (ego) index of every stored CSR entry, aligned with colidx/cweight.
+*/
+real colvector `NWdef'::csr_rows(){
+	real colvector r
+	real scalar i, n
+
+	ensure_sparse_built()
+	n = get_nodes()
+	r = J(rows(colidx), 1, 0)
+	for (i = 1; i <= n; i++){
+		if (rowptr[i+1] > rowptr[i]){
+			r[|rowptr[i] \ rowptr[i+1]-1|] = J(rowptr[i+1]-rowptr[i], 1, i)
+		}
+	}
+	return(r)
+}
+
 real scalar `NWdef'::check_symmetry(){
 //!! TODO - change when network not saved as matrix edge
+	real colvector r, c, w, k1, k2, o1, o2
+	real scalar n
+
+	// Sparse-native network that has never needed its dense matrix: compare
+	// the off-diagonal (i,j,w) set with its transpose directly (the
+	// diagonal is blanked/irrelevant exactly as in the dense comparison).
+	if (edge_dense_built == `False' & !hasmissing(cweight)){
+		ensure_sparse_built()
+		n = get_nodes()
+		r = csr_rows()
+		c = colidx
+		w = cweight
+		if (rows(r) == 0) return(1)
+		o1 = nw_which(r :!= c)
+		if (rows(o1) == 0) return(1)
+		r = r[o1,1]; c = c[o1,1]; w = w[o1,1]
+		k1 = r :* (n + 1) :+ c
+		k2 = c :* (n + 1) :+ r
+		o1 = order(k1, 1)
+		o2 = order(k2, 1)
+		if (any(k1[o1] :!= k2[o2])) return(0)
+		return(all(w[o1] :== w[o2]))
+	}
 	ensure_dense_built()
 	if (edge == edge'){
 		return(1)
@@ -7842,9 +8061,68 @@ pointer (real matrix) scalar `NWdef'::get_symmetrize(string scalar mode){
 	set_directed(0)
 }*/
 
+/*
+	Symmetrization straight on the sparse triplets, for a network whose
+	dense matrix was never built.  Cell (i,j) becomes f(a_ij, a_ji) with
+	the same f and the same "no tie = 0" convention as the dense code in
+	symmetrize(); diagonal entries (only present when self-loops are
+	allowed) are kept unchanged.  Like the dense code it leaves isvalued
+	as it was.
+*/
+void `NWdef'::symmetrize_sparse(string scalar mode){
+	real colvector r, c, w, off, dg, ego, alt, ke, a, b, v, ord, sk
+	real matrix info
+	real scalar n, nn, wasvalued
+
+	ensure_sparse_built()
+	wasvalued = isvalued
+	n = get_nodes()
+	r = csr_rows()
+	c = colidx
+	w = cweight
+
+	dg = nw_which(r :== c)
+	off = nw_which(r :!= c)
+	ego = r[off,1] \ c[off,1]
+	alt = c[off,1] \ r[off,1]
+	nn = rows(off)
+	ke = ego :* (n + 1) :+ alt
+	a = w[off,1] \ J(nn, 1, 0)
+	b = J(nn, 1, 0) \ w[off,1]
+
+	if (rows(ke) > 0){
+		ord = order(ke, 1)
+		ke = ke[ord]; ego = ego[ord]; alt = alt[ord]; a = a[ord]; b = b[ord]
+		info = panelsetup(ke, 1)
+		a = panelsum(a, info)
+		b = panelsum(b, info)
+		ego = ego[info[,1]]
+		alt = alt[info[,1]]
+		if (mode == "sum") v = a :+ b
+		else if (mode == "mean") v = (a :+ b) :/ 2
+		else if (mode == "max") v = (a :>= b) :* a :+ (b :> a) :* b
+		else v = (a :<= b) :* a :+ (b :< a) :* b
+	}
+	else {
+		v = J(0, 1, 0)
+	}
+
+	ego = ego \ r[dg,1]
+	alt = alt \ c[dg,1]
+	v = v \ w[dg,1]
+	set_edge_from_triplets(ego, alt, v, 0)
+	isvalued = wasvalued
+	set_directed(0)
+}
+
 void `NWdef'::symmetrize(string scalar mode){
 //!! TODO - change when network not saved as matrix edge
 	real matrix d, res1, res2
+
+	if (edge_dense_built == `False' & !hasmissing(cweight)){
+		symmetrize_sparse(mode)
+		return
+	}
 	ensure_dense_built()
 	d = diagonal(edge)
 	
@@ -7992,6 +8270,10 @@ real scalar `NWdef'::get_selfloops_number(){
 	real matrix  d
 	
 	if (isselfloop == 1) { 
+		if (edge_dense_built == `False'){
+			ensure_sparse_built()
+			return(sum((csr_rows() :== colidx) :& (cweight :!= 0) :& (cweight :!= .)))
+		}
 		d = diagonal(*get_matrix())
 		return(sum(d :/ d))	
 	}
@@ -8056,6 +8338,13 @@ real scalar `NWdef'::get_arcs_sum(){
 */
 real scalar `NWdef'::get_missing_edges(){
 	pointer(real matrix) scalar e
+
+	// Sparse-native, dense matrix not built: the dense count includes the
+	// blanked (missing) diagonal when self-loops are off, so add it here.
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight :== .) + (isselfloop == 0 ? get_nodes() : 0))
+	}
 	
 	e = get_matrix()
 	return(sum(*e:==.))

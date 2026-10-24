@@ -85,9 +85,32 @@ automatically.
 Two backends exist for the commands where it matters, chosen automatically and transparently —
 there is nothing to configure, and results are identical either way:
 
-- **A sparse-native Mata graph representation** for the core structural commands (components,
-  degree, clustering, neighbor traversal, unweighted distances) — proven at 100,000 nodes /
-  1,000,000 edges with no external dependencies.
+- **A sparse-native Mata graph representation** for the core structural commands (`nwfromedge`,
+  `nwcomponents`, `nwdegree`, `nwneighbor`, `nwclustering`, and the other traversal commands listed
+  in `help nwintro`), with no external dependencies. Measured end to end in Stata/BE (not MP) on a
+  shared Mac, random directed network with 10 ties per node, seconds:
+
+  | nodes / ties | `nwfromedge` | `nwdegree` | `nwcomponents` | `nwneighbor` (1 node) | `nwclustering` |
+  |---|---|---|---|---|---|
+  | 10,000 / 100,000 | 0.3 | 0.05 | 0.05 | 0.06 | 0.8 |
+  | 25,000 / 250,000 | 0.8 | 0.13 | 0.12 | 0.13 | 2.0 |
+  | 40,000 / 400,000 | 1.2 | 0.16 | 0.16 | 0.14 | 3.6 |
+  | 100,000 / 1,000,000 | 3.7 | 0.5 | 0.5 | 0.4 | 16 |
+
+  Building with automatic directed/undirected detection (no `directed` option) took 8.8 s at
+  100,000 nodes, `forceundirected` 14 s. None of these builds the dense N x N matrix.
+  Saving and exchanging a big network also works (same random networks, same machine, load average
+  about 5, seconds; `nwtoedge, compress` and `nwsave` list only the stored ties):
+
+  | nodes | `nwtoedge, compress` | `nwfromedge` of that list | `nwsave` (file) | `nwuse` | `nwappend` |
+  |---|---|---|---|---|---|
+  | 25,000 | 2.0 | 3.3 | 2.7 (30 MB) | 4.4 | 4.0 |
+  | 40,000 | 2.9 | 5.6 | 6.4 (49 MB) | 10.4 | 10.4 |
+  | 100,000 | 14.7 | 20.2 | 14.8 (124 MB) | 28.1 | 36.4 |
+
+  Commands that still need the full adjacency matrix (for example the all-pairs `nwgeodesic`,
+  `nwsummarize`, uncompressed `nwtoedge`, `nwtoedge`/`nwsave` of several networks at once, two-mode
+  networks, most weighted-distance commands) are refused above 20,000 nodes.
 - **Compiled native (C) kernels** (Stata plugins, source in `native/`) for the specific
   operations where Stata's own Mata interpreter is the actual bottleneck, not the algorithm:
   betweenness centrality. Falls back to an equivalent,

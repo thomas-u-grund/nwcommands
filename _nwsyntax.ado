@@ -79,7 +79,8 @@ program _nwsyntax
 	mata: st_local("istemporal", `nws'.pdefs[`r(id)']->is_temporal())
 	mata: st_local("temporaltype", `nws'.pdefs[`r(id)']->get_temporal_type())
 	mata: st_local("datasync", strofreal(`nws'.get_datasync()))
-    mata: st_local("labs", invtokens(`nws'.pdefs[`r(id)']->get_nodenames(),","))
+    // "" when the label string would approach the macro length limit (see nw_labs_string() in unw_core.do)
+    mata: st_local("labs", nw_labs_string(`nws'.pdefs[`r(id)']->get_nodenames()))
 
 	c_local `other'selfloops "`selfloops'"
 	c_local `other'nodes "`nodes'"

@@ -135,7 +135,7 @@ program _nwname
 	mata: st_global("r(caption)", nw.nws.pdefs[`id']->get_caption())
 	mata: st_numscalar("r(missing_edges)", nw.nws.pdefs[`id']->get_missing_edges())
 	//!! Should r(labs) have real labels?
-	mata: st_global("r(labs)", invtokens(nw.nws.pdefs[`id']->get_nodenames(),","))
+	mata: st_global("r(labs)", nw_labs_string(nw.nws.pdefs[`id']->get_nodenames()))
 	mata: st_global("r(modes)", nw.nws.pdefs[`id']->get_modes_labeled_string())
 	mata: st_numscalar("r(nodes1)", nw.nws.pdefs[`id']->get_nodes_mode1())
 	mata: st_numscalar("r(nodes2)", nw.nws.pdefs[`id']->get_nodes_mode2())

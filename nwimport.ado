@@ -803,7 +803,7 @@ program _nwimport_edgelist
 		local value : word 3 of `r(varlist)'
 		replace `alter' = `ego' if `alter' == .
 		drop if `ego' == .
-		nwfromedge `ego' `alter' `value', `keeporiginal' `undirected' `direcetd' `xvars' name(`name')
+		nwfromedge `ego' `alter' `value', `keeporiginal' `undirected' `directed' `xvars' name(`name')
 		//restore
 	}
 	else {

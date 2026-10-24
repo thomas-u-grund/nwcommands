@@ -24,7 +24,7 @@ program nwtoedge
 	local __iso_srclabels ""
 	if `__iso_nwcount' == 1 {
 		_nwsyntax `netname'
-		mata: st_local("__iso_srclabels", `netobj'->get_nodenames_string())
+		mata: st_local("__iso_srclabels", `netobj'->get_isolate_source_string())
 	}
 
 	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
@@ -186,7 +186,20 @@ program nwtoedge
 		if "`upper'" != "" & "`directed'" == "true" {
 			noi di "{txt}Warning! Network {res}`net'{txt} is directed. Option {res}upper{txt} surpressed." 
 		}
-		mata: __nwedgelist`i' = (`netobj'->get_edgelist((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+		// compress with ONE network: list only the stored ties (O(ties));
+		// everything else lists all N x N cells, zeros included, which is
+		// what the uncompressed list means (and what several networks
+		// merged on one ego/alter pair need).
+		local __sparseok 0
+		if "`compress'" != "" & `: word count `nets'' == 1 {
+			mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
+		}
+		if `__sparseok' {
+			mata: __nwedgelist`i' = (`netobj'->get_edgelist_sparse((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+		}
+		else {
+			mata: __nwedgelist`i' = (`netobj'->get_edgelist((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+		}
 		preserve
 		drop _all
 		tempvar include
