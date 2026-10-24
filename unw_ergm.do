@@ -5123,6 +5123,933 @@ void ergm_mple_expand_fixed(class ErgmModel scalar M, real matrix bfree, real ma
 	st_matrix(Vname, Vfull)
 }
 
+/* ===================================================================
+   MPLE variants (nwergm): Firth-penalised MPLE, Konis' MPLE existence
+   check, and the glm-style IRLS used to reproduce what R reports when
+   the MPLE does not exist.  D is the MPLE design matrix: one row per
+   dyad, columns = change statistics, last column = tie indicator.
+   =================================================================== */
+
+/*
+	Penalised (Firth/Jeffreys-prior) logistic regression, the algorithm
+	of R's MPLE.type="penalized": modified-score Newton iteration from
+	beta = (logit(mean y), 0, ..., 0), step capped at maxstep, up to
+	maxhs half-steps on the penalised log-likelihood, stop when
+	sum|delta| <= epsilon or maxit.  Posts b (1 x p) and V (p x p; the
+	inverse Fisher information of the final iteration, as R reports it)
+	into the Stata matrices bname/Vname and returns the iteration count.
+*/
+real scalar ergm_pen_glm(real matrix D, string scalar bname, string scalar Vname,
+	| real scalar maxit, real scalar maxhs, real scalar epsilon, real scalar maxstep){
+	real scalar p, n, iter, halfs, loglik, loglik_old, mx
+	real colvector y, pi, w, diagH, U, delta, beta
+	real matrix x, Fisher, covs
+
+	if (args() < 4) maxit = 25
+	if (args() < 5) maxhs = 5
+	if (args() < 6) epsilon = 1e-4
+	if (args() < 7) maxstep = 10
+	p = cols(D) - 1
+	n = rows(D)
+	y = D[., p+1]
+	x = D[., 1..p]
+	beta = J(p, 1, 0)
+	beta[1] = ln(sum(y) / sum(1 :- y))
+	pi = invlogit(x * beta)
+	w = pi :* (1 :- pi)
+	Fisher = cross(x, w, x)
+	loglik = sum(y :* ln(pi) :+ (1 :- y) :* ln(1 :- pi)) + 0.5 * ln(det(Fisher))
+	iter = 0
+	covs = J(p, p, 0)
+	while (1) {
+		iter++
+		w = pi :* (1 :- pi)
+		Fisher = cross(x, w, x)
+		covs = invsym(Fisher)
+		diagH = rowsum((x * covs) :* x) :* w
+		U = cross(x, (y :- pi) :+ diagH :* (0.5 :- pi))
+		delta = covs * U
+		mx = max(abs(delta)) / maxstep
+		if (mx > 1) delta = delta / mx
+		beta = beta + delta
+		loglik_old = loglik
+		for (halfs=1; halfs<=maxhs; halfs++) {
+			pi = invlogit(x * beta)
+			loglik = sum(y :* ln(pi) :+ (1 :- y) :* ln(1 :- pi))
+			Fisher = cross(x, pi :* (1 :- pi), x)
+			loglik = loglik + 0.5 * ln(det(Fisher))
+			if (loglik > loglik_old) break
+			beta = beta - delta * 2^(-halfs)
+		}
+		if (iter == maxit | sum(abs(delta)) <= epsilon) break
+	}
+	st_matrix(bname, beta')
+	st_matrix(Vname, covs)
+	return(iter)
+}
+
+/*
+	Does the (unpenalised) MPLE exist?  Konis (2007): with
+	A = diag(2y-1) * X, the MPLE fails to exist iff some beta gives
+	A*beta >= 0 with A*beta != 0 -- an unbounded linear programme.  By
+	duality that is the same as infeasibility of  A'lambda = 0,
+	lambda >= 1 (one multiplier per dyad), which is decided here by a
+	phase-one simplex on the p equality rows (identical dyad types are
+	merged first, their multiplicity entering as the lower bound).
+	Returns 1 if the MPLE exists, 0 if the data are (quasi-)separated.
+*/
+real scalar ergm_mple_exists(real matrix D){
+	real scalar p, m, i, j, it, jin, iout, ratio, best, tol, z
+	real matrix A, X, T, key, info
+	real colvector y, cnt, b, basis, perm, st
+	real rowvector rc
+
+	p = cols(D) - 1
+	y = D[., p+1] :* 2 :- 1
+	X = D[., 1..p] :* y
+	// merge identical rows
+	key = X
+	perm = order(key, 1..p)
+	key = key[perm, .]
+	if (rows(key) > 1) st = 1 \ (selectindex(rowsum(abs(key[2::rows(key), .] :- key[1::rows(key)-1, .])) :> 0) :+ 1)
+	else st = 1
+	if (rows(st) > 1) info = st, (st[2::rows(st)] :- 1 \ rows(key))
+	else info = st, rows(key)
+	m = rows(info)
+	A = J(m, p, 0)
+	cnt = J(m, 1, 0)
+	for (i=1; i<=m; i++) {
+		A[i, .] = key[info[i,1], .]
+		cnt[i] = info[i,2] - info[i,1] + 1
+	}
+	// drop all-zero rows (they constrain nothing)
+	// A'nu = -A'cnt, nu >= 0
+	b = -(A' * cnt)
+	tol = 1e-9
+	// make b >= 0 by flipping rows of the equality system
+	T = (A', I(p), b)
+	for (i=1; i<=p; i++) if (b[i] < 0) {
+		T[i, 1..m] = -T[i, 1..m]
+		T[i, m+p+1] = -b[i]
+	}
+	basis = (m+1::m+p)
+	// phase-one objective: minimise sum of artificials
+	rc = J(1, m+p+1, 0)
+	for (i=1; i<=p; i++) rc = rc - T[i, .]
+	rc[(m+1..m+p)] = J(1, p, 0)
+	for (it=1; it<=20000; it++) {
+		jin = 0
+		best = -tol * max((1, max(abs(A))))
+		if (it < 2000) {
+			for (j=1; j<=m+p; j++) if (rc[j] < best) {
+				best = rc[j]
+				jin = j
+			}
+		}
+		else {
+			for (j=1; j<=m+p; j++) if (rc[j] < -tol) {
+				jin = j
+				break
+			}
+		}
+		if (jin == 0) break
+		iout = 0
+		ratio = .
+		for (i=1; i<=p; i++) {
+			if (T[i, jin] > 1e-10) {
+				z = T[i, m+p+1] / T[i, jin]
+				if (iout == 0 | z < ratio - 1e-12) {
+					ratio = z
+					iout = i
+				}
+			}
+		}
+		if (iout == 0) break
+		T[iout, .] = T[iout, .] / T[iout, jin]
+		for (i=1; i<=p; i++) if (i != iout) T[i, .] = T[i, .] - T[i, jin] * T[iout, .]
+		rc = rc - rc[jin] * T[iout, .]
+		basis[iout] = jin
+	}
+	// feasible iff the phase-one objective (-rc[last]) is ~0
+	b = abs(b)
+	return(abs(rc[m+p+1]) <= 1e-7 * max((1, sum(b))))
+}
+
+/*
+	R's glm.fit(family=binomial) IRLS (mustart=(y+0.5)/2, <= 25
+	iterations, relative deviance tolerance 1e-8), used only to
+	reproduce the (huge, finite) coefficients R reports when
+	ergm_mple_exists() is 0.  Posts b, V (inverse information at the last
+	weights) to Stata matrices; returns 1 if the deviance converged.
+*/
+real scalar ergm_glm_irls(real matrix D, string scalar bname, string scalar Vname, | real colvector offs){
+	real scalar p, it, dev, devold, conv, eps, g
+	real colvector y, mu, eta, z, w, beta, mueta, wt, perm, st
+	real matrix x, XtWX, K
+
+	eps = 2.220446049250313e-16
+	p = cols(D) - 1
+	if (args() < 4) offs = J(rows(D), 1, 0)
+	// identical (design row, outcome, offset) rows are merged with a weight, as R's MPLE does
+	K = (D, offs)
+	perm = order(K, 1..cols(K))
+	K = K[perm, .]
+	if (rows(K) > 1) st = 1 \ (selectindex(rowsum(abs(K[2::rows(K), .] :- K[1::rows(K)-1, .])) :> 0) :+ 1)
+	else st = 1
+	if (rows(st) == 1) wt = rows(K)
+	else wt = (st[2::rows(st)] \ rows(K)+1) :- st
+	K = K[st, .]
+	x = K[., 1..p]
+	y = K[., p+1]
+	offs = K[., p+2]
+	mu = (wt :* y :+ 0.5) :/ (wt :+ 1)
+	eta = ln(mu :/ (1 :- mu))
+	mu = ergm_glm_linkinv(eta, eps)
+	devold = ergm_glm_dev(y, mu, wt)
+	conv = 0
+	beta = J(p, 1, 0)
+	XtWX = I(p)
+	for (it=1; it<=25; it++) {
+		mueta = (abs(eta) :> 30) :* eps :+ (abs(eta) :<= 30) :* (exp(eta) :/ (1 :+ exp(eta)):^2)
+		w = wt :* mueta:^2 :/ (mu :* (1 :- mu))
+		z = (eta :- offs) :+ (y :- mu) :/ mueta
+		XtWX = cross(x, w, x)
+		beta = invsym(XtWX) * cross(x, w :* z)
+		eta = x * beta :+ offs
+		mu = ergm_glm_linkinv(eta, eps)
+		dev = ergm_glm_dev(y, mu, wt)
+		if (abs(dev - devold) / (abs(dev) + 0.1) < 1e-8) {
+			conv = 1
+			break
+		}
+		devold = dev
+	}
+	st_matrix(bname, beta')
+	st_matrix(Vname, invsym(XtWX))
+	return(conv)
+}
+
+real colvector ergm_glm_linkinv(real colvector eta, real scalar eps){
+	return((eta :< -30) :* eps :+ (eta :> 30) :* (1/(1+eps)) :+ (abs(eta) :<= 30) :* (exp(eta) :/ (1 :+ exp(eta))))
+}
+
+real scalar ergm_glm_dev(real colvector y, real colvector mu, real colvector wt){
+	real colvector t1, t0
+	t1 = J(rows(y), 1, 0)
+	t0 = J(rows(y), 1, 0)
+	t1 = (y :> 0) :* y :* ln(y :/ mu :+ (y :== 0))
+	t0 = (y :< 1) :* (1 :- y) :* ln((1 :- y) :/ (1 :- mu) :+ (y :== 1))
+	return(2 * sum(wt :* (t1 :+ t0)))
+}
+
+/* ===================================================================
+   Goodness-of-fit statistics (estat gof), the GOF terms of R's gof():
+   degree / idegree / odegree, espartners, dspartners, distance,
+   triadcensus.  All take the dense 0/1 adjacency matrix A.
+   =================================================================== */
+
+// degree distribution: counts of nodes with degree 0..n-1 (mode 0 = degree/out+in of an undirected graph,
+// 1 = in-degree, 2 = out-degree)
+real rowvector ergm_gof_deg(real matrix A, real scalar mode){
+	real colvector d
+	real rowvector out
+	real scalar n, k
+	n = rows(A)
+	if (mode == 1) d = colsum(A)'
+	else d = rowsum(A)
+	out = J(1, n, 0)
+	for (k=1; k<=n; k++) out[k] = sum(d :== k-1)
+	return(out)
+}
+
+// bipartite degree: nodes of mode 1 (rows 1..n1) or mode 2, by the number of ties, 0..max
+real rowvector ergm_gof_bdeg(real matrix A, real scalar n1, real scalar mode){
+	real colvector d
+	real rowvector out
+	real scalar n, k, top
+	n = rows(A)
+	if (mode == 1) {
+		d = rowsum(A[1::n1, (n1+1)::n])
+		top = n - n1
+	}
+	else {
+		d = colsum(A[1::n1, (n1+1)::n])'
+		top = n1
+	}
+	out = J(1, top+1, 0)
+	for (k=1; k<=top+1; k++) out[k] = sum(d :== k-1)
+	return(out)
+}
+
+// shared-partner distributions: counts of ties (esp, dsp=0) or of all dyads (dsp=1) with 0..n-2 shared partners
+// (directed: outgoing two-paths i->k->j, R's default type OTP)
+real rowvector ergm_gof_sp(real matrix A, real scalar directed, real scalar alldyads){
+	real matrix C
+	real scalar n, i, j, k
+	real rowvector out
+	n = rows(A)
+	C = A * A
+	out = J(1, n-1, 0)
+	for (i=1; i<=n; i++) {
+		for (j=(directed ? 1 : i+1); j<=n; j++) {
+			if (i == j) continue
+			if (alldyads | A[i,j]) {
+				k = C[i,j]
+				out[k+1] = out[k+1] + 1
+			}
+		}
+	}
+	return(out)
+}
+
+// bipartite dyadwise shared partners (same-mode pairs, as R's dsp on a bipartite network): counts by 0..max(n1,n2)-1... (0..n-2)
+real rowvector ergm_gof_bdsp(real matrix A, real scalar n1){
+	real matrix B, C
+	real scalar n, i, j, k, n2
+	real rowvector out
+	n = rows(A)
+	n2 = n - n1
+	B = A[1::n1, (n1+1)::n]
+	out = J(1, n-1, 0)
+	C = B * B'
+	for (i=1; i<=n1; i++) for (j=i+1; j<=n1; j++) {
+		k = C[i,j]
+		out[k+1] = out[k+1] + 1
+	}
+	C = B' * B
+	for (i=1; i<=n2; i++) for (j=i+1; j<=n2; j++) {
+		k = C[i,j]
+		out[k+1] = out[k+1] + 1
+	}
+	return(out)
+}
+
+// geodesic distance distribution: dyads at distance 1..n-1, last element = unreachable (R: "Inf")
+real rowvector ergm_gof_dist(real matrix A, real scalar directed){
+	real scalar n, s, h, head, tail, v, w, cnt, reach
+	real colvector dist, queue
+	real rowvector out, nb
+	real matrix nbrs
+	n = rows(A)
+	out = J(1, n, 0)
+	for (s=1; s<=n; s++) {
+		dist = J(n, 1, -1)
+		dist[s] = 0
+		queue = J(n, 1, 0)
+		queue[1] = s
+		head = 1
+		tail = 1
+		while (head <= tail) {
+			v = queue[head]
+			head++
+			nb = selectindex(A[v, .] :> 0)
+			for (w=1; w<=cols(nb); w++) {
+				if (dist[nb[w]] < 0) {
+					dist[nb[w]] = dist[v] + 1
+					tail++
+					queue[tail] = nb[w]
+				}
+			}
+		}
+		for (v=1; v<=n; v++) {
+			if (v == s) continue
+			if (!directed & v < s) continue
+			if (dist[v] < 0) out[n] = out[n] + 1
+			else out[dist[v]] = out[dist[v]] + 1
+		}
+	}
+	return(out)
+}
+
+// class (1..16, statnet/ergm triadcensus order 003 012 102 021D 021U 021C 111D 111U 030T 030C 201 120D 120U 120C 210 300)
+// of the triad with arcs ab ba ac ca bc cb
+real scalar ergm_triad_class(real scalar ab, real scalar ba, real scalar ac, real scalar ca, real scalar bc, real scalar cb){
+	real scalar m, a, oa, ob, oc, ia, ib, ic
+	m = (ab & ba) + (ac & ca) + (bc & cb)
+	a = (ab + ba == 1) + (ac + ca == 1) + (bc + cb == 1)
+	oa = ab + ac
+	ob = ba + bc
+	oc = ca + cb
+	ia = ba + ca
+	ib = ab + cb
+	ic = ac + bc
+	if (m == 0 & a == 0) return(1)
+	if (m == 0 & a == 1) return(2)
+	if (m == 1 & a == 0) return(3)
+	if (m == 0 & a == 2) {
+		if (max((oa, ob, oc)) == 2) return(4)
+		if (max((ia, ib, ic)) == 2) return(5)
+		return(6)
+	}
+	if (m == 1 & a == 1) {
+		// the node z outside the mutual dyad; w the mutual-pair node joined to z by the asymmetric arc
+		if (ab & ba) {
+			// z = c
+			if (ac | bc) return(8)	// arc into the mutual pair
+			return(7)
+		}
+		if (ac & ca) {
+			// z = b
+			if (ab | cb) return(8)
+			return(7)
+		}
+		// z = a
+		if (ba | ca) return(8)
+		return(7)
+	}
+	if (m == 0 & a == 3) return(max((oa, ob, oc)) == 2 ? 9 : 10)
+	if (m == 2 & a == 0) return(11)
+	if (m == 1 & a == 2) {
+		if (ab & ba) return(oc == 2 ? 12 : (ic == 2 ? 13 : 14))
+		if (ac & ca) return(ob == 2 ? 12 : (ib == 2 ? 13 : 14))
+		return(oa == 2 ? 12 : (ia == 2 ? 13 : 14))
+	}
+	if (m == 2 & a == 1) return(15)
+	return(16)
+}
+
+// triad census: undirected 4 counts (0..3 ties); directed 16 counts in ergm's order
+real rowvector ergm_gof_triad(real matrix A, real scalar directed){
+	real scalar n, i, j, k, m, t3, p2, c0, c1, c2, c3
+	real rowvector out, d
+	real colvector deg
+	n = rows(A)
+	if (!directed) {
+		deg = rowsum(A)
+		m = sum(deg) / 2
+		t3 = trace(A * A * A) / 6
+		p2 = sum(deg :* (deg :- 1)) / 2
+		c3 = t3
+		c2 = p2 - 3 * t3
+		c1 = m * (n - 2) - 2 * c2 - 3 * c3
+		c0 = n * (n - 1) * (n - 2) / 6 - c1 - c2 - c3
+		return((c0, c1, c2, c3))
+	}
+	out = J(1, 16, 0)
+	for (i=1; i<=n-2; i++) for (j=i+1; j<=n-1; j++) for (k=j+1; k<=n; k++) {
+		m = ergm_triad_class(A[i,j], A[j,i], A[i,k], A[k,i], A[j,k], A[k,j])
+		out[m] = out[m] + 1
+	}
+	return(out)
+}
+
+/*
+	Runs the simulation behind estat gof and posts, per requested group, k x 5 summary matrices
+	(obs, min, mean, max, MC p-value) named prefix_p_<group>, the nsim x k simulated values
+	prefix_s_<group> and the 1 x k observed values prefix_o_<group>.  Groups: model deg ideg odeg
+	b1deg b2deg espart dspart dist triad.  The chain continues from the current state of G
+	(the fit's last draw): `burnin' steps before the first draw, `interval' between draws.
+*/
+void ergm_gof_run(class ErgmModel scalar M, class ErgmGraph scalar G, real matrix Aobs, real rowvector Gobsstat,
+	real rowvector theta, real scalar nsim, real scalar burnin, real scalar interval,
+	pointer(real rowvector function) scalar proposalfn, real scalar directed, real scalar n1,
+	string rowvector groups, string scalar prefix){
+	real scalar s, g, k, ng
+	real matrix A, Smodel
+	real rowvector st
+	transmorphic scalar sims
+	string scalar gname
+	real matrix Sg, Pg, d
+	real rowvector ov
+
+	ng = cols(groups)
+	sims = asarray_create()
+	for (g=1; g<=ng; g++) asarray(sims, groups[g], J(nsim, 0, .))
+	for (s=1; s<=nsim; s++) {
+		Smodel = ErgmMCMCSample(M, G, theta, (s == 1 ? burnin : 0), interval, 1, proposalfn)
+		A = G.to_dense()
+		for (g=1; g<=ng; g++) {
+			gname = groups[g]
+			if (gname == "model") st = Smodel
+			else if (gname == "deg") st = ergm_gof_deg(A, 0)
+			else if (gname == "ideg") st = ergm_gof_deg(A, 1)
+			else if (gname == "odeg") st = ergm_gof_deg(A, 2)
+			else if (gname == "b1deg") st = ergm_gof_bdeg(A, n1, 1)
+			else if (gname == "b2deg") st = ergm_gof_bdeg(A, n1, 2)
+			else if (gname == "espart") st = ergm_gof_sp(A, directed, 0)
+			else if (gname == "dspart") st = (n1 > 0 ? ergm_gof_bdsp(A, n1) : ergm_gof_sp(A, directed, 1))
+			else if (gname == "dist") st = ergm_gof_dist(A, directed)
+			else st = ergm_gof_triad(A, directed)
+			Sg = asarray(sims, gname)
+			if (s == 1) Sg = J(nsim, cols(st), .)
+			Sg[s, .] = st
+			asarray(sims, gname, Sg)
+		}
+	}
+	for (g=1; g<=ng; g++) {
+		gname = groups[g]
+		if (gname == "model") ov = Gobsstat
+		else if (gname == "deg") ov = ergm_gof_deg(Aobs, 0)
+		else if (gname == "ideg") ov = ergm_gof_deg(Aobs, 1)
+		else if (gname == "odeg") ov = ergm_gof_deg(Aobs, 2)
+		else if (gname == "b1deg") ov = ergm_gof_bdeg(Aobs, n1, 1)
+		else if (gname == "b2deg") ov = ergm_gof_bdeg(Aobs, n1, 2)
+		else if (gname == "espart") ov = ergm_gof_sp(Aobs, directed, 0)
+		else if (gname == "dspart") ov = (n1 > 0 ? ergm_gof_bdsp(Aobs, n1) : ergm_gof_sp(Aobs, directed, 1))
+		else if (gname == "dist") ov = ergm_gof_dist(Aobs, directed)
+		else ov = ergm_gof_triad(Aobs, directed)
+		Sg = asarray(sims, gname)
+		d = Sg :- ov
+		Pg = (ov', colmin(Sg)', mean(Sg)', colmax(Sg)', J(cols(ov), 1, .))
+		for (k=1; k<=cols(ov); k++) Pg[k,5] = min((1, 2 * min((mean(d[., k] :>= 0), mean(d[., k] :<= 0)))))
+		st_matrix(prefix + "_p_" + gname, Pg)
+		st_matrix(prefix + "_s_" + gname, Sg)
+		st_matrix(prefix + "_o_" + gname, ov)
+	}
+}
+
+// collapse simulated count rows for the gof plot: first `keep' columns kept, the remaining columns summed into one last
+// column, everything divided by `total' (total = 0: by the row sum)
+real matrix ergm_gof_collapse(real matrix S, real scalar keep, real scalar total){
+	real matrix out
+	real scalar s, tot
+	out = J(rows(S), keep + 1, 0)
+	for (s=1; s<=rows(S); s++) {
+		out[s, 1..min((keep, cols(S)))] = S[s, 1..min((keep, cols(S)))]
+		if (cols(S) > keep) out[s, keep+1] = sum(S[s, (keep+1)..cols(S)])
+		tot = (total > 0 ? total : sum(S[s, .]))
+		out[s, .] = out[s, .] / tot
+	}
+	return(out)
+}
+
+// average geodesic distance from a distance-count row (1..n-1, last = unreachable): -1 if any pair is unreachable
+real scalar ergm_gof_avgpath(real rowvector c){
+	real scalar n
+	n = cols(c)
+	if (c[n] > 0) return(-1)
+	return(sum(c[1..n-1] :* (1..n-1)) / sum(c[1..n-1]))
+}
+
+// mean over the draws whose network is connected
+real scalar ergm_gof_avgpath_sim(real matrix S){
+	real scalar s, k, tot
+	tot = 0
+	k = 0
+	for (s=1; s<=rows(S); s++) {
+		if (ergm_gof_avgpath(S[s, .]) >= 0) {
+			tot = tot + ergm_gof_avgpath(S[s, .])
+			k++
+		}
+	}
+	return(k ? tot / k : .)
+}
+
+// reads an NWdef network into an (empty) ErgmGraph, each undirected tie once
+void ergm_bridge_obs(pointer(class nw_def scalar) scalar netobj, class ErgmGraph scalar G, real scalar directed){
+	real scalar i, k
+	real matrix nb
+
+	for (i=1; i<=G.n; i++) {
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!directed & nb[k] <= i) continue
+			G.toggle(i, nb[k])
+		}
+	}
+}
+
+// per-column (min, p25, median, p75, max) of simulated draws, nearest-rank, for the gof plot
+real matrix ergm_gof_sum5(real matrix draws){
+	real scalar k, nrow
+	real colvector col
+	real matrix out
+	nrow = rows(draws)
+	out = J(cols(draws), 5, .)
+	for (k=1; k<=cols(draws); k++) {
+		col = sort(draws[., k], 1)
+		out[k,1] = col[1]
+		out[k,2] = col[ceil(0.25*nrow)]
+		out[k,3] = col[ceil(0.50*nrow)]
+		out[k,4] = col[ceil(0.75*nrow)]
+		out[k,5] = col[nrow]
+	}
+	return(out)
+}
+
+// sets G to the network A0 (dense 0/1) by toggling the dyads that differ
+void ergm_reset_graph(class ErgmGraph scalar G, real matrix A0){
+	real scalar i, j, n
+	real matrix A
+	n = G.n
+	A = G.to_dense()
+	for (i=1; i<=n; i++) {
+		for (j=(G.directed ? 1 : i+1); j<=n; j++) {
+			if (i == j) continue
+			if (A[i,j] != A0[i,j]) G.toggle(i, j)
+		}
+	}
+}
+
+/*
+	simulate from a fitted model (R simulate.ergm): nsim draws at theta starting from the network A0 held in G.
+	sequential: one chain (burnin once, `interval' steps between draws); otherwise every draw restarts from A0
+	with the full burnin.  Posts prefix_stats (nsim x p); wantnet=1 also keeps each draw, posted by
+	ergm_sim_get() as dense matrices, wantnet=2 builds prefix_el (sim, tail, head).
+*/
+transmorphic scalar ergm_sim_run(class ErgmModel scalar M, class ErgmGraph scalar G, real matrix A0,
+	real rowvector theta, real scalar nsim, real scalar burnin, real scalar interval,
+	pointer(real rowvector function) scalar proposalfn, real scalar sequential, real scalar wantnet, string scalar prefix){
+	real scalar s, i, j
+	real matrix S, A, el
+	transmorphic scalar nets
+
+	nets = asarray_create("real", 1)
+	S = J(nsim, M.nparam(), .)
+	el = J(0, 3, .)
+	if (!sequential) ergm_reset_graph(G, A0)
+	for (s=1; s<=nsim; s++) {
+		if (!sequential & s > 1) ergm_reset_graph(G, A0)
+		S[s, .] = ErgmMCMCSample(M, G, theta, (s == 1 | !sequential ? burnin : 0), interval, 1, proposalfn)
+		if (wantnet) {
+			A = G.to_dense()
+			if (wantnet == 1) asarray(nets, s, A)
+			else {
+				for (i=1; i<=G.n; i++) for (j=(G.directed ? 1 : i+1); j<=G.n; j++) {
+					if (i != j & A[i,j]) el = el \ (s, i, j)
+				}
+			}
+		}
+	}
+	st_matrix(prefix + "_stats", S)
+	if (wantnet == 2) st_matrix(prefix + "_el", el)
+	return(nets)
+}
+
+/* ===================================================================
+   mcmc.diagnostics() of R ergm: coda/statnet.common building blocks
+   (multivariate Yule-Walker AR, spectrum at zero, Hotelling tests,
+   Geweke diagnostics), written to give the same numbers on the same
+   sample.  Rows with missing values are allowed (as in R's na.pass).
+   =================================================================== */
+
+// R acf(type="covariance", demean=TRUE, na.action=na.pass): block lag*p+1..(lag+1)*p, entry [u,v] = cov(x_u[t+lag], x_v[t])
+real matrix ergm_acf_cov(real matrix X, real scalar lagmax){
+	real scalar n, p, k, lag, m2, k2
+	real matrix Z, Mk, S, N, out
+	n = rows(X)
+	p = cols(X)
+	Z = X
+	for (k=1; k<=p; k++) {
+		m2 = mean(select(X[., k], X[., k] :< .))
+		Z[., k] = X[., k] :- m2
+	}
+	Mk = (Z :< .)
+	Z = editmissing(Z, 0)
+	out = J((lagmax+1)*p, p, .)
+	for (lag=0; lag<=lagmax; lag++) {
+		S = Z[(lag+1)::n, .]' * Z[1::(n-lag), .]
+		N = Mk[(lag+1)::n, .]' * Mk[1::(n-lag), .]
+		out[(lag*p+1)::((lag+1)*p), .] = S :/ (N :+ lag)
+		for (k=1; k<=p; k++) for (k2=1; k2<=p; k2++) if (N[k,k2] == 0) out[lag*p+k, k2] = .
+	}
+	return(out)
+}
+
+// R ar.yw.default (Whittle recursion for nser>1, the same sequence for nser==1): chosen order, sum of AR coefficient
+// matrices, prediction variance, aic differences (0..ordmax)
+void ergm_ar_yw(real matrix X, real scalar ordmax, real scalar useaic, real scalar ord, real matrix arsum,
+	real matrix varpred, real rowvector xaic){
+	real scalar n, nser, nobs, m, i, ld
+	real matrix xacf, A, B, Aold, Bold, EA, EB, KA, KB, betaA, betaB, Im
+	n = rows(X)
+	nser = cols(X)
+	nobs = sum(X[., 1] :< .)
+	xacf = ergm_acf_cov(X, ordmax)
+	Im = I(nser)
+	A = J((ordmax+1)*nser, nser, 0)
+	B = A
+	A[1::nser, .] = Im
+	B[1::nser, .] = Im
+	EA = xacf[1::nser, .]
+	EB = EA
+	xaic = J(1, ordmax+1, .)
+	ord = 0
+	arsum = J(nser, nser, 0)
+	varpred = EA * nobs / (nobs - nser)
+	for (m=0; m<=ordmax; m++) {
+		ld = ln(abs(det(EA)))
+		xaic[m+1] = nobs * ld + 2 * m * nser * nser
+		if (!useaic | xaic[m+1] <= min(xaic[1..(m+1)])) {
+			ord = m
+			varpred = EA * nobs / (nobs - nser * (m + 1))
+			arsum = J(nser, nser, 0)
+			for (i=1; i<=m; i++) arsum = arsum - A[(i*nser+1)::((i+1)*nser), .]
+		}
+		if (m < ordmax) {
+			betaA = J(nser, nser, 0)
+			betaB = J(nser, nser, 0)
+			for (i=0; i<=m; i++) {
+				betaA = betaA + A[(i*nser+1)::((i+1)*nser), .] * xacf[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+				betaB = betaB + B[(i*nser+1)::((i+1)*nser), .] * xacf[((m+1-i)*nser+1)::((m+2-i)*nser), .]'
+			}
+			KA = -betaA * luinv(EB)
+			KB = -betaB * luinv(EA)
+			EB = (Im - KB * KA) * EB
+			EA = (Im - KA * KB) * EA
+			Aold = A
+			Bold = B
+			for (i=1; i<=m+1; i++) {
+				A[(i*nser+1)::((i+1)*nser), .] = Aold[(i*nser+1)::((i+1)*nser), .] + KA * Bold[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+				B[(i*nser+1)::((i+1)*nser), .] = Bold[(i*nser+1)::((i+1)*nser), .] + KB * Aold[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+			}
+		}
+	}
+	xaic = xaic :- min(xaic)
+}
+
+// coda spectrum0.ar for one series (missing rows dropped): innovations variance / (1 - sum of AR)^2; 0 for a (linearly trending) constant
+real scalar ergm_spec0_ar(real colvector x0){
+	real colvector x, z, r
+	real scalar n, ordmax, ord, b
+	real matrix arsum, varpred
+	real rowvector xaic
+	x = select(x0, x0 :< .)
+	n = rows(x)
+	z = (1::n)
+	b = (cross(z :- mean(z), x :- mean(x))) / cross(z :- mean(z), z :- mean(z))
+	r = x :- mean(x) :- b * (z :- mean(z))
+	if (sqrt(variance(r)) < 1.5e-8) return(0)
+	ordmax = min((n-1, floor(10*log10(n))))
+	ergm_ar_yw(x, ordmax, 1, ord, arsum, varpred, xaic)
+	return(varpred[1,1] / (1 - arsum[1,1])^2)
+}
+
+// R statnet.common/ergm spectrum0.mvar: spectral covariance matrix at zero of the (possibly NA-padded) series X; infl and rank returned
+real matrix ergm_spec0_mvar(real matrix Xfull, real scalar infl, real scalar rnk){
+	real scalar p, pv, k, ord, tol, ordsel, i, j, ok
+	real matrix x, xf, evec, xr, unmapper, indvar, v, vvar, adj, arsum, varpred
+	real rowvector xscl, ev, xrsd, xaic, d, keep, ind
+	real colvector rows_ok
+	real scalar ord_ar
+
+	tol = sqrt(2.220446049250313e-16)
+	p = cols(Xfull)
+	rows_ok = (rowmissing(Xfull) :== 0)
+	x = select(Xfull, rows_ok)
+	v = J(p, p, 0)
+	xscl = sqrt(diagonal(variance(x)))'
+	keep = selectindex(xscl :>= tol)
+	pv = cols(keep)
+	if (pv == 0) _error(3498, "All variables are constant.")
+	x = x[., keep]
+	xf = Xfull[., keep]
+	xscl = xscl[keep]
+	x = x :/ xscl
+	xf = xf :/ xscl
+	symeigensystem(variance(x), evec, ev)
+	xr = J(rows(xf), pv, .)
+	for (k=1; k<=pv; k++) xr[., k] = (xf * evec[., k]) / sqrt(max((ev[k], 0)))
+	xrsd = J(1, pv, .)
+	for (k=1; k<=pv; k++) {
+		d = select(xr[., k], xr[., k] :< .)
+		xrsd[k] = (rows(d) > 1 ? sqrt(variance(d)) : .)
+	}
+	ind = selectindex((xrsd :< .) :& (abs(xrsd :- 1) :< tol))
+	unmapper = diag(xscl) * evec[., ind] * diag(sqrt(ev[ind]))
+	xr = xr[., ind]
+	rnk = cols(ind)
+	indvar = variance(select(xr, rowmissing(xr) :== 0))
+	ord = ceil(10 * log10(rows(xr)))
+	ok = 0
+	ord = ord + 1
+	while (!ok & ord > 0) {
+		ord = ord - 1
+		if (ord <= 0) _error(3498, "Unable to fit ar() even with order 1; this is likely to be due to insufficient sample size or a trend in the data.")
+		ergm_ar_yw(xr, ord, 1, ord_ar, arsum, varpred, xaic)
+		ok = !hasmissing(varpred)
+		if (ok) {
+			symeigensystem(0.5 * (varpred + varpred'), evec, ev)
+			if (min(ev) < 0) ok = 0
+		}
+	}
+	// the AIC curve's first local minimum bounds the order
+	d = (. , xaic, .)
+	ordsel = -1
+	for (i=2; i<=cols(d); i++) {
+		if (d[i] >= d[i-1]) {
+			ordsel = i - 2 - 1
+			break
+		}
+	}
+	if (ord_ar > ordsel) {
+		ergm_ar_yw(xr, max((ordsel, 1)), (ordsel == 0), ord_ar, arsum, varpred, xaic)
+	}
+	adj = I(cols(xr)) - arsum
+	vvar = luinv(adj) * varpred * luinv(adj)'
+	infl = exp((ln(det(vvar)) - ln(det(indvar))) / cols(indvar))
+	vvar = unmapper * vvar * unmapper'
+	for (i=1; i<=pv; i++) for (j=1; j<=pv; j++) v[keep[i], keep[j]] = vvar[i, j]
+	return(v)
+}
+
+// quadratic form x' A^- x with a symmetric-eigen generalised inverse (statnet.common xTAx_seigen)
+real scalar ergm_xtax_seigen(real colvector x, real matrix A){
+	real matrix evec
+	real rowvector ev
+	real colvector u
+	real scalar t
+	symeigensystem(0.5 * (A + A'), evec, ev)
+	t = max(abs(ev)) * sqrt(2.220446049250313e-16)
+	u = evec' * x
+	return(sum((u:^2 :/ ev')[selectindex(ev' :> t)]))
+}
+
+// ergm approx.hotelling.diff.test: one-sample (Y empty) or pooled two-sample test with autocorrelation correction;
+// returns T^2, the F-transform parameters and the p-value (the covariance of the difference of means is returned in V)
+void ergm_hotelling(real matrix X, real matrix Y, real rowvector mu0, real scalar T2, real scalar prm, real scalar df,
+	real scalar pval, real matrix V){
+	real scalar nx, ny, infl, rnk, k, p, pad
+	real matrix vc, xp, yp, xy, ds
+	real rowvector d, dm, nov
+	real colvector sel
+
+	nx = rows(X)
+	if (rows(Y) == 0) {
+		vc = ergm_spec0_mvar(X, infl, rnk)
+		d = mean(X) - mu0
+		V = vc / nx
+		df = nx / infl - 1
+	}
+	else {
+		ny = rows(Y)
+		xp = X :- mean(X)
+		yp = Y :- mean(Y)
+		pad = ceil(10 * log10(nx + ny))
+		xy = xp \ J(pad, cols(X), .) \ yp
+		vc = ergm_spec0_mvar(xy, infl, rnk)
+		d = mean(X) - mean(Y) - mu0
+		V = (vc * (nx - 1) + vc * (ny - 1)) / (nx + ny - 2) * (1/nx + 1/ny)
+		df = nx / infl + ny / infl - 2
+	}
+	nov = (diagonal(V)' :== 0)
+	sel = selectindex(!nov)
+	prm = cols(sel)
+	if (prm == 0) _error(3498, "data are essentially constant")
+	if (any((d :!= 0) :& nov)) T2 = .
+	else T2 = ergm_xtax_seigen(d[sel]', V[sel, sel])
+	if (prm >= df | T2 >= .) pval = .
+	else pval = Ftail(prm, df - prm + 1, T2 * (df - prm + 1) / (prm * df))
+}
+
+// Geweke windows (coda): indices of the first frac1 and the last frac2 of the chain
+void ergm_geweke_windows(real scalar n, real scalar frac1, real scalar frac2, real scalar e1, real scalar s2){
+	e1 = 1 + floor(frac1 * (n - 1) + 1e-5)
+	s2 = ceil(n - frac2 * (n - 1) - 1e-5)
+}
+
+// univariate Geweke z (coda geweke.diag) for each column
+real rowvector ergm_geweke_z2(real matrix S, real scalar frac1, real scalar frac2){
+	real scalar n, e1, s2, k
+	real rowvector z
+	real colvector a, b
+	n = rows(S)
+	ergm_geweke_windows(n, frac1, frac2, e1, s2)
+	z = J(1, cols(S), .)
+	for (k=1; k<=cols(S); k++) {
+		a = S[1::e1, k]
+		b = S[s2::n, k]
+		z[k] = (mean(a) - mean(b)) / sqrt(ergm_spec0_ar(a) / rows(a) + ergm_spec0_ar(b) / rows(b))
+	}
+	return(z)
+}
+
+// multivariate Geweke p-value (ergm geweke.diag.mv)
+real scalar ergm_geweke_mv(real matrix S, real scalar frac1, real scalar frac2){
+	real scalar n, e1, s2, T2, prm, df, pval
+	real matrix V
+	n = rows(S)
+	ergm_geweke_windows(n, frac1, frac2, e1, s2)
+	ergm_hotelling(S[1::e1, .], S[s2::n, .], J(1, cols(S), 0), T2, prm, df, pval, V)
+	if (pval >= .) pval = 0
+	return(pval)
+}
+
+// coda autocorr: lags 0..lagmax of the autocorrelation of each column
+real matrix ergm_autocorr(real matrix S, real scalar lagmax){
+	real matrix acv, out
+	real scalar k, p, lag
+	p = cols(S)
+	acv = ergm_acf_cov(S, lagmax)
+	out = J(lagmax+1, p, .)
+	for (k=1; k<=p; k++) for (lag=0; lag<=lagmax; lag++) out[lag+1, k] = acv[lag*p+k, k] / acv[k, k]
+	return(out)
+}
+
+// the pieces of estat mcmcdiag; results are posted to Stata matrices
+void ergm_mcdiag_summary(real matrix C, string scalar sname, string scalar qname){
+	real scalar n, p, k
+	real matrix S, Q
+	real colvector x
+	n = rows(C)
+	p = cols(C)
+	S = J(p, 4, .)
+	Q = J(p, 5, .)
+	for (k=1; k<=p; k++) {
+		x = C[., k]
+		S[k,1] = mean(x)
+		S[k,2] = sqrt(variance(x))
+		S[k,3] = S[k,2] / sqrt(n)
+		S[k,4] = sqrt(ergm_spec0_ar(x) / n)
+		Q[k,.] = ergm_quantile7(x, (0.025, 0.25, 0.5, 0.75, 0.975))
+	}
+	st_matrix(sname, S)
+	st_matrix(qname, Q)
+}
+
+// R quantile(type 7)
+real rowvector ergm_quantile7(real colvector x, real rowvector probs){
+	real colvector xs
+	real rowvector out
+	real scalar n, j, h, lo
+	xs = sort(x, 1)
+	n = rows(xs)
+	out = J(1, cols(probs), .)
+	for (j=1; j<=cols(probs); j++) {
+		h = (n - 1) * probs[j] + 1
+		lo = floor(h + 1e-12)
+		out[j] = (lo >= n ? xs[n] : xs[lo] + (h - lo) * (xs[lo+1] - xs[lo]))
+	}
+	return(out)
+}
+
+// "Are sample statistics significantly different from observed?" : rows diff, z, p for each statistic; last column the omnibus test
+void ergm_mcdiag_obstest(real matrix C, string scalar name){
+	real scalar n, p, k, T2, prm, df, pval, ess, v0
+	real matrix V, out
+	n = rows(C)
+	p = cols(C)
+	out = J(3, p+1, .)
+	for (k=1; k<=p; k++) {
+		v0 = ergm_spec0_ar(C[., k])
+		ess = (v0 == 0 ? 0 : n * variance(C[., k]) / v0)
+		out[1,k] = mean(C[., k])
+		out[2,k] = out[1,k] / sqrt(variance(C[., k])) * sqrt(ess)
+		out[3,k] = 2 * normal(-abs(out[2,k]))
+	}
+	ergm_hotelling(C, J(0, p, .), J(1, p, 0), T2, prm, df, pval, V)
+	out[2, p+1] = T2
+	out[3, p+1] = pval
+	st_matrix(name, out)
+}
+
+void ergm_mcdiag_corr(real matrix C, string scalar xname, string scalar aname){
+	st_matrix(xname, correlation(C))
+	st_matrix(aname, ergm_autocorr(C, 5))
+}
+
+// Geweke z, individual and joint p-values (row 1: z, row 2: p, last entry of row 2: joint p)
+void ergm_mcdiag_geweke(real matrix C, string scalar name){
+	real rowvector z
+	real matrix out
+	z = ergm_geweke_z2(C, 0.1, 0.5)
+	out = J(2, cols(C)+1, .)
+	out[1, 1..cols(C)] = z
+	out[2, 1..cols(C)] = 2 * normal(-abs(z))
+	out[2, cols(C)+1] = ergm_geweke_mv(C, 0.1, 0.5)
+	st_matrix(name, out)
+}
+
 real scalar ErgmModel::nparam(){
 	return(sum(npar))
 }
@@ -9191,6 +10118,329 @@ real matrix ergm_heidel_diag(real matrix samp, real scalar critval, real scalar 
 	return(out)
 }
 
+/* ===================================================================
+   Contrastive divergence (R: estimate="CD") and Stochastic
+   Approximation (R: main.method="Stochastic-Approximation").
+   =================================================================== */
+
+// CD sample: every draw starts from the current network G, takes `nsteps' Metropolis-Hastings steps at theta and
+// records the accumulated statistic change; the toggles are undone afterwards, so G is left unchanged.
+// Returns the (samplesize x p) change matrix; acc (out) = number of accepted steps.
+real matrix ergm_cd_sample(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta,
+	real scalar nsteps, real scalar samplesize, pointer(real rowvector function) scalar proposalfn, real scalar acc){
+	real scalar d, step, k, tail, head, logratio, cutoff, ntog
+	real rowvector prop, chg, cum
+	real matrix out, tog
+
+	out = J(samplesize, cols(theta), 0)
+	acc = 0
+	for (d=1; d<=samplesize; d++) {
+		cum = J(1, cols(theta), 0)
+		tog = J(nsteps, 2, 0)
+		ntog = 0
+		for (step=1; step<=nsteps; step++) {
+			prop = (*proposalfn)(G)
+			tail = prop[1]
+			head = prop[2]
+			logratio = prop[3]
+			chg = M.full_change(G, tail, head)
+			cutoff = (theta * chg') + logratio
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(tail, head)
+				ntog++
+				tog[ntog, .] = (tail, head)
+				cum = cum + chg
+				acc++
+			}
+		}
+		for (k=ntog; k>=1; k--) G.toggle(tog[k,1], tog[k,2])
+		out[d, .] = cum
+	}
+	return(out)
+}
+
+// maximiser of the importance-sampling log-likelihood ratio -log(sum exp(x*delta)) (R: metric "naive"/"IS" in ergm.estimate)
+real rowvector ergm_is_newton(real matrix X){
+	real scalar p, it, f, fnew, step, ok, i
+	real rowvector delta, dnew, m
+	real colvector lw, w
+	real matrix V
+	p = cols(X)
+	delta = J(1, p, 0)
+	lw = X * delta'
+	f = -(max(lw) + ln(sum(exp(lw :- max(lw)))))
+	for (it=1; it<=100; it++) {
+		lw = X * delta'
+		w = exp(lw :- max(lw))
+		w = w / sum(w)
+		m = w' * X
+		V = cross(X :- m, w, X :- m)
+		step = 1
+		ok = 0
+		for (i=1; i<=30; i++) {
+			dnew = delta + step * (-m * invsym(V))
+			lw = X * dnew'
+			fnew = -(max(lw) + ln(sum(exp(lw :- max(lw)))))
+			if (fnew >= f - 1e-12) {
+				ok = 1
+				break
+			}
+			step = step / 2
+		}
+		if (!ok) break
+		if (max(abs(dnew - delta)) < 1e-10) {
+			delta = dnew
+			break
+		}
+		delta = dnew
+		f = fnew
+	}
+	return(delta)
+}
+
+// one-sample Hotelling p-value of "mean of X is zero" assuming independent draws (assume.indep=TRUE)
+real scalar ergm_hotel_indep(real matrix X){
+	real scalar n, p, T2, df
+	real rowvector m
+	real matrix V
+	real colvector sel
+	n = rows(X)
+	m = mean(X)
+	V = variance(X) / n
+	sel = selectindex(diagonal(V) :> 0)
+	p = rows(sel)
+	if (p == 0) return(any(m :!= 0) ? 0 : 1)
+	if (any(m[selectindex(diagonal(V) :== 0)'] :!= 0)) return(0)
+	T2 = ergm_xtax_seigen(m[sel]', V[sel, sel])
+	df = n - 1
+	if (p >= df) return(.)
+	return(Ftail(p, df - p + 1, T2 * (df - p + 1) / (p * df)))
+}
+
+struct ErgmMCMLEFit scalar ErgmCD(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta0, real scalar maxit, real scalar nsteps, real scalar samplesize0,
+	pointer(real rowvector function) scalar proposalfn, real scalar verbose, real scalar minpval, real scalar margin){
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, obs, freeidx, delta, mu, w0, steps
+	real matrix samp, X, Xs, coefhist, V
+	real scalar iter, ss, pval, finished, steplen, acc, tot, p, nfree, converged, k
+	real colvector lw, w
+
+	p = cols(theta0)
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	obs = M.full_statistic(G)
+	theta = theta0
+	ss = (samplesize0 > 0 ? samplesize0 : 128 * nfree)
+	coefhist = J(0, p, 0)
+	steps = J(1, 0, 0)
+	finished = 0
+	converged = 0
+	acc = 0
+	tot = 0
+	for (iter=1; iter<=maxit; iter++) {
+		if (iter == maxit) finished = 1
+		samp = ergm_cd_sample(M, G, theta, nsteps, ss, proposalfn, k)
+		acc = acc + k
+		tot = tot + ss * nsteps
+		X = samp[., freeidx]
+		if (all(diagonal(variance(X)) :< 1e-20) & any(X :!= 0)) {
+			errprintf("Unconstrained CD sampling did not mix at all. Optimization cannot continue.\n")
+			_error(498)
+		}
+		pval = ergm_hotel_indep(X)
+		if (verbose) printf("CD iter %g: convergence test p-value %9.3g\n", iter, pval)
+		if (pval < . & pval > minpval) {
+			finished = 1
+			converged = 1
+		}
+		steplen = (margin < . ? ergm_hummel_steplength(X, margin, 1) : 1)
+		if (steplen >= .) steplen = 1
+		steps = steps, steplen
+		if (cols(steps) > 2) {
+			if (steps[cols(steps)] + steps[cols(steps)-1] < 2 * 0.0001) {
+				errprintf("CD-MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data.\n")
+				_error(498)
+			}
+		}
+		Xs = X :- (1 - steplen) * mean(X)
+		delta = ergm_is_newton(Xs)
+		theta[freeidx] = theta[freeidx] + delta
+		coefhist = coefhist \ theta
+		if (verbose) {
+			printf("   step length %5.3f  theta:", steplen)
+			for (k=1; k<=p; k++) printf(" %9.5f", theta[k])
+			printf("\n")
+		}
+		if (finished) break
+	}
+	// covariance: inverse of the importance-weighted variance of the (unshrunk) CD statistics at the update
+	lw = X * delta'
+	w = exp(lw :- max(lw))
+	w = w / sum(w)
+	mu = w' * X
+	V = cross(X :- mu, w, X :- mu)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = invsym(V)
+	res.converged = converged
+	res.niter = min((iter, maxit))
+	res.coefhist = coefhist
+	res.finalsample = samp :+ obs
+	res.acceptrate = acc / tot
+	res.final_interval = nsteps
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, M.ntheta(), 0)
+	return(res)
+}
+
+// Stochastic approximation (Snijders 2002; ergm's MCMCPhase12 followed by a Newton step on a phase-3 sample)
+struct ErgmMCMLEFit scalar ErgmSA(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta0,
+	real scalar burnin, real scalar interval, real scalar gain, real scalar nphase1, real scalar nsub,
+	real scalar minit, real scalar maxit, real scalar phase3n, pointer(real rowvector function) scalar proposalfn, real scalar verbose){
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, obs, freeidx, ubar, u2bar, adiag, esteq, esteq_old, prod_cum, theta_sum, s, delta, infl, Sdiag
+	real matrix samp, V, S, Vinv
+	real scalar p, i, j, sub, n2lo, n2hi, done, totit, nfree, k
+	real colvector xx
+
+	p = cols(theta0)
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	obs = M.full_statistic(G)
+	theta = theta0
+	// burn-in and phase 1 at theta0
+	s = ErgmMCMCSample(M, G, theta, burnin, 0, 1, proposalfn) - obs
+	ubar = J(1, p, 0)
+	u2bar = J(1, p, 0)
+	for (i=0; i<=nphase1; i++) {
+		s = ErgmMCMCSample(M, G, theta, 0, interval, 1, proposalfn) - obs
+		if (i > 0) {
+			ubar = ubar + s
+			u2bar = u2bar + s:^2
+		}
+	}
+	adiag = J(1, p, 0)
+	for (j=1; j<=p; j++) {
+		if (M.isfixed[j]) continue
+		adiag[j] = u2bar[j] - ubar[j]^2 / nphase1
+		adiag[j] = (adiag[j] > 0 ? nphase1 * gain / adiag[j] : 0.00001)
+	}
+	if (verbose) {
+		printf("SA phase 1 done; gain/V:")
+		for (j=1; j<=p; j++) printf(" %g", adiag[j])
+		printf("\n")
+	}
+	esteq = J(1, p, 0)
+	totit = 0
+	for (sub=1; sub<=nsub; sub++) {
+		n2lo = trunc(minit * 2.52^(sub-1)) + 1
+		n2hi = maxit - minit + n2lo
+		theta_sum = J(1, p, 0)
+		prod_cum = J(1, p, 0)
+		for (i=1; i<=1000000; i++) {
+			s = ErgmMCMCSample(M, G, theta, 0, interval, 1, proposalfn) - obs
+			esteq_old = esteq
+			esteq = J(1, p, 0)
+			for (j=1; j<=p; j++) {
+				if (M.isfixed[j]) continue
+				esteq[j] = s[j]
+				prod_cum[j] = prod_cum[j] + esteq[j] * esteq_old[j]
+				theta[j] = theta[j] - adiag[j] * esteq[j]
+				theta_sum[j] = theta_sum[j] + theta[j]
+			}
+			totit++
+			done = 0
+			if (i >= n2hi) done = 1
+			else if (i >= n2lo) {
+				done = 1
+				for (j=1; j<=p; j++) if (!M.isfixed[j] & prod_cum[j] >= 0) {
+					done = 0
+					break
+				}
+			}
+			if (done) {
+				for (j=1; j<=p; j++) {
+					if (M.isfixed[j]) continue
+					if (sub == nsub) theta[j] = theta_sum[j] / i
+					adiag[j] = adiag[j] / 2
+				}
+				break
+			}
+		}
+		if (verbose) {
+			printf("SA subphase %g: %g iterations; theta:", sub, i)
+			for (j=1; j<=p; j++) printf(" %9.5f", theta[j])
+			printf("\n")
+		}
+	}
+	// phase 3: sample at the SA estimate and take one Newton step; covariance from the same sample
+	samp = ErgmMCMCSample(M, G, theta, burnin, interval, phase3n, proposalfn)
+	V = variance(samp[., freeidx])
+	delta = -(mean(samp[., freeidx] :- obs[freeidx])) * invsym(V)
+	theta[freeidx] = theta[freeidx] + delta
+	infl = ergm_spectral0_ar(samp[., freeidx] :- mean(samp[., freeidx]))
+	Sdiag = sqrt(infl)
+	S = V :* (Sdiag' * Sdiag)
+	Vinv = invsym(V)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = Vinv + Vinv * (S / rows(samp)) * Vinv
+	res.converged = 1
+	res.niter = totit
+	res.coefhist = theta
+	res.finalsample = samp
+	res.acceptrate = .
+	res.final_interval = interval
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, M.ntheta(), 0)
+	return(res)
+}
+
+/*
+	MPLE covariance beyond the inverse Hessian (R: MPLE.covariance.method = "Godambe" or "bootstrap").
+	R simulated networks from the model at the MPLE (burn-in once, then `interval' steps between draws);
+	Godambe: invHess * Var(u) * invHess with u = X'(y - p) summed over dyads of each simulated network
+	(R's formula ignores offset terms there); bootstrap: the covariance of the MPLEs of the simulated networks.
+	invHess is the free-coefficient block.  Returns the free-block covariance.
+*/
+real matrix ergm_mple_cov(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta, real matrix invHess,
+	real scalar kind, real scalar R, real scalar burnin, real scalar interval, pointer(real rowvector function) scalar proposalfn){
+	real scalar r, p, pf
+	real rowvector fidx
+	real matrix D, X, U, B, Uc
+	real colvector y, pr, off
+	string scalar nb, nv
+
+	p = M.nparam()
+	fidx = M.freeidx()
+	pf = cols(fidx)
+	U = J(R, pf, 0)
+	B = J(R, pf, 0)
+	nb = st_tempname()
+	nv = st_tempname()
+	for (r=1; r<=R; r++) {
+		(void) ErgmMCMCSample(M, G, theta, (r == 1 ? burnin : 0), interval, 1, proposalfn)
+		D = (M.native_enabled ? ErgmNativeBuildMPLEData(M, G) : M.build_mple_data(G))
+		X = D[., fidx]
+		y = D[., p+1]
+		if (kind == 1) {
+			pr = invlogit(X * theta[fidx]')
+			U[r, .] = (X' * (y - pr))'
+		}
+		else {
+			off = D[., 1..p] * (M.isfixed :* M.fixedvalue)'
+			(void) ergm_glm_irls((X, y), nb, nv, off)
+			B[r, .] = st_matrix(nb)
+		}
+	}
+	if (kind == 1) {
+		Uc = U :- mean(U)
+		return(invHess * (cross(Uc, Uc) / (R - 1)) * invHess)
+	}
+	return(variance(B))
+}
+
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize0, pointer(real rowvector function) scalar proposalfn,
@@ -9218,6 +10468,19 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	real rowvector theta_c_try
 	real scalar bt_domain
 	real rowvector freeidx, delta_apply
+	real rowvector ctl
+	real scalar term, conv_now, last_ok, pval, minpval, hmargin, hmax
+	external real rowvector ergm_ctl
+
+	// control.ergm()-style settings supplied by nwergm: (termination 1=confidence 2=Hummel 3=Hotelling 4=none,
+	// MCMLE.confidence, MCMLE.steplength, MCMLE.steplength.margin (. = NULL), MCMLE.effectiveSize (. = default), MCMLE.conv.min.pval)
+	ctl = (1, 0.99, 1, 0.05, ., 0.5)
+	if (cols(ergm_ctl) == 6) ctl = ergm_ctl
+	term = ctl[1]
+	hmax = ctl[3]
+	hmargin = ctl[4]
+	minpval = ctl[6]
+	last_ok = 0
 	real matrix sampo, Dobs, Dtesto, Vtesto, Svo, covmean, So
 	real rowvector inflo, Sdiago
 	real colvector lwo, wo
@@ -9289,7 +10552,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// matches Statnet's own default "confidence" termination method's
 	// own reported confidence level (observed directly in real ergm()
 	// console output: "Converged with 99% confidence").
-	confidence = 0.99
+	confidence = ctl[2]
 
 	// ADAPTIVE INTERVAL (harmonisation unit 85, docs/CERTIFICATION.md) -
 	// closes the open question unit 84 surfaced rather than resolved:
@@ -9336,6 +10599,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// requeried every iteration.
 	ptest_const = (is_curved ? M.ntheta() : cols(freeidx))
 	min_neff = max((200, 64*ptest_const))
+	if (ctl[5] < .) min_neff = ctl[5]
 	interval_cap = 20000
 
 	// Combined safety bound on `interval * samplesize' (the TOTAL raw
@@ -9462,6 +10726,10 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 			printf("not varying this iteration - this may indicate an extreme point or dead-end configuration.\n")
 		}
 		pvarying = ptest_const - sum(nonvarying)
+		if (pvarying == 0 & any(Dtestbar :!= 0)) {
+			errprintf("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.\n")
+			_error(498)
+		}
 		if (pvarying > 1) {
 			varyidx = J(1, 0, 0)
 			for (k=1; k<=ptest_const; k++) if (!nonvarying[k]) varyidx = varyidx, k
@@ -9503,7 +10771,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		// badly non-mixed chain) - the old Mahalanobis rule is kept as
 		// the fallback for exactly that rare case, rather than failing
 		// the whole fit outright.
-		gamma_hummel = ergm_hummel_steplength(Dtest, 0.05, 1)
+		if (hmargin < .) gamma_hummel = ergm_hummel_steplength(Dtest, hmargin, hmax)
+		else gamma_hummel = hmax
 		if (gamma_hummel != .) gamma = gamma_hummel
 		else {
 			mahal = sqrt(delta * Vtest * delta')
@@ -9819,9 +11088,29 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 			if (theta_c_maxdiff < 1e-3) theta_c_stable_count = theta_c_stable_count + 1
 			else theta_c_stable_count = 0
 		}
-		if (Fstat!=. & Fcrit!=. & Fstat <= Fcrit & (gamma==1 | (is_curved & theta_c_stable_count>=2))) {
-			converged = 1
-			break
+		if (term == 1) {
+			if (Fstat!=. & Fcrit!=. & Fstat <= Fcrit & (gamma==1 | (is_curved & theta_c_stable_count>=2))) {
+				converged = 1
+				break
+			}
+		}
+		else if (term == 2 | term == 3) {
+			// Hotelling / Hummel termination (R: MCMLE.termination): criterion met in two successive iterations;
+			// the first time the sample size is raised by MCMLE.last.boost (4)
+			if (term == 3) {
+				pval = (Fstat < . ? Ftail(ptest_const, neff - ptest_const, Fstat) : .)
+				conv_now = (pval < . & pval >= 1 - sqrt(1 - minpval))
+			}
+			else conv_now = (gamma_undamped == 1)
+			if (conv_now) {
+				if (last_ok) {
+					converged = 1
+					break
+				}
+				last_ok = 1
+				samplesize = min((samplesize * 4, samplesize_cap, floor(total_draws_cap/interval)))
+			}
+			else last_ok = 0
 		}
 		// Not (yet) converged: if the achieved effective sample size is
 		// below the target floor, grow `interval' for the NEXT iteration

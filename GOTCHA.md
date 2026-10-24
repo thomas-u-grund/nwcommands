@@ -847,6 +847,35 @@ same trap: clear it at the start of the fit.
 then equals the unthresholded one. Use `setEffect(e, totExposure, name = ..., type = "rate", interaction1 = ..., parameter = 3,
 include = TRUE)` when validating the thresholds of the diffusion rate effects.
 
+## Mata functions and programs defined inside an .ado file are private to that file
+
+`mata: nwergm_estat_bridge_from_netobj(...)` called from a *different* .ado file fails with "not found" (3499): functions
+(and `program`s) defined in an .ado are namespaced `file.name` and only callable from programs of the same file. Anything two
+helper files need (observed-network bridge, summary functions) belongs in `unw_ergm.do` (the Mata library), as
+`ergm_bridge_obs()`. Likewise `estat gof` plots call `_nwergm_gofplot`, a file of its own.
+
+## Stata `syntax` flag options that start with "no" lose the prefix
+
+`syntax [, NOMPLECHECK]` creates the local `mplecheck`, not `nomplecheck`; testing `"`nomplecheck'" == ""` is then always true.
+Use a string option (`mplecheck(on|off)`) or a name that does not start with "no".
+
+## R ergm 4.12.0 and the development 4.13 differ in `spectrum0.mvar()` (mcmc.diagnostics, Hotelling tests)
+
+4.12.0 fits a multivariate Yule-Walker AR (`ar()`), 4.13 an OLS VAR (`fit_var_ols_multi`); the Hotelling omnibus p-values and the
+joint Geweke p-value differ in the 2nd-3rd digit between the two. `unw_ergm.do` follows 4.12.0 (`ergm_spec0_mvar()`, checked to 1e-8
+against 4.12.0 on a fixed sample in `cscripts/test_nwergm_est.do`). Also: in 4.12.0 `MPLE.type="penalized"` stops with "'length = 3' in
+coercion to 'logical(1)'" (R >= 4.3); fixed in 4.13 (`anyNA(start)`), which `ergm_pen_glm()` reproduces.
+
+## `nwergm ... , simulate` must be recognised before the comma
+
+`nwergm simulate, nsim(5)` has `simulate,` as its first blank-delimited token; the dispatcher compares the first token parsed with
+`parse(" ,")`. Testing `"`1'" == "simulate"` never matched when a comma follows directly.
+
+## MPLE existence check vs. the old logit start
+
+`logit` silently drops perfectly predicted terms/observations, so the old MCMLE start from a separated pseudolikelihood was finite
+(or failed with "no observations", which `test_nwergm_ado.do` relies on for a 3-node cycle). The new check (`ergm_mple_exists()`, Konis'
+LP) only warns for method(mcmle); the glm-style iterate R reports (huge coefficients) is used for `estimate(mple)` only.
 ## The RSiena reference is version 1.6.14 now (1.6.6 numbers can silently differ)
 
 The installed RSiena was updated from 1.6.6 to 1.6.14 (2026-10-22). Reference numbers written into the cscripts before that date

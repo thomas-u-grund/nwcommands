@@ -2,8 +2,14 @@
 capture program drop nwergm
 program nwergm, eclass
 	version 14
-	if `"`1'"' == "simulate" {
-		gettoken __ergm_sub 0 : 0
+	gettoken __ergm_t1 : 0, parse(" ,")
+	if `"`__ergm_t1'"' == "simulate" {
+		gettoken __ergm_sub 0 : 0, parse(" ,")
+		gettoken __ergm_first : 0, parse(" ,")
+		if `"`__ergm_first'"' == "" | `"`__ergm_first'"' == "," {
+			_nwergm_simfit `0'
+			exit
+		}
 		nwergm_simulate `0'
 		exit
 	}
@@ -31,10 +37,21 @@ program nwergm, eclass
 		BGWDEGREEFREE1(string) BGWDEGREEFREE2(string) BGWDSPFREE1(string) BGWDSPFREE2(string) ///
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
-		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
+		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 60) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) COEFLABEL(string) LOGSTAT(string) EXPSTAT(string) STRUCTURAL(string asis) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) BRIDGEINTERVAL(integer 0) ]
+		OFFSET(string) COEFLABEL(string) LOGSTAT(string) EXPSTAT(string) STRUCTURAL(string asis) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) BRIDGEINTERVAL(integer 0) ///
+		INIT(string) MPLETYPE(string) MPLECHECK(string) MPLECOVariance(string) ESTimate(string) MAINMETHOD(string) ///
+		MCMLETERMination(string) MCMLECONFidence(real 0.99) MCMLESTEPLength(real 1) MCMLESTEPMargin(real 0.05) ///
+		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SABURNin(integer 16384) SAINTERval(integer 1024) SAPHASE3(integer 1000) SAGAIN(real 0.1) SANSUB(integer 4) ]
 	set more off
+	_nwergm_est opts, estimate(`estimate') method(`method') mainmethod(`mainmethod') mpletype(`mpletype') ///
+		mplecovariance(`mplecovariance') mcmletermination(`mcmletermination') mplecheck(`mplecheck')
+	local method "`s(method)'"
+	local mainmethod "`s(mainmethod)'"
+	local mpletype "`s(mpletype)'"
+	local mplecovariance "`s(mplecovariance)'"
+	local mcmletermination "`s(mcmletermination)'"
+	local mplecheck "`s(mplecheck)'"
 	// numlist-valued options accept ranges such as degree(0/3), as in R's d=0:3
 	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
 		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
@@ -89,7 +106,7 @@ program nwergm, eclass
 	if "`proposal'" == "" local proposal "tnt"
 	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`method'" != "" {
-		_opts_oneof "mple mcmle" "method" "`method'" 6556
+		_opts_oneof "mple mcmle cd" "method" "`method'" 6556
 	}
 	local __ergm_type_explicit = ("`type'" != "")
 	local type = upper("`type'")
@@ -1683,7 +1700,7 @@ program nwergm, eclass
 	// this check's own result, a forcing that no longer happens.
 	local __ergm_dind = (`"`mutual'"'=="" & `__ns_dep' == 0 & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep' & "`nodecovrange'`nodeocovrange'`nodeicovrange'`nodefactordistinct'`nodeofactordistinct'`nodeifactordistinct'"=="")
 	if "`method'" == "" {
-		local method = cond(`__ergm_dind', "mple", "mcmle")
+		local method = cond(`__ergm_dind' & "`mainmethod'" != "sa", "mple", "mcmle")
 	}
 	if "`method'" == "mple" & !`__ergm_dind' {
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
@@ -1765,6 +1782,21 @@ program nwergm, eclass
 	// accordingly. Found and fixed while building the R-vs-Stata
 	// benchmark suite's own large-network control case
 	// (docs/CERTIFICATION.md harmonisation unit 81).
+	if `__ergm_curved' & ("`method'" == "cd" | "`mainmethod'" == "sa") {
+		di "{err}contrastive divergence and stochastic approximation are not available for models with curved terms."
+		error 198
+	}
+	// init(): R's control.ergm(init=); starting values / offset values
+	local __e7_initmode 0
+	if `"`init'"' != "" {
+		if `__ergm_curved' {
+			di "{err}option {bf:init()} is not currently supported for a model containing a curved (free-decay) term."
+			error 198
+		}
+		_nwergm_est init `"`init'"' "`method'"
+		local __e7_initmode = r(mode)
+	}
+
 	tempname __nw_D
 	// Harmonisation unit 145: route the design-matrix build through the
 	// native (C) backend when eligible, exactly the same "is this whole
@@ -1875,7 +1907,12 @@ program nwergm, eclass
 
 		local __ergm_irls 0
 		mata: st_local("__ergm_has_offset", strofreal(sum(__nwergm_last_M.isfixed)>0))
-		if !`__ergm_has_offset' mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		if !`__ergm_has_offset' & "`mpletype'" == "glm" & ("`mplecheck'" == "on" | "`method'" != "mple") mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		// a separated pseudolikelihood goes through the existence check and R's glm iterate below
+		if `__ergm_irls' & "`mplecheck'" == "on" {
+			mata: st_local("__e7_ex", strofreal(ergm_mple_exists(`__nw_D')))
+			if !`__e7_ex' local __ergm_irls 0
+		}
 		if !`__ergm_irls' {
 		preserve
 		qui drop _all
@@ -1918,26 +1955,39 @@ program nwergm, eclass
 		// would leave the caller's own dataset in the modified,
 		// mid-preserve state (the same class of bug already fixed once
 		// in nwrename.ado this same pass).
-		capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt' tolerance(1e-9) ltolerance(1e-11)
-		// near-separated fits may not reach the tight tolerance: fall back to logit's defaults
-		if _rc == 430 capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
-		if _rc != 0 {
-			local __ergm_mple_rc = _rc
+		tempname __e7_sb __e7_sV
+		local __e7_special 0
+		_nwergm_est mple `__nw_D' `__e7_sb' `__e7_sV' "`mpletype'" "`mplecheck'" `__ergm_has_offset' "`method'"
+		local __e7_special = r(special)
+		local __e7_rcx 0
+		if !`__e7_special' {
+			capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt' tolerance(1e-9) ltolerance(1e-11)
+			// near-separated fits may not reach the tight tolerance: fall back to logit's defaults
+			if _rc == 430 capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
+			local __e7_rcx = _rc
+		}
+		if `__e7_rcx' != 0 {
+			local __ergm_mple_rc = `__e7_rcx'
 			restore
 			di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
 			error `__ergm_mple_rc'
 		}
-		if `__ergm_has_offset' {
-			tempname __b_mple_free __V_mple_free
+		tempname __b_mple_free __V_mple_free
+		if `__e7_special' {
+			matrix `__b_mple_free' = `__e7_sb'
+			matrix `__V_mple_free' = `__e7_sV'
+		}
+		else {
 			matrix `__b_mple_free' = e(b)
 			matrix `__V_mple_free' = e(V)
-			restore
+		}
+		restore
+		if `__ergm_has_offset' {
 			mata: ergm_mple_expand_fixed(__nwergm_last_M, st_matrix("`__b_mple_free'"), st_matrix("`__V_mple_free'"), "`__b_mple'", "`__V_mple'")
 		}
 		else {
-			matrix `__b_mple' = e(b)
-			matrix `__V_mple' = e(V)
-			restore
+			matrix `__b_mple' = `__b_mple_free'
+			matrix `__V_mple' = `__V_mple_free'
 		}
 		}
 	}
@@ -1960,6 +2010,9 @@ program nwergm, eclass
 		matrix rownames `__V_mple' = `__ergm_coefnames'
 		matrix colnames `__V_mple' = `__ergm_coefnames'
 
+		if "`mplecovariance'" != "invhess" & ("`mplecovariance'" == "bootstrap" | !`__ergm_dind') & !`__ergm_curved' {
+			_nwergm_est mplecov `__b_mple' `__V_mple' "`mplecovariance'" "`proposal'"
+		}
 		ereturn post `__b_mple' `__V_mple', depname(`netname') obs(`__ergm_nrows')
 		ereturn local cmd "nwergm"
 		ereturn local title "Exponential-family random graph model (MPLE)"
@@ -1989,6 +2042,16 @@ program nwergm, eclass
 	}
 	else {
 		tempname __theta0
+		if `__e7_initmode' == 1 {
+			mata: __e7_fx = __nwergm_last_M.isfixed; __e7_fx[__e7_tmpfix] = J(1, cols(__e7_tmpfix), 0); __nwergm_last_M.isfixed = __e7_fx
+			mata: __e7_fx = __nwergm_last_M.fixedvalue; __e7_fx[__e7_tmpfix] = J(1, cols(__e7_tmpfix), 0); __nwergm_last_M.fixedvalue = __e7_fx
+			mata: mata drop __e7_fx
+			mata: mata drop __e7_tmpfix
+		}
+		if `__e7_initmode' == 2 {
+			mata: __e7_th = __e7_init; __e7_th = editmissing(__e7_th, 0) :* (1 :- __nwergm_last_M.isfixed) + (__nwergm_last_M.isfixed :* __nwergm_last_M.fixedvalue); st_matrix("`__b_mple'", __e7_th)
+			mata: mata drop __e7_th
+		}
 		// Curved gwesp (harmonisation unit 138): `__b_mple' is now
 		// THETA-space for a curved model (unit 136's own MPLE change -
 		// it reports gwesp_weight/gwesp_decay directly, not raw
@@ -2126,6 +2189,8 @@ program nwergm, eclass
 			mata: __nwergm_last_M.obs_active = 1
 		}
 
+		_nwergm_est ctl, termination(`mcmletermination') confidence(`mcmleconfidence') steplength(`mcmlesteplength') ///
+			margin(`mcmlestepmargin') effsize(`mcmleeffectivesize')
 		capture mata: mata drop __ergm_obsstat
 		capture confirm number 0
 		mata: __ergm_obsstat = __nwergm_last_M.full_statistic(__nwergm_last_G)
@@ -2135,7 +2200,16 @@ program nwergm, eclass
 			mata: mata drop __ergm_theta_c0_mcmle
 		}
 		else {
-			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+			if "`method'" == "cd" {
+				_nwergm_est cdstart `__theta0' `__ergm_curved'
+				mata: `__fit' = ErgmCD(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `cdnsteps', `cdsamplesize', `__ergm_propfn', ("`verbose'"!=""), 0.5, 0.5)
+			}
+			else if "`mainmethod'" == "sa" {
+				mata: __e7_q = cols(__nwergm_last_M.freeidx())
+				mata: `__fit' = ErgmSA(__nwergm_last_M, __nwergm_last_G, `__theta0', `saburnin', `sainterval', `sagain', max((200, 7 + 3*__e7_q)), `sansub', 7 + __e7_q, 207 + __e7_q, `saphase3', `__ergm_propfn', ("`verbose'"!=""))
+				mata: mata drop __e7_q
+			}
+			else mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
@@ -2223,6 +2297,7 @@ program nwergm, eclass
 			}
 			mata: st_matrix("`__b_mcmle'", `__fit'.coef)
 			mata: st_matrix("`__V_mcmle'", `__fit'.vcov)
+
 		}
 		// captured into plain locals, NOT e(name)-style scalars: `ereturn
 		// post' below clears whatever the e() results namespace
@@ -2248,6 +2323,7 @@ program nwergm, eclass
 		ereturn local title "Exponential-family random graph model (MCMLE)"
 		ereturn local depvar "`netname'"
 		ereturn local method "mcmle"
+		ereturn local estimate "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MLE"))'"
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
 		ereturn local estat_cmd "nwergm_estat"
@@ -2333,7 +2409,7 @@ program nwergm, eclass
 			di "{err}Results are reported but should not be treated as a converged fit - consider increasing mcmleiterations()/mcmcsamplesize()."
 		}
 
-		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
+		nwergm_display "`netname'" "`nodes'" "`directed'" "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MCMLE"))'" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
 		_nwergm_fitstats, dmat(`__nw_D') method(mcmle) propfn(`__ergm_propfn') mcmcburnin(`mcmcburnin') mcmcinterval(`mcmcinterval') ///
 			mcmcsamplesize(`mcmcsamplesize') intervalfinal(`__ergm_interval_final') curved(`__ergm_curved') bridgesteps(`bridgesteps') ///
 			bridgesamplesize(`bridgesamplesize') bridgeinterval(`bridgeinterval') `nologlik'
@@ -2356,14 +2432,20 @@ program nwergm_display
 	di "{txt}Nodes:{col 24}={res}  `nodes'"
 	di "{txt}Ties:{col 24}={res}  `=e(ties)'"
 	di "{txt}Directed:{col 24}={res}  " cond("`directed'"=="true","Yes","No")
-	di "{txt}Estimation:{col 24}={res}  `method'"
+	di "{txt}Estimation:{col 24}={res}  " cond("`method'"=="CD","Contrastive divergence",cond("`method'"=="SA","Stochastic approximation","`method'"))
 	if "`method'" == "MCMLE" {
 		di "{txt}MCMC sample size:{col 24}={res}  `mcmcsamplesize'"
 	}
 	di
 	ereturn display
 	di
-	if "`method'" == "MCMLE" {
+	if "`method'" == "CD" {
+		di "{txt}Contrastive divergence estimate (`niter' iteration(s)); standard errors come from the covariance of the short-run CD sample."
+	}
+	else if "`method'" == "SA" {
+		di "{txt}Stochastic approximation estimate (`niter' phase-2 iteration(s))."
+	}
+	else if "`method'" == "MCMLE" {
 		if "`converged'" == "1" {
 			di "{txt}MCMLE converged after `niter' iteration(s)."
 		}
