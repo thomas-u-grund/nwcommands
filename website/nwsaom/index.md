@@ -65,7 +65,7 @@ program, and the page [nwsaom and RSiena](rsiena/) says exactly what `nwsaom` ha
 ## Links
 
 - Source code and releases: [github.com/thomas-u-grund/nwsaom](https://github.com/thomas-u-grund/nwsaom)
-- The manual (PDF): [nwsaom_manual.pdf](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf) in the GitHub repository
+- The manual (PDF), archived at Zenodo: [doi:10.5281/zenodo.23623808](https://doi.org/10.5281/zenodo.23623808); also in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf)
 - Stata's own documentation: `help nwsaom`, `help nwsaom_estat`, `help nwsaom_remarks`; or the
   [`nwsaom` reference page](../reference/nwsaom)
 - A Stata Journal article on `nwsaom` is in preparation.
