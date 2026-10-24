@@ -27,7 +27,7 @@ The core package ships with example networks, so every tutorial and help example
 
 ### s50
 - **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
-- **Source:** the same excerpt as `glasgow` above (the tie counts agree at all three waves). The `netexample` help text describes `s50` as a different study; until that is settled, treat the Glasgow references as the source.
+- **Source:** the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as `s50` with RSiena; the networks are the same as in `glasgow` above (the tie counts agree at all three waves), which also has the sport variable. References as for `glasgow`.
 - **Load:** `nwwebuse s50`
 - **Used in:** [Tutorial 9 (longitudinal models: an overview)](../tutorials/10-intro-longitudinal-models/).
 
