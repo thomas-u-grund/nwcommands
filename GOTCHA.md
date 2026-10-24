@@ -269,3 +269,16 @@ the starting edge list of seeded MCMC fits (nwergm `seed()`). The dense path (`b
 Fix: sort by one combined key `ego*(n+1)+alter` (and `target*(n+1)+source` for in-neighbors), so every adjacency list is
 ascending with no per-call sort. **Lesson:** never rely on the tie order of `order()`/`sort()`; add the tie-breaking
 column to the key. Test: `cscripts/test_core_neighbor_order.do`.
+
+
+## nwinstall deleted profile.do: `c(adopath)` contains quotes, never put it in a `shell` line (fixed 2026-10-24)
+
+`nwinstall, remove` (also `gui`/`permanently` with an existing profile.do) erased the user's profile.do, then ran
+`shell export PATH="...`c(adopath)'..."; mv ...` to put the edited copy back. After `adopath ++ "dir"` the macro
+`c(adopath)` holds compound-quoted entries (`"dir";BASE;SITE;...`), so the shell saw an unbalanced quote
+(`zsh: unmatched "`, `parse error in command substitution`), `mv` never ran, and the original was already gone.
+`shell` does not return the command's exit code, so Stata reported rc=0. `cscripts/test_nwinstall.do` failed only
+because it ran with such an adopath entry. Fix: no `shell` for file edits; write a temp file, verify it, back up, replace
+with Stata's `copy`, restore on failure. **Lesson:** never erase a file before its replacement is verified in place,
+never interpolate `c(adopath)`/`c(pwd)`/paths into a shell string, and prefer Stata's `copy`/`erase`/`mkdir` over `shell`.
+Also: subprograms of an ado-file are not callable from a do-file (the test defines its own line counter).
