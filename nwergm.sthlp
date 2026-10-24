@@ -41,6 +41,7 @@
 {p2col:{it:{help nwergm##sharedpartner_effects:sharedpartner_effects}}}fixed (non-geometric) shared-partner count terms, and the directed shared-partner {opt type()} selector{p_end}
 {p2col:{it:{help nwergm##triad_effects_directed:triad_effects_directed}}}directed triad-closure existence-indicator terms{p_end}
 {p2col:{it:{help nwergm##nodelevel_effects:nodelevel_effects}}}dyadic-covariate and per-node fixed-effect terms{p_end}
+{p2col:{opt structural(termlist)}}further structural terms of R's ergm ({opt twopath}, {opt transitive}, {opt cycle()}, {opt altkstar()}, {opt degree()} with {opt by()} ...), see {help nwergm_structural}{p_end}
 {p2col:{it:{help nwergm##estimation_control:estimation_control}}}estimation method, MCMC tuning, constraints, and output control{p_end}
 
 {synoptset 25 tabbed}{...}
@@ -65,6 +66,7 @@
 
 {marker bipartite_effects}{...}
 {syntab:Two-mode (bipartite) effects}
+{synopt:{it:further two-mode terms}}b1/b2 concurrent, mindegree, degrange, covrange, factordistinct, sociality, starmix, twostar, coincidence, dsp and gwdsp, curved versions, sub-arguments such as {cmd:by()} - see {help nwergm_bipartite:nwergm (two-mode)}{p_end}
 {synopt:{opth bcov1(varlist)}}Bipartite (two-mode) networks only: the {cmd:b1cov()} term from R's own {cmd:ergm} package (renamed to {cmd:bcov1()} because Stata's {cmd:syntax} command rejects an option name with a digit followed by a letter, e.g. {cmd:b1cov}) - continuous node covariate main effect for the MODE-1 endpoint only (sum, over ties, of the mode-1 endpoint's own covariate value; the mode-2 endpoint's value is never added). Reported coefficient name keeps R's own {cmd:b1cov_}{it:varname} spelling{p_end}
 {synopt:{opth bcov2(varlist)}}Bipartite networks only: the {cmd:b2cov()} term - the {opt bcov1()} mirror for the MODE-2 endpoint. Reported coefficient name: {cmd:b2cov_}{it:varname}{p_end}
 {synopt:{opth bfactor1(varlist)}}Bipartite networks only: the {cmd:b1factor()} term - one coefficient per NON-BASE distinct level of each listed categorical attribute (lowest-sorted level omitted, same convention as {opt nodefactor()}), each counting the number of ties whose MODE-1 endpoint carries that level (the mode-2 endpoint never gets credit, unlike {opt nodefactor()}'s own both-endpoints convention). Reported coefficient name: {cmd:b1factor_}{it:varname}{cmd:_}{it:level}{p_end}
@@ -143,6 +145,10 @@
 {syntab:Estimation control}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opth offset(coefname # [coefname # ...])}}Hold one or more named coefficients fixed at a given value rather than estimating them, matching R ergm's own {cmd:offset()} formula wrapper. {bf:coefname} must be a coefficient this model would otherwise report (an option must still be typed to register the term, e.g. {opt triangle}, before {opt offset(triangle #)} can fix its own coefficient - {opt offset()} names an EXISTING coefficient, it does not add a second copy of the term). Works with both {opt method(mple)} and {opt method(mcmle)}. At least one coefficient in the model must remain free. Not currently supported for a curved (free-decay) term's own weight/decay. The fixed coefficient is reported at exactly the given value with standard error exactly 0 (matching R's own real output) and a zero row/column in {bf:e(V)} - see {bf:Remarks} below{p_end}
+{synopt:{opt nologlik}}Do not evaluate the log-likelihood of a dyad-dependent MCMLE fit by bridge sampling (R: {cmd:eval.loglik=FALSE}); {cmd:e(ll)}, AIC and BIC are then missing{p_end}
+{synopt:{opt bridgesteps(#)}}Number of bridges for the log-likelihood evaluation; default 16 (R: {cmd:bridge.nsteps}){p_end}
+{synopt:{opt bridgesamplesize(#)}}Draws per bridge; default {opt mcmcsamplesize()}{p_end}
+{synopt:{opt bridgeinterval(#)}}MCMC thinning within the bridges; default the final MCMLE interval divided by the number of bridges{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
 {synopt:{opt mcmcsamplesize(int)}}Number of recorded MCMC draws per simulation; default 3,000{p_end}
@@ -231,7 +237,7 @@ coefficients may be fixed in one model: {bf:offset(mutual 2 gwesp_weight 0.5)}.
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - a narrow term family so far ({opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}, {opt bnodematch1()}/{opt bnodematch2()}, {opt bgwdegree1()}/{opt bgwdegree2()}); see Limitations below.
+Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - the two-mode terms are listed in {help nwergm_bipartite:nwergm (two-mode)} (the older ones are {opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}, {opt bnodematch1()}/{opt bnodematch2()}, {opt bgwdegree1()}/{opt bgwdegree2()}); see Limitations below.
 
 {title:Limitations (v1 scope)}
 
@@ -415,10 +421,17 @@ simulation.
 simulated networks and the network {cmd:nwergm} was fitted on - available after either
 estimation method. See {help nwergm_estat} for full details.
 
+{pstd}
+{cmd:estat ic}, {cmd:lrtest} and {cmd:predict} (conditional tie probabilities, as {cmd:predict.ergm} in R) are described in {help nwergm_fit}, which
+also explains how missing dyads and missing covariate values are handled.
+
 {title:Stored results}
 
 	Scalars
-	  {bf:e(N)}			number of dyads
+	  {bf:e(N)}			number of informative dyads (observed, not missing, not constrained)
+	  {bf:e(nmissing)}		number of missing dyads
+	  {bf:e(ll)}, {bf:e(ll_0)}	log-likelihood and null-model log-likelihood; see {help nwergm_fit}
+	  {bf:e(df_m)}, {bf:e(aic)}, {bf:e(bic)}, {bf:e(deviance)}, {bf:e(ll_se)}	see {help nwergm_fit}
 	  {bf:e(nodes)}			number of nodes
 	  {bf:e(ties)}			number of observed ties
 	  {bf:e(converged)}		1 if MCMLE's own convergence test was satisfied (method(mcmle) only)

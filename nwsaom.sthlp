@@ -294,10 +294,13 @@ estimates agree with siena07{p_end}
 {cmd:outtrunc()}/{cmd:outmore()}/{cmd:outthreshold()} there): {cmd:jin jout transtrip1 transtrip2 transrectrip2 transtripfr transtripfe transtripee outpopmore:}{it:#}
 {cmd:outpopsqrtmore:}{it:#} {cmd:outpopthreshold:}{it:#} (RSiena Jin, Jout, transTrip1, transTrip2, transRecTrip2, transTrip.FR/FE/EE, outPopMore, outPopSqrtMore, outPopThreshold)
 and the ego degree effects {cmd:outactego[:2] outactmoreego:}{it:#} {cmd:outactsqrtmoreego:}{it:#} {cmd:outmoreego:}{it:#}
-{cmd:divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]} (RSiena's *_ego forms; parameter 2 = square root). Statistics and estimates agree with siena07{p_end}
+{cmd:divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]} (RSiena's *_ego forms; parameter 2 = square root). {cmd:outpopmore}, {cmd:outpopsqrtmore} and {cmd:outpopthreshold}
+need a parameter of at least 1 (the default; RSiena stops with an error below 1). Statistics and estimates agree with siena07{p_end}
 {synopt:{opt dyadx(effect:matrix ...)}}Network effects of a constant dyadic covariate W (RSiena's WWX, cyWWX, InWWX, OutWWX, WXX, XWX, XWX1, XWX2,
 XXW): {it:effect} is the lower-case name, {it:matrix} a Stata {it:n} x {it:n} matrix used {bf:raw} (not centred, missing cells = 0), e.g.
-{cmd:dyadx(xwx:DM wwx:DM)}. Coefficients {cmd:nat_}{it:effect}{cmd:_}{it:matrix}. Observed statistics and estimates agree with siena07.
+{cmd:dyadx(xwx:DM wwx:DM)}. {cmd:wxzx:}{it:W}{cmd::}{it:Z} is RSiena's WXZX, the closure of the paths i -W-> h -X-> k -Z-> j by the tie i -> j, with two matrices.
+In a two-mode network the available effects are {cmd:wxx} (a matrix among the actors, {it:na} x {it:na}), {cmd:xwx xwx1 xwx2} (a matrix among the events) and {cmd:wxzx:}{it:W}{cmd::}{it:Z}
+(W among the actors, Z among the events). Coefficients {cmd:nat_}{it:effect}{cmd:_}{it:matrix}. Observed statistics and estimates agree with siena07.
 {bf:Native plugin only} (protocol 49){p_end}
 {synopt:{opt behshape(effect[:#] ...)}}RSiena's further behavior shape effects (native, protocol 51): {cmd:quad_cc} and {cmd:quad_nc} (centred / non-centred quadratic shape - use
 them {it:instead of} {cmd:quadratic}), {cmd:threshold:}{it:#}, {cmd:simallnear:}{it:#} (default 2), {cmd:simallfar:}{it:#} (default 4), {cmd:avgroup}[{cmd::}{it:#}],
@@ -416,6 +419,8 @@ omitted or mis-sized (outdegree first, then every other effect in the order its 
 network-only model starts {opt outdegree} at RSiena's data-derived starting value{p_end}
 {synopt:{opt k0(int)}}Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50{p_end}
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
+{synopt:{opt ml}}estimate by maximum likelihood (Robbins-Monro on the likelihood of the augmented data) instead of the method of moments; see {help nwsaom_remarks##ml:Maximum likelihood}{p_end}
+{synopt:{opt mloptions(string)}}controls of the maximum likelihood estimator: {opt n1(#)}, {opt nsub(#)}, {opt nstart2(#)}, {opt n3(#)}, {opt mult(#)}, {opt gain(#)}, {opt seed(#)}{p_end}
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every
@@ -450,6 +455,17 @@ parameter whose t-ratio is 0.1 or more in absolute value; the full information i
 {synopt:{opt detail}}list the convergence t-ratio of every parameter{p_end}
 {synoptline}
 {p2colreset}{...}
+
+{marker describe}{...}
+{title:Describing the data before a fit: nwsaom describe}
+
+{p 8 17 2}
+{cmd:nwsaom describe,} {opt waves(namelist)} [{opt beh:avior(varlist)}]
+
+{p 4 4 2}
+Prints what RSiena prints before an estimation: for every wave the number of ties, the density and the average degree; for every period the numbers of ties kept, created and dissolved, the Jaccard index and the Hamming distance; and, with {opt behavior()}, the mean of the behavior in every wave and the numbers of actors whose behavior goes up, down or stays the same.
+A period with a Jaccard index below about 0.3 has few stable ties and carries little information about the change process.
+Results are in {cmd:r(periods)}, {cmd:r(waves)} and {cmd:r(behchange)}.
 
 {marker meta}{...}
 {title:Several groups: nwsaom meta}
@@ -502,7 +518,9 @@ outoutavintn dist2outinactintn outoutdist2actintn outoutdist2avintn ndist2actint
 wxxer xwxer xwxfe jinmix joutmix gwespffmix gwespbbmix gwespbfmix gwespfbmix gwesprrmix inpopoutw sharedto avalt2mtie avalt2mtot doubleinpop}).
 Also {cmd:toany}, {cmd:betweenpop} and {cmd:gwespmix} (= gwespfbmix), and RSiena's from.w.ind as {cmd:fromwindoo} (the other network for both the agreement and the in-degree weights),
 {cmd:fromwindow} (agreement in the other, weights from the own network) and {cmd:fromwindwo} (agreement in the own, weights from the other network).
-With a {bf:dyadic covariate} (a Stata matrix, written {it:effect}{cmd::}{it:matrix}[{cmd::}{it:#}], e.g. {cmd:cross1(sharedtou:W:1)}): {cmd:tou sharedtou avaltutie} (RSiena toU, sharedToU, avAltU.2M.tie).
+With a {bf:dyadic covariate} (a Stata matrix, written {it:effect}{cmd::}{it:matrix}[{cmd::}{it:#}], e.g. {cmd:cross1(sharedtou:W:1)}): {cmd:tou sharedtou avaltutie} (RSiena toU, sharedToU, avAltU.2M.tie). 
+{cmd:tou} counts, for the ego i and the alter j, the actors q with a tie i -> q in the {it:other} network and a tie q -> j in the own network,
+each weighted by the covariate value for (i,q) (RSiena 1.6.12 and later).
 {bf:With a covariate} of the actors (a variable in the current dataset, written {it:effect}{cmd::}{it:var}[{cmd::}{it:#}], e.g. {cmd:cross1(covnetnet:alc homcovnetnet:alc)}; a covariate that changes between waves is declared with
 {cmd:tvcov(a1 a2 a3)}, one variable per period, and used by its stem: {cmd:cross1(samewxclosure:a)}; not for the three similarity effects), protocol 56:
 {cmd:samewwclosure diffwwclosure jumpwwclosure jumpfrom jumpsharedin samewxclosure diffwxclosure jumpwxclosure homwxclosure samexwclosure diffxwclosure covnetnet homcovnetnet

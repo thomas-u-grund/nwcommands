@@ -68,6 +68,13 @@ f _nwergm_cov.ado
 f _nwergm_coeflabel.ado
 f _nwergm_statop.ado
 f nwergm_estat.ado
+f _nwergm_bip.ado
+f _nwergm_bipgof.ado
+f _nwergm_bip_curved.ado
+f _nwergm_struct.ado
+f nwergm_p.ado
+f _nwergm_miss.ado
+f _nwergm_fitstats.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado
@@ -128,6 +135,8 @@ f nwring.ado
 f nwsaom.ado
 f nwsaom_estat.ado
 f nwsaom_bayes.ado
+f nwsaom_ml.ado
+f _nwsaom_getrates.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado

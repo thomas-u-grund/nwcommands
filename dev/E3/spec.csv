@@ -1,0 +1,66 @@
+id,kind,nw,r
+density,both,density,density
+meandeg,both,meandeg,meandeg
+twopath,both,twopath,twopath
+isolates,both,isolates,isolates
+isolatededges,und,isolatededges,isolatededges
+degree15,und,degree1.5,degree1.5
+odegree15,dir,odegree1.5,odegree1.5
+idegree15,dir,idegree1.5,idegree1.5
+degcrossprod,und,degcrossprod,degcrossprod
+degcor,und,degcor,degcor
+m2star,dir,m2star,m2star
+concties,und,concurrentties,concurrentties
+conctiesby,und,"concurrentties(by=a)","concurrentties(by='a')"
+concby,und,"concurrent(by=a)","concurrent(by='a')"
+altkstar,und,"altkstar(lambda=0.7 fixed)","altkstar(0.7,fixed=TRUE)"
+asymmetric,dir,asymmetric,asymmetric
+asymattr,dir,"asymmetric(attr=a)","asymmetric('a')"
+asymdiff,dir,"asymmetric(attr=a diff)","asymmetric('a',diff=TRUE)"
+mutualsame,dir,"mutual(same=a)","mutual(same='a')"
+mutualsamediff,dir,"mutual(same=a diff)","mutual(same='a',diff=TRUE)"
+mutualby,dir,"mutual(by=a)","mutual(by='a')"
+transitive,dir,transitive,transitive
+intransitive,dir,intransitive,intransitive
+cycle,both,"cycle(k=3 4 5)","cycle(3:5)"
+cycle2,dir,"cycle(k=2 3)","cycle(2:3)"
+semicycle,dir,"cycle(k=3 4 semi)","cycle(3:4,semi=TRUE)"
+ttriple,dir,ttriple,ttriple
+ttriattr,dir,"ttriple(attr=a)","ttriple('a')"
+ttridiff,dir,"ttriple(attr=a diff)","ttriple('a',diff=TRUE)"
+ctriple,dir,ctriple,ctriple
+ctriattr,dir,"ctriple(attr=a)","ctriple('a')"
+ctridiff,dir,"ctriple(attr=a diff)","ctriple('a',diff=TRUE)"
+triangle,both,triangle,triangle
+triattr,both,"triangle(attr=a)","triangle('a')"
+tridiff,both,"triangle(attr=a diff)","triangle('a',diff=TRUE)"
+tripercent,und,tripercent,tripercent
+tripctattr,und,"tripercent(attr=a)","tripercent('a')"
+tripctdiff,und,"tripercent(attr=a diff)","tripercent('a',diff=TRUE)"
+opentriad,und,opentriad,opentriad
+threetrail,both,threetrail,threetrail
+nearsimmelian,dir,nearsimmelian,nearsimmelian
+simmelian,dir,simmelian,simmelian
+simmelianties,dir,simmelianties,simmelianties
+triadcensus,both,triadcensus,triadcensus
+nsp,both,"nsp(d=0 1 2)","nsp(0:2)"
+degplain,und,"degree(d=0 1 2)","degree(0:2)"
+degby,und,"degree(d=1 2 by=a)","degree(1:2,by='a')"
+deghom,und,"degree(d=0 1 2 by=a homophily)","degree(0:2,by='a',homophily=TRUE)"
+odegplain,dir,"odegree(d=0 1 2)","odegree(0:2)"
+odegby,dir,"odegree(d=1 2 by=a)","odegree(1:2,by='a')"
+odeghom,dir,"odegree(d=0 1 by=a homophily)","odegree(0:1,by='a',homophily=TRUE)"
+idegplain,dir,"idegree(d=0 1 2)","idegree(0:2)"
+idegby,dir,"idegree(d=1 2 by=a)","idegree(1:2,by='a')"
+ideghom,dir,"idegree(d=0 1 by=a homophily)","idegree(0:1,by='a',homophily=TRUE)"
+degrange,und,"degrange(from=1 to=3)","degrange(1,3)"
+degrange2,und,"degrange(from=0 3 to=2 Inf)","degrange(c(0,3),c(2,Inf))"
+degrangeby,und,"degrange(from=1 to=3 by=a)","degrange(1,3,by='a')"
+degrangehom,und,"degrange(from=2 by=a homophily)","degrange(2,by='a',homophily=TRUE)"
+odegrange,dir,"odegrange(from=1 to=3)","odegrange(1,3)"
+odegrangeby,dir,"odegrange(from=1 to=3 by=a)","odegrange(1,3,by='a')"
+idegrangehom,dir,"idegrange(from=1 to=3 by=a homophily)","idegrange(1,3,by='a',homophily=TRUE)"
+kstarplain,und,"kstar(k=2 3)","kstar(2:3)"
+kstarattr,und,"kstar(k=2 3 attr=a)","kstar(2:3,'a')"
+ostarattr,dir,"ostar(k=2 3 attr=a)","ostar(2:3,'a')"
+istarattr,dir,"istar(k=2 3 attr=a)","istar(2:3,'a')"

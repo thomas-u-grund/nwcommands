@@ -6,7 +6,7 @@ do unw_saom.do
 
 * Regression test: nwsaom network-only models against RSiena.
 *
-* Reference: RSiena 1.6.6 on its own s50 data (friendship s501-s503,
+* Reference: RSiena 1.6.14 (the numbers below were recomputed with it; 1.6.6 gave the same within 0.06 SE) on its own s50 data (friendship s501-s503,
 * smoking s50s), the same data as `nwwebuse glasgow' (node order differs,
 * results do not). Numbers are means over five seeds (1-5) of
 *
@@ -75,13 +75,13 @@ nwwebuse glasgow, nwclear
 
 * ---------------------------------------------------------------- M1
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity unconditional seed(12345)
-_net_check "rate1 outdegree reciprocity" "5.528 -2.227 2.432" "0.778 0.125 0.240"
+_net_check "rate1 outdegree reciprocity" "5.577 -2.227 2.432" "0.779 0.128 0.245"
 di as text "M1 (2 waves) PASS"
 
 * ---------------------------------------------------------------- M2
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional seed(12345)
 _net_check "rate1 rate2 outdegree reciprocity transtrip" ///
-	"6.485 5.283 -2.650 2.421 0.614" "1.094 0.899 0.119 0.193 0.079"
+	"6.518 5.263 -2.648 2.418 0.614" "1.101 0.839 0.116 0.195 0.079"
 * e(tratio) is on RSiena's scale: the effect columns of e(tconv)
 matrix __tr = e(tratio)
 matrix __tc = e(tconv)
@@ -95,19 +95,19 @@ di as text "M2 (transTrip) PASS"
 * ---------------------------------------------------------------- M3
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(12345)
 _net_check "rate1 rate2 outdegree reciprocity gwesp_.69" ///
-	"6.592 5.269 -2.814 2.525 1.589" "1.114 0.849 0.130 0.189 0.157"
+	"6.627 5.307 -2.813 2.523 1.590" "1.171 0.884 0.135 0.190 0.163"
 di as text "M3 (gwespFF) PASS"
 
 * ---------------------------------------------------------------- M4
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip nodematch(smoke1) unconditional seed(12345)
 _net_check "rate1 rate2 outdegree reciprocity transtrip nodematch_smoke1" ///
-	"6.540 5.281 -2.727 2.410 0.612 0.128" "1.129 0.828 0.158 0.196 0.083 0.149"
+	"6.544 5.271 -2.733 2.420 0.611 0.130" "1.069 0.927 0.153 0.197 0.079 0.149"
 di as text "M4 (sameX) PASS"
 
 * ---------------------------------------------------------------- M5
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip indegpopularity outactivity unconditional seed(12345)
 _net_check "rate1 rate2 outdegree reciprocity transtrip indegpopularity outactivity" ///
-	"7.240 5.620 -1.236 2.227 0.779 -0.391 -0.151" "1.308 0.973 0.406 0.200 0.082 0.212 0.046"
+	"7.224 5.617 -1.235 2.226 0.780 -0.387 -0.153" "1.363 1.002 0.421 0.208 0.086 0.212 0.049"
 di as text "M5 (inPopSqrt, outAct) PASS"
 
 * restarting from the estimates (theta0() and rate0()) stays at the solution
@@ -120,15 +120,15 @@ forvalues j = 1/5 {
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip indegpopularity outactivity ///
 	theta0(`__th') rate0(`=__r0[1,1]' `=__r0[1,2]') unconditional seed(54321)
 _net_check "rate1 rate2 outdegree reciprocity transtrip indegpopularity outactivity" ///
-	"7.240 5.620 -1.236 2.227 0.779 -0.391 -0.151" "1.308 0.973 0.406 0.200 0.082 0.212 0.046"
+	"7.224 5.617 -1.235 2.226 0.780 -0.387 -0.153" "1.363 1.002 0.421 0.208 0.086 0.212 0.049"
 di as text "M5 restarted from its estimates PASS"
 
 * ---------------------------------------------------------------- ratecov()
 * two waves, density + reciprocity, rate effect of smoking (RSiena RateX on
 * coCovar(s50s[, 1]), which RSiena centers; nwsaom gets the centered
 * variable, so both rates refer to an actor of average smoking). RSiena,
-* unconditional, five seeds: rate 5.917 (SE .9-1.2), smoking on rate .991
-* (.36-.50; one seed 3.6), outdegree -2.221 (.14), reciprocity 2.422
+* unconditional, five seeds (RSiena 1.6.14): rate 5.927 (SE .9-1.2), smoking on rate 1.012
+* (.36-.50; one seed 3.6), outdegree -2.225 (.14), reciprocity 2.426
 * (.26). The coefficient's SE is noisy in both programs, so only the
 * estimates are checked here.
 quietly summarize smoke1
@@ -136,10 +136,10 @@ generate double __smkc = smoke1 - r(mean)
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ratecov(__smkc) unconditional seed(12345)
 matrix __b = e(b)
 di as text "rate " %6.3f e(rate) "  ratecoef " %6.3f e(ratecoef) "  outdegree " %6.3f __b[1,1] "  reciprocity " %6.3f __b[1,2]
-assert abs(e(rate) - 5.917) < 0.25 * 1.0
-assert abs(e(ratecoef) - 0.991) < 0.25 * 0.42
-assert abs(__b[1,1] - (-2.221)) < 0.25 * 0.14
-assert abs(__b[1,2] - 2.422) < 0.25 * 0.26
+assert abs(e(rate) - 5.927) < 0.25 * 1.0
+assert abs(e(ratecoef) - 1.012) < 0.25 * 0.42
+assert abs(__b[1,1] - (-2.225)) < 0.25 * 0.14
+assert abs(__b[1,2] - 2.426) < 0.25 * 0.26
 assert e(ratecoef_fixed) == 0
 assert e(tconv_max) < 0.3
 drop __smkc
@@ -155,16 +155,16 @@ di as text "ratecov() PASS"
 * the references use initialValue 0.5 for the rate. The rate is RSiena's
 * basic rate parameter lambda (pairs at rate lambda^2), which nwsaom
 * reports since 2026-10-01 (e(rate_actor) keeps the per-actor rate):
-* joint rate .546 (.051), density -1.271 (.108); force .545 (.047),
-* -2.539 (.206); agree .585 (.051), -1.083 (.122).
+* joint rate .548 (.052), density -1.271 (.105); force .548 (.052),
+* -2.540 (.217); agree .586 (.052), -1.085 (.129) (RSiena 1.6.14).
 nwtomata glasgow1, mat(__gs1)
 nwtomata glasgow2, mat(__gs2)
 mata: __gs1 = (__gs1 + __gs1') :> 0
 mata: __gs2 = (__gs2 + __gs2') :> 0
 nwset, mat(__gs1) directed name(__gsym1)
 nwset, mat(__gs2) directed name(__gsym2)
-local __rs  `""0.546 -1.271" "0.545 -2.539" "0.585 -1.083""'
-local __rse `""0.051 0.108" "0.047 0.206" "0.051 0.122""'
+local __rs  `""0.548 -1.271" "0.548 -2.540" "0.586 -1.085""'
+local __rse `""0.052 0.105" "0.052 0.217" "0.052 0.129""'
 local __j 0
 foreach __t in joint force agree {
 	local ++__j

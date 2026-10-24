@@ -15,7 +15,7 @@
 
 {pstd}
 {cmd:nwsaom bayes} is run after {cmd:nwsaom} and samples the posterior distribution of the model that was just fitted (same network waves, same effects, covariates included). It can also be called as {cmd:nwsaom_bayes}.
-The fitted model must be one directed one-mode network without a co-evolving behavior, without endowment/creation effects, rate covariates, structural zeros, missing-data or composition-change options, and the native plugin must be installed.
+The fitted model must be one directed one-mode network, with or without one co-evolving behavior, without endowment/creation effects, rate covariates, structural zeros, missing-data or composition-change options, and the native plugin must be installed.
 The estimates of the {cmd:nwsaom} fit are the starting values and its covariance matrix gives the proposal distribution for the effects.
 
 {synoptset 26 tabbed}{...}
@@ -26,6 +26,8 @@ The estimates of the {cmd:nwsaom} fit are the starting values and its covariance
 {synopt:{opt nmain(#)}}main iterations (one draw is saved per iteration), default 250{p_end}
 {synopt:{opt nrunmh(#)}}batches per iteration, default 20 (the draw saved is the state after the last batch of the iteration){p_end}
 {synopt:{opt nimprovemh(#)}}batches per round of tuning of the proposal scale factors (twice: before and after the warming), default 100{p_end}
+{synopt:{opt mhgeom(#)}}draw the position of the second ministep of an inserted pair from a truncated geometric distribution with this ratio (between 0 and 1) instead of uniformly (the default 0 is the uniform choice of RSiena);
+shorter blocks are cheaper but mix the length of the sequence more slowly{p_end}
 {synopt:{opt targetmh(#)}}target acceptance probability, default 0.25{p_end}
 {synopt:{opt mult(#)}}the number of Metropolis-Hastings steps on the unobserved sequence of ministeps per batch and period is {opt mult()} times the observed number of tie changes (rounded to hundreds above 100), default 5{p_end}
 {synopt:{opt nmh(#)}}that number given directly{p_end}
@@ -64,12 +66,13 @@ Differences from multi_siena: only one group is supported (no group-level mean a
 with one group multi_siena itself keeps the rate prior fixed at a normal distribution around the initial rate estimates with variance 1, which is the default here);
 the starting values and proposal covariance come from the {cmd:nwsaom} fit (multi_siena first runs a short method-of-moments estimation of its own);
 the Metropolis-Hastings steps were written from the published description of the algorithm and the probability of each proposal is derived and checked, the permutation length is kept fixed in the main run;
-behavior, several networks, missing data, composition change, rate covariates, non-directed and two-mode models are not available. The posterior of the effects is, for a flat prior, close to the maximum likelihood estimate and its standard error.
+several behaviors, several networks, missing data, composition change, rate covariates, non-directed and two-mode models are not available. The posterior of the effects is, for a flat prior, close to the maximum likelihood estimate and its standard error.
 
 {title:Remarks}
 
 {pstd}
-The draws are autocorrelated; check the effective sample sizes in the table and increase {opt nmain()} or {opt nrunmh()} when they are small. The sampler is slower than the method of moments; {opt mult()} larger than 5 slows it further but mixes better.
+The draws are autocorrelated; check the effective sample sizes in the table and increase {opt nmain()} or {opt nrunmh()} when they are small. With a behavior the sequences also contain behavior ministeps (the actor changes the behavior by -1, 0 or +1;
+their rates are separate parameters, {cmd:e(rates_beh)}) and the permuted blocks and inserted pairs follow the rules of RSiena's maximum likelihood chain for behavior. The sampler is slower than the method of moments; {opt mult()} larger than 5 slows it further but mixes better.
 
 {title:Stored results}
 

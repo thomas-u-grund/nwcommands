@@ -1,0 +1,18 @@
+l_nodecov|nodecov('x')|nodecov(x)
+l_nodefactor|nodefactor('g')|nodefactor(g)
+l_nodematch|nodematch('g')|nodematch(g)
+l_nodematchd|nodematch('g',diff=TRUE)|nodematchdiff(g)
+l_nodemix|nodemix('g')|nodemix(g)
+l_absdiff|absdiff('x')|absdist(x)
+l_degree|degree(0:3)|degree(0/3)
+l_kstar|kstar(2:3)|kstar(2 3)
+l_conc|concurrent|concurrent
+l_degrange|degrange(1,3)|degrange(1) degrangeto(3)
+l_esp|esp(0:2)|esp(0/2)
+l_dsp|dsp(0:3)|dsp(0/3)
+l_gwesp|gwesp(0.5,fixed=TRUE)|gwesp(0.5)
+l_gwdsp|gwdsp(0.5,fixed=TRUE)|gwdsp(0.5)
+l_gwnsp|gwnsp(0.5,fixed=TRUE)|gwnsp(0.5)
+l_triangle|triangle|triangle
+l_transties|transitiveties|transitiveties
+l_cyclties|cyclicalties|cyclicalties

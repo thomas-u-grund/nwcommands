@@ -1538,6 +1538,164 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 }
 
 /* ===================================================================
+   Generic bipartite family (Stage 5): TERMCODE = 3000 + kind, direct
+   ports of _bx_one() in unw_ergm.do, written as change statistics
+   (state BEFORE the toggle; delta = +1 add / -1 remove). Packed
+   parameters: p = a + 131072*b + 131072^2*c (see _bx_pack()).
+   =================================================================== */
+static void bx_unpack(double p, double *a, double *b, double *c) {
+	double cc = floor(p / 17179869184.0);
+	double bb = floor((p - cc * 17179869184.0) / 131072.0);
+	*c = cc; *b = bb; *a = p - cc * 17179869184.0 - bb * 131072.0;
+}
+static double bx_g(double c, double e) {
+	if (c < 1.0) return 0.0;
+	if (e == 0.0) return (c == 1.0) ? 0.0 : 0.5 * c;
+	return 0.5 * c * pow(c - 1.0, e);
+}
+static double change_bipx(graph_t *g, int kind, double p1, double p2, double *attr, double delta, long i, long j) {
+	long m = (long)p2;
+	long nm, oth, q;
+	double chg = 0.0;
+	adjlist_t *nb;
+	/* kind-specific mode: kinds with mode in p2 use it; others handled below */
+	if (kind == 14) {
+		long n1node = (g->mode[i] == 1) ? i : j;
+		long n2node = (n1node == i) ? j : i;
+		return (attr[n1node] == p1 && attr[n2node] == p2) ? delta : 0.0;
+	}
+	if (kind == 6) {
+		long node = (long)p1;
+		return (i == node || j == node) ? delta : 0.0;
+	}
+	if (kind == 9) {
+		long film = (g->mode[i] == 2) ? i : j;
+		long act = (film == i) ? j : i;
+		long other;
+		if (film != (long)p1 && film != (long)p2) return 0.0;
+		other = (film == (long)p1) ? (long)p2 : (long)p1;
+		return has_edge(g, act, other) ? delta : 0.0;
+	}
+	if (kind == 12) {
+		double A, B, ty, e = p2;
+		double code, ao;
+		bx_unpack(p1, &A, &B, &ty);
+		m = 1 + (long)(ty / 2.0);
+		ty = ty - 2.0 * (double)(m - 1);
+		nm = (g->mode[i] == m) ? i : j; oth = (nm == i) ? j : i;
+		code = attr[nm]; ao = attr[oth];
+		if (A > 0 && A != code) return 0.0;
+		if (B > 0 && B != ao) return 0.0;
+		nb = &g->adj[oth];
+		if (ty == 0.0) {
+			long cnt = 0;
+			for (q = 0; q < nb->len; q++) { long v = nb->nb[q]; if (v != nm && attr[v] == code) cnt++; }
+			return delta * (bx_g((double)cnt + 1.0, e) - bx_g((double)cnt, e));
+		}
+		else {
+			adjlist_t *nn = &g->adj[nm];
+			for (q = 0; q < nb->len; q++) {
+				long v = nb->nb[q], r;
+				long cnt = 0;
+				if (v == nm || attr[v] != code) continue;
+				for (r = 0; r < nn->len; r++) {
+					long w = nn->nb[r];
+					if (w == oth) continue;
+					if (B > 0 && attr[w] != ao) continue;
+					if (has_edge(g, v, w)) cnt++;
+				}
+				chg += (cnt == 0) ? 1.0 : pow((double)cnt + 1.0, e) - pow((double)cnt, e);
+			}
+			return delta * chg;
+		}
+	}
+	if (kind == 13) { double z, l13, m13; bx_unpack(p2, &m13, &l13, &z); m = (long)m13; }
+	nm = (g->mode[i] == m) ? i : j; oth = (nm == i) ? j : i;
+	nb = (g->adj != NULL) ? &g->adj[nm] : NULL;
+	switch (kind) {
+		case 1: case 2: {
+			double from, to, lev, d;
+			bx_unpack(p1, &from, &to, &lev);
+			if (to >= 131071.0) to = 1e12;
+			if (kind == 1) {
+				if (lev > 0 && attr[nm] != lev) return 0.0;
+				d = (double)g->deg[nm];
+			}
+			else {
+				if (attr[nm] != attr[oth]) return 0.0;
+				d = 0.0;
+				for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[nm]) d += 1.0;
+			}
+			return (double)((d + delta >= from && d + delta < to) - (d >= from && d < to));
+		}
+		case 3: {
+			double d = 0.0;
+			if (attr[nm] != attr[oth]) return 0.0;
+			for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[nm]) d += 1.0;
+			return ergm_choose(d + delta, p1) - ergm_choose(d, p1);
+		}
+		case 4: {
+			double omin = 1e300, omax = -1e300, nmin = 1e300, nmax = -1e300, v;
+			for (q = 0; q < nb->len; q++) {
+				long u = nb->nb[q];
+				v = attr[u];
+				if (v < omin) omin = v; if (v > omax) omax = v;
+				if (!(delta < 0 && u == oth)) { if (v < nmin) nmin = v; if (v > nmax) nmax = v; }
+			}
+			if (delta > 0) { v = attr[oth]; if (v < nmin) nmin = v; if (v > nmax) nmax = v; }
+			return (nmax < -1e299 ? 0.0 : nmax - nmin) - (omax < -1e299 ? 0.0 : omax - omin);
+		}
+		case 5: {
+			long cnt = 0;
+			if (attr[oth] <= 0) return 0.0;
+			for (q = 0; q < nb->len; q++) if (nb->nb[q] != oth && attr[nb->nb[q]] == attr[oth]) cnt++;
+			return cnt == 0 ? delta : 0.0;
+		}
+		case 7: {
+			double k, t, h, d = 0.0;
+			bx_unpack(p1, &k, &t, &h);
+			if (attr[nm] != t) return 0.0;
+			if (h > 0 && attr[oth] != h) return 0.0;
+			for (q = 0; q < nb->len; q++) if (attr[nb->nb[q]] == attr[oth]) d += 1.0;
+			return ergm_choose(d + delta, k) - ergm_choose(d, k);
+		}
+		case 8: {
+			double t, lo, hi, ao = attr[oth], nlo = 0.0, nhi = 0.0;
+			bx_unpack(p1, &t, &lo, &hi);
+			if (attr[nm] != t) return 0.0;
+			if (ao != lo && ao != hi) return 0.0;
+			for (q = 0; q < nb->len; q++) {
+				long u = nb->nb[q];
+				if (u == oth) continue;
+				if (attr[u] == lo) nlo += 1.0;
+				if (attr[u] == hi) nhi += 1.0;
+			}
+			if (lo == hi) return delta * nlo;
+			return delta * ((ao == lo) ? nhi : nlo);
+		}
+		case 10: case 11: {
+			adjlist_t *no = &g->adj[oth];
+			for (q = 0; q < no->len; q++) {
+				long k = no->nb[q];
+				double pk;
+				if (k == nm) continue;
+				pk = (double)common_neighbors(g, nm, k);
+				if (kind == 10) chg += ind_kernel(pk + delta, p1) - ind_kernel(pk, p1);
+				else chg += gw_kernel(pk + delta, p1) - gw_kernel(pk, p1);
+			}
+			return chg;
+		}
+		case 13: {
+			double mm, lev, z;
+			bx_unpack(p2, &mm, &lev, &z);
+			if (lev > 0 && attr[nm] != lev) return 0.0;
+			return gw_kernel((double)g->deg[nm] + delta, p1) - gw_kernel((double)g->deg[nm], p1);
+		}
+	}
+	return 0.0;
+}
+
+/* ===================================================================
    Covariate terms added by agent E4 (term codes 2000-2999). All of
    them are dispatched from the tail of change_term() below through
    change_term_cov(), so the main switch is untouched.
@@ -1668,7 +1826,10 @@ static double change_term_cov(graph_t *g, int termcode, double p1, double p2, do
 	header comment there for the exact Mata source each was checked
 	against before porting.
 */
+#include "ergm_struct.h"
 static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	if (termcode >= 1000 && termcode < 2000) return change_struct(g, termcode, p1, p2, attr, cm, n, delta, i, j);
+	if (termcode >= 3000 && termcode < 4000) return change_bipx(g, termcode - 3000, p1, p2, attr, delta, i, j);
 	switch (termcode) {
 		case TERMCODE_EDGES:
 			return delta;
@@ -2131,7 +2292,7 @@ static long next_long(void) {
 	return (long)next_double();
 }
 
-#define MAXTERMS 64  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
+#define MAXTERMS 256  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
 #define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
 #define MAXCOVMAT 8  /* must match unw_ergm.do's own ErgmNativeSetup() maxcovmat (harmonisation unit 160) - distinct dense n x n edgecov()/hamming() matrices are far heavier per slot (n^2 doubles, not n) than an attribute array, so this cap is deliberately much smaller than MAXATTR */
 
@@ -2157,7 +2318,6 @@ static double change_slot(long k, graph_t *g, int termcode, double p1, double p2
 	}
 	return c;
 }
-
 
 /* eta = theta_to_eta(theta): the first (nterms-ncurved) eta slots equal
    the corresponding theta values one-for-one (an ordinary term IS its
@@ -2558,11 +2718,16 @@ STDLL stata_call(int argc, char *argv[]) {
 		p1[i] = next_double();
 		p2[i] = next_double();
 		covidx[i] = (int)next_long();
+		if (termcodes[i] >= 1000 && termcodes[i] < 2000) { need_adj = 1; need_outin = 1; need_dirsp = 1; }
 		switch (termcodes[i]) {
 			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
 			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
 			case TERMCODE_NSP: case TERMCODE_B1NODEMATCH: case TERMCODE_B2NODEMATCH:
 				need_adj = 1;
+		}
+		if (termcodes[i] >= 3000 && termcodes[i] < 4000) {
+			int bk = termcodes[i] - 3000;
+			if (bk != 1 && bk != 6 && bk != 9) need_adj = 1;
 		}
 		switch (termcodes[i]) {
 			case TERMCODE_GWODEGREE: case TERMCODE_GWIDEGREE:
@@ -2858,6 +3023,42 @@ STDLL stata_call(int argc, char *argv[]) {
 		return(0);
 	}
 
+	if (mode == 3) {
+		/* observed statistics by build-up (as R's summary() does for terms
+		   without a dedicated s_ function): empty the graph, then add the
+		   observed ties one by one, summing each slot's change statistic.
+		   Result goes to row 1 of the output columns. */
+		long ne = g.nties;
+		long *ti = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		long *tj = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		double acc[MAXTERMS];
+		long e;
+		for (e = 0; e < ne; e++) { ti[e] = g.elist_i[e]; tj[e] = g.elist_j[e]; }
+		for (e = 0; e < ne; e++) toggle(&g, ti[e], tj[e]);
+		for (k = 0; k < nterms; k++) acc[k] = 0.0;
+		for (e = 0; e < ne; e++) {
+			for (k = 0; k < nterms; k++) {
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				acc[k] += change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, ti[e], tj[e]);
+			}
+			toggle(&g, ti[e], tj[e]);
+		}
+		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), 1, acc[k]);
+		free(ti); free(tj);
+		for (k = 0; k < nattr; k++) free(attrs[k]);
+		for (k = 0; k < ncovmat; k++) free(covmats[k]);
+		free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
+		free(g.deg); free(g.outdeg); free(g.indeg);
+		ht_free(&g.ht);
+		free(g.elist_i); free(g.elist_j);
+		free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
+		if (g.adj) { for (i = 0; i <= n; i++) free(g.adj[i].nb); free(g.adj); }
+		if (g.outadj) { for (i = 0; i <= n; i++) free(g.outadj[i].nb); free(g.outadj); }
+		if (g.inadj) { for (i = 0; i <= n; i++) free(g.inadj[i].nb); free(g.inadj); }
+		return(0);
+	}
+
 	if (mode == 2) {
 		/* Curved MPLE, entirely native (harmonisation unit 146): build
 		   the SAME design matrix mode=1 builds (identical per-dyad
@@ -2872,7 +3073,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		   (theta, the covariance matrix, a converged flag) cross back
 		   via SF_scal_save() - the dyad-scale design matrix itself
 		   never needs to leave this call at all. */
-		long ndyads = directed ? n * (n - 1) : n * (n - 1) / 2;
+		long ndyads = bipartite ? g.n1 * g.n2 : (directed ? n * (n - 1) : n * (n - 1) / 2);
 		long ntheta = (nterms - ncurved) + 2;
 		double *X, *Y;
 		double theta_out[MAXTERMS], V_out[MAXTERMS*MAXTERMS];
@@ -2889,6 +3090,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				double *xrow;
 				if (i == j) continue;
 				if (!directed && j < i) continue;
+				if (bipartite && g.mode[i] == g.mode[j]) continue;
 				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
 				delta = tied ? -1.0 : 1.0;
 				xrow = X + (size_t)pos * (size_t)nterms;

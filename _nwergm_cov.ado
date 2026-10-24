@@ -41,6 +41,11 @@ program _nwergm_cov, rclass
 				}
 				mata: _ergm_covmat_load(`td', "`v'", `nn', `isdir')
 			}
+			mata: st_local("__nacov", strofreal(ergm_offdiag_missing(`td'.edgecovmat)))
+			if `__nacov' {
+				di "{err}In term {bf:`term'}: network {bf:`v'} has missing dyads, which is not supported for a dyadic covariate."
+				error 416
+			}
 			if "`term'" == "edgecov" {
 				mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `td', ("edgecov_`v'"))
 			}

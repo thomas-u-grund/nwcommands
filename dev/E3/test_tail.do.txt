@@ -1,0 +1,115 @@
+* ---- (3) native change statistics == brute-force statistic differences ----
+* (change toward one of every dyad, from the native MPLE design builder, against stat(dyad=1) - stat(dyad=0)
+*  computed by the observed-statistic routine; random 7-node graphs.  degcor and tripercent are excluded: R's change
+*  statistic of those two is not the difference of its summary statistic (degcor is standardised by the observed
+*  variance; tripercent is a sum of single-step ratios).)
+mata:
+real scalar ns_t_brute(real scalar tol)
+{
+	external class ErgmModel scalar __nwergm_last_M
+	external class ErgmGraph scalar __nwergm_last_G
+	real matrix D
+	real scalar n, i, j, row, p, maxdiff, tied
+	real rowvector s0, s1, ch
+	n = __nwergm_last_G.n
+	(void) ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
+	if (!__nwergm_last_M.native_enabled) return(-1)
+	D = ErgmNativeBuildMPLEData(__nwergm_last_M, __nwergm_last_G)
+	p = __nwergm_last_M.nparam()
+	maxdiff = 0
+	row = 0
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+		if (i == j) continue
+		if (!__nwergm_last_G.directed & j < i) continue
+		row++
+		tied = __nwergm_last_G.has_edge(i, j)
+		if (tied) {
+			s1 = __nwergm_last_M.full_statistic(__nwergm_last_G)
+			__nwergm_last_G.toggle(i, j)
+			s0 = __nwergm_last_M.full_statistic(__nwergm_last_G)
+			__nwergm_last_G.toggle(i, j)
+		}
+		else {
+			s0 = __nwergm_last_M.full_statistic(__nwergm_last_G)
+			__nwergm_last_G.toggle(i, j)
+			s1 = __nwergm_last_M.full_statistic(__nwergm_last_G)
+			__nwergm_last_G.toggle(i, j)
+		}
+		ch = s1 - s0
+		maxdiff = max((maxdiff, max(abs(ch - D[row, 1..p]))))
+	}
+	return(maxdiff)
+}
+end
+
+capture program drop ns_brute
+program ns_brute
+	args id dir terms
+	* random 7-node graph, node attribute a in 1..3
+	clear
+	qui set obs 7
+	qui gen a = 1 + mod(_n * 5, 3)
+	matrix A_br = J(7,7,0)
+	forvalues i = 1/7 {
+		forvalues j = 1/7 {
+			if `i' != `j' & runiform() < 0.35 {
+				matrix A_br[`i',`j'] = 1
+				if !`dir' matrix A_br[`j',`i'] = 1
+			}
+		}
+	}
+	ns_stat br `dir' "`terms'"
+	mata: st_numscalar("__ns_md", ns_t_brute(1e-9))
+	if scalar(__ns_md) < 0 {
+		di as err "FAIL brute `id': model not native-eligible"
+		exit 9
+	}
+	if scalar(__ns_md) > 1e-9 {
+		di as err "FAIL brute `id': native change statistic differs from the difference of the observed statistic by " scalar(__ns_md)
+		exit 9
+	}
+end
+set seed 12345
+forvalues rep = 1/3 {
+	ns_brute und`rep' 0 "twopath isolates isolatededges degree1.5 degcrossprod concurrentties altkstar(lambda=0.7 fixed) triangle opentriad threetrail cycle(k=3 4 5) nsp(d=0 1) degree(d=0 1 by=a) kstar(k=2 3 attr=a) degrange(from=1 to=3 by=a homophily) concurrentties(by=a) triangle(attr=a diff) degrange(from=0 2 to=2 Inf) triadcensus"
+	ns_brute dir`rep' 1 "m2star odegree1.5 idegree1.5 asymmetric transitive intransitive cycle(k=3 4) cycle(k=3 4 semi) ttriple ctriple triangle nearsimmelian simmelian simmelianties threetrail mutual(same=a) mutual(by=a) asymmetric(attr=a diff) odegree(d=0 1 by=a) idegree(d=1 by=a homophily) ostar(k=2 attr=a) ttriple(attr=a diff) ctriple(attr=a) isolates twopath"
+	ns_brute dirt`rep' 1 "triadcensus nsp(d=0 1) idegrange(from=1 to=3 by=a) odegrange(from=0 to=2 by=a homophily)"
+}
+di "test_nwergm_structural: native change statistics == statistic differences"
+
+* ---- (4) MCMLE, simulate, error handling ----
+qui clear
+qui nwclear
+qui nwset, mat(A_u) undirected name(gu)
+qui nwergm simulate 30, edges structural(degree1.5) theta(-2.4 -0.02) nsim(1) mcmcburnin(5000) mcmcinterval(100) generate(su) seed(8)
+qui nwergm su, edges structural(degree1.5) seed(11)
+assert e(N) > 0
+assert e(b)[1,1] < .
+assert e(b)[1,2] < .
+qui nwergm gu, edges structural(altkstar(lambda=0.8 fixed)) method(mple)
+assert e(b)[1,2] < .
+
+* simulate with a structural term, then re-estimate it
+qui nwergm simulate 25, edges structural(m2star) directed theta(-2.2 -0.05) nsim(2) mcmcburnin(2000) mcmcinterval(50) generate(sst) seed(5)
+qui nwsummarize sst_1
+assert r(nodes) == 25
+
+* density / meandeg may replace edges (they are collinear with it)
+qui nwergm gu, structural(density) method(mple)
+assert e(b)[1,1] < .
+qui nwergm gu, structural(meandeg) method(mple)
+assert e(b)[1,1] < .
+
+* directed-only term on an undirected network, undirected-only term on a directed network, unknown term
+capture nwergm gu, edges structural(transitive) method(mple)
+assert _rc == 198
+capture nwergm gu, edges structural(nosuchterm) method(mple)
+assert _rc == 198
+qui nwclear
+qui nwset, mat(A_d) directed name(gd)
+capture nwergm gd, edges structural(degree1.5) method(mple)
+assert _rc == 198
+capture nwergm gd, edges structural(altkstar(lambda=0.5)) method(mple)
+assert _rc == 198
+
+di "test_nwergm_structural: ALL OK"

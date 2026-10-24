@@ -11,6 +11,10 @@ program define nwergm_estat, rclass
 		nwergm_estat_gof `rest'
 		return add
 	}
+	else if "`subcmd'" == "ic" {
+		nwergm_estat_ic
+		return add
+	}
 	else {
 		di as err "estat `subcmd' not allowed after nwergm"
 		exit 321
@@ -280,6 +284,23 @@ program define nwergm_estat_gof, rclass
 		exit 498
 	}
 
+	// a bipartite model gets R's bipartite gof (b1degree, b2degree, dspartners, distance)
+	mata: st_local("__gof_isbip", strofreal(__nwergm_last_G.bipartite))
+	if `__gof_isbip' {
+		tempname obsG obsvec
+		mata: `obsG' = ErgmGraph()
+		mata: `obsG'.init(`nodes', 0)
+		mata: nwergm_estat_bridge_from_netobj(`netobj', `obsG', 0)
+		mata: `obsG'.set_bipartite(__nwergm_last_G.mode)
+		mata: `obsvec' = ergm_bip_gofstats(`obsG')
+		mata: st_local("__gof_n1", strofreal(rows(`obsG'.mode1nodes)))
+		mata: mata drop `obsG'
+		_nwergm_bipgof, obs(`obsvec') nsim(`nsim') burnin(`gofburnin') interval(`gofinterval') n1(`__gof_n1') n2(`=`nodes'-`__gof_n1'') nodes(`nodes')
+		return add
+		mata: mata drop `obsvec'
+		exit
+	}
+
 	// observed comparison statistics (Part XX: reuse the package's own
 	// existing algorithms - nwgeodesic's real BFS/Dijkstra machinery and
 	// nwtriads' real MAN-census machinery - rather than duplicating
@@ -425,6 +446,7 @@ program define nwergm_estat_gof, rclass
 	else {
 		local __gof_propfn "&ergm_propose_tnt()"
 	}
+	mata: ns_native_setup(__nwergm_last_M, 2, __nwergm_last_G)
 	preserve
 	forvalues __s = 1/`nsim' {
 		local __gof_thisburnin = cond(`__s'==1, `gofburnin', 0)
@@ -767,4 +789,27 @@ real matrix ergm_gof_summary5(real matrix draws) {
 	}
 	return(out)
 }
+end
+
+
+capture program drop nwergm_estat_ic
+program define nwergm_estat_ic, rclass
+	if missing(e(ll)) {
+		di as err "no log-likelihood was stored for this fit (it was fitted with the nologlik option)"
+		exit 498
+	}
+	tempname M
+	matrix `M' = (e(N), e(ll_0), e(ll), e(df_m), e(aic), e(bic))
+	matrix colnames `M' = N ll(null) ll(model) df AIC BIC
+	matrix rownames `M' = `e(depvar)'
+	di
+	di as txt "Akaike's information criterion and Bayesian information criterion"
+	di
+	di as txt "{hline 13}{c TT}{hline 63}"
+	di as txt %12s "Model" " {c |}" %9s "N" %13s "ll(null)" %13s "ll(model)" %6s "df" %10s "AIC" %10s "BIC"
+	di as txt "{hline 13}{c +}{hline 63}"
+	di as txt %12s abbrev("`e(depvar)'", 12) " {c |}" as res %9.0g e(N) %13.5g e(ll_0) %13.5g e(ll) %6.0f e(df_m) %10.5g e(aic) %10.5g e(bic)
+	di as txt "{hline 13}{c BT}{hline 63}"
+	di as txt "Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood = " as res %7.5g e(ll_se)
+	return matrix S = `M'
 end
