@@ -1,6 +1,7 @@
 ---
 title: "nwfactions"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Partition nodes into a specified number of cohesive factions"

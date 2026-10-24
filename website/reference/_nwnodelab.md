@@ -1,6 +1,7 @@
 ---
 title: "_nwnodelab"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Returns the nodelab of a node given its nodeid"

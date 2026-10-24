@@ -1,6 +1,7 @@
 ---
 title: "nwnoderename"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Rename a single node in a network"

@@ -1,7 +1,8 @@
 ---
 title: "Intro to Longitudinal Network Models"
 parent: Tutorials
-nav_order: 10
+grand_parent: "nwcommands (core)"
+nav_order: 9
 description: "Stochastic actor-oriented models (nwsaom), relational event models (nwrem) and dynamic network actor models (nwdynam): installing the packages and a first model of each."
 ---
 

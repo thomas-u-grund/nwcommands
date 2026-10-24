@@ -1,0 +1,114 @@
+-------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-1-first-saom/example.log
+  log type:  text
+ opened on:  24 Oct 2026, 19:41:43
+
+. * nwsaom tutorial 1: a first SAOM on the Glasgow friendship data
+. * Requires the core nwcommands and the package nwsaom.
+. 
+. nwsaom version
+nwsaom version 1.0.1, 24oct2026
+  core package nwcommands : installed (development copy, no distribution date)
+  native plugin           : .../ (plugin proto
+> col 140)
+  compared with           : R RSiena 1.6.14
+  license                 : GNU GPL-3
+
+. nwwebuse glasgow, nwclear
+
+. describe
+
+Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/glasgow.nwdta
+ Observations:            50                  
+    Variables:            11                  14 May 2019 16:09
+-------------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+-------------------------------------------------------------------------------------------------------------------------
+_nwnode         str3    %9s                   
+_nwinclude      float   %9.0g                 
+alcohol1        byte    %20.0g     alclbl     
+alcohol2        byte    %20.0g     alclbl     
+alcohol3        byte    %20.0g     alclbl     
+smoke1          byte    %11.0g     smklbl     
+smoke2          byte    %11.0g     smklbl     
+smoke3          byte    %11.0g     smklbl     
+sport1          byte    %11.0g     sprlbl     
+sport2          byte    %11.0g     sprlbl     
+sport3          byte    %11.0g     sprlbl     
+-------------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. nwsaom describe, waves(glasgow1 glasgow2 glasgow3)
+
+Network data: 3 waves, 50 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1              113      0.0461         2.260
+2              116      0.0473         2.320
+3              122      0.0498         2.440
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          57       59        56    0.331       115
+2->3          66       56        50    0.384       106
+----------------------------------------------------------
+
+. 
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
+ reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
+samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
+   transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.4783     5.2605 
+          se |    1.1113     0.8674 
+Overall maximum convergence ratio: 0.097 (good; all t-ratios below 0.1)
+
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1) detail
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
+ reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
+samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
+   transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.4783     5.2605 
+          se |    1.1113     0.8674 
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+RSiena effect names:
+  samex_smoke1                  same smoke1
+Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+  outdegree                  0.072      reciprocity                0.072
+  samex_smoke1               0.094      transtrip                  0.061
+Overall maximum convergence ratio:  0.097
+
+. log close
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-1-first-saom/example.log
+  log type:  text
+ closed on:  24 Oct 2026, 19:41:44
+-------------------------------------------------------------------------------------------------------------------------

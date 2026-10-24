@@ -1,6 +1,7 @@
 ---
 title: "nwergm"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwergm: exponential-family random graph models (ERGM), in the separate nwergm package (GPL-3)."
@@ -8,7 +9,7 @@ description: "nwergm: exponential-family random graph models (ERGM), in the sepa
 
 # `nwergm`
 
-`nwergm` fits exponential-family random graph models to a network, after R's `ergm`: maximum pseudolikelihood where the model is dyad-independent and Monte Carlo maximum likelihood otherwise.
+`nwergm` fits exponential-family random graph models to a network, after the R package `ergm` (statnet): maximum pseudolikelihood where the model is dyad-independent and Monte Carlo maximum likelihood otherwise.
 
 `nwergm` is not part of the core `nwcommands`. It is a package of its own, released under the
 GNU General Public License, version 3, and it needs the core installed first.
@@ -38,4 +39,4 @@ A first model:
 . nwergm flomarriage, edges nodecov(wealth)
 ```
 
-Tutorial: [Intro to ERGM in Stata](../tutorials/09-intro-ergm/).
+Section: [nwergm](../nwergm/). First tutorial: [Intro to ERGM in Stata](../tutorials/09-intro-ergm/). `nwergm` follows the R package `ergm` (statnet) and is not a replacement for it.

@@ -1,6 +1,7 @@
 ---
 title: "nwsaom"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwsaom: stochastic actor-oriented models (SAOM), in the separate nwsaom package (GPL-3)."
@@ -26,7 +27,7 @@ GNU General Public License, version 3, and it needs the core installed first.
 core never overwrites the package; to update the package, repeat the `net install` line with
 `replace`. Inside Stata, `help nwsaom` gives the complete syntax, options and examples.
 
-Worked tutorials, an installation page and a guide for RSiena users are in the [nwsaom section](../nwsaom/) of this website.
+Section: [nwsaom](../nwsaom/), with an installation page, worked tutorials and a guide for RSiena users. `nwsaom` follows the R package RSiena and is not a replacement for it.
 
 What it offers:
 
@@ -40,4 +41,4 @@ A first model:
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
 ```
 
-Tutorial: [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+First tutorial: [A first SAOM](../nwsaom/tutorial-1-first-saom/).

@@ -1,6 +1,7 @@
 ---
 title: "nwrandomwalk"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Mean random-walk hitting time to a target node"

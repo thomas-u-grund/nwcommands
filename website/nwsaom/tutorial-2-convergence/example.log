@@ -1,0 +1,156 @@
+-------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-2-convergence/example.log
+  log type:  text
+ opened on:  24 Oct 2026, 19:44:22
+
+. * nwsaom tutorial 2: reading convergence, and what to do when it fails
+. * Requires the core nwcommands and the package nwsaom.
+. 
+. nwwebuse glasgow, nwclear
+
+. 
+. * A rich model estimated with a deliberately short third phase (k3(100)):
+. * the estimates are noisy and the run does not converge
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) a
+> ltx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(1) k3(100) detail
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      outdegree |  -1.209788   .6076227    -1.99   0.046    -2.400707   -.0188697
+    reciprocity |   2.263883    .529079     4.28   0.000     1.226907    3.300859
+   samex_smoke1 |   .1610482   .2266739     0.71   0.477    -.2832245    .6053209
+  altx_alcohol1 |    .006889   .1107258     0.06   0.950    -.2101297    .2239076
+  egox_alcohol1 |   .1359848   .1114579     1.22   0.222    -.0824685    .3544382
+indegpopularity |  -.6466204   .4983963    -1.30   0.194    -1.623459    .3302184
+    outactivity |  -.1646595   .0717318    -2.30   0.022    -.3052512   -.0240677
+      transtrip |  -1.179726   1.512629    -0.78   0.435    -4.144425    1.784972
+         cycle3 |   1.029549   1.018194     1.01   0.312    -.9660754    3.025173
+      gwesp_.69 |   3.840171   3.118244     1.23   0.218    -2.271475    9.951818
+  simx_alcohol1 |   .5145673   .3656165     1.41   0.159     -.202028    1.231163
+---------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.7516     4.9774 
+          se |    1.1937     0.9694 
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+RSiena effect names:
+  samex_smoke1                  same smoke1
+  altx_alcohol1                 alcohol1 alter
+  egox_alcohol1                 alcohol1 ego
+  gwesp_.69                     GWESP I -> K -> J (69)
+  simx_alcohol1                 alcohol1 similarity
+Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
+  alcohol1                          2.880
+Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+  outdegree                  0.199      reciprocity                0.165
+  samex_smoke1               0.049      altx_alcohol1              0.300
+  egox_alcohol1              0.241      indegpopularity            0.201
+  outactivity                0.238      transtrip                  0.213
+  cycle3                     0.192      gwesp_.69                  0.215
+  simx_alcohol1              0.201
+Overall maximum convergence ratio:  0.427
+
+. 
+. * The convergence t-ratios are stored
+. matrix list e(tconv)
+
+e(tconv)[1,11]
+          outdegree   reciprocity  samex_smoke1  altx_alcoh~1  egox_alcoh~1  indegpopul~y   outactivity     transtrip
+tconv     .19864068      .1645989     .04859904     .29953977     .24109886     .20086809     .23756474     .21284053
+
+             cycle3     gwesp_.69  simx_alcoh~1
+tconv     .19159416     .21507889     .20131954
+
+. 
+. * Restart from the estimates: pass them as starting values
+. matrix b = e(b)
+
+. local th
+
+. forvalues j = 1/`=colsof(b)' {
+  2.     local th `th' `=b[1,`j']'
+  3. }
+
+. display "`th'"
+-1.209788342910438 2.263883290175206 .161048200899927 .0068889647862173 .1359848318693529 -.646620403954551 -.16465947714
+> 10311 -1.179726289641659 1.029548730367141 3.840171283459527 .5145672925763973
+
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) a
+> ltx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(2) theta0(`th') detail
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      outdegree |   -1.20907   .5609371    -2.16   0.031    -2.308487   -.1096537
+    reciprocity |   2.280546   .2646771     8.62   0.000     1.761789    2.799304
+   samex_smoke1 |   .1680516   .1960388     0.86   0.391    -.2161774    .5522807
+  altx_alcohol1 |  -.0002235   .0776939    -0.00   0.998    -.1525007    .1520538
+  egox_alcohol1 |   .1379253   .1047766     1.32   0.188     -.067433    .3432837
+indegpopularity |  -.6432866   .3120702    -2.06   0.039    -1.254933   -.0316402
+    outactivity |  -.1674719   .0622312    -2.69   0.007    -.2894428    -.045501
+      transtrip |  -1.192036    .806658    -1.48   0.139    -2.773056    .3889849
+         cycle3 |   1.015119   .5305186     1.91   0.056    -.0246787    2.054916
+      gwesp_.69 |   3.876746   1.589124     2.44   0.015     .7621203    6.991372
+  simx_alcohol1 |   .4904613   .3493353     1.40   0.160    -.1942234    1.175146
+---------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5281     5.0094 
+          se |    1.1808     0.8427 
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+RSiena effect names:
+  samex_smoke1                  same smoke1
+  altx_alcohol1                 alcohol1 alter
+  egox_alcohol1                 alcohol1 ego
+  gwesp_.69                     GWESP I -> K -> J (69)
+  simx_alcohol1                 alcohol1 similarity
+Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
+  alcohol1                          2.880
+Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+  outdegree                  0.063      reciprocity                0.056
+  samex_smoke1               0.049      altx_alcohol1              0.025
+  egox_alcohol1              0.022      indegpopularity            0.069
+  outactivity                0.062      transtrip                  0.058
+  cycle3                     0.052      gwesp_.69                  0.060
+  simx_alcohol1             -0.005
+Overall maximum convergence ratio:  0.091
+
+. 
+. * Wald tests with Stata's own commands
+. test egox_alcohol1 = altx_alcohol1
+
+ ( 1)  - altx_alcohol1 + egox_alcohol1 = 0
+
+           chi2(  1) =    0.98
+         Prob > chi2 =    0.3234
+
+. lincom egox_alcohol1 - altx_alcohol1
+
+ ( 1)  - altx_alcohol1 + egox_alcohol1 = 0
+
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .1381488   .1399055     0.99   0.323     -.136061    .4123586
+------------------------------------------------------------------------------
+
+. log close
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-2-convergence/example.log
+  log type:  text
+ closed on:  24 Oct 2026, 19:44:27
+-------------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 ---
 title: "nwshared"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Calculate number of shared neighbors between nodes and saves information in network"

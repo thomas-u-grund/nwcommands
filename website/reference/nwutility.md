@@ -1,6 +1,7 @@
 ---
 title: "nwutility"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Calculate utility scores according to Jackson and Wollinsky (1996)"

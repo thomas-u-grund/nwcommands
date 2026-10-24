@@ -1,6 +1,7 @@
 ---
 title: "nwmixing"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "E-I index and mixing table for a categorical node attribute"

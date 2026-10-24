@@ -485,11 +485,20 @@ program _write_nwcommands
 	tempname nw
 	file open `nw' using nwcommands.sthlp, replace write
 	file write `nw' "{smcl}" _n ///
-"{* *! version 1.0.0  3sept2014}{...}" _n ///
+"{* *! version `version'  `c(current_date)'}{...}" _n ///
+"" _n ///
+"{pstd}{it:nwcommands version `version', `c(current_date)'}{p_end}" _n ///
 "" _n ///
 "{pstd}" _n ///
 "New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else" _n ///
 "(core commands, help files, dialog boxes) - see {help nwinstall}." _n ///
+"{p_end}" _n ///
+"" _n ///
+"{pstd}" _n ///
+"The statistical network models are separate packages that need this core: {cmd:nwsaom} (stochastic actor-oriented models)," _n ///
+"{cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem}" _n ///
+"(relational event models). Install them with {cmd:nwinstall, models}; see {help nwinstall}. {cmd:nwversion} shows the core" _n ///
+"version and which model packages are installed." _n ///
 "{p_end}" _n ///
 "" _n ///
 "{col 14}Section{col 31}Description" _n ///
@@ -508,6 +517,9 @@ program _write_nwcommands
 "" _n ///
 "{help nwinternals:{col 14}{bf:[NW-7]}{...}{col 31}{bf:Internal helper files}}" _n ///
 "" _n ///
+"{pstd}" _n ///
+"nwcommands is free software under the GNU General Public License, version 3, as are the model packages." _n ///
+"{p_end}" _n ///
 "" _n ///
 "		*! Date        : `c(current_date)'" _n ///
 "		*! Version     : `version'" _n ///

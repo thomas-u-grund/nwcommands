@@ -1,6 +1,7 @@
 ---
 title: "nwsync"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Sync network with Stata variables"

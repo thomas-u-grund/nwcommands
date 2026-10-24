@@ -1,6 +1,7 @@
 ---
 title: "nwerrorcodes"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "What this package's own custom return codes mean"
