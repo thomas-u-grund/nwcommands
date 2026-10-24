@@ -107,5 +107,4 @@ evidence-based summary of what to expect at various network sizes.
 
 ## License
 
-Free to install and use, including for commercial research — see `LICENSE`. Redistribution,
-modification, and commercial licensing require permission; contact thomas.u.grund@gmail.com.
+nwcommands is free software under the GNU General Public License, version 3 (see `LICENSE` and `NOTICE.md`). The model packages nwsaom, nwergm, nwdynam and nwrem are separate packages under the same license.

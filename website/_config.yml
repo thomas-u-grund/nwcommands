@@ -21,9 +21,10 @@ aux_links:
     - "https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"
 
 footer_content: >-
-  nwcommands is free to install and use, including for commercial research.
-  See the <a href="https://github.com/thomas-u-grund/nwcommands">GitHub
-  repository</a> for source, license, and issue tracking.
+  nwcommands is free software under the GNU General Public License, version 3,
+  as are the model packages nwsaom, nwergm, nwdynam and nwrem. See the
+  <a href="https://github.com/thomas-u-grund/nwcommands">GitHub repository</a>
+  for source, license, and issue tracking.
 
 back_to_top: true
 back_to_top_text: "Back to top"

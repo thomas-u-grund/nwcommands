@@ -50,6 +50,6 @@ representation and compiled C kernels, are chosen automatically.
 
 ## Version and license
 
-The core is version 3.0.0 (24 October 2026) and is free to install and use, including for commercial
-research; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages are
-licensed separately under the GNU General Public License, version 3.
+The core is version 3.0.0 (24 October 2026). It is free software under the GNU General Public License,
+version 3; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages
+are separate packages under the same license.
