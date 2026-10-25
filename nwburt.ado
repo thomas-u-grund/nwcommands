@@ -30,8 +30,15 @@ program nwburt, rclass
 	// NETWORK output is a different problem from summarizing it per
 	// node.
 	if "`dyadredundancy'" == "" & "`dyadconstraint'" == "" {
+		local __fast 0
 		tempname __burt
-		mata: `__burt' = `netobj'->calculate_burt()
+		// native kernel 29 (plugin generation 7 or later) from the stored ties; an n x 4 result is used, anything else
+		// (older plugin, failure, NW_NOFASTKERNELS) leaves the Mata method
+		mata: `__burt' = nw_fastburt(`netobj')
+		mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+		if !`__fast' {
+			mata: `__burt' = `netobj'->calculate_burt()
+		}
 		mata: effsize = `__burt'[.,1]
 		mata: efficiency = `__burt'[.,2]
 		mata: constraint = `__burt'[.,3]
@@ -116,11 +123,32 @@ program nwburt, rclass
 	capture confirm number 1
 end
 
+capture mata: mata drop nw_fastburt()
 capture mata: mata drop dyadicredundancy()
 capture mata: mata drop dyadicconstraint()
 capture mata: mata drop hierarchy()
 
 mata:
+// Native Burt measures (kernel 29 of the nwgraph plugin): the n x 4 matrix of calculate_burt() (effective size,
+// efficiency, constraint, hierarchy), or a 0 x 0 matrix when the kernel is not available. The global
+// NW_NOFASTKERNELS forces the Mata method.
+real matrix nw_fastburt(pointer (class nw_def scalar) scalar p)
+{
+	real rowvector aux
+	real scalar st, n
+	real matrix r, el
+	real colvector h
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 7) return(J(0, 0, .))
+	n = p->get_nodes()
+	el = p->edgelist()
+	r = nwg_comb(29, n, el, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 5) return(J(0, 0, .))
+	h = r[., 4] :+ editvalue(r[., 5], 1, .)
+	return((r[., 1], r[., 2], r[., 3], h))
+}
+
 real matrix hierarchy(real matrix net, real matrix dc){
 	real matrix N, avgc, z, H, M
 

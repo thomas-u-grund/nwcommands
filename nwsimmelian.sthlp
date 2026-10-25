@@ -61,6 +61,11 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 The mutual ties and the mutual neighbours they share are found from the tie lists. Measured in Stata/BE, random undirected
 network with 10 ties drawn per node: 20,000 nodes 7 seconds and 1.2 GB (12.5 GB before).
 
+{pstd}
+The mutual ties that have a mutual neighbour in common are found in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
+platform has it, and in Mata otherwise; both give the same network. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.08 seconds,
+20,000 nodes 0.2 seconds, 100,000 nodes 0.8 seconds (the Mata route needs 0.5, 2.0 and 11.6 seconds).
+
 {title:See also}
 	{help nwshared}
 	
