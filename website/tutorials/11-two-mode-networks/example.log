@@ -112,7 +112,7 @@ Notes:
   Projected network: women
   Level: 1
   Nodes: 18
-  Ties: 278
+  Ties: 139
 
 . nwsummarize women
 --------------------------------------------------
@@ -151,8 +151,164 @@ Notes:
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_davis.svg...
-(file plot_davis.svg not found)
 file plot_davis.svg saved as SVG format
+
+. 
+. * Part of the network: the flag, the two modes and the level labels are kept
+. nwkeepnodes davis, nodes(Brenda Charlotte Dorothy Eleanor E1 E2 E3 E4 E5) generate(small)
+
+
+
+
+
+
+
+
+
+
+. nwsummarize small
+--------------------------------------------------
+   Network name:  small
+   Network id:  3
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 9
+      Level 1: 4 (woman)
+      Level 2: 5 (event)
+   Selfloop: false
+   Edges: 8
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .4
+   Temporal: false
+
+. nw2degree small, generate(attsmall)
+----------------------------------------
+  Network name: small
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    attsmall |          9          .4    .3010399          0         .8
+ 
+
+. 
+. * Communities of the two-mode network itself: the bipartite modularity of Barber (the default) and Newman's modularity
+. nwcommunity davis, generate(comm_bip) seed(1)
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q (Barber, two-mode): .346
+
+   comm_bip |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         12       37.50       37.50
+          2 |          6       18.75       56.25
+          3 |          9       28.12       84.38
+          4 |          5       15.62      100.00
+------------+-----------------------------------
+      Total |         32      100.00
+ 
+
+. nwcommunity davis, generate(comm_one) onemode seed(1)
+----------------------------------------
+  Network name: davis
+  Communities: 3
+  Modularity Q: .332
+
+   comm_one |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         12       37.50       37.50
+          2 |         14       43.75       81.25
+          3 |          6       18.75      100.00
+------------+-----------------------------------
+      Total |         32      100.00
+ 
+
+. nwmodularity davis, group(comm_bip)
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q (Barber, two-mode): .346
+ 
+
+. nwmodularity davis, group(comm_bip) onemode
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q: .333
+ 
+
+. 
+. * How nested is the network? NODF and the C-score
+. nw2nested davis
+------------------------------------------------------------
+  Network name: davis
+  NODF (Almeida-Neto et al. 2008):   48.5812
+      among the nodes of mode 1:   48.2057    of mode 2:   49.2125
+  C-score, pairs of mode-2 nodes:   12.5934   normalised (0-1):    0.4494
+------------------------------------------------------------
+
+. 
+. * Clustering: Opsahl (default) and Robins-Alexander
+. nw2clustering davis, generate(clo)
+
+. display r(C_global)
+.7718968
+
+. nw2clustering davis, ra
+  Robins-Alexander clustering (4 x C4 / L3):  0.467764   (C4 = 341, L3 = 2916)
+
+. 
+. * A null model that keeps both degree sequences
+. set seed 1
+
+. nwpermute davis, generate(davis_swap) swap
+
+. nw2degree davis_swap, generate(att_swap) raw silent
+
+. nw2degree davis, generate(att_raw) raw silent
+
+. assert att_swap == att_raw
+
+. 
+. * Export and import keep the two modes
+. nwexport davis, type(pajek) fname(davis_pajek) replace
+Exporting network: davis
+Saved as file: davis_pajek.net
+
+. nwimport davis_pajek.net, type(pajek) name(davis_back) nwappend
+------------------------------
+Importing successful
+
+. nwsummarize davis_back
+--------------------------------------------------
+   Network name:  davis_back
+   Network id:  5
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 32
+      Level 1: 18 (mode 1)
+      Level 2: 14 (mode 2)
+   Selfloop: false
+   Edges: 89
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .353
+   Temporal: false
+
+. erase davis_pajek.net
+
+. 
+. * Commands that cannot say anything about a two-mode network stop
+. capture noisily nwspectral davis, generate(sp)
+nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold no 
+> ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a one-mod
+> e graph.
+
+. display _rc
+6088
 
 . 
 . * Company directors in Sweden: 5,092 directors, 455 companies
@@ -172,7 +328,7 @@ file plot_davis.svg saved as SVG format
    Edges: 5669
    Minimum value:  0
    Maximum value:  1
-   Density:  0
+   Density:  .00245
    Temporal: false
 
 . nw2degree ftdirectors_se, generate(deg)
@@ -229,7 +385,7 @@ Female |  1.190244      1025
   Projected network: companies
   Level: 2
   Nodes: 455
-  Ties: 1518
+  Ties: 759
 
 . nwsummarize companies
 --------------------------------------------------
@@ -243,7 +399,7 @@ Female |  1.190244      1025
    Edges: 759
    Minimum value:  0
    Maximum value:  5
-   Density:  .007
+   Density:  .00735
    Temporal: false
    Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
 

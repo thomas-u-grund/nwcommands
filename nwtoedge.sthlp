@@ -38,6 +38,7 @@
 {synopt:{opt numeric}}Return every possible node pair (a full node x node grid), not just actual ties; only allowed with a single network{p_end}
 {synopt:{opt ignore2mode}}Treat a two-mode network like a one-mode one - suppress the mode indicator that would otherwise be added to {opt egovars()}/{opt altervars()} automatically{p_end}
 {synopt:{opt isolates0}}reserved; not currently implemented{p_end}
+{synopt:{opt allpairs}}Two-mode network: also write the pairs of nodes of different modes without a tie (by default a two-mode network is written as its ties, as with {opt compress}){p_end}
 
 {p2colreset}{...}
 
@@ -154,10 +155,15 @@ directions, so the signed comparison is preserved correctly for both.
 	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(dist)}
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - one row for every tie between the two modes (the pairs without a tie only with {opt allpairs}) and the mode of both nodes; read back with {help nwfromedge}, {opt twomode} or {help nw2fromedge} the list gives the same network.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see {help nw2toedge} for the two-mode-specific counterpart, though this command's own {opt egovars()}/{opt altervars()} two-mode handling is used internally by several other commands directly on a two-mode network too.
+Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - one row for every tie between the two modes (the pairs without a tie only with {opt allpairs}) and the mode of both nodes; read back with {help nwfromedge}, {opt twomode} or {help nw2fromedge} the list gives the same network.
 
 {pstd}
 When converting a single network, this command also attaches that network's own full node list to
@@ -185,4 +191,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

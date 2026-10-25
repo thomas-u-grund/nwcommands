@@ -21,6 +21,10 @@ program nwshared
 	}
 	unw_defs
 	_nwsyntax `netname'
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 
 	if "`name'" == "" {
 		local name "_shared"

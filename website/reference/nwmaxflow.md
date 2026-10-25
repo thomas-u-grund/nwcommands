@@ -50,7 +50,7 @@ For a DIRECTED network, capacities are directional (a tie A->B only lets flow mo
 
 ## Supported network types
 
-Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual directedness (unlike [nwlambda](nwlambda), which always symmetrizes first; a flow network is inherently a directed concept). Weighted: yes, via `weighted`. Signed: not checked - a negative capacity has no meaning here. Two-mode: not checked (see [nwmatching](nwmatching) for the two-mode/bipartite analog - maximum matching, not maximum flow).
+Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual directedness (unlike [nwlambda](nwlambda), which always symmetrizes first; a flow network is inherently a directed concept). Weighted: yes, via `weighted`. Signed: not checked - a negative capacity has no meaning here. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 
@@ -75,3 +75,7 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 - [nwmatching](nwmatching), [nwlambda](nwlambda), [nwkcomponents](nwkcomponents), [nwbridges](nwbridges)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

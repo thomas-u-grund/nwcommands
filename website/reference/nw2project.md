@@ -28,7 +28,7 @@ replace]
 |---|---|
 | `project(1\|2)` | Mode/level to collapse to |
 | `name(newnetname)` | Name of the new one-mode network; default = *project* |
-| `stat(min\|max\|minmax\|sum\|mean\|count\|binary\|jaccard\|cosine)` | How to combine tie values (or, for the last 4, how to score shared-neighbor structure directly); default = *minmax* |
+| `stat(min\|max\|minmax\|sum\|mean\|count\|binary\|jaccard\|cosine\|newman)` | How to combine tie values (or, for the last 5, how to score shared-neighbor structure directly; *newman* is the collaboration weight of Newman 2001, the sum over the shared nodes of the other mode of 1/(k - 1) with k the number of ties of the shared node, the weight of `tnet::projecting_tm`; for tie values the mean of tnet's two directions); default = *minmax* |
 | `xvars` | Generate Stata variables for the new network |
 | `replace` | Replace an existing network of the same name |
 
@@ -92,17 +92,21 @@ The projected network's provenance (which network and mode it was projected from
 
 ## Supported network types
 
-Binary: yes. Directed: not checked - the source two-mode network's ties are treated as undirected affiliations. Weighted: **W1**, native - an unvalued source network projects to a shared-neighbor *count* (the standard bipartite-projection tie weight); a valued source network projects using `stat()`'s explicit choice of combination rule (see above) - tie strength is never silently discarded or reinterpreted as a distance. Signed: not checked. Two-mode: **T3** - this command's entire purpose is projecting a two-mode network down to one mode, so the projection is always explicit and user-requested (via `project()`), never a silent side effect of some other operation - the canonical, correct way to project in this package.
+Binary: yes. Directed: not checked - the source two-mode network's ties are treated as undirected affiliations. Weighted: **W1**, native - an unvalued source network projects to a shared-neighbor *count* (the standard bipartite-projection tie weight); a valued source network projects using `stat()`'s explicit choice of combination rule (see above) - tie strength is never silently discarded or reinterpreted as a distance. Signed: not checked. Two-mode: yes - the projection onto one mode; `stat()` chooses the tie weight (`count` is the number of shared nodes of the other mode as in `igraph::bipartite_projection`, `newman` the weight 1/(k - 1) per shared node of `tnet::projecting_tm`).
 
 ## Stored results
 
 **Scalars**
 
 - **r(nodes)** number of nodes in the projected network
-- **r(ties)** number of ties in the projected network
+- **r(ties)** number of edges in the projected (undirected) network, each pair counted once
 
 ## See also
 
 - [nwproject](nwproject) (an exact alias for this command), [nw2set](nw2set), [nw2fromedge](nw2fromedge), [nw2toedge](nw2toedge), [nw2clustering](nw2clustering)
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

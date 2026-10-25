@@ -92,8 +92,7 @@ investment proportion (exactly Burt's own interpretation of tie strength), not a
 not supported - {it:p_ij} is a ratio to a sum of outgoing tie weights, which is only mathematically
 meaningful when all of a node's tie weights are non-negative; a negative tie included in the same
 network as positive ties will distort every {it:p_ij} for that node (values can fall outside [0,1],
-and {it:c_ij} can exceed 1) rather than being handled as a distinct signed relation. Two-mode: not
-checked.
+and {it:c_ij} can exceed 1) rather than being handled as a distinct signed relation. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:References}
@@ -125,4 +124,4 @@ both give the same values (to the last digits). The kernel itself takes about on
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

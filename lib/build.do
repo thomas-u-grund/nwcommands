@@ -21,6 +21,8 @@ if _rc {
 }
 clear all
 capture mata: mata clear
+* unw_core.do calls unw_defs, which calls _nwlibcheck: the library that is being built need not exist yet
+global NW_LIBCHECK_OK 1
 
 cd "`root'"
 do "`root'/unw_core.do"
@@ -31,4 +33,5 @@ mata: mata mlib add lnwcommands *(), dir("`root'/lib")
 mata: mata mlib index
 
 mata: mata describe using lnwcommands
+global NW_LIBCHECK_OK
 cd "`root'"

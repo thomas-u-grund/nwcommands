@@ -35,10 +35,15 @@ By default, an existing network is replaced, unless option {opt generate(newnetn
 
 {marker examples}{...}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes - {opt generate()}'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - the row-grouping this command performs has no notion of mode, so it would freely collapse mode-1 and mode-2 nodes together; rejected explicitly with a clear error instead.
+Binary: yes. Directed: yes. Weighted: yes - {opt generate()}'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
 
 {title:Examples}
 
@@ -65,4 +70,4 @@ a message that says why and what to do instead.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -1,7 +1,7 @@
 
 capture program drop nwfromedge
 program nwfromedge
-	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode]
+	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode valued unvalued]
 
 	// HARMONISATION: `twomode' makes the existing, separate `nw2fromedge'
 	// command reachable directly from `nwfromedge' too - mirroring
@@ -79,12 +79,12 @@ program nwfromedge
 	tempvar _value
 	if (wordcount("`varlist'") == 3) {
 		local value : word 3 of `varlist'
-		gen `_value' = `value'
+		gen double `_value' = `value'
 		_extract_valuelabels `value'
 		local edgelabs "`r(valuelabels)'"
 	}
 	else {
-		gen `_value' = 1
+		gen byte `_value' = 1
 	}
 	
 	// check for string variables
@@ -401,6 +401,10 @@ program nwfromedge
 		mata: nw_fromedge_mirror(__nwego, __nwalter, __nwvalue)
 	}
 	mata: `othernetobj'->set_edge_from_triplets(__nwego, __nwalter, __nwvalue, 1)
+	// The valued flag is set here, when the network is created: a value variable (third variable) makes
+	// the network valued, even if every value is 1; without one it is binary.  valued / unvalued override.
+	local __nwfe_val = (wordcount("`varlist'") == 3 | "`valued'" != "") & "`unvalued'" == ""
+	mata: `othernetobj'->set_valued(`__nwfe_val')
 	// Directed at construction unconditionally, matching nwset's own
 	// former default at this exact step (its own mat()-dispatch set
 	// directed unless an `undirected' local was forwarded, which this

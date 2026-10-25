@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 282
+POSITION 10 10 550 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwpagerank - PageRank centrality")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 188, label("Options")
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
   TEXT tx_ed_damping 20 54 260 ., label("Probability of following a tie, between 0 and 1; default = 0.85")
   EDIT ed_damping 290 54 100 ., numonly nomem option(damping)
   TEXT tx_ed_generate 20 82 260 ., label("Name of the Stata variable that stores each node's PageRank score")
@@ -30,6 +30,8 @@ BEGIN
   EDIT ed_maxiter 290 166 100 ., numonly nomem option(maxiter)
   TEXT tx_ed_tol 20 194 260 ., label("Convergence tolerance; default = 1e-10")
   EDIT ed_tol 290 194 100 ., nomem option(tol)
+  TEXT tx_cx_binary 20 222 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  CHECKBOX cx_binary 290 222 190 ., label("binary") option(binary)
 END
 
 LIST netlist
@@ -51,6 +53,7 @@ BEGIN
 		optionarg main.ed_generate
 		option main.cx_replace
 		option main.cx_silent
+		option main.cx_binary
 	endoptions
 	stata
 END

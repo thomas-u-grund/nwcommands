@@ -39,9 +39,9 @@
 {p2line}
 {p2col:{cmd: pearson}}Calculate Pearson correlation for tie vectors of two nodes{p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: jaccard}}Calculate Jaccard distance between the tie vectors of two nodes{p_end}
+{p2col:{cmd: jaccard}}Calculate the Jaccard coefficient of the tie vectors of two nodes (shared neighbours divided by the neighbours of either node; with {cmd:context(both)} the out- and in-neighbours are pooled){p_end}
 {p2col:{cmd: matches}}Calculate percentage of matches in tie vectors of two nodes{p_end}
-{p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes{p_end}
+{p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes, the sum over all other nodes k of w_ik*w_jk (the number of common contacts in a binary network){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker context}{...}
@@ -124,14 +124,18 @@ Calculates the cross-product of the tie vectors of nodes {it:} and {it:j}
 {cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::cor} on the incidence matrix).
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes ({bf:mode()} lets you restrict the comparison to incoming or
 outgoing ties only). Weighted: {bf:pearson} (via {help nwcorrelate}) and {bf:crossproduct} use
 tie weights directly; {bf:hamming}/{bf:jaccard}/{bf:matches} binarize each tie before comparing,
-so tie strength does not affect these three. Signed: not checked. Two-mode: not supported -
-operates on the network's own square adjacency matrix. The similarity network itself always
+so tie strength does not affect these three. Signed: not checked. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::cor} on the incidence matrix). The similarity network itself always
 carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits
 its source network's own node labels, so it can be compared directly against the source network
 node-for-node.
@@ -150,4 +154,4 @@ about 12,900 nodes the command stops at once with r(484) and a message with the 
 	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

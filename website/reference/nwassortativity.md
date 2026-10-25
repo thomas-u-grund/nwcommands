@@ -19,7 +19,8 @@ nwassortativity
 [,
 attribute(varname)
 weighted
-silent]
+silent
+binary]
 ```
 
 | | |
@@ -27,6 +28,7 @@ silent]
 | `attribute(varname)` | Numeric node attribute to correlate across ties; default = each node's own degree |
 | `weighted` | Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally |
 | `silent` | Suppress display of results |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -55,7 +57,7 @@ Social networks are frequently found to be assortative by degree (popular people
 
 ## Supported network types
 
-Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same reasoning as [nwclustering](nwclustering)/[nwclique](nwclique)). Weighted: **W2** (added 2026-09-02, closing a self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's own original definition; `weighted` (Leung and Chau 2007) is an explicit opt-in that weights the same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the weighted correlation's own denominators, not handled distinctly. Two-mode: not checked - operates on the network's own stored ties directly.
+Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same reasoning as [nwclustering](nwclustering)/[nwclique](nwclique)). Weighted: **W2** (added 2026-09-02, closing a self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's own original definition; `weighted` (Leung and Chau 2007) is an explicit opt-in that weights the same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the weighted correlation's own denominators, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the degree assortativity of a bipartite graph is negative by construction and rarely of interest.
 
 A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value - the same convention this package uses elsewhere for degree-undefined cases (e.g. [nwclustering](nwclustering)).
 
@@ -79,3 +81,7 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 ## See also
 
 - [nwdegree](nwdegree), [nwclustering](nwclustering), [nwmixing](nwmixing), [nwcorrelate](nwcorrelate)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

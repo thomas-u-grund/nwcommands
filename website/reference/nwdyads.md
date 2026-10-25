@@ -16,6 +16,7 @@ Dyad census
 ```stata
 nwdyads 
 [netname]
+netname may be a list of networks or a wildcard such as lazega_*, as in nwsummarize; the census is shown for each network and the r() results are those of the last one.
 ```
 
 ## Description
@@ -62,7 +63,7 @@ The command also returns the reciprocity of the network.
 
 ## Supported network types
 
-Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
 
 ## Stored results
 
@@ -80,3 +81,7 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 - [nwtriads](nwtriads)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -49,7 +49,7 @@ silent]
 
 ## Supported network types
 
-Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network membership and alter-alter density; tie strength does not affect these measures. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix.
+Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network membership and alter-alter density; tie strength does not affect these measures. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 
@@ -60,3 +60,7 @@ Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harv
 - [nwdegree](nwdegree), [nwaltergen](nwaltergen), [nwconstraint](nwconstraint), [nwburt](nwburt)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

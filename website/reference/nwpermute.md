@@ -19,6 +19,7 @@ nwpermute
 [,
 generate(newnetname)
 replace
+nwreplace
 xvars]
 ```
 
@@ -26,7 +27,10 @@ xvars]
 |---|---|
 | `generate(newnetname)` | Save permutation as new network |
 | `replace` | Replace existing network with permutation |
+| `nwreplace` | Overwrite the network named in `generate()` if it already exists; without it the command stops with an error |
 | `xvars` | Generate Stata variables for the network |
+| `swap` | Two-mode network: exchange the partners of two ties at random (Maslov and Sneppen); keeps both degree sequences and the tie values; without it the labels are permuted within the modes |
+| `swaps(#)` | Two-mode network: the number of attempted exchanges with `swap`; default = ten times the number of ties |
 
 ## Description
 
@@ -73,10 +77,14 @@ The structure of the network remains exactly the same, however, the nodes have a
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode (`tnet::rg_reshuffling_tm`); `swap` exchanges the partners of two ties at random and keeps both degree sequences (`bipartite::swap.web`).
 
 ## See also
 
 - [nwqap](nwqap), [nwcorrelate](nwcorrelate)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

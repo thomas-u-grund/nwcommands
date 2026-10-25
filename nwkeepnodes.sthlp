@@ -108,10 +108,15 @@ default unless {bf:netonly} is specified.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: mode assignments are preserved for surviving nodes.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
 
 {title:Limits}
 
@@ -124,4 +129,4 @@ Stata/BE; killed at 12 GB before).
    {help nwdropnodes}, {help nwkeep}, {help nwdrop}, {help nwclear}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

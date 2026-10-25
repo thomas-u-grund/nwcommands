@@ -2,7 +2,7 @@
 capture program drop nwdegree
 program nwdegree
 	version 9
-	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(real 0.0) GENerate(string) in(string) outputoff out(string) *]
+	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) *]
 	set more off
 
 	// This command's own doc has always described netlist (multi-network)
@@ -30,6 +30,22 @@ program nwdegree
 	// nwcomponents/nwcommunity check the "networks" local before
 	// entering their own loops, not inside them).
 	local totalnetworks = `networks'
+
+	// Tie values: on a valued network the default is the strength (sum of the tie values,
+	// alpha(1); igraph::strength, tnet::degree_w), as R does for a weighted graph.  alpha(0) or
+	// binary gives the number of ties.  An unvalued network has no values: alpha() is then
+	// irrelevant and the result is the number of ties, as before.
+	if "`alpha'" != "" {
+		capture confirm number `alpha'
+		if _rc {
+			noi di "{err}Option {bf:alpha()} must be a number."
+			error 198
+		}
+		if "`binary'" != "" & real("`alpha'") != 0 {
+			noi di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
+			error 198
+		}
+	}
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
@@ -74,7 +90,10 @@ program nwdegree
 			if "`ignored_opts'" != "" {
 				noi di "{txt}      the following option(s) have no bipartite equivalent and were ignored:{bf:`ignored_opts'}"
 			}
-			noi nw2degree `netname_temp', generate(`generate') `replace' `silent' alpha(`alpha')
+			local __fwd ""
+			if "`alpha'" != "" local __fwd "alpha(`alpha')"
+			if "`binary'" != "" local __fwd "`__fwd' binary"
+			noi nw2degree `netname_temp', generate(`generate') `replace' `silent' `__fwd'
 			continue
 		}
 
@@ -85,8 +104,18 @@ program nwdegree
 		tempname outdegree
 		tempname indegree
 
-		mata: `outdegree' = `netobj'->get_outdegree(`alpha')
-		mata: `indegree' = `netobj'->get_indegree(`alpha')
+		local __alpha 0
+		if "`alpha'" != "" {
+			local __alpha = real("`alpha'")
+		}
+		else if "`valued'" == "true" & "`binary'" == "" {
+			local __alpha 1
+		}
+		// strengths are not whole numbers: stored in double precision (a network without values keeps float)
+		local __gt ""
+		if "`valued'" == "true" local __gt "double"
+		mata: `outdegree' = `netobj'->get_outdegree(`__alpha')
+		mata: `indegree' = `netobj'->get_indegree(`__alpha')
 
 		// BUGFIX (real, severe, silently-wrong-output bug - confirmed
 		// empirically before fixing, not assumed): the default (no
@@ -259,6 +288,38 @@ program nwdegree
 		// existence was never actually checked here at all, silently
 		// falling through to a bare "capture generate" later instead of
 		// this guard's own clear error message.
+		// ties(): the number of ties as well, next to the strength (names: degree, or outdegree and indegree)
+		local __cntout ""
+		local __cntin ""
+		if "`ties'" != "" {
+			local __tcount : word count `ties'
+			if "`directed'" == "true" & `__tcount' != 2 {
+				noi di "{err}Option {bf:ties()} needs 2 names (outdegree, indegree) for a directed network; got `__tcount'."
+				error 198
+			}
+			if "`directed'" != "true" & `__tcount' != 1 {
+				noi di "{err}Option {bf:ties()} needs 1 name for an undirected network; got `__tcount'."
+				error 198
+			}
+			local __cntout : word 1 of `ties'
+			local __cntin : word 2 of `ties'
+			if `totalnetworks' > 1 {
+				local __cntout "`__cntout'_`netname_temp'"
+				if "`__cntin'" != "" local __cntin "`__cntin'_`netname_temp'"
+			}
+			foreach c in `__cntout' `__cntin' {
+				capture confirm variable `c', exact
+				if _rc == 0 & "`replace'" == "" {
+					noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:ties()}"
+					err 99
+				}
+				capture drop `c'
+			}
+		}
+		else if "`isolates'" != "" & `__alpha' != 0 {
+			// the isolates are the nodes without a tie, whatever the tie values add up to
+			tempvar __cntout __cntin
+		}
 		foreach c in `_degree' `_indegree' `_outdegree' `_isolate' {
 			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
@@ -269,30 +330,57 @@ program nwdegree
 		}
 
 		if ("`directed'" == "false"){
-			capture generate `_degree' = .
+			capture generate `__gt' `_degree' = .
 			mata: st_store((1,`nodes_temp'), "`_degree'", `outdegree')
 		}
 		else {
-			capture generate `_outdegree' = .
-			capture generate `_indegree' = .
+			capture generate `__gt' `_outdegree' = .
+			capture generate `__gt' `_indegree' = .
 			mata: st_store((1,`nodes_temp'), "`_outdegree'", `outdegree')
 			mata: st_store((1,`nodes_temp'), "`_indegree'", `indegree')
 		}
 
+		if "`__cntout'" != "" {
+			qui generate double `__cntout' = .
+			mata: st_store((1,`nodes_temp'), "`__cntout'", `netobj'->get_outdegree(0))
+			if "`directed'" == "true" {
+				qui generate double `__cntin' = .
+				mata: st_store((1,`nodes_temp'), "`__cntin'", `netobj'->get_indegree(0))
+			}
+		}
+
 		if "`standardize'" != "" {
-			capture replace `_degree' = `_degree' / (`nodes_temp' - 1)
-			capture replace `_outdegree' = `_outdegree' / (`nodes_temp' - 1)
-			capture replace `_indegree' = `_indegree' / (`nodes_temp' - 1)
+			// Divide each stored variable once: for an undirected network
+			// `_degree' and `_outdegree' are the same variable (word 1 of
+			// generate()), and for a directed network `_degree' is the
+			// outdegree variable, so dividing all three divided it twice.
+			if "`directed'" == "true" {
+				replace `_outdegree' = `_outdegree' / (`nodes_temp' - 1)
+				replace `_indegree' = `_indegree' / (`nodes_temp' - 1)
+			}
+			else {
+				replace `_degree' = `_degree' / (`nodes_temp' - 1)
+			}
 		}
 
 		if "`isolates'" != "" {
 			capture generate `_isolate' = .
 			sum `_isolate'
 			if "`directed'" == "true" {
-				replace `_isolate' = (`_outdegree' == 0) * (`_indegree'==0) if `included' == 1
+				if "`__cntout'" != "" {
+					replace `_isolate' = (`__cntout' == 0) * (`__cntin'==0) if `included' == 1
+				}
+				else {
+					replace `_isolate' = (`_outdegree' == 0) * (`_indegree'==0) if `included' == 1
+				}
 			}
 			else {
-				replace `_isolate' = (`_degree' == 0)  if `included' == 1
+				if "`__cntout'" != "" {
+					replace `_isolate' = (`__cntout' == 0)  if `included' == 1
+				}
+				else {
+					replace `_isolate' = (`_degree' == 0)  if `included' == 1
+				}
 			}
 		}
 
@@ -300,6 +388,17 @@ program nwdegree
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{hline 40}"
+			if "`valued'" == "true" {
+				if `__alpha' == 0 {
+					noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"
+				}
+				else if `__alpha' == 1 {
+					noi di "{txt}  (valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties)"
+				}
+				else {
+					noi di "{txt}  (valued network: degree is k (s/k)^alpha, alpha = `__alpha', k = number of ties, s = sum of tie values)"
+				}
+			}
 			if "`isolates'" == "" {
 				noi di "{txt}    Degree distribution"
 				if "`directed'" == "true"{
@@ -316,7 +415,17 @@ program nwdegree
 			}
 		}
 
+		if "`silent'" == "" & "`valued'" == "true" {
+			mata: st_local("__mt", strofreal(mean(`netobj'->get_outdegree(0)), "%9.4g"))
+			mata: st_local("__ms", strofreal(mean(`netobj'->get_outdegree(1)), "%9.4g"))
+			noi di "{txt}  Mean number of ties (out): {res}`__mt'{txt}   mean strength (out): {res}`__ms'"
+		}
 		mata: st_rclear()
+		mata: st_numscalar("r(alpha)", `__alpha')
+		if "`valued'" == "true" {
+			mata: st_numscalar("r(mean_ties)", mean(`netobj'->get_outdegree(0)))
+			mata: st_numscalar("r(mean_strength)", mean(`netobj'->get_outdegree(1)))
+		}
 
 		if "`isolates'" == "" {
 			if ("`directed'" == "false") {

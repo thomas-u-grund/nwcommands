@@ -31,7 +31,7 @@ nodes exists. It also returns the names of those nodes when ids are used. Either
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is returned exactly as stored, respecting direction, never symmetrized. Weighted: yes, natively - returns the tie's own raw stored value. Signed: not checked; a negative value is returned as-is with no special handling. Two-mode: not checked, but not expected to need any - a direct single-cell lookup by node identity.
+Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is returned exactly as stored, respecting direction, never symmetrized. Weighted: yes, natively - returns the tie's own raw stored value. Signed: not checked; a negative value is returned as-is with no special handling. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Examples}
 
@@ -52,4 +52,4 @@ The value of one cell of a network held as stored ties is read from the sparse i
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -27,6 +27,7 @@ program nwhierarchy, rclass
 		local equivgen "`generate'"
 	}
 	_nwsyntax `netname'
+	_nw2guard `netname', cmd(nwhierarchy)
 
 	if "`clear'" == "" & "`add'" == "" {
 		local add = "add"

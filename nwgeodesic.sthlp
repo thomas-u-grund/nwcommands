@@ -26,14 +26,15 @@
 {opt nwreplace}
 {opth generate(newvarname)}
 {opt xvars}
-{opt force}]
+{opt force}
+{opt binary}]
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth unconnected(int)}}Define the length of the path between two unconnected nodes{p_end}
-{synopt:{opth alpha(real)}}Deal with valued networks{p_end}
+{synopt:{opth alpha(real)}}Cost of a step along a tie of value w: 1/w^alpha; default 1 on a valued network, 0 (every tie is one step) otherwise{p_end}
 {synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
 {synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
@@ -41,6 +42,7 @@
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -99,10 +101,21 @@ the formula above ignores tie weights.
 
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network a step along a tie of value w costs 1/w^alpha, with {cmd:alpha(1)} by default, so that a stronger tie is a shorter step (Opsahl et al. 2010; {it:igraph::distances} with weights 1/w, {it:tnet::distance_w}); {cmd:alpha(-1)} reads the values as lengths, as {it:igraph} does. {opt binary} (or {cmd:alpha(0)}) counts steps. Weighted distances are computed for networks of up to 100 nodes, larger networks count steps unless {opt force} is given.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
 
 {title:References}
 
@@ -196,4 +209,4 @@ The distances of all pairs of nodes are an {it:n}-by-{it:n} matrix; two matrices
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -43,6 +43,11 @@ For each node, {cmd:nwbalance} generates the number of closed triads it belongs 
 those that are balanced, and the ratio of the two. Network-level counts and the overall balance
 ratio are returned in {help return:r()}.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
+
 {title:Supported network types}
 
 {pstd}
@@ -51,8 +56,7 @@ Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of 
 balance product is whichever direction is checked first ({it:i->j} before {it:j->i}), which matters
 only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is
 used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is
-the command's whole purpose - see Description. Two-mode: not checked; structural balance is not a
-meaningful concept for a bipartite network's own inherently unclosable triads.
+the command's whole purpose - see Description. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
 
 {title:Stored results}
 
@@ -101,4 +105,4 @@ node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the older
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

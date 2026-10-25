@@ -53,10 +53,15 @@ a perfectly symmetric matrix to a directed network, one can use:
  to overwrite the automatic setting afterwards. 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the matrix must not hold a tie between two nodes of the same mode (error 459).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: not checked.
+Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: yes - the matrix must not hold a tie between two nodes of the same mode (error 459).
 
 {title:Examples}
 
@@ -90,4 +95,4 @@ before the matrix is put in (earlier: a complete graph, so five matrices at once
 	{help nwreplace}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

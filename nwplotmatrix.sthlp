@@ -122,7 +122,7 @@ All normal {help connect_options:options for lines} can be applied as well.
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike {help nwplot}'s node-link layout, which needs {opt arrows} to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike {help nwplot}'s node-link layout, which needs {opt arrows} to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 
@@ -138,4 +138,4 @@ are refused; plot a part of the network or use {help nwplot}.
 last certified : 25 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

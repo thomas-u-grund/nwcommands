@@ -61,7 +61,7 @@ The similarity of a node with itself is not defined and is set to missing, as ar
 
 ## Supported network types
 
-Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore) uses). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore) uses). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 
@@ -85,3 +85,7 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 - [nwsimilar](nwsimilar), [nw2project](nw2project), [nwkcore](nwkcore), [nwburt](nwburt)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

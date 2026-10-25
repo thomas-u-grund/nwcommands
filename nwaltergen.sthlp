@@ -140,8 +140,7 @@ tie direction (see above). Weighted: {bf:W2} - {bf:mean}/{bf:sum}/{bf:min}/{bf:m
 (added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight,
 an explicit opt-in via a separate {it:stat} name rather than an automatic switch. Signed: not
 checked - {bf:wmean()} would divide by a possibly near-zero or sign-cancelling weight sum for a
-node with negative-weighted ties, not handled distinctly. Two-mode: no - {it:srcvar} is read per
-node under the one-mode {it:_nwnode} indexing convention, with no mode-specific handling.
+node with negative-weighted ties, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Examples}
 
@@ -175,4 +174,4 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 last certified : 02 Sep 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

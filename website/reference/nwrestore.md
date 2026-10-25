@@ -40,3 +40,7 @@ Preserve a network, drop it, then restore it:
 ## Supported network types
 
 Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - restores the full working state saved by [nwpreserve](nwpreserve), independent of any of these properties.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

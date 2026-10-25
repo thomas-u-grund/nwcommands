@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.5.1  25oct2026}{...}
+{* *! version 3.6.0  26oct2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} 
 {hline 2} Topical list of network commands
@@ -149,6 +149,7 @@
 {col 8}{hline 3}{c RT}       {it:Cohesion, Components & Subgroups}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nw2nested }}}Nestedness (NODF, C-score) of a two-mode network{p_end}
 {p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
 {p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:    {bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
@@ -306,4 +307,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

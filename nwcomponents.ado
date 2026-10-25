@@ -23,6 +23,8 @@ program nwcomponents, rclass
 		local k = 1
 	}
 	
+	local __vnquiet = cond(c(noisily) == 0 | "`silent'" != "", "quiet", "")
+	local __vndone 0
 	qui foreach netname_temp in `netname' {
 		nwname `netname_temp'
 		local nodes = r(nodes)
@@ -55,6 +57,13 @@ program nwcomponents, rclass
 		_nwsyncrows `netname_temp'
 		mata: st_rclear()
 		_nwsyntax `netname_temp'
+		if `__vndone' == 0 {
+			_nwvaluednote `netname_temp', `__vnquiet'
+			if r(shown) == 1 {
+				noi di `"`r(msg)'"'
+				local __vndone 1
+			}
+		}
 		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
 
 		// Stata's tabulate stops at 1,000 distinct values (r(134)) and a matrix row-name list of thousands of

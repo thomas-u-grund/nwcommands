@@ -42,9 +42,13 @@ This collapses the first and the second node of a random network. The collapsed 
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes - `generate()`'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - the row-grouping this command performs has no notion of mode, so it would freely collapse mode-1 and mode-2 nodes together; rejected explicitly with a clear error instead.
+Binary: yes. Directed: yes. Weighted: yes - `generate()`'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - error 6088; make a one-mode network of one mode first with [nwproject](nwproject).
 
 ## See also
 
 - `collapse`
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

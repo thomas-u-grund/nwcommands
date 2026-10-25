@@ -64,3 +64,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a 
 ## See also
 
 - [nwwebuse](nwwebuse), [nwsave](nwsave), `use`, [nwappend](nwappend)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -79,6 +79,11 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 transaction networks. {it:Sociological Methodology} 19, 89-126.
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
@@ -86,8 +91,7 @@ Binary: yes. Directed: yes, and directionality is used directly (see Description
 network type the model was originally defined for. Undirected networks are supported too, with the
 directional distinction collapsing away as described above. Weighted: not used - only the
 presence/absence of a tie determines whether a two-path exists; tie strength does not affect role
-counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency
-matrix. {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
+counts. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
 (the same convention {help nwmodularity}'s own {opt group()} option uses) - {cmd:nwbrokerage} does
 not detect groups itself; pair it with {help nwconcor}, {help nwcoreperiphery}, {help nwcommunity},
 or a substantive attribute for the grouping.
@@ -99,4 +103,4 @@ or a substantive attribute for the grouping.
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

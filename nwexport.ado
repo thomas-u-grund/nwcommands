@@ -46,6 +46,17 @@ program _nwexport_pajek
 	
 	preserve
 	keep if _n <= `nodes'
+	// a two-mode network is written in Pajek's bipartite form: "*Vertices n n1", the n1 nodes of the first mode come
+	// first, and every tie is listed from its first-mode node to its second-mode node
+	local __n1 0
+	if "`is2mode'" == "true" {
+		tempvar __md __ord
+		_nwexport_modevar `nw_mode', generate(`__md')
+		qui count if `__md' == 1
+		local __n1 = r(N)
+		gen long `__ord' = _n
+		sort `__md' `__ord'
+	}
 	gen `_running' = _n
 	keep `nw_nodename' `_running'
 	save `f', replace
@@ -55,7 +66,12 @@ program _nwexport_pajek
 	// the vertex block and the tie rows are then written in blocks by Mata
 	file open `expfile' using "`fname'.net", write `replace'
 	file close `expfile'
-	mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes')
+	if "`is2mode'" == "true" {
+		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes', `__n1')
+	}
+	else {
+		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes')
+	}
 
 	qui nwtoedge `netname', compress
 	qui keep if `netname' != 0
@@ -80,6 +96,12 @@ program _nwexport_pajek
 	drop `nw_nodename'
 	local ties = _N
 	drop if `netname' == .
+	if "`is2mode'" == "true" {
+		tempvar __a
+		qui gen double `__a' = `nw_ego'
+		qui replace `nw_ego' = `nw_alter' if `__a' > `__n1'
+		qui replace `nw_alter' = `__a' if `__a' > `__n1'
+	}
 	sort `_rk'
 	local __head "*Edges"
 	if "`directed'" == "true" local __head "*Arcs"
@@ -95,6 +117,17 @@ program _nwexport_ucinet
 	unw_defs
 	_nwsyntax `netname'
 	_nwdatasync `netname'
+	// a two-mode network is written as a rectangular matrix (nr rows = first mode, nc columns = second mode) with
+	// row and column labels; nwimport reads it back as a two-mode network
+	if "`is2mode'" == "true" {
+		capture confirm file "`fname'.dl"
+		if _rc == 0 & "`replace'" == "" {
+			di "{err}file `fname'.dl already exists"
+			error 602
+		}
+		mata: nw_exp_ucinet_rect(st_local("fname") + ".dl", `netobj')
+		exit
+	}
 	
 	tempvar _running
 	tempfile f
@@ -158,7 +191,15 @@ program _nwexport_gml
 	tempname expfile
 	file open `expfile' using "`fname'.gml", write `replace'
 	file close `expfile'
-	mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes')
+	if "`is2mode'" == "true" {
+		// the attribute nwmode (1 or 2) of every node keeps the two modes
+		tempvar __md
+		_nwexport_modevar `nw_mode', generate(`__md')
+		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes', "`__md'")
+	}
+	else {
+		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes')
+	}
 
 	// `nw_ego'/`nw_alter' (nwtoedge's own output) are node LABELS, not
 	// numeric positions (confirmed directly the same way
@@ -230,10 +271,41 @@ program _nwexport_edgelist
 	// no lookup/remapping needed here at all, matching nwimport's own
 	// type(edgelist) importer, which reads ego/alter as plain labels.
 	rename `netname' value
+	if "`is2mode'" == "true" {
+		// a two-mode network: every row runs from the first-mode node to the second-mode node and carries the two mode
+		// numbers (1 and 2) in two more columns; nwimport recognises the five columns
+		tempvar __swap __t
+		qui gen str244 `__t' = `nw_ego'
+		qui gen byte `__swap' = (`nw_mode'`nw_ego' == "2")
+		qui replace `nw_ego' = `nw_alter' if `__swap'
+		qui replace `nw_alter' = `__t' if `__swap'
+		keep `nw_ego' `nw_alter' value
+		qui gen byte mode_ego = 1
+		qui gen byte mode_alter = 2
+		rename `nw_ego' ego
+		rename `nw_alter' alter
+		order ego alter value mode_ego mode_alter
+		export delimited using "`fname'.txt", delimiter(tab) novarnames `replace'
+		restore
+		exit
+	}
 	keep `nw_ego' `nw_alter' value
 	rename `nw_ego' ego
 	rename `nw_alter' alter
 	export delimited using "`fname'.txt", delimiter(tab) novarnames `replace'
 	restore
+end
+
+// numeric mode (1 or 2) of the nodes of the data set into a new variable (the mode variable may be string or numeric)
+capture program drop _nwexport_modevar
+program _nwexport_modevar
+	syntax varname, GENerate(name)
+	capture confirm string variable `varlist'
+	if _rc == 0 {
+		qui gen byte `generate' = real(`varlist')
+	}
+	else {
+		qui gen byte `generate' = `varlist'
+	}
 end
 

@@ -27,7 +27,7 @@ net install nwrem,   from(https://raw.githubusercontent.com/thomas-u-grund/nwrem
 net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
 ```
 
-or `nwinstall, models` for all four model packages at once. Each package reports its own release
+or `nwinstall, models` for all four model packages at once (`nwinstall, everything` installs the core as well). Each package reports its own release
 (and stores it in `r(version)`):
 
 ```stata

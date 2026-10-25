@@ -31,6 +31,7 @@ silent]
 | `symmetrize` | Symmetrize a directed network before scoring (required for directed networks) |
 | `resolution(real)` | Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1 |
 | `silent` | Suppress display of results |
+| `onemode` | Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network) |
 
 ## Description
 
@@ -48,7 +49,7 @@ Modularity compares the fraction of ties that fall within the given groups to th
 
 ## Supported network types
 
-Binary: yes. Directed: requires `symmetrize` - modularity as computed here is not defined for a directed network. Weighted: yes, via `measure(binary|valued)`; default = *valued* for a valued network, *binary* otherwise. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: requires `symmetrize` - modularity as computed here is not defined for a directed network. Weighted: yes, via `measure(binary|valued)`; default = *valued* for a valued network, *binary* otherwise. Signed: not checked. Two-mode: yes - the modularity of a grouping is Barber's bipartite modularity (only pairs of nodes from different modes enter the null model); `onemode` gives Newman's modularity of the bipartite graph read as a one-mode graph (`igraph::modularity`).
 
 ## Stored results
 
@@ -68,3 +69,7 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 10
 ## See also
 
 - [nwcommunity](nwcommunity), [nwcomponents](nwcomponents)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

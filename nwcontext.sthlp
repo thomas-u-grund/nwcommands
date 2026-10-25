@@ -112,7 +112,7 @@ Sometimes, however, one might want to calculate statistics including the attribu
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt mode(outgoing|incoming|both|either)}. Weighted: yes by default (neighbor attribute values weighted by tie strength); {opt noweight} treats all ties as binary. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, via {opt mode(outgoing|incoming|both|either)}. Weighted: yes by default (neighbor attribute values weighted by tie strength); {opt noweight} treats all ties as binary. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Scope}
 {pstd}
@@ -182,4 +182,4 @@ The statistics are computed on the dense network and three {it:n}-by-{it:n} matr
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

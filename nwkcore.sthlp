@@ -48,10 +48,15 @@ treats directed networks for the same kind of undirected-sense structural questi
 {opt generate()} is required and names the new variable which stores each node's coreness.
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching {help nwcomponents}'s own weak-connectivity convention and {help nwsimindex}'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching {help nwcomponents}'s own weak-connectivity convention and {help nwsimindex}'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 
@@ -85,4 +90,4 @@ arXiv:cs/0310049.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

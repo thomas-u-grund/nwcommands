@@ -52,7 +52,7 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not distinguish in-ties from out-ties, the same choice [nwcoreperiphery](nwcoreperiphery) already makes). Weighted: yes, via `measure(valued)` - tie VALUES then enter the fitness correlation directly rather than just their presence/absence. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not distinguish in-ties from out-ties, the same choice [nwcoreperiphery](nwcoreperiphery) already makes). Weighted: yes, via `measure(valued)` - tie VALUES then enter the fitness correlation directly rather than just their presence/absence. Signed: not checked. Two-mode: not supported - error 6088; the factions of the square matrix would mix the two modes; make a one-mode network of one mode first with [nwproject](nwproject).
 
 ## Stored results
 
@@ -74,3 +74,7 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 - [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwconcor](nwconcor), [nwlambda](nwlambda)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

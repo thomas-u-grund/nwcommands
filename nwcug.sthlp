@@ -93,14 +93,18 @@ tail of the null distribution, or comfortably inside it?), the same comparison R
 package's {bf:plot.cug.test()} draws for its own {bf:cug.test()}. Grayscale by design, matching
 every other plot this package produces.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; the null networks are one-mode random networks; {help nwpermute} with {opt swap} draws two-mode null networks that keep both degree sequences.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: depends entirely on
 {bf:stat()} - {cmd:nwcug} itself only draws random comparison networks and calls whatever command
 {bf:stat()} names, so it inherits that command's own support. Signed: same as weighted, depends on
-{bf:stat()}. Two-mode: no - {help nwrandom}'s density/census conditioning used to draw comparison
-networks does not support two-mode networks.
+{bf:stat()}. Two-mode: not supported - error 6088; the null networks are one-mode random networks; {help nwpermute} with {opt swap} draws two-mode null networks that keep both degree sequences.
 
 {title:Stored results}
 
@@ -135,4 +139,4 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

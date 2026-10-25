@@ -94,6 +94,11 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 applications to social network analysis and comparison with multidimensional scaling. {it:Journal of Mathematical Psychology} 12(3), 328-383.
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; CONCOR of the bipartite graph would put nodes of both modes in the same block; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
@@ -103,8 +108,7 @@ its outgoing and incoming ties separately), unlike {help nwcommunity}, which req
 the profile; {opt measure(binary)} uses presence/absence only; default follows the network's own
 weighted-ness, matching {help nwcommunity}'s convention. Signed: not checked - a negative tie
 weight participates in the profile and correlation arithmetic like any other value, but no dedicated
-signed-network semantics exist. Two-mode: not checked - operates on the network's own square
-adjacency matrix. Isolates (nodes with no tie in any direction) are rejected explicitly with a clear
+signed-network semantics exist. Two-mode: not supported - error 6088; CONCOR of the bipartite graph would put nodes of both modes in the same block; make a one-mode network of one mode first with {help nwproject}. Isolates (nodes with no tie in any direction) are rejected explicitly with a clear
 error, not silently mishandled - see Description.
 
 {title:Limits}
@@ -121,4 +125,4 @@ is no sparse form of the method.
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

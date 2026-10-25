@@ -76,6 +76,11 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:S
 21(4), 375-395.
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; a core-periphery model of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
@@ -83,8 +88,7 @@ Binary: yes. Directed: yes, automatically symmetrized (no explicit {bf:symmetriz
 {help nwcommunity} - the model itself does not distinguish direction). Weighted:
 {opt measure(valued)} uses tie weights directly when computing the fitness correlation;
 {opt measure(binary)} uses presence/absence only; default follows the network's own weighted-ness,
-matching {help nwcommunity}'s convention. Signed: not checked. Two-mode: not checked - operates on
-the network's own square adjacency matrix. A network with no ties at all is rejected explicitly
+matching {help nwcommunity}'s convention. Signed: not checked. Two-mode: not supported - error 6088; a core-periphery model of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}. A network with no ties at all is rejected explicitly
 (there is no structure to fit a core-periphery pattern to); a node with no ties of its own (an
 isolate) is handled without error and is simply assigned to the periphery.
 
@@ -103,4 +107,4 @@ random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds 
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

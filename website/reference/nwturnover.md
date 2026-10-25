@@ -50,7 +50,7 @@ For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(di
 
 ## Supported network types
 
-Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not checked. Two-mode: not checked - operates on each network's own square adjacency matrix.
+Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 
@@ -71,3 +71,7 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 - [nwcorrelate](nwcorrelate), [nwcomponents](nwcomponents), [nwqap](nwqap)
 
 - last certified : 22 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

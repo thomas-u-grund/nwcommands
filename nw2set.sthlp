@@ -141,10 +141,15 @@ For example, this generates a Mata matrix and sets a two-mode network with 6 nod
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes.
+
 {title:Supported network types}
 
 {pstd}
-Two-mode: **T1**, native - this command's entire purpose is declaring a two-mode (bipartite) network from a rectangular incidence matrix or a variable list. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
+Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
 
 {title:Remarks}
  
@@ -195,4 +200,4 @@ are missing), so the memory grows with the square of the total number of nodes. 
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -101,3 +101,7 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 ## See also
 
 - [nwpref](nwpref), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwring](nwring)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -63,4 +63,8 @@ When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij
 
 ## Supported network types
 
-Binary: yes. Directed: not checked (the connections model as implemented here assumes an undirected notion of reachability via [nwgeodesic](nwgeodesic)). Weighted: **W1**, native - the network under analysis only needs to be binary for the underlying geodesic-distance calculation, but `intrvalue()`/`intrcost()` let tie strength (as a full per-dyad value, not the analyzed network's own weight) enter the utility formula directly, not as a distance. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: not checked (the connections model as implemented here assumes an undirected notion of reachability via [nwgeodesic](nwgeodesic)). Weighted: **W1**, native - the network under analysis only needs to be binary for the underlying geodesic-distance calculation, but `intrvalue()`/`intrcost()` let tie strength (as a full per-dyad value, not the analyzed network's own weight) enter the utility formula directly, not as a distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -31,3 +31,7 @@ Each measure below is computed by its own dedicated command - for example, degre
 [Closeness centrality](nwcloseness)
 
 [Katz centrality](nwkatz)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

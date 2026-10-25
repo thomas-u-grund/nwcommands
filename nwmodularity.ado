@@ -2,7 +2,7 @@
 capture program drop nwmodularity
 program nwmodularity, rclass
 	version 12
-	syntax [anything(name=netname)], GROUP(varname) [measure(string) SYMmetrize resolution(real 1) silent]
+	syntax [anything(name=netname)], GROUP(varname) [measure(string) SYMmetrize resolution(real 1) silent ONEmode]
 	set more off
 
 	// resolution() had no input validation - same fix as nwcommunity's
@@ -45,6 +45,11 @@ program nwmodularity, rclass
 		}
 
 		local val = ("`netmeasure'" == "valued")
+		// a two-mode network is scored with Barber's bipartite modularity (only pairs of nodes from different modes
+		// enter the null model); onemode gives Newman's Q of the bipartite graph read as a one-mode graph
+		local __bip = ("`is2mode'" == "true" & "`onemode'" == "")
+		local __qtype = cond(`__bip', "barber", "newman")
+		local __qlab = cond(`__bip', "{space 1}(Barber, two-mode)", "")
 
 		tempname __nw_group
 		mata: `__nw_group' = nw_community_denserelabel(st_data((1::`nodes'), "`group'"))
@@ -53,11 +58,17 @@ program nwmodularity, rclass
 		// never be forwarded, so calculate_modularity() always scored on
 		// the network's raw valued weights regardless of what measure()
 		// requested - measure(binary) was a complete no-op.
-		mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_group', `val', `resolution'))
+		if `__bip' {
+			mata: st_numscalar("modularity", `netobj'->calculate_modularity_bipartite(`__nw_group', `val', `resolution'))
+		}
+		else {
+			mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_group', `val', `resolution'))
+		}
 		mata: st_numscalar("communities", max(`__nw_group'))
 		mata: mata drop `__nw_group'
 
 		return scalar modularity = modularity
+		return local modularity_type "`__qtype'"
 		return scalar communities = communities
 		local lcomm = communities
 		local lmod = modularity
@@ -101,7 +112,7 @@ program nwmodularity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
+			noi di "{txt}  Modularity Q`__qlab': {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
 			noi di " "
 		}
 		local k = `=`k' + 1'

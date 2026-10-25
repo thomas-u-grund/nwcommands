@@ -60,3 +60,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - syncs no
 ## See also
 
 - [nwload](nwload), [nwreplace](nwreplace), [nwname](nwname)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

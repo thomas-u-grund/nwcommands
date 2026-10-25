@@ -49,7 +49,7 @@ Always operates on the undirected version of the network (the classical model do
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (no explicit **symmetrize** option, unlike [nwcommunity](nwcommunity) - the model itself does not distinguish direction). Weighted: `measure(valued)` uses tie weights directly when computing the fitness correlation; `measure(binary)` uses presence/absence only; default follows the network's own weighted-ness, matching [nwcommunity](nwcommunity)'s convention. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. A network with no ties at all is rejected explicitly (there is no structure to fit a core-periphery pattern to); a node with no ties of its own (an isolate) is handled without error and is simply assigned to the periphery.
+Binary: yes. Directed: yes, automatically symmetrized (no explicit **symmetrize** option, unlike [nwcommunity](nwcommunity) - the model itself does not distinguish direction). Weighted: `measure(valued)` uses tie weights directly when computing the fitness correlation; `measure(binary)` uses presence/absence only; default follows the network's own weighted-ness, matching [nwcommunity](nwcommunity)'s convention. Signed: not checked. Two-mode: not supported - error 6088; a core-periphery model of the square matrix would mix the two modes; make a one-mode network of one mode first with [nwproject](nwproject). A network with no ties at all is rejected explicitly (there is no structure to fit a core-periphery pattern to); a node with no ties of its own (an isolate) is handled without error and is simply assigned to the periphery.
 
 ## Stored results
 
@@ -67,3 +67,7 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 - [nwconcor](nwconcor), [nwcommunity](nwcommunity), [nwconstraint](nwconstraint)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

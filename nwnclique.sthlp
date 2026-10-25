@@ -100,6 +100,11 @@ Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applic
 University Press. (cliques and cohesive subgroups)
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
@@ -107,8 +112,7 @@ Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definit
 generalization, the same reasoning {help nwclique}/{help nwkplex} already apply). Weighted: not
 used for membership - {opth n(int)} counts hops, not tie strength, though the underlying distance
 calculation ({help nwgeodesic}'s own unweighted, {cmd:alpha(0)}-equivalent convention) is unaffected
-by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own
-square adjacency matrix. Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
+by weight either way. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
 exponential behaviour (a mathematical property of maximal-clique-family problems in general).
 
 {title:Limits}
@@ -141,4 +145,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

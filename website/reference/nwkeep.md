@@ -52,3 +52,7 @@ Keep only certain nodes of a network, using `if`:
 . nwkeep net3 if _n <= 3
 . nwsummarize net3
 ```
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

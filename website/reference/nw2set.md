@@ -118,10 +118,14 @@ From a two-mode network one can also produce a one-mode projection (see [nw2proj
 
 ## Supported network types
 
-Two-mode: **T1**, native - this command's entire purpose is declaring a two-mode (bipartite) network from a rectangular incidence matrix or a variable list. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
+Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
 
 ## See also
 
 - [nwset](nwset) (whose own `twomode`/`bipartite` options can also declare a two-mode network directly), [nw2fromedge](nw2fromedge), [nwload](nwload), [nw2project](nw2project) ([nwproject](nwproject))
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

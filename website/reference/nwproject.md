@@ -42,10 +42,14 @@ Build a small two-mode network (3 people x 2 events) and project it onto mode 1 
 
 ## Supported network types
 
-Identical to [nw2project](nw2project) - see that command's help file.
+Identical to [nw2project](nw2project) - see that command's help file. Two-mode: yes - alias of [nw2project](nw2project).
 
 ## Stored results
 
 See [nw2project](nw2project).
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

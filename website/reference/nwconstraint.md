@@ -52,7 +52,7 @@ The diagonal (self-constraint) is not meaningful and is not part of the returned
 
 ## Supported network types
 
-Binary: yes. Directed: yes, but not symmetrized - *p_ij* is computed from the raw adjacency matrix exactly as given, so a directed network's constraint reflects outgoing ties only (a node with no outgoing ties at all has *p* entirely zero, and therefore zero constraint toward everyone, regardless of its incoming ties). This is a real, asymmetric treatment of directed data - not a symmetrized "Burt" constraint in the traditional (undirected) sense - and is the command's actual behavior, not silently assumed. Weighted: **W1**, native - tie weight is used directly as *p_ij*'s investment proportion (exactly Burt's own interpretation of tie strength), not as a distance. Signed: not supported - *p_ij* is a ratio to a sum of outgoing tie weights, which is only mathematically meaningful when all of a node's tie weights are non-negative; a negative tie included in the same network as positive ties will distort every *p_ij* for that node (values can fall outside [0,1], and *c_ij* can exceed 1) rather than being handled as a distinct signed relation. Two-mode: not checked.
+Binary: yes. Directed: yes, but not symmetrized - *p_ij* is computed from the raw adjacency matrix exactly as given, so a directed network's constraint reflects outgoing ties only (a node with no outgoing ties at all has *p* entirely zero, and therefore zero constraint toward everyone, regardless of its incoming ties). This is a real, asymmetric treatment of directed data - not a symmetrized "Burt" constraint in the traditional (undirected) sense - and is the command's actual behavior, not silently assumed. Weighted: **W1**, native - tie weight is used directly as *p_ij*'s investment proportion (exactly Burt's own interpretation of tie strength), not as a distance. Signed: not supported - *p_ij* is a ratio to a sum of outgoing tie weights, which is only mathematically meaningful when all of a node's tie weights are non-negative; a negative tie included in the same network as positive ties will distort every *p_ij* for that node (values can fall outside [0,1], and *c_ij* can exceed 1) rather than being handled as a distinct signed relation. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 
@@ -63,3 +63,7 @@ Ronald S. Burt (1992). *Structural Holes: The Social Structure of Competition*. 
 - [nwburt](nwburt), [nwdegree](nwdegree), [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwevcent](nwevcent), [nwclustering](nwclustering)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

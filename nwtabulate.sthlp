@@ -16,11 +16,16 @@
 {p 8 32 2}
 {helpb nwtab3:nwtabulate twoway}{space 7}for two-way table of network and node attribute
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings,
-not tie values. Signed: not applicable. Two-mode: not checked.
+not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}
@@ -313,4 +318,4 @@ The {opt plot} option draws the table with a built-in bar plot (the same plot th
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

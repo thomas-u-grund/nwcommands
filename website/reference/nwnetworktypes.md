@@ -29,3 +29,7 @@ Rather than guess, every `nw*` command's own help file has a **Supported network
 ## See also
 
 - [nwintro](nwintro), [nwtopical](nwtopical), [introduction to two-mode networks](nw2set)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -38,6 +38,8 @@
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt listall}}Print the full table of communities; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
+{synopt:{opt onemode}}Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network){p_end}
+{synopt:{opt starts(#)}}Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = {it:30}; the first starts in the order of the nodes, the others in random order ({opt seed()}){p_end}
 
 {p2colreset}{...}
 
@@ -88,10 +90,15 @@ is driven by an actual modularity-gain comparison, not a plain vote count, so it
 unchanged.
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - Louvain-type search for the partition with the largest bipartite modularity of Barber (2007), the null model of {cmd:bipartite::computeModules}; {opt onemode} gives the modularity of Newman for the bipartite graph read as a one-mode graph ({cmd:igraph::cluster_louvain}); {opt starts()} sets the number of starting orders.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: requires {opt symmetrize} - community detection as implemented here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise (affects both which partition is searched for and the reported {bf:r(modularity)}). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: requires {opt symmetrize} - community detection as implemented here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise (affects both which partition is searched for and the reported {bf:r(modularity)}). Signed: not checked. Two-mode: yes - Louvain-type search for the partition with the largest bipartite modularity of Barber (2007), the null model of {cmd:bipartite::computeModules}; {opt onemode} gives the modularity of Newman for the bipartite graph read as a one-mode graph ({cmd:igraph::cluster_louvain}); {opt starts()} sets the number of starting orders.
 
 {title:Stored results}
 
@@ -152,4 +159,4 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

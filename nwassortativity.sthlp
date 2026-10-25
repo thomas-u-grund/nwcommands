@@ -18,7 +18,8 @@
 [{cmd:,}
 {opt attribute(varname)}
 {opt weighted}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 
 {synoptset 25 tabbed}{...}
@@ -27,6 +28,7 @@
 {synopt:{opt attribute(varname)}}Numeric node attribute to correlate across ties; default = each node's own degree{p_end}
 {synopt:{opt weighted}}Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -95,6 +97,17 @@ same coefficient as omitting it - not an approximation.
 	  {bf:r(weighted)}       {bf:"true"} if {opt weighted} was specified, {bf:"false"} otherwise
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the node attribute is the strength (sum of the tie values) when {opt attribute()} is not given, instead of the degree; {opt binary} uses the degree. {opt weighted} additionally weights each tie by its value (Leung and Chau 2007).
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the degree assortativity of a bipartite graph is negative by construction and rarely of interest.
+
 {title:Supported network types}
 
 {pstd}
@@ -103,8 +116,7 @@ reasoning as {help nwclustering}/{help nwclique}). Weighted: {bf:W2} (added 2026
 self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's
 own original definition; {opt weighted} (Leung and Chau 2007) is an explicit opt-in that weights the
 same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the
-weighted correlation's own denominators, not handled distinctly. Two-mode: not checked - operates
-on the network's own stored ties directly.
+weighted correlation's own denominators, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the degree assortativity of a bipartite graph is negative by construction and rarely of interest.
 
 {pstd}
 A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across
@@ -128,4 +140,4 @@ A} 378(2), 591-602. ({opt weighted}'s own extension)
 	{help nwdegree}, {help nwclustering}, {help nwmixing}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

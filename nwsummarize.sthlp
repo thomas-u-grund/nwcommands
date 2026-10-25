@@ -43,10 +43,15 @@
 
  
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of {cmd:bipartite}).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of {cmd:bipartite}).
 
 {title:Examples}
 
@@ -144,4 +149,4 @@ in Stata/BE (4.9 seconds and 9.4 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -45,6 +45,7 @@ program nwcug, rclass
 		di "{err}Network {bf:`netname'} not found."
 		error `errNWsNotFound'
 	}
+	_nw2guard `netname', cmd(nwcug)
 	local origname "`netname'"
 
 	if "`condition'" == "census" & "`directed'" != "true" {

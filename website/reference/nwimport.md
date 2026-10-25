@@ -58,4 +58,8 @@ Imports networks from popular network file formats. The command automatically re
 
 ## Supported network types
 
-Binary: yes. Directed: yes - automatically detected from the source file unless overridden with **forcedirected**/**forceundirected**. Weighted: yes, where the source format itself carries tie values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own values are negative. Two-mode: yes, for the formats whose own file structure distinguishes row and column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the same way as any other [nwset](nwset)-created network.
+Binary: yes. Directed: yes - automatically detected from the source file unless overridden with **forcedirected**/**forceundirected**. Weighted: yes, where the source format itself carries tie values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own values are negative. Two-mode: yes - the four formats written by [nwexport](nwexport) come back as a two-mode network (Pajek `*Vertices n n1`, a rectangular UCINET matrix, the five-column edge list, GML with the attribute `nwmode`); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

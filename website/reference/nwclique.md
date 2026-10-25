@@ -49,7 +49,7 @@ Cliques are fundamentally different from the partitions [nwcomponents](nwcompone
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair mutually tied - has no directed generalization, the same reasoning [nwcoreperiphery](nwcoreperiphery) already applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect clique membership. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large network could take a long time. [nwnclique](nwnclique), [nwnclan](nwnclan) and [nwkplex](nwkplex) have the options `maxcliques()` / `maxplexes()`, `maxtime()`, `countonly` and `nomatrix` for such searches; `nwclique` has none.
+Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair mutually tied - has no directed generalization, the same reasoning [nwcoreperiphery](nwcoreperiphery) already applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect clique membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); cliques of three or more nodes cannot exist in a bipartite graph. Maximal clique enumeration is worst-case exponential in the number of maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large network could take a long time. [nwnclique](nwnclique), [nwnclan](nwnclan) and [nwkplex](nwkplex) have the options `maxcliques()` / `maxplexes()`, `maxtime()`, `countonly` and `nomatrix` for such searches; `nwclique` has none.
 
 ## Stored results
 
@@ -72,3 +72,7 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 - [nwkplex](nwkplex), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcomponents](nwkcomponents), [nwkcore](nwkcore), [nwcomponents](nwcomponents), [nwcommunity](nwcommunity), [nwconcor](nwconcor)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

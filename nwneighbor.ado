@@ -3,6 +3,10 @@ capture program drop nwneighbor
 program nwneighbor
 	syntax [anything(name=netname)], ego(string) [ mode(string) generate(string) replace SUBnet(string) subreplace]
 	_nwsyntax `netname', max(1)
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	_nwdatasync `netname'
 	nwname `netname'
 

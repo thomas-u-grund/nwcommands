@@ -79,10 +79,15 @@ directly whenever you need something {help nwdichotomize} does not offer - multi
 
 {marker options}{...}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes and the level labels are kept.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid case. Directed: yes. Weighted: yes, natively - this command's entire purpose is recoding tie values via a rule. Signed: yes, a recode rule can map negative values like any other. Two-mode: not checked.
+Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid case. Directed: yes. Weighted: yes, natively - this command's entire purpose is recoding tie values via a rule. Signed: yes, a recode rule can map negative values like any other. Two-mode: yes - the flag, the modes and the level labels are kept.
 
 {title:Options}
 
@@ -159,4 +164,4 @@ value, or turns ties into missing values, recodes the whole matrix (guarded at 2
 	{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case)
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

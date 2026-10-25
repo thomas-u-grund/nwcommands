@@ -103,7 +103,10 @@ assert         r(N)     == 12
 
 nwclear
 nw2set, mat(J(6,4,1)) name(mynet)
+* a two-mode network is written as its ties by default (twomodesupport); allpairs gives a row for every pair of nodes
 nwtoedge
+assert _N == 24
+nwtoedge, allpairs
 assert _N == 55
 
 nwclear

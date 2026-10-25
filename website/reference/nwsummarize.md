@@ -29,7 +29,7 @@ silent
 |---|---|
 | `mat` | Display adjacency matrix of the network |
 | `matonly` | Only display adjacency matrix of the network |
-| `detail` | Calculate additional network measures, e.g. centralization, transitivity |
+| `detail` | Calculate additional network measures: reciprocity, transitivity and the centralization measures (their `r()` results are only filled with `detail`); reciprocity is displayed as n/a for an undirected network (the stored `r(reciprocity)` is unchanged) |
 | `save(filename)` | Save network measures in file |
 | `silent` | Compute and return results without displaying anything |
 
@@ -83,7 +83,7 @@ silent
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of `bipartite`).
 
 ## Stored results
 
@@ -99,7 +99,7 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 - **r(arcs)** number of arcs (directed network)
 - **r(edges_sum)** sum of edge values (undirected network)
 - **r(arcs_value)** sum of arc values (directed network)
-- **r(density)** network density
+- **r(density)** network density (two-mode network: ties over the pairs between the two modes)
 - **r(reciprocity)** network reciprocity
 - **r(transitivity)** network transitivity
 - **r(missing_edges)** number of missing (undefined) dyads
@@ -128,3 +128,7 @@ The full set above is inherited unchanged from the internal [nwname](nwname) cal
 
 - [nwname](nwname), [nwdyads](nwdyads), [nwtriads](nwtriads)
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

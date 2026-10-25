@@ -32,8 +32,17 @@ program nwkplex, rclass
 		local i = 1
 	}
 
+	local __vnquiet = cond(c(noisily) == 0 | "`silent'" != "", "quiet", "")
+	local __vndone 0
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		if `__vndone' == 0 {
+			_nwvaluednote `netname_temp', `__vnquiet'
+			if r(shown) == 1 {
+				noi di `"`r(msg)'"'
+				local __vndone 1
+			}
+		}
 
 		local netgenerate "`generate'"
 		if "`netgenerate'" == "" {

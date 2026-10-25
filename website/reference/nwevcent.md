@@ -20,15 +20,17 @@ nwevcent
 generate(varname)
 nosym
 weighted
-replace]
+replace
+binary]
 ```
 
 | | |
 |---|---|
 | `generate`(*`varname`*) | **Required.** Variable name for eigenvector centrality scores |
 | `nosym` | do not symmetrize network before calculation |
-| `weighted` | calculate on tie values instead of dichotomizing a valued network |
+| `weighted` | use the tie values of a valued network; redundant, this is the default (kept for compatibility) |
 | `replace` | replace existing *generate()* variable |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -49,7 +51,7 @@ Eigenvector centrality is only defined for connected networks.
 
 ## Supported network types
 
-Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" `nosym` convention as [nwcloseness](nwcloseness)/[nwkatz](nwkatz)), `nosym` available. Weighted: not by default - `weighted` switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: not applicable (one-mode only).
+Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" `nosym` convention as [nwcloseness](nwcloseness)/[nwkatz](nwkatz)), `nosym` available. Weighted: not by default - `weighted` switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 
@@ -62,3 +64,7 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 - [nwcloseness](nwcloseness), [nwbetween](nwbetween), [nwdegree](nwdegree), [nwcloseness](nwcloseness)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

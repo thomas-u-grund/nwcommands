@@ -86,10 +86,15 @@ interval is calculated. A plot is displayed and additional information is return
 
 {marker nodes}{...}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; the correlation of the profiles of the nodes of ONE network reads the empty blocks between nodes of the same mode ({help nwsimilar}, {opt type(pearson)} correlates the profiles over the other mode); two networks are correlated as for any pair of networks.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt context(incoming|outgoing|both)} for the node-correlation mode. Weighted: yes, natively - uses raw tie values throughout, no dichotomize option. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, via {opt context(incoming|outgoing|both)} for the node-correlation mode. Weighted: yes, natively - uses raw tie values throughout, no dichotomize option. Signed: not checked. Two-mode: not supported - error 6088; the correlation of the profiles of the nodes of ONE network reads the empty blocks between nodes of the same mode ({help nwsimilar}, {opt type(pearson)} correlates the profiles over the other mode); two networks are correlated as for any pair of networks.
 
 {title:Nodes of one network}
 
@@ -309,4 +314,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -9,7 +9,7 @@ permalink: /nwcommands/
 # nwcommands (core)
 {: .no_toc }
 
-The core package, version 3.5.1, handles networks in Stata: it imports and exports them, generates
+The core package, version 3.6.0, handles networks in Stata: it imports and exports them, generates
 them, describes and analyzes them, and plots them. It is the base for the model packages
 ([nwsaom](../nwsaom/), [nwergm](../nwergm/), [nwdynam](../nwdynam/), [nwrem](../nwrem/)), which need
 it but are installed separately.
@@ -18,11 +18,13 @@ it but are installed separately.
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
 
-`nwinstall, all` downloads every command, all help files and every dialog box. Add `nwinstall, gui`
-for a "Network Analysis" menu in Stata. `nwinstall, models` installs the four model packages.
+`nwinstall, everything` installs the core (every command, all help files and every dialog box) and the four model
+packages. `nwinstall, all` installs the core only; `nwinstall, models` adds the model packages later. Add
+`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested with Stata 17 and 18;
+Stata BE is enough).
 `nwversion` shows the core version and which model packages are installed. See the
 [Installation & Setup](../tutorials/01-installation-setup/) tutorial for details.
 
@@ -33,6 +35,12 @@ for a "Network Analysis" menu in Stata. `nwinstall, models` installs the four mo
 - **Command reference** ([all commands](../reference/)): every command with its syntax and options.
 - **Size limits** ([how large a network can be](size-limits/)): which commands finish in seconds, which need
   minutes and which are refused at which number of nodes.
+- **Valued networks** ([which commands use tie values](valued-networks/)): when a network is valued, which commands
+  use the values by default, which ignore them, and the option `binary`.
+- **Two-mode networks** ([what the commands do with a two-mode network](two-mode/)): how a two-mode network is declared
+  and kept, which commands use the two modes, which accept the bipartite graph as it is and which stop.
+- **Network types** ([the table of all commands](network-types/)): for every command, what it does with binary, valued,
+  two-mode and directed networks.
 - **Model packages**: the statistical models have their own sections in the menu: [nwsaom](../nwsaom/)
   (stochastic actor-oriented models), [nwergm](../nwergm/) (exponential random graph models),
   [nwdynam](../nwdynam/) (dynamic network actor models) and [nwrem](../nwrem/) (relational event models).
@@ -51,6 +59,6 @@ representation and compiled C kernels, are chosen automatically.
 
 ## Version and license
 
-The core is version 3.5.1 (25 October 2026). It is free software under the GNU General Public License,
+The core is version 3.6.0 (26 October 2026). It is free software under the GNU General Public License,
 version 3; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages
 are separate packages under the same license.

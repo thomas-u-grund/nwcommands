@@ -14,8 +14,10 @@ description: "Install nwsaom for Stata: the core nwcommands first, then the nwsa
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
+
+`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.
@@ -31,10 +33,10 @@ This installs the latest release. As a shortcut, the core can install it for you
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.8:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.9:
 
 ```stata
-. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.8/) replace
+. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.9/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -44,7 +46,7 @@ version produced the results.
 
 ```stata
 . nwsaom version
-nwsaom version 1.0.8, 25oct2026
+nwsaom version 1.0.9, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../saom_sim_macos.plugin (plugin protocol 140)
   compared with           : R RSiena 1.6.14

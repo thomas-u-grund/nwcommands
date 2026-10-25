@@ -19,15 +19,17 @@
 {opt generate}({it:{help varname}})
 {opt nosym}
 {opt weighted}
-{opt replace}]
+{opt replace}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for eigenvector centrality scores{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation{p_end}
-{synopt:{opt weighted}}calculate on tie values instead of dichotomizing a valued network{p_end}
+{synopt:{opt weighted}}use the tie values of a valued network; redundant, this is the default (kept for compatibility){p_end}
 {synopt:{opt replace}}replace existing {it:generate()} variable{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -50,10 +52,16 @@ network (there is nothing to weight by).
 Eigenvector centrality is only defined for connected networks.
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the eigenvector centrality is that of the matrix of tie values ({it:igraph::eigen_centrality}; scaled to unit length, igraph scales to maximum 1). {opt binary} uses presence only. The option {opt weighted} is accepted for compatibility; it is redundant on a valued network. For a directed network with {opt nosym} outgoing ties are used (igraph uses incoming ties).
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" {opt nosym} convention as {help nwcloseness}/{help nwkatz}), {opt nosym} available. Weighted: not by default - {opt weighted} switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: not applicable (one-mode only).
+Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" {opt nosym} convention as {help nwcloseness}/{help nwkatz}), {opt nosym} available. Weighted: not by default - {opt weighted} switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Examples}
 
@@ -90,4 +98,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

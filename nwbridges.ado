@@ -8,6 +8,10 @@ program nwbridges
 	// a confusing, fully dead duplicate. Removed.
 	syntax [anything(name=netname)] [, nwreplace name(string) type(string)]
 	_nwsyntax `netname'
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	local oldname `netname'
 	local olddirected `netname'
 	local generate "`name'"

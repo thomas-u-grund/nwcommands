@@ -33,11 +33,11 @@ General Public License, version 3.
 
 | Package | What it does | Follows | Version |
 |---|---|---|---|
-| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.5.1 |
+| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.6.0 |
 | [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([manual: doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.0.7 |
-| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network | R package `ergm` (statnet) | 1.2.1 |
-| [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.1.1 |
-| [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.6 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network | R package `ergm` (statnet) | 1.2.2 |
+| [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.1.2 |
+| [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.7 |
 
 Not sure which one you need? See [Which package do I need?](which-package/).
 
@@ -46,15 +46,20 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
 
 1. The first line installs `nwinstall` itself and the landing help topics.
-2. `nwinstall, all` downloads everything else: every command, all help files and every dialog box.
+2. `nwinstall, everything` downloads everything else: the core (every command, all help files and every dialog
+   box) and the four model packages, and prints the version of each at the end.
 3. Optional: `nwinstall, gui` installs the "Network Analysis" menu in Stata's User menu (the older
-   option name `permanently` still works), and `nwinstall, models` installs the four model packages.
-   To install one model package only, for example nwsaom, type
-   `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
+   option name `permanently` still works).
+
+To install the core only, type `nwinstall, all` instead of `nwinstall, everything`; the model packages can be
+added later with `nwinstall, models`. To install one model package only, for example nwsaom, type
+`net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
+
+Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
 
 `nwversion` shows the installed versions. More on installation, releases and computers without
 internet access: [Installation & Setup](tutorials/01-installation-setup/).

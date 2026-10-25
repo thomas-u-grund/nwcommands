@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 366
+POSITION 10 10 550 394
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nw2toedge - Convert two-mode network to edgelist")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 272, label("Options")
+  GROUPBOX gb_opt 10 44 520 300, label("Options")
   TEXT tx_cx_isolates0 20 54 260 ., label("reserved; not currently implemented")
   CHECKBOX cx_isolates0 290 54 190 ., label("isolates0") option(isolates0)
   TEXT tx_cx_compress 20 82 260 ., label("Drop rows with no tie in any listed network")
@@ -36,6 +36,8 @@ BEGIN
   CHECKBOX cx_full 290 250 190 ., label("full") option(full)
   TEXT tx_cx_ignore2mode 20 278 260 ., label("Treat the two-mode network like a one-mode one - suppress the auto-generated / m")
   CHECKBOX cx_ignore2mode 290 278 190 ., label("ignore2mode") option(ignore2mode)
+  TEXT tx_cx_allpairs 20 306 260 ., label("Also write the pairs without a tie (default: ties only)")
+  CHECKBOX cx_allpairs 290 306 190 ., label("allpairs") option(allpairs)
 END
 
 LIST netlist
@@ -62,6 +64,7 @@ BEGIN
 		optionarg main.ed_alter
 		option main.cx_full
 		option main.cx_ignore2mode
+		option main.cx_allpairs
 	endoptions
 	stata
 END

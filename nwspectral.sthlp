@@ -31,6 +31,7 @@
 {synopt:{opt replace}}Replace existing variable(s){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt force}}Run the complete decomposition of a network with more than 6,000 nodes{p_end}
+{synopt:{opt onemode}}Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088){p_end}
 
 {p2colreset}{...}
 
@@ -97,6 +98,11 @@ Fiedler, M. (1973). Algebraic connectivity of graphs. {it:Czechoslovak Mathemati
 von Luxburg, U. (2007). A tutorial on spectral clustering. {it:Statistics and Computing} 17(4),
 395-416.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the Laplacian spectrum of the bipartite graph ({cmd:igraph::laplacian_matrix}).
+
 {title:Supported network types}
 
 {pstd}
@@ -105,8 +111,7 @@ this command reports assume a symmetric matrix, the same reasoning {help nwcommu
 {help nwkcomponents} already apply). Weighted: yes, via {opt measure(valued)} (default for a
 valued network) - the Laplacian is built from tie weights directly rather than dichotomized
 presence/absence. Signed: not checked - a Laplacian built from mixed-sign weights is not
-guaranteed positive semi-definite, so results are not meaningful for a signed network. Two-mode:
-not checked - operates on the network's own square adjacency matrix. Only a single network is
+guaranteed positive semi-definite, so results are not meaningful for a signed network. Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the Laplacian spectrum of the bipartite graph ({cmd:igraph::laplacian_matrix}). Only a single network is
 accepted (unlike most other commands in this package, which accept a full {help netlist}) - each
 network's own Fiedler vector is a full per-node eigenvector, not a simple per-network scalar or
 per-node aggregate that stacks cleanly across multiple networks the way {help nwcomponents}'s
@@ -129,4 +134,4 @@ spectrum: only the Fiedler vector could be had from a sparse iteration, which th
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

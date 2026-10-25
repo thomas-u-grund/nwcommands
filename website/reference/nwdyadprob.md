@@ -65,3 +65,7 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 - [nwhomophily](nwhomophily), [nwgen](nwgen), [nwexpand](nwexpand)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

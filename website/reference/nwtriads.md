@@ -81,10 +81,14 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 ## Supported network types
 
-Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command still runs, but 12 of the 16 categories (everything except **_003**/**_102**/**_201**/**_300**) are not meaningful for undirected data and reliably return 0, since an undirected network has no asymmetric ties by construction - `nwtriads` prints a note to this effect when called on an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous count). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command still runs, but 12 of the 16 categories (everything except **_003**/**_102**/**_201**/**_300**) are not meaningful for undirected data and reliably return 0, since an undirected network has no asymmetric ties by construction - `nwtriads` prints a note to this effect when called on an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph (`igraph::triad_census`); it has no triangle, so the transitivity is 0; closure in a two-mode network is [nw2clustering](nw2clustering).
 
 ## See also
 
 - [nwdyads](nwdyads)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

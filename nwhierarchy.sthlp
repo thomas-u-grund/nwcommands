@@ -127,6 +127,11 @@ Using a specific dissimilarity type/context, and a custom variable name:
 
 	{cmd:. nwhierarchy flomarriage, type(hamming) context(outgoing) groups(3) equivgen(role3)}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}, or cluster the same-mode profiles of {help nwdissimilar}.
+
 {title:Supported network types}
 
 {pstd}
@@ -136,7 +141,7 @@ default {opt context()}/{opt type()} form. The {opt dismat()} and {opt disnet()}
 forms bypass {cmd:nwdissimilar} entirely and use whatever matrix/network you supply directly -
 {cmd:nwhierarchy} does not itself validate that it is a genuine dissimilarity matrix (symmetric,
 zero diagonal, nonnegative). Stata's own {help clustermat} (which does the actual clustering)
-requires a matrix with no missing values, including on the diagonal.
+requires a matrix with no missing values, including on the diagonal. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}, or cluster the same-mode profiles of {help nwdissimilar}.
 
 {title:Limits}
 
@@ -155,4 +160,4 @@ unless {opt force} is given (Stata keeps the dissimilarity matrix as a Stata mat
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

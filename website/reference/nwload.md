@@ -97,3 +97,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads th
 - [nwcurrent](nwcurrent), [nwsync](nwsync), [nwuse](nwuse), [nwimport](nwimport), [feasible network sizes](nwintro)
 
 - last certified : 25 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

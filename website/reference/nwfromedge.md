@@ -25,7 +25,9 @@ xvars
 labs(lab1 lab2 ...)
 undirected
 directed
-twomode]
+twomode
+valued
+unvalued]
 ```
 
 | | |
@@ -36,6 +38,8 @@ twomode]
 | `undirected` | force the network to be undirected (alias: `forceundirected`) |
 | `directed` | force the network to be directed (alias: `forcedirected`) |
 | `twomode` | declare a two-mode (bipartite) network instead - *fromid*/*toid* are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for [nw2fromedge](nw2fromedge), forwarding `name()`/`xvars` only; cannot be combined with `directed`/`undirected`/`forcedirected`/`forceundirected`. See [nw2fromedge](nw2fromedge) for the full two-mode-specific behavior (same-label disambiguation, mode assignment, `project()`) |
+| `valued` | mark the network as valued (default if a value variable is given, also when every value is 1) |
+| `unvalued` | mark the network as binary even if a value variable is given |
 | `noclear` | do not clear existing dataset |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
 | `labprefix`(*string*) | prefix used for auto-generated node labels when `fromid`/`toid` are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
@@ -84,7 +88,7 @@ Or alternatively, this calculates the [betweenness centrality](nwbetween) of the
 ```stata
 . nwbetween mynet
 ```
-By default, **nwfromedge** recognizes if a network is directed or undirected, i.e. for each dyad entry (i,j) there is also a dyad entry (j,i). However, this automatic detection can be overwritten with the options `undirected` and `directed`.
+By default, **nwfromedge** recognizes if a network is directed or undirected, i.e. for each dyad entry (i,j) there is also a dyad entry (j,i). However, this automatic detection can be overwritten with the options `undirected` and `directed`. With `undirected`, a tie that is listed in only one direction is stored as it is (a negative value stays negative); if both directions are listed with different values, the larger value is kept.
 
 One can also transfrom any network that exists in memory into such an edgelist with [nwtoedge](nwtoedge).
 
@@ -106,4 +110,8 @@ This loads a network dataset from the internet and transforms the network *glasg
 
 ## Supported network types
 
-Binary: yes. Directed: yes, via `directed`/`undirected`/`forcedirected`/`forceundirected`. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via `twomode` - an exact alias for [nw2fromedge](nw2fromedge), the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior, where isolate preservation below does not apply). A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through [nwtoedge](nwtoedge) specifically is not affected: `nwtoedge` attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and `nwfromedge` automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with [nwaddnodes](nwaddnodes) same as always.
+Binary: yes. Directed: yes, via `directed`/`undirected`/`forcedirected`/`forceundirected`. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with `undirected` a tie listed once keeps its sign. Two-mode: yes - with `twomode`, an exact alias for [nw2fromedge](nw2fromedge), which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through [nwtoedge](nwtoedge) specifically is not affected: `nwtoedge` attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and `nwfromedge` automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with [nwaddnodes](nwaddnodes) same as always.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

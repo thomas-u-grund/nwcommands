@@ -64,13 +64,18 @@ weight inside the groups and the number of same-group pairs, which takes time pr
 the number of groups, not to the square of the number of nodes; {cmd:r(fitness)} agrees with a direct computation of
 the correlation to rounding error (about 1e-15).
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; the factions of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not
 distinguish in-ties from out-ties, the same choice {help nwcoreperiphery} already makes). Weighted:
 yes, via {opt measure(valued)} - tie VALUES then enter the fitness correlation directly rather than
-just their presence/absence. Signed: not checked. Two-mode: not checked.
+just their presence/absence. Signed: not checked. Two-mode: not supported - error 6088; the factions of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}.
 
 {title:Limits}
 
@@ -106,4 +111,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). {it:UCINET for Windows: Sof
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

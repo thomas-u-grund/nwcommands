@@ -85,6 +85,24 @@ program nwdissimilar
 	// own defining file, where it is visible) into such a variable
 	// first, then passing that already-computed matrix's *name* to
 	// nwset instead of an unevaluated function call.
+	// two-mode: a node is compared with the other nodes of its OWN mode, over the nodes of the other mode (see
+	// nwsimilar); pairs of nodes from different modes are not compared (missing)
+	if "`otheris2mode'" == "true" {
+		local __t2 = cond("`type'" == "hamming", "dhamming", cond("`type'" == "jaccard", "djaccard", "`type'"))
+		mata: __nwdissim = nw_twomode_profile(`srcmata', strtoreal(`othernetobj'->get_modes())', "`__t2'")
+		if `__nwdis_usenames' {
+			nwset, mat(__nwdissim) name(`name') selfloop undirected nodenames(`__nwdis_names') `vars'
+			capture mata mata drop `__nwdis_names'
+		}
+		else {
+			nwset, mat(__nwdissim) name(`name') selfloop undirected `labs' `vars'
+		}
+		capture mata mata drop __nwdissim
+		if "`xvars'" != "" {
+			nwload `name'
+		}
+		exit
+	}
 	if "`type'" == "euclidean" {
 		mata: __nwdissim = euclidean_dissimilarity(`srcmata', `dtype')
 	}
@@ -253,7 +271,8 @@ real matrix jaccard_dissimilarity(real matrix net,real scalar dtype){
 	// - a genuinely asymmetric formula, not a bug introduced here
 	// (see nwsimilar.ado's jaccard_similarity, the identical case).
 	if (dtype == 0) {
-		denom = (outdeg :- Bout) :+ (indeg :- Bout')
+		// union of the out- and in-neighbours of i and j, positions i and j left out
+		denom = __nwdissim_outersum(outdeg, n) :+ __nwdissim_outersum(indeg, n) :- 2:*sym :- COout :- COin
 		S = 1 :- ((COout :+ COin) :/ denom)
 	}
 	if (dtype == 1) {

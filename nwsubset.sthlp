@@ -55,10 +55,15 @@ network expressions can be very complicated, no labels are copied.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
 
 {title:Limits}
 
@@ -70,4 +75,4 @@ A network held as stored ties keeps the ties between the remaining nodes without
 	{help nwgenerate}, {help nwduplicate}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

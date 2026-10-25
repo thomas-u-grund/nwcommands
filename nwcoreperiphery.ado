@@ -18,6 +18,7 @@ program nwcoreperiphery, rclass
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		noi _nw2guard `netname_temp', cmd(nwcoreperiphery)
 
 		local netmeasure "`measure'"
 		if "`netmeasure'" == "" {

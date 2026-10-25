@@ -19,7 +19,8 @@ nwmatching
 [,
 generate(newvarname)
 replace
-silent]
+silent
+binary]
 ```
 
 | | |
@@ -27,6 +28,7 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched) |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -46,13 +48,14 @@ Requires a genuine two-mode network (`twomode`/`bipartite` in [nwset](nwset), or
 
 ## Supported network types
 
-Binary: yes (only) - matching is a presence/absence structure; tie values are ignored. Directed: not applicable (a two-mode affiliation tie has no meaningful direction). Weighted: not applicable - see [nwmaxflow](nwmaxflow) directly if a WEIGHTED assignment problem (maximum total value, not maximum count) is actually what is needed; that is a different, harder problem (not this command). Signed: not checked. Two-mode: required.
+Binary: yes (only) - matching is a presence/absence structure; tie values are ignored. Directed: not applicable (a two-mode affiliation tie has no meaningful direction). Weighted: not applicable - see [nwmaxflow](nwmaxflow) directly if a WEIGHTED assignment problem (maximum total value, not maximum count) is actually what is needed; that is a different, harder problem (not this command). Signed: not checked. Two-mode: yes - the command needs a two-mode network and finds the largest matching between the two modes (`igraph::max_bipartite_match`).
 
 ## Stored results
 
 **Scalars**
 
 - **r(matched)** number of matched pairs found
+- **r(weight)** total tie value of the matching (valued network, not with `binary`)
 
 **Macros**
 
@@ -67,3 +70,7 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 - [nwmaxflow](nwmaxflow), [nw2project](nw2project), [nw2set](nw2set), [nw2fromedge](nw2fromedge)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -36,8 +36,9 @@ differs and what is missing.
 
 ## Install
 
-The core first, then the model package you need: see [Installation](../nwcommands/install/), or the
-Install page in each package's section.
+The simplest way is `nwinstall, everything`, which installs the core and all four model packages (requires
+Stata 17 or later; see [Installation](../nwcommands/install/)). To install the core and then only the model
+package you need, see the Install page in each package's section.
 
 ## Longitudinal models side by side
 

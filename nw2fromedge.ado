@@ -3,6 +3,10 @@ capture program drop nw2fromedge
 program nw2fromedge
 	syntax varlist(min=2 max=3) [if] [, xvars * ]
 	
+	// level labels and the modes of isolated nodes, if the list was written by nw2toedge/nwtoedge
+	local __im : char _dta[nwtoedge_modes]
+	local __id1 : char _dta[nwtoedge_mode1desc]
+	local __id2 : char _dta[nwtoedge_mode2desc]
 	local group1 : word 1 of `varlist'
 	local group2 : word 2 of `varlist'
 	local value : word 3 of `varlist'
@@ -126,8 +130,13 @@ program nw2fromedge
 	mata: `modes' = modes_from_labels(`netobj'->get_nodenames(), `group1labels')'
 	mata: `netobj'->set_2mode(1)
 	mata: `netobj'->set_modes(`modes')
-	mata: `netobj'->set_description_mode1("`group1'")
-	mata: `netobj'->set_description_mode2("`group2'")
+	local __dd1 = cond(`"`__id1'"' != "", `"`__id1'"', "`group1'")
+	local __dd2 = cond(`"`__id2'"' != "", `"`__id2'"', "`group2'")
+	mata: `netobj'->set_description_mode1(`"`__dd1'"')
+	mata: `netobj'->set_description_mode2(`"`__dd2'"')
+	if `"`__im'"' != "" {
+		qui mata: `netobj'->set_modes_from_labeled_string(`"`__im'"')
+	}
 	mata: `netobj'->clean_matrix_2mode()
 
 	_nwsyntax

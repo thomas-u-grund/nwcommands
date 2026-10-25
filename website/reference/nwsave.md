@@ -53,3 +53,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - the file
 
 - [nwuse](nwuse), [nwwebuse](nwwebuse), `save`
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

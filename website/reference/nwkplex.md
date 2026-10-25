@@ -58,7 +58,7 @@ Like cliques, k-plexes genuinely overlap - a node can belong to several at once 
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each member's own missing-tie count - has no natural directed generalization, the same reasoning [nwclique](nwclique) already applies). Weighted: not used - only presence/absence of a tie matters. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem itself, true of any correct algorithm) and, for a fixed network, generally slower than [nwclique](nwclique)'s own clique enumeration for the same reason its own "Supported network types" section already notes for cliques, compounded further here since checking whether a candidate can still be added requires examining the whole candidate set's own induced structure, not just a simple neighbor lookup. The number of maximal k-plexes is what limits this command, not the size of the network; see **Limits** below.
+Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each member's own missing-tie count - has no natural directed generalization, the same reasoning [nwclique](nwclique) already applies). Weighted: not used - only presence/absence of a tie matters. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem itself, true of any correct algorithm) and, for a fixed network, generally slower than [nwclique](nwclique)'s own clique enumeration for the same reason its own "Supported network types" section already notes for cliques, compounded further here since checking whether a candidate can still be added requires examining the whole candidate set's own induced structure, not just a simple neighbor lookup. The number of maximal k-plexes is what limits this command, not the size of the network; see **Limits** below.
 
 ## Stored results
 
@@ -85,3 +85,7 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 - [nwclique](nwclique), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcomponents](nwkcomponents), [nwkcore](nwkcore), [nwcomponents](nwcomponents), [nwcommunity](nwcommunity), [nwconcor](nwconcor)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

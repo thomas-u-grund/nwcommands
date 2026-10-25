@@ -28,11 +28,7 @@ program nwcollapse
 	// two-mode networks refuse them explicitly (`errTwoModeUnsupported',
 	// 6088, unw_defs.ado - declared package-wide but, until now, never
 	// actually used anywhere).
-	if "`is2mode'" == "true" {
-		unw_defs
-		di "{err}Network {bf:`netname'} is two-mode; {bf:nwcollapse} does not support collapsing two-mode networks."
-		error `errTwoModeUnsupported'
-	}
+	_nw2guard `netname', cmd(nwcollapse)
 	local original `netname'
 
 	// Stata's collapse is applied to the list of ALL dyads (one row per ordered pair of nodes, the zero cells
@@ -53,6 +49,11 @@ program nwcollapse
 	nwduplicate `original', name(_temp_`original')
 	_nwdatasync _temp_`original'
 	_nwsyntax _temp_`original'
+	local __srcvalued "`valued'"
+	// the collapsed network keeps the directedness of the original (nwfromedge
+	// would otherwise guess it from whether the collapsed list is symmetric)
+	local __dirflag "forcedirected"
+	if "`directed'" == "false" local __dirflag "undirected"
 	tempvar by_group by_dummy
 	gen `by_dummy' = 1
 	qui replace `by_dummy' = . if _n > `nodes'
@@ -79,12 +80,18 @@ program nwcollapse
 	collapse (`stat') _temp_`original' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
 	
 	if "`generate'" != "" {
-		qui nwfromedge _fromid _toid _temp_`original', name(`generate')
+		qui nwfromedge _fromid _toid _temp_`original', name(`generate') `__dirflag'
 	}
 	else {
 		nwdrop `original'
-		qui nwfromedge _fromid _toid _temp_`original', name(`original')
+		qui nwfromedge _fromid _toid _temp_`original', name(`original') `__dirflag'
 	}
+	// the collapsed network keeps the Valued flag of the original; it becomes valued if the collapse creates values
+	// other than 0 and 1 (for example (sum) of a binary network)
+	local __tgt "`original'"
+	if "`generate'" != "" local __tgt "`generate'"
+	_nwsyntax `__tgt', max(1)
+	mata: `netobj'->set_valued(("`__srcvalued'" == "true") | `netobj'->check_valued())
 	restore
 end
 

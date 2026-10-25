@@ -67,7 +67,8 @@ program nwutility
 		nwtomata `intrcost', mat(checkedcost)
 	}
 	else {
-		mata: checkedcost = (I(`netnodes') :- 1) :*(-1)
+		// y_ij = cost for every tied pair (help: "default = cost")
+		mata: checkedcost = (I(`netnodes') :- 1) :*(-1) :* `cost'
 	}
 
 	local netname `netname_backup'
@@ -88,7 +89,9 @@ program nwutility
 	// header comment), so this call - not wrapped in preserve/restore -
 	// never leaves an unrequested "_eccentricity" behind unless the
 	// caller's own forwarded `options' asks for generate() explicitly.
-	qui nwgeodesic `netname', name(_temp_util) `options'
+	local __ub "binary"
+	if strpos(lower(`"`options'"'), "alpha(") > 0 local __ub ""
+	qui nwgeodesic `netname', name(_temp_util) `__ub' `options'
 	nwtomata _temp_util, mat(geonet)
 	// the diagonal (self-distance) is stored as missing, per this
 	// package's convention - distance_distribution()'s own dist>0
@@ -110,9 +113,9 @@ program nwutility
 		// crashing the very next Mata statement with a class/real
 		// type mismatch. Renamed to avoid the collision.
 		nwtomata `netname', mat(netmat)
-		mata: util = util_weighted(netmat, geonet, checkedvalue, checkedcost, 1)
+		mata: util = util_weighted(netmat, geonet, checkedvalue, checkedcost, `benefit')
 		mata: mata drop netmat
-		mata: mata drop checkedcost
+		mata: mata drop checkedcost checkedvalue
 	}
 	capture drop _cost
 	capture drop _benefit

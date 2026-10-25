@@ -452,18 +452,18 @@ all continue to work exactly as they would without {opt export()}.
 	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
 	  {bf:r(interactive)}	same as {bf:r(fname)}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - plots the nodes and the ties between the modes; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}).
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Weighted: yes (via {opt edgesize()}/{opt edgecolor()} - see the shortest-path example above).
 Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
 dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
-directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: the
-command plots a two-mode network's nodes and ties correctly (it has no bipartite-specific logic, but a
-bipartite network's ties are simply a subset of the same one-mode adjacency structure every other network
-uses) - the two modes are not visually distinguished automatically, though; pass the network's own
-{cmd:get_modes()}-derived mode variable to {opt color()} or {opt symbol()} to tell them apart at a glance
-(e.g. {cmd:nw2degree}'s own output, or any variable holding "1"/"2" per node). Self-loops: not rendered -
+directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}); the two modes are not coloured differently unless a variable holding the mode (1 or 2) per node is passed to {opt color()} or {opt symbol()}. Self-loops: not rendered -
 a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
 in the package's own visualization roadmap rather than fixed here.
 
@@ -488,4 +488,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -48,17 +48,12 @@ assert `"`r(vars)'"'     == `"n10 n3 n4 n5 n6 n7 n8 n9 new_n1"'
 
 assert         r(nodes)         == 9
 assert         r(density)       == 1
-// This first collapse happens to leave a symmetric (every remaining
-// pair tied both ways) result, which nwsummarize reports as undirected
-// (r(edges)/r(edges_sum), not r(arcs)/r(arcs_value)) - unlike the
-// original network above and the two further collapses below, both of
-// which stay directed. A pre-existing test-authoring bug: this used to
-// check r(arcs)/r(arcs_value) == 72 (double-counting each undirected
-// edge once per direction), never actually reached before nwcollapse's
-// own (unrelated) xvars-consistency fix elsewhere in this file let the
-// test run this far for the first time.
-assert         r(edges_sum)     == 36
-assert         r(edges)         == 36
+// The original network is directed, so the collapsed network stays directed
+// (it used to be reported undirected whenever the collapsed ties happened to
+// be symmetric); every remaining pair is tied both ways: 72 arcs.
+assert         r(directed)      == "true"
+assert         r(arcs_value)    == 72
+assert         r(arcs)          == 72
 assert         r(maxval)        == 1
 assert         r(minval)        == 1
 assert         r(missing_edges) == 9

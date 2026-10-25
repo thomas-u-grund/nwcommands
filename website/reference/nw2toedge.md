@@ -34,6 +34,7 @@ alter(newvarname)]
 | `upper` | List only one entry per undirected dyad (the default; see `full` above) - has no effect and is suppressed with a warning on a directed network |
 | `ignore2mode` | Treat the two-mode network like a one-mode one - suppress the auto-generated *_nwmode_ego*/*_nwmode_alter* mode-indicator variables |
 | `isolates0` | reserved; not currently implemented |
+| `allpairs` | Also write the pairs of nodes of different modes without a tie (by default the ties only, as with `compress`) |
 
 ## Description
 
@@ -63,10 +64,14 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 
 ## Supported network types
 
-Two-mode: **T1**, native - this command's entire purpose is converting a two-mode network to an edge list. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
+Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; `allpairs` also writes the pairs without a tie. The list read back with [nw2fromedge](nw2fromedge) or [nwfromedge](nwfromedge), `twomode` gives the same network. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
 
 ## See also
 
 - [nw2fromedge](nw2fromedge), [nwtoedge](nwtoedge), [nwsave](nwsave)
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

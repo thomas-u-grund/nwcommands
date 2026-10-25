@@ -45,7 +45,7 @@ disnet(netname)
 
 ## Description
 
-`nwhierarchy` performs hierarchical clustering of a network's nodes based on their pairwise structural dissimilarity (by default, computed the same way [nwdissimilar](nwdissimilar) computes it - see that command's own `type()`/`context()` options, which `nwhierarchy` passes straight through) and returns a Stata `cluster analysis` object built via `clustermat`.
+`nwhierarchy` performs hierarchical clustering of a network's nodes based on their pairwise structural dissimilarity (by default, computed the same way [nwdissimilar](nwdissimilar) computes it - see that command's own `type()`/`context()` options, which `nwhierarchy` passes straight through) and returns a Stata `cluster analysis` object built via `clustermat`. The default linkage is **single** (`singlelinkage`); single linkage tends to chain nodes into one large cluster, so consider `linkage(averagelinkage)` or `linkage(completelinkage)`.
 
 `dismat()`, `disnet()`, and `type()`/`context()` are three alternative ways to supply the pairwise dissimilarity `nwhierarchy` clusters on, not independent options - the single `syntax` statement accepts all of them together with no validation, so if more than one is given, only one is actually used: `dismat()` wins if specified at all; otherwise `disnet()` wins if specified; otherwise `type()`/`context()` (computed via [nwdissimilar](nwdissimilar)) is used. The others are silently ignored, not combined or warned about - specify only one.
 
@@ -76,7 +76,7 @@ Using a specific dissimilarity type/context, and a custom variable name:
 
 ## Supported network types
 
-Same network-type support as the underlying dissimilarity computation - see [nwdissimilar](nwdissimilar)'s own "Supported network types" section when using the default `context()`/`type()` form. The `dismat()` and `disnet()` forms bypass `nwdissimilar` entirely and use whatever matrix/network you supply directly - `nwhierarchy` does not itself validate that it is a genuine dissimilarity matrix (symmetric, zero diagonal, nonnegative). Stata's own `clustermat` (which does the actual clustering) requires a matrix with no missing values, including on the diagonal.
+Same network-type support as the underlying dissimilarity computation - see [nwdissimilar](nwdissimilar)'s own "Supported network types" section when using the default `context()`/`type()` form. The `dismat()` and `disnet()` forms bypass `nwdissimilar` entirely and use whatever matrix/network you supply directly - `nwhierarchy` does not itself validate that it is a genuine dissimilarity matrix (symmetric, zero diagonal, nonnegative). Stata's own `clustermat` (which does the actual clustering) requires a matrix with no missing values, including on the diagonal. Two-mode: not supported - error 6088; make a one-mode network of one mode first with [nwproject](nwproject), or cluster the same-mode profiles of [nwdissimilar](nwdissimilar).
 
 ## Stored results
 
@@ -96,3 +96,7 @@ Same network-type support as the underlying dissimilarity computation - see [nwd
 - [nwdendrogram](nwdendrogram)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

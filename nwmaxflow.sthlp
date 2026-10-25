@@ -64,8 +64,7 @@ handling.
 Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual
 directedness (unlike {help nwlambda}, which always symmetrizes first; a flow network is inherently
 a directed concept). Weighted: yes, via {opt weighted}. Signed: not checked - a negative capacity
-has no meaning here. Two-mode: not checked (see {help nwmatching} for the two-mode/bipartite
-analog - maximum matching, not maximum flow).
+has no meaning here. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 
@@ -104,4 +103,4 @@ A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} ca
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

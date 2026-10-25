@@ -82,9 +82,9 @@ assert _rc == 482
 * give the same r either way, masking a completely ignored weight).
 nwclear
 nwset, mat((0,1,1,10\1,0,1,0\1,1,0,0\10,0,0,0)) name(wassort) undirected labs(A,B,C,D)
-nwassortativity wassort
+nwassortativity wassort, binary
 local r_unweighted = r(assortativity)
-nwassortativity wassort, weighted
+nwassortativity wassort, weighted binary
 local r_weighted = r(assortativity)
 assert `"`r(weighted)'"' == `"true"'
 * the two coefficients must genuinely differ - confirms the weight is

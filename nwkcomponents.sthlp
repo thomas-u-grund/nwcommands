@@ -118,13 +118,18 @@ Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applic
 University Press. (k-components and structural cohesion)
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical
 Moody-White sense has no directed generalization here, the same reasoning {help nwclique}/
 {help nwkplex}/{help nwnclique} already apply). Weighted: not used - only tie presence/absence
-affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation
+affects connectivity. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Vertex-connectivity computation
 via max-flow is polynomial per pair, but {cmd:nwkcomponents} computes it between {it:every}
 non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller
 reference-vertex subset a more optimized algorithm would use), and the overall
@@ -157,4 +162,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

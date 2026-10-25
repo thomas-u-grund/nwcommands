@@ -23,7 +23,7 @@ program nwkatz
 	// applies", since the two modes need genuinely different defaults
 	// (1 for the pre-existing distance-decay formula, 0.9/rho for the
 	// walk-counting one - see below).
-	syntax [anything(name=netname)] , [ alpha(real -999999) walks GENerate(string) replace nosym force *]
+	syntax [anything(name=netname)] , [ alpha(real -999999) walks BINary GENerate(string) replace nosym force *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -97,6 +97,8 @@ program nwkatz
 		tempname __nwkatz_M __nwkatz_rho
 		mata: `__nwkatz_M' = *`netobj'->get_matrix()
 		mata: _editmissing(`__nwkatz_M', 0)
+		// walks on a valued network count weighted walks (igraph::alpha_centrality uses the weights); binary: tie present or not
+		if "`binary'" != "" mata: `__nwkatz_M' = (`__nwkatz_M' :!= 0)
 		mata: `__nwkatz_rho' = max(abs(eigenvalues(`__nwkatz_M')))
 		mata: st_numscalar("__nwkatz_rho", `__nwkatz_rho')
 		local rho = __nwkatz_rho
@@ -182,7 +184,10 @@ program nwkatz
 			// "_eccentricity" side effect. If the caller's own forwarded
 			// geodesic_options DOES include generate(), that ask passes
 			// through via `options' and is respected exactly as given.
-			qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
+			// the distance-decay form uses the number of steps (no R twin): binary distances unless alpha() was passed on
+			local __kb "binary"
+			if strpos(lower(`"`options'"'), "alpha(") > 0 local __kb ""
+			qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `__kb' `options'
 			_nwsyntax `geo'
 			// nwreplace's own expression parser (_nwexpnetexp.ado) treats its
 			// input as plain Stata-style arithmetic text and translates it into
@@ -248,16 +253,20 @@ program nwkatz
 	// ordering - some LATER ordinary command (e.g. `capture nwdrop') can
 	// coincidentally reset `_rc' back to 0 before the program returns,
 	// but nothing should depend on that coincidence holding.
+	// `force': rows beyond the node rows (a data set with more
+	// observations than the network has nodes) are left missing, as in
+	// nwdegree and nwcloseness, instead of failing with r(459).
+	_nwsetobs `original'
 	if "`origdirected'" == "true" {
 		capture drop `generate'_out
 		capture drop `generate'_in
-		getmata `generate'_out = `__nw_out', double
-		getmata `generate'_in = `__nw_in', double
+		getmata `generate'_out = `__nw_out', double force
+		getmata `generate'_in = `__nw_in', double force
 		mata: mata drop `__nw_out' `__nw_in'
 	}
 	else {
 		capture drop `generate'
-		getmata `generate' = `__nw_all', double
+		getmata `generate' = `__nw_all', double force
 		mata: mata drop `__nw_all'
 	}
 

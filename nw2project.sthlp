@@ -27,7 +27,7 @@
 {synoptline}
 {synopt:{opt project(1|2)}}Mode/level to collapse to{p_end}
 {synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}{p_end}
-{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine)}}How to combine tie values (or, for the last 4, how to score shared-neighbor structure directly); default = {it:minmax}{p_end}
+{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine|newman)}}How to combine tie values (or, for the last 5, how to score shared-neighbor structure directly; {it:newman} is the collaboration weight of Newman 2001, the sum over the shared nodes of the other mode of 1/(k - 1) with k the number of ties of the shared node, the weight of {cmd:tnet::projecting_tm}; for tie values the mean of tnet's two directions); default = {it:minmax}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
@@ -117,6 +117,11 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 	  {bf:r(ties)}		number of edges in the projected (undirected) network, each pair counted once
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the projection onto one mode; {opt stat()} chooses the tie weight ({opt count} is the number of shared nodes of the other mode as in {cmd:igraph::bipartite_projection}, {opt newman} the weight 1/(k - 1) per shared node of {cmd:tnet::projecting_tm}).
+
 {title:Supported network types}
 
 {pstd}
@@ -124,10 +129,7 @@ Binary: yes. Directed: not checked - the source two-mode network's ties are trea
 affiliations. Weighted: {bf:W1}, native - an unvalued source network projects to a shared-neighbor
 {it:count} (the standard bipartite-projection tie weight); a valued source network projects using
 {opt stat()}'s explicit choice of combination rule (see above) - tie strength is never silently
-discarded or reinterpreted as a distance. Signed: not checked. Two-mode: {bf:T3} - this command's
-entire purpose is projecting a two-mode network down to one mode, so the projection is always
-explicit and user-requested (via {opt project()}), never a silent side effect of some other
-operation - the canonical, correct way to project in this package.
+discarded or reinterpreted as a distance. Signed: not checked. Two-mode: yes - the projection onto one mode; {opt stat()} chooses the tie weight ({opt count} is the number of shared nodes of the other mode as in {cmd:igraph::bipartite_projection}, {opt newman} the weight 1/(k - 1) per shared node of {cmd:tnet::projecting_tm}).
 
 
 {title:See also}
@@ -137,4 +139,4 @@ operation - the canonical, correct way to project in this package.
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

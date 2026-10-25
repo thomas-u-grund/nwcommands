@@ -33,6 +33,7 @@ function; default = *arithmetic* for a valued network, *binary* otherwise |
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each `level()`-mode
 node's own clustering coefficient |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
+| `ra` | The global clustering coefficient of Robins and Alexander (2004), 4 C4 / L3 (C4 the number of four-cycles, L3 the number of paths of length three) of the binary network; `generate()` is then optional; results in `r(ra)`, `r(C4)`, `r(L3)` |
 
 ## Description
 
@@ -52,7 +53,7 @@ Only nodes of the requested `level()` receive a value; nodes of the other mode a
 
 ## Supported network types
 
-Binary: yes (the default `measure(binary)` case). Directed: not checked - a two-mode network's ties are treated as undirected. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the 4-path's own four tie values before testing closure. Signed: not checked; negative tie values are not validated or rejected. Two-mode: **T3** - this command's entire purpose is two-mode clustering; calling it on a one-mode network raises a clear error.
+Binary: yes (the default `measure(binary)` case). Directed: not checked - a two-mode network's ties are treated as undirected. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the 4-path's own four tie values before testing closure. Signed: not checked; negative tie values are not validated or rejected. Two-mode: yes - the clustering coefficient of Opsahl (2013), four-paths closed by a fifth tie (as `tnet::clustering_tm`); `ra` adds the global coefficient of Robins and Alexander (2004), 4 C4 / L3.
 
 ## Stored results
 
@@ -77,3 +78,7 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 - [nwclustering](nwclustering), [nw2project](nw2project), [nw2degree](nw2degree)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

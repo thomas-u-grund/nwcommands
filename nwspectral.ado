@@ -2,10 +2,15 @@
 capture program drop nwspectral
 program nwspectral, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) bipartition measure(string) replace silent force]
+	syntax [anything(name=netname)][, GENerate(string) bipartition measure(string) replace silent force ONEmode]
 	set more off
 
 	_nwsyntax `netname', max(1)
+	_nw2guard `netname', cmd(nwspectral) allowone `onemode'
+	local __nw1m = r(copied)
+	local __origname "`netname'"
+	local netname "`r(net)'"
+	_nwsyntax `netname'
 
 	local netmeasure "`measure'"
 	if "`netmeasure'" == "" {
@@ -107,6 +112,7 @@ program nwspectral, rclass
 	// reset explicitly and silently.
 	capture confirm variable `netgenerate', exact
 
+	if `__nw1m' local netname "`__origname'"
 	if "`silent'" == "" {
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname'"
@@ -115,4 +121,5 @@ program nwspectral, rclass
 		noi sum `netgenerate'
 		noi di " "
 	}
+	if `__nw1m' capture nwdrop __nw1m
 end

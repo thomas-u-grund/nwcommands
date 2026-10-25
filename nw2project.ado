@@ -13,7 +13,7 @@ program nw2project, rclass
 	if "`stat'" == "" {
 		local stat "minmax"
 	}
-	_opts_oneof "min max minmax sum mean count binary jaccard cosine" "stat" "`stat'" 6556
+	_opts_oneof "min max minmax sum mean count binary jaccard cosine newman" "stat" "`stat'" 6556
 
 	_nwsyntax `netname'
 
@@ -203,7 +203,7 @@ real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar 
 real matrix nw2project_edges_dense(pointer(class nw_def scalar) scalar p, real scalar level, string scalar stat){
 	real scalar nsel, valued, oa, ob, oi, oq, k, l, wiq, wjq, thismin, val, nout
 	real matrix sel, localidx, nb, nb2, degvec
-	real matrix minval, maxval, sumval, cntval, minmaxval, sharedcount
+	real matrix minval, maxval, sumval, cntval, minmaxval, sharedcount, newmanval
 	real matrix ego_tmp, alter_tmp, weight_tmp, out
 
 	sel = nw2project_sel(p, level)
@@ -221,6 +221,7 @@ real matrix nw2project_edges_dense(pointer(class nw_def scalar) scalar p, real s
 	sumval = J(nsel, nsel, 0)
 	cntval = J(nsel, nsel, 0)
 	sharedcount = J(nsel, nsel, 0)
+	newmanval = J(nsel, nsel, 0)
 	// far-level (affiliation) degree of each selected node - the shared
 	// set of neighbors visited below is the same "other mode" set this
 	// counts, so both jaccard's union term and cosine's normalizer reuse
@@ -241,6 +242,9 @@ real matrix nw2project_edges_dense(pointer(class nw_def scalar) scalar p, real s
 				if (ob > oa){
 					wjq = p->edge_weight(nb2[l,1], oq)
 					sharedcount[oa,ob] = sharedcount[oa,ob] + 1
+					// Newman (2001) collaboration weight: each shared node of the other mode counts 1/(k - 1), k its number of
+					// ties (tnet::projecting_tm 'Newman'); for tie values the mean of the two directions of tnet
+					newmanval[oa,ob] = newmanval[oa,ob] + (wiq + wjq) / (2 * (rows(nb2) - 1))
 					sumval[oa,ob] = sumval[oa,ob] + wiq + wjq
 					cntval[oa,ob] = cntval[oa,ob] + 2
 					if (minval[oa,ob] == . | wiq < minval[oa,ob]) minval[oa,ob] = wiq
@@ -280,6 +284,9 @@ real matrix nw2project_edges_dense(pointer(class nw_def scalar) scalar p, real s
 				}
 				else if (stat == "cosine"){
 					val = sharedcount[oa,ob] / sqrt(degvec[oa,1] * degvec[ob,1])
+				}
+				else if (stat == "newman"){
+					val = newmanval[oa,ob]
 				}
 				else if (!valued){
 					val = sharedcount[oa,ob]
@@ -377,9 +384,10 @@ real matrix nw2project_edges_sparse(pointer(class nw_def scalar) scalar p, real 
 						statvec = asarray(AS, (oa,ob))
 					}
 					else {
-						statvec = (0, ., ., 0, 0, .)
+						statvec = (0, ., ., 0, 0, ., 0)
 					}
 					statvec[1] = statvec[1] + 1
+					statvec[7] = statvec[7] + (wiq + wjq) / (2 * (rows(nb2) - 1))
 					statvec[4] = statvec[4] + wiq + wjq
 					statvec[5] = statvec[5] + 2
 					if (statvec[2] == . | wiq < statvec[2]) statvec[2] = wiq
@@ -427,6 +435,9 @@ real matrix nw2project_edges_sparse(pointer(class nw_def scalar) scalar p, real 
 		}
 		else if (stat == "cosine"){
 			val = statvec[1] / sqrt(degvec[oa,1] * degvec[ob,1])
+		}
+		else if (stat == "newman"){
+			val = statvec[7]
 		}
 		else if (!valued){
 			val = statvec[1]

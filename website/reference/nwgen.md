@@ -50,3 +50,7 @@ Generate a new network with a network expression:
 ## Supported network types
 
 Not applicable to `nwgen` itself - a dispatcher/shortcut layer over [nwgenerate](nwgenerate) (and, for `mean(alter.`*srcvar*`)`-style expressions, [nwaltergen](nwaltergen)); the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn1*/*netfcn2* shortcut or network expression is invoked - see that function's own help topic.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -15,6 +15,7 @@ program nwfactions, rclass
 	}
 
 	_nwsyntax `netname'
+	_nw2guard `netname', cmd(nwfactions)
 
 	if `groups' > `nodes' {
 		di "{err}groups(`groups') exceeds the number of nodes (`nodes')."

@@ -18,6 +18,7 @@ nwdegree
 [netname]
 [,
 alpha(real)
+ties(varlist)
 generate(varlist)
 replace
 silent
@@ -27,12 +28,13 @@ in(tabulate_opt)
 out(tabulate_opt)
 tabulate_opt
 outputoff
-]
+binary]
 ```
 
 | | |
 |---|---|
-| `alpha` | Tuning parameter for valued networks; default = 0 |
+| `alpha` | Tuning parameter for valued networks; default = 1 (strength) on a valued network, 0 (number of ties) otherwise |
+| `ties`(*varlist*) | Valued networks: variables for the number of ties (one name, or outdegree and indegree), next to the strength in `generate()` |
 | `generate`(*`varlist`*) | **Required.** Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if `isolates` is also given, an extra name for the isolate indicator |
 | `replace` | Overwrite existing variables *varlist* |
 | `silent` | Surpress output |
@@ -42,6 +44,7 @@ outputoff
 | `in`(*`tabulate_opt`*) | Options for tabulating *indegree* |
 | `out`(*`tabulate_opt`*) | Options for tabulating *outdegree* |
 | *`tabulate_opt`* | Options for tabulating *degree* |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -55,7 +58,9 @@ where *k_i* is the number of ties that node *i* is involved in (regardless of ti
 
 Option **isolates** adds one more name to `generate()` (after the degree name(s)) for a variable indicating whether a node is an isolate (not connected to any other node) - e.g. `generate(mydeg myisolate) isolates` on an undirected network, or `generate(myout myin myisolate) isolates` on a directed one.
 
-Option **standardize** divides the centrality scores by N - 1, where N = number of nodes in a network.
+Option **standardize** divides the degree (undirected network) or the outdegree and the indegree (directed network) by N - 1, where N = number of nodes in a network. Each variable is divided once.
+
+The stored results **r(dg_central)** (undirected), **r(indg_central)** and **r(outdg_central)** (directed) are Freeman's degree centralization, computed from the raw scores whether or not **standardize** is given: sum(max - c_i) / ((N-1)*(N-2)) for an undirected network and sum(max - c_i) / ((N-1)*(N-1)) for the in- and outdegree of a directed network.
 
 `nwdegree` accepts a [netlist](netlist) (e.g. **nwdegree glasgow1 glasgow2, generate(deg)**), calculating degree centrality independently for each network in the list. When more than one network is given, `generate()`'s own name(s) get the network's own name appended (e.g. *deg_glasgow1*, *deg_glasgow2*); a single-network call is unaffected and keeps the plain name(s) exactly as given. **r()** results (e.g. **r(dg_central)**) reflect whichever network was processed last, matching this package's convention for other [netlist](netlist) commands.
 
@@ -103,7 +108,7 @@ The next example saves the out- and indegree centrality in the variables *myout*
 
 ## Supported network types
 
-Binary: yes. Directed: yes - generates separate *_indegree*/*_outdegree* (or *_instrength*/ *_outstrength* for a valued network) automatically. Weighted: **W1**, native - the Opsahl et al. (2010) generalized degree formula above is the command's default and only formulation, controlled by `alpha()`; weight meaning is tie strength, used directly (not a distance). Signed: not checked. Two-mode: **T1-via-redirect** - automatically redirects to [nw2degree](nw2degree) with a clear note when given a two-mode network, forwarding `alpha()` (nw2degree gained its own weighted two-mode degree/strength variant, the same Opsahl formula applied to bipartite normalization) and naming explicitly, not silently, any other one-mode-only option (`isolates`, `standardize`, `in()`, `out()`, `outputoff`) that has no bipartite equivalent and was ignored.
+Binary: yes. Directed: yes - generates separate *_indegree*/*_outdegree* (or *_instrength*/ *_outstrength* for a valued network) automatically. Weighted: **W1**, native - the Opsahl et al. (2010) generalized degree formula above is the command's default and only formulation, controlled by `alpha()`; weight meaning is tie strength, used directly (not a distance). Signed: not checked. Two-mode: delegated to [nw2degree](nw2degree).
 
 ## References
 
@@ -113,3 +118,7 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 
 - [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwclustering](nwclustering), [nwevcent](nwevcent), [nwkatz](nwkatz)
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -19,7 +19,8 @@ nwcomponents
 [, lgc
 generate(newvarname)
 replace
-silent]
+silent
+listall]
 ```
 
 | | |
@@ -28,6 +29,7 @@ silent]
 | `replace` | Replace existing variable |
 | `lgc` | Calculate membership to largest component |
 | `silent` | Suppress display of results |
+| `listall` | Print the full table of components; by default at most the first 30 rows are printed, with a note. Results in `r()` are unchanged |
 
 ## Description
 
@@ -63,7 +65,7 @@ This shows that there are two components in the Florentine marriage network. All
 
 ## Supported network types
 
-Binary: yes (only) - component membership is a structural (weak-connectivity) property, tie values are ignored. Directed: yes - uses weak connectivity (ignores tie direction), matching the standard convention for "components" on a directed graph. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - component membership is a structural (weak-connectivity) property, tie values are ignored. Directed: yes - uses weak connectivity (ignores tie direction), matching the standard convention for "components" on a directed graph. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 
@@ -78,3 +80,7 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 ## See also
 
 - [nwgen](nwgen), [nwkcomponents](nwkcomponents)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

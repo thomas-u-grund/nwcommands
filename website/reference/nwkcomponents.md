@@ -52,7 +52,7 @@ Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - th
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical Moody-White sense has no directed generalization here, the same reasoning [nwclique](nwclique)/ [nwkplex](nwkplex)/[nwnclique](nwnclique) already apply). Weighted: not used - only tie presence/absence affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation via max-flow is polynomial per pair, but `nwkcomponents` computes it between *every* non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller reference-vertex subset a more optimized algorithm would use), and the overall recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks (see **Limits**); for k of 3 and higher, very large or very dense networks are not recommended.
+Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical Moody-White sense has no directed generalization here, the same reasoning [nwclique](nwclique)/ [nwkplex](nwkplex)/[nwnclique](nwnclique) already apply). Weighted: not used - only tie presence/absence affects connectivity. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Vertex-connectivity computation via max-flow is polynomial per pair, but `nwkcomponents` computes it between *every* non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller reference-vertex subset a more optimized algorithm would use), and the overall recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks (see **Limits**); for k of 3 and higher, very large or very dense networks are not recommended.
 
 ## Stored results
 
@@ -79,3 +79,7 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 - [nwcomponents](nwcomponents), [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcore](nwkcore)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

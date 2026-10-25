@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.5.1** (25 October 2026)
+**Version 3.6.0** (26 October 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -39,7 +39,10 @@ data commands.
   There are also three signed networks (positive and negative ties): `senate114` and `senate93` (US Senate
   co-sponsorship networks of the 114th and 93rd Congress, Neal 2020, doi:10.6084/m9.figshare.8096429, CC BY 4.0;
   the signs are inferred by a statistical model, not observed likes) and `gahuku` (Read 1954: alliances and
-  enmities among 16 tribes of New Guinea; no licence stated for the data).
+  enmities among 16 tribes of New Guinea; no licence stated for the data
+  The US airport networks `usair` (50 busiest airports) and `usair_full` (all 549 airports with a domestic
+  route, 5,450 directed routes, three components) are derived from the OpenFlights airport and route
+  databases (route data of about 2014) and stay under their Open Database License (ODbL 1.0), not the GPL-3.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, gui` (or `db <command>` directly) — for

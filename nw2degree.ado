@@ -2,10 +2,21 @@
 capture program drop nw2degree
 program nw2degree, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace silent alpha(real 0.0)]
+	syntax [anything(name=netname)][, GENerate(string) replace silent alpha(string) BINary RAW]
 	set more off
 
 	_nwsyntax `netname', max(9999)
+	if "`alpha'" != "" {
+		capture confirm number `alpha'
+		if _rc {
+			di "{err}Option {bf:alpha()} must be a number."
+			error 198
+		}
+		if "`binary'" != "" & real("`alpha'") != 0 {
+			di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
+			error 198
+		}
+	}
 
 	if `networks' > 1 {
 		local k = 1
@@ -51,7 +62,7 @@ program nw2degree, rclass
 		if _rc == 0 {
 			drop `netgenerate'`k'
 		}
-		gen `netgenerate'`k' = .
+		gen `=cond("`valued'" == "true", "double", "")' `netgenerate'`k' = .
 		mata: st_rclear()
 		qui if _N < `nodes' {
 			set obs `nodes'
@@ -63,7 +74,21 @@ program nw2degree, rclass
 		_nwsyncrows `netname_temp'
 		mata: st_rclear()
 		_nwsyntax `netname_temp'
-		mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`alpha'))
+		// tie values: the strength on a valued network (as nwdegree), the number of ties with binary or alpha(0)
+		local __alpha 0
+		if "`alpha'" != "" {
+			local __alpha = real("`alpha'")
+		}
+		else if "`valued'" == "true" & "`binary'" == "" {
+			local __alpha 1
+		}
+		if "`raw'" != "" {
+			// the degree itself (tnet::degree_tm, igraph::degree), without the division by the size of the other mode
+			mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`__alpha') :* ((strtoreal(`netobj'->get_modes()) :== 1)' :* `netobj'->get_nodes_mode2() :+ (strtoreal(`netobj'->get_modes()) :== 2)' :* `netobj'->get_nodes_mode1()))
+		}
+		else {
+			mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`__alpha'))
+		}
 
 		// see nwbrokerage.ado's own header comment for why this is
 		// needed: quietly/mata:-only commands above do not refresh _rc
@@ -74,6 +99,12 @@ program nw2degree, rclass
 		if "`silent'" == "" {
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
+			if "`raw'" != "" noi di "{txt}  (raw degree: not divided by the size of the other mode)"
+			if "`valued'" == "true" {
+				if `__alpha' == 0 noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"
+				else if `__alpha' == 1 noi di "{txt}  (valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties)"
+				else noi di "{txt}  (valued network: degree is k (s/k)^alpha, alpha = `__alpha')"
+			}
 			noi sum `netgenerate'`k'
 			noi di " "
 		}

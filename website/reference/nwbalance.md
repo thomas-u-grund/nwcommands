@@ -51,7 +51,7 @@ Of the 4 triads in this network, *A-B-C* (all positive) and *A-B-D* (two negativ
 
 ## Supported network types
 
-Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when **either** direction has a tie; if both directions are tied (a mutual dyad), the value used for the balance product is whichever direction is checked first (*i->j* before *j->i*), which matters only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is the command's whole purpose - see Description. Two-mode: not checked; structural balance is not a meaningful concept for a bipartite network's own inherently unclosable triads.
+Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when **either** direction has a tie; if both directions are tied (a mutual dyad), the value used for the balance product is whichever direction is checked first (*i->j* before *j->i*), which matters only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is the command's whole purpose - see Description. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
 
 ## Stored results
 
@@ -71,3 +71,7 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 - [nwtriads](nwtriads), [nwvalue](nwvalue)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -31,26 +31,76 @@ per-command section is always the authoritative answer for a specific command; t
 the vocabulary those sections use and points to the small set of commands that have been read
 closely enough to also carry a fuller, source-verified classification.
 
+{title:Valued networks}
+
+{pstd}
+Every network carries a {it:Valued} flag (shown by {help nwsummarize}). It is set when the network is created, by the
+way it is created, and it is not worked out from the values again later: a network created with tie values
+({help nwfromedge} with a value variable, an import of a file with tie values, {cmd:nwset, valued}, a matrix with a
+value other than 0 and 1) is valued, also if every value is 1; a network created without values is binary. Commands
+that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network that was saved by an
+earlier release keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
+
+{pstd}
+Measures that have a weighted form in R use the tie values of a valued network by default
+({help nwdegree}, {help nw2degree}, {help nwgeodesic}, {help nwcloseness}, {help nwbetween}, {help nwevcent},
+{help nwpagerank}, {help nwrandomwalk}, {help nwpath}, {help nwmatching}, {help nwassortativity}, {help nwkatz} with
+{opt walks}); the option {opt binary} ignores the values. Measures without a weighted form in R are binary by
+definition and print the line "(note: tie values are ignored; this measure is binary)" on a valued network. The
+website page on valued networks lists all commands.
+
 {title:Two-mode networks and the nw2* family}
 
 {pstd}
-{cmd:nwcommands} detects whether a network is two-mode automatically (set via {help nw2set} or
-produced by a two-mode-native generator/import) - ordinary commands do not need a special flag to
-tell them a network is bipartite. A handful of commands (the {cmd:nw2*}-prefixed family, e.g.
-{help nw2degree}, {help nw2project}, {help nw2clustering}) exist because the underlying
-{it:statistic itself} is genuinely different for bipartite data (e.g. two-mode degree only makes
-sense counting ties to the opposite mode; a one-mode "clustering coefficient" has no direct
-bipartite analogue and needs its own definition), not because the package needs a separate command
-just to recognize the network type. Where a one-mode command's statistic degrades gracefully or
-redirects cleanly (e.g. {help nwdegree} on a two-mode network), it does so automatically and says so
-in its own {bf:Supported network types} section rather than raising an error.
+Every network carries a {it:Two-mode} flag (shown by {help nwsummarize}). It is set when the network is created, by
+declaration, and nowhere else: {cmd:nwset, twomode} or {cmd:bipartite}, {help nw2fromedge}, {help nw2set},
+{cmd:nwfromedge, twomode}, {help nwimport} of a file that declares the modes and {help nwuse} of a saved two-mode
+network. No measure works the flag out from the ties, because the adjacency matrix of a two-mode network looks like
+that of a one-mode network. The declaration is checked: both modes must hold nodes and no tie may join two nodes of
+the same mode ({cmd:nwname, new2mode(true)} on a one-mode network is an error). Every command that derives a network
+from a two-mode network ({help nwdropnodes}, {help nwkeepnodes}, {help nwsubset}, {help nwduplicate}, {help nwsym},
+{help nwtranspose}, {help nwrecode}, {help nwdichotomize}, {help nwaddnodes}, {help nwpermute}) keeps the flag, the
+modes and the level labels. {help nwexport} and {help nwimport} keep them in all four formats; an edge list written
+by {help nwtoedge} or {help nw2toedge} holds the ties between the modes and reads back as the same network.
+
+{pstd}
+Every command's help file says in its {bf:Supported network types} section, in one of four fixed wordings, what the
+command does with a two-mode network:
+
+{phang2}
+{bf:Two-mode: yes - ...} The command uses the two modes the way R does ({cmd:tnet}, {cmd:igraph},
+{cmd:bipartite}); the rest of the sentence says what changes.
+
+{phang2}
+{bf:Two-mode: delegated to ...} {help nwdegree} and {help nwclustering} hand a two-mode network to {help nw2degree}
+and {help nw2clustering} and say so.
+
+{phang2}
+{bf:Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation)}
+The measure is defined on any graph and the number is right for the bipartite graph: components, k-cores, geodesics,
+betweenness, closeness, PageRank, eigenvector centrality, Burt's constraint and so on. Nothing is printed.
+
+{phang2}
+{bf:Two-mode: not supported - error 6088} The command would read the blocks between nodes of the same mode, which hold
+no ties, and give missing or meaningless numbers. It stops with one message (the same for every such command) and
+the error 6088. Make a one-mode network of one mode with {help nwproject} first. {help nwspectral} and
+{help nwrandomwalk} have the option {opt onemode}, which reads the bipartite graph as a one-mode graph, as {cmd:igraph}
+does.
+
+{pstd}
+A handful of commands (the {cmd:nw2*} family, e.g. {help nw2degree}, {help nw2project}, {help nw2clustering},
+{help nw2nested}) exist because the statistic itself is different for bipartite data. Measures that have a two-mode
+form in R use it by default on a two-mode network ({help nwcommunity} and {help nwmodularity}: the bipartite
+modularity of Barber; {help nwsimilar} and {help nwdissimilar}: nodes are compared with nodes of their own mode); the
+option {opt onemode} (or, for the normalisations of Borgatti and Everett, {opt twomode}) chooses the other form. The
+website page on two-mode networks and the table of network types list all commands.
 
 {title:Weighted (valued) networks}
 
 {pstd}
 A network is {it:valued} (weighted) when its ties carry a real number, not just presence/absence -
 set automatically whenever {help nwset}, {help nwfromedge}, or an import command is given tie
-values other than a plain 0/1 indicator, and readable via {help nwsummarize}/{help nwname}'s own
+values other than a plain 0/1 indicator (at least one tie value other than 0 and 1; a network whose ties are all 1 is binary), and readable via {help nwsummarize}/{help nwname}'s own
 {cmd:valued} field. As with two-mode status, ordinary commands do not need a special flag to tell
 them a network is valued; each command's own {bf:Supported network types} section states what it
 actually does with the tie values.
@@ -139,4 +189,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 {help nwintro}, {help nwtopical}, {help nw2set:introduction to two-mode networks}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

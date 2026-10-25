@@ -66,6 +66,11 @@ permutation test: the attribute assignment is held fixed while the network itsel
 randomly permuted, building a null distribution of the E-I index under "no association between this
 attribute and tie placement", and reports a two-sided p-value.
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
@@ -73,7 +78,7 @@ Binary: yes. Directed: yes - ego/alter mixing is directional for a directed netw
 {it:attribute}{cmd:_ego}/{it:attribute}{cmd:_alter} pair is not symmetric); an undirected network's
 own mixing table instead shows each edge counted from both endpoints, noted explicitly in the
 output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed:
-not checked. Two-mode: not checked.
+not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 
@@ -126,4 +131,4 @@ pattern.
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

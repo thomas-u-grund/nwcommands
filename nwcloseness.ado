@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode legacy *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -77,7 +77,8 @@ program nwcloseness
 		// no n x n matrix: 98 s and 6.4 GB at 20,000 nodes before); the distance matrix of nwgeodesic is still built
 		// when geodesic_options are passed (alpha, unconnected, ...) or the plugin is older.
 		local __fastcl 0
-		if `"`options'"' == "" {
+		// the hop-count kernel is the binary closeness: used when the network has no tie values or binary is given
+		if `"`options'"' == "" & ("`binary'" != "" | "`valued'" == "false") {
 			mata: st_local("__fastcl", strofreal(nwg_comb_version() >= 5))
 		}
 		if `__fastcl' {
@@ -88,13 +89,15 @@ program nwcloseness
 				local __src `__symnet'
 			}
 			_nwsyntax `__src'
-			mata: far = nw_distance_sums(`netobj', 0, 0)[., 1]
+			mata: reach = nw_distance_sums(`netobj', 0, 0)
+			mata: far = reach[., 1]
+			mata: reach = reach[., 2]
 			if "`symopt'" != "" {
 				nwdrop `__symnet'
 			}
 		}
 		else {
-			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
+			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `binary' `options'
 			nwname _tempgeodesic
 			// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
 			// full n x n matrix into a second, separately-named Mata matrix
@@ -112,18 +115,43 @@ program nwcloseness
 			mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
 			mata: far = rowsum(*`netobj'->get_matrix())
 
-			if `r(mindistance)' < 0 {
-				mata: far = J(`nodes', 1, .)
-				noi di "{txt}Warning: network {bf:`netname_temp'} not connected; specify {bf:unconnected()} to obtain results.
-				nwdrop _tempgeodesic
-				exit
-			}
-		
+			// number of other nodes each node can reach (the diagonal of the
+			// distance matrix is 0 or missing and is not counted)
+			mata: reach = rowsum((*`netobj'->get_matrix()) :< .) :- (diagonal(*`netobj'->get_matrix()) :< .)
 		}
 		_nwsyntax `netname_temp'
 
 		mata: nearness = J(`nodes', 1,1) :/ far
-		mata: closeness = nearness :* (`nodes' - 1)
+		// Closeness is the number of nodes a node can reach divided by
+		// the sum of its distances to them (igraph's definition). On a
+		// connected network that is (nodes - 1) * nearness; legacy keeps
+		// (nodes - 1) * nearness whatever the connectedness.
+		mata: st_local("__disc", strofreal(max(reach :< (`nodes' - 1))))
+		if `__disc' & "`legacy'" == "" {
+			mata: closeness = reach :/ far
+		}
+		else {
+			mata: closeness = nearness :* (`nodes' - 1)
+		}
+		if `__disc' {
+			if "`legacy'" == "" {
+				local __how "uses only the nodes each node can reach (as igraph)"
+			}
+			else {
+				local __how "is (nodes - 1) / farness and can exceed 1 (legacy)"
+			}
+			noi di "{txt}Warning: network {bf:`netname_temp'} is not connected; closeness `__how'. Specify {bf:unconnected()} to give missing paths a length."
+		}
+		if "`twomode'" != "" {
+			// Borgatti and Everett (1997): the smallest possible farness of a node is reached when it is tied to every
+			// node of the other mode (distance 1) and every other node of its own mode is at distance 2
+			if "`is2mode'" != "true" {
+				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
+				error 198
+			}
+			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); closeness = ((__md :== 1) :* (__n2 + 2 * (__n1 - 1)) :+ (__md :== 2) :* (__n1 + 2 * (__n2 - 1))) :* nearness
+			mata: mata drop __md __n1 __n2
+		}
 		local _closeness : word 1 of `generate'
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'
@@ -172,7 +200,7 @@ program nwcloseness
 	
 		local generate_all "`generate_all' `_closeness'`k' `_farness'`k' `_nearness'`k'"
 		capture drop `included'
-		mata: mata drop closeness far nearness
+		mata: mata drop closeness far nearness reach
 		
 		local k = `k' + 1	
 	}

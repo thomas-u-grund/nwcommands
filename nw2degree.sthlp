@@ -18,7 +18,8 @@
 {opth generate(newvarname)}
 {opt replace}
 {opt silent}
-{opt alpha(#)}]
+{opt alpha(#)}
+{opt binary}]
 
 
 {synoptset 25 tabbed}{...}
@@ -28,6 +29,8 @@
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt alpha(#)}}Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = {it:0} (plain unweighted degree, identical to omitting the option){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt raw}}The degree itself, not divided by the size of the other mode ({cmd:tnet::degree_tm}, {cmd:igraph::degree}){p_end}
 
 {p2colreset}{...}
 
@@ -101,6 +104,17 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued two-mode network the degree is the strength divided by the size of the other mode ({it:tnet::degree_tm} gives the unnormalized strength); {opt binary} or {cmd:alpha(0)} gives the number of ties divided by the size of the other mode.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw} gives the count itself ({cmd:tnet::degree_tm}).
+
 {title:Supported network types}
 
 {pstd}
@@ -110,8 +124,7 @@ native - {opt alpha()} generalizes the plain tie-count formula to a tie-strength
 (Opsahl et al. 2010), the same convention {help nwdegree}'s own {opt alpha()} uses for one-mode
 degree; {opt alpha(0)}, the default, is bit-for-bit identical to the original unweighted formula.
 Signed: not checked - a negative tie value would distort the strength sum {opt alpha()} relies on,
-not handled distinctly from "no tie". Two-mode: this command requires a two-mode network and errors
-clearly on a one-mode one, the opposite convention of most other commands in this package.
+not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw} gives the count itself ({cmd:tnet::degree_tm}).
 
 {title:See also}
 
@@ -120,4 +133,4 @@ clearly on a one-mode one, the opposite convention of most other commands in thi
 last certified : 02 Sep 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

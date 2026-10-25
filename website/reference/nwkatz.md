@@ -22,7 +22,8 @@ walks
 generate(varname)
 replace
 geodesic_options
-force]
+force
+binary]
 ```
 
 | | |
@@ -33,6 +34,7 @@ force]
 | `replace` | Replace existing variable |
 | *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to
 synopt:`force`Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -58,7 +60,7 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between
 
 ## Supported network types
 
-Binary: yes. Directed: yes - generates separate *_in*/*_out* variables automatically when the network is directed (the network is otherwise symmetrized for the underlying distance calculation unless [geodesic_options](nwgeodesic) specifies `nosym`). Weighted: distances come from [nwgeodesic](nwgeodesic), which supports valued networks via its own `alpha()`/weighting options, forwarded through this command's *geodesic_options*; weight meaning follows whatever [nwgeodesic](nwgeodesic) uses (tie strength inverted into a path cost via the Opsahl et al. formulation - see [nwgeodesic](nwgeodesic) for detail), not tie strength directly. Signed: not checked; negative tie values are not validated or rejected. Two-mode: not checked.
+Binary: yes. Directed: yes - generates separate *_in*/*_out* variables automatically when the network is directed (the network is otherwise symmetrized for the underlying distance calculation unless [geodesic_options](nwgeodesic) specifies `nosym`). Weighted: distances come from [nwgeodesic](nwgeodesic), which supports valued networks via its own `alpha()`/weighting options, forwarded through this command's *geodesic_options*; weight meaning follows whatever [nwgeodesic](nwgeodesic) uses (tie strength inverted into a path cost via the Opsahl et al. formulation - see [nwgeodesic](nwgeodesic) for detail), not tie strength directly. Signed: not checked; negative tie values are not validated or rejected. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 
@@ -69,3 +71,7 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 - [nwcloseness](nwcloseness), [nwbetween](nwbetween), [nwdegree](nwdegree), [nwcloseness](nwcloseness), [nwevcent](nwevcent)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -35,6 +35,7 @@ program nwcorrelate_nodes
 	// _nwsyntax exports a local named directed: keep the options under other names
 	local _ud_opts `undirected' `directed'
 	_nwsyntax `netname'
+	_nw2guard `netname', cmd(nwcorrelate)
 	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
 	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
 	if `nodes' > 7000 {
@@ -168,7 +169,7 @@ unw_defs
 		preserve
 		drop _all
 		
-		getmata correlation = corr_reps
+		getmata correlation = corr_reps, double
 		capture mata: mata drop corr_reps
 		
 		qui gen observed = `corr'

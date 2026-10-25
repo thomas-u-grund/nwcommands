@@ -33,6 +33,7 @@
 {synopt:{opt upper}}List only one entry per undirected dyad (the default; see {opt full} above) - has no effect and is suppressed with a warning on a directed network{p_end}
 {synopt:{opt ignore2mode}}Treat the two-mode network like a one-mode one - suppress the auto-generated {it:_nwmode_ego}/{it:_nwmode_alter} mode-indicator variables{p_end}
 {synopt:{opt isolates0}}reserved; not currently implemented{p_end}
+{synopt:{opt allpairs}}Also write the pairs of nodes of different modes without a tie (by default the ties only, as with {opt compress}){p_end}
 
 {p2colreset}{...}
 
@@ -81,10 +82,15 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 	{cmd:. nw2toedge attendance}
 	{cmd:. list}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; {opt allpairs} also writes the pairs without a tie. The list read back with {help nw2fromedge} or {help nwfromedge}, {opt twomode} gives the same network.
+
 {title:Supported network types}
 
 {pstd}
-Two-mode: **T1**, native - this command's entire purpose is converting a two-mode network to an edge list. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
+Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; {opt allpairs} also writes the pairs without a tie. The list read back with {help nw2fromedge} or {help nwfromedge}, {opt twomode} gives the same network. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
 
 {title:Limits}
 
@@ -100,4 +106,4 @@ and 1.3 GB), 5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

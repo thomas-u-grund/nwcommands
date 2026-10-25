@@ -66,8 +66,12 @@ This example generates a ring lattice first (*mynet*), but then replaces the adj
 
 ## Supported network types
 
-Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: not checked.
+Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: yes - the matrix must not hold a tie between two nodes of the same mode (error 459).
 
 ## See also
 
 - [nwreplace](nwreplace)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

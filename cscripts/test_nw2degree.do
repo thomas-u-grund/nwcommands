@@ -132,7 +132,8 @@ input str10 mode1 str10 mode2 value
 "B" "Z" 6
 end
 nwset mode1 mode2 value, twomode name(wbip)
-nw2degree wbip, generate(_2degree)
+* (tie values are used by default; binary gives the number of ties)
+nw2degree wbip, generate(_2degree) binary
 assert _rc == 0
 sort _nwnode
 tempname wlab wval

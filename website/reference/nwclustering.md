@@ -56,7 +56,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` automatically s
 
 ## Supported network types
 
-Binary: yes (the default `measure(binary)` case). Directed: yes for `measure(binary)` (each node's own potential triples are formed from one in-neighbor paired with one out-neighbor, matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted `measure()` is not defined for a directed network - either choose `measure(binary)` or `symmetrize` the network first. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the two tie values of a potential triple's own pair of ties before testing closure; undirected networks only (see above). Signed: not checked; negative tie values are not validated or rejected. Two-mode: automatically delegated to [nw2clustering](nw2clustering) (see Description).
+Binary: yes (the default `measure(binary)` case). Directed: yes for `measure(binary)` (each node's own potential triples are formed from one in-neighbor paired with one out-neighbor, matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted `measure()` is not defined for a directed network - either choose `measure(binary)` or `symmetrize` the network first. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the two tie values of a potential triple's own pair of ties before testing closure; undirected networks only (see above). Signed: not checked; negative tie values are not validated or rejected. Two-mode: delegated to [nw2clustering](nw2clustering).
 
 ## Stored results
 
@@ -79,3 +79,7 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 - [nw2clustering](nw2clustering), [nwtriads](nwtriads), [nwbrokerage](nwbrokerage)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

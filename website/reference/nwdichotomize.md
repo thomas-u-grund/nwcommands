@@ -54,8 +54,11 @@ Same, but keep the original valued network and save the binary version under a n
 ```stata
 . nwdichotomize trade, threshold(100) generate(trade_binary)
 ```
-- last certified : 28 Aug 2026
 
 ## Supported network types
 
-Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` leaves it unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked - a negative value below `threshold()` is treated the same as any other sub-threshold value. Two-mode: not checked directly, but inherits whatever [nwrecode](nwrecode)/[nwtoedge](nwtoedge) support for two-mode data.
+Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` leaves it unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked - a negative value below `threshold()` is treated the same as any other sub-threshold value. Two-mode: yes - the flag, the modes and the level labels are kept.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

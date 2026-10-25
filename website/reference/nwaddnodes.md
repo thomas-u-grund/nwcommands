@@ -50,8 +50,11 @@ This example adds two isolate nodes to a two-mode network - one to each mode (a 
 . nw2fromedge person institution, name(mynet)
 . nwaddnodes mynet, nodenames(New Person, New Institution) mode(1 2)
 ```
-- last certified : 29 Aug 2026
 
 ## Supported network types
 
 Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched. Two-mode: yes - `mode()` is REQUIRED on a two-mode network (no default is silently assumed) to say which of the two node sets each new isolate belongs to; omitting it on a two-mode network is an error, not a silent mode-1 default.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

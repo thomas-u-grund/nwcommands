@@ -124,3 +124,7 @@ Generate a per-node variable, one value per node, from an existing network:
 Not applicable to `nwgenerate` itself - the underlying dispatcher [nwgen](nwgen)/[nwgenvar](nwgenvar) both delegate to; the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn*/network expression is invoked - see that function's own help topic.
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

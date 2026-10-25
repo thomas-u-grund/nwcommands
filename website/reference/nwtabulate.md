@@ -30,7 +30,7 @@ The command makes use of the normal `tabulate` command, hence, all *`tabulate1_o
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings, not tie values. Signed: not applicable. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings, not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 - * *! 12jul2016: Thomas Grund
 
@@ -39,3 +39,7 @@ Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/at
 - [two-way nwtabulate](nwtab2), `tabulate`
 
 - * *! 12jul2016: Thomas Grund
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

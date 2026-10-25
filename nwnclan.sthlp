@@ -101,11 +101,16 @@ Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applic
 University Press. (cliques and cohesive subgroups)
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (same reasoning {help nwnclique} already
-applies). Weighted: not used for membership. Signed: not checked. Two-mode: not checked. Inherits
+applies). Weighted: not used for membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Inherits
 {help nwnclique}'s own worst-case exponential enumeration cost, plus an additional per-candidate
 induced-subgraph diameter check.
 
@@ -139,4 +144,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

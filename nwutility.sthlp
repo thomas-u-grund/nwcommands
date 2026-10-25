@@ -71,7 +71,7 @@ Then one can use {opt intrvalue()} in {cmd:nwutility}:
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: not checked (the connections model as implemented here assumes an undirected notion of reachability via {help nwgeodesic}). Weighted: {bf:W1}, native - the network under analysis only needs to be binary for the underlying geodesic-distance calculation, but {opt intrvalue()}/{opt intrcost()} let tie strength (as a full per-dyad value, not the analyzed network's own weight) enter the utility formula directly, not as a distance. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: not checked (the connections model as implemented here assumes an undirected notion of reachability via {help nwgeodesic}). Weighted: {bf:W1}, native - the network under analysis only needs to be binary for the underlying geodesic-distance calculation, but {opt intrvalue()}/{opt intrcost()} let tie strength (as a full per-dyad value, not the analyzed network's own weight) enter the utility formula directly, not as a distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:Bibliography}
@@ -93,4 +93,4 @@ The utility is computed from the matrix of shortest paths and holds about 4 matr
 option {opt force} runs it anyway.
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

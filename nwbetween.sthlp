@@ -23,7 +23,8 @@
 {opt silent}
 {opt weighted}
 {opt alpha(real)}
-{opt force}]
+{opt force}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -33,9 +34,11 @@
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt standardize}}standardize centrality scores{p_end}
 {synopt:{opt silent}}suppress the summary table of the generated variable{p_end}
-{synopt:{opt weighted}}calculate on weighted (Dijkstra) shortest paths instead of dichotomizing{p_end}
+{synopt:{opt weighted}}use the tie values in the shortest paths; redundant on a valued network, where this is the default (kept for compatibility){p_end}
 {synopt:{opt alpha(real)}}weight-to-distance exponent used with {opt weighted}; default = 1{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt twomode}}Two-mode network: betweenness divided by the largest value a node of its mode can reach (Borgatti and Everett 1997){p_end}
 
 
 {title:Description}
@@ -81,6 +84,9 @@ Directed network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))}
 Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
 
 {pstd}
+The stored result {bf:r(bw_central)} is Freeman's betweenness centralization, computed from the raw scores whether or not {opt standardize} is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). Without {opt nosym} the network is symmetrized first, so the undirected formula applies. Before the correction of this formula the value stored for an undirected network was half of Freeman's.
+
+{pstd}
 {opt generate()} is required and names the Stata variable to hold the result (pass {opt replace}
 to allow overwriting an existing variable of that name). When betweenness centrality is calculated
 for more than one network at the same time (e.g. {bf:nwbetween glasgow1 glasgow2, generate(bw)}), the command
@@ -106,6 +112,17 @@ there is nothing to configure and no difference in the result, only in how fast 
 just 1,000). {opt weighted} still always uses the Mata implementation.
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the shortest paths are those of least cost 1/w^alpha ({cmd:alpha(1)} by default; {it:igraph::betweenness} with weights 1/w, {it:tnet::betweenness_w}); paths of equal cost are recognised with a relative tolerance of 1e-10. {opt binary} counts steps. The option {opt weighted} is accepted for compatibility; it is redundant on a valued network.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997).
+
 {title:Supported network types}
 
 {pstd}
@@ -122,7 +139,7 @@ implied, always an explicit opt-in. Signed: ties with weight less than or equal 
 negative ties, are treated as no tie at all in both the default and {opt weighted} cases - a
 negative (e.g. antagonistic) tie is not distinguished from an absent one, and {opt weighted}'s
 {it:weight^alpha} cost is undefined for a negative base in general, so signed networks are not
-natively supported by either mode. Two-mode: not checked.
+natively supported by either mode. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997).
 
 
 {title:References}
@@ -147,4 +164,4 @@ Betweenness needs one shortest-path search from every node, so the time grows wi
 last certified : 23 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

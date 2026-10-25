@@ -80,8 +80,12 @@ Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) 
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: mode assignments are preserved for surviving nodes.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
 
 ## See also
 
 - [nwkeepnodes](nwkeepnodes), [nwdrop](nwdrop), [nwclear](nwclear), [nwkeep](nwkeep)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
