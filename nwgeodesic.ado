@@ -16,6 +16,7 @@ program nwgeodesic
 	local symmetrized "false"
 
 	_nwsyntax `netname', max(1)
+	_nwdenseguard, command(nwgeodesic) nodes(`nodes') copies(2) alternative(The distances between all pairs of nodes form an n x n matrix. Use nwcloseness or nwkatz for sums over the distances, nwcomponents for connectedness, nwpath for one pair, or a part of the network (nwsubset).) `force'
 
 	local eccvar "`generate'"
 	// nwgeodesic is dual-purpose: its PRIMARY output is the distance

@@ -48,6 +48,11 @@ Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collisi
 	{bf:r(validvars)}	list of valid Stata variables 
  
  
+{title:Limits}
+
+{pstd}
+One name per node goes into a Stata macro. When the {it:nodes} names do not fit into a macro (about 20,000 names in Stata/BE) the command stops at once with r(900) and a message instead of failing after minutes with r(920).
+
 {title:Also see}
 
    {help nwvalidate}, {help nwload}

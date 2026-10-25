@@ -23,7 +23,7 @@ program nwkatz
 	// applies", since the two modes need genuinely different defaults
 	// (1 for the pre-existing distance-decay formula, 0.9/rho for the
 	// walk-counting one - see below).
-	syntax [anything(name=netname)] , [ alpha(real -999999) walks GENerate(string) replace nosym *]
+	syntax [anything(name=netname)] , [ alpha(real -999999) walks GENerate(string) replace nosym force *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -31,6 +31,9 @@ program nwkatz
 	_nwsyntax `netname', max(1)
 	local origdirected "`directed'"
 	_nwdatasync `netname'
+	if "`walks'" == "" {
+		_nwtimeguard, command(nwkatz) nodes(`nodes') model(bfs) netobj(`netobj') rate(6.6e8) alternative(The Katz centrality of the distance sums needs one breadth-first search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
+	}
 
 	local original `netname'
 	// generate() is required (suite-wide generate()-required style

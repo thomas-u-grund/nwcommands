@@ -18,7 +18,8 @@
 {opth k(int)}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt force}]
 
 
 {synoptset 25 tabbed}{...}
@@ -28,6 +29,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest qualifying k-component size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 {p2colreset}{...}
 
@@ -135,6 +137,9 @@ The search for vertex cuts runs in compiled code and the network is not turned i
 random undirected network with about 20 ties per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.05 / 2 / 31 seconds
 (before: 25 seconds at 1,000 nodes, over 5 minutes at 5,000). The time grows about with nodes times ties; for large k
 or many cuts it is longer. Without the compiled plugin for the platform the Mata code is used and is much slower.
+
+{pstd}
+Every level of the recursion looks for a minimum vertex cut. Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 39 seconds; the time grows like the number of nodes to the power 2.6. When the estimated time is more than 2 minutes (about 31,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
 
 {title:See also}
 

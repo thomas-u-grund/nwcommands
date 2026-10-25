@@ -112,8 +112,9 @@ there is nothing to configure, and results are identical either way:
   | 100,000 | 14.7 | 20.2 | 14.8 (124 MB) | 28.1 | 36.4 |
 
   Commands that still need the full adjacency matrix (for example the all-pairs `nwgeodesic`,
-  `nwsummarize`, uncompressed `nwtoedge`, `nwtoedge`/`nwsave` of several networks at once, two-mode
-  networks, most weighted-distance commands) are refused above 20,000 nodes.
+  uncompressed `nwtoedge`, `nwsimilar`, two-mode networks, most weighted-distance commands) are
+  refused above 20,000 nodes (or earlier, when their matrices would not fit in 12 GB) with a
+  message that names an alternative; the other commands were audited at 100,000 nodes.
 - **Compiled native (C) kernels** (Stata plugins, source in `native/`) for the specific
   operations where Stata's own Mata interpreter is the actual bottleneck, not the algorithm:
   betweenness centrality. Falls back to an equivalent,

@@ -7,7 +7,7 @@ program nwexpand
 	// option nwexpand itself never exposed at all, so that instruction
 	// was impossible to follow. Replaced `noreplace' with a real,
 	// working `replace', forwarded to the underlying `nwset' call.
-	syntax varlist(min=1 max=1) [if],[ mode(string) network(string) nodes(integer 0) xvars name(string) labs(string) replace]
+	syntax varlist(min=1 max=1) [if],[ mode(string) network(string) nodes(integer 0) xvars name(string) labs(string) replace force]
 	
 	unw_defs
 	
@@ -58,6 +58,7 @@ program nwexpand
 		di "{err}Not enough observations for variable {bf:`varlist'}."
 		error 6200
 	}
+	_nwdenseguard, command(nwexpand) nodes(`nodes') copies(2) alternative(The result is a network with a tie for every pair of nodes. Expand a part of the nodes (option nodes() or if).) `force'
 	
 	capture confirm numeric variable `varlist'
 	if _rc != 0 {

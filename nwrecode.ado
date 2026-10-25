@@ -41,7 +41,7 @@ program nwrecode
 		// form recode knows works, and then the stored ties take the new
 		// values.  O(ties).
 		drop _all
-		mata: `netobj'->value_counts_to_vars(0, "`onenet'", "__nwrec_fq")
+		mata: `netobj'->value_counts_to_vars(0, "`onenet'", "__nwrec_fq", 0)
 		qui gen double __nwrec_old = `onenet'
 		if `"`options'"' == "" {
 			qui recode `onenet' `rules'

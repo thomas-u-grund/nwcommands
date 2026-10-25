@@ -22,6 +22,7 @@ program nwreplace, rclass
 	}
 
 	_nwsyntax `netname'
+	_nwdenseguard, command(nwreplace) nodes(`nodes') copies(3) alternative(nwreplace evaluates matrix expressions over the whole n x n network. Change tie values with nwrecode or nwdichotomize, add or remove ties with nwfromedge or nwset, work on a part of the network (nwsubset).)
 	_nwdatasync `netname'
 	
 	local newcmd0 "(*`netobj'->get_matrix())"

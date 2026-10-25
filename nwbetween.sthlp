@@ -22,7 +22,8 @@
 {opt standardize}
 {opt silent}
 {opt weighted}
-{opt alpha(real)}]
+{opt alpha(real)}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -34,6 +35,7 @@
 {synopt:{opt silent}}suppress the summary table of the generated variable{p_end}
 {synopt:{opt weighted}}calculate on weighted (Dijkstra) shortest paths instead of dichotomizing{p_end}
 {synopt:{opt alpha(real)}}weight-to-distance exponent used with {opt weighted}; default = 1{p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 
 {title:Description}
@@ -132,6 +134,11 @@ Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal o
 Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks:
 Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
 
+
+{title:Limits}
+
+{pstd}
+Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. Measured in Stata/BE on a random directed network with 10 ties per node: 10,000 nodes 7.6 seconds, 20,000 nodes 29 seconds, 100,000 nodes about 15 minutes (estimated). When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
 
 {title:See also}
 

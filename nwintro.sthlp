@@ -187,6 +187,22 @@ Two-mode networks are one matrix over both modes: 20,000 nodes in total (13,333 
 refused above 6,000 nodes), {help nwnclique}, {help nwkplex} and {help nwnclan} (more than 100,000 maximal subgroups),
 {help nwplotmatrix} and {help nwtostata}.
 
+{pstd}
+Measured at 100,000 nodes (Stata/BE, random directed network with 10 ties per node, 1.0 million ties, 0.6 to 1.5 GB for most
+commands). Seconds: {help nwfromedge} 3, {help nwset} 3, {help nwsave} 6, {help nwuse} 14, {help nwdegree} 0.3, {help nwdyads} 0.5,
+{help nwsummarize} 0.06, {help nwcomponents} 0.3, {help nwkcore} 0.5, {help nwpagerank} 1.8, {help nwcommunity} 7 (label propagation 15),
+{help nwevcent} 14, {help nwclustering} 26, {help nwshared} 10, {help nwtriads} 71, {help nwclique} 75 (3.6 GB), {help nwburt} 104,
+{help nwsimmelian} 46 (5.7 GB), {help nwconstraint} 12 (directed) to 50 (undirected, 7 GB), {help nwmaxflow} 1.7, {help nwrecode} and
+{help nwdichotomize} 2, {help nwdropnodes}, {help nwkeepnodes} and {help nwsubset} 1 to 3, {help nwattime} 2, the generators
+{help nwring}, {help nwrandom}, {help nwpref} 1 to 2 and {help nwsmall} 6 (but {help nwrandom} with {opt prob()} 64 seconds).
+These commands stop at once with r(484), a message and an alternative ({opt force} runs them anyway): the commands with an
+{it:n}-by-{it:n} result or matrix ({help nwgeodesic}, {help nwreach}, {help nwlambda}, {help nwexpand}, {help nwcontext},
+{help nwreplace}, {help nwsimilar}, {help nwdissimilar}, {help nwsimindex}, {help nwcorrelate}, {help nwqap}, {help nwutility},
+{help nwspectral}, {help nwconcor}, {help nwhierarchy}, {help nwplotmatrix}, {help nwtomata}, {help nwtostata}), and the ones that
+would run for more than 2 minutes: {help nwbetween} (about 15 minutes), {help nwcloseness} and {help nwkatz} (5 minutes; measured
+302 seconds), {help nwkcomponents} (about 43 minutes) and {help nwcohesion} (about 13 minutes). Two-mode networks are one matrix over
+both modes and are refused above 20,000 nodes in total ({help nw2fromedge}).
+
 {marker limits_combinatorial}{...}
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
 

@@ -2,7 +2,7 @@
 capture program drop nwcohesion
 program nwcohesion, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace silent]
+	syntax [anything(name=netname)][, GENerate(string) replace silent force]
 	set more off
 
 	_nwsyntax `netname', max(9999)
@@ -13,6 +13,7 @@ program nwcohesion, rclass
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwtimeguard, command(nwcohesion) nodes(`nodes') model(power) base(27) exponent(2.1) alternative(The cohesion hierarchy needs a vertex-connectivity search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
 
 		if "`generate'" == "" {
 			di "{err}option {bf:generate()} required."

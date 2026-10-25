@@ -21,7 +21,8 @@
 {opth generate(newvarname)}
 {opt mat(string)}
 {opt noweight}
-{opt replace}]
+{opt replace}
+{opt force}]
 
 
 
@@ -35,6 +36,7 @@
 {synopt:{opt mat(string)}}Store the result in a Mata matrix of this name instead of generating a Stata variable{p_end}
 {synopt:{opt noweight}}Ignore valued ties and treats all as binary{p_end}
 {synopt:{opt replace}}Replace {opt generate()}'s target variable if it already exists{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -167,6 +169,11 @@ generates different variables: {it:w_avg} = average wealth of network neighbors,
 You can plot the florentine marriage network with {it:wealth} as node label to better understand how these values come about:
 
 	{cmd:. nwplot flomarriage, label(wealth)}
+
+{title:Limits}
+
+{pstd}
+The statistics are computed on the dense network and three {it:n}-by-{it:n} matrices are held at once. Above about 22,000 nodes (12 GB) the command stops at once with r(484) and names {help nwaltergen} as the alternative: it computes the mean, sum, minimum, maximum and standard deviation of the attribute of the neighbors from the stored ties and works at 100,000 nodes and more. Option {opt force} runs the command anyway.
 
 {title:See also}
 

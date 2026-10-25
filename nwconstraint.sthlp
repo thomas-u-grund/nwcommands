@@ -105,6 +105,9 @@ Press.
 {pstd}
 The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE (killed at 12 GB before).
 
+{pstd}
+Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 10 ties per node and 100,000 nodes: 12 seconds for a directed network, 50 seconds and 7 GB for an undirected one (40 million cells).
+
 {title:See also}
 
 	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}

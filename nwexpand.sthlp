@@ -22,7 +22,8 @@
 {opt name}({it:{help newnetname}})
 {opt xvars}
 {opt labs}({it:lab1 lab2 ...})
-{opt replace}]
+{opt replace}
+{opt force}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -34,6 +35,7 @@
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker expand_mode}{...}
@@ -168,6 +170,9 @@ Binary: source attribute values can be binary or continuous - {opt mode()} selec
 {pstd}
 The expanded network is built row by row (one {it:n}-by-{it:n} matrix; the earlier code multiplied two such matrices, which is
 cubic): 10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix; killed at 12 GB before).
+
+{pstd}
+The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes ({opt nodes()} or {opt if}), or use {opt force}.
 
 {title:See also}
 

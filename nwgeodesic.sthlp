@@ -40,7 +40,7 @@
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise){p_end}
+{synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
 
 
 {title:Description}
@@ -185,6 +185,9 @@ The breadth-first searches run in the plugin, 128 sources per call (the ties are
 per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and
 6.4 GB (13 and 49 seconds one source per call); the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
 not build the matrix.
+
+{pstd}
+The distances of all pairs of nodes are an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), names {help nwcloseness}, {help nwkatz}, {help nwcomponents} and {help nwpath} as the alternatives for sums of distances, connectedness and single pairs, and {opt force} runs it anyway.
 
 {title:See also}
 

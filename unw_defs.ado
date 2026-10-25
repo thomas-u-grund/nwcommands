@@ -40,6 +40,9 @@ program unw_defs
 	// largest memory (GB) a command may need for its dense n x n matrices before _nwdenseguard refuses it
 	c_local nw_max_dense_gb 12
 
+	// longest run time (seconds, estimated) a command may need before _nwtimeguard refuses it
+	c_local nw_max_seconds 120
+
 	//static objects
 	
 	c_local nw_static = "nw"

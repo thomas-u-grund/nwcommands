@@ -92,6 +92,9 @@ With {opt attribute()} the permutation test acts on the stored ties of a network
 permutations: 1.6 seconds; killed at 12 GB before). The permutation p-value of earlier versions counted the missing diagonal as ties
 (a Mata comparison without a colon) and was biased; it is not reproduced. The test of two networks still works on the matrices.
 
+{pstd}
+Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by {cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored). A network of 100,000 nodes takes 0.1 seconds.
+
 {title:See also}
 
     {help nwtab2:two-way nwtabulate}, {help tabulate}

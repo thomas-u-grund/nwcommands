@@ -21,7 +21,8 @@
 {opt sym}
 {opth name(string)}
 {opt xvars}
-{opt nwreplace}]
+{opt nwreplace}
+{opt force}]
 
 
 {synoptset 25 tabbed}{...}
@@ -31,6 +32,7 @@
 {synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt nwreplace}}if a network named {it:newnetname} already exists, drop it and use this name anyway - required, not silent (see {help nwgeodesic} for the same convention){p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
 
 
 {title:Description}
@@ -77,6 +79,9 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 {pstd}
 The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with
 10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB (16 and 52 seconds with one plugin call per source; killed at 12 GB before).
+
+{pstd}
+Reachability of all pairs of nodes is an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it anyway. For connectedness use {help nwcomponents}, for one pair {help nwpath}.
 
 {title:See also}
 
