@@ -3606,6 +3606,66 @@ real rowvector nw_robins_alexander(real matrix B)
 }
 
 /*
+	Same-mode similarity or dissimilarity of the nodes of a two-mode network (nwsimilar, nwdissimilar): the profile of
+	a node is its row over the nodes of the OTHER mode, so two persons are compared over the groups they belong to
+	(R: sna::sedist and cor(t(B)) on the biadjacency matrix B, igraph::similarity).  Pairs of nodes from different
+	modes are not compared (missing).  net is the square matrix (missing cells = no tie), md the mode (1 or 2) of
+	every node; type is one of
+		similarity:    pearson, matches (share of the other-mode nodes on which both agree), hamming (number of
+		               agreements), jaccard, crossproduct (sum of the products of the tie values)
+		dissimilarity: euclidean, manhatten, nonmatches (1 - matches), dhamming (number of disagreements),
+		               djaccard (1 - jaccard)
+	Binary measures count a tie wherever the value is not 0; pearson, crossproduct, euclidean and manhatten use the
+	tie values.
+*/
+real matrix nw_twomode_profile(real matrix net, real colvector md, string scalar type)
+{
+	real matrix W, R, B, Bb, S, Z, D
+	real colvector idx, oth, kb, nz, sq
+	real scalar n, m, c, r, i
+
+	n = rows(net)
+	W = editmissing(net, 0)
+	_diag(W, 0)
+	R = J(n, n, .)
+	for (m = 1; m <= 2; m++) {
+		idx = selectindex(md :== m)
+		oth = selectindex(md :!= m)
+		r = rows(idx)
+		c = rows(oth)
+		if (r == 0 | c == 0) continue
+		B = W[idx, oth]
+		Bb = (B :!= 0)
+		kb = rowsum(Bb)
+		S = Bb * Bb'
+		if (type == "crossproduct") D = B * B'
+		else if (type == "matches") D = (c :- kb * J(1, r, 1) :- J(r, 1, 1) * kb' :+ 2 :* S) :/ c
+		else if (type == "hamming") D = c :- kb * J(1, r, 1) :- J(r, 1, 1) * kb' :+ 2 :* S
+		else if (type == "jaccard") D = S :/ (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- S)
+		else if (type == "nonmatches") D = (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- 2 :* S) :/ c
+		else if (type == "dhamming") D = kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- 2 :* S
+		else if (type == "djaccard") D = 1 :- S :/ (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- S)
+		else if (type == "euclidean") {
+			sq = rowsum(B :^ 2)
+			D = sq * J(1, r, 1) :+ J(r, 1, 1) * sq' :- 2 :* (B * B')
+			D = sqrt(D :* (D :> 0))
+		}
+		else if (type == "manhatten") {
+			D = J(r, r, 0)
+			for (i = 1; i <= r; i++) D[i, .] = rowsum(abs(B[i, .] :- B))'
+		}
+		else if (type == "pearson") {
+			Z = B :- rowsum(B) :/ c
+			nz = sqrt(rowsum(Z :^ 2))
+			D = (Z * Z') :/ (nz * nz')
+		}
+		else _error(3498, "nw_twomode_profile: unknown type " + type)
+		R[idx, idx] = D
+	}
+	return(R)
+}
+
+/*
 	nw_louvain_bip1() from `nstart' starting orders (the first visits the nodes in their order, the others in random
 	order) and keeps the partition with the largest Barber modularity; the greedy search is order dependent.
 */
@@ -4645,6 +4705,30 @@ real scalar nw_ties_only(pointer(class nw_def scalar) scalar p)
 	return(!p->is_dense_built() & p->is_2mode_boolean() != 1)
 }
 
+/*
+	"label=mode" pairs (comma separated) of the nodes of a two-mode network that have no tie, for the edge list
+	characteristic _dta[nwtoedge_modes] (an isolated node does not appear in a list of ties, so its mode would be
+	lost); "" when the string would not fit a Stata characteristic.
+*/
+string scalar nw_isolate_modes_string(pointer(class nw_def scalar) scalar p)
+{
+	real matrix el
+	real colvector has, iso
+	string rowvector nm, md
+	string scalar res
+
+	el = p->edgelist()
+	has = J(p->get_nodes(), 1, 0)
+	if (rows(el) > 0) has[el[., 1]] = J(rows(el), 1, 1)
+	iso = selectindex(has :== 0)
+	if (rows(iso) == 0) return("")
+	nm = p->get_nodenames()
+	md = p->get_modes()
+	res = invtokens(nm[iso]' :+ "=" :+ md[iso]', ",")
+	if (strlen(res) > 60000) return("")
+	return(res)
+}
+
 /* dst := transpose of src (dst is a copy of src, or src itself) */
 void nw_transpose_net(pointer(class nw_def scalar) scalar src, pointer(class nw_def scalar) scalar dst)
 {
@@ -5623,7 +5707,7 @@ void nw_exp_ties(string scalar fname, string scalar vk, string scalar vl, string
 	`i   "label"' row per node, the labels read from the first n rows of
 	variable vname.
 */
-void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n){
+void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n, | real scalar n1){
 	real scalar fh
 	string scalar nl
 	string colvector lab
@@ -5631,7 +5715,8 @@ void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar
 	nl = char(10)
 	(void) _unlink(fname)
 	fh = fopen(fname, "w")
-	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + nl)
+	// a two-mode network: "*Vertices n n1", the first n1 vertices are the nodes of the first mode (Pajek's bipartite format)
+	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + (args() == 4 ? " " + strofreal(n1, "%18.0g") : "") + nl)
 	if (n > 0){
 		lab = st_sdata((1::n), vname)
 		fwrite(fh, invtokens((nw_exp_num((1::n)) :+ "   " :+ char(34) :+ lab :+ char(34) :+ nl)', ""))
@@ -5651,6 +5736,35 @@ void nw_exp_ucinet_head(string scalar fname, string rowvector names){
 	(void) _unlink(fname)
 	fh = fopen(fname, "w")
 	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(names, ",") + nl + "data:")
+	fclose(fh)
+}
+
+/*
+	UCINET DL file of a two-mode network: a rectangular full matrix (nr rows = mode-1 nodes, nc columns = mode-2
+	nodes) with the row and column labels; ties in a mode are not part of the format.
+*/
+void nw_exp_ucinet_rect(string scalar fname, pointer(class nw_def scalar) scalar p)
+{
+	real matrix W
+	real colvector i1, i2
+	real scalar fh, i
+	string scalar nl
+	string rowvector nm, md
+	string colvector s
+
+	nl = char(10)
+	nm = p->get_nodenames()
+	md = p->get_modes()
+	i1 = selectindex(md' :== "1")
+	i2 = selectindex(md' :== "2")
+	W = editmissing((*p->get_matrix())[i1, i2], 0)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl nr=" + strofreal(rows(i1), "%18.0g") + " nc=" + strofreal(rows(i2), "%18.0g") + nl + "format = fullmatrix" + nl)
+	fwrite(fh, "row labels:" + nl + invtokens(nm[i1], ",") + nl + "col labels:" + nl + invtokens(nm[i2], ",") + nl + "data:" + nl)
+	for (i = 1; i <= rows(i1); i++) {
+		fwrite(fh, invtokens(strofreal(W[i, .], "%18.0g")) + nl)
+	}
 	fclose(fh)
 }
 
@@ -5677,10 +5791,10 @@ string colvector nw_realstr(real colvector x)
 	return(s)
 }
 
-void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
+void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n, | string scalar mname){
 	real scalar fh
 	string scalar nl
-	string colvector lab
+	string colvector lab, mod
 
 	nl = char(10)
 	(void) _unlink(fname)
@@ -5688,7 +5802,9 @@ void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar v
 	fwrite(fh, "graph [" + nl + "  directed " + (directed ? "1" : "0") + nl)
 	if (n > 0){
 		lab = st_sdata((1::n), vname)
-		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ (nl + "  ]" + nl))', ""))
+		// a two-mode network: the attribute nwmode (1 or 2) of every node (igraph: V(g)$type <- V(g)$nwmode == 2)
+		mod = (args() == 5 ? (nl + "    nwmode ") :+ strofreal(st_data((1::n), mname), "%18.0g") : J(n, 1, ""))
+		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ mod :+ (nl + "  ]" + nl))', ""))
 	}
 	fclose(fh)
 }
