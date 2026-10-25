@@ -31,6 +31,11 @@ data commands.
   Install each with `net install <name>, from(https://raw.githubusercontent.com/thomas-u-grund/<name>/main/)`.
   They are separate packages, so they are not part of the core: installing or updating `nwcommands`
   never replaces them.
+- **Example data**: real networks to try the commands on, loaded with `nwwebuse` (list: `help netexample`;
+  sources and licences: the website page "Data sets"). They include two two-mode
+  data sets: `davis` (Davis, Gardner and Gardner 1941, the Southern women: 18 women, 14 events, 89 ties;
+  no licence stated for the data) and `ftdirectors_se` (Swedish company directors, a subset of
+  Evtushenko and Gastner, doi:10.5281/zenodo.3553442, CC BY 4.0: 5,092 directors, 455 companies, 5,669 ties).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, gui` (or `db <command>` directly) — for

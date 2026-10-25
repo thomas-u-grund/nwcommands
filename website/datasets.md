@@ -93,6 +93,23 @@ The core package ships with example networks, so every tutorial and help example
 - **Load:** `nwwebuse usstates`
 - **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
 
+## Two-mode (affiliation) networks
+
+Both data sets are two-mode networks: nodes of the first mode (people, `_nwmode` = 1) are tied to nodes of the second mode (events or companies, `_nwmode` = 2), and there are no ties inside a mode. Use `nw2degree`, `nw2clustering` and `nw2project` for them; `nw2project` turns each one into a one-mode network of the people or of the events or companies.
+
+### davis: Southern women
+- **What:** 18 women of a Southern US town ("Old City") and the 14 social events they attended in 1936, as reported in the local newspaper: 32 nodes and 89 ties, undirected, unvalued. Network `davis`, mode 1 `woman`, mode 2 `event`. Women are labeled by first name; events are labeled `E1` to `E14`. Attributes: `surname` and `title` (Miss or Mrs) for the women, `eventdate` (year-month-day, all 1936) for the events. The projection to the women has 139 ties (the number of shared events is the tie value, up to 7), the projection to the events 66 ties (up to 9).
+- **Source:** Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South: A Social Anthropological Study of Caste and Class*, University of Chicago Press. The attendance matrix is the classic one that is distributed with many network programs (for example the R package manynet and the UCINET and Pajek collections); the names are the pseudonyms of the book. The data have no licence of their own; the file contains only the facts of who attended which event.
+- **Load:** `nwwebuse davis`
+- **Used in:** no tutorial yet; examples for `nw2degree`, `nw2project` and `nwcommunity`.
+
+### ftdirectors_se: company directors in Sweden
+- **What:** 5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes and 5,669 ties, undirected, unvalued. Network `ftdirectors_se`, mode 1 `director`, mode 2 `company`. Directors and companies carry only anonymous identifiers (`P00001`..., `C0001`...). Attributes of the directors: `gender` (1,025 women, 3,485 men, 582 unknown) and `age`; attributes of the companies: `sector`, `industry` and `employees` (number of employees). Missing values are empty (text) or missing (numbers). Most directors sit on one board (390 sit on two to seven), and the projection to the companies (759 ties) falls apart into many small groups of interlocked companies and a large number of companies with no shared director.
+- **Source:** Evtushenko, A. and Gastner, M. T. (2019), *Data set discussed in "Beyond Fortune 500: Women in a Global Network of Directors"*, Zenodo, [doi:10.5281/zenodo.3553442](https://doi.org/10.5281/zenodo.3553442), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The original data come from the company profiles of the Financial Times web site, retrieved on 17 September 2016 (321,869 persons, 34,769 companies and 377,060 ties in 54 countries). See Evtushenko, A. and Gastner, M. T. (2020), "Beyond Fortune 500: Women in a Global Network of Directors", in Cherifi, H. et al. (eds.), *Complex Networks and Their Applications VIII*, vol. 1, Springer, 586-598, [arXiv:1910.07441](https://arxiv.org/abs/1910.07441).
+- **Changes (derived data set):** this is a subset of the original data, adapted by Thomas U. Grund. Only the companies located in Sweden and all of their directors were kept. Of the original columns, the director's gender and age and the company's sector, industry and number of employees were kept; the other columns were dropped. The identifiers were renamed, the entry "NA" was turned into a missing value, age and the number of employees were made numeric, and the result was stored in the nwcommands network file format. No values were otherwise altered.
+- **Load:** `nwwebuse ftdirectors_se`
+- **Used in:** no tutorial yet; examples for `nw2degree`, `nw2project`, `nwcommunity` and for the homophily and assortativity commands. For plots use the projection to the companies; the director side is large.
+
 ## Event data
 
 ### socialevolution: phone calls in a dormitory
