@@ -8111,7 +8111,8 @@ void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, 
 	if (m > 1) d[|2 \ m|] = (v[p])[|2 \ m|] :!= (v[p])[|1 \ m-1|]
 	g = runningsum(d)
 	vals = strtoreal(strofreal((v[p])[nw_which(d)]))
-	v[p] = vals[g]
+	// (a single distinct value is a scalar: it cannot be indexed by g)
+	v[p] = (rows(vals) == 1 ? J(m, 1, vals) : vals[g])
 	nm = nodes
 	st_addobs(m)
 	ml = max(strlen(nm))
@@ -8207,7 +8208,7 @@ real scalar `NWdef'::recode_weights(real colvector oldv, real colvector newv){
 	pos = J(rows(x), 1, 0)
 	pos[o] = runningsum(isold[o])
 	idx = pos[|rows(oldv)+1 \ rows(x)|]
-	neww = newv[idx]
+	neww = (rows(newv) == 1 ? J(rows(idx), 1, newv) : newv[idx])
 	if (!any(neww :!= 0)){
 		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
 		isvalued = wasvalued
@@ -8240,7 +8241,7 @@ real matrix nw_recode_matrix(real matrix M, real colvector oldv, real colvector 
 	pos = J(rows(x), 1, 0)
 	pos[o] = runningsum(isold[o])
 	idx = pos[|rows(oldv)+1 \ rows(x)|]
-	return(colshape(newv[idx], rows(M))')
+	return(colshape((rows(newv) == 1 ? J(rows(idx), 1, newv) : newv[idx]), rows(M))')
 }
 
 /*

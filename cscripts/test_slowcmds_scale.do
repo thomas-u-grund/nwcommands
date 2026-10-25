@@ -385,6 +385,60 @@ forvalues s = 1/20 {
 }
 di "=== nw2toedge lists the dyads between the modes: 20 networks VERIFIED ==="
 
+
+* a single distinct tie value (matrix of ones) used to fail with a conformability error (r(3200))
+foreach v in 1 2.5 {
+    quietly nwclear
+    clear
+    quietly nw2set, mat(J(6, 4, `v')) name(mynet)
+    quietly nw2toedge
+    assert _N == 24
+    quietly nw2toedge, compress
+    assert _N == 24
+    quietly nw2toedge, full
+    assert _N == 48
+    quietly nwtoedge mynet
+    assert _N == 55
+    quietly nwtoedge mynet, compress
+    quietly count if mynet == `v'
+    assert r(N) == 24
+    quietly nwtabulate mynet, matcell(T1)
+    quietly nwexport mynet, type(edgelist) fname(`"`tmpd'/slowscale_ones"') replace
+    quietly nwrecode mynet (`v'=3), generate(m3)
+    nwtomata m3, mat(MR)
+    mata: st_numscalar("ok", sum(MR :== 3) == 48)
+    assert scalar(ok) == 1
+    quietly nwclear
+    quietly nwset, mat(J(4, 4, 1)) name(full1) undirected selfloop
+    quietly nwrecode full1 (1=2)
+    nwtomata full1, mat(MR)
+    mata: st_numscalar("ok", all(MR :== 2))
+    assert scalar(ok) == 1
+    quietly nwdichotomize full1, threshold(2)
+    nwtomata full1, mat(MR)
+    mata: st_numscalar("ok", all(MR :== 1))
+    assert scalar(ok) == 1
+}
+* nwset with modes and nw2fromedge: same lists as the cross-mode count
+quietly nwclear
+clear
+quietly nwset, mat(J(10, 10, 1)) name(bip) undirected bipartite
+quietly nwtoedge bip
+quietly nwtoedge bip, compress
+quietly nwdrop bip
+quietly nwclear
+clear
+quietly set obs 30
+quietly gen long f = ceil(_n/5)
+quietly gen long g = mod(_n-1, 5) + 1
+quietly nw2fromedge f g, name(two)
+quietly nw2toedge two
+assert _N == 30
+quietly nw2toedge two, compress
+assert _N == 30
+quietly nwtoedge two
+di "=== single-valued and matrix-built two-mode networks VERIFIED ==="
+
 * ---------------------------------------------------------------- 5. nwrecode and nwdichotomize with labels not in alphabetical order
 forvalues s = 1/30 {
     quietly nwclear

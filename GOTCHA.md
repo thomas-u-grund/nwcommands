@@ -343,3 +343,11 @@ command can list rows with equal keys in a different order, which made old-versu
 network in a comparison script, and where the order of a file matters sort explicitly (the exports now sort by alter
 label, then ego label). Also: a native-plugin kernel that must reproduce Mata arithmetic bit for bit needs
 `-ffp-contract=off` (see `native/Makefile`), otherwise fused multiply-adds change the last digits.
+
+## Native plugin algorithm codes: keep the ranges apart
+
+`native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
+3-9 and 99-100 belong to the combinatorial kernels (`comb_handles()`), 20 is the vertex-connectivity search
+(nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
+feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
+A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
