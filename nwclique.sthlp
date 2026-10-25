@@ -18,6 +18,7 @@
 {opth generate(newvarname)}
 {opt replace}
 {opth minsize(int)}
+{opt nomatrix}
 {opt silent}]
 
 
@@ -27,6 +28,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest clique size to report; default = 3{p_end}
+{synopt:{opt nomatrix}}Do not store {bf:r(clique_matrix)}; the {opth generate(newvarname)} variable and {bf:r(cliques)} are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -63,7 +65,7 @@ value in the generated variable, not a spurious 0.
 	  {bf:r(cliques)}		number of maximal cliques found meeting {opth minsize(int)}
 
 	Matrices
-	  {bf:r(clique_matrix)}	cliques-by-nodes 0/1 membership matrix, one row per maximal clique
+	  {bf:r(clique_matrix)}	cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with {opt nomatrix})
 
 {title:Examples}
 
@@ -104,7 +106,8 @@ same order. Measured in Stata/BE on a random undirected network with 10 ties dra
 20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
 which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
 one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
-of memory for that matrix.
+of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
+100,000 nodes take about a quarter of a second.
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 

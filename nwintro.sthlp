@@ -116,6 +116,9 @@ shared computer, for a random directed network with 10 ties per node: {help nwfr
 1,000,000 ties, {help nwdegree} takes 0.5, {help nwcomponents} 0.5, {help nwneighbor} (one node) 0.4 and
 {help nwclustering} 0.7 seconds (at 25,000 nodes: 0.13, 0.12 and 0.13 seconds for the first three). Building the network from an edge
 list ({help nwfromedge}, {cmd:nwset, edgelist}, {help nwimport} type(edgelist)) never allocates the dense matrix.
+Since the speed round in the Mata library (5 ties drawn per node, which is a mean degree of 10 when undirected; 100,000 nodes; seconds before and after):
+{help nwfromedge} 1.93 and 0.51 for a directed network, 2.59 and 1.07 for an undirected one; {help nwdegree} (undirected) 0.29 and 0.032, (directed) 0.30 and 0.19;
+{help nwconstraint} (undirected) 9.7 and 2.2, (directed) 2.9 and 0.70; {help nwclique} with option {opt nomatrix} 36.7 and 0.26.
 {help nwtoedge} with {opt compress}, {help nwsave}, {help nwuse} and {help nwappend} of a single network work at this
 size too (100,000 nodes / 1,000,000 ties: {cmd:nwtoedge, compress} 15, {cmd:nwsave} 15 seconds and a 124 MB file,
 {cmd:nwuse} 28, {cmd:nwappend} 36 seconds on a busy computer; 25,000 nodes: 2.0, 2.7, 4.4 and 4.0 seconds).

@@ -24,7 +24,7 @@ Technical overview for anyone reading or extending the codebase, not just using 
 ## The core network representation
 
 `NWdef` stores each network as a sparse CSR/CSC index (`rowptr`/`colidx`/`cweight` for
-out-neighbors, a CSC-style mirror for in-neighbors on directed networks) rather than an N×N
+out-neighbors, a CSC-style mirror for in-neighbors on directed networks, built on first use for a network created from a tie list) rather than an N×N
 dense matrix. This is what makes networks with 100,000+ nodes and 1,000,000+ edges practical:
 construction, degree/neighbor queries, and the core structural algorithms (components,
 clustering, betweenness, distances) are all O(degree) or O(V+E), never O(N²).

@@ -3937,6 +3937,14 @@ class `NWdef' {
 		an N x N matrix - sets this to `False'. See ensure_dense_built().
 	*/
 	`BOOL'				edge_dense_built
+
+	/*
+		1 while the in-neighbor index (rowptr_in, colidx_in, edgeid_in) of a directed network built by
+		set_edge_from_triplets() has not been built yet: it needs a sort of all ties (5 s at 11 million ties)
+		and is built by ensure_reverse_built() on the first call that reads it. Missing or 0: the index
+		is valid (every other route builds it at once).
+	*/
+	real scalar			rev_pending
 /* -------------------------------------------------------------------- */
 
 //!! methods:
@@ -3980,6 +3988,7 @@ class `NWdef' {
 	void build_sparse_index()
 	void build_reverse_index()
 	void ensure_sparse_built()
+	void ensure_reverse_built()
 	void invalidate_sparse()
 	void set_edge_from_triplets()
 	void ensure_dense_built()
@@ -4999,6 +5008,41 @@ string matrix get_node_suffix(real scalar nodes){
 	M = (1::nodes)
 	S = strofreal(M)
 	return(S)
+}
+
+/*
+	Row pointers (length n+1, 1-based) of a CSR/CSC index from the ascending list of the row of every entry:
+	entry k of row i is at rowptr[i] <= k < rowptr[i+1].  Vectorised (the loop over the entries cost seconds at
+	a million ties).  A list that is not ascending, or holds a row outside 1..n, gets the loop it had before.
+*/
+real colvector nw_rowptr(real colvector r, real scalar n){
+	real colvector cnt, rp
+	real matrix info
+	real scalar nnz, i, pos, ok
+
+	nnz = rows(r)
+	if (nnz == 0) return(J(n + 1, 1, 1))
+	// (the conditions are tested one after the other: & and | evaluate both sides, and r[|2 \ nnz|] is invalid for one entry)
+	ok = !hasmissing(r)
+	if (ok) ok = (r[1] >= 1 & r[nnz] <= n)
+	if (ok & nnz > 1) ok = all(r[|2 \ nnz|] :>= r[|1 \ nnz-1|])
+	if (ok){
+		info = panelsetup(r, 1)
+		cnt = J(n, 1, 0)
+		cnt[r[info[., 1], 1], 1] = info[., 2] - info[., 1] :+ 1
+		return(1 \ (1 :+ runningsum(cnt)))
+	}
+	rp = J(n + 1, 1, 0)
+	pos = 1
+	for (i = 1; i <= n; i++){
+		rp[i] = pos
+		while (pos <= nnz){
+			if (r[pos] != i) break
+			pos = pos + 1
+		}
+	}
+	rp[n + 1] = pos
+	return(rp)
 }
 
 /*
@@ -6742,15 +6786,23 @@ real matrix `NWdef'::calculate_kcore(){
 	real scalar n, i, j, k, maxdeg, v, u, w, pos, bin_start, curdeg, vdeg, d
 	real matrix deg, core, nb, adjmat
 	real matrix nodes, node_pos, bin_boundaries, processed, sortkey
+	real colvector rowi, adjv
 
 	n = get_nodes()
 	deg = J(n, 1, 0)
-	for (i = 1; i <= n; i++){
-		if (isdirect){
-			deg[i] = rows(uniqrows(neighbors(i) \ neighbors_in(i)))
-		}
-		else {
-			deg[i] = degree(i)
+	if (!isdirect & n > 0){
+		// undirected: the degree is the length of the stored row
+		ensure_sparse_built()
+		deg = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+	}
+	else {
+		for (i = 1; i <= n; i++){
+			if (isdirect){
+				deg[i] = rows(uniqrows(neighbors(i) \ neighbors_in(i)))
+			}
+			else {
+				deg[i] = degree(i)
+			}
 		}
 	}
 
@@ -6765,6 +6817,15 @@ real matrix `NWdef'::calculate_kcore(){
 	// this file, chosen specifically to avoid taking the address of a
 	// loop-reused local (which would make every pointer alias the same,
 	// final value) rather than a genuine pointer-array-of-neighbor-lists.
+	if (!isdirect & n * maxdeg <= 20000000){
+		// undirected: the rows of the index scattered into the padded matrix in one step
+		rowi = csr_rows()
+		adjv = J(n * maxdeg, 1, .)
+		adjv[(rowi :- 1) :* maxdeg :+ ((1::rows(colidx)) :- rowptr[rowi, 1] :+ 1), 1] = colidx
+		adjmat = colshape(adjv', maxdeg)
+		adjv = J(0, 1, .)
+	}
+	else {
 	adjmat = J(n, maxdeg, .)
 	for (i = 1; i <= n; i++){
 		if (isdirect){
@@ -6776,6 +6837,7 @@ real matrix `NWdef'::calculate_kcore(){
 		if (rows(nb) > 0){
 			adjmat[i, (1::rows(nb))'] = nb'
 		}
+	}
 	}
 
 	// PERFORMANCE FIX: the previous version found the next node to peel
@@ -8125,11 +8187,16 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 	out-plus-in behavior exactly.
 */
 real matrix `NWdef'::calculate_components(){
-	real scalar ncomp, next, i, numnodes, cur, head, tail, nvisited
+	real scalar ncomp, next, i, numnodes, cur, head, tail, nvisited, fast, w
 	real matrix visited, comp, nb
 	real colvector queue
 
 	numnodes = get_nodes()
+	// the neighbours are read straight from the index (no call and no copy per visited node); a directed
+	// network whose in-neighbour index is not usable keeps the calls, which report that
+	ensure_sparse_built()
+	if (isdirect) ensure_reverse_built()
+	fast = (!isdirect | rows(rowptr_in) == numnodes + 1)
 	visited = J(numnodes,1,0)
 	comp = J(numnodes,1,0)
 	ncomp = 1
@@ -8159,6 +8226,31 @@ real matrix `NWdef'::calculate_components(){
 		while (head <= tail){
 			cur = queue[head]
 			head = head + 1
+			if (fast){
+				for (i = rowptr[cur]; i < rowptr[cur+1]; i++){
+					w = colidx[i]
+					if (visited[w,1]==0){
+						visited[w,1] = 1
+						nvisited = nvisited + 1
+						comp[w,1] = ncomp
+						tail = tail + 1
+						queue[tail] = w
+					}
+				}
+				if (isdirect){
+					for (i = rowptr_in[cur]; i < rowptr_in[cur+1]; i++){
+						w = colidx_in[i]
+						if (visited[w,1]==0){
+							visited[w,1] = 1
+							nvisited = nvisited + 1
+							comp[w,1] = ncomp
+							tail = tail + 1
+							queue[tail] = w
+						}
+					}
+				}
+				continue
+			}
 			nb = neighbors(cur)
 			if (isdirect){
 				nb = nb \ neighbors_in(cur)
@@ -8212,6 +8304,7 @@ void `NWdef'::build_sparse_index(){
 	real scalar n, nnz, i, k, pos
 
 	n = get_nodes()
+	rev_pending = 0
 	// row by row, without a copy of the matrix or an n x n mask (a dense network of 20,000 nodes needed four
 	// matrices of 3.2 GB here): the columns and values of the ties of every row are kept, then put together
 	PI = J(n, 1, NULL)
@@ -8287,7 +8380,7 @@ void `NWdef'::build_sparse_index(){
 */
 void `NWdef'::build_reverse_index(real matrix rowidx, real scalar nnz){
 	real matrix perm, sorted_target
-	real scalar n, j, pos
+	real scalar n
 
 	n = get_nodes()
 
@@ -8307,22 +8400,27 @@ void `NWdef'::build_reverse_index(real matrix rowidx, real scalar nnz){
 	edgeid_in = perm
 	sorted_target = colidx[perm,1]
 
-	rowptr_in = J(n + 1, 1, 0)
-	pos = 1
-	for (j = 1; j <= n; j++){
-		rowptr_in[j] = pos
-		while (pos <= nnz){
-			if (sorted_target[pos,1] != j) break
-			pos = pos + 1
-		}
-	}
-	rowptr_in[n + 1] = pos
+	rowptr_in = nw_rowptr(sorted_target, n)
 }
 
 void `NWdef'::ensure_sparse_built(){
 	if (sparse_built != `True'){
 		build_sparse_index()
 	}
+}
+
+/*
+	Builds the deferred in-neighbor index (see rev_pending) from the stored ties.
+*/
+void `NWdef'::ensure_reverse_built(){
+	real colvector rowidx
+
+	if (rev_pending != 1) return
+	ensure_sparse_built()
+	if (rev_pending != 1) return
+	rowidx = csr_rows()
+	rev_pending = 0
+	build_reverse_index(rowidx, rows(colidx))
 }
 
 /*
@@ -8358,8 +8456,8 @@ void `NWdef'::invalidate_sparse(){
 	report).
 */
 void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real matrix weight, real scalar directed){
-	real scalar n, nnz, i, pos
-	real matrix ord, sorted_ego, sorted_alter, sorted_weight, keep
+	real scalar n, nnz, sorted
+	real matrix sorted_ego, keep
 	real colvector key, ordk, sk
 
 	n = get_nodes()
@@ -8421,23 +8519,33 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// when, and only when, duplicates exist).
 	if (rows(ego) > 0){
 		key = ego :* (n + 1) :+ alter
-		ordk = order(key, 1)
-		sk = key[ordk]
-		if (rows(sk) > 1){
-			if (any(sk[2::rows(sk)] :== sk[1::rows(sk)-1])){
-				ordk = order((key, (1::rows(key))), (1, 2))
-				sk = key[ordk]
-				ordk = ordk[selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1)]
+		// a list that already comes in strictly ascending (ego, alter) order (what the kernels, nwfromedge after
+		// nw_triplets_lastwins() and symmetrize_sparse() hand over) has no duplicates and the sort would return
+		// the identity permutation: skip it (the sort of 11 million cells cost 8 s)
+		sorted = 1
+		if (rows(key) > 1) sorted = all(key[|2 \ rows(key)|] :> key[|1 \ rows(key)-1|])
+		if (!sorted){
+			ordk = order(key, 1)
+			sk = key[ordk]
+			if (rows(sk) > 1){
+				if (any(sk[2::rows(sk)] :== sk[1::rows(sk)-1])){
+					ordk = order((key, (1::rows(key))), (1, 2))
+					sk = key[ordk]
+					ordk = ordk[selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1)]
+				}
 			}
+			ego = ego[ordk,1]
+			alter = alter[ordk,1]
+			weight = weight[ordk,1]
 		}
-		ego = ego[ordk,1]
-		alter = alter[ordk,1]
-		weight = weight[ordk,1]
 
-		keep = selectindex((weight :!= 0) :& (isselfloop :== 1 :| ego :!= alter))
-		ego = ego[keep,1]
-		alter = alter[keep,1]
-		weight = weight[keep,1]
+		keep = (weight :!= 0) :& (isselfloop :== 1 :| ego :!= alter)
+		if (!all(keep)){
+			keep = selectindex(keep)
+			ego = ego[keep,1]
+			alter = alter[keep,1]
+			weight = weight[keep,1]
+		}
 	}
 	nnz = rows(ego)
 
@@ -8451,31 +8559,16 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	}
 	else {
 		sorted_ego = ego
-		sorted_alter = alter
-		sorted_weight = weight
-
-		rowptr = J(n+1,1,0)
-		colidx = sorted_alter
-		cweight = sorted_weight
-		pos = 1
-		for (i=1; i<=n; i++){
-			rowptr[i] = pos
-			while (pos <= nnz){
-				if (sorted_ego[pos,1] != i) break
-				pos = pos + 1
-			}
-		}
-		rowptr[n+1] = pos
+		colidx = alter
+		cweight = weight
+		rowptr = nw_rowptr(sorted_ego, n)
 	}
 
-	if (isdirect & nnz > 0){
-		build_reverse_index(sorted_ego, nnz)
-	}
-	else {
-		rowptr_in = J(0, 1, 0)
-		colidx_in = J(0, 1, 0)
-		edgeid_in = J(0, 1, 0)
-	}
+	rowptr_in = J(0, 1, 0)
+	colidx_in = J(0, 1, 0)
+	edgeid_in = J(0, 1, 0)
+	// the in-neighbor index of a directed network is built when something asks for it (ensure_reverse_built())
+	rev_pending = (isdirect & nnz > 0)
 
 	if (nnz > 0){
 		isvalued = (min(weight) < 0 | max(weight) > 1)
@@ -8544,6 +8637,7 @@ real matrix `NWdef'::neighbors_in(real scalar i){
 	if (!isdirect){
 		return(neighbors(i))
 	}
+	if (rev_pending == 1) ensure_reverse_built()
 	if (rowptr_in[i+1] > rowptr_in[i]){
 		return(colidx_in[(rowptr_in[i]::(rowptr_in[i+1]-1)),1])
 	}
@@ -8560,6 +8654,7 @@ real scalar `NWdef'::degree_in(real scalar i){
 	if (!isdirect){
 		return(degree(i))
 	}
+	if (rev_pending == 1) ensure_reverse_built()
 	return(rowptr_in[i+1] - rowptr_in[i])
 }
 
@@ -10270,7 +10365,10 @@ string scalar `NWdef'::get_isolate_source_string(){
 	ensure_sparse_built()
 	n = get_nodes()
 	dout = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
-	if (isdirect) din = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+	if (isdirect){
+		ensure_reverse_built()
+		din = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+	}
 	else din = dout
 	all = invtokens(select(nodes, (dout :== 0 :& din :== 0)'), ";")
 	if (strlen(all) <= 60000) return(all)
@@ -10489,10 +10587,18 @@ real scalar `NWdef'::check_symmetry(){
 		r = r[o1,1]; c = c[o1,1]; w = w[o1,1]
 		k1 = r :* (n + 1) :+ c
 		k2 = c :* (n + 1) :+ r
-		o1 = order(k1, 1)
 		o2 = order(k2, 1)
-		if (any(k1[o1] :!= k2[o2])) return(0)
-		return(all(w[o1] :== w[o2]))
+		// the stored ties come in ascending (row, column) order, so k1 is already sorted (no sort, and the
+		// permutation of a strictly ascending list is the identity); an unsorted list is sorted as before
+		if (rows(k1) > 1) {
+			if (!all(k1[|2 \ rows(k1)|] :> k1[|1 \ rows(k1)-1|])) {
+				o1 = order(k1, 1)
+				if (any(k1[o1] :!= k2[o2])) return(0)
+				return(all(w[o1] :== w[o2]))
+			}
+		}
+		if (any(k1 :!= k2[o2])) return(0)
+		return(all(w :== w[o2]))
 	}
 	ensure_dense_built()
 	if (edge == edge'){
@@ -10668,6 +10774,7 @@ void `NWdef'::symmetrize(string scalar mode){
 */
 real matrix `NWdef'::get_indegree(real scalar alpha){
 	real matrix s, k
+	real colvector idx
 	real scalar i, n
 
 	ensure_sparse_built()
@@ -10675,18 +10782,36 @@ real matrix `NWdef'::get_indegree(real scalar alpha){
 	s = J(n,1,0)
 	k = J(n,1,0)
 	if (!isdirect){
-		for (i=1; i<=n; i++){
-			if (rowptr[i+1] > rowptr[i]){
-				k[i,1] = rowptr[i+1] - rowptr[i]
-				s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+		if (n > 0 & !hasmissing(cweight)){
+			// the tie count and the sum of the tie values of every node by panel sums over the index: the same
+			// values added in the same order as in the loop below, so identical to the last bit (panelsum() does
+			// not skip missing values as sum() does, hence the test)
+			k = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+			idx = colshape(selectindex(k :> 0), 1)
+			if (rows(idx) > 0) s[idx, 1] = panelsum(cweight, (rowptr[idx, 1], rowptr[idx :+ 1, 1] :- 1))
+		}
+		else {
+			for (i=1; i<=n; i++){
+				if (rowptr[i+1] > rowptr[i]){
+					k[i,1] = rowptr[i+1] - rowptr[i]
+					s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+				}
 			}
 		}
 	}
 	else {
-		for (i=1; i<=n; i++){
-			if (rowptr_in[i+1] > rowptr_in[i]){
-				k[i,1] = rowptr_in[i+1] - rowptr_in[i]
-				s[i,1] = sum(cweight[edgeid_in[(rowptr_in[i]::(rowptr_in[i+1]-1)),1],1])
+		ensure_reverse_built()
+		if (n > 0 & !hasmissing(cweight) & rows(rowptr_in) == n + 1){
+			k = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+			idx = colshape(selectindex(k :> 0), 1)
+			if (rows(idx) > 0) s[idx, 1] = panelsum(cweight[edgeid_in, 1], (rowptr_in[idx, 1], rowptr_in[idx :+ 1, 1] :- 1))
+		}
+		else {
+			for (i=1; i<=n; i++){
+				if (rowptr_in[i+1] > rowptr_in[i]){
+					k[i,1] = rowptr_in[i+1] - rowptr_in[i]
+					s[i,1] = sum(cweight[edgeid_in[(rowptr_in[i]::(rowptr_in[i+1]-1)),1],1])
+				}
 			}
 		}
 	}
@@ -10695,16 +10820,25 @@ real matrix `NWdef'::get_indegree(real scalar alpha){
 
 real matrix `NWdef'::get_outdegree(real scalar alpha){
 	real matrix s, k
+	real colvector idx
 	real scalar i, n
 
 	ensure_sparse_built()
 	n = get_nodes()
 	s = J(n,1,0)
 	k = J(n,1,0)
-	for (i=1; i<=n; i++){
-		if (rowptr[i+1] > rowptr[i]){
-			k[i,1] = rowptr[i+1] - rowptr[i]
-			s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+	if (n > 0 & !hasmissing(cweight)){
+		// panel sums over the index, identical to the loop below to the last bit (see get_indegree())
+		k = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+		idx = colshape(selectindex(k :> 0), 1)
+		if (rows(idx) > 0) s[idx, 1] = panelsum(cweight, (rowptr[idx, 1], rowptr[idx :+ 1, 1] :- 1))
+	}
+	else {
+		for (i=1; i<=n; i++){
+			if (rowptr[i+1] > rowptr[i]){
+				k[i,1] = rowptr[i+1] - rowptr[i]
+				s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+			}
 		}
 	}
 	return(editmissing((k :* ((s :/ k) :^ alpha)),0))
@@ -10752,15 +10886,23 @@ void `NWdef'::update_match(){
 */
 void `NWdef'::update_nodesvar(){
 	transmorphic A
+	string colvector sv
 	real scalar k, i, dup
 
 	k = cols(nodes)
 	nodesvar = strtoname(nodes)
 	// two nodes with the same variable name: every node gets the default name (n1, n2, ...).  The duplicate test
-	// compares all pairs in the earlier version (quadratic: 9 s at 10,000 nodes, on every rename or creation); a hash
+	// compared all pairs in the first version (quadratic: 9 s at 10,000 nodes, on every rename or creation); a hash
 	// finds the same (not a sort: a Mata sort advances the state that breaks ties in the sorts that follow, and with
-	// it the order of the data rows that belong to no node)
-	if (k > 1) {
+	// it the order of the data rows that belong to no node).  The hash costs half a second at 100,000 nodes, so a
+	// large network (more than 5,000 nodes) is checked with one sort of the names instead and a comparison of
+	// neighbours: the same duplicates, a few hundredths of a second.  Small networks keep the hash.
+	if (k > 5000) {
+		sv = sort(nodesvar', 1)
+		dup = any(sv[|2 \ k|] :== sv[|1 \ k-1|])
+		if (dup) nodesvar = J(1,k,"`nwvars_def_pref'") + (strofreal(1::k))'
+	}
+	else if (k > 1) {
 		A = asarray_create("string", 1)
 		dup = 0
 		for (i = 1; i <= k; i++) {
@@ -11194,6 +11336,7 @@ void `NWdef'::init_edge_sparse() {
 	rowptr_in = J(0, 1, 0)
 	colidx_in = J(0, 1, 0)
 	edgeid_in = J(0, 1, 0)
+	rev_pending = 0
 	sparse_built = `True'
 }
 
@@ -11737,6 +11880,7 @@ void `NWdef'::zap() {
 	isdirect = `False'
 	is2mode   = `False'
 	sparse_built = `False'
+	rev_pending = 0
 }
 
 /*

@@ -20,6 +20,7 @@ nwkcomponents
 k(int)
 generate(newvarname)
 replace
+nomatrix
 silent
 force]
 ```
@@ -29,6 +30,7 @@ force]
 | `k(int)` | Minimum vertex connectivity required; default = 2 |
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest qualifying k-component size |
 | `replace` | Replace existing variable |
+| `nomatrix` | Do not store **r(kcomp_matrix)**; the `generate(newvarname)` variable and **r(kcomponents)** are still returned |
 | `silent` | Suppress display of results |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
@@ -60,7 +62,7 @@ Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in th
 
 **Matrices**
 
-- **r(kcomp_matrix)** k-components-by-nodes 0/1 membership matrix, one row per maximal k-component
+- **r(kcomp_matrix)** k-components-by-nodes 0/1 membership matrix, one row per maximal k-component (not with `nomatrix`)
 
 ## References
 

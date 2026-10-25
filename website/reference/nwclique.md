@@ -20,6 +20,7 @@ nwclique
 generate(newvarname)
 replace
 minsize(int)
+nomatrix
 silent]
 ```
 
@@ -28,6 +29,7 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-clique membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest clique size to report; default = 3 |
+| `nomatrix` | Do not store **r(clique_matrix)**; the `generate(newvarname)` variable and **r(cliques)** are still returned |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -57,7 +59,7 @@ Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition
 
 **Matrices**
 
-- **r(clique_matrix)** cliques-by-nodes 0/1 membership matrix, one row per maximal clique
+- **r(clique_matrix)** cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with `nomatrix`)
 
 ## References
 

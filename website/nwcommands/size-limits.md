@@ -46,8 +46,8 @@ a message (error code 484) and does nothing. Sizes are numbers of nodes.
 | Build, import, export, save and load a network (`nwfromedge`, `nwset`, `nwimport`, `nwexport`, `nwsave`, `nwuse`, `nwappend`, `nwtoedge, compress`) | 20,000 nodes: 0.6 to 2 s | 100,000 nodes: 3 to 14 s each, 0.6 to 1.4 GB | Not tried beyond 100,000 nodes | |
 | Degrees, dyads, summary, components, k-core, PageRank, random walk, assortativity, bridges, brokerage, paths and neighbors, recode, dichotomize, drop, keep, subset, maximum flow, networks at a point in time | 100,000 nodes: 0.06 to 7 s | | Not tried beyond 100,000 nodes | |
 | Clustering, community detection, ego networks, eigenvector centrality, shared neighbors, mixing, motifs, factions, `nwcug` (5 repetitions) | 20,000 nodes: up to 5 s | 100,000 nodes: 0.7 to 26 s in the audit; `nwclustering` (26.1 s then) and `nwevcent` (13.7 s then) now take 0.7 s and 0.5 s; the others were not measured again | Not tried beyond 100,000 nodes | |
-| Heavier counting: `nwtriads`, `nwburt`, `nwsimmelian`, `nwclique` (these now run in the compiled plugin) | 5,000 nodes: 0.03 to 0.1 s; 20,000 nodes: `nwclique` 1.0 s | 100,000 nodes: `nwburt` 0.2 s, `nwsimmelian` 0.8 s, `nwtriads` 1.0 s; `nwclique` search 0.6 s, but the result matrix takes longer to store (see below) | Not tried beyond 100,000 nodes | Run on a sample or a component first |
-| `nwconstraint` | 5,000 nodes: 0.4 s | 100,000 nodes: 10.4 s (6.9 GB measured in the audit, not measured again) | Not tried beyond 100,000 nodes; above 2,000 nodes only `name()` and `replace` are accepted | Run on a sample or a component first |
+| Heavier counting: `nwtriads`, `nwburt`, `nwsimmelian`, `nwclique` (these now run in the compiled plugin) | 5,000 nodes: 0.03 to 0.1 s; 20,000 nodes: `nwclique` 1.0 s | 100,000 nodes: `nwburt` 0.2 s, `nwsimmelian` 0.8 s, `nwtriads` 1.0 s; `nwclique` search 0.6 s, but the result matrix takes longer to store (see below); with `nomatrix` 100,000 nodes take 0.26 s | Not tried beyond 100,000 nodes | Run on a sample or a component first |
+| `nwconstraint` | 5,000 nodes: 0.4 s | 100,000 nodes: 10.4 s in the audit; 2.2 s (undirected) and 0.70 s (directed) after the later speed round, with 5 ties drawn per node | Not tried beyond 100,000 nodes; above 2,000 nodes only `name()` and `replace` are accepted | Run on a sample or a component first |
 | `nwcloseness`, `nwkatz` | 20,000 nodes: 10 s | About 63,000 nodes inside the 2-minute limit | Above about 63,000 nodes (100,000: estimated 5 minutes; one run with `force` took 302 s) | `nwdegree`, `nwpagerank`, or run on a part of the network (`nwsubset`) |
 | `nwbetween` | 10,000 nodes: 8 s | 20,000 nodes: 29 s; about 36,000 inside the limit | Above about 36,000 nodes (100,000: estimated 15 minutes, not measured) | As above |
 | `nwkcomponents` with `k(2)` | 5,000 nodes: 0.1 s; 20,000 nodes: 1.0 s | 100,000 nodes: about 60 s with `force` (most of it is Stata storing the result matrix) | Above about 31,000 nodes without `force` (the guard is unchanged, although `k(2)` is now much faster) | `nwcomponents`, `nwkcore`, or a part of the network |
@@ -97,7 +97,7 @@ undirected for `nwclique`, `nwburt`, `nwsimmelian` and `nwconstraint`; `nwcluste
 | `nwevcent` | 0.69 / 0.05 | | 13.7 / 0.5 |
 | `nwburt` | 1.18 / 0.03 | | 25.6 / 0.17 |
 | `nwsimmelian` | 0.51 / 0.08 | | 11.6 / 0.75 |
-| `nwconstraint` | 0.58 / 0.44 | | 13.3 / 10.4 |
+| `nwconstraint` | 0.58 / 0.44 | | 13.3 / 10.4; later 9.7 / 2.2 (5 ties drawn per node) |
 | `nwpagerank` | 0.12 / 0.03 | | 1.9 / 0.3 |
 | `nwclique` (minsize 3) | 0.35 / 0.10 | 3.3 / 1.0 | search alone 45 / 0.6 |
 | `nwkcomponents` (`k(2)`) | 1.8 / 0.1 | 67 / 1.0 | over 120 / about 60 |
@@ -107,8 +107,8 @@ Two limits remain, and they are Stata's, not the kernels':
 - **`nwclique` and `nwkcomponents`:** from about 40,000 nodes on, most of the time is Stata's `st_matrix()` storing
   `r(clique_matrix)` or `r(kcomp_matrix)`; the time grows with the square of the number of columns, whatever the number
   of rows. This is why `nwkcomponents` still takes about a minute at 100,000 nodes.
-- **`nwconstraint`:** the kernel needs 0.9 s at 100,000 nodes; the rest of the 10.4 s is storing 11 million cells as a
-  network in the Mata library, which did not change.
+- **`nwclique` with `nomatrix`:** the matrix is not built or stored, and the variable and `r(cliques)` stay the same: 100,000 nodes take 0.26 s instead of 36.7 s (random network with 5 ties drawn per node; `nwkcomponents` has the same option).
+- **`nwconstraint`:** after the speed round of the Mata library, 100,000 nodes take 2.2 s for an undirected and 0.70 s for a directed network (5 ties drawn per node; 9.7 and 2.9 s before).
 
 Nothing else on this page was measured again. In particular, `nwbetween`, `nwcloseness`, `nwkatz` and the commands with
 an n-by-n result are as limited as before.

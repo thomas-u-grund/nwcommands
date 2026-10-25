@@ -2,7 +2,7 @@
 capture program drop nwclique
 program nwclique, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace minsize(int 3) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace minsize(int 3) NOMatrix silent]
 	set more off
 
 	if `minsize' < 1 {
@@ -48,23 +48,41 @@ program nwclique, rclass
 		// answer of the wrong shape (older plugin, no plugin, a self-loop, a failure) leaves the Mata path. The
 		// global NW_NOFASTKERNELS forces the Mata path.
 		local __fast 0
-		mata: `__nw_cliq' = nw2_fastcliq(`netobj'->edgelist(), `nodes', `minsize')
-		mata: st_local("__fast", strofreal(cols(`__nw_cliq') == `nodes'))
-		if !`__fast' {
-			mata: `__nw_cliq' = `netobj'->calculate_cliques_filtered(`minsize')
+		if "`nomatrix'" != "" {
+			// no cliques-by-nodes matrix (Stata stores it in time growing with the square of the number of
+			// nodes: about a minute at 100,000 nodes): the per-node variable and the count come from the list of
+			// (clique, node) pairs of the kernel, without the dense matrix
+			mata: `__nw_cliqnum' = nw2_fastcliqnum(`netobj'->edgelist(), `nodes', `minsize')
+			mata: st_local("__fast", strofreal(rows(`__nw_cliqnum') == `nodes' + 1))
+			if `__fast' {
+				mata: st_numscalar("nw_ncliques", `__nw_cliqnum'[`nodes' + 1])
+				mata: `__nw_cliqnum' = `__nw_cliqnum'[|1 \ `nodes'|]
+			}
 		}
-		mata: `__nw_sizes' = rowsum(`__nw_cliq')
-		mata: st_numscalar("nw_ncliques", rows(`__nw_cliq'))
-		mata: st_matrix("nw_cliquematrix", (rows(`__nw_cliq') > 0 ? `__nw_cliq' : J(1, `nodes', 0)))
-		mata: `__nw_cliqnum' = (rows(`__nw_cliq') > 0 ? editvalue(colmax(`__nw_cliq' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
+		if !`__fast' {
+			mata: `__nw_cliq' = nw2_fastcliq(`netobj'->edgelist(), `nodes', `minsize')
+			mata: st_local("__fast", strofreal(cols(`__nw_cliq') == `nodes'))
+			if !`__fast' {
+				mata: `__nw_cliq' = `netobj'->calculate_cliques_filtered(`minsize')
+			}
+			mata: `__nw_sizes' = rowsum(`__nw_cliq')
+			mata: st_numscalar("nw_ncliques", rows(`__nw_cliq'))
+			if "`nomatrix'" == "" {
+				mata: st_matrix("nw_cliquematrix", (rows(`__nw_cliq') > 0 ? `__nw_cliq' : J(1, `nodes', 0)))
+			}
+			mata: `__nw_cliqnum' = (rows(`__nw_cliq') > 0 ? editvalue(colmax(`__nw_cliq' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
+			mata: mata drop `__nw_cliq' `__nw_sizes'
+		}
 
 		capture drop `netgenerate'`k'
 		gen `netgenerate'`k' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`k'", `__nw_cliqnum')
-		mata: mata drop `__nw_cliq' `__nw_sizes' `__nw_cliqnum'
+		mata: mata drop `__nw_cliqnum'
 
 		return scalar cliques = nw_ncliques
-		return matrix clique_matrix = nw_cliquematrix
+		if "`nomatrix'" == "" {
+			return matrix clique_matrix = nw_cliquematrix
+		}
 		local lcliques = nw_ncliques
 
 		// see nwbrokerage.ado's own header comment: the "already
@@ -106,5 +124,40 @@ real matrix nw2_fastcliq(real matrix el, real scalar n, real scalar minsize)
 	out = J(nc, n, 0)
 	for (k = 1; k <= nc; k++) out[k, r[|info[k, 1], 2 \ info[k, 2], 2|]'] = J(1, info[k, 2] - info[k, 1] + 1, 1)
 	return(out)
+}
+
+// The per-node clique number (size of the largest maximal clique of the node, missing for a node in none) and, as
+// element n + 1, the number of cliques, straight from the (clique, node) pairs of the kernel: the numbers the dense
+// matrix gives, without the matrix. A 0 x 0 matrix when the kernel is not available (the caller then takes the
+// dense route).
+real colvector nw2_fastcliqnum(real matrix el, real scalar n, real scalar minsize)
+{
+	real rowvector aux
+	real scalar st, nc
+	real matrix r, info
+	real colvector sz, cid, sr, o, nd, out
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (n < 1) return(J(0, 0, .))
+	if (nwg_comb_version() < 8) return(J(0, 0, .))
+	r = nwg_comb(35, n, el, J(0, 1, .), (minsize), aux, st)
+	if (st != 0 | cols(r) != 2) return(J(0, 0, .))
+	nc = aux[1]
+	out = J(n, 1, .)
+	if (rows(r) == 0) return(out \ nc)
+	info = panelsetup(r[., 1], 1)
+	if (rows(info) != nc) return(J(0, 0, .))
+	sz = info[., 2] - info[., 1] :+ 1
+	cid = J(rows(r), 1, 0)
+	cid[info[., 1], 1] = J(nc, 1, 1)
+	// (a column subscript: a 1 x 1 vector indexed by a vector would come back as a row)
+	sr = sz[runningsum(cid), 1]
+	// the largest size per node: sort by (node, size) and take the last pair of every node
+	o = order((r[., 2], sr), (1, 2))
+	nd = r[o, 2]
+	sr = sr[o]
+	info = panelsetup(nd, 1)
+	out[nd[info[., 1], 1], 1] = sr[info[., 2], 1]
+	return(out \ nc)
 }
 end
