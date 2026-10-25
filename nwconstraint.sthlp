@@ -112,4 +112,4 @@ The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

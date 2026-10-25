@@ -53,4 +53,4 @@ Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collisi
    {help nwvalidate}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

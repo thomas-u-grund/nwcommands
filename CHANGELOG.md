@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [3.2.0] - not yet released
+## [3.2.0] - 2026-10-25
 Large networks (to 100,000 nodes) now work, and a series of wrong results found on the way are fixed. Read "Results that change" before you re-run old analyses.
 
 ### Results that change
