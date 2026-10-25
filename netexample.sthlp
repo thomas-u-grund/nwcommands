@@ -19,6 +19,7 @@
         {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "sysdescribe macaque.nwdta":describe}
         {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "sysdescribe chesapeake.nwdta":describe}
         {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "sysdescribe usair.nwdta":describe}
+        {help netexample##usair:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "sysdescribe usair_full.nwdta":describe}
         {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "sysdescribe lazega.nwdta":describe}
         {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "sysdescribe s50.nwdta":describe}
         {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "sysdescribe sampson.nwdta":describe}
@@ -729,6 +730,39 @@ Congress were kept (the sheets S93 and S114 of the workbook); of the original co
 and, from the row labels, the senator's name, state and party were kept; the result is stored in the
 nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the
 code.
+
+{hline}
+
+{marker usair_full}
+{title:Full US airport network (usair_full)}
+
+{pstd}
+{bf:Networks:} {it:usair_full}{p_end}
+{pstd}
+{bf:Vertex attributes:} {it:iata, name, city, lat, lon, _outdegree, _indegree, _degree}{p_end}
+
+{pstd}
+The unrestricted counterpart of {it:usair}: every US airport with at least one scheduled non-stop
+domestic route in OpenFlights' route database, 549 airports and 5,450 directed routes. A tie from
+airport {it:i} to airport {it:j} means that the route database lists at least one route from {it:i}
+to {it:j}. The network has three connected components (541, 4 and 4 airports), so it is a real
+example of a larger network that is not connected: use {help nwcloseness:nwcloseness} with
+{cmd:unconnected(max)}. The route data are from about 2014 (the supplier stopped updating them in
+June 2014).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+OpenFlights, Airport Database and Route Database, https://openflights.org/data. "The OpenFlights
+Airport, Airline, Plane and Route Databases are made available under the Open Database License."
+(ODbL 1.0, https://opendatacommons.org/licenses/odbl/1-0/); "Any rights in individual contents of the
+database are licensed under the Database Contents License." The airport data derive from OurAirports
+and DAFIF and the route data from Airline Route Mapper. This is a derived database, adapted by Thomas
+U. Grund: only US airports with an IATA code were used, duplicate routes over airlines were merged,
+airports without a route were dropped, and only the columns named above were kept. It is made
+available under the ODbL 1.0 with attribution to OpenFlights; derived databases must again be
+offered under the ODbL. It is not covered by the GPL-3 of the code.
 
 {hline}
 

@@ -35,6 +35,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwconstraint` (the dyadic constraint network) is not changed and still uses the tie values as they are.
 
 ### Added
+- The full US airport network `usair_full` (549 airports, 5,450 directed routes, three connected components; attributes iata, name, city, lat, lon and the degrees) is now documented as bundled example data: `nwwebuse usair_full`. It is derived from the OpenFlights airport and route databases (route data of about 2014) and stays under their Open Database License (ODbL 1.0), with attribution; it is not covered by the GPL-3 of the code. See `NOTICE.md`, `help netexample` and the website page "Data sets". New test `cscripts/test_usair_full_data.do`.
 - `nwinstall, everything` installs the core (what `nwinstall, all` installs) and the four model packages (what `models` installs) as one set, checks first that every model repository can be reached and that no model needs a newer core, and prints the version of each package at the end. `from()`, `modelsfrom()` and `release()` work as for `models` (offline installs from local folders). `nwinstall, all models` is the same as `everything`.
 - `nwinstall, all` ends with a hint on how to add the model packages.
 - `nwinstall` and `nwversion` print a note (and go on) when Stata is older than version 17.
