@@ -1117,7 +1117,8 @@ program nwplot, rclass
 		mata: comp_freqid = J(rows(comp_id), 2,0)
 		mata: comp_freqid[.,1] = comp_freq
 		mata: comp_freqid[.,2] = comp_id
-		mata: comp_freqid = sort(comp_freqid, - 1)
+		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
+		mata: comp_freqid = sort(comp_freqid, (-1, 2))
 		mata: comp_nonisol = sum((comp_freqid[.,1] :> 1))
 		mata: st_numscalar("r(comp_nonisol)", comp_nonisol)
 		local comp_nonisol = `r(comp_nonisol)'
@@ -3320,7 +3321,7 @@ real matrix function sugiyamalayout(real matrix M, real scalar Iter)
 							else sortmat[r,2] = xrank[i]
 						}
 					}
-					sortmat = sort(sortmat, 2)
+					sortmat = sort(sortmat, (2, 1))
 					for (r=1; r<=cnt; r++) xrank[sortmat[r,1]] = r
 				}
 			}
@@ -3348,7 +3349,7 @@ real matrix function sugiyamalayout(real matrix M, real scalar Iter)
 							else sortmat[r,2] = xrank[i]
 						}
 					}
-					sortmat = sort(sortmat, 2)
+					sortmat = sort(sortmat, (2, 1))
 					for (r=1; r<=cnt; r++) xrank[sortmat[r,1]] = r
 				}
 			}
@@ -3456,7 +3457,7 @@ real matrix function bipartitelayout(real matrix M, string rowvector modevec, re
 					else sortmat[r,2] = xrank[i]
 				}
 			}
-			sortmat = sort(sortmat, 2)
+			sortmat = sort(sortmat, (2, 1))
 			for (r=1; r<=cnt1; r++) xrank[sortmat[r,1]] = r
 		}
 		if (cnt2 > 1) {
@@ -3478,7 +3479,7 @@ real matrix function bipartitelayout(real matrix M, string rowvector modevec, re
 					else sortmat[r,2] = xrank[i]
 				}
 			}
-			sortmat = sort(sortmat, 2)
+			sortmat = sort(sortmat, (2, 1))
 			for (r=1; r<=cnt2; r++) xrank[sortmat[r,1]] = r
 		}
 	}

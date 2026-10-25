@@ -81,7 +81,8 @@ program nwmodularity, rclass
 		mata: comm_sizeid[.,1] = comm_size
 		mata: comm_sizeid[.,2] = comm_id
 		mata: comm_sizeid[.,3] = comm_share
-		mata: comm_sizeid = sort(comm_sizeid, -1)
+		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
+		mata: comm_sizeid = sort(comm_sizeid, (-1, 2))
 		mata: st_matrix("comm_sizeid", comm_sizeid)
 		mata: st_numscalar("commnum", comm_number)
 		matrix colnames comm_sizeid = size compid share

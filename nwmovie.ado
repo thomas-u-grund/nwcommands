@@ -363,7 +363,7 @@ program nwmovie
 		// browser-side timeline player (nwmovie_template.html's seekTo())
 		// assumes chronological order, exactly like RemState does.
 		mata: `_nwmv_evlist' = *(`netobj'->get_eventlist())
-		mata: `_nwmv_evlist' = `_nwmv_evlist'[order(`_nwmv_evlist'[.,3], 1), .]
+		mata: `_nwmv_evlist' = `_nwmv_evlist'[order((`_nwmv_evlist'[.,3], (1::rows(`_nwmv_evlist'))), (1, 2)), .]
 		mata: st_numscalar("_nwmv_nev", rows(`_nwmv_evlist'))
 		local _nwmv_nev = _nwmv_nev
 		scalar drop _nwmv_nev

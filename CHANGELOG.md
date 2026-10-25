@@ -4,10 +4,15 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.4.1] - 2026-10-25
+
+### Results that change (read before you re-run old analyses)
+- Ties are ordered the same way under every seed: equal-sized classes in `r(core_sizeid)` (`nwkcore`), `r(comm_sizeid)` (`nwmodularity`) and `r(block_sizeid)` (`nwconcor`) are listed by ascending id, and a few figures (`nwplot`, `nwplotmatrix`, `nwmovie`) and the vector of a repeated eigenvalue (`nwspectral`) can differ from earlier runs. Details below.
+- Error messages that were swallowed inside `quietly` blocks are now visible (see Fixed).
 
 ### Fixed
 - Error messages printed inside a `quietly` block were swallowed, so the user saw only "invalid syntax". Now shown: `option generate() required.` for `nw2degree`, `nwbrokerage`, `nwclique`, `nwcohesion`, `nwcommunity`, `nwconcor`, `nwcoreperiphery`, `nwdegree`, `nwkcomponents`, `nwkcore`, `nwnclan` and `nwnclique`; the "already exists" messages of `nwbetween` and `nwfromedge`; the size limit of `nwconcor`; and two messages of the bar-plot helper (`all bars zero height?`, `choose between offset() and zoffset()`).
+- Ties are broken the same way under every seed. Mata's `sort()` and `order()` order equal keys by the state of the random-number generator, so with equal values these results changed from run to run: the order of equal-sized classes in `r(core_sizeid)` (`nwkcore`), `r(comm_sizeid)` (`nwmodularity`) and `r(block_sizeid)` (`nwconcor`) and which of two equal components `nwplot` draws first; the order of events with the same time in the `nwmovie` file; the vector of a repeated eigenvalue in `nwspectral`; the order of nodes within one group in `nwplotmatrix, group()`; and the positions in the layouts `hierarchy` and `bipartite` of `nwplot`. Equal sizes are now listed by ascending id, and the other ties keep the order of the input.
 
 ## [3.4.0] - 2026-10-25
 

@@ -78,7 +78,7 @@ program nwspectral, rclass
 	}
 	mata: `__nw_L' = `netobj'->calculate_laplacian(`val')
 	mata: symeigensystem(`__nw_L', `__nw_EC' = ., `__nw_EV' = .)
-	mata: `__nw_ord' = order(`__nw_EV'', 1)
+	mata: `__nw_ord' = order((`__nw_EV'', (1::cols(`__nw_EV'))), (1, 2))
 	mata: `__nw_EV' = (`__nw_EV''[`__nw_ord'])'
 	mata: `__nw_EC' = `__nw_EC'[.,`__nw_ord']
 	mata: st_matrix("nw_spectral_eigenvalues", `__nw_EV')
