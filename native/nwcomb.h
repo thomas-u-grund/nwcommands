@@ -1227,7 +1227,8 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 
 static int comb_handles(const char *s) {
 	long a = (long)atof(s);
-	return (a >= 3 && a <= 100);
+	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
+	return ((a >= 3 && a <= 9) || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
