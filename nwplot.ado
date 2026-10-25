@@ -770,7 +770,22 @@ program nwplot, rclass
 		}
 		local edgecolorkeys "`forcekeys'"
 
-		qui if "`forcekeys'" == "" {
+		// A continuous (non-integer or negative) edgecolor() network is cut
+		// into five classes with a light-to-dark sequential palette; integer
+		// values (0, 1, 2, ...) remain categories, one colour each.
+		nwtomata `edgecolor', mat(edgecolormat)
+		mata: st_local("_ec_nonint", strofreal(any(edgecolormat :!= trunc(edgecolormat)) | any(edgecolormat :< 0)))
+		local _ec_binned = (`_ec_nonint' == 1)
+		if `_ec_binned' {
+			mata: _nwplot_binedgecolor(5)
+			if "`edgecolorpalette'" == "" {
+				local edgecolorpalette "navy*.3 navy*.45 navy*.6 navy*.8 navy"
+			}
+			if "`forcekeys'" == "" {
+				local edgecolorkeys "`_ecbin_keys'"
+			}
+		}
+		qui if "`forcekeys'" == "" & !`_ec_binned' {
 			nwtabulate `edgecolor', matrow(r)
 			matrix edgecolor_mat = r
 			
@@ -780,11 +795,11 @@ program nwplot, rclass
 				local edgecolorkeys "`edgecolorkeys' `=`eckey'+1'"
 			}
 		}
-		nwtomata `edgecolor', mat(edgecolormat)
 		mata: edgecolormat = edgecolormat :+ 1
 		nwname `edgecolor', newdirected("`edgecolor_directed'")
 	}
 	else {
+		local _ec_binned = 0
 		mata: edgecolormat = J(`nodes',`nodes',0)
 	}
 
@@ -795,8 +810,14 @@ program nwplot, rclass
 		forvalues i = 1/ `keysused_edgecolor' {
 			local edgecolorlabel_temp : word `i' of `edgecolorkeys'
 			local edgecolororder "`edgecolororder' `=`keysused' + `i''"
-			local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
-			local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'"
+			if `_ec_binned' {
+				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''")"'
+				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''"
+			}
+			else {
+				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
+				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'"
+			}
 		}
 		local keysused = `keysused' + `keysused_edgecolor'
 	}
@@ -1229,10 +1250,17 @@ program nwplot, rclass
 	if "`edgeimport'" != "" {
 		preserve
 		import delimited "`edgeimport'", clear varnames(1) case(preserve)
-		if _N != `_nwedit_ties' {
-			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_ties' ties; re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
+		// The page lists an undirected tie once (it has no direction), the
+		// plot's tie list holds both (i,j) and (j,i): accept either count.
+		local _nwedit_expect = `_nwedit_ties'
+		if "`directed'" != "true" {
+			mata: st_local("_nwedit_expect", strofreal(sum(NumElist(plotmat)[.,1] :<= NumElist(plotmat)[.,2])))
+		}
+		if _N != `_nwedit_ties' & _N != `_nwedit_expect' {
+			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
 			error 6056
 		}
+		local _nwedit_edgehalf = (_N != `_nwedit_ties')
 		capture assert edge_row == _n
 		if _rc {
 			di "{err}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
@@ -1240,6 +1268,10 @@ program nwplot, rclass
 		}
 		mata: _nwedit_edgecolor = st_sdata(., "color")
 		mata: _nwedit_edgestyle = st_sdata(., "style")
+		if `_nwedit_edgehalf' {
+			mata: _nwedit_edgecolor = _nwedit_expandundirected(_nwedit_edgecolor, NumElist(plotmat))
+			mata: _nwedit_edgestyle = _nwedit_expandundirected(_nwedit_edgestyle, NumElist(plotmat))
+		}
 		restore
 	}
 
@@ -1489,6 +1521,7 @@ program nwplot, rclass
 		}
 		capture erase "`_nwedit_out'"
 		local _nwedit_isdirected = ("`directed'" == "true")
+		local _nwedit_hasedgesize = ("`edgesize'" != "")
 		// The on-canvas legend should only appear when nwplot's own real
 		// static plot would show one too -- i.e. keysused>0 territory
 		// (nwplot.ado:1932's own legend(off) gate) -- plus a single-entry
@@ -2106,7 +2139,58 @@ end
 
 capture mata: mata drop fruchtrein()
 capture mata: mata drop getTieCoordinates()
+capture mata: mata drop _nwedit_expandundirected()
+capture mata: mata drop _nwplot_binedgecolor()
 mata:
+// edgeimport() for undirected networks: the page holds one row per
+// undirected tie (the (i,j) with i<=j); give both (i,j) and (j,i) rows of
+// the plot's tie list the value of that row.
+string colvector _nwedit_expandundirected(string colvector v, real matrix topo)
+{
+	transmorphic A
+	real colvector key, kept
+	string colvector out
+	real scalar i, mx
+	mx = max(topo[.,1] \ topo[.,2]) + 1
+	key = rowmin(topo[.,1..2]) :* mx + rowmax(topo[.,1..2])
+	kept = selectindex(topo[.,1] :<= topo[.,2])
+	A = asarray_create("real", 1)
+	for (i=1; i<=rows(kept); i++) asarray(A, key[kept[i]], v[i])
+	out = J(rows(topo), 1, "")
+	for (i=1; i<=rows(topo); i++) out[i] = asarray(A, key[i])
+	return(out)
+}
+
+// edgecolor() with a continuous network: cut the non-zero tie values into
+// nb equal-width classes 0..nb-1 (0 = no tie stays 0 as well; the caller adds 1
+// afterwards) and return the class ranges as locals.
+void _nwplot_binedgecolor(real scalar nb)
+{
+	external real matrix edgecolormat
+	real matrix b, nz
+	real scalar lo, hi, k, present
+	string scalar keys, labs
+	nz = (edgecolormat :!= 0) :& (edgecolormat :< .)
+	lo = min(select(vec(edgecolormat), vec(nz)))
+	hi = max(select(vec(edgecolormat), vec(nz)))
+	b = J(rows(edgecolormat), cols(edgecolormat), 0)
+	if (hi > lo) {
+		b = floor((edgecolormat :- lo) :/ (hi - lo) :* nb)
+		b = b :* (b :< nb) :+ (nb-1) :* (b :>= nb)
+	}
+	b = b :* nz
+	keys = ""
+	for (k=0; k<nb; k++) {
+		present = sum(nz :& (b :== k))
+		if (present > 0) {
+			keys = keys + " " + strofreal(k+1)
+			st_local("_ecbin_lo_" + strofreal(k+1), strofreal(lo + k*(hi-lo)/nb, "%9.3g"))
+			st_local("_ecbin_hi_" + strofreal(k+1), strofreal(lo + (k+1)*(hi-lo)/nb, "%9.3g"))
+		}
+	}
+	edgecolormat = b
+	st_local("_ecbin_keys", strtrim(keys))
+}
 real matrix function getTieCoordinates(
 	real matrix Coord, real matrix size, real matrix List, real matrix EColMat, real matrix ESizMat, real scalar sizefactor, real scalar doarrows, real scalar arrowgap)
 {
@@ -2371,7 +2455,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		real scalar hasnodelegend, real scalar hasedgelegend,
 		real scalar hassizelegend, real scalar sizelegendn)
 {
-	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv
+	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv, edgewv, esv
 	string colvector nlabelv
 	real matrix topology
 	string scalar json, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl, sizelbl
@@ -2465,6 +2549,17 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		edgecolorv = st_data((1::nties), "edgecolor")
 		recipv = st_data((1::nties), "recip")
 		topology = NumElist(plotmat)
+		// edgesize(): the page maps the tie values linearly onto line
+		// widths 1..8 px (largest |value| = 8); the width slider is a
+		// multiplier on top. Without edgesize(), or when all ties have the
+		// same value, every tie keeps the plain 3 px.
+		edgewv = J(nties, 1, 3)
+		if (st_local("_nwedit_hasedgesize") == "1") {
+			esv = abs(st_data((1::nties), "edgesize"))
+			if (max(esv) > min(esv) & max(esv) > 0) {
+				edgewv = 1 :+ 7 :* esv :/ max(esv)
+			}
+		}
 		nemitted = 0
 		for (i=1; i<=nties; i++) {
 			ecg = edgecolorv[i]
@@ -2502,7 +2597,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 				q+"edgegroup_label"+q+":"+q+edgegrouplbl+q+"," +
 				q+"color"+q+":"+q+colorstr+q+"," +
 				q+"style"+q+":"+q+shapestr+q+"," +
-				q+"width"+q+":3," +
+				q+"width"+q+":"+strofreal(edgewv[i])+"," +
 				q+"arrow"+q+":"+(doarrows==1 ? "true" : "false")+"," +
 				q+"recip"+q+":"+((isdirected==1 & recipv[i]==1) ? "true" : "false")+"," +
 				q+"edgecolor_group"+q+":"+strofreal(ecg) +
