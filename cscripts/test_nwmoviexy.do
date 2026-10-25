@@ -50,7 +50,7 @@ nwset, mat((0,1,0\1,0,1\0,1,0)) name(mvxy_net2) undirected labs(A,B,C)
 
 capture erase "test_nwmoviexy_cert.html"
 nwmoviexy mvxy_net1 mvxy_net2, noopen fname(test_nwmoviexy_cert) duration(400) fixedlayout
-assert _rc == 0
+assert fileexists("test_nwmoviexy_cert.html")   // (was _rc == 0, which only held while the viewer launch reset _rc)
 assert fileexists("test_nwmoviexy_cert.html")
 
 mata: __nwmoviexy_filehas("test_nwmoviexy_cert.html", `"{"mode":"panel""', "chk_mode")

@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -51,7 +51,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -219,8 +219,15 @@ program nwplot, rclass
 	// own value wins, else fall back to the top-level default" precedence
 	// this file already uses for sizebin() (see the __sizebin_toplevel
 	// comment above).
+	// The slider in the interactive view is a multiplier on the view's own
+	// baseline size, and the view draws on screen pixels (about 7 px per
+	// unit of Stata's msize), whereas the static graph's symbols are
+	// relative to the graph. A slider value of 1 in the view therefore
+	// corresponds to roughly 0.2 as nodefactor() in the static graph;
+	// scale the imported slider value accordingly so the bring-back looks
+	// like the view without a manual nodefactor().
 	if "`nodefactor'" == "" & "`_nwedit_nodefactor'" != "" {
-		local nodefactor = `_nwedit_nodefactor'
+		local nodefactor = `_nwedit_nodefactor' * 0.2
 	}
 	if "`nodefactor'" == "" {
 		local nodefactor = 1
@@ -1467,6 +1474,19 @@ program nwplot, rclass
 		// next command ran). Built manually instead, in the OS temp dir,
 		// so its lifetime isn't tied to this program's own scope.
 		local _nwedit_out = "`c(tmpdir)'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
+		// fname(): write the interactive HTML to a chosen file instead of the
+		// time-stamped temp-folder file; ".html" is appended when the name
+		// has no extension, a relative name is taken relative to the
+		// working directory, and the file is overwritten.
+		if `"`fname'"' != "" {
+			local _nwedit_out `"`fname'"'
+			if strpos(`"`_nwedit_out'"', ".") == 0 | strpos(substr(`"`_nwedit_out'"', -6, .), ".") == 0 {
+				local _nwedit_out `"`_nwedit_out'.html"'
+			}
+			if substr(`"`_nwedit_out'"', 1, 1) != "/" & substr(`"`_nwedit_out'"', 2, 1) != ":" & substr(`"`_nwedit_out'"', 1, 1) != "~" {
+				local _nwedit_out `"`c(pwd)'/`_nwedit_out'"'
+			}
+		}
 		capture erase "`_nwedit_out'"
 		local _nwedit_isdirected = ("`directed'" == "true")
 		// The on-canvas legend should only appear when nwplot's own real
@@ -1550,6 +1570,9 @@ program nwplot, rclass
 			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 		}
 
+		if "`movieexport'" == "" {
+			di as txt "Interactive view written to {bf:`_nwedit_out'}"
+		}
 		if "`noopen'" == "" {
 			di "{text:Opening interactive view...}"
 			// Launch logic (chromeless native viewer via `winexec`, falling
@@ -1688,7 +1711,7 @@ program nwplot, rclass
 			local szkey_size : word `i' of `sizekeys_size'
 			local tempcolstyle_line = r(col_line)
 			local tempwidth_line = r(line_width)
-			local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("scheme p0")  mlcolor("`tempcolstyle_line'") mlwidth("`templine_width'") mfcolor("scheme p0")  msize(`szkey_size') `scatteropt') "'            		
+			local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol(O)  mlcolor("`tempcolstyle_line'") mlwidth(vthin) mfcolor("`tempcolstyle_line'")  msize(`szkey_size') `scatteropt') "'            		
 		}
 		local sizekeys_num : word count `sizekeys'
 	}
@@ -1930,6 +1953,7 @@ program nwplot, rclass
 	// above)
 	return local scheme "`scheme'"
 	return local interactive "`_nwedit_out'"
+	return local fname "`_nwedit_out'"
 	return local importcoords "`importcoords'"
 
 	restore
