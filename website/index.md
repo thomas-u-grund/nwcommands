@@ -41,8 +41,6 @@ General Public License, version 3.
 
 Not sure which one you need? See [Which package do I need?](which-package/).
 
-nwcommands is developed and maintained by [Thomas U. Grund](about/) (RWTH Aachen University).
-
 ## Install in three steps
 {: #install-in-three-steps }
 

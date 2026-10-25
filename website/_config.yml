@@ -23,9 +23,8 @@ aux_links:
   "Report an issue": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"]
 
 footer_content: >-
-  nwcommands is developed and maintained by <a href="/about/">Thomas U. Grund</a>
-  (RWTH Aachen University). It is free software under the GNU General Public
-  License, version 3, as are the model packages nwsaom, nwergm, nwdynam and nwrem.
+  nwcommands is free software under the GNU General Public License, version 3,
+  as are the model packages nwsaom, nwergm, nwdynam and nwrem.
   <a href="/citing/">Citing and licenses</a> ·
   <a href="/help/">Get help</a> ·
   <a href="https://github.com/thomas-u-grund/nwcommands">GitHub</a>.
