@@ -159,8 +159,6 @@ macros:
 . * interconnected are those alters with each other
 . * nwego stores its results row by row, so put the nodes back in network
 . * order (here: alphabetical) after the gsort above
-. sort _nwnode
-
 . nwego flomarriage, sizevar(egosize) densvar(egodensity)
 ----------------------------------------
   Network name: flomarriage

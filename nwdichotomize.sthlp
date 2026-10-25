@@ -42,8 +42,7 @@ knowing {help nwrecode}'s own general recode-rule syntax. For anything beyond a 
 (multiple bands, missing-value handling, etc.), use {help nwrecode} directly.
 
 {pstd}
-As with {help nwrecode} (and following the package's general convention - see
-{browse "NWCOMMANDS_COMMAND_STYLE.md":the style guide}'s "Output creation" section - for commands
+As with {help nwrecode} (and following the package's general convention for commands
 where in-place modification is the default), the network is dichotomized in place unless
 {opt generate()} or {opt prefix()} is specified, in which case the original is left untouched and
 the result is saved under a new name instead.

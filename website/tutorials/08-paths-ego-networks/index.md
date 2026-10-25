@@ -148,13 +148,11 @@ node visually obvious even in a network too large to eyeball directly for connec
 
 `nwego` looks at each node's own local neighborhood in isolation: how many alters does it have
 (`sizevar()`), and how interconnected are those alters with *each other*, independent of their
-(by definition, universal) ties back to the node itself (`densvar()`). `nwego` stores its results
-row by row, so the `sort _nwnode` first puts the observations back in the order of the network
-(here alphabetical), which the `gsort` above had changed:
+(by definition, universal) ties back to the node itself (`densvar()`). `nwego` matches its results
+to the nodes by name, so it does not matter that the `gsort` above changed the order of the
+observations:
 
 ```stata
-. sort _nwnode
-
 . nwego flomarriage, sizevar(egosize) densvar(egodensity)
 ----------------------------------------
   Network name: flomarriage
