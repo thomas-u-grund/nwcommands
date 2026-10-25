@@ -3409,6 +3409,349 @@ real scalar nw_modularity_pairs(real scalar n, real matrix pairs, real matrix me
 	return(q / m2)
 }
 
+/*
+	Two-mode networks: Barber's (2007) bipartite modularity of a membership vector on the symmetric pairs
+	(i, j, w), i < j, with md the mode (1 or 2) of every node:
+		Q_B = (1/m) sum_C [ e_C - resolution * K1_C * K2_C / m ]
+	m is the total weight of the cross-mode ties, e_C the weight of the ties inside community C, K1_C (K2_C) the
+	degree sum of the mode-1 (mode-2) nodes of C.  Ties between nodes of the same mode do not exist and are
+	ignored.  Same convention as bipartite::computeModules (binary case) and tnet/igraph users who evaluate
+	Barber's Q by hand.
+*/
+real scalar nw_modularity_bip(real scalar n, real matrix pairs, real colvector md, real matrix membership, real scalar resolution)
+{
+	real matrix p
+	real colvector mem, K1, K2, inw
+	real scalar m, ncomm, r, i, j, w
+
+	p = select(pairs, (md[pairs[., 1]] :!= md[pairs[., 2]]) :& (pairs[., 3] :< .) :& (pairs[., 3] :!= 0))
+	if (rows(p) == 0) return(0)
+	m = sum(p[., 3])
+	mem = vec(membership)
+	ncomm = max(mem)
+	if (ncomm == . | ncomm < 1) return(0)
+	K1 = J(ncomm, 1, 0)
+	K2 = J(ncomm, 1, 0)
+	inw = J(ncomm, 1, 0)
+	for (r = 1; r <= rows(p); r++) {
+		i = p[r, 1]
+		j = p[r, 2]
+		w = p[r, 3]
+		if (md[i] != 1) {
+			i = p[r, 2]
+			j = p[r, 1]
+		}
+		// i is the mode-1 end, j the mode-2 end
+		if (mem[i] < . & mem[i] >= 1 & mem[i] <= ncomm) K1[mem[i]] = K1[mem[i]] + w
+		if (mem[j] < . & mem[j] >= 1 & mem[j] <= ncomm) K2[mem[j]] = K2[mem[j]] + w
+		if (mem[i] == mem[j] & mem[i] < . & mem[i] >= 1 & mem[i] <= ncomm) inw[mem[i]] = inw[mem[i]] + w
+	}
+	return((sum(inw) - resolution * sum(K1 :* K2) / m) / m)
+}
+
+/*
+	Louvain-type search for the partition that maximises Barber's bipartite modularity (see nw_modularity_bip).
+	Phase 1 moves one node at a time to the neighbouring community with the largest gain
+		gain(i -> C) = k_i,C / m - resolution * (a_i * B_C + b_i * A_C) / m^2
+	where a_i (b_i) is the mode-1 (mode-2) degree of the (super-)node i and A_C, B_C the mode-1 and mode-2 degree
+	sums of C; phase 2 merges the communities into super-nodes (carrying a, b) and repeats until nothing moves.
+	Same scheme as Louvain() with the bipartite null model in place of Newman's.  Returns the community (1..k)
+	of every node.
+*/
+real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar rnd)
+{
+	real matrix p, info
+	real colvector a, b, deg, src, dst, wt, final, comm, Ac, Bc, kin, touched, ptr, nbr, wgt, o, ei, ej, ew, cnt
+	real colvector cs, cd, keep, A2, B2, lo, hi, key, so, ww, newsrc, newdst, neww, ord
+	real scalar m, N, r, ii, i, ci, c, q, nt, t, best, g, bestg, moved, anymove, sweep, K
+
+	p = select(pairs, (md[pairs[., 1]] :!= md[pairs[., 2]]) :& (pairs[., 3] :> 0) :& (pairs[., 3] :< .))
+	if (rows(p) == 0 | n <= 1) return((1::n))
+	m = sum(p[., 3])
+	deg = J(n, 1, 0)
+	for (r = 1; r <= rows(p); r++) {
+		deg[p[r, 1]] = deg[p[r, 1]] + p[r, 3]
+		deg[p[r, 2]] = deg[p[r, 2]] + p[r, 3]
+	}
+	a = deg :* (md :== 1)
+	b = deg :* (md :== 2)
+	src = p[., 1]
+	dst = p[., 2]
+	wt = p[., 3]
+	N = n
+	final = (1::n)
+	while (1) {
+		// adjacency lists of the level graph
+		ei = src \ dst
+		ej = dst \ src
+		ew = wt \ wt
+		o = order(ei, 1)
+		ei = ei[o]
+		nbr = ej[o]
+		wgt = ew[o]
+		cnt = J(N, 1, 0)
+		for (r = 1; r <= rows(ei); r++) cnt[ei[r]] = cnt[ei[r]] + 1
+		ptr = J(N + 1, 1, 1)
+		for (i = 1; i <= N; i++) ptr[i + 1] = ptr[i] + cnt[i]
+		comm = (1::N)
+		Ac = a
+		Bc = b
+		kin = J(N, 1, 0)
+		touched = J(N, 1, 0)
+		moved = 0
+		anymove = 1
+		sweep = 0
+		while (anymove & sweep < 100) {
+			anymove = 0
+			sweep++
+			ord = (rnd ? unorder(N) : (1::N))
+			for (ii = 1; ii <= N; ii++) {
+				i = ord[ii]
+				ci = comm[i]
+				Ac[ci] = Ac[ci] - a[i]
+				Bc[ci] = Bc[ci] - b[i]
+				nt = 0
+				for (q = ptr[i]; q < ptr[i + 1]; q++) {
+					c = comm[nbr[q]]
+					if (kin[c] == 0) {
+						nt++
+						touched[nt] = c
+					}
+					kin[c] = kin[c] + wgt[q]
+				}
+				best = ci
+				bestg = kin[ci] / m - res * (a[i] * Bc[ci] + b[i] * Ac[ci]) / (m * m)
+				for (t = 1; t <= nt; t++) {
+					c = touched[t]
+					g = kin[c] / m - res * (a[i] * Bc[c] + b[i] * Ac[c]) / (m * m)
+					if (g > bestg + 1e-12) {
+						bestg = g
+						best = c
+					}
+				}
+				for (t = 1; t <= nt; t++) kin[touched[t]] = 0
+				comm[i] = best
+				Ac[best] = Ac[best] + a[i]
+				Bc[best] = Bc[best] + b[i]
+				if (best != ci) {
+					anymove = 1
+					moved = 1
+				}
+			}
+		}
+		if (moved == 0) break
+		comm = nw_community_denserelabel(comm)
+		K = max(comm)
+		final = comm[final]
+		cs = comm[src]
+		cd = comm[dst]
+		keep = selectindex(cs :!= cd)
+		if (rows(keep) == 0) break
+		A2 = J(K, 1, 0)
+		B2 = J(K, 1, 0)
+		for (i = 1; i <= N; i++) {
+			A2[comm[i]] = A2[comm[i]] + a[i]
+			B2[comm[i]] = B2[comm[i]] + b[i]
+		}
+		lo = rowmin((cs[keep], cd[keep]))
+		hi = rowmax((cs[keep], cd[keep]))
+		key = lo :* (K + 1) :+ hi
+		o = order(key, 1)
+		so = key[o]
+		ww = wt[keep]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		neww = panelsum(ww, info)
+		key = so[info[., 1]]
+		newsrc = floor((key :- 1) :/ (K + 1))
+		newdst = key :- newsrc :* (K + 1)
+		src = newsrc
+		dst = newdst
+		wt = neww
+		a = A2
+		b = B2
+		N = K
+	}
+	return(nw_community_denserelabel(final))
+}
+
+/*
+	Robins and Alexander (2004) global clustering of a binary biadjacency matrix B: 4 * C4 / L3, with C4 the number
+	of 4-cycles and L3 the number of paths of length 3 (L3 = sum over the ties of (k_i - 1)(k_j - 1)).  Returns
+	(coefficient, C4, L3).  Opsahl's (2013) coefficient (nw2clustering default, tnet::clustering_tm) is a
+	different quantity.
+*/
+real rowvector nw_robins_alexander(real matrix B)
+{
+	real colvector kr, kc
+	real matrix S
+	real scalar n, s, e, i, bs, c4, l3, ra
+
+	n = rows(B)
+	kr = rowsum(B)
+	kc = colsum(B)'
+	l3 = sum((B :* ((kr :- 1) * (kc :- 1)')))
+	c4 = 0
+	bs = max((1, floor(4e6 / max((n, 1)))))
+	for (s = 1; s <= n; s = s + bs) {
+		e = min((n, s + bs - 1))
+		S = B[|s, 1 \ e, .|] * B'
+		for (i = s; i <= e; i++) {
+			if (i < n) c4 = c4 + sum(S[i - s + 1, (i + 1)..n] :* (S[i - s + 1, (i + 1)..n] :- 1) :/ 2)
+		}
+	}
+	ra = .
+	if (l3 > 0) ra = 4 * c4 / l3
+	return((ra, c4, l3))
+}
+
+/*
+	nw_louvain_bip1() from `nstart' starting orders (the first visits the nodes in their order, the others in random
+	order) and keeps the partition with the largest Barber modularity; the greedy search is order dependent.
+*/
+real colvector nw_louvain_bip(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar nstart)
+{
+	real colvector best, cur
+	real scalar bq, cq, r
+
+	best = nw_louvain_bip1(n, pairs, md, res, 0)
+	bq = nw_modularity_bip(n, pairs, md, best, res)
+	for (r = 2; r <= nstart; r++) {
+		cur = nw_louvain_bip1(n, pairs, md, res, 1)
+		cq = nw_modularity_bip(n, pairs, md, cur, res)
+		if (cq > bq + 1e-12) {
+			bq = cq
+			best = cur
+		}
+	}
+	return(best)
+}
+
+/* (sum of the percentages, number of row pairs) of the NODF of the rows of B */
+real rowvector nw_nodf_part(real matrix B)
+{
+	real colvector k, kj, klo, si
+	real matrix S
+	real scalar n, s, e, i, tot, bs
+	real colvector ok
+
+	n = rows(B)
+	if (n < 2) return((0, 1))
+	k = rowsum(B)
+	tot = 0
+	bs = max((1, floor(4e6 / n)))
+	for (s = 1; s <= n; s = s + bs) {
+		e = min((n, s + bs - 1))
+		S = B[|s, 1 \ e, .|] * B'
+		for (i = s; i <= e; i++) {
+			if (i == n) continue
+			kj = k[|i + 1 \ n|]
+			si = S[i - s + 1, (i + 1)..n]'
+			klo = (kj :< k[i]) :* kj :+ (kj :> k[i]) :* k[i]
+			ok = (kj :!= k[i]) :& (klo :> 0)
+			if (sum(ok) > 0) tot = tot + sum(select(si, ok) :/ select(klo, ok))
+		}
+	}
+	return((100 * tot, n * (n - 1) / 2))
+}
+
+/*
+	Nestedness of a binary biadjacency matrix B (rows = one mode, columns = the other), after Almeida-Neto et al.
+	(2008): for every pair of rows with different totals the percentage of the ones of the row with the smaller
+	total that the other row shares (0 for equal totals), averaged over all pairs; the same for the columns; NODF
+	pools both sets of pairs.  Equals vegan::nestednodf(web, order = TRUE) and the NODF2 of bipartite::nested.
+	Returns (NODF, N.rows, N.columns).
+*/
+real rowvector nw_nodf(real matrix B)
+{
+	real rowvector r1, r2
+
+	r1 = nw_nodf_part(B)
+	r2 = nw_nodf_part(B')
+	return(((r1[1] + r2[1]) / (r1[2] + r2[2]), r1[1] / r1[2], r2[1] / r2[2]))
+}
+
+/*
+	Largest possible number of checkerboard units of two columns with a and b ones among n rows, constructed as in
+	bipartite::C.score (the columns are laid out so that they overlap as little as the margins allow).
+*/
+real scalar nw_cmax(real scalar a, real scalar b, real scalar n)
+{
+	real colvector c1, c2, z
+	real scalar half, rem, j
+
+	if (a == 0 | b == 0 | a == n | b == n) return(0)
+	half = floor(n / 2)
+	c1 = J(n, 1, 0)
+	c2 = J(n, 1, 0)
+	if (a <= n / 2) c1[1::(2 * a)] = vec(J(1, a, 1) \ J(1, a, 0))
+	else {
+		c1[1::(2 * half)] = vec(J(1, half, 1) \ J(1, half, 0))
+		rem = a - sum(c1)
+		z = selectindex(c1 :== 0)
+		c1[z[(rows(z) - rem + 1)::rows(z)]] = J(rem, 1, 1)
+	}
+	if (b <= n / 2) c2[1::(2 * b)] = vec(J(1, b, 0) \ J(1, b, 1))
+	else {
+		c2[1::(2 * half)] = vec(J(1, half, 0) \ J(1, half, 1))
+		rem = b - sum(c2)
+		z = selectindex(c2 :== 0)
+		c2[z[(rows(z) - rem + 1)::rows(z)]] = J(rem, 1, 1)
+	}
+	j = sum(c1 :* c2)
+	return((sum(c1) - j) * (sum(c2) - j))
+}
+
+/*
+	C-score (Stone and Roberts 1990) of the columns of the binary matrix B, as in bipartite::C.score: for every
+	pair of columns the number of checkerboard units (a - j)(b - j), a and b the column totals, j the rows in
+	which both are 1; returns (mean over the pairs, mean over the pairs of the units divided by their maximum
+	possible number, number of pairs used for the second mean).  A pair whose maximum is 0 (a column that is
+	empty or full) has no normalised value and is left out of the second mean.
+*/
+real rowvector nw_cscore(real matrix B)
+{
+	real colvector k
+	real matrix S
+	real scalar n, c, s, e, i, j, bs, tot, totn, cnt, cntn, cm, d, key
+	transmorphic scalar cache
+
+	n = rows(B)
+	c = cols(B)
+	if (c < 2) return((., ., 0))
+	k = colsum(B)'
+	cache = asarray_create("real")
+	tot = 0
+	totn = 0
+	cnt = 0
+	cntn = 0
+	bs = max((1, floor(4e6 / c)))
+	for (s = 1; s <= c; s = s + bs) {
+		e = min((c, s + bs - 1))
+		S = B[., s..e]' * B
+		for (i = s; i <= e; i++) {
+			for (j = i + 1; j <= c; j++) {
+				d = (k[i] - S[i - s + 1, j]) * (k[j] - S[i - s + 1, j])
+				tot = tot + d
+				cnt++
+				key = min((k[i], k[j])) * (n + 2) + max((k[i], k[j]))
+				if (asarray_contains(cache, key)) cm = asarray(cache, key)
+				else {
+					cm = nw_cmax(k[i], k[j], n)
+					asarray(cache, key, cm)
+				}
+				if (cm > 0) {
+					totn = totn + d / cm
+					cntn++
+				}
+			}
+		}
+	}
+	cm = .
+	if (cntn > 0) cm = totn / cntn
+	return((tot / cnt, cm, cntn))
+}
+
 /* maximum bipartite matching, native: the mode-2 partner (0 = none) of every node, mode-2 nodes 0 */
 real colvector nwg_matching(real scalar n, real matrix el, real colvector modes)
 {
@@ -4077,6 +4420,10 @@ class `NWdef' {
 	real matrix calculate_clustering()
 	real matrix calculate_balance()
 	real scalar calculate_modularity()
+	real scalar calculate_modularity_bipartite()
+	real matrix detect_communities_bipartite()
+	real scalar count_samemode_ties()
+	void permute_swap()
 	real matrix detect_communities_louvain()
 	real matrix detect_communities_labelprop()
 	real matrix calculate_concor()
@@ -6008,6 +6355,50 @@ real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar 
 	w = *get_matrix_mod(val,0)
 	_diag(w, 0)
 	return(Modularity(w, membership, res))
+}
+
+/*
+	Barber's bipartite modularity of a partition of a two-mode network (see nw_modularity_bip()); the groups of the
+	two modes are scored by the cross-mode ties only.
+*/
+real scalar `NWdef'::calculate_modularity_bipartite(real matrix membership, | real scalar valued, real scalar resolution){
+	real scalar val, res
+
+	val = (args() >= 2 ? valued : 1)
+	res = (args() == 3 ? resolution : 1)
+	return(nw_modularity_bip(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), strtoreal(get_modes())', membership, res))
+}
+
+/*
+	Communities of a two-mode network by Louvain-type maximisation of Barber's bipartite modularity (see
+	nw_louvain_bip()).
+*/
+real matrix `NWdef'::detect_communities_bipartite(| real scalar valued, real scalar resolution, real scalar starts){
+	real scalar val, res, nstart
+
+	val = (args() >= 1 ? valued : 1)
+	res = (args() >= 2 ? resolution : 1)
+	nstart = (args() == 3 ? starts : 10)
+	return(nw_louvain_bip(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), strtoreal(get_modes())', res, nstart))
+}
+
+/*
+	Number of ties that join two nodes of the same mode (0 for a valid two-mode network, R: igraph::is_bipartite
+	with the declared types).  Counts each undirected tie once.
+*/
+real scalar `NWdef'::count_samemode_ties(){
+	real matrix el
+	real colvector md, bad
+	real scalar nb
+
+	if (is2mode != 1) return(0)
+	el = edgelist()
+	if (rows(el) == 0) return(0)
+	md = strtoreal(get_modes())'
+	bad = (md[el[., 1]] :== md[el[., 2]]) :& (el[., 1] :!= el[., 2]) :& (el[., 3] :< .) :& (el[., 3] :!= 0)
+	if (isdirect != 1) bad = bad :& (el[., 1] :< el[., 2])
+	nb = sum(bad)
+	return(nb)
 }
 
 /*
@@ -9237,9 +9628,22 @@ real matrix `NWdef'::calculate_constraint_triplets(){
 
 void `NWdef'::permute(){
 	real matrix perm
-	real colvector inv
+	real colvector inv, md, idx
 	real matrix el
-	real scalar wasvalued
+	real scalar wasvalued, mm
+	// a two-mode network is permuted within its modes: the node labels of the mode-1 nodes are shuffled among the
+	// mode-1 positions and those of the mode-2 nodes among the mode-2 positions, so that no tie ever joins two
+	// nodes of the same mode (a joint permutation of all nodes would; R: tnet::rg_reshuffling_tm keeps the modes)
+	if (is2mode == 1){
+		md = strtoreal(get_modes())'
+		perm = (1::get_nodes())
+		for (mm = 1; mm <= 2; mm++){
+			idx = selectindex(md :== mm)
+			if (rows(idx) > 1) perm[idx] = idx[unorder(rows(idx))]
+		}
+		set_edge((*get_matrix())[perm, perm])
+		return
+	}
 	perm = unorder(get_nodes())
 	// a network held as stored ties only is permuted tie by tie: the tie (u,v) of the old network is the tie
 	// (inv[u], inv[v]) of the new one, where inv undoes perm; the dense route needs two n x n matrices
@@ -9253,6 +9657,48 @@ void `NWdef'::permute(){
 		return
 	}
 	set_edge((*get_matrix())[perm, perm])
+}
+
+/*
+	Tie-swap null model of a two-mode network (Maslov-Sneppen; R: bipartite::swap.web, tnet::rg_reshuffling_tm
+	keeps the degrees too): `nswap' attempts, each takes two ties (a,b) and (c,d) at random and replaces them by
+	(a,d) and (c,b) unless one of those exists already.  Both degree sequences, the number of ties and the tie
+	values (carried along) are preserved; no tie ever joins two nodes of the same mode.  Returns nothing; the
+	number of swaps that took place is stored in swaps_done.
+*/
+void `NWdef'::permute_swap(real scalar nswap){
+	real matrix T, e
+	real colvector md
+	real scalar m, t, r1, r2, a, b, c, d, w1, w2, k
+
+	if (is2mode != 1) _error(3498, "the tie-swap null model needs a two-mode network")
+	ensure_dense_built()
+	md = strtoreal(get_modes())'
+	e = edge
+	T = J(0, 3, 0)
+	k = get_nodes()
+	// the ties between the modes (mode 1 to mode 2)
+	T = edgelist()
+	T = select(T, (md[T[., 1]] :== 1) :& (md[T[., 2]] :== 2) :& (T[., 3] :< .) :& (T[., 3] :!= 0))
+	m = rows(T)
+	if (m < 2) return
+	for (t = 1; t <= nswap; t++){
+		r1 = ceil(uniform(1, 1) * m)
+		r2 = ceil(uniform(1, 1) * m)
+		if (r1 == r2) continue
+		a = T[r1, 1]; b = T[r1, 2]; w1 = T[r1, 3]
+		c = T[r2, 1]; d = T[r2, 2]; w2 = T[r2, 3]
+		if (a == c | b == d) continue
+		if (e[a, d] != 0 & e[a, d] < .) continue
+		if (e[c, b] != 0 & e[c, b] < .) continue
+		e[a, b] = 0; e[b, a] = 0
+		e[c, d] = 0; e[d, c] = 0
+		e[a, d] = w1; e[d, a] = w1
+		e[c, b] = w2; e[b, c] = w2
+		T[r1, .] = (a, d, w1)
+		T[r2, .] = (c, b, w2)
+	}
+	set_edge(e)
 }
 
 /*
@@ -10728,6 +11174,8 @@ pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
 	sub->set_nodesvar(get_nodesvar())
 	sub->set_label(get_label())
 	sub->set_caption(get_caption())
+	sub->set_description_mode1(get_description_mode1())
+	sub->set_description_mode2(get_description_mode2())
 
 	sub->keep_nodes(k)
 
@@ -10764,6 +11212,8 @@ void `NWdef'::copy_subgraph_into(pointer(class `NWdef' scalar) scalar dst, rowve
 	dst->set_nodesvar(get_nodesvar())
 	dst->set_label(get_label())
 	dst->set_caption(get_caption())
+	dst->set_description_mode1(get_description_mode1())
+	dst->set_description_mode2(get_description_mode2())
 
 	dst->keep_nodes(k)
 }
@@ -12625,6 +13075,9 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 
 	pdefs[size]->set_label(pdefs[i]->get_label())
 	pdefs[size]->set_caption(pdefs[i]->get_caption())
+	// the level labels of a two-mode network (shown by nwsummarize) travel with the copy
+	pdefs[size]->set_description_mode1(pdefs[i]->get_description_mode1())
+	pdefs[size]->set_description_mode2(pdefs[i]->get_description_mode2())
 	make_current(size)
 
 }
