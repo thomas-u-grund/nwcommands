@@ -351,6 +351,15 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 
 	if (minflow < target) goto done;
 
+	/* target 2 (nwkcomponents, k = 2): the answer of every flow query is known from the blocks of one
+	   depth-first search (kconn2_search() in nwfast2.h); same queries in the same order, same result */
+	if (target == 2) {
+		long mf2, bs2, bt2;
+		int h = kconn2_search(n, ei, ej, m, delta, v0, &mf2, &bs2, &bt2);
+		if (h == 1) { minflow = mf2; best_s = bs2; best_t = bt2; goto done; }
+		if (h == 2) { rc = 909; goto done; }
+	}
+
 	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
 	rowptr[1] = 0;
 	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];

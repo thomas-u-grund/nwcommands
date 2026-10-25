@@ -70,6 +70,14 @@ already represents "can move either way" directly. Weighted: not checked - tie v
 definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: not
 checked.
 
+{title:Limits}
+
+{pstd}
+The power iteration runs in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
+and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations.
+Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.03 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes
+0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds).
+
 {title:Stored results}
 
 	Macros

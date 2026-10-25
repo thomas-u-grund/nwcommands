@@ -41,7 +41,15 @@ program nwpagerank, rclass
 	_nwdatasync `netname', generate(`__nw_pr_included')
 
 	tempname __nw_pr
-	mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')
+	// native kernel 34 (plugin generation 8 or later) runs the same iteration on the stored ties; a result of the
+	// wrong shape (older plugin, no plugin, a kernel failure) leaves the Mata path. The global NW_NOFASTKERNELS
+	// forces the Mata path.
+	local __fast 0
+	mata: `__nw_pr' = nw2_fastpr(`netobj'->edgelist(), `nodes', `damping', `maxiter', `tol')
+	mata: st_local("__fast", strofreal(rows(`__nw_pr') == `nodes'))
+	if !`__fast' {
+		mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')
+	}
 	capture drop `generate'
 	qui gen double `generate' = .
 	mata: st_store((1::`nodes'), "`generate'", `__nw_pr')
@@ -56,4 +64,23 @@ program nwpagerank, rclass
 		di "{hline 40}"
 		summarize `generate'
 	}
+end
+
+capture mata: mata drop nw2_fastpr()
+mata:
+// Native PageRank (kernel 34 of the nwgraph plugin): the iteration of calculate_pagerank() on the stored ties
+// el = edgelist(). Returns the n x 1 scores, or a 0 x 1 vector when the kernel is not available.
+real colvector nw2_fastpr(real matrix el, real scalar n, real scalar d, real scalar mi, real scalar tol)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 1, .))
+	if (n < 1) return(J(0, 1, .))
+	if (nwg_comb_version() < 8) return(J(0, 1, .))
+	r = nwg_comb(34, n, el, J(0, 1, .), (d, mi, tol), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
+	return(r)
+}
 end

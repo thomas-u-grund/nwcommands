@@ -386,7 +386,7 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 ## Native plugin algorithm codes: keep the ranges apart
 
 `native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
-3-9, 22-31 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 32 and up for the next kernel), 20 is the vertex-connectivity search
+3-9, 22-31, 34-39 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 40 and up for the next kernel), 20 is the vertex-connectivity search
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
@@ -593,3 +593,22 @@ Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix 
 - **A kernel result of 0 rows is legitimate** (`pub_result(0, 0, c)`): `nwg_comb()` then returns `J(0, c, .)`; the failure signal is `J(0, 0, .)` (zero columns). Test `cols()`, not only `rows()`.
 - **Kernels that return fewer rows than allocated** must set `g_res_rows` to the real count before the fetch call (it copies `g_res_rows` rows).
 - The `nwburt` hierarchy is missing for a node without ties and 1 for degree 1 (log 1 = 0); the kernel returns a missing flag in column 5 because plugin results are plain doubles.
+
+## Algorithm codes 34-35 (PageRank, maximal cliques) and the k = 2 block search; kernel version 8
+
+`native/nwfast2.h` (included by `nwcomb.h`, `NWCOMB_VERSION 8`) hosts the kernels of `nwpagerank` (34) and `nwclique` (35); the glue is a file-scope Mata helper
+in each ado (`nw2_fastpr()`, `nw2_fastcliq()`), the same pattern as codes 26-28 (`NW_NOFASTKERNELS`, empty answer = old Mata route).
+- **`st_matrix()` is quadratic in the number of columns**: storing a matrix of any number of rows costs 0.15 s at 10,000 columns, 0.7 s at 20,000, 3.4 s at 40,000 and about 45 s at
+  100,000 (measured with `J(1, c, 0)` and `J(10, c, 0)`, the same time). `nwclique` and `nwkcomponents` store one column per node (`r(clique_matrix)`, `r(kcomp_matrix)`), so
+  at 100,000 nodes that call is the whole running time once the search is native. It cannot be avoided without changing the result matrices; do not look for the time in the kernels.
+- **Algorithm 20 (`kconn_search()` in `nwgraph.c`) has a second route for target 2** (`kconn2_search()` in `nwfast2.h`): for target 2 the flow of a non-adjacent pair is 0 (different
+  components), 1 (no common biconnected block) or 2 (a common block), so one depth-first search with an edge stack answers all n queries; the queries are walked in the order of the flow
+  search (node order for v0, then the pairs of the neighbours of v0 in list order) and the first below 2 is reported, so `(minflow, best_s, best_t)` is identical when the connectivity is
+  below 2. It is inside the plugin, so `NW_NOFASTKERNELS` does not switch it off; compare with `fast_min_cut_search_edges()` (Mata) or with the generation 6 plugin. A self-loop in the arc
+  list sends the call to the flow search.
+- **The cliques kernel returns (clique number, node) pairs, not a dense matrix**; the helper builds the K x n matrix of 0/1. Order of the rows = order of `BronKerboschSparse()`, because the
+  pivot (first node of P then X with the most neighbours in P), P (ascending), X (insertion order) and the branch order are reproduced. P is kept ascending with tombstones and X by insertion
+  position (a stamp array with an undo log), so intersections with N(v) walk the shorter side: the top level of a sparse graph is O(sum of degrees), not O(n^2) as in Mata.
+  A stored self-loop is handed to Mata (status 3).
+- **The random generators were looked at and left alone**: `nwrandom prob()` draws n^2 uniforms to keep the seed-to-network mapping (66 s at 100,000 nodes, all drawing), `nwsmall`
+  interleaves the draws with the rewiring (4.9 of 7.4 s at 100,000 nodes), `nwring` and `nwpref` draw almost nothing (0.02 and 0.06 s of 1.4 and 1.2 s: the rest is building the network).
