@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- The full US airport network `usair_full` (549 airports, 5,450 directed routes, three connected components; attributes iata, name, city, lat, lon and the degrees) is now documented as bundled example data: `nwwebuse usair_full`. It is derived from the OpenFlights airport and route databases (route data of about 2014) and stays under their Open Database License (ODbL 1.0), with attribution; it is not covered by the GPL-3 of the code. See `NOTICE.md`, `help netexample` and the website page "Data sets". New test `cscripts/test_usair_full_data.do`.
+
 ## [3.5.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)

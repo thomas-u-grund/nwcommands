@@ -160,8 +160,16 @@ These show that the commands work on any network.
 
 ### usair: US airports
 - **What:** the 50 busiest US airports, directed, direct routes between them. Attributes: name, city, latitude, longitude, degree in the full US network.
-- **Source:** OpenFlights airport and route databases, [openflights.org/data.php](https://openflights.org/data.php), Open Database License.
+- **Source and licence:** OpenFlights airport and route databases, [openflights.org/data](https://openflights.org/data), made available under the [Open Database License (ODbL 1.0)](https://opendatacommons.org/licenses/odbl/1-0/). This is a derived database, adapted by Thomas U. Grund (see `usair_full` below for the changes); it is offered under the ODbL, not under the GPL-3 of the code.
 - **Load:** `nwwebuse usair`
+
+### usair_full: the full US airport network
+- **What:** every US airport with at least one scheduled non-stop domestic route in OpenFlights' route database: 549 airports and 5,450 directed routes (density 0.018). Network `usair_full`, node names are the IATA codes (ATL, DEN, ...). Attributes: `iata`, `name`, `city`, `lat`, `lon` and the out-, in- and total degree (`_outdegree`, `_indegree`, `_degree`). The network falls into three connected components: 541 airports, an Alaska/Aleutian seaplane cluster of 4 and a San Juan Islands seaplane cluster of 4. A real example of a larger, messier network: Anchorage has by far the largest betweenness, and closeness needs `unconnected(max)`.
+- **Source:** OpenFlights, *Airport Database* and *Route Database*, [openflights.org/data](https://openflights.org/data). The page states: "The OpenFlights Airport, Airline, Plane and Route Databases are made available under the Open Database License." and "Any rights in individual contents of the database are licensed under the Database Contents License." (ODbL 1.0, [opendatacommons.org/licenses/odbl/1-0](https://opendatacommons.org/licenses/odbl/1-0/); DbCL 1.0, [opendatacommons.org/licenses/dbcl/1.0](http://opendatacommons.org/licenses/dbcl/1.0/)). The airport data derive from OurAirports and DAFIF and the route data from Airline Route Mapper, which the page calls public domain. The route data are from about 2014: the third party that supplies them stopped updating them in June 2014, so the network is a snapshot and not today's flight schedule.
+- **Changes (derived database):** adapted by Thomas U. Grund. Only airports in the United States with an IATA code were used. A tie runs from the origin to the destination airport if the route database lists at least one route between them; duplicates over airlines were merged and there are no self-loops. Airports without such a route were dropped. Of the original columns the IATA code, name, city, latitude and longitude were kept and the degrees were added. The result is stored in the nwcommands network file format.
+- **Licence and redistribution:** this derived database is made available under the Open Database License 1.0 (ODbL), with attribution to OpenFlights (openflights.org); any database derived from it must again be offered under the ODbL and kept open. It is not covered by the GPL-3 of the code.
+- **Load:** `nwwebuse usair_full`
+- **Used in:** the book *Network Analysis with Stata* (performance appendix); examples for the centrality commands, `nwcomponents` and `nwcloseness, unconnected(max)`.
 
 ## Data sets used by RSiena and where to find them
 

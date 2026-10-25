@@ -11,7 +11,7 @@ description: "Example networks that can be loaded with nwwebuse."
 
 Example networks hosted in the nwcommands repository. Load one with [`nwwebuse`](nwwebuse), for example
 `nwwebuse florentine`. The available data sets are: gang, glasgow, florentine, usstates, klas12b, hpotter,
-macaque, chesapeake, usair, lazega, s50, sampson, mesa, zachary, kapferer, socialevolution, the two-mode data sets davis (Southern women) and ftdirectors_se (company directors in Sweden), and the signed networks senate114, senate93 (US Senate) and gahuku (Gahuku-Gama tribes). In
+macaque, chesapeake, usair, usair_full, lazega, s50, sampson, mesa, zachary, kapferer, socialevolution, the two-mode data sets davis (Southern women) and ftdirectors_se (company directors in Sweden), and the signed networks senate114, senate93 (US Senate) and gahuku (Gahuku-Gama tribes). In
 Stata, `help netexample` describes each data set and its sources.
 
 The [Importing & Exporting](../tutorials/03-importing-exporting/) tutorial uses several of them. The
