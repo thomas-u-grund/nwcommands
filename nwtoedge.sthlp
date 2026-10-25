@@ -56,7 +56,7 @@ dyad pair ({it:i},{it:j}) in the network {it:netname}.
 
 {pstd}
 When a network is undirected only one entry for the dyad pair ({it:i},{it:j})
-is generated, unless option {opt full} is specified. 
+is generated, unless option {opt full} is specified. For an undirected valued network the listed pairs are those with {it:_ego} > {it:_alter}, so each tie appears once, in the row of the higher node id. 
 
 {pstd}
 When the command is used with a {help netlist}, it generates one new variable for each network {it:netname} in the list. If only one

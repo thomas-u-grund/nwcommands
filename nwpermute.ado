@@ -1,7 +1,7 @@
 capture program drop nwpermute	
 program nwpermute
 	version 9.0
-	syntax [anything(name=netname)], [ xvars replace generate(string)]
+	syntax [anything(name=netname)], [ xvars replace nwreplace generate(string)]
 	if "`replace'" == "" & "`generate'" == "" {
 		// Error-code coherence pass: was `999' (this package's own
 		// convention for "loading would discard unsaved data" - an
@@ -17,6 +17,11 @@ program nwpermute
 		mata: `netobj'->permute()
 	}
 	if "`generate'" != "" {
+		capture _nwsyntax `generate', other(_chk)
+		if _rc == 0 & "`nwreplace'" == "" & "`replace'" == "" {
+			di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}"
+			error 99
+		}
 		capture nwdrop `generate'
 		nwduplicate `netname', name(`generate')
 		_nwsyntax `generate'

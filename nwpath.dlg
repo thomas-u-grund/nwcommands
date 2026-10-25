@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 310
+POSITION 10 10 550 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwpath - Calculate paths between nodes")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  GROUPBOX gb_opt 10 44 520 244, label("Options")
   TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite networks with")
   CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
   TEXT tx_ed_ego 20 82 260 ., label("Name of start node")
@@ -32,6 +32,8 @@ BEGIN
   CHECKBOX cx_sym 290 194 190 ., label("sym") option(sym)
   TEXT tx_cb_generate 20 222 260 ., label("Save paths as networks beginning with")
   COMBOBOX cb_generate 290 222 190 ., dropdown contents(netlist) nomem option(generate)
+  TEXT tx_cx_nopaths 20 250 260 ., label("Do not print the list of paths")
+  CHECKBOX cx_nopaths 290 250 190 ., label("nopaths") option(nopaths)
 END
 
 LIST netlist
@@ -56,6 +58,7 @@ BEGIN
 		optionarg main.sp_alterid
 		option main.cx_sym
 		optionarg main.cb_generate
+		option main.cx_nopaths
 	endoptions
 	stata
 END

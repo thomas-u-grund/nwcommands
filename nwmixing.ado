@@ -99,7 +99,14 @@ program nwmixing
 		di"{txt}       The table shows two entries for each edge."
 	}
 	tempname tableres tablecol tablerow
-	tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
+	// tab cuts value labels at 9 characters, so with no tab options the table is printed by hand below
+	if `"`options'"' == "" {
+		qui tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow')
+		_nwmixing_print, cell(`tableres') col(`tablecol') row(`tablerow') egovar(`egoname') altervar(`altername')
+	}
+	else {
+		tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
+	}
 
 	if "`plot'" != "" {
 		_nwtabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
@@ -252,4 +259,62 @@ real matrix rep_EIvar(real scalar reps, real matrix net0, real matrix attr){
 	EI = (extern - intern) :/ (extern + intern)
 	return(EI)
 }
+end
+
+capture program drop _nwmixing_print
+program _nwmixing_print
+	syntax , cell(name) col(name) row(name) egovar(string) altervar(string)
+	local nr = rowsof(`cell')
+	local nc = colsof(`cell')
+	local elab : value label `egovar'
+	local alab : value label `altervar'
+	local w1 = max(8, length("`egovar'"))
+	local w2 = 8
+	forvalues i = 1/`nr' {
+		local v = `row'[`i',1]
+		local l = cond("`elab'" != "", "`: label `elab' `v''", string(`v'))
+		local rl`i' = substr("`l'", 1, 30)
+		local w1 = max(`w1', length("`rl`i''"))
+	}
+	forvalues j = 1/`nc' {
+		local v = `col'[1,`j']
+		local l = cond("`alab'" != "", "`: label `alab' `v''", string(`v'))
+		local cl`j' = substr("`l'", 1, 30)
+		local w2 = max(`w2', length("`cl`j''"))
+	}
+	local w2 = `w2' + 1
+	di
+	di "{txt}{ralign `w1':`egovar'} {c |} `altervar'"
+	local hdr "{txt}{space `w1'} {c |}"
+	forvalues j = 1/`nc' {
+		local hdr "`hdr'{ralign `w2':`cl`j''}"
+	}
+	local hdr "`hdr'{ralign `=`w2'+1':Total}"
+	di "`hdr'"
+	di "{hline `=`w1'+1'}{c +}{hline `=(`nc'+1)*`w2'+1'}"
+	forvalues i = 1/`nr' {
+		local ln "{res}{lalign `w1':`rl`i''} {txt}{c |}{res}"
+		local tot 0
+		forvalues j = 1/`nc' {
+			local x = `cell'[`i',`j']
+			local tot = `tot' + `x'
+			local ln "`ln'{ralign `w2':`x'}"
+		}
+		local ln "`ln'{ralign `=`w2'+1':`tot'}"
+		di "`ln'"
+	}
+	di "{hline `=`w1'+1'}{c +}{hline `=(`nc'+1)*`w2'+1'}"
+	local ln "{txt}{lalign `w1':Total} {c |}{res}"
+	local gt 0
+	forvalues j = 1/`nc' {
+		local cs 0
+		forvalues i = 1/`nr' {
+			local cs = `cs' + `cell'[`i',`j']
+		}
+		local gt = `gt' + `cs'
+		local ln "`ln'{ralign `w2':`cs'}"
+	}
+	local ln "`ln'{ralign `=`w2'+1':`gt'}"
+	di "`ln'"
+	di
 end

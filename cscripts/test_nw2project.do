@@ -150,7 +150,7 @@ nw2project mynet2, project(2) name(collideproj) replace
 * macro-lookup (no such local exists), r(nodes)/r(ties) were correct
 * all along - only the *display* line was ever affected.
 assert r(nodes) == 2
-assert r(ties) == 2
+assert r(ties) == 1
 
 capture _nwsyntax collideproj, other(_check)
 assert _rc == 0
