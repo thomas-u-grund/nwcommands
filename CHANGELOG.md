@@ -4,6 +4,13 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Changed
+- `nwclustering` (binary measure), `nwtriads` and `nwevcent` run in the compiled graph plugin (native kernels 26, 27 and 28; plugin generation 6), with the Mata code kept as the fallback where the platform's plugin is older or missing and for the weighted clustering measures and for networks with self-loops (`nwtriads`). Results are identical (counts exactly, `nwevcent` to the last digit in all test networks). Stata/BE, random network with 10 ties per node, seconds before / after: `nwclustering` 5,000 nodes 1.15 / 0.06, 100,000 nodes 26.1 / 0.7; `nwtriads` 5,000 nodes 3.4 / 0.08, 100,000 nodes 73 / 1.0; `nwevcent` 5,000 nodes 0.69 / 0.05, 100,000 nodes 13.7 / 0.5.
+- The Mata library `lnwcommands.mlib` is unchanged, so the model packages need no new release for this change. The Linux and Windows plugins must be rebuilt by the plugin workflow before a release (until then those platforms use the Mata code and are as slow as before).
+- `nwtriads`: the count of empty triads (`r(_003)`) is the exact integer; the Mata census could carry a rounding error of one unit in the last place (about 4e-12 at 28,643).
+
 ## [3.3.1] - 2026-10-25
 
 ### Fixed

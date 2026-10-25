@@ -34,7 +34,12 @@ program nwtriads
 	}
 
 	tempname triadcensus
-	mata: `triadcensus' = `netobj'->calculate_triadcensus()
+	// native kernel 27 (Batagelj-Mrvar census, plugin generation 6 or later); an empty result sends us to the Mata census
+	mata: `triadcensus' = nw_fasttriads(`netobj'->edgelist(), `nodes')
+	mata: st_local("__fast", strofreal(cols(`triadcensus') == 16))
+	if !`__fast' {
+		mata: `triadcensus' = `netobj'->calculate_triadcensus()
+	}
 
 	mata: st_numscalar("r(_003)", `triadcensus'[1])
 	mata: st_numscalar("r(_012)", `triadcensus'[2])
@@ -161,5 +166,25 @@ program nwtriads
 		di as txt "(plot saved as {bf:`name'}; triad-category counts for `netname')"
 	}
 end
-	
 
+capture mata: mata drop nw_fasttriads()
+mata:
+// Native triad census (kernel 27 of the nwgraph plugin): the 1 x 16 vector of calculate_triadcensus(), or a 0 x 0
+// matrix when the kernel is not available or the network has self-loops (the Mata census is not defined there; it keeps
+// that case). Set the global NW_NOFASTKERNELS to force the Mata path.
+real matrix nw_fasttriads(real matrix el, real scalar n)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 6) return(J(0, 0, .))
+	if (rows(el) > 0) {
+		if (any(el[., 1] :== el[., 2])) return(J(0, 0, .))
+	}
+	r = nwg_comb(27, n, el, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0 | rows(r) != 1 | cols(r) != 16) return(J(0, 0, .))
+	return(r)
+}
+end

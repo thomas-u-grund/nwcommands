@@ -81,6 +81,15 @@ validated or rejected. Two-mode: automatically delegated to {help nw2clustering}
 	  {bf:r(measure)}		the {opt measure()} actually used
 	  {bf:r(symmetrized)}		{it:false}, only returned when {opt symmetrize} was specified
 
+{title:Limits}
+
+{pstd}
+For {opt measure(binary)} the closed and potential triples are counted in the compiled graph plugin (the native kernel of
+{cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients.
+The work grows with the sum of the squared degrees. Measured in Stata/BE, random undirected network with 10 ties per node:
+5,000 nodes 0.06 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.7 seconds (the Mata route needs 1.1, 4.9 and 26 seconds).
+The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
