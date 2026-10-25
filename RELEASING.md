@@ -19,6 +19,21 @@ Installing a given release: `net install nwcommands, from("https://raw.githubuse
 - Order for a numbered release: 1. update `CHANGELOG.md` and run `python3 tools/set_version.py X.Y.Z [date]`; 2. run the tests; 3. commit on `develop`; 4. `./promote.sh --tag`; 5. `gh release create vX.Y.Z --title "nwcommands X.Y.Z" --notes-file <changelog excerpt>`.
 - The CI plugin-rebuild bot commits to `develop` and `main` after pushes that touch `native/`; `git pull --rebase` before the next push.
 
+## Whenever the core Mata library changes
+
+The Mata libraries of nwsaom, nwergm, nwdynam and nwrem are compiled against `lib/lnwcommands.mlib` and must be rebuilt and released in
+step with every core release that changes it (otherwise a fresh install fails with r(3021)). `lib/lnwcommands.mlib.release.sha256` holds
+the sha256 of the library at the last release. `python3 tools/record_release_hash.py` writes it (`tools/set_version.py X.Y.Z` calls it, but
+run it again after the final library build of step 4). `tools/check_version.py` prints a loud WARNING ("Mata library changed: rebuild and
+re-release nwsaom and nwergm in step") when the library differs from the recorded hash; follow "Whenever the core library changes" in the
+RELEASING.md of each model package, then record the new hash after the core release.
+
+## Fresh-install smoke test
+
+`tools/smoke_fresh_install.sh [core_dir model_parent_dir]` installs the core and the four model packages from local folders into an
+empty PLUS directory (Stata `-e`) and then runs one real fit of each package in a new Stata process. Run it before a release of any
+package (`SMOKE_STALE=1` additionally starts every fit session with a Mata library index that does not yet know the model libraries).
+
 ## After every release of any package: update the website
 
 The website lives in this repository (`website/`) and covers all five packages, so a release of nwsaom, nwergm, nwdynam or nwrem also means a commit here:

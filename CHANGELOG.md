@@ -4,6 +4,13 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.3.1] - 2026-10-25
+
+### Fixed
+- `nwinstall, all` and `nwinstall, models` index the Mata libraries after installing (`mata mlib index`), so the model packages are found in the same session. (Each model package also indexes its own library when it is first used.)
+- `nwinstall, ado|help|dialog|all` accepts `from()` (a local folder or URL) as the source of the core package files; the default is unchanged (GitHub).
+- Release check: `tools/check_version.py` warns when the core Mata library differs from the hash recorded at the last release (`tools/record_release_hash.py`), as a reminder to rebuild and re-release nwsaom and nwergm in step. `tools/smoke_fresh_install.sh` tests a fresh install from local folders.
+
 ## [3.3.0] - 2026-10-25
 Networks of 100,000 nodes: more commands work at that size, and commands that cannot are refused at once with a message and an alternative.
 

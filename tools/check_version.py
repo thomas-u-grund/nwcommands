@@ -30,5 +30,16 @@ need("CITATION.cff", r'(?m)^version: "%s"' % re.escape(ver), "CITATION version")
 need("CHANGELOG.md", r'## \[%s\]' % re.escape(ver), "CHANGELOG entry")
 import subprocess
 if subprocess.call([sys.executable, os.path.join("tools", "check_help_index.py")]) != 0: bad.append("tools/check_help_index.py failed (see above)")
+# the Mata library of the core against the hash recorded at the last release (a warning, not a failure)
+import hashlib
+_lib, _rec = os.path.join("lib", "lnwcommands.mlib"), os.path.join("lib", "lnwcommands.mlib.release.sha256")
+if os.path.exists(_lib) and os.path.exists(_rec):
+    if hashlib.sha256(open(_lib, "rb").read()).hexdigest() != open(_rec).read().split()[0]:
+        print("\n" + "*" * 100 + "\nWARNING: Mata library changed: rebuild and re-release nwsaom and nwergm in step\n"
+              "  (lib/lnwcommands.mlib differs from the hash recorded at the last release, lib/lnwcommands.mlib.release.sha256;\n"
+              "   nwdynam and nwrem too if their libraries use changed classes; see 'Whenever the core library changes' in RELEASING.md)\n"
+              "  After the release run: python3 tools/record_release_hash.py\n" + "*" * 100 + "\n")
+elif os.path.exists(_lib):
+    print("WARNING: lib/lnwcommands.mlib.release.sha256 is missing: run python3 tools/record_release_hash.py")
 if bad: print("\n".join(bad)); sys.exit(1)
 print("version display consistent:", ver, date)

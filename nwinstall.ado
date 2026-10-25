@@ -26,6 +26,8 @@ program nwinstall
 	if "`path'" == "" {
 		local path "`c(pwd)'"
 	}
+	// source of the core package files: GitHub, or from() (a local folder or URL; used by tools/smoke_fresh_install.sh)
+	local __nw_src = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main", `"`from'"')
 	
 	tempname fh1 fh2
 	
@@ -82,7 +84,7 @@ program nwinstall
 	// command needing to hardcode that count.
 	if ("`ado'" != "" | "`all'" != "") & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ado"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
+		net from "`__nw_src'"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -102,7 +104,7 @@ program nwinstall
 
 	if "`help'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-hlp"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
+		net from "`__nw_src'"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -141,7 +143,7 @@ program nwinstall
 
 	if "`dialog'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-dlg"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
+		net from "`__nw_src'"
 		// BUGFIX: was a single `net install "nwcommands-dlg", all' -
 		// the dialog rebuild grew the .dlg count past Stata's
 		// per-package line limit (see _nwdeploy.ado's own comment on
@@ -161,6 +163,9 @@ program nwinstall
 	}
 	
 	
+	if "`remove'" == "" & ("`ado'" != "" | "`all'" != "") {
+		capture mata: mata mlib index   // the core library lnwcommands.mlib has just been installed; harmless if it fails
+	}
 	if `__nw_models' {
 		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
 	}
