@@ -33,6 +33,8 @@ if "$NWA_KIND" != "none" {
     quietly gen byte val = ceil(runiform()*5)
     quietly count
     display "NWAUDIT_TIES=" r(N)
+    * ground truth for the correctness checks (checks.do): the edge list as Mata externals
+    mata: NWA_from = st_data(., "from"); NWA_to = st_data(., "to"); NWA_val = st_data(., "val")
     if "$NWA_KIND" != "edges" {
         timer clear 90
         timer on 90

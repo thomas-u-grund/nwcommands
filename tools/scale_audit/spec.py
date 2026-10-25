@@ -49,7 +49,7 @@ S("nwtostata", "dir", "nwtostata, mat(M) stub(m_)", pre=["nwtomata bench, mat(M)
 S("nwtomata", "dir", "nwtomata bench, mat(M)", cat="io", note="materialises a Mata matrix")
 S("nwtomatafast", "dir", "nwtomatafast bench", cat="util")
 S("nwreplacemat", "dir", "nwreplacemat bench, newmat(M) netonly", pre=["nwtomata bench, mat(M)"], cat="io")
-S("nwset", "edges", "nwset from to, name(bench)", cat="io", note="edge-list form of nwset")
+S("nwset", "edges", "nwset from to, edgelist name(bench)", cat="io", note="edge-list form of nwset (stages 0-1 timed the matrix form on two variables: a 2-node network)")
 S("nw2set", "edges", "nw2set from to, edgelist name(bench)", cat="io")
 S("nwsync", "dir", "nwsync bench", cat="io")
 
@@ -199,3 +199,96 @@ S("nwrestore", "dir", "nwrestore", pre=["nwpreserve"], cat="manip")
 
 def by_name():
     return {r["command"]: r for r in SPEC}
+
+# ---------------------------------------------------------------- correctness checks (checks.do)
+# chk: Stata lines run after the timed command (untimed); None = nwa_std bench (nodes, ties, labels, exact tie set of
+# the unchanged benchmark network); [] = no check. Ground truth comes from the generator's edge list.
+_V = lambda v, extra="": f"nwa_var {v}, n({{N}}){extra}"
+_EDGE = lambda v, valued: [f'mata: st_numscalar("nwa_x", nwa_varcmp("e_", "a_", "{v}", {valued}))',
+                           'nwa_check "edge list equals the generator ties" , c(scalar(nwa_x) == 0)']
+CHK = {
+    "nwfromedge": ["nwa_std bench, kind(dir)"],
+    "nwfromedge[valued]": ["nwa_std bench, kind(dir) valued"],
+    "nwfromedge[undirected]": ["nwa_std bench, kind(undir)"],
+    "nw2fromedge": ["nwa_std bench, kind(two)"],
+    "nwtoedge": ['nwa_check "rows N*N" , c(_N == {N}*{N})'] + _EDGE("bench", 0),
+    "nwtoedge[valued]": ['nwa_check "rows N*N" , c(_N == {N}*{N})'] + _EDGE("bench", 1),
+    "nwtoedge[compress]": ['nwa_check "rows = ties" , c(_N == scalar(nwa_t_ties) + {N})'] + _EDGE("bench", 0),
+    "nw2toedge": [], "nw2toedge[compress]": [],
+    "nwset": ["nwa_std bench, kind(dir)"],
+    "nw2set": ["nwa_std bench, kind(two)"],
+    "nwtostata": [],
+    "nwimport[edgelist]": ["nwa_std imp, kind(dir)"],
+    "nwdegree": ['mata: st_numscalar("nwa_x", nwa_degcmp("d_out", "d_in", 0))', 'nwa_check "degrees equal the generator degrees" , c(scalar(nwa_x) == 0)'],
+    "nwdegree[valued]": ['mata: st_numscalar("nwa_x", nwa_degcmp("d_out", "d_in", 0))', 'nwa_check "degrees of the valued network equal the tie counts" , c(scalar(nwa_x) == 0)'],
+    "nwdyads": ['nwa_check "dyad census sums to N(N-1)/2" , c(r(_001) + r(_010) + r(_100) == {N}*({N}-1)/2)',
+                'nwa_check "asymmetric + 2*mutual = ties" , c(r(_010) + 2*r(_100) == scalar(nwa_t_ties))'],
+    "nwtriads": ['nwa_check "triad census sums to C(N,3)" , c(r(_003)+r(_012)+r(_102)+r(_021D)+r(_021U)+r(_021C)+r(_111D)+r(_111U)+r(_030T)+r(_030C)+r(_201)+r(_120D)+r(_120U)+r(_120C)+r(_210)+r(_300) == {N}*({N}-1)*({N}-2)/6)'],
+    "nwcomponents": ['nwa_check "components" , c(r(components) == scalar(nwa_t_ncomp))',
+                     'mata: st_numscalar("nwa_x", nwa_compcmp("comp"))', 'nwa_check "component membership equals union-find" , c(scalar(nwa_x) == 0)'],
+    "nwbetween": [_V("btw", " min(0)")],
+    "nwcloseness": [_V("far"), 'mata: nwa_f = nwa_farcmp("far")', 'mata: st_numscalar("nwa_x", min(nwa_f))',
+                    'nwa_check "farness equals BFS sum of distances (sample sources)" , c(scalar(nwa_x) == 0)'],
+    "nwevcent": [_V("evc", " min(-1e-6)")],
+    "nwpagerank": [_V("pr", " sum(1) tol(1e-4)")],
+    "nwkatz": [_V("katz_in"), _V("katz_out")],
+    "nwclustering": ['mata: st_numscalar("nwa_x", nwa_clustcmp("clu", 40))', 'nwa_check "clustering equals independent count (sample)" , c(scalar(nwa_x) == 0)'],
+    "nwkcore": ['mata: nwa_kc = nwa_kcore()', 'mata: st_numscalar("nwa_x", sum(st_data((1, rows(nwa_kc)), "kc") :!= nwa_kc))',
+                'nwa_check "coreness equals independent peeling" , c(scalar(nwa_x) == 0)'],
+    "nwgeodesic": ['nwa_netp geo', 'mata: st_numscalar("nwa_x", nwa_rowcmp(nwa_p, 0))', 'nwa_check "geodesics equal BFS (sample rows)" , c(scalar(nwa_x) == 0)'],
+    "nwgeodesic[vars]": ['nwa_netp geo', 'mata: st_numscalar("nwa_x", nwa_rowcmp(nwa_p, 0))', 'nwa_check "geodesics equal BFS (sample rows)" , c(scalar(nwa_x) == 0)'],
+    "nwreach": ['nwa_netp rch', 'mata: st_numscalar("nwa_x", nwa_rowcmp(nwa_p, 1))', 'nwa_check "reachability equals BFS (sample rows)" , c(scalar(nwa_x) == 0)'],
+    "nwmixing": ['nwa_check "ties counted" , c(r(N) == scalar(nwa_t_ties))'],
+    "nwsummarize": ['nwa_check "nodes" , c(r(nodes) == scalar(nwa_t_nodes))', 'nwa_check "arcs" , c(r(arcs) == scalar(nwa_t_ties))'],
+    "nwtranspose": ["nwa_edges tr, mode(2) noweights"],
+    "nwpermute": ['nwa_netp perm', 'nwa_check "nodes" , c(scalar(nwa_n) == scalar(nwa_t_nodes))', 'nwa_check "arcs" , c(scalar(nwa_arcs) == scalar(nwa_t_ties))', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwduplicate": ["nwa_edges dup, mode(0) noweights"],
+    "nwsym": ["nwa_edges sym, mode(1) noweights"],
+    "nwsymmetrize": ["nwa_edges sym, mode(1) noweights"],
+    "nwdropnodes": ['nwa_edges dn, mode(0) noweights keep(4::st_numscalar(\"nwa_t_nodes\"))'],
+    "nwkeepnodes": ['nwa_edges kn, mode(0) noweights keep(1::5)'],
+    "nwaddnodes": ['nwa_netp an', 'nwa_check "nodes + 2" , c(scalar(nwa_n) == scalar(nwa_t_nodes) + 2)', 'nwa_check "arcs unchanged" , c(scalar(nwa_arcs) == scalar(nwa_t_ties))'],
+    "nwsubset": ['nwa_edges sub, mode(0) noweights keep(1::floor(st_numscalar(\"nwa_t_nodes\")/2))'],
+    "nwdichotomize": ['nwa_netp dich', 'nwa_check "nodes" , c(scalar(nwa_n) == scalar(nwa_t_nodes))'],
+    "nwrecode": ['nwa_netp rec', 'nwa_check "nodes" , c(scalar(nwa_n) == scalar(nwa_t_nodes))'],
+    "nwrename": ["nwa_std bench_r"],
+}
+CHK.update({
+    "nwcommunity": ['mata: st_numscalar("nwa_x", nwa_modq("com"))', 'nwa_check "modularity equals independent Q of the partition" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)', _V("com")],
+    "nwcommunity[labelprop]": ['mata: st_numscalar("nwa_x", nwa_modq("com"))', 'nwa_check "modularity equals independent Q of the partition" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)', _V("com")],
+    "nwmodularity": ['mata: st_numscalar("nwa_x", nwa_modq("grp"))', 'nwa_check "modularity equals independent Q" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)'],
+    "nwmotifs": ['nwa_check "graphlet counts sum to C(N,4)" , c(6*(r(disconnected)+r(k4)+r(diamond)+r(paw)+r(cycle)+r(star)+r(path)) == ({N}*({N}-1)/2)*(({N}-2)*({N}-3)/2))'],
+    "nwspectral": ['nwa_check "components" , c(r(components) == scalar(nwa_t_ncomp))'],
+    "nwkcomponents": ['nwa_check "at least one 2-component" , c(r(kcomponents) >= 1)'],
+    "nwcohesion": ['nwa_check "blocks" , c(r(blocks) >= 1)', _V("coh")],
+    "nwclique": ['nwa_check "cliques found" , c(r(cliques) >= 1)', 'quietly count if !missing(cliq)', 'nwa_check "clique members" , c(r(N) >= 3 & r(N) <= {N})'],
+    "nwcoreperiphery": [_V("cp")],
+    "nwconcor": [_V("cc")],
+    "nwfactions": ['nwa_check "groups" , c(r(groups) == 3)'],
+    "nwego": [_V("esz"), _V("edn")],
+    "nwburt": ['nwa_check "nodes" , c(r(nodes) == scalar(nwa_t_nodes))'],
+    "nwring": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "arcs 2*k*N" , c(scalar(nwa_arcs) == 10*{N})', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwsmall": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "arcs 2*k*N" , c(scalar(nwa_arcs) == 10*{N})', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwlattice": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == 900)', 'nwa_check "arcs" , c(scalar(nwa_arcs) == 3480)', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwpref": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "arcs 2(N-1)" , c(scalar(nwa_arcs) == 2*({N}-1))', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwrandom": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "ties near density*N*(N-1)" , c(abs(scalar(nwa_arcs) - .0001*{N}*({N}-1)) <= max(2, 5*sqrt(.0001*{N}*({N}-1))))', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwrandom[prob]": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "ties near prob*N*(N-1)" , c(abs(scalar(nwa_arcs) - .0001*{N}*({N}-1)) <= max(2, 5*sqrt(.0001*{N}*({N}-1))))', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwdyadprob": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "ties near p*N*(N-1)" , c(abs(scalar(nwa_arcs) - .01*{N}*({N}-1)) <= 5*sqrt(.01*{N}*({N}-1)))', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwdyadprob[mat]": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == 30)', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nwhomophily": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "some ties" , c(scalar(nwa_arcs) > 0)', 'nwa_check "labels" , c(scalar(nwa_labbad) == 0)'],
+    "nw2degree": ['nwa_netp bench', 'mata: st_numscalar("nwa_ton", nwa_nto())', 'nwa_check "nodes" , c(scalar(nwa_n) == {N} + scalar(nwa_ton))'],
+    "nw2clustering": ['nwa_netp bench', 'mata: st_numscalar("nwa_ton", nwa_nto())', 'nwa_check "nodes" , c(scalar(nwa_n) == {N} + scalar(nwa_ton))'],
+    "nwdrop": ["nwa_gone"],
+    "nwclear": ["nwa_gone"],
+    "nwnoderename": ['nwa_netp bench', 'mata: st_local("nwa_l1", nwa_p->get_nodenames()[1])', 'nwa_check "node 1 renamed" , c("`nwa_l1\'" == "x1")', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})'],
+    "nwreplace": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "ties T or T+1" , c(inlist(scalar(nwa_arcs), scalar(nwa_t_ties), scalar(nwa_t_ties)+1))'],
+    "nwreplace[all]": ['nwa_netp bench', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})'],
+    "nwattime": ['nwa_netp att', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})'],
+    "nwproject": ['nwa_netp proj', 'nwa_check "nodes = mode-1 nodes" , c(scalar(nwa_n) == {N})'],
+    "nw2project": ['nwa_netp proj', 'nwa_check "nodes = mode-1 nodes" , c(scalar(nwa_n) == {N})'],
+    "nw2project[min]": ['nwa_netp proj', 'nwa_check "nodes = mode-1 nodes" , c(scalar(nwa_n) == {N})'],
+    "nwmatching": ['nwa_check "matched pairs at most the smaller mode" , c(r(matched) >= 1 & r(matched) <= {N}/2)'],
+})
+for _r in SPEC:
+    if _r["command"] in CHK:
+        _r["chk"] = [l.replace("{N}", "{N}") for l in CHK[_r["command"]]]

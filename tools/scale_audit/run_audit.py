@@ -17,9 +17,9 @@ sys.path.insert(0, HERE)
 import spec as specmod
 
 STATA = "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"
-ALL_SIZES = [100, 300, 1000, 5000, 20000, 100000]
+ALL_SIZES = [100, 300, 1000, 5000, 10000, 20000, 100000]
 FIELDS = ["command", "N", "ties", "outcome", "seconds", "gen_seconds", "peak_mem_mb",
-          "load_avg_1m", "rc", "message", "timestamp"]
+          "load_avg_1m", "rc", "message", "timestamp", "correct"]
 lock = threading.Lock()
 
 def prelude(plus):
@@ -40,17 +40,36 @@ def build_do(rec, N, plus):
     s += f'global NWA_N {N}\nglobal NWA_KIND {rec["net"]}\nglobal NWA_ATTR {1 if rec.get("attr") else 0}\n'
     s += f'do "{HERE}/network_gen.do"\n'
     s += 'display "NWAUDIT_SETUP_DONE"\n'
+    s += f'quietly do "{HERE}/checks.do"\n'
+    if rec["net"] in ("dir", "undir", "valued", "valuedu", "edges"):
+        s += 'quietly nwa_truthinit\n'
+    elif rec["net"] == "two":
+        s += 'scalar nwa_t_ties = _N\n'
     for l in rec.get("pre", []):
         s += f'capture noisily {l.replace("{N}", str(N))}\n'
         s += 'if _rc {\n    display "NWAUDIT_PRE_RC=" _rc\n    exit _rc\n}\n'
     line = rec["line"].replace("{N}", str(N))
     s += 'display "NWAUDIT_BEGINCMD"\ntimer clear 91\ntimer on 91\n'
-    s += f'capture quietly {line}\nlocal nwa_rc = _rc\ntimer off 91\n'
+    s += f'capture quietly {line}\nlocal nwa_rc = _rc\ncapture _return hold nwa_ret\ntimer off 91\n'
     s += 'quietly timer list 91\n'
     # quietly hides 'display as error' texts: for a quick failure run the line once more with
     # output on, only to learn the message (the reported seconds come from the first run)
     s += 'local nwa_t = r(t91)\nif `nwa_rc\' & `nwa_t\' < 20 {\n    display "NWAUDIT_RERUN"\n    capture noisily ' + line + '\n}\n'
     s += 'display "NWAUDIT_SECS=" `nwa_t\'\n'
+    chk = rec.get("chk")
+    if chk is None:
+        chk = ["nwa_std bench"]
+    s += 'global NWA_FAIL ""\n'
+    if chk and True:
+        s += 'if `nwa_rc\' == 0 {\n'
+        for l in chk:
+            s += '    capture _return restore nwa_ret, hold\n'
+            s += f'    capture noisily {l.replace("{N}", str(N))}\n'
+            s += '    if _rc global NWA_FAIL `"${NWA_FAIL}; check line failed rc=`=_rc\': ' + l.replace("{N}", str(N)).replace('"', "'").replace("`", "").replace("$", "") + '"\'\n'
+        s += '}\n'
+        s += 'if `"${NWA_FAIL}"\' == "" display "NWAUDIT_CHECK=ok"\nelse display "NWAUDIT_CHECK=FAIL" `"${NWA_FAIL}"\'\n'
+    else:
+        s += 'display "NWAUDIT_CHECK=none"\n'
     s += 'display "NWAUDIT_RC=`nwa_rc\'"\n'
     s += 'display "NWAUDIT_END"\n'
     return s
@@ -169,8 +188,12 @@ def run_one(rec, N, timeout, workdir, maxmem_gb=20):
         rc = int(g("NWAUDIT_RC") or 0)
         row["seconds"] = g("NWAUDIT_SECS")
         row["rc"] = rc
+        mc = re.search(r"^NWAUDIT_CHECK=(.*)$", log, re.M)
+        row["correct"] = (mc.group(1).strip()[:400] if mc else "")
         if rc == 0:
             row["outcome"] = "OK"
+            if row["correct"].startswith("FAIL"):
+                row["outcome"] = "WRONG_RESULT"
         else:
             msg = first_msg("NWAUDIT_BEGINCMD", "NWAUDIT_SECS")
             row["message"] = msg
@@ -267,6 +290,15 @@ def main():
                                        message=f"capped at N={maxn}: {rec.get('cat','')}"))
                 continue
             pr = prev_row(rec["command"], N)
+            longrun = False
+            if pr is not None:
+                try:
+                    slow5 = float(pr["seconds"] or 0) > 90
+                except ValueError:
+                    slow5 = False
+                if N == 10000 and (pr["outcome"] in ("TIMEOUT", "REFUSED_GUARD") or slow5 or pr["outcome"].startswith("SETUP_")):
+                    longrun = True           # stage-2 rule: run once with the longer limit
+                    pr = None
             if pr is not None:
                 bad = pr["outcome"] in ("TIMEOUT", "CRASH", "MEMORY_KILLED", "NOT_TRIED_PREV_FAILED", "NOT_TRIED_CAP")
                 if N >= 100000 and pr["outcome"] != "OK":
@@ -285,6 +317,8 @@ def main():
                                            message=f"N={pr['N']}: {pr['outcome']} {pr['seconds']}s"))
                     continue
             to = a.timeout or (60 if N <= 1000 else 180)
+            if not a.timeout and (longrun or rec.get("tmo")):
+                to = max(300, rec.get("tmo") or 0)
             row = run_one(rec, N, to, a.workdir, a.maxmem_gb)
             append_row(a.out, row)
             print(f"{rec['command']:16s} N={N:<7d} {row['outcome']:22s} {row['seconds']!s:>8s}s  {row['message'][:70]}", flush=True)
