@@ -19,7 +19,7 @@ Pick by your data and your question.
 | Timestamped events (e-mails, calls), ordered by time | Why this sender and this receiver at each event? | [nwrem](../nwrem/) (REM) |
 
 All four model packages need the core. The core is where you import, prepare and describe the data,
-so most projects start there.
+so most projects start there. If your network is large, see [how large a network can be](../nwcommands/size-limits/).
 
 ## If you know the R packages
 

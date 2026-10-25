@@ -25,6 +25,11 @@ command, all help files and every dialog box. Add `nwinstall, gui` to also get a
 
 shows the core version and which model packages are installed.
 
+## How large a network can be
+
+The core builds and describes networks of 100,000 nodes, but not every command scales that far. See
+[how large a network can be](../size-limits/) before you start on a big network.
+
 ## Model packages
 
 The statistical models are separate packages that need the core: [nwsaom](../../nwsaom/install/),
