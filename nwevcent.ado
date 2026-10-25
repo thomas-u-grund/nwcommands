@@ -210,11 +210,20 @@ real colvector nw_evcentrality_matvec(real matrix E, real colvector v, real scal
 
 real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw, real scalar nosym, real scalar getvalued)
 {
-	real scalar n, iter, maxiter, tol, norm, shift
+	real scalar n, iter, maxiter, tol, norm, shift, st
 	real colvector x, y
-	real matrix E
+	real matrix E, r
+	real rowvector aux
 
 	n = thisnw->get_nodes()
+	// native kernel 28 (plugin generation 6 or later): the same iteration on the same effective tie list, in C.
+	// Set the global NW_NOFASTKERNELS to force the Mata path.
+	if (st_global("NW_NOFASTKERNELS") == "") {
+		if (nwg_comb_version() >= 6) {
+			r = nwg_comb(28, n, thisnw->edgelist(), J(0, 1, .), (nosym, getvalued), aux, st)
+			if (st == 0 & rows(r) == n & cols(r) == 1) return(r)
+		}
+	}
 	E = nw_evcentrality_edges(thisnw, nosym, getvalued)
 	x = J(n, 1, 1) :/ sqrt(n)
 

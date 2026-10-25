@@ -76,8 +76,10 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 {title:Limits}
 
 {pstd}
-The neighbour list is built once and each power iteration is one vectorized sum over it. Measured in Stata/BE, random
-undirected network with 10 ties per node: 5,000 nodes 0.6 seconds (15 seconds before); the result is the same.
+The power iteration runs in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
+and in Mata otherwise; both give the same result (they differ by less than 1e-10 relative).
+Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.05 seconds, 20,000 nodes 0.1 seconds,
+100,000 nodes 0.5 seconds (the Mata route needs 0.6, 2.6 and 14 seconds).
 
 {title:See also}
 

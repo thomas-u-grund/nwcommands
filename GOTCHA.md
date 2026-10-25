@@ -386,7 +386,7 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 ## Native plugin algorithm codes: keep the ranges apart
 
 `native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
-3-9, 22-25 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 26 and up for the next kernel), 20 is the vertex-connectivity search
+3-9, 22-28 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 29 and up for the next kernel), 20 is the vertex-connectivity search
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
@@ -561,3 +561,17 @@ by hand "fixes" it for that session only, which hid the bug in every manual test
   index is made while only the core library is visible). Without `SMOKE_STALE` a plain new session usually finds all libraries,
   which is why a simple "install, restart, run" test passes.
 - `nwinstall, all` and `nwinstall, models` run `mata mlib index` after installing; the model packages do not rely on it.
+
+## Algorithm codes 26-28 (clustering, triad census, eigenvector centrality); kernel version 6; wired from the ado files
+
+`native/nwfast.h` (included by `nwcomb.h`, `NWCOMB_VERSION 6`) hosts the kernels of `nwclustering` (26), `nwtriads` (27) and `nwevcent` (28).
+- **The glue lives in the .ado files, not in the Mata library**: `lib/lnwcommands.mlib` must stay byte-identical (a change forces new nwsaom and nwergm
+  releases). Each ado has a file-scope `mata:` helper (`nw_fastclust()`, `nw_fasttriads()`, and a branch in `nw_evcentrality()`) that calls the public
+  `nwg_comb_version()` / `nwg_comb()` of the library and returns an empty matrix when the kernel is missing (plugin generation < 6, status != 0, wrong shape);
+  the ado then runs the old Mata method. Mata functions defined in an ado file are private to that file (`mata which nw_fastclust()` says "not found" from
+  outside; `program dir` lists them as `nwclustering.nw_fastclust()`), so a test cannot call them: call `nwg_comb(26, ...)` directly or compare through the command.
+- **`global NW_NOFASTKERNELS 1` forces the Mata route** (empty = native). The helpers read it with `st_global()` on every call; `cscripts/test_fastkernels.do` uses it to compare both routes.
+- **`generate()` variables of `nwclustering` and `nwevcent` are floats by default**: an old-versus-new test that compares them only compares to about 1e-7. Pre-create a `double` variable and pass `replace` (nwevcent keeps its type), or compare the kernel output.
+- **The Mata triad census is not defined for self-loops** (the loop makes a node its own connected neighbour): `nw_fasttriads()` hands such networks to the Mata census and the results stay as they were. Its 003 count is `n(n-1)(n-2)/6 - sum`, which can be off by one unit in the last place; the kernel's is the exact integer, so compare with a tolerance of 1e-6, not `==`.
+- **Equality of nwevcent with the Mata iteration is bit for bit** because the C kernel sums in the same order and `-ffp-contract=off` forbids fused multiply-adds (largest difference measured over 80 networks: 0).
+

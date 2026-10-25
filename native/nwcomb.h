@@ -11,7 +11,8 @@
 	Codes 22 (triad balance of nwbalance) and 23 (bipartite matching of nwmatching) were added with
 	NWCOMB_VERSION 3 (see comb_balance(), comb_matching() in nwcomb2.h), code 24 (Louvain communities of
 	nwcommunity) with NWCOMB_VERSION 4 (comb_louvain()), code 25 (distance sums of
-	nwcloseness and nwkatz) with NWCOMB_VERSION 5 (comb_distsum()).
+	nwcloseness and nwkatz) with NWCOMB_VERSION 5 (comb_distsum()), codes 26 (clustering of nwclustering), 27
+	(triad census of nwtriads) and 28 (eigenvector centrality of nwevcent) with NWCOMB_VERSION 6 (nwfast.h).
 
 	WIRE PROTOCOL (algorithm codes 3..99, see comb_call() at the end):
 	  plugin call nwgraph_native v1 v2 v3 v4 [v5 ...], "alg n nties p1 p2 ..."
@@ -37,7 +38,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define NWCOMB_VERSION 5
+#define NWCOMB_VERSION 6
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4
@@ -1229,6 +1230,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 }
 
 #include "nwcomb2.h"
+#include "nwfast.h"
 
 /* ------------------------------------------------------------------ */
 /* dispatcher                                                           */
@@ -1237,7 +1239,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 static int comb_handles(const char *s) {
 	long a = (long)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
-	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 99 || a == 100);
+	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
@@ -1326,6 +1328,15 @@ static int comb_call(int argc, char *argv[]) {
 			break;
 		case ALG_DISTSUM:
 			rc = comb_distsum(n, nties, ei, ej, (int)p[3], p[4]);
+			break;
+		case ALG_CLUSTERING:
+			rc = comb_clustering(n, nties, ei, ej, (int)p[3]);
+			break;
+		case ALG_TRIADS:
+			rc = comb_triads(n, nties, ei, ej);
+			break;
+		case ALG_EVCENT:
+			rc = comb_evcent(n, nties, ei, ej, ew, (int)p[3], (int)p[4]);
 			break;
 		default:
 			SF_error("nwgraph: unknown algorithm code\n");
