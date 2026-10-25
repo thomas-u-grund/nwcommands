@@ -4,6 +4,22 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- `nwdegree, standardize` divided the degree of an undirected network, and the outdegree of a directed network, by (N-1)^2 instead of N-1 (the indegree was right). Standardised degree is now degree / (N-1) in every case. The stored centralisation (`r(dg_central)`, `r(indg_central)`, `r(outdg_central)`) was and is computed from the raw degrees and does not change.
+- `r(bw_central)` of `nwbetween` was half of Freeman's betweenness centralisation for undirected networks (and for directed networks analysed with the default symmetrisation). It is now sum(max - b_i) / ((N-1)^2 (N-2) / 2) for undirected and sum(max - b_i) / ((N-1)^2 (N-2)) for directed raw scores (`nosym`), so a star gives 1. The node scores themselves do not change.
+- `nwcloseness` on an unconnected network returned closeness above 1 (sum of the finite distances times N-1) and never printed its warning. It now prints a warning and, as R's igraph does, divides the number of nodes a node can reach by its farness, so closeness stays at most 1; a node that reaches nobody gets a missing value. Connected networks, and results with `unconnected()`, are unchanged. Option `legacy` returns the old (N-1) / farness. Farness and nearness are unchanged.
+- `nwsimilar` and `nwdissimilar` with `type(jaccard)` and `context(both)` (the default) gave asymmetric and wrong values (the union in the denominator used only the first node). The union now pools the out- and in-neighbours of both nodes, positions i and j left out. The other contexts and types are unchanged.
+- `nwutility` with `intrvalue()` or `intrcost()` ignored `benefit()` and `cost()` (benefit was fixed at 1 and the cost per tie at 1). `benefit()` now decays the weighted benefit and `cost()` is the cost of a tie when `intrcost()` is not given, as the help describes. Calls without `intrvalue()` and `intrcost()` are unchanged.
+
+### Fixed
+- `nwkatz` stopped with r(459) when the data set had more observations than the network has nodes; the extra observations are now left missing, as in `nwdegree` and `nwcloseness`.
+- `nwmixing` printed stray "0 invalid name" lines before the mixing table.
+- `nwcorrelate` stored the permuted correlations as float, so the tie handling in the p-value depended on rounding; they are now stored as double (also in the file written by `save()`).
+- `nwreach` help said the network is symmetrised by default; it is not (use `sym`). The help now says so.
+- Help for `nwdegree`, `nwbetween`, `nwcloseness` (new option `legacy`, also in its dialog), `nwsimilar` and `nwdissimilar` states the formulas used. Regression test `cscripts/test_auditfix.do`.
+
 ## [3.5.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)

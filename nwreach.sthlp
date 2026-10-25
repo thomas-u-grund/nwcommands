@@ -47,7 +47,7 @@ value 1 when there is at least one path between {it:nodes i} and {it:j} in the o
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as {help nwgeodesic}), {opt sym} available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - reachability follows the direction of the ties and the network is not symmetrized unless {opt sym} is given (same convention as {help nwgeodesic}). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
 {title:Examples}
 	

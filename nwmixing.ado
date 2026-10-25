@@ -278,13 +278,21 @@ program _nwmixing_print
 	local w2 = 8
 	forvalues i = 1/`nr' {
 		local v = `row'[`i',1]
-		local l = cond("`elab'" != "", "`: label `elab' `v''", string(`v'))
+		// `: label' must not be expanded when there is no label (cond() and
+		// a one-line if both expand it first and print "N invalid name")
+		local l = string(`v')
+		if "`elab'" != "" {
+			local l : label `elab' `v'
+		}
 		local rl`i' = substr("`l'", 1, 30)
 		local w1 = max(`w1', length("`rl`i''"))
 	}
 	forvalues j = 1/`nc' {
 		local v = `col'[1,`j']
-		local l = cond("`alab'" != "", "`: label `alab' `v''", string(`v'))
+		local l = string(`v')
+		if "`alab'" != "" {
+			local l : label `alab' `v'
+		}
 		local cl`j' = substr("`l'", 1, 30)
 		local w2 = max(`w2', length("`cl`j''"))
 	}

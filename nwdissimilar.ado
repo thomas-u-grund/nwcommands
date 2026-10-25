@@ -253,7 +253,8 @@ real matrix jaccard_dissimilarity(real matrix net,real scalar dtype){
 	// - a genuinely asymmetric formula, not a bug introduced here
 	// (see nwsimilar.ado's jaccard_similarity, the identical case).
 	if (dtype == 0) {
-		denom = (outdeg :- Bout) :+ (indeg :- Bout')
+		// union of the out- and in-neighbours of i and j, positions i and j left out
+		denom = __nwdissim_outersum(outdeg, n) :+ __nwdissim_outersum(indeg, n) :- 2:*sym :- COout :- COin
 		S = 1 :- ((COout :+ COin) :/ denom)
 	}
 	if (dtype == 1) {

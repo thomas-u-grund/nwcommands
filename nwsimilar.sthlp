@@ -39,7 +39,7 @@
 {p2line}
 {p2col:{cmd: pearson}}Calculate Pearson correlation for tie vectors of two nodes{p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: jaccard}}Calculate Jaccard distance between the tie vectors of two nodes{p_end}
+{p2col:{cmd: jaccard}}Calculate the Jaccard coefficient of the tie vectors of two nodes (shared neighbours divided by the neighbours of either node; with {cmd:context(both)} the out- and in-neighbours are pooled){p_end}
 {p2col:{cmd: matches}}Calculate percentage of matches in tie vectors of two nodes{p_end}
 {p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes{p_end}
 

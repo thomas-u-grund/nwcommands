@@ -44,7 +44,7 @@
 {p2col:{cmd: euclidean}}Calculate Euclidean distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: manhatten}}Calculate Manhatten distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: jaccard}}Calculate Jaccard distance between the tie vectors of two nodes{p_end}
+{p2col:{cmd: jaccard}}Calculate the Jaccard distance (1 minus the Jaccard coefficient) of the tie vectors of two nodes; with {cmd:context(both)} the out- and in-neighbours are pooled{p_end}
 {p2col:{cmd: nonmatches}}Calculate percentage of non-matches in tie vectors of two nodes{p_end}
 
 {synoptset 15 tabbed}{...}

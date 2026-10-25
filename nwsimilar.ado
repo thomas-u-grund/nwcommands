@@ -218,7 +218,8 @@ real matrix jaccard_similarity(real matrix net,real scalar dtype){
 	// normalizes by i's own out+in totals only, NOT the union with j
 	// - a genuinely asymmetric formula, not a bug introduced here.
 	if (dtype == 0) {
-		denom = (outdeg :- Bout) :+ (indeg :- Bout')
+		// union of the out- and in-neighbours of i and j, positions i and j left out
+		denom = __nwsim_outersum(outdeg, n) :+ __nwsim_outersum(indeg, n) :- 2:*sym :- COout :- COin
 		S = (COout :+ COin) :/ denom
 	}
 	if (dtype == 1) {

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 226
+POSITION 10 10 550 256
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcloseness - Calculate closeness centrality")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 190, label("Options")
   TEXT tx_vr_generate 20 54 260 ., label("variables names to save closeness, farness and nearness scores; default:")
   VARNAME vr_generate 290 54 190 ., nomem option(generate)
   TEXT tx_cx_nosym 20 82 260 ., label("do not symmetrize network before calculation of shortest paths")
@@ -28,6 +28,8 @@ BEGIN
   CHECKBOX cx_force 290 138 190 ., label("force") option(force)
   TEXT tx_cx_silent 20 166 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
+  TEXT tx_cx_legacy 20 194 260 ., label("On an unconnected network use (nodes - 1) / farness as in earlier releases")
+  CHECKBOX cx_legacy 290 194 190 ., label("legacy") option(legacy)
 END
 
 LIST netlist
@@ -50,6 +52,7 @@ BEGIN
 		option main.cx_replace
 		option main.cx_force
 		option main.cx_silent
+		option main.cx_legacy
 	endoptions
 	stata
 END
