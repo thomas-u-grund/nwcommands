@@ -327,6 +327,7 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
 	char *isnb = NULL, *isnb2 = NULL;
 	long *queue = NULL, *parent = NULL, *stamp = NULL, curstamp = 0;
+	long *touched = NULL, ntouched = 0;
 	flowgraph_t g;
 	int rc = 0;
 	long nv0 = 0, *nbv0 = NULL;
@@ -363,6 +364,8 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 	stamp = (long *)calloc((size_t)(g.N + 1), sizeof(long));
 	isnb = (char *)calloc((size_t)(n + 1), 1);
 	isnb2 = (char *)calloc((size_t)(n + 1), 1);
+	touched = (long *)malloc(((size_t)target * (size_t)(2 * n + 2) + (size_t)(2 * (n + m) + 2)) * sizeof(long));
+	if (!touched) { rc = 909; goto done; }
 	if (!g.head || !g.to || !g.nxt || !g.cap || !g.res || !queue || !parent || !stamp || !isnb || !isnb2) { rc = 909; goto done; }
 	/* arc index 0 is a dummy so that head[]==0 means "no arc" */
 	g.nedge = 2;
@@ -372,12 +375,13 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 	nv0 = rowptr[v0 + 1] - rowptr[v0];
 	nbv0 = colidx + rowptr[v0];
 	for (i = 0; i < nv0; i++) isnb[nbv0[i]] = 1;
+	memcpy(g.res, g.cap, (size_t)g.nedge * sizeof(long));
 
 	/* the flow between s and t, stopping at `target' */
 #define QUERY(S, T, OUT) do { \
 	long s_ = (S), t_ = (T), maxf_ = 0; \
 	long as_ = 2 + 2 * (s_ - 1), at_ = 2 + 2 * (t_ - 1); \
-	memcpy(g.res, g.cap, (size_t)g.nedge * sizeof(long)); \
+	ntouched = 0; \
 	g.res[as_] = big; g.res[at_] = big; \
 	while (maxf_ < target) { \
 		long qh_ = 0, qt_ = 0, found_ = 0, u_, a_, v_, pf_; \
@@ -400,9 +404,12 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 		pf_ = big; v_ = t_; \
 		while (v_ != n + s_) { a_ = parent[v_]; if (g.res[a_] < pf_) pf_ = g.res[a_]; v_ = g.to[a_ ^ 1]; } \
 		v_ = t_; \
-		while (v_ != n + s_) { a_ = parent[v_]; g.res[a_] -= pf_; g.res[a_ ^ 1] += pf_; v_ = g.to[a_ ^ 1]; } \
+		while (v_ != n + s_) { a_ = parent[v_]; g.res[a_] -= pf_; g.res[a_ ^ 1] += pf_; touched[ntouched++] = a_; v_ = g.to[a_ ^ 1]; } \
 		maxf_ += pf_; \
 	} \
+	/* back to the base capacities: only the arcs the flow used */ \
+	{ long q_; for (q_ = 0; q_ < ntouched; q_++) { g.res[touched[q_]] = g.cap[touched[q_]]; g.res[touched[q_] ^ 1] = g.cap[touched[q_] ^ 1]; } } \
+	g.res[as_] = g.cap[as_]; g.res[at_] = g.cap[at_]; \
 	(OUT) = maxf_; } while (0)
 
 	/* (2) v0 to every vertex it is not adjacent to */
@@ -434,7 +441,7 @@ done:
 	SF_vstore(3, 3, (double)best_t);
 	free(deg); free(rowptr); free(colidx); free(cursor);
 	free(g.head); free(g.to); free(g.nxt); free(g.cap); free(g.res);
-	free(queue); free(parent); free(stamp); free(isnb); free(isnb2);
+	free(queue); free(parent); free(stamp); free(isnb); free(isnb2); free(touched);
 	return rc;
 }
 

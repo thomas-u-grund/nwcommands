@@ -3125,6 +3125,7 @@ class `NWdef' {
 	void value_counts_to_vars()
 	real scalar recode_weights()
 	real scalar edgelist_sparse_ok()
+	real scalar edgelist_sparse_ok_cross()
 	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
@@ -8326,6 +8327,23 @@ real scalar `NWdef'::edgelist_sparse_ok(){
 }
 
 /*
+	Like edgelist_sparse_ok(), for a caller that only keeps the dyads between
+	the modes of a two-mode network (nw2toedge): the missing cells of a
+	cleaned two-mode network all lie between nodes of the same mode, so the
+	stored ties list exactly the cross-mode non-zero cells.
+*/
+real scalar `NWdef'::edgelist_sparse_ok_cross(){
+	real rowvector md
+	real colvector mdc
+
+	if (edge_dense_built == `False') return(1)
+	if (is2mode != 1) return(edgelist_sparse_ok())
+	md = strtoreal(get_modes())
+	mdc = md'
+	return(sum((edge :== .) :& (J(rows(mdc), 1, 1) * md :!= mdc * J(1, cols(md), 1))) == 0)
+}
+
+/*
 	The ";"-delimited node list nwtoedge stores in the edge list dataset
 	(characteristic _dta[nwtoedge_nodes]) so that nwfromedge can restore the
 	isolates: all node names when that fits a Stata characteristic (67,784
@@ -10094,6 +10112,7 @@ void `NWsdef'::drop(string scalar netname){
 
 void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	real scalar i, size
+	real matrix el
 	
 	names = (names, new_netname)
 	i = first_index_match(names, netname)
@@ -10101,8 +10120,18 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	size = cols(pdefs)
 	pdefs[size] = &(`NWdef'())
 	pdefs[size]->set_name(new_netname)
-	pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
-	pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	if (pdefs[i]->is_dense_built() == 0){
+		// a network that only exists as its ties (nwfromedge and the like):
+		// copy the ties, never the N x N matrix
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+		pdefs[size]->set_selfloop(pdefs[i]->is_selfloop_boolean())
+		el = pdefs[i]->edgelist()
+		pdefs[size]->set_edge_from_triplets(el[,1], el[,2], el[,3], 1)
+	}
+	else {
+		pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	}
 	
 	if (pdefs[i]->is_2mode_boolean()){
 		pdefs[size]->set_modes(pdefs[i]->get_modes())

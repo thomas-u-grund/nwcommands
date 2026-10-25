@@ -71,10 +71,15 @@ program nw2toedge
 		// otherwise every dyad - of a two-mode network only those between
 		// the modes, the only ones kept at the end
 		local __sparseok 0
-		if "`compress'" != "" & `: word count `nets'' == 1 {
-			mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
-		}
 		local __cross = ("`is2mode'" == "true" & "`ignore2mode'" == "" & `: word count `nets'' == 1)
+		if "`compress'" != "" & `: word count `nets'' == 1 {
+			if `__cross' {
+				mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok_cross()))
+			}
+			else {
+				mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
+			}
+		}
 		if `__sparseok' {
 			mata: __nwedgelist`i' = (`netobj'->get_edgelist_sparse((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
 			preserve
