@@ -41,3 +41,7 @@ Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collisi
 - **r(stub)** stub used to generate Stata variable names
 - **r(valid)** "true" when Stata variables do not already exist, "false" otherwise
 - **r(validvars)** list of valid Stata variables
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

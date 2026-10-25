@@ -78,3 +78,7 @@ Binary: yes. Directed: yes (**context()** lets you restrict the comparison to in
 ## See also
 
 - [nwsimilar](nwsimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

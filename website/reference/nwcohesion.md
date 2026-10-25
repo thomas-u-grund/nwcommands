@@ -73,3 +73,7 @@ Even, S. (1979). *Graph Algorithms*. Computer Science Press. (the vertex-splitti
 - [nwkcomponents](nwkcomponents), [nwcomponents](nwcomponents), [nwclique](nwclique), [nwkplex](nwkplex)
 
 - last certified : 22 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -72,3 +72,7 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 - [nwevcent](nwevcent), [nwrandomwalk](nwrandomwalk), [nwbetween](nwbetween), [nwcloseness](nwcloseness)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

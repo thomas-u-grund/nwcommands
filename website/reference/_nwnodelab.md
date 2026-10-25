@@ -62,3 +62,7 @@ Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are 
 ## See also
 
 - [_nwnodeid](_nwnodeid), [nodelab](nodeid), [nodeid](nodeid)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

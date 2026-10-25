@@ -79,3 +79,7 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 - [nw2clustering](nw2clustering), [nwtriads](nwtriads), [nwbrokerage](nwbrokerage)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

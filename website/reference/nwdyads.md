@@ -81,3 +81,7 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 - [nwtriads](nwtriads)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

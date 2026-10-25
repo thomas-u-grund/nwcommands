@@ -43,3 +43,7 @@ Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is retu
 
 - [nwreplace](nwreplace)
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

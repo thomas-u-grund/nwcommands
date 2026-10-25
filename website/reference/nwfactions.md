@@ -74,3 +74,7 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 - [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwconcor](nwconcor), [nwlambda](nwlambda)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

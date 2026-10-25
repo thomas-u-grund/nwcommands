@@ -257,3 +257,7 @@ This command is the primary mechanism by which a network's own binary/directed/w
 ## See also
 
 - [nodeid](nodeid), [nwname](nwname), [nwds](nwds), [nwload](nwload), [nwvalidate](nwvalidate), [nwsummarize](nwsummarize), [nw2fromedge](nw2fromedge), [nw2project](nw2project) ([nwproject](nwproject)), [nwattime](nwattime), [feasible network sizes](nwintro)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

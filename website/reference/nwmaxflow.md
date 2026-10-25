@@ -75,3 +75,7 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 - [nwmatching](nwmatching), [nwlambda](nwlambda), [nwkcomponents](nwkcomponents), [nwbridges](nwbridges)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

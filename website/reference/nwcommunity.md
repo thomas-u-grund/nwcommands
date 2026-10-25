@@ -86,3 +86,7 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 ## See also
 
 - [nwmodularity](nwmodularity), [nwcomponents](nwcomponents), [nwclustering](nwclustering)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

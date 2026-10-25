@@ -66,3 +66,7 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 - [nwburt](nwburt), [nwpath](nwpath)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

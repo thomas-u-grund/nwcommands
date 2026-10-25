@@ -58,3 +58,7 @@ Not applicable - reports or sets which network is the "current" one; does not re
 
 - Macros:
 - r(current) name of current network
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

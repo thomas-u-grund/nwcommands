@@ -71,3 +71,7 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 - [nwconcor](nwconcor), [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwmodularity](nwmodularity)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

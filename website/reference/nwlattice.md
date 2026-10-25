@@ -71,3 +71,7 @@ Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weigh
 ## See also
 
 - [nwpref](nwpref), [nwrandom](nwrandom), [nwring](nwring), [nwsmall](nwsmall)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

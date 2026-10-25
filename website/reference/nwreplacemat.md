@@ -71,3 +71,7 @@ Binary: yes. Directed: yes - this command's entire purpose is writing an arbitra
 ## See also
 
 - [nwreplace](nwreplace)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

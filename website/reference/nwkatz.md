@@ -71,3 +71,7 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 - [nwcloseness](nwcloseness), [nwbetween](nwbetween), [nwdegree](nwdegree), [nwcloseness](nwcloseness), [nwevcent](nwevcent)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

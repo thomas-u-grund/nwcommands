@@ -125,3 +125,7 @@ Two-mode: yes - declares a two-mode network from a rectangular incidence matrix 
 - [nwset](nwset) (whose own `twomode`/`bipartite` options can also declare a two-mode network directly), [nw2fromedge](nw2fromedge), [nwload](nwload), [nw2project](nw2project) ([nwproject](nwproject))
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

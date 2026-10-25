@@ -33,3 +33,7 @@ Catch a package-specific error code programmatically:
 ## See also
 
 - [nwcommands](nwcommands), [nwtopical](nwtopical)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

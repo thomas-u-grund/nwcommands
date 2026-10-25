@@ -88,3 +88,7 @@ Binary: yes. Directed: yes - this command's entire purpose is converting a direc
 - [nwsymmetrize](nwsymmetrize) (an exact alias for this command)
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

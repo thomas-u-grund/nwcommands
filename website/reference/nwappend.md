@@ -42,3 +42,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - appends 
 - [nwuse](nwuse), [nwwebuse](nwwebuse), [nwsave](nwsave), `append`
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

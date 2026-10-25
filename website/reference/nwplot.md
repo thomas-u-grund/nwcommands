@@ -226,3 +226,7 @@ Binary: yes. Weighted: yes (via `edgesize()`/`edgecolor()` - see the shortest-pa
 ## See also
 
 - [nwplotmatrix](nwplotmatrix), [nwmovie](nwmovie), [netexample](netexample)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

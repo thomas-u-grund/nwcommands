@@ -7,3 +7,7 @@ search_exclude: false
 ---
 
 # `nwalphabetical`
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

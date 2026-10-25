@@ -71,3 +71,7 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 - [nwcorrelate](nwcorrelate), [nwcomponents](nwcomponents), [nwqap](nwqap)
 
 - last certified : 22 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

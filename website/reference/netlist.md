@@ -4,7 +4,6 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "List of network names, with abbreviation rules (netlist)."
 ---
 
 # `netlist`
@@ -63,3 +62,7 @@ The networks in the dataset can be reordered with [nworder](nworder).
 ## See also
 
 - [netname](netname), [nwsummarize](nwsummarize), [nworder](nworder)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

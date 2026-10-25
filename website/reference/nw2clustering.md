@@ -78,3 +78,7 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 - [nwclustering](nwclustering), [nw2project](nw2project), [nw2degree](nw2degree)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

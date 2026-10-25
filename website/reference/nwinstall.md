@@ -68,3 +68,7 @@ This command loads Stata dialog boxes for the nwcommands and installs a menu "Ne
 ## Supported network types
 
 Not applicable - installs/manages this package's own Stata menu, dialogs, and update mechanism; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

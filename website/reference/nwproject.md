@@ -49,3 +49,7 @@ Identical to [nw2project](nw2project) - see that command's help file. Two-mode: 
 See [nw2project](nw2project).
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

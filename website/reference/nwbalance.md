@@ -71,3 +71,7 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 - [nwtriads](nwtriads), [nwvalue](nwvalue)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

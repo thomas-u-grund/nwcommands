@@ -72,3 +72,7 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 - [nwpref](nwpref), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwsmall](nwsmall)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

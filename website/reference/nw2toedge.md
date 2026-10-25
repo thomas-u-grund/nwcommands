@@ -71,3 +71,7 @@ Two-mode: yes - one row for every tie between the two modes, with the mode of bo
 - [nw2fromedge](nw2fromedge), [nwtoedge](nwtoedge), [nwsave](nwsave)
 
 - last certified : 28 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

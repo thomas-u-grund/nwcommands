@@ -79,3 +79,7 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 - [nwcomponents](nwcomponents), [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcore](nwkcore)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

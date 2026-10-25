@@ -80,3 +80,7 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. *Statistics and Compu
 - [nwevcent](nwevcent), [nwcommunity](nwcommunity), [nwcomponents](nwcomponents), [nwkcomponents](nwkcomponents)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

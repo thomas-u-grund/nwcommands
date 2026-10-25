@@ -22,6 +22,7 @@ density(float)
 census(mutual asym [null])
 weights(p1, p2,...)
 undirected
+directed
 ntimes(int)
 name(newnetname)
 labs(lab1, lab2, ...)
@@ -37,6 +38,7 @@ xvars]
 | `census`([*mutual* [*asym null*]](nwdyads)) | dyad census of the new network |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
+| `directed` | generate a directed network; this is the default, so the option changes nothing (it cannot be combined with `undirected`) |
 | `ntimes(int)` | number of random networks to be generated; default = 1 |
 | `name`(*[newnetname](newnetname)*) | name of the new random network; default = *random* |
 | `labs`(*lab1, lab2, ...*) | overwrite node labels |
@@ -95,3 +97,7 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 - [nwsmall](nwsmall), [nwpref](nwpref), [nwpref](nwpref), [nwlattice](nwlattice), [nwring](nwring)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -130,3 +130,7 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 ## See also
 
 - `nwergm`, [nwpermute](nwpermute)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

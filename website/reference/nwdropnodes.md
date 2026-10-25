@@ -85,3 +85,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural ope
 ## See also
 
 - [nwkeepnodes](nwkeepnodes), [nwdrop](nwdrop), [nwclear](nwclear), [nwkeep](nwkeep)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

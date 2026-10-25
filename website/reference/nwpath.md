@@ -93,3 +93,7 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 ## Supported network types
 
 Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic) for weighted distances). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

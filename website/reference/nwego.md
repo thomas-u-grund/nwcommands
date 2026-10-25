@@ -60,3 +60,7 @@ Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harv
 - [nwdegree](nwdegree), [nwaltergen](nwaltergen), [nwconstraint](nwconstraint), [nwburt](nwburt)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

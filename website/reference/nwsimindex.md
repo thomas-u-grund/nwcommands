@@ -85,3 +85,7 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 - [nwsimilar](nwsimilar), [nw2project](nw2project), [nwkcore](nwkcore), [nwburt](nwburt)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

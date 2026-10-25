@@ -46,3 +46,7 @@ Binary: yes. Directed: yes - a replaced value is written to the exact (ego,alter
 ## See also
 
 - [nwreplacemat](nwreplacemat), [nwsync](nwsync), [nwload](nwload)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

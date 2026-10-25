@@ -55,3 +55,7 @@ Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued
 Almeida-Neto, M., P. Guimaraes, P. R. Guimaraes, R. D. Loyola, and W. Ulrich. 2008. A consistent metric for nestedness analysis in ecological systems. *Oikos* 117: 1227-1239.
 
 Stone, L., and A. Roberts. 1990. The checkerboard score and species distributions. *Oecologia* 85: 74-79.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

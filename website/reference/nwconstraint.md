@@ -63,3 +63,7 @@ Ronald S. Burt (1992). *Structural Holes: The Social Structure of Competition*. 
 - [nwburt](nwburt), [nwdegree](nwdegree), [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwevcent](nwevcent), [nwclustering](nwclustering)
 
 - last certified : 21 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

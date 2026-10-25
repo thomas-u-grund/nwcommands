@@ -61,3 +61,7 @@ Simply transposes a network, i.e. a directed tie from node *i* to node *j* is tr
 ## Supported network types
 
 Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: yes - the flag, the modes and the level labels are kept (the matrix of a two-mode network is symmetric).
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -94,3 +94,7 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 - [nwcloseness](nwcloseness), [nwreach](nwreach), [nwpath](nwpath), [nwcomponents](nwcomponents)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

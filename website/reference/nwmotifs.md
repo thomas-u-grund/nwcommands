@@ -90,3 +90,7 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 - [nwtriads](nwtriads), [nwcug](nwcug), [nwclustering](nwclustering)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

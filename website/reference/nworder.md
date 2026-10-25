@@ -74,3 +74,7 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders
 ## See also
 
 - [nwds](nwds), `order`, [netlist](netlist)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

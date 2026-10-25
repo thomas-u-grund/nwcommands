@@ -9,9 +9,9 @@ description: "How to cite nwdynam, and the original papers and software it build
 # How to cite
 
 **nwdynam.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwdynam version` (for example "nwdynam 1.1.1"). The package has no DOI:
+`nwdynam version` (for example "nwdynam 1.1.2"). The package has no DOI:
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models (version 1.1.1).* GitHub. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models (version 1.1.2).* GitHub. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
 Please also cite the core package, nwcommands.
 

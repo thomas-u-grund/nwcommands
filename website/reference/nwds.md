@@ -57,3 +57,7 @@ Not applicable - a pure network-listing utility (in the style of Stata's own `ds
 - `ds`, [nwcurrent](nwcurrent), [nwclear](nwclear)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

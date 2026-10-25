@@ -45,3 +45,7 @@ Binary: yes. Directed: yes - this command's entire purpose is checking whether a
 ## See also
 
 - [nwsym](nwsym), [nwname](nwname)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

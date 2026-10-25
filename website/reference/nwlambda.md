@@ -71,3 +71,7 @@ The result is an *n*-by-*n* network and two matrices are held at once: above abo
 - [nwkcomponents](nwkcomponents), [nwcohesion](nwcohesion), [nwhierarchy](nwhierarchy), [nwclique](nwclique), [nwkplex](nwkplex)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

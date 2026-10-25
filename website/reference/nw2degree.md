@@ -86,3 +86,7 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 - [nwdegree](nwdegree), [nw2set](nw2set), [nw2project](nw2project), [nw2clustering](nw2clustering)
 
 - last certified : 02 Sep 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

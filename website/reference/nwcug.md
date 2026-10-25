@@ -83,3 +83,7 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 - [nwrandom](nwrandom), [nwdyads](nwdyads), [nwpermute](nwpermute), [nwqap](nwqap)
 
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

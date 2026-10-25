@@ -71,3 +71,7 @@ Binary: yes. Directed: yes, via `mode(incoming|outgoing|either)`. Weighted: not 
 **Matrices**
 
 - **r(neighbors)** reshuffled list of all neighbors
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

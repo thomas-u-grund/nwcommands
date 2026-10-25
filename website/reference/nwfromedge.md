@@ -111,3 +111,7 @@ This loads a network dataset from the internet and transforms the network *glasg
 ## Supported network types
 
 Binary: yes. Directed: yes, via `directed`/`undirected`/`forcedirected`/`forceundirected`. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with `undirected` a tie listed once keeps its sign. Two-mode: yes - with `twomode`, an exact alias for [nw2fromedge](nw2fromedge), which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through [nwtoedge](nwtoedge) specifically is not affected: `nwtoedge` attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and `nwfromedge` automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with [nwaddnodes](nwaddnodes) same as always.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

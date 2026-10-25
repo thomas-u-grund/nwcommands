@@ -78,3 +78,7 @@ Besides setting the network, this also creates a new variable *_nwmode*, which h
 ## Supported network types
 
 Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use [nwaddnodes](nwaddnodes)'s own **mode()** option afterward to add any isolates the source data could not represent.
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

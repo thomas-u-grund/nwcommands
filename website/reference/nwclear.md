@@ -21,6 +21,8 @@ nwclear
 
 Clears all networks and variables from memory. This is the network extension of `clear`. One can also just drop some or all networks using [nwdrop](nwdrop).
 
+Note that Stata's own `clear` (or `clear all`) does not remove the networks held by nwcommands; only `nwclear` does (or [nwdrop](nwdrop) for chosen networks).
+
 This example loads network data and clears everything afterwards.
 
 ```stata
@@ -41,3 +43,7 @@ Not applicable - clears all networks and Stata variables from memory uncondition
 
 - [nwdrop](nwdrop), `clear`
 - last certified : 24 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

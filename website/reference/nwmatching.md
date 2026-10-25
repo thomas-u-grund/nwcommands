@@ -70,3 +70,7 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 - [nwmaxflow](nwmaxflow), [nw2project](nw2project), [nw2set](nw2set), [nw2fromedge](nw2fromedge)
 
 - last certified : 31 Aug 2026
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

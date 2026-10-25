@@ -39,3 +39,7 @@ Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/at
 - [two-way nwtabulate](nwtab2), `tabulate`
 
 - * *! 12jul2016: Thomas Grund
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))

@@ -72,3 +72,7 @@ Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incom
 ## See also
 
 - [nwdissimilar](nwdissimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)
+
+---
+
+*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
