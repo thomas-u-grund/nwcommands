@@ -379,4 +379,4 @@ crashes.
 	{help _nwevalnetexp}, {help _nwsyntax}, {help nwtomata}
 
 {hline}
-{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
