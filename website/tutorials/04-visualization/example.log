@@ -20,8 +20,6 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-Running /Users/tgrund/Documents/Stata/profile.do ...
-
 . do example.do 
 
 . * Tutorial 4: Visualization
@@ -67,8 +65,7 @@ file plot_styled.svg saved as SVG format
 
 . 
 . * nwcommands ships three schemes purpose-built for network plots
-. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s2network) export("plot_scheme2.svg") replac
-> e
+. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s2network) export("plot_scheme2.svg") replace
 Calculating node coordinates...
 Generating splines...
 Plotting network...
@@ -76,8 +73,7 @@ Exporting graph to plot_scheme2.svg...
 (file plot_scheme2.svg not found)
 file plot_scheme2.svg saved as SVG format
 
-. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s3network) export("plot_scheme3.svg") replac
-> e
+. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s3network) export("plot_scheme3.svg") replace
 Calculating node coordinates...
 Generating splines...
 Plotting network...
@@ -113,14 +109,57 @@ file plot_path.svg saved as SVG format
 . * drag nodes to reposition them, edit the color/shape legend directly
 . nwwebuse glasgow, nwclear
 
-. nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen
+. nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen fname(interactive_plot)
 Calculating node coordinates...
 Generating splines...
 Preparing interactive view...
+Interactive view written to .../interactive_plot.html
 Plotting network...
 
-. display "`r(interactive)'"
-/var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T/nwedit_160951_404175.html
+. display "`r(fname)'"
+.../interactive_plot.html
+
+. 
+. * The interactive workflow in four steps, with the advice network of the
+. * 71 lawyers of the Lazega law firm (colour = office, shape = practice,
+. * size = indegree).  1. Build the page; fname() names the file and noopen
+. * writes it without opening the viewer window.  generate(x y) keeps the layout.
+. nwwebuse lazega, nwclear
+
+. quietly nwdegree lazega_adv, generate(outdeg indeg)
+
+. set seed 42
+
+. nwplot lazega_adv, color(office, colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) edgefact
+> or(0.4) generate(x y) interactive noopen fname(lazega_advice_interactive)
+Calculating node coordinates...
+Generating splines...
+Preparing interactive view...
+Interactive view written to .../lazega_advice_interactive.html
+Plotting network...
+Export coordinates...
+
+. display "`r(fname)'"
+.../lazega_advice_interactive.html
+
+. 
+. * 2. (In the browser: drag, recolour, move the sliders, Save nodes, Save edges.
+. * The two files below were saved in such a session.)
+. * 3. Bring the edits back.  No nodefactor() is given: the size slider is
+. * scaled so that the static plot has the proportions of the view.
+. nwplot lazega_adv, nodexy(x y) importcoords("lazega_saved_nodes.csv") edgeimport("lazega_saved_edges.csv") color(office
+> , colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) scheme(s1mono) labelopt(mlabsize(tiny))
+>  export("plot_lazega_bringback.svg") replace
+(9 vars, 71 obs)
+(4 vars, 892 obs)
+Generating splines...
+Plotting network...
+Exporting graph to plot_lazega_bringback.svg...
+(file plot_lazega_bringback.svg not found)
+file plot_lazega_bringback.svg saved as SVG format
+
+. 
+. nwwebuse glasgow, nwclear
 
 . 
 . * nwmovie builds an interactive, browser-based timeline player directly
@@ -130,7 +169,6 @@ Resolving network glasgow1 (1/3)...
 Resolving network glasgow2 (2/3)...
 Resolving network glasgow3 (3/3)...
 Wrote friendship_movie.html
-request ignored because of batch mode
 
 . 
 end of do-file

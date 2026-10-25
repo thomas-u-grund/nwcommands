@@ -41,6 +41,7 @@ name(string)
 | `plot` | Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own `permutations()` null draws - the same comparison R's **sna::plot.qaptest()** draws, generalized to every coefficient in the regression |
 | `name(string)` | Name for the combined graph created by `plot`; default = **qap** |
 | `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see [qapspp](nwqap) below |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise) |
 
 ## Description
 
@@ -128,4 +129,4 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 
 ## See also
 
-- [nwergm](nwergm), [nwpermute](nwpermute)
+- `nwergm`, [nwpermute](nwpermute)

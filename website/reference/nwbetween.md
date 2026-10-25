@@ -23,7 +23,8 @@ nosym
 standardize
 silent
 weighted
-alpha(real)]
+alpha(real)
+force]
 ```
 
 | | |
@@ -35,6 +36,7 @@ alpha(real)]
 | `silent` | suppress the summary table of the generated variable |
 | `weighted` | calculate on weighted (Dijkstra) shortest paths instead of dichotomizing |
 | `alpha(real)` | weight-to-distance exponent used with `weighted`; default = 1 |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
 ## Description
 

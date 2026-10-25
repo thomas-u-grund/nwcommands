@@ -30,6 +30,7 @@ geodesic_options]
 | `cost(real)` | cost of connection; default = 1 |
 | `intrvalue(netname)` | intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair |
 | `intrcost(netname)` | per-dyad cost y_ij, replacing the constant *cost* for direct connections; default = *cost* for every tied pair |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 19,300 nodes otherwise) |
 
 ## Description
 

@@ -19,7 +19,8 @@ nwcohesion
 [,
 generate(newvarname)
 replace
-silent]
+silent
+force]
 ```
 
 | | |
@@ -27,6 +28,7 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own highest cohesion level |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
 ## Description
 
@@ -45,7 +47,7 @@ Like [nwkcomponents](nwkcomponents), blocks can genuinely overlap (a cutset rema
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed generalization here, matching [nwkcomponents](nwkcomponents)). Weighted: not used. Signed: not checked. Two-mode: not checked. Computationally more expensive than a single [nwkcomponents](nwkcomponents) call, since each block found is itself recursively re-decomposed - fine for the moderate network sizes typical of SNA datasets.
+Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed generalization here, matching [nwkcomponents](nwkcomponents)). Weighted: not used. Signed: not checked. Two-mode: not checked.
 
 ## Stored results
 

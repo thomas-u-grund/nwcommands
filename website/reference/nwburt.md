@@ -58,7 +58,7 @@ Conceptually, constraint refers to how much room you have to negotiate or exploi
 
 Hierarchy is another quite complex measure that describes the nature of the constraint on ego.  If the total constraint on ego is concentrated in a single other actor, the hierarchy measure will have a higher value.  If the constraint results more equally from multiple actors in ego's neighborhood, hierarchy will be less.  The hierarchy measure, in itself, does not assess the degree of constraint.  But, among whatever constraint there is on ego, it measures the important property of dependency -- inequality in the distribution of constraints on ego across the alters in its neighborhood.
 
-This command operates on the full adjacency matrix (via [nwtomata](nwtomata)) rather than the sparse network index, because the underlying formulas require genuine matrix products (two-step reach via every intermediary) rather than single-neighbor lookups - the same reason [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar), and [nwqap](nwqap) are also matrix-based. This is not expected to be practical on very large networks; see the sparse-backend documentation for detail on which nwcommands are, and are not yet, sparse-scalable.
+The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the work), so the command also runs on large networks (see **Limits**). The options `dyadredundancy` and `dyadconstraint` build the full *n*-by-*n* dyadic networks from the adjacency matrix (via [nwtomata](nwtomata)), as [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar) and [nwqap](nwqap) do, and are practical only for moderate network sizes.
 
 ## Examples
 

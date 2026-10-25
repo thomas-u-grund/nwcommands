@@ -42,7 +42,7 @@ pick something else.
 
 ## Exporting to UCINET and Pajek
 
-`nwexport` writes one network at a time, in either UCINET (`.dl`) or Pajek (`.net`) format:
+`nwexport` writes one network at a time, in UCINET (`.dl`) or Pajek (`.net`) format; `type(gml)` and `type(edgelist)` write a GML file or a plain-text edge list (`.gml`, `.txt`). Without node attributes in any of them:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -69,7 +69,6 @@ network. `nwtoedge` does the first half:
 . nwwebuse glasgow, nwclear
 
 . nwtoedge glasgow1
-(50 real changes made)
 
 . describe
 

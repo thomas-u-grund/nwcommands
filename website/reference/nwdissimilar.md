@@ -33,6 +33,7 @@ vars(newvarlist)]
 | `xvars` | Generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels; default = the source network's own labels |
 | `vars`(*`newvarlist`*) | new variables that are used for the network |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 13,700 nodes otherwise) |
 
 ## Description
 

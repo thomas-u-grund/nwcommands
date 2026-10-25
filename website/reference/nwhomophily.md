@@ -100,7 +100,7 @@ Notice that when *nwhomophily* is used together with *z* variables in `varlist`,
 
 ## Remarks
 
-The program requires some additional programs (**gsample, moremata**) that it will automatically install with a working internet connection.
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
 ## Supported network types
 

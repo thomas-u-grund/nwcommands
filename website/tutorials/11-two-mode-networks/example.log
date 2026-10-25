@@ -1,0 +1,264 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+
+
+. do example.do 
+
+. * Tutorial 9: Two-mode networks
+. * The two data sets are loaded from the data folder of the repository here;
+. * once the release is installed, nwwebuse davis and nwwebuse ftdirectors_se do the same.
+. 
+. * Southern women: 18 women, 14 social events
+. nwuse ../../../data/davis, nwclear
+
+. nwsummarize davis
+--------------------------------------------------
+   Network name:  davis
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 32
+      Level 1: 18 (woman)
+      Level 2: 14 (event)
+   Selfloop: false
+   Edges: 89
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .353
+   Temporal: false
+
+. 
+. * Degree in a two-mode network: the number of ties divided by the size of the other mode
+. nw2degree davis, generate(att)
+----------------------------------------
+  Network name: davis
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         att |         32    .3531746     .171207   .1428571   .7777778
+ 
+
+. generate attended = round(att * 14) if _nwmode == "1"
+(14 missing values generated)
+
+. generate guests = round(att * 18) if _nwmode == "2"
+(18 missing values generated)
+
+. list _nwnode surname title attended if _nwmode == "1", noobs
+
+  +-------------------------------------------+
+  |   _nwnode      surname   title   attended |
+  |-------------------------------------------|
+  |    Brenda       Rogers    Miss          7 |
+  | Charlotte       McDowd    Miss          4 |
+  |   Dorothy    Murchison     Mrs          2 |
+  |   Eleanor          Nye    Miss          4 |
+  |    Evelyn    Jefferson     Mrs          8 |
+  |-------------------------------------------|
+  |     Flora        Price     Mrs          2 |
+  |   Frances     Anderson    Miss          4 |
+  |     Helen        Lloyd     Mrs          5 |
+  | Katherine       Rogers    Miss          6 |
+  |     Laura   Mandeville    Miss          7 |
+  |-------------------------------------------|
+  |      Myra      Liddell    Miss          4 |
+  |      Nora      Fayette     Mrs          8 |
+  |    Olivia     Carleton     Mrs          2 |
+  |     Pearl   Oglethorpe    Miss          3 |
+  |      Ruth       DeSand    Miss          4 |
+  |-------------------------------------------|
+  |    Sylvia     Avondale     Mrs          7 |
+  |   Theresa     Anderson    Miss          8 |
+  |     Verne    Sanderson    Miss          4 |
+  +-------------------------------------------+
+
+. gsort -guests
+
+. list _nwnode eventdate guests in 1/3, noobs
+
+  +-------------------------------+
+  | _nwnode    eventdate   guests |
+  |-------------------------------|
+  |      E8   1936-09-16       14 |
+  |      E9   1936-04-08       12 |
+  |      E7   1936-03-15       10 |
+  +-------------------------------+
+
+. sort _nwmode _nwnode
+
+. 
+. * Project onto the women: the tie value is the number of events two women attended together
+. nw2project davis, project(1) name(women)
+----------------------------------------
+  Projected network: women
+  Level: 1
+  Nodes: 18
+  Ties: 278
+
+. nwsummarize women
+--------------------------------------------------
+   Network name:  women
+   Network id:  2
+   Directed: false
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Edges: 139
+   Minimum value:  0
+   Maximum value:  7
+   Density:  .908
+   Temporal: false
+   Provenance:  projected from network davis, mode 1 (woman), stat=minmax
+
+. nwcommunity women, generate(group)
+----------------------------------------
+  Network name: women
+  Communities: 2
+  Modularity Q: .152
+
+      group |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          8       44.44       44.44
+          2 |         10       55.56      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. 
+. * Plot the two modes in two columns
+. nwplot davis, layout(bipartite, vertical) color(_nwmode) label(_nwnode) scheme(s1network) export("plot_davis.svg") repl
+> ace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_davis.svg...
+(file plot_davis.svg not found)
+file plot_davis.svg saved as SVG format
+
+. 
+. * Company directors in Sweden: 5,092 directors, 455 companies
+. nwuse ../../../data/ftdirectors_se, nwclear
+
+. nwsummarize ftdirectors_se
+--------------------------------------------------
+   Network name:  ftdirectors_se
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 5547
+      Level 1: 5092 (director)
+      Level 2: 455 (company)
+   Selfloop: false
+   Edges: 5669
+   Minimum value:  0
+   Maximum value:  1
+   Density:  0
+   Temporal: false
+
+. nw2degree ftdirectors_se, generate(deg)
+----------------------------------------
+  Network name: ftdirectors_se
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         deg |      5,547    .0024468    .0010275   .0005892   .0153846
+ 
+
+. generate boards = round(deg * 455) if _nwmode == "1"
+(455 missing values generated)
+
+. tabulate boards
+
+     boards |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |      4,702       92.34       92.34
+          2 |        268        5.26       97.60
+          3 |         81        1.59       99.19
+          4 |         26        0.51       99.71
+          5 |          8        0.16       99.86
+          6 |          5        0.10       99.96
+          7 |          2        0.04      100.00
+------------+-----------------------------------
+      Total |      5,092      100.00
+
+. tabulate gender if _nwmode == "1", missing
+
+     gender |      Freq.     Percent        Cum.
+------------+-----------------------------------
+            |        582       11.43       11.43
+     Female |      1,025       20.13       31.56
+       Male |      3,485       68.44      100.00
+------------+-----------------------------------
+      Total |      5,092      100.00
+
+. tabstat boards if _nwmode == "1", by(gender) statistics(mean count)
+
+Summary for variables: boards
+Group variable: gender 
+
+gender |      Mean         N
+-------+--------------------
+Female |  1.190244      1025
+  Male |  1.098709      3485
+-------+--------------------
+ Total |  1.119512      4510
+----------------------------
+
+. nw2project ftdirectors_se, project(2) name(companies)
+----------------------------------------
+  Projected network: companies
+  Level: 2
+  Nodes: 455
+  Ties: 1518
+
+. nwsummarize companies
+--------------------------------------------------
+   Network name:  companies
+   Network id:  2
+   Directed: false
+   Valued: true
+   Two-mode: false
+   Nodes: 455
+   Selfloop: false
+   Edges: 759
+   Minimum value:  0
+   Maximum value:  5
+   Density:  .007
+   Temporal: false
+   Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
+
+. * Components of the projection: how many groups of interlocked companies?
+. quietly nwcomponents companies, generate(comp)
+
+. display r(components)
+132
+
+. egen size = count(comp), by(comp)
+
+. summarize size, meanonly
+
+. display r(max)
+304
+
+. 
+end of do-file

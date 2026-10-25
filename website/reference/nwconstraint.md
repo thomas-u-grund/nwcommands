@@ -17,9 +17,12 @@ Calculate Burt's constraint
 nwconstraint
 [netname]
 [,
+name(newnetname)
+replace
 nwset_options]
-where nwset_options are any options accepted by nwset's mat() form (e.g.
-name(), undirected, directed) - they are forwarded unchanged to the internal
+name() names the new network and replace overwrites an existing network of that name. The
+other nwset_options are any options accepted by nwset's mat() form (e.g.
+undirected, directed); they are forwarded unchanged to the internal
 nwset, mat() call that stores the result.
 ```
 

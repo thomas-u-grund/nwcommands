@@ -23,7 +23,8 @@ nodes(int)
 name(newnetname)
 xvars
 labs(lab1 lab2 ...)
-replace]
+replace
+force]
 ```
 
 | | |
@@ -35,6 +36,7 @@ replace]
 | `xvars` | generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
 
 ## Description
 

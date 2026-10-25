@@ -82,16 +82,16 @@ Row/column 12 (`pucci`) is entirely missing, confirming it's unreachable from ev
 node's *eccentricity*: the length of its own single longest shortest path.
 
 ```stata
-. gsort -ecc
+. gsort -ecc _nwnode
 
 . list _nwnode ecc in 1/5
 
      +--------------------+
      |      _nwnode   ecc |
      |--------------------|
-  1. | lamberteschi     5 |
-  2. |        pazzi     5 |
-  3. |     bischeri     5 |
+  1. |     bischeri     5 |
+  2. | lamberteschi     5 |
+  3. |        pazzi     5 |
   4. |      peruzzi     5 |
   5. |   acciaiuoli     4 |
      +--------------------+
@@ -148,9 +148,13 @@ node visually obvious even in a network too large to eyeball directly for connec
 
 `nwego` looks at each node's own local neighborhood in isolation: how many alters does it have
 (`sizevar()`), and how interconnected are those alters with *each other*, independent of their
-(by definition, universal) ties back to the node itself (`densvar()`):
+(by definition, universal) ties back to the node itself (`densvar()`). `nwego` stores its results
+row by row, so the `sort _nwnode` first puts the observations back in the order of the network
+(here alphabetical), which the `gsort` above had changed:
 
 ```stata
+. sort _nwnode
+
 . nwego flomarriage, sizevar(egosize) densvar(egodensity)
 ----------------------------------------
   Network name: flomarriage
@@ -160,19 +164,23 @@ node visually obvious even in a network too large to eyeball directly for connec
      egosize |         16         2.5    1.505545          0          6
   egodensity |         11    .2181818    .2192734          0   .6666667
 
-. gsort -egosize
+. gsort -egosize _nwnode
 
-. list _nwnode egosize egodensity in 1/5
+. list _nwnode egosize egodensity in 1/8
 
-     +-------------------------------+
-     |  _nwnode   egosize   egoden~y |
-     |-------------------------------|
-  1. |   medici         6   .0666667 |
-  2. | guadagni         4          0 |
-  3. |  strozzi         4   .3333333 |
-  4. |  peruzzi         3   .6666667 |
-  5. |  ridolfi         3   .3333333 |
-     +-------------------------------+
+     +---------------------------------+
+     |    _nwnode   egosize   egoden~y |
+     |---------------------------------|
+  1. |     medici         6   .0666667 |
+  2. |   guadagni         4          0 |
+  3. |    strozzi         4   .3333333 |
+  4. |    albizzi         3          0 |
+  5. |   bischeri         3   .3333333 |
+     |---------------------------------|
+  6. | castellani         3   .3333333 |
+  7. |    peruzzi         3   .6666667 |
+  8. |    ridolfi         3   .3333333 |
+     +---------------------------------+
 ```
 
 `medici` has by far the largest ego network (6 alters) but one of the *lowest* densities among

@@ -24,6 +24,7 @@ nwreplace]
 | | |
 |---|---|
 | `name(newnetname)` | Save Simmelian ties as new network; default *_simmelian* |
+| `nwreplace` | Replace the network *name()* if it already exists |
 
 ## Description
 
@@ -43,7 +44,7 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 
 ## Supported network types
 
-Binary: yes (only) - uses `get_matrix_unvalued()` throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (a known doc/implementation gap, not yet resolved - see the alpha audit's own finding). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - uses `get_matrix_unvalued()` throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (the concept is often described in terms of strong ties; this command does not apply a strength threshold). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
 ## References
 

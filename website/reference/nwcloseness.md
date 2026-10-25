@@ -20,7 +20,8 @@ nwcloseness
 unconnected(int)
 generate(var1 var2 var3)
 nosym
-replace]
+replace
+force]
 ```
 
 | | |
@@ -29,6 +30,7 @@ replace]
 | `generate`(*`var1 var2 var3`*) | **Required.** Exactly 3 variable names to save closeness, farness and nearness scores, in that order |
 | `nosym` | do not symmetrize network before calculation of shortest paths |
 | `replace` | overwrite existing *var1, var2, var3* (or *_closeness, _farness, _nearness*); required if they already exist |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
 ## Description
 
