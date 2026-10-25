@@ -4,6 +4,15 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results change for valued networks!
+- `nwburt` on a **valued** network now computes Burt's (1992) weighted measures. Before, the tie values were put into the formulas of a binary network without the normalisations that Burt's definitions need, so effective size could be negative and efficiency below 0 (the gang network with values 1 to 4: effective size from -16.6 to 15, 22 of 54 members negative; the Chesapeake network: down to -1.8e10). Now, as in `igraph::constraint(weights=)` of R and `networkx.effective_size` / `networkx.constraint`: the strength of the relation between i and j is the sum of both directions (z_ij + z_ji), p_ij is its share of the sum over all contacts of i, m_jq is a_jq divided by the largest a_jk of j, and effective size, efficiency (effective size divided by the number of contacts), constraint and hierarchy follow Burt. A directed valued network is therefore symmetrized (igraph does the same); a directed network whose ties all have the value 1 is not, and gives the same numbers as before. The new option `binary` ignores the values (every positive value is a tie). Networks whose ties all have the value 1 give exactly the same numbers as before.
+- `nwburt` stops with an error for a network with negative or missing tie values. `dyadredundancy` and `dyadconstraint` need the option `binary` for a valued network.
+- The weighted measures run in the native plugin only (plugin generation 9, kernel 40; no slow Mata fallback). Without the plugin, or with an older one, a valued network gives the error "Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the binary option for the unweighted measures".
+- New stored result `r(weighted)`. Regression tests `cscripts/test_burt_valued.do` (60 random valued networks against an independent R implementation that agrees with igraph and networkx to 1e-10; the R script is `tools/verify_burt.R`).
+- `nwconstraint` (the dyadic constraint network) is not changed and still uses the tie values as they are.
+
 ## [3.5.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)

@@ -602,6 +602,15 @@ Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix 
 - **Kernels that return fewer rows than allocated** must set `g_res_rows` to the real count before the fetch call (it copies `g_res_rows` rows).
 - The `nwburt` hierarchy is missing for a node without ties and 1 for degree 1 (log 1 = 0); the kernel returns a missing flag in column 5 because plugin results are plain doubles.
 
+## nwburt on valued networks: kernel 40, plugin generation 9 (2026-10-25)
+
+- Before this change a valued network went through the formulas of a binary network with the weights inserted (kernel 29 / `calculate_burt()` / the dense `dyadicredundancy()`), giving negative effective sizes (note that Burt's constraint itself can legitimately exceed 1 for a node with strong indirect paths; igraph agrees). Kernel 29 and the Mata routines are unchanged and are still the route for networks whose ties all have the value 1 (so every number printed for a binary network is byte-identical) and for `nwburt, binary`, which first keeps the positive ties and sets them to 1.
+- Valued means "some positive tie value other than 1" (`nw_burtkind()` in `nwburt.ado`), not the `valued` flag of the network (that flag is 0 for values inside [0,1]). Negative or missing values are refused.
+- Kernel 40 (`native/nwburtw.h`) follows Burt and igraph: a_ij = z_ij + z_ji over all contacts, so a directed valued network is symmetrized, but a directed network with only 1-ties is still computed from outgoing ties (kernel 29, the old documented convention; igraph differs for it). Do not "fix" one without the other: it changes the printed numbers of the directed Lazega networks in the book. Contacts are the nodes with a_ij > 0, the sums run over contacts only (influenceR::constraint also sums over non-contacts and differs), isolates give 0 (igraph: NaN), degree 1 gives hierarchy 1.
+- Weights are stored in single precision by `nwset`: a test fixture with weights like 5.552 differs from R in the 9th digit; use multiples of 1/64 (tools/verify_burt.R does).
+- No Mata fallback by design: with `NW_NOFASTKERNELS` or a plugin older than generation 9 a valued network is an error. Linux and Windows plugins of generation 9 come from CI; until then `test_burt_valued.do` skips (prints SKIPPED).
+- `nwconstraint` (kernel 30, dyadic constraint network) still takes the tie values as they are; it was not part of this change.
+
 ## Algorithm codes 34-35 (PageRank, maximal cliques) and the k = 2 block search; kernel version 8
 
 `native/nwfast2.h` (included by `nwcomb.h`, `NWCOMB_VERSION 8`) hosts the kernels of `nwpagerank` (34) and `nwclique` (35); the glue is a file-scope Mata helper

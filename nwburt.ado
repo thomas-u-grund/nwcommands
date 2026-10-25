@@ -2,9 +2,25 @@
 capture program drop nwburt
 program nwburt, rclass
 	version 12
-	syntax [anything(name=netname)] [, dyadredundancy dyadconstraint replace silent]
+	syntax [anything(name=netname)] [, dyadredundancy dyadconstraint BINary replace silent]
 
 	_nwsyntax `netname'
+
+	// What kind of ties does the network store: 0 = every tie has the value 1, 1 = other positive values
+	// (valued), 2 = a negative or missing value. Valued networks get Burt's (1992) weighted measures (native
+	// kernel 40) unless binary is given, which treats every positive value as a tie.
+	local __kind 0
+	mata: st_local("__kind", strofreal(nw_burtkind(`netobj')))
+	if `__kind' == 2 {
+		di "{err}nwburt is not defined for networks with negative or missing tie values"
+		err 198
+	}
+	local __weighted = (`__kind' == 1 & "`binary'" == "")
+	if `__weighted' & ("`dyadredundancy'" != "" | "`dyadconstraint'" != "") {
+		di "{err}The network is valued: dyadredundancy and dyadconstraint are defined for ties that are present or absent."
+		di "{err}Add the option {bf:binary} (every positive value counts as a tie) or dichotomize the network first."
+		err 198
+	}
 
 	foreach v in _effsize _efficiency _constraint _hierarchy {
 		capture confirm variable `v'
@@ -34,10 +50,25 @@ program nwburt, rclass
 		tempname __burt
 		// native kernel 29 (plugin generation 7 or later) from the stored ties; an n x 4 result is used, anything else
 		// (older plugin, failure, NW_NOFASTKERNELS) leaves the Mata method
-		mata: `__burt' = nw_fastburt(`netobj')
-		mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
-		if !`__fast' {
-			mata: `__burt' = `netobj'->calculate_burt()
+		if `__weighted' {
+			// weighted Burt measures: native kernel 40 (plugin generation 9 or later), no Mata fallback
+			mata: `__burt' = nw_fastburtw(`netobj')
+			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+			if !`__fast' {
+				di "{err}Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the {bf:binary} option for the unweighted measures"
+				err 198
+			}
+		}
+		else {
+			mata: `__burt' = nw_fastburt(`netobj', `__kind')
+			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+			if !`__fast' & `__kind' == 1 {
+				di "{err}The {bf:binary} option for a valued network needs the native plugin of nwcommands >= 3.6.0"
+				err 198
+			}
+			if !`__fast' {
+				mata: `__burt' = `netobj'->calculate_burt()
+			}
 		}
 		mata: effsize = `__burt'[.,1]
 		mata: efficiency = `__burt'[.,2]
@@ -61,6 +92,7 @@ program nwburt, rclass
 		// nothing to a two-step-via-q path count either way, so 0 (the
 		// correct additive identity) is what belongs on the diagonal
 		// for this computation, not missing.
+		if `__kind' == 1 mata: `onenet' = (`onenet' :> 0) :* (`onenet' :< .)
 		mata: _diag(`onenet', J(`nodes',1,0))
 
 		mata: dr = dyadicredundancy(`onenet')
@@ -104,12 +136,14 @@ program nwburt, rclass
 	mata: mata drop effsize efficiency constraint h
 
 	return scalar nodes = `nodes'
+	return scalar weighted = `__weighted'
 
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network name: {res}`netname'"
 		di "{hline 40}"
 		di "{txt}    Burt structural hole measures"
+		if `__weighted' di "{txt}    (valued ties: Burt's weighted measures; both directions of a directed tie count)"
 		sum _effsize _efficiency _constraint _hierarchy
 	}
 	// Drive-by fix (found while writing this command's own Examples
@@ -127,6 +161,8 @@ program nwburt, rclass
 end
 
 capture mata: mata drop nw_fastburt()
+capture mata: mata drop nw_fastburtw()
+capture mata: mata drop nw_burtkind()
 capture mata: mata drop dyadicredundancy()
 capture mata: mata drop dyadicconstraint()
 capture mata: mata drop hierarchy()
@@ -135,7 +171,7 @@ mata:
 // Native Burt measures (kernel 29 of the nwgraph plugin): the n x 4 matrix of calculate_burt() (effective size,
 // efficiency, constraint, hierarchy), or a 0 x 0 matrix when the kernel is not available. The global
 // NW_NOFASTKERNELS forces the Mata method.
-real matrix nw_fastburt(pointer (class nw_def scalar) scalar p)
+real matrix nw_fastburt(pointer (class nw_def scalar) scalar p, real scalar kind)
 {
 	real rowvector aux
 	real scalar st, n
@@ -146,10 +182,46 @@ real matrix nw_fastburt(pointer (class nw_def scalar) scalar p)
 	if (nwg_comb_version() < 7) return(J(0, 0, .))
 	n = p->get_nodes()
 	el = p->edgelist()
+	// binary option on a valued network: every positive value is a tie of value 1
+	if (kind == 1) {
+		el = select(el, el[., 3] :> 0)
+		if (rows(el) > 0) el[., 3] = J(rows(el), 1, 1)
+	}
 	r = nwg_comb(29, n, el, J(0, 1, .), J(1, 0, .), aux, st)
 	if (st != 0 | rows(r) != n | cols(r) != 5) return(J(0, 0, .))
 	h = r[., 4] :+ editvalue(r[., 5], 1, .)
 	return((r[., 1], r[., 2], r[., 3], h))
+}
+
+// Weighted Burt measures (kernel 40 of the nwgraph plugin, plugin generation 9 or later): the n x 4 matrix of effective
+// size, efficiency, constraint and hierarchy, or a 0 x 0 matrix when the kernel is not available. No Mata fallback.
+real matrix nw_fastburtw(pointer (class nw_def scalar) scalar p)
+{
+	real rowvector aux
+	real scalar st, n
+	real matrix r
+	real colvector h
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 9) return(J(0, 0, .))
+	n = p->get_nodes()
+	r = nwg_comb(40, n, p->edgelist(), J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 5) return(J(0, 0, .))
+	h = r[., 4] :+ editvalue(r[., 5], 1, .)
+	return((r[., 1], r[., 2], r[., 3], h))
+}
+
+// 0 = every stored tie has the value 1, 1 = some other positive value, 2 = a negative or missing value
+real scalar nw_burtkind(pointer (class nw_def scalar) scalar p)
+{
+	real matrix el
+	real colvector w
+
+	el = p->edgelist()
+	if (rows(el) == 0) return(0)
+	w = el[., 3]
+	if (any(w :>= .) | any(w :< 0)) return(2)
+	return(any(w :> 0 :& w :!= 1))
 }
 
 real matrix hierarchy(real matrix net, real matrix dc){
