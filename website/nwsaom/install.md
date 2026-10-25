@@ -14,8 +14,10 @@ description: "Install nwsaom for Stata: the core nwcommands first, then the nwsa
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
+
+`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.
@@ -88,8 +90,7 @@ uses the first one it finds; if an update does not seem to take effect, `which n
 
 ## Requirements
 
-- Stata 16 or later is recommended: the plugin exchanges data with Mata through frames, which exist
-  from Stata 16. The development and the examples used Stata/BE 18. Stata/BE is enough.
+- Stata 17 or later (tested with Stata 17 and 18; Stata/BE is enough). The Mata libraries are built with Stata 17; older versions are untested. The examples used Stata/BE 18.
 - The core `nwcommands`, as above.
 - No R and no other software.
 

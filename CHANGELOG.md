@@ -4,6 +4,18 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+
+- `nwinstall, everything` installs the core (what `nwinstall, all` installs) and the four model packages (what `models` installs) as one set, checks first that every model repository can be reached and that no model needs a newer core, and prints the version of each package at the end. `from()`, `modelsfrom()` and `release()` work as for `models` (offline installs from local folders). `nwinstall, all models` is the same as `everything`.
+- `nwinstall, all` ends with a hint on how to add the model packages.
+- `nwinstall` and `nwversion` print a note (and go on) when Stata is older than version 17.
+
+### Changed
+
+- Supported Stata versions: 17 or later, tested with Stata 17 and 18 (StataBE is enough); the false "Stata 14 or later" is replaced in the README, `help nwintro`, the help of `nwinstall` and the website. The install pages and the home page lead with `nwinstall, everything`.
+
 ## [3.5.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)

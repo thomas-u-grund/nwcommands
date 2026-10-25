@@ -331,7 +331,7 @@ The intution and usage of these network extensions is very similar to what one i
 {title:Required software}
 
 {pstd}
-The core commands need nothing beyond Stata itself (Stata 14 or later) and the files of this package: no
+The core commands need nothing beyond Stata itself (Stata 17 or later; tested with Stata 17 and 18, StataBE is enough) and the files of this package: no
 user-written package from SSC, no internet connection after installation, and nothing is ever installed into your
 PLUS directory behind your back. (Earlier versions downloaded {bf:gsample}, {bf:moremata}, {bf:labellist} and
 {bf:tabplot} on first use; that is gone, all four are replaced by built-in code.) The statistical model packages

@@ -14,8 +14,10 @@ description: "Install nwdynam for Stata: the core nwcommands first, then the nwd
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
+
+`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.
@@ -76,7 +78,7 @@ uses the first one it finds; `which nwdynam` and `nwdynam version` show which co
 
 ## Requirements
 
-- Stata 14 or later; Stata/BE is enough. The examples on this site used Stata/BE 18.
+- Stata 17 or later (tested with Stata 17 and 18; StataBE is enough). The Mata libraries are built with Stata 17; older versions are untested. The examples on this site used Stata/BE 18.
 - The core `nwcommands`, as above. No R and no other software.
 
 ## Next

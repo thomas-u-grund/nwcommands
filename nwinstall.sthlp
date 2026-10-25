@@ -31,6 +31,7 @@
 {opth from(string)}
 {opth dest(string)}
 {opt models}
+{opt everything}
 {opth modelpkg(namelist)}
 {opth release(string)}
 {opth modelsfrom(string)}]
@@ -57,6 +58,7 @@
 {synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case){p_end}
 
 {synopt:{opt models}}also install the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem} (see below); with {opt remove} they are uninstalled{p_end}
+{synopt:{opt everything}}install the core (everything {opt all} installs) and the four model packages (what {opt models} installs) as one set, and show all five versions at the end{p_end}
 {synopt:{opth modelpkg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
 {synopt:{opth release(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
 {synopt:{opth modelsfrom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
@@ -70,6 +72,11 @@
 The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem} (relational event models) are packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
 They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
 {cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular release.
+{cmd:nwinstall, all} installs the core only and ends with a hint about the model packages.
+{cmd:nwinstall, everything} installs the core and the four model packages in one step, and prints the version of each package at the end (as {help nwversion} does).
+Before anything is installed, {opt everything} checks that every model repository can be reached and that no model needs a newer core than the one being installed; if not, it stops with a message that names the package and installs nothing.
+{cmd:nwinstall, all models} is the same as {cmd:nwinstall, everything}.
+With {opt everything} (and with {opt models}), {opt from()} is the source of the core package, {opt modelsfrom()} the folder with one subfolder per model package, and {opt release()} the release of the model packages; for an offline install point both at local folders.
 Each package has a {cmd:version} subcommand, for example {cmd:nwsaom version}.
 Updating {cmd:nwcommands} never replaces an installed model package.
 
@@ -93,11 +100,13 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 New to nwcommands? The full install is two commands:
 
 	{cmd:. net install nwcommands}{p_end}
-	{cmd:. nwinstall, all}
+	{cmd:. nwinstall, everything}
 
 {pstd}
 The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); the second downloads
-everything else - the core commands, all help files, and the dialog boxes - and installs them permanently.
+everything else - the core commands, all help files, and the dialog boxes, installed permanently - and the four model packages
+{cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}. To install the core only, type {cmd:nwinstall, all}.
+nwcommands needs Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
 
 
 {pstd}

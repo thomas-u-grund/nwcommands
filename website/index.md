@@ -46,15 +46,20 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
 
 1. The first line installs `nwinstall` itself and the landing help topics.
-2. `nwinstall, all` downloads everything else: every command, all help files and every dialog box.
+2. `nwinstall, everything` downloads everything else: the core (every command, all help files and every dialog
+   box) and the four model packages, and prints the version of each at the end.
 3. Optional: `nwinstall, gui` installs the "Network Analysis" menu in Stata's User menu (the older
-   option name `permanently` still works), and `nwinstall, models` installs the four model packages.
-   To install one model package only, for example nwsaom, type
-   `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
+   option name `permanently` still works).
+
+To install the core only, type `nwinstall, all` instead of `nwinstall, everything`; the model packages can be
+added later with `nwinstall, models`. To install one model package only, for example nwsaom, type
+`net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
+
+Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
 
 `nwversion` shows the installed versions. More on installation, releases and computers without
 internet access: [Installation & Setup](tutorials/01-installation-setup/).

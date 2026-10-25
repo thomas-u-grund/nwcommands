@@ -1,7 +1,22 @@
 capture program drop nwinstall
 program nwinstall
-	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs MODELPkg(string) RELease(string) MODELSFrom(string)]
+	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string)]
 	
+	// supported Stata versions: 17 and 18 (the Mata libraries are built with Stata 17); older versions are untested, not blocked
+	if c(stata_version) < 17 {
+		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
+	}
+
+	// everything = the core (exactly what all installs) plus the four model packages (what models installs), as one consistent set
+	if "`everything'" != "" {
+		local all "all"
+		local models "models"
+		if "`modelpkg'" != "" {
+			di as err "everything installs all four model packages; it cannot be combined with modelpkg()"
+			exit 198
+		}
+	}
+
 	// gui is the documented name of the option that installs the "Network Analysis" menu and dialogs permanently; permanently remains accepted as the older name
 	if "`gui'" != "" local permanently "permanently"
 
@@ -30,6 +45,12 @@ program nwinstall
 	local __nw_src = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main", `"`from'"')
 	
 	tempname fh1 fh2
+
+	// everything: before touching anything, make sure every model repository is reachable and that no model needs a newer core than the one about to be installed
+	if "`everything'" != "" & "`remove'" == "" & "`localcopy'" == "" {
+		nwinstall_corever, src(`"`__nw_src'"')
+		nwinstall_models, release(`release') from(`modelsfrom') preflight corever(`r(ver)')
+	}
 	
 	if "`all'" != "" {
 		local help = "help"
@@ -167,7 +188,7 @@ program nwinstall
 		capture mata: mata mlib index   // the core library lnwcommands.mlib has just been installed; harmless if it fails
 	}
 	if `__nw_models' {
-		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
+		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove' `=cond("`everything'" != "" & "`remove'" == "", "stop", "")'
 	}
 
 	set more off
@@ -218,6 +239,36 @@ program nwinstall
 			}
 		}
 	}	
+
+	if "`everything'" != "" & "`remove'" == "" {
+		// the versions of the whole set, as nwversion shows them (the model packages are indexed by the Mata call above)
+		capture program drop nwversion
+		nwversion
+	}
+	else if "`all'" != "" & !`__nw_models' & "`remove'" == "" {
+		di as text _n "To also install the model packages type: nwinstall, models   (or nwinstall, everything)"
+	}
+end
+
+
+capture program drop nwinstall_corever
+program nwinstall_corever, rclass
+	// version of the core package at the install source (its nwcommands.pkg, line "d Version: X.Y.Z"); empty if unreadable
+	syntax , src(string)
+	tempfile pk
+	local ver ""
+	capture copy `"`src'/nwcommands.pkg"' `"`pk'"', replace
+	if _rc == 0 {
+		tempname fh
+		file open `fh' using `"`pk'"', read text
+		file read `fh' line
+		while r(eof) == 0 {
+			if substr(`"`line'"', 1, 11) == "d Version: " & "`ver'" == "" local ver = strtrim(substr(`"`line'"', 12, .))
+			file read `fh' line
+		}
+		file close `fh'
+	}
+	return local ver "`ver'"
 end
 
 

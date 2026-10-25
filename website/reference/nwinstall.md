@@ -32,6 +32,7 @@ localcopy
 from(string)
 dest(string)
 models
+everything
 modelpkg(namelist)
 release(string)
 modelsfrom(string)]
@@ -55,6 +56,7 @@ modelsfrom(string)]
 | `from(string)` | with `localcopy`: the local folder to copy nwcommands files from; default: the current directory |
 | `dest(string)` | with `localcopy`: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case) |
 | `models` | also install the four model packages `nwsaom`, `nwergm`, `nwdynam` and `nwrem` (see below); with `remove` they are uninstalled |
+| `everything` | install the core (everything `all` installs) and the four model packages (what `models` installs) as one set, and show all five versions at the end |
 | `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
 | `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
 | `modelsfrom(string)` | with `models`: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs) |

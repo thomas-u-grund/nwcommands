@@ -5,6 +5,9 @@ program define nwversion, rclass
 	local nwv "3.5.0"
 	local nwd "25oct2026"
 	di as text _n "nwcommands " as res "`nwv'" as text " (`nwd'), core package; Stata " as res c(stata_version) as text ", " as res c(os)
+	if c(stata_version) < 17 {
+		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
+	}
 	di as text "Model packages (separate, GPL-3; install with {stata nwinstall, models}):"
 	foreach p in nwsaom nwergm nwdynam nwrem {
 		capture findfile `p'.ado

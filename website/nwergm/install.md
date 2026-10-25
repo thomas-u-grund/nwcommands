@@ -14,8 +14,10 @@ description: "Install nwergm for Stata: the core nwcommands first, then the nwer
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
+
+`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.
@@ -79,4 +81,4 @@ nothing to configure. `nwergm version` shows the path of the plugin in use. The 
 
 ## Requirements
 
-Stata 14 or later (Stata BE is enough) and the core `nwcommands` with its Mata library.
+Stata 17 or later (tested with Stata 17 and 18; Stata BE is enough; older versions are untested) and the core `nwcommands` with its Mata library.
