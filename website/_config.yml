@@ -16,7 +16,6 @@ heading_anchors: true
 aux_links:
   "nwcommands": ["https://github.com/thomas-u-grund/nwcommands"]
   "nwsaom": ["https://github.com/thomas-u-grund/nwsaom"]
-  "nwsaom manual (Zenodo)": ["https://doi.org/10.5281/zenodo.23623807"]
   "nwergm": ["https://github.com/thomas-u-grund/nwergm"]
   "nwdynam": ["https://github.com/thomas-u-grund/nwdynam"]
   "nwrem": ["https://github.com/thomas-u-grund/nwrem"]

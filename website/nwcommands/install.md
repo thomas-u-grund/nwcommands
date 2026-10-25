@@ -39,6 +39,6 @@ or pick one on its own page.
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.1.1/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.2.0/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release and installing on
 computers without internet access or administrator rights.
