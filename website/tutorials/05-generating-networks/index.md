@@ -155,7 +155,7 @@ characteristic *hub* structure — a few nodes accumulate far more ties than the
 ------------+-----------------------------------
       Total |         20      100.00
 
-   Degree centralization:: .427
+   Degree centralization: .427
 
 . sort deg _nwnode
 

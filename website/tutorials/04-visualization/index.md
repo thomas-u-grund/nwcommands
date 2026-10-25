@@ -107,19 +107,31 @@ alone is the right tool for a discrete highlight/no-highlight distinction like t
 
 ## Interactive plots
 
-`interactive` opens the same plot in a browser-based, editable view: drag nodes to reposition
-them, and click a color or shape swatch in the legend to recolor every node sharing that value.
-It's the same view embedded live below — try it:
+`interactive` writes the plot as a self-contained web page (the drawing library is inside the file;
+nothing is sent over the Internet, so you can mail the page to a colleague). In the page you drag
+nodes to reposition them, click a color or shape swatch in the legend to recolor every node sharing
+that value, and move two sliders for the size of the nodes and the width of the lines. The glasgow
+plot below is the same view embedded live, so try it:
 
 ```stata
 . nwwebuse glasgow, nwclear
 
-. nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen
+. nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen fname(interactive_plot)
 Calculating node coordinates...
 Generating splines...
 Preparing interactive view...
+Interactive view written to .../interactive_plot.html
 Plotting network...
+
+. display "`r(fname)'"
+.../interactive_plot.html
 ```
+
+Without `noopen`, Stata opens the page in a small viewer window; with `noopen` it only writes the file.
+`fname()` says where: the name you give (`.html` is added if missing; a relative name is relative to the
+working directory, and an existing file is replaced). Without `fname()` the page is written to Stata's
+temporary folder under a time-stamped name. Either way the path is displayed and returned in
+`r(fname)`, and `r(interactive)` holds the same path.
 
 {: .note }
 Drag any node below to reposition it. Click a legend swatch to change the color assigned to that
@@ -127,9 +139,71 @@ whole group.
 
 <iframe src="interactive_plot.html" width="100%" height="600" style="border:1px solid #d0d7de; border-radius:6px;" loading="lazy"></iframe>
 
-Two buttons in that view save your edits as CSV files — feed them back into a later `nwplot` call
-with `importcoords()`/`edgeimport()` to reuse a hand-arranged layout. See
-[nwplot](../../reference/nwplot) for the full round trip.
+### The workflow: explore in the browser, finish in Stata
+
+The browser is for looking at the network from several sides; the figure you publish is better made
+in Stata, where it can be reproduced. The steps, with the advice network of the 71 lawyers of the Lazega
+law firm (color for office, shape for practice, size for the number of colleagues who ask the lawyer for
+advice):
+
+1. **Build the page and keep the layout.** `generate(x y)` stores the coordinates that `nwplot`
+   computed; `set seed` makes the starting layout repeatable.
+2. **Work in the page.** Drag, recolor, move the sliders, then use *Save nodes* and *Save edges*. They
+   write two small CSV files (`nwedit_nodes.csv`, `nwedit_edges.csv`; in most browsers these end up in
+   the Downloads folder).
+3. **Bring the edits back.** `nodexy(x y)` tells `nwplot` where the nodes were, `importcoords()` and
+   `edgeimport()` read the two files.
+4. **Export the static figure** with `export()`.
+
+```stata
+. nwwebuse lazega, nwclear
+
+. quietly nwdegree lazega_adv, generate(outdeg indeg)
+
+. set seed 42
+
+. nwplot lazega_adv, color(office, colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) edgefactor(0.4) generate(x y) interactive noopen fname(lazega_advice_interactive)
+Calculating node coordinates...
+Generating splines...
+Preparing interactive view...
+Interactive view written to .../lazega_advice_interactive.html
+Plotting network...
+Export coordinates...
+```
+
+The page this call writes is on its own page, [Interactive demo: the Lazega advice network](../../book/interactive/).
+Two CSV files saved in such a session (one node dragged, the Providence lawyers recolored, the size
+slider at 1.85) are in the folder of this tutorial; they bring the edits back like this:
+
+```stata
+. nwplot lazega_adv, nodexy(x y) importcoords("lazega_saved_nodes.csv") edgeimport("lazega_saved_edges.csv") color(office, colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) scheme(s1mono) labelopt(mlabsize(tiny)) export("plot_lazega_bringback.svg") replace
+(9 vars, 71 obs)
+(4 vars, 892 obs)
+Generating splines...
+Plotting network...
+Exporting graph to plot_lazega_bringback.svg...
+file plot_lazega_bringback.svg saved as SVG format
+```
+
+![The Lazega advice network after bringing the browser edits back](plot_lazega_bringback.svg)
+
+Things to know about the bring-back:
+
+- **Sizes.** The size slider in the page is a multiplier on the page's own starting size, and the page draws
+  in screen pixels. A slider value of 1 therefore corresponds to about `nodefactor(0.2)` in the static
+  plot. Without `nodefactor()`, `nwplot` uses 0.2 times the saved slider value (1.85 gives
+  `nodefactor(0.37)`), so the static figure has the proportions of the view. Give `nodefactor()` or
+  `edgefactor()` yourself and your value wins over the saved one, for example to make the symbols
+  smaller for a printed page.
+- **Same network.** The edits are matched to the nodes and ties by row number, so run the bring-back on
+  the same network, with the same sort order and the same `if` and `in` restrictions. A mismatch gives
+  an error.
+- **Shapes.** The shape drop-down in the legend belongs to a color group. When the nodes of a group have
+  different shapes (here `symbol(practice)` is a second variable), it reads "mixed". Choosing a shape
+  there sets all nodes of the group. Read the legend drawn on the canvas for the shapes.
+- **Edge colors and patterns** can be edited the same way and come back through `edgeimport()`.
+
+See [nwplot](../../reference/nwplot) for all options of the interactive view.
 
 ## Movies
 

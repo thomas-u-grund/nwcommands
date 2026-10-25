@@ -35,7 +35,7 @@ network, the Florentine marriage network, so the different rankings can be compa
 ------------+-----------------------------------
       Total |         16      100.00
 
-   Degree centralization:: .267
+   Degree centralization: .267
 ```
 
 ## Betweenness
@@ -88,7 +88,7 @@ raw neighbor count:
   Network name: flomarriage
 ----------------------------------------
     Eigenvector centrality
-.   (calculated on symmetrized network)
+   (calculated on symmetrized network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -104,7 +104,6 @@ well-defined score even where eigenvector centrality would refuse:
 
 ```stata
 . nwpagerank flomarriage, generate(pgr)
-(16 missing values generated)
 ----------------------------------------
   Network: flomarriage
   Damping: .85

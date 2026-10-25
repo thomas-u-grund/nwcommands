@@ -20,9 +20,6 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/dd506fca-d14d-47db-993d-6a7ac002e250/scratchp
-> ad/tutdev/website/tutorials/03-importing-exporting/profile.do ...
-
 . do example.do 
 
 . * Tutorial 3: Importing & Exporting
@@ -65,13 +62,12 @@ Saved as file: flobusiness.net
 . nwwebuse glasgow, nwclear
 
 . nwtoedge glasgow1
-(50 real changes made)
 
 . describe
 
-Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_86603.000001
+Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_57964.000001
  Observations:         2,500                  
-    Variables:             3                  1 Oct 2026 21:36
+    Variables:             3                  25 Oct 2026 14:32
 -------------------------------------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
