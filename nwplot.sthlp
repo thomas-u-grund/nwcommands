@@ -84,7 +84,8 @@
 {p2col:{it:edge_options}}Description{p_end}
 {marker edge_options}{...}
 {p2line}
-{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
+{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
+{p2col:{opt edgesizeraw}}with {opt edgesize()}: use the tie values themselves for the line widths instead of the 1 to 8 mapping (very large values are cut at 20){p_end}
 {p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
@@ -130,7 +131,7 @@
 {marker layout_options}{...}
 {p2line}
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
-{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
+{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...) are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
 	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
@@ -280,7 +281,7 @@ choosing a shape there sets all nodes of the group. The CSV format is unchanged.
 The view draws {it:y} upward, as the static plot does, for every layout and for {opt nodexy()} (with
 {cmd:nodexy(Lon Lat)} the map is upright), and the saved CSV holds the same {it:y}, so a saved layout
 comes back in the same orientation. With {opt edgesize()} the view maps the tie values linearly onto line
-widths of 1 to 8 pixels (all ties 3 pixels without {opt edgesize()}); the edge-width slider is a
+widths of 1 to 8 pixels (all ties 3 pixels without {opt edgesize()}; the static plot uses the same 1 to 8 mapping); the edge-width slider is a
 multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider
 multiplies on top. {opt edgeimport()} accepts the edge file of a directed or an undirected network (the
 view lists an undirected tie once).

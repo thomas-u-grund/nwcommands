@@ -22,7 +22,7 @@ BEGIN
   CHECKBOX cx_nwclear 290 54 190 ., label("nwclear") option(nwclear)
   TEXT tx_cx_nwappend 20 82 260 ., label("append to existing data")
   CHECKBOX cx_nwappend 290 82 190 ., label("nwappend") option(nwappend)
-  TEXT tx_cx_force 20 110 260 ., label("when combined with , if the incoming data contains a network with the same name ")
+  TEXT tx_cx_force 20 110 260 ., label("When combined with nwappend, if the incoming data contains a network with the same name as one already in memory")
   CHECKBOX cx_force 290 110 190 ., label("force") option(force)
 END
 

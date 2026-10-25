@@ -30,7 +30,7 @@ BEGIN
   EDIT ed_plotoptions 290 166 190 ., nomem option(plotoptions)
   TEXT tx_sp_permutations 20 194 260 ., label("Number of QAP permutations for the E-I index's own null")
   SPINNER sp_permutations 290 194 70 ., default(100) max(999999) min(-999999) nomem option(permutations)
-  TEXT tx_ed_save 20 222 260 ., label("Save the QAP permutation draws (variable ) and the")
+  TEXT tx_ed_save 20 222 260 ., label("Save the QAP permutation draws (variable EI_simulated) and the observed value (variable EI_observed) to a new dataset")
   EDIT ed_save 290 222 190 ., nomem option(save)
 END
 

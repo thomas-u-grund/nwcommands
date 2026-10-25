@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 132, label("Options")
-  TEXT tx_cx_check 20 54 260 ., label("Check if network is symmetric (regardless of whether is declared as directed or ")
+  TEXT tx_cx_check 20 54 260 ., label("Check if network is symmetric (regardless of whether is declared as directed or undirected)")
   CHECKBOX cx_check 290 54 190 ., label("check") option(check)
   TEXT tx_ed_generate 20 82 260 ., label("Save symmetrization as new network")
   EDIT ed_generate 290 82 190 ., nomem option(generate)

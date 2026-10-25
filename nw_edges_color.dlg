@@ -25,7 +25,7 @@ BEGIN
 	COMBOBOX cb_col8	270 90 100	., dropdownlist contents(colors) nomemory
 	CHECKBOX ck_res 270 110 100 100, label("Rescale off") option(norescale)
 	GROUPBOX gb_lgd 10 160 380 70, label("Edge color legend")
-	TEXT     tx_keys	20	190	280	., label("Force keys:  (not available)") 	
+	TEXT     tx_keys	20	190	280	., label("Force keys (not available)") 	
 	//EDIT ed_keys 110 190 150 .,	nomemory
 	CHECKBOX ck_lgd 270 190 100 100, label("Legend off") option(legendoff) 
 

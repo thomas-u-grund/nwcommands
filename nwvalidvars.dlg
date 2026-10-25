@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_ed_stub 20 54 260 ., label("Stub")
+  TEXT tx_ed_stub 20 54 260 ., label("Stem of the new variable names")
   EDIT ed_stub 290 54 190 ., nomem option(stub)
 END
 

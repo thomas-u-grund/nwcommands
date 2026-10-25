@@ -127,6 +127,7 @@ BEGIN
   TEXT    tx_factor1 30	95	100	., label("Edge factor:") 		
   SPINNER sp_dig1 100 95 35 ., label("dig1") default(1) nomemory
   TEXT    tx_factor2 132 95 5	., label(".") 		
+  CHECKBOX cx_sizeraw 190 95 105 ., label("Raw edge sizes")
   SPINNER sp_dig2 140 95 35 ., label("dig2") default(0) nomemory
   GROUPBOX gb_arc 10 140 200 130, label("Style")
   GROUPBOX gb_arrow 230 140 200 130, label("Arrows")
@@ -563,6 +564,9 @@ BEGIN
 			put ", " edges_sizeOptions
 		}
 		put ")"
+		if edges.cx_sizeraw {
+			put " edgesizeraw"
+		}
 	}
 END
 

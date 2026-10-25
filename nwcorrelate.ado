@@ -31,7 +31,9 @@ end
 
 capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
-	syntax [anything(name=netname)] [, name(string) context(string)]
+	syntax [anything(name=netname)] [, name(string) context(string) UNDirected DIRected]
+	// _nwsyntax exports a local named directed: keep the options under other names
+	local _ud_opts `undirected' `directed'
 	_nwsyntax `netname'
 	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
 	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
@@ -63,7 +65,7 @@ program nwcorrelate_nodes
 	_nwsyntax `netname'
 	local origname "`netname'"
 	
-	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'")	
+	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'") `_ud_opts'	
 	_nwsyntax
 	
 	mata: st_rclear()
@@ -170,9 +172,17 @@ unw_defs
 		capture mata: mata drop corr_reps
 		
 		qui gen observed = `corr'
-		if "`save'"!= "" {
-			di "QAP results saved as: `save'" 
-			save "`save'", replace
+		if `"`save'"' != "" {
+			// save(): quoted or unquoted file name, paths with spaces allowed
+			local savefile `save'
+			if !regexm(`"`savefile'"', "\.dta$") local savefile `"`savefile'.dta"'
+			qui save `"`savefile'"', replace
+			// print the real location (a relative name is saved in the working directory)
+			local savefull `"`savefile'"'
+			if substr(`"`savefile'"', 1, 1) != "/" & substr(`"`savefile'"', 2, 1) != ":" & substr(`"`savefile'"', 1, 1) != "~" {
+				local savefull `"`c(pwd)'/`savefile'"'
+			}
+			di `"{txt}QAP results saved as: {res}`savefull'"'
 		}
 	
 		qui count

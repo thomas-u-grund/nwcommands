@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_ed_generate 20 54 260 ., label("Name of the Stata variable that stores each node's coreness; default =")
+  TEXT tx_ed_generate 20 54 260 ., label("Required. Name of the Stata variable that stores each node's coreness")
   EDIT ed_generate 290 54 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing variable")
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)

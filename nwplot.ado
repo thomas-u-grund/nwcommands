@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -51,7 +51,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -1573,11 +1573,15 @@ program nwplot, rclass
 		// show (sizekeys_legendoff set, or size() not given - the same
 		// gate nwplot's own static-plot legend loop uses), so its word
 		// count alone is the correct display gate.
+		// coordinates that are not on the canvas scale (degrees, metres, ...) are rescaled by the page builder;
+		// the default node size follows the node density of the rescaled layout
+		mata: st_local("_nwedit_k", strofreal(_nwedit_viewmap(`nodes')[5]))
+		local nodefactor_html = `nodefactor' * `_nwedit_k'
 		local _nwedit_sizelegend_n : word count `sizekeys'
 		local _nwedit_hassizelegend = (`_nwedit_sizelegend_n' > 0)
 		forvalues _nwedit_szi = 1/`_nwedit_sizelegend_n' {
 			local _nwedit_szraw : word `_nwedit_szi' of `_nwedit_sizekeys_rawnsize'
-			local _nwedit_sizelegend_px_`_nwedit_szi' = `_nwedit_szraw' * `nodefactor' * 2 * 7
+			local _nwedit_sizelegend_px_`_nwedit_szi' = `_nwedit_szraw' * `nodefactor_html' * 2 * 7
 			local _nwedit_szkeyval : word `_nwedit_szi' of `sizekeys'
 			if "`_nwedit_sizevarname'" != "" {
 				local _nwedit_sizelegend_label_`_nwedit_szi' "`_nwedit_sizevarname' = `_nwedit_szkeyval'"
@@ -1587,7 +1591,7 @@ program nwplot, rclass
 			}
 		}
 
-		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor_html', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 
 		// movieexport(): nwmovie's own hook into this same resolved-color/
 		// shape/position JSON, reusing every line of the resolution work
@@ -1600,7 +1604,7 @@ program nwplot, rclass
 		// full HTML page, as a standalone .json file - no template/
 		// vendored-JS overhead, since nwmovie assembles its own page.
 		if "`movieexport'" != "" {
-			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor_html', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 		}
 
 		if "`movieexport'" == "" {
@@ -1753,10 +1757,29 @@ program nwplot, rclass
 	}
 	
 	// Ghost plots of size of edges
+	// edgesize(): unless edgesizeraw is given, the tie values are mapped linearly onto the
+	// widths 1 to 8 units (largest absolute value = 8, a quarter of a Stata line-width unit
+	// each, as the interactive view does in pixels), so that valued networks with large
+	// or tiny values give a readable plot. When all ties carry the same value, or without
+	// edgesize(), the plain default width is kept.
+	local esscale 0
+	local esmax 1
+	capture qui sum edgesize if edgesize < ., meanonly
+	if _rc == 0 & r(N) > 0 {
+		local esmax = max(abs(r(max)), abs(r(min)))
+		local esscale = ("`edgesizeraw'" == "" & "`edgesize'" != "" & r(max) > r(min) & `esmax' > 0)
+	}
 	if "`edgesizekeys'" != "" & "`edgesizekeys_legendoff'" == ""{
 		foreach eszkey in `edgesizekeys' {
-			local tempval_line = (`eszkey' / 2) * `edgefactor' / 2
-			local tempval_arrow = (`eszkey' + 1) * `arrowfactor' 
+			if `esscale' {
+				local tempkey_s = 1 + 7 * abs(`eszkey') / `esmax'
+				local tempval_line = (`tempkey_s' / 2) * `edgefactor' / 2
+				local tempval_arrow = (`tempkey_s' + 1) * `arrowfactor'
+			}
+			else {
+				local tempval_line = (`eszkey' / 2) * `edgefactor' / 2
+				local tempval_arrow = (`eszkey' + 1) * `arrowfactor'
+			}
 			local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 			local ghostcmd `"`ghostcmd' || (`pc' `ghost1' `ghost2' `ghost2' `ghost1' if `ghost1' !=., lpattern(solid) lwidth(`tempval_line') lcolor("scheme p0") mcolor("scheme p0") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
 		}
@@ -1876,8 +1899,15 @@ program nwplot, rclass
 			}
 			forvalues tempval_mat = 1/`tempvalue_rows'{
 				local tempval = valuerow[`tempval_mat',1]
-				local tempval_line = (`tempval' / 2) * `edgefactor' / 2
-				local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+				if `esscale' {
+					local tempval_s = 1 + 7 * abs(`tempval') / `esmax'
+					local tempval_line = (`tempval_s' / 2) * `edgefactor' / 2
+					local tempval_arrow = (`tempval_s' + 1) * `arrowfactor'
+				}
+				else {
+					local tempval_line = (`tempval' / 2) * `edgefactor' / 2
+					local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+				}
 				local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 				// BUGFIX: this formula assumes edgesize() ties are on a
 				// small scale (tie counts, small integer weights) -
@@ -2438,11 +2468,40 @@ end
 // dataset variables the real twoway graph is built from a few lines below
 // (st_store'd in by this same program a little earlier) - this renders
 // what nwplot actually resolved, it does not recompute anything.
+capture mata: mata drop _nwedit_viewmap()
 capture mata: mata drop _nwedit_buildjson()
 capture mata: mata drop _nwedit_slurpfile()
 capture mata: mata drop _nwedit_buildinteractivehtml()
 capture mata: mata drop _nwedit_writejson()
 mata:
+// Viewer canvas mapping of the node coordinates (nx, ny of the plotting dataset). The page places a node at
+// 1000 x unit px. The layouts of nwplot give units between 0 and 1.5 and are kept as they are; coordinates
+// on another scale (nodexy() in degrees, metres, ... or a very small extent) are shifted to the origin and
+// scaled uniformly (aspect ratio kept) so that the larger extent is 1.5 units (1,500 px). Returns
+// (rescaled 0/1, min x, min y, scale, node size multiplier): the multiplier is 1 for the unchanged
+// layouts, and for rescaled coordinates it adapts the default node size to the node density (spacing of
+// the nodes if spread evenly over the canvas: size = 0.3 x spacing, between 8 and 34 px).
+real rowvector _nwedit_viewmap(real scalar nn)
+{
+	real colvector xv, yv
+	real scalar minx, maxx, miny, maxy, span, scale, w, h, spacing, k
+
+	xv = (st_data((1::nn), "nx") :/ 100 :- 0.05) :/ 0.9
+	yv = (st_data((1::nn), "ny") :/ 100 :- 0.05) :/ 0.9
+	if (nn < 2) return((0, 0, 0, 1, 1))
+	minx = min(xv); maxx = max(xv); miny = min(yv); maxy = max(yv)
+	if (minx >= . | miny >= .) return((0, 0, 0, 1, 1))
+	span = max((maxx - minx, maxy - miny))
+	if (span <= 0) return((0, 0, 0, 1, 1))
+	if (span >= 0.5 & span <= 3 & minx >= -1 & miny >= -1 & maxx <= 4 & maxy <= 4) return((0, 0, 0, 1, 1))
+	scale = 1.5 / span
+	w = max(((maxx - minx) * scale, 0.15))
+	h = max(((maxy - miny) * scale, 0.15))
+	spacing = 1000 * sqrt(w * h / nn)
+	k = min((max((0.3 * spacing / 22.4, 8 / 22.4)), 34 / 22.4))
+	return((1, minx, miny, scale, k))
+}
+
 // Split out of what used to be _nwedit_buildinteractivehtml()'s own body
 // (harmonisation: nwmovie's own real-world-data movie player, see
 // _nwopenviewer.ado's header for the sibling refactor) - this half does
@@ -2456,6 +2515,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		real scalar hassizelegend, real scalar sizelegendn)
 {
 	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv, edgewv, esv
+	real rowvector vmap
 	string colvector nlabelv
 	real matrix topology
 	string scalar json, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl, sizelbl
@@ -2480,7 +2540,17 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	nsymbolv = st_data((1::nn), "nsymbol")
 	nlabelv = st_sdata((1::nn), "nlabel")
 
+	// node coordinates on the viewer canvas (see _nwedit_viewmap())
+	vmap = _nwedit_viewmap(nn)
+	nxv = (nxv :/ 100 :- 0.05) :/ 0.9
+	nyv = (nyv :/ 100 :- 0.05) :/ 0.9
+	if (vmap[1] == 1) {
+		nxv = (nxv :- vmap[2]) :* vmap[4]
+		nyv = (nyv :- vmap[3]) :* vmap[4]
+	}
+
 	json = "{" +
+		q+"label_font"+q+":"+strofreal(8 * vmap[5])+"," +
 		q+"has_node_legend"+q+":"+(hasnodelegend==1 ? "true" : "false")+"," +
 		q+"has_edge_legend"+q+":"+(hasedgelegend==1 ? "true" : "false")+"," +
 		q+"has_size_legend"+q+":"+(hassizelegend==1 ? "true" : "false")+"," +
@@ -2538,8 +2608,8 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 			q+"size"+q+":"+strofreal(sizepx)+"," +
 			q+"color_group"+q+":"+strofreal(cg)+"," +
 			q+"shape_group"+q+":"+strofreal(sg)+"," +
-			q+"x"+q+":"+strofreal((nxv[i]/100 - 0.05)/0.9)+"," +
-			q+"y"+q+":"+strofreal((nyv[i]/100 - 0.05)/0.9) +
+			q+"x"+q+":"+strofreal(nxv[i])+"," +
+			q+"y"+q+":"+strofreal(nyv[i]) +
 			"}"
 		if (i < nn) json = json + ","
 	}

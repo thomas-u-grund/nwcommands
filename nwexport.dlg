@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_cb_type 20 54 260 ., label("Type")
+  TEXT tx_cb_type 20 54 260 ., label("Export format")
   COMBOBOX cb_type 290 54 190 ., dropdownlist contents(list_type) nomem option(type)
   TEXT tx_ed_fname 20 82 260 ., label("filename of the exported network; default = network name")
   EDIT ed_fname 290 82 190 ., nomem option(fname)

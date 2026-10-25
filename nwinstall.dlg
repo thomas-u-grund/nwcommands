@@ -16,7 +16,7 @@ END
 DIALOG main, title("nwinstall - Install Stata menu/dialogs")
 BEGIN
   GROUPBOX gb_opt 10 10 1030 216, label("Options")
-  TEXT tx_cx_update 20 20 260 ., label("refresh the installed menu (an internal, self-recursive flag: re-invokes )")
+  TEXT tx_cx_update 20 20 260 ., label("Refresh the installed menu (an internal, self-recursive flag: re-invokes nwinstall, help usermenu)")
   CHECKBOX cx_update 290 20 190 ., label("update") option(update)
   TEXT tx_ed_menu 20 48 260 ., label("install in this menu; default = 'stUser'")
   EDIT ed_menu 290 48 190 ., nomem option(menu)
