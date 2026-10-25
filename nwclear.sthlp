@@ -23,6 +23,9 @@ Clears all networks and variables from memory. This is the network extension of 
 some or all networks using {help nwdrop}.
 
 {pstd}
+Note that Stata's own {cmd:clear} (or {cmd:clear all}) does not remove the networks held by nwcommands; only {cmd:nwclear} does (or {help nwdrop} for chosen networks).
+
+{pstd}
 This example loads network data and clears everything afterwards.
 
 	{cmd:. nwwebuse glasgow}

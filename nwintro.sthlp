@@ -80,6 +80,9 @@ A minimal example - load a real network and compute degree centrality:
 {pstd}
 See {help nwstart} for a full, hands-on walkthrough.
 
+{pstd}
+Networks are held by nwcommands, not in the Stata dataset: Stata's {cmd:clear} does not remove them, {help nwclear} does.
+
 
 {marker limits}{...}
 {title:Limitations and feasible network sizes}

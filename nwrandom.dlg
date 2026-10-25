@@ -40,6 +40,8 @@ BEGIN
   CHECKBOX cx_xvars 800 138 190 ., label("xvars") option(xvars)
   TEXT tx_cx_noreplace 530 166 260 ., label("reserved; currently a no-op - the create/replace collision guard on  already app")
   CHECKBOX cx_noreplace 800 166 190 ., label("noreplace") option(noreplace)
+  TEXT tx_cx_directed 530 194 260 ., label("Directed network (the default; no-op)")
+  CHECKBOX cx_directed 800 194 190 ., label("directed") option(directed)
 END
 
 LIST netlist
@@ -66,6 +68,7 @@ BEGIN
 		optionarg main.ed_labs
 		optionarg main.cb_name
 		option main.cx_undirected
+		option main.cx_directed
 		option main.cx_xvars
 		option main.cx_noreplace
 	endoptions

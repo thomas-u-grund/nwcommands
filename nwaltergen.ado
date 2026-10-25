@@ -89,6 +89,9 @@ program nwaltergen
 	}
 
 	_nwsyntax `net'
+	if "`net'" == "" {
+		di "{txt}(no network name given: using the current network {bf:`netname'})"
+	}
 
 	if _N < `nodes' {
 		di as err "dataset has fewer observations (`=_N') than the network has nodes (`nodes')"

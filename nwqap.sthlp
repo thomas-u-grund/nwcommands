@@ -36,7 +36,7 @@
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}modes for expanding variables to networks{p_end}
 {synopt:{opt type}({it:{help nwqap##regcmd:regcmd}})}regression command to be used for dyad dataset; default = {it:logit}{p_end}
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
-{synopt:{opt detail}}display details of regression results{p_end}
+{synopt:{opt detail}}display details of regression results and the permutation progress lines{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
 {synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 {synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}

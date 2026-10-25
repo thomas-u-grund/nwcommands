@@ -27,7 +27,7 @@ nw2fromedge ego alter value, name(mynet)
 nwproject mynet, project(1) name(proj1) stat(minmax)
 assert _rc == 0
 assert r(nodes) == 2
-assert r(ties) == 2
+assert r(ties) == 1
 nwtomata proj1, mat(M)
 mata: assert(M[1,2] == 5)
 

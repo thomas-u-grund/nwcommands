@@ -163,7 +163,12 @@ program nwinf
 		}
 
 		if "`detail'" != "" {
-			di "{txt}   Reciprocity: {res} `=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
+			if (r(directed) == "false"){
+				di "{txt}   Reciprocity: {res} n/a (undirected network)"
+			}
+			else {
+				di "{txt}   Reciprocity: {res} `=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
+			}
 			di "{txt}   Transitivity: {res} `=strtrim(string(round((`r(transitivity)')*1000)/1000,"%9.0g"))'"
 			if (r(directed) == "false"){
 				di "{txt}   Degree centralization: {res}`=strtrim(string(round((`r(dg_central)')*1000)/1000,"%9.0g"))'"

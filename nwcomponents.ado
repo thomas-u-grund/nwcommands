@@ -2,7 +2,7 @@
 capture program drop nwcomponents
 program nwcomponents, rclass
 	version 9
-	syntax [anything(name=netname)][, lgc GENerate(string) replace silent]
+	syntax [anything(name=netname)][, lgc GENerate(string) replace silent listall]
 	set more off
 
 	_nwsyntax `netname', max(9999)
@@ -106,8 +106,12 @@ program nwcomponents, rclass
 			replace `generate'`k' = 1 if `generate'`k' == `comps_lgc' & `generate'`k' != .	
 		}
 		if "`silent'" == "" {
-			if `lcomp' <= 1000 {
+			if `lcomp' <= 30 | (`lcomp' <= 1000 & "`listall'" != "") {
 				noi tab `generate'`k'
+			}
+			else if `lcomp' <= 1000 {
+				noi tab `generate'`k' if `generate'`k' <= 30
+				noi di "{txt}  (first 30 of `lcomp' components shown; use {bf:listall} for the full table)"
 			}
 			else {
 				noi di "{txt}  (the table of the `lcomp' components is not shown; sizes are in r(comp_sizeid))"

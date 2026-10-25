@@ -17,7 +17,8 @@
 [, {opt lgc}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt listall}]
 
 
 {synoptset 25 tabbed}{...}
@@ -27,6 +28,7 @@
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt listall}}Print the full table of components; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
 
 {p2colreset}{...}
 	

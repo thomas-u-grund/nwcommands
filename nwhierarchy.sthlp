@@ -69,7 +69,7 @@
 {cmd:nwhierarchy} performs hierarchical clustering of a network's nodes based on their pairwise
 structural dissimilarity (by default, computed the same way {help nwdissimilar} computes it - see
 that command's own {opt type()}/{opt context()} options, which {cmd:nwhierarchy} passes straight
-through) and returns a Stata {help cluster:cluster analysis} object built via {help clustermat}.
+through) and returns a Stata {help cluster:cluster analysis} object built via {help clustermat}. The default linkage is {bf:single} ({cmd:singlelinkage}); single linkage tends to chain nodes into one large cluster, so consider {opt linkage(averagelinkage)} or {opt linkage(completelinkage)}.
 
 {pstd}
 {opt dismat()}, {opt disnet()}, and {opt type()}/{opt context()} are three alternative ways to supply

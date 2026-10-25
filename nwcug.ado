@@ -230,6 +230,9 @@ program nwcug, rclass
 	// bug found (and fixed the same way) in nw2project.ado earlier this
 	// session: r(x) reads as missing from inside the same program body
 	// that just called "return scalar x = ...".
+	if "`condition'" == "census" & sdnull == 0 {
+		di "{txt}Note: the null standard deviation is 0 under condition(census); this statistic is fixed by the dyad census, so the test is uninformative."
+	}
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network: {res}`origname'"

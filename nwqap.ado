@@ -134,11 +134,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	di 
 	local perm_running 1
 	qui forvalues j = 1/`permutations' {
-		if `j' == 1 {
+		if `j' == 1 & "`detail'" != "" {
 			noisily di "{txt}Permutation: 1 out of `permutations'"
 		}
 		if `j' / 50 >= `perm_running' {
-			noisily di "{txt}Permutation: `=`perm_running'*50' out of `permutations'"
+			if "`detail'" != "" noisily di "{txt}Permutation: `=`perm_running'*50' out of `permutations'"
 			local perm_running = `perm_running' + 1
 		}
 		// A permutation can, by chance, produce a fully degenerate

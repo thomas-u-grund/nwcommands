@@ -114,7 +114,7 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 
 	Scalars
 	  {bf:r(nodes)}		number of nodes in the projected network
-	  {bf:r(ties)}		number of ties in the projected network
+	  {bf:r(ties)}		number of edges in the projected (undirected) network, each pair counted once
 
 
 {title:Supported network types}

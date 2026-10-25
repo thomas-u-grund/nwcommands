@@ -23,7 +23,8 @@
 {opth alterid(nodeid)}]
 {opth generate(newnetnamestub)}
 {opt sym}
-{opt nwreplace}]
+{opt nwreplace}
+{opt nopaths}]
 
 
 {synoptset 23 tabbed}{...}
@@ -37,6 +38,7 @@
 {synopt:{opth generate(newnetnamestub)}}Save paths as networks beginning with {it:newnetnamestub}{p_end}
 {synopt:{opt sym}}Symmetrize network for calculation{p_end}
 {synopt:{opt nwreplace}}Overwrite networks with {it:newnetnamestub}{p_end}
+{synopt:{opt nopaths}}Do not print the list of paths; the results in {cmd:r()} are still returned{p_end}
 {synoptline}
 {p2colreset}{...}
 
