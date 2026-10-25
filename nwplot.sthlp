@@ -144,6 +144,10 @@
 	color/shape/position data as plain JSON to {it:filename}, with no HTML page or viewer window -
 	{help nwmovie} uses this internally, once per network in its own sequence, rather than
 	re-deriving concrete colors from scratch{p_end}
+{p2col:{opt fname}({it:filename})}with {opt interactive}: write the interactive HTML page to {it:filename}
+	(".html" is added if there is no extension; a relative name is relative to the working directory;
+	an existing file is replaced) instead of a time-stamped file in Stata's temporary folder. The
+	path is displayed and returned in {cmd:r(fname)} in either case{p_end}
 {p2col:{opt noopen}}with {opt interactive}: build the interactive view but do not open a viewer
 	window for it (used together with {opt movieexport()} - {help nwmovie} does not want a viewer
 	window popping open for every network in its own sequence){p_end}
@@ -260,6 +264,17 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
 	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
 	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+How the bring-back works: node positions come from the CSV through {opt nodexy()}; node colors and
+shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier
+on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds
+to about {cmd:nodefactor(0.2)} in the static graph. Without {opt nodefactor()}, {cmd:nwplot} therefore
+uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of
+1.85 gives {cmd:nodefactor(0.37)}); an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
+the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when
+the nodes of that group have different shapes (for example when {opt symbol()} is a second variable);
+choosing a shape there sets all nodes of the group. The CSV format is unchanged.
 
 {pstd}
 {opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
@@ -424,6 +439,8 @@ all continue to work exactly as they would without {opt export()}.
 
 	Macros:
 	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
+	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
+	  {bf:r(interactive)}	same as {bf:r(fname)}
 
 {title:Supported network types}
 

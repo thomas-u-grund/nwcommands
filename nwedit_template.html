@@ -618,6 +618,12 @@ function buildLegend(data) {
     if (!(n.group in legendState)) {
       legendState[n.group] = { color: rgbStringToHex(n.color), shape: n.shape, label: n.group_label || n.group };
       order.push(n.group);
+    } else if (legendState[n.group].shape !== n.shape) {
+      // The legend row is keyed by colour group, but shape is its own
+      // grouping (symbol()): a colour group can hold nodes with several
+      // shapes. Show 'mixed' instead of the first node's shape; picking a
+      // shape in the dropdown still sets every node of the row.
+      legendState[n.group].shape = 'mixed';
     }
   }
 
@@ -639,6 +645,12 @@ function buildLegend(data) {
     colorInput.oninput = () => applyLegendEdit(key, 'color', colorInput.value);
 
     const shapeSelect = document.createElement('select');
+    if (state.shape === 'mixed') {
+      const mx = document.createElement('option');
+      mx.value = 'mixed'; mx.textContent = 'mixed'; mx.selected = true; mx.disabled = true;
+      shapeSelect.appendChild(mx);
+      shapeSelect.title = 'Nodes of this colour group have different shapes; choosing a shape here sets all of them';
+    }
     for (const s of SHAPE_CHOICES) {
       const opt = document.createElement('option');
       opt.value = s; opt.textContent = s;

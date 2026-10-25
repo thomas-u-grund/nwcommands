@@ -174,6 +174,7 @@ square of the number of nodes. Measured in Stata/BE, random directed network wit
 (1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072
 nodes, 10,000 for an undirected network) the command stops with an error that recommends {opt compress}. With
 {opt compress} only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds.
+For a two-mode network {opt compress} lists only the ties between the two modes (as {help nw2toedge} does), never the pairs of nodes inside one mode.
 
 {title:See also}
 	

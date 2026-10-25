@@ -575,3 +575,10 @@ by hand "fixes" it for that session only, which hid the bug in every manual test
 - **The Mata triad census is not defined for self-loops** (the loop makes a node its own connected neighbour): `nw_fasttriads()` hands such networks to the Mata census and the results stay as they were. Its 003 count is `n(n-1)(n-2)/6 - sum`, which can be off by one unit in the last place; the kernel's is the exact integer, so compare with a tolerance of 1e-6, not `==`.
 - **Equality of nwevcent with the Mata iteration is bit for bit** because the C kernel sums in the same order and `-ffp-contract=off` forbids fused multiply-adds (largest difference measured over 80 networks: 0).
 
+## A Stata option declared as lowercase `noxxx` in `syntax` sets the local `xxx`, not `noxxx`
+
+`syntax ..., noopen` makes Stata treat `noopen` as the negation of an option `open`: the local `open` is set (to `open`) when the option is absent and cleared when it is given, and the local `noopen` is always empty. `nwmovie` tested `"`noopen'" == ""` and so opened the viewer even with `noopen`. Declare it as `NOOpen` (capital letters mark the minimal abbreviation and keep `noopen` as the option name) as `nwplot` does.
+
+## Two-mode networks in edge lists: `nwtoedge, compress` used to keep the missing within-mode cells
+
+The cleaned matrix of a two-mode network holds a missing value for every pair of nodes of the same mode; the generic `nwtoedge, compress` code drops zero rows only (`abs(.)` is missing, not 0), so it kept all of them. `nwtoedge` now hands a single two-mode network with `compress` to `nw2toedge` (between-mode ties only), and `nwsave` makes the tie list of each network separately when the file holds a two-mode network (stacked, a row carries the value of its own network only; `nwuse` uses the value variable as the weight and ignores missing). The `_dta[nwtoedge_nodes]` isolate list must be cleared when several networks are stacked, or `nwuse` adds the other network's nodes to each network.

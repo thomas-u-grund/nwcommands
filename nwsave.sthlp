@@ -38,7 +38,7 @@ network data.
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves the full network object to disk exactly as stored, independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - the file holds the ties between the two modes only (the pairs of nodes inside one mode are not stored), the mode of every node and the node attributes, so a network with 5,000 + 500 nodes takes about a megabyte; {help nwuse} restores the same network. Files written by earlier versions (which listed every pair of nodes) are still read by {cmd:nwuse}, and files written now can be read by earlier versions.
 
 {title:Examples}
         
