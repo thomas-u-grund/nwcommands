@@ -19,6 +19,10 @@
 {opth generate(newvarname)}
 {opt replace}
 {opth minsize(int)}
+{opt maxcliques(#)}
+{opt maxtime(#)}
+{opt countonly}
+{opt nomatrix}
 {opt silent}]
 
 
@@ -29,6 +33,10 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest n-clique size to report; default = 3{p_end}
+{synopt:{opt maxcliques(#)}}Stop with an error when more than this many maximal n-cliques of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default = 100,000{p_end}
+{synopt:{opt maxtime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
+{synopt:{opt countonly}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth generate(newvarname)} is then not needed{p_end}
+{synopt:{opt nomatrix}}Do not build the sets-by-nodes matrix; the {opth generate(newvarname)} variable and the count are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -65,9 +73,11 @@ variable, not a spurious 0.
 
 	Scalars
 	  {bf:r(ncliques)}		number of maximal n-cliques found meeting {opth minsize(int)}
+	  {bf:r(maxsize)}	size of the largest set (with {opt countonly} or {opt nomatrix})
 
 	Matrices
-	  {bf:r(nclique_matrix)}	n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique
+	  {bf:r(size_table)}	(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size
+	  {bf:r(nclique_matrix)}	n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique (not with {opt countonly} or {opt nomatrix})
 
 {title:Examples}
 
@@ -99,11 +109,33 @@ used for membership - {opth n(int)} counts hops, not tie strength, though the un
 calculation ({help nwgeodesic}'s own unweighted, {cmd:alpha(0)}-equivalent convention) is unaffected
 by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own
 square adjacency matrix. Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
-exponential behaviour (a mathematical property of maximal-clique-family problems in general) - fine
-for the moderate network sizes typical of SNA datasets, not specially guarded against here.
+exponential behaviour (a mathematical property of maximal-clique-family problems in general).
+
+{title:Limits}
+
+{pstd}
+{bf:Feasible sizes.} The graph "distance at most {it:n}" is built as bitsets by a breadth-first search from every
+node and searched with the same pivoting Bron-Kerbosch rule, in compiled code, in the same order as the Mata version.
+What limits the command is the number of maximal n-cliques, not the size of the network: with {opt n(2)} almost every
+node reaches almost every other within two steps, the "distance at most 2" graph is dense, and its maximal cliques
+are very many. Measured in Stata/BE on a random network with 10 ties drawn per node and {opt n(2)}: 100 nodes already
+have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; counting them with {opt countonly} takes
+33 seconds, and the result matrix would need 37 GB), so the output of the command, not its running time, is out of
+reach from about 100 nodes on. The previous Mata version used 5.3 GB and did not finish in 60 seconds at 100 nodes.
+Sparser or smaller networks, a larger {opt minsize()} and path-like networks (long distances, few short cycles) are
+fine.
+
+{pstd}
+{bf:Guards.} The command stops at once with r(484) and a message that names the option to raise when it has found
+more than {opt maxcliques()} maximal n-cliques (default 100,000), when the result matrix would be too large to build
+(more than 50 million numbers; use {opt nomatrix}), or when the search has run for {opt maxtime()} seconds (default 60).
+{opt countonly} counts and tabulates the sets by size without storing them.
 
 {title:See also}
 
 	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

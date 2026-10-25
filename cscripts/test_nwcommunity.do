@@ -124,12 +124,18 @@ assert r(communities) >= 1
 * 2,000-node random network (well past the smaller end of that limit,
 * confirmed directly) reliably produces well over 1,000 communities
 * here, without needing a slower n=10,000 network in this test file.
+* (Stage 2 of the scaling audit found that the large community counts of that sparse network were produced by a
+* defect of the Louvain aggregation, which no longer merges too little; the many-communities case is built directly now:
+* 1,200 disjoint pairs of nodes are 1,200 communities and 1,200 components.)
 nwclear
-set seed 1
-nwrandom 2000, prob(.001) undirected name(bignet2k)
+clear
+quietly set obs 1200
+quietly gen long from = 2 * _n - 1
+quietly gen long to = 2 * _n
+nwfromedge from to, name(bignet2k) undirected
 nwcommunity bignet2k, generate(_bc) replace silent
 assert _rc == 0
-assert r(communities) > 500
+assert r(communities) == 1200
 
 
 * --- alpha-audit regression: measure(binary|valued) is forwarded to

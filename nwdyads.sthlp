@@ -89,8 +89,17 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 	  {bf:r(name)}	name of network
 	  
 	  
+{title:Limits}
+
+{pstd}
+A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB
+in Stata/BE (7 seconds and 6.3 GB before).
+
 {title:See also}
 
 	{help nwtriads}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

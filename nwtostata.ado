@@ -36,6 +36,12 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 	if "`stub'" != "" {
 		mata: st_numscalar("r(cols)", cols(`mat'))
 		local cols = r(cols)
+		// each column becomes a Stata variable: fail early and clearly when the flavour cannot hold them
+		if `cols' + c(k) > c(max_k_theory) {
+			dis as error "nwtostata would create `cols' variables, but `c(flavor)' Stata allows at most `c(max_k_theory)' variables (`c(k)' in use)."
+			dis as error "Use the Mata matrix directly (nwtomata) or a larger Stata flavour."
+			error 900
+		}
 		forvalues i = 1/`cols' {
 			quietly gen `stub'`i' =.
 		}

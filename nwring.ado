@@ -60,28 +60,37 @@ program nwring
 		exit
 	}
 	
-	tempname __nwnew
-	mata: `__nwnew' = ringlattice(`nodes', `k')
-	if "`weights'" != "" {
-		tempname w
-		capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
-		if _rc != 0 {
-			// BUGFIX: see nwrandom.ado's own header comment on this
-			// identical block for the full explanation - this used to
-			// print the message and fall through, silently producing an
-			// unweighted network while claiming success.
-			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-			error 198
-		}
-		capture mata: `w' = `w' :/ sum((`weights'))
-		if "`undirected'" != "" {
-			mata: `w' = lowertriangle(`w',0)
-			mata: `w' = `w' + `w''
-		}
-		capture mata: `__nwnew' = `__nwnew' :* `w'
+	if "`weights'" == "" & `nodes' > 2000 {
+		tempname __nwtrip
+		mata: `__nwtrip' = nw_ring_triplets(`nodes', `k')
+		mata: st_rclear()
+		_nwsetsparse, triplets(`__nwtrip') nodes(`nodes') name(`name') labs(`labs') `undirected'
+		capture mata: mata drop `__nwtrip'
 	}
-	mata: st_rclear()
-	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
+	else {
+		tempname __nwnew
+		mata: `__nwnew' = ringlattice(`nodes', `k')
+		if "`weights'" != "" {
+			tempname w
+			capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
+			if _rc != 0 {
+				// BUGFIX: see nwrandom.ado's own header comment on this
+				// identical block for the full explanation - this used to
+				// print the message and fall through, silently producing an
+				// unweighted network while claiming success.
+				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+				error 198
+			}
+			capture mata: `w' = `w' :/ sum((`weights'))
+			if "`undirected'" != "" {
+				mata: `w' = lowertriangle(`w',0)
+				mata: `w' = `w' + `w''
+			}
+			capture mata: `__nwnew' = `__nwnew' :* `w'
+		}
+		mata: st_rclear()
+		nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
+	}
 	if "`xvars'" == "" {
 		nwload, xvars
 	}

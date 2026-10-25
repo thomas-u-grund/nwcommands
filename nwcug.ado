@@ -135,7 +135,9 @@ program nwcug, rclass
 	// stat() that does not depend on names/attributes at all (density,
 	// a raw statistic count, ...): only the labels controlling row reuse
 	// change, never the drawn graph's own structure.
-	mata: st_local("origlabs", invtokens(`netobj'->get_nodenames(), ","))
+	// the names go to nwrandom as a Mata variable: a long Stata option string gets blanks inserted (GOTCHA.md)
+	tempname origlabs
+	mata: `origlabs' = `netobj'->get_nodenames()
 
 	mata: nwcug_nullvals = J(`reps', 1, .)
 	local base "_nwcug_draw"
@@ -143,10 +145,10 @@ program nwcug, rclass
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
 		if "`condition'" == "census" {
-			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base') labs(`origlabs')
+			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base') nodenamesmata(`origlabs')
 		}
 		else {
-			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' labs(`origlabs')
+			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' nodenamesmata(`origlabs')
 		}
 		qui `drawcmd'
 		local v = r(`rname')

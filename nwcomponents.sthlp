@@ -83,7 +83,16 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 	{cmd:. nwcomponents _all, lgc generate(mylgc)}
   
 
+ {title:Limits}
+
+ {pstd}
+ The components are found from the stored ties (10,000 nodes: 0.04 seconds). A network with more than 1,000 components (any sparse network
+ of a few thousand nodes) used to stop with r(134) after the components had been found; the sizes are now counted in Mata, the
+ table is not printed above 1,000 components, and {bf:r(comp_sizeid)} holds the sizes ordered by size and then by component number.
+
  {title:See also}
  
 	{help nwgen}, {help nwkcomponents}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

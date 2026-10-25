@@ -95,3 +95,6 @@ This shows that the "ginori" family has business relationships with the "barbado
    {help nwcontext}, {help nwgeodesic}, {help nwpath}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

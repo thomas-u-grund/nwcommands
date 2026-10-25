@@ -1,5 +1,6 @@
 {smcl}
 {* *! version 1.0.0  22aug2026 author: Thomas Grund}{...}
+{marker topic}
 {helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
@@ -96,12 +97,24 @@ reduction for vertex connectivity)
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed
 generalization here, matching {help nwkcomponents}). Weighted: not used. Signed: not checked.
-Two-mode: not checked. Computationally more expensive than a single {help nwkcomponents} call, since
-each block found is itself recursively re-decomposed - fine for the moderate network sizes typical
-of SNA datasets.
+Two-mode: not checked.
+
+{title:Limits}
+
+{pstd}
+The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single
+{help nwkcomponents} call, since every block found is searched again at the next connectivity level; the time grows
+with the number of nodes squared times the connectivity level of the deepest block. Measured in Stata/BE on a random
+network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 /
+1.4 seconds. The previous Mata routine took 22 seconds at 300 nodes and did not finish in 60 seconds at 1,000.
+{cmd:r(cohesion_matrix)} has one row per block and one column per node. On a platform whose plugin file has not been
+built yet, the older Mata routine runs instead (same results, about 20 seconds at 300 nodes).
 
 {title:See also}
 
 	{help nwkcomponents}, {help nwcomponents}, {help nwclique}, {help nwkplex}
 
 last certified : 22 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

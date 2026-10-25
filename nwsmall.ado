@@ -99,35 +99,49 @@ program nwsmall
 		error 198
 	}
 	
-	tempname __nwnew
-	if "`prob'" != "" {
-		mata: `__nwnew' = smallworldprob(`nodes', `k', `prob', `directed')
-	}
-	if "`shortcuts'" != "" {
-		mata: `__nwnew' = smallworldsk(`nodes', `k', `shortcuts', `directed')
-	}
-	
-	if "`weights'" != "" {
-		tempname w
-		capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
-		if _rc != 0 {
-			// BUGFIX: see nwrandom.ado's own header comment on this
-			// identical block for the full explanation - this used to
-			// print the message and fall through, silently producing an
-			// unweighted network while claiming success.
-			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-			error 198
+	if "`weights'" == "" & `nodes' > 2000 & ("`prob'" == "" | "`shortcuts'" == "") {
+		tempname __nwtrip
+		if "`prob'" != "" {
+			mata: `__nwtrip' = nw_small_prob_triplets(`nodes', `k', `prob', `directed')
 		}
-		capture mata: `w' = `w' :/ sum((`weights'))
-		if "`undirected'" != "" {
-			mata: `w' = lowertriangle(`w',0)
-			mata: `w' = `w' + `w''
+		else {
+			mata: `__nwtrip' = nw_small_sk_triplets(`nodes', `k', `shortcuts', `directed')
 		}
-		capture mata: `__nwnew' = `__nwnew' :* `w'
+		mata: st_rclear()
+		_nwsetsparse, triplets(`__nwtrip') nodes(`nodes') name(`name') labs(`labs') `undirected'
+		capture mata: mata drop `__nwtrip'
 	}
+	else {
+		tempname __nwnew
+		if "`prob'" != "" {
+			mata: `__nwnew' = smallworldprob(`nodes', `k', `prob', `directed')
+		}
+		if "`shortcuts'" != "" {
+			mata: `__nwnew' = smallworldsk(`nodes', `k', `shortcuts', `directed')
+		}
 	
-	mata: st_rclear()
-	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
+		if "`weights'" != "" {
+			tempname w
+			capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
+			if _rc != 0 {
+				// BUGFIX: see nwrandom.ado's own header comment on this
+				// identical block for the full explanation - this used to
+				// print the message and fall through, silently producing an
+				// unweighted network while claiming success.
+				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+				error 198
+			}
+			capture mata: `w' = `w' :/ sum((`weights'))
+			if "`undirected'" != "" {
+				mata: `w' = lowertriangle(`w',0)
+				mata: `w' = `w' + `w''
+			}
+			capture mata: `__nwnew' = `__nwnew' :* `w'
+		}
+	
+		mata: st_rclear()
+		nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
+	}
 	if "`xvars'" == "" {
 		nwload, xvars
 	}

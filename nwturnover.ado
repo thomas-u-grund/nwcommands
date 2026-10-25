@@ -49,16 +49,8 @@ program nwturnover, rclass
 	_nwsyntax `netname2'
 	local netobj2 `netobj'
 
-	tempname __nw_A1 __nw_A2 __nw_pernode __nw_turnrate
-	mata: `__nw_A1' = (*`netobj1'->get_matrix_mod(0,`isdirected')) :!= 0
-	mata: `__nw_A2' = (*`netobj2'->get_matrix_mod(0,`isdirected')) :!= 0
-	mata: _diag(`__nw_A1', 0)
-	mata: _diag(`__nw_A2', 0)
-
-	mata: `__nw_pernode' = J(`nodes1', 3, 0)
-	mata: `__nw_pernode'[.,1] = rowsum(`__nw_A1' :& `__nw_A2')
-	mata: `__nw_pernode'[.,2] = rowsum(`__nw_A2' :& !`__nw_A1')
-	mata: `__nw_pernode'[.,3] = rowsum(`__nw_A1' :& !`__nw_A2')
+	tempname __nw_pernode __nw_turnrate
+	mata: `__nw_pernode' = nw_turnover_counts(`netobj1', `netobj2', `isdirected')
 
 	local divisor = cond(`isdirected', 1, 2)
 	mata: st_numscalar("nw_stable", sum(`__nw_pernode'[.,1]) / `divisor')
@@ -73,7 +65,7 @@ program nwturnover, rclass
 	capture drop `netgenerate'
 	qui gen `netgenerate' = .
 	mata: st_store((1::`nodes1'), "`netgenerate'", `__nw_turnrate')
-	mata: mata drop `__nw_A1' `__nw_A2' `__nw_pernode' `__nw_turnrate'
+	mata: mata drop `__nw_pernode' `__nw_turnrate'
 
 	local total = nw_stable + nw_formed + nw_dissolved
 	local jaccard = cond(`total' > 0, nw_stable / `total', .)

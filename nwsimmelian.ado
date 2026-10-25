@@ -28,10 +28,7 @@ program nwsimmelian
 
 	nwduplicate `netname', name(`name')
 	_nwsyntax
-	mata: __nw_mutual = (*`netobj'->get_matrix_unvalued()) :* (*`netobj'->get_matrix_unvalued())'
-	mata: _editmissing(__nw_mutual,0)
-	mata: __nw_simmel = (__nw_mutual) :* (__nw_mutual * __nw_mutual)
-	mata: __nw_simmel = (__nw_simmel :!= 0)
-	mata: `netobj'->set_edge(__nw_simmel)
-	capture mata: mata drop __nw_simmel __nw_mutual
+	// mutual ties with a mutual neighbour in common (for a network held as stored ties they are found from the tie
+	// list, without the n x n matrices of the dense route)
+	mata: nw_simmelian_net(`netobj')
 end

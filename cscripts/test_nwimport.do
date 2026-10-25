@@ -367,3 +367,26 @@ assert r(networks) == 0
 
 di "=== nwimport Ucinet lowerhalf/row-labels-embedded and unsupported-format REGRESSION VERIFIED ==="
 
+
+* --- .dta edge list: `directed' used to be dropped on the way to nwfromedge
+* (typo in the forwarded option).  nwimport afterwards sets a symmetric
+* network undirected unless forcedirected is given, so the end result is
+* checked for each combination.
+clear
+input byte a byte b
+1 2
+2 1
+2 3
+3 2
+end
+local symdta "`c(tmpdir)'/nwimport_symtest"
+quietly save `symdta'.dta, replace
+foreach opt in "" "directed" "forcedirected" "directed forcedirected" {
+	clear
+	nwimport `symdta'.dta, type(edgelist) name(symtest) nwclear `opt'
+	nwname symtest
+	local expect = cond(strpos("`opt'", "forcedirected") > 0, "true", "false")
+	assert "`r(directed)'" == "`expect'"
+	assert r(nodes) == 3
+}
+nwclear

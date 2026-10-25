@@ -96,8 +96,19 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 	Macros
 	  {bf:r(netlist)}	list of new networks
 
+{title:Limits}
+
+{pstd}
+Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives
+the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so
+far (a different stream; {cmd:rdiscrete()} takes at most 10,000 probabilities, which stopped the earlier version at 10,001 nodes).
+20,000 nodes: 0.2 seconds. {opt weights()} still uses the matrix.
+
 {title:See also}
 
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

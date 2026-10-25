@@ -45,7 +45,16 @@ Binary: yes (only) - shared-tie/exposure counting is a structural property, tie 
 		{cmd:. nwshared flomarriage, name(shared)}
 		{cmd:. nwplot flomarriage, edgecolor(shared) edgesize(shared) edgefactor(3)}
 
+{title:Limits}
+
+{pstd}
+The two-step paths i -> k -> j are listed from the stored ties (the sum over k of in-degree times out-degree) and counted on the
+ties; no matrix is built. 20,000 nodes 1.7 seconds in Stata/BE, random directed network with 10 ties per node (killed at 12 GB before).
+
 {title:See also}
 	{help nwsimmelian}
 	
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

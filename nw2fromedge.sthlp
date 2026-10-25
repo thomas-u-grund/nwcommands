@@ -192,8 +192,18 @@ longest time that Peter and Thomas were at the same institution. This is the def
 Peter - Thomas  - 5 years
  
 	
+{title:Limits}
+
+{pstd}
+Above 20,000 nodes in both modes together the command stops at once with r(484) (it used to build the network for 22 seconds first).
+A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw2degree}, {help nw2clustering}, {help nwmatching},
+{help nwproject} and {help nw2project} then take 1.7 to 12 seconds at that size.
+
 {title:Also see}
 	
 	{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}
 
 last certified : 29 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

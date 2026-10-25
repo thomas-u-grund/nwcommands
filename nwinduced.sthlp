@@ -114,6 +114,18 @@ inherited from whichever {opt measure()} is chosen - {cmd:nwinduced} itself does
 values directly. Two-mode: not supported - operates on the network's own one-mode adjacency
 directly; a bipartite-aware variant is not attempted here.
 
+{title:Limits}
+
+{pstd}
+{bf:measure(degree)} has a closed form - removing a node takes away its own degree and one tie from each neighbour -
+so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes:
+0.02 / 0.03 / 0.09 seconds; the loop took 11 seconds at 300 nodes and about 50 at 1,000). The other measures have
+no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number
+of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node:
+{bf:betweenness} 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, {bf:closeness} 2.8 / 20 / 8 seconds (the time of
+{help nwcloseness} depends on the network), {bf:evcent} 6 seconds at 50 and 26 seconds at 100 nodes; plan for
+minutes at a few hundred nodes.
+
 
 {title:References}
 
@@ -125,3 +137,6 @@ Networks} 32(4), 339-344.
 {title:See also}
 
 	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwneighbor}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

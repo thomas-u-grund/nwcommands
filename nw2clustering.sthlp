@@ -65,6 +65,17 @@ ties are treated as undirected. Weighted: yes, via {opt measure(arithmetic|geome
 checked; negative tie values are not validated or rejected. Two-mode: {bf:T3} - this command's entire
 purpose is two-mode clustering; calling it on a one-mode network raises a clear error.
 
+{title:Limits}
+
+{pstd}
+The 4-paths around each node are enumerated in compiled code and the closing 6-cycle is tested with a marker array
+instead of a copy of the neighbour list per path; the sums are accumulated in the same order as before, so results
+agree with the previous implementation exactly (up to the last bit of the geometric mean). The work grows with, for
+each node, the square of its number of alters times the squares of their numbers of other egos. Measured in Stata/BE on a
+random two-mode network with N mode-1 nodes, N/2 mode-2 nodes and 10 ties drawn per mode-1 node: N = 300 / 1,000 /
+5,000 take 0.09 / 0.25 / 1.4 seconds (before: 58 seconds at 300, more than 60 seconds at 1,000). Memory is
+proportional to the number of ties.
+
 {title:Stored results}
 
 	Scalars
@@ -96,3 +107,6 @@ distance in bipartite graphs. {it:Computational & Mathematical Organization Theo
 	{help nwclustering}, {help nw2project}, {help nw2degree}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

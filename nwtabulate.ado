@@ -34,7 +34,14 @@ program nwtab1
 	_nwedgelabs `anything'
 	local edgelabs r(edgelabs)
 	
-	nwtoedge `netname', `upper'
+	// the distinct tie values and their dyad counts (zeros counted, not
+	// listed), tabulated with frequency weights: the table of listing all
+	// N x N dyads without the N x N rows
+	_nwsyntax `netname'
+	drop _all
+	tempvar freq
+	mata: `netobj'->value_counts_to_vars(("`directed'" == "false"), "`netname'", "`freq'")
+	qui compress `netname'
 	
 	local ident = length("`netname'") + 20
 	di
@@ -42,7 +49,7 @@ program nwtab1
 	di "{txt}                           {txt}{col `ident'}Selfloops: {res}`selfloops'{txt}"
 	capture label def elab `edgelabs'
 	capture label val `netname' elab
-	tab `netname', `options'
+	tab `netname' [fweight = `freq'], `options'
 	restore
 end
 
@@ -51,12 +58,6 @@ capture program drop nwtab2
 program nwtab2
 	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
-	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
-	}
 	
 	local netname0 `netname'
 	_nwsyntax `netname', max(2) min(2)
@@ -101,7 +102,7 @@ program nwtab2
 	}
 	
 	if "`plot'" != "" {
-		tabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -174,12 +175,6 @@ capture program drop nwtab3
 program nwtab3
 	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
-	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
-	}
 	
 	_nwsyntax `netname', max(1) min(1)
 	
@@ -200,7 +195,8 @@ program nwtab3
 
 	di "{txt}   Attribute:  {res}`attribute'{txt}"
 	
-	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full
+	// compress: only the ties are listed (the table below counts ties only), not all N x N dyads
+	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full compress
 
 	unw_defs
 	_nwsyntax `netname'
@@ -216,7 +212,7 @@ program nwtab3
 	}
 	
 	if "`plot'" != "" {
-		tabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -260,7 +256,7 @@ program nwtab3
 	
 	qui if `permutations' > 1  {
 		_nwsyntax `netname'
-		mata: `EI_qap' = rep_EIattr(`permutations', `netobj'->get_matrix_copy(), st_data((1::`nodes'),"`group'"))
+		mata: `EI_qap' = rep_EIattr_net(`permutations', `netobj', st_data((1::`nodes'),"`group'"))
 		if `EI_index' > 0 {
 			mata: `out' = sum(`EI_qap' :>= `EI_index')
 		}
@@ -310,6 +306,29 @@ capture mata : mata drop rep_EInet()
 capture mata : mata drop rep_EIattr()
 
 mata:
+// see rep_EIvar_net() in nwmixing.ado: the permutations act on the stored ties of a large network
+real matrix rep_EIattr_net(real scalar reps, pointer(class nw_def scalar) scalar p, real matrix attr)
+{
+	real matrix el
+	real colvector perm, inv, A, intern, extern
+	real scalar n, i, total
+
+	if (!nw_ties_only(p)) return(rep_EIattr(reps, p->get_matrix_copy(), attr))
+	n = p->get_nodes()
+	el = p->edgelist()
+	total = rows(el)
+	intern = J(reps, 1, 0)
+	inv = J(n, 1, .)
+	for (i = 1; i <= reps; i++) {
+		perm = unorder(n)
+		inv[perm] = (1::n)
+		A = attr[inv]
+		intern[i] = sum(A[el[., 1]] :== A[el[., 2]])
+	}
+	extern = J(reps, 1, total) :- intern
+	return((extern :- intern) :/ (extern :+ intern))
+}
+
 real matrix rep_EInet(real scalar reps, real matrix net1, real matrix net2) {
 	real scalar nsize, total, EI, i
 	real matrix intern, extern, permutationVec, perm_net
@@ -335,7 +354,11 @@ real matrix rep_EIattr(real scalar reps, real matrix net1, real matrix attr) {
 	real scalar nsize, total, EI, i
 	real matrix intern, extern, permutationVec, perm_net, attr1, attr2
 	
-	net1 = (net1:!=0 :& net1 != .)
+	// BUGFIX: this read `net1 != .' (no colon: ONE comparison of the whole matrix, true whenever any cell
+	// differs from missing), so the missing diagonal counted as a tie in every cell, total and internal count
+	// alike, which shifted the whole simulated E-I distribution and biased the permutation p-value (the same
+	// defect nwmixing had until 2026-09-30).  Elementwise now.
+	net1 = (net1:!=0 :& net1 :!= .)
 	nsize = cols(net1)
 	total = sum(net1)
 	

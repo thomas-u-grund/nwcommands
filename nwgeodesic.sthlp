@@ -178,8 +178,19 @@ additional line here, and, if {opt generate()} is specified, stores each node's 
 	  {bf:r(netname)}	name of the new distance network	  
 		  
 		  
+{title:Limits}
+
+{pstd}
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call; with an older plugin one source
+per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and
+6.4 GB (13 and 49 seconds one source per call); the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
+not build the matrix.
+
 {title:See also}
 
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

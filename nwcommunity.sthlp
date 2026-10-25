@@ -119,7 +119,32 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 
 
+{title:Limits}
+
+{pstd}
+Louvain runs in a kernel of the native plugin on the stored ties (a platform whose plugin has not been rebuilt yet keeps
+the Mata code, which gives the same communities, on the dense matrix). Measured in Stata/BE, random undirected network with
+10 ties drawn per node: 1,000 nodes 0.08 seconds, 3,000 nodes 0.08 seconds (14 communities, modularity 0.18), 10,000
+nodes 0.24 seconds (0.2 GB; 3.8 seconds and 3 GB before). Label propagation works on the dense matrix: 10,000 nodes 17
+seconds and 1.7 GB. Above 1,000 communities (a sparse network of a few thousand nodes) the table of community sizes is not
+printed; the sizes are in {bf:r(comm_sizeid)}, ordered by size and then by community number.
+
+{pstd}
+Version note: before this version the second and later aggregation levels of Louvain could not merge communities (a
+super-node counted its own loop as a tie to its own community), so the communities of every network that needed a
+second level were too many and too small; on 40 random networks of 30 to 430 nodes the modularity rose by 0.018 to
+0.12 (mean 0.064), and above about 1,500 nodes it had collapsed (3,000 nodes: 1,311 communities, modularity 0.07).
+Partitions found with earlier versions are not reproduced.
+
+{pstd}
+Label propagation runs on the stored ties too (the same partitions for the same {opt seed()}; the old version summed the weights to a
+community over all n nodes for every neighbour community and relabelled the communities by searching the whole list for every node).
+Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,000 nodes 17 seconds and 1.7 GB before; 20,000 nodes
+1.9 seconds and 0.3 GB (93 seconds and 6.4 GB before).
+
 {title:See also}
 
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

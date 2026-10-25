@@ -93,33 +93,11 @@ program nwdropnodes
 		error 198
 	}
 
-	foreach onevar in `vars' {
-		local i = `i' + 1
-		local onelab : word `i' of `labs'
-		mata: st_numscalar("r(include)", `keepmat'[`i',1])
-		if ("`r(include)'" == "1") {
-			local newvars "`newvars' `onevar'"
-			// comma-separated, not space-separated - this is what
-			// eventually reaches nwrandom's own labs() option (via
-			// nwreplacemat's size-changing path), which expects the
-			// same comma-separated format nwname's own r(labs)
-			// uses (confirmed directly: nwrandom's labs() silently
-			// treats a bare space-separated list as a single label
-			// for the first node, auto-generating default "n2"/"n3"-
-			// style labels for the rest, rather than erroring - a
-			// separate, genuinely silent bug in nwrandom.ado itself,
-			// not fixed here since this file does not need to pass
-			// it a malformed value to begin with).
-			if "`newlabs'" == "" {
-				local newlabs "`onelab'"
-			}
-			else {
-				local newlabs "`newlabs',`onelab'"
-			}
-		}
-		mata: st_rclear()
-	}
-		
+	// the node names of the remaining network go to nwreplacemat in a Mata variable: a long Stata option
+	// string gets blanks inserted by Stata (every 5,292 characters), which corrupted node names above ~900 nodes
+	tempname newnames
+	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
+
 	// BUGFIX: attribute values used to be read via st_data() AFTER
 	// nwreplacemat (below) had already run - but nwreplacemat physically
 	// reorders the dataset's own rows to match the new, post-drop node
@@ -152,12 +130,23 @@ program nwdropnodes
 	// generate new matrix and replace network with this new matrix
 	tempname keepnet
 	tempname keepvector
-	nwtomata `netname', mat(`keepnet')
+	// the matrix of the remaining network (for a network held as stored ties it is written tie by tie: the
+	// n x n matrix of the full network is not built)
+	_nwsyntax `netname'
 	mata: `keepvector' = `keepmat'
-	mata: `keepnet' = select(`keepnet', `keepvector')
-	mata: `keepvector' = `keepvector''
-	mata: `keepnet' = select(`keepnet', `keepvector')
-	nwreplacemat `netname', newmat(`keepnet') `netonly' labs(`newlabs') vars(`newvars') `xvars'
+	mata: st_local("__dnsparse", strofreal(nw_ties_only(`netobj') & sum(`keepvector') < `nodes' & "`netonly'" == ""))
+	if `__dnsparse' {
+		// a network held as stored ties stays so: the ties between the nodes that remain are the new network
+		mata: `keepnet' = nw_dropnodes_triplets(`netobj', `keepvector')
+		mata: `keepvector' = `keepvector''
+		nwreplacemat `netname', triplets(`keepnet') labsmata(`newnames') `xvars'
+	}
+	else {
+		mata: `keepnet' = nw_dropnodes_matrix(`netobj', `keepvector')
+		mata: `keepvector' = `keepvector''
+		nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
+	}
+	mata: mata drop `newnames'
 
 	// deal with attributes that should be synced with the smaller network
 	if "`attributes'" != "" {

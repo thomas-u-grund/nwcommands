@@ -1,11 +1,12 @@
 capture program drop nwsimilar
 program nwsimilar
-	syntax [anything(name=netname)] [, type(string) name(string) mode(string) context(string) xvars]
+	syntax [anything(name=netname)] [, type(string) name(string) mode(string) context(string) xvars force]
 	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
 	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
 	_nwsyntax `netname'
+	_nwdenseguard, command(nwsimilar) nodes(`nodes') copies(9) alternative(The result is a network with a tie for every pair of nodes. Compute it for a part of the network (nwsubset, nwego, nwkeepnodes) or take the ties with nwtoedge, compress into other software.) `force'
 
 	// Naming consistency (moderate-severity pass, generators_derived
 	// group): nwdissimilar (this command's own direct sibling/
@@ -57,8 +58,9 @@ program nwsimilar
 	// - see nwdissimilar.ado's identical fix for the full explanation
 	// (a label mismatch makes nwcommands' master dataset treat the
 	// source and derived networks as having disjoint node sets).
-	nwname `netname'
-	local netlabs "`r(labs)'"
+	// node names travel to nwset in a Mata variable, not in a Stata option string (see nwdissimilar.ado)
+	tempname __nwsim_names
+	mata: `__nwsim_names' = `netobj'->get_nodenames()
 
 	if "`type'" == "pearson" {
 		qui nwcorrelate `netname', name(`name')
@@ -98,9 +100,10 @@ program nwsimilar
 		// ordinary relational network's diagonal, which defaults to
 		// missing (no self-ties) when selfloop is not given. See
 		// nwdissimilar.ado's identical fix for the full explanation.
-		nwset, mat(__nwsim) name(`name') selfloop labs(`netlabs')
+		nwset, mat(__nwsim) name(`name') selfloop nodenames(`__nwsim_names')
 		capture mata mata drop __nwsim
 	}
+	capture mata mata drop `__nwsim_names'
 	if "`xvars'" != "" {
 		nwload `name'
 	}

@@ -1,7 +1,7 @@
 capture program drop nwreplacemat
 program nwreplacemat
 	version 9.0
-	syntax anything(name=netname), newmat(string) [vars(string) labs(string) nosync netonly xvars]
+	syntax anything(name=netname), [newmat(string) TRIplets(string) vars(string) labs(string) LABSMata(string) nosync netonly xvars]
 
 	// _nwsyntax itself exports a local called `labs' (the *current*
 	// network's own labels, via its own c_local labs "..." with no
@@ -16,6 +16,40 @@ program nwreplacemat
 	local newmatlabs "`labs'"
 	unw_defs
 	_nwsyntax `netname', max(1)
+
+	// triplets(): the new network (fewer nodes, named by labsmata()) as a list of ties (ego, alter, value) of new
+	// node numbers instead of a matrix, for a network that is held as stored ties: the same steps as the matrix
+	// route below, without any n x n matrix
+	if "`triplets'" != "" {
+		if "`labsmata'" == "" | "`netonly'" != "" | "`newmat'" != "" {
+			di "{err}triplets() needs labsmata() and cannot be combined with newmat() or netonly."
+			error 198
+		}
+		mata: st_local("matrows", strofreal(cols(`labsmata')))
+		nwdrop `netname'
+		_nwsetsparse, triplets(`triplets') nodes(`matrows') name(`netname') nodenames(`labsmata')
+		if "`xvars'" == "" {
+			nwload, xvars
+		}
+		else {
+			nwload
+		}
+		_nwsyntax `netname', max(1)
+		mata: st_local("__sym", strofreal(nw_triplets_symmetric(`triplets', `matrows')))
+		mata: `netobj'->set_valued(0)
+		if "`sync'" == "" {
+			nwsync `netname'
+		}
+		if "`xvars'" != "" {
+			nwload `netname'
+		}
+		mata: `netobj'->set_directed(!`__sym')
+		exit
+	}
+	if "`newmat'" == "" {
+		di "{err}option newmat() or triplets() required."
+		error 198
+	}
 
 	capture mat list `newmat'
 	if _rc == 0 {
@@ -60,7 +94,10 @@ program nwreplacemat
 			// updated too or the object would report the OLD node count
 			// forever despite holding a differently-sized edge matrix.
 			mata: `netobj'->set_edge(`newmat')
-			if "`newmatlabs'" != "" {
+			if "`labsmata'" != "" {
+				mata: `netobj'->set_nodenames(`labsmata')
+			}
+			else if "`newmatlabs'" != "" {
 				mata: `netobj'->set_nodenames(tokens(subinstr("`newmatlabs'", ",", " ", .)))
 			}
 			else {
@@ -82,7 +119,22 @@ program nwreplacemat
 			// ties (from `prob(1)') are immediately overwritten by the
 			// very next line's recursive `nwreplacemat' call regardless
 			// of what `nwrandom' names its variables.
-			nwrandom `nodes', prob(1) name(`netname') labs(`newmatlabs') `xvars'
+			// a network of the new size, overwritten with the new matrix just below: created without ties
+			// (the earlier nwrandom, prob(1) built a complete graph and several n x n matrices to be overwritten)
+			mata: __nwrm_noties = J(0, 3, 0)
+			if "`labsmata'" != "" {
+				_nwsetsparse, triplets(__nwrm_noties) nodes(`nodes') name(`netname') nodenames(`labsmata')
+			}
+			else {
+				_nwsetsparse, triplets(__nwrm_noties) nodes(`nodes') name(`netname') labs(`newmatlabs')
+			}
+			mata: mata drop __nwrm_noties
+			if "`xvars'" == "" {
+				nwload, xvars
+			}
+			else {
+				nwload
+			}
 			// `nosync' itself is never populated (Stata's own "no"-
 			// prefix syntax convention stores the literal string
 			// "nosync" in `sync' instead - see the check just above

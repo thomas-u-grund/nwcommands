@@ -33,6 +33,12 @@ capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
 	syntax [anything(name=netname)] [, name(string) context(string)]
 	_nwsyntax `netname'
+	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
+	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
+	if `nodes' > 7000 {
+		di "{err}nwcorrelate of the nodes of network {bf:`netname'} needs about 25 dense `nodes' x `nodes' matrices (about `=round(`nodes'^2*205/1e9, .1)' GB) and is refused above 7,000 nodes."
+		error 484
+	}
 	if "`context'" == "" {
 		local context = "outgoing"
 	}
@@ -61,7 +67,7 @@ program nwcorrelate_nodes
 	_nwsyntax
 	
 	mata: st_rclear()
-	mata: st_numscalar("r(avg_corr)", ( sum(*`netobj'->get_matrix()) / sum((*`netobj'->get_matrix()):!=.)))
+	mata: st_numscalar("r(avg_corr)", ( sum(*`netobj'->get_matrix()) / (rows(*`netobj'->get_matrix()) * cols(*`netobj'->get_matrix()) - missing(*`netobj'->get_matrix()))))
 	
 	mata: st_global("r(name)", "`origname'")
 	mata: st_global("r(corrname)", "`netname'")
@@ -77,7 +83,7 @@ end
 
 capture program drop nwcorrelate_nets	
 program nwcorrelate_nets
-syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) *]
+syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) force *]
 unw_defs
 	
 	if "`mode'" == "" {
@@ -101,6 +107,7 @@ unw_defs
 	
 	_nwsyntax `netname1'
 	local netnodes1 `nodes'
+	_nwdenseguard, command(nwcorrelate) nodes(`nodes') copies(9) alternative(The correlation of two networks is taken over all pairs of nodes. Use a part of the network (nwsubset, nwego).) `force'
 	local netobj1 `netobj'
 	
 	if "`attribute'" != "" {

@@ -600,7 +600,13 @@ if "`overwrite'" != "" local replace "replace"
 
 			mata: mode1 = cols(`mat')
 			mata: st_local("mode1", strofreal(mode1))
-			mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")
+			// a square matrix of a one-mode network needs no cut-down: one copy, not two
+			if "`bipartite'" == "" {
+				mata: `__nwnew' = `mat'
+			}
+			else {
+				mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")
+			}
 			mata: `__modes' = J(cols(`__nwnew'), 1, 2)
 			mata: `__modes'[(1::mode1),1] = J(mode1, 1, 1)
 			mata: `__modes'=strofreal(`__modes')'
@@ -661,14 +667,16 @@ if "`overwrite'" != "" local replace "replace"
 		mata: `nws'.add("`name'")
 		
 		_nwsyntax `name'
-		mata: `netobj'->create_by_name(`__nwnodenames')
+		mata: `netobj'->create_by_name_sparse(`__nwnodenames')
 		mata: `netobj'->set_name("`name'")
-		mata: `netobj'->set_edge(`__nwnew')
+		mata: `netobj'->set_edge_take(`__nwnew')
 		mata: `netobj'->set_directed("`undirected'" == "")
 		mata: `netobj'->set_selfloop("`selfloop'" == "selfloop")
 	
 		if "`nodenames'" != "" {
 			mata: `netobj'->set_nodenames(`nodenames')
+			// the Stata variable names that nwload gives the nodes follow the names (as create_by_name() does for labs())
+			mata: `netobj'->update_nodesvar()
 		}
 
 		// vars() lets a caller explicitly name the Stata variables
@@ -685,7 +693,7 @@ if "`overwrite'" != "" local replace "replace"
 		// nwvalidvars.ado, which turned out to be a red herring - see
 		// docs/CERTIFICATION.md).
 		if "`vars'" != "" {
-			mata: st_local("nwsetvarsnodes", strofreal(rows(`__nwnew')))
+			mata: st_local("nwsetvarsnodes", strofreal(`netobj'->get_nodes()))
 			local varscount : word count `vars'
 			if `varscount' != `nwsetvarsnodes' {
 				di "{err}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`nwsetvarsnodes'})."
@@ -761,7 +769,7 @@ real matrix check_bipartite(real matrix edge, string scalar bip){
 	}
 	else {
 		m = min((rows(edge), cols(edge)))
-		edge = edge[(1::m),(1::m)]
+		if (rows(edge) != m | cols(edge) != m) edge = edge[(1::m),(1::m)]
 	}
 	return(edge)
 }

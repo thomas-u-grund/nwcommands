@@ -27,6 +27,7 @@
 {synopt:{opth name(newnetname)}}Name of the new similarity network; default = {it:simindex}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 17,300 nodes otherwise){p_end}
 
 {p2colreset}{...}
 
@@ -91,8 +92,22 @@ Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social n
 {pstd}
 Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Networks} 25(3), 211-230.
 
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random undirected network with 10 ties per
+node: 5,000 nodes 0.8 seconds and 1.3 GB.
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} valued network. About 5 matrices of that size are held at once (10,000 nodes: 2.8 seconds and
+4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes);
+option {opt force} runs it anyway.
+
 {title:See also}
 
 	{help nwsimilar}, {help nw2project}, {help nwkcore}, {help nwburt}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

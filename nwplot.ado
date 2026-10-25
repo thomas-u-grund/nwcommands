@@ -51,7 +51,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen force * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -82,6 +82,7 @@ program nwplot, rclass
 	}
 
 	_nwsyntax `netname', max(1)
+	_nwdenseguard, command(nwplot) nodes(`nodes') copies(10) alternative(A picture of that many nodes is unreadable and slow: plot a part of the network (nwsubset, nwego, nwkcore) or export it with nwexport for a dedicated program.) `force'
 	qui nwsummarize `netname'
 	if `r(density)' == 0 {
 		di "{txt}Network empty. Plotting does not make sense.{txt}"
@@ -186,11 +187,6 @@ program nwplot, rclass
 		local label "`nw_nodename'"
 	}
 	
-	capture which labellist
-	if _rc != 0 {
-		ssc install labellist
-	}
-
 		
 	if "`aspectratio'" == "" {
 		local aspectratio = 1
@@ -2003,23 +1999,34 @@ capture program drop _getvaluelabel
 program _getvaluelabel
 	syntax varlist(min=1 max=1), key(string)
 	
-	qui labellist `varlist'
-	local labkeys "`r(values)'"
-	local lablabels `"`r(labels)'"'
-	if ("`r(lblname)'"!= ""){
-		local lnum = `r(`r(lblname)'_k)'
-		local llab "`varlist' = `key'"
-		forvalues j = 1 /`lnum' {
-			local lkey : word `j' of `labkeys'
-			if "`lkey'" == "`key'" {
-				local llab : word `j' of `lablabels'
-			}
+	// Built-in replacement for the user-written -labellist- (SSC): look up
+	// the value-label text of -key- for a numeric variable. Builds the
+	// keys (strofreal of the value, as -labellist- returned in r(values))
+	// and label texts of the variable's value label.
+	local llab "`varlist' = `key'"
+	local lbln ""
+	capture confirm numeric variable `varlist'
+	if _rc == 0 {
+		local lbln : value label `varlist'
+	}
+	if "`lbln'" != "" {
+		capture label list `lbln'
+		if _rc | r(k) == 0 {
+			local lbln ""
 		}
 	}
-	else{
-		local llab "`varlist' = `key'"
+	if "`lbln'" != "" {
+		mata: st_vlload("`lbln'", _nwv = ., _nwt = "")
+		mata: st_local("lnum", strofreal(rows(_nwv)))
+		forvalues j = 1 /`lnum' {
+			mata: st_local("lkey", strofreal(_nwv[`j', 1]))
+			if "`lkey'" == "`key'" {
+				mata: st_local("llab", _nwt[`j', 1])
+			}
+		}
+		mata: mata drop _nwv _nwt
 	}
-	mata: st_global("r(key_label)", "`llab'")
+	mata: st_global("r(key_label)", `"`llab'"')
 	mata: st_global("r(key)", "`key'")
 end
 

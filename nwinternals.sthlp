@@ -108,3 +108,6 @@ belongs on this page for the same reason: it is called by nearly every documente
 populate a shared table of this package's own error-code local macros (see
 {help nwerrorcodes} for the user-facing meaning of each code) and a handful of other
 commonly-needed locals, rather than each command redefining the same table itself.
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

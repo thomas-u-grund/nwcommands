@@ -45,3 +45,6 @@ Not applicable - clears all networks and Stata variables from memory uncondition
 
   {help nwdrop}, {help clear}
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

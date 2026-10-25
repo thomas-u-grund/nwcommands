@@ -68,3 +68,5 @@ This command is mostly used for programming with networks.
 
    {help _nwnodeid}, {help nodeid:nodelab}, {help nodeid}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

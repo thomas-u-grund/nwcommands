@@ -375,17 +375,39 @@ real matrix build_edge_value_matrix(string rowvector nodenames, string colvector
 {
 	real scalar n, k, i, j
 	real matrix m
+	real colvector i1, i2
 	n = cols(nodenames)
 	m = J(n, n, .)
+	// the position of every label (the first match, as first_index_match() gives): looked up in a hash, not
+	// searched for in the list of all nodes for every tie (200,000 ties x 20,000 nodes took minutes)
+	i1 = nw_label_positions(nodenames, lab1)
+	i2 = nw_label_positions(nodenames, lab2)
 	for (k=1; k<=rows(lab1); k++){
-		i = first_index_match(nodenames, lab1[k])
-		j = first_index_match(nodenames, lab2[k])
+		i = i1[k]
+		j = i2[k]
 		if (i > 0 & j > 0) {
 			m[i,j] = tval[k]
 			if (symmetric) m[j,i] = tval[k]
 		}
 	}
 	return(m)
+}
+
+/* position (first match; 0 when absent) of every label of lab in the list of node names */
+real colvector nw_label_positions(string vector names, string vector lab)
+{
+	transmorphic A
+	real colvector pos
+	real scalar k, nn
+
+	A = asarray_create("string", 1)
+	nn = rows(names) * cols(names)
+	for (k = nn; k >= 1; k--) asarray(A, names[k], k)
+	pos = J(rows(lab) * cols(lab), 1, 0)
+	for (k = 1; k <= rows(pos); k++) {
+		if (asarray_contains(A, lab[k])) pos[k] = asarray(A, lab[k])
+	}
+	return(pos)
 }
 
 /*
@@ -402,11 +424,9 @@ real matrix build_eventlist(string rowvector nodenames, string colvector lab1, s
 	real matrix ev
 	nevents = rows(lab1)
 	ev = J(nevents, 3, .)
-	for (k=1; k<=nevents; k++){
-		ev[k,1] = first_index_match(nodenames, lab1[k])
-		ev[k,2] = first_index_match(nodenames, lab2[k])
-		ev[k,3] = tval[k]
-	}
+	ev[., 1] = nw_label_positions(nodenames, lab1)
+	ev[., 2] = nw_label_positions(nodenames, lab2)
+	ev[., 3] = tval
 	return(ev)
 }
 
@@ -693,15 +713,20 @@ real scalar nw_community_kin(real matrix W, real scalar i, real matrix comm, rea
 	Remap an arbitrary integer-labeled vector to dense labels 1..k
 */
 real matrix nw_community_denserelabel(real matrix v){
-	real matrix u, out
-	real scalar i, n
+	real colvector o, sv, flag
+	real matrix out
+	real scalar n
 
+	// rank of every value among the distinct values (sort once; the earlier loop searched the whole list of
+	// distinct values for every node, quadratic when there are thousands of communities)
 	n = rows(v)
-	u = uniqrows(v)
 	out = J(n, 1, 0)
-	for (i = 1; i <= n; i++){
-		out[i,1] = selectindex(u :== v[i,1])
-	}
+	if (n == 0) return(out)
+	o = order(v[., 1], 1)
+	sv = v[o, 1]
+	flag = J(n, 1, 1)
+	if (n > 1) flag[|2 \ n|] = (sv[|2 \ n|] :!= sv[|1 \ n - 1|])
+	out[o] = runningsum(flag)
 	return(out)
 }
 
@@ -753,7 +778,10 @@ real matrix Louvain(real matrix W, real scalar resolution){
 			// cost of nwcommunity/detect_communities_louvain() at
 			// n=10,000 in a fresh dev/benchmark_suite.do run (63.6s for a
 			// sparse random graph with average degree ~10).
-			idx = selectindex(W[i,.] :!= 0)
+			// the node's own loop (present from the second level on, where a super-node holds the weight inside
+			// its community) is not a tie to any community: counting it in the weight to the node's own community
+			// made every super-node stay where it was, so the aggregation levels never merged anything
+			idx = selectindex((W[i,.] :!= 0) :& ((1..n) :!= i))
 			if (cols(idx) > 0){
 				nb_w = (W[i, idx])'
 				nb_c = comm[idx',1]
@@ -884,6 +912,73 @@ real matrix LabelPropagation(real matrix W){
 			if (pick != c_old){
 				moved = 1
 			}
+		}
+	}
+	return(nw_community_denserelabel(comm))
+}
+
+/*
+	The same label propagation on the symmetric weighted pairs (i, j, w), i < j, of nwg_symweights() instead of the
+	dense matrix: the same sweep orders (unorder() per sweep), the same one runiform() per node with ties, the
+	same candidates (the communities of the neighbours, in ascending order) and the same weights (added in
+	ascending node order), so the partitions are identical to LabelPropagation() for a given seed.
+*/
+real matrix LabelPropagationPairs(real scalar n, real matrix pairs)
+{
+	real matrix comm, info
+	real colvector ia, ib, iw, ptr, o, nb, w, cn, so, sw, winners, cs, visit, deg
+	real scalar moved, sweep, ii, i, c_old, best_w, nwin, pick, a, m, k
+	real matrix wsum
+
+	if (n <= 1) return((1::n))
+	m = rows(pairs)
+	ia = pairs[., 1] \ pairs[., 2]
+	ib = pairs[., 2] \ pairs[., 1]
+	iw = pairs[., 3] \ pairs[., 3]
+	if (m > 0) {
+		o = order((ia, ib), (1, 2))
+		ia = ia[o]
+		ib = ib[o]
+		iw = iw[o]
+	}
+	ptr = J(n + 2, 1, 1)
+	if (m > 0) {
+		deg = nw_count_by(ia, n)
+		ptr[1] = 1
+		for (k = 1; k <= n; k++) ptr[k + 1] = ptr[k] + deg[k]
+	}
+	comm = (1::n)
+	moved = 1
+	sweep = 0
+	while (moved == 1 & sweep < 100) {
+		moved = 0
+		sweep = sweep + 1
+		visit = unorder(n)
+		for (ii = 1; ii <= n; ii++) {
+			i = visit[ii]
+			if (ptr[i + 1] == ptr[i]) continue
+			nb = ib[|ptr[i] \ ptr[i + 1] - 1|]
+			w = iw[|ptr[i] \ ptr[i + 1] - 1|]
+			cn = comm[nb]
+			c_old = comm[i, 1]
+			if (rows(cn) == 1) {
+				cs = cn
+				wsum = w
+			}
+			else {
+				o = order((cn, (1::rows(cn))), (1, 2))
+				so = cn[o]
+				sw = w[o]
+				info = panelsetup(so, 1)
+				cs = so[info[., 1]]
+				wsum = panelsum(sw, info)
+			}
+			best_w = max(wsum)
+			winners = select(cs, wsum :== best_w)
+			nwin = rows(winners)
+			pick = winners[ceil(runiform(1, 1) * nwin), 1]
+			comm[i, 1] = pick
+			if (pick != c_old) moved = 1
 		}
 	}
 	return(nw_community_denserelabel(comm))
@@ -1137,6 +1232,105 @@ real matrix CorePeriphery(real matrix net, real scalar maxiter){
 }
 
 /*
+	Adjacency lists of the symmetric pairs (i, j, w), i < j, as three arrays: ptr[i]..ptr[i+1]-1 index the neighbours
+	nb (ascending) and the weights w of node i.
+*/
+void nw_pairs_csr(real scalar n, real matrix pairs, real colvector ptr, real colvector nb, real colvector w)
+{
+	real colvector ia, ib, iw, o, deg
+	real scalar k
+
+	ptr = J(n + 2, 1, 1)
+	nb = J(0, 1, .)
+	w = J(0, 1, .)
+	if (rows(pairs) == 0) return
+	ia = pairs[., 1] \ pairs[., 2]
+	ib = pairs[., 2] \ pairs[., 1]
+	iw = pairs[., 3] \ pairs[., 3]
+	o = order((ia, ib), (1, 2))
+	ia = ia[o]
+	nb = ib[o]
+	w = iw[o]
+	deg = nw_count_by(ia, n)
+	for (k = 1; k <= n; k++) ptr[k + 1] = ptr[k] + deg[k]
+}
+
+/*
+	CorePeriphery() on the symmetric weighted pairs of nwg_symweights() instead of the n x n matrix (the matrix
+	version holds six of them): the same search, the same flips; the sums that the matrix version takes over all
+	cells come from the pairs, and the reported fitness is Pearson's r from the same sums instead of
+	correlation() of two vectors of n(n-1) cells (equal up to rounding in the last digits).
+*/
+real matrix CorePeripheryPairs(real scalar n, real matrix pairs, real scalar maxiter)
+{
+	real colvector ptr, nb, w, sw, deg, core, ia, ib, pw
+	real scalar m, sumA, sumAA, varA, sumP, sumAP, sweep, moved, i, c_old, nP, wsum, dirn, nPer
+	real scalar sumP1, sumAP1, fit0, fit1, varP0, varP1, fit, mx, k
+
+	mx = (rows(pairs) > 0 ? max(pairs[., 3]) : 0)
+	if (mx < 0) mx = 0
+	if (mx <= 0) {
+		errprintf("Core-periphery detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	nw_pairs_csr(n, pairs, ptr, nb, w)
+	sw = J(n, 1, 0)
+	for (i = 1; i <= n; i++) {
+		if (ptr[i + 1] > ptr[i]) sw[i] = sum(w[|ptr[i] \ ptr[i + 1] - 1|])
+	}
+	deg = sw :+ sw
+	core = (deg :> mean(deg))
+
+	m = n * (n - 1)
+	sumA = 2 * sum(pairs[., 3])
+	sumAA = 2 * sum(pairs[., 3] :^ 2)
+	varA = m * sumAA - sumA^2
+
+	nPer = n - sum(core)
+	sumP = m - nPer * (nPer - 1)
+	ia = pairs[., 1]
+	ib = pairs[., 2]
+	pw = pairs[., 3]
+	sumAP = sumA - 2 * sum(select(pw, (core[ia] :== 0) :& (core[ib] :== 0)))
+
+	sweep = 0
+	moved = 1
+	while (moved & sweep < maxiter) {
+		moved = 0
+		sweep++
+		for (i = 1; i <= n; i++) {
+			varP0 = sumP * (m - sumP)
+			fit0 = (varP0 <= 0 | varA <= 0) ? . : (m * sumAP - sumA * sumP) / sqrt(varA * varP0)
+			c_old = core[i, 1]
+			nP = nPer - (c_old == 0)
+			wsum = 0
+			if (ptr[i + 1] > ptr[i]) {
+				k = ptr[i]
+				wsum = sum((core[nb[|k \ ptr[i + 1] - 1|]] :== 0) :* (w[|k \ ptr[i + 1] - 1|] :+ w[|k \ ptr[i + 1] - 1|]))
+			}
+			dirn = (c_old == 1 ? -1 : 1)
+			sumP1 = sumP + dirn * 2 * nP
+			sumAP1 = sumAP + dirn * wsum
+			varP1 = sumP1 * (m - sumP1)
+			fit1 = (varP1 <= 0 | varA <= 0) ? . : (m * sumAP1 - sumA * sumP1) / sqrt(varA * varP1)
+			if (fit1 > fit0 + 1e-12) {
+				core[i, 1] = 1 - c_old
+				nPer = nPer + (c_old == 1 ? 1 : -1)
+				sumP = sumP1
+				sumAP = sumAP1
+				moved = 1
+			}
+		}
+	}
+	nPer = n - sum(core)
+	sumP = m - nPer * (nPer - 1)
+	sumAP = sumA - 2 * sum(select(pw, (core[ia] :== 0) :& (core[ib] :== 0)))
+	varP0 = sumP * (m - sumP)
+	fit = (varP0 <= 0 | varA <= 0) ? . : (m * sumAP - sumA * sumP) / sqrt(varA * varP0)
+	return(core \ fit)
+}
+
+/*
 	nw_faction_fitness(): the "factions" analog of nw_cp_fitness() above -
 	correlation between the observed tie matrix and the IDEAL factions
 	pattern (1 if two nodes share the SAME group, 0 otherwise - unlike
@@ -1211,7 +1405,9 @@ real matrix Factions(real matrix net, real scalar K, real scalar maxiter){
 	idx = selectindex(vec(mask))
 
 	deg = rowsum(net) :+ colsum(net)'
-	byDeg = sort((( 1::n), deg), -2)		// column 1 = node index, sorted by descending degree (column 2)
+	// ties in degree are broken by node number (sort() on a single key breaks ties at random, using the
+	// random-number stream, so the old partitions were not reproducible); canonical order: degree descending, node ascending
+	byDeg = sort((( 1::n), deg), (-2,1))		// column 1 = node index, sorted by descending degree (column 2)
 	groups = J(n,1,.)
 	for (i=1; i<=n; i++) {
 		groups[byDeg[i,1],1] = mod(i-1, K) + 1
@@ -2666,6 +2862,35 @@ real rowvector csr_neighbors(real colvector rowptr, real colvector colidx, real 
 }
 
 /*
+	nw_csr_from_edges(n, eu, ev, rowptrP, colidxP): the CSR of the arc list
+	(eu, ev) - rows in node order, each row's entries in the order the arcs
+	come, exactly what build_edgelist_csr_dense() builds - without its
+	element-by-element loops.
+*/
+void nw_csr_from_edges(real scalar n, real colvector eu, real colvector ev,
+		pointer(real colvector) scalar rowptrP, pointer(real colvector) scalar colidxP){
+	real scalar m, g
+	real colvector o, es, starts, cnt, deg
+
+	m = rows(eu)
+	deg = J(n, 1, 0)
+	if (m > 0){
+		o = order((eu, (1::m)), (1, 2))
+		es = eu[o]
+		starts = nw_which((es :!= (0 \ es[|1 \ m-1|])))
+		g = rows(starts)
+		cnt = (g > 1 ? starts[|2 \ g|] : J(0, 1, 0)) \ (m + 1)
+		cnt = cnt - starts
+		deg[es[starts]] = cnt
+		(*colidxP) = ev[o]
+	}
+	else {
+		(*colidxP) = J(0, 1, 0)
+	}
+	(*rowptrP) = 0 \ runningsum(deg)
+}
+
+/*
 	KComponentsEdges(nfull, eu, ev, rowptr, colidx, nodeset, k): the
 	edge-list/CSR-native equivalent of KComponents() above - identical
 	algorithm (see that function's own header comment for the full
@@ -2731,7 +2956,8 @@ real matrix KComponentsEdges(real scalar nfull, real colvector eu, real colvecto
 	// completely unaffected - the early exit only ever fires once
 	// minflow is already known to be below k, which cannot happen on a
 	// branch that reports conn >= k.
-	search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
+	if (NativeGraphAvailable()) search = nw_kconn_search_native(cols(idx), eu_local, ev_local, k)
+	else search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
 	conn = search[1]
 	if (conn >= k) {
 		results = nodeset
@@ -2932,6 +3158,583 @@ real matrix CohesionHierarchy(real matrix origadj, real rowvector nodeset){
 }
 
 
+/* -------------------------------------------------------------------- */
+/*
+	Native combinatorial kernels (native/nwcomb.h, nwcomb2.h): dispatcher and
+	thin wrappers for nwcohesion, nwfactions, nwlambda, nwmotifs,
+	nw2clustering, nwnclique, nwnclan and nwkplex. The NWdef methods and
+	nw2clustering.ado call the kernels when nwg_comb_ok() says the plugin
+	of this platform has them, and keep their older Mata code otherwise
+	(a platform whose plugin has not been rebuilt yet still works, only
+	slowly).
+
+	nwg_comb(alg, n, ties, nodevals, par, aux, status) sends the ties (rows
+	ego, alter[, weight]; 1-based) and optional per-node values to the
+	plugin in a scratch frame and returns the result matrix; aux receives
+	the scalars __nwg_a1..a4 the kernel published and status its status
+	(0 ok, 1 result limit exceeded, 2 out of memory, 3 time limit).
+*/
+real scalar nwg_comb_ok()
+{
+	external real scalar nwg_comb_state
+	real scalar rc
+
+	if (nwg_comb_state != .) return(nwg_comb_state)
+	nwg_comb_state = 0
+	if (!NativeGraphAvailable()) return(0)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	st_numscalar("__nwg_ver", .)
+	rc = _stata("capture plugin call nwgraph_native, " + char(34) + "100 0 0 0 0" + char(34), 1)
+	if (nwg_scalar("__nwg_ver") != .) {
+		if (nwg_scalar("__nwg_ver") >= 2) nwg_comb_state = 1
+	}
+	return(nwg_comb_state)
+}
+
+/*
+	The plugin generation of this platform's binary: 0 when it has no combinatorial kernels, 2 for the
+	original set (codes 3..9), 3 when it also has the triad balance (22) and bipartite matching (23).
+	A platform whose plugin is older keeps the Mata code of nwbalance/nwmatching, slowly.
+*/
+real scalar nwg_comb_version()
+{
+	if (!nwg_comb_ok()) return(0)
+	return(nwg_scalar("__nwg_ver"))
+}
+
+/* triad balance, native: n x 2 (closed triads, balanced closed triads) per node from the stored ties */
+real matrix nwg_balance(real scalar n, real matrix el)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(22, n, el, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwbalance")
+	return(res)
+}
+
+/*
+	Symmetric weighted pairs of an edgelist() result for the community routines: one row (i, j, w) per
+	pair i < j with the weight get_matrix_mod(val, 0) gives it, the larger of the two directed cells
+	(a missing cell counts as 0); with val = 0 the weight is 1 for a positive larger cell.  Loops are left
+	out, pairs of weight 0 too.
+*/
+real matrix nwg_symweights(real scalar n, real matrix el, real scalar val)
+{
+	real matrix p
+	real colvector lo, hi, w, key, o, ks, ws, first, f, nxt, wm, keep
+
+	if (rows(el) == 0) return(J(0, 3, 0))
+	p = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :< .))
+	if (rows(p) == 0) return(J(0, 3, 0))
+	lo = rowmin(p[., (1, 2)])
+	hi = rowmax(p[., (1, 2)])
+	w = p[., 3]
+	key = lo :* (n + 1) :+ hi
+	o = order(key, 1)
+	ks = key[o]
+	ws = w[o]
+	first = 1 \ (ks[|2 \ rows(ks)|] :!= ks[|1 \ rows(ks) - 1|])
+	f = selectindex(first)
+	nxt = J(rows(f), 1, 0)
+	keep = selectindex(f :< rows(ks))
+	if (rows(keep) > 0) {
+		nxt[keep] = (ks[f[keep] :+ 1] :== ks[f[keep]]) :* ws[f[keep] :+ 1]
+	}
+	wm = rowmax((ws[f], nxt))
+	if (val == 0) wm = (wm :> 0)
+	keep = selectindex(wm :!= 0)
+	if (rows(keep) == 0) return(J(0, 3, 0))
+	key = ks[f[keep]]
+	lo = floor(key :/ (n + 1))
+	return((lo, key :- lo :* (n + 1), wm[keep]))
+}
+
+/*
+	Networks with more nodes than this go through the routes that work on the list of ties instead of an n x n matrix
+	where the two give the same result up to rounding (nwcoreperiphery).  2,000 unless a test sets the external
+	scalar nw_sparse_min_nodes (to 0 to force those routes on small networks).
+*/
+real scalar nw_sparse_min_nodes()
+{
+	pointer scalar pe
+
+	pe = findexternal("nw_sparse_min_nodes_x")
+	if (pe == NULL) return(2000)
+	return(*pe)
+}
+
+/* Louvain communities, native: the community (1..k) of every node from the symmetric pairs (i, j, w), i < j */
+real colvector nwg_louvain(real scalar n, real matrix pairs, real scalar resolution)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(24, n, pairs, J(0, 1, .), (resolution), aux, st)
+	if (st != 0) nwg_fail(st, "nwcommunity")
+	return(res[., 1])
+}
+
+/*
+	Distance sums of every node, native (kernel 25; needs a plugin of generation 5): n x 3 = (sum of the distances to
+	the nodes that can be reached, number of those nodes, sum of alpha^distance).  reverse = 1 searches along the
+	in-ties.  Unvalued: every tie above 0 is a step, as in the distance matrix of nwgeodesic.
+*/
+real matrix nwg_distsums(real scalar n, real matrix el, real scalar reverse, real scalar alpha)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(25, n, el, J(0, 1, .), (reverse, alpha), aux, st)
+	if (st != 0) nwg_fail(st, "distance sums")
+	return(res)
+}
+
+/*
+	Newman modularity of a membership vector on the symmetric pairs (i, j, w), i < j: the sparse form of
+	Modularity() (communities are the integers 1..max(membership); nodes with any other value belong to none).
+*/
+real scalar nw_modularity_pairs(real scalar n, real matrix pairs, real matrix membership, real scalar resolution)
+{
+	real colvector mem, k, ids, ww, o, so, lab, inw, tot, c, lw
+	real matrix info
+	real scalar ncomm, m2, q, i
+
+	mem = vec(membership)
+	if (rows(pairs) == 0) return(0)
+	ids = pairs[., 1] \ pairs[., 2]
+	ww = pairs[., 3] \ pairs[., 3]
+	o = order(ids, 1)
+	so = ids[o]
+	info = panelsetup(so, 1)
+	k = J(n, 1, 0)
+	k[so[info[., 1]]] = panelsum(ww[o], info)
+	m2 = sum(k)
+	if (m2 == 0) return(0)
+	ncomm = max(mem)
+	if (ncomm == . | ncomm < 1) return(0)
+	inw = J(ncomm, 1, 0)
+	tot = J(ncomm, 1, 0)
+	lab = mem[pairs[., 1]]
+	c = selectindex((lab :== mem[pairs[., 2]]) :& (lab :== floor(lab)) :& (lab :>= 1) :& (lab :<= ncomm))
+	if (rows(c) > 0) {
+		lw = lab[c]
+		ww = pairs[c, 3]
+		o = order(lw, 1)
+		so = lw[o]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		inw[so[info[., 1]]] = 2 :* panelsum(ww, info)
+	}
+	c = selectindex((mem :== floor(mem)) :& (mem :>= 1) :& (mem :<= ncomm))
+	if (rows(c) > 0) {
+		lw = mem[c]
+		ww = k[c]
+		o = order(lw, 1)
+		so = lw[o]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		tot[so[info[., 1]]] = panelsum(ww, info)
+	}
+	q = 0
+	for (i = 1; i <= ncomm; i++) {
+		if (tot[i] != 0 | inw[i] != 0) q = q + inw[i] - resolution * tot[i]^2 / m2
+	}
+	return(q / m2)
+}
+
+/* maximum bipartite matching, native: the mode-2 partner (0 = none) of every node, mode-2 nodes 0 */
+real colvector nwg_matching(real scalar n, real matrix el, real colvector modes)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(23, n, el, modes, J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwmatching")
+	return(res[., 1])
+}
+
+real scalar nwg_scalar(string scalar nm)
+{
+	real matrix x
+
+	x = st_numscalar(nm)
+	return(length(x) == 1 ? x : .)
+}
+
+real matrix nwg_comb(real scalar alg, real scalar n, real matrix ties, real colvector nv,
+		real rowvector par, real rowvector aux, real scalar status)
+{
+	string scalar origframe, argstr, vl
+	real scalar nties, nr, nc, j
+	real rowvector junk
+	string rowvector vn
+	real matrix res
+
+	aux = J(1, 4, .)
+	status = 2
+	res = J(0, 0, .)
+	nties = rows(ties)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_comb")
+	stata("frame create __nwgraph_comb")
+	st_framecurrent("__nwgraph_comb")
+	st_addobs(max((n, nties, 1)))
+	junk = st_addvar("double", ("v1", "v2", "v3", "v4"))
+	if (nties > 0) {
+		st_store((1::nties), ("v1", "v2"), ties[., (1, 2)])
+		st_store((1::nties), "v3", (cols(ties) >= 3 ? ties[., 3] : J(nties, 1, 1)))
+	}
+	if (rows(nv) > 0) st_store((1::n), "v4", nv)
+
+	argstr = strofreal(alg) + " " + strofreal(n) + " " + strofreal(nties)
+	for (j = 1; j <= cols(par); j++) argstr = argstr + " " + strofreal(par[j], "%21.0g")
+	st_numscalar("__nwg_status", .)
+	st_numscalar("__nwg_rows", .)
+	st_numscalar("__nwg_cols", .)
+	for (j = 1; j <= 4; j++) st_numscalar("__nwg_a" + strofreal(j), .)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	if (_stata("plugin call nwgraph_native v1 v2 v3 v4, " + char(34) + argstr + char(34), 1) == 0) {
+		status = nwg_scalar("__nwg_status")
+		if (status == .) status = 2
+		for (j = 1; j <= 4; j++) aux[j] = nwg_scalar("__nwg_a" + strofreal(j))
+		nr = nwg_scalar("__nwg_rows")
+		nc = nwg_scalar("__nwg_cols")
+		if (status == 0 & nr != . & nr > 0 & nc > 0) {
+			if (st_nobs() < nr) st_addobs(nr - st_nobs())
+			vn = J(1, nc, "")
+			vl = "v1 v2 v3 v4"
+			for (j = 1; j <= nc; j++) {
+				vn[j] = "v" + strofreal(4 + j)
+				vl = vl + " " + vn[j]
+			}
+			junk = st_addvar("double", vn)
+			if (_stata("plugin call nwgraph_native " + vl + ", " + char(34) + "99 0 0 " + strofreal(nc) + char(34), 1) == 0) {
+				res = st_data((1::nr), vn)
+			}
+			else status = 2
+		}
+		else if (status == 0) res = J(0, (nc == . ? 0 : nc), .)
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_comb")
+	return(res)
+}
+
+void nwg_fail(real scalar status, string scalar what)
+{
+	errprintf("%s: the native kernel ran out of memory or failed (status %g).\n", what, status)
+	exit(error(3900))
+}
+
+/*
+	Symmetric 0/1 tie list of an edgelist() result: one row (i,j) in each
+	direction for every pair with a positive tie in either direction, no
+	loops, sorted by i then j and without duplicates - the sparse form of
+	get_matrix_mod(0,0) with the diagonal cleared.
+*/
+real matrix nwg_sym01(real matrix el)
+{
+	real matrix p
+
+	if (rows(el) == 0) return(J(0, 2, 0))
+	p = select(el, (el[., 3] :> 0) :& (el[., 3] :< .) :& (el[., 1] :!= el[., 2]))
+	if (rows(p) == 0) return(J(0, 2, 0))
+	return(uniqrows(p[., (1, 2)] \ p[., (2, 1)]))
+}
+
+/* cohesive blocks: nblocks x (n+1), column 1 the block's connectivity, then 0/1 membership */
+real matrix nwg_cohesion(real scalar n, real matrix pairs)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+	real colvector out
+
+	res = nwg_comb(3, n, pairs, J(0, 1, .), (0), aux, st)
+	if (st != 0) nwg_fail(st, "nwcohesion")
+	out = J(aux[1] * (n + 1), 1, 0)
+	if (rows(res) > 0) {
+		out[(res[., 1] :- 1) :* (n + 1) :+ 1] = res[., 3]
+		out[(res[., 1] :- 1) :* (n + 1) :+ res[., 2] :+ 1] = J(rows(res), 1, 1)
+	}
+	return(colshape(out, n + 1))
+}
+
+/* n x n edge-connectivity matrix from the equivalent-flow tree the kernel returns */
+real matrix nwg_lambda(real scalar n, real matrix pairs)
+{
+	real rowvector aux, v
+	real scalar st, s, p, f
+	real matrix res, lam
+
+	lam = J(n, n, 0)
+	if (n <= 1) return(lam)
+	res = nwg_comb(5, n, pairs, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwlambda")
+	for (s = 2; s <= n; s++) {
+		p = res[s, 1]
+		f = res[s, 2]
+		v = lam[p, 1..(s-1)]
+		v[p] = f
+		v = (f :< v) :* f :+ (f :>= v) :* v
+		lam[s, 1..(s-1)] = v
+		lam[1..(s-1), s] = v'
+	}
+	return(lam)
+}
+
+/*
+	Symmetrised tie weights as get_matrix_mod(val, 0) defines them, as a
+	sparse (i, j, w) list with both directions and no loops: for an
+	undirected network the stored weights (binarised when they are valued
+	and val is 0); for a directed one max(w_ij, w_ji) with an absent tie
+	counting 0 (or 0/1 when val is 0).
+*/
+real matrix nwg_symw(real matrix el, real scalar isdirect, real scalar isvalued, real scalar val)
+{
+	real matrix p, q
+	real colvector key, first, cnt
+	real scalar m
+
+	if (rows(el) == 0) return(J(0, 3, 0))
+	p = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :< .) :& (el[., 3] :!= 0))
+	if (rows(p) == 0) return(J(0, 3, 0))
+	if (isdirect == 0) {
+		if (val == 1 | isvalued == 0) return(p)
+		p = select(p, p[., 3] :> 0)
+		p[., 3] = J(rows(p), 1, 1)
+		return(p)
+	}
+	if (val == 0) {
+		q = nwg_sym01(el)
+		return((q, J(rows(q), 1, 1)))
+	}
+	q = p \ (p[., 2], p[., 1], p[., 3])
+	q = sort(q, (1, 2, -3))
+	m = rows(q)
+	key = q[., 1] :* (max(q[., (1, 2)]) + 1) :+ q[., 2]
+	first = J(m, 1, 1)
+	cnt = J(m, 1, 0)
+	if (m > 1) {
+		first[2::m] = (key[2::m] :!= key[1::(m-1)])
+		/* cnt = 1 on the first row of a pair that is listed in both directions */
+		cnt[1::(m-1)] = first[1::(m-1)] :* (key[2::m] :== key[1::(m-1)])
+	}
+	/* a pair listed in both directions keeps its larger weight; a pair listed once pairs with an absent tie (0) */
+	q = select(q, first :& ((cnt :== 1) :| (q[., 3] :> 0)))
+	return(q)
+}
+
+/*
+	Factions on the sparse symmetrised weights: the starting partition (nodes
+	sorted by weighted degree, dealt out to the groups round-robin) is built here
+	with the same Mata sort() as Factions(), so ties among equal degrees are
+	broken identically; the relocation sweeps run in the kernel with an
+	incremental fitness (the correlation is rebuilt from the within-group tie
+	weight and the number of same-group ordered pairs, O(degree + groups) per
+	candidate instead of O(n^2)). Returns the n group labels and, in row n+1, the
+	fitness (agrees with the dense computation to rounding, about 1e-15).
+*/
+real matrix nwg_factions(real scalar K, real scalar val, real scalar maxiter, real matrix el,
+		real scalar n, real scalar isdirect, real scalar isvalued)
+{
+	real matrix sw, byDeg, info, res
+	real colvector deg, groups
+	real rowvector aux
+	real scalar st
+
+	sw = nwg_symw(el, isdirect, isvalued, val)
+	if (rows(sw) == 0) {
+		errprintf("Factions detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	if (max(sw[., 3]) <= 0) {
+		errprintf("Factions detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	if (K < 2 | K > n) {
+		errprintf("Factions requires groups() to be between 2 and the number of nodes.\n")
+		exit(error(6556))
+	}
+	deg = J(n, 1, 0)
+	info = panelsetup(sw[., 1], 1)
+	deg[sw[info[., 1], 1]] = panelsum(sw[., 3], info)
+	deg = deg :+ deg
+	byDeg = sort(((1::n), deg), (-2,1))
+	groups = J(n, 1, .)
+	groups[byDeg[., 1]] = mod((1::n) :- 1, K) :+ 1
+	res = nwg_comb(4, n, sw, groups, (K, maxiter), aux, st)
+	if (st != 0) nwg_fail(st, "nwfactions")
+	return(res \ aux[1])
+}
+
+/*
+	nwinduced, measure(degree): induced(v) = (sum of the degrees) - (sum of the degrees of the network
+	without v) = 2 * (stored ties of v) - 1 if v carries a self-tie. Matches the leave-one-out loop,
+	which counts stored ties (nwdegree with alpha 0).
+*/
+real colvector nwg_induced_degree(real matrix el, real scalar n)
+{
+	real colvector k, ego, lp
+	real matrix info
+
+	k = J(n, 1, 0)
+	lp = J(n, 1, 0)
+	if (rows(el) > 0) {
+		ego = sort(el[., 1], 1)
+		info = panelsetup(ego, 1)
+		k[ego[info[., 1]]] = info[., 2] - info[., 1] :+ 1
+		ego = select(el[., 1], el[., 1] :== el[., 2])
+		if (rows(ego) > 0) lp[ego] = J(rows(ego), 1, 1)
+	}
+	return(2 :* k - lp)
+}
+
+/* 4-node motif census (1 x 7): path, star, cycle, paw, diamond, k4, disconnected */
+real rowvector nwg_motif4(real scalar n, real matrix pairs)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(6, n, pairs, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwmotifs")
+	return(res)
+}
+
+/* Mata classes of the combinatorial searches: summary of the last enumeration */
+void nwg_enum_opts(real scalar mc, real scalar co, real scalar mw)
+{
+	external real scalar nwg_maxcliques, nwg_countonly, nwg_maxwork
+
+	mc = (nwg_maxcliques == . ? 100000 : nwg_maxcliques)
+	co = (nwg_countonly == . ? 0 : nwg_countonly)
+	mw = (nwg_maxwork == . ? 60 : nwg_maxwork)         // seconds of search
+}
+
+/* sets the summary of the last enumeration from a 0/1 set matrix when the kernel did not (Mata fallback) */
+void nwg_enum_summary(real matrix M)
+{
+	external real scalar nwg_enum_count, nwg_enum_max
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+	real colvector sz, u
+	real scalar i
+
+	if (nwg_enum_count != .) {
+		if (rows(nwg_enum_hist) == 0) nwg_enum_hist = J(1, 2, 0)
+		return
+	}
+	nwg_enum_nodevar = (rows(M) > 0 ? editvalue(colmax(M :* rowsum(M))', 0, .) : J(cols(M), 1, .))
+	nwg_enum_count = rows(M)
+	if (rows(M) == 0) {
+		nwg_enum_max = 0
+		nwg_enum_hist = J(1, 2, 0)
+		return
+	}
+	sz = rowsum(M)
+	nwg_enum_max = max(sz)
+	u = uniqrows(sz)
+	nwg_enum_hist = (u, J(rows(u), 1, 0))
+	for (i = 1; i <= rows(u); i++) nwg_enum_hist[i, 2] = sum(sz :== u[i])
+}
+
+void nwg_enum_reset(real scalar maxcliques, real scalar countonly, | real scalar maxwork, real scalar nomatrix)
+{
+	external real scalar nwg_maxcliques, nwg_countonly, nwg_maxwork, nwg_nomatrix, nwg_enum_count, nwg_enum_max
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+
+	nwg_maxcliques = maxcliques
+	nwg_countonly = countonly
+	nwg_maxwork = (args() >= 3 ? maxwork : .)
+	nwg_nomatrix = (args() >= 4 ? nomatrix : .)
+	nwg_enum_nodevar = J(0, 1, .)
+	nwg_enum_count = .
+	nwg_enum_max = .
+	nwg_enum_hist = J(0, 2, .)
+}
+
+/* per-node largest size of a set containing the node (missing if none), from the (set, node) pairs of the kernel */
+real colvector nwg_enum_nodemax(real matrix res, real scalar n)
+{
+	real colvector sz, nv, ord, first
+	real matrix info
+	real scalar m
+
+	nv = J(n, 1, .)
+	m = rows(res)
+	if (m == 0) return(nv)
+	info = panelsetup(res[., 1], 1)
+	sz = (info[., 2] - info[., 1] :+ 1)[res[., 1]]
+	ord = order((res[., 2], -sz), (1, 2))
+	first = J(m, 1, 1)
+	if (m > 1) first[2::m] = (res[ord[2::m], 2] :!= res[ord[1::(m-1)], 2])
+	nv[res[select(ord, first), 2]] = sz[select(ord, first)]
+	return(nv)
+}
+
+/*
+	Runs an exhaustive search kernel (alg 8: n-cliques, n-clans; alg 9:
+	k-plexes) and returns the maximal sets as a 0/1 matrix, one row per set,
+	n columns, in the order the Mata routines produced them. With the
+	countonly setting it returns an empty matrix and leaves the size
+	histogram in nwg_enum_hist; the number of sets in nwg_enum_count and the
+	largest size in nwg_enum_max in both modes.
+*/
+real matrix nwg_enum(string scalar what, real scalar alg, real scalar n, real matrix ties,
+		real rowvector par, real rowvector extra, string scalar optname)
+{
+	external real scalar nwg_enum_count, nwg_enum_max, nwg_nomatrix
+	external real matrix nwg_enum_hist, nwg_enum_nodevar
+	real rowvector aux
+	real scalar st, cells, maxcliques, countonly, maxwork
+	real matrix res, out
+
+	nwg_enum_opts(maxcliques, countonly, maxwork)
+	res = nwg_comb(alg, n, ties, J(0, 1, .), (par, maxcliques, countonly, extra, maxwork), aux, st)
+	if (st == 1) {
+		if (what == "nwnclan") {
+			errprintf("%s: more than %g maximal n-cliques had to be examined while looking for n-clans; stopped.\n", what, maxcliques)
+			errprintf("  Raise the limit with option %s(#) (each examined n-clique costs a few microseconds), or lower n().\n", optname)
+		}
+		else {
+			errprintf("%s: more than %g maximal sets (size >= minsize) found; stopped to protect memory.\n", what, maxcliques)
+			errprintf("  Raise the limit with option %s(#) (the result matrix needs sets x nodes numbers; option nomatrix skips it), or count only with option countonly.\n", optname)
+		}
+		exit(error(484))
+	}
+	if (st == 3) {
+		errprintf("%s: the search was stopped after %g seconds without finishing (%g sets found so far).\n", what, maxwork, aux[1])
+		errprintf("  The number of maximal sets, and so the search time, grows exponentially with network size and density (and with k or n).\n")
+		errprintf("  Raise the limit with option maxtime(#) (seconds), or reduce n()/k() or the network.\n")
+		exit(error(484))
+	}
+	if (st != 0) nwg_fail(st, what)
+	nwg_enum_count = aux[1]
+	nwg_enum_max = aux[2]
+	if (countonly) {
+		nwg_enum_hist = (rows(res) > 0 ? res : J(1, 2, 0))
+		return(J(0, n, 0))
+	}
+	if (nwg_nomatrix == 1) {
+		nwg_enum_nodevar = nwg_enum_nodemax(res, n)
+		return(J(0, n, 0))
+	}
+	cells = aux[1] * n
+	if (cells > 5e7) {
+		errprintf("%s: the result matrix (%g sets x %g nodes = %g numbers, several copies of it are made) is too large to build.\n", what, aux[1], n, cells)
+		errprintf("  Use option nomatrix (per-node variable and counts only) or countonly.\n")
+		exit(error(484))
+	}
+	out = J(aux[1] * n, 1, 0)
+	if (rows(res) > 0) out[(res[., 1] :- 1) :* n :+ res[., 2]] = J(rows(res), 1, 1)
+	return(colshape(out, n))
+}
+
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
 
@@ -3090,6 +3893,13 @@ class `NWdef' {
 	real scalar get_nodeid_from_nodename()
 
 	string matrix get_edgelist()
+	string matrix get_edgelist_sparse()
+	void edgelist_full_to_vars()
+	void value_counts_to_vars()
+	real scalar recode_weights()
+	real scalar edgelist_sparse_ok()
+	real scalar edgelist_sparse_ok_cross()
+	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
 	real matrix get_indegree()
@@ -3109,6 +3919,9 @@ class `NWdef' {
 	void invalidate_sparse()
 	void set_edge_from_triplets()
 	void ensure_dense_built()
+	real scalar is_dense_built()
+	real colvector csr_rows()
+	void symmetrize_sparse()
 	real matrix neighbors()
 	real matrix neighbors_in()
 	real scalar degree()
@@ -3175,6 +3988,8 @@ class `NWdef' {
 	real matrix calculate_distances_dijkstra()
 	real matrix calculate_distances_without()
 	real matrix calculate_bridges_global()
+	real matrix bridge_list()
+	real matrix bridges_global_triplets()
 	real scalar calculate_distance_pair()
 	real scalar bfs_dist_excluding()
 	real matrix bfs_hopdist_from()
@@ -3221,6 +4036,8 @@ class `NWdef' {
 	void set_nodenames()
 	void set_nodesvar()
 	void set_nodes_from_string()
+	real scalar cell_value()
+	void set_edge_take()
 	void set_edge()
 	void set_label()
 	void set_caption()
@@ -3284,21 +4101,20 @@ class `NWdef' {
 	a documented simplification, not silently wrong.
 */
 real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real scalar at){
-	real matrix et, ed, out
-	real scalar n, i, j, nout
+	real matrix et, el, out
+	real scalar k, nout, i, j, w
+	// the ties come from the stored ties (row-major order as before), not from a scan of all n^2 cells
 	et = *(p->get_edge_time())
-	ed = *(p->get_matrix())
-	n = p->get_nodes()
-	out = J(n*n, 3, 0)
+	el = p->edgelist()
+	out = J(rows(el), 3, 0)
 	nout = 0
-	for (i=1; i<=n; i++){
-		for (j=1; j<=n; j++){
-			if (i != j & et[i,j] != . & et[i,j] == at & ed[i,j] != . & ed[i,j] != 0){
-				nout = nout + 1
-				out[nout,1] = i
-				out[nout,2] = j
-				out[nout,3] = ed[i,j]
-			}
+	for (k=1; k<=rows(el); k++){
+		i = el[k,1]; j = el[k,2]; w = el[k,3]
+		if (i != j & et[i,j] != . & et[i,j] == at & w != . & w != 0){
+			nout = nout + 1
+			out[nout,1] = i
+			out[nout,2] = j
+			out[nout,3] = w
 		}
 	}
 	if (nout == 0) return(J(0,3,0))
@@ -3306,22 +4122,20 @@ real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real 
 }
 
 real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real scalar at){
-	real matrix es, ee, ed, out
-	real scalar n, i, j, nout
+	real matrix es, ee, el, out
+	real scalar k, nout, i, j, w
 	es = *(p->get_edge_start())
 	ee = *(p->get_edge_end())
-	ed = *(p->get_matrix())
-	n = p->get_nodes()
-	out = J(n*n, 3, 0)
+	el = p->edgelist()
+	out = J(rows(el), 3, 0)
 	nout = 0
-	for (i=1; i<=n; i++){
-		for (j=1; j<=n; j++){
-			if (i != j & es[i,j] != . & es[i,j] <= at & ee[i,j] > at & ed[i,j] != . & ed[i,j] != 0){
-				nout = nout + 1
-				out[nout,1] = i
-				out[nout,2] = j
-				out[nout,3] = ed[i,j]
-			}
+	for (k=1; k<=rows(el); k++){
+		i = el[k,1]; j = el[k,2]; w = el[k,3]
+		if (i != j & es[i,j] != . & es[i,j] <= at & ee[i,j] > at & w != . & w != 0){
+			nout = nout + 1
+			out[nout,1] = i
+			out[nout,2] = j
+			out[nout,3] = w
 		}
 	}
 	if (nout == 0) return(J(0,3,0))
@@ -3339,38 +4153,726 @@ real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real 
 	language: this command IS the explicit request.
 */
 real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real scalar at){
-	real matrix ev, acc, out
-	real scalar nev, k, n, i, j, nout
+	real matrix ev, out
+	real colvector key, ks, first
+	real scalar nev, n, nk
 	ev = *(p->get_eventlist())
 	nev = rows(ev)
 	n = p->get_nodes()
-	// accumulate through a dense n x n indicator rather than emitting
-	// one triplet row per matching event directly - two+ events
-	// between the same pair at the exact same t would otherwise emit
-	// duplicate triplet rows, which set_edge_from_triplets() (the
-	// consumer) does not dedupe itself
-	acc = J(n, n, 0)
-	for (k=1; k<=nev; k++){
-		if (ev[k,3] != . & ev[k,3] == at){
-			i = ev[k,1]
-			j = ev[k,2]
-			if (i > 0 & j > 0 & i != j) acc[i,j] = 1
+	// two+ events between the same pair at the exact same t would emit duplicate triplet rows, which
+	// set_edge_from_triplets() (the consumer) does not dedupe itself: one tie per distinct pair, in row-major order
+	if (nev == 0) return(J(0,3,0))
+	ev = select(ev, (ev[.,3] :!= .) :& (ev[.,3] :== at) :& (ev[.,1] :> 0) :& (ev[.,2] :> 0) :& (ev[.,1] :!= ev[.,2]))
+	if (rows(ev) == 0) return(J(0,3,0))
+	key = ev[.,1] :* (n + 1) :+ ev[.,2]
+	ks = uniqrows(key)
+	out = J(rows(ks), 3, 1)
+	out[.,1] = floor(ks :/ (n + 1))
+	out[.,2] = ks :- out[.,1] :* (n + 1)
+	return(out)
+}
+
+/*
+	Large networks: operations on a network that is held as stored ties only (is_dense_built() false) work on
+	the tie list; a network with a dense matrix, and every two-mode network, keeps the dense route.
+*/
+real scalar nw_ties_only(pointer(class nw_def scalar) scalar p)
+{
+	return(!p->is_dense_built() & p->is_2mode_boolean() != 1)
+}
+
+/* dst := transpose of src (dst is a copy of src, or src itself) */
+void nw_transpose_net(pointer(class nw_def scalar) scalar src, pointer(class nw_def scalar) scalar dst)
+{
+	real matrix el
+	real scalar wasvalued
+
+	if (!nw_ties_only(src)) {
+		dst->set_edge((*src->get_matrix())')
+		return
+	}
+	el = src->edgelist()
+	wasvalued = dst->is_valued_boolean()
+	dst->set_edge_from_triplets(el[., 2], el[., 1], el[., 3], dst->is_directed_boolean())
+	dst->set_valued(wasvalued)
+}
+
+/*
+	Counts of ties kept, formed and dissolved between two networks of the same nodes, per node (n x 3: in both,
+	only in the second, only in the first), ties being the cells above 0 outside the diagonal (a tie is kept in
+	both directions of an undirected network, as in the dense route).  For networks held as stored ties the
+	counts come from the tie lists (sort and compare keys); otherwise from the two n x n matrices.
+*/
+real matrix nw_turnover_counts(pointer(class nw_def scalar) scalar p1, pointer(class nw_def scalar) scalar p2, real scalar isdirected)
+{
+	real matrix el1, el2, A1, A2, out
+	real colvector k1, k2, k, o, ks, e, src, first, inb, cnt
+	real scalar n, m
+
+	n = p1->get_nodes()
+	out = J(n, 3, 0)
+	if (!nw_ties_only(p1) | !nw_ties_only(p2)) {
+		A1 = (*p1->get_matrix_mod(0, isdirected)) :!= 0
+		A2 = (*p2->get_matrix_mod(0, isdirected)) :!= 0
+		_diag(A1, 0)
+		_diag(A2, 0)
+		out[., 1] = rowsum(A1 :& A2)
+		out[., 2] = rowsum(A2 :& !A1)
+		out[., 3] = rowsum(A1 :& !A2)
+		return(out)
+	}
+	el1 = p1->edgelist()
+	el2 = p2->edgelist()
+	el1 = select(el1, (el1[., 3] :> 0) :& (el1[., 1] :!= el1[., 2]))
+	el2 = select(el2, (el2[., 3] :> 0) :& (el2[., 1] :!= el2[., 2]))
+	k1 = el1[., 1] :* (n + 1) :+ el1[., 2]
+	k2 = el2[., 1] :* (n + 1) :+ el2[., 2]
+	k = k1 \ k2
+	m = rows(k)
+	if (m == 0) return(out)
+	e = el1[., 1] \ el2[., 1]
+	src = J(rows(k1), 1, 1) \ J(rows(k2), 1, 2)
+	o = order(k, 1)
+	ks = k[o]
+	e = e[o]
+	src = src[o]
+	if (m > 1) {
+		first = (ks[|1 \ m - 1|] :== ks[|2 \ m|]) \ 0        // first of a pair of equal keys: the tie is in both
+		inb = first :| (0 \ first[|1 \ m - 1|])
+	}
+	else {
+		first = 0
+		inb = 0
+	}
+	out[., 1] = nw_count_by(e[selectindex(first)], n)
+	out[., 2] = nw_count_by(e[selectindex(!inb :& src :== 2)], n)
+	out[., 3] = nw_count_by(e[selectindex(!inb :& src :== 1)], n)
+	return(out)
+}
+
+/* how often each of 1..n occurs in v */
+real colvector nw_count_by(real colvector v, real scalar n)
+{
+	real colvector cnt, sv
+	real matrix info
+
+	cnt = J(n, 1, 0)
+	if (rows(v) == 0) return(cnt)
+	sv = sort(v, 1)
+	info = panelsetup(sv, 1)
+	cnt[sv[info[., 1]]] = info[., 2] :- info[., 1] :+ 1
+	return(cnt)
+}
+
+/*
+	The number of two-step paths i -> k -> j for every tie (i,j) of the list el (rows ego, alter, x; no loops, each
+	pair once): the rows (i, j, count) of the ties with at least one path.  Every path is listed once (sum over k
+	of the in-degree times the out-degree of k) and the paths are counted on the tie keys by sorting.
+*/
+real matrix nw_shared_core(real scalar n, real matrix el)
+{
+	real colvector oo, oi, optr, iptr, outdeg, indeg, dst_o, in_src, pk, kk, ks, tk, allk, flag, cnt, ak, ac, o, u, v, keep, first
+	real colvector A, B
+	real scalar m, k, tot, pos, nu, ma
+	real matrix info
+
+	m = rows(el)
+	if (m == 0) return(J(0, 3, 0))
+	outdeg = nw_count_by(el[., 1], n)
+	indeg = nw_count_by(el[., 2], n)
+	tot = sum(indeg :* outdeg)
+	if (tot == 0) return(J(0, 3, 0))
+	oo = order((el[., 1], el[., 2]), (1, 2))
+	dst_o = el[oo, 2]
+	oi = order((el[., 2], el[., 1]), (1, 2))
+	in_src = el[oi, 1]
+	optr = 1 \ (1 :+ runningsum(outdeg))
+	iptr = 1 \ (1 :+ runningsum(indeg))
+	pk = J(tot, 1, .)
+	pos = 0
+	for (k = 1; k <= n; k++) {
+		if (indeg[k] == 0 | outdeg[k] == 0) continue
+		A = in_src[|iptr[k] \ iptr[k + 1] - 1|]
+		B = dst_o[|optr[k] \ optr[k + 1] - 1|]
+		kk = vec(J(1, rows(B), A :* (n + 1)) :+ J(rows(A), 1, B'))
+		pk[|pos + 1 \ pos + rows(kk)|] = kk
+		pos = pos + rows(kk)
+	}
+	ks = sort(pk, 1)
+	info = panelsetup(ks, 1)
+	nu = rows(info)
+	ak = ks[info[., 1]]
+	ac = info[., 2] :- info[., 1] :+ 1
+	tk = el[., 1] :* (n + 1) :+ el[., 2]
+	allk = ak \ tk
+	flag = J(nu, 1, 1) \ J(rows(tk), 1, 2)
+	cnt = ac \ J(rows(tk), 1, 0)
+	o = order((allk, flag), (1, 2))
+	allk = allk[o]
+	flag = flag[o]
+	cnt = cnt[o]
+	ma = rows(allk)
+	if (ma < 2) return(J(0, 3, 0))
+	first = (allk[|1 \ ma - 1|] :== allk[|2 \ ma|]) :& (flag[|1 \ ma - 1|] :== 1)
+	keep = selectindex(first)
+	if (rows(keep) == 0) return(J(0, 3, 0))
+	ks = allk[keep]
+	u = floor(ks :/ (n + 1))
+	v = ks :- u :* (n + 1)
+	return((u, v, cnt[keep]))
+}
+
+/*
+	nwshared: the network whose value on a tie (i,j) is the number of nodes k with i -> k -> j (the dense route is
+	M :* (M * M) for the 0/1 tie matrix M); ties without a path get the value 0, i.e. no tie.
+*/
+void nw_shared_net(pointer(class nw_def scalar) scalar p)
+{
+	real matrix el, M, T
+	real scalar wasvalued
+
+	if (!nw_ties_only(p)) {
+		M = p->get_matrix_unvalued_copy()
+		p->set_edge(M :* (M * M))
+		return
+	}
+	el = p->edgelist()
+	el = select(el, el[., 3] :!= 0)
+	wasvalued = p->is_valued_boolean()
+	T = nw_shared_core(p->get_nodes(), el)
+	p->set_edge_from_triplets(T[., 1], T[., 2], T[., 3], p->is_directed_boolean())
+	p->set_valued(wasvalued)
+}
+
+/*
+	nwsimmelian: the mutual ties that have a mutual neighbour in common (dense route: (M :* (M * M)) :!= 0 for the
+	matrix M of mutual ties, M = A :* A').
+*/
+void nw_simmelian_net(pointer(class nw_def scalar) scalar p)
+{
+	real matrix el, A, M, T
+	real colvector k1, k2, kk, ks, dk, u
+	real scalar n, wasvalued, ma
+
+	if (!nw_ties_only(p) | p->is_selfloop_boolean() == 1) {
+		A = *p->get_matrix_unvalued()
+		M = A :* A'
+		_editmissing(M, 0)
+		M = M :* (M * M)
+		M = (M :!= 0)
+		p->set_edge(M)
+		return
+	}
+	n = p->get_nodes()
+	wasvalued = p->is_valued_boolean()
+	el = p->edgelist()
+	el = select(el, (el[., 3] :!= 0) :& (el[., 3] :!= .) :& (el[., 1] :!= el[., 2]))
+	if (rows(el) == 0) {
+		p->set_edge_from_triplets(J(0, 1, 0), J(0, 1, 0), J(0, 1, 0), p->is_directed_boolean())
+		p->set_valued(wasvalued)
+		return
+	}
+	k1 = el[., 1] :* (n + 1) :+ el[., 2]
+	k2 = el[., 2] :* (n + 1) :+ el[., 1]
+	kk = k1 \ k2
+	ks = sort(kk, 1)
+	ma = rows(ks)
+	// a key that occurs twice is an arc whose reverse is a tie as well: the arcs of the mutual ties
+	dk = (ma > 1 ? ks[selectindex(ks[|1 \ ma - 1|] :== ks[|2 \ ma|])] : J(0, 1, .))
+	if (rows(dk) == 0) {
+		p->set_edge_from_triplets(J(0, 1, 0), J(0, 1, 0), J(0, 1, 0), p->is_directed_boolean())
+		p->set_valued(wasvalued)
+		return
+	}
+	u = floor(dk :/ (n + 1))
+	T = nw_shared_core(n, (u, dk :- u :* (n + 1), J(rows(dk), 1, 1)))
+	p->set_edge_from_triplets(T[., 1], T[., 2], J(rows(T), 1, 1), p->is_directed_boolean())
+	p->set_valued(wasvalued)
+}
+
+/* nwpath, generate(): the network of the id-th path (one tie per step), on the nodes of p */
+void nw_path_net(pointer(class nw_def scalar) scalar p, real matrix path, real scalar id)
+{
+	real scalar n, i, wasvalued
+	real matrix net
+
+	n = p->get_nodes()
+	if (nw_ties_only(p)) {
+		wasvalued = p->is_valued_boolean()
+		p->set_edge_from_triplets(path[id, (1..cols(path) - 1)]', path[id, (2..cols(path))]', J(cols(path) - 1, 1, 1), p->is_directed_boolean())
+		p->set_valued(wasvalued)
+		return
+	}
+	net = J(n, n, 0)
+	for (i = 1; i < cols(path); i++) net[path[id, i], path[id, i + 1]] = 1
+	p->set_edge(net)
+}
+
+/*
+	Sparse generators of the network generators (nwring, nwrandom, nwsmall, nwpref): the ties as a list
+	(ego, alter, 1), never an n x n matrix.  Where the random-number stream of the matrix version can be kept it is
+	kept: the same numbers are drawn in the same order, so the same seed gives the same network.
+*/
+real matrix nw_ring_triplets(real scalar nodes, real scalar k)
+{
+	real colvector rws, y
+	real matrix T
+	real scalar i
+
+	rws = (1::nodes)
+	T = J(2 * k * nodes, 3, 1)
+	for (i = 1; i <= k; i++) {
+		y = editvalue(mod(rws :+ i, nodes), 0, nodes)
+		T[|(2 * i - 2) * nodes + 1, 1 \ (2 * i - 1) * nodes, 2|] = (rws, y)
+		y = editvalue(mod(rws :- i, nodes), 0, nodes)
+		T[|(2 * i - 1) * nodes + 1, 1 \ (2 * i) * nodes, 2|] = (rws, y)
+	}
+	return(T)
+}
+
+/*
+	nwrandom, prob(): the cell (i,j) is a tie when floor(uniform() + prob) = 1.  uniform(r, c) fills the matrix
+	row by row, so drawing the rows in blocks gives the numbers of uniform(n, n); an undirected network takes
+	the lower triangle (the dense route copies it to the upper one).
+*/
+real matrix nw_random_prob_triplets(real scalar nodes, real scalar prob, real scalar undirected, real scalar selfloop)
+{
+	real scalar blk, r0, r1, b
+	real matrix U, V, out
+	real colvector idx, rr, cc, v, keep, vv
+
+	blk = max((1, floor(2e7 / nodes)))
+	out = J(0, 3, .)
+	for (r0 = 1; r0 <= nodes; r0 = r0 + blk) {
+		r1 = min((r0 + blk - 1, nodes))
+		b = r1 - r0 + 1
+		U = uniform(b, nodes)
+		V = floor(U :+ prob)
+		vv = vec(V)
+		idx = selectindex(vv :!= 0)
+		if (rows(idx) == 0) continue
+		rr = mod(idx :- 1, b) :+ r0
+		cc = floor((idx :- 1) :/ b) :+ 1
+		v = vv[idx]
+		if (undirected) keep = selectindex((rr :> cc) :| ((rr :== cc) :& selfloop))
+		else keep = selectindex((rr :!= cc) :| selfloop)
+		if (rows(keep) == 0) continue
+		out = out \ (rr[keep], cc[keep], v[keep])
+	}
+	if (undirected & rows(out) > 0) {
+		keep = selectindex(out[., 1] :!= out[., 2])
+		out = out \ (out[keep, 2], out[keep, 1], out[keep, 3])
+	}
+	return(out)
+}
+
+/* k different integers from 1..N, at random (rejection sampling on a vector of draws) */
+real colvector nw_sample_distinct(real scalar N, real scalar k)
+{
+	real colvector u, x, p
+
+	u = J(0, 1, .)
+	while (rows(u) < k) {
+		x = ceil(runiform(ceil(1.2 * (k - rows(u))) + 20, 1) :* N)
+		x = editvalue(x, 0, 1)
+		u = uniqrows(u \ x)
+	}
+	if (rows(u) > k) {
+		p = unorder(rows(u))
+		u = u[p[|1 \ k|]]
+	}
+	return(u)
+}
+
+/*
+	nwrandom, density(): exactly floor(density * dyads) ties at random positions.  The matrix version shuffles all
+	n^2 cells (a different random-number stream and O(n^2) memory and time); this draws the positions of the
+	ties directly.  undirected: floor(ties / 2) pairs, as there.
+*/
+real matrix nw_random_density_triplets(real scalar nodes, real scalar density, real scalar undirected, real scalar selfloop)
+{
+	real scalar ties, k, N
+	real colvector x, r, c, jj, lo, hi
+
+	ties = floor(nodes * (nodes - (1 - selfloop)) * density)
+	if (undirected == 0) {
+		N = (selfloop ? nodes * nodes : nodes * (nodes - 1))
+		if (ties > N) ties = N
+		x = nw_sample_distinct(N, ties)
+		if (selfloop) {
+			r = floor((x :- 1) :/ nodes) :+ 1
+			c = mod(x :- 1, nodes) :+ 1
+		}
+		else {
+			r = floor((x :- 1) :/ (nodes - 1)) :+ 1
+			jj = mod(x :- 1, nodes - 1) :+ 1
+			c = jj :+ (jj :>= r)
+		}
+		return((r, c, J(rows(r), 1, 1)))
+	}
+	k = floor(ties / 2)
+	if (selfloop) {
+		N = nodes * (nodes + 1) / 2
+		if (k > N) k = N
+		x = nw_sample_distinct(N, k)
+		// t = r(r-1)/2 + c, 1 <= c <= r
+		r = ceil((sqrt(1 :+ 8 :* x) :- 1) :/ 2)
+		r = r :- (r :* (r :- 1) :/ 2 :>= x)
+		r = r :+ (r :* (r :+ 1) :/ 2 :< x)
+		c = x :- r :* (r :- 1) :/ 2
+	}
+	else {
+		N = nodes * (nodes - 1) / 2
+		if (k > N) k = N
+		x = nw_sample_distinct(N, k)
+		// t = (r-1)(r-2)/2 + c, 1 <= c < r
+		r = ceil((1 :+ sqrt(1 :+ 8 :* x)) :/ 2)
+		r = r :- ((r :- 1) :* (r :- 2) :/ 2 :>= x)
+		r = r :+ (r :* (r :- 1) :/ 2 :< x)
+		c = x :- (r :- 1) :* (r :- 2) :/ 2
+	}
+	lo = c
+	hi = r
+	return((hi, lo, J(rows(hi), 1, 1)) \ (lo[selectindex(hi :!= lo)], hi[selectindex(hi :!= lo)], J(rows(selectindex(hi :!= lo)), 1, 1)))
+}
+
+/* is alter within k steps of ego on the ring (or equal to it): the band of the ring lattice */
+real scalar nw_inside_band(real scalar nodes, real scalar k, real scalar ego, real scalar alter)
+{
+	real scalar inside
+
+	inside = 0
+	if (((ego - alter) <= k) & (ego >= alter)) inside = 1
+	if (((ego - alter) > k) & (((alter + nodes) - ego) <= k)) inside = 1
+	if (((alter - ego) <= k) & (alter >= ego)) inside = 1
+	if (((alter - ego) > k) & (((ego + nodes) - alter) <= k)) inside = 1
+	if (ego == alter) inside = 1
+	return(inside)
+}
+
+/* nwsmall, shortcuts(): port of smallworldsk() with the ties in a hash instead of an n x n matrix; same draws */
+real matrix nw_small_sk_triplets(real scalar nodes, real scalar k, real scalar shortcuts, real scalar directed)
+{
+	transmorphic A
+	real matrix rewires, T
+	real colvector rws, y, keys, sgn
+	real scalar i, j, ry, alreadyRewired, wrongPick, rx_old, ry_old, K, sign1
+	real scalar kk
+
+	K = nodes + 1
+	A = asarray_create("real", 1)
+	rws = (1::nodes)
+	for (i = 1; i <= k; i++) {
+		y = editvalue(mod(rws :+ i, nodes), 0, nodes)
+		for (j = 1; j <= nodes; j++) asarray(A, rws[j] * K + y[j], 1)
+		y = editvalue(mod(rws :- i, nodes), 0, nodes)
+		for (j = 1; j <= nodes; j++) asarray(A, rws[j] * K + y[j], 1)
+	}
+	rewires = runiform(shortcuts, 2)
+	rewires[., 1] = ceil(rewires[., 1] :* nodes)
+	if (directed == 0) {
+		y = ceil(rewires[., 2] :* k)
+		y = editvalue(mod(rewires[., 1] :+ y, nodes), 0, nodes)
+		rewires[., 2] = y
+	}
+	if (directed == 1) {
+		sgn = round(runiform(shortcuts, 1))
+		sgn = J(shortcuts, 1, 1) :- (sgn :* 2)
+		rewires[., 2] = editvalue(mod(rewires[., 1] :+ (ceil(rewires[., 2] :* k) :* sgn), nodes), 0, nodes)
+	}
+	for (i = 1; i <= shortcuts; i++) {
+		alreadyRewired = 1
+		while (alreadyRewired == 1) {
+			alreadyRewired = 0
+			if (!asarray_contains(A, rewires[i, 1] * K + rewires[i, 2])) {
+				alreadyRewired = 1
+				rewires[i, 1] = ceil(runiform(1, 1) * nodes)
+				if (directed == 0) {
+					rewires[i, 2] = runiform(1, 1)
+					rewires[i, 2] = editvalue(mod(rewires[i, 1] :+ ceil(rewires[i, 2] :* k), nodes), 0, nodes)
+				}
+				if (directed == 1) {
+					sign1 = round(runiform(1, 1))
+					sign1 = 1 :- (sign1 :* 2)
+					rewires[i, 2] = editvalue(mod(rewires[i, 1] :+ (ceil(rewires[i, 2] :* k) :* sign1), nodes), 0, nodes)
+				}
+			}
+		}
+		rx_old = rewires[i, 1]
+		ry_old = rewires[i, 2]
+		wrongPick = 1
+		while (wrongPick == 1) {
+			wrongPick = 0
+			ry = ceil(runiform(1, 1) :* nodes)
+			wrongPick = ((nw_inside_band(nodes, k, rx_old, ry) == 1) | asarray_contains(A, rx_old * K + ry))
+		}
+		asarray(A, rx_old * K + ry, 1)
+		if (directed == 0) asarray(A, ry * K + rx_old, 1)
+		if (asarray_contains(A, rx_old * K + ry_old)) asarray_remove(A, rx_old * K + ry_old)
+		if (directed == 0) {
+			if (asarray_contains(A, ry_old * K + rx_old)) asarray_remove(A, ry_old * K + rx_old)
 		}
 	}
-	out = J(n*n, 3, 0)
-	nout = 0
-	for (i=1; i<=n; i++){
-		for (j=1; j<=n; j++){
-			if (acc[i,j] == 1){
-				nout = nout + 1
-				out[nout,1] = i
-				out[nout,2] = j
-				out[nout,3] = 1
+	keys = asarray_keys(A)
+	kk = rows(keys)
+	T = J(kk, 3, 1)
+	T[., 1] = floor(keys :/ K)
+	T[., 2] = keys :- T[., 1] :* K
+	return(T)
+}
+
+/* nwsmall, prob(): port of smallworldprob() with the ties in a hash instead of an n x n matrix; same draws */
+real matrix nw_small_prob_triplets(real scalar nodes, real scalar k, real scalar prob, real scalar directed)
+{
+	transmorphic A
+	real matrix T
+	real colvector rws, y, keys
+	real scalar i, j, ego, alter, alter_new, wrongPick, K
+
+	K = nodes + 1
+	A = asarray_create("real", 1)
+	rws = (1::nodes)
+	for (i = 1; i <= k; i++) {
+		y = editvalue(mod(rws :+ i, nodes), 0, nodes)
+		for (j = 1; j <= nodes; j++) asarray(A, rws[j] * K + y[j], 1)
+		y = editvalue(mod(rws :- i, nodes), 0, nodes)
+		for (j = 1; j <= nodes; j++) asarray(A, rws[j] * K + y[j], 1)
+	}
+	if (directed == 0) {
+		for (ego = 1; ego <= nodes; ego++) {
+			for (i = 1; i <= k; i++) {
+				alter = mod((ego + i), nodes)
+				if (alter == 0) alter = nodes
+				if (runiform(1, 1) <= prob) {
+					wrongPick = 1
+					while (wrongPick == 1) {
+						wrongPick = 0
+						alter_new = ceil(runiform(1, 1) :* nodes)
+						wrongPick = ((nw_inside_band(nodes, k, ego, alter_new) == 1) | asarray_contains(A, ego * K + alter_new))
+					}
+					if (asarray_contains(A, ego * K + alter)) asarray_remove(A, ego * K + alter)
+					if (asarray_contains(A, alter * K + ego)) asarray_remove(A, alter * K + ego)
+					asarray(A, ego * K + alter_new, 1)
+					asarray(A, alter_new * K + ego, 1)
+				}
 			}
 		}
 	}
-	if (nout == 0) return(J(0,3,0))
-	return(out[(1::nout),.])
+	if (directed == 1) {
+		for (ego = 1; ego <= nodes; ego++) {
+			for (i = (-k); i <= k; i++) {
+				if (i != 0) {
+					alter = mod((ego + i), nodes)
+					if (alter == 0) alter = nodes
+					if (runiform(1, 1) <= prob) {
+						wrongPick = 1
+						while (wrongPick == 1) {
+							wrongPick = 0
+							alter_new = ceil(runiform(1, 1) :* nodes)
+							wrongPick = ((nw_inside_band(nodes, k, ego, alter_new) == 1) | asarray_contains(A, ego * K + alter_new))
+						}
+						if (asarray_contains(A, ego * K + alter)) asarray_remove(A, ego * K + alter)
+						asarray(A, ego * K + alter_new, 1)
+					}
+				}
+			}
+		}
+	}
+	keys = asarray_keys(A)
+	T = J(rows(keys), 3, 1)
+	T[., 1] = floor(keys :/ K)
+	T[., 2] = keys :- T[., 1] :* K
+	return(T)
+}
+
+/*
+	nwpref: port of prefattach() with the ties as a list.  A new node's picks come from rdiscrete() exactly as
+	before (so the same seed gives the same network) up to 10,000 nodes, the largest vector rdiscrete() accepts;
+	above that a pick proportional to the degrees is a uniformly chosen end point of the ties made so far.
+*/
+real matrix nw_pref_triplets(real scalar nodes, real scalar m0, real scalar m, real scalar prob, real scalar directed)
+{
+	real matrix T, probability
+	real colvector degree, stubs, mypicks
+	real scalar i, j, newpicks, pick, z, totaldeg, nT, nstub, big, u, nstub0
+
+	big = (nodes > 10000)
+	T = J(m0 * m0 + nodes * (directed ? 1 : 2) * max((m, m0)), 3, 1)
+	nT = 0
+	degree = J(nodes, 1, 0)
+	for (i = 1; i <= m0; i++) {
+		for (j = 1; j <= m0; j++) {
+			nT++
+			T[nT, 1] = i
+			T[nT, 2] = j
+		}
+	}
+	degree[|1 \ m0|] = J(m0, 1, m0)
+	totaldeg = m0 * m0
+	if (big) {
+		stubs = J(m0 * m0 + nodes * 2 * max((m, m0)), 1, 0)
+		nstub = 0
+		for (i = 1; i <= m0; i++) {
+			stubs[|nstub + 1 \ nstub + m0|] = J(m0, 1, i)
+			nstub = nstub + m0
+		}
+	}
+	z = min((m \ m0))
+	for (i = (m0 + 1); i <= nodes; i++) {
+		newpicks = 0
+		mypicks = J(0, 1, .)
+		if (!big) {
+			if (runiform(1, 1) <= prob) probability = J((i - 1), 1, (1 / (i - 1)))
+			else probability = degree :/ totaldeg
+			if (probability == 1) probability = (1 \ 0)
+		}
+		else {
+			u = -1
+			nstub0 = nstub       // the picks of this node come from the ties made before it
+		}
+		while (newpicks < z) {
+			if (big) {
+				if (u < 0) u = (runiform(1, 1) <= prob)
+				if (u == 1) pick = ceil(runiform(1, 1) * (i - 1))
+				else pick = stubs[max((1, ceil(runiform(1, 1) * nstub0)))]
+				if (pick < 1) pick = 1
+			}
+			else pick = rdiscrete(1, 1, probability)
+			if (!any(mypicks :== pick)) {
+				newpicks = newpicks + 1
+				mypicks = mypicks \ pick
+				nT++
+				T[nT, 1] = i
+				T[nT, 2] = pick
+				degree[pick] = degree[pick] + 1
+				totaldeg = totaldeg + 1
+				if (big) {
+					nstub++
+					stubs[nstub] = pick
+				}
+				if (directed == 0) {
+					nT++
+					T[nT, 1] = pick
+					T[nT, 2] = i
+					degree[i] = degree[i] + 1
+					totaldeg = totaldeg + 1
+					if (big) {
+						nstub++
+						stubs[nstub] = i
+					}
+				}
+			}
+		}
+	}
+	return(T[|1, 1 \ nT, 3|])
+}
+
+/* distance sums of the nodes of a network, from its stored ties (see nwg_distsums()) */
+real matrix nw_distance_sums(pointer(class nw_def scalar) scalar p, real scalar reverse, real scalar alpha)
+{
+	real matrix el
+
+	el = p->edgelist()
+	if (rows(el) > 0) el = select(el, el[., 3] :> 0)
+	return(nwg_distsums(p->get_nodes(), el, reverse, alpha))
+}
+
+/*
+	nwreach: turn the distance matrix of a network (unreachable pairs marked with the value `unreached') into its
+	reachability matrix in place (1 where the pair is reachable, 0 where not; the diagonal stays as it is).  One n x n matrix; the expression route of nwreplace
+	held several.
+*/
+void nw_reach_inplace(pointer(class nw_def scalar) scalar p, real scalar unreached)
+{
+	pointer(real matrix) scalar P
+	real colvector d
+	real scalar i, n
+
+	P = p->get_matrix()
+	n = p->get_nodes()
+	d = diagonal(*P)
+	for (i = 1; i <= n; i++) (*P)[i, .] = ((*P)[i, .] :!= unreached)
+	_diag(*P, d)
+	p->invalidate_sparse()
+}
+
+/*
+	nwdropnodes: the matrix of the network without the nodes whose keep flag is 0 (keep: n x 1 of 0/1).  A network
+	held as stored ties is cut tie by tie (the surviving ties are written into a k x k matrix; the n x n matrix is
+	never built); the dense route cuts the matrix twice.  The diagonal of a network without self-loops is missing,
+	as in the matrix the dense route returns.
+*/
+real matrix nw_dropnodes_matrix(pointer(class nw_def scalar) scalar p, real colvector keep)
+{
+	real matrix el, M, info
+	real colvector newid, ok, o, eg, al, wt
+	real scalar n, k, b
+
+	if (!nw_ties_only(p)) {
+		M = *p->get_matrix()
+		return(select(select(M, keep), keep'))
+	}
+	n = p->get_nodes()
+	k = sum(keep)
+	newid = runningsum(keep)
+	el = p->edgelist()
+	if (rows(el) > 0) {
+		ok = selectindex(keep[el[., 1]] :& keep[el[., 2]])
+		el = el[ok, .]
+	}
+	M = J(k, k, 0)
+	if (rows(el) > 0) {
+		o = order((el[., 1], el[., 2]), (1, 2))
+		eg = newid[el[o, 1]]
+		al = newid[el[o, 2]]
+		wt = el[o, 3]
+		info = panelsetup(eg, 1)
+		for (b = 1; b <= rows(info); b++) {
+			M[eg[info[b, 1]], al[|info[b, 1] \ info[b, 2]|]] = wt[|info[b, 1] \ info[b, 2]|]'
+		}
+	}
+	if (p->is_selfloop_boolean() != 1) _diag(M, .)
+	return(M)
+}
+
+/*
+	nwdropnodes for a network held as stored ties: the ties between the nodes that stay, as triplets (ego, alter,
+	value) with the new node numbers (the same ties as the matrix of nw_dropnodes_matrix()).
+*/
+real matrix nw_dropnodes_triplets(pointer(class nw_def scalar) scalar p, real colvector keep)
+{
+	real matrix el
+	real colvector newid, ok
+
+	newid = runningsum(keep)
+	el = p->edgelist()
+	if (rows(el) == 0) return(J(0, 3, 0))
+	ok = selectindex(keep[el[., 1]] :& keep[el[., 2]])
+	if (rows(ok) == 0) return(J(0, 3, 0))
+	return((newid[el[ok, 1]], newid[el[ok, 2]], el[ok, 3]))
+}
+
+/* 1 when the triplets (ego, alter, value) of n nodes are symmetric: every tie has its reverse with the same value */
+real scalar nw_triplets_symmetric(real matrix T, real scalar n)
+{
+	real colvector k1, k2, o1, o2
+
+	if (rows(T) == 0) return(1)
+	k1 = T[., 1] :* (n + 1) :+ T[., 2]
+	k2 = T[., 2] :* (n + 1) :+ T[., 1]
+	o1 = order(k1, 1)
+	o2 = order(k2, 1)
+	return(all(k1[o1] :== k2[o2]) & all(T[o1, 3] :== T[o2, 3]))
+}
+
+/* replace the ties of a network by the list (ego, alter, value); the directed/valued flags stay as they were */
+void nw_set_ties(pointer(class nw_def scalar) scalar p, real matrix T)
+{
+	real scalar wasvalued
+
+	wasvalued = p->is_valued_boolean()
+	p->set_edge_from_triplets(T[., 1], T[., 2], T[., 3], p->is_directed_boolean())
+	p->set_valued(wasvalued)
 }
 
 /*
@@ -3393,39 +4895,298 @@ string matrix get_node_suffix(real scalar nodes){
 	return(S)
 }
 
+/*
+	Column vector of the positions where the (column vector) condition m is
+	true; 0x1 when none.  selectindex() returns a ROW vector for a 1x1 or
+	empty condition, which breaks stacking with "\".
+*/
+real colvector nw_which(real colvector m){
+	if (rows(m) == 0) return(J(0,1,0))
+	if (!any(m)) return(J(0,1,0))
+	return(colshape(selectindex(m), 1))
+}
+
+/*
+	Collapses duplicate (ego,alter) rows to one, keeping the row with the
+	highest rank (the last one in the order the edge list was given), and
+	leaves the rows sorted by (ego, alter).  ego/alter/weight are changed
+	in place.  An empty rank means "no duplicates possible" (nothing done).
+*/
+void nw_triplets_lastwins(real colvector ego, real colvector alter, real colvector weight, real colvector rank){
+	real colvector key, ord, sk
+
+	if (rows(rank) != rows(ego) | rows(ego) < 2) return
+	key = ego :* (max((ego \ alter)) + 1) :+ alter
+	ord = order((key, rank), (1, 2))
+	sk = key[ord]
+	ord = ord[colshape(selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1), 1)]
+	ego = ego[ord]
+	alter = alter[ord]
+	weight = weight[ord]
+}
+
 string matrix get_nodenames_from_string(string scalar s, real scalar z, string scalar def){
-	string matrix nodenames, nodenamesrest
-	real scalar invalid, i, j
+	string matrix nodenames
 
 	nodenames = (tokens(s,","))'
 	nodenames = select(nodenames, (J(rows(nodenames),1, ","):!= nodenames))
-	invalid = 0
+	return(get_nodenames_from_vector(nodenames, z, def))
+}
 
-	// check for duplicates
-	for (i = 1; i<= (rows(nodenames)-1); i++){
-		for (j = i + 1; j <= rows(nodenames); j++){
-			if (nodenames[i] == nodenames[j]){
-				invalid = 1
-				i = rows(nodenames) + 1
-				j = rows(nodenames) + 1
-			}
+/*
+	Same rules as get_nodenames_from_string(), for a label column vector
+	that is already in Mata (so nwfromedge never has to pass node labels
+	through a Stata macro, which BE caps at 264,408 characters): duplicate
+	labels -> default names def+1..z; too few -> padded with default names;
+	too many -> truncated to z. The duplicate check sorts (O(n log n))
+	instead of comparing every pair (O(n^2)).
+*/
+string matrix get_nodenames_from_vector(string colvector nodenames, real scalar z, string scalar def){
+	string matrix nodenamesrest
+	string colvector sorted
+
+	if (rows(nodenames) > 1){
+		sorted = sort(nodenames, 1)
+		if (any(sorted[2::rows(sorted)] :== sorted[1::rows(sorted)-1])){
+			return(J(z,1,def) + get_node_suffix(z))
 		}
-	}
-
-	if (invalid == 1){
-		nodenames =(J(z,1,def) + get_node_suffix(z))
-		return(nodenames)
 	}
 
 	if (rows(nodenames)< z){
 		nodenamesrest = (J(z,1,def) + get_node_suffix(z))
-		nodenamesrest[(1::rows(nodenames))] = nodenames
+		if (rows(nodenames) > 0) nodenamesrest[(1::rows(nodenames))] = nodenames
 		return(nodenamesrest)
 	}
 	if (rows(nodenames)> z){
 		return(nodenames[(1::z)])
 	}
 	return(nodenames)
+}
+
+/*
+	Node-label string for the Stata macros _nwsyntax (`labs') and _nwname
+	(r(labs)) export: comma-joined, or "" when the result would come near
+	Stata's macro length limit (264,408 characters in Stata/BE), because
+	an over-long macro makes every later `macro' substitution on that line
+	fail with r(920).  Commands that need the labels of a big network
+	read them from Mata.
+*/
+string scalar nw_labs_string(string rowvector names){
+	if (cols(names) == 0) return("")
+	if (sum(strlen(names)) + cols(names) > 200000) return("")
+	return(invtokens(names, ","))
+}
+
+/*
+	nw_group_counts(x, cw): the distinct values of x (missing last) and the
+	sum of the weights cw of the entries holding each, as a two column matrix.
+*/
+real matrix nw_group_counts(real colvector x, real colvector cw){
+	real colvector p, xs, cs, d, cum, ends, cnt
+	real scalar m
+
+	m = rows(x)
+	if (m == 0) return(J(0, 2, 0))
+	p = order(x, 1)
+	xs = x[p]
+	cs = cw[p]
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = xs[|2 \ m|] :!= xs[|1 \ m-1|]
+	cum = runningsum(cs)
+	ends = nw_which(d)
+	// last row of every group
+	ends = (m > 1 ? (ends[|2 \ rows(ends)|] :- 1) : J(0, 1, 0)) \ m
+	cnt = cum[ends]
+	if (rows(ends) > 1) cnt = cnt - (0 \ cnt[|1 \ rows(ends)-1|])
+	return((xs[nw_which(d)], cnt))
+}
+
+/*
+	nwplotmatrix (plotmatrix's data): the cells of matrix `matname' stacked
+	column by column into variables _stack (column number) and col1 (value,
+	float like svmat made it) of the data in memory, which must already have
+	rows(M)*cols(M) observations.
+*/
+void nw_pm_cells(string scalar matname){
+	real matrix M
+
+	M = st_matrix(matname)
+	(void) st_addvar((cols(M) < 32740 ? "int" : "long"), "_stack")
+	(void) st_addvar("float", "col1")
+	st_store(., "_stack", vec(J(rows(M), 1, 1..cols(M))))
+	st_store(., "col1", vec(M))
+}
+
+/*
+	nwplotmatrix: replaces the data in memory (_stack, col1: one observation
+	per cell) by the five corners of every cell's box, five observations per
+	cell in the order of (_stack, row): y (row number), yy and xx (corner
+	coordinates, the fifth observation of a box missing so that the boxes are
+	not joined) and cb (the colour level: j-1 when split[j-1] <= col1 <
+	split[j]).  The same variables the stack/expand/bysort sequence made,
+	built directly (the old way took 8 s for 1,000 nodes, this about 1 s).
+*/
+void nw_pm_boxes(real rowvector split, real scalar diff){
+	real scalar n2, nx, ny, K, j
+	real colvector col1, stk, y, cb, sg, r5, yy, xx, hit, five
+	real matrix rep
+
+	n2 = st_nobs()
+	stk = st_data(., "_stack")
+	col1 = st_data(., "col1")
+	nx = max(stk)
+	ny = n2 / nx
+	y = mod((1::n2) :- 1, ny) :+ 1
+	K = cols(split)
+	cb = J(n2, 1, .)
+	for (j = 2; j <= K; j++){
+		hit = selectindex((col1 :< split[j]) :& (col1 :>= split[j-1]))
+		if (length(hit) > 0) cb[hit] = J(length(hit), 1, j - 1)
+	}
+	if (K > 0){
+		hit = selectindex(col1 :== split[K])
+		if (length(hit) > 0) cb[hit] = J(length(hit), 1, K)
+	}
+	stata("quietly drop _all")
+	st_addobs(5 * n2)
+	rep = J(5, 1, 1)
+	r5 = mod((1::5*n2) :- 1, 5) :+ 1
+	(void) st_addvar((nx < 32740 ? "int" : "long"), "_stack")
+	(void) st_addvar("float", "col1")
+	(void) st_addvar("float", "y")
+	(void) st_addvar("float", "yy")
+	(void) st_addvar("float", "xx")
+	(void) st_addvar("float", "cb")
+	stk = vec(rep * stk')
+	y = vec(rep * y')
+	st_store(., "_stack", stk)
+	st_store(., "col1", vec(rep * col1'))
+	st_store(., "y", y)
+	// corners 1,2: y+diff, corners 3,4: y-diff; corners 1,4: column+diff,
+	// corners 2,3: column-diff; corner 5 missing (the boxes are not joined)
+	sg = (r5 :<= 2) :- ((r5 :>= 3) :& (r5 :<= 4))
+	yy = -1 :* (y :+ diff :* sg) :+ 1
+	xx = stk :+ diff :* (((r5 :== 1) :| (r5 :== 4)) :- ((r5 :== 2) :| (r5 :== 3)))
+	five = selectindex(r5 :== 5)
+	yy[five] = J(length(five), 1, .)
+	xx[five] = J(length(five), 1, .)
+	st_store(., "yy", yy)
+	st_store(., "xx", xx)
+	st_store(., "cb", vec(rep * cb'))
+}
+
+/*
+	Export writers (nwexport): the text a Stata-level `file write' loop used
+	to produce one tie at a time, built in blocks and appended with fwrite().
+	Numbers are written the way a macro expansion of `local x = ...' shows
+	them (%18.0g), so the files are byte-for-byte what the loops wrote.
+*/
+string colvector nw_exp_num(real colvector x){
+	return(strofreal(x, "%18.0g"))
+}
+
+/*
+	Append the tie rows held in the data in memory (variables vk, vl: node
+	numbers, vv: tie value) to fname: head, then newline, K, L, V per row
+	(and the reversed row L, K, V right after it when `both'), then tail.
+*/
+void nw_exp_ties(string scalar fname, string scalar vk, string scalar vl, string scalar vv,
+		real scalar both, string scalar head, string scalar tail){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector ks, ls, vs, s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	fwrite(fh, head)
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		ks = nw_exp_num(st_data((a::b), vk))
+		ls = nw_exp_num(st_data((a::b), vl))
+		vs = nw_exp_num(st_data((a::b), vv))
+		s = nl :+ ks :+ " " :+ ls :+ " " :+ vs
+		if (both) s = s :+ (nl :+ ls :+ " " :+ ks :+ " " :+ vs)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, tail)
+	fclose(fh)
+}
+
+/*
+	Pajek vertex block: (re)create fname with "*Vertices n" and one
+	`i   "label"' row per node, the labels read from the first n rows of
+	variable vname.
+*/
+void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((nw_exp_num((1::n)) :+ "   " :+ char(34) :+ lab :+ char(34) :+ nl)', ""))
+	}
+	fclose(fh)
+}
+
+/*
+	UCINET header: "dl n=", format, the comma separated labels (every label,
+	whatever the number of nodes), "data:".
+*/
+void nw_exp_ucinet_head(string scalar fname, string rowvector names){
+	real scalar fh
+	string scalar nl
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(names, ",") + nl + "data:")
+	fclose(fh)
+}
+
+/*
+	GML: header and node blocks (labels from the first n rows of vname);
+	nw_exp_gml_edges() then appends the edge blocks and the closing bracket.
+*/
+void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "graph [" + nl + "  directed " + (directed ? "1" : "0") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ (nl + "  ]" + nl))', ""))
+	}
+	fclose(fh)
+}
+
+void nw_exp_gml_edges(string scalar fname, string scalar vk, string scalar vl, string scalar vv){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ strofreal(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, "]" + nl)
+	fclose(fh)
 }
 
 /*
@@ -4012,6 +5773,7 @@ real matrix `NWdef'::calculate_balance(){
 	real scalar n, i, j, k, tij, tjk, tik, vij, vjk, vik, bal
 
 	n = get_nodes()
+	if (nwg_comb_version() >= 3) return(nwg_balance(n, edgelist()))
 	result = J(n, 2, 0)
 
 	for (i = 1; i <= n-2; i++) {
@@ -4071,6 +5833,9 @@ real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar 
 	// labelprop() just below.
 	val = (args() >= 2 ? valued : 1)
 	res = (args() == 3 ? resolution : 1)
+	// large networks: the same sum over the stored ties (the dense route needs the n x n matrix and a pass over
+	// all n nodes per community)
+	if (nwg_comb_version() >= 4 & get_nodes() > 2000) return(nw_modularity_pairs(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), membership, res))
 	w = *get_matrix_mod(val,0)
 	_diag(w, 0)
 	return(Modularity(w, membership, res))
@@ -4085,6 +5850,7 @@ real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scala
 
 	val = (args() >= 1 ? valued : 1)
 	res = (args() == 2 ? resolution : 1)
+	if (nwg_comb_version() >= 4) return(nwg_louvain(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), res))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(Louvain(w, res))
@@ -4099,6 +5865,7 @@ real matrix `NWdef'::detect_communities_labelprop(| real scalar valued){
 	real scalar val
 
 	val = (args() >= 1 ? valued : 1)
+	if (edge_dense_built == `False' & is2mode != 1) return(LabelPropagationPairs(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val)))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(LabelPropagation(w))
@@ -4158,6 +5925,8 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 
 	val = (args() >= 1 ? valued : 1)
 	iter = (args() == 2 ? maxiter : 100)
+	// large networks: on the symmetric pairs (no n x n matrix)
+	if (get_nodes() > nw_sparse_min_nodes() & is2mode != 1) return(CorePeripheryPairs(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), iter))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 
@@ -4177,6 +5946,7 @@ real matrix `NWdef'::calculate_factions(real scalar k, | real scalar valued, rea
 
 	val = (args() >= 2 ? valued : 1)
 	iter = (args() == 3 ? maxiter : 100)
+	if (nwg_comb_ok()) return(nwg_factions(k, val, iter, edgelist(), get_nodes(), isdirect, isvalued))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 
@@ -4464,15 +6234,19 @@ real colvector fixcol(real matrix v){
 	calculate_cliques() below).
 */
 void BronKerboschSparse(real scalar n, real colvector R, real colvector P, real colvector X,
-		real rowvector mark, pointer(real colvector) colvector NcP, string colvector found){
+		real rowvector mark, pointer(real colvector) colvector NcP, string colvector found, real scalar minsize){
 	real colvector PX, Nv, Nu, newR, newP, newX, branch
 	real scalar i, v, u, best, cnt, nP, nX
 
 	nP = rows(P)
 	nX = rows(X)
 	if (nP == 0 & nX == 0){
-		found[rows(found)] = invtokens(strofreal(R'))
-		found = found \ ""
+		// only the cliques the caller wants are kept (a sparse network has about as many maximal cliques of one
+		// or two nodes as it has ties, and an n-wide row for each of them was the bulk of the memory and time)
+		if (rows(R) >= minsize){
+			found[rows(found)] = invtokens(strofreal(R'))
+			found = found \ ""
+		}
 		return
 	}
 
@@ -4506,7 +6280,7 @@ void BronKerboschSparse(real scalar n, real colvector R, real colvector P, real 
 		newX = (nX > 0 ? fixcol(select(X, mark[X]')) : J(0,1,0))
 		if (rows(Nv) > 0) mark[Nv] = J(1, rows(Nv), 0)
 
-		BronKerboschSparse(n, newR, newP, newX, mark, NcP, found)
+		BronKerboschSparse(n, newR, newP, newX, mark, NcP, found, minsize)
 
 		P = fixcol(select(P, (P :!= v)))
 		nP = rows(P)
@@ -4515,7 +6289,7 @@ void BronKerboschSparse(real scalar n, real colvector R, real colvector P, real 
 	}
 }
 
-real matrix `NWdef'::calculate_cliques(){
+real matrix `NWdef'::calculate_cliques(| real scalar minsize){
 	real scalar n, i, nc
 	real colvector R0, P0, X0
 	real rowvector mark
@@ -4534,7 +6308,8 @@ real matrix `NWdef'::calculate_cliques(){
 	mark = J(1,n,0)
 	found = J(1,1,"")
 
-	BronKerboschSparse(n, R0, P0, X0, mark, NcP, found)
+	if (args() == 0) minsize = 0
+	BronKerboschSparse(n, R0, P0, X0, mark, NcP, found, minsize)
 
 	// the accumulator always ends with one trailing "" sentinel
 	// (appended after the last real entry, never populated) - drop it.
@@ -4559,7 +6334,7 @@ real matrix `NWdef'::calculate_cliques(){
 real matrix `NWdef'::calculate_cliques_filtered(real scalar minsize){
 	real matrix cliq, sizes
 
-	cliq = calculate_cliques()
+	cliq = calculate_cliques(minsize)
 	sizes = rowsum(cliq)
 	return(select(cliq, sizes :>= minsize))
 }
@@ -4604,6 +6379,8 @@ real matrix `NWdef'::calculate_kplex(real scalar k){
 real matrix `NWdef'::calculate_kplex_filtered(real scalar k, real scalar minsize){
 	real matrix kplex, sizes
 
+	// native search (native/nwcomb2.h), same visiting order as KPlex(); caps the number of sets kept
+	if (nwg_comb_ok()) return(nwg_enum("nwkplex", 9, get_nodes(), nwg_sym01(edgelist()), (k, minsize), J(1, 0, .), "maxplexes"))
 	kplex = calculate_kplex(k)
 	sizes = rowsum(kplex)
 	return(select(kplex, sizes :>= minsize))
@@ -4689,6 +6466,8 @@ real matrix `NWdef'::calculate_nclique(real scalar n){
 real matrix `NWdef'::calculate_nclique_filtered(real scalar n, real scalar minsize){
 	real matrix ncliq, sizes
 
+	// native search (native/nwcomb2.h): distance-<=n graph as bitsets, Bron-Kerbosch with the same pivot rule
+	if (nwg_comb_ok()) return(nwg_enum("nwnclique", 8, get_nodes(), edgelist(), (n, minsize), (0), "maxcliques"))
 	ncliq = calculate_nclique(n)
 	sizes = rowsum(ncliq)
 	return(select(ncliq, sizes :>= minsize))
@@ -4712,6 +6491,8 @@ real matrix `NWdef'::calculate_nclan_filtered(real scalar n, real scalar minsize
 	real matrix ncliq, adj, keep
 	real scalar i
 
+	// native: the diameter check is done inside the search, so the maximal n-cliques are never stored
+	if (nwg_comb_ok()) return(nwg_enum("nwnclan", 8, get_nodes(), edgelist(), (n, minsize), (1), "maxcliques"))
 	ncliq = calculate_nclique_filtered(n, minsize)
 	if (rows(ncliq) == 0) return(ncliq)
 
@@ -4739,11 +6520,42 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 	real rowvector nodeset
 	real scalar n
 
+	real matrix el
+	real colvector r, c, w, keep, key, o, eu, ev, rowptr, colidx
+
 	n = get_nodes()
+	nodeset = J(1, n, 1)
+
+	if (edgelist_sparse_ok()){
+		// the undirected, unvalued graph from the stored ties alone (what
+		// get_matrix_mod(0,0) :!= 0 gives, without the N x N matrix): a
+		// tie counts when it is not 0 (unvalued, undirected network) or
+		// positive (otherwise), in either direction; no loops
+		ensure_sparse_built()
+		el = edgelist()
+		eu = J(0, 1, 0)
+		ev = J(0, 1, 0)
+		if (rows(el) > 0){
+			r = el[,1]; c = el[,2]; w = el[,3]
+			if (isdirect == 0 & isvalued == 0) keep = nw_which((w :!= 0) :& (r :!= c))
+			else keep = nw_which((w :> 0) :& (r :!= c))
+			if (rows(keep) > 0){
+				r = r[keep]; c = c[keep]
+				// each tie in both directions, once, in the order of a column
+				// by column scan of the symmetric 0/1 matrix (key = column
+				// * (n+1) + row, column = ev)
+				key = sort((c :* (n + 1) :+ r) \ (r :* (n + 1) :+ c), 1)
+				if (rows(key) > 1) key = key[nw_which((key[|2 \ rows(key)|] :!= key[|1 \ rows(key)-1|]) \ 1)]
+				ev = floor((key :- 1) :/ (n + 1))
+				eu = key :- ev :* (n + 1)
+			}
+		}
+		nw_csr_from_edges(n, eu, ev, &rowptr, &colidx)
+		return(KComponentsEdges(n, eu, ev, rowptr, colidx, nodeset, k))
+	}
+
 	adj = (*get_matrix_mod(0,0)) :!= 0
 	_diag(adj, 0)
-
-	nodeset = J(1, n, 1)
 	return(KComponents(adj, nodeset, k))
 }
 
@@ -4761,6 +6573,8 @@ real matrix `NWdef'::calculate_cohesion_hierarchy(){
 	real scalar n
 
 	n = get_nodes()
+	// native kernel (native/nwcomb.h), exact port of the Mata recursion below
+	if (nwg_comb_ok()) return(nwg_cohesion(n, nwg_sym01(edgelist())))
 	adj = (*get_matrix_mod(0,0)) :!= 0
 	_diag(adj, 0)
 
@@ -4980,6 +6794,8 @@ real matrix `NWdef'::calculate_lambda(){
 	real rowvector parent
 
 	n = get_nodes()
+	// native: Gusfield's equivalent-flow tree (n-1 maximum flows) instead of n(n-1)/2
+	if (nwg_comb_ok()) return(nwg_lambda(n, nwg_sym01(edgelist())))
 	adj = *get_matrix_mod(0, 0)
 	lambda = J(n, n, 0)
 
@@ -5136,6 +6952,12 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 	}
 	n = get_nodes()
 	modes = get_modes()		// 1 x n STRING rowvector, values "1"/"2"
+	if (nwg_comb_version() >= 3) {
+		// the same matching, from the stored ties only (no n x n capacity matrices)
+		adj = edgelist()
+		if (rows(adj) > 0) adj = select(adj, (adj[.,3] :> 0) :& (adj[.,3] :< .) :& (adj[.,1] :!= adj[.,2]) :& ((modes')[adj[.,1]] :== "1") :& ((modes')[adj[.,2]] :== "2"))
+		return(nwg_matching(n, adj, (modes :== "1")' + 2 :* (modes :!= "1")'))
+	}
 	adj = *get_matrix_mod(0, 1)
 	_diag(adj, 0)
 	_editmissing(adj, 0)
@@ -5254,6 +7076,76 @@ real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxit
 }
 
 /*
+	Smallest number of nodes for which nwrandomwalk solves its linear system by conjugate gradients
+	instead of the dense LU.  A cscript can change it through the external scalar nw_hitting_cg_min_x.
+*/
+real scalar nw_hitting_cg_min()
+{
+	pointer(real scalar) scalar px
+	px = findexternal("nw_hitting_cg_min_x")
+	if (px == NULL) return(1500)
+	return(*px)
+}
+
+/*
+	Mean hitting times to node t of the simple random walk on the symmetrized binary network: for i != t
+	h(i) = 1 + mean of h over the neighbours of i, h(t) = 0, i.e. the symmetric positive definite system
+	(D - A) h = deg on the nodes other than t (the Laplacian grounded at t).  Conjugate gradients with a
+	Jacobi preconditioner, one panelsum() per iteration, stopped at a relative residual of 1e-13.
+	Returns a 0 x 1 vector (the caller then takes the dense route) when an
+	isolate exists, or the tolerance is not reached in 5,000 iterations (e.g. a disconnected network).
+*/
+real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t)
+{
+	real colvector r, c, w, key, deg, x, res, z, p, q, tmp
+	real matrix info
+	real scalar n, it, rz, rz0, alpha, beta, bnorm
+
+	n = thisnw->get_nodes()
+	thisnw->ensure_sparse_built()
+	r = thisnw->csr_rows(); c = thisnw->colidx; w = thisnw->cweight
+	tmp = selectindex((r :!= c) :& (w :> 0))
+	if (rows(tmp) == 0) return(J(0, 1, .))
+	key = sort(uniqrows((r[tmp] :* (n + 1) :+ c[tmp]) \ (c[tmp] :* (n + 1) :+ r[tmp])), 1)
+	r = floor(key :/ (n + 1))
+	c = key :- r :* (n + 1)
+	info = panelsetup(r, 1)
+	deg = J(n, 1, 0)
+	deg[r[info[., 1]]] = panelsum(J(rows(r), 1, 1), info)
+	if (min(deg) == 0) return(J(0, 1, .))
+
+	// b = deg on the non-target nodes
+	x = J(n, 1, 0)
+	res = deg
+	res[t] = 0
+	bnorm = sqrt(sum(res:^2))
+	z = res :/ deg
+	p = z
+	rz = sum(res :* z)
+	for (it = 1; it <= 5000; it++){
+		q = J(n, 1, 0)
+		p[t] = 0
+		q[r[info[., 1]]] = panelsum(p[c], info)
+		q = deg :* p - q
+		q[t] = 0
+		alpha = rz / sum(p :* q)
+		x = x + alpha :* p
+		res = res - alpha :* q
+		if (sqrt(sum(res:^2)) <= 1e-13 * bnorm){
+			x[t] = 0
+			return(x)
+		}
+		z = res :/ deg
+		z[t] = 0
+		rz0 = rz
+		rz = sum(res :* z)
+		beta = rz / rz0
+		p = z + beta :* p
+	}
+	return(J(0, 1, .))
+}
+
+/*
 	calculate_randomwalk_hitting(): mean hitting time from every node to
 	a given target `t' - the expected number of steps a simple random
 	walk (at each step, move to a uniformly-random NEIGHBOR of the
@@ -5290,6 +7182,13 @@ real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
 	if (t < 1 | t > n) {
 		errprintf("nwrandomwalk: target node index out of range.\n")
 		exit(error(6556))
+	}
+	// Large networks: the grounded-Laplacian system is solved by conjugate gradients on the sparse tie
+	// list (O(ties) per iteration; the dense LU below is O(n^3) and needs several n x n matrices:
+	// 65 s at 10,000 nodes), only if CG reaches its tolerance; otherwise the dense code below runs as before.
+	if (n > nw_hitting_cg_min()){
+		h = nw_hitting_cg(&this, t)
+		if (rows(h) == n) return(h)
 	}
 	A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
@@ -5361,6 +7260,8 @@ real matrix `NWdef'::calculate_motif4(){
 		errprintf("nwmotifs requires at least 4 nodes.\n")
 		exit(error(6556))
 	}
+	// native: subgraph counts from degrees, triangles and common neighbours (O(m * max degree))
+	if (nwg_comb_ok()) return(nwg_motif4(n, nwg_sym01(edgelist())))
 	A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
 	_editmissing(A, 0)
@@ -5817,7 +7718,7 @@ real matrix `NWdef'::calculate_distances_without(){
 	SET of bridge edges found matches in every case, not merely the
 	count.
 */
-real matrix `NWdef'::calculate_bridges_global(){
+real matrix `NWdef'::bridge_list(){
 	real scalar n, i, u, v, top, idx, timer
 	real colvector disc, low, parent, stack_node, stack_idx, Nu
 	real matrix res, bridge_u, bridge_v
@@ -5883,12 +7784,32 @@ real matrix `NWdef'::calculate_bridges_global(){
 		}
 	}
 
+	if (nbridges == 0) return(J(0, 2, 0))
+	return((bridge_u[|1 \ nbridges|], bridge_v[|1 \ nbridges|]))
+}
+
+/* the n x n matrix of the bridges: -1 for both directions of every bridge, 0 elsewhere */
+real matrix `NWdef'::calculate_bridges_global(){
+	real matrix res, bl
+	real scalar i, n
+
+	n = get_nodes()
+	bl = bridge_list()
 	res = J(n,n,0)
-	for (i=1; i<=nbridges; i++){
-		res[bridge_u[i], bridge_v[i]] = -1
-		res[bridge_v[i], bridge_u[i]] = -1
+	for (i=1; i<=rows(bl); i++){
+		res[bl[i,1], bl[i,2]] = -1
+		res[bl[i,2], bl[i,1]] = -1
 	}
 	return(res)
+}
+
+/* the same bridges as ties (ego, alter, value) in both directions, without the n x n matrix */
+real matrix `NWdef'::bridges_global_triplets(real scalar value){
+	real matrix bl
+
+	bl = bridge_list()
+	if (rows(bl) == 0) return(J(0, 3, 0))
+	return((bl[., 1], bl[., 2], J(rows(bl), 1, value)) \ (bl[., 2], bl[., 1], J(rows(bl), 1, value)))
 }
 
 real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar length)
@@ -5946,13 +7867,13 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 			// operators treat missing as larger than any real value),
 			// silently reintroducing the identical counting mismatch
 			// this fix is for.
-			reach_next = ((*get_matrix())[id_next,])'
-			_editmissing(reach_next,0)
-			reach_next = (reach_next :!= 0)
-			if (reach_next[alter,1] != 0) {
-				found = 1
+			// the out-neighbours from the stored ties (the dense route pulled a row of the n x n matrix,
+			// materialising the matrix of a large network)
+			reach_ids = neighbors(id_next)
+			if (rows(reach_ids) > 0) {
+				if (any(reach_ids :== alter)) found = 1
 			}
-			new_paths = new_paths + sum(reach_next)
+			new_paths = new_paths + rows(reach_ids)
 		}
 
 		paths_new = J(new_paths, (step + 1),0)
@@ -5969,11 +7890,8 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 			// binarizing first and then running _editmissing() on an
 			// already-0/1 matrix, which would silently do nothing (no
 			// actual missing values left for it to find).
-			reach_next = ((*get_matrix())[id_next,])'
-			_editmissing(reach_next,0)
-			reach_next = (reach_next :!= 0)
-			reach_ids = select(ids, reach_next)
-			reach_num = sum(reach_next)
+			reach_ids = neighbors(id_next)
+			reach_num = rows(reach_ids)
 			if (reach_num > 0){
 				path_next = J(reach_num, (step + 1),0)
 				path_next[,step] = J(reach_num,1,id_next)
@@ -6009,17 +7927,24 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 	out-plus-in behavior exactly.
 */
 real matrix `NWdef'::calculate_components(){
-	real scalar ncomp, next, i, numnodes, cur, qn
-	real matrix visited, comp, queue, nb
+	real scalar ncomp, next, i, numnodes, cur, head, tail, nvisited
+	real matrix visited, comp, nb
+	real colvector queue
 
 	numnodes = get_nodes()
 	visited = J(numnodes,1,0)
 	comp = J(numnodes,1,0)
 	ncomp = 1
 	next = 1
+	nvisited = 0
+	// every node enters the queue at most once, so one preallocated array
+	// with head/tail indices suffices.  (The former queue = queue[2::n]
+	// copy on every pop made a big component O(n^2): 11 s at 100,000
+	// nodes / 1,000,000 ties; and sum(visited) was recomputed per component.)
+	queue = J(numnodes,1,0)
 
 	// as long as not everybody has been visited
-	while (sum(visited) != numnodes){
+	while (nvisited != numnodes){
 		// find next not visited node
 		while (visited[next,1]==1) {
 			next = next + 1
@@ -6027,18 +7952,15 @@ real matrix `NWdef'::calculate_components(){
 
 		// bfs from next, assign component id to everybody reachable
 		visited[next,1] = 1
+		nvisited = nvisited + 1
 		comp[next,1] = ncomp
-		queue = next
+		head = 1
+		tail = 1
+		queue[1] = next
 
-		while (rows(queue) > 0){
-			cur = queue[1,1]
-			qn = rows(queue)
-			if (qn > 1){
-				queue = queue[(2::qn),1]
-			}
-			else {
-				queue = J(0,1,0)
-			}
+		while (head <= tail){
+			cur = queue[head]
+			head = head + 1
 			nb = neighbors(cur)
 			if (isdirect){
 				nb = nb \ neighbors_in(cur)
@@ -6046,8 +7968,10 @@ real matrix `NWdef'::calculate_components(){
 			for (i = 1; i <= rows(nb); i++){
 				if (visited[nb[i,1],1]==0){
 					visited[nb[i,1],1] = 1
+					nvisited = nvisited + 1
 					comp[nb[i,1],1] = ncomp
-					queue = queue \ nb[i,1]
+					tail = tail + 1
+					queue[tail] = nb[i,1]
 				}
 			}
 		}
@@ -6083,14 +8007,28 @@ real matrix `NWdef'::get_adjlist(){
 	as the rest of the class's edge-counting conventions.
 */
 void `NWdef'::build_sparse_index(){
-	real matrix e, nzmask, rowidx, idx
+	real matrix idx
+	real rowvector rw
+	real colvector rowidx
+	pointer(real colvector) colvector PI, PW
 	real scalar n, nnz, i, k, pos
 
 	n = get_nodes()
-	e = edge
-	nzmask = (e :!= 0 :& e :!= .)
-
-	nnz = sum(nzmask)
+	// row by row, without a copy of the matrix or an n x n mask (a dense network of 20,000 nodes needed four
+	// matrices of 3.2 GB here): the columns and values of the ties of every row are kept, then put together
+	PI = J(n, 1, NULL)
+	PW = J(n, 1, NULL)
+	nnz = 0
+	for (i = 1; i <= n; i++){
+		rw = edge[i,.]
+		idx = selectindex((rw :!= 0) :& (rw :!= .))
+		k = cols(idx) * rows(idx)
+		if (k > 0){
+			PI[i] = &(vec(idx))
+			PW[i] = &(vec(rw[idx]))
+			nnz = nnz + k
+		}
+	}
 	rowptr = J(n + 1, 1, 0)
 	rowidx = J(nnz, 1, 0)
 	colidx = J(nnz, 1, 0)
@@ -6099,13 +8037,10 @@ void `NWdef'::build_sparse_index(){
 	pos = 1
 	for (i = 1; i <= n; i++){
 		rowptr[i] = pos
-		if (n > 0){
-			idx = selectindex(nzmask[i,.])
-			k = cols(idx)
-			if (k > 0){
-				colidx[(pos::(pos+k-1)),1] = idx'
-				cweight[(pos::(pos+k-1)),1] = e[i,idx]'
-			}
+		if (PI[i] != NULL){
+			k = rows(*PI[i])
+			colidx[(pos::(pos+k-1)),1] = *PI[i]
+			cweight[(pos::(pos+k-1)),1] = *PW[i]
 			pos = pos + k
 		}
 	}
@@ -6227,6 +8162,7 @@ void `NWdef'::invalidate_sparse(){
 void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real matrix weight, real scalar directed){
 	real scalar n, nnz, i, pos
 	real matrix ord, sorted_ego, sorted_alter, sorted_weight, keep
+	real colvector key, ordk, sk
 
 	n = get_nodes()
 	isdirect = directed
@@ -6277,7 +8213,29 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// has_edge(i,i) (true, wrongly) against the dense matrix's own
 	// diagonal (correctly 0) and confirming a forced invalidate_sparse()
 	// + rebuild fixed it, before finding the actual root cause here.
+	// Duplicate (ego,alter) rows collapse to ONE tie, the last row in the
+	// input winning - the value a cell-by-cell fill of a dense matrix
+	// would have ended with.  This runs before the zero/self-loop filter
+	// below so that "5 then 0" still means "no tie", as it did densely.
+	// The rows come out sorted by (ego, alter), so the CSR rows are always
+	// sorted ascending by node index (order() alone does not keep the
+	// input order of equal keys, hence the row number as 2nd sort key
+	// when, and only when, duplicates exist).
 	if (rows(ego) > 0){
+		key = ego :* (n + 1) :+ alter
+		ordk = order(key, 1)
+		sk = key[ordk]
+		if (rows(sk) > 1){
+			if (any(sk[2::rows(sk)] :== sk[1::rows(sk)-1])){
+				ordk = order((key, (1::rows(key))), (1, 2))
+				sk = key[ordk]
+				ordk = ordk[selectindex((sk[1::rows(sk)-1] :!= sk[2::rows(sk)]) \ 1)]
+			}
+		}
+		ego = ego[ordk,1]
+		alter = alter[ordk,1]
+		weight = weight[ordk,1]
+
 		keep = selectindex((weight :!= 0) :& (isselfloop :== 1 :| ego :!= alter))
 		ego = ego[keep,1]
 		alter = alter[keep,1]
@@ -6294,14 +8252,9 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 		cweight = J(0,1,0)
 	}
 	else {
-		// Sort by (ego, alter) with one combined key: order() on ego alone does
-		// not keep the input order of ties, which made every node's neighbor
-		// list come out in an arbitrary, session-dependent order. This way the
-		// CSR rows are always sorted ascending by node index.
-		ord = order(ego :* (n + 1) :+ alter, 1)
-		sorted_ego = ego[ord,1]
-		sorted_alter = alter[ord,1]
-		sorted_weight = weight[ord,1]
+		sorted_ego = ego
+		sorted_alter = alter
+		sorted_weight = weight
 
 		rowptr = J(n+1,1,0)
 		colidx = sorted_alter
@@ -6370,7 +8323,8 @@ void `NWdef'::ensure_dense_built(){
 	if (isselfloop == 0){
 		_diag(e, .)
 	}
-	edge = e
+	// swap, not a copy: the temporary matrix e and `edge' together would hold two n x n matrices
+	swap(edge, e)
 	edge_dense_built = `True'
 }
 
@@ -6425,7 +8379,8 @@ real scalar `NWdef'::edge_weight(real scalar i, real scalar j){
 	ensure_sparse_built()
 	if (rowptr[i+1] > rowptr[i]){
 		idx = selectindex(colidx[(rowptr[i]::(rowptr[i+1]-1)),1] :== j)
-		if (cols(idx) > 0){
+		// selectindex() of a column condition without a match is a 0 x 1 matrix (cols() is 1): count the elements
+		if (rows(idx) * cols(idx) > 0){
 			return(cweight[rowptr[i] + idx[1] - 1, 1])
 		}
 	}
@@ -6673,7 +8628,21 @@ real matrix `NWdef'::calculate_constraint_dyadic(){
 
 void `NWdef'::permute(){
 	real matrix perm
+	real colvector inv
+	real matrix el
+	real scalar wasvalued
 	perm = unorder(get_nodes())
+	// a network held as stored ties only is permuted tie by tie: the tie (u,v) of the old network is the tie
+	// (inv[u], inv[v]) of the new one, where inv undoes perm; the dense route needs two n x n matrices
+	if (edge_dense_built == `False' & is2mode != 1){
+		inv = J(get_nodes(), 1, .)
+		inv[vec(perm)] = (1::get_nodes())
+		el = edgelist()
+		wasvalued = isvalued
+		set_edge_from_triplets(inv[el[.,1]], inv[el[.,2]], el[.,3], isdirect)
+		isvalued = wasvalued
+		return
+	}
 	set_edge((*get_matrix())[perm, perm])
 }
 
@@ -7301,6 +9270,39 @@ real matrix `NWdef'::calculate_betweenness_native(){
 }
 
 /*
+	Native (C) counterpart of fast_min_cut_search_edges(n, eu, ev, target)
+	for nwkcomponents (native/nwgraph.c, ALG_KCONN_SEARCH): the vertex
+	connectivity search of the graph with n nodes and the symmetric arc list
+	(eu, ev), stopping as soon as a pair with fewer than `target' disjoint
+	paths is found.  Returns (minflow, best_s, best_t); a connectivity of
+	`target' or more comes back as `target' (see the C source).
+	CALLER'S RESPONSIBILITY: NativeGraphAvailable().
+*/
+real rowvector nw_kconn_search_native(real scalar n, real colvector eu, real colvector ev, real scalar target){
+	real scalar m, __junk
+	string scalar origframe, argstr
+	real rowvector res
+
+	m = rows(eu)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	st_addobs(max((n, m, 3)))
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
+	if (m > 0) st_store((1::m), ("v1","v2"), (eu, ev))
+	argstr = "20 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(target)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34))
+	res = st_data((1::3), "v3")'
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(res)
+}
+
+/*
 	Native single-source-BFS-per-call all-pairs unweighted distance
 	matrix - the compiled counterpart to bfs_hopdist_from()/
 	calculate_distances_bfs() above. Unlike calculate_betweenness_native()
@@ -7322,13 +9324,18 @@ real matrix `NWdef'::calculate_betweenness_native(){
 */
 real matrix `NWdef'::calculate_distances_bfs_native(){
 	real matrix ties, D
-	real scalar n, nties, nobs_needed, __junk, i
-	string scalar origframe, argstr, cmd
+	real scalar n, nties, nobs_needed, __junk, i, nb, m, blocks
+	string scalar origframe, argstr, cmd, vl
+	string rowvector vn
 
 	n = get_nodes()
 	ties = edgelist()
 	if (rows(ties) > 0) ties = select(ties, ties[.,3] :> 0)
 	nties = rows(ties)
+	// a plugin of kernel version 5 or later takes a block of consecutive sources per call (one call reads the ties
+	// once for all of them); an older one answers one source per call, as before
+	blocks = (nwg_comb_version() >= 5)
+	nb = (blocks ? max((1, min((128, n)))) : 1)
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __nwgraph_native")
@@ -7339,18 +9346,21 @@ real matrix `NWdef'::calculate_distances_bfs_native(){
 	st_addobs(nobs_needed)
 	__junk = st_addvar("double", "v1")
 	__junk = st_addvar("double", "v2")
-	__junk = st_addvar("double", "v3")
+	vn = "v" :+ strofreal(3..(2 + nb))
+	__junk = st_addvar("double", vn)
+	vl = invtokens(vn)
 
 	if (nties > 0) st_store((1::nties), ("v1","v2"), ties[.,(1,2)])
 
 	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
 
 	D = J(n, n, .)
-	for (i = 1; i <= n; i++){
-		argstr = strofreal(2) + " " + strofreal(n) + " " + strofreal(isdirect) + " " + strofreal(nties) + " " + strofreal(i)
-		cmd = "plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34)
+	for (i = 1; i <= n; i = i + nb){
+		m = min((nb, n - i + 1))
+		argstr = strofreal(2) + " " + strofreal(n) + " " + strofreal(isdirect) + " " + strofreal(nties) + " " + strofreal(i) + (blocks ? " " + strofreal(m) : "")
+		cmd = "plugin call nwgraph_native v1 v2 " + vl + ", " + char(34) + argstr + char(34)
 		stata(cmd)
-		D[i,.] = st_data((1::n), "v3")'
+		D[|i, 1 \ i + m - 1, n|] = st_data((1::n), invtokens(vn[1..m]))'
 	}
 
 	st_framecurrent(origframe)
@@ -7361,7 +9371,9 @@ real matrix `NWdef'::calculate_distances_bfs_native(){
 
 
 void `NWdef'::clean_matrix_2mode(){
-	real matrix z
+	string colvector m, u
+	real colvector idx
+	real scalar g, i
 	// General validation-stage finding (see docs/CERTIFICATION.md): this
 	// method reads/writes `edge' directly with no dense guard, unlike
 	// every other such method in this class. Its one live caller
@@ -7371,9 +9383,17 @@ void `NWdef'::clean_matrix_2mode(){
 	// caller convention, not by design. Guarded explicitly here so it is
 	// actually safe for any future caller, not just the current one.
 	ensure_dense_built()
-	z = ((J(get_nodes(),1, modes):== J(1,get_nodes(), modes')):== 1)
-	_editvalue(z, 1, .)
-	edge = edge :+ z
+	// Blank every cell whose two nodes are in the same mode. This used to build the n x n STRING matrix
+	// J(n,1,modes) :== J(1,n,modes') (about 10 GB at 15,000 nodes); the cells are now set mode by mode in
+	// place (same result: edge :+ missing is missing).
+	m = vec(modes)
+	u = uniqrows(m)
+	for (g = 1; g <= rows(u); g++){
+		idx = selectindex(m :== u[g])
+		for (i = 1; i <= rows(idx); i++){
+			edge[idx[i], idx'] = J(1, rows(idx), .)
+		}
+	}
 	sparse_built = `False'
 }
 
@@ -7535,12 +9555,10 @@ string scalar `NWdef'::get_modes_labeled_string(){
 	real scalar i
 
 	m = get_modes()
-	result = ""
-	for (i=1; i<=cols(nodes); i++) {
-		if (i > 1) result = result + ","
-		result = result + nodes[i] + "=" + m[i]
-	}
-	return(result)
+	// one invtokens() call: the old pairwise string concatenation was O(n^2)
+	// and cost ~1.5 s per nwname call at 40,000 nodes
+	if (cols(nodes) == 0) return("")
+	return(invtokens(nodes :+ "=" :+ m[|1,1 \ 1,cols(nodes)|], ","))
 }
 
 /*
@@ -7563,28 +9581,32 @@ string scalar `NWdef'::get_modes_labeled_string(){
 	nwuse.ado's own new2mode() handling already follows for is2mode.
 */
 void `NWdef'::set_modes_from_labeled_string(string scalar s){
-	string scalar remaining, onepair, lab, md
-	real scalar idx, eqpos, commapos
+	string rowvector pairs
+	string scalar lab, md, onepair
+	real scalar idx, eqpos, i
+	transmorphic scalar t, pos
 
 	if (s == "") return
 	get_modes()
-	remaining = s
-	while (strlen(remaining) > 0) {
-		commapos = strpos(remaining, ",")
-		if (commapos == 0) {
-			onepair = remaining
-			remaining = ""
-		}
-		else {
-			onepair = substr(remaining, 1, commapos-1)
-			remaining = substr(remaining, commapos+1, .)
-		}
+	// Split at every comma (no whitespace splitting) and look labels up in a
+	// hash of the node names: the former character-by-character scan with a
+	// linear label search was O(n^2), minutes at 40,000 nodes.
+	t = tokeninit("", ",", "", 0, 0)
+	tokenset(t, s)
+	pairs = tokengetall(t)
+	pos = asarray_create("string")
+	for (i = cols(nodes); i >= 1; i--) asarray(pos, nodes[i], i)
+	for (i = 1; i <= cols(pairs); i++) {
+		onepair = pairs[i]
+		if (onepair == ",") continue
 		eqpos = strpos(onepair, "=")
 		if (eqpos > 0) {
 			lab = substr(onepair, 1, eqpos-1)
 			md = substr(onepair, eqpos+1, .)
-			idx = first_index_match(nodes, lab)
-			if (idx > 0) modes[idx] = md
+			if (asarray_contains(pos, lab)) {
+				idx = asarray(pos, lab)
+				modes[idx] = md
+			}
 		}
 	}
 }
@@ -7671,6 +9693,319 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 	return(select((vec(sender), vec(receiver), strofreal(vec(e)), strofreal(vec(z)), strofreal(vec(e')),strofreal(vec(sender_num)), strofreal(vec(receiver_num))), vec(z)))
 }
 
+
+/*
+	The ego, alter and value columns get_edgelist() lists (all N x N cells, or
+	the lower triangle with `undirected'), written straight into three new
+	variables of the data in memory (which must have no observations): ego and
+	alter as the node names, value as the number get_edgelist() would show as
+	text and destring would read back (12 significant digits), in the same row
+	order.  Replaces building a seven-column string matrix and parsing it again
+	(four times slower).  Refused beyond 5e7 rows, where the list would take
+	several GB and minutes; nwtoedge, compress lists only the ties.
+*/
+void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, string scalar valter, string scalar vnet, | real scalar crossmode){
+	real scalar n, m, ml, k
+	real colvector v, ri, ci, sel, p, d, g, vals
+	string rowvector nm, md
+	string colvector s
+
+	n = get_nodes()
+	m = (undirected ? n*(n+1)/2 : n*n)
+	if (m > 5e7){
+		error_handle("Listing every dyad of the " + strofreal(n) + " nodes of network `" + get_name() + "' would create " + strofreal(m) + " rows (more than 50,000,000). Use the option compress, which lists only the ties.", `errDenseTooLarge')
+	}
+	if (m == 0) {
+		st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+		return
+	}
+	v = vec(get_matrix_copy())
+	ri = mod((1::n*n) :- 1, n) :+ 1
+	ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+	if (undirected){
+		sel = nw_which(ri :>= ci)
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+	}
+	// two-mode: only the dyads between the modes (what nw2toedge keeps)
+	if (crossmode == 1){
+		md = get_modes()
+		sel = nw_which((md')[ri] :!= (md')[ci])
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+		m = rows(v)
+		if (m == 0){
+			st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+			return
+		}
+	}
+	// the text round trip, once per distinct value
+	p = order(v, 1)
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = (v[p])[|2 \ m|] :!= (v[p])[|1 \ m-1|]
+	g = runningsum(d)
+	vals = strtoreal(strofreal((v[p])[nw_which(d)]))
+	// (a single distinct value is a scalar: it cannot be indexed by g)
+	v[p] = (rows(vals) == 1 ? J(m, 1, vals) : vals[g])
+	nm = nodes
+	st_addobs(m)
+	ml = max(strlen(nm))
+	s = (nm')[ri]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), vego), s)
+	s = (nm')[ci]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), valter), s)
+	st_store(., st_addvar("double", vnet), v)
+}
+
+/*
+	The distinct tie values of get_edgelist() (every cell, or the lower triangle
+	with `undirected', missing diagonal included) with the number of cells
+	holding each, written to two new variables (vval: the value as get_edgelist()
+	shows it and destring reads it back, vfreq: the count) of the data in memory,
+	which must have no observations.  O(ties): the zeros are counted, not
+	listed.  What nwtabulate tabulates.
+*/
+void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, string scalar vfreq){
+	real scalar n, total, nz
+	real colvector r, c, w, cw, keep, ri, ci, rt
+	real matrix uc
+
+	n = get_nodes()
+	total = (undirected ? n*(n+1)/2 : n*n)
+	if (total > 2147483647){
+		error_handle("Tabulating the " + strofreal(n) + " nodes of network `" + get_name() + "' needs more than 2,147,483,647 dyad counts (Stata frequency weights). Use nwsummarize or nwdegree for networks of this size.", `errDenseTooLarge')
+	}
+	if (edgelist_sparse_ok()){
+		ensure_sparse_built()
+		r = csr_rows()
+		c = colidx
+		w = cweight
+		if (undirected){
+			keep = nw_which(r :>= c)
+			w = w[keep]
+		}
+		if (isselfloop == 0) w = w \ J(n, 1, .)
+		cw = J(rows(w), 1, 1)
+		nz = total - rows(w)
+		w = w \ 0
+		cw = cw \ nz
+	}
+	else {
+		w = vec(get_matrix_copy())
+		if (undirected){
+			ri = mod((1::n*n) :- 1, n) :+ 1
+			ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+			w = w[nw_which(ri :>= ci)]
+		}
+		cw = J(rows(w), 1, 1)
+	}
+	uc = nw_group_counts(w, cw)
+	// the text round trip, then merge values that coincide afterwards
+	rt = strtoreal(strofreal(uc[,1]))
+	uc = nw_group_counts(rt, uc[,2])
+	uc = select(uc, uc[,2] :> 0)
+	st_addobs(rows(uc))
+	st_store(., st_addvar("double", vval), uc[,1])
+	st_store(., st_addvar("double", vfreq), uc[,2])
+}
+
+/*
+	Recode the tie values in place (nwrecode): oldv holds the distinct values
+	the cells of this network show (as value_counts_to_vars() lists them,
+	ascending, missing last) and newv what each becomes.  Every stored tie
+	takes the new value of its (text-round-tripped) old one; ties that become
+	0 are dropped.  Only valid when 0 stays 0, missing stays missing and no
+	tie becomes missing (nw_recode_fastok()).  O(ties).  Returns 1 when the
+	recoded matrix is symmetric, else 0.
+*/
+real scalar `NWdef'::recode_weights(real colvector oldv, real colvector newv){
+	real matrix el
+	real colvector rt, x, o, isold, pos, idx, neww, keep, r, c, k1, k2, o1, o2
+	real scalar m, n, wasvalued
+
+	ensure_sparse_built()
+	n = get_nodes()
+	// like the dense code (set_edge()), leave the valued flag as it was
+	wasvalued = isvalued
+	el = edgelist()
+	m = rows(el)
+	if (m == 0){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	rt = strtoreal(strofreal(el[,3]))
+	// position of every tie value among the distinct old values
+	x = oldv \ rt
+	isold = J(rows(oldv), 1, 1) \ J(m, 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	neww = (rows(newv) == 1 ? J(rows(idx), 1, newv) : newv[idx])
+	if (!any(neww :!= 0)){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	keep = nw_which(neww :!= 0)
+	r = el[keep, 1]
+	c = el[keep, 2]
+	neww = neww[keep]
+	set_edge_from_triplets(r, c, neww, 1)
+	isvalued = wasvalued
+	k1 = r :* (n + 1) :+ c
+	k2 = c :* (n + 1) :+ r
+	o1 = order(k1, 1)
+	o2 = order(k2, 1)
+	return(all(k1[o1] :== k2[o2]) & all(neww[o1] :== neww[o2]))
+}
+
+/*
+	nw_recode_matrix(M, oldv, newv): M with every cell replaced by the new
+	value of its (text-round-tripped) old value; the cells of M hold only
+	values listed in oldv.
+*/
+real matrix nw_recode_matrix(real matrix M, real colvector oldv, real colvector newv){
+	real colvector x, o, isold, pos, idx
+
+	x = oldv \ strtoreal(strofreal(vec(M)))
+	isold = J(rows(oldv), 1, 1) \ J(rows(x) - rows(oldv), 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	return(colshape((rows(newv) == 1 ? J(rows(idx), 1, newv) : newv[idx]), rows(M))')
+}
+
+/*
+	nw_recode_fastok(oldv, newv): TRUE when a recode that maps the distinct
+	values oldv to newv can be applied to the stored ties alone: 0 stays 0,
+	missing stays missing, and no tie value becomes missing.
+*/
+real scalar nw_recode_fastok(real colvector oldv, real colvector newv){
+	real colvector z, mm, nn
+
+	z = oldv :== 0
+	mm = oldv :>= .
+	nn = (oldv :!= 0) :& (oldv :< .)
+	if (any(z)) if (any(newv[nw_which(z)] :!= 0)) return(0)
+	if (any(mm)) if (any(newv[nw_which(mm)] :!= oldv[nw_which(mm)])) return(0)
+	if (any(nn)) if (any(newv[nw_which(nn)] :>= .)) return(0)
+	return(1)
+}
+
+/*
+	The rows of get_edgelist() whose cell is not exactly 0, computed from the
+	stored ties (O(nnz) time and memory, no N x N matrix).  Same 7 columns as
+	get_edgelist() (sender, receiver, value, in-selection flag "1", reverse
+	cell value, sender index, receiver index), rows in no particular order.
+	The blanked diagonal of a network without self-loops (value ".") is
+	listed exactly as get_edgelist() lists it; with `undirected' only the
+	lower triangle including the diagonal is listed.  Cells of value 0 are
+	left out - callers that need them (the uncompressed edge list) use
+	get_edgelist().
+*/
+string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
+	real colvector r, c, w, keep, k1, k2, tag, K, ord, tg, wrev, hit, dg
+	real scalar n, m
+	string colvector rv
+
+	ensure_sparse_built()
+	n = get_nodes()
+	r = csr_rows()
+	c = colidx
+	w = cweight
+	// reverse cell value of every stored tie: look up (c,r) among the keys (r,c)
+	m = rows(r)
+	wrev = J(m, 1, 0)
+	if (m > 0){
+		k1 = r :* (n + 1) :+ c
+		k2 = c :* (n + 1) :+ r
+		K = k1 \ k2
+		tag = J(m, 1, 1) \ J(m, 1, 2)
+		ord = order((K, tag), (1, 2))
+		tg = tag[ord]
+		hit = selectindex(tg[2::2*m] :== 2 :& tg[1::2*m-1] :== 1 :& K[ord][2::2*m] :== K[ord][1::2*m-1])
+		if (rows(hit) > 0){
+			// position (in the stacked vector) of the probe row, and of its match just before it
+			wrev[ord[hit :+ 1] :- m] = w[ord[hit]]
+		}
+	}
+	if (undirected){
+		keep = nw_which(r :>= c)
+		r = r[keep,1]; c = c[keep,1]; w = w[keep,1]; wrev = wrev[keep,1]
+	}
+	if (isselfloop == 0){
+		dg = (1::n)
+		r = r \ dg
+		c = c \ dg
+		w = w \ J(n, 1, .)
+		wrev = wrev \ J(n, 1, .)
+	}
+	m = rows(r)
+	if (m == 0) return(J(0, 7, ""))
+	rv = strofreal(r)
+	return((nodes[r]', nodes[c]', strofreal(w), J(m, 1, "1"), strofreal(wrev), rv, strofreal(c)))
+}
+
+/*
+	TRUE when get_edgelist_sparse() lists exactly the non-zero cells of
+	get_edgelist(): the network was never expanded to a dense matrix, or
+	its dense matrix holds no missing cell besides the blanked diagonal
+	(a missing cell - e.g. the same-mode dyads of a cleaned two-mode
+	network - is not part of the sparse tie store).
+*/
+real scalar `NWdef'::edgelist_sparse_ok(){
+	if (edge_dense_built == `False') return(1)
+	return(missing(edge) == (isselfloop == 0 ? get_nodes() : 0))
+}
+
+/*
+	Like edgelist_sparse_ok(), for a caller that only keeps the dyads between
+	the modes of a two-mode network (nw2toedge): the missing cells of a
+	cleaned two-mode network all lie between nodes of the same mode, so the
+	stored ties list exactly the cross-mode non-zero cells.
+*/
+real scalar `NWdef'::edgelist_sparse_ok_cross(){
+	real rowvector md
+	real scalar i, bad
+
+	if (edge_dense_built == `False') return(1)
+	if (is2mode != 1) return(edgelist_sparse_ok())
+	md = strtoreal(get_modes())
+	// a missing cell between two nodes of different modes would be a tie the stored list cannot show; counted row by
+	// row (the earlier one-line form built three n x n matrices)
+	bad = 0
+	for (i = 1; i <= cols(md); i++) {
+		bad = bad + sum((edge[i, .] :== .) :& (md :!= md[i]))
+		if (bad > 0) return(0)
+	}
+	return(1)
+}
+
+/*
+	The ";"-delimited node list nwtoedge stores in the edge list dataset
+	(characteristic _dta[nwtoedge_nodes]) so that nwfromedge can restore the
+	isolates: all node names when that fits a Stata characteristic (67,784
+	characters), otherwise only the names of the isolated nodes (appended
+	after the tied nodes on reload), otherwise "".
+*/
+string scalar `NWdef'::get_isolate_source_string(){
+	string scalar all
+	real colvector dout, din
+	real scalar n
+
+	all = get_nodenames_string()
+	if (strlen(all) <= 60000) return(all)
+	ensure_sparse_built()
+	n = get_nodes()
+	dout = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+	if (isdirect) din = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+	else din = dout
+	all = invtokens(select(nodes, (dout :== 0 :& din :== 0)'), ";")
+	if (strlen(all) <= 60000) return(all)
+	return("")
+}
 
 void `NWdef'::drop_nodes(rowvector d){
 	keep_nodes(d:==0)
@@ -7803,8 +10138,71 @@ void `NWdef'::set_2mode(real scalar d){
 	is2mode = d
 }
 
+/*
+	TRUE unless `edge' is still the empty placeholder of a sparse-natively
+	built network (see ensure_dense_built()).  Lets callers ask "is this
+	matrix a view / is it filled" without forcing the N x N allocation.
+*/
+/*
+	The value of one cell of the matrix.  For a network held as stored ties it comes from the sparse index (the
+	dense matrix, which a read of one number would otherwise build, has a missing diagonal when the network has no
+	self-loops and 0 for a pair without a tie).
+*/
+real scalar `NWdef'::cell_value(real scalar i, real scalar j){
+	if (edge_dense_built == `False'){
+		if (i == j & isselfloop != 1) return(.)
+		return(edge_weight(i, j))
+	}
+	return((*get_matrix())[i, j])
+}
+
+real scalar `NWdef'::is_dense_built(){
+	return(edge_dense_built != `False')
+}
+
+/*
+	Row (ego) index of every stored CSR entry, aligned with colidx/cweight.
+*/
+real colvector `NWdef'::csr_rows(){
+	real colvector r
+	real scalar i, n
+
+	ensure_sparse_built()
+	n = get_nodes()
+	r = J(rows(colidx), 1, 0)
+	for (i = 1; i <= n; i++){
+		if (rowptr[i+1] > rowptr[i]){
+			r[|rowptr[i] \ rowptr[i+1]-1|] = J(rowptr[i+1]-rowptr[i], 1, i)
+		}
+	}
+	return(r)
+}
+
 real scalar `NWdef'::check_symmetry(){
 //!! TODO - change when network not saved as matrix edge
+	real colvector r, c, w, k1, k2, o1, o2
+	real scalar n
+
+	// Sparse-native network that has never needed its dense matrix: compare
+	// the off-diagonal (i,j,w) set with its transpose directly (the
+	// diagonal is blanked/irrelevant exactly as in the dense comparison).
+	if (edge_dense_built == `False' & !hasmissing(cweight)){
+		ensure_sparse_built()
+		n = get_nodes()
+		r = csr_rows()
+		c = colidx
+		w = cweight
+		if (rows(r) == 0) return(1)
+		o1 = nw_which(r :!= c)
+		if (rows(o1) == 0) return(1)
+		r = r[o1,1]; c = c[o1,1]; w = w[o1,1]
+		k1 = r :* (n + 1) :+ c
+		k2 = c :* (n + 1) :+ r
+		o1 = order(k1, 1)
+		o2 = order(k2, 1)
+		if (any(k1[o1] :!= k2[o2])) return(0)
+		return(all(w[o1] :== w[o2]))
+	}
 	ensure_dense_built()
 	if (edge == edge'){
 		return(1)
@@ -7842,11 +10240,104 @@ pointer (real matrix) scalar `NWdef'::get_symmetrize(string scalar mode){
 	set_directed(0)
 }*/
 
+/*
+	Symmetrization straight on the sparse triplets, for a network whose
+	dense matrix was never built.  Cell (i,j) becomes f(a_ij, a_ji) with
+	the same f and the same "no tie = 0" convention as the dense code in
+	symmetrize(); diagonal entries (only present when self-loops are
+	allowed) are kept unchanged.  Like the dense code it leaves isvalued
+	as it was.
+*/
+void `NWdef'::symmetrize_sparse(string scalar mode){
+	real colvector r, c, w, off, dg, ego, alt, ke, a, b, v, ord, sk
+	real matrix info
+	real scalar n, nn, wasvalued
+
+	ensure_sparse_built()
+	wasvalued = isvalued
+	n = get_nodes()
+	r = csr_rows()
+	c = colidx
+	w = cweight
+
+	dg = nw_which(r :== c)
+	off = nw_which(r :!= c)
+	ego = r[off,1] \ c[off,1]
+	alt = c[off,1] \ r[off,1]
+	nn = rows(off)
+	ke = ego :* (n + 1) :+ alt
+	a = w[off,1] \ J(nn, 1, 0)
+	b = J(nn, 1, 0) \ w[off,1]
+
+	if (rows(ke) > 0){
+		ord = order(ke, 1)
+		ke = ke[ord]; ego = ego[ord]; alt = alt[ord]; a = a[ord]; b = b[ord]
+		info = panelsetup(ke, 1)
+		a = panelsum(a, info)
+		b = panelsum(b, info)
+		ego = ego[info[,1]]
+		alt = alt[info[,1]]
+		if (mode == "sum") v = a :+ b
+		else if (mode == "mean") v = (a :+ b) :/ 2
+		else if (mode == "max") v = (a :>= b) :* a :+ (b :> a) :* b
+		else v = (a :<= b) :* a :+ (b :< a) :* b
+	}
+	else {
+		v = J(0, 1, 0)
+	}
+
+	ego = ego \ r[dg,1]
+	alt = alt \ c[dg,1]
+	v = v \ w[dg,1]
+	set_edge_from_triplets(ego, alt, v, 0)
+	isvalued = wasvalued
+	set_directed(0)
+}
+
 void `NWdef'::symmetrize(string scalar mode){
 //!! TODO - change when network not saved as matrix edge
 	real matrix d, res1, res2
+	real scalar i, nn
+	real rowvector rw, cl, v1, v2
+
+	if (edge_dense_built == `False' & !hasmissing(cweight)){
+		symmetrize_sparse(mode)
+		return
+	}
 	ensure_dense_built()
 	d = diagonal(edge)
+
+	// large matrix: pair by pair (row i against column i, above the diagonal) in place; the formulas are the ones
+	// below, cell by cell, but no n x n temporaries (the matrix expressions below hold up to five)
+	if (rows(edge) > 2000 & (mode == "sum" | mode == "mean" | mode == "max" | mode == "min")) {
+		nn = rows(edge)
+		for (i = 1; i < nn; i++) {
+			rw = edge[i, (i+1)..nn]
+			cl = edge[(i+1)..nn, i]'
+			if (mode == "sum") {
+				v1 = rw + cl
+				v2 = cl + rw
+			}
+			else if (mode == "mean") {
+				v1 = (rw + cl) :/ 2
+				v2 = (cl + rw) :/ 2
+			}
+			else if (mode == "max") {
+				v1 = ((rw :>= cl) :* rw) + ((cl :> rw) :* cl)
+				v2 = ((cl :>= rw) :* cl) + ((rw :> cl) :* rw)
+			}
+			else {
+				v1 = ((rw :<= cl) :* rw) + ((cl :< rw) :* cl)
+				v2 = ((cl :<= rw) :* cl) + ((rw :< cl) :* rw)
+			}
+			edge[i, (i+1)..nn] = v1
+			edge[(i+1)..nn, i] = v2'
+		}
+		_diag(edge, d)
+		set_directed(0)
+		sparse_built = `False'
+		return
+	}
 	
 	if (mode == "sum") {
 		edge = edge  + edge'
@@ -7969,19 +10460,26 @@ void `NWdef'::update_match(){
 	Update variable names that should be used when loading data to Stata
 */
 void `NWdef'::update_nodesvar(){
-	real scalar i, j, k
-	
-	k = cols(nodesvar)
-	
+	transmorphic A
+	real scalar k, i, dup
+
+	k = cols(nodes)
 	nodesvar = strtoname(nodes)
-	for(i = 1; i<=k;i++){
-		for(j = 1; j<=k;j++){
-			if (nodesvar[i] == nodesvar[j] & i != j ){
-				j = k + 1
-				i = j
-				nodesvar = J(1,k,"`nwvars_def_pref'") + (strofreal(1::k))'
+	// two nodes with the same variable name: every node gets the default name (n1, n2, ...).  The duplicate test
+	// compares all pairs in the earlier version (quadratic: 9 s at 10,000 nodes, on every rename or creation); a hash
+	// finds the same (not a sort: a Mata sort advances the state that breaks ties in the sorts that follow, and with
+	// it the order of the data rows that belong to no node)
+	if (k > 1) {
+		A = asarray_create("string", 1)
+		dup = 0
+		for (i = 1; i <= k; i++) {
+			if (asarray_contains(A, nodesvar[i])) {
+				dup = 1
+				break
 			}
-		}	
+			asarray(A, nodesvar[i], 1)
+		}
+		if (dup) nodesvar = J(1,k,"`nwvars_def_pref'") + (strofreal(1::k))'
 	}
 }
 
@@ -7992,6 +10490,10 @@ real scalar `NWdef'::get_selfloops_number(){
 	real matrix  d
 	
 	if (isselfloop == 1) { 
+		if (edge_dense_built == `False'){
+			ensure_sparse_built()
+			return(sum((csr_rows() :== colidx) :& (cweight :!= 0) :& (cweight :!= .)))
+		}
 		d = diagonal(*get_matrix())
 		return(sum(d :/ d))	
 	}
@@ -8005,6 +10507,16 @@ real scalar `NWdef'::get_selfloops_number(){
 */
 real scalar `NWdef'::get_density(){
 	pointer(real matrix) scalar e
+	real scalar num, den
+
+	// stored ties: the sum of the 0/1 matrix is the number of ties (valued) or the sum of their values (unvalued),
+	// the number of cells that are not missing is n^2 less the blanked diagonal and the ties of missing value
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		den = get_nodes()^2 - (isselfloop == 0 ? get_nodes() : 0) - sum(cweight :== .)
+		num = (is_valued() == "false" ? sum(cweight) : sum(cweight :!= . :& cweight :!= 0))
+		return(num / den)
+	}
 
 	e = get_matrix_unvalued()
 	return(sum(*e)/ sum(*e:!= .))
@@ -8017,6 +10529,11 @@ real scalar `NWdef'::get_density(){
 real scalar `NWdef'::get_edges_count(){
 	pointer(real matrix) scalar e
 	
+	// a network held as stored ties: counted on them (the dense route builds the n x n matrix and three more)
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight :!= . :& cweight :!= 0)/2)
+	}
 	e = get_matrix()
 	return(sum(*e:!=. :& *e:!=0)/2)
 }
@@ -8027,6 +10544,10 @@ real scalar `NWdef'::get_edges_count(){
 real scalar `NWdef'::get_edges_sum(){
 	pointer(real matrix) scalar e
 	
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight)/2)
+	}
 	e = get_matrix()
 	return(sum(*e)/2)
 }
@@ -8037,6 +10558,10 @@ real scalar `NWdef'::get_edges_sum(){
 real scalar `NWdef'::get_arcs_count(){
 	pointer(real matrix) scalar e
 
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight :!= . :& cweight :!= 0))
+	}
 	e = get_matrix()
 	return(sum(*e:!=. :& *e:!=0))
 }
@@ -8047,6 +10572,10 @@ real scalar `NWdef'::get_arcs_count(){
 real scalar `NWdef'::get_arcs_sum(){
 	pointer(real matrix) scalar e
 	
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight))
+	}
 	e = get_matrix()
 	return(sum(*e))
 }
@@ -8056,9 +10585,16 @@ real scalar `NWdef'::get_arcs_sum(){
 */
 real scalar `NWdef'::get_missing_edges(){
 	pointer(real matrix) scalar e
+
+	// Sparse-native, dense matrix not built: the dense count includes the
+	// blanked (missing) diagonal when self-loops are off, so add it here.
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		return(sum(cweight :== .) + (isselfloop == 0 ? get_nodes() : 0))
+	}
 	
 	e = get_matrix()
-	return(sum(*e:==.))
+	return(missing(*e))
 }
 
 /*
@@ -8066,7 +10602,15 @@ real scalar `NWdef'::get_missing_edges(){
 */
 real scalar `NWdef'::get_minimum(){
 	pointer(real matrix) scalar e
+	real scalar mn
 	
+	// stored ties: the smallest tie value, and 0 when some cell that is not missing holds no tie
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		mn = (rows(cweight) > 0 ? min(cweight) : .)
+		if (get_nodes()^2 - (isselfloop == 0 ? get_nodes() : 0) - rows(cweight) > 0) mn = min((mn, 0))
+		return(mn)
+	}
 	e = get_matrix()
 	return(min(*e))
 }
@@ -8076,7 +10620,14 @@ real scalar `NWdef'::get_minimum(){
 */
 real scalar `NWdef'::get_maximum(){
 	pointer(real matrix) scalar e
+	real scalar mx
 	
+	if (edge_dense_built == `False'){
+		ensure_sparse_built()
+		mx = (rows(cweight) > 0 ? max(cweight) : .)
+		if (get_nodes()^2 - (isselfloop == 0 ? get_nodes() : 0) - rows(cweight) > 0) mx = max((mx, 0))
+		return(mx)
+	}
 	e = get_matrix()
 	return(max(*e))
 }
@@ -8356,6 +10907,20 @@ void `NWdef'::init_edge_sparse() {
 }
 
 /*
+	set_edge() that takes the matrix over instead of copying it (swap): the argument is left holding the old,
+	empty matrix.  For callers that build a matrix only to hand it to the network (nwset); with an n x n matrix
+	of 20,000 nodes it saves 3.2 GB.
+*/
+void `NWdef'::set_edge_take(real matrix edge1) {
+	swap(edge, edge1)
+	if (is_selfloop_boolean() == 0){
+		_diag(edge, .)
+	}
+	sparse_built = `False'
+	edge_dense_built = `True'
+}
+
+/*
 	Set edge matrix
 */
 void `NWdef'::set_edge(real matrix edge1) {
@@ -8489,6 +11054,27 @@ real matrix `NWdef'::calculate_dyadcensus(){
     real scalar asym
     real scalar mutual
     real scalar null
+    real matrix el
+    real colvector k1, k2, kk
+    real scalar nn, m, m2
+
+    // stored ties (every tie of an unvalued network is a 1): the dyads are found by matching each tie with its reverse
+    if (edge_dense_built == `False' & isselfloop != 1 & (is_valued() == "true" | all(cweight :== 1))) {
+        el = edgelist()
+        el = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :!= 0) :& (el[., 3] :!= .))
+        nn = get_nodes()
+        m = rows(el)
+        k1 = el[., 1] :* (nn + 1) :+ el[., 2]
+        k2 = el[., 2] :* (nn + 1) :+ el[., 1]
+        kk = k1 \ k2
+        // an arc whose reverse is a tie too appears twice in kk (once as itself, once as the reverse of the other)
+        m2 = (m > 0 ? 2 * m - rows(uniqrows(kk)) : 0)
+        mutual = m2 / 2
+        asym = m - m2
+        null = nn * (nn - 1) / 2 - asym - mutual
+        if (is_2mode_boolean() == 1) null = get_nodes_mode1() * get_nodes_mode2() - asym - mutual
+        return((mutual, asym, null))
+    }
 
     asym = sum((*get_matrix_unvalued() - *get_matrix_unvalued()'):==1) + sum((*get_matrix_unvalued() - *get_matrix_unvalued()'):==-1)
     asym = asym / 2
@@ -8807,12 +11393,25 @@ void `NWdef'::add_node(string scalar s, | string scalar mode) {
 	// dense-touching method in this class, and would have silently
 	// concatenated onto an empty/wrong-sized matrix for a
 	// sparse-natively-built network regardless.
-	ensure_dense_built()
 	size = cols(nodes)
-	nodes = (nodes, s)
-	nodesvar = (nodesvar, strtoname(s))
-	edge = (edge, J(size, 1, 0)\J(1, size+1, 0))
-	sparse_built = `False'
+	if (edge_dense_built == `False' & sparse_built == `True' & is2mode != 1){
+		// stored ties only: the new node has no ties, so only the row pointers grow
+		ensure_sparse_built()
+		nodes = (nodes, s)
+		nodesvar = (nodesvar, strtoname(s))
+		rowptr = (rowptr \ rowptr[rows(rowptr)])
+		if (rows(rowptr_in) > 0) rowptr_in = (rowptr_in \ rowptr_in[rows(rowptr_in)])
+	}
+	else {
+		ensure_dense_built()
+		nodes = (nodes, s)
+		nodesvar = (nodesvar, strtoname(s))
+		edge = (edge, J(size, 1, 0)\J(1, size+1, 0))
+		// the diagonal of a network without self-loops is missing, also for the new node (a stored 0 there
+		// looked like a self-loop value to code reading the matrix directly)
+		if (isselfloop != 1) edge[size+1, size+1] = .
+		sparse_built = `False'
+	}
 	// `modes' was never extended here - genuinely harmless while `modes'
 	// itself is still empty (get_modes()'s own lazy-init sizes it fresh
 	// off get_nodes() on first read, whenever that happens), but once
@@ -9297,6 +11896,7 @@ void `NWsdef'::drop(string scalar netname){
 
 void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	real scalar i, size
+	real matrix el
 	
 	names = (names, new_netname)
 	i = first_index_match(names, netname)
@@ -9304,8 +11904,18 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	size = cols(pdefs)
 	pdefs[size] = &(`NWdef'())
 	pdefs[size]->set_name(new_netname)
-	pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
-	pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	if (pdefs[i]->is_dense_built() == 0){
+		// a network that only exists as its ties (nwfromedge and the like):
+		// copy the ties, never the N x N matrix
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+		pdefs[size]->set_selfloop(pdefs[i]->is_selfloop_boolean())
+		el = pdefs[i]->edgelist()
+		pdefs[size]->set_edge_from_triplets(el[,1], el[,2], el[,3], 1)
+	}
+	else {
+		pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	}
 	
 	if (pdefs[i]->is_2mode_boolean()){
 		pdefs[size]->set_modes(pdefs[i]->get_modes())
@@ -9444,27 +12054,76 @@ end
 // nwplot.ado's own `frucht' layout, but using shortest-path distances as
 // ideal spring lengths. Reuses `distance()' (above) for graph-theoretic
 // shortest paths.
+capture mata: mata drop nw_kk_native()
+mata:
+// kklayout()'s sweeps in native/nwgraph.c (ALG_KK_STRESS).  Pos holds the
+// start coordinates and, when the status is 0, the result.  Status: 0 done,
+// 1 two nodes coincided (the interpreted loop must run: it draws random
+// numbers), -1 no plugin or the call failed.
+real scalar nw_kk_native(real matrix M, real matrix Pos, real scalar Iter)
+{
+	real scalar n, m, nobs, status, junk
+	real matrix T
+	real colvector nz, ei, ej
+	string scalar origframe
+
+	if (!NativeGraphAvailable()) return(-1)
+	n = rows(M)
+	if (n < 2 | n > 60000) return(-1)
+	T = M + M'
+	nz = selectindex((vec(T) :!= 0) :& (vec(T) :< .))
+	T = .
+	if (length(nz) > 0) {
+		ei = mod(nz :- 1, n) :+ 1
+		ej = floor((nz :- 1) :/ n) :+ 1
+	}
+	else {
+		ei = J(0, 1, 0)
+		ej = J(0, 1, 0)
+	}
+	nz = .
+	m = rows(ei)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	nobs = max((n, m, 1))
+	st_addobs(nobs)
+	junk = st_addvar("double", "v1")
+	junk = st_addvar("double", "v2")
+	junk = st_addvar("double", "v3")
+	junk = st_addvar("double", "v4")
+	junk = st_addvar("double", "v5")
+	if (m > 0) st_store((1::m), ("v1","v2"), (ei, ej))
+	st_store((1::n), ("v3","v4"), Pos)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("capture plugin call nwgraph_native v1 v2 v3 v4 v5, " + char(34) + "21 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(Iter) + char(34))
+	status = -1
+	if (st_numscalar("c(rc)") == 0) {
+		status = st_data(1, "v5")
+		if (status == 0) Pos = st_data((1::n), ("v3","v4"))
+	}
+	// distance() symmetrises and dichotomises its argument in place, which
+	// the code after the sweeps (and the caller) rely on
+	if (status == 0) {
+		M = (M + M') :/ (M + M')
+		_editmissing(M, 0)
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(status)
+}
+end
+
 capture mata: mata drop kklayout()
 mata:
 real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Start)
 {
 	real matrix D, W, Pos, delta
-	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k
+	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k, status
 	real rowvector numer, nonisolates
 
 	V = rows(M)
-	D = distance(M)
-	_diag(D, 0)
-
-	// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
-	// should be far apart in the layout get proportionally less pull
-	// toward their exact target distance than close pairs do)
-	W = J(V, V, 0)
-	for (i=1; i<=V; i++) {
-		for (j=1; j<=V; j++) {
-			if (i != j) W[i,j] = 1 / (D[i,j]^2)
-		}
-	}
 
 	// `Start' (optional) warm-starts the iteration from a caller-given
 	// configuration instead of a random jittered circle - used by
@@ -9488,6 +12147,26 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 		// netplotmds() above, not an arbitrary independent choice
 		Pos = jumble(circlelayout(V))
 	}
+
+	// The distances and the sweeps in compiled code when the plugin is there
+	// (same numbers; see nw_kk_native()); the interpreted code below runs
+	// when it is not, or when two nodes coincide (it then draws random
+	// numbers, which the plugin cannot).
+	status = nw_kk_native(M, Pos, Iter)
+	if (status != 0) {
+		// the start configuration again: the failed attempt left it as it was
+		D = distance(M)
+		_diag(D, 0)
+
+		// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
+		// should be far apart in the layout get proportionally less pull
+		// toward their exact target distance than close pairs do)
+		W = J(V, V, 0)
+		for (i=1; i<=V; i++) {
+			for (j=1; j<=V; j++) {
+				if (i != j) W[i,j] = 1 / (D[i,j]^2)
+			}
+		}
 
 	// Gauss-Seidel stress majorization: each node i is moved directly to
 	// its own closed-form optimum given every OTHER node's CURRENT
@@ -9516,6 +12195,7 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 			}
 			Pos[i,.] = numer :/ wsum
 		}
+	}
 	}
 
 	// rescale into this file's own established [~0.25,1.25] x [0,1]

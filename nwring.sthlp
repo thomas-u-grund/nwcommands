@@ -72,8 +72,17 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	Macros
 	  {bf:r(netlist)}	list of new networks
 
+{title:Limits}
+
+{pstd}
+Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt k(5)}: 0.2 seconds; killed at 12 GB before).
+{opt weights()} still uses the matrix.
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwsmall}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

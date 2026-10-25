@@ -135,7 +135,7 @@ program nwcommunity, rclass
 		mata: comm_sizeid[.,1] = comm_size
 		mata: comm_sizeid[.,2] = comm_id
 		mata: comm_sizeid[.,3] = comm_share
-		mata: comm_sizeid = sort(comm_sizeid, -1)
+		mata: comm_sizeid = sort(comm_sizeid, (-1, 2))
 		mata: st_numscalar("communities", comm_number)
 		mata: st_matrix("comm_sizeid", comm_sizeid)
 
@@ -147,17 +147,22 @@ program nwcommunity, rclass
 		local lmod = modularity
 
 		mata: __nwc_stripe = J(comm_number, 2, "")
-		mata: for (__nwc_i=1; __nwc_i<=comm_number; __nwc_i++) __nwc_stripe[__nwc_i,2] = "comm" + strofreal(__nwc_i)
+		mata: __nwc_stripe[., 2] = "comm" :+ strofreal((1::comm_number))
 		mata: st_matrixrowstripe("comm_sizeid", __nwc_stripe)
 		return matrix comm_sizeid = comm_sizeid
-		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid __nwc_vals __nwc_sorted __nwc_info __nwc_stripe __nwc_i
+		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid __nwc_vals __nwc_sorted __nwc_info __nwc_stripe
 
 		if "`silent'" == "" {
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
 			noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
-			noi tab `netgenerate'`k'
+			if `lcomm' <= 1000 {
+				noi tab `netgenerate'`k'
+			}
+			else {
+				noi di "{txt}  (the table of the `lcomm' communities is not shown; sizes are in r(comm_sizeid))"
+			}
 			noi di " "
 		}
 		local k = `=`k' + 1'

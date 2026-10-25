@@ -88,6 +88,16 @@ Directed: yes - automatically symmetrized first (edge connectivity has no standa
 generalization in the classical cohesive-subgroup literature, the same choice {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwkcomponents} already make). Weighted: not
 applicable. Signed: not applicable. Two-mode: not checked.
 
+{title:Limits}
+
+{pstd}
+The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): {it:n}-1 maximum flows on the
+sparse network instead of {it:n}({it:n}-1)/2, each stopped as soon as it reaches the smaller degree of the two ends.
+The result is a dense {it:n}-by-{it:n} valued network, which is what takes the memory: it is held twice while the network is
+registered (20,000 nodes: 30 seconds and 6.5 GB; killed at 12 GB before, when it was held four times).
+Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds
+(the previous version did not finish in 3 minutes at 300 nodes).
+
 {title:Stored results}
 
 	Scalars
@@ -116,3 +126,6 @@ Menger, K. (1927). Zur allgemeinen Kurventheorie. {it:Fundamenta Mathematicae} 1
 	{help nwkcomponents}, {help nwcohesion}, {help nwhierarchy}, {help nwclique}, {help nwkplex}
 
 last certified : 31 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

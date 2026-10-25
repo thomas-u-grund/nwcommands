@@ -86,8 +86,18 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 {pstd}
 Two-mode: **T1**, native - this command's entire purpose is converting a two-mode network to an edge list. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
 
+{title:Limits}
+
+{pstd}
+Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in
+Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds (before: 8 seconds
+and 1.3 GB), 5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
+
 {title:See also}
 
 	{help nw2fromedge}, {help nwtoedge}, {help nwsave}
 
 last certified : 28 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

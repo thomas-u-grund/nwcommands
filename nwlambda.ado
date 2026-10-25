@@ -28,8 +28,11 @@ program nwlambda, rclass
 	tempname __nw_lam
 	mata: `__nw_lam' = `netobj'->calculate_lambda()
 
-	nwset, mat(`__nw_lam') name(`name') undirected labs(`labs')
-	mata: mata drop `__nw_lam'
+	// node names go to nwset in a Mata variable (a long Stata option string gets blanks inserted, see GOTCHA.md)
+	tempname __nw_names
+	mata: `__nw_names' = `netobj'->get_nodenames()
+	nwset, mat(`__nw_lam') name(`name') undirected nodenames(`__nw_names')
+	mata: mata drop `__nw_lam' `__nw_names'
 
 	_nwsyntax `name'
 	mata: `netobj'->set_valued(1)

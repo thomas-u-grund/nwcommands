@@ -95,8 +95,17 @@ Binary: yes. Directed: yes (each ordered pair compared independently, both netwo
 the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not
 checked. Two-mode: not checked - operates on each network's own square adjacency matrix.
 
+{title:Limits}
+
+{pstd}
+The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as
+stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds (killed at 12 GB before).
+
 {title:See also}
 
 	{help nwcorrelate}, {help nwcomponents}, {help nwqap}
 
 last certified : 22 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

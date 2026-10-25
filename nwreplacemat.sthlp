@@ -79,6 +79,15 @@ network with a new Mata matrix {bf:J(5,5,99)}.
 	  {c BLC}{hline 25}{c BRC}
 
 	
+{title:Limits}
+
+{pstd}
+The new matrix is yours; the network takes it over without a further copy, and a network of a new size is created without ties
+before the matrix is put in (earlier: a complete graph, so five matrices at once).
+
 {title:See also}
 
 	{help nwreplace}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

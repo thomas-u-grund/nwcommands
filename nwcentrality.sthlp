@@ -35,3 +35,6 @@ Each measure below is computed by its own dedicated command - for example, degre
 
 {p 8 32 2}
 {helpb nwkatz:Katz centrality}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

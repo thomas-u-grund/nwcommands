@@ -2,7 +2,7 @@
 capture program drop nwconcor
 program nwconcor, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace SPLITs(int 1) measure(string) maxiter(int 25) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace SPLITs(int 1) measure(string) maxiter(int 25) silent force]
 	set more off
 
 	if `splits' < 1 {
@@ -78,6 +78,13 @@ program nwconcor, rclass
 		// on a fully successful call, corrupting _rc for any caller.)
 		capture drop `netgenerate'`k'
 
+		// every iteration correlates the dense n x n matrix with itself (O(n^3)): 3,000 nodes take about a
+		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB
+		if `nodes' > 6000 & "`force'" == "" {
+			di "{err}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+			error 484
+		}
+
 		mata: st_rclear()
 		qui if _N < `nodes' {
 			set obs `nodes'
@@ -85,6 +92,11 @@ program nwconcor, rclass
 		_nwsyntax `netname_temp'
 
 		tempname __nw_concor
+		// CONCOR correlates the full node-by-node matrix in every iteration: O(n^3) per iteration
+		// (measured in Stata/BE: 1,000 nodes 4 s, 5,000 nodes more than 3 minutes)
+		if "`silent'" == "" & `nodes' > 2000 {
+			di "{txt}(note: nwconcor works on the dense `nodes' x `nodes' matrix and takes minutes above about 3,000 nodes)"
+		}
 		capture noisily mata: `__nw_concor' = `netobj'->calculate_concor(`splits', `val', `maxiter')
 		if _rc != 0 {
 			exit _rc

@@ -105,7 +105,19 @@ program nwinduced, rclass
 	// registry at all).
 	tempname inducedvals
 	mata: `inducedvals' = J(`n', 1, .)
-	forvalues v = 1/`n' {
+
+	// measure(degree) has a closed form: removing node v deletes its own degree and one tie
+	// from each of its neighbours, so the sum of degrees drops by 2*degree(v) (minus 1 for a
+	// self-tie, which is counted once). That is exact and needs no loop - the loop below
+	// (preserve, copy the subnetwork, rerun the measure, restore, n times) took about 50 s at
+	// 1,000 nodes. The other measures have no such shortcut and keep the loop.
+	local __nwind_closed = ("`measure'" == "degree" & `n' >= 3)
+	if `__nwind_closed' {
+		_nwsyntax `origname', max(1)
+		mata: `inducedvals' = nwg_induced_degree(`netobj'->edgelist(), `n')
+	}
+	local __nwind_last = cond(`__nwind_closed', 0, `n')
+	forvalues v = 1/`__nwind_last' {
 		preserve
 		// BUGFIX (caught before this ever ran, not after): `netobj' is
 		// just this program's own local macro, set by the LAST

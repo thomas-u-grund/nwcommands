@@ -1,6 +1,6 @@
 {smcl}
 {* *! version 1.0.0  11aug2014}{...}
-{marker topical}
+{marker topic}
 {helpb nwtopical##visualization:[NW-2.8] Visualization}
 {cmd:help animate}
 {hline}
@@ -51,3 +51,6 @@
 {cmd:        scatter le year if year <= `i', xscale(range(1900 2000)) name(le`i') }
 {cmd:  {c )-}}
 {cmd:. animate lifemovie, graphs(_all)}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

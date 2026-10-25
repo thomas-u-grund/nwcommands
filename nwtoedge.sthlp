@@ -166,8 +166,20 @@ later {help nwfromedge} call on this same edgelist can restore any isolate (zero
 edgelist, by construction, cannot represent as a row of its own. See {help nwfromedge}'s own
 {bf:Supported network types} section for the other half of this.
 
+{title:Limits}
+
+{pstd}
+The list of {it:all} dyads (without {opt compress}) has one row for every pair of nodes, so its size grows with the
+square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 nodes
+(1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072
+nodes, 10,000 for an undirected network) the command stops with an error that recommends {opt compress}. With
+{opt compress} only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds.
+
 {title:See also}
 	
 	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

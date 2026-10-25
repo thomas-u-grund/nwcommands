@@ -90,7 +90,7 @@ program nwgeodesic
 	}
 	
 	// Get number of unconnected links
-	mata: st_numscalar("r(unconnected)", sum((*`netobj'->get_matrix()):==.) - sum(diagonal(*`netobj'->get_matrix()):==.))
+	mata: st_numscalar("r(unconnected)", missing(*`netobj'->get_matrix()) - missing(diagonal(*`netobj'->get_matrix())))
 	
 	// Deal with non-existing paths
 	if "`unconnected'" != "" {

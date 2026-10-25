@@ -282,3 +282,233 @@ because it ran with such an adopath entry. Fix: no `shell` for file edits; write
 with Stata's `copy`, restore on failure. **Lesson:** never erase a file before its replacement is verified in place,
 never interpolate `c(adopath)`/`c(pwd)`/paths into a shell string, and prefer Stata's `copy`/`erase`/`mkdir` over `shell`.
 Also: subprograms of an ado-file are not callable from a do-file (the test defines its own line counter).
+
+## Big networks: never put per-node lists in a Stata macro, and "sparse-native" ends where a helper touches the dense matrix (fixed 2026-10-24)
+
+`nwfromedge` was documented as proven at 100,000 nodes / 1,000,000 ties, but in Stata/BE it failed with
+`r(920)` (macro substitution results in line that is too long) from about 40,000 nodes and with the
+dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_sparse` +
+`set_edge_from_triplets`) was never the problem; everything *around* it was:
+
+- **BE's maximum macro length is 264,408 characters.** Any `st_local`/`st_global` of "all node labels"
+  (`_nwsyntax`'s `labs`, `nwname`'s `r(labs)`, `nwsync`'s `r(vars)`, a `forvalues` loop that appends a
+  label per node) breaks the first time a later line expands it. Pass lists through Mata variables
+  (`putmata`/`getmata`) and use `nw_labs_string()` where a macro is unavoidable (it returns "" above
+  200,000 characters; callers that need a label read it from Mata).
+- **A single helper can silently turn a sparse network dense.** The usual suspects were `isview(*get_matrix())`
+  in `nwload`, `check_symmetry()`/`symmetrize()` (auto-symmetrize in `nwfromedge`), `get_missing_edges()`
+  and `get_selfloops_number()` (called by every `nwname`). Test with `p->is_dense_built()` after the
+  command: it must still be 0. `cscripts/test_nwfromedge_large.do` does this.
+- **Quadratic Mata idioms hide in small-network tests**: `result = result + ...` string building
+  (`get_modes_labeled_string`, 1.5 s per `nwname` call at 40,000 nodes), `queue = queue[2::n]` as a BFS
+  pop (`calculate_components`, 27 s at 100,000 nodes), all-pairs duplicate-label checks. Profile with
+  `timer on/off` around stages and Mata `timer_on()`, not by reading the code.
+- `selectindex()` of a 1x1 or empty condition returns a ROW vector, `1::0` is the vector (1,0), and Mata
+  passes arguments by reference (assigning to a function argument changes the caller's variable).
+  All three bit the sparse `symmetrize` while it was written.
+- In a git worktree `lib/lnwcommands.mlib` is not on the adopath of a plain Stata session; load the core
+  with `do unw_core.do` from the worktree root (what every cscript does) and put the worktree on the
+  adopath explicitly. Parallel test runs that share one PLUS directory can collide while an ado such as
+  `gsample` is being installed (a one-off `r(499)` in `test_nwhomophily`); rerun before suspecting code.
+- `nwtoedge` built the full N x N list of dyads in `get_edgelist()` even with `compress` (so `nwsave` was
+  refused above 20,000 nodes, after a minute or two). `nwtoedge, compress` of ONE network now uses
+  `get_edgelist_sparse()`, which must list exactly the non-zero cells of `get_edgelist()`: that is only
+  true if the dense matrix holds no missing cell besides the blanked diagonal (a cleaned two-mode network
+  does), which `edgelist_sparse_ok()` checks. Several networks at once need the zero cells for the merge
+  and still go through the dense list. Other limits met on the way: a Stata characteristic holds at most
+  67,784 characters (the isolate list in `_dta[nwtoedge_nodes]`), `st_sdata()`/`st_sstore()` and strL are
+  the way to move long strings, and `set_modes_from_labeled_string()` was O(n^2).
+- An `.ado` file's extra programs (`_nwimport_edgelist` in `nwimport.ado`) are private to that file: a
+  cscript cannot call them directly, only through the command.
+
+## Scaling audit harness (`tools/scale_audit/`): three measurement traps
+
+- **An empty scratch PLUS used to make some commands download packages (fixed).** `nwdyadprob` (and
+  `nwhomophily` through it) `ssc install`ed gsample and moremata, `nwplot` labellist, `nwtabulate` tabplot, on
+  first use (about 20 s, needs internet, wrote to the user's PLUS). Gone: `gsample` is replaced by the built-in
+  `_nwgsample.ado` (same algorithm and same random-number stream as `gsample ..., wor`: random order via
+  `uniform(N,2)`, then systematic sampling along the cumulated weights; verified identical samples, errors and
+  RNG state against the real package on 300 random inputs), the `labellist` call in `nwplot`'s
+  `_getvaluelabel` is a direct `st_vlload()` lookup, and `tabplot` is replaced by the built-in `_nwtabplot.ado` (the same `twoway scatter || rbar` construction; PNG and SVG exports byte-identical to the real tabplot in 24 random cases; by(), separate(), frame(), recast(), bar#() are not supported and give a clear error). Exporting a graph from a batch do-file needs an absolute path: the relative path is resolved against the log directory (`PWD`), and a failed PNG export shows as `--Break--`. `cscripts/test_no_ssc_install.do` fails if a new `ssc install` sneaks in. The harness no longer needs the
+  seeded PLUS for these commands (it is harmless). Do not reintroduce `ssc install` in core code. Mata trap met
+  on the way: a one-line `mata: for (...) { ... }` is "invalid expression" in Stata (braces need separate
+  lines), so loops inside an ado must be vectorised or live in a compiled function.
+- **`quietly` hides `display as error` messages**, so `capture quietly cmd` leaves rc 999 with no explanation
+  in the log. The harness times `capture quietly cmd` and, only for a quick failure, reruns it with output on
+  to read the message. `set output error` is not a substitute (it changed timings).
+- **Stata `-e` puts the batch log in the directory named by the `PWD` environment variable**, not the process
+  cwd. Launching from Python with `cwd=d` but an inherited PWD wrote `audit.log` into the repo root and the
+  do-file was not found. Set `env PWD=d` as well.
+
+## Native combinatorial kernels (`native/nwcomb.h`, `nwcomb2.h`): things that cost time to find
+
+- **Mata `sort()` on one key breaks ties at random**, using the random-number stream, so the result depends on
+  the RNG state at that moment (confirmed: the same 12 numbers sorted after `rseed(1)`, `rseed(2)` and after
+  100 x 100 `runiform()` give three different orders of the tied rows). `Factions()` seeded its partition from
+  `sort((1::n, deg), -2)`, so `nwfactions` gave different partitions on identical calls whenever two nodes had
+  the same degree, and no old-vs-new comparison could be exact. Sort with a second key (`(-2,1)`: node number)
+  whenever ties are possible and the order matters.
+- **`_nwsyntax` clears `r()`.** In a cscript, read `r(...)` into a local or Mata variable before the next
+  `_nwsyntax`; `st_numscalar("r(x)")` then returns a 0x0 void and the assertion fails far from the cause.
+- **`st_numscalar()` of a scalar that does not exist returns a void, not a missing**: assigning it to a vector
+  element is a conformability error. `nwg_scalar()` wraps it.
+- **`strofreal(x)` without a format keeps 9 significant digits** (`nwmotifs` cut every count above 999,999,999,
+  i.e. from about 800 nodes on, when it passed them through `st_local`). Use `strofreal(x, "%21.0g")`.
+- **Stata's `comb(n,k)` is not exact** (floating point via gamma functions); compare counts with an integer
+  product in a cscript. A network built with `nwfromedge` has as many nodes as distinct ids in the edge list,
+  not the largest id you meant.
+- **A Stata session keeps the plugin it loaded first.** `nwg_comb_ok()` probes the plugin once per session
+  (external scalar `nwg_comb_state`: `.` = not probed, 1 = kernels available, 0 = use the Mata code); a
+  cscript sets it to 0 to run the Mata reference and back to `.` afterwards. After rebuilding the plugin start
+  a new Stata process (`rm` the file first, never `cp` over a loaded one). A stale `nwgraph_macos.plugin` in
+  PLUS shadows the repo's one (the probe then finds no kernels and silently uses the slow Mata path).
+- **Why the cohesion kernel may reorder flows but not change results:** the value of a maximum flow and the set of
+  nodes reachable from the source in its residual graph do not depend on the order of the augmenting paths, so
+  the C search (bidirectional BFS, early stop at the current minimum) returns the same minimum, witness pair and
+  cutset as the Mata one; what does depend on order is only *which* equal-valued pair is found first, and the
+  loops visit the pairs in the Mata order. A block certified by the parent's `k`-component step carries its exact
+  connectivity and witness pair into the next level (the target search that ran to the end is the same query
+  sequence as the plain connectivity search).
+- **The n-clan search prunes**, it does not enumerate-then-filter: a branch is dropped when a member of `R` is
+  farther than `n` steps from the newest member inside `R` + candidates (distances only grow in the subsets a
+  clan below the branch can be). The scratch distance array must be all `-1` between uses; `clan_ok()` once left
+  it dirty and the pruned search lost clans (found by the exact old-vs-new comparison, not by the size tests).
+
+## Equality tests against an old implementation: set the sort seed, and do not trust `merge` order
+
+Stata's `sort` (and so `merge`) breaks ties in a random order controlled by `set sortseed`. Two runs of the same
+command can list rows with equal keys in a different order, which made old-versus-new comparisons of
+`nwtoedge` with node attributes and of the Pajek/UCINET/GML exports look like failures. Set `set sortseed` before each
+network in a comparison script, and where the order of a file matters sort explicitly (the exports now sort by alter
+label, then ego label). Also: a native-plugin kernel that must reproduce Mata arithmetic bit for bit needs
+`-ffp-contract=off` (see `native/Makefile`), otherwise fused multiply-adds change the last digits.
+
+## Native plugin algorithm codes: keep the ranges apart
+
+`native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
+3-9, 22-25 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 26 and up for the next kernel), 20 is the vertex-connectivity search
+(nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
+feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
+A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
+
+## Stata inserts a blank into long option values: never pass node labels through an option string
+
+`syntax ..., labs(string)` (and any `command, opt(`longmacro')`) cuts a value longer than 5,292 characters: a blank is
+inserted into every 5,292nd character, so a label list for 900+ nodes ("n1,n2,...") comes out with names such as
+`n1 067`. The symptom is not an error: the new network has nodes the dataset does not know, `_nwdatasync` merges
+and APPENDS rows (a 5,000-node network gives _N = 5,004), and a later command that needs `_N == nodes` fails
+(`nwhierarchy`: "number of selected observations must match dimension of mymat"). Found at 5,000 nodes; the same
+bug sat in every command that forwarded `r(labs)`/`labs` to `nwset`. Pass the names in a Mata variable instead:
+`nwset ..., nodenames(<mata vector>)`; `nwrandom ..., nodenamesmata()`, `nwreplacemat ..., labsmata()` are the
+forwarding options. Test: `cscripts/test_scale5k.do`. Remaining paths that still use `labs()` with a macro:
+`nwexpand, network()`, `nw2set`, `nwimport` (user supplied lists; keep them below 5,000 characters or call `nwfromedge`).
+
+## Algorithm codes 22 and 23 (triad balance, bipartite matching); kernel version 3
+
+`native/nwcomb2.h` has `comb_balance()` (code 22) and `comb_matching()` (code 23); `comb_handles()` lists them and
+`NWCOMB_VERSION` is 3. Mata asks `nwg_comb_version()`: a plugin older than 3 (Linux and Windows until CI rebuilds them)
+keeps the older Mata code of `calculate_balance()` / `calculate_bipartite_matching()`. `comb_matching()` is an exact
+port of the dense Edmonds-Karp (residual arcs visited in ascending node number, the augmenting path ends at the first
+discovery of the sink), so it returns the same matching, not just the same size. To force the Mata path in a test,
+set the external `nwg_comb_state` to 0 (see `cscripts/test_scale5k.do`).
+
+## Equality checks of `nwdropnodes` / `nwkeepnodes`: the order of the dropped rows is not stable
+
+The rows of dropped nodes stay at the end of the data (attributes missing) and their order depends on `set sortseed`
+state, i.e. on how many sorts ran before. Compare the first `r(nodes)` rows by position and the rest as a sorted set.
+
+## Algorithm code 24 (Louvain communities); kernel version 4; Louvain bug that hid from small networks
+
+`native/nwcomb2.h` has `comb_louvain()` (code 24; `NWCOMB_VERSION` 4, `nwg_comb_version() >= 4` in Mata). It is an exact port of
+the corrected Mata `Louvain()`: same visiting order, candidates in ascending community number, a move needs a gain larger by
+more than 1e-12, communities numbered in ascending order of their old numbers. The old Mata code counted the node's own
+loop (the weight inside a super-node, present from the second level on) as a tie to its own community, so super-nodes never
+moved and the aggregation levels merged nothing: modularity was fine for ~1,000 nodes (the first level alone found 30
+communities) and collapsed above ~1,500 (3,000 nodes: 1,311 communities, Q 0.07; the right answer is ~14 communities,
+Q 0.18). No small-network test could see it because the first level already looked plausible. When you write a graph
+algorithm that aggregates, check the number of communities and Q at 3,000+ nodes against an independent computation.
+`cscripts/test_scale10k_louvain.do` compares native and Mata on 40 random networks and recovers a planted partition.
+
+## `tabulate` and `matrix rownames` stop at about 1,000 groups
+
+`tab x, matrow() matcell()` fails with r(134) ("too many values") above 1,000 distinct values in Stata/BE, and a row-name
+list of thousands of tokens exceeds the command-line limit. `nwcomponents` (sparse networks have thousands of components) and
+`nwcommunity` failed that way after the result was computed. Count in Mata (`sort`, `panelsetup`) and set row names with
+`st_matrixrowstripe()`; tabulate for display only when there are at most 1,000 groups. Mata `sort(x, -1)` of a size table breaks ties
+randomly: sort by `(-1, 2)`.
+
+## Mata traps met in stage 2
+
+- A function that declares `external real scalar x` CREATES x (as a missing value) when it does not exist: test existence with
+  `findexternal()` first (a threshold function returned `.` and silently switched an optimization off).
+- `colvector :+ rowvector` is a conformability error in Mata (only vector with matrix broadcasts): build the matrix with `J()`.
+- `v[a][b]` (chained subscripts) is not allowed; a one-line `{ ...; ... }` inside `mata ... end` of a do-file is "invalid expression".
+- The harness runs the checks after `quietly timer list`, which replaces `r()`: the command's results are kept with `_return hold`
+  and put back with `_return restore, hold` before each check line.
+- `strofreal(x)` of exact counts: compare with integer arithmetic (6 * C(n,4) = (n(n-1)/2)((n-2)(n-3)/2)), a division by 24 is not exact.
+
+## Two-mode networks are dense by definition: 15,000 nodes cost 7 GB
+
+`clean_matrix_2mode()` used to compare an n x n STRING matrix of modes (10 GB at 15,000 nodes); it blanks the same-mode cells in place
+now. The cleaned two-mode matrix still holds missing cells, so every two-mode command works on the dense matrix (10,000 + 5,000 nodes
+peak at 7 GB). `nw2toedge` without `compress` lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
+
+## The audit recipes of stages 0 and 1 measured the wrong thing in two places
+
+`nwset from to, name(x)` is the MATRIX form (two variables = a 2 x 2 matrix) and took 0.05 s at every size; the edge-list form is
+`nwset from to, edgelist name(x)`. `nw2fromedge` was fed `to` in 1..N, i.e. N + N nodes, not N + N/2. Both recipes are corrected in
+`tools/scale_audit/spec.py` (a recipe that "passes" at every size deserves a look at what network it actually built).
+
+
+## Scaling audit, stage 3 (20,000 nodes): what cost time to find
+
+- **The peak memory of a harness row includes the correctness check.** `/usr/bin/time` measures the whole Stata process: the
+  generator, the timed command and the check that follows. Several rows of the first 20,000-node run said MEMORY_KILLED for
+  commands that had finished (`nwgeodesic` 49 s, `nwreplacemat`, `nwtranspose`): the check built the tie index of a dense
+  3.2 GB result. The harness now prints `NWAUDIT_CMD_RC` when the command returns, reports a kill after that as OK with
+  `correct = UNCHECKED (the check exceeded the memory cap)`, and `nwa_net()` counts the ties of a big dense result row by row.
+  A kill before `NWAUDIT_SECS` is a real kill of the command.
+- **Mata `sum(M :== .)`, `sum(M :!= 0 :& M :!= .)`, `edge' ...` on an n x n matrix each hold one n x n temporary per operator**
+  (8 bytes a cell: 3.2 GB at 20,000 nodes). `missing(M)` counts the missing cells without a temporary; a row-by-row loop
+  (`for (i...) sum(M[i,.] :== ...)`) replaces the others. `x = y` of an n x n matrix is a copy: `swap(x, y)` moves it
+  (`ensure_dense_built()`, new `set_edge_take()` used by `nwset`). The old dense `build_sparse_index()` held the matrix, its
+  copy, a mask and two more temporaries (four matrices) just to find the non-zero cells.
+- **`selectindex(col :== j)` without a match is a 0 x 1 matrix, so `cols(idx) > 0` is true.** `edge_weight(i, j)` indexed
+  `idx[1]` of it and stopped with a subscript error (swallowed by a `capture`: `nwvalue` returned `.` for every pair without a
+  tie once it used the sparse index). Test `rows(idx) * cols(idx) > 0`.
+- **A Mata function that assigns to its argument changes the caller's variable.** `rep_EIvar()` of `nwmixing` did
+  `net1 = (net1 :!= 0)` on `*netobj->get_matrix()`: after `nwmixing, permutations()` a valued network held only its 0/1
+  pattern. The same file's `rep_EIattr()` read `net1 != .` (no colon: ONE comparison, true) so the missing diagonal counted
+  as ties in every permutation of `nwtabulate, attribute()`. Both fixed; every `:`-less comparison in a Mata one-liner is
+  worth a look.
+- **`rdiscrete()` accepts at most 10,000 probabilities** ("exceeded maximum table size of 10000", r(3300)); `nwpref` used it
+  with a vector of n probabilities and stopped above 10,000 nodes. Above that size a pick proportional to the degrees is a
+  uniformly chosen end point of the ties made so far.
+- **Quadratic code that looked like bookkeeping**: `update_nodesvar()` compared all pairs of variable names (9 s at 10,000
+  nodes, on every `nwnoderename`), `build_edge_value_matrix()` searched the list of all nodes for every tie
+  (`nwset, time()` did not finish at 20,000 nodes), `nw_community_denserelabel()` searched all communities for every node,
+  `nwattime` walked all n^2 cells in Mata. A run of "OK slow" rows that quadruple from 10,000 to 20,000 nodes is the
+  signature.
+- **A command that builds its result with `nwset, mat()` holds three n x n matrices at once** (the caller's, the copy for the
+  network, the one inside `set_edge()`); now two. `nwsym`/`symmetrize()` of a dense matrix held five; it works pair by pair
+  above 2,000 nodes. `nwname` called `sum(M :== .)`, which held a third.
+- **Random generators**: `runiform(r, c)` fills row by row, so drawing the rows in blocks gives the numbers of one big call
+  (this keeps `nwrandom, prob()` identical to the matrix version at any size). `nwrandom, density()` shuffled all n^2 cells;
+  above 5,000 nodes the positions of the ties are drawn directly (a different stream, the same distribution); up to 5,000
+  nodes the old shuffle runs, so earlier seeds still give the same networks.
+- **A prefix `external` declaration creates the external** (see stage 2): `nw_sparse_min_nodes()` reads the test switch
+  through `findexternal()` and a pointer, without declaring it.
+- **`nwclique` stored every maximal clique, size 1 and 2 included**, as a row of n zeros and ones: a sparse network has about
+  as many maximal 2-cliques as ties, 100,000 rows of 20,000 numbers (77 s at 10,000 nodes, killed at 20,000). Only the
+  cliques of the asked size are kept now (0.9 s and 2.9 s).
+- **A Mata `sort()` / `uniqrows()` / `order()` advances the state that breaks ties in the Stata sorts that follow** (the random-number stream
+  itself is not touched: `runiform()` after it is the same). The visible effect is the order of the data rows that belong to no node
+  (the leftover rows when a smaller network follows a larger one): the old-versus-new comparison of `nwrandom` and `nwnoderename` differed
+  in `_nwnode[10..22]` after `update_nodesvar()` got a `uniqrows()`; the hash version of the duplicate test leaves them identical. In a
+  comparison script compare those rows as a sorted set (see the `nwdropnodes` entry) or avoid a sort on a path every command takes.
+- **The generator `nwpref` picks from the ties made before the new node**: a stub list that grows while the node picks lets the node pick itself
+  (found by `test_scale20k.do` counting the ties of a 12,000-node network).
+- **Plugin and Mata must agree on the call**: the block call of the distance kernel (`2 n directed nties source nblock`) is used only when
+  `nwg_comb_version() >= 5`; an older plugin ignores the extra number and would fill one column only, silently. Rebuild the plugin
+  (`rm`, then `make -C native macos-nwgraph`) BEFORE running anything that loads the new `unw_core.do`; the harness picks up files the moment they
+  are edited, so do not edit the worktree while an audit runs (a run in the window between the edit and the rebuild had to be discarded).

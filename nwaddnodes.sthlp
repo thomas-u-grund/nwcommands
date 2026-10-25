@@ -69,4 +69,12 @@ with no memberships, and a mode-2 "institution" with no members):
 	{cmd:. nw2fromedge person institution, name(mynet)}
 	{cmd:. nwaddnodes mynet, nodenames(New Person, New Institution) mode(1 2)}
 
+{title:Limits}
+
+{pstd}
+The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds (killed at 12 GB before).
+
 last certified : 29 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

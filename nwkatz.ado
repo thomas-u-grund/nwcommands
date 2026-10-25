@@ -120,69 +120,104 @@ program nwkatz
 		if `alpha' == -999999 {
 			local alpha = 1
 		}
-		tempname geo
-		local __nwkatz_havegeo = 1
-		// `options' forwards whatever geodesic_options the caller supplied
-		// (as documented in the syntax block above) - previously declared
-		// via the trailing `*' but never actually passed through, so e.g.
-		// alpha()/unconnected() on the underlying nwgeodesic call were
-		// silently ignored regardless of what the user specified.
-		// nwreplace here (nwgeodesic's own option, unrelated to nwkatz's own
-		// replace guard above) is required even though `geo' is a fresh
-		// tempname: Stata's tempname counter is scoped per top-level command
-		// invocation, not session-globally unique, so calling nwkatz twice
-		// in a row can allocate the identical underlying name (confirmed via
-		// direct trace) - nwgeodesic's own "name already exists" guard would
-		// otherwise intermittently fire on this purely-internal scratch
-		// network, depending on what tempname counter state happens to be
-		// active. This scratch network is dropped again a few lines below
-		// regardless, so always allowing nwgeodesic to overwrite it here is
-		// safe.
-		// nwgeodesic's own eccentricity output is optional and skipped
-		// entirely when generate() is omitted (see nwgeodesic.ado's own
-		// header comment) - so this internal call, which never forwards
-		// generate() itself, naturally never creates an unrequested
-		// "_eccentricity" side effect. If the caller's own forwarded
-		// geodesic_options DOES include generate(), that ask passes
-		// through via `options' and is respected exactly as given.
-		qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
-		_nwsyntax `geo'
-		// nwreplace's own expression parser (_nwexpnetexp.ado) treats its
-		// input as plain Stata-style arithmetic text and translates it into
-		// Mata syntax via naive string substitution (e.g. every "*" becomes
-		// " :* ", every "^" becomes " :^ "). It was never designed to accept
-		// raw Mata object/pointer syntax such as (*netobj->get_matrix()) -
-		// passing that here (as this line previously did) mangles the "*"
-		// dereference and "->" method-call operators into nonsense along
-		// with the alpha exponentiation, producing a genuine "invalid
-		// expression" Mata error on every call. Confirmed via direct trace
-		// before fixing - this was broken end to end, not merely for
-		// non-integer alpha; there was no prior test coverage to catch it.
-		// Fixed by doing the alpha^distance transform directly in Mata and
-		// writing it back via the network's own set_edge() method (which
-		// correctly invalidates the sparse index), instead of routing a
-		// pointer-dereference expression through nwreplace's string-based
-		// translator at all.
-		tempname __nw_katz
-		mata: `__nw_katz' = `alpha' :^ (*`netobj'->get_matrix())
-		mata: _editmissing(`__nw_katz', 0)
-		mata: `netobj'->set_edge(`__nw_katz')
-		mata: mata drop `__nw_katz'
-
-		if "`origdirected'" == "true" {
-			// This package's own row=source/column=target adjacency
-			// convention (confirmed against get_outdegree()/get_indegree()
-			// in unw_core.do) means "out" reach is a ROW sum (how far node i
-			// can reach others) and "in" reach is a COLUMN sum (how
-			// reachable node i is from others) - the previous version had
-			// these swapped, verified by hand on a small A->B, A->C example
-			// (A's true out-reach summed to 1.0, but the swapped code
-			// returned 0 for it).
-			mata: `__nw_out' = rowsum(*`netobj'->get_matrix())
-			mata: `__nw_in' = colsum(*`netobj'->get_matrix())'
+		// Same sums without the n x n distance matrix: one breadth-first search per node over the stored ties
+		// (kernel 25; sum of alpha^distance over the nodes reached). Used unless geodesic_options are given or the
+		// plugin is older; the distance matrix of nwgeodesic is built otherwise.
+		local __fastkz 0
+		if `"`options'"' == "" {
+			mata: st_local("__fastkz", strofreal(nwg_comb_version() >= 5))
+		}
+		if `__fastkz' {
+			tempname __symnet
+			local __src `netname'
+			if "`symopt'" != "" {
+				nwsym `netname', generate(`__symnet')
+				local __src `__symnet'
+			}
+			_nwsyntax `__src'
+			if "`origdirected'" == "true" {
+				mata: `__nw_out' = nw_distance_sums(`netobj', 0, `alpha')[., 3]
+				if "`symopt'" != "" {
+					// symmetrized: the distances into a node are those out of it
+					mata: `__nw_in' = `__nw_out'
+				}
+				else {
+					mata: `__nw_in' = nw_distance_sums(`netobj', 1, `alpha')[., 3]
+				}
+			}
+			else {
+				mata: `__nw_all' = nw_distance_sums(`netobj', 0, `alpha')[., 3]
+			}
+			if "`symopt'" != "" {
+				nwdrop `__symnet'
+			}
+			local __nwkatz_havegeo = 0
 		}
 		else {
-			mata: `__nw_all' = rowsum(*`netobj'->get_matrix())
+			tempname geo
+			local __nwkatz_havegeo = 1
+			// `options' forwards whatever geodesic_options the caller supplied
+			// (as documented in the syntax block above) - previously declared
+			// via the trailing `*' but never actually passed through, so e.g.
+			// alpha()/unconnected() on the underlying nwgeodesic call were
+			// silently ignored regardless of what the user specified.
+			// nwreplace here (nwgeodesic's own option, unrelated to nwkatz's own
+			// replace guard above) is required even though `geo' is a fresh
+			// tempname: Stata's tempname counter is scoped per top-level command
+			// invocation, not session-globally unique, so calling nwkatz twice
+			// in a row can allocate the identical underlying name (confirmed via
+			// direct trace) - nwgeodesic's own "name already exists" guard would
+			// otherwise intermittently fire on this purely-internal scratch
+			// network, depending on what tempname counter state happens to be
+			// active. This scratch network is dropped again a few lines below
+			// regardless, so always allowing nwgeodesic to overwrite it here is
+			// safe.
+			// nwgeodesic's own eccentricity output is optional and skipped
+			// entirely when generate() is omitted (see nwgeodesic.ado's own
+			// header comment) - so this internal call, which never forwards
+			// generate() itself, naturally never creates an unrequested
+			// "_eccentricity" side effect. If the caller's own forwarded
+			// geodesic_options DOES include generate(), that ask passes
+			// through via `options' and is respected exactly as given.
+			qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
+			_nwsyntax `geo'
+			// nwreplace's own expression parser (_nwexpnetexp.ado) treats its
+			// input as plain Stata-style arithmetic text and translates it into
+			// Mata syntax via naive string substitution (e.g. every "*" becomes
+			// " :* ", every "^" becomes " :^ "). It was never designed to accept
+			// raw Mata object/pointer syntax such as (*netobj->get_matrix()) -
+			// passing that here (as this line previously did) mangles the "*"
+			// dereference and "->" method-call operators into nonsense along
+			// with the alpha exponentiation, producing a genuine "invalid
+			// expression" Mata error on every call. Confirmed via direct trace
+			// before fixing - this was broken end to end, not merely for
+			// non-integer alpha; there was no prior test coverage to catch it.
+			// Fixed by doing the alpha^distance transform directly in Mata and
+			// writing it back via the network's own set_edge() method (which
+			// correctly invalidates the sparse index), instead of routing a
+			// pointer-dereference expression through nwreplace's string-based
+			// translator at all.
+			tempname __nw_katz
+			mata: `__nw_katz' = `alpha' :^ (*`netobj'->get_matrix())
+			mata: _editmissing(`__nw_katz', 0)
+			mata: `netobj'->set_edge(`__nw_katz')
+			mata: mata drop `__nw_katz'
+
+			if "`origdirected'" == "true" {
+				// This package's own row=source/column=target adjacency
+				// convention (confirmed against get_outdegree()/get_indegree()
+				// in unw_core.do) means "out" reach is a ROW sum (how far node i
+				// can reach others) and "in" reach is a COLUMN sum (how
+				// reachable node i is from others) - the previous version had
+				// these swapped, verified by hand on a small A->B, A->C example
+				// (A's true out-reach summed to 1.0, but the swapped code
+				// returned 0 for it).
+				mata: `__nw_out' = rowsum(*`netobj'->get_matrix())
+				mata: `__nw_in' = colsum(*`netobj'->get_matrix())'
+			}
+			else {
+				mata: `__nw_all' = rowsum(*`netobj'->get_matrix())
+			}
 		}
 	}
 

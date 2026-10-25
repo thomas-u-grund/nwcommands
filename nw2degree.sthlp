@@ -118,3 +118,6 @@ clearly on a one-mode one, the opposite convention of most other commands in thi
 	{help nwdegree}, {help nw2set}, {help nw2project}, {help nw2clustering}
 
 last certified : 02 Sep 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

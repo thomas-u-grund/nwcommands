@@ -88,8 +88,19 @@ the network's own square adjacency matrix. A network with no ties at all is reje
 (there is no structure to fit a core-periphery pattern to); a node with no ties of its own (an
 isolate) is handled without error and is simply assigned to the periphery.
 
+{title:Limits}
+
+{pstd}
+Above 2,000 nodes the search runs on the stored ties (the sums of the correlation with the ideal pattern are taken from the ties;
+the cores found are those of the matrix version, the fitness equal up to rounding in the last digits). Measured in Stata/BE on a
+random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds and 0.2 GB (19.5 seconds and 9.4 GB before),
+20,000 nodes 0.6 seconds.
+
 {title:See also}
 
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

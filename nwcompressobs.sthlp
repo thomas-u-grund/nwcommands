@@ -39,3 +39,6 @@ Not applicable - trims trailing empty (all-missing) Stata observations from the 
 {title:See also}
 
   {help nwdrop}, {help clear}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

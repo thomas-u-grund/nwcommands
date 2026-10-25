@@ -126,8 +126,18 @@ One can now use this new network to represent the edgecolor when plotting the or
 	                    {bf:r(paths)} > 0
 
 
+{title:Limits}
+
+{pstd}
+The paths are enumerated from the stored ties and {opt generate()} writes each path as a network of its ties; neither builds a matrix.
+20,000 nodes 0.25 seconds in Stata/BE for two nodes at 4 steps (killed at 12 GB before). The number of walks examined grows with the
+degree to the power of the path length.
+
 {title:Also see}
 
    {help nwgeodesic}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

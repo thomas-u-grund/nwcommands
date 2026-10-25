@@ -30,6 +30,7 @@
 {synopt:{opth cost(real)}}cost of connection; default = 1{p_end}
 {synopt:{opt intrvalue(netname)}}intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair{p_end}
 {synopt:{opt intrcost(netname)}}per-dyad cost y_ij, replacing the constant {it:cost} for direct connections; default = {it:cost} for every tied pair{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 19,300 nodes otherwise){p_end}
 
 
 {title:Description}
@@ -84,4 +85,12 @@ Jackson, M. and Wollinsky, A. (1996) A Strategic Model of Social and Economic Ne
 {pstd}
 When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij = {it:cost}, and w_ii = 0 (i.e. {opt intrvalue()} is not given).
 
+{title:Limits}
 
+{pstd}
+The utility is computed from the matrix of shortest paths and holds about 4 matrices of {it:n}-by-{it:n} (10,000 nodes: 24 seconds and
+3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes);
+option {opt force} runs it anyway.
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

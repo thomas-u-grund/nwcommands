@@ -53,7 +53,7 @@ program nwvalue
 			
 			capture mata: st_numscalar("r(ego_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`ego'")'))
 			capture mata: st_numscalar("r(alter_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`alter'")'))
-			capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`r(ego_id)', `r(alter_id)'])
+			capture mata: st_numscalar("r(value)",`netobj'->cell_value(`r(ego_id)', `r(alter_id)'))
 			capture mata: st_global("r(ego)", "`ego'")
 			capture mata: st_global("r(alter)", "`alter'")	
 		}
@@ -78,7 +78,7 @@ program nwvalue
 			di "{err}alterid {it:`alterid'} out of range (network `netname' has `nodes' nodes)"
 			error `errNodeNotFound'
 		}
-		capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`egoid', `alterid'])
+		capture mata: st_numscalar("r(value)",`netobj'->cell_value(`egoid', `alterid'))
 		capture mata: st_numscalar("r(ego_id)", `egoid')
 		capture mata: st_numscalar("r(alter_id)", `alterid')
 		capture mata: st_global("r(ego)", `netobj'->get_nodenames()[`r(ego_id)'])

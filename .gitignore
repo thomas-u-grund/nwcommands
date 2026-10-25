@@ -58,3 +58,7 @@ website/.jekyll-metadata
 website/Gemfile.lock
 website/.bundle/
 website/vendor/
+
+# files written into the working directory by some tests
+/flobusiness.net
+/flomarriage.dl

@@ -45,16 +45,6 @@ program nwdyadprob
 	}
 
 
-	// Install gsample if needed
-	capture which gsample
-	if _rc != 0 {
-		ssc install gsample
-	}
-	capture mata: mata which mm_sample()
-	if _rc != 0 {
-		ssc install moremata
-	}
-
 	if "`weightnet'" != "" {
 		_nwsyntax `weightnet', other(_wn)
 		mata: `mat' = transformIntoProbs((*`_wnnetobj'->get_matrix()))
@@ -154,6 +144,12 @@ program nwdyadprob
 	}
 	if "`density'" != "" {
 		// Generate network from weight network
+		// density() draws the ties with weights from a list of ALL dyads: n*n rows. nwtoedge refuses above
+		// 50,000,000 rows (7,071 nodes); stop here with the reason instead of after the dense work
+		if `nodes' * `nodes' > 5e7 {
+			di "{err}density() weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself."
+			error `errDenseTooLarge'
+		}
 		preserve
 		nwset, mat(`mat') name(_tempdyad)
 		nwreplace _tempdyad = _tempdyad * 10
@@ -182,7 +178,7 @@ program nwdyadprob
 			error 198
 		}
 		qui drop if `nw_ego' == `nw_alter'
-		gsample `ties' [aweight=_tempdyad], generate(link) wor
+		_nwgsample `ties' [aweight=_tempdyad], generate(link)
 		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked
 		// nwhomophily investigation - "homophily(2) and homophily(-2)
 		// produce identical output"): this used to hand the selected

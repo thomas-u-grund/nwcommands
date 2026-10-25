@@ -67,6 +67,7 @@ end
 
 capture mata: mata drop nw_evcentrality()
 capture mata: mata drop nw_evcentrality_matvec()
+capture mata: mata drop nw_evcentrality_edges()
 mata:
 /*
 	Eigenvector centrality via sparse-native power iteration - the
@@ -154,40 +155,56 @@ mata:
 	node, matching the prior dense implementation's own "maxEV==0"
 	contract exactly.
 */
-real colvector nw_evcentrality_matvec(pointer (class nw_def scalar) scalar thisnw, real colvector v, real scalar nosym, real scalar getvalued)
+/*
+	The effective weighted neighbour list of the matvec, built ONCE: rows (i, j, w) sorted by i, then j,
+	holding every term i contributes to out[i] (j != i, effective weight w > 0). The same terms, in the
+	same order, as the per-node neighbour loops this replaced; the products are then summed per node by
+	one panelsum() call per iteration instead of an interpreted loop over all nodes and neighbours.
+*/
+real matrix nw_evcentrality_edges(pointer (class nw_def scalar) scalar thisnw, real scalar nosym, real scalar getvalued)
 {
-	real scalar n, i, k, wij, wji, w, j
-	real colvector out
-	real matrix nbout, nbin, allnb
+	real matrix el, both
+	real colvector key, p, w, wn, dup
+	real scalar n, m
 
 	n = thisnw->get_nodes()
-	out = J(n, 1, 0)
-	for (i = 1; i <= n; i++) {
-		if (nosym) {
-			nbout = thisnw->neighbors(i)
-			for (k = 1; k <= rows(nbout); k++) {
-				j = nbout[k,1]
-				if (j == i) continue
-				w = getvalued ? thisnw->edge_weight(i,j) : 1
-				if (w <= 0) continue
-				out[i] = out[i] + w * v[j]
-			}
-		}
-		else {
-			nbout = thisnw->neighbors(i)
-			nbin  = thisnw->neighbors_in(i)
-			allnb = uniqrows((nbout \ nbin))
-			for (k = 1; k <= rows(allnb); k++) {
-				j = allnb[k,1]
-				if (j == i) continue
-				wij = thisnw->has_edge(i,j) ? thisnw->edge_weight(i,j) : 0
-				wji = thisnw->has_edge(j,i) ? thisnw->edge_weight(j,i) : 0
-				w = max((wij, wji))
-				if (w <= 0) continue
-				out[i] = out[i] + (getvalued ? w : 1) * v[j]
-			}
-		}
+	el = thisnw->edgelist()
+	if (rows(el) == 0) return(J(0, 3, 0))
+	el = select(el, el[.,1] :!= el[.,2])
+	if (rows(el) == 0) return(J(0, 3, 0))
+	if (nosym) {
+		w = (getvalued ? el[.,3] : J(rows(el), 1, 1))
+		return(select((el[.,1], el[.,2], w), w :> 0))
 	}
+	both = el \ (el[.,2], el[.,1], el[.,3])
+	key = both[.,1] :* (n + 1) :+ both[.,2]
+	p = order(key, 1)
+	both = both[p, .]
+	key = key[p]
+	m = rows(both)
+	w = both[.,3]
+	if (m > 1) {
+		dup = (key[|1 \ m-1|] :== key[|2 \ m|]) \ 0
+		wn = w[|2 \ m|] \ 0
+		w = (dup :* rowmax((w, wn))) :+ ((1 :- dup) :* w)
+		// a row whose key repeats the PREVIOUS row is the second copy: dropped
+		dup = 0 \ dup[|1 \ m-1|]
+		both = select((both[.,1], both[.,2], w), dup :== 0)
+	}
+	else both = (both[.,1], both[.,2], w)
+	w = (getvalued ? both[.,3] : J(rows(both), 1, 1))
+	return(select((both[.,1], both[.,2], w), both[.,3] :> 0))
+}
+
+real colvector nw_evcentrality_matvec(real matrix E, real colvector v, real scalar n)
+{
+	real colvector out
+	real matrix info
+
+	out = J(n, 1, 0)
+	if (rows(E) == 0) return(out)
+	info = panelsetup(E[.,1], 1)
+	out[E[info[.,1], 1]] = panelsum(E[.,3] :* v[E[.,2]], info)
 	return(out)
 }
 
@@ -195,8 +212,10 @@ real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw
 {
 	real scalar n, iter, maxiter, tol, norm, shift
 	real colvector x, y
+	real matrix E
 
 	n = thisnw->get_nodes()
+	E = nw_evcentrality_edges(thisnw, nosym, getvalued)
 	x = J(n, 1, 1) :/ sqrt(n)
 
 	// An all-isolates (or entirely empty, or all-non-positive-weight)
@@ -209,7 +228,7 @@ real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw
 	// not specially detected here, same as this command's own
 	// documented "only defined for connected networks" caveat already
 	// covers any other not-strongly-connected input.)
-	if (max(abs(nw_evcentrality_matvec(thisnw, x, nosym, getvalued))) == 0) {
+	if (max(abs(nw_evcentrality_matvec(E, x, n))) == 0) {
 		return(J(n, 1, .))
 	}
 
@@ -218,13 +237,13 @@ real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw
 	// this (plus a +1 margin) is always large enough to make every
 	// shifted eigenvalue strictly positive - see the header comment
 	// above for why that's needed instead of squaring.
-	shift = max(nw_evcentrality_matvec(thisnw, J(n, 1, 1), nosym, getvalued)) + 1
+	shift = max(nw_evcentrality_matvec(E, J(n, 1, 1), n)) + 1
 
 	maxiter = 1000
 	tol = 1e-10
 
 	for (iter = 1; iter <= maxiter; iter++) {
-		y = nw_evcentrality_matvec(thisnw, x, nosym, getvalued) :+ shift :* x
+		y = nw_evcentrality_matvec(E, x, n) :+ shift :* x
 		norm = sqrt(sum(y:^2))
 		y = y :/ norm
 		if (max(abs(y - x)) < tol | max(abs(y + x)) < tol) {

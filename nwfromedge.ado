@@ -97,6 +97,14 @@ program nwfromedge
 		keep `if'
 	}
 	
+	// Row order of the edge list as given.  The sorts and merges below
+	// scramble it, and duplicate (ego,alter) rows must resolve the same
+	// way every time: the LAST row given wins (what filling an adjacency
+	// matrix cell by cell does).  Rows that go through collapse (string
+	// ids) are already unique, so the variable is simply gone there.
+	tempvar _roworder
+	gen long `_roworder' = _n
+
 	tempfile dictionaryOriginalString
 	
 	// deal with strings as node identifiers
@@ -117,16 +125,16 @@ program nwfromedge
 		gen `tovar' = `fromvar'
 		drop _stack		
 		save `dictionaryString', replace
-		list _all
 		
 		sort `_nodeid'
 		keep if `_nodeid' != `_nodeid'[_n-1]
-		list _all
 		
+		// Node labels travel through Mata, never through a macro: a macro
+		// of 100,000 labels overflows Stata/BE's 264,408-character limit
+		// (r(920)), and building it cost O(n^2).
 		if "`labs'" == "" {
-			forvalues k = 1/ `=_N'{
-				local labs "`labs' `=`fromvar'[`k']',"
-			}
+			capture mata: mata drop __nwlabvec
+			putmata __nwlabvec = `fromvar'
 		}
 		restore
 
@@ -173,9 +181,9 @@ program nwfromedge
 	}
 	if "`rawtype'" == "numeric" {
 		if "`labs'" == "" {
-			forvalues k = 1/ `=_N'{
-				local labs "`labs' `labprefix'`=`_rawid'[`k']',"
-			}
+			capture mata: mata drop __nwlabvec
+			putmata __nwlabvec = `_rawid'
+			mata: __nwlabvec = "`labprefix'" :+ strofreal(__nwlabvec, "%18.0g")
 		}
 	}
 	save `dictionaryConsecutive', replace
@@ -234,7 +242,15 @@ program nwfromedge
 	capture mata: mata drop __nwvalue
 	capture mata: mata drop __nwego
 	capture mata: mata drop __nwalter
+	capture mata: mata drop __nwrank
 
+	capture confirm variable `_roworder'
+	if _rc == 0 {
+		putmata __nwrank = `_roworder'
+	}
+	else {
+		mata: __nwrank = J(0, 1, .)
+	}
 	putmata __nwvalue = `_value'
 	putmata __nwego = `fromvar'
 	putmata __nwalter = `tovar'
@@ -317,7 +333,13 @@ program nwfromedge
 	// get_nodenames_from_string() returns a column vector; create_by_name_sparse()
 	// requires a string rowvector (same transpose nwset.ado applies at its own
 	// call site, see its line using __nwnew rows()).
-	mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', `maxNodes', "`cDftNodepref'"))'
+	if `"`labs'"' == "" {
+		mata: `__nwnodenames' = (get_nodenames_from_vector(__nwlabvec, `maxNodes', "`cDftNodepref'"))'
+		capture mata: mata drop __nwlabvec
+	}
+	else {
+		mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', `maxNodes', "`cDftNodepref'"))'
+	}
 	mata: `nws'.add("`edgename'")
 	// other(other) namespaces _nwsyntax's exported locals as
 	// `otherXXX' - this program's own `syntax' line already declares
@@ -331,6 +353,7 @@ program nwfromedge
 	_nwsyntax `edgename', other(other)
 	mata: `othernetobj'->create_by_name_sparse(`__nwnodenames')
 	mata: `othernetobj'->set_name("`edgename'")
+	mata: nw_triplets_lastwins(__nwego, __nwalter, __nwvalue, __nwrank)
 	mata: `othernetobj'->set_edge_from_triplets(__nwego, __nwalter, __nwvalue, 1)
 	// Directed at construction unconditionally, matching nwset's own
 	// former default at this exact step (its own mat()-dispatch set
@@ -366,6 +389,7 @@ program nwfromedge
 	capture mata: mata drop __nwvalue
 	capture mata: mata drop __nwego
 	capture mata: mata drop __nwalter
+	capture mata: mata drop __nwrank
 	capture mata: mata drop `__nwnodenames'
 
 	if "`clear'" == "" {

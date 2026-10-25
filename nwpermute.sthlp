@@ -96,8 +96,17 @@ Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties unde
 	{cmd:. nwpermute mynet, replace}
 	{cmd:. nwplot mynet, lab layout(circle)}
 
+{title:Limits}
+
+{pstd}
+A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds
+in Stata/BE (killed at 12 GB before).
+
 {title:See also}
 
 	{help nwqap}, {help nwcorrelate}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

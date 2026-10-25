@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 3.1.1  24oct2026}{...}
 {phang}
 {help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network programs
  
@@ -49,9 +49,9 @@
 {p2col:{bf:{help nwduplicate }}}Duplicate a network{p_end}
 {p2col:{bf:{help nwdyadprob }}}Generate a network based on tie probabilities{p_end}
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
-{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE) (moved to its own package){p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences (separate package){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
-{p2col:{bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation (moved to its own package){p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks (separate package){p_end}
 {p2col:{bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand variable to network{p_end}
 {p2col:{bf:{help nwexport }}}Export network as Pajek or Ucinet file{p_end}
@@ -65,7 +65,7 @@
 {p2col:{bf:{help nwhomophily }}}Generate a homophily network{p_end}
 {p2col:{bf:{help nwimport }}}Import network{p_end}
 {p2col:{bf:{help nwinduced }}}Induced, endogenous and exogenous centrality{p_end}
-{p2col:{bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
+{p2col:{bf:{help nwinstall }}}Install Stata menu/dialogs and the model packages{p_end}
 {p2col:{bf:{help nwissymmetric }}}Check if network is symmetric{p_end}
 {p2col:{bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:{bf:{help nwkcomponents }}}Maximal k-component enumeration{p_end}
@@ -103,13 +103,13 @@
 {p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:{bf:{help nwreach }}}Calculate reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode network{p_end}
-{p2col:{bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE) (moved to its own package){p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events (separate package){p_end}
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace network{p_end}
 {p2col:{bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
 {p2col:{bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
-{p2col:{bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves (moved to its own package){p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwsaom/":nwsaom}}}Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves (separate package){p_end}
 {p2col:{bf:{help nwsave }}}Save network data in file{p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
@@ -137,6 +137,17 @@
 {p2col:{bf:{help nwvalidate }}}Validate network name{p_end}
 {p2col:{bf:{help nwvalidvars }}}Validate Stata variables for network{p_end}
 {p2col:{bf:{help nwvalue }}}Returns a tie value{p_end}
+{p2col:{bf:{help nwversion }}}Version of nwcommands and of the installed model packages{p_end}
 {p2col:{bf:{help nwwebuse }}}Load network data over the web{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}
+{p2colreset}{...}
+
+{pstd}
+The statistical network models are separate packages that need the core. Install them with
+{stata "nwinstall, models":nwinstall, models} (see {help nwinstall}; {help nwversion} shows which are installed).
+Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
+{p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -116,8 +116,20 @@ networks does not support two-mode networks.
 Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and density with graph-level
 indices. {it:Social Networks} 21(3), 239-267.
 
+{title:Limits}
+
+{pstd}
+Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it. With
+{cmd:condition(density)} above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn
+directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents} as the statistic take 2 seconds at 20,000 nodes
+(more than 5 minutes at 10,000 nodes before, each draw shuffling the 100 million cells). The draws of networks of more than
+5,000 nodes are not those of earlier versions for the same seed. {cmd:condition(census)} still works on the matrix.
+
 {title:See also}
 
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

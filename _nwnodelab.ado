@@ -19,14 +19,9 @@ program _nwnodelab
 		error 600022
 	}
 	else {
-		// r(labs) is comma-separated (see _nwname.ado's own
-		// invtokens with a comma delimiter), but "word N of ..."
-		// needs a space-separated list - without this conversion,
-		// the whole comma-joined string is one "word" and any
-		// nodeid past 1 silently returns empty.
-		local labs "`r(labs)'"
-		local labs : subinstr local labs "," " ", all
-		local onelab : word `nodeid' of `labs'
+		// read straight from Mata: r(labs) is empty for networks too big
+		// for a macro (see nw_labs_string() in unw_core.do)
+		mata: st_local("onelab", `netobj'->get_nodenames()[`nodeid'])
 	}
 	mata: st_rclear()
 	mata: st_numscalar("r(nodeid)", `nodeid')

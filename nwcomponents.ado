@@ -51,33 +51,37 @@ program nwcomponents, rclass
 		_nwsyntax `netname_temp'
 		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
 
-		qui tab `generate'`k', matrow(comp_id) matcell(comp_size)
-		
-		mata: comp_id = st_matrix("comp_id")
-		mata: comp_number = rows(comp_id)
-		mata: comp_size = st_matrix("comp_size")
+		// Stata's tabulate stops at 1,000 distinct values (r(134)) and a matrix row-name list of thousands of
+		// tokens blows the command-line limit, so a network with more components than that (any sparse network of
+		// a few thousand nodes) made this command fail after the components had been found: the sizes are now
+		// counted in Mata and the row names set through the matrix API.
+		mata: __nwcc_vals = st_data((1::`nodes'), "`generate'`k'")
+		mata: __nwcc_sorted = sort(__nwcc_vals, 1)
+		mata: __nwcc_info = panelsetup(__nwcc_sorted, 1)
+		mata: comp_number = rows(__nwcc_info)
+		mata: comp_id = __nwcc_sorted[__nwcc_info[.,1]]
+		mata: comp_size = __nwcc_info[.,2] :- __nwcc_info[.,1] :+ 1
 		mata: comp_share = comp_size :/ (sum(comp_size))
 		mata: comp_sizeid = J(comp_number, 3, 0)
 		mata: comp_sizeid[.,1] = comp_size
 		mata: comp_sizeid[.,2] = comp_id
 		mata: comp_sizeid[.,3] = comp_share
-		mata: comp_sizeid = sort(comp_sizeid, -1)
+		mata: comp_sizeid = sort(comp_sizeid, (-1, 2))
 		mata: st_numscalar("components", comp_number)
 		mata: st_matrix("comp_sizeid", comp_sizeid)
-			
+		// the (first) largest component, for the lgc option
+		mata: st_numscalar("__nwcc_lgc", comp_id[selectindex(comp_size :== max(comp_size))[1]])
+
 		matrix colnames comp_sizeid = size compid share
-	
-		local rowlabs ""
-			
+
 		return scalar components = components
 		local lcomp = components
-		
-		forvalues i = 1/`=components'{
-			local rowlabs "`rowlabs' comp`i'"
-		}
-		matrix rownames comp_sizeid = `rowlabs'
+
+		mata: __nwcc_stripe = J(comp_number, 2, "")
+		mata: __nwcc_stripe[., 2] = "comp" :+ strofreal((1::comp_number))
+		mata: st_matrixrowstripe("comp_sizeid", __nwcc_stripe)
 		return matrix comp_sizeid = comp_sizeid
-		mata: mata drop comp_number comp_share comp_id comp_size comp_sizeid
+		mata: mata drop comp_number comp_share comp_id comp_size comp_sizeid __nwcc_vals __nwcc_sorted __nwcc_info __nwcc_stripe
 
 		// Consistency (moderate-severity pass, cohesion_subgroups group):
 		// every sibling command in this group (nwclique/nwkcomponents/
@@ -91,20 +95,17 @@ program nwcomponents, rclass
 		}
 
 		qui if "`lgc'" != "" {
-			tab `generate'`k', matcell(freqs) matrow(comps)
-			local freqs_max = 1
-			local freqs_all = rowsof(freqs)
-			forvalues i = 1/`freqs_all' {
-				if freqs[`freqs_max',1] < freqs[`i',1] {
-					local freqs_max = `i'
-				}
-			}
-			local comps_lgc = comps[`freqs_max',1]
+			local comps_lgc = scalar(__nwcc_lgc)
 			replace `generate'`k' = 0 if `generate'`k' != `comps_lgc' & `generate'`k' != .
 			replace `generate'`k' = 1 if `generate'`k' == `comps_lgc' & `generate'`k' != .	
 		}
 		if "`silent'" == "" {
-			noi tab `generate'`k'
+			if `lcomp' <= 1000 {
+				noi tab `generate'`k'
+			}
+			else {
+				noi di "{txt}  (the table of the `lcomp' components is not shown; sizes are in r(comp_sizeid))"
+			}
 			noi di " "
 			noi di " "
 		}

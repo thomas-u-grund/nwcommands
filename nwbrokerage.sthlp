@@ -95,3 +95,6 @@ or a substantive attribute for the grouping.
 	{help nwconcor}, {help nwcoreperiphery}, {help nwcommunity}, {help nwmodularity}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

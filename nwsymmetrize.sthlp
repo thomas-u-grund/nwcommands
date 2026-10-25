@@ -50,3 +50,6 @@ This loads the Glasgow data and symmetrizes the network {it:glasgow1}, identical
 See {help nwsym}.
 
 last certified : 28 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

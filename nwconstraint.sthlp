@@ -100,8 +100,16 @@ Ronald S. Burt (1992). {it:Structural Holes: The Social Structure of Competition
 Press.
 
 
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE (killed at 12 GB before).
+
 {title:See also}
 
 	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

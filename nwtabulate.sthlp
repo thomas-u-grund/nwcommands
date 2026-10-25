@@ -76,6 +76,22 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 92 ties have the value 2 and so on.
 
 
+{title:Limits}
+
+{pstd}
+The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties,
+not on the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 /
+5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds (before: 4.7 seconds at 1,000 nodes, 90 seconds and 11 GB at 5,000).
+The tabulation of a network by an attribute lists the ties only (before: every dyad, refused above 7,071 nodes, 58 seconds
+and 4.2 GB at 5,000 nodes); the permutation test ({opt permutations()}, default 100) permutes the attribute on the dense
+matrix and takes most of the time: 10,000 nodes with 100 permutations 47 seconds and 4.8 GB. The tabulation of two
+networks still uses the dyad list and the full matrix.
+
+{pstd}
+With {opt attribute()} the permutation test acts on the stored ties of a network that is held that way (20,000 nodes with the default 100
+permutations: 1.6 seconds; killed at 12 GB before). The permutation p-value of earlier versions counted the missing diagonal as ties
+(a Mata comparison without a colon) and was biased; it is not reproduced. The test of two networks still works on the matrices.
+
 {title:See also}
 
     {help nwtab2:two-way nwtabulate}, {help tabulate}
@@ -179,6 +195,12 @@ where families have both a marriage and a business relationship. In contrast, th
 relationship.
 
 
+{title:Remarks on plot}
+
+{pstd}
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+
+
 {title:See also}
 
 	{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}
@@ -275,8 +297,17 @@ has a seat in the civic council and the other one does not.
 
 	
 
+{title:Remarks on plot}
+
+{pstd}
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+
+
 {title:See also}
 {pstd}
 	{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

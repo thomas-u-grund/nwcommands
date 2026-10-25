@@ -132,7 +132,16 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 	makes on your behalf - see {help nwname}'s own {bf:Stored results} section for the authoritative,
 	complete list (this command does not add or remove any of it).
 
+{title:Limits}
+
+{pstd}
+Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes 0.02 seconds and 0.2 GB
+in Stata/BE (4.9 seconds and 9.4 GB before).
+
 {title:See also}
 
 	{help nwname}, {help nwdyads}, {help nwtriads}
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

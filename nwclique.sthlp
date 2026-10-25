@@ -94,8 +94,19 @@ maximal cliques a graph can have (a mathematical property of the problem itself,
 algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large
 network could take a long time; not specially guarded against here beyond this note.
 
+{title:Limits}
+
+{pstd}
+Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
+are as many as its ties and were the bulk of the work). Measured in Stata/BE on a random undirected network with 10 ties drawn per
+node and {opt minsize(3)}: 10,000 nodes 0.9 seconds (77 seconds before), 20,000 nodes 3.0 seconds and 0.9 GB. The clique matrix
+({cmd:r(clique_matrix)}) has one row per clique and one column per node, so a network with many cliques needs a lot of memory.
+
 {title:See also}
 
 	{help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

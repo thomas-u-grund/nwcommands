@@ -24,7 +24,7 @@ program nwtoedge
 	local __iso_srclabels ""
 	if `__iso_nwcount' == 1 {
 		_nwsyntax `netname'
-		mata: st_local("__iso_srclabels", `netobj'->get_nodenames_string())
+		mata: st_local("__iso_srclabels", `netobj'->get_isolate_source_string())
 	}
 
 	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
@@ -186,19 +186,39 @@ program nwtoedge
 		if "`upper'" != "" & "`directed'" == "true" {
 			noi di "{txt}Warning! Network {res}`net'{txt} is directed. Option {res}upper{txt} surpressed." 
 		}
-		mata: __nwedgelist`i' = (`netobj'->get_edgelist((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
-		preserve
-		drop _all
-		tempvar include
-		tempvar transp
-		getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
-		destring `include', replace force
-		capture drop if `include' != 1
-		capture drop `include'
-		destring `net', replace force
-		mata: mata drop __nwedgelist`i'
-		save `__nwedgelist`i''
-		restore
+		// compress with ONE network: list only the stored ties (O(ties));
+		// everything else lists all N x N cells, zeros included, which is
+		// what the uncompressed list means (and what several networks
+		// merged on one ego/alter pair need).
+		local __sparseok 0
+		if "`compress'" != "" & `: word count `nets'' == 1 {
+			mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
+		}
+		if `__sparseok' {
+			mata: __nwedgelist`i' = (`netobj'->get_edgelist_sparse((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+			preserve
+			drop _all
+			tempvar include
+			tempvar transp
+			getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
+			destring `include', replace force
+			capture drop if `include' != 1
+			capture drop `include'
+			destring `net', replace force
+			mata: mata drop __nwedgelist`i'
+			save `__nwedgelist`i''
+			restore
+		}
+		else {
+			// every dyad: the ego, alter and value columns go straight into
+			// variables (no string matrix and no destring)
+			preserve
+			drop _all
+			mata: `netobj'->edgelist_full_to_vars((("`upper'" != "" | "`directed'" == "false") & "`full'" == ""), "`ego'", "`alter'", "`net'")
+			compress `net'
+			save `__nwedgelist`i''
+			restore
+		}
 		local i = `i' + 1
 	}
 	
