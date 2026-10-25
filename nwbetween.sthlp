@@ -84,6 +84,9 @@ Directed network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))}
 Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
 
 {pstd}
+The stored result {bf:r(bw_central)} is Freeman's betweenness centralization, computed from the raw scores whether or not {opt standardize} is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). Without {opt nosym} the network is symmetrized first, so the undirected formula applies. Before the correction of this formula the value stored for an undirected network was half of Freeman's.
+
+{pstd}
 {opt generate()} is required and names the Stata variable to hold the result (pass {opt replace}
 to allow overwriting an existing variable of that name). When betweenness centrality is calculated
 for more than one network at the same time (e.g. {bf:nwbetween glasgow1 glasgow2, generate(bw)}), the command

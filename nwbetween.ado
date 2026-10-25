@@ -153,7 +153,21 @@ program nwbetween
 		if "`silent'" == "" {
 			noi sum `netgenerate'
 		}
-		mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(st_data((1::`nodes'), "`netgenerate'"))) :- st_data((1::`nodes'), "`netgenerate'")) / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1)))
+		// Freeman's betweenness centralisation: sum(max - b_i) divided by
+		// its maximum, (n-1)^2 (n-2) for raw directed scores (ordered
+		// pairs) and (n-1)^2 (n-2) / 2 for raw undirected scores
+		// (unordered pairs). `directed' describes the network that was
+		// actually analysed (the symmetrised copy unless nosym).
+		// The centralisation is taken from the raw scores, so undo
+		// standardize if it was requested.
+		local bwdiv = 1
+		if "`directed'" != "true" local bwdiv = 2
+		local bwscale = 1
+		if "`standardize'" != "" {
+			if "`directed'" == "true" local bwscale = (`nodes' - 1) * (`nodes' - 2)
+			else local bwscale = (`nodes' - 1) * (`nodes' - 2) / 2
+		}
+		mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(st_data((1::`nodes'), "`netgenerate'"))) :- st_data((1::`nodes'), "`netgenerate'")) * `bwscale' / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1) / `bwdiv'))
 	}
 end
 

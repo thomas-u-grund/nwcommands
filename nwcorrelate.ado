@@ -169,7 +169,7 @@ unw_defs
 		preserve
 		drop _all
 		
-		getmata correlation = corr_reps
+		getmata correlation = corr_reps, double
 		capture mata: mata drop corr_reps
 		
 		qui gen observed = `corr'

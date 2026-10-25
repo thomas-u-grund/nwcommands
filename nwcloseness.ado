@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode legacy *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -89,7 +89,9 @@ program nwcloseness
 				local __src `__symnet'
 			}
 			_nwsyntax `__src'
-			mata: far = nw_distance_sums(`netobj', 0, 0)[., 1]
+			mata: reach = nw_distance_sums(`netobj', 0, 0)
+			mata: far = reach[., 1]
+			mata: reach = reach[., 2]
 			if "`symopt'" != "" {
 				nwdrop `__symnet'
 			}
@@ -113,18 +115,33 @@ program nwcloseness
 			mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
 			mata: far = rowsum(*`netobj'->get_matrix())
 
-			if `r(mindistance)' < 0 {
-				mata: far = J(`nodes', 1, .)
-				noi di "{txt}Warning: network {bf:`netname_temp'} not connected; specify {bf:unconnected()} to obtain results.
-				nwdrop _tempgeodesic
-				exit
-			}
-		
+			// number of other nodes each node can reach (the diagonal of the
+			// distance matrix is 0 or missing and is not counted)
+			mata: reach = rowsum((*`netobj'->get_matrix()) :< .) :- (diagonal(*`netobj'->get_matrix()) :< .)
 		}
 		_nwsyntax `netname_temp'
 
 		mata: nearness = J(`nodes', 1,1) :/ far
-		mata: closeness = nearness :* (`nodes' - 1)
+		// Closeness is the number of nodes a node can reach divided by
+		// the sum of its distances to them (igraph's definition). On a
+		// connected network that is (nodes - 1) * nearness; legacy keeps
+		// (nodes - 1) * nearness whatever the connectedness.
+		mata: st_local("__disc", strofreal(max(reach :< (`nodes' - 1))))
+		if `__disc' & "`legacy'" == "" {
+			mata: closeness = reach :/ far
+		}
+		else {
+			mata: closeness = nearness :* (`nodes' - 1)
+		}
+		if `__disc' {
+			if "`legacy'" == "" {
+				local __how "uses only the nodes each node can reach (as igraph)"
+			}
+			else {
+				local __how "is (nodes - 1) / farness and can exceed 1 (legacy)"
+			}
+			noi di "{txt}Warning: network {bf:`netname_temp'} is not connected; closeness `__how'. Specify {bf:unconnected()} to give missing paths a length."
+		}
 		if "`twomode'" != "" {
 			// Borgatti and Everett (1997): the smallest possible farness of a node is reached when it is tied to every
 			// node of the other mode (distance 1) and every other node of its own mode is at distance 2
@@ -183,7 +200,7 @@ program nwcloseness
 	
 		local generate_all "`generate_all' `_closeness'`k' `_farness'`k' `_nearness'`k'"
 		capture drop `included'
-		mata: mata drop closeness far nearness
+		mata: mata drop closeness far nearness reach
 		
 		local k = `k' + 1	
 	}

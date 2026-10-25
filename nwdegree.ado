@@ -350,9 +350,17 @@ program nwdegree
 		}
 
 		if "`standardize'" != "" {
-			capture replace `_degree' = `_degree' / (`nodes_temp' - 1)
-			capture replace `_outdegree' = `_outdegree' / (`nodes_temp' - 1)
-			capture replace `_indegree' = `_indegree' / (`nodes_temp' - 1)
+			// Divide each stored variable once: for an undirected network
+			// `_degree' and `_outdegree' are the same variable (word 1 of
+			// generate()), and for a directed network `_degree' is the
+			// outdegree variable, so dividing all three divided it twice.
+			if "`directed'" == "true" {
+				replace `_outdegree' = `_outdegree' / (`nodes_temp' - 1)
+				replace `_indegree' = `_indegree' / (`nodes_temp' - 1)
+			}
+			else {
+				replace `_degree' = `_degree' / (`nodes_temp' - 1)
+			}
 		}
 
 		if "`isolates'" != "" {

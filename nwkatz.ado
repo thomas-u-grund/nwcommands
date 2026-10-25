@@ -253,16 +253,20 @@ program nwkatz
 	// ordering - some LATER ordinary command (e.g. `capture nwdrop') can
 	// coincidentally reset `_rc' back to 0 before the program returns,
 	// but nothing should depend on that coincidence holding.
+	// `force': rows beyond the node rows (a data set with more
+	// observations than the network has nodes) are left missing, as in
+	// nwdegree and nwcloseness, instead of failing with r(459).
+	_nwsetobs `original'
 	if "`origdirected'" == "true" {
 		capture drop `generate'_out
 		capture drop `generate'_in
-		getmata `generate'_out = `__nw_out', double
-		getmata `generate'_in = `__nw_in', double
+		getmata `generate'_out = `__nw_out', double force
+		getmata `generate'_in = `__nw_in', double force
 		mata: mata drop `__nw_out' `__nw_in'
 	}
 	else {
 		capture drop `generate'
-		getmata `generate' = `__nw_all', double
+		getmata `generate' = `__nw_all', double force
 		mata: mata drop `__nw_all'
 	}
 

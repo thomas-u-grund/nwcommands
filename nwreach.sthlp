@@ -52,7 +52,8 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as {help nwgeodesic}), {opt sym} available. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - reachability follows the direction of the ties and the network is not symmetrized unless {opt sym} is given (same convention as {help nwgeodesic}). Weighted: not applicable. Signed: not applicable. same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+
 
 {title:Examples}
 	

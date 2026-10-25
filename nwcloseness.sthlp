@@ -22,13 +22,15 @@
 {opt replace}
 {opt silent}
 {opt force}
-{opt binary}]
+{opt binary}
+{opt legacy}]
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth unconnected(int)}}defines the length of the (non-existent) path between two unconnected nodes{p_end}
+{synopt:{opt legacy}}on an unconnected network, use (nodes - 1) / farness as in earlier releases instead of the number of reachable nodes / farness{p_end}
 {synopt:{opt generate}({it:{help varname:var1 var2 var3}})}{bf:Required.} Exactly 3 variable names to save closeness, farness and nearness scores, in that order{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
@@ -57,7 +59,7 @@ The closeness centrality for node {it:i} is defined in the following way:
 with: {it:dist_ik} being the length of the shortest path from node {it:i} to node {it:k} (see {help nwgeodesic})
 
 {pstd}
-Closeness centrality is not defined when the network is unconnected. However, scores can still be obtained when
+Closeness as defined above ((nodes - 1) / farness) is only defined for a connected network. When the network is unconnected (or, for a directed network, not strongly connected) the command prints a warning and, as in R's igraph, takes the sum of the distances over the nodes that {it:i} can reach and divides the {it:number of those nodes} by it: {it:closeness_i = reach_i / farness_i}. This equals the formula above for a connected network and never exceeds 1. Farness and nearness are the plain sum of finite distances and its inverse. A node that reaches no other node gets a missing closeness. Option {bf:legacy} returns the (nodes - 1) / farness of releases before this correction, which can exceed 1 on an unconnected network. Scores based on all (nodes - 1) other nodes can also be obtained when
 option {bf:unconnected()} is specified. Any integer value can be choosen; {bf:unconnected(max)} assigns non-existent
 paths a length based on the longest shortest path length observed in the network (plus one) (see {help nwgeodesic}).	
 

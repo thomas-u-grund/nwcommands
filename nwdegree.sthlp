@@ -72,7 +72,10 @@ indicating whether a node is an isolate (not connected to any other node) - e.g.
 {cmd:generate(myout myin myisolate) isolates} on a directed one.
 
 {pstd}
-Option {bf:standardize} divides the centrality scores by N - 1, where N = number of nodes in a network.
+Option {bf:standardize} divides the degree (undirected network) or the outdegree and the indegree (directed network) by N - 1, where N = number of nodes in a network. Each variable is divided once.
+
+{pstd}
+The stored results {bf:r(dg_central)} (undirected), {bf:r(indg_central)} and {bf:r(outdg_central)} (directed) are Freeman's degree centralization, computed from the raw scores whether or not {bf:standardize} is given: sum(max - c_i) / ((N-1)*(N-2)) for an undirected network and sum(max - c_i) / ((N-1)*(N-1)) for the in- and outdegree of a directed network.
 
 {pstd}
 {cmd:nwdegree} accepts a {help netlist} (e.g. {bf:nwdegree glasgow1 glasgow2, generate(deg)}), calculating degree
