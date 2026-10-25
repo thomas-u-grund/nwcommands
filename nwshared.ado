@@ -70,7 +70,7 @@ program nwshared
 	nwduplicate `netname', name(`name')
 	_nwsyntax
 
-	mata: `netobj'->set_edge((`netobj'->get_matrix_unvalued_copy()):* ((`netobj'->get_matrix_unvalued_copy()) * (`netobj'->get_matrix_unvalued_copy())))
+	mata: nw_shared_net(`netobj')
 	// BUGFIX: was an unconditional `capture nwdrop `symmetrized'' - the
 	// tempname `symmetrized' is only ever actually created as a real
 	// network when `undirected' was given (see above); otherwise this

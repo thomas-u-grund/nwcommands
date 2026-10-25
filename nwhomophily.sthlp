@@ -146,8 +146,8 @@ The program needs no additional packages: the weighted sampling of ties is built
 {pstd}
 The tie probabilities are an {it:n}-by-{it:n} matrix and the ties are drawn with these weights from the list of all dyads
 ({help nwdyadprob}), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, density
-0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops with an error
-(more than 50,000,000 dyads) before the dense work starts.
+0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more
+than 50,000,000 dyads), before any matrix is built (it used to be killed at 12 GB after 2 seconds at 20,000 nodes).
 
 {title:See also}
 

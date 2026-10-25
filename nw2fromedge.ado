@@ -104,6 +104,22 @@ program nw2fromedge
 	local mode1 = r(N)
 	restore
 
+	// A two-mode network is stored as ONE matrix over the nodes of both modes (dense, with the cells inside a mode
+	// missing), so the number of nodes is bounded by the dense limit. Say so now: finding out after building the
+	// network took 22 s at 30,000 nodes.
+	preserve
+	keep `group2'
+	gen byte `temp' = 1
+	collapse (mean) `temp', by(`group2')
+	qui count
+	local mode2 = r(N)
+	restore
+	if `mode1' + `mode2' > `nw_max_dense_nodes' {
+		di "{err}nw2fromedge: the two modes have `mode1' + `mode2' = `=`mode1'+`mode2'' nodes. A two-mode network is stored as one matrix over the nodes of both modes (`=round((`mode1'+`mode2')^2*8/1e9, .1)' GB here) and is refused above `nw_max_dense_nodes' nodes."
+		di "{err}Keep the affiliation as an edge list and work on it directly, or take a sample of the larger mode first."
+		exit 484
+	}
+
 	qui nwfromedge `group1' `group2' `value' `if', `options' `xvars' undirected
 	_nwsyntax
 

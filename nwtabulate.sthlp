@@ -87,6 +87,11 @@ and 4.2 GB at 5,000 nodes); the permutation test ({opt permutations()}, default 
 matrix and takes most of the time: 10,000 nodes with 100 permutations 47 seconds and 4.8 GB. The tabulation of two
 networks still uses the dyad list and the full matrix.
 
+{pstd}
+With {opt attribute()} the permutation test acts on the stored ties of a network that is held that way (20,000 nodes with the default 100
+permutations: 1.6 seconds; killed at 12 GB before). The permutation p-value of earlier versions counted the missing diagonal as ties
+(a Mata comparison without a colon) and was biased; it is not reproduced. The test of two networks still works on the matrices.
+
 {title:See also}
 
     {help nwtab2:two-way nwtabulate}, {help tabulate}

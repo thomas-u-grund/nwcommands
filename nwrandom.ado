@@ -57,80 +57,117 @@ program nwrandom
 		exit
 	}
 	
-	tempname __nwnew
-	
-	if ("`prob'" != "") {
-		mata: `__nwnew' = get_random_prob(`nodes', `prob', ("`undirected'" != ""), "`selfloop'" != "")
-	}
-	if ("`density'" != "") {
-		mata: `__nwnew' = get_random_density(`nodes', `density', ("`undirected'" != ""), "`selfloop'" != "")
-	}
-	if "`census'" != "" {
-		local mutual : word 1 of `census'
-		local asym : word 2 of `census'
-		if "`asym'" == "" {
-			local asym = 0	
+	// large networks without weights or a dyad census: the ties are drawn as a list (prob(): the same draws as the
+	// matrix version, so the same seed gives the same network; density(): the positions of the ties are drawn
+	// directly, which is a different stream than the shuffle of all n^2 cells)
+	local __sparsegen 0
+	if "`weights'" == "" & "`census'" == "" & `nodes' > 2000 {
+		if "`prob'" != "" & "`density'" == "" {
+			mata: st_local("__pv", strofreal(`prob', "%21.12g"))
+			if `__pv' <= .2 {
+				local __sparsegen 1
+			}
 		}
-		local total = `mutual' + `asym'	
-		if `total' > `=((`nodes' * (`nodes'-1)) / 2)' {
+		else if "`density'" != "" & "`prob'" == "" & `nodes' > 5000 {
+			mata: st_local("__dv", strofreal(`density', "%21.12g"))
+			if `__dv' <= .2 {
+				local __sparsegen 2
+			}
+		}
+	}
+	if `__sparsegen' > 0 {
+		tempname __nwtrip
+		if `__sparsegen' == 1 {
+			mata: `__nwtrip' = nw_random_prob_triplets(`nodes', `prob', ("`undirected'" != ""), "`selfloop'" != "")
+		}
+		else {
+			mata: `__nwtrip' = nw_random_density_triplets(`nodes', `density', ("`undirected'" != ""), "`selfloop'" != "")
+		}
+		mata: st_rclear()
+		if "`nodenamesmata'" != "" {
+			_nwsetsparse, triplets(`__nwtrip') nodes(`nodes') name(`name') nodenames(`nodenamesmata') `undirected' `selfloop'
+		}
+		else {
+			_nwsetsparse, triplets(`__nwtrip') nodes(`nodes') name(`name') labs(`labs') `undirected' `selfloop'
+		}
+		capture mata: mata drop `__nwtrip'
+	}
+	else {
+		tempname __nwnew
+	
+		if ("`prob'" != "") {
+			mata: `__nwnew' = get_random_prob(`nodes', `prob', ("`undirected'" != ""), "`selfloop'" != "")
+		}
+		if ("`density'" != "") {
+			mata: `__nwnew' = get_random_density(`nodes', `density', ("`undirected'" != ""), "`selfloop'" != "")
+		}
+		if "`census'" != "" {
+			local mutual : word 1 of `census'
+			local asym : word 2 of `census'
+			if "`asym'" == "" {
+				local asym = 0	
+			}
+			local total = `mutual' + `asym'	
+			if `total' > `=((`nodes' * (`nodes'-1)) / 2)' {
+				// BUGFIX: was a bare `exit' (no return code) - the message
+				// printed but the command returned rc==0 as if nothing were
+				// wrong (same disguised-silent-failure class already fixed
+				// elsewhere in this package, see nwevcent.ado's own header
+				// comment). Also fixed a typo ("manny" -> "many") while
+				// touching this line.
+				di "{err}Too many dyads requested,"
+				error 198
+			}
+			mata: `__nwnew' = dyadcensusGenerator(`nodes', `mutual', `asym')
+		}
+	
+		if "`weights'" != "" {
+			tempname w
+			capture mata: `w' = (`weights') :/ sum((`weights')) 
+			capture mata: `w' = rdiscrete(`nodes', `nodes',(`w')) 
+			if _rc != 0 {
+				// BUGFIX: this used to print the message and fall straight
+				// through - the two `capture mata:' lines just below then
+				// ALSO silently failed (operating on `w', left undefined by
+				// this same failure), so `__nwnew' never actually got
+				// multiplied by any weight at all and the command returned
+				// rc==0 with a plain unweighted 0/1 network, silently
+				// ignoring weights() entirely instead of erroring. Confirmed
+				// directly (nwrandom 5, prob(1) weights(abc,def) printed the
+				// message and still returned a "Valued: false" network).
+				// Same fix applied identically to nwring.ado/nwsmall.ado/
+				// nwpref.ado/nwdyadprob.ado, which all share this exact code.
+				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+				error 198
+			}
+
+			if "`undirected'" != "" {
+				mata: `w' = lowertriangle(`w',0)
+				mata: `w' = `w' + `w''
+			}
+			capture mata: `__nwnew' = `__nwnew' :* `w'
+		}
+	
+		if ("`prob'"=="" & "`density'"=="" & "`census'" == ""){
 			// BUGFIX: was a bare `exit' (no return code) - the message
 			// printed but the command returned rc==0 as if nothing were
 			// wrong (same disguised-silent-failure class already fixed
 			// elsewhere in this package, see nwevcent.ado's own header
-			// comment). Also fixed a typo ("manny" -> "many") while
-			// touching this line.
-			di "{err}Too many dyads requested,"
-			error 198
-		}
-		mata: `__nwnew' = dyadcensusGenerator(`nodes', `mutual', `asym')
-	}
-	
-	if "`weights'" != "" {
-		tempname w
-		capture mata: `w' = (`weights') :/ sum((`weights')) 
-		capture mata: `w' = rdiscrete(`nodes', `nodes',(`w')) 
-		if _rc != 0 {
-			// BUGFIX: this used to print the message and fall straight
-			// through - the two `capture mata:' lines just below then
-			// ALSO silently failed (operating on `w', left undefined by
-			// this same failure), so `__nwnew' never actually got
-			// multiplied by any weight at all and the command returned
-			// rc==0 with a plain unweighted 0/1 network, silently
-			// ignoring weights() entirely instead of erroring. Confirmed
-			// directly (nwrandom 5, prob(1) weights(abc,def) printed the
-			// message and still returned a "Valued: false" network).
-			// Same fix applied identically to nwring.ado/nwsmall.ado/
-			// nwpref.ado/nwdyadprob.ado, which all share this exact code.
-			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+			// comment, and nwsmall.ado's own identical "neither prob() nor
+			// shortcuts() given" case).
+			di "{err}either {it:prob}(), {it:density}() or {it:census()} missing"
 			error 198
 		}
 
-		if "`undirected'" != "" {
-			mata: `w' = lowertriangle(`w',0)
-			mata: `w' = `w' + `w''
+		mata: st_rclear()
+		// nodenamesmata(): name of a Mata string vector with the node names. Long node name lists must not travel
+		// in a Stata option string (labs()): Stata inserts a blank every 5,292 characters of an option value.
+		if "`nodenamesmata'" != "" {
+			nwset, mat(`__nwnew') name(`name') nodenames(`nodenamesmata') `undirected' `selfloop'
 		}
-		capture mata: `__nwnew' = `__nwnew' :* `w'
-	}
-	
-	if ("`prob'"=="" & "`density'"=="" & "`census'" == ""){
-		// BUGFIX: was a bare `exit' (no return code) - the message
-		// printed but the command returned rc==0 as if nothing were
-		// wrong (same disguised-silent-failure class already fixed
-		// elsewhere in this package, see nwevcent.ado's own header
-		// comment, and nwsmall.ado's own identical "neither prob() nor
-		// shortcuts() given" case).
-		di "{err}either {it:prob}(), {it:density}() or {it:census()} missing"
-		error 198
-	}
-
-	mata: st_rclear()
-	// nodenamesmata(): name of a Mata string vector with the node names. Long node name lists must not travel
-	// in a Stata option string (labs()): Stata inserts a blank every 5,292 characters of an option value.
-	if "`nodenamesmata'" != "" {
-		nwset, mat(`__nwnew') name(`name') nodenames(`nodenamesmata') `undirected' `selfloop'
-	}
-	else {
-		nwset, mat(`__nwnew') name(`name') labs(`labs') `undirected' `selfloop'
+		else {
+			nwset, mat(`__nwnew') name(`name') labs(`labs') `undirected' `selfloop'
+		}
 	}
 	if "`xvars'" == "" {
 		nwload, xvars

@@ -800,3 +800,80 @@ done:
 	if (rc == 0) pub_result(0, n, 1);
 	return rc;
 }
+
+/* ------------------------------------------------------------------ */
+/* ALG_DISTSUM (25): distance sums of every node (nwcloseness, nwkatz) */
+/* ------------------------------------------------------------------ */
+/*
+	One breadth-first search per node over the arcs (i -> j) as given (the caller passes both directions
+	of an undirected tie; p[3] = 1 reverses every arc, i.e. searches along the in-ties).  For every
+	source s the distances d(s,j) to the nodes j != s that can be reached are summed:
+	  column 1  far    = sum of d(s,j)
+	  column 2  reach  = number of nodes j != s reached
+	  column 3  katz   = sum of alpha^d(s,j)  (alpha = p[4]; the levels are added as count * alpha^d)
+	exactly the row sums of the matrices that nwgeodesic builds (unvalued, diagonal and unreachable
+	cells missing, i.e. counted as 0), without ever holding an n x n matrix.  Memory is O(n + ties).
+*/
+static int comb_distsum(long n, long nties, const long *ei, const long *ej, int reverse, double alpha) {
+	long *ptr = NULL, *idx = NULL, *cur = NULL, *queue = NULL, *dist = NULL;
+	long k, s, h, t, v, w, a, b, cnt;
+	double far, kz;
+	int rc = 0;
+
+	ptr = (long *)calloc((size_t)(n + 3), sizeof(long));
+	idx = (long *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(long));
+	cur = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	queue = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	dist = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	if (!ptr || !idx || !cur || !queue || !dist) { free(ptr); free(idx); free(cur); free(queue); free(dist); return 2; }
+	for (k = 0; k < nties; k++) {
+		a = reverse ? ej[k] : ei[k];
+		b = reverse ? ei[k] : ej[k];
+		if (a < 1 || b < 1 || a > n || b > n) continue;
+		ptr[a + 1]++;
+	}
+	ptr[1] = 0;
+	for (v = 1; v <= n; v++) ptr[v + 1] += ptr[v];
+	for (v = 1; v <= n; v++) cur[v] = ptr[v];
+	for (k = 0; k < nties; k++) {
+		a = reverse ? ej[k] : ei[k];
+		b = reverse ? ei[k] : ej[k];
+		if (a < 1 || b < 1 || a > n || b > n) continue;
+		idx[cur[a]++] = b;
+	}
+	if (res_alloc(n, 3)) { free(ptr); free(idx); free(cur); free(queue); free(dist); return 2; }
+	for (v = 0; v <= n; v++) dist[v] = -1;
+	for (s = 1; s <= n; s++) {
+		long lv = 1, pos = 1;
+		h = 0; t = 0;
+		queue[t++] = s;
+		dist[s] = 0;
+		far = 0; kz = 0; cnt = 0;
+		while (h < t) {
+			v = queue[h++];
+			for (k = ptr[v]; k < ptr[v + 1]; k++) {
+				w = idx[k];
+				if (dist[w] < 0) {
+					dist[w] = dist[v] + 1;
+					queue[t++] = w;
+				}
+			}
+		}
+		/* the queue lists the nodes in order of distance: add the levels one by one */
+		while (pos < t) {
+			long c0 = 0;
+			while (pos < t && dist[queue[pos]] == lv) { c0++; pos++; }
+			far += (double)c0 * (double)lv;
+			kz += (double)c0 * pow(alpha, (double)lv);
+			cnt += c0;
+			lv++;
+		}
+		g_res[(s - 1) * 3 + 0] = far;
+		g_res[(s - 1) * 3 + 1] = (double)cnt;
+		g_res[(s - 1) * 3 + 2] = kz;
+		for (h = 0; h < t; h++) dist[queue[h]] = -1;
+	}
+	free(ptr); free(idx); free(cur); free(queue); free(dist);
+	pub_result(0, n, 3);
+	return rc;
+}

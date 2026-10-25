@@ -114,8 +114,12 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 {title:Limits}
 
 {pstd}
-{opt density()} and {opt census()} shuffle all {it:n}^2 cells, so the time and the memory grow with the square of the number
-of nodes. Measured in Stata/BE, density 0.0001: 5,000 nodes 11 seconds and 0.9 GB.
+{opt prob()} above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives
+the same network). {opt density()} above 5,000 nodes draws the positions of the ties directly instead of shuffling all {it:n}^2
+cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used, so earlier seeds
+give the same networks. {opt weights()} and {opt census()} still work on the matrix. Measured in Stata/BE, density 0.0001: 5,000
+nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds ({opt density(.0002)}; 56 seconds at 10,000 and a
+timeout at 20,000 before); {opt prob(.0002)} at 20,000 nodes 2.8 seconds (killed at 12 GB before).
 
 {title:See also}
 

@@ -51,6 +51,7 @@
 {marker node_options}{...}
 {p2line}
 {synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}size of the nodes{p_end}
+{synopt:{opt force}}Draw although the matrices would not fit in memory (the command stops with r(484) above about 12,200 nodes otherwise){p_end}
 {p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}color of the nodes{p_end}
 {p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}symbol of the nodes{p_end}
 {p2col:{opth nodefactor(float)}}multiply all node sizes by a factor{p_end}
@@ -447,6 +448,11 @@ square of the number of nodes (about 8 bytes per pair for the matrix of the netw
 in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes
 4 seconds in total (before: 16 seconds), 5,000 nodes 21 seconds and 2.2 GB (before: 127 seconds). Above a few thousand nodes
 use {opt layout(circle)}, {opt layout(grid)} or {opt layout(frucht)}.
+
+{pstd}
+Drawing needs the network as an {it:n}-by-{it:n} matrix and about 10 copies of it: above about 12,200 nodes the command stops at once
+with r(484) (32 GB at 20,000 nodes); option {opt force} runs it anyway. A picture of that many nodes is not readable: plot a part of
+the network ({help nwsubset}, {help nwego}, {help nwkcore}).
 
 {title:See also}
 		{help nwplotmatrix}

@@ -75,6 +75,15 @@ Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {
 	{cmd:. sum _closeness _farness _nearness}
 
 
+{title:Limits}
+
+{pstd}
+Without {it:geodesic_options} the sums of the distances come from one breadth-first search per node over the stored ties in
+the plugin (no matrix of distances); a platform whose plugin has not been rebuilt, or any {it:geodesic_options}
+({opt alpha()}, {opt unconnected()}, ...), takes the route over the matrix of {help nwgeodesic}. Measured in Stata/BE on a
+random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 nodes 9.9 seconds and 0.35 GB (98 seconds and
+6.4 GB through the matrix); the time grows with the number of nodes times the number of ties.
+
 {title:See also}
 
 	{help nwgeodesic}, {help nwpath}, {help nwgeodesic}, {help nwbetween}, {help nwdegree}, {help nwevcent}, {help nwkatz}

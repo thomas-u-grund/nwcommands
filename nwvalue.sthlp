@@ -41,6 +41,11 @@ Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is retu
 	{cmd:. return list}
 
 
+{title:Limits}
+
+{pstd}
+The value of one cell of a network held as stored ties is read from the sparse index (no matrix).
+
 {title:See also}
    
    {help nwreplace}

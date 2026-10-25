@@ -28,9 +28,8 @@ program nwreach
 		nwdrop `name'
 	}
 	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') nwreplace
-	qui nwreplace `name' = 1 if `name' != (`missing2')
-	qui nwreplace `name' = 0 if `name' == (`missing2')
 	_nwsyntax `name'
+	mata: nw_reach_inplace(`netobj', `missing2')
 	mata: `netobj'->set_valued(0)
 	
 	if "`xvars'" != "" {

@@ -135,7 +135,7 @@ program nwpath
 			capture nwdrop `generate'_`i'
 			nwduplicate `netname', name(`generate'_`i')
 			_nwsyntax 
-			mata: `netobj'-> set_edge(makenet(`_path', `i', `nodes'))
+			mata: nw_path_net(`netobj', `_path', `i')
 		}
 	}
 	

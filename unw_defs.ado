@@ -37,6 +37,9 @@ program unw_defs
 	// NWdef::ensure_dense_built() in unw_core.do
 	c_local nw_max_dense_nodes 20000	
 
+	// largest memory (GB) a command may need for its dense n x n matrices before _nwdenseguard refuses it
+	c_local nw_max_dense_gb 12
+
 	//static objects
 	
 	c_local nw_static = "nw"

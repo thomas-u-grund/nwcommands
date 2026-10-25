@@ -20,12 +20,14 @@ f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
 f _nwdatasync.ado
+f _nwdenseguard.ado
 f _nwedgelabs.ado
 f _nwexpnetexp.ado
 f _nwgsample.ado
 f _nwname.ado
 f _nwtabplot.ado
 f _nwopenviewer.ado
+f _nwsetsparse.ado
 f _nwsyntax.ado
 f _nwtomata.ado
 f nwaddnodes.ado

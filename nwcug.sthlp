@@ -119,9 +119,11 @@ indices. {it:Social Networks} 21(3), 239-267.
 {title:Limits}
 
 {pstd}
-Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it, so a
-network with 5,000 nodes costs about 11 seconds per draw for the generation alone (5 draws, with {cmd:nwcomponents} as
-the statistic: 57 seconds in Stata/BE).
+Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it. With
+{cmd:condition(density)} above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn
+directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents} as the statistic take 2 seconds at 20,000 nodes
+(more than 5 minutes at 10,000 nodes before, each draw shuffling the 100 million cells). The draws of networks of more than
+5,000 nodes are not those of earlier versions for the same seed. {cmd:condition(census)} still works on the matrix.
 
 {title:See also}
 

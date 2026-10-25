@@ -44,17 +44,23 @@ program nwkeepnodes
 	}
 	local nodelist "`newnodelist'"
 		
-	local dropnodes ""
-	forvalues i = 1/`nodes' {
-		local dropnodes "`dropnodes' `i'"
+	// The nodes to keep go to nwdropnodes as a 0/1 vector in Mata (keepmat()). The list of all the OTHER nodes used to
+	// be built as a macro (nodes(1 2 3 ...)): 110,000 characters at 20,000 nodes, over Stata/BE's 264,408 characters
+	// from about 48,000 nodes, and a subinstr per kept node on it.
+	if strpos(`"`options'"', "keepmat(") > 0 {
+		nwdropnodes `netname', `generate' `attributes' `options'
 	}
-	foreach j in `nodelist' {
-		local dropnodes: subinstr local dropnodes "`j'" "", all word
-		local dropnodes: subinstr local dropnodes "  " " ", all
-		local dropnodes: subinstr local dropnodes `"""' "", all
-	}	
-	
-	nwdropnodes `netname', nodes(`dropnodes') `generate' `attributes' `options'
+	else {
+		tempname __kn_keep
+		mata: `__kn_keep' = J(`nodes', 1, 0)
+		foreach j in `nodelist' {
+			if `j' >= 1 & `j' <= `nodes' {
+				mata: `__kn_keep'[`j'] = 1
+			}
+		}
+		nwdropnodes `netname', keepmat(`__kn_keep') `generate' `attributes' `options'
+		capture mata: mata drop `__kn_keep'
+	}
 end
 
 

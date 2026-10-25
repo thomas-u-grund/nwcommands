@@ -163,6 +163,12 @@ of a friendship tie did sport at wave1.
 {pstd}
 Binary: source attribute values can be binary or continuous - {opt mode()} selects the transform. Directed: not applicable - produces a new derived network from a node attribute, not from an existing network's own directed status. Weighted: yes, natively - every {opt mode()} choice (same/dist/absdist/distinv/absdistinv/sender/receiver) produces continuous-valued ties by construction. Signed: yes, {opt mode(dist)} in particular can produce negative values. Two-mode: not applicable - produces a one-mode network from node-level attribute comparisons.
 
+{title:Limits}
+
+{pstd}
+The expanded network is built row by row (one {it:n}-by-{it:n} matrix; the earlier code multiplied two such matrices, which is
+cubic): 10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix; killed at 12 GB before).
+
 {title:See also}
 
 	{help nwcorrelate}

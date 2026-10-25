@@ -136,6 +136,12 @@ second level were too many and too small; on 40 random networks of 30 to 430 nod
 0.12 (mean 0.064), and above about 1,500 nodes it had collapsed (3,000 nodes: 1,311 communities, modularity 0.07).
 Partitions found with earlier versions are not reproduced.
 
+{pstd}
+Label propagation runs on the stored ties too (the same partitions for the same {opt seed()}; the old version summed the weights to a
+community over all n nodes for every neighbour community and relabelled the communities by searching the whole list for every node).
+Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,000 nodes 17 seconds and 1.7 GB before; 20,000 nodes
+1.9 seconds and 0.3 GB (93 seconds and 6.4 GB before).
+
 {title:See also}
 
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}

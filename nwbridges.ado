@@ -44,14 +44,25 @@ program nwbridges
 	// local)/type(distance) both need real distance values (not just
 	// a bridge/not-bridge boolean) and also keep the original path
 	// unconditionally.
+	local __brsparse 0
 	if "`type'" == "global" & "`directed'" == "false" {
-		mata: `netobj'->set_edge(`netobj'->calculate_bridges_global())
+		// the bridge indicator (1 on a bridge, 0 elsewhere) of a network held as stored ties is written as ties:
+		// the n x n matrix and the dense nwreplace below are not needed
+		mata: st_local("__brsparse", strofreal(nw_ties_only(`netobj')))
+		if `__brsparse' {
+			mata: nw_set_ties(`netobj', `netobj'->bridges_global_triplets(1))
+		}
+		else {
+			mata: `netobj'->set_edge(`netobj'->calculate_bridges_global())
+		}
 	}
 	else {
 		mata: `netobj'->set_edge(`netobj'->calculate_distances_without())
 	}
 	if "`type'" == "global" {
-		nwreplace `generate' = (`generate' == -1)
+		if !`__brsparse' {
+			nwreplace `generate' = (`generate' == -1)
+		}
 		local type "global"
 	}
 	if "`type'" == "local"{

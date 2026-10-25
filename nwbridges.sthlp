@@ -77,6 +77,12 @@ Binary: yes (only) - bridge status is a structural property, tie values are igno
 Burt, R. S. (1992). {it:Structural Holes: The Social Structure of Competition}. Cambridge: Harvard
 University Press.
 
+{title:Limits}
+
+{pstd}
+{cmd:type(global)} of an undirected network writes the bridges as ties (one depth-first search, no matrix): 20,000 nodes 0.4 seconds
+and 0.3 GB in Stata/BE (9.5 seconds and 9.4 GB before). {cmd:type(local)} and {cmd:type(distance)} still work on the matrix.
+
 {title:See also}
 
 	{help nwburt}, {help nwpath}

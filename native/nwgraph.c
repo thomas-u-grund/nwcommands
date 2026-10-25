@@ -239,8 +239,8 @@ cleanup:
    interpreter overhead this whole native path exists to avoid.
    =================================================================== */
 
-static int bfs_distances_from(long n, long *ei, long *ej, long nties, long source) {
-	long i, k;
+static int bfs_distances_from(long n, long *ei, long *ej, long nties, long source, long nblock) {
+	long i, k, b, src;
 	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
 	long *queue = NULL, *dist = NULL;
 	int rc = 0;
@@ -261,32 +261,38 @@ static int bfs_distances_from(long n, long *ei, long *ej, long nties, long sourc
 	queue = (long *)malloc((size_t)n * sizeof(long));
 	if (!dist || !queue) { rc = 909; goto cleanup; }
 
-	for (i = 1; i <= n; i++) dist[i] = -1;
-	dist[source] = 0;
-	{
-		long qh = 0, qt = 0;
-		queue[qt++] = source;
-		while (qh < qt) {
-			long v = queue[qh++];
-			for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
-				long w = colidx[k];
-				if (dist[w] < 0) {
-					dist[w] = dist[v] + 1;
-					queue[qt++] = w;
+	/* nblock sources source, source+1, ... (the default is the one source): the graph is built once for all of them and
+	   the distances of source+b go to output variable 3+b (variables 3.. of the call). */
+	for (b = 0; b < nblock; b++) {
+		src = source + b;
+		if (src > n) break;
+		for (i = 1; i <= n; i++) dist[i] = -1;
+		dist[src] = 0;
+		{
+			long qh = 0, qt = 0;
+			queue[qt++] = src;
+			while (qh < qt) {
+				long v = queue[qh++];
+				for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
+					long w = colidx[k];
+					if (dist[w] < 0) {
+						dist[w] = dist[v] + 1;
+						queue[qt++] = w;
+					}
 				}
 			}
 		}
-	}
 
-	/* Matches bfs_hopdist_from()'s own convention exactly: the source
-	   itself is left MISSING on return (Brute_dist()'s original
-	   "_editvalue(dist,0,.)" behavior, which calculate_distances_bfs()
-	   relies on), and any node BFS never reached also comes back
-	   missing rather than a sentinel like -1 that could be mistaken for
-	   a real distance. */
-	for (i = 1; i <= n; i++) {
-		if (i == source || dist[i] < 0) SF_vstore(3, i, SV_missval);
-		else SF_vstore(3, i, (double)dist[i]);
+		/* Matches bfs_hopdist_from()'s own convention exactly: the source
+		   itself is left MISSING on return (Brute_dist()'s original
+		   "_editvalue(dist,0,.)" behavior, which calculate_distances_bfs()
+		   relies on), and any node BFS never reached also comes back
+		   missing rather than a sentinel like -1 that could be mistaken for
+		   a real distance. */
+		for (i = 1; i <= n; i++) {
+			if (i == src || dist[i] < 0) SF_vstore(3 + b, i, SV_missval);
+			else SF_vstore(3 + b, i, (double)dist[i]);
+		}
 	}
 
 cleanup:
@@ -566,7 +572,7 @@ static long next_long(void) {
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long algcode, n, directed, nties, source, target = 0, i;
+	long algcode, n, directed, nties, source, nblock = 1, target = 0, i;
 	long *ei = NULL, *ej = NULL;
 	int rc = 0;
 
@@ -582,6 +588,8 @@ STDLL stata_call(int argc, char *argv[]) {
 	/* ALG_BFS_DISTANCES carries one further argument (source), read
 	   before freeing argbuf - strtok() state lives inside it. */
 	source   = (algcode == ALG_BFS_DISTANCES) ? next_long() : 0;
+	/* an optional number of consecutive sources (plugin kernel version 5): one call, one graph, nblock columns of distances */
+	if (algcode == ALG_BFS_DISTANCES) { char *tk = strtok(NULL, " \t"); if (tk) nblock = (long)atof(tk); if (nblock < 1) nblock = 1; }
 	if (algcode == ALG_KCONN_SEARCH || algcode == ALG_KK_STRESS) target = next_long();
 	free(argbuf);
 
@@ -600,7 +608,7 @@ STDLL stata_call(int argc, char *argv[]) {
 			rc = betweenness_unweighted(n, (int)directed, ei, ej, nties);
 			break;
 		case ALG_BFS_DISTANCES:
-			rc = bfs_distances_from(n, ei, ej, nties, source);
+			rc = bfs_distances_from(n, ei, ej, nties, source, nblock);
 			break;
 		case ALG_KK_STRESS:
 			rc = kk_stress(n, ei, ej, nties, target);

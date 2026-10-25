@@ -161,10 +161,8 @@ The program needs no additional packages: the weighted sampling of ties is built
 {title:Limits}
 
 {pstd}
-With {opt mat()} and no {opt density()} the ties are drawn from the matrix in one pass: 5,000 nodes 0.4 seconds in Stata/BE
-(1.1 GB). With {opt density()} the ties are drawn with the probabilities as weights from the list of all dyads, which
-takes 78 seconds and 5.3 GB for 5,000 nodes (see {help nwhomophily}); above 7,071 nodes the command stops with an error
-that explains the limit.
+With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command: 20,000 nodes
+3.1 seconds (killed at 12 GB before). {opt density()} weights all dyads and is refused above 7,071 nodes.
 
 {title:See also}
 

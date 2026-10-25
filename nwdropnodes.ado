@@ -130,12 +130,22 @@ program nwdropnodes
 	// generate new matrix and replace network with this new matrix
 	tempname keepnet
 	tempname keepvector
-	nwtomata `netname', mat(`keepnet')
+	// the matrix of the remaining network (for a network held as stored ties it is written tie by tie: the
+	// n x n matrix of the full network is not built)
+	_nwsyntax `netname'
 	mata: `keepvector' = `keepmat'
-	mata: `keepnet' = select(`keepnet', `keepvector')
-	mata: `keepvector' = `keepvector''
-	mata: `keepnet' = select(`keepnet', `keepvector')
-	nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
+	mata: st_local("__dnsparse", strofreal(nw_ties_only(`netobj') & sum(`keepvector') < `nodes' & "`netonly'" == ""))
+	if `__dnsparse' {
+		// a network held as stored ties stays so: the ties between the nodes that remain are the new network
+		mata: `keepnet' = nw_dropnodes_triplets(`netobj', `keepvector')
+		mata: `keepvector' = `keepvector''
+		nwreplacemat `netname', triplets(`keepnet') labsmata(`newnames') `xvars'
+	}
+	else {
+		mata: `keepnet' = nw_dropnodes_matrix(`netobj', `keepvector')
+		mata: `keepvector' = `keepvector''
+		nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
+	}
 	mata: mata drop `newnames'
 
 	// deal with attributes that should be synced with the smaller network

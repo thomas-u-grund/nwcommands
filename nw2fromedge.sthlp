@@ -195,12 +195,9 @@ Peter - Thomas  - 5 years
 {title:Limits}
 
 {pstd}
-A two-mode network is stored as one dense matrix over the nodes of both modes (the cells between nodes of the same mode
-are missing), so the memory grows with the square of the total number of nodes. Measured in Stata/BE, random edge list with
-10 ties per mode-1 node and half as many mode-2 nodes: 7,500 nodes (5,000 + 2,500) 1.1 GB, 15,000 nodes (10,000 + 5,000)
-6.6 seconds and 7 GB (before: 6.3 GB at 7,500 nodes, more than 12 GB at 15,000). The commands that work on the two modes
-({help nw2project}, {help nwmatching}, {help nw2degree}, {help nw2clustering}) take 1 to 10 seconds at 15,000 nodes.
-{help nw2toedge} without {opt compress} lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
+Above 20,000 nodes in both modes together the command stops at once with r(484) (it used to build the network for 22 seconds first).
+A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw2degree}, {help nw2clustering}, {help nwmatching},
+{help nwproject} and {help nw2project} then take 1.7 to 12 seconds at that size.
 
 {title:Also see}
 	

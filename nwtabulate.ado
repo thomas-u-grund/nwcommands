@@ -256,7 +256,7 @@ program nwtab3
 	
 	qui if `permutations' > 1  {
 		_nwsyntax `netname'
-		mata: `EI_qap' = rep_EIattr(`permutations', `netobj'->get_matrix_copy(), st_data((1::`nodes'),"`group'"))
+		mata: `EI_qap' = rep_EIattr_net(`permutations', `netobj', st_data((1::`nodes'),"`group'"))
 		if `EI_index' > 0 {
 			mata: `out' = sum(`EI_qap' :>= `EI_index')
 		}
@@ -306,6 +306,29 @@ capture mata : mata drop rep_EInet()
 capture mata : mata drop rep_EIattr()
 
 mata:
+// see rep_EIvar_net() in nwmixing.ado: the permutations act on the stored ties of a large network
+real matrix rep_EIattr_net(real scalar reps, pointer(class nw_def scalar) scalar p, real matrix attr)
+{
+	real matrix el
+	real colvector perm, inv, A, intern, extern
+	real scalar n, i, total
+
+	if (!nw_ties_only(p)) return(rep_EIattr(reps, p->get_matrix_copy(), attr))
+	n = p->get_nodes()
+	el = p->edgelist()
+	total = rows(el)
+	intern = J(reps, 1, 0)
+	inv = J(n, 1, .)
+	for (i = 1; i <= reps; i++) {
+		perm = unorder(n)
+		inv[perm] = (1::n)
+		A = attr[inv]
+		intern[i] = sum(A[el[., 1]] :== A[el[., 2]])
+	}
+	extern = J(reps, 1, total) :- intern
+	return((extern :- intern) :/ (extern :+ intern))
+}
+
 real matrix rep_EInet(real scalar reps, real matrix net1, real matrix net2) {
 	real scalar nsize, total, EI, i
 	real matrix intern, extern, permutationVec, perm_net
@@ -331,7 +354,11 @@ real matrix rep_EIattr(real scalar reps, real matrix net1, real matrix attr) {
 	real scalar nsize, total, EI, i
 	real matrix intern, extern, permutationVec, perm_net, attr1, attr2
 	
-	net1 = (net1:!=0 :& net1 != .)
+	// BUGFIX: this read `net1 != .' (no colon: ONE comparison of the whole matrix, true whenever any cell
+	// differs from missing), so the missing diagonal counted as a tie in every cell, total and internal count
+	// alike, which shifted the whole simulated E-I distribution and biased the permutation p-value (the same
+	// defect nwmixing had until 2026-09-30).  Elementwise now.
+	net1 = (net1:!=0 :& net1 :!= .)
 	nsize = cols(net1)
 	total = sum(net1)
 	

@@ -159,11 +159,33 @@ Measured at 10,000 nodes (Stata/BE, random network with 10 ties per node): the c
 {help nwconcor} and {help nwhierarchy} (and {help nwdendrogram} of its result) need more than 5 minutes and stop with
 r(484) above 6,000 nodes unless the option {opt force} is given; {help nwcorrelate} of the nodes of one network needs about
 25 dense matrices and stops with r(484) above 7,000 nodes; {help nwqap} 40 seconds and 11.6 GB; {help nwhomophily},
-{help nwcollapse} and the uncompressed {help nwtoedge} stop above 7,071 nodes; {help nwrandom} 56 seconds and {help nwcug}
-with 5 draws more than 5 minutes (each draw shuffles the 100 million cells of the matrix). Two-mode networks
+{help nwcollapse} and the uncompressed {help nwtoedge} stop above 7,071 nodes; {help nwrandom} with {opt density()} took 56 seconds and
+{help nwcug} with 5 draws more than 5 minutes (each draw shuffled the 100 million cells of the matrix; the generators draw the ties
+as a list now: 0.1 seconds, and 1.5 seconds for {help nwcug} at 10,000 nodes). Two-mode networks
 cost the square of both modes together: 10,000 + 5,000 nodes need 7 GB. {help nwcommunity} 0.24 seconds,
 {help nwrandomwalk} 0.15 seconds, {help nwcomponents} 0.04 seconds. Most other commands finish in under 30 seconds
 (the slowest: {help nwplot} with the circle layout 39 seconds, {help nwutility} 26 seconds, {help nwkatz} 24 seconds).
+
+{pstd}
+Measured at 20,000 nodes (Stata/BE, random directed network with 10 ties per node, 200,000 ties; the sparse cutoff of the
+dense matrix). Most commands work on the stored ties and finish in seconds: {help nwcomponents} 0.07, {help nwdegree} 0.08,
+{help nwcommunity} 0.6, {help nwcoreperiphery} 0.6, {help nwclique} 3.0, {help nwcloseness} and {help nwkatz} 9.9 and 10 seconds
+(from one breadth-first search per node in the plugin; 98 and 99 seconds and 6.4 GB through the matrix of distances before),
+{help nwbetween} 29, {help nwkcomponents} 39, {help nwcohesion} 27 seconds. {help nwtranspose}, {help nwpermute}, {help nwaddnodes},
+{help nwdropnodes}, {help nwkeepnodes}, {help nwturnover}, {help nwshared}, {help nwsimmelian}, {help nwbridges}, {help nwpath},
+{help nwdyads}, {help nwsummarize} and {help nwvalue} no longer build an {it:n}-by-{it:n} matrix (each used to be killed at 12 GB
+or to need 6-12 GB). The generators {help nwring}, {help nwrandom}, {help nwsmall} and {help nwpref} draw the ties as a list above
+2,000 nodes (0.2 to 2.8 seconds at 20,000 nodes), so {help nwcug} with 5 draws takes 2 seconds. Networks whose result is a dense
+{it:n}-by-{it:n} network take their memory, which is why the following stop at once with r(484) when it would not fit in 12 GB
+({opt force} runs them): {help nwsimilar} (9 matrices, 28.8 GB), {help nwdissimilar}, {help nwsimindex}, {help nwcorrelate} of two
+networks, {help nwqap} (48 GB), {help nwutility} and {help nwplot}; still working at 20,000 nodes: {help nwgeodesic} (10 seconds,
+6.4 GB), {help nwreach} (11 seconds, 6.4 GB), {help nwlambda} (30 seconds, 6.5 GB), {help nwconstraint}, {help nwexpand}.
+Two-mode networks are one matrix over both modes: 20,000 nodes in total (13,333 + 6,667) work in every two-mode command
+(1.7 to 12 seconds, 3.4 GB), above 20,000 nodes {help nw2fromedge} refuses at once. Unchanged by design: {help nwtoedge} and
+{help nw2toedge} without {opt compress} (one row per dyad, refused above 50,000,000 rows), {help nwhomophily} and {help nwcollapse}
+(the same list of dyads, refused at once), {help nwspectral}, {help nwconcor}, {help nwhierarchy} and {help nwdendrogram} (cubic,
+refused above 6,000 nodes), {help nwnclique}, {help nwkplex} and {help nwnclan} (more than 100,000 maximal subgroups),
+{help nwplotmatrix} and {help nwtostata}.
 
 {marker limits_combinatorial}{...}
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}

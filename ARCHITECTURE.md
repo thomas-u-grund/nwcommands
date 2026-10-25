@@ -49,7 +49,8 @@ build systems a general library would bring along for a handful of functions act
   host further general graph kernels behind the same plugin binary over time. `nwcomb.h` and
   `nwcomb2.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
   blocking, factions, line connectivity (equivalent-flow tree), the 4-node motif census, two-mode
-  clustering, triad balance, bipartite matching, Louvain communities, and the exhaustive subgroup
+  clustering, triad balance, bipartite matching, Louvain communities, the distance sums behind closeness
+  and Katz (one breadth-first search per node, no distance matrix), and the exhaustive subgroup
   searches (n-cliques, n-clans, k-plexes) with result and work limits. The Mata side (`nwg_comb()` in `unw_core.do`) probes the plugin once per session and
   keeps the older Mata code as the fallback.
 

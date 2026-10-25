@@ -103,6 +103,14 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 	{cmd:. sum _katz}
 
 
+{title:Limits}
+
+{pstd}
+The distance-decay score (without {opt walks}) is summed over breadth-first searches from every node in the plugin, without a
+matrix of distances, unless {it:geodesic_options} are given or the plugin is older (then the matrix of {help nwgeodesic} is used,
+as before). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB
+(99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
+
 {title:See also}
 
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}

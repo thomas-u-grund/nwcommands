@@ -115,6 +115,12 @@ The mixing table counts ties, so only the ties are listed (not all dyads). Measu
 ({opt permutations()}) permutes the attribute on the dense adjacency matrix; its running time at 5,000 nodes has not been
 measured.
 
+{pstd}
+The permutations of {opt permutations()} act on the stored ties of a network that is held that way (a tie (u,v) lands in the cell
+(inv u, inv v) of the permuted matrix: the same counts and the same random permutations as before, O(ties) per draw). 20,000 nodes
+with 20 permutations: 1.2 seconds (killed at 12 GB before). Before this version the call replaced a valued network by its 0/1
+pattern.
+
 {title:See also}
 
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}

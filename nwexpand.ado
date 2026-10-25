@@ -90,46 +90,10 @@ program nwexpand
 		di "{txt}Option {it:mode(same)} selected."
 		local mode = "same"
 	}
-	if( "`mode'" == "dist"){
-		mata: distMat(attr)
-		mata: expnet = distMat(attr)
-	}
-	if ("`mode'" == "distinv"){
-		mata: expnet = distMat(attr)
-		mata: expnet = expnet :* (-1)
-	}
-	if ("`mode'" == "absdist"){
-		mata: expnet = distMat(attr)
-		mata: expnet = ((expnet:<0) :* (expnet :* -2)) + expnet
+	// the expanded matrix is built row by row (one n x n matrix, not the five of the matrix-product version)
+	mata: expnet = nwexpand_matrix(attr, "`mode'")
+	if inlist("`mode'", "absdist", "absdistinv", "same") {
 		local undirected "undirected"
-	}
-	if("`mode'" == "absdistinv") {
-		mata: expnet = distMat(attr)
-		mata: expnet = ((expnet:<0) :* (expnet :* -2)) + expnet
-		// BUGFIX: was `J(`nodes',`nodes',-max(expnet)) - expnet' - the
-		// stray negative sign on `max(expnet)' made every resulting
-		// value negative (max_dist=4 on x=1..5 gave -5..-8, not the
-		// intended "closer pairs score higher" inverse-distance
-		// transform). This is a bounded max-minus-distance inversion,
-		// not a literal 1/|diff| reciprocal (nwhomophily.sthlp's own
-		// prose used to describe it as one, since fixed) - deliberately
-		// NOT switched to a true reciprocal, which would reintroduce
-		// the very blowup-for-near-equal-values problem this bounded
-		// transform avoids (confirmed as the actual cause of a
-		// downstream nwhomophily crash - see its own CERTIFICATION.md
-		// entry).
-		mata: expnet = J(`nodes',`nodes',max(expnet)) - expnet
-		local undirected "undirected"
-	}
-	if "`mode'" == "same" {
-		mata: expnet = simMat(attr)
-		local undirected "undirected"
-	}
-	if "`mode'" == "sender" {
-		mata: expnet = senderMat(attr)		
-	}
-	if "`mode'" == "receiver" {
-		mata: expnet = receiverMat(attr)		
 	}
 
     capture confirm variable `nw_nodename'
@@ -159,48 +123,38 @@ capture mata mata drop distMat()
 capture mata mata drop simMat()
 capture mata mata drop senderMat()
 capture mata mata drop receiverMat()
+capture mata mata drop nwexpand_matrix()
 
-mata:	
-real matrix senderMat(real matrix attr){
-	real scalar nsize
-	real matrix temp, rowMat
-	
-	nsize = rows(attr)
-	temp = attr :* I(nsize)
-	rowMat = temp * J(nsize,nsize,1)
-	return(rowMat)
-}
-real matrix receiverMat(real matrix attr){
-	real scalar nsize
-	real matrix temp, rowMat, colMat
-	
-	nsize = rows(attr)
-	temp = attr :* I(nsize)
-	rowMat = temp * J(nsize,nsize,1)
-	colMat = rowMat'
-	return(colMat)
-}
-real matrix distMat(real matrix attr){
-	real scalar nsize
-	real matrix temp, rowMat, colMat, distMat
-	
-	nsize = rows(attr)
-	temp = attr :* I(nsize)
-	rowMat = temp * J(nsize,nsize,1)
-	colMat = rowMat'
-	distMat = rowMat :- colMat
-	return(distMat)
-}
-real matrix simMat(real matrix attr){
-	real scalar nsize
-	real matrix temp, rowMat, colMat, distMat, simMat
-	
-	nsize = rows(attr)
-	temp = attr :* I(nsize)
-	rowMat = temp * J(nsize,nsize,1)
-	colMat = rowMat'
-	distMat = rowMat :- colMat
-	simMat = (distMat:==0) :* J(nsize,nsize,1) 
-	return(simMat)
+mata:
+// The dyad matrix of an attribute, one row at a time:
+//   same      1 where the two values are equal
+//   dist      value of the ego minus value of the alter
+//   distinv   the negative of dist
+//   absdist   absolute distance
+//   absdistinv  largest absolute distance minus the absolute distance
+//   sender    value of the ego;  receiver   value of the alter
+// A missing value gives missing (0 in "same"), exactly as the earlier matrix-product construction did.
+real matrix nwexpand_matrix(real matrix attr, string scalar mode)
+{
+	real scalar n, i, mx
+	real matrix E
+	real rowvector at
+
+	n = rows(attr)
+	at = attr'
+	E = J(n, n, .)
+	for (i = 1; i <= n; i++) {
+		if (mode == "same") E[i, .] = ((attr[i] :- at) :== 0)
+		else if (mode == "sender") E[i, .] = J(1, n, attr[i])
+		else if (mode == "receiver") E[i, .] = at
+		else if (mode == "distinv") E[i, .] = (attr[i] :- at) :* (-1)
+		else if (mode == "absdist" | mode == "absdistinv") E[i, .] = abs(attr[i] :- at)
+		else E[i, .] = attr[i] :- at
+	}
+	if (mode == "absdistinv") {
+		mx = max(E)
+		for (i = 1; i <= n; i++) E[i, .] = mx :- E[i, .]
+	}
+	return(E)
 }
 end

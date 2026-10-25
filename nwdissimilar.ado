@@ -1,6 +1,6 @@
 capture program drop nwdissimilar
 program nwdissimilar
-	syntax [anything(name=netname)] [, type(string) labs(passthru) vars(passthru) name(string) context(string) xvars]
+	syntax [anything(name=netname)] [, type(string) labs(passthru) vars(passthru) name(string) context(string) xvars force]
 	// _nwsyntax is a deprecated pure wrapper around _nwsyntax, kept here
 	// only to resolve/default `netname' (_nwsyntax's own c_local export
 	// re-populates it even when empty, meaning "use the current
@@ -11,6 +11,7 @@ program nwdissimilar
 	// used. other() avoids that collision entirely.
 	_nwsyntax `netname', other(other)
 	local netname "`othernetname'"
+	_nwdenseguard, command(nwdissimilar) nodes(`othernodes') copies(8) alternative(The result is a network with a tie for every pair of nodes. Compute it for a part of the network (nwsubset, nwego, nwkeepnodes) or take the ties with nwtoedge, compress into other software.) `force'
 	
 	if "`context'" == "" {
 		local context = "both"

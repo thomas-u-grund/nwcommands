@@ -1,7 +1,7 @@
 
 capture program drop nwqap
 program nwqap, eclass
-syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) qapspp]
+syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) qapspp force]
     set more off
 
 	mata: st_rclear()
@@ -29,6 +29,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		di "{err}Network {bf:`net'} not found."
 		error `errNWsNotFound'
 	}
+	_nwdenseguard, command(nwqap) nodes(`nodes') copies(15) alternative(QAP regresses the dyads of the networks, one observation per pair of nodes: `=`nodes'*(`nodes'-1)' here. Use a part of the network (nwsubset, nwego) or nwcorrelate for the correlation of two networks.) `force'
 	nwtomata `net', mat(dvnet)
 
 	// Binary-outcome regression commands (logit is this command's own

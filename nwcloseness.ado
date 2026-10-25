@@ -70,31 +70,54 @@ program nwcloseness
 	set more off
 	qui foreach netname_temp in `netname' {
 		preserve
-		qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
-		nwname _tempgeodesic
-		// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
-		// full n x n matrix into a second, separately-named Mata matrix
-		// (confirmed via direct source inspection of _nwtomata.ado:
-		// `mat' = (*`netobj'->get_matrix())`, an unavoidable full copy for
-		// a NAMED handle) purely so that copy can immediately be handed to
-		// min()/rowsum() and discarded - both of those are read-only
-		// reductions that work identically on a dereferenced pointer
-		// directly, with no copy needed at all. Same accessor
-		// (`netobj'->get_matrix()) as nwtomata used internally, same
-		// values, only the redundant intermediate copy is removed -
-		// verified byte-identical against the prior nwtomata-based version
-		// in cscripts/test_nwcloseness.do.
-		_nwsyntax _tempgeodesic
-		mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
-		mata: far = rowsum(*`netobj'->get_matrix())
-
-		if `r(mindistance)' < 0 {
-			mata: far = J(`nodes', 1, .)
-			noi di "{txt}Warning: network {bf:`netname_temp'} not connected; specify {bf:unconnected()} to obtain results.
-			nwdrop _tempgeodesic
-			exit
+		// The farness of a node is the sum of its distances to the nodes it can reach. With a plugin of the current
+		// generation it comes from one breadth-first search per node over the stored ties (kernel 25, O(nodes x ties),
+		// no n x n matrix: 98 s and 6.4 GB at 20,000 nodes before); the distance matrix of nwgeodesic is still built
+		// when geodesic_options are passed (alpha, unconnected, ...) or the plugin is older.
+		local __fastcl 0
+		if `"`options'"' == "" {
+			mata: st_local("__fastcl", strofreal(nwg_comb_version() >= 5))
 		}
+		if `__fastcl' {
+			tempname __symnet
+			local __src `netname_temp'
+			if "`symopt'" != "" {
+				nwsym `netname_temp', generate(`__symnet')
+				local __src `__symnet'
+			}
+			_nwsyntax `__src'
+			mata: far = nw_distance_sums(`netobj', 0, 0)[., 1]
+			if "`symopt'" != "" {
+				nwdrop `__symnet'
+			}
+		}
+		else {
+			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
+			nwname _tempgeodesic
+			// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
+			// full n x n matrix into a second, separately-named Mata matrix
+			// (confirmed via direct source inspection of _nwtomata.ado:
+			// `mat' = (*`netobj'->get_matrix())`, an unavoidable full copy for
+			// a NAMED handle) purely so that copy can immediately be handed to
+			// min()/rowsum() and discarded - both of those are read-only
+			// reductions that work identically on a dereferenced pointer
+			// directly, with no copy needed at all. Same accessor
+			// (`netobj'->get_matrix()) as nwtomata used internally, same
+			// values, only the redundant intermediate copy is removed -
+			// verified byte-identical against the prior nwtomata-based version
+			// in cscripts/test_nwcloseness.do.
+			_nwsyntax _tempgeodesic
+			mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
+			mata: far = rowsum(*`netobj'->get_matrix())
+
+			if `r(mindistance)' < 0 {
+				mata: far = J(`nodes', 1, .)
+				noi di "{txt}Warning: network {bf:`netname_temp'} not connected; specify {bf:unconnected()} to obtain results.
+				nwdrop _tempgeodesic
+				exit
+			}
 		
+		}
 		_nwsyntax `netname_temp'
 
 		mata: nearness = J(`nodes', 1,1) :/ far
@@ -102,7 +125,9 @@ program nwcloseness
 		local _closeness : word 1 of `generate'
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'
-		nwdrop _tempgeodesic
+		if !`__fastcl' {
+			nwdrop _tempgeodesic
+		}
 		restore
 
 		_nwsetobs `netname_temp'

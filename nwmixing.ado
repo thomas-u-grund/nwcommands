@@ -120,7 +120,7 @@ program nwmixing
 	
 	qui if `permutations' > 1  {
 	
-		mata: `EI_qap' = rep_EIvar(`permutations', *`netobj'->get_matrix(), `attmat')
+		mata: `EI_qap' = rep_EIvar_net(`permutations', `netobj', `attmat')
 		// BUGFIX: the one-sided direction used to be chosen from the SIGN
 		// of the OBSERVED E-I index itself (`EI_index' > 0), not from
 		// where the observed value actually falls relative to the null
@@ -168,17 +168,47 @@ program nwmixing
 end	
 
 capture mata : mata drop rep_EIvar()
+capture mata : mata drop rep_EIvar_net()
 
 mata:
-real matrix rep_EIvar(real scalar reps, real matrix net1, real matrix attr){
-	real scalar nsize, total, EI, i
-	real matrix intern, extern, same, attrMat, attrMatTr, permutationVec, perm_net
+// QAP permutations of the E-I index.  A network held as stored ties is permuted tie by tie: the tie (u,v) of the
+// original lands in the cell (inv[u], inv[v]) of the permuted matrix, so it counts as internal when the two
+// attribute values at those positions are equal (the same number as the sum over the permuted n x n matrix, with
+// the same random permutations, but O(ties) per draw and no n x n matrix).
+real matrix rep_EIvar_net(real scalar reps, pointer(class nw_def scalar) scalar p, real matrix attr)
+{
+	real matrix el
+	real colvector perm, inv, A, intern, extern
+	real scalar n, i, total
 
-	nsize = cols(net1)
+	if (!nw_ties_only(p)) return(rep_EIvar(reps, *p->get_matrix(), attr))
+	n = p->get_nodes()
+	el = p->edgelist()
+	el = select(el, el[., 1] :!= el[., 2])
+	total = rows(el)
+	intern = J(reps, 1, 0)
+	inv = J(n, 1, .)
+	for (i = 1; i <= reps; i++) {
+		perm = unorder(n)
+		inv[perm] = (1::n)
+		A = attr[inv]
+		intern[i] = sum(A[el[., 1]] :== A[el[., 2]])
+	}
+	extern = J(reps, 1, total) :- intern
+	return((extern - intern) :/ (extern + intern))
+}
+
+real matrix rep_EIvar(real scalar reps, real matrix net0, real matrix attr){
+	real scalar nsize, total, EI, i
+	real matrix intern, extern, same, attrMat, attrMatTr, permutationVec, perm_net, net1
+
+	nsize = cols(net0)
 	attrMat = J(nsize, nsize,1) :* attr
 	attrMatTr = attrMat'
 	same = (attrMat:== attrMatTr)
-	net1 = (net1:!=0)
+	// BUGFIX: this assigned to its argument, which Mata passes by reference: the network's own matrix was
+	// overwritten with its 0/1 pattern after every nwmixing call with permutations (values of a valued network lost)
+	net1 = (net0:!=0)
 	// BUGFIX: the network's own diagonal is missing (no self-ties), not
 	// 0, and Mata's `:!=0' treats missing as not-equal-to-zero - so
 	// before this fix, every one of the `nsize' diagonal cells silently

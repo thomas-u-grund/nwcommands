@@ -2,7 +2,7 @@
 capture program drop nwsimindex
 program nwsimindex, rclass
 	version 12
-	syntax [anything(name=netname)][, measure(string) name(string) xvars replace]
+	syntax [anything(name=netname)][, measure(string) name(string) xvars replace force]
 
 	local measure = lower("`measure'")
 	if "`measure'" == "" {
@@ -11,6 +11,7 @@ program nwsimindex, rclass
 	_opts_oneof "common jaccard dice cosine adamicadar" "measure" "`measure'" 6556
 
 	_nwsyntax `netname'
+	_nwdenseguard, command(nwsimindex) nodes(`nodes') copies(5) alternative(The result is a network with a tie for every pair of nodes. Compute it for a part of the network (nwsubset, nwego, nwkeepnodes) or take the ties with nwtoedge, compress into other software.) `force'
 
 	if "`name'" == "" {
 		local name "simindex"

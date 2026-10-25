@@ -103,9 +103,10 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural ope
 {title:Limits}
 
 {pstd}
-Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.6 seconds. The node labels of the
-remaining network are passed on in Mata; they used to be damaged above about 900 nodes (and rows were added to the
-data).
+A network held as stored ties stays so: the ties between the remaining nodes are the new network. Measured in Stata/BE, random
+directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB (killed at 12 GB before).
+The node labels of the remaining network are passed on in Mata; they used to be damaged above about 900 nodes (and rows were added
+to the data).
 
 {title:See also}
    

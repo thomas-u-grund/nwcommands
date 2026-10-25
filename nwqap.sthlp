@@ -42,6 +42,7 @@
 {synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
 {synopt:{opt name(string)}}Name for the combined graph created by {opt plot}; default = {bf:qap}{p_end}
 {synopt:{opt qapspp}}Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see {help nwqap##qapspp:qapspp} below{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise){p_end}
 
 
 {title:Description}
@@ -246,6 +247,11 @@ values directly, at the one point internally where they are genuinely meaningful
 The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10
 ties per node, {cmd:type(regress)}, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB.
 Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
+
+{pstd}
+QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of {it:n}-by-{it:n}
+(10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a
+message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs it anyway.
 
 {title:See also}
 

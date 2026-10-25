@@ -35,6 +35,7 @@
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels; default = the source network's own labels{p_end}
 {synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 13,700 nodes otherwise){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -154,9 +155,10 @@ so it can be compared directly against the source network node-for-node.
 {title:Limits}
 
 {pstd}
-The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random directed network with 10 ties per
-node: 5,000 nodes 1.2 seconds and 1.7 GB. The node labels of the new network are the labels of the old one at any size
-(they used to be damaged above about 900 nodes).
+The result is a dense {it:n}-by-{it:n} valued network. About 8 matrices of that size are held at once (10,000 nodes: 4 seconds and
+6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000
+nodes); option {opt force} runs it anyway. The node labels of the new network are the labels of the old one at any size (they used to
+be damaged above about 900 nodes).
 
 {title:See also}
 

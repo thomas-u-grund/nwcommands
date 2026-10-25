@@ -4,6 +4,7 @@ d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 24oct2026
 d Version: 3.1.1
+f _nwrowalign.ado
 f _extract_valuelabels.ado
 f _gnwdegree.ado
 f _growmedian2.ado
@@ -25,12 +26,14 @@ f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
 f _nwdatasync.ado
+f _nwdenseguard.ado
 f _nwedgelabs.ado
 f _nwexpnetexp.ado
 f _nwgsample.ado
 f _nwname.ado
 f _nwtabplot.ado
 f _nwopenviewer.ado
+f _nwsetsparse.ado
 f _nwsyntax.ado
 f _nwtomata.ado
 f nwaddnodes.ado
@@ -81,5 +84,3 @@ f nwgenvar.ado
 f nwgeodesic.ado
 f nwhierarchy.ado
 f nwhomophily.ado
-f nwimport.ado
-f nwinduced.ado

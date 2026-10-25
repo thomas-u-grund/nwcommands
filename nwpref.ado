@@ -63,40 +63,49 @@ program nwpref
 		exit
 	}
 	
-	tempname __nwnew
-	mata: `__nwnew' = prefattach(`nodes',`m0',`m',`prob',`directed')
-	
-	if "`weights'" != "" {
-		tempname w
-		capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
-		if _rc != 0 {
-			// BUGFIX: see nwrandom.ado's own header comment on this
-			// identical block for the full explanation - this used to
-			// print the message and fall through, silently producing an
-			// unweighted network while claiming success.
-			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-			error 198
-		}
-		capture mata: `w' = `w' :/ sum((`weights'))
-		if "`undirected'" != "" {
-			mata: `w' = lowertriangle(`w',0)
-			mata: `w' = `w' + `w''
-		}
-		capture mata: `__nwnew' = `__nwnew' :* `w'
+	if "`weights'" == "" & `nodes' > 2000 {
+		tempname __nwtrip
+		mata: `__nwtrip' = nw_pref_triplets(`nodes', `m0', `m', `prob', `directed')
+		mata: st_rclear()
+		_nwsetsparse, triplets(`__nwtrip') nodes(`nodes') name(`name') labs(`labs') `undirected'
+		capture mata: mata drop `__nwtrip'
 	}
+	else {
+		tempname __nwnew
+		mata: `__nwnew' = prefattach(`nodes',`m0',`m',`prob',`directed')
 	
-	// BUGFIX: this referenced a `prefname' local that is never set
-	// anywhere in this file (a plain typo for `name', the local this
-	// command's own syntax line actually declares and every sibling
-	// generator - nwring/nwsmall/nwlattice - correctly uses in the
-	// identical final nwset call) - so any caller's own name() was
-	// silently discarded and the resulting network always got nwset's
-	// own generic default name instead of the one actually requested.
-	// Found while restoring nwgenerate's own pref( shortcut, which
-	// depends on this working correctly to produce the network under
-	// the caller's chosen name at all.
-	mata: st_rclear()
-	nwset, mat(`__nwnew') name(`name') `undirected' labs(`labs')
+		if "`weights'" != "" {
+			tempname w
+			capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
+			if _rc != 0 {
+				// BUGFIX: see nwrandom.ado's own header comment on this
+				// identical block for the full explanation - this used to
+				// print the message and fall through, silently producing an
+				// unweighted network while claiming success.
+				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+				error 198
+			}
+			capture mata: `w' = `w' :/ sum((`weights'))
+			if "`undirected'" != "" {
+				mata: `w' = lowertriangle(`w',0)
+				mata: `w' = `w' + `w''
+			}
+			capture mata: `__nwnew' = `__nwnew' :* `w'
+		}
+	
+		// BUGFIX: this referenced a `prefname' local that is never set
+		// anywhere in this file (a plain typo for `name', the local this
+		// command's own syntax line actually declares and every sibling
+		// generator - nwring/nwsmall/nwlattice - correctly uses in the
+		// identical final nwset call) - so any caller's own name() was
+		// silently discarded and the resulting network always got nwset's
+		// own generic default name instead of the one actually requested.
+		// Found while restoring nwgenerate's own pref( shortcut, which
+		// depends on this working correctly to produce the network under
+		// the caller's chosen name at all.
+		mata: st_rclear()
+		nwset, mat(`__nwnew') name(`name') `undirected' labs(`labs')
+	}
 	if "`xvars'" == "" {
 		nwload, xvars
 	}

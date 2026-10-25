@@ -90,6 +90,13 @@ checked. Two-mode: not yet supported as a source (see {help nwset}'s own note th
 composability item for a later pass).
 
 
+{title:Limits}
+
+{pstd}
+The ties at the time point are taken from the stored ties and the matrix of tie times (the loop over all {it:n}^2 cells is gone);
+{cmd:nwset, time()}/{cmd:interval()}/{cmd:eventtime()} find the node of every label in a hash. 20,000 nodes with 200,000 ties and 3
+waves: 0.3 seconds (the call did not finish in 3 minutes before). The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
+
 {title:See also}
 
 	{help nwset}, {help nwsummarize}

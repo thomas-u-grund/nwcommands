@@ -67,7 +67,7 @@ program nwcorrelate_nodes
 	_nwsyntax
 	
 	mata: st_rclear()
-	mata: st_numscalar("r(avg_corr)", ( sum(*`netobj'->get_matrix()) / sum((*`netobj'->get_matrix()):!=.)))
+	mata: st_numscalar("r(avg_corr)", ( sum(*`netobj'->get_matrix()) / (rows(*`netobj'->get_matrix()) * cols(*`netobj'->get_matrix()) - missing(*`netobj'->get_matrix()))))
 	
 	mata: st_global("r(name)", "`origname'")
 	mata: st_global("r(corrname)", "`netname'")
@@ -83,7 +83,7 @@ end
 
 capture program drop nwcorrelate_nets	
 program nwcorrelate_nets
-syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) *]
+syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) force *]
 unw_defs
 	
 	if "`mode'" == "" {
@@ -107,6 +107,7 @@ unw_defs
 	
 	_nwsyntax `netname1'
 	local netnodes1 `nodes'
+	_nwdenseguard, command(nwcorrelate) nodes(`nodes') copies(9) alternative(The correlation of two networks is taken over all pairs of nodes. Use a part of the network (nwsubset, nwego).) `force'
 	local netobj1 `netobj'
 	
 	if "`attribute'" != "" {

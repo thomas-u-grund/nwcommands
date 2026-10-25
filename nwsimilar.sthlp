@@ -31,6 +31,7 @@
 {synopt:{opt context}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both (alias: {opt mode()}, kept for backward compatibility - {help nwdissimilar}, this command's own sibling, uses {opt context()} for the identical concept){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new similarity network; default = {it:_similar}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 12,900 nodes otherwise){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -139,7 +140,9 @@ node-for-node.
 
 {pstd}
 The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random directed network with 10 ties per
-node: 5,000 nodes 1.1 seconds and 1.9 GB. The node labels of the new network are the labels of the old one at any size
+node: 5,000 nodes 1.1 seconds and 1.9 GB, 10,000 nodes 4 seconds and 7 GB. About 9 matrices of that size are held at once: above
+about 12,900 nodes the command stops at once with r(484) and a message with the memory needed (28.8 GB at 20,000 nodes); option
+{opt force} runs it anyway. The node labels of the new network are the labels of the old one at any size
 (they used to be damaged above about 900 nodes).
 
 {title:See also}

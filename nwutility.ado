@@ -1,6 +1,6 @@
 capture program drop nwutility
 program nwutility
-	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) *]
+	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) force *]
 	unw_defs
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
@@ -12,6 +12,7 @@ program nwutility
 		di "{err}Network {bf:`netname'} not found."
 		error `errNWsNotFound'
 	}
+	_nwdenseguard, command(nwutility) nodes(`nodes') copies(4) alternative(The utility is computed from the matrix of all shortest paths. Use a part of the network (nwsubset, nwego).) `force'
 	// _nwsyntax (now _nwsyntax directly, since _nwsyntax never
 	// re-exports the node count) gives the main network's node
 	// count, but the intrvalue()/intrcost() branches below call

@@ -53,6 +53,6 @@ program nwtranspose
 	_nwsyntax `netname', max(1)
 	local netobj2 `netobj'
 	
-	mata: `netobj2'->set_edge((*`netobj1'->get_matrix())')
+	mata: nw_transpose_net(`netobj1', `netobj2')
 	
 end
