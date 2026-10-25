@@ -158,6 +158,14 @@ The result can be nicely plotted in the following way:
 The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded or installed.
 
 
+{title:Limits}
+
+{pstd}
+With {opt mat()} and no {opt density()} the ties are drawn from the matrix in one pass: 5,000 nodes 0.4 seconds in Stata/BE
+(1.1 GB). With {opt density()} the ties are drawn with the probabilities as weights from the list of all dyads, which
+takes 78 seconds and 5.3 GB for 5,000 nodes (see {help nwhomophily}); above 7,071 nodes the command stops with an error
+that explains the limit.
+
 {title:See also}
 
 	{help nwhomophily}, {help nwgen}, {help nwexpand}

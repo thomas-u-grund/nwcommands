@@ -65,7 +65,8 @@ program nwmixing
 	// each edge" header printed below. Ask for both orientations. The E-I
 	// index is unchanged (internal and external counts both double).
 	local __nwmix_full = cond("`undirected'" != "", "full", "")
-	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full'
+	// compress: only the ties are listed (the table below counts ties only), not all N x N dyads
+	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full' compress
 	local egoname "`egosrc'_ego"
 	local altername "`egosrc'_alter"
 	capture label val `egoname' `attrlab'

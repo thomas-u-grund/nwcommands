@@ -144,6 +144,12 @@ program nwdyadprob
 	}
 	if "`density'" != "" {
 		// Generate network from weight network
+		// density() draws the ties with weights from a list of ALL dyads: n*n rows. nwtoedge refuses above
+		// 50,000,000 rows (7,071 nodes); stop here with the reason instead of after the dense work
+		if `nodes' * `nodes' > 5e7 {
+			di "{err}density() weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself."
+			error `errDenseTooLarge'
+		}
 		preserve
 		nwset, mat(`mat') name(_tempdyad)
 		nwreplace _tempdyad = _tempdyad * 10

@@ -116,6 +116,13 @@ networks does not support two-mode networks.
 Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and density with graph-level
 indices. {it:Social Networks} 21(3), 239-267.
 
+{title:Limits}
+
+{pstd}
+Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it, so a
+network with 5,000 nodes costs about 11 seconds per draw for the generation alone (5 draws, with {cmd:nwcomponents} as
+the statistic: 57 seconds in Stata/BE).
+
 {title:See also}
 
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}

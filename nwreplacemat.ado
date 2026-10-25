@@ -1,7 +1,7 @@
 capture program drop nwreplacemat
 program nwreplacemat
 	version 9.0
-	syntax anything(name=netname), newmat(string) [vars(string) labs(string) nosync netonly xvars]
+	syntax anything(name=netname), newmat(string) [vars(string) labs(string) LABSMata(string) nosync netonly xvars]
 
 	// _nwsyntax itself exports a local called `labs' (the *current*
 	// network's own labels, via its own c_local labs "..." with no
@@ -60,7 +60,10 @@ program nwreplacemat
 			// updated too or the object would report the OLD node count
 			// forever despite holding a differently-sized edge matrix.
 			mata: `netobj'->set_edge(`newmat')
-			if "`newmatlabs'" != "" {
+			if "`labsmata'" != "" {
+				mata: `netobj'->set_nodenames(`labsmata')
+			}
+			else if "`newmatlabs'" != "" {
 				mata: `netobj'->set_nodenames(tokens(subinstr("`newmatlabs'", ",", " ", .)))
 			}
 			else {
@@ -82,7 +85,12 @@ program nwreplacemat
 			// ties (from `prob(1)') are immediately overwritten by the
 			// very next line's recursive `nwreplacemat' call regardless
 			// of what `nwrandom' names its variables.
-			nwrandom `nodes', prob(1) name(`netname') labs(`newmatlabs') `xvars'
+			if "`labsmata'" != "" {
+				nwrandom `nodes', prob(1) name(`netname') nodenamesmata(`labsmata') `xvars'
+			}
+			else {
+				nwrandom `nodes', prob(1) name(`netname') labs(`newmatlabs') `xvars'
+			}
 			// `nosync' itself is never populated (Stata's own "no"-
 			// prefix syntax convention stores the literal string
 			// "nosync" in `sync' instead - see the check just above

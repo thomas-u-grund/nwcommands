@@ -151,6 +151,13 @@ The dissimilarity network itself always carries a genuine (non-missing) diagonal
 is never dissimilar from itself) and inherits its source network's own node labels by default,
 so it can be compared directly against the source network node-for-node.
 
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random directed network with 10 ties per
+node: 5,000 nodes 1.2 seconds and 1.7 GB. The node labels of the new network are the labels of the old one at any size
+(they used to be damaged above about 900 nodes).
+
 {title:See also}
 
 	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}

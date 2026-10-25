@@ -51,6 +51,13 @@ This collapses the first and the second node of a random network. The collapsed 
 	{cmd:. nwcollapse mynet, by(att)}
 
 	
+{title:Limits}
+
+{pstd}
+The collapse is done on the list of all dyads of the network (see {help nwtoedge}), so the time and the memory grow with the
+square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node and 5 groups: 1,000
+nodes 8 seconds, 5,000 nodes 61 seconds and 4.5 GB; above 7,071 nodes the list is refused (more than 50,000,000 dyads).
+
 {title:See also}
 
 	{help collapse}

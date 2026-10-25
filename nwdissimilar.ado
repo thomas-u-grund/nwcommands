@@ -55,9 +55,14 @@ program nwdissimilar
 	// networks' node sets look like a disjoint union (e.g. 8 rows for
 	// two differently-labeled 4-node networks instead of a shared 4),
 	// which is exactly what broke nwhierarchy's default path.
+	// The source network's node names go to nwset through a Mata variable, never through a Stata option
+	// string: Stata's option parser inserts a blank every 5,292 characters of a long option value, which
+	// corrupted the names of networks with more than about 900 nodes (see GOTCHA.md).
+	tempname __nwdis_names
+	local __nwdis_usenames 0
 	if "`labs'" == "" {
-		nwname `netname'
-		local labs = "labs(`r(labs)')"
+		mata: `__nwdis_names' = `othernetobj'->get_nodenames()
+		local __nwdis_usenames 1
 	}
 	// Mata functions defined in an ado-file's trailing mata: block are
 	// private to that ado-file - visible only to mata code running
@@ -102,7 +107,13 @@ program nwdissimilar
 	// nwhierarchy's clustermat call, etc.), even though the dissimilarity
 	// functions above correctly compute 0 for the diagonal themselves -
 	// confirmed via a direct nwset/nwtomatafast round-trip probe.
-	nwset, mat(__nwdissim) name(`name') selfloop `labs' `vars'
+	if `__nwdis_usenames' {
+		nwset, mat(__nwdissim) name(`name') selfloop nodenames(`__nwdis_names') `vars'
+		capture mata mata drop `__nwdis_names'
+	}
+	else {
+		nwset, mat(__nwdissim) name(`name') selfloop `labs' `vars'
+	}
 	capture mata mata drop __nwdissim
 	if "`xvars'" != "" {
 		nwload `name'

@@ -83,6 +83,15 @@ not checked. Two-mode: required.
 Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in bipartite graphs.
 {it:SIAM Journal on Computing} 2(4), 225-231.
 
+{title:Limits}
+
+{pstd}
+The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as before, so
+the same matching comes out) by a kernel of the native plugin; a platform whose plugin has not been rebuilt yet keeps
+the older Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000
+mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the older code did not
+finish in 180 seconds and used 4 GB).
+
 {title:See also}
 
 	{help nwmaxflow}, {help nw2project}, {help nw2set}, {help nw2fromedge}

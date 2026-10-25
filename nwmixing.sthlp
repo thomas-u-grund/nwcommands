@@ -107,6 +107,14 @@ simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
 
 
+{title:Limits}
+
+{pstd}
+The mixing table counts ties, so only the ties are listed (not all dyads). Measured in Stata/BE, random directed network with
+10 ties per node: 5,000 nodes 0.3 seconds (56 seconds and 4.2 GB when every dyad was listed). The significance test
+({opt permutations()}) permutes the attribute on the dense adjacency matrix; its running time at 5,000 nodes has not been
+measured.
+
 {title:See also}
 
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}

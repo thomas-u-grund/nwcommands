@@ -137,6 +137,14 @@ forms bypass {cmd:nwdissimilar} entirely and use whatever matrix/network you sup
 zero diagonal, nonnegative). Stata's own {help clustermat} (which does the actual clustering)
 requires a matrix with no missing values, including on the diagonal.
 
+{title:Limits}
+
+{pstd}
+The hierarchical clustering is Stata's {cmd:clustermat} on the dense dissimilarity matrix. Measured in Stata/BE, random
+directed network with 10 ties per node: 1,000 nodes 3 seconds, 2,000 nodes 16 seconds, 3,000 nodes 45 seconds, 5,000 nodes 170
+seconds (the dissimilarities themselves take 1 second). Above 2,000 nodes the command prints a note. {help nwdendrogram}
+of such a clustering adds the time of the plot.
+
 {title:See also}
 
 	{help nwdissimilar}, {help nwsimilar}, {help nwcomponents}, {help cluster}, {help clustermat},

@@ -35,8 +35,11 @@ program nwsimindex, rclass
 	tempname __nw_sim
 	mata: `__nw_sim' = `netobj'->calculate_similarity_index("`measure'")
 
-	nwset, mat(`__nw_sim') name(`name') undirected labs(`labs')
-	mata: mata drop `__nw_sim'
+	// node names go to nwset in a Mata variable (a long Stata option string gets blanks inserted, see GOTCHA.md)
+	tempname __nw_names
+	mata: `__nw_names' = `netobj'->get_nodenames()
+	nwset, mat(`__nw_sim') name(`name') undirected nodenames(`__nw_names')
+	mata: mata drop `__nw_sim' `__nw_names'
 
 	_nwsyntax `name'
 	mata: `netobj'->set_valued(1)

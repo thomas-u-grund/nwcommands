@@ -111,6 +111,14 @@ network's own Fiedler vector is a full per-node eigenvector, not a simple per-ne
 per-node aggregate that stacks cleanly across multiple networks the way {help nwcomponents}'s
 component id does.
 
+{title:Limits}
+
+{pstd}
+The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are
+returned, so the work grows with the cube of the number of nodes and the memory with its square. Measured in Stata/BE,
+random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 nodes 14 seconds, 3,000 nodes 50 seconds,
+5,000 nodes more than 180 seconds. Above 2,000 nodes the command prints a note.
+
 {title:See also}
 
 	{help nwevcent}, {help nwcommunity}, {help nwcomponents}, {help nwkcomponents}

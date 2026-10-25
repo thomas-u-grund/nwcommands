@@ -440,3 +440,209 @@ static int comb_kplex(long n, long nties, const long *ei, const long *ej, const 
 	csr_free(&G);
 	return rc;
 }
+
+/* ------------------------------------------------------------------ */
+/* ALG_BALANCE (22): triad balance of nwbalance                         */
+/* ------------------------------------------------------------------ */
+
+/*
+	Closed triads and balanced closed triads per node, the port of
+	calculate_balance() in unw_core.do.  A triple i<j<k is closed when every pair is tied in
+	some direction; its sign product uses, for each pair {a<b}, the weight of the tie a->b when
+	it exists and else the weight of b->a.  The product is > 0 (or a weight is missing, which
+	Mata's missing > 0 treats as true) for a balanced triad.  Ties: the stored ties (ego, alter,
+	weight), 1-based.  Result: n rows x 2 columns (closed, balanced), counts per node.
+	Work: O(sum over tied pairs of the smaller neighbour list) instead of O(n^2) pair probes.
+*/
+typedef struct { long lo, hi; int rev; double w; } bal_pair_t;
+
+static int bal_cmp(const void *a, const void *b) {
+	const bal_pair_t *x = (const bal_pair_t *)a, *y = (const bal_pair_t *)b;
+	if (x->lo != y->lo) return x->lo < y->lo ? -1 : 1;
+	if (x->hi != y->hi) return x->hi < y->hi ? -1 : 1;
+	if (x->rev != y->rev) return x->rev < y->rev ? -1 : 1;   /* forward (a<b) tie first */
+	return 0;
+}
+
+static int comb_balance(long n, long nties, const long *ei, const long *ej, const double *ew) {
+	bal_pair_t *pr;
+	long np = 0, k, u, q, a;
+	long *deg, *ptr, *idx, *cur;
+	double *wt;
+	int bad = 0;
+
+	pr = (bal_pair_t *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(bal_pair_t));
+	if (!pr) return 2;
+	for (k = 0; k < nties; k++) {
+		long x = ei[k], y = ej[k];
+		if (x == y || x < 1 || y < 1 || x > n || y > n) continue;
+		pr[np].lo = x < y ? x : y;
+		pr[np].hi = x < y ? y : x;
+		pr[np].rev = (x > y);
+		pr[np].w = ew[k];
+		np++;
+	}
+	qsort(pr, (size_t)np, sizeof(bal_pair_t), bal_cmp);
+	/* unique pairs: keep the first (forward preferred) */
+	{
+		long m = 0;
+		for (k = 0; k < np; k++) {
+			if (m > 0 && pr[m - 1].lo == pr[k].lo && pr[m - 1].hi == pr[k].hi) continue;
+			pr[m++] = pr[k];
+		}
+		np = m;
+	}
+	deg = (long *)calloc((size_t)(n + 2), sizeof(long));
+	ptr = (long *)calloc((size_t)(n + 2), sizeof(long));
+	idx = (long *)malloc((size_t)(2 * np > 0 ? 2 * np : 1) * sizeof(long));
+	wt = (double *)malloc((size_t)(2 * np > 0 ? 2 * np : 1) * sizeof(double));
+	cur = (long *)calloc((size_t)(n + 2), sizeof(long));
+	if (!deg || !ptr || !idx || !wt || !cur) { free(pr); free(deg); free(ptr); free(idx); free(wt); free(cur); return 2; }
+	for (k = 0; k < np; k++) { deg[pr[k].lo]++; deg[pr[k].hi]++; }
+	ptr[1] = 0;
+	for (u = 1; u <= n; u++) ptr[u + 1] = ptr[u] + deg[u];
+	for (u = 1; u <= n; u++) cur[u] = ptr[u];
+	/* pairs are sorted by (lo, hi): appending in this order keeps every list ascending
+	   (neighbours below u arrive from pairs with hi == u in increasing lo, then those above) */
+	for (k = 0; k < np; k++) {
+		/* entries for 'lo' list: neighbours hi ascending are appended in pair order;
+		   entries for 'hi' list: lo values arrive ascending because pairs are sorted by lo first */
+		idx[cur[pr[k].lo]] = pr[k].hi; wt[cur[pr[k].lo]++] = pr[k].w;
+		idx[cur[pr[k].hi]] = pr[k].lo; wt[cur[pr[k].hi]++] = pr[k].w;
+	}
+	if (res_alloc(n, 2)) { free(pr); free(deg); free(ptr); free(idx); free(wt); free(cur); return 2; }
+	for (k = 0; k < n * 2; k++) g_res[k] = 0;
+	/* the lists of a node: lower neighbours (appended while scanning pairs with that hi, in
+	   increasing lo) all come before the higher ones only if pairs sorted by lo... guard with a check */
+	for (u = 1; u <= n && !bad; u++)
+		for (q = ptr[u] + 1; q < ptr[u + 1]; q++)
+			if (idx[q] < idx[q - 1]) { bad = 1; break; }
+	if (bad) {
+		/* insertion sort each list (rare: lists are almost sorted) */
+		for (u = 1; u <= n; u++) {
+			for (q = ptr[u] + 1; q < ptr[u + 1]; q++) {
+				long ti = idx[q]; double tw = wt[q];
+				long r = q - 1;
+				while (r >= ptr[u] && idx[r] > ti) { idx[r + 1] = idx[r]; wt[r + 1] = wt[r]; r--; }
+				idx[r + 1] = ti; wt[r + 1] = tw;
+			}
+		}
+	}
+	/* triangles i<j<k: for each tied pair (i,j), common neighbours k > j */
+	for (a = 1; a <= n; a++) {
+		for (q = ptr[a]; q < ptr[a + 1]; q++) {
+			long j = idx[q];
+			double vij = wt[q];
+			long p1, p2, e1, e2;
+			if (j <= a) continue;
+			p1 = q + 1;                       /* neighbours of a above j */
+			e1 = ptr[a + 1];
+			p2 = ptr[j];
+			e2 = ptr[j + 1];
+			while (p2 < e2 && idx[p2] <= j) p2++;
+			while (p1 < e1 && p2 < e2) {
+				if (idx[p1] < idx[p2]) p1++;
+				else if (idx[p1] > idx[p2]) p2++;
+				else {
+					long kk = idx[p1];
+					double vik = wt[p1], vjk = wt[p2], prod;
+					int bl;
+					if (SF_is_missing(vij) || SF_is_missing(vjk) || SF_is_missing(vik)) bl = 1;
+					else { prod = vij * vjk * vik; bl = (prod > 0); }
+					g_res[(a - 1) * 2] += 1;  g_res[(j - 1) * 2] += 1;  g_res[(kk - 1) * 2] += 1;
+					g_res[(a - 1) * 2 + 1] += bl;  g_res[(j - 1) * 2 + 1] += bl;  g_res[(kk - 1) * 2 + 1] += bl;
+					p1++; p2++;
+				}
+			}
+		}
+	}
+	free(pr); free(deg); free(ptr); free(idx); free(wt); free(cur);
+	pub_result(0, n, 2);
+	return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* ALG_MATCHING (23): maximum bipartite matching of nwmatching          */
+/* ------------------------------------------------------------------ */
+
+/*
+	The Edmonds-Karp matching of calculate_bipartite_matching() in unw_core.do on a sparse
+	residual graph.  Node ids 1..n, virtual source n+1 and sink n+2; the residual arcs of each
+	node are visited in ascending target order and a path is augmented as soon as the sink is
+	discovered, exactly as bfs_augment() does on the dense capacity matrix, so the same matching
+	comes out.  Ties: mode-1 -> mode-2 ties with a positive weight, sorted by (ego, alter) as
+	edgelist() gives them; v4: the mode (1 or 2) of each node.  Result: n x 1, the mode-2 partner
+	of each mode-1 node (0 when unmatched).
+*/
+static int comb_matching(long n, long nties, const long *ei, const long *ej, const double *nv) {
+	long *ptr, *idx, *cur, *m1, *m2, *queue, *parent;
+	char *vis;
+	long k, i, j, u, qh, qt, v, found;
+	int rc = 0;
+
+	ptr = (long *)calloc((size_t)(n + 3), sizeof(long));
+	idx = (long *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(long));
+	cur = (long *)calloc((size_t)(n + 3), sizeof(long));
+	m1 = (long *)calloc((size_t)(n + 3), sizeof(long));      /* mode-1 node -> partner (0 none) */
+	m2 = (long *)calloc((size_t)(n + 3), sizeof(long));      /* mode-2 node -> partner */
+	queue = (long *)malloc((size_t)(n + 3) * sizeof(long));
+	parent = (long *)malloc((size_t)(n + 3) * sizeof(long));
+	vis = (char *)malloc((size_t)(n + 3));
+	if (!ptr || !idx || !cur || !m1 || !m2 || !queue || !parent || !vis) {
+		free(ptr); free(idx); free(cur); free(m1); free(m2); free(queue); free(parent); free(vis);
+		return 2;
+	}
+	for (k = 0; k < nties; k++) if (ei[k] >= 1 && ei[k] <= n) ptr[ei[k] + 1]++;
+	ptr[1] = 0;
+	for (i = 1; i <= n; i++) ptr[i + 1] += ptr[i];
+	for (i = 1; i <= n; i++) cur[i] = ptr[i];
+	for (k = 0; k < nties; k++) if (ei[k] >= 1 && ei[k] <= n) idx[cur[ei[k]]++] = ej[k];
+	{
+		long src = n + 1, snk = n + 2;
+		for (;;) {
+			memset(vis, 0, (size_t)(n + 3));
+			qh = 0; qt = 0;
+			queue[qt++] = src; vis[src] = 1;
+			found = 0;
+			while (qh < qt && !found) {
+				u = queue[qh++];
+				if (u == src) {
+					for (i = 1; i <= n; i++)
+						if (nv[i - 1] == 1.0 && m1[i] == 0 && !vis[i]) { vis[i] = 1; parent[i] = u; queue[qt++] = i; }
+				}
+				else if (nv[u - 1] == 1.0) {
+					for (k = ptr[u]; k < ptr[u + 1]; k++) {
+						j = idx[k];
+						if (m1[u] == j) continue;          /* saturated arc */
+						if (!vis[j]) { vis[j] = 1; parent[j] = u; queue[qt++] = j; }
+					}
+					/* the reverse arc to the source leads to a visited node */
+				}
+				else {
+					if (m2[u] != 0) {                      /* reverse arc to the matched partner */
+						v = m2[u];
+						if (!vis[v]) { vis[v] = 1; parent[v] = u; queue[qt++] = v; }
+					}
+					else if (!vis[snk]) { vis[snk] = 1; parent[snk] = u; queue[qt++] = snk; found = 1; }
+				}
+				if (vis[snk]) found = 1;
+			}
+			if (!found) break;
+			/* augment along parent[]: sink <- j <- i <- (j' <- i' ...) <- source */
+			{
+				long jj = parent[snk];                     /* mode-2 node at the end of the path */
+				while (1) {
+					long ii = parent[jj];                  /* mode-1 node before it */
+					m1[ii] = jj; m2[jj] = ii;
+					if (parent[ii] == src) break;
+					jj = parent[ii];                       /* ii was entered by the reverse arc of mode-2 node parent[ii] */
+				}
+			}
+		}
+	}
+	if (res_alloc(n, 1)) rc = 2;
+	else for (i = 1; i <= n; i++) g_res[i - 1] = (nv[i - 1] == 1.0) ? (double)m1[i] : 0.0;
+	free(ptr); free(idx); free(cur); free(m1); free(m2); free(queue); free(parent); free(vis);
+	if (rc == 0) pub_result(0, n, 1);
+	return rc;
+}

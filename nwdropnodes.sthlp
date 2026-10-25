@@ -100,6 +100,13 @@ default unless {bf:netonly} is specified.
 {pstd}
 Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: mode assignments are preserved for surviving nodes.
 
+{title:Limits}
+
+{pstd}
+Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.6 seconds. The node labels of the
+remaining network are passed on in Mata; they used to be damaged above about 900 nodes (and rows were added to the
+data).
+
 {title:See also}
    
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}

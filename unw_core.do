@@ -2997,6 +2997,41 @@ real scalar nwg_comb_ok()
 	return(nwg_comb_state)
 }
 
+/*
+	The plugin generation of this platform's binary: 0 when it has no combinatorial kernels, 2 for the
+	original set (codes 3..9), 3 when it also has the triad balance (22) and bipartite matching (23).
+	A platform whose plugin is older keeps the Mata code of nwbalance/nwmatching, slowly.
+*/
+real scalar nwg_comb_version()
+{
+	if (!nwg_comb_ok()) return(0)
+	return(nwg_scalar("__nwg_ver"))
+}
+
+/* triad balance, native: n x 2 (closed triads, balanced closed triads) per node from the stored ties */
+real matrix nwg_balance(real scalar n, real matrix el)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(22, n, el, J(0, 1, .), J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwbalance")
+	return(res)
+}
+
+/* maximum bipartite matching, native: the mode-2 partner (0 = none) of every node, mode-2 nodes 0 */
+real colvector nwg_matching(real scalar n, real matrix el, real colvector modes)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(23, n, el, modes, J(1, 0, .), aux, st)
+	if (st != 0) nwg_fail(st, "nwmatching")
+	return(res[., 1])
+}
+
 real scalar nwg_scalar(string scalar nm)
 {
 	real matrix x
@@ -4723,6 +4758,7 @@ real matrix `NWdef'::calculate_balance(){
 	real scalar n, i, j, k, tij, tjk, tik, vij, vjk, vik, bal
 
 	n = get_nodes()
+	if (nwg_comb_version() >= 3) return(nwg_balance(n, edgelist()))
 	result = J(n, 2, 0)
 
 	for (i = 1; i <= n-2; i++) {
@@ -5889,6 +5925,12 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 	}
 	n = get_nodes()
 	modes = get_modes()		// 1 x n STRING rowvector, values "1"/"2"
+	if (nwg_comb_version() >= 3) {
+		// the same matching, from the stored ties only (no n x n capacity matrices)
+		adj = edgelist()
+		if (rows(adj) > 0) adj = select(adj, (adj[.,3] :> 0) :& (adj[.,3] :< .) :& (adj[.,1] :!= adj[.,2]) :& ((modes')[adj[.,1]] :== "1") :& ((modes')[adj[.,2]] :== "2"))
+		return(nwg_matching(n, adj, (modes :== "1")' + 2 :* (modes :!= "1")'))
+	}
 	adj = *get_matrix_mod(0, 1)
 	_diag(adj, 0)
 	_editmissing(adj, 0)

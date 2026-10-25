@@ -59,6 +59,13 @@ handling happened whenever {it:matamatrix} was itself produced.
 	{cmd:. nwtostata, mat(m) stub(col)}
 	{cmd:. list}
 
+{title:Limits}
+
+{pstd}
+Every column of the matrix becomes a Stata variable, so the number of columns is limited by what the flavour of Stata
+allows (2,048 variables in Stata/BE, 32,767 in Stata/SE). The command checks this first and stops with r(900) and
+a message instead of failing half way; use the Mata matrix ({help nwtomata}) for larger networks.
+
 {title:See also}
 
 	{help nwtomata}, {help nwload}

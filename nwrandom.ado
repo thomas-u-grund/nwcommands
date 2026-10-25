@@ -7,7 +7,7 @@ program nwrandom
 	// instead of erroring, unlike every sibling generator in this group
 	// (nwpref/nwlattice/nwring/nwsmall), none of which have this
 	// wildcard and all of which correctly reject unknown options.
-	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) name(string) undirected xvars noreplace]
+	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) NODENAMESmata(string) name(string) undirected xvars noreplace]
 	unw_defs
 	
 	// Generate valid network name and valid varlist
@@ -124,7 +124,14 @@ program nwrandom
 	}
 
 	mata: st_rclear()
-	nwset, mat(`__nwnew') name(`name') labs(`labs') `undirected' `selfloop'
+	// nodenamesmata(): name of a Mata string vector with the node names. Long node name lists must not travel
+	// in a Stata option string (labs()): Stata inserts a blank every 5,292 characters of an option value.
+	if "`nodenamesmata'" != "" {
+		nwset, mat(`__nwnew') name(`name') nodenames(`nodenamesmata') `undirected' `selfloop'
+	}
+	else {
+		nwset, mat(`__nwnew') name(`name') labs(`labs') `undirected' `selfloop'
+	}
 	if "`xvars'" == "" {
 		nwload, xvars
 	}

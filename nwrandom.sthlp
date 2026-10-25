@@ -111,6 +111,12 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	Macros
 	  {bf:r(netlist)}	list of new networks
 	  
+{title:Limits}
+
+{pstd}
+{opt density()} and {opt census()} shuffle all {it:n}^2 cells, so the time and the memory grow with the square of the number
+of nodes. Measured in Stata/BE, density 0.0001: 5,000 nodes 11 seconds and 0.9 GB.
+
 {title:See also}
 
 	{help nwsmall}, {help nwpref}, {help nwpref}, {help nwlattice}, {help nwring}

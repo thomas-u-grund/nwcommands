@@ -390,3 +390,30 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
+
+## Stata inserts a blank into long option values: never pass node labels through an option string
+
+`syntax ..., labs(string)` (and any `command, opt(`longmacro')`) cuts a value longer than 5,292 characters: a blank is
+inserted into every 5,292nd character, so a label list for 900+ nodes ("n1,n2,...") comes out with names such as
+`n1 067`. The symptom is not an error: the new network has nodes the dataset does not know, `_nwdatasync` merges
+and APPENDS rows (a 5,000-node network gives _N = 5,004), and a later command that needs `_N == nodes` fails
+(`nwhierarchy`: "number of selected observations must match dimension of mymat"). Found at 5,000 nodes; the same
+bug sat in every command that forwarded `r(labs)`/`labs` to `nwset`. Pass the names in a Mata variable instead:
+`nwset ..., nodenames(<mata vector>)`; `nwrandom ..., nodenamesmata()`, `nwreplacemat ..., labsmata()` are the
+forwarding options. Test: `cscripts/test_scale5k.do`. Remaining paths that still use `labs()` with a macro:
+`nwexpand, network()`, `nw2set`, `nwimport` (user supplied lists; keep them below 5,000 characters or call `nwfromedge`).
+
+## Algorithm codes 22 and 23 (triad balance, bipartite matching); kernel version 3
+
+`native/nwcomb2.h` has `comb_balance()` (code 22) and `comb_matching()` (code 23); `comb_handles()` lists them and
+`NWCOMB_VERSION` is 3. Mata asks `nwg_comb_version()`: a plugin older than 3 (Linux and Windows until CI rebuilds them)
+keeps the older Mata code of `calculate_balance()` / `calculate_bipartite_matching()`. `comb_matching()` is an exact
+port of the dense Edmonds-Karp (residual arcs visited in ascending node number, the augmenting path ends at the first
+discovery of the sink), so it returns the same matching, not just the same size. To force the Mata path in a test,
+set the external `nwg_comb_state` to 0 (see `cscripts/test_scale5k.do`).
+
+## Equality checks of `nwdropnodes` / `nwkeepnodes`: the order of the dropped rows is not stable
+
+The rows of dropped nodes stay at the end of the data (attributes missing) and their order depends on `set sortseed`
+state, i.e. on how many sorts ran before. Compare the first `r(nodes)` rows by position and the rest as a sorted set.
+

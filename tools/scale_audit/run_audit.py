@@ -58,6 +58,8 @@ def build_do(rec, N, plus):
 def classify(rc, msg, text):
     if rc == 484 or "materializing a dense" in text and rc != 0:
         return "REFUSED_GUARD"
+    if rc == 900 and "allows at most" in text:       # nwtostata: more columns than the flavour has variables
+        return "REFUSED_GUARD"
     if rc == 920 or "macro substitution results in line that is too long" in msg:
         return "MACRO_LIMIT"
     return "OTHER_ERROR"

@@ -93,33 +93,11 @@ program nwdropnodes
 		error 198
 	}
 
-	foreach onevar in `vars' {
-		local i = `i' + 1
-		local onelab : word `i' of `labs'
-		mata: st_numscalar("r(include)", `keepmat'[`i',1])
-		if ("`r(include)'" == "1") {
-			local newvars "`newvars' `onevar'"
-			// comma-separated, not space-separated - this is what
-			// eventually reaches nwrandom's own labs() option (via
-			// nwreplacemat's size-changing path), which expects the
-			// same comma-separated format nwname's own r(labs)
-			// uses (confirmed directly: nwrandom's labs() silently
-			// treats a bare space-separated list as a single label
-			// for the first node, auto-generating default "n2"/"n3"-
-			// style labels for the rest, rather than erroring - a
-			// separate, genuinely silent bug in nwrandom.ado itself,
-			// not fixed here since this file does not need to pass
-			// it a malformed value to begin with).
-			if "`newlabs'" == "" {
-				local newlabs "`onelab'"
-			}
-			else {
-				local newlabs "`newlabs',`onelab'"
-			}
-		}
-		mata: st_rclear()
-	}
-		
+	// the node names of the remaining network go to nwreplacemat in a Mata variable: a long Stata option
+	// string gets blanks inserted by Stata (every 5,292 characters), which corrupted node names above ~900 nodes
+	tempname newnames
+	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
+
 	// BUGFIX: attribute values used to be read via st_data() AFTER
 	// nwreplacemat (below) had already run - but nwreplacemat physically
 	// reorders the dataset's own rows to match the new, post-drop node
@@ -157,7 +135,8 @@ program nwdropnodes
 	mata: `keepnet' = select(`keepnet', `keepvector')
 	mata: `keepvector' = `keepvector''
 	mata: `keepnet' = select(`keepnet', `keepvector')
-	nwreplacemat `netname', newmat(`keepnet') `netonly' labs(`newlabs') vars(`newvars') `xvars'
+	nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
+	mata: mata drop `newnames'
 
 	// deal with attributes that should be synced with the smaller network
 	if "`attributes'" != "" {

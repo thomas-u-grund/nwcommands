@@ -144,6 +144,16 @@ and {help nw2toedge} are in this group; so are two-mode networks in {cmd:nwtoedg
 this same category even though it is newer - it genuinely needs the full eigenspectrum, not just a dominant
 pair, so there is no sparse equivalent available the way there now is for {help nwevcent}.)
 
+{pstd}
+Measured at 5,000 nodes (Stata/BE, random network with 10 ties per node, one command each): {help nwspectral}, {help nwconcor}
+and {help nwhierarchy} work on dense matrices with a running time that grows with the cube (or, for the clustering, about
+the 2.4th power) of the number of nodes: 1,000 / 2,000 / 3,000 / 5,000 nodes take 1.5 / 14 / 50 / more than 180 seconds
+({cmd:nwspectral}), 4 / 16 / 57 / more than 180 seconds ({cmd:nwconcor}) and 3 / 16 / 45 / 170 seconds ({cmd:nwhierarchy});
+{help nwhomophily} 78 seconds and 5.3 GB, {help nwcollapse} 61 seconds, {help nwcug} with 5 draws 57 seconds and
+{help nwrandom} 11 seconds. {help nwbalance}, {help nwmatching}, {help nwmixing}, {help nwevcent}, {help nwdissimilar},
+{help nwsimilar}, {help nwsimindex} and {help nwlambda} take under 2 seconds at 5,000 nodes. {help nwtostata} needs one Stata
+variable per node and is limited by the number of variables of your Stata flavour (2,048 in Stata/BE).
+
 {marker limits_combinatorial}{...}
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
 

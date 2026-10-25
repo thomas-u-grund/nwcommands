@@ -60,6 +60,11 @@ program nwspectral, rclass
 	_nwsyntax `netname', max(1)
 
 	tempname __nw_L __nw_EC __nw_EV __nw_ord __nw_fiedler
+	// the complete eigendecomposition of the dense Laplacian is O(n^3)
+	// (measured in Stata/BE: 1,000 nodes 1.5 s, 5,000 nodes about 3 minutes)
+	if "`silent'" == "" & `nodes' > 2000 {
+		di "{txt}(note: nwspectral decomposes the dense `nodes' x `nodes' Laplacian completely and takes minutes above about 4,000 nodes)"
+	}
 	mata: `__nw_L' = `netobj'->calculate_laplacian(`val')
 	mata: symeigensystem(`__nw_L', `__nw_EC' = ., `__nw_EV' = .)
 	mata: `__nw_ord' = order(`__nw_EV'', 1)

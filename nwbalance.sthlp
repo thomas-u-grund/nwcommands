@@ -86,6 +86,14 @@ balanced; {it:A-C-D} and {it:B-C-D} (one negative tie each) are not.
 Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heider's theory.
 {it:Psychological Review} 63(5), 277-293.
 
+{title:Limits}
+
+{pstd}
+Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of
+nodes. The enumeration is a kernel of the native plugin; a platform whose plugin has not been rebuilt yet keeps the
+older Mata code, with the same results and the old speed. Measured in Stata/BE, random valued network with 10 ties per
+node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the older code).
+
 {title:See also}
 
 	{help nwtriads}, {help nwvalue}

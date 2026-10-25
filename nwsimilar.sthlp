@@ -135,6 +135,13 @@ carries a genuine (non-missing) diagonal (a node is maximally similar to itself)
 its source network's own node labels, so it can be compared directly against the source network
 node-for-node.
 
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random directed network with 10 ties per
+node: 5,000 nodes 1.1 seconds and 1.9 GB. The node labels of the new network are the labels of the old one at any size
+(they used to be damaged above about 900 nodes).
+
 {title:See also}
 
 	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}

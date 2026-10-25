@@ -85,6 +85,11 @@ program nwconcor, rclass
 		_nwsyntax `netname_temp'
 
 		tempname __nw_concor
+		// CONCOR correlates the full node-by-node matrix in every iteration: O(n^3) per iteration
+		// (measured in Stata/BE: 1,000 nodes 4 s, 5,000 nodes more than 3 minutes)
+		if "`silent'" == "" & `nodes' > 2000 {
+			di "{txt}(note: nwconcor works on the dense `nodes' x `nodes' matrix and takes minutes above about 3,000 nodes)"
+		}
 		capture noisily mata: `__nw_concor' = `netobj'->calculate_concor(`splits', `val', `maxiter')
 		if _rc != 0 {
 			exit _rc

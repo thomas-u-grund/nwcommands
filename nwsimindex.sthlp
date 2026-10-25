@@ -91,6 +91,12 @@ Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social n
 {pstd}
 Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Networks} 25(3), 211-230.
 
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random undirected network with 10 ties per
+node: 5,000 nodes 0.8 seconds and 1.3 GB.
+
 {title:See also}
 
 	{help nwsimilar}, {help nw2project}, {help nwkcore}, {help nwburt}
