@@ -669,6 +669,8 @@ if "`overwrite'" != "" local replace "replace"
 	
 		if "`nodenames'" != "" {
 			mata: `netobj'->set_nodenames(`nodenames')
+			// the Stata variable names that nwload gives the nodes follow the names (as create_by_name() does for labs())
+			mata: `netobj'->update_nodesvar()
 		}
 
 		// vars() lets a caller explicitly name the Stata variables
