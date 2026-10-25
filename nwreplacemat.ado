@@ -36,7 +36,7 @@ program nwreplacemat
 		}
 		_nwsyntax `netname', max(1)
 		mata: st_local("__sym", strofreal(nw_triplets_symmetric(`triplets', `matrows')))
-		mata: `netobj'->set_valued(0)
+		mata: `netobj'->set_valued(`netobj'->check_valued())
 		if "`sync'" == "" {
 			nwsync `netname'
 		}
@@ -187,6 +187,9 @@ program nwreplacemat
 	else {
 		mata: `netobj'->set_directed(1)
 	}
+
+	// the valued flag follows the new values (a network created empty is unvalued until now)
+	mata: `netobj'->set_valued(`netobj'->check_valued())
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

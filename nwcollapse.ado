@@ -53,6 +53,10 @@ program nwcollapse
 	nwduplicate `original', name(_temp_`original')
 	_nwdatasync _temp_`original'
 	_nwsyntax _temp_`original'
+	// the collapsed network keeps the directedness of the original (nwfromedge
+	// would otherwise guess it from whether the collapsed list is symmetric)
+	local __dirflag "forcedirected"
+	if "`directed'" == "false" local __dirflag "undirected"
 	tempvar by_group by_dummy
 	gen `by_dummy' = 1
 	qui replace `by_dummy' = . if _n > `nodes'
@@ -79,11 +83,11 @@ program nwcollapse
 	collapse (`stat') _temp_`original' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
 	
 	if "`generate'" != "" {
-		qui nwfromedge _fromid _toid _temp_`original', name(`generate')
+		qui nwfromedge _fromid _toid _temp_`original', name(`generate') `__dirflag'
 	}
 	else {
 		nwdrop `original'
-		qui nwfromedge _fromid _toid _temp_`original', name(`original')
+		qui nwfromedge _fromid _toid _temp_`original', name(`original') `__dirflag'
 	}
 	restore
 end

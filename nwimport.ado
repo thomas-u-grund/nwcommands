@@ -633,6 +633,8 @@ program _nwimport_gml
 		file open importfile using `anything', read
 
 		local mode ""
+		local gmlvalue 1
+		local nwfromedgeopt ""
 		file read importfile line
 		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked "GML/
 		// GraphML import fixture confidence" gap): this used to loop
@@ -680,12 +682,25 @@ program _nwimport_gml
 				if "``i''" == "source" & "`mode'" == "edge" {
 					local mode_sub = "edge_source"
 					local source = "``=`i'+1''"
-					_insert_edge, from(`source') to(`target') value(1)
+					_insert_edge, from(`source') to(`target') value(`gmlvalue')
 				}
 				if "``i''" == "target" & "`mode'" == "edge" {
 					local mode_sub = "edge_target"
 					local target = "``=`i'+1''"
-					_insert_edge, from(`source') to(`target') value(1)
+					_insert_edge, from(`source') to(`target') value(`gmlvalue')
+				}
+				// tie value (written by nwexport as value, by other software as weight)
+				if inlist("``i''", "value", "weight") & "`mode'" == "edge" {
+					local gmlvalue = real("``=`i'+1''")
+					if `gmlvalue' >= . local gmlvalue 1
+					if "`source'" != "-1" & "`target'" != "-1" {
+						qui replace _value = `gmlvalue' in `=_N'
+					}
+				}
+				// graph [ directed 0|1 ]: before the first node or edge block
+				if "``i''" == "directed" & "`mode'" == "" {
+					if "``=`i'+1''" == "0" local nwfromedgeopt "undirected"
+					if "``=`i'+1''" == "1" local nwfromedgeopt "forcedirected"
 				}
 				if "``i''" == "node" {
 					local mode = "node"
@@ -694,6 +709,7 @@ program _nwimport_gml
 					local mode = "edge"
 					local target = -1
 					local source = -1
+					local gmlvalue 1
 				}
 				local i = `i' + 1
 			}

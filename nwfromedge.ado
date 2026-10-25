@@ -79,12 +79,12 @@ program nwfromedge
 	tempvar _value
 	if (wordcount("`varlist'") == 3) {
 		local value : word 3 of `varlist'
-		gen `_value' = `value'
+		gen double `_value' = `value'
 		_extract_valuelabels `value'
 		local edgelabs "`r(valuelabels)'"
 	}
 	else {
-		gen `_value' = 1
+		gen byte `_value' = 1
 	}
 	
 	// check for string variables

@@ -50,7 +50,7 @@ in its own {bf:Supported network types} section rather than raising an error.
 {pstd}
 A network is {it:valued} (weighted) when its ties carry a real number, not just presence/absence -
 set automatically whenever {help nwset}, {help nwfromedge}, or an import command is given tie
-values other than a plain 0/1 indicator, and readable via {help nwsummarize}/{help nwname}'s own
+values other than a plain 0/1 indicator (at least one tie value other than 0 and 1; a network whose ties are all 1 is binary), and readable via {help nwsummarize}/{help nwname}'s own
 {cmd:valued} field. As with two-mode status, ordinary commands do not need a special flag to tell
 them a network is valued; each command's own {bf:Supported network types} section states what it
 actually does with the tie values.

@@ -4,6 +4,21 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- **Networks whose tie values all lie in (0,1], or that have one constant value other than 0 and 1, are now valued.** The rule is: a network is valued when at least one tie has a value other than 0 and 1; a network whose ties are all 1 is binary. Before, only a value below 0 or above 1 made a network valued, so shares, probabilities and normalised weights ran as binary in `nwclustering`, `nwcommunity`, `nwmodularity`, `nwspectral`, `nwconcor`, `nwcoreperiphery`, `nwfactions` and `nw2clustering` (default measure) and in every command that reads the flag. Their results on such networks change; binary networks are unchanged. The options `valued` and `unvalued` of `nwset` now work (they were ignored).
+- `nwbetween, weighted` counted tied shortest paths wrongly when path lengths are sums of fractions (alpha 1): equal lengths differed by rounding. Lengths are now compared with a relative tolerance (1e-10). Values change on networks with equal-cost paths (Sampson Berthold 18.08 becomes 14.07; the printed `gang_valued` node g20 73.91 becomes 74.08).
+- `nwsimilar, type(crossproduct)` now uses the tie values (sum over k of w_ik w_jk), as documented; before it counted common contacts. Binary networks are unchanged.
+- `nwtoedge`, `nwsave` and `nwexport, type(gml)` wrote tie values with 7 digits (3 digits from 1e7 on); they now keep full precision. `nwfromedge` stored the tie value in single precision (16,777,217 became 16,777,216); it now uses double.
+- `nwcollapse` returns a network with the directedness of the original (an undirected network came back directed, a directed one was flagged undirected when the collapsed ties happened to be symmetric).
+
+### Fixed
+- `nwkeepnodes` and `nwdropnodes` lost the Valued flag of the network.
+- `nwimport, type(gml)` ignored the tie `value`/`weight` and the `directed` key of the file.
+- `nwconcor` stopped with a false "every node must have at least one tie" on signed networks (it summed values, so negative ties cancelled positive ones).
+- `nwclique` and `nwkcore` print one line "(note: tie values are ignored; this measure is binary)" when given a valued network (not with `silent`).
+
 ## [3.5.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)

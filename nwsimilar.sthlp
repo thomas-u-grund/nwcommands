@@ -41,7 +41,7 @@
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: jaccard}}Calculate Jaccard distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: matches}}Calculate percentage of matches in tie vectors of two nodes{p_end}
-{p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes{p_end}
+{p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes, the sum over all other nodes k of w_ik*w_jk (the number of common contacts in a binary network){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker context}{...}

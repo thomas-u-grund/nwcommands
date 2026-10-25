@@ -120,10 +120,13 @@ to the network.
 An adjacency matrix is a simple representation of a network. The adjaceny matrix {it:M} of a one-mode network
 has the dimensions {it:nodes} x {it:nodes}. The matrix cell {it:M_ij} = 0 when there is no tie between nodes {it:i}
 and {it:j}. In binary networks, {it:M_ij} = 1 when there is a network relationship between nodes {it:i} and {it:j}.
-However, networks can also be valued, i.e. {it:M_ij} > 1; in undirected networks {it:M_ij = M_ji}.
+However, networks can also be valued, i.e. {it:M_ij} may take other values than 0 and 1 (for example 2, 0.3 or -1); in undirected networks {it:M_ij = M_ji}.
 
 {pstd}
-The command automatically recognizes if the network is unvalued (only has values 0, 1 or missing) or valued.
+The command automatically recognizes if the network is unvalued or valued: a network is valued when at least one tie
+has a value other than 0 and 1, so shares or probabilities between 0 and 1, a network whose ties all equal 2, and
+signed networks are valued. A network whose ties are all 1 is binary. Options {opt valued} and {opt unvalued} override
+the rule.
 
 {pstd}
 There are three ways to explicitly declare data to be network data:

@@ -52,6 +52,7 @@
 		{p_end}
 {p2col:{cmd: gml}}network is given in {browse "https://docs.gephi.org/desktop/User_Manual/Import/GML_File_Format/":GML file format}
 	{p_end}
+{p2col:}The tie value is read from the {cmd:value} or {cmd:weight} key of an edge (1 if absent) and the direction from the {cmd:directed} key of the graph.{p_end}
 
 
 {synoptset 20 tabbed}{...}
