@@ -24,7 +24,7 @@ program nwbrokerage, rclass
 		_nwsyntax `netname_temp'
 
 		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		local netgenerate "`generate'"

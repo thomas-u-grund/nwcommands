@@ -82,7 +82,7 @@ program nwplotmatrix
 		local sortby `_group'
 	}
 	
-	qui sort `nw_included' `sortby'
+	qui sort `nw_included' `sortby' `_sorting'
 	mata: st_matrix("`tempmat'",(*`netobj'->get_matrix())[st_data((1,`nodes'), ("`_sorting'")), st_data((1,`nodes'), ("`_sorting'"))])
 	
 	local xlines ""

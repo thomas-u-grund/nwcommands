@@ -323,7 +323,7 @@ program nwfromedge
 			// Error-code coherence pass: consolidated onto `errNWsExists'
 			// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 			// history of this convention's drift onto an undocumented `6099'.
-			di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+			noi di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
 			error `errNWsExists'
 		}
 	}
@@ -394,6 +394,12 @@ program nwfromedge
 	mata: `othernetobj'->create_by_name_sparse(`__nwnodenames')
 	mata: `othernetobj'->set_name("`edgename'")
 	mata: nw_triplets_lastwins(__nwego, __nwalter, __nwvalue, __nwrank)
+	// An undirected network from a list that gives each tie once: add the missing reverse direction first, with the
+	// tie's own value. Symmetrising afterwards with "max" would compare a negative value with the 0 of the absent
+	// direction and keep the 0 (every -1 of a signed network was lost).
+	if "`forceundirected'" != "" | "`undirected'" != "" {
+		mata: nw_fromedge_mirror(__nwego, __nwalter, __nwvalue)
+	}
 	mata: `othernetobj'->set_edge_from_triplets(__nwego, __nwalter, __nwvalue, 1)
 	// Directed at construction unconditionally, matching nwset's own
 	// former default at this exact step (its own mat()-dispatch set
@@ -457,6 +463,7 @@ program nwfromedge
 	}
 end
 
+capture mata: mata drop nw_fromedge_mirror()
 capture mata: mata drop nw_fromedge_prep()
 mata:
 // The node dictionary of nwfromedge done in Mata: the identifiers are mapped to 1, 2, ... in ascending order of their
@@ -492,5 +499,44 @@ pointer(real colvector) rowvector nw_fromedge_prep(string scalar fromvar, string
 	if (rankvar != "") rank = st_data(., rankvar)
 	else rank = J(0, 1, .)
 	return((&ge, &ga, &(st_data(., valuevar)), &rank, &u))
+}
+
+// For an undirected network: every tie (i,j) whose reverse (j,i) is not in the list gets the reverse added with the same
+// value, so that the later symmetrisation compares two listed values (when both directions are listed with different
+// values the larger one is kept, as always) and never a listed value against the "no tie" 0.
+void nw_fromedge_mirror(real colvector e, real colvector a, real colvector v)
+{
+	real colvector off, k1, k2, x, tag, ord, xs, ts, first, pidx, ps, cnt, cntorig, miss, ne, na, nv
+	real matrix info
+	real scalar n, m
+
+	off = selectindex(e :!= a)
+	m = rows(off)
+	if (m == 0) return
+	n = max((max(e), max(a)))
+	k1 = e :* (n + 1) :+ a
+	k2 = a[off] :* (n + 1) :+ e[off]
+	x = k1 \ k2
+	tag = J(rows(k1), 1, 1) \ J(m, 1, 0)
+	ord = order(x, 1)
+	xs = x[ord]
+	ts = tag[ord]
+	first = J(rows(xs), 1, 1)
+	if (rows(xs) > 1) first[|2 \ rows(xs)|] = (xs[|2 \ rows(xs)|] :!= xs[|1 \ rows(xs)-1|])
+	pidx = runningsum(first)
+	info = panelsetup(xs, 1)
+	ps = panelsum(ts, info)
+	cnt = ps[pidx]
+	cntorig = J(rows(x), 1, 0)
+	cntorig[ord] = cnt
+	miss = selectindex(cntorig[|rows(k1)+1 \ rows(x)|] :== 0)
+	if (rows(miss) == 0) return
+	miss = off[miss]
+	ne = a[miss]
+	na = e[miss]
+	nv = v[miss]
+	e = e \ ne
+	a = a \ na
+	v = v \ nv
 }
 end

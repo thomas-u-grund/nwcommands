@@ -21,7 +21,7 @@ program nwkcomponents, rclass
 		_nwtimeguard, command(nwkcomponents) nodes(`nodes') model(power) base(39) exponent(2.6) alternative(k-components need a vertex-connectivity (max-flow) search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
 
 		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		local netgenerate "`generate'"

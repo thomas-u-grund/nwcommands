@@ -33,7 +33,9 @@
 {marker mode}{...}
 {p2col:{it:mode}}Description{p_end}
 {p2line}
-{p2col:{cmd: max}}Maximum of tie values (i,j) and (j,i); default
+{p2col:{cmd: max}}Maximum of tie values (i,j) and (j,i); default. A missing tie counts as 0, so in a signed
+		network a tie of -1 against no tie in the other direction becomes 0 (use {cmd:mode(sum)} to keep it).
+		To build an undirected signed network from a list of ties use {help nwfromedge:nwfromedge, undirected}.
 		{p_end}
 {p2col:{cmd: min}}Minimum of tie values (i,j) and (j,i)
 		{p_end}
@@ -122,4 +124,4 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

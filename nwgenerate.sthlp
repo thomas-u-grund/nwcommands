@@ -167,4 +167,4 @@ underlying {it:netfcn}/network expression is invoked - see that function's own h
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

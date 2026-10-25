@@ -138,7 +138,11 @@ program nwuse
 		// for the remainder of this loop iteration, below.
 		nwvalidate `n'
 		local ncreate = r(validname)
-		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'")
+		// an undirected network is saved with each tie once; `undirected' adds the missing direction with the tie's own
+		// value (the nwsym below alone would keep 0 instead of a negative value)
+		local fedir ""
+		if "`d'" == "false" local fedir "undirected"
+		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'") `fedir'
 		// BUGFIX: `_nw_netname' is a LOCAL-macro reference to a local
 		// literally named "_nw_netname", which is never defined
 		// anywhere in this loop - `_nw_netname' is the STATA VARIABLE

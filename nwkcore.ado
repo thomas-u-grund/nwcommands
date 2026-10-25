@@ -15,7 +15,7 @@ program nwkcore, rclass
 		_nwsyntax `netname_temp'
 
 		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		local netgenerate "`generate'"
@@ -64,7 +64,8 @@ program nwkcore, rclass
 		mata: core_sizeid[.,1] = core_size
 		mata: core_sizeid[.,2] = core_id
 		mata: core_sizeid[.,3] = core_share
-		mata: core_sizeid = sort(core_sizeid, -1)
+		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
+		mata: core_sizeid = sort(core_sizeid, (-1, 2))
 		mata: st_matrix("core_sizeid", core_sizeid)
 		mata: st_numscalar("corelevels", core_number)
 

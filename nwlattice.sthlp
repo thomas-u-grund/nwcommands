@@ -73,4 +73,4 @@ Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). W
 	{help nwpref}, {help nwrandom}, {help nwring}, {help nwsmall}
 
 {hline}
-{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

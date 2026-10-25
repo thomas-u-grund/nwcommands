@@ -66,7 +66,7 @@ program nwbetween
 
 		capture confirm variable `netgenerate', exact
 		if _rc == 0 & "`replace'" == "" {
-			di "{err}Variable {bf:`netgenerate'} already exists; use {bf:replace} or {bf:generate()}"
+			noi di "{err}Variable {bf:`netgenerate'} already exists; use {bf:replace} or {bf:generate()}"
 			err 99
 		}
 		capture drop `netgenerate'

@@ -4,6 +4,24 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.5.0] - 2026-10-25
+
+### Results that change (read before you re-run old analyses)
+- **Negative ties of undirected networks were lost** when a network was built from a tie list that lists each pair once (`nwfromedge ..., undirected`, `nwset ..., edgelist undirected`, `nwsave` then `nwuse`, `nwimport type(edgelist) forceundirected`): every -1 became 0, so signed undirected networks lost their negative ties and `nwbalance` then called every triad balanced. They are now kept. Re-load signed undirected networks that were saved or built this way.
+- Ties are ordered the same way under every seed: equal-sized classes in `r(core_sizeid)` (`nwkcore`), `r(comm_sizeid)` (`nwmodularity`) and `r(block_sizeid)` (`nwconcor`) are listed by ascending id, and a few figures (`nwplot`, `nwplotmatrix`, `nwmovie`) and the vector of a repeated eigenvalue (`nwspectral`) can differ from earlier runs. Details below.
+- Error messages that were swallowed inside `quietly` blocks are now visible (see Fixed).
+
+### Fixed
+- Error messages printed inside a `quietly` block were swallowed, so the user saw only "invalid syntax". Now shown: `option generate() required.` for `nw2degree`, `nwbrokerage`, `nwclique`, `nwcohesion`, `nwcommunity`, `nwconcor`, `nwcoreperiphery`, `nwdegree`, `nwkcomponents`, `nwkcore`, `nwnclan` and `nwnclique`; the "already exists" messages of `nwbetween` and `nwfromedge`; the size limit of `nwconcor`; and two messages of the bar-plot helper (`all bars zero height?`, `choose between offset() and zoffset()`).
+- Ties are broken the same way under every seed. Mata's `sort()` and `order()` order equal keys by the state of the random-number generator, so with equal values these results changed from run to run: the order of equal-sized classes in `r(core_sizeid)` (`nwkcore`), `r(comm_sizeid)` (`nwmodularity`) and `r(block_sizeid)` (`nwconcor`) and which of two equal components `nwplot` draws first; the order of events with the same time in the `nwmovie` file; the vector of a repeated eigenvalue in `nwspectral`; the order of nodes within one group in `nwplotmatrix, group()`; and the positions in the layouts `hierarchy` and `bipartite` of `nwplot`. Equal sizes are now listed by ascending id, and the other ties keep the order of the input.
+
+### Fixed (results change!)
+- Saving and reloading an undirected signed network (`nwsave` then `nwuse`, also `nwappend`) turned every negative tie into 0, so `nwbalance` then reported every triad as balanced. The same happened with `nwfromedge`, `nwset` and `nwimport` when an undirected network was built from a list that gives each tie once (`undirected`, `forceundirected`): the symmetrisation compared a value of -1 with the 0 of the absent direction and kept the 0. A tie listed in only one direction is now stored with its own value (if both directions are listed with different values the larger one is kept, as before). Networks with only non-negative values are not affected. Saved files made with 3.4.0 or earlier load as before; if you saved an undirected network with negative ties, rebuild it from the original data. `nwsym` itself is unchanged: on a directed network, `mode(max)` still treats a missing tie as 0. Regression test `cscripts/test_signfix.do`.
+- The signed example data sets are now stored with each tie once (smaller files); loading them gives the same networks.
+
+### Added
+- Three signed example networks (one valued network with +1 and -1 ties), loaded with `nwwebuse`: `senate114` and `senate93` (US Senate co-sponsorship networks of the 114th and 93rd Congress, Neal 2020, doi:10.6084/m9.figshare.8096429, CC BY 4.0: 100 senators with 1,435 positive and 2,261 negative ties, and 101 senators with 581 positive and 1,858 negative ties; attributes state and party) and `gahuku` (alliances and enmities among the 16 Gahuku-Gama tribes, Read 1954: 29 positive and 29 negative ties). Sources, licences and the changes made to the Senate subset are in `help netexample` and the website page "Data sets"; regression test `cscripts/test_signed_data.do`.
+
 ## [3.4.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)
