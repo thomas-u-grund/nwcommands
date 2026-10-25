@@ -133,13 +133,19 @@ SNA datasets, not recommended for very large or very dense networks.
 {title:Limits}
 
 {pstd}
-The search for vertex cuts runs in compiled code and the network is not turned into a matrix. Measured in Stata/BE,
-random undirected network with about 20 ties per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.05 / 2 / 31 seconds
-(before: 25 seconds at 1,000 nodes, over 5 minutes at 5,000). The time grows about with nodes times ties; for large k
-or many cuts it is longer. Without the compiled plugin for the platform the Mata code is used and is much slower.
+The search for vertex cuts runs in compiled code and the network is not turned into a matrix. For k(2), the default, the search needs a
+single pass over the ties (the blocks of the network, one depth-first search) instead of one max-flow computation per node; for k(3) and
+higher it is still one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn
+per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds (before: 0.04 / 1.8 / 67 seconds). Both routes give the same
+components in the same order. Without the compiled plugin for the platform the Mata code is used and is much slower. For large k or many
+cuts the time is longer.
 
 {pstd}
-Every level of the recursion looks for a minimum vertex cut. Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 39 seconds; the time grows like the number of nodes to the power 2.6. When the estimated time is more than 2 minutes (about 31,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
+Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time
+is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix {cmd:r(kcomp_matrix)}
+(one row per component, one column per node): 100,000 nodes take about one minute. When the estimated time is more than 2 minutes (about 120,000
+nodes for k(2) with the compiled plugin, about 31,000 nodes otherwise) the command stops at once with r(484) and a message; option {opt force}
+runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
 
 {title:See also}
 

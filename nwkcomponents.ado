@@ -18,7 +18,17 @@ program nwkcomponents, rclass
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
-		_nwtimeguard, command(nwkcomponents) nodes(`nodes') model(power) base(39) exponent(2.6) alternative(k-components need a vertex-connectivity (max-flow) search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
+		// k = 2 with a plugin that has the block search (generation 8 or later) is much faster: the estimate of the guard follows
+		local __tb 39
+		local __te 2.6
+		if `k' == 2 & "$NW_NOFASTKERNELS" == "" {
+			mata: st_local("__gen", strofreal(nwg_comb_version()))
+			if `__gen' >= 8 {
+				local __tb 1.2
+				local __te 2.5
+			}
+		}
+		_nwtimeguard, command(nwkcomponents) nodes(`nodes') model(power) base(`__tb') exponent(`__te') alternative(k-components need a vertex-connectivity (max-flow) search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
 
 		if "`generate'" == "" {
 			di "{err}option {bf:generate()} required."

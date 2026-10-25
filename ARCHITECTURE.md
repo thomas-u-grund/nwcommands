@@ -48,11 +48,11 @@ eliminates interpreter overhead, and a bespoke kernel avoids licensing questions
 build systems a general library would bring along for a handful of functions actually used.
 
 - `nwgraph.c` — betweenness centrality (Brandes' algorithm) and unweighted distances, structured to
-  host further general graph kernels behind the same plugin binary over time. `nwcomb.h`, `nwcomb2.h` and `nwfast.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
+  host further general graph kernels behind the same plugin binary over time. `nwcomb.h`, `nwcomb2.h`, `nwfast.h` and `nwfast2.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
   blocking, factions, line connectivity (equivalent-flow tree), the 4-node motif census, two-mode
   clustering, triad balance, bipartite matching, Louvain communities, the distance sums behind closeness
   and Katz (one breadth-first search per node, no distance matrix), the local clustering coefficient, the
-  triad census and eigenvector centrality (called from their own ado files), and the exhaustive subgroup
+  triad census, eigenvector centrality, PageRank and maximal cliques (called from their own ado files), and the exhaustive subgroup
   searches (n-cliques, n-clans, k-plexes) with result and work limits. The Mata side (`nwg_comb()` in `unw_core.do`) probes the plugin once per session and
   keeps the older Mata code as the fallback.
 

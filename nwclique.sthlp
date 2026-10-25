@@ -98,9 +98,13 @@ network could take a long time; not specially guarded against here beyond this n
 
 {pstd}
 Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
-are as many as its ties and were the bulk of the work). Measured in Stata/BE on a random undirected network with 10 ties drawn per
-node and {opt minsize(3)}: 10,000 nodes 0.9 seconds (77 seconds before), 20,000 nodes 3.0 seconds and 0.9 GB. The clique matrix
-({cmd:r(clique_matrix)}) has one row per clique and one column per node, so a network with many cliques needs a lot of memory.
+are as many as its ties and were the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
+(the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
+same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
+20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
+which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
+one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
+of memory for that matrix.
 
 {title:See also}
 
