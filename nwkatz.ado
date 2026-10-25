@@ -291,9 +291,9 @@ program nwkatz
 		di "{txt}	Network has been symmetrized for calculation.{txt}"
 	}
 	di "{hline 40}"
-	di "{txt}	Alpha: {res}`=strtrim(string(round(`alpha',0.001),"%9.0g"))'"
+	di "{txt}	Alpha: {res}`=strtrim(string(round((`alpha')*1000)/1000,"%9.0g"))'"
 	if "`walks'" != "" {
-		di "{txt}	Spectral radius (rho): {res}`=strtrim(string(round(`rho',0.001),"%9.0g"))'"
+		di "{txt}	Spectral radius (rho): {res}`=strtrim(string(round((`rho')*1000)/1000,"%9.0g"))'"
 	}
 
 	sum `generate_all'

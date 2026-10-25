@@ -214,10 +214,18 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// this is why the previous version of this file explicitly did not
 	// offer one; genuine dyad-level fitted values are captured directly,
 	// on demand, instead.
-	if "`predict'" != "" {
-		tempvar __nw_fittedvar
-		qui predict `__nw_fittedvar'
+	// Always captured (not only with predict()): the postestimation
+	// command  predict newnetname  after nwqap (see nwqap_p.ado) builds
+	// the fitted-value network from it.
+	tempvar __nw_fittedvar
+	capture qui predict `__nw_fittedvar'
+	local __nw_havefit = (_rc == 0)
+	if `__nw_havefit' {
 		mata: fitted_long = st_data(., "`__nw_fittedvar'")
+	}
+	else if "`predict'" != "" {
+		di "{err}predict() is not available for {bf:type(`type')}."
+		error 198
 	}
 
 	// Calculate p-values.
@@ -401,17 +409,26 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// actual (possibly auto-incremented) target name via nwvalidate before
 	// calling nwset, so nwset is only ever asked to create under a name
 	// already confirmed free.
+	capture mata: mata drop nwqap_fitted_last
+	if `__nw_havefit' {
+		mata: fitted_mat = transformOutOfLong(fitted_long, `nodes')
+		mata: _diag(fitted_mat, J(`nodes', 1, 0))
+		// kept for the postestimation command  predict newnetname
+		mata: nwqap_fitted_last = fitted_mat
+		local __nw_fit_directed "`directed'"
+		local __nw_fit_labs `"`labs'"'
+	}
 	if "`predict'" != "" {
 		nwvalidate `predict'
 		local predict = r(validname)
-		mata: fitted_mat = transformOutOfLong(fitted_long, `nodes')
-		mata: _diag(fitted_mat, J(`nodes', 1, 0))
 		if "`directed'" == "true" {
 			qui nwset, mat(fitted_mat) name(`predict') directed labs(`labs')
 		}
 		else {
 			qui nwset, mat(fitted_mat) name(`predict') undirected labs(`labs')
 		}
+	}
+	if `__nw_havefit' {
 		mata: mata drop fitted_long fitted_mat
 	}
 
@@ -427,7 +444,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	local dyads = `r(nodes)' * `r(nodes)' - `r(nodes)' 
 	di "{txt}Multiple Regression Quadratic Assignment Procedure"
 	di
-	di "{txt}  Estimation{col 25}={res}  QAP" 
+	if "`qapspp'" != "" {
+		di "{txt}  Estimation{col 25}={res}  QAP, double semi-partialling"
+	}
+	else {
+		di "{txt}  Estimation{col 25}={res}  QAP" 
+	}
 	di "{txt}  Regression{col 25}={res}  `type'"
 	di "{txt}  Permutations{col 25}={res}  `permutations'"  
 	di "{txt}  Number of vertices{col 25}=  {res}`r(nodes)'" 
@@ -495,6 +517,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	ereturn local title "Multivariate regression quadratic assignment procedure (QAP)"
 	ereturn local depvar "`net'"
 	ereturn local qap_regcmd "`type'"
+	if `__nw_havefit' {
+		ereturn local predict "nwqap_p"
+		ereturn local fit_directed "`__nw_fit_directed'"
+		ereturn local fit_labs `"`__nw_fit_labs'"'
+	}
 	ereturn scalar permutations = `permutations'
 	ereturn matrix pvalues pvalues
 	mata: mata drop datalong net_long perm_net onenet dvnet
@@ -637,6 +664,14 @@ real rowvector _nwqap_dsp_pvalue(real matrix datalong, real scalar nodes,
 		Xk_perm_full = transformIntoLong(Xk_perm_mat)
 		nulldist[i,1] = _nwqap_ols_coef(select(Yresid_full, offdiag), select(Xk_perm_full, offdiag))
 	}
+
+	// The observed statistic must be on the scale of the null draws: the
+	// OLS slope of the residualized Y on the residualized x_k (equal to
+	// the model's own coefficient for type(regress), by the
+	// Frisch-Waugh-Lovell theorem). The coefficient of the main model
+	// (origcoef; a logit or probit coefficient for a binary dependent
+	// network) is on another scale and gave p = 0 for every variable.
+	origcoef = _nwqap_ols_coef(select(Yresid_full, offdiag), select(Xkresid_full, offdiag))
 
 	mean_null = mean(nulldist)
 	var_null = variance(nulldist)

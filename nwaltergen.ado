@@ -94,6 +94,9 @@ program nwaltergen
 		di as err "dataset has fewer observations (`=_N') than the network has nodes (`nodes')"
 		error 4
 	}
+	// align row i of the data set with node i of the network before the positional
+	// read/write below (see nwcommunity.ado)
+	_nwsyncrows `net'
 
 	tempname __nw_srcvar __nw_alterstat
 	mata: `__nw_srcvar' = st_data(1::`nodes', "`srcvar'")

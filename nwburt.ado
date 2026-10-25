@@ -92,6 +92,9 @@ program nwburt, rclass
 	qui gen _efficiency = .
 	qui gen _constraint = .
 	qui gen _hierarchy = .
+	// align row i of the data set with node i of the network before the positional
+	// read/write below (see nwcommunity.ado)
+	_nwsyncrows `netname'
 
 	mata: st_store((1::`nodes'), "_effsize", effsize)
 	mata: st_store((1::`nodes'), "_efficiency", efficiency)
