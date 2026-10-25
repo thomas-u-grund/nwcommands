@@ -8825,10 +8825,14 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// the in-neighbor index of a directed network is built when something asks for it (ensure_reverse_built())
 	rev_pending = (isdirect & nnz > 0)
 
+	// The valued flag is fixed when a network is created (by the command that creates it) and is not
+	// re-derived from the values afterwards: a valued network stays valued, whatever its values are
+	// (even all 1).  Only a network that is not flagged valued becomes valued when ties with a value
+	// other than 0 and 1 appear in it (a transformation that creates values).
 	if (nnz > 0){
-		isvalued = any((weight :< .) :& (weight :!= 0) :& (weight :!= 1))
+		if (isvalued != `True') isvalued = any((weight :< .) :& (weight :!= 0) :& (weight :!= 1))
 	}
-	else {
+	else if (isvalued != `True') {
 		isvalued = `False'
 	}
 
@@ -12135,6 +12139,7 @@ void `NWdef'::zap() {
 	edge  = J(0, 0, 0)
 	isdirect = `False'
 	is2mode   = `False'
+	isvalued = `False'
 	sparse_built = `False'
 	rev_pending = 0
 }
