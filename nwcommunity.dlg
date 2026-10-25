@@ -38,7 +38,7 @@ BEGIN
   CHECKBOX cx_listall 290 278 190 ., label("listall") option(listall)
   TEXT tx_cx_onemode 20 306 260 ., label("Two-mode network: Newman instead of Barber modularity (one-mode reading)")
   CHECKBOX cx_onemode 290 306 190 ., label("onemode") option(onemode)
-  TEXT tx_ed_starts 20 334 260 ., label("Two-mode network: number of starting orders of the search (default 10)")
+  TEXT tx_ed_starts 20 334 260 ., label("Two-mode network: number of starting orders of the search (default 30)")
   EDIT ed_starts 290 334 100 ., numonly nomem option(starts)
 END
 

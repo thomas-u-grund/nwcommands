@@ -40,7 +40,7 @@ Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**f
 
 ## Supported network types
 
-Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: not checked.
+Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
 

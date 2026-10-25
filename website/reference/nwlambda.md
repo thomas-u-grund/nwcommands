@@ -46,7 +46,7 @@ Computed via a direct max-flow (Edmonds-Karp) between every pair of nodes on the
 
 ## Supported network types
 
-Binary: yes (only) - similarity is computed from binary edge-connectivity; tie values are ignored. Directed: yes - automatically symmetrized first (edge connectivity has no standard directed generalization in the classical cohesive-subgroup literature, the same choice [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwkcomponents](nwkcomponents) already make). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - similarity is computed from binary edge-connectivity; tie values are ignored. Directed: yes - automatically symmetrized first (edge connectivity has no standard directed generalization in the classical cohesive-subgroup literature, the same choice [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwkcomponents](nwkcomponents) already make). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

@@ -33,8 +33,8 @@ command directly, see the [command reference](../reference/).
 8. [Paths & Ego Networks](08-paths-ego-networks/) — geodesics, reachability, ego-network
    extraction
 9. [Two-mode Networks](11-two-mode-networks/) — affiliation data (people and events or companies):
-   degree, projection to one mode, components, communities, plotting; the data sets `davis` and
-   `ftdirectors_se`
+   degree, projection to one mode, components, communities (bipartite modularity), nestedness, null models, saving and
+   exchanging, what stops on a two-mode network, plotting; the data sets `davis` and `ftdirectors_se`
 
 ## Longitudinal models
 

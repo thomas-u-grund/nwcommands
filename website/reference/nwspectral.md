@@ -32,6 +32,7 @@ silent]
 | `replace` | Replace existing variable(s) |
 | `silent` | Suppress display of results |
 | `force` | Run the complete decomposition of a network with more than 6,000 nodes |
+| `onemode` | Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088) |
 
 ## Description
 
@@ -55,7 +56,7 @@ For a network with more than one connected component, the Fiedler value is 0 and
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (the classical Laplacian spectrum results this command reports assume a symmetric matrix, the same reasoning [nwcommunity](nwcommunity)/ [nwkcomponents](nwkcomponents) already apply). Weighted: yes, via `measure(valued)` (default for a valued network) - the Laplacian is built from tie weights directly rather than dichotomized presence/absence. Signed: not checked - a Laplacian built from mixed-sign weights is not guaranteed positive semi-definite, so results are not meaningful for a signed network. Two-mode: not checked - operates on the network's own square adjacency matrix. Only a single network is accepted (unlike most other commands in this package, which accept a full [netlist](netlist)) - each network's own Fiedler vector is a full per-node eigenvector, not a simple per-network scalar or per-node aggregate that stacks cleanly across multiple networks the way [nwcomponents](nwcomponents)'s component id does.
+Binary: yes. Directed: yes, automatically symmetrized (the classical Laplacian spectrum results this command reports assume a symmetric matrix, the same reasoning [nwcommunity](nwcommunity)/ [nwkcomponents](nwkcomponents) already apply). Weighted: yes, via `measure(valued)` (default for a valued network) - the Laplacian is built from tie weights directly rather than dichotomized presence/absence. Signed: not checked - a Laplacian built from mixed-sign weights is not guaranteed positive semi-definite, so results are not meaningful for a signed network. Two-mode: not supported - error 6088; `onemode` reads the two-mode network as a one-mode graph and gives the Laplacian spectrum of the bipartite graph (`igraph::laplacian_matrix`). Only a single network is accepted (unlike most other commands in this package, which accept a full [netlist](netlist)) - each network's own Fiedler vector is a full per-node eigenvector, not a simple per-network scalar or per-node aggregate that stacks cleanly across multiple networks the way [nwcomponents](nwcomponents)'s component id does.
 
 ## Stored results
 

@@ -58,7 +58,7 @@ Like cliques, n-cliques genuinely overlap - a node can belong to several at once
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique)/[nwkplex](nwkplex) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal n-clique enumeration inherits [nwclique](nwclique)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general).
+Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique)/[nwkplex](nwkplex) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal n-clique enumeration inherits [nwclique](nwclique)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general).
 
 ## Stored results
 

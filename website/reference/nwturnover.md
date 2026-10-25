@@ -50,7 +50,7 @@ For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(di
 
 ## Supported network types
 
-Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not checked. Two-mode: not checked - operates on each network's own square adjacency matrix.
+Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

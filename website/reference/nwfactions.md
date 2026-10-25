@@ -52,7 +52,7 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not distinguish in-ties from out-ties, the same choice [nwcoreperiphery](nwcoreperiphery) already makes). Weighted: yes, via `measure(valued)` - tie VALUES then enter the fitness correlation directly rather than just their presence/absence. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not distinguish in-ties from out-ties, the same choice [nwcoreperiphery](nwcoreperiphery) already makes). Weighted: yes, via `measure(valued)` - tie VALUES then enter the fitness correlation directly rather than just their presence/absence. Signed: not checked. Two-mode: not supported - error 6088; the factions of the square matrix would mix the two modes; make a one-mode network of one mode first with [nwproject](nwproject).
 
 ## Stored results
 

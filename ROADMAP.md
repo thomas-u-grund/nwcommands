@@ -37,7 +37,9 @@ dataset export with ego/alter comparison variables; `nwqap`'s full `eclass` inte
 hierarchical (Sugiyama-style), and dedicated bipartite layouts.
 
 **Two-mode and temporal groundwork**: two-mode/bipartite status as a first-class, compositional
-network property (including a two-ID-variable `nwset ..., twomode` declaration form); temporal
+network property (a declaration that every derived network keeps, one shared refusal for the commands that cannot work on a
+two-mode network, Barber's bipartite modularity, nestedness, a within-mode null model, export and import in all four formats; see the page
+on two-mode networks); temporal
 metadata (`time()`/`interval()`/`eventtime()`) and slicing (`nwattime`) — the foundation the
 relational-event and actor-oriented models above are built on.
 
@@ -52,6 +54,8 @@ scale.
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.
+- **Two-mode kernels**: the bipartite Louvain search runs in Mata; native kernels for it and for the module search of
+  `bipartite::computeModules`, faster tie swapping, bipartite motifs and a two-mode null model for `nwcug` remain open.
 
 ## Planned / under consideration
 

@@ -42,7 +42,7 @@ This example loads the [Florentine marriage data](netexample) and exports to bot
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - exports the network to Pajek/UCINET format largely as stored; consult the target format's own documentation for what it can represent.
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - Pajek gets the bipartite form (first line `*Vertices n n1`, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute `nwmode`. [nwimport](nwimport) reads each of the four back as a two-mode network.
 
 ## See also
 

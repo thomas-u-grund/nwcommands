@@ -103,7 +103,7 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ## Supported network types
 
-Binary: yes. Directed: yes, via `mode(outgoing|incoming|both|either)`. Weighted: yes by default (neighbor attribute values weighted by tie strength); `noweight` treats all ties as binary. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, via `mode(outgoing|incoming|both|either)`. Weighted: yes by default (neighbor attribute values weighted by tie strength); `noweight` treats all ties as binary. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
 

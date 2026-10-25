@@ -113,6 +113,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ### Cohesion, Components & Subgroups
 
+- [`nw2nested`](nw2nested) --- Nestedness (NODF, C-score) of a two-mode network
 - [`nwbridges`](nwbridges) --- Calculate bridges
 - [`nwclique`](nwclique) --- Maximal clique enumeration
 - [`nwcomponents`](nwcomponents) --- Calculate network components / largest component

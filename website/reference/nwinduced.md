@@ -20,7 +20,8 @@ nwinduced
 measure(string)
 [generate(stub)
 replace
-silent]
+silent
+binary]
 ```
 
 | | |
@@ -29,6 +30,7 @@ silent]
 | `generate(stub)` | **Required.** Prefix for the three output variables (*stub***_endog**, *stub***_induced**, *stub***_exog**) |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -66,7 +68,7 @@ The real computational cost is the leave-one-out reconstruction: computing induc
 
 ## Supported network types
 
-Binary: yes. Directed: **measure(betweenness/closeness/evcent)** support directed networks directly (each already produces exactly one clean per-node output variable regardless of directedness); **measure(degree)** does not - [nwdegree](nwdegree) itself splits into separate **_outdegree**/**_indegree** variables on a directed network, so induced degree would need a choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear error) rather than guessed at. Weighted/Signed: entirely inherited from whichever `measure()` is chosen - `nwinduced` itself does not read tie values directly. Two-mode: not supported - operates on the network's own one-mode adjacency directly; a bipartite-aware variant is not attempted here.
+Binary: yes. Directed: **measure(betweenness/closeness/evcent)** support directed networks directly (each already produces exactly one clean per-node output variable regardless of directedness); **measure(degree)** does not - [nwdegree](nwdegree) itself splits into separate **_outdegree**/**_indegree** variables on a directed network, so induced degree would need a choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear error) rather than guessed at. Weighted/Signed: entirely inherited from whichever `measure()` is chosen - `nwinduced` itself does not read tie values directly. Two-mode: not supported - error 6088; make a one-mode network of one mode first with [nwproject](nwproject).
 
 ## Stored results
 

@@ -67,7 +67,7 @@ Calculates the cross-product of the tie vectors of nodes ** and *j*
 
 ## Supported network types
 
-Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incoming or outgoing ties only). Weighted: **pearson** (via [nwcorrelate](nwcorrelate)) and **crossproduct** use tie weights directly; **hamming**/**jaccard**/**matches** binarize each tie before comparing, so tie strength does not affect these three. Signed: not checked. Two-mode: not supported - operates on the network's own square adjacency matrix. The similarity network itself always carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits its source network's own node labels, so it can be compared directly against the source network node-for-node.
+Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incoming or outgoing ties only). Weighted: **pearson** (via [nwcorrelate](nwcorrelate)) and **crossproduct** use tie weights directly; **hamming**/**jaccard**/**matches** binarize each tie before comparing, so tie strength does not affect these three. Signed: not checked. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing (`sna::sedist`, `stats::cor` on the incidence matrix). The similarity network itself always carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits its source network's own node labels, so it can be compared directly against the source network node-for-node.
 
 ## See also
 

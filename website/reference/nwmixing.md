@@ -62,7 +62,7 @@ With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a 
 
 ## Supported network types
 
-Binary: yes. Directed: yes - ego/alter mixing is directional for a directed network (an *attribute*`_ego`/*attribute*`_alter` pair is not symmetric); an undirected network's own mixing table instead shows each edge counted from both endpoints, noted explicitly in the output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - ego/alter mixing is directional for a directed network (an *attribute*`_ego`/*attribute*`_alter` pair is not symmetric); an undirected network's own mixing table instead shows each edge counted from both endpoints, noted explicitly in the output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

@@ -20,7 +20,8 @@ nw2degree
 generate(newvarname)
 replace
 silent
-alpha(#)]
+alpha(#)
+binary]
 ```
 
 | | |
@@ -29,6 +30,8 @@ alpha(#)]
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 | `alpha(#)` | Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = *0* (plain unweighted degree, identical to omitting the option) |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `raw` | The degree itself, not divided by the size of the other mode (`tnet::degree_tm`, `igraph::degree`) |
 
 ## Description
 
@@ -70,7 +73,7 @@ where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its 
 
 ## Supported network types
 
-Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: **W1**, native - `alpha()` generalizes the plain tie-count formula to a tie-strength-aware blend (Opsahl et al. 2010), the same convention [nwdegree](nwdegree)'s own `alpha()` uses for one-mode degree; `alpha(0)`, the default, is bit-for-bit identical to the original unweighted formula. Signed: not checked - a negative tie value would distort the strength sum `alpha()` relies on, not handled distinctly from "no tie". Two-mode: this command requires a two-mode network and errors clearly on a one-mode one, the opposite convention of most other commands in this package.
+Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: **W1**, native - `alpha()` generalizes the plain tie-count formula to a tie-strength-aware blend (Opsahl et al. 2010), the same convention [nwdegree](nwdegree)'s own `alpha()` uses for one-mode degree; `alpha(0)`, the default, is bit-for-bit identical to the original unweighted formula. Signed: not checked - a negative tie value would distort the strength sum `alpha()` relies on, not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); `raw` gives the count itself (`tnet::degree_tm`).
 
 ## References
 

@@ -39,6 +39,7 @@ comparemode(mode)]
 | `numeric` | Return every possible node pair (a full node x node grid), not just actual ties; only allowed with a single network |
 | `ignore2mode` | Treat a two-mode network like a one-mode one - suppress the mode indicator that would otherwise be added to `egovars()`/`altervars()` automatically |
 | `isolates0` | reserved; not currently implemented |
+| `allpairs` | Two-mode network: also write the pairs of nodes of different modes without a tie (by default a two-mode network is written as its ties, as with `compress`) |
 
 ## Description
 
@@ -46,7 +47,7 @@ comparemode(mode)]
 
 An edgelist of a single network [netname](netname) produced by `nwtoedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [nodeid](nodeid) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [nodeid](nodeid) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
 
-When a network is undirected only one entry for the dyad pair (*i*,*j*) is generated, unless option `full` is specified.
+When a network is undirected only one entry for the dyad pair (*i*,*j*) is generated, unless option `full` is specified. For an undirected valued network the listed pairs are those with *_ego* > *_alter*, so each tie appears once, in the row of the higher node id.
 
 When the command is used with a [netlist](netlist), it generates one new variable for each network *netname* in the list. If only one of the networks in [netlist](netlist) is directed, the option `full` is enforced.
 
@@ -123,7 +124,7 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see [nw2toedge](nw2toedge) for the two-mode-specific counterpart, though this command's own `egovars()`/`altervars()` two-mode handling is used internally by several other commands directly on a two-mode network too.
+Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - one row for every tie between the two modes (the pairs without a tie only with `allpairs`) and the mode of both nodes; read back with [nwfromedge](nwfromedge), `twomode` or [nw2fromedge](nw2fromedge) the list gives the same network.
 
 When converting a single network, this command also attaches that network's own full node list to the resulting dataset as a hidden characteristic (no visible extra rows/variables) - purely so a later [nwfromedge](nwfromedge) call on this same edgelist can restore any isolate (zero-tie node) that an edgelist, by construction, cannot represent as a row of its own. See [nwfromedge](nwfromedge)'s own **Supported network types** section for the other half of this.
 

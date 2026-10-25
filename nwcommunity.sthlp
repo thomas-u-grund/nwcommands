@@ -39,7 +39,7 @@
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt listall}}Print the full table of communities; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
 {synopt:{opt onemode}}Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network){p_end}
-{synopt:{opt starts(#)}}Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = {it:10}; the first starts in the order of the nodes, the others in random order ({opt seed()}){p_end}
+{synopt:{opt starts(#)}}Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = {it:30}; the first starts in the order of the nodes, the others in random order ({opt seed()}){p_end}
 
 {p2colreset}{...}
 

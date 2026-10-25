@@ -2,7 +2,7 @@
 capture program drop nwcommunity
 program nwcommunity, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall ONEmode STARTs(int 10)]
+	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall ONEmode STARTs(int 30)]
 	set more off
 
 	// resolution() had no input validation at all - zero or negative
