@@ -61,6 +61,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwcug, condition(census)` prints a note when the null standard deviation is 0; `nwsummarize, detail` shows reciprocity as n/a on undirected networks (stored value unchanged).
 - Help: `nwtoedge` (undirected valued networks list only `_ego` > `_alter`), `nwcommunity` (label propagation can collapse on dense networks; Louvain ignores the seed), `nwhierarchy` (default linkage is single), `nwclear` and `nwintro` (Stata's `clear` does not remove networks).
 
+### Fixed (book-code triage, test `cscripts/test_triagefix.do`)
+- `nwmixing ..., permutations(1)` (no simulation) printed a stray `invalid syntax` line, also under `quietly`, because the p-value was formatted from a result that does not exist; the line now shows only the E-I index. With `permutations(2)` or more nothing changes.
+
 ## [3.3.1] - 2026-10-25
 
 ### Fixed
