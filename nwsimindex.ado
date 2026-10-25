@@ -11,6 +11,10 @@ program nwsimindex, rclass
 	_opts_oneof "common jaccard dice cosine adamicadar" "measure" "`measure'" 6556
 
 	_nwsyntax `netname'
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	_nwdenseguard, command(nwsimindex) nodes(`nodes') copies(5) alternative(The result is a network with a tie for every pair of nodes. Compute it for a part of the network (nwsubset, nwego, nwkeepnodes) or take the ties with nwtoedge, compress into other software.) `force'
 
 	if "`name'" == "" {

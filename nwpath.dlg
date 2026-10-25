@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 338
+POSITION 10 10 550 394
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwpath - Calculate paths between nodes")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 244, label("Options")
+  GROUPBOX gb_opt 10 44 520 300, label("Options")
   TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite networks with newnetnamestub")
   CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
   TEXT tx_ed_ego 20 82 260 ., label("Name of start node")
@@ -34,6 +34,10 @@ BEGIN
   COMBOBOX cb_generate 290 222 190 ., dropdown contents(netlist) nomem option(generate)
   TEXT tx_cx_nopaths 20 250 260 ., label("Do not print the list of paths")
   CHECKBOX cx_nopaths 290 250 190 ., label("nopaths") option(nopaths)
+  TEXT tx_cx_binary 20 278 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  CHECKBOX cx_binary 290 278 190 ., label("binary") option(binary)
+  TEXT tx_ed_alpha 20 306 260 ., label("Cost of a step along a tie of value w: 1/w^alpha (valued network; default 1)")
+  EDIT ed_alpha 290 306 100 ., numonly nomem option(alpha)
 END
 
 LIST netlist
@@ -59,6 +63,8 @@ BEGIN
 		option main.cx_sym
 		optionarg main.cb_generate
 		option main.cx_nopaths
+		option main.cx_binary
+		optionarg main.ed_alpha
 	endoptions
 	stata
 END

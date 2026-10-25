@@ -53,6 +53,7 @@ program nwcollapse
 	nwduplicate `original', name(_temp_`original')
 	_nwdatasync _temp_`original'
 	_nwsyntax _temp_`original'
+	local __srcvalued "`valued'"
 	// the collapsed network keeps the directedness of the original (nwfromedge
 	// would otherwise guess it from whether the collapsed list is symmetric)
 	local __dirflag "forcedirected"
@@ -89,6 +90,12 @@ program nwcollapse
 		nwdrop `original'
 		qui nwfromedge _fromid _toid _temp_`original', name(`original') `__dirflag'
 	}
+	// the collapsed network keeps the Valued flag of the original; it becomes valued if the collapse creates values
+	// other than 0 and 1 (for example (sum) of a binary network)
+	local __tgt "`original'"
+	if "`generate'" != "" local __tgt "`generate'"
+	_nwsyntax `__tgt', max(1)
+	mata: `netobj'->set_valued(("`__srcvalued'" == "true") | `netobj'->check_valued())
 	restore
 end
 

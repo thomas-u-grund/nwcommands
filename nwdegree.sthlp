@@ -17,6 +17,7 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opth alpha(real)}
+{opth ties(varlist)}
 {opt generate}({it:{help varlist:varlist}})
 {opt replace}
 {opt silent}
@@ -26,12 +27,14 @@
 {opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
 {it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}
 {opt outputoff}
-]
+
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt alpha}}Tuning parameter for valued networks; default = 0{p_end}
+{synopt:{opt alpha}}Tuning parameter for valued networks; default = 1 (strength) on a valued network, 0 (number of ties) otherwise{p_end}
+{synopt:{opt ties}({it:varlist})}Valued networks: variables for the number of ties (one name, or outdegree and indegree), next to the strength in {opt generate()}{p_end}
 {synopt:{opt generate}({it:{help varlist}})}{bf:Required.} Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if {opt isolates} is also given, an extra name for the isolate indicator{p_end}
 {synopt:{opt replace}}Overwrite existing variables {it:varlist}{p_end}
 {synopt:{opt silent}}Surpress output{p_end}
@@ -41,6 +44,7 @@
 {synopt:{opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:indegree}{p_end}
 {synopt:{opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:outdegree}{p_end}
 {synopt:{it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}}Options for tabulating {it:degree}{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -78,6 +82,12 @@ centrality independently for each network in the list. When more than one networ
 given. {bf:r()} results (e.g. {bf:r(dg_central)}) reflect whichever network was processed last,
 matching this package's convention for other {help netlist} commands.
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the degree is the {it:strength}, the sum of the tie values ({cmd:alpha(1)}), as {it:igraph::strength} and {it:tnet::degree_w} give it in R; {opt alpha(a)} gives k (s/k)^a with k the number of ties and s the strength, {cmd:alpha(0)} or {opt binary} the number of ties ({it:igraph::degree}). The output names the weighting used and shows the mean number of ties next to the mean strength ({cmd:r(mean_ties)}, {cmd:r(mean_strength)}); {opt ties()} stores the tie counts in variables next to the strength. Isolates are nodes without ties, whatever the tie values add up to.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

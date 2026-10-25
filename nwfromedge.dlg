@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 282
+POSITION 10 10 1060 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwfromedge - Imports network data from edgelist")
 BEGIN
   TEXT tx_vars 20 20 260 ., label("Variables (define the network):")
   VARLIST vl_vars 290 20 190 ., nomem
-  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  GROUPBOX gb_opt 10 44 1030 244, label("Options")
   TEXT tx_cx_overwrite 20 54 260 ., label("Forwarded to nwload governing whether this command's own generated Stata variables overwrite existing ones of the same")
   CHECKBOX cx_overwrite 290 54 190 ., label("overwrite") option(overwrite)
   TEXT tx_cx_replace 20 82 260 ., label("If a network named newnetname already exists, drop it and use this name anyway (see nwset for the same convention)")
@@ -42,6 +42,10 @@ BEGIN
   CHECKBOX cx_forceundirec 800 166 190 ., label("forceundirected") option(forceundirected)
   TEXT tx_cx_twomode 530 194 260 ., label("declare a two-mode network instead (alias for nw2fromedge)")
   CHECKBOX cx_twomode 800 194 190 ., label("twomode") option(twomode)
+  TEXT tx_cx_valued 20 222 260 ., label("Mark the network as valued even without a value variable")
+  CHECKBOX cx_valued 290 222 190 ., label("valued") option(valued)
+  TEXT tx_cx_unvalued 20 250 260 ., label("Mark the network as binary even with a value variable")
+  CHECKBOX cx_unvalued 290 250 190 ., label("unvalued") option(unvalued)
 END
 
 LIST netlist
@@ -71,6 +75,8 @@ BEGIN
 		option main.cx_forcedirecte
 		option main.cx_forceundirec
 		option main.cx_twomode
+		option main.cx_valued
+		option main.cx_unvalued
 	endoptions
 	stata
 END

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 254
+POSITION 10 10 1060 282
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwgeodesic - Calculate shortest paths between nodes")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 1030 160, label("Options")
+  GROUPBOX gb_opt 10 44 1030 188, label("Options")
   TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite existing network")
   CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
   TEXT tx_cx_force 20 82 260 ., label("force distance calculation on a valued network exceeding 100 nodes (potentially ")
@@ -38,6 +38,8 @@ BEGIN
   EDIT ed_symopt 800 138 190 ., nomem option(symopt)
   TEXT tx_ed_generate 530 166 260 ., label("Name of the Stata variable that stores each node's eccentricity")
   EDIT ed_generate 800 166 190 ., nomem option(generate)
+  TEXT tx_cx_binary 530 194 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  CHECKBOX cx_binary 290 194 190 ., label("binary") option(binary)
 END
 
 LIST netlist
@@ -65,6 +67,7 @@ BEGIN
 		option main.cx_sym
 		optionarg main.ed_symopt
 		optionarg main.ed_generate
+		option main.cx_binary
 	endoptions
 	stata
 END

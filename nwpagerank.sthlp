@@ -20,7 +20,8 @@
 {opt damping(real)}
 {opt maxiter(int)}
 {opt tol(real)}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -31,6 +32,7 @@
 {synopt:{opt maxiter(int)}}Maximum power-iteration sweeps; default 1000{p_end}
 {synopt:{opt tol(real)}}Convergence tolerance; default 1e-10{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -59,6 +61,12 @@ nodes exist.
 Computed via sparse power iteration - no dense n x n matrix is ever materialized, matching the same
 scalability discipline this package's own sparse-backend commands ({help nwkcore},
 {help nwevcent}) already follow.
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the random surfer follows the tie from i to j with probability w_ij / s_i, s_i the out-strength ({it:igraph::page_rank} with its weight attribute); {opt binary} follows a uniformly chosen tie. The native kernel is the binary walk, the weighted walk is computed in Mata.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

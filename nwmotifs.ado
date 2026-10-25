@@ -4,6 +4,11 @@ program nwmotifs, rclass
 	syntax [anything(name=netname)] [, silent PLOT NAME(string)]
 
 	_nwsyntax `netname', max(1)
+	local __vnquiet = cond("`silent'" != "", "quiet", "")
+	_nwvaluednote `netname', `__vnquiet'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 
 	if "`directed'" == "true" {
 		di "{txt}Note: {bf:`netname'} is directed - the 4-node motif census below"

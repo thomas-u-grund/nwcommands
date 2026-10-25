@@ -24,7 +24,9 @@
 {opt labs}({it:lab1 lab2 ...})
 {opt undirected}
 {opt directed}
-{opt twomode}]
+{opt twomode}
+{opt valued}
+{opt unvalued}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -35,6 +37,8 @@
 {synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
 {synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
 {synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge}, forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. See {help nw2fromedge} for the full two-mode-specific behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
+{synopt:{opt valued}}mark the network as valued (default if a value variable is given, also when every value is 1){p_end}
+{synopt:{opt unvalued}}mark the network as binary even if a value variable is given{p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 {synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}

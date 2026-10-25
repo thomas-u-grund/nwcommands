@@ -2,7 +2,7 @@
 capture program drop nwpagerank
 program nwpagerank, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace DAMPing(real 0.85) maxiter(int 1000) tol(real 1e-10) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace DAMPing(real 0.85) maxiter(int 1000) tol(real 1e-10) silent BINary]
 
 	if `damping' <= 0 | `damping' >= 1 {
 		di "{err}damping() must be strictly between 0 and 1."
@@ -44,11 +44,16 @@ program nwpagerank, rclass
 	// native kernel 34 (plugin generation 8 or later) runs the same iteration on the stored ties; a result of the
 	// wrong shape (older plugin, no plugin, a kernel failure) leaves the Mata path. The global NW_NOFASTKERNELS
 	// forces the Mata path.
+	// a valued network: the surfer follows a tie with probability proportional to its value (igraph::page_rank);
+	// binary ignores the values.  The native kernel is the binary walk.
+	local __wtd = ("`valued'" == "true" & "`binary'" == "")
 	local __fast 0
+	if !`__wtd' {
 	mata: `__nw_pr' = nw2_fastpr(`netobj'->edgelist(), `nodes', `damping', `maxiter', `tol')
 	mata: st_local("__fast", strofreal(rows(`__nw_pr') == `nodes'))
+	}
 	if !`__fast' {
-		mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')
+		mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol', `__wtd')
 	}
 	capture drop `generate'
 	qui gen double `generate' = .
@@ -61,6 +66,7 @@ program nwpagerank, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
 		di "{txt}  Damping: {res}`damping'"
+		if `__wtd' di "{txt}  (valued network: ties followed in proportion to their values; {bf:binary} ignores the values)"
 		di "{hline 40}"
 		summarize `generate'
 	}

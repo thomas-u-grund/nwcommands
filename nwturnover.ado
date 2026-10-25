@@ -8,6 +8,17 @@ program nwturnover, rclass
 	_nwsyntax `netnames', max(2) min(2)
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
+	local __vnquiet = cond("`silent'" != "", "quiet", "")
+	local __vndone 0
+	foreach __vn in `netname1' `netname2' {
+		if `__vndone' == 0 {
+			_nwvaluednote `__vn', `__vnquiet'
+			if r(shown) == 1 {
+				noi di `"`r(msg)'"'
+				local __vndone 1
+			}
+		}
+	}
 
 	_nwsyntax `netname1'
 	local nodes1 `nodes'

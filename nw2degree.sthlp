@@ -18,7 +18,8 @@
 {opth generate(newvarname)}
 {opt replace}
 {opt silent}
-{opt alpha(#)}]
+{opt alpha(#)}
+{opt binary}]
 
 
 {synoptset 25 tabbed}{...}
@@ -28,6 +29,7 @@
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt alpha(#)}}Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = {it:0} (plain unweighted degree, identical to omitting the option){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -100,6 +102,12 @@ Borgatti, S.P., Everett, M.G. (1997). Network analysis of 2-mode data. {it:Socia
 Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted networks: Generalizing
 degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued two-mode network the degree is the strength divided by the size of the other mode ({it:tnet::degree_tm} gives the unnormalized strength); {opt binary} or {cmd:alpha(0)} gives the number of ties divided by the size of the other mode.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

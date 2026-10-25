@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 338
+POSITION 10 10 550 366
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwbetween - Calculate betweenness centrality")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 244, label("Options")
+  GROUPBOX gb_opt 10 44 520 272, label("Options")
   TEXT tx_cx_replace 20 54 260 ., label("allow overwriting an existing variable of the same name")
   CHECKBOX cx_replace 290 54 190 ., label("replace") option(replace)
   TEXT tx_ed_generate 20 82 260 ., label("Required. Variable name for betweenness centrality")
@@ -34,6 +34,8 @@ BEGIN
   EDIT ed_alpha 290 222 100 ., numonly nomem option(alpha)
   TEXT tx_cx_force 20 250 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 250 190 ., label("force") option(force)
+  TEXT tx_cx_binary 20 278 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  CHECKBOX cx_binary 290 278 190 ., label("binary") option(binary)
 END
 
 LIST netlist
@@ -59,6 +61,7 @@ BEGIN
 		option main.cx_weighted
 		optionarg main.ed_alpha
 		option main.cx_force
+		option main.cx_binary
 	endoptions
 	stata
 END

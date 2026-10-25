@@ -1,7 +1,7 @@
 capture program drop nwevcent
 program nwevcent
 	version 9
-	syntax [anything(name=netname)] , [nosym weighted GENerate(string) replace]
+	syntax [anything(name=netname)] , [nosym weighted BINary GENerate(string) replace]
 	_nwsyntax `netname'
 	_nwdatasync `netname'
 
@@ -26,7 +26,12 @@ program nwevcent
 	local nosym = ("`sym'" != "")
 
 	local getvalued = 0
-	if "`weighted'" != "" & "`valued'" == "true" {
+	if "`binary'" != "" & "`weighted'" != "" {
+		di "{err}Options {bf:binary} and {bf:weighted} cannot be combined."
+		error 198
+	}
+	// a valued network is analysed with its tie values (igraph::eigen_centrality); binary ignores them
+	if "`binary'" == "" & "`valued'" == "true" {
 		local getvalued = 1
 	}
 

@@ -5,6 +5,10 @@ program nwtriads
 	syntax [anything(name=netname)] [, PLOT NAME(string)]
 
 	_nwsyntax `netname', max(1)
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	local onedirected = "`directed'"
 
 	// The 16-type MAN census is a genuinely directed-network concept:

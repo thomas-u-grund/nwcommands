@@ -23,7 +23,8 @@
 {opt silent}
 {opt weighted}
 {opt alpha(real)}
-{opt force}]
+{opt force}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -33,9 +34,10 @@
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt standardize}}standardize centrality scores{p_end}
 {synopt:{opt silent}}suppress the summary table of the generated variable{p_end}
-{synopt:{opt weighted}}calculate on weighted (Dijkstra) shortest paths instead of dichotomizing{p_end}
+{synopt:{opt weighted}}use the tie values in the shortest paths; redundant on a valued network, where this is the default (kept for compatibility){p_end}
 {synopt:{opt alpha(real)}}weight-to-distance exponent used with {opt weighted}; default = 1{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -105,6 +107,12 @@ there is nothing to configure and no difference in the result, only in how fast 
 (a native run at 10,000 nodes was measured faster than the Mata implementation at
 just 1,000). {opt weighted} still always uses the Mata implementation.
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the shortest paths are those of least cost 1/w^alpha ({cmd:alpha(1)} by default; {it:igraph::betweenness} with weights 1/w, {it:tnet::betweenness_w}); paths of equal cost are recognised with a relative tolerance of 1e-10. {opt binary} counts steps. The option {opt weighted} is accepted for compatibility; it is redundant on a valued network.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

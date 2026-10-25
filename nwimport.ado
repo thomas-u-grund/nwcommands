@@ -161,6 +161,8 @@ program _nwimport_pajek
 		`clear'
 		`nwclear'
 		set more off
+		// the network is valued when the file gives tie values (a third field on an edge line, a matrix with values)
+		local __haswt 0
 		preserve
 		drop _all
 		
@@ -285,6 +287,7 @@ program _nwimport_pajek
 					replace _toid = `alter' in `newN'
 					if (wordcount("`line'") - 2) > 0 {
 						local value = word("`line'", 3)
+						local __haswt 1
 					}
 					else {
 						local value = 1
@@ -338,6 +341,7 @@ program _nwimport_pajek
 						replace _fromid = `id_ego' in `newN'
 						replace _toid = `id_alter' in `newN'
 						replace _value = `value' in `newN'
+						if `value' != 0 & `value' != 1 local __haswt 1
 					}
 					local value = word("`line'", `next') 
 				}	
@@ -349,7 +353,7 @@ program _nwimport_pajek
 
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
 	
 		unw_defs
 		nwload, labelonly
@@ -470,7 +474,8 @@ program _nwimport_ucinet
 		if `matrix_loaded' == 0  {
 			capture replace _fromid = trim(_fromid)
 			capture replace _toid = trim(_toid)
-			qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+			qui count if _value < . & _value != 0 & _value != 1
+			qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(r(N) > 0, "valued", "unvalued")'
 		}
 		restore
 end
@@ -629,6 +634,7 @@ program _nwimport_gml
 		gen _toid = ""
 		gen _value = .
 		local labs ""
+		local __haswt 0
 		
 		file open importfile using `anything', read
 
@@ -693,6 +699,7 @@ program _nwimport_gml
 				if inlist("``i''", "value", "weight") & "`mode'" == "edge" {
 					local gmlvalue = real("``=`i'+1''")
 					if `gmlvalue' >= . local gmlvalue 1
+					local __haswt 1
 					if "`source'" != "-1" & "`target'" != "-1" {
 						qui replace _value = `gmlvalue' in `=_N'
 					}
@@ -719,7 +726,7 @@ program _nwimport_gml
 		capture file close importfile
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
 		restore
 end
 
@@ -803,7 +810,7 @@ program _nwimport_gefx
 		}	
 		capture replace _fromidnum = trim(_fromidnum)
 		capture replace _toidnum = trim(_toidnum)
-		nwfromedge _fromidnum _toidnum _value, name(`name') labs(`labs') `nwfromedgeopt'
+		nwfromedge _fromidnum _toidnum _value, name(`name') labs(`labs') `nwfromedgeopt' unvalued
 		restore
 end
 

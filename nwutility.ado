@@ -88,7 +88,9 @@ program nwutility
 	// header comment), so this call - not wrapped in preserve/restore -
 	// never leaves an unrequested "_eccentricity" behind unless the
 	// caller's own forwarded `options' asks for generate() explicitly.
-	qui nwgeodesic `netname', name(_temp_util) `options'
+	local __ub "binary"
+	if strpos(lower(`"`options'"'), "alpha(") > 0 local __ub ""
+	qui nwgeodesic `netname', name(_temp_util) `__ub' `options'
 	nwtomata _temp_util, mat(geonet)
 	// the diagonal (self-distance) is stored as missing, per this
 	// package's convention - distance_distribution()'s own dist>0

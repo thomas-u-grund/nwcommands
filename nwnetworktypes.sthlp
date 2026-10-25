@@ -31,6 +31,24 @@ per-command section is always the authoritative answer for a specific command; t
 the vocabulary those sections use and points to the small set of commands that have been read
 closely enough to also carry a fuller, source-verified classification.
 
+{title:Valued networks}
+
+{pstd}
+Every network carries a {it:Valued} flag (shown by {help nwsummarize}). It is set when the network is created, by the
+way it is created, and it is not worked out from the values again later: a network created with tie values
+({help nwfromedge} with a value variable, an import of a file with tie values, {cmd:nwset, valued}, a matrix with a
+value other than 0 and 1) is valued, also if every value is 1; a network created without values is binary. Commands
+that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network that was saved by an
+earlier release keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
+
+{pstd}
+Measures that have a weighted form in R use the tie values of a valued network by default
+({help nwdegree}, {help nw2degree}, {help nwgeodesic}, {help nwcloseness}, {help nwbetween}, {help nwevcent},
+{help nwpagerank}, {help nwrandomwalk}, {help nwpath}, {help nwmatching}, {help nwassortativity}, {help nwkatz} with
+{opt walks}); the option {opt binary} ignores the values. Measures without a weighted form in R are binary by
+definition and print the line "(note: tie values are ignored; this measure is binary)" on a valued network. The
+website page on valued networks lists all commands.
+
 {title:Two-mode networks and the nw2* family}
 
 {pstd}

@@ -17,6 +17,10 @@ program _nwdyads1
 	version 9
 	syntax anything(name=netname)
 	_nwsyntax `netname', max(1)
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	mata: census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
 	mata: st_numscalar("r(_001)", census[3])

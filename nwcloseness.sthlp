@@ -21,7 +21,8 @@
 {opt nosym}
 {opt replace}
 {opt silent}
-{opt force}]
+{opt force}
+{opt binary}]
 
 
 {synoptset 30 tabbed}{...}
@@ -33,6 +34,7 @@
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
 {synopt:{opt silent}}Do not display the summary of the new variables{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -66,6 +68,12 @@ for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2, g
 {it:var1_z, var2_z, var3_z} for each network.
 
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the distances are those of {help nwgeodesic} with cost 1/w ({it:igraph::closeness} with weights 1/w; {it:tnet::closeness_w} is the same value multiplied by the mean tie value, the ranking is the same). {opt binary} counts steps. Options of {help nwgeodesic} such as {opt alpha()} can be passed on.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

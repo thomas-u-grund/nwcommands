@@ -18,7 +18,8 @@
 {opt target(nodename)}
 [{opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -27,6 +28,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own mean hitting time to {opt target()}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -52,6 +54,12 @@ subject to any Monte Carlo noise): for every node i other than the target, its o
 equals 1 plus the average of its own neighbors' hitting times; the target's own hitting time is
 fixed at 0. The same "solve directly, do not simulate" discipline {help nwkatz}'s own walk-counting
 Katz centrality already established for an analogous exact random-walk quantity.
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the walk steps from i to j with probability w_ij / s_i (as {it:igraph::random_walk}), and the hitting times solve (D_s - W) h = s off the target, D_s the strengths; {opt binary} is the simple random walk.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

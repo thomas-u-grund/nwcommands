@@ -1,7 +1,7 @@
 capture program drop nwgeodesic
 program nwgeodesic
 	version 9
-	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) xvars unconnected(string) sym symopt(string) generate(string)]
+	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) BINary xvars unconnected(string) sym symopt(string) generate(string)]
 
 	capture
 	unw_defs
@@ -73,6 +73,16 @@ program nwgeodesic
 	nwduplicate `netname', name(`name')
 	_nwsyntax `name'
 	
+	// Tie values: on a valued network a step along a tie of value w costs 1/w^alpha, alpha = 1 by default
+	// (Opsahl et al. 2010; alpha(-1) is igraph's "weights are lengths").  binary or alpha(0): every tie is one step.
+	local __alpha_given = (strpos(lower(`"`0'"'), "alpha(") > 0)
+	if "`binary'" != "" & `__alpha_given' & `alpha' != 0 {
+		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
+		error 198
+	}
+	if "`valued'" == "true" & "`binary'" == "" & !`__alpha_given' {
+		local alpha = 1
+	}
 	if ("`valued'" == "false" & `alpha' != 1 ){
 		// say so only when alpha() was typed (the default 0 is not a request)
 		if strpos(lower(`"`0'"'), "alpha(") > 0 {

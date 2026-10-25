@@ -17,7 +17,8 @@
 [{cmd:,}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -25,6 +26,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -54,6 +56,12 @@ matching); every mode-2 node's own value is always 0 - read the match off the mo
 matching {help nw2project}'s own established "one side owns the report" convention for a two-mode
 result.
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the matching is the one of largest total tie value ({it:igraph::max_bipartite_match} with its weight attribute), which can have fewer pairs than the largest matching; {cmd:r(weight)} is the total value. {opt binary} finds the matching with the most pairs.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
 {title:Supported network types}
 
 {pstd}
@@ -67,6 +75,7 @@ not checked. Two-mode: required.
 
 	Scalars
 	  {bf:r(matched)}	number of matched pairs found
+	  {bf:r(weight)}	total tie value of the matching (valued network, not with {opt binary})
 
 	Macros
 	  {bf:r(matchvar)}	name of the generated match variable

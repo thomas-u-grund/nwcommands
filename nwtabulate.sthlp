@@ -16,6 +16,11 @@
 {p 8 32 2}
 {helpb nwtab3:nwtabulate twoway}{space 7}for two-way table of network and node attribute
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}

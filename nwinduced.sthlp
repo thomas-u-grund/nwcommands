@@ -19,7 +19,8 @@
 {opt measure(string)}
 [{opth generate(stub)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 
 {synoptset 25 tabbed}{...}
@@ -29,6 +30,7 @@
 {synopt:{opth generate(stub)}}{bf:Required.} Prefix for the three output variables ({it:stub}{bf:_endog}, {it:stub}{bf:_induced}, {it:stub}{bf:_exog}){p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -100,6 +102,12 @@ plain betweenness score).{p_end}
 	  {bf:r(induced)}      name of the induced-centrality variable
 	  {bf:r(exogenous)}    name of the exogenous-centrality variable
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. The centrality measures {opt betweenness}, {opt closeness} and {opt evcent} use the tie values of a valued network, as {help nwbetween}, {help nwcloseness} and {help nwevcent} do; {opt degree} counts ties. {opt binary} ignores the values.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

@@ -1,7 +1,7 @@
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted alpha(real 1) force]
+	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -27,6 +27,10 @@ program nwbetween
 	// package (e.g. nwdegree, nwkatz).
 	_nwsyntax `netname', max(9999)
 	local totalnetworks = `networks'
+	if "`binary'" != "" & "`weighted'" != "" {
+		di "{err}Options {bf:binary} and {bf:weighted} cannot be combined."
+		error 198
+	}
 
 	// generate() is required (suite-wide generate()-required style
 	// decision, 2026-09-05): nwbetween's whole purpose is producing this
@@ -41,6 +45,9 @@ program nwbetween
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		// tie values: shortest paths with step cost 1/value^alpha on a valued network (weighted is redundant there);
+		// binary ignores the values
+		local __wtd = ("`weighted'" != "" | ("`valued'" == "true" & "`binary'" == ""))
 		_nwtimeguard, command(nwbetween) nodes(`nodes') model(bfs) netobj(`netobj') rate(2.2e8) alternative(Betweenness needs one shortest-path search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
 		local oldnetname `netname_temp'
 
@@ -88,7 +95,7 @@ program nwbetween
 			_nwsyntax
 		}
 
-		if "`weighted'" != "" {
+		if `__wtd' {
 			// weighted (Dijkstra-based) betweenness has no native
 			// backend yet - a documented follow-on, see
 			// docs/NATIVE_GRAPH_LIBRARIES.md.
@@ -123,6 +130,9 @@ program nwbetween
 		noi di "{txt}  Network name: {res}`netname_temp'"
 		noi di "{hline 40}"
 		noi di "{txt}    Betweenness centrality"
+		if `__wtd' {
+			noi di "{txt}    (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha')"
+		}
 		if "`standardize'" != "" {
 			noi di "{txt}    (standardized)"
 		}

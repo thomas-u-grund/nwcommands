@@ -123,10 +123,12 @@ and {it:j}. In binary networks, {it:M_ij} = 1 when there is a network relationsh
 However, networks can also be valued, i.e. {it:M_ij} may take other values than 0 and 1 (for example 2, 0.3 or -1); in undirected networks {it:M_ij = M_ji}.
 
 {pstd}
-The command automatically recognizes if the network is unvalued or valued: a network is valued when at least one tie
-has a value other than 0 and 1, so shares or probabilities between 0 and 1, a network whose ties all equal 2, and
-signed networks are valued. A network whose ties are all 1 is binary. Options {opt valued} and {opt unvalued} override
-the rule.
+The valued flag is set when a network is created. For a matrix or variables given without a statement of intent the
+numbers decide, once, at creation: the network is valued when at least one tie has a value other than 0 and 1, so shares or
+probabilities between 0 and 1, a network whose ties all equal 2, and signed networks are valued; a network whose ties are
+all 1 is binary. Options {opt valued} and {opt unvalued} override this. A network created from an edgelist with a value
+variable ({help nwfromedge}) is valued, also if every value is 1. The flag is not worked out from the values again later:
+commands that change a network keep it (see {help nwnetworktypes}).
 
 {pstd}
 There are three ways to explicitly declare data to be network data:

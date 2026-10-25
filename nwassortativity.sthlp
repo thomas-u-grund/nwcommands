@@ -18,7 +18,8 @@
 [{cmd:,}
 {opt attribute(varname)}
 {opt weighted}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 
 {synoptset 25 tabbed}{...}
@@ -27,6 +28,7 @@
 {synopt:{opt attribute(varname)}}Numeric node attribute to correlate across ties; default = each node's own degree{p_end}
 {synopt:{opt weighted}}Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -94,6 +96,12 @@ same coefficient as omitting it - not an approximation.
 	  {bf:r(attribute)}      attribute used (or "degree" for the default)
 	  {bf:r(weighted)}       {bf:"true"} if {opt weighted} was specified, {bf:"false"} otherwise
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the node attribute is the strength (sum of the tie values) when {opt attribute()} is not given, instead of the degree; {opt binary} uses the degree. {opt weighted} additionally weights each tie by its value (Leung and Chau 2007).
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

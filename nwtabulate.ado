@@ -3,6 +3,17 @@ capture program drop nwtabulate
 program nwtabulate
 	syntax [anything(name=netname)] [, attribute(varname) *]
 	_nwsyntax `netname', max(2)
+	local __vndone 0
+	forvalues __vi = 1/2 {
+		local __vn : word `__vi' of `netname'
+		if `__vndone' == 0 & (`__vi' == 1 | "`__vn'" != "") {
+			_nwvaluednote `__vn'
+			if r(shown) == 1 {
+				noi di `"`r(msg)'"'
+				local __vndone 1
+			}
+		}
+	}
 
 	if `networks' == 1 & "`attribute'" == "" {
 		nwtab1 `netname', `options'

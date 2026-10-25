@@ -19,15 +19,17 @@
 {opt generate}({it:{help varname}})
 {opt nosym}
 {opt weighted}
-{opt replace}]
+{opt replace}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for eigenvector centrality scores{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation{p_end}
-{synopt:{opt weighted}}calculate on tie values instead of dichotomizing a valued network{p_end}
+{synopt:{opt weighted}}use the tie values of a valued network; redundant, this is the default (kept for compatibility){p_end}
 {synopt:{opt replace}}replace existing {it:generate()} variable{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -49,6 +51,12 @@ network (there is nothing to weight by).
 {pstd}
 Eigenvector centrality is only defined for connected networks.
 
+
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the eigenvector centrality is that of the matrix of tie values ({it:igraph::eigen_centrality}; scaled to unit length, igraph scales to maximum 1). {opt binary} uses presence only. The option {opt weighted} is accepted for compatibility; it is redundant on a valued network. For a directed network with {opt nosym} outgoing ties are used (igraph uses incoming ties).
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
 {title:Supported network types}
 

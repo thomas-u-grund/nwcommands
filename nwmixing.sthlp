@@ -66,6 +66,11 @@ permutation test: the attribute assignment is held fixed while the network itsel
 randomly permuted, building a null distribution of the E-I index under "no association between this
 attribute and tie placement", and reports a two-sided p-value.
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}

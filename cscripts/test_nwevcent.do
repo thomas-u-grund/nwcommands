@@ -20,7 +20,7 @@ assert myev[1] == .
 nwclear
 nwset, mat((0,1,1,10\1,0,0,0\1,0,0,0\10,0,0,0)) name(starw) undirected labs(A,B,C,D)
 
-nwevcent starw, generate(ev_unw)
+nwevcent starw, generate(ev_unw) binary
 assert reldif(ev_unw[2], ev_unw[3]) < 1E-6
 assert reldif(ev_unw[2], ev_unw[4]) < 1E-6
 

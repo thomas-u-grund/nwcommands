@@ -16,6 +16,8 @@ program nwreplacemat
 	local newmatlabs "`labs'"
 	unw_defs
 	_nwsyntax `netname', max(1)
+	// the valued flag of the network is kept; it turns on if the new values need it
+	local __wasv "`valued'"
 
 	// triplets(): the new network (fewer nodes, named by labsmata()) as a list of ties (ego, alter, value) of new
 	// node numbers instead of a matrix, for a network that is held as stored ties: the same steps as the matrix
@@ -36,7 +38,7 @@ program nwreplacemat
 		}
 		_nwsyntax `netname', max(1)
 		mata: st_local("__sym", strofreal(nw_triplets_symmetric(`triplets', `matrows')))
-		mata: `netobj'->set_valued(`netobj'->check_valued())
+		mata: `netobj'->set_valued(("`__wasv'" == "true") | `netobj'->check_valued())
 		if "`sync'" == "" {
 			nwsync `netname'
 		}
@@ -189,7 +191,7 @@ program nwreplacemat
 	}
 
 	// the valued flag follows the new values (a network created empty is unvalued until now)
-	mata: `netobj'->set_valued(`netobj'->check_valued())
+	mata: `netobj'->set_valued(("`__wasv'" == "true") | `netobj'->check_valued())
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

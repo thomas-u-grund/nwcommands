@@ -3,6 +3,10 @@ program nwsimmelian
 	syntax [anything(name=netname)] [, name(string) nwreplace]
 	unw_defs
 	_nwsyntax `netname'
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	
 	if "`name'" == "" {
 		local name "_simmelian"

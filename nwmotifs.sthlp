@@ -80,6 +80,11 @@ preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcu
 {opt plot} option and {help nwtriads}'s own {opt plot} option (its 3-node analogue) use.
 Grayscale by design, matching every other plot this package produces.
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
