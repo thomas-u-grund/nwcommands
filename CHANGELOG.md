@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- Two two-mode example data sets, loaded with `nwwebuse`: `davis` (Southern women of Davis, Gardner and Gardner 1941: 18 women, 14 events, 89 ties; attributes surname, title, event date) and `ftdirectors_se` (a subset of the Financial Times directors-and-companies data of Evtushenko and Gastner, doi:10.5281/zenodo.3553442, CC BY 4.0: 5,092 directors, 455 companies, 5,669 ties; attributes gender, age, sector, industry, employees). Sources, licences and the changes made to the subset are in `help netexample` and the website page "Data sets". Regression test `cscripts/test_twomode_data.do`.
+
 ## [3.3.1] - 2026-10-25
 
 ### Fixed

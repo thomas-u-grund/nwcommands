@@ -6,6 +6,10 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## `nwsave` of a large two-mode network writes every within-mode dyad (gigabytes)
+
+`nwsave` stores a network as an edge list made with `nwtoedge ..., ignore2mode compress`. For a two-mode network that lists all pairs of nodes *inside* each mode as well (with value 0), so `davis` (32 nodes) is 365 rows but a 5,092 x 455 network came to 2.6 GB. `ftdirectors_se.nwdta` was therefore written with a copy of `nwsave.ado` that adds `keep if <network> == 1` right after the `nwtoedge` line; `nwuse` reads such a file fine (it only needs the tie rows). Do the same when you rebuild a large two-mode data file, or fix `nwsave` to skip the zero rows of two-mode networks.
+
 ## Package manifests (`nwcommands*.pkg`) are generated — don't hand-edit them
 
 `nwcommands-ado1.pkg`/`-ado2.pkg`/`-ado3.pkg`, `nwcommands-hlp1.pkg`/`-hlp2.pkg`,
