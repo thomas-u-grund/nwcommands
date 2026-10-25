@@ -634,4 +634,4 @@ Distributed with R's own {cmd:goldfish} package as {cmd:data(Social_Evolution)},
 version (fewer variables, a reduced time window) of the original Reality Commons release.
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

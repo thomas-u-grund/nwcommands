@@ -91,4 +91,4 @@ random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

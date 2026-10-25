@@ -104,4 +104,4 @@ waves: 0.3 seconds (the call did not finish in 3 minutes before). The matrix of 
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

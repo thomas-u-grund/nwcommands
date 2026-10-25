@@ -140,4 +140,4 @@ Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
 last certified : 23 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
