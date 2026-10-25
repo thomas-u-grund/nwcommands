@@ -545,3 +545,19 @@ peak at 7 GB). `nw2toedge` without `compress` lists every pair of nodes of the t
   starts); the recipe is capped at 20,000 in `spec.py`.
 - **`pgrep -f run_audit` finds the shells that wait for it.** A wait loop `until ! pgrep -f run_audit...` never ends while another
   session's wait loop (whose command line contains the same words) exists; match `ps aux | grep "[r]un_audit.py --sizes N" | grep -v zsh`.
+
+## `mata mlib index` does not persist: a library installed by net install can be missing from a session's Mata library list
+
+Stata builds its list of Mata libraries (.mlib) once, early in a session; `mata mlib index` rebuilds it for the running session only
+and nothing is saved. A library that `net install` put into PLUS/l/ can be absent from the list (`mata mlib query` shows `lnwcommands`
+but not `lnwsaom1, lnwergm, ...`). The first Mata call then stops with r(3499) "<function>() not found", and a Mata block that mentions a class of
+the library stops the whole ado file with r(3000) "class ... undefined (error occurred while loading ...)". Running `mata mlib index`
+by hand "fixes" it for that session only, which hid the bug in every manual test.
+- Every entry program of the model packages starts with `_<pkg>_libcheck` (which runs `mata mlib index` once when a library function is not visible); do not
+  call Mata before it.
+- A **file-scope** `mata:` block in an .ado file is compiled when the file is auto-loaded, i.e. before any program of the file runs:
+  `_<pkg>_libcheck` is therefore also called at file scope (`capture quietly ...`) in front of such a block.
+- Reproduce: `SMOKE_STALE=1 tools/smoke_fresh_install.sh [core_dir model_parent_dir]` builds exactly this state (the session's Mata
+  index is made while only the core library is visible). Without `SMOKE_STALE` a plain new session usually finds all libraries,
+  which is why a simple "install, restart, run" test passes.
+- `nwinstall, all` and `nwinstall, models` run `mata mlib index` after installing; the model packages do not rely on it.

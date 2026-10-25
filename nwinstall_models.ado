@@ -33,6 +33,11 @@ program define nwinstall_models
 			capture noisily which `p'
 		}
 	}
+	// Stata indexes the Mata libraries once, early in a session; index again so the libraries just installed are found
+	// (the model entry points repeat this check themselves). Harmless if it fails.
+	if "`remove'" == "" {
+		capture mata: mata mlib index
+	}
 	if "`remove'" == "" & "`failed'" == "" {
 		di as text _n "Model packages installed. Each has a version command, e.g. {stata nwsaom version}."
 		di as text "They are free software (GPL-3) and are installed separately from the nwcommands core;"

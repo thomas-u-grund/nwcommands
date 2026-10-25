@@ -46,3 +46,6 @@ if os.path.exists("README.md"):
     sub("README.md", lambda s: re.sub(r'(?m)^\*\*Version [^\n]*\n', '**Version %s** (%s)\n' % (ver, longdate), s))
 sub("CITATION.cff", lambda s: re.sub(r'(?m)^version: .*$', 'version: "%s"' % ver, re.sub(r'(?m)^date-released: .*$', 'date-released: "%s"' % iso, s)))
 print("version", ver, date)
+if len(sys.argv) > 1:   # a release: record the hash of the core Mata library (re-run tools/record_release_hash.py after a later rebuild of the library)
+    import subprocess
+    subprocess.call([sys.executable, os.path.join("tools", "record_release_hash.py")])
