@@ -28,6 +28,9 @@
         {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "sysdescribe socialevolution.dta":describe}
         {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "sysdescribe davis.nwdta":describe}
         {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "sysdescribe ftdirectors_se.nwdta":describe}
+        {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "sysdescribe senate114.nwdta":describe}
+        {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "sysdescribe senate93.nwdta":describe}
+        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "sysdescribe gahuku.nwdta":describe}
 
 {hline}
 
@@ -684,6 +687,74 @@ were renamed, "NA" became missing, and age and the number of employees were made
 {pmore}
 Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global Network of Directors.
 In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
+
+{hline}
+
+{marker senate114}
+{title:US Senate, signed co-sponsorship (signed)}
+
+{pstd}
+{bf:Networks:} {it:senate114} (file senate114), {it:senate93} (file senate93){p_end}
+
+{pstd}
+Signed networks of the US Senate, undirected, with ties of +1 and -1 (no tie is 0). {it:senate114}
+(114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties. {it:senate93}
+(93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. A positive tie means that
+two senators co-sponsored significantly more bills together than expected by chance, a negative tie
+significantly fewer. Nodes are named by surname and initial. Attributes: {it:state} and {it:party}
+(D, R, I; one senator of the 93rd Senate has the party C, Conservative). Use them with {helpb nwbalance}
+(in the 114th Senate 97.3 percent of the closed triads are balanced, in the 93rd 55.0 percent) and for
+signed degrees.
+
+{pstd}
+The signs are not observed likes and dislikes. They are inferred from the co-sponsorship of bills by a
+statistical model (the stochastic degree sequence model), and the 114th network is dense (75 percent of
+all pairs carry a tie).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Neal, Z. P. (2020). A Sign of the Times: Dataset of US Congress signed network backbones from
+co-sponsorship data, 1973-2016. figshare, doi:10.6084/m9.figshare.8096429. Licensed under CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Described in Neal, Z. P. (2020). A sign of the times?
+Weak and strong polarization in the U.S. Congress, 1973-2016. Social Networks 60, 103-112,
+doi:10.1016/j.socnet.2018.07.007. The method is that of Neal, Z. P. (2014). The backbone of bipartite
+projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other
+co-behaviors. Social Networks 39, 84-97, doi:10.1016/j.socnet.2014.06.001.
+
+{pmore}
+These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd and the 114th
+Congress were kept (the sheets S93 and S114 of the workbook); of the original columns only the tie sign
+and, from the row labels, the senator's name, state and party were kept; the result is stored in the
+nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the
+code.
+
+{hline}
+
+{marker gahuku}
+{title:Gahuku-Gama tribes (signed)}
+
+{pstd}
+{bf:Networks:} {it:gahuku}{p_end}
+
+{pstd}
+Alliances (positive) and enmities (negative) among 16 tribes of the Eastern Central Highlands of New
+Guinea, undirected: 16 nodes, 29 positive and 29 negative ties. Nodes are named by tribe; there are no
+attributes. Of the 68 closed triads 59 are balanced; only 2 violate weak balance (7 of the 9 unbalanced
+triads have three negative ties), so the network is a standard example for strong versus weak balance
+({helpb nwbalance}).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Read, K. E. (1954). Cultures of the Central Highlands, New Guinea. Southwestern Journal of
+Anthropology 10(1), 1-43, doi:10.1086/soutjanth.10.1.3629074. Analysed by Hage, P. and Harary, F.
+(1983). Structural Models in Anthropology. Cambridge: Cambridge University Press. The data have no
+licence statement of their own, so no licence is asserted here: they are facts about which tribes are
+allied and which are enemies, not covered by the GPL-3 of this package, and are redistributed with
+citation of the sources. The ties come from the version distributed with the R package signnet.
 
 {hline}
 {pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- Three signed example networks (one valued network with +1 and -1 ties), loaded with `nwwebuse`: `senate114` and `senate93` (US Senate co-sponsorship networks of the 114th and 93rd Congress, Neal 2020, doi:10.6084/m9.figshare.8096429, CC BY 4.0: 100 senators with 1,435 positive and 2,261 negative ties, and 101 senators with 581 positive and 1,858 negative ties; attributes state and party) and `gahuku` (alliances and enmities among the 16 Gahuku-Gama tribes, Read 1954: 29 positive and 29 negative ties). Sources, licences and the changes made to the Senate subset are in `help netexample` and the website page "Data sets"; regression test `cscripts/test_signed_data.do`.
+
 ## [3.4.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)
