@@ -17,9 +17,12 @@ di "=== COMPLETE GRAPH K4: effsize=1 as documented, VERIFIED ==="
 
 nwclear
 nwset, mat((0,4,3,2\4,0,2,0\3,2,0,0\2,0,0,0)) name(mynet) undirected labs(A,B,C,D)
-nwburt mynet, dyadredundancy dyadconstraint silent
+* mynet is valued: the dyadic options need the option binary (ties present or absent)
+capture nwburt mynet, dyadredundancy dyadconstraint silent
+assert _rc == 198
+nwburt mynet, dyadredundancy dyadconstraint binary silent
 mata:
-onenet = (0,4,3,2\4,0,2,0\3,2,0,0\2,0,0,0)
+onenet = (0,1,1,1\1,0,1,0\1,1,0,0\1,0,0,0)
 net2 = onenet * onenet
 outdeg = rowsum(onenet)
 dyadred_ref = onenet :* (net2 :/ outdeg)

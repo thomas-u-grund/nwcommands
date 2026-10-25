@@ -31,21 +31,24 @@ program define _bk_cmp
 	if `md' > $bk_maxdiff {
 		global bk_maxdiff = `md'
 	}
-	global NW_NOFASTKERNELS
-	qui nwburt `net', replace silent
-	foreach v in _effsize _efficiency _constraint _hierarchy {
-		qui gen double `v'_f = `v'
-	}
-	global NW_NOFASTKERNELS 1
-	qui nwburt `net', replace silent
-	global NW_NOFASTKERNELS
-	foreach v in _effsize _efficiency _constraint _hierarchy {
-		capture assert (`v' == `v'_f) | reldif(`v', `v'_f) < 1e-10
-		if _rc {
-			di as err "nwburt `v' differs: `net' (`kind')"
-			exit 9
+	* the command nwburt weights a valued network (kernel 40, cscripts/test_burt_valued.do): compare its two routes on unvalued networks
+	if !strpos(`"`kind'"', "val=1") {
+		global NW_NOFASTKERNELS
+		qui nwburt `net', replace silent
+		foreach v in _effsize _efficiency _constraint _hierarchy {
+			qui gen double `v'_f = `v'
 		}
-		drop `v'_f
+		global NW_NOFASTKERNELS 1
+		qui nwburt `net', replace silent
+		global NW_NOFASTKERNELS
+		foreach v in _effsize _efficiency _constraint _hierarchy {
+			capture assert (`v' == `v'_f) | reldif(`v', `v'_f) < 1e-10
+			if _rc {
+				di as err "nwburt `v' differs: `net' (`kind')"
+				exit 9
+			}
+			drop `v'_f
+		}
 	}
 	* constraint: the cells of the kernel against calculate_constraint_triplets(), then the command's network
 	mata: bk_t = `netobj'->calculate_constraint_triplets()

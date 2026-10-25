@@ -15,6 +15,7 @@
 	(triad census of nwtriads) and 28 (eigenvector centrality of nwevcent) with NWCOMB_VERSION 6 (nwfast.h), 29 (nwburt), 30 (nwconstraint) and
 	31 (nwsimmelian) with NWCOMB_VERSION 7 (nwbrokerage.h).
 	Codes 34..39 (nwfast2.h, NWCOMB_VERSION 8): 34 pagerank of nwpagerank, 35 maximal cliques of nwclique.
+	Code 40 (nwburtw.h, NWCOMB_VERSION 9): weighted Burt measures of nwburt for valued networks (41, 42 reserved).
 
 	WIRE PROTOCOL (algorithm codes 3..99, see comb_call() at the end):
 	  plugin call nwgraph_native v1 v2 v3 v4 [v5 ...], "alg n nties p1 p2 ..."
@@ -40,7 +41,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define NWCOMB_VERSION 8
+#define NWCOMB_VERSION 9
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4
@@ -1235,6 +1236,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 #include "nwfast.h"
 #include "nwbrokerage.h"
 #include "nwfast2.h"
+#include "nwburtw.h"
 
 /* ------------------------------------------------------------------ */
 /* dispatcher                                                           */
@@ -1243,7 +1245,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 static int comb_handles(const char *s) {
 	long a = (long)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
-	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || a == 99 || a == 100);
+	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
@@ -1353,6 +1355,9 @@ static int comb_call(int argc, char *argv[]) {
 			break;
 		case ALG_CONSTRAINT:
 			rc = comb_constraint(n, nties, ei, ej, ew);
+			break;
+		case ALG_BURTW:
+			rc = comb_burtw(n, nties, ei, ej, ew);
 			break;
 		case ALG_SIMMELIAN:
 			rc = comb_simmelian(n, nties, ei, ej);
