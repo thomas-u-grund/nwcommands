@@ -268,7 +268,7 @@ program _nwmixing_print
 	local nc = colsof(`cell')
 	local elab : value label `egovar'
 	local alab : value label `altervar'
-	local w1 = 8
+	local w1 = max(8, length("`egovar'"))
 	local w2 = 8
 	forvalues i = 1/`nr' {
 		local v = `row'[`i',1]
@@ -284,7 +284,7 @@ program _nwmixing_print
 	}
 	local w2 = `w2' + 1
 	di
-	di "{txt}{space `=`w1'+1'}{c |} `altervar'"
+	di "{txt}{ralign `w1':`egovar'} {c |} `altervar'"
 	local hdr "{txt}{space `w1'} {c |}"
 	forvalues j = 1/`nc' {
 		local hdr "`hdr'{ralign `w2':`cl`j''}"
