@@ -46,7 +46,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Networks | directed one-mode, undirected one-mode (coordination), two-mode (a narrow set of effects) |
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood and gradient (macOS, Linux, Windows); the optimization runs in Mata |
-| Version | 1.0.4 (25 October 2026) |
+| Version | 1.1.0 (25 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
