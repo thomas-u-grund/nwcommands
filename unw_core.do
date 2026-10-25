@@ -4084,6 +4084,8 @@ class `NWdef' {
 	real matrix calculate_factions()
 	real matrix calculate_maxflow()
 	real matrix calculate_bipartite_matching()
+	real matrix calculate_matching_maxweight()
+	real matrix get_path_weighted()
 	real matrix calculate_pagerank()
 	real matrix calculate_randomwalk_hitting()
 	real matrix calculate_motif4()
@@ -4510,16 +4512,20 @@ void nw_path_net(pointer(class nw_def scalar) scalar p, real matrix path, real s
 {
 	real scalar n, i, wasvalued
 	real matrix net
+	real rowvector pp
 
 	n = p->get_nodes()
+	// paths of different numbers of steps (equally long weighted paths) are padded with 0 on the right
+	pp = path[id, .]
+	pp = pp[1, (1..sum(pp :> 0))]
 	if (nw_ties_only(p)) {
 		wasvalued = p->is_valued_boolean()
-		p->set_edge_from_triplets(path[id, (1..cols(path) - 1)]', path[id, (2..cols(path))]', J(cols(path) - 1, 1, 1), p->is_directed_boolean())
+		p->set_edge_from_triplets(pp[(1..cols(pp) - 1)]', pp[(2..cols(pp))]', J(cols(pp) - 1, 1, 1), p->is_directed_boolean())
 		p->set_valued(wasvalued)
 		return
 	}
 	net = J(n, n, 0)
-	for (i = 1; i < cols(path); i++) net[path[id, i], path[id, i + 1]] = 1
+	for (i = 1; i < cols(pp); i++) net[pp[i], pp[i + 1]] = 1
 	p->set_edge(net)
 }
 
@@ -7282,6 +7288,96 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 }
 
 /*
+	calculate_matching_maxweight(): the bipartite matching of
+	maximum TOTAL tie value (igraph::max_bipartite_match with its weight
+	attribute, which is what R uses by default on a weighted graph), not of
+	maximum size: a heavy tie can beat two light ones.  Hungarian method
+	(Kuhn-Munkres, shortest augmenting paths with potentials, O(N^3) on the
+	N x N padded value matrix of the two modes, N = larger mode); ties of
+	value zero or less are absent.  The dense matrix limits it to modes of a
+	few thousand nodes.  Same return value as calculate_bipartite_matching():
+	an n x 1 column holding, for a mode-1 node, its mode-2 partner's node
+	index (0 if unmatched), 0 for every mode-2 node.
+*/
+real matrix `NWdef'::calculate_matching_maxweight(){
+	real matrix adj, W
+	real scalar n, n1, n2, N, i, j, k
+	string rowvector modes
+	real colvector match, idx1, idx2, pos, asg, u, v, p, way, minv, used
+	real scalar i0, j0, j1, delta, cur
+
+	if (is_2mode_boolean() == 0) {
+		errprintf("nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).\n")
+		exit(error(6556))
+	}
+	n = get_nodes()
+	modes = get_modes()
+	match = J(n,1,0)
+	idx1 = selectindex((modes :== "1")')
+	idx2 = selectindex((modes :== "2")')
+	n1 = rows(idx1); n2 = rows(idx2)
+	if (n1 == 0 | n2 == 0) return(match)
+	N = max((n1, n2))
+	pos = J(n,1,0)
+	pos[idx1] = (1::n1)
+	pos[idx2] = (1::n2)
+	W = J(N, N, 0)
+	adj = edgelist()
+	if (rows(adj) > 0) {
+		adj = select(adj, (adj[.,3] :> 0) :& (adj[.,3] :< .) :& (adj[.,1] :!= adj[.,2]) :& ((modes')[adj[.,1]] :== "1") :& ((modes')[adj[.,2]] :== "2"))
+		for (k=1; k<=rows(adj); k++) W[pos[adj[k,1]], pos[adj[k,2]]] = adj[k,3]
+	}
+	// minimum cost = - value; index 0 of the textbook arrays is stored at position 1
+	u = J(N+1, 1, 0); v = J(N+1, 1, 0); p = J(N+1, 1, 0); way = J(N+1, 1, 0)
+	for (i=1; i<=N; i++){
+		p[1] = i
+		j0 = 0
+		minv = J(N+1, 1, 1e300)
+		used = J(N+1, 1, 0)
+		do {
+			used[j0+1] = 1
+			i0 = p[j0+1]
+			delta = 1e300
+			j1 = 0
+			for (j=1; j<=N; j++){
+				if (used[j+1] == 0){
+					cur = -W[i0,j] - u[i0] - v[j+1]
+					if (cur < minv[j+1]){
+						minv[j+1] = cur
+						way[j+1] = j0
+					}
+					if (minv[j+1] < delta){
+						delta = minv[j+1]
+						j1 = j
+					}
+				}
+			}
+			for (j=0; j<=N; j++){
+				if (used[j+1] == 1){
+					u[p[j+1]] = u[p[j+1]] + delta
+					v[j+1] = v[j+1] - delta
+				}
+				else minv[j+1] = minv[j+1] - delta
+			}
+			j0 = j1
+		} while (p[j0+1] != 0)
+		do {
+			j1 = way[j0+1]
+			p[j0+1] = p[j1+1]
+			j0 = j1
+		} while (j0 != 0)
+	}
+	// p[j+1] = the row (mode-1 position) assigned to column (mode-2 position) j
+	for (j=1; j<=N; j++){
+		i = p[j+1]
+		if (i >= 1 & i <= n1 & j <= n2){
+			if (W[i,j] > 0) match[idx1[i]] = idx2[j]
+		}
+	}
+	return(match)
+}
+
+/*
 	calculate_pagerank(): Page & Brin's (1998) own random-walk-based
 	centrality - the stationary distribution of a "random surfer" who,
 	at each step, follows a uniformly-random OUT-tie from the current
@@ -7310,22 +7406,62 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 	networks work identically (`neighbors()`/`degree()` already fall
 	back to the symmetric case on their own).
 
+	With the optional fourth argument `weighted' = 1 the surfer follows the
+	tie i->j with probability w_ij / s_i (s_i = sum of i's tie values of
+	positive size), as igraph::page_rank does with its weight attribute;
+	the default (0) is the binary walk above, unchanged.
+
 	`damping' defaults to 0.85 (Page & Brin's own original, still the
 	universal default in every other implementation). Returns an n x 1
 	column of PageRank scores summing to 1 (a genuine probability
 	distribution), not renormalized to any other convention.
 */
-real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxiter, real scalar tol){
-	real scalar n, d, mi, tolv, iter, i, k, danglingmass, diff, outd
-	real colvector r, rnew, outdeg
-	real matrix nb
+real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxiter, real scalar tol, real scalar weighted){
+	real scalar n, d, mi, tolv, iter, i, k, danglingmass, diff, outd, wtd
+	real colvector r, rnew, outdeg, rw, cl, cw, keep, perm, str, share, cls, tgt
+	real matrix nb, info, info2
 
 	d = (args() >= 1 ? damping : 0.85)
 	mi = (args() >= 2 ? maxiter : 1000)
 	tolv = (args() >= 3 ? tol : 1e-10)
+	wtd = (args() >= 4 ? weighted : 0)
 
 	n = get_nodes()
 	if (n == 0) return(J(0,1,0))
+
+	if (wtd == 1){
+		// Weighted walk (igraph::page_rank with the weight attribute): the surfer follows the tie i->j with
+		// probability w_ij / s_i, s_i the out-strength; ties of value zero or less are not followed.
+		ensure_sparse_built()
+		rw = csr_rows(); cl = colidx; cw = cweight
+		keep = selectindex((cw :> 0) :& (cw :< .))
+		str = J(n,1,0)
+		if (rows(keep) > 0){
+			rw = rw[keep]; cl = cl[keep]; cw = cw[keep]
+			info = panelsetup(rw, 1)
+			str[rw[info[.,1]]] = panelsum(cw, info)
+			perm = order(cl, 1)
+			cls = cl[perm]
+			info2 = panelsetup(cls, 1)
+			tgt = cls[info2[.,1]]
+		}
+		else {
+			rw = J(0,1,0); cl = J(0,1,0); cw = J(0,1,0)
+		}
+		r = J(n,1,1/n)
+		for (iter=1; iter<=mi; iter++){
+			danglingmass = sum(select(r, str :== 0))
+			rnew = J(n,1,(1-d)/n + d*danglingmass/n)
+			if (rows(cw) > 0){
+				share = ((cw :/ str[rw]) :* r[rw])[perm]
+				rnew[tgt] = rnew[tgt] + d :* panelsum(share, info2)
+			}
+			diff = max(abs(rnew - r))
+			r = rnew
+			if (diff < tolv) break
+		}
+		return(r)
+	}
 
 	outdeg = J(n,1,0)
 	for (i=1; i<=n; i++) outdeg[i] = degree(i)
@@ -7369,23 +7505,35 @@ real scalar nw_hitting_cg_min()
 	Returns a 0 x 1 vector (the caller then takes the dense route) when an
 	isolate exists, or the tolerance is not reached in 5,000 iterations (e.g. a disconnected network).
 */
-real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t)
+real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t, | real scalar weighted)
 {
-	real colvector r, c, w, key, deg, x, res, z, p, q, tmp
-	real matrix info
-	real scalar n, it, rz, rz0, alpha, beta, bnorm
+	real colvector r, c, w, key, deg, x, res, z, p, q, tmp, o, wv
+	real matrix info, T
+	real scalar n, it, rz, rz0, alpha, beta, bnorm, wtd
 
+	wtd = (args() >= 3 ? weighted : 0)
 	n = thisnw->get_nodes()
 	thisnw->ensure_sparse_built()
+	if (wtd == 1){
+		// symmetrized tie values as get_matrix_mod(1, 0) defines them (the larger direction), positive ones only
+		T = nwg_symw(thisnw->edgelist(), thisnw->is_directed_boolean(), thisnw->is_valued_boolean(), 1)
+		if (rows(T) > 0) T = select(T, (T[.,1] :!= T[.,2]) :& (T[.,3] :> 0) :& (T[.,3] :< .))
+		if (rows(T) == 0) return(J(0, 1, .))
+		o = order(T[.,1] :* (n + 1) :+ T[.,2], 1)
+		r = T[o,1]; c = T[o,2]; wv = T[o,3]
+	}
+	else {
 	r = thisnw->csr_rows(); c = thisnw->colidx; w = thisnw->cweight
 	tmp = selectindex((r :!= c) :& (w :> 0))
 	if (rows(tmp) == 0) return(J(0, 1, .))
 	key = sort(uniqrows((r[tmp] :* (n + 1) :+ c[tmp]) \ (c[tmp] :* (n + 1) :+ r[tmp])), 1)
 	r = floor(key :/ (n + 1))
 	c = key :- r :* (n + 1)
+	wv = J(rows(r), 1, 1)
+	}
 	info = panelsetup(r, 1)
 	deg = J(n, 1, 0)
-	deg[r[info[., 1]]] = panelsum(J(rows(r), 1, 1), info)
+	deg[r[info[., 1]]] = panelsum(wv, info)
 	if (min(deg) == 0) return(J(0, 1, .))
 
 	// b = deg on the non-target nodes
@@ -7399,7 +7547,7 @@ real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real s
 	for (it = 1; it <= 5000; it++){
 		q = J(n, 1, 0)
 		p[t] = 0
-		q[r[info[., 1]]] = panelsum(p[c], info)
+		q[r[info[., 1]]] = panelsum(wv :* p[c], info)
 		q = deg :* p - q
 		q[t] = 0
 		alpha = rz / sum(p :* q)
@@ -7446,12 +7594,18 @@ real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real s
 	not attempted here; an unreachable node in a disconnected undirected
 	network has no finite hitting time by definition, reported as
 	missing rather than guessed).
+
+	Optional second argument `weighted' = 1: the walk steps from i to j with
+	probability w_ij / s_i (the tie values, as igraph::random_walk does);
+	the system is then (D_s - W) h = s with the strengths on the diagonal.
+	The default (0) is the simple walk above, unchanged.
 */
-real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
+real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t, | real scalar weighted){
 	real matrix A, P, M, rhs, h
-	real scalar n, i, d
+	real scalar n, i, d, wtd
 	real colvector deg
 
+	wtd = (args() >= 2 ? weighted : 0)
 	n = get_nodes()
 	if (t < 1 | t > n) {
 		errprintf("nwrandomwalk: target node index out of range.\n")
@@ -7460,11 +7614,18 @@ real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
 	// Large networks: the grounded-Laplacian system is solved by conjugate gradients on the sparse tie
 	// list (O(ties) per iteration; the dense LU below is O(n^3) and needs several n x n matrices:
 	// 65 s at 10,000 nodes), only if CG reaches its tolerance; otherwise the dense code below runs as before.
+	// With weighted = 1 the walk steps from i to j with probability w_ij / s_i (s_i = strength of i, the larger
+	// direction of a directed pair, ties of positive value only), as igraph::random_walk does with weights.
 	if (n > nw_hitting_cg_min()){
-		h = nw_hitting_cg(&this, t)
+		h = nw_hitting_cg(&this, t, wtd)
 		if (rows(h) == n) return(h)
 	}
-	A = *get_matrix_mod(0, 0)
+	if (wtd == 1){
+		A = *get_matrix_mod(1, 0)
+		_editmissing(A, 0)
+		A = A :* (A :> 0)
+	}
+	else A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
 	deg = rowsum(A)
 	if (min(deg) == 0) {
@@ -8186,6 +8347,86 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 	paths = select(paths_sofar, paths_valid)
 	return(paths)
 	}
+}
+
+/*
+	get_path_weighted(ego, alter, alpha): every shortest path from ego to alter when a step along a tie of
+	value w costs w^(-alpha) (alpha = 1: 1/w, a stronger tie is shorter; alpha = -1: igraph's weights as lengths;
+	alpha = 0: every step costs 1).  Dijkstra from ego, then the paths are read backwards from alter through
+	the in-neighbours that lie on a shortest path (equal lengths within a relative 1e-10).  One path per row, the
+	node ids from ego to alter, padded with 0 on the right when equally long paths differ in their number of steps;
+	0 x 0 when alter cannot be reached.  Ties of value zero or less are not traversed.
+*/
+real matrix `NWdef'::get_path_weighted(real scalar ego, real scalar alter, real scalar alpha)
+{
+	real scalar n, m, j, u, mindist, nd, k, w, c, h, hmax, r, i
+	real colvector D, settled, nbr, idx
+	real matrix partial, done, nxt, paths
+
+	n = get_nodes()
+	ensure_sparse_built()
+	if (ego == alter) return(J(1, 1, ego))
+	D = J(n, 1, .)
+	D[ego] = 0
+	settled = J(n, 1, 0)
+	for (m=1; m<=n; m++){
+		mindist = .
+		u = 0
+		for (j=1; j<=n; j++){
+			if (settled[j] == 0 & D[j] < . & (u == 0 | D[j] < mindist)){
+				mindist = D[j]
+				u = j
+			}
+		}
+		if (u == 0) break
+		settled[u] = 1
+		if (u == alter) break
+		if (rowptr[u+1] > rowptr[u]){
+			idx = (rowptr[u]::(rowptr[u+1]-1))
+			for (k=1; k<=rows(idx); k++){
+				w = colidx[idx[k]]
+				c = cweight[idx[k]]
+				if (w == u | settled[w] | c <= 0 | c >= .) continue
+				nd = D[u] + c^(-alpha)
+				if (D[w] == . | nd < D[w]) D[w] = nd
+			}
+		}
+	}
+	if (D[alter] == .) return(J(0, 0, .))
+	// backwards from alter: a partial path is stored from its head (the node nearest to alter) outwards
+	partial = J(1, 1, alter)
+	done = J(0, 0, .)
+	hmax = 0
+	while (rows(partial) > 0){
+		nxt = J(0, cols(partial) + 1, 0)
+		for (r=1; r<=rows(partial); r++){
+			h = partial[r, cols(partial)]
+			if (h == ego){
+				if (rows(done) == 0) done = J(0, cols(partial), 0)
+				if (cols(done) < cols(partial)) done = (done, J(rows(done), cols(partial) - cols(done), 0))
+				done = done \ (partial[r, .], J(1, cols(done) - cols(partial), 0))
+				continue
+			}
+			nbr = neighbors_in(h)
+			for (i=1; i<=rows(nbr); i++){
+				j = nbr[i]
+				c = edge_weight(j, h)
+				if (j == h | c <= 0 | c >= . | D[j] == .) continue
+				if (abs(D[j] + c^(-alpha) - D[h]) <= 1e-10 * D[h]){
+					nxt = nxt \ (partial[r, .], j)
+				}
+			}
+		}
+		partial = nxt
+	}
+	// each stored path runs alter ... ego: reverse it, keeping the padding at the right
+	paths = J(rows(done), cols(done), 0)
+	for (r=1; r<=rows(done); r++){
+		k = sum(done[r, .] :> 0)
+		paths[r, (1..k)] = done[r, (k..1)]
+	}
+	if (rows(paths) > 1) paths = sort(paths, (1..cols(paths)))
+	return(paths)
 }
 
 /*
