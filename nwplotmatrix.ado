@@ -22,6 +22,17 @@ program nwplotmatrix
 		error 198
 	}
 
+	// one box (five points) per dyad: memory and drawing time grow with the
+	// square of the number of nodes (about 2.6 GB and 20 s for 2,000 nodes,
+	// 1 GB and 5 s for 1,000); beyond 2,500 nodes a box per dyad is also
+	// finer than a screen or a page can show
+	if `nodes' > 2500 {
+		di "{err}nwplotmatrix draws one box for every pair of nodes: " ///
+			"`nodes' nodes would need about " round(`nodes'^2 * 5 * 130 / 1024^3, 0.1) " GB."
+		di "{err}Plot a part of the network (for example nwinduced) or use {bf:nwplot}."
+		exit `errDenseTooLarge'
+	}
+
 	preserve
 	gettoken temp ylabel : ylabel, parse(",")
 	gettoken temp xlabel : xlabel, parse(",")
@@ -139,37 +150,14 @@ if "`label'" != "" {
 local ynames `"`xnames'"'
 drop _all
 
-/* Find matrix dimensions and col/row names */
+/* Find matrix dimensions */
 local ny = rowsof(`mat')
 local nx = colsof(`mat')
 
-local rowsmat = rowsof(`mat')
-local colsmat = colsof(`mat')
-local rowsname ""
-local colsname ""
-forvalues i =1 /`rowsmat' {
-	local rowsname "`rowsname' v`i'"
-}
-forvalues i =1 /`colsmat' {
-	local colsname "`colsname' v`i'"
-}
-mat rownames `mat' = `rowsname'
-mat colnames `mat' = `colsname'
-
-noi svmat `mat', names(matcol) 
-if "`split'" ~= "" _mkdata, s(`split') nc(`nx')
-else  _mkdata, nc(`nx')
-
-
-if "`nodiag'"~="" {
-  qui replace col1=. if _stack==y
-  qui replace cb=. if _stack==y
-}
-
-/***************************************************** 
- * put the numlist of values in split macro 
- *****************************************************/
-if "`split'"=="" local split "`r(split)'"
+/* the data of the boxes, built directly (no svmat/stack: Stata/BE holds at most
+   2,048 variables, and a variable per column was a second copy of the matrix) */
+_mkdata, mat(`mat') split(`split')
+if "`split'" == "" local split "`r(split)'"
 
 
 /*Go through the colour cutoffs to create the legend list?*/
@@ -362,23 +350,19 @@ end
 
 capture program drop _mkdata
 prog def _mkdata, rclass
-syntax [varlist] [, Split(numlist) NC(integer 0)]
-
-/* 
-Create percentiles if split is not specified
-nc is the number of columns.. if there is only one column just do a rename otherwise stack the columns
-*/
-
-if `nc'==1 {
-  rename `varlist' col1
-  qui g _stack = 1
-}
-else qui stack `varlist', into(col1) clear
+syntax , Mat(name) [Split(numlist)]
 
 /*
- Split option here allows for the calculation of the legend, percentiles are 
- defaults
+Create percentiles if split is not specified.  The cells of the matrix are
+stacked column by column into col1 (with the column number in _stack and the
+row number in y); every cell then becomes the five corners of its box, in the
+order the boxes are drawn (see nw_pm_boxes() in unw_core.do).
 */
+
+local ny = rowsof(`mat')
+local nx = colsof(`mat')
+qui set obs `=`ny'*`nx''
+mata: nw_pm_cells("`mat'")
 
 qui su col1
 local min: di %5.3f (`r(min)'-0.001)
@@ -397,25 +381,5 @@ if "`split'"=="" {
 return local split = "`split'"  
 
 local diff 0.5
-qui bysort _stack:g y=_n
-qui expand 5
-qui bysort _stack y: g yy=-1*cond(_n==1 | _n==2, y+`diff', cond( _n==3 | _n==4, y-`diff',.))+1
-qui bysort _stack y: g xx=cond(_n==1 | _n==4, _stack+`diff', cond(_n==3 | _n==2, _stack-`diff',.))
-
-qui g cb =.
-qui g colorleg =""
-local var "col1"
-local pcent 0
-
-foreach num of numlist `split' {
-  if `pcent'~=0 {
-    qui replace cb = cond( `var'<`num' & `var'>=`prev', `pcent',cb) 
-    qui replace colorleg =  cond( `var'<`num' & `var'>=`prev', "`prev'-`num'",colorleg)
-  }
-  local prev = `num'
-  local `pcent++'
-}
-qui replace cb= cond( `var'==`prev', `pcent',cb)  /* This is the extra very last value*/
-qui replace colorleg =  cond( `var'==`prev' , "`prev'",colorleg)
-
+mata: nw_pm_boxes(strtoreal(tokens(st_local("split"))), `diff')
 end

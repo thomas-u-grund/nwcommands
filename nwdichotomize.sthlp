@@ -73,6 +73,11 @@ Same, but keep the original valued network and save the binary version under a n
 
 	{cmd:. nwdichotomize trade, threshold(100) generate(trade_binary)}
 
+{title:Limits}
+
+{pstd}
+See {help nwrecode}: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, random directed network with 10 ties per node.
+
 last certified : 28 Aug 2026
 
 {hline}

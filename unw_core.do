@@ -2668,6 +2668,35 @@ real rowvector csr_neighbors(real colvector rowptr, real colvector colidx, real 
 }
 
 /*
+	nw_csr_from_edges(n, eu, ev, rowptrP, colidxP): the CSR of the arc list
+	(eu, ev) - rows in node order, each row's entries in the order the arcs
+	come, exactly what build_edgelist_csr_dense() builds - without its
+	element-by-element loops.
+*/
+void nw_csr_from_edges(real scalar n, real colvector eu, real colvector ev,
+		pointer(real colvector) scalar rowptrP, pointer(real colvector) scalar colidxP){
+	real scalar m, g
+	real colvector o, es, starts, cnt, deg
+
+	m = rows(eu)
+	deg = J(n, 1, 0)
+	if (m > 0){
+		o = order((eu, (1::m)), (1, 2))
+		es = eu[o]
+		starts = nw_which((es :!= (0 \ es[|1 \ m-1|])))
+		g = rows(starts)
+		cnt = (g > 1 ? starts[|2 \ g|] : J(0, 1, 0)) \ (m + 1)
+		cnt = cnt - starts
+		deg[es[starts]] = cnt
+		(*colidxP) = ev[o]
+	}
+	else {
+		(*colidxP) = J(0, 1, 0)
+	}
+	(*rowptrP) = 0 \ runningsum(deg)
+}
+
+/*
 	KComponentsEdges(nfull, eu, ev, rowptr, colidx, nodeset, k): the
 	edge-list/CSR-native equivalent of KComponents() above - identical
 	algorithm (see that function's own header comment for the full
@@ -2733,7 +2762,8 @@ real matrix KComponentsEdges(real scalar nfull, real colvector eu, real colvecto
 	// completely unaffected - the early exit only ever fires once
 	// minflow is already known to be below k, which cannot happen on a
 	// branch that reports conn >= k.
-	search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
+	if (NativeGraphAvailable()) search = nw_kconn_search_native(cols(idx), eu_local, ev_local, k)
+	else search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
 	conn = search[1]
 	if (conn >= k) {
 		results = nodeset
@@ -3503,7 +3533,11 @@ class `NWdef' {
 
 	string matrix get_edgelist()
 	string matrix get_edgelist_sparse()
+	void edgelist_full_to_vars()
+	void value_counts_to_vars()
+	real scalar recode_weights()
 	real scalar edgelist_sparse_ok()
+	real scalar edgelist_sparse_ok_cross()
 	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
@@ -3891,6 +3925,218 @@ string scalar nw_labs_string(string rowvector names){
 	if (cols(names) == 0) return("")
 	if (sum(strlen(names)) + cols(names) > 200000) return("")
 	return(invtokens(names, ","))
+}
+
+/*
+	nw_group_counts(x, cw): the distinct values of x (missing last) and the
+	sum of the weights cw of the entries holding each, as a two column matrix.
+*/
+real matrix nw_group_counts(real colvector x, real colvector cw){
+	real colvector p, xs, cs, d, cum, ends, cnt
+	real scalar m
+
+	m = rows(x)
+	if (m == 0) return(J(0, 2, 0))
+	p = order(x, 1)
+	xs = x[p]
+	cs = cw[p]
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = xs[|2 \ m|] :!= xs[|1 \ m-1|]
+	cum = runningsum(cs)
+	ends = nw_which(d)
+	// last row of every group
+	ends = (m > 1 ? (ends[|2 \ rows(ends)|] :- 1) : J(0, 1, 0)) \ m
+	cnt = cum[ends]
+	if (rows(ends) > 1) cnt = cnt - (0 \ cnt[|1 \ rows(ends)-1|])
+	return((xs[nw_which(d)], cnt))
+}
+
+/*
+	nwplotmatrix (plotmatrix's data): the cells of matrix `matname' stacked
+	column by column into variables _stack (column number) and col1 (value,
+	float like svmat made it) of the data in memory, which must already have
+	rows(M)*cols(M) observations.
+*/
+void nw_pm_cells(string scalar matname){
+	real matrix M
+
+	M = st_matrix(matname)
+	(void) st_addvar((cols(M) < 32740 ? "int" : "long"), "_stack")
+	(void) st_addvar("float", "col1")
+	st_store(., "_stack", vec(J(rows(M), 1, 1..cols(M))))
+	st_store(., "col1", vec(M))
+}
+
+/*
+	nwplotmatrix: replaces the data in memory (_stack, col1: one observation
+	per cell) by the five corners of every cell's box, five observations per
+	cell in the order of (_stack, row): y (row number), yy and xx (corner
+	coordinates, the fifth observation of a box missing so that the boxes are
+	not joined) and cb (the colour level: j-1 when split[j-1] <= col1 <
+	split[j]).  The same variables the stack/expand/bysort sequence made,
+	built directly (the old way took 8 s for 1,000 nodes, this about 1 s).
+*/
+void nw_pm_boxes(real rowvector split, real scalar diff){
+	real scalar n2, nx, ny, K, j
+	real colvector col1, stk, y, cb, sg, r5, yy, xx, hit, five
+	real matrix rep
+
+	n2 = st_nobs()
+	stk = st_data(., "_stack")
+	col1 = st_data(., "col1")
+	nx = max(stk)
+	ny = n2 / nx
+	y = mod((1::n2) :- 1, ny) :+ 1
+	K = cols(split)
+	cb = J(n2, 1, .)
+	for (j = 2; j <= K; j++){
+		hit = selectindex((col1 :< split[j]) :& (col1 :>= split[j-1]))
+		if (length(hit) > 0) cb[hit] = J(length(hit), 1, j - 1)
+	}
+	if (K > 0){
+		hit = selectindex(col1 :== split[K])
+		if (length(hit) > 0) cb[hit] = J(length(hit), 1, K)
+	}
+	stata("quietly drop _all")
+	st_addobs(5 * n2)
+	rep = J(5, 1, 1)
+	r5 = mod((1::5*n2) :- 1, 5) :+ 1
+	(void) st_addvar((nx < 32740 ? "int" : "long"), "_stack")
+	(void) st_addvar("float", "col1")
+	(void) st_addvar("float", "y")
+	(void) st_addvar("float", "yy")
+	(void) st_addvar("float", "xx")
+	(void) st_addvar("float", "cb")
+	stk = vec(rep * stk')
+	y = vec(rep * y')
+	st_store(., "_stack", stk)
+	st_store(., "col1", vec(rep * col1'))
+	st_store(., "y", y)
+	// corners 1,2: y+diff, corners 3,4: y-diff; corners 1,4: column+diff,
+	// corners 2,3: column-diff; corner 5 missing (the boxes are not joined)
+	sg = (r5 :<= 2) :- ((r5 :>= 3) :& (r5 :<= 4))
+	yy = -1 :* (y :+ diff :* sg) :+ 1
+	xx = stk :+ diff :* (((r5 :== 1) :| (r5 :== 4)) :- ((r5 :== 2) :| (r5 :== 3)))
+	five = selectindex(r5 :== 5)
+	yy[five] = J(length(five), 1, .)
+	xx[five] = J(length(five), 1, .)
+	st_store(., "yy", yy)
+	st_store(., "xx", xx)
+	st_store(., "cb", vec(rep * cb'))
+}
+
+/*
+	Export writers (nwexport): the text a Stata-level `file write' loop used
+	to produce one tie at a time, built in blocks and appended with fwrite().
+	Numbers are written the way a macro expansion of `local x = ...' shows
+	them (%18.0g), so the files are byte-for-byte what the loops wrote.
+*/
+string colvector nw_exp_num(real colvector x){
+	return(strofreal(x, "%18.0g"))
+}
+
+/*
+	Append the tie rows held in the data in memory (variables vk, vl: node
+	numbers, vv: tie value) to fname: head, then newline, K, L, V per row
+	(and the reversed row L, K, V right after it when `both'), then tail.
+*/
+void nw_exp_ties(string scalar fname, string scalar vk, string scalar vl, string scalar vv,
+		real scalar both, string scalar head, string scalar tail){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector ks, ls, vs, s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	fwrite(fh, head)
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		ks = nw_exp_num(st_data((a::b), vk))
+		ls = nw_exp_num(st_data((a::b), vl))
+		vs = nw_exp_num(st_data((a::b), vv))
+		s = nl :+ ks :+ " " :+ ls :+ " " :+ vs
+		if (both) s = s :+ (nl :+ ls :+ " " :+ ks :+ " " :+ vs)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, tail)
+	fclose(fh)
+}
+
+/*
+	Pajek vertex block: (re)create fname with "*Vertices n" and one
+	`i   "label"' row per node, the labels read from the first n rows of
+	variable vname.
+*/
+void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((nw_exp_num((1::n)) :+ "   " :+ char(34) :+ lab :+ char(34) :+ nl)', ""))
+	}
+	fclose(fh)
+}
+
+/*
+	UCINET header: "dl n=", format, the comma separated labels (every label,
+	whatever the number of nodes), "data:".
+*/
+void nw_exp_ucinet_head(string scalar fname, string rowvector names){
+	real scalar fh
+	string scalar nl
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(names, ",") + nl + "data:")
+	fclose(fh)
+}
+
+/*
+	GML: header and node blocks (labels from the first n rows of vname);
+	nw_exp_gml_edges() then appends the edge blocks and the closing bracket.
+*/
+void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "graph [" + nl + "  directed " + (directed ? "1" : "0") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ (nl + "  ]" + nl))', ""))
+	}
+	fclose(fh)
+}
+
+void nw_exp_gml_edges(string scalar fname, string scalar vk, string scalar vl, string scalar vv){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ strofreal(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, "]" + nl)
+	fclose(fh)
 }
 
 /*
@@ -5211,11 +5457,42 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 	real rowvector nodeset
 	real scalar n
 
+	real matrix el
+	real colvector r, c, w, keep, key, o, eu, ev, rowptr, colidx
+
 	n = get_nodes()
+	nodeset = J(1, n, 1)
+
+	if (edgelist_sparse_ok()){
+		// the undirected, unvalued graph from the stored ties alone (what
+		// get_matrix_mod(0,0) :!= 0 gives, without the N x N matrix): a
+		// tie counts when it is not 0 (unvalued, undirected network) or
+		// positive (otherwise), in either direction; no loops
+		ensure_sparse_built()
+		el = edgelist()
+		eu = J(0, 1, 0)
+		ev = J(0, 1, 0)
+		if (rows(el) > 0){
+			r = el[,1]; c = el[,2]; w = el[,3]
+			if (isdirect == 0 & isvalued == 0) keep = nw_which((w :!= 0) :& (r :!= c))
+			else keep = nw_which((w :> 0) :& (r :!= c))
+			if (rows(keep) > 0){
+				r = r[keep]; c = c[keep]
+				// each tie in both directions, once, in the order of a column
+				// by column scan of the symmetric 0/1 matrix (key = column
+				// * (n+1) + row, column = ev)
+				key = sort((c :* (n + 1) :+ r) \ (r :* (n + 1) :+ c), 1)
+				if (rows(key) > 1) key = key[nw_which((key[|2 \ rows(key)|] :!= key[|1 \ rows(key)-1|]) \ 1)]
+				ev = floor((key :- 1) :/ (n + 1))
+				eu = key :- ev :* (n + 1)
+			}
+		}
+		nw_csr_from_edges(n, eu, ev, &rowptr, &colidx)
+		return(KComponentsEdges(n, eu, ev, rowptr, colidx, nodeset, k))
+	}
+
 	adj = (*get_matrix_mod(0,0)) :!= 0
 	_diag(adj, 0)
-
-	nodeset = J(1, n, 1)
 	return(KComponents(adj, nodeset, k))
 }
 
@@ -7803,6 +8080,39 @@ real matrix `NWdef'::calculate_betweenness_native(){
 }
 
 /*
+	Native (C) counterpart of fast_min_cut_search_edges(n, eu, ev, target)
+	for nwkcomponents (native/nwgraph.c, ALG_KCONN_SEARCH): the vertex
+	connectivity search of the graph with n nodes and the symmetric arc list
+	(eu, ev), stopping as soon as a pair with fewer than `target' disjoint
+	paths is found.  Returns (minflow, best_s, best_t); a connectivity of
+	`target' or more comes back as `target' (see the C source).
+	CALLER'S RESPONSIBILITY: NativeGraphAvailable().
+*/
+real rowvector nw_kconn_search_native(real scalar n, real colvector eu, real colvector ev, real scalar target){
+	real scalar m, __junk
+	string scalar origframe, argstr
+	real rowvector res
+
+	m = rows(eu)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	st_addobs(max((n, m, 3)))
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
+	if (m > 0) st_store((1::m), ("v1","v2"), (eu, ev))
+	argstr = "20 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(target)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34))
+	res = st_data((1::3), "v3")'
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(res)
+}
+
+/*
 	Native single-source-BFS-per-call all-pairs unweighted distance
 	matrix - the compiled counterpart to bfs_hopdist_from()/
 	calculate_distances_bfs() above. Unlike calculate_betweenness_native()
@@ -8177,6 +8487,205 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 
 
 /*
+	The ego, alter and value columns get_edgelist() lists (all N x N cells, or
+	the lower triangle with `undirected'), written straight into three new
+	variables of the data in memory (which must have no observations): ego and
+	alter as the node names, value as the number get_edgelist() would show as
+	text and destring would read back (12 significant digits), in the same row
+	order.  Replaces building a seven-column string matrix and parsing it again
+	(four times slower).  Refused beyond 5e7 rows, where the list would take
+	several GB and minutes; nwtoedge, compress lists only the ties.
+*/
+void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, string scalar valter, string scalar vnet, | real scalar crossmode){
+	real scalar n, m, ml, k
+	real colvector v, ri, ci, sel, p, d, g, vals
+	string rowvector nm, md
+	string colvector s
+
+	n = get_nodes()
+	m = (undirected ? n*(n+1)/2 : n*n)
+	if (m > 5e7){
+		error_handle("Listing every dyad of the " + strofreal(n) + " nodes of network `" + get_name() + "' would create " + strofreal(m) + " rows (more than 50,000,000). Use the option compress, which lists only the ties.", `errDenseTooLarge')
+	}
+	if (m == 0) {
+		st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+		return
+	}
+	v = vec(get_matrix_copy())
+	ri = mod((1::n*n) :- 1, n) :+ 1
+	ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+	if (undirected){
+		sel = nw_which(ri :>= ci)
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+	}
+	// two-mode: only the dyads between the modes (what nw2toedge keeps)
+	if (crossmode == 1){
+		md = get_modes()
+		sel = nw_which((md')[ri] :!= (md')[ci])
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+		m = rows(v)
+		if (m == 0){
+			st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+			return
+		}
+	}
+	// the text round trip, once per distinct value
+	p = order(v, 1)
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = (v[p])[|2 \ m|] :!= (v[p])[|1 \ m-1|]
+	g = runningsum(d)
+	vals = strtoreal(strofreal((v[p])[nw_which(d)]))
+	v[p] = vals[g]
+	nm = nodes
+	st_addobs(m)
+	ml = max(strlen(nm))
+	s = (nm')[ri]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), vego), s)
+	s = (nm')[ci]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), valter), s)
+	st_store(., st_addvar("double", vnet), v)
+}
+
+/*
+	The distinct tie values of get_edgelist() (every cell, or the lower triangle
+	with `undirected', missing diagonal included) with the number of cells
+	holding each, written to two new variables (vval: the value as get_edgelist()
+	shows it and destring reads it back, vfreq: the count) of the data in memory,
+	which must have no observations.  O(ties): the zeros are counted, not
+	listed.  What nwtabulate tabulates.
+*/
+void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, string scalar vfreq){
+	real scalar n, total, nz
+	real colvector r, c, w, cw, keep, ri, ci, rt
+	real matrix uc
+
+	n = get_nodes()
+	total = (undirected ? n*(n+1)/2 : n*n)
+	if (total > 2147483647){
+		error_handle("Tabulating the " + strofreal(n) + " nodes of network `" + get_name() + "' needs more than 2,147,483,647 dyad counts (Stata frequency weights). Use nwsummarize or nwdegree for networks of this size.", `errDenseTooLarge')
+	}
+	if (edgelist_sparse_ok()){
+		ensure_sparse_built()
+		r = csr_rows()
+		c = colidx
+		w = cweight
+		if (undirected){
+			keep = nw_which(r :>= c)
+			w = w[keep]
+		}
+		if (isselfloop == 0) w = w \ J(n, 1, .)
+		cw = J(rows(w), 1, 1)
+		nz = total - rows(w)
+		w = w \ 0
+		cw = cw \ nz
+	}
+	else {
+		w = vec(get_matrix_copy())
+		if (undirected){
+			ri = mod((1::n*n) :- 1, n) :+ 1
+			ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+			w = w[nw_which(ri :>= ci)]
+		}
+		cw = J(rows(w), 1, 1)
+	}
+	uc = nw_group_counts(w, cw)
+	// the text round trip, then merge values that coincide afterwards
+	rt = strtoreal(strofreal(uc[,1]))
+	uc = nw_group_counts(rt, uc[,2])
+	uc = select(uc, uc[,2] :> 0)
+	st_addobs(rows(uc))
+	st_store(., st_addvar("double", vval), uc[,1])
+	st_store(., st_addvar("double", vfreq), uc[,2])
+}
+
+/*
+	Recode the tie values in place (nwrecode): oldv holds the distinct values
+	the cells of this network show (as value_counts_to_vars() lists them,
+	ascending, missing last) and newv what each becomes.  Every stored tie
+	takes the new value of its (text-round-tripped) old one; ties that become
+	0 are dropped.  Only valid when 0 stays 0, missing stays missing and no
+	tie becomes missing (nw_recode_fastok()).  O(ties).  Returns 1 when the
+	recoded matrix is symmetric, else 0.
+*/
+real scalar `NWdef'::recode_weights(real colvector oldv, real colvector newv){
+	real matrix el
+	real colvector rt, x, o, isold, pos, idx, neww, keep, r, c, k1, k2, o1, o2
+	real scalar m, n, wasvalued
+
+	ensure_sparse_built()
+	n = get_nodes()
+	// like the dense code (set_edge()), leave the valued flag as it was
+	wasvalued = isvalued
+	el = edgelist()
+	m = rows(el)
+	if (m == 0){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	rt = strtoreal(strofreal(el[,3]))
+	// position of every tie value among the distinct old values
+	x = oldv \ rt
+	isold = J(rows(oldv), 1, 1) \ J(m, 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	neww = newv[idx]
+	if (!any(neww :!= 0)){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	keep = nw_which(neww :!= 0)
+	r = el[keep, 1]
+	c = el[keep, 2]
+	neww = neww[keep]
+	set_edge_from_triplets(r, c, neww, 1)
+	isvalued = wasvalued
+	k1 = r :* (n + 1) :+ c
+	k2 = c :* (n + 1) :+ r
+	o1 = order(k1, 1)
+	o2 = order(k2, 1)
+	return(all(k1[o1] :== k2[o2]) & all(neww[o1] :== neww[o2]))
+}
+
+/*
+	nw_recode_matrix(M, oldv, newv): M with every cell replaced by the new
+	value of its (text-round-tripped) old value; the cells of M hold only
+	values listed in oldv.
+*/
+real matrix nw_recode_matrix(real matrix M, real colvector oldv, real colvector newv){
+	real colvector x, o, isold, pos, idx
+
+	x = oldv \ strtoreal(strofreal(vec(M)))
+	isold = J(rows(oldv), 1, 1) \ J(rows(x) - rows(oldv), 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	return(colshape(newv[idx], rows(M))')
+}
+
+/*
+	nw_recode_fastok(oldv, newv): TRUE when a recode that maps the distinct
+	values oldv to newv can be applied to the stored ties alone: 0 stays 0,
+	missing stays missing, and no tie value becomes missing.
+*/
+real scalar nw_recode_fastok(real colvector oldv, real colvector newv){
+	real colvector z, mm, nn
+
+	z = oldv :== 0
+	mm = oldv :>= .
+	nn = (oldv :!= 0) :& (oldv :< .)
+	if (any(z)) if (any(newv[nw_which(z)] :!= 0)) return(0)
+	if (any(mm)) if (any(newv[nw_which(mm)] :!= oldv[nw_which(mm)])) return(0)
+	if (any(nn)) if (any(newv[nw_which(nn)] :>= .)) return(0)
+	return(1)
+}
+
+/*
 	The rows of get_edgelist() whose cell is not exactly 0, computed from the
 	stored ties (O(nnz) time and memory, no N x N matrix).  Same 7 columns as
 	get_edgelist() (sender, receiver, value, in-selection flag "1", reverse
@@ -8240,6 +8749,23 @@ string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
 real scalar `NWdef'::edgelist_sparse_ok(){
 	if (edge_dense_built == `False') return(1)
 	return(sum(edge :== .) == (isselfloop == 0 ? get_nodes() : 0))
+}
+
+/*
+	Like edgelist_sparse_ok(), for a caller that only keeps the dyads between
+	the modes of a two-mode network (nw2toedge): the missing cells of a
+	cleaned two-mode network all lie between nodes of the same mode, so the
+	stored ties list exactly the cross-mode non-zero cells.
+*/
+real scalar `NWdef'::edgelist_sparse_ok_cross(){
+	real rowvector md
+	real colvector mdc
+
+	if (edge_dense_built == `False') return(1)
+	if (is2mode != 1) return(edgelist_sparse_ok())
+	md = strtoreal(get_modes())
+	mdc = md'
+	return(sum((edge :== .) :& (J(rows(mdc), 1, 1) * md :!= mdc * J(1, cols(md), 1))) == 0)
 }
 
 /*
@@ -10011,6 +10537,7 @@ void `NWsdef'::drop(string scalar netname){
 
 void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	real scalar i, size
+	real matrix el
 	
 	names = (names, new_netname)
 	i = first_index_match(names, netname)
@@ -10018,8 +10545,18 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	size = cols(pdefs)
 	pdefs[size] = &(`NWdef'())
 	pdefs[size]->set_name(new_netname)
-	pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
-	pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	if (pdefs[i]->is_dense_built() == 0){
+		// a network that only exists as its ties (nwfromedge and the like):
+		// copy the ties, never the N x N matrix
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+		pdefs[size]->set_selfloop(pdefs[i]->is_selfloop_boolean())
+		el = pdefs[i]->edgelist()
+		pdefs[size]->set_edge_from_triplets(el[,1], el[,2], el[,3], 1)
+	}
+	else {
+		pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
+		pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
+	}
 	
 	if (pdefs[i]->is_2mode_boolean()){
 		pdefs[size]->set_modes(pdefs[i]->get_modes())
@@ -10158,27 +10695,76 @@ end
 // nwplot.ado's own `frucht' layout, but using shortest-path distances as
 // ideal spring lengths. Reuses `distance()' (above) for graph-theoretic
 // shortest paths.
+capture mata: mata drop nw_kk_native()
+mata:
+// kklayout()'s sweeps in native/nwgraph.c (ALG_KK_STRESS).  Pos holds the
+// start coordinates and, when the status is 0, the result.  Status: 0 done,
+// 1 two nodes coincided (the interpreted loop must run: it draws random
+// numbers), -1 no plugin or the call failed.
+real scalar nw_kk_native(real matrix M, real matrix Pos, real scalar Iter)
+{
+	real scalar n, m, nobs, status, junk
+	real matrix T
+	real colvector nz, ei, ej
+	string scalar origframe
+
+	if (!NativeGraphAvailable()) return(-1)
+	n = rows(M)
+	if (n < 2 | n > 60000) return(-1)
+	T = M + M'
+	nz = selectindex((vec(T) :!= 0) :& (vec(T) :< .))
+	T = .
+	if (length(nz) > 0) {
+		ei = mod(nz :- 1, n) :+ 1
+		ej = floor((nz :- 1) :/ n) :+ 1
+	}
+	else {
+		ei = J(0, 1, 0)
+		ej = J(0, 1, 0)
+	}
+	nz = .
+	m = rows(ei)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	nobs = max((n, m, 1))
+	st_addobs(nobs)
+	junk = st_addvar("double", "v1")
+	junk = st_addvar("double", "v2")
+	junk = st_addvar("double", "v3")
+	junk = st_addvar("double", "v4")
+	junk = st_addvar("double", "v5")
+	if (m > 0) st_store((1::m), ("v1","v2"), (ei, ej))
+	st_store((1::n), ("v3","v4"), Pos)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("capture plugin call nwgraph_native v1 v2 v3 v4 v5, " + char(34) + "21 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(Iter) + char(34))
+	status = -1
+	if (st_numscalar("c(rc)") == 0) {
+		status = st_data(1, "v5")
+		if (status == 0) Pos = st_data((1::n), ("v3","v4"))
+	}
+	// distance() symmetrises and dichotomises its argument in place, which
+	// the code after the sweeps (and the caller) rely on
+	if (status == 0) {
+		M = (M + M') :/ (M + M')
+		_editmissing(M, 0)
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(status)
+}
+end
+
 capture mata: mata drop kklayout()
 mata:
 real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Start)
 {
 	real matrix D, W, Pos, delta
-	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k
+	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k, status
 	real rowvector numer, nonisolates
 
 	V = rows(M)
-	D = distance(M)
-	_diag(D, 0)
-
-	// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
-	// should be far apart in the layout get proportionally less pull
-	// toward their exact target distance than close pairs do)
-	W = J(V, V, 0)
-	for (i=1; i<=V; i++) {
-		for (j=1; j<=V; j++) {
-			if (i != j) W[i,j] = 1 / (D[i,j]^2)
-		}
-	}
 
 	// `Start' (optional) warm-starts the iteration from a caller-given
 	// configuration instead of a random jittered circle - used by
@@ -10202,6 +10788,26 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 		// netplotmds() above, not an arbitrary independent choice
 		Pos = jumble(circlelayout(V))
 	}
+
+	// The distances and the sweeps in compiled code when the plugin is there
+	// (same numbers; see nw_kk_native()); the interpreted code below runs
+	// when it is not, or when two nodes coincide (it then draws random
+	// numbers, which the plugin cannot).
+	status = nw_kk_native(M, Pos, Iter)
+	if (status != 0) {
+		// the start configuration again: the failed attempt left it as it was
+		D = distance(M)
+		_diag(D, 0)
+
+		// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
+		// should be far apart in the layout get proportionally less pull
+		// toward their exact target distance than close pairs do)
+		W = J(V, V, 0)
+		for (i=1; i<=V; i++) {
+			for (j=1; j<=V; j++) {
+				if (i != j) W[i,j] = 1 / (D[i,j]^2)
+			}
+		}
 
 	// Gauss-Seidel stress majorization: each node i is moved directly to
 	// its own closed-form optimum given every OTHER node's CURRENT
@@ -10230,6 +10836,7 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 			}
 			Pos[i,.] = numer :/ wsum
 		}
+	}
 	}
 
 	// rescale into this file's own established [~0.25,1.25] x [0,1]

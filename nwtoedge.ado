@@ -196,22 +196,29 @@ program nwtoedge
 		}
 		if `__sparseok' {
 			mata: __nwedgelist`i' = (`netobj'->get_edgelist_sparse((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+			preserve
+			drop _all
+			tempvar include
+			tempvar transp
+			getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
+			destring `include', replace force
+			capture drop if `include' != 1
+			capture drop `include'
+			destring `net', replace force
+			mata: mata drop __nwedgelist`i'
+			save `__nwedgelist`i''
+			restore
 		}
 		else {
-			mata: __nwedgelist`i' = (`netobj'->get_edgelist((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+			// every dyad: the ego, alter and value columns go straight into
+			// variables (no string matrix and no destring)
+			preserve
+			drop _all
+			mata: `netobj'->edgelist_full_to_vars((("`upper'" != "" | "`directed'" == "false") & "`full'" == ""), "`ego'", "`alter'", "`net'")
+			compress `net'
+			save `__nwedgelist`i''
+			restore
 		}
-		preserve
-		drop _all
-		tempvar include
-		tempvar transp
-		getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
-		destring `include', replace force
-		capture drop if `include' != 1
-		capture drop `include'
-		destring `net', replace force
-		mata: mata drop __nwedgelist`i'
-		save `__nwedgelist`i''
-		restore
 		local i = `i' + 1
 	}
 	

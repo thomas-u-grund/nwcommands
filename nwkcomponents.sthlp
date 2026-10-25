@@ -128,6 +128,14 @@ reference-vertex subset a more optimized algorithm would use - see {help nwcliqu
 recursive decomposition can call this repeatedly - fine for the moderate network sizes typical of
 SNA datasets, not recommended for very large or very dense networks.
 
+{title:Limits}
+
+{pstd}
+The search for vertex cuts runs in compiled code and the network is not turned into a matrix. Measured in Stata/BE,
+random undirected network with about 20 ties per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.05 / 2 / 31 seconds
+(before: 25 seconds at 1,000 nodes, over 5 minutes at 5,000). The time grows about with nodes times ties; for large k
+or many cuts it is longer. Without the compiled plugin for the platform the Mata code is used and is much slower.
+
 {title:See also}
 
 	{help nwcomponents}, {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcore}

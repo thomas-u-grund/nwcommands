@@ -51,25 +51,19 @@ program _nwexport_pajek
 	save `f', replace
 	tempname expfile
 
+	// the file is created (and refused if it exists without replace) here;
+	// the vertex block and the tie rows are then written in blocks by Mata
 	file open `expfile' using "`fname'.net", write `replace'
-	file write `expfile' "*Vertices `nodes'" _newline
-	forvalues i = 1/`nodes' {
-		file write `expfile' (`i')
-		file write `expfile' ("   ")
-		file write `expfile' (char(34))
-		file write `expfile' (`nw_nodename'[`i'])
-		file write `expfile' (char(34)) _newline	
-	}
-	
-	if ("`directed'" == "true"){
-		file write `expfile' "*Arcs"
-	}
-	else {
-		file write `expfile' "*Edges"
-	}
-	
-	qui nwtoedge `netname'
+	file close `expfile'
+	mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes')
+
+	qui nwtoedge `netname', compress
 	qui keep if `netname' != 0
+	// merge m:1 orders the rows of one alter arbitrarily; fix the order
+	// (by alter label, then ego label) so a file is reproducible
+	tempvar _rk
+	sort `nw_alter' `nw_ego'
+	gen long `_rk' = _n
 	gen `nw_nodename' = `nw_ego'
 	merge m:1 `nw_nodename' using `f'
 	drop if _merge != 3
@@ -86,21 +80,10 @@ program _nwexport_pajek
 	drop `nw_nodename'
 	local ties = _N
 	drop if `netname' == .
-	forvalues i = 1/`=_N' {
-		if `netname'[`i'] != 0 {
-			local value = `netname'[`i']
-			local k = `nw_ego'[`i']
-			local l = `nw_alter'[`i']
-			file write `expfile' _newline
-			file write `expfile' (`k')
-			file write `expfile' " "
-			file write `expfile' (`l')
-			file write `expfile' " `value'" 	
-		}
-	
-	}
-	file write `expfile' "" _newline
-	file close `expfile'	
+	sort `_rk'
+	local __head "*Edges"
+	if "`directed'" == "true" local __head "*Arcs"
+	mata: nw_exp_ties(st_local("fname") + ".net", "`nw_ego'", "`nw_alter'", "`netname'", 0, "`__head'", char(10))
 	restore
 end
 
@@ -123,16 +106,17 @@ program _nwexport_ucinet
 	save `f', replace
 	tempname expfile
 	
-	nwname `netname'
 	file open `expfile' using "`fname'.dl", write `replace'
-	file write `expfile' "dl n=`nodes'" _newline
-	file write `expfile' "format = edgelist1" _newline
-	file write `expfile' "labels:" _newline
-	file write `expfile' "`r(labs)'" _newline
-	file write `expfile' "data:"
+	file close `expfile'
+	mata: nw_exp_ucinet_head(st_local("fname") + ".dl", `netobj'->get_nodenames())
 
-	qui nwtoedge `netname'
+	qui nwtoedge `netname', compress
 	qui keep if `netname' != 0
+	// merge m:1 orders the rows of one alter arbitrarily; fix the order
+	// (by alter label, then ego label) so a file is reproducible
+	tempvar _rk
+	sort `nw_alter' `nw_ego'
+	gen long `_rk' = _n
 	gen `nw_nodename' = `nw_ego'
 	merge m:1 `nw_nodename' using `f'
 	drop if _merge != 3
@@ -149,27 +133,8 @@ program _nwexport_ucinet
 	drop `nw_nodename'
 	local ties = _N
 	drop if `netname' == .
-	forvalues i = 1/`=_N' {
-		if `netname'[`i'] != 0 {
-			local value = `netname'[`i']
-			local k = `nw_ego'[`i']
-			local l = `nw_alter'[`i']
-			file write `expfile' _newline
-			file write `expfile' (`k')
-			file write `expfile' " "
-			file write `expfile' (`l')
-			file write `expfile' " `value'" 	
-			if "`directed'" == "false" {
-				file write `expfile' _newline
-				file write `expfile' (`l')
-				file write `expfile' " "
-				file write `expfile' (`k')
-				file write `expfile' " `value'"
-			}
-		}
-	}
-	file write `expfile' "" _newline
-	file close `expfile'
+	sort `_rk'
+	mata: nw_exp_ties(st_local("fname") + ".dl", "`nw_ego'", "`nw_alter'", "`netname'", ("`directed'" == "false"), "", char(10))
 	restore
 end
 
@@ -192,14 +157,8 @@ program _nwexport_gml
 
 	tempname expfile
 	file open `expfile' using "`fname'.gml", write `replace'
-	file write `expfile' "graph [" _newline
-	file write `expfile' ("  directed " + cond("`directed'"=="true", "1", "0")) _newline
-	forvalues i = 1/`nodes' {
-		file write `expfile' "  node [" _newline
-		file write `expfile' ("    id " + strofreal(`i')) _newline
-		file write `expfile' ("    label " + char(34) + `nw_nodename'[`i'] + char(34)) _newline
-		file write `expfile' "  ]" _newline
-	}
+	file close `expfile'
+	mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes')
 
 	// `nw_ego'/`nw_alter' (nwtoedge's own output) are node LABELS, not
 	// numeric positions (confirmed directly the same way
@@ -216,7 +175,7 @@ program _nwexport_gml
 	keep `nw_nodename' `_running'
 	save `f', replace
 
-	qui nwtoedge `netname'
+	qui nwtoedge `netname', compress
 	// `!= 0' alone lets nwtoedge's own diagonal self-rows through
 	// whenever they hold a MISSING tie value rather than a real 0 (`.'
 	// is not `== 0') - confirmed directly (a real, self-loop-free test
@@ -224,6 +183,9 @@ program _nwexport_gml
 	// _nwexport_pajek's own already-correct `drop if `netname' == .'
 	// step (further down that program), not reimplemented differently.
 	qui keep if `netname' != 0 & `netname' != .
+	tempvar _rk
+	sort `nw_alter' `nw_ego'
+	gen long `_rk' = _n
 	gen `nw_nodename' = `nw_ego'
 	merge m:1 `nw_nodename' using `f'
 	drop if _merge != 3
@@ -236,21 +198,9 @@ program _nwexport_gml
 	drop _merge `nw_alter' `nw_nodename'
 	rename `_running' `nw_alter'
 
-	local nties = _N
-	forvalues i = 1/`nties' {
-		local k = `nw_ego'[`i']
-		local l = `nw_alter'[`i']
-		local value = `netname'[`i']
-		file write `expfile' "  edge [" _newline
-		file write `expfile' ("    source " + strofreal(`k')) _newline
-		file write `expfile' ("    target " + strofreal(`l')) _newline
-		file write `expfile' ("    value " + strofreal(`value')) _newline
-		file write `expfile' "  ]" _newline
-	}
+	sort `_rk'
+	mata: nw_exp_gml_edges(st_local("fname") + ".gml", "`nw_ego'", "`nw_alter'", "`netname'")
 	restore
-
-	file write `expfile' "]" _newline
-	file close `expfile'
 end
 
 
@@ -268,7 +218,7 @@ program _nwexport_edgelist
 	_nwdatasync `netname'
 
 	preserve
-	qui nwtoedge `netname'
+	qui nwtoedge `netname', compress
 	// `!= 0' alone lets nwtoedge's own diagonal self-rows through
 	// whenever they hold a MISSING tie value rather than a real 0 - see
 	// _nwexport_gml's own identical comment above.

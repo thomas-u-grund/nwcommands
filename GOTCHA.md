@@ -373,3 +373,12 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
   farther than `n` steps from the newest member inside `R` + candidates (distances only grow in the subsets a
   clan below the branch can be). The scratch distance array must be all `-1` between uses; `clan_ok()` once left
   it dirty and the pruned search lost clans (found by the exact old-vs-new comparison, not by the size tests).
+
+## Equality tests against an old implementation: set the sort seed, and do not trust `merge` order
+
+Stata's `sort` (and so `merge`) breaks ties in a random order controlled by `set sortseed`. Two runs of the same
+command can list rows with equal keys in a different order, which made old-versus-new comparisons of
+`nwtoedge` with node attributes and of the Pajek/UCINET/GML exports look like failures. Set `set sortseed` before each
+network in a comparison script, and where the order of a file matters sort explicitly (the exports now sort by alter
+label, then ego label). Also: a native-plugin kernel that must reproduce Mata arithmetic bit for bit needs
+`-ffp-contract=off` (see `native/Makefile`), otherwise fused multiply-adds change the last digits.

@@ -118,6 +118,16 @@ all pairs, which is dense (10,000 nodes: 19 seconds; refused above 20,000 nodes)
 ({help nwfactions} and {help nwmotifs} are combinatorial rather than sparse-traversal in nature - see their own
 help files for their own, different scaling characteristics.)
 
+{pstd}
+Other general-purpose commands that used to build the N x N list of dyads or the N x N matrix now work on the ties
+(Stata/BE, random directed network with 10 ties per node; 1,000 / 5,000 / 20,000 nodes): {help nwtoedge} with
+{opt compress}, {help nwexport} (edge list, Pajek, UCINET, GML), {help nwrecode} and {help nwdichotomize} take
+0.1-0.3 / 0.2-0.4 / 0.3-1.4 seconds; {help nwtabulate} of one network 0.01 / 0.01 / 0.03 seconds; {help nwkcomponents}
+(undirected, about 20 ties per node) 0.05 / 2 / 31 seconds. Still quadratic by nature: {help nwtoedge} and {help nw2toedge}
+without {opt compress} (one row per dyad: 5,000 nodes 20 / 24 seconds, refused above 50,000,000 rows), {help nwplotmatrix}
+(one box per dyad: 1,000 nodes 5 seconds, refused above 2,500 nodes) and {cmd:nwplot, layout(kk)} (5,000 nodes 21 seconds
+and 2.2 GB).
+
 {marker limits_dense}{...}
 {title:Commands that need the full adjacency matrix (older algorithms, weighted distances)}
 
