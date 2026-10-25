@@ -2,6 +2,7 @@ capture program drop nwlattice
 program nwlattice
 	syntax anything(name=dims) , [xwrap ywrap name(string) labs(string) vars(string) stub(string) xvars undirected noreplace ntimes(integer 1)]
 	version 9
+	_nwlibcheck
 	set more off
 	
 	// Get parameters

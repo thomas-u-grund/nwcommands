@@ -30,6 +30,7 @@ f _nwtabplot.ado
 f _nwopenviewer.ado
 f _nwsetsparse.ado
 f _nwsyntax.ado
+f _nwlibcheck.ado
 f _nwtomata.ado
 f nwaddnodes.ado
 f nwaltergen.ado

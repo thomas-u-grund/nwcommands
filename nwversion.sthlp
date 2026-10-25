@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.5.0  25oct2026}{...}
+{* *! version 3.5.1  25oct2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -34,4 +34,4 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). A given release can be 
 {pstd}Thomas U. Grund, University College Dublin{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

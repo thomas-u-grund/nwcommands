@@ -19,6 +19,23 @@ Installing a given release: `net install nwcommands, from("https://raw.githubuse
 - Order for a numbered release: 1. update `CHANGELOG.md` and run `python3 tools/set_version.py X.Y.Z [date]`; 2. run the tests; 3. commit on `develop`; 4. `./promote.sh --tag`; 5. `gh release create vX.Y.Z --title "nwcommands X.Y.Z" --notes-file <changelog excerpt>`.
 - The CI plugin-rebuild bot commits to `develop` and `main` after pushes that touch `native/`; `git pull --rebase` before the next push.
 
+## Build the Mata libraries with the oldest supported Stata
+
+**Rule: build every Mata library (`.mlib`) with the OLDEST supported Stata, currently Stata 17, never with a newer one.** A library
+compiled by a newer Stata is silently ignored by older Stata versions ("compiled by Stata 18.0, is too new to be run by this version of
+Stata and so was ignored"), and then every function is "not found" (r(3499)); this broke a fresh install in Stata 17 after the
+2026-10-25 releases. Stata 18 reads libraries built by Stata 17. The tested versions are 17 and 18 (older versions are untested); raise
+the build version in the build guard only when support for Stata 17 is dropped on purpose.
+
+- Build with `/Applications/Stata 17.0/StataBE.app/Contents/MacOS/StataBE -e do lib/build.do` (core: `lib/build.do` from the repository
+  root; models: `NWCORE=<core> ... -e do lib/build.do`, see below). Run it in a scratch PLUS (see CLAUDE.md).
+- Every `lib/build.do` has a build guard: it stops with a clear message when `c(stata_version)` is higher than 17. The environment
+  variable `NW_ALLOW_NEWER_STATA=1` overrides it for experiments whose library is never released.
+- Before a release run a command of the package in Stata 17 against the built library (the suites in `cscripts/` mostly load the
+  Mata source with `do unw_core.do` and so do NOT test the library; use `tools/smoke_fresh_install.sh` with Stata 17, or a test that
+  does not load the source).
+- The core command `_nwlibcheck` (called from `unw_defs`) prints a clear message and exits 3499 when the library is missing or unusable.
+
 ## Whenever the core Mata library changes
 
 The Mata libraries of nwsaom, nwergm, nwdynam and nwrem are compiled against `lib/lnwcommands.mlib` and must be rebuilt and released in
@@ -26,7 +43,7 @@ step with every core release that changes it (otherwise a fresh install fails wi
 the sha256 of the library at the last release. `python3 tools/record_release_hash.py` writes it (`tools/set_version.py X.Y.Z` calls it, but
 run it again after the final library build of step 4). `tools/check_version.py` prints a loud WARNING ("Mata library changed: rebuild and
 re-release nwsaom and nwergm in step") when the library differs from the recorded hash; follow "Whenever the core library changes" in the
-RELEASING.md of each model package, then record the new hash after the core release.
+RELEASING.md of each model package, then record the new hash after the core release. All of these libraries are built with Stata 17 (see the rule above).
 
 ## Fresh-install smoke test
 

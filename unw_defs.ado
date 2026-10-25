@@ -1,5 +1,6 @@
 capture program drop unw_defs
 program unw_defs
+	_nwlibcheck
 	
 	//error codes
 	//

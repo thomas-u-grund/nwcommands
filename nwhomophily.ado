@@ -9,6 +9,7 @@ program def nwhomophily
 	// wiring up a real implementation would mean extending nwdyadprob
 	// too, out of scope for a moderate-severity doc/dead-option fix.
 	syntax varlist(min=1), homophily(string) density(real) [mode(string) nodes(string) name(string) xvars undirected]
+	_nwlibcheck
 	
 	local vc = wordcount("`varlist'")
 	local hc = wordcount("`homophily'")

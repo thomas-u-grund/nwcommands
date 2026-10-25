@@ -103,4 +103,4 @@ random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds 
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

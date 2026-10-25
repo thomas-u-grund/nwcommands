@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.5.0** (25 October 2026)
+**Version 3.5.1** (25 October 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -22,7 +22,7 @@ data commands.
 - **Structural analysis**: centrality, components, cliques/k-plexes/k-cores, cohesive
   subgroups, community detection, structural equivalence, QAP, and more (see
   `help nwtopical` once installed for the full, organized command index).
-- **No external packages.** The core commands need nothing but Stata (14 or later) and this package: no SSC
+- **No external packages.** The core commands need nothing but Stata (17 or later; tested with Stata 17 and 18, see the Installation section) and this package: no SSC
   packages (`gsample`, `moremata`, `labellist` and `tabplot` are replaced by built-in code; they used to be
   installed silently on first use), no internet after installation, and nothing is written to your PLUS directory.
 - **Statistical network models** live in separate packages that build on this one (all GPL-3):
@@ -56,6 +56,8 @@ variable budget unless you ask it to.
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
+
+**Requirements.** Stata 17 or later (Stata/BE is enough). Tested with Stata 17 and Stata 18. The Mata library is built with Stata 17, the oldest tested version, because a library built by a newer Stata is ignored by older ones; Stata 16 and older have not been tested and are not expected to work.
 
 The first line installs just `nwinstall` itself and the landing help topics; `nwinstall,
 all` then downloads everything else — every command, all help files, and all 120 dialog

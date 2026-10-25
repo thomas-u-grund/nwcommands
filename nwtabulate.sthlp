@@ -313,4 +313,4 @@ The {opt plot} option draws the table with a built-in bar plot (the same plot th
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
