@@ -85,7 +85,7 @@
 {marker edge_options}{...}
 {p2line}
 {p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
-{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
+{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
@@ -275,6 +275,15 @@ uses 0.2 times the saved slider value, which reproduces the proportions of the v
 the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when
 the nodes of that group have different shapes (for example when {opt symbol()} is a second variable);
 choosing a shape there sets all nodes of the group. The CSV format is unchanged.
+
+{pstd}
+The view draws {it:y} upward, as the static plot does, for every layout and for {opt nodexy()} (with
+{cmd:nodexy(Lon Lat)} the map is upright), and the saved CSV holds the same {it:y}, so a saved layout
+comes back in the same orientation. With {opt edgesize()} the view maps the tie values linearly onto line
+widths of 1 to 8 pixels (all ties 3 pixels without {opt edgesize()}); the edge-width slider is a
+multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider
+multiplies on top. {opt edgeimport()} accepts the edge file of a directed or an undirected network (the
+view lists an undirected tie once).
 
 {pstd}
 {opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the

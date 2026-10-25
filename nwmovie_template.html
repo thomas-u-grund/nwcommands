@@ -173,7 +173,7 @@ const cy = cytoscape({
     // plotting-box convention), not pixels - nwedit_template.html (the
     // interactive single-network viewer this movie player was built
     // alongside) already scales by 1000 for exactly this reason (see
-    // its own "position: { x: n.x * 1000, y: n.y * 1000 }"). This file
+    // its own "position: { x: n.x * 1000, y: -n.y * 1000 }"). This file
     // never applied that same scale anywhere it sets a node's position
     // - every node ended up crammed into a 1.5x1 PIXEL rectangle,
     // indistinguishable from a single overlapping point at normal
@@ -182,7 +182,7 @@ const cy = cytoscape({
     // nodes should have rendered. Fixed here and at every other place
     // in this file that sets a node's `x`/`y` (the two `ele.position`
     // calls and the cross-fade interpolation below).
-    nodes: initialNodes.map(n => ({ data: { id: n.id, label: n.label }, position: { x: n.x * 1000, y: n.y * 1000 } })),
+    nodes: initialNodes.map(n => ({ data: { id: n.id, label: n.label }, position: { x: n.x * 1000, y: -n.y * 1000 } })),
     edges: isEvent ? [] : MOVIE_DATA.keyframes[0].edges.map(e => ({ data: { id: e.id, source: e.source, target: e.target } }))
   },
   style: [
@@ -336,7 +336,7 @@ if (!isEvent) {
     cy.batch(() => {
       kf.nodes.forEach(n => {
         const ele = cy.getElementById(n.id);
-        ele.position({ x: n.x * 1000, y: n.y * 1000 });
+        ele.position({ x: n.x * 1000, y: -n.y * 1000 });
         ele.style(nodeStyleFor(n));
       });
       // Full wipe-and-rebuild, matching animateToFrame()'s own edge
@@ -447,7 +447,7 @@ if (!isEvent) {
         // this node-style animation including `shape').
         ele.style('shape', nodeStyleFor(n).shape);
         const { shape, ...animStyle } = nodeStyleFor(n);
-        ele.animate({ position: { x: n.x * 1000, y: n.y * 1000 }, style: animStyle }, { duration, easing, complete: donePosition });
+        ele.animate({ position: { x: n.x * 1000, y: -n.y * 1000 }, style: animStyle }, { duration, easing, complete: donePosition });
       });
       if (pending === 0) applyEdges();
       curFrame = idx;
@@ -517,7 +517,7 @@ if (!isEvent) {
         a.nodes.forEach((n0, idx) => {
           const n1 = b.nodes[idx];
           const ele = cy.getElementById(n0.id);
-          ele.position({ x: (n0.x + (n1.x - n0.x) * frac) * 1000, y: (n0.y + (n1.y - n0.y) * frac) * 1000 });
+          ele.position({ x: (n0.x + (n1.x - n0.x) * frac) * 1000, y: -(n0.y + (n1.y - n0.y) * frac) * 1000 });
           const s0 = nodeStyleFor(n0), s1 = nodeStyleFor(n1);
           ele.style({
             'background-color': lerpHexColor(s0['background-color'], s1['background-color'], frac),
