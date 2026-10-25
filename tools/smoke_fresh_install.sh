@@ -35,7 +35,7 @@ hdr install > "$T/s0_install.do"
 cat >> "$T/s0_install.do" <<EOF
 net install nwcommands, from("$CORE/") replace
 capture program drop nwinstall
-nwinstall, all models from("$CORE") modelsfrom("$MODELS") path("$T/prof")
+nwinstall, everything from("$CORE") modelsfrom("$MODELS") path("$T/prof")
 display "SMOKE_OK"
 EOF
 
