@@ -334,3 +334,12 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
 - **Stata `-e` puts the batch log in the directory named by the `PWD` environment variable**, not the process
   cwd. Launching from Python with `cwd=d` but an inherited PWD wrote `audit.log` into the repo root and the
   do-file was not found. Set `env PWD=d` as well.
+
+## Equality tests against an old implementation: set the sort seed, and do not trust `merge` order
+
+Stata's `sort` (and so `merge`) breaks ties in a random order controlled by `set sortseed`. Two runs of the same
+command can list rows with equal keys in a different order, which made old-versus-new comparisons of
+`nwtoedge` with node attributes and of the Pajek/UCINET/GML exports look like failures. Set `set sortseed` before each
+network in a comparison script, and where the order of a file matters sort explicitly (the exports now sort by alter
+label, then ego label). Also: a native-plugin kernel that must reproduce Mata arithmetic bit for bit needs
+`-ffp-contract=off` (see `native/Makefile`), otherwise fused multiply-adds change the last digits.

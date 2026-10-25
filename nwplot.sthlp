@@ -439,6 +439,15 @@ uses) - the two modes are not visually distinguished automatically, though; pass
 a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
 in the package's own visualization roadmap rather than fixed here.
 
+{title:Limits}
+
+{pstd}
+{bf:Limits of layout(kk).} The layout needs the distance between every pair of nodes, so memory and time grow with the
+square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run
+in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes
+4 seconds in total (before: 16 seconds), 5,000 nodes 21 seconds and 2.2 GB (before: 127 seconds). Above a few thousand nodes
+use {opt layout(circle)}, {opt layout(grid)} or {opt layout(frucht)}.
+
 {title:See also}
 		{help nwplotmatrix}
 

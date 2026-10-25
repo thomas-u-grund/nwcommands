@@ -60,6 +60,14 @@ This example loads the {help netexample:Florentine marriage data} and exports to
 	{cmd:. nwexport flomarriage, type(ucinet)}
 	{cmd:. nwexport flobusiness, type(pajek)}
 
+{title:Limits}
+
+{pstd}
+Every format is written from the ties only and in blocks. Measured in Stata/BE, random directed network with 10 ties per
+node: 1,000 / 5,000 / 20,000 nodes in 0.1 / 0.3 / 1.4 seconds (edge list, Pajek, UCINET; before: 4.7 seconds at 1,000
+nodes, 90 seconds and 11 GB at 5,000 nodes, out of memory at 20,000). Within a Pajek, UCINET or GML file the ties are
+ordered by the label of the alter, then of the ego.
+
  {title:See also}
  
 	{help nwimport}, {help nwuse}, {help nwsave}

@@ -124,6 +124,13 @@ All normal {help connect_options:options for lines} can be applied as well.
 {pstd}
 Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike {help nwplot}'s node-link layout, which needs {opt arrows} to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: not checked.
 
+{title:Limits}
+
+{pstd}
+One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes:
+1,000 nodes 5 seconds and 0.8 GB (before: 16 seconds), 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
+are refused; plot a part of the network or use {help nwplot}.
+
 {title:See also}
 
 	{help nwplot}

@@ -76,6 +76,15 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 92 ties have the value 2 and so on.
 
 
+{title:Limits}
+
+{pstd}
+The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties,
+not on the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 /
+5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds (before: 4.7 seconds at 1,000 nodes, 90 seconds and 11 GB at 5,000).
+The tabulation of two networks or of a network by an attribute, and the permutation test, still use the dyad list and
+the full matrix.
+
 {title:See also}
 
     {help nwtab2:two-way nwtabulate}, {help tabulate}
