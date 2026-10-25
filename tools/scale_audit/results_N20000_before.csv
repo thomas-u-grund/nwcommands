@@ -1,0 +1,144 @@
+command,N,ties,outcome,seconds,gen_seconds,peak_mem_mb,load_avg_1m,rc,message,timestamp,correct
+nwfromedge,20000,199940,OK,.493,,240.1,3.38,0,,2026-10-25 04:48:51,ok
+nwfromedge[valued],20000,199940,OK,.498,,240.4,3.38,0,,2026-10-25 04:48:51,ok
+nwfromedge[undirected],20000,199940,OK,.751,,284.5,3.38,0,,2026-10-25 04:48:53,ok
+nwtoedge,20000,199940,REFUSED_GUARD,.069,.48,234.9,3.38,484,"(20,000 real changes made)",2026-10-25 04:48:54,n/a
+nwtoedge[valued],20000,199940,REFUSED_GUARD,.07,.488,235.0,3.67,484,"(20,000 real changes made)",2026-10-25 04:48:56,n/a
+nwtoedge[compress],20000,199940,OK,.881,.482,333.4,3.67,0,,2026-10-25 04:48:59,ok
+nw2fromedge,20000,199910,REFUSED_GUARD,21.932,,286.2,3.38,484,,2026-10-25 04:49:13,n/a
+nw2toedge,20000,199910,SETUP_REFUSED_GUARD,,22,285.5,3.61,484,SETUP: =199910,2026-10-25 04:49:21,
+nwsave,20000,199940,OK,1.258,.495,333.1,4.29,0,,2026-10-25 04:49:24,ok
+nwload,20000,199940,OK,.078,.505,240.0,4.43,0,,2026-10-25 04:49:26,ok
+nwload[xvars],20000,199940,OK,.069,.503,240.0,4.43,0,,2026-10-25 04:49:27,ok
+nwuse,20000,199940,OK,1.943,.506,405.3,4.43,0,,2026-10-25 04:49:32,ok
+nwexport[edgelist],20000,199940,OK,.994,.491,333.4,4.47,0,,2026-10-25 04:49:35,ok
+nw2toedge[compress],20000,199910,SETUP_REFUSED_GUARD,,21.893,285.6,4.06,484,SETUP: =199910,2026-10-25 04:49:36,
+nwexport[pajek],20000,199940,OK,1.329,.508,334.6,4.51,0,,2026-10-25 04:49:37,ok
+nwexport[ucinet],20000,199940,OK,1.315,.522,333.5,4.51,0,,2026-10-25 04:49:39,ok
+nwtostata,20000,199940,REFUSED_GUARD,.001,.512,6337.9,4.87,900,"nwtostata would create 20000 variables, but Intercooled Stata allows at most 2048 variables (2 in use).",2026-10-25 04:49:41,n/a
+nwimport[edgelist],20000,199940,OK,1.507,.485,333.3,4.51,0,,2026-10-25 04:49:42,ok
+nwtomata,20000,199940,OK,.507,.518,6342.7,4.87,0,,2026-10-25 04:49:43,ok
+nwtomatafast,20000,199940,OK,.008,.529,238.8,4.87,0,,2026-10-25 04:49:43,ok
+nwset,20000,199940,OK,.497,,240.0,4.87,0,,2026-10-25 04:49:45,ok
+nwreplacemat,20000,199940,MEMORY_KILLED,2.8,.514,12755.8,4.87,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:49:46,
+nwsync,20000,199940,OK,.007,.506,239.2,4.96,0,,2026-10-25 04:49:48,ok
+nwdegree,20000,199940,OK,.082,.51,234.9,4.96,0,,2026-10-25 04:49:49,ok
+nwdegree[valued],20000,199940,OK,.075,.503,235.0,4.89,0,,2026-10-25 04:49:51,ok
+nw2set,20000,199910,REFUSED_GUARD,21.897,,285.6,4.96,484,,2026-10-25 04:50:08,n/a
+nw2degree,20000,199910,SETUP_REFUSED_GUARD,,22.015,284.9,4.89,484,SETUP: =199910,2026-10-25 04:50:14,
+nwsummarize,20000,199940,OK,4.929,.5,9390.7,5.37,0,,2026-10-25 04:50:14,ok
+nwdyads,20000,199940,OK,7.264,.533,6338.1,5.23,0,,2026-10-25 04:50:23,ok
+nwmotifs,20000,199940,OK,.444,.781,419.1,5.13,0,,2026-10-25 04:50:25,ok
+nwissymmetric,20000,199940,OK,.014,.512,240.7,5.04,0,,2026-10-25 04:50:26,ok
+nwtabulate,20000,199940,OK,.037,.503,240.3,5.04,0,,2026-10-25 04:50:28,ok
+nwtriads,20000,199940,OK,12.575,.532,244.2,5.23,0,,2026-10-25 04:50:28,ok
+nwcurrent,20000,199940,OK,.008,.516,239.4,5.04,0,,2026-10-25 04:50:30,ok
+nwnode,20000,199940,OK,.005,.504,239.3,4.96,0,,2026-10-25 04:50:30,ok
+nwvalue,20000,199940,OK,.401,.526,6343.2,4.96,0,,2026-10-25 04:50:32,ok
+nwdyadprob,20000,,MEMORY_KILLED,3.3,,12341.9,4.96,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:50:33,
+nwds,20000,199940,OK,.009,.533,239.1,4.96,0,,2026-10-25 04:50:33,ok
+nwvalidate,20000,199940,OK,.001,.52,239.7,4.96,0,,2026-10-25 04:50:35,ok
+nwvalidvars,20000,199940,OK,1.197,.519,240.5,4.96,0,,2026-10-25 04:50:36,ok
+nwunab,20000,199940,OK,.001,.489,239.7,5.28,0,,2026-10-25 04:50:37,ok
+nwbetween,20000,199940,OK,29.429,.524,325.9,5.28,0,,2026-10-25 04:51:07,ok
+nwevcent,20000,199940,OK,2.66,.806,397.7,5.06,0,,2026-10-25 04:51:11,ok
+nwcloseness,20000,199940,OK,97.688,.512,6436.4,5.28,0,,2026-10-25 04:52:17,ok
+nwpagerank,20000,199940,OK,.404,.521,235.1,5.7,0,,2026-10-25 04:52:19,ok
+nwrandomwalk,20000,199940,OK,.306,.528,244.5,5.72,0,,2026-10-25 04:52:21,ok
+nwconstraint,20000,199940,MEMORY_KILLED,11.8,.811,12492.9,5.72,,killed by the harness: RSS above 12.0 GB after 12s,2026-10-25 04:52:33,
+nwkatz,20000,199940,OK,99.279,.549,6434.1,5.06,0,,2026-10-25 04:52:52,ok
+nwburt,20000,199940,OK,18.573,.827,284.2,5.68,0,,2026-10-25 04:52:53,ok
+nwbalance,20000,199940,OK,.106,.517,263.9,5.42,0,,2026-10-25 04:52:54,ok
+nwclustering,20000,199940,OK,4.81,.79,284.0,5.42,0,,2026-10-25 04:53:00,ok
+nwassortativity,20000,199940,OK,.526,.506,251.5,5.82,0,,2026-10-25 04:53:02,ok
+nwbrokerage,20000,199940,OK,1.324,.514,239.9,5.82,0,,2026-10-25 04:53:05,ok
+nwego,20000,199940,OK,2.547,.801,283.8,5.83,0,,2026-10-25 04:53:10,ok
+nwcontext,20000,199940,OK,1.962,.509,6343.3,5.85,0,,2026-10-25 04:53:13,ok
+nwaltergen,20000,199940,OK,.028,.502,239.7,5.85,0,,2026-10-25 04:53:15,ok
+nwgen,20000,199940,OK,.084,.517,240.2,5.86,0,,2026-10-25 04:53:17,ok
+nw2clustering,20000,199910,SETUP_REFUSED_GUARD,,22.554,285.3,5.54,484,SETUP: =199910,2026-10-25 04:53:17,
+nwgenerate,20000,199940,OK,.083,.514,240.4,5.86,0,,2026-10-25 04:53:18,ok
+nwgenvar,20000,199940,OK,.083,.503,240.5,5.86,0,,2026-10-25 04:53:19,ok
+nwinduced,20000,199940,OK,.329,.777,293.7,5.86,0,,2026-10-25 04:53:20,ok
+nwhomophily,20000,,MEMORY_KILLED,2.2,,12355.0,6.03,,killed by the harness: RSS above 12.0 GB after 2s,2026-10-25 04:53:21,
+nwgeodesic,20000,199940,MEMORY_KILLED,53.7,.521,12472.5,6.03,,killed by the harness: RSS above 12.0 GB after 54s,2026-10-25 04:54:14,
+nwgeodesic[vars],20000,199940,MEMORY_KILLED,53.7,.522,12468.9,6.03,,killed by the harness: RSS above 12.0 GB after 54s,2026-10-25 04:54:15,
+nwpath,20000,199940,MEMORY_KILLED,4.4,.53,15503.9,5.37,,killed by the harness: RSS above 12.0 GB after 4s,2026-10-25 04:54:18,
+nwreach,20000,199940,MEMORY_KILLED,54.3,.542,12474.4,5.37,,killed by the harness: RSS above 12.0 GB after 54s,2026-10-25 04:55:09,
+nwmaxflow,20000,199940,OK,9.542,.509,9395.6,5.66,0,,2026-10-25 04:55:20,ok
+nwneighbor,20000,199940,OK,.077,.517,240.1,5.79,0,,2026-10-25 04:55:22,ok
+nwlambda,20000,199940,MEMORY_KILLED,68.0,.813,12591.1,5.37,,killed by the harness: RSS above 12.0 GB after 68s,2026-10-25 04:55:27,
+nwshared,20000,199940,MEMORY_KILLED,4.9,.524,12452.0,5.96,,killed by the harness: RSS above 12.0 GB after 5s,2026-10-25 04:55:31,
+nwcomponents,20000,199940,OK,.071,.539,235.1,6.37,0,,2026-10-25 04:55:33,ok
+nwbridges,20000,199940,OK,11.603,.788,9460.4,5.79,0,,2026-10-25 04:55:36,ok
+nwkcore,20000,199940,OK,.107,.841,285.7,6.34,0,,2026-10-25 04:55:48,ok
+nwkcomponents,20000,199940,OK,38.425,.803,400.0,6.37,0,,2026-10-25 04:56:14,ok
+nwcommunity,20000,199940,OK,.581,.798,325.6,5.91,0,,2026-10-25 04:56:17,ok
+nwcohesion,20000,199940,OK,26.751,.836,2881.2,6.43,0,,2026-10-25 04:56:18,ok
+nwmodularity,20000,199940,OK,.215,.781,310.1,5.91,0,,2026-10-25 04:56:20,ok
+nwfactions,20000,199940,OK,.152,.777,318.7,5.83,0,,2026-10-25 04:56:23,ok
+nwcoreperiphery,20000,199940,MEMORY_KILLED,2.8,.771,12490.7,5.83,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:56:25,
+nwmatching,20000,199910,SETUP_REFUSED_GUARD,,22.279,284.9,5.77,484,SETUP: =199910,2026-10-25 04:56:49,
+nwspectral,20000,199940,REFUSED_GUARD,.005,.799,283.9,5.76,484,"nwspectral decomposes the complete dense 20000 x 20000 Laplacian completely: about 247 minutes and 12.8 GB. It is refused above 6,000 nodes; option force runs it anyway.",2026-10-25 04:56:50,n/a
+nwconcor,20000,199940,REFUSED_GUARD,.009,.776,283.7,5.78,484,,2026-10-25 04:56:52,n/a
+nwmixing,20000,199940,OK,1.118,.527,333.7,5.78,0,,2026-10-25 04:56:55,ok
+nwturnover,20000,199940,MEMORY_KILLED,3.8,.496,13253.4,5.88,,killed by the harness: RSS above 12.0 GB after 4s,2026-10-25 04:56:58,
+nwsimilar,20000,199940,MEMORY_KILLED,5.4,.514,12790.6,5.88,,killed by the harness: RSS above 12.0 GB after 5s,2026-10-25 04:57:04,
+nwdissimilar,20000,199940,MEMORY_KILLED,7.5,.505,12311.5,5.98,,killed by the harness: RSS above 12.0 GB after 8s,2026-10-25 04:57:11,
+nwsimindex,20000,199940,MEMORY_KILLED,7.5,.785,12490.5,5.82,,killed by the harness: RSS above 12.0 GB after 8s,2026-10-25 04:57:19,
+nwsimmelian,20000,199940,OK,6.755,.793,12510.7,5.85,0,,2026-10-25 04:57:28,ok
+nwhierarchy,20000,199940,REFUSED_GUARD,.005,.502,234.2,5.86,484,"nwhierarchy clusters the dense 20000 x 20000 dissimilarity matrix with Stata's clustermat: about 222 minutes. It is refused above 6,000 nodes; option force runs it anyway.",2026-10-25 04:57:30,n/a
+nwdendrogram,20000,199940,SETUP_REFUSED_GUARD,,.511,234.5,5.95,484,"SETUP(pre): nwhierarchy clusters the dense 20000 x 20000 dissimilarity matrix with Stata's clustermat: about 222 minutes. It is refused above 6,000 nodes; option force runs it anyway.",2026-10-25 04:57:31,
+nwcorrelate,20000,199940,MEMORY_KILLED,3.3,.515,12453.8,5.95,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:57:35,
+nwcorrelate[nodes],20000,199940,REFUSED_GUARD,.009,.503,234.4,5.79,484,"nwcorrelate of the nodes of network bench needs about 25 dense 20000 x 20000 matrices (about 82 GB) and is refused above 7,000 nodes.",2026-10-25 04:57:36,n/a
+nwcug,20000,199940,MEMORY_KILLED,5.9,.514,12441.8,5.79,,killed by the harness: RSS above 12.0 GB after 6s,2026-10-25 04:57:42,
+nwqap,20000,199940,MEMORY_KILLED,3.3,.521,17157.0,5.73,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:57:45,
+nwcommunity[labelprop],20000,199940,OK,93.469,.78,6412.4,5.91,0,,2026-10-25 04:57:52,ok
+nwutility,20000,199940,MEMORY_KILLED,52.1,.505,12469.1,5.75,,killed by the harness: RSS above 12.0 GB after 52s,2026-10-25 04:58:38,
+nwrandom[prob],20000,,MEMORY_KILLED,4.4,,12359.3,5.63,,killed by the harness: RSS above 12.0 GB after 4s,2026-10-25 04:58:42,
+nwring,20000,,MEMORY_KILLED,2.8,,12358.8,5.5,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:58:45,
+nwlattice,20000,,OK,.128,,162.6,5.62,0,,2026-10-25 04:58:45,ok
+nwpref,20000,,OTHER_ERROR,1.135,,3184.1,5.62,3300,exceeded maximum table size of 10000,2026-10-25 04:58:48,n/a
+nwsmall,20000,,MEMORY_KILLED,2.8,,12359.2,5.62,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:58:51,
+nwdyadprob[mat],20000,,OK,.031,,133.8,5.73,0,,2026-10-25 04:58:51,ok
+nwduplicate,20000,199940,OK,.104,.526,248.5,5.73,0,,2026-10-25 04:58:53,ok
+nwrename,20000,199940,OK,.045,.529,240.2,5.73,0,,2026-10-25 04:58:55,ok
+nwdrop,20000,199940,OK,.007,.53,234.0,5.75,0,,2026-10-25 04:58:56,ok
+nwkeep,20000,199940,OK,.007,.53,248.3,5.75,0,,2026-10-25 04:58:58,ok
+nwclear,20000,199940,OK,.002,.547,234.3,5.75,0,,2026-10-25 04:58:59,ok
+nwname,20000,199940,OK,.018,.56,239.8,5.69,0,,2026-10-25 04:59:01,ok
+nwsym,20000,199940,OK,.391,.538,292.7,5.69,0,,2026-10-25 04:59:03,ok
+nwsymmetrize,20000,199940,OK,.385,.534,293.4,5.69,0,,2026-10-25 04:59:05,ok
+nwtranspose,20000,199940,MEMORY_KILLED,4.4,.536,14550.6,5.72,,killed by the harness: RSS above 12.0 GB after 4s,2026-10-25 04:59:10,
+nwpermute,20000,199940,MEMORY_KILLED,3.8,.538,12452.2,5.66,,killed by the harness: RSS above 12.0 GB after 4s,2026-10-25 04:59:13,
+nwrecode,20000,199940,OK,.354,.543,260.7,5.66,0,,2026-10-25 04:59:16,ok
+nwreplace,20000,199940,MEMORY_KILLED,7.0,.544,12441.3,5.77,,killed by the harness: RSS above 12.0 GB after 7s,2026-10-25 04:59:23,
+nwreplace[all],20000,199940,MEMORY_KILLED,7.5,.549,12441.7,5.71,,killed by the harness: RSS above 12.0 GB after 8s,2026-10-25 04:59:30,
+nwdichotomize,20000,199940,OK,.284,.537,254.4,5.97,0,,2026-10-25 04:59:32,ok
+nwsubset,20000,199940,OK,2.11,.55,9403.9,5.97,0,,2026-10-25 04:59:36,ok
+nwcollapse,20000,199940,REFUSED_GUARD,.239,.534,255.3,5.89,484,(0 real changes made),2026-10-25 04:59:38,n/a
+nwdropnodes,20000,199940,MEMORY_KILLED,6.5,.526,12452.9,5.89,,killed by the harness: RSS above 12.0 GB after 6s,2026-10-25 04:59:45,
+nwkeepnodes,20000,199940,OK,3.341,.533,6356.5,6.2,0,,2026-10-25 04:59:50,ok
+nwaddnodes,20000,199940,MEMORY_KILLED,2.8,.529,16321.4,6.11,,killed by the harness: RSS above 12.0 GB after 3s,2026-10-25 04:59:52,
+nwnoderename,20000,199940,OK,40.387,.538,235.6,6.11,0,,2026-10-25 05:00:34,ok
+nwappend,20000,199940,OK,2.031,.54,412.2,6.12,0,,2026-10-25 05:00:39,ok
+nwexpand[attr],20000,199940,MEMORY_KILLED,6.0,.527,13513.6,6.03,,killed by the harness: RSS above 12.0 GB after 6s,2026-10-25 05:00:45,
+nwexpand[network],20000,199940,MEMORY_KILLED,6.0,.541,13199.0,6.18,,killed by the harness: RSS above 12.0 GB after 6s,2026-10-25 05:00:51,
+nwrandom,20000,,TIMEOUT,180.1,,9288.9,6.09,,exit=-14 wall=180s,2026-10-25 05:00:52,
+nwtabulate[attribute],20000,199940,MEMORY_KILLED,6.6,.546,14901.9,6.25,,killed by the harness: RSS above 12.0 GB after 7s,2026-10-25 05:00:58,
+nwmixing[perm],20000,199940,MEMORY_KILLED,5.5,.513,12454.3,6.25,,killed by the harness: RSS above 12.0 GB after 5s,2026-10-25 05:00:58,
+nwcompressobs,20000,199940,OK,.419,.52,240.0,6.23,0,,2026-10-25 05:01:00,ok
+nworder,20000,199940,OK,.244,.509,260.3,6.13,0,,2026-10-25 05:01:02,ok
+nwpreserve,20000,199940,OK,1.265,.504,333.3,6.13,0,,2026-10-25 05:01:05,ok
+nwproject,20000,199910,SETUP_REFUSED_GUARD,,22.289,285.2,6.12,484,SETUP: =199910,2026-10-25 05:01:28,
+nw2project,20000,199910,SETUP_REFUSED_GUARD,,22.013,285.3,6.26,484,SETUP: =199910,2026-10-25 05:01:51,
+nw2project[min],20000,199910,SETUP_REFUSED_GUARD,,22.889,285.2,5.8,484,SETUP: =199910,2026-10-25 05:02:15,
+nwplot[circle],20000,199940,MEMORY_KILLED,9.1,.51,12442.0,5.87,,killed by the harness: RSS above 12.0 GB after 9s,2026-10-25 05:02:24,
+nwplot[kk],20000,,NOT_TRIED_CAP,,,,5.72,,capped at N=5000: superlinear,2026-10-25 05:02:24,
+nwplotmatrix,20000,199940,REFUSED_GUARD,.008,.504,234.1,5.72,484,nwplotmatrix draws one box for every pair of nodes: 20000 nodes would need about 242.1 GB.,2026-10-25 05:02:26,n/a
+nwrestore,20000,199940,OK,1.936,.501,405.0,5.9,0,,2026-10-25 05:02:30,ok
+nwattime,20000,199940,TIMEOUT,180.4,,3349.6,6.23,,exit=-14 wall=180s,2026-10-25 05:03:58,
+nwclique,20000,199940,TIMEOUT,180.4,.737,293.9,5.43,,exit=-14 wall=180s,2026-10-25 05:06:59,
+nwnclique,20000,199940,REFUSED_GUARD,.262,.743,357.0,4.38,484,nwnclique: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 05:07:01,n/a
+nwnclan,20000,199940,REFUSED_GUARD,11.626,.756,479.8,4.27,484,"nwnclan: the result matrix (288022 sets x 20000 nodes = 5.7604e+09 numbers, several copies of it are made) is too large to build.",2026-10-25 05:07:26,n/a
+nwkplex,20000,199940,REFUSED_GUARD,1.543,.753,421.8,4.19,484,nwkplex: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 05:07:30,n/a

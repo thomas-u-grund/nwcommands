@@ -54,6 +54,7 @@ def build_do(rec, N, plus):
     # output on, only to learn the message (the reported seconds come from the first run)
     s += 'local nwa_t = r(t91)\nif `nwa_rc\' & `nwa_t\' < 20 {\n    display "NWAUDIT_RERUN"\n    capture noisily ' + line + '\n}\n'
     s += 'display "NWAUDIT_SECS=" `nwa_t\'\n'
+    s += 'display "NWAUDIT_CMD_RC=`nwa_rc\'"\n'
     chk = rec.get("chk")
     if chk is None:
         chk = ["nwa_std bench"]
@@ -179,7 +180,8 @@ def run_one(rec, N, timeout, workdir, maxmem_gb=20):
         for ln in seg.splitlines():
             ln = ln.strip()
             if ln and not ln.startswith(". ") and not ln.startswith("> ") and ln != "." \
-               and not ln.startswith("NWAUDIT") and not ln.startswith("end of do-file"):
+               and not ln.startswith("NWAUDIT") and not ln.startswith("end of do-file") \
+               and not ln.startswith("=") and not re.match(r"^\([\d,]+ (real changes? made|observations? )", ln):
                 return ln[:300]
         return ""
     if re.search(r"^NWAUDIT_END", log, re.M):
@@ -209,6 +211,14 @@ def run_one(rec, N, timeout, workdir, maxmem_gb=20):
         msg = first_msg("NWAUDIT_TIES", "NWAUDIT_GEN_SECS")
         row.update(rc=rc, message="SETUP: " + msg)
         row["outcome"] = "SETUP_" + classify(rc, msg, log)
+    elif memkilled and re.search(r"^NWAUDIT_SECS=", log, re.M) and g("NWAUDIT_CMD_RC") == "0":
+        # the timed command finished and returned 0; the memory cap was hit afterwards, in the correctness check
+        # (which materialises matrices of its own). Report the command's own result, say that it is unchecked.
+        row["seconds"] = g("NWAUDIT_SECS")
+        row["rc"] = 0
+        row["outcome"] = "OK"
+        row["correct"] = "UNCHECKED (the check exceeded the memory cap)"
+        row["message"] = f"command finished; check killed: RSS above {maxmem_gb} GB after {wall:.0f}s"
     else:
         if memkilled:
             row["outcome"] = "MEMORY_KILLED"
@@ -296,7 +306,7 @@ def main():
                     slow5 = float(pr["seconds"] or 0) > 90
                 except ValueError:
                     slow5 = False
-                if N == 10000 and (pr["outcome"] in ("TIMEOUT", "REFUSED_GUARD") or slow5 or pr["outcome"].startswith("SETUP_")):
+                if N in (10000, 20000) and (pr["outcome"] in ("TIMEOUT", "REFUSED_GUARD") or slow5 or pr["outcome"].startswith("SETUP_")):
                     longrun = True           # stage-2 rule: run once with the longer limit
                     pr = None
             if pr is not None:

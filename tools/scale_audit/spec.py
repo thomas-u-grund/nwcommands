@@ -223,6 +223,7 @@ CHK = {
     "nwset": ["nwa_std bench, kind(dir)"],
     "nw2set": ["nwa_std bench, kind(two)"],
     "nwtostata": [],
+    "nwreplacemat": ['mata: mata drop M', "nwa_std bench"],
     "nwimport[edgelist]": ["nwa_std imp, kind(dir)"],
     "nwdegree": ['mata: st_numscalar("nwa_x", nwa_degcmp("d_out", "d_in", 0))', 'nwa_check "degrees equal the generator degrees" , c(scalar(nwa_x) == 0)'],
     "nwdegree[valued]": ['mata: st_numscalar("nwa_x", nwa_degcmp("d_out", "d_in", 0))', 'nwa_check "degrees of the valued network equal the tie counts" , c(scalar(nwa_x) == 0)'],

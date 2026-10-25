@@ -50,7 +50,10 @@ if "$NWA_KIND" != "none" {
         local grc = _rc
         timer off 90
         quietly timer list 90
-        display "NWAUDIT_GEN_SECS=" r(t90)
+        local gensecs = r(t90)
+        * quietly hides the text of a refusal: show it (only a refusal is quick enough to run twice)
+        if `two' & `grc' == 484 capture noisily nw2fromedge from to, name(bench)
+        display "NWAUDIT_GEN_SECS=`gensecs'"
         if `grc' {
             display "NWAUDIT_GEN_RC=`grc'"
             exit `grc'

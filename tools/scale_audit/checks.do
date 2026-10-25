@@ -61,12 +61,32 @@ void nwa_net(pointer(class nw_def scalar) scalar p)
     string colvector lab
     real scalar n, bad
     n = p->get_nodes()
-    p->ensure_sparse_built()
-    r = p->csr_rows(); c = p->colidx; w = p->cweight
-    ok = r :!= c
     st_numscalar("nwa_n", n)
-    st_numscalar("nwa_arcs", sum(ok))
-    st_numscalar("nwa_wsum", sum(select(w, ok)))
+    if (p->is_dense_built() & n > 5000) {
+        // a result that is dense by nature (all-pairs distances, similarities): building the tie index of its
+        // n*n cells would need three more matrices of that size; the recipes of such commands compare sample rows
+        // count the ties and add their values row by row (the diagonal is left out)
+        pointer(real matrix) scalar PM
+        real rowvector rowv
+        real scalar ii, narcs, wsm
+        PM = p->get_matrix()
+        narcs = 0; wsm = 0
+        for (ii = 1; ii <= n; ii++) {
+            rowv = (*PM)[ii, .]
+            rowv[ii] = 0
+            narcs = narcs + sum((rowv :!= 0) :& (rowv :!= .))
+            wsm = wsm + sum(editmissing(rowv, 0))
+        }
+        st_numscalar("nwa_arcs", narcs)
+        st_numscalar("nwa_wsum", wsm)
+    }
+    else {
+        p->ensure_sparse_built()
+        r = p->csr_rows(); c = p->colidx; w = p->cweight
+        ok = r :!= c
+        st_numscalar("nwa_arcs", sum(ok))
+        st_numscalar("nwa_wsum", sum(select(w, ok)))
+    }
     lab = p->get_nodenames()
     if (rows(lab) == 1) lab = lab'
     id = strtoreal(substr(lab, 2, .))
@@ -200,17 +220,17 @@ real colvector nwa_samples()
 real scalar nwa_rowcmp(pointer(class nw_def scalar) scalar p, real scalar what)
 {
     real colvector sm, d
-    real matrix M
+    pointer(real matrix) scalar M
     real scalar i, bad
     sm = nwa_samples()
-    M = *p->get_matrix()
+    M = p->get_matrix()
     bad = 0
     for (i = 1; i <= rows(sm); i++) {
         d = nwa_bfs(sm[i], 0)
         d[sm[i]] = .
         if (what == 1) d = (d :!= .) :* 1
         if (what == 1) d[sm[i]] = .
-        bad = bad + sum(M[sm[i], .]' :!= d)
+        bad = bad + sum((*M)[sm[i], .]' :!= d)
     }
     return(bad)
 }
