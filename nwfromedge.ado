@@ -154,6 +154,45 @@ program nwfromedge
 		collapse (max) `_value', by(`fromvar' `tovar')
 	}
 
+	// `labprefix' (renamed from `prefix' during harmonisation, to avoid
+	// colliding with nwrecode's unrelated network-naming `prefix()') was
+	// previously overwritten unconditionally in the dictionary block below,
+	// discarding whatever the caller's own option had set - a dead option
+	// (node labels were always n-prefixed regardless). Now only defaults to
+	// "n" when the caller left labprefix() unspecified.
+	if "`labprefix'" == "" {
+		local labprefix "n"
+	}
+
+	// Fast route for the dictionary of node identifiers (the stack/egen/collapse/merge/merge below cost 0.9 s of a
+	// 100,000-node network): the same mapping done in Mata. Used when the dataset is cleared afterwards (the default;
+	// the route below rewrites the caller's variables in place, which only matters with noclear) and every identifier
+	// is an integer that a float stores exactly, so that the dictionary below (a collapse (mean) that keeps a float)
+	// is exact. Anything else, or a list without a single complete row, takes the route below, unchanged.
+	local __fe_fast 0
+	if "`clear'" == "" {
+		capture mata: mata drop __nwP
+		capture confirm variable `_roworder'
+		local __fe_roworder = cond(_rc == 0, "`_roworder'", "")
+		mata: __nwP = nw_fromedge_prep("`fromvar'", "`tovar'", "`_value'", "`__fe_roworder'")
+		mata: st_local("__fe_fast", strofreal(cols(__nwP) == 5))
+		if `__fe_fast' {
+			capture mata: mata drop __nwvalue
+			capture mata: mata drop __nwego
+			capture mata: mata drop __nwalter
+			capture mata: mata drop __nwrank
+			mata: __nwego = *__nwP[1]; __nwalter = *__nwP[2]; __nwvalue = *__nwP[3]; __nwrank = *__nwP[4]
+			mata: st_local("maxNodes", strofreal(max((max(__nwego), max(__nwalter))), "%18.0g"))
+			if "`rawtype'" == "numeric" & "`labs'" == "" {
+				capture mata: mata drop __nwlabvec
+				mata: __nwlabvec = "`labprefix'" :+ strofreal(*__nwP[5], "%18.0g")
+			}
+		}
+		capture mata: mata drop __nwP
+	}
+
+	if !`__fe_fast' {
+
 	// deal with non-consecutive integers as node identifiers
 	set more off
 	tempfile dictionaryConsecutive
@@ -254,6 +293,7 @@ program nwfromedge
 	putmata __nwvalue = `_value'
 	putmata __nwego = `fromvar'
 	putmata __nwalter = `tovar'
+	}
 
 	// Captured BEFORE the defaulting below - only an explicit, caller-
 	// chosen name() is held to the create/replace convention (mirrors
@@ -415,4 +455,42 @@ program nwfromedge
 	}
 	
 	}
+end
+
+capture mata: mata drop nw_fromedge_prep()
+mata:
+// The node dictionary of nwfromedge done in Mata: the identifiers are mapped to 1, 2, ... in ascending order of their
+// value. Returns (ego, alter, value, rank, sorted distinct identifiers) as pointers to column vectors, or an empty
+// pointer vector when the route does not apply (then the Stata route runs): a missing identifier, a non-integer
+// identifier or one beyond what a float stores exactly (the Stata route keeps the dictionary in a float).
+pointer(real colvector) rowvector nw_fromedge_prep(string scalar fromvar, string scalar tovar, string scalar valuevar, string scalar rankvar)
+{
+	real colvector e, a, x, gid, present, rank, u, ge, ga
+	real scalar lo, hi, n
+
+	e = st_data(., fromvar)
+	a = st_data(., tovar)
+	n = rows(e)
+	// a row with a missing identifier goes through the Stata route, which has its own (and not always consistent)
+	// way of treating it
+	if (hasmissing(e) | hasmissing(a)) return(J(1, 0, NULL))
+	x = e \ a
+	if (rows(x) == 0) return(J(1, 0, NULL))
+	if (any(x :!= trunc(x)) | max(abs(x)) > 16777216) return(J(1, 0, NULL))
+	lo = min(x)
+	hi = max(x)
+	// the identifiers are small integers: a table indexed by the value gives the rank of every value without a
+	// sort (a wide, sparse range is left to the Stata route)
+	if (hi - lo + 1 > 8 * rows(x) + 2000000) return(J(1, 0, NULL))
+	present = J(hi - lo + 1, 1, 0)
+	present[x :- lo :+ 1, 1] = J(rows(x), 1, 1)
+	u = select((lo::hi), present)
+	gid = runningsum(present)
+	present = J(0, 1, 0)
+	ge = gid[e :- lo :+ 1, 1]
+	ga = gid[a :- lo :+ 1, 1]
+	if (rankvar != "") rank = st_data(., rankvar)
+	else rank = J(0, 1, .)
+	return((&ge, &ga, &(st_data(., valuevar)), &rank, &u))
+}
 end

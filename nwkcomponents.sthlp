@@ -18,6 +18,7 @@
 {opth k(int)}
 {opth generate(newvarname)}
 {opt replace}
+{opt nomatrix}
 {opt silent}
 {opt force}]
 
@@ -28,6 +29,7 @@
 {synopt:{opth k(int)}}Minimum vertex connectivity required; default = 2{p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest qualifying k-component size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opt nomatrix}}Do not store {bf:r(kcomp_matrix)}; the {opth generate(newvarname)} variable and {bf:r(kcomponents)} are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
@@ -88,7 +90,7 @@ provides, not a reason to withhold the single-level version now.
 	  {bf:r(kcomponents)}	number of maximal k-components found
 
 	Matrices
-	  {bf:r(kcomp_matrix)}	k-components-by-nodes 0/1 membership matrix, one row per maximal k-component
+	  {bf:r(kcomp_matrix)}	k-components-by-nodes 0/1 membership matrix, one row per maximal k-component (not with {opt nomatrix})
 
 {title:Examples}
 
@@ -143,7 +145,7 @@ cuts the time is longer.
 {pstd}
 Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time
 is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix {cmd:r(kcomp_matrix)}
-(one row per component, one column per node): 100,000 nodes take about one minute. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made
+(one row per component, one column per node): 100,000 nodes take about one minute. Option {opt nomatrix} leaves the matrix out; the variable and {cmd:r(kcomponents)} are the same. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made
 for the slower route) the command stops at once with r(484) and a message; option {opt force}
 runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
 

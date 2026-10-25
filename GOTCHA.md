@@ -569,8 +569,8 @@ by hand "fixes" it for that session only, which hid the bug in every manual test
 ## Algorithm codes 26-28 (clustering, triad census, eigenvector centrality); kernel version 6; wired from the ado files
 
 `native/nwfast.h` (included by `nwcomb.h`, `NWCOMB_VERSION 6`) hosts the kernels of `nwclustering` (26), `nwtriads` (27) and `nwevcent` (28).
-- **The glue lives in the .ado files, not in the Mata library**: `lib/lnwcommands.mlib` must stay byte-identical (a change forces new nwsaom and nwergm
-  releases). Each ado has a file-scope `mata:` helper (`nw_fastclust()`, `nw_fasttriads()`, and a branch in `nw_evcentrality()`) that calls the public
+- **The glue lives in the .ado files, not in the Mata library** (kept so for these kernels; since the "matafast" work the library may change, but every change forces new nwsaom and nwergm
+  releases, see RELEASING.md "Whenever the core Mata library changes"). Each ado has a file-scope `mata:` helper (`nw_fastclust()`, `nw_fasttriads()`, and a branch in `nw_evcentrality()`) that calls the public
   `nwg_comb_version()` / `nwg_comb()` of the library and returns an empty matrix when the kernel is missing (plugin generation < 6, status != 0, wrong shape);
   the ado then runs the old Mata method. Mata functions defined in an ado file are private to that file (`mata which nw_fastclust()` says "not found" from
   outside; `program dir` lists them as `nwclustering.nw_fastclust()`), so a test cannot call them: call `nwg_comb(26, ...)` directly or compare through the command.
@@ -592,7 +592,7 @@ The cleaned matrix of a two-mode network holds a missing value for every pair of
 
 Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix = fall back). Things that were not obvious:
 - **A static helper name in a new header can clash with `nwcomb2.h`** (`cmp_long` is already there): prefix helpers (`brk_`) so that several kernel headers can be merged.
-- **The big cost of `nwconstraint` at 100,000 nodes is not the kernel** (0.9 s) but `_nwsetsparse` / `set_edge_from_triplets()` in the Mata library (10 s for 11 million cells: key sort in Mata). It cannot be sped up without changing `lnwcommands.mlib`.
+- **The big cost of `nwconstraint` at 100,000 nodes was not the kernel** (0.9 s) but `_nwsetsparse` / `set_edge_from_triplets()` in the Mata library (10 s for 11 million cells: two key sorts and, for the directed network, the sort for the in-neighbour index). Since the matafast change the kernel's ascending list is not sorted again and the in-neighbour index is built when something asks for it (see "Mata library speed-ups" below).
 - **Mata's `order()` is not stable** (see the comment in `set_edge_from_triplets()`), so the Mata `calculate_constraint_triplets()` adds equal cells in an unspecified order; the kernel adds them in the order of the tie list. Differences are 1e-16 relative, never more.
 - **A kernel result of 0 rows is legitimate** (`pub_result(0, 0, c)`): `nwg_comb()` then returns `J(0, c, .)`; the failure signal is `J(0, 0, .)` (zero columns). Test `cols()`, not only `rows()`.
 - **Kernels that return fewer rows than allocated** must set `g_res_rows` to the real count before the fetch call (it copies `g_res_rows` rows).
@@ -604,7 +604,7 @@ Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix 
 in each ado (`nw2_fastpr()`, `nw2_fastcliq()`), the same pattern as codes 26-28 (`NW_NOFASTKERNELS`, empty answer = old Mata route).
 - **`st_matrix()` is quadratic in the number of columns**: storing a matrix of any number of rows costs 0.15 s at 10,000 columns, 0.7 s at 20,000, 3.4 s at 40,000 and about 45 s at
   100,000 (measured with `J(1, c, 0)` and `J(10, c, 0)`, the same time). `nwclique` and `nwkcomponents` store one column per node (`r(clique_matrix)`, `r(kcomp_matrix)`), so
-  at 100,000 nodes that call is the whole running time once the search is native. It cannot be avoided without changing the result matrices; do not look for the time in the kernels.
+  at 100,000 nodes that call is the whole running time once the search is native. It cannot be avoided without changing the result matrices (a transposed or one-row matrix costs the same); do not look for the time in the kernels. Both commands have the option `nomatrix` (as `nwnclique`): no matrix is built or stored, the per-node variable and the count are the same, and `nwclique` then gets them from the kernel's (clique, node) list without the cliques-by-nodes matrix.
 - **Algorithm 20 (`kconn_search()` in `nwgraph.c`) has a second route for target 2** (`kconn2_search()` in `nwfast2.h`): for target 2 the flow of a non-adjacent pair is 0 (different
   components), 1 (no common biconnected block) or 2 (a common block), so one depth-first search with an edge stack answers all n queries; the queries are walked in the order of the flow
   search (node order for v0, then the pairs of the neighbours of v0 in list order) and the first below 2 is reported, so `(minflow, best_s, best_t)` is identical when the connectivity is
@@ -616,3 +616,15 @@ in each ado (`nw2_fastpr()`, `nw2_fastcliq()`), the same pattern as codes 26-28 
   A stored self-loop is handed to Mata (status 3).
 - **The random generators were looked at and left alone**: `nwrandom prob()` draws n^2 uniforms to keep the seed-to-network mapping (66 s at 100,000 nodes, all drawing), `nwsmall`
   interleaves the draws with the rewiring (4.9 of 7.4 s at 100,000 nodes), `nwring` and `nwpref` draw almost nothing (0.02 and 0.06 s of 1.4 and 1.2 s: the rest is building the network).
+
+## Mata library speed-ups ("matafast"): things that cost time to find
+
+Measured first (Mata timer, 100,000 nodes, 1 million ties): the loops over the nodes (row pointers, `csr_rows()`) cost 0.03-0.07 s each; what costs is `order()` (0.25-0.6 s per million keys, 7 s for 11 million), `asarray` (0.5 s for 100,000 names), Stata-side `merge`/`stack`/`egen group`, and `preserve`/`merge`/`gsort` in `_nwdatasync`.
+- **`set_edge_from_triplets()` skips the sort when the key (ego, alter) is strictly ascending** (the kernels, `nw_triplets_lastwins()` and `symmetrize_sparse()` hand over such lists); a strictly ascending list has no duplicates and the sort would return the identity. The row pointers come from `nw_rowptr()` (panelsetup, no loop; a list that is not ascending keeps the loop).
+- **The in-neighbour index of a directed network is built on demand** (`rev_pending`, `ensure_reverse_built()`), because it needs one more sort of all ties. Code that reads `rowptr_in`/`colidx_in`/`edgeid_in` directly must call `ensure_reverse_built()` first (or go through `neighbors_in()`, `degree_in()`, `get_indegree()`); `build_sparse_index()` still builds it at once.
+- **`panelsum()` does not skip missing values, `sum()` does**: `get_outdegree()`/`get_indegree()` use panel sums only when `cweight` has no missing value (the sums are then bit-identical to the loop of `sum()` calls: checked on 20,000 random groups).
+- **`_nwdatasync` was a no-op fast path for years**: the early `check_signatures()` call compared `is_2mode()` (the string "false", never empty) with "" and so never exited. Now the two cases that make the merge pointless are handled directly: the data hold exactly the node names in node order, or the dataset is empty (what `nwfromedge`, `nwset` and the generators leave): the indicator variable is created, nothing else changes. Everything else (other row counts, blank or long names, two-mode, a sorted dataset, `force`) still takes the preserve/merge/gsort route, because the order of rows that belong to no node is decided there. `_rc` is reset by a succeeding `capture confirm number 0` (neither `set more off`, `gen` nor `count` resets it at the top level of a do-file).
+- **`nwfromedge` builds the node dictionary in Mata** when the identifiers are integers within +-16,777,216 without missing values (table lookup, no sort); the Stata route (stack, egen group, collapse, two merges) stays for anything else and for `noclear`. A row with a missing alter is KEPT by the Stata route as a corrupt tie (ego/alter missing in the triplets: later `r(3301)` in `nwconstraint`, and a crash of the Stata process in plugin kernels were seen); do not feed such lists to the equality tests, or drop the rows first. A missing identifier therefore sends the whole list to the Stata route in order not to change anything for it.
+- **Mata `order()` ties are not reproducible** (two identical calls give different orders), so only tie-free outputs can be compared bit for bit between old and new library; the equality harness compares lists of unique keys.
+- `update_nodesvar()` uses one `sort()` of the names for networks of more than 5,000 nodes (the hash costs 0.5 s at 100,000); small networks keep the hash on purpose (a Mata sort advances the state that breaks ties in later sorts).
+
