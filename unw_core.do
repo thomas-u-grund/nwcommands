@@ -5305,6 +5305,25 @@ void nw_exp_ucinet_head(string scalar fname, string rowvector names){
 	GML: header and node blocks (labels from the first n rows of vname);
 	nw_exp_gml_edges() then appends the edge blocks and the closing bracket.
 */
+/*
+	Numbers as text without losing digits: 15 significant digits when that
+	reads back exactly, 17 otherwise (strofreal() with the default format
+	keeps 7 digits, and 3 from 1e7 on).
+*/
+string colvector nw_realstr(real colvector x)
+{
+	string colvector s, s17
+	real colvector bad
+
+	s = strtrim(strofreal(x, "%21.15g"))
+	bad = selectindex((strtoreal(s) :!= x) :& (x :< .))
+	if (rows(bad) > 0){
+		s17 = strtrim(strofreal(x[bad], "%21.17g"))
+		s[bad] = s17
+	}
+	return(s)
+}
+
 void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
 	real scalar fh
 	string scalar nl
@@ -5332,7 +5351,7 @@ void nw_exp_gml_edges(string scalar fname, string scalar vk, string scalar vl, s
 	chunk = 200000
 	for (a = 1; a <= n; a = a + chunk){
 		b = min((a + chunk - 1, n))
-		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ strofreal(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ nw_realstr(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
 		fwrite(fh, invtokens(s', ""))
 	}
 	fwrite(fh, "]" + nl)
@@ -5648,26 +5667,20 @@ real matrix `NWdef'::single_source_dijkstra(real matrix adjlist, real scalar s){
 	behavior exactly). An all-zero/no-edge sparse network is unvalued.
 */
 real scalar `NWdef'::check_valued(){
-	real scalar mi, ma
+	real colvector w
 
+	// A network is valued when at least one tie has a value other than
+	// 0 and 1 (shares, probabilities, a constant value of 2, negative
+	// values all count). A network whose ties are all 1 is binary.
 	if (edge_dense_built == `False' & sparse_built == `True'){
 		if (rows(cweight) == 0){
 			return(0)
 		}
-		mi = min(cweight)
-		ma = max(cweight)
+		return(any((cweight :< .) :& (cweight :!= 0) :& (cweight :!= 1)))
 	}
-	else {
-		mi = min(*get_matrix())
-		ma = max(*get_matrix())
-	}
-
-	if ((mi >= 0 &  mi <= 1) & (ma>=0 & ma <=1)) {
-		return(0)
-	}
-	else {
-		return(1)
-	}
+	// the stored values themselves: get_matrix() would already apply the current valued flag
+	ensure_dense_built()
+	return(any((edge :< .) :& (edge :!= 0) :& (edge :!= 1)))
 }
 
 /*
@@ -6044,7 +6057,8 @@ real matrix `NWdef'::calculate_concor(real scalar splits, | real scalar valued, 
 	_diag(w, 0)
 	n = get_nodes()
 
-	if (min(rowsum(w) :+ colsum(w)') <= 0){
+	// count ties, not their sum: negative values must not cancel positive ones
+	if (min(rowsum(abs(w)) :+ colsum(abs(w))') <= 0){
 		// _error()'s own message argument silently hits an undocumented
 		// ~100-char cap ("argument out of range", r(3300)) - confirmed
 		// by bisection; this message is longer, so errprintf()+exit()
@@ -8571,7 +8585,7 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	rev_pending = (isdirect & nnz > 0)
 
 	if (nnz > 0){
-		isvalued = (min(weight) < 0 | max(weight) > 1)
+		isvalued = any((weight :< .) :& (weight :!= 0) :& (weight :!= 1))
 	}
 	else {
 		isvalued = `False'
@@ -9238,7 +9252,7 @@ real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 	real matrix adjacencyList, adjacencyCost, Cb, Stack, P, nP, S, D, Dd
 	real matrix nb, settled
-	real scalar m, k, n, s, v, j, w, idx, u, mindist, nn, cost
+	real scalar m, k, n, s, v, j, w, idx, u, mindist, nn, cost, newd
 
 	nn = get_nodes()
 	adjacencyList = J(nn, nn-1, .)
@@ -9286,12 +9300,16 @@ real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 				w=adjacencyList[v,j]
 				cost=adjacencyCost[v,j]
 				if (settled[w]) continue
-				if(D[w]==. | D[w]>D[v]+cost) {
-					D[w]=D[v]+cost
+				// path lengths are sums of 1/weight^alpha, so equal
+				// lengths differ by rounding: compare with a relative
+				// tolerance (as igraph does) instead of ==
+				newd = D[v]+cost
+				if(D[w]==. | D[w]-newd > 1e-10*newd) {
+					D[w]=newd
 					S[w]=0
 					nP[w]=1
 				}
-				if(D[w]==D[v]+cost) {
+				if(abs(D[w]-newd) <= 1e-10*newd) {
 					S[w]=S[w]+S[v]
 					P[w,nP[w]]=v; nP[w]=nP[w]+1
 				}
@@ -10310,7 +10328,9 @@ string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
 	m = rows(r)
 	if (m == 0) return(J(0, 7, ""))
 	rv = strofreal(r)
-	return((nodes[r]', nodes[c]', strofreal(w), J(m, 1, "1"), strofreal(wrev), rv, strofreal(c)))
+	// full precision (nw_realstr): strofreal() with the default format
+	// keeps 7 digits (3 from 1e7 on) and would round large or fine values
+	return((nodes[r]', nodes[c]', nw_realstr(w), J(m, 1, "1"), nw_realstr(wrev), rv, strofreal(c)))
 }
 
 /*
@@ -11231,12 +11251,7 @@ void `NWdef'::set(string scalar networkname, string colvector nodenames, real ma
 	this.edge = edge
 	this.isdirect = isdirect
 	
-	if (max(edge) > 1 | min(edge) < 0) {
-		this.isvalued = `True'
-	}
-	else {
-		this.isvalued = `False'
-	}
+	this.isvalued = any((edge :< .) :& (edge :!= 0) :& (edge :!= 1))
 } 
 
 /*
