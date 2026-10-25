@@ -3458,12 +3458,12 @@ real scalar nw_modularity_bip(real scalar n, real matrix pairs, real colvector m
 	Same scheme as Louvain() with the bipartite null model in place of Newman's.  Returns the community (1..k)
 	of every node.
 */
-real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar rnd)
+real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar rnd, real colvector init)
 {
 	real matrix p, info
 	real colvector a, b, deg, src, dst, wt, final, comm, Ac, Bc, kin, touched, ptr, nbr, wgt, o, ei, ej, ew, cnt
 	real colvector cs, cd, keep, A2, B2, lo, hi, key, so, ww, newsrc, newdst, neww, ord
-	real scalar m, N, r, ii, i, ci, c, q, nt, t, best, g, bestg, moved, anymove, sweep, K
+	real scalar hasinit, lvl, m, N, r, ii, i, ci, c, q, nt, t, best, g, bestg, moved, anymove, sweep, K
 
 	p = select(pairs, (md[pairs[., 1]] :!= md[pairs[., 2]]) :& (pairs[., 3] :> 0) :& (pairs[., 3] :< .))
 	if (rows(p) == 0 | n <= 1) return((1::n))
@@ -3480,6 +3480,8 @@ real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector 
 	wt = p[., 3]
 	N = n
 	final = (1::n)
+	hasinit = (rows(init) == n)
+	lvl = 0
 	while (1) {
 		// adjacency lists of the level graph
 		ei = src \ dst
@@ -3496,6 +3498,16 @@ real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector 
 		comm = (1::N)
 		Ac = a
 		Bc = b
+		if (lvl == 0 & hasinit) {
+			// start from the partition given (the search is repeated from its own result)
+			comm = init
+			Ac = J(N, 1, 0)
+			Bc = J(N, 1, 0)
+			for (i = 1; i <= N; i++) {
+				Ac[comm[i]] = Ac[comm[i]] + a[i]
+				Bc[comm[i]] = Bc[comm[i]] + b[i]
+			}
+		}
 		kin = J(N, 1, 0)
 		touched = J(N, 1, 0)
 		moved = 0
@@ -3539,8 +3551,9 @@ real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector 
 				}
 			}
 		}
-		if (moved == 0) break
+		if (moved == 0 & !(lvl == 0 & hasinit)) break
 		comm = nw_community_denserelabel(comm)
+		lvl++
 		K = max(comm)
 		final = comm[final]
 		cs = comm[src]
@@ -3684,14 +3697,25 @@ real scalar nw_be_maxbetween(real scalar n, real scalar m)
 */
 real colvector nw_louvain_bip(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar nstart)
 {
-	real colvector best, cur
-	real scalar bq, cq, r
+	real colvector best, cur, nxt
+	real scalar bq, cq, nq, r, it
 
-	best = nw_louvain_bip1(n, pairs, md, res, 0)
+	best = nw_louvain_bip1(n, pairs, md, res, 0, J(0, 1, .))
 	bq = nw_modularity_bip(n, pairs, md, best, res)
-	for (r = 2; r <= nstart; r++) {
-		cur = nw_louvain_bip1(n, pairs, md, res, 1)
+	for (r = 1; r <= nstart; r++) {
+		if (r == 1) cur = best
+		else cur = nw_louvain_bip1(n, pairs, md, res, 1, J(0, 1, .))
 		cq = nw_modularity_bip(n, pairs, md, cur, res)
+		// repeat the search from the partition found, in random order, while it improves
+		for (it = 1; it <= 20; it++) {
+			nxt = nw_louvain_bip1(n, pairs, md, res, 1, cur)
+			nq = nw_modularity_bip(n, pairs, md, nxt, res)
+			if (nq > cq + 1e-12) {
+				cq = nq
+				cur = nxt
+			}
+			else break
+		}
 		if (cq > bq + 1e-12) {
 			bq = cq
 			best = cur
@@ -6507,7 +6531,7 @@ real matrix `NWdef'::detect_communities_bipartite(| real scalar valued, real sca
 
 	val = (args() >= 1 ? valued : 1)
 	res = (args() >= 2 ? resolution : 1)
-	nstart = (args() == 3 ? starts : 10)
+	nstart = (args() == 3 ? starts : 30)
 	return(nw_louvain_bip(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), strtoreal(get_modes())', res, nstart))
 }
 
