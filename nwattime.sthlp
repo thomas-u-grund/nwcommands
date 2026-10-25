@@ -76,7 +76,7 @@ existed in wave 2:
 {title:Stored results}
 
 	Scalars
-	  {bf:r(ties)}		number of ties in the static view
+	  {bf:r(ties)}		number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed {it:Ties} line)
 	  {bf:r(at)}		the timepoint sliced at
 
 

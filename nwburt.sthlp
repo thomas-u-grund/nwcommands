@@ -81,12 +81,10 @@ network. Constraint is a summary measure that taps the extent to which ego's con
 Hierarchy is another quite complex measure that describes the nature of the constraint on ego.  If the total constraint on ego is concentrated in a single other actor, the hierarchy measure will have a higher value.  If the constraint results more equally from multiple actors in ego's neighborhood, hierarchy will be less.  The hierarchy measure, in itself, does not assess the degree of constraint.  But, among whatever constraint there is on ego, it measures the important property of dependency -- inequality in the distribution of constraints on ego across the alters in its neighborhood.
 
 {pstd}
-This command operates on the full adjacency matrix (via {help nwtomata}) rather than the sparse
-network index, because the underlying formulas require genuine matrix products (two-step reach via
-every intermediary) rather than single-neighbor lookups - the same reason {help nwsimilar},
-{help nwdissimilar}, and {help nwqap} are also matrix-based. This is not expected to be practical on
-very large networks; see the sparse-backend documentation for detail on which nwcommands are, and are
-not yet, sparse-scalable.
+The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the
+work), so the command also runs on large networks (see {bf:Limits}). The options {opt dyadredundancy} and
+{opt dyadconstraint} build the full {it:n}-by-{it:n} dyadic networks from the adjacency matrix (via {help nwtomata}), as
+{help nwsimilar}, {help nwdissimilar} and {help nwqap} do, and are practical only for moderate network sizes.
 
 {title:Stored results}
 
@@ -113,6 +111,8 @@ platform has it and in Mata otherwise; both give the same values (to the last di
 not with {it:n}^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds,
 100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). The options {opt dyadredundancy} and {opt dyadconstraint} build
 {it:n}-by-{it:n} networks and take the dense route.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:Examples}
 

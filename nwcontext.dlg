@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 310
+POSITION 10 10 550 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcontext - Create a context variable")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  GROUPBOX gb_opt 10 44 520 244, label("Options")
   TEXT tx_vr_attribute 20 54 260 ., label("Attribute variable")
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_cb_stat 20 82 260 ., label("Statistic that is used to calculate context variable for node i from attributes ")
@@ -32,6 +32,8 @@ BEGIN
   CHECKBOX cx_noweight 290 194 190 ., label("noweight") option(noweight)
   TEXT tx_cx_replace 20 222 260 ., label("Replace 's target variable if it already exists")
   CHECKBOX cx_replace 290 222 190 ., label("replace") option(replace)
+  TEXT tx_cx_force 20 250 260 ., label("Run despite the time or memory guard")
+  CHECKBOX cx_force 290 250 190 ., label("force") option(force)
 END
 
 LIST netlist
@@ -79,6 +81,7 @@ BEGIN
 		optionarg main.ed_mat
 		option main.cx_noweight
 		option main.cx_replace
+		option main.cx_force
 	endoptions
 	stata
 END

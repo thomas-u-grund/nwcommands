@@ -92,7 +92,7 @@ clique membership. Signed: not checked. Two-mode: not checked - operates on the 
 square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of
 maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct
 algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large
-network could take a long time; not specially guarded against here beyond this note.
+network could take a long time. {help nwnclique}, {help nwnclan} and {help nwkplex} have the options {opt maxcliques()} / {opt maxplexes()}, {opt maxtime()}, {opt countonly} and {opt nomatrix} for such searches; {cmd:nwclique} has none.
 
 {title:Limits}
 
@@ -105,6 +105,8 @@ same order. Measured in Stata/BE on a random undirected network with 10 ties dra
 which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
 one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
 of memory for that matrix.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 

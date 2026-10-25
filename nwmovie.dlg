@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 560 480
+POSITION 10 10 1100 480
 
 SCRIPT PREINIT
 BEGIN
@@ -51,6 +51,33 @@ BEGIN
   VARNAME vr_size 290 416 190 ., nomem option(size)
   TEXT tx_vr_label 20 444 260 ., label("node labels from this variable")
   VARNAME vr_label 290 444 190 ., nomem option(label)
+
+  GROUPBOX gb_pan 550 44 530 244, label("Styling by wave and edges")
+  TEXT tx_cb_edgecolor 560 54 260 ., label("color edges by this other network (all waves)")
+  COMBOBOX cb_edgecolor 830 54 190 ., dropdown contents(netlist) nomem option(edgecolor)
+  TEXT tx_cb_edgesize 560 82 260 ., label("width edges by this other network (all waves)")
+  COMBOBOX cb_edgesize 830 82 190 ., dropdown contents(netlist) nomem option(edgesize)
+  TEXT tx_ed_colors 560 110 260 ., label("panel mode: one color variable per wave")
+  EDIT ed_colors 830 110 190 ., nomem option(colors)
+  TEXT tx_ed_symbols 560 138 260 ., label("panel mode: one shape variable per wave")
+  EDIT ed_symbols 830 138 190 ., nomem option(symbols)
+  TEXT tx_ed_sizes 560 166 260 ., label("panel mode: one size variable per wave")
+  EDIT ed_sizes 830 166 190 ., nomem option(sizes)
+  TEXT tx_ed_edgecolors 560 194 260 ., label("panel mode: one edge-color network per wave")
+  EDIT ed_edgecolors 830 194 190 ., nomem option(edgecolors)
+  TEXT tx_ed_edgesizes 560 222 260 ., label("panel mode: one edge-width network per wave")
+  EDIT ed_edgesizes 830 222 190 ., nomem option(edgesizes)
+  TEXT tx_ed_titles 560 250 260 ., label("panel mode: one double-quoted title per wave")
+  EDIT ed_titles 830 250 190 ., nomem option(titles)
+  GROUPBOX gb_pal 550 294 530 132, label("Palettes and scheme")
+  TEXT tx_ed_colorpalette 560 304 260 ., label("node color palette (see nwplot)")
+  EDIT ed_colorpalette 830 304 190 ., nomem option(colorpalette)
+  TEXT tx_ed_edgecolorpalette 560 332 260 ., label("edge color palette (see nwplot)")
+  EDIT ed_edgecolorpalette 830 332 190 ., nomem option(edgecolorpalette)
+  TEXT tx_ed_symbolpalette 560 360 260 ., label("node shape palette (see nwplot)")
+  EDIT ed_symbolpalette 830 360 190 ., nomem option(symbolpalette)
+  TEXT tx_ed_scheme 560 388 260 ., label("graph scheme (see nwplot)")
+  EDIT ed_scheme 830 388 190 ., nomem option(scheme)
 END
 
 LIST netlist
@@ -90,6 +117,18 @@ BEGIN
 		optionarg main.vr_symbol
 		optionarg main.vr_size
 		optionarg main.vr_label
+		optionarg main.cb_edgecolor
+		optionarg main.cb_edgesize
+		optionarg main.ed_colors
+		optionarg main.ed_symbols
+		optionarg main.ed_sizes
+		optionarg main.ed_edgecolors
+		optionarg main.ed_edgesizes
+		optionarg main.ed_titles
+		optionarg main.ed_colorpalette
+		optionarg main.ed_edgecolorpalette
+		optionarg main.ed_symbolpalette
+		optionarg main.ed_scheme
 	endoptions
 	stata
 END

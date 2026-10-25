@@ -124,11 +124,10 @@ Moody-White sense has no directed generalization here, the same reasoning {help 
 {help nwkplex}/{help nwnclique} already apply). Weighted: not used - only tie presence/absence
 affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation
 via max-flow is polynomial per pair, but {cmd:nwkcomponents} computes it between {it:every}
-non-adjacent pair (a deliberately simple, definitely-correct brute-force rather than the smaller
-reference-vertex subset a more optimized algorithm would use - see {help nwclique}'s own
-"Supported network types" section for the same trade-off philosophy applied there), and the overall
-recursive decomposition can call this repeatedly - fine for the moderate network sizes typical of
-SNA datasets, not recommended for very large or very dense networks.
+non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller
+reference-vertex subset a more optimized algorithm would use), and the overall
+recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks
+(see {bf:Limits}); for k of 3 and higher, very large or very dense networks are not recommended.
 
 {title:Limits}
 
@@ -146,6 +145,8 @@ is spent in Stata itself, which needs time growing with the square of the number
 (one row per component, one column per node): 100,000 nodes take about one minute. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made
 for the slower route) the command stops at once with r(484) and a message; option {opt force}
 runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 

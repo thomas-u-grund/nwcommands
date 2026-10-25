@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 282
+POSITION 10 10 550 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwconcor - CONCOR structural-equivalence blockmodel")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 188, label("Options")
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
   TEXT tx_ed_generate 20 54 260 ., label("Name of the Stata variable that stores block membership; default =")
   EDIT ed_generate 290 54 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing variable")
@@ -30,6 +30,8 @@ BEGIN
   SPINNER sp_maxiter 290 166 70 ., default(25) max(999999) min(-999999) nomem option(maxiter)
   TEXT tx_cx_silent 20 194 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 194 190 ., label("silent") option(silent)
+  TEXT tx_cx_force 20 222 260 ., label("Run despite the time or memory guard")
+  CHECKBOX cx_force 290 222 190 ., label("force") option(force)
 END
 
 LIST netlist
@@ -53,6 +55,7 @@ BEGIN
 		optionarg main.ed_measure
 		optionarg main.sp_maxiter
 		option main.cx_silent
+		option main.cx_force
 	endoptions
 	stata
 END
