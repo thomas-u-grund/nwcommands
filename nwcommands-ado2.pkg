@@ -42,6 +42,7 @@ f nwpref.ado
 f nwpreserve.ado
 f nwproject.ado
 f nwqap.ado
+f nwqap_p.ado
 f nwrandom.ado
 f nwrandomwalk.ado
 f nwreach.ado

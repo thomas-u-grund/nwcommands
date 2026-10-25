@@ -81,6 +81,12 @@ program nwcommunity, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
 		tempname __nw_comm
@@ -156,7 +162,7 @@ program nwcommunity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round(`lmod',0.001),"%9.0g"))'"
+			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
 			if `lcomm' <= 1000 {
 				noi tab `netgenerate'`k'
 			}

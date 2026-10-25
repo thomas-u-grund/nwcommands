@@ -75,7 +75,7 @@ program nwfactions, rclass
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network name: {res}`netname'"
-		di "{txt}  Groups: {res}`groups'{txt}   Fitness: {res}`=strtrim(string(round(`lfit',0.001),"%9.0g"))'"
+		di "{txt}  Groups: {res}`groups'{txt}   Fitness: {res}`=strtrim(string(round((`lfit')*1000)/1000,"%9.0g"))'"
 		tab `netgenerate'
 		di " "
 	}

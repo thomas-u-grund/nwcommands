@@ -69,6 +69,22 @@ program nwmixing
 	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full' compress
 	local egoname "`egosrc'_ego"
 	local altername "`egosrc'_alter"
+	// a string attribute was encoded into a temporary variable: give the
+	// ego/alter columns readable names so the table header shows
+	// attribute_ego | attribute_alter instead of __000000_ego
+	if "`egosrc'" != "`attribute'" {
+		capture rename `egoname' `attribute'_ego
+		if _rc == 0 {
+			capture rename `altername' `attribute'_alter
+			if _rc == 0 {
+				local egoname "`attribute'_ego"
+				local altername "`attribute'_alter"
+			}
+			else {
+				rename `attribute'_ego `egoname'
+			}
+		}
+	}
 	capture label val `egoname' `attrlab'
 	capture label val `altername' `attrlab'
 
@@ -153,7 +169,7 @@ program nwmixing
 		local xmax = max(`EI_index',r(max))
 		local bandwidth `= 1 / `nodes''
 		if "`eiplot'" != "" {
-			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `eiplotoptions'	
+			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `netname'"') `eiplotoptions'	
 		}		
 	}
 	_return restore res1
@@ -162,7 +178,7 @@ program nwmixing
 	capture mata: mata drop `EI_out' `pvalue' `out'
 	capture mata: mata drop `attmat'
 	
-	di "{txt}   E-I Index: {res}`=strtrim(string(round(`r(EI_index)',0.001),"%9.0g"))'{txt}   p-value: {res}`=strtrim(string(round(`r(EI_pvalue)',0.001),"%9.0g"))'"
+	di "{txt}   E-I Index: {res}`=strtrim(string(round((`r(EI_index)')*1000)/1000,"%9.0g"))'{txt}   p-value: {res}`=strtrim(string(round((`r(EI_pvalue)')*1000)/1000,"%9.0g"))'"
 
 	restore
 end	

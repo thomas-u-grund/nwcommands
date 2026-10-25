@@ -64,6 +64,10 @@ program nwspectral, rclass
 	qui if _N < `nodes' {
 		set obs `nodes'
 	}
+	// align row i of the data set with node i of the network before the positional
+	// read/write below (see nwcommunity.ado)
+	_nwsyncrows `netname'
+	mata: st_rclear()
 	_nwsyntax `netname', max(1)
 
 	tempname __nw_L __nw_EC __nw_EV __nw_ord __nw_fiedler
@@ -107,7 +111,7 @@ program nwspectral, rclass
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname'"
 		noi di "{txt}  Connected components: {res}`lcomponents'"
-		noi di "{txt}  Algebraic connectivity: {res}`=strtrim(string(round(`lalgconn',0.001),"%9.0g"))'"
+		noi di "{txt}  Algebraic connectivity: {res}`=strtrim(string(round((`lalgconn')*1000)/1000,"%9.0g"))'"
 		noi sum `netgenerate'
 		noi di " "
 	}

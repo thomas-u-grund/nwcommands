@@ -151,6 +151,13 @@ program nwdyadprob
 			error `errDenseTooLarge'
 		}
 		preserve
+		// the helper network _tempdyad must not outlive this call on ANY
+		// exit path: a failed call used to leave it behind, so the next
+		// call stopped with r(483) (network already exists). Remove a
+		// leftover of an earlier failure, run the body under capture, drop
+		// the helper in every case and then pass the error on.
+		capture nwdrop _tempdyad
+		capture noisily {
 		nwset, mat(`mat') name(_tempdyad)
 		nwreplace _tempdyad = _tempdyad * 10
 		nwtoedge _tempdyad, full
@@ -237,6 +244,13 @@ program nwdyadprob
 		restore
 		nwset, mat(`__densemat') name(`name') `labs' `xvars'
 		mata: mata drop `__densemat'
+		}
+		local __nwdp_rc = _rc
+		capture nwdrop _tempdyad
+		capture mata: mata drop `__densemat'
+		if `__nwdp_rc' != 0 {
+			exit `__nwdp_rc'
+		}
 	}
 	
 	if "`undirected'" != "" {

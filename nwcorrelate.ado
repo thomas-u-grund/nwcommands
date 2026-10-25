@@ -77,7 +77,7 @@ program nwcorrelate_nodes
 	di "{txt}  Correlation network: {res}`r(corrname)'"
 	di "{hline 40}"
 	di "{txt}    Context definition: {res}`r(context)'"
-	di "{txt}    Average correlation between nodes: {res}`=strtrim(string(round(`r(avg_corr)',0.001),"%9.0g"))'"
+	di "{txt}    Average correlation between nodes: {res}`=strtrim(string(round((`r(avg_corr)')*1000)/1000,"%9.0g"))'"
 end
 
 
@@ -171,7 +171,7 @@ unw_defs
 		
 		qui gen observed = `corr'
 		if "`save'"!= "" {
-			di "QAP results saved as: `c(pwd)'/nwcorrelationqap.dta" 
+			di "QAP results saved as: `save'" 
 			save "`save'", replace
 		}
 	
@@ -203,7 +203,7 @@ unw_defs
 			local xmax = `corr'
 		}
 		
-		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `options'	
+		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2'"') `options'	
 
 		restore
 		_return restore `myr'
@@ -220,9 +220,9 @@ unw_defs
 	di "{txt}  Network2 name: {res}`r(name_2)'"
 	
 	di "{hline 40}"
-	di "{txt}    Correlation: {res}`=strtrim(string(round(`r(corr)',0.001),"%9.0g"))'"
+	di "{txt}    Correlation: {res}`=strtrim(string(round((`r(corr)')*1000)/1000,"%9.0g"))'"
 	if "`r(pvalue)'" != "" {
-		di "{txt}    P-value: {res}`=strtrim(string(round(`r(pvalue)',0.001),"%9.0g"))'"
+		di "{txt}    P-value: {res}`=strtrim(string(round((`r(pvalue)')*1000)/1000,"%9.0g"))'"
 	}
 	_return hold r1
 	if "`attribute'" != "" {

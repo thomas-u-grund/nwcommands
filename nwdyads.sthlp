@@ -17,6 +17,9 @@ version 2.0.0
 {cmdab: nwdyads} 
 [{it:{help netname}}]
 
+{pstd}
+{it:netname} may be a list of networks or a wildcard such as {cmd:lazega_*}, as in {help nwsummarize}; the census is shown for each network and the {cmd:r()} results are those of the last one.
+
 {title:Description}
 
 {pstd}

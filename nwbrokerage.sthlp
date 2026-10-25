@@ -87,7 +87,7 @@ network type the model was originally defined for. Undirected networks are suppo
 directional distinction collapsing away as described above. Weighted: not used - only the
 presence/absence of a tie determines whether a two-path exists; tie strength does not affect role
 counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency
-matrix. {opt group()} must be an existing Stata variable already aligned with the network's nodes
+matrix. {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
 (the same convention {help nwmodularity}'s own {opt group()} option uses) - {cmd:nwbrokerage} does
 not detect groups itself; pair it with {help nwconcor}, {help nwcoreperiphery}, {help nwcommunity},
 or a substantive attribute for the grouping.
