@@ -169,7 +169,7 @@ program nwuse
 		// crash on every dataset that reaches this line (i.e. every
 		// genuine .nwdta restoration - previously undiagnosed beyond
 		// "some macro-quoting mismatch").
-		nwname `ncreate', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
+		nwname `ncreate', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"') skipcheck
 		if `has_modes' {
 			_nwsyntax `ncreate', other(other)
 			mata: `othernetobj'->set_modes_from_labeled_string(__nwmd)

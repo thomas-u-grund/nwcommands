@@ -3,7 +3,7 @@ capture program drop nwtoedge
 program nwtoedge
 	version 9
 	syntax [anything(name=netname)][, isolates0 compress upper egovars(varlist) altervars(varlist) numeric ///
-	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string)]
+	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string) ALLpairs]
 
 	unw_defs
 	_nwsyntax `netname', max(9999)
@@ -21,6 +21,10 @@ program nwtoedge
 	// apply once nwtoedge is combining more than one (see comparevars()
 	// above, which is already single-network-only for the same reason).
 	local __iso_nwcount : word count `netname'
+	// a two-mode network is written as its ties by default (see nw2toedge); allpairs gives the row for every pair
+	if "`is2mode'" == "true" & "`allpairs'" == "" & `__iso_nwcount' == 1 {
+		local compress compress
+	}
 	local __iso_srclabels ""
 	if `__iso_nwcount' == 1 {
 		_nwsyntax `netname'

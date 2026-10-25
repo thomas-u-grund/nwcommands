@@ -156,6 +156,17 @@ program nwreplacemat
 		// set_edge() is the modern equivalent (already used
 		// elsewhere in this package, e.g. nwkatz's own in-place
 		// matrix update).
+		// a two-mode network keeps no tie inside a mode: refuse a matrix that has one (before anything is changed)
+		if "`is2mode'" == "true" {
+			tempname __md2 __bm2
+			mata: `__md2' = strtoreal(`netobj'->get_modes())'; `__bm2' = editmissing(`newmat', 0); _diag(`__bm2', 0)
+			mata: st_local("__bad2", strofreal(sum((`__bm2' :!= 0) :& ((`__md2' * J(1, rows(`__md2'), 1)) :== (J(rows(`__md2'), 1, 1) * `__md2''))) / 2))
+			mata: mata drop `__md2' `__bm2'
+			if `__bad2' > 0 {
+				di "{err}The matrix has `__bad2' ties between nodes of the same mode; network {bf:`netname'} is two-mode (no tie can join two nodes of one mode)."
+				error 459
+			}
+		}
 		mata: `netobj'->set_edge(`newmat')
 		if "`netonly'" == "" {
 			if "`sync'" == "" {

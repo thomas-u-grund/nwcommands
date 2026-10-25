@@ -2,8 +2,13 @@
 capture program drop nwrandomwalk
 program nwrandomwalk, rclass
 	version 12
-	syntax [anything(name=netname)], TARGET(string) [GENerate(string) replace silent BINary]
+	syntax [anything(name=netname)], TARGET(string) [GENerate(string) replace silent BINary ONEmode]
 
+	_nwsyntax `netname'
+	_nw2guard `netname', cmd(nwrandomwalk) allowone `onemode'
+	local __nw1m = r(copied)
+	local __origname "`netname'"
+	local netname "`r(net)'"
 	_nwsyntax `netname'
 	// a valued network: the walk steps along a tie with probability proportional to its value; binary ignores the values
 	local __wtd = ("`valued'" == "true" & "`binary'" == "")
@@ -46,6 +51,7 @@ program nwrandomwalk, rclass
 	return local target "`target'"
 	return local generate "`generate'"
 
+	if `__nw1m' local netname "`__origname'"
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
@@ -54,4 +60,5 @@ program nwrandomwalk, rclass
 		di "{hline 40}"
 		summarize `generate'
 	}
+	if `__nw1m' capture nwdrop __nw1m
 end

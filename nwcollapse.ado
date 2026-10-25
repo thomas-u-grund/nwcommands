@@ -28,11 +28,7 @@ program nwcollapse
 	// two-mode networks refuse them explicitly (`errTwoModeUnsupported',
 	// 6088, unw_defs.ado - declared package-wide but, until now, never
 	// actually used anywhere).
-	if "`is2mode'" == "true" {
-		unw_defs
-		di "{err}Network {bf:`netname'} is two-mode; {bf:nwcollapse} does not support collapsing two-mode networks."
-		error `errTwoModeUnsupported'
-	}
+	_nw2guard `netname', cmd(nwcollapse)
 	local original `netname'
 
 	// Stata's collapse is applied to the list of ALL dyads (one row per ordered pair of nodes, the zero cells

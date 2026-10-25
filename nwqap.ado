@@ -29,6 +29,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		di "{err}Network {bf:`net'} not found."
 		error `errNWsNotFound'
 	}
+	_nw2guard `net', cmd(nwqap)
 	_nwdenseguard, command(nwqap) nodes(`nodes') copies(15) alternative(QAP regresses the dyads of the networks, one observation per pair of nodes: `=`nodes'*(`nodes'-1)' here. Use a part of the network (nwsubset, nwego) or nwcorrelate for the correlation of two networks.) `force'
 	nwtomata `net', mat(dvnet)
 

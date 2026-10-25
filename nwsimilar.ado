@@ -62,6 +62,20 @@ program nwsimilar
 	tempname __nwsim_names
 	mata: `__nwsim_names' = `netobj'->get_nodenames()
 
+	// two-mode: a node is compared with the other nodes of its OWN mode, over the nodes of the other mode (the
+	// profile of a person is the set of groups; R: sna::sedist, cor(t(B)) on the biadjacency matrix). Pairs of
+	// nodes from different modes are not compared (missing); mode() plays no role (a two-mode network is undirected).
+	if "`is2mode'" == "true" {
+		mata: __nwsim = nw_twomode_profile(`srcmata', strtoreal(`netobj'->get_modes())', "`type'")
+		nwset, mat(__nwsim) name(`name') selfloop undirected nodenames(`__nwsim_names')
+		capture mata mata drop __nwsim
+		capture mata mata drop `__nwsim_names'
+		if "`xvars'" != "" {
+			nwload `name'
+		}
+		exit
+	}
+
 	if "`type'" == "pearson" {
 		qui nwcorrelate `netname', name(`name')
 	}

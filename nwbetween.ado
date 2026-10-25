@@ -1,7 +1,7 @@
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force]
+	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force TWOmode]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -110,7 +110,18 @@ program nwbetween
 			mata: st_store((1::`nodes'),"`netgenerate'", NativeGraphAvailable() ? `netobj'->calculate_betweenness_native() : `netobj'->calculate_betweenness())
 		}
 
-		if "`standardize'" != "" {
+		if "`twomode'" != "" {
+			// Borgatti and Everett (1997): the largest possible betweenness of a node of a mode with n nodes, the other
+			// mode having m nodes (a node that lies on every path between the other nodes of its mode): with
+			// s = floor((n - 1) / m) and t = n - 1 - s m, (m^2 (s+1)^2 + m (s+1) (2t - s - 1) - t (2s - t + 3)) / 2
+			if "`is2mode'" != "true" {
+				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
+				error 198
+			}
+			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); st_store((1::`nodes'), "`netgenerate'", st_data((1::`nodes'), "`netgenerate'") :/ ((__md :== 1) :* nw_be_maxbetween(__n1, __n2) :+ (__md :== 2) :* nw_be_maxbetween(__n2, __n1)))
+			mata: mata drop __md __n1 __n2
+		}
+		else if "`standardize'" != "" {
 			if "`directed'" == "true" {
 				qui replace `netgenerate'  = `netgenerate'  / ((`nodes' - 1) * (`nodes' - 2))
 			}
@@ -133,7 +144,10 @@ program nwbetween
 		if `__wtd' {
 			noi di "{txt}    (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha')"
 		}
-		if "`standardize'" != "" {
+		if "`twomode'" != "" {
+			noi di "{txt}    (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)"
+		}
+		else if "`standardize'" != "" {
 			noi di "{txt}    (standardized)"
 		}
 		if "`silent'" == "" {

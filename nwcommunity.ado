@@ -2,7 +2,7 @@
 capture program drop nwcommunity
 program nwcommunity, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall]
+	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall ONEmode STARTs(int 10)]
 	set more off
 
 	// resolution() had no input validation at all - zero or negative
@@ -26,6 +26,11 @@ program nwcommunity, rclass
 
 	if `seed' != -1 {
 		set seed `seed'
+	}
+
+	if `starts' < 1 {
+		di "{err}Option {bf:starts()} must be at least 1."
+		error 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -74,6 +79,12 @@ program nwcommunity, rclass
 		}
 
 		local val = ("`netmeasure'" == "valued")
+		// a two-mode network is scored and searched with Barber's bipartite modularity (R: bipartite::computeModules,
+		// the null model counts only pairs of nodes from different modes); onemode gives Newman's Q of the bipartite
+		// graph read as a one-mode graph (igraph::cluster_louvain)
+		local __bip = ("`is2mode'" == "true" & "`onemode'" == "")
+		local __qtype = cond(`__bip', "barber", "newman")
+		local __qlab = cond(`__bip', "{space 1}(Barber, two-mode)", "")
 
 		capture drop `netgenerate'`k'
 		gen `netgenerate'`k' = .
@@ -93,6 +104,9 @@ program nwcommunity, rclass
 		if "`algorithm'" == "labelprop" {
 			mata: `__nw_comm' = `netobj'->detect_communities_labelprop(`val')
 		}
+		else if `__bip' {
+			mata: `__nw_comm' = `netobj'->detect_communities_bipartite(`val', `resolution', `starts')
+		}
 		else {
 			mata: `__nw_comm' = `netobj'->detect_communities_louvain(`val', `resolution')
 		}
@@ -104,7 +118,12 @@ program nwcommunity, rclass
 		// corrupting the reported r(modularity) for the community
 		// partition detect_communities_louvain()/labelprop() actually
 		// searched for under measure(binary).
-		mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_comm', `val', `resolution'))
+		if `__bip' {
+			mata: st_numscalar("modularity", `netobj'->calculate_modularity_bipartite(`__nw_comm', `val', `resolution'))
+		}
+		else {
+			mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_comm', `val', `resolution'))
+		}
 		mata: mata drop `__nw_comm'
 
 		// PERFORMANCE/CORRECTNESS FIX: `tab ..., matrow() matcell()'
@@ -148,6 +167,7 @@ program nwcommunity, rclass
 		matrix colnames comm_sizeid = size compid share
 
 		return scalar modularity = modularity
+		return local modularity_type "`__qtype'"
 		return scalar communities = communities
 		local lcomm = communities
 		local lmod = modularity
@@ -162,7 +182,7 @@ program nwcommunity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
+			noi di "{txt}  Modularity Q`__qlab': {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
 			if `lcomm' <= 30 | (`lcomm' <= 1000 & "`listall'" != "") {
 				noi tab `netgenerate'`k'
 			}

@@ -6,6 +6,7 @@ program nwinduced, rclass
 	_opts_oneof "degree betweenness closeness evcent" "measure" "`measure'" 6556
 
 	_nwsyntax `netname', max(1)
+	_nw2guard `netname', cmd(nwinduced)
 
 	// Directed networks are supported for betweenness/closeness/evcent
 	// (each already produces exactly one clean per-node output

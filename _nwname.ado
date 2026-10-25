@@ -5,7 +5,7 @@ program _nwname
 	// referenced anywhere in this file's body (a fully dead,
 	// undocumented no-op; confirmed via grep across the whole package -
 	// nothing ever passed it either).
-	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) ]
+	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) skipcheck]
 
 	// BUGFIX: `id()' was completely non-functional - _nwsyntax.ado's own
 	// unprefixed `c_local id `r(id)'' side effect immediately clobbered
@@ -114,6 +114,26 @@ program _nwname
 	}
 	if "`newprovenance'" != "" {
 		mata: nw.nws.pdefs[`id']->set_provenance(`"`newprovenance'"')
+	}
+
+	// A network can only be declared two-mode when it is bipartite: both modes must hold nodes and no tie may join two
+	// nodes of the same mode (igraph::is_bipartite with the declared types).  nwuse restores older files that carry no
+	// modes and passes skipcheck.
+	if "`new2mode'" == "true" & "`skipcheck'" == "" {
+		qui mata: (void) nw.nws.pdefs[`id']->get_modes()
+		mata: st_local("__n1", strofreal(nw.nws.pdefs[`id']->get_nodes_mode1()))
+		mata: st_local("__n2", strofreal(nw.nws.pdefs[`id']->get_nodes_mode2()))
+		mata: st_local("__bad", strofreal(nw.nws.pdefs[`id']->count_samemode_ties()))
+		if `__n1' == 0 | `__n2' == 0 {
+			mata: nw.nws.pdefs[`id']->set_2mode(0)
+			di "{err}Network {bf:`netname'} cannot be declared two-mode: only `=cond(`__n2' == 0, "mode 1", "mode 2")' has nodes. Give the mode of every node with {bf:newmodes()} in the same call, or build the network with {bf:nwset, twomode} or {bf:nw2fromedge}."
+			error 459
+		}
+		if `__bad' > 0 {
+			mata: nw.nws.pdefs[`id']->set_2mode(0)
+			di "{err}Network {bf:`netname'} cannot be declared two-mode: `__bad' ties join two nodes of the same mode."
+			error 459
+		}
 	}
 
 	mata: st_numscalar("r(id)", `id')
