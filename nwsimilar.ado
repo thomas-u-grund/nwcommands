@@ -62,6 +62,20 @@ program nwsimilar
 	tempname __nwsim_names
 	mata: `__nwsim_names' = `netobj'->get_nodenames()
 
+	// two-mode: a node is compared with the other nodes of its OWN mode, over the nodes of the other mode (the
+	// profile of a person is the set of groups; R: sna::sedist, cor(t(B)) on the biadjacency matrix). Pairs of
+	// nodes from different modes are not compared (missing); mode() plays no role (a two-mode network is undirected).
+	if "`is2mode'" == "true" {
+		mata: __nwsim = nw_twomode_profile(`srcmata', strtoreal(`netobj'->get_modes())', "`type'")
+		nwset, mat(__nwsim) name(`name') selfloop undirected nodenames(`__nwsim_names')
+		capture mata mata drop __nwsim
+		capture mata mata drop `__nwsim_names'
+		if "`xvars'" != "" {
+			nwload `name'
+		}
+		exit
+	}
+
 	if "`type'" == "pearson" {
 		qui nwcorrelate `netname', name(`name')
 	}
@@ -249,9 +263,16 @@ real matrix hamming_similarity(real matrix net,real scalar dtype){
 }
 
 real matrix crossproduct_similarity(real matrix net,real scalar dtype){
-	real matrix Bout, outdeg, indeg, COout, COin, sym, S
+	real matrix W, COout, COin, S
 
-	__nwsim_binaryco(net, Bout, outdeg, indeg, COout, COin, sym)
+	// weighted as documented: sum over k of w_ik * w_jk (outgoing) and of
+	// w_ki * w_kj (incoming); identical to the co-occurrence count on a
+	// binary network. No self-loops, missing counts as no tie.
+	W = net
+	_diag(W, J(rows(W), 1, 0))
+	W = editmissing(W, 0)
+	COout = W * W'
+	COin = W' * W
 
 	if (dtype == 0) S = COout :+ COin
 	if (dtype == 1) S = COin

@@ -1,7 +1,7 @@
 capture program drop nwpermute	
 program nwpermute
 	version 9.0
-	syntax [anything(name=netname)], [ xvars replace nwreplace generate(string)]
+	syntax [anything(name=netname)], [ xvars replace nwreplace generate(string) SWAP SWAPS(integer -1)]
 	if "`replace'" == "" & "`generate'" == "" {
 		// Error-code coherence pass: was `999' (this package's own
 		// convention for "loading would discard unsaved data" - an
@@ -13,8 +13,30 @@ program nwpermute
 		error 198
 	}
 	_nwsyntax `netname', max(1)
+	// a two-mode network is permuted within its modes (the labels of the mode-1 nodes among themselves, the mode-2
+	// labels among themselves); swap instead exchanges the partners of two ties at random (Maslov-Sneppen) and keeps
+	// both degree sequences (R: bipartite::swap.web, tnet::rg_reshuffling_tm)
+	if "`swaps'" != "-1" & "`swap'" == "" local swap swap
+	if "`swap'" != "" & "`is2mode'" != "true" {
+		di "{err}Option {bf:swap} needs a two-mode network."
+		error 198
+	}
+	if "`swap'" != "" {
+		if `swaps' == -1 {
+			mata: st_local("swaps", strofreal(10 * sum(`netobj'->edgelist()[., 3] :!= 0) / 2))
+		}
+		if `swaps' < 1 {
+			di "{err}Option {bf:swaps()} must be at least 1."
+			error 198
+		}
+	}
 	if "`generate'" == "" & "`replace'" != "" {
-		mata: `netobj'->permute()
+		if "`swap'" != "" {
+			mata: `netobj'->permute_swap(`swaps')
+		}
+		else {
+			mata: `netobj'->permute()
+		}
 	}
 	if "`generate'" != "" {
 		capture _nwsyntax `generate', other(_chk)
@@ -25,7 +47,12 @@ program nwpermute
 		capture nwdrop `generate'
 		nwduplicate `netname', name(`generate')
 		_nwsyntax `generate'
-		mata: `netobj'->permute()
+		if "`swap'" != "" {
+			mata: `netobj'->permute_swap(`swaps')
+		}
+		else {
+			mata: `netobj'->permute()
+		}
 	}
 	if "`xvars'" != "" {
 		nwload `netname'

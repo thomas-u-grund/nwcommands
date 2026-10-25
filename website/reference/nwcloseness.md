@@ -21,7 +21,9 @@ unconnected(int)
 generate(var1 var2 var3)
 nosym
 replace
-force]
+silent
+force
+binary]
 ```
 
 | | |
@@ -30,7 +32,10 @@ force]
 | `generate`(*`var1 var2 var3`*) | **Required.** Exactly 3 variable names to save closeness, farness and nearness scores, in that order |
 | `nosym` | do not symmetrize network before calculation of shortest paths |
 | `replace` | overwrite existing *var1, var2, var3* (or *_closeness, _farness, _nearness*); required if they already exist |
+| `silent` | Do not display the summary of the new variables |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `twomode` | Two-mode network: closeness is the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997) |
 
 ## Description
 
@@ -60,7 +65,7 @@ Closeness centrality is not defined when the network is unconnected. However, sc
 
 ## Supported network types
 
-Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `nosym` convention as [nwkatz](nwkatz)/[nwevcent](nwevcent)), `nosym` available. Weighted: inherited entirely from whatever [nwgeodesic](nwgeodesic) options are passed through (this command has no `weighted`/`alpha()` of its own). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `nosym` convention as [nwkatz](nwkatz)/[nwevcent](nwevcent)), `nosym` available. Weighted: inherited entirely from whatever [nwgeodesic](nwgeodesic) options are passed through (this command has no `weighted`/`alpha()` of its own). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option `twomode` divides the smallest possible farness of a node of its mode by its farness (Borgatti and Everett 1997).
 
 ## See also
 

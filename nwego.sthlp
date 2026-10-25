@@ -71,13 +71,18 @@ Press. (ego-network density as used in structural holes analysis - see also {hel
 {help nwburt})
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density
 counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network
 membership and alter-alter density; tie strength does not affect these measures. Signed: not
-checked. Two-mode: not checked - operates on the network's own square adjacency matrix.
+checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:See also}
 

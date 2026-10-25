@@ -120,10 +120,15 @@ to the network.
 An adjacency matrix is a simple representation of a network. The adjaceny matrix {it:M} of a one-mode network
 has the dimensions {it:nodes} x {it:nodes}. The matrix cell {it:M_ij} = 0 when there is no tie between nodes {it:i}
 and {it:j}. In binary networks, {it:M_ij} = 1 when there is a network relationship between nodes {it:i} and {it:j}.
-However, networks can also be valued, i.e. {it:M_ij} > 1; in undirected networks {it:M_ij = M_ji}.
+However, networks can also be valued, i.e. {it:M_ij} may take other values than 0 and 1 (for example 2, 0.3 or -1); in undirected networks {it:M_ij = M_ji}.
 
 {pstd}
-The command automatically recognizes if the network is unvalued (only has values 0, 1 or missing) or valued.
+The valued flag is set when a network is created. For a matrix or variables given without a statement of intent the
+numbers decide, once, at creation: the network is valued when at least one tie has a value other than 0 and 1, so shares or
+probabilities between 0 and 1, a network whose ties all equal 2, and signed networks are valued; a network whose ties are
+all 1 is binary. Options {opt valued} and {opt unvalued} override this. A network created from an edgelist with a value
+variable ({help nwfromedge}) is valued, also if every value is 1. The flag is not worked out from the values again later:
+commands that change a network keep it (see {help nwnetworktypes}).
 
 {pstd}
 There are three ways to explicitly declare data to be network data:
@@ -356,10 +361,15 @@ relational-event models, temporal ERGMs) is implemented or attempted here.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
+
 {title:Supported network types}
 
 {pstd}
-This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected.
+This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected. Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
 
 {title:Remarks}
 

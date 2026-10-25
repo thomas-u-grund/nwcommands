@@ -22,13 +22,14 @@ name(string)
 nwreplace
 generate(newvarname)
 xvars
-force]
+force
+binary]
 ```
 
 | | |
 |---|---|
 | `unconnected(int)` | Define the length of the path between two unconnected nodes |
-| `alpha(real)` | Deal with valued networks |
+| `alpha(real)` | Cost of a step along a tie of value w: 1/w^alpha; default 1 on a valued network, 0 (every tie is one step) otherwise |
 | `sym` | Calculate distances from symmetrized network |
 | `symopt(options)` | Options controlling the symmetrization when `sym` is specified (see [nwsym](nwsym)) |
 | `name`(*[newnetname](newnetname)*) | Name of the new distance network; default = *_geodesic* |
@@ -36,6 +37,7 @@ force]
 | `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
 | `force` | force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -61,7 +63,7 @@ which is essentially what Newman (2001) and Brandes (2001) suggested. This simpl
 
 ## Supported network types
 
-Binary: yes. Directed: yes - symmetrized by default (matching [nwcloseness](nwcloseness)/[nwkatz](nwkatz)'s own identical convention), `sym`/`nosym` control it explicitly. Weighted: yes, via `alpha()` - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - symmetrized by default (matching [nwcloseness](nwcloseness)/[nwkatz](nwkatz)'s own identical convention), `sym`/`nosym` control it explicitly. Weighted: yes, via `alpha()` - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
 
 ## Stored results
 

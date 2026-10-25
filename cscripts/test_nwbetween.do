@@ -159,7 +159,7 @@ assert _between[4] == 0
 nwclear
 nwset, mat((0,1,4,0\1,0,2,0\4,2,0,1\0,0,1,0)) name(wnet) undirected labs(A,B,C,D)
 nwbetween wnet, weighted alpha(0) generate(_wa0) silent
-nwbetween wnet, generate(_wu) silent
+nwbetween wnet, generate(_wu) silent binary
 assert _wa0[1] == _wu[1]
 assert _wa0[2] == _wu[2]
 assert _wa0[3] == _wu[3]

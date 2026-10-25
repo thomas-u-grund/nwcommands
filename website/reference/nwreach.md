@@ -61,7 +61,7 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 
 ## Supported network types
 
-Binary: yes (only) - reachability is a structural yes/no property; [nwgeodesic](nwgeodesic)'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as [nwgeodesic](nwgeodesic)), `sym` available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - reachability is a structural yes/no property; [nwgeodesic](nwgeodesic)'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as [nwgeodesic](nwgeodesic)), `sym` available. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
 

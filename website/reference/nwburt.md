@@ -69,7 +69,7 @@ The four per-node measures are computed from the stored ties (the sum of the squ
 
 ## Supported network types
 
-Binary: yes. Directed: yes, but not symmetrized - *p_ij* (the proportion of *i*'s outgoing investment in *j*) is computed from the raw adjacency matrix exactly as given, same convention as [nwconstraint](nwconstraint). Weighted: **W1**, native - tie weight is used directly as *p_ij*'s investment proportion, not as a distance. Signed: not supported, same reason as [nwconstraint](nwconstraint) - *p_ij* is a ratio to a sum of outgoing tie weights, only meaningful when all non-negative. Two-mode: not checked.
+Binary: yes. Directed: yes, but not symmetrized - *p_ij* (the proportion of *i*'s outgoing investment in *j*) is computed from the raw adjacency matrix exactly as given, same convention as [nwconstraint](nwconstraint). Weighted: **W1**, native - tie weight is used directly as *p_ij*'s investment proportion, not as a distance. Signed: not supported, same reason as [nwconstraint](nwconstraint) - *p_ij* is a ratio to a sum of outgoing tie weights, only meaningful when all non-negative. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

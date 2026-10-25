@@ -39,7 +39,7 @@ For example:
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties. Two-mode: yes - the copy keeps the flag, the modes and the level labels.
 
 ## See also
 

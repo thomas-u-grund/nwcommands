@@ -21,7 +21,8 @@
 {opt generate}({it:{help varname}})
 {opt replace}
 {it:{help nwgeodesic:geodesic_options}}
-{opt force}]
+{opt force}
+{opt binary}]
 
 
 {synoptset 30 tabbed}{...}
@@ -34,6 +35,7 @@
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -79,6 +81,12 @@ valid range if violated. Default {opt alpha()} in this mode is {bf:0.9/rho}, a c
 the same convention the default distance-decay formula already uses.
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. With {opt walks} on a valued network the walks are weighted ({it:igraph::alpha_centrality} with weights; the {it:_in} variable is igraph's); {opt binary} counts a tie once. The distance-decay form counts steps and does not use tie values.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
 {title:Supported network types}
 
 {pstd}
@@ -89,7 +97,7 @@ unless {help nwgeodesic:geodesic_options} specifies {opt nosym}). Weighted: dist
 forwarded through this command's {it:geodesic_options}; weight meaning follows whatever
 {help nwgeodesic} uses (tie strength inverted into a path cost via the Opsahl et al. formulation -
 see {help nwgeodesic} for detail), not tie strength directly. Signed: not checked; negative tie
-values are not validated or rejected. Two-mode: not checked.
+values are not validated or rejected. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:References}

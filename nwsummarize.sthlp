@@ -43,10 +43,15 @@
 
  
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of {cmd:bipartite}).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of {cmd:bipartite}).
 
 {title:Examples}
 

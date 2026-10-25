@@ -24,7 +24,8 @@ standardize
 silent
 weighted
 alpha(real)
-force]
+force
+binary]
 ```
 
 | | |
@@ -34,9 +35,11 @@ force]
 | `nosym` | do not symmetrize network before calculation of shortest paths |
 | `standardize` | standardize centrality scores |
 | `silent` | suppress the summary table of the generated variable |
-| `weighted` | calculate on weighted (Dijkstra) shortest paths instead of dichotomizing |
+| `weighted` | use the tie values in the shortest paths; redundant on a valued network, where this is the default (kept for compatibility) |
 | `alpha(real)` | weight-to-distance exponent used with `weighted`; default = 1 |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `twomode` | Two-mode network: betweenness divided by the largest value a node of its mode can reach (Borgatti and Everett 1997) |
 
 ## Description
 
@@ -74,7 +77,7 @@ The default (unweighted) mode of `nwbetween` transparently uses a compiled nativ
 
 ## Supported network types
 
-Binary: yes, native. Directed: yes for the standardization normalizer (see the formulas above), but by default the network is symmetrized before computing betweenness at all - pass `nosym` to compute genuinely directed betweenness on the network as given; without `nosym` the reported scores reflect the symmetrized structure, not the original directed one (this applies identically whether or not `weighted` is used - symmetrization, via [nwsym](nwsym)'s default `max` mode, correctly combines rather than discards tie weights). Weighted: **W2** - the default remains **W3** (explicit binary-only: any tie with weight strictly greater than zero is dichotomized to an edge, tie strength otherwise ignored), but `weighted` now computes genuine Dijkstra-based betweenness using tie strength directly as distance/cost via `alpha()` - never silently implied, always an explicit opt-in. Signed: ties with weight less than or equal to zero, including negative ties, are treated as no tie at all in both the default and `weighted` cases - a negative (e.g. antagonistic) tie is not distinguished from an absent one, and `weighted`'s *weight^alpha* cost is undefined for a negative base in general, so signed networks are not natively supported by either mode. Two-mode: not checked.
+Binary: yes, native. Directed: yes for the standardization normalizer (see the formulas above), but by default the network is symmetrized before computing betweenness at all - pass `nosym` to compute genuinely directed betweenness on the network as given; without `nosym` the reported scores reflect the symmetrized structure, not the original directed one (this applies identically whether or not `weighted` is used - symmetrization, via [nwsym](nwsym)'s default `max` mode, correctly combines rather than discards tie weights). Weighted: **W2** - the default remains **W3** (explicit binary-only: any tie with weight strictly greater than zero is dichotomized to an edge, tie strength otherwise ignored), but `weighted` now computes genuine Dijkstra-based betweenness using tie strength directly as distance/cost via `alpha()` - never silently implied, always an explicit opt-in. Signed: ties with weight less than or equal to zero, including negative ties, are treated as no tie at all in both the default and `weighted` cases - a negative (e.g. antagonistic) tie is not distinguished from an absent one, and `weighted`'s *weight^alpha* cost is undefined for a negative base in general, so signed networks are not natively supported by either mode. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option `twomode` divides by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997).
 
 ## References
 

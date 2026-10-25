@@ -22,7 +22,8 @@ replace
 damping(real)
 maxiter(int)
 tol(real)
-silent]
+silent
+binary]
 ```
 
 | | |
@@ -33,6 +34,7 @@ silent]
 | `maxiter(int)` | Maximum power-iteration sweeps; default 1000 |
 | `tol(real)` | Convergence tolerance; default 1e-10 |
 | `silent` | Suppress display of results |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -53,7 +55,7 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 
 ## Supported network types
 
-Binary: yes. Directed: yes - the natural case (a random surfer follows ties in their own real direction); an undirected network is handled identically, since its own symmetric tie matrix already represents "can move either way" directly. Weighted: not checked - tie values are ignored (a random surfer moves to each out-neighbor with EQUAL probability, matching the classical definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - the natural case (a random surfer follows ties in their own real direction); an undirected network is handled identically, since its own symmetric tie matrix already represents "can move either way" directly. Weighted: not checked - tie values are ignored (a random surfer moves to each out-neighbor with EQUAL probability, matching the classical definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

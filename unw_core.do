@@ -3409,6 +3409,446 @@ real scalar nw_modularity_pairs(real scalar n, real matrix pairs, real matrix me
 	return(q / m2)
 }
 
+/*
+	Two-mode networks: Barber's (2007) bipartite modularity of a membership vector on the symmetric pairs
+	(i, j, w), i < j, with md the mode (1 or 2) of every node:
+		Q_B = (1/m) sum_C [ e_C - resolution * K1_C * K2_C / m ]
+	m is the total weight of the cross-mode ties, e_C the weight of the ties inside community C, K1_C (K2_C) the
+	degree sum of the mode-1 (mode-2) nodes of C.  Ties between nodes of the same mode do not exist and are
+	ignored.  Same convention as bipartite::computeModules (binary case) and tnet/igraph users who evaluate
+	Barber's Q by hand.
+*/
+real scalar nw_modularity_bip(real scalar n, real matrix pairs, real colvector md, real matrix membership, real scalar resolution)
+{
+	real matrix p
+	real colvector mem, K1, K2, inw
+	real scalar m, ncomm, r, i, j, w
+
+	p = select(pairs, (md[pairs[., 1]] :!= md[pairs[., 2]]) :& (pairs[., 3] :< .) :& (pairs[., 3] :!= 0))
+	if (rows(p) == 0) return(0)
+	m = sum(p[., 3])
+	mem = vec(membership)
+	ncomm = max(mem)
+	if (ncomm == . | ncomm < 1) return(0)
+	K1 = J(ncomm, 1, 0)
+	K2 = J(ncomm, 1, 0)
+	inw = J(ncomm, 1, 0)
+	for (r = 1; r <= rows(p); r++) {
+		i = p[r, 1]
+		j = p[r, 2]
+		w = p[r, 3]
+		if (md[i] != 1) {
+			i = p[r, 2]
+			j = p[r, 1]
+		}
+		// i is the mode-1 end, j the mode-2 end
+		if (mem[i] < . & mem[i] >= 1 & mem[i] <= ncomm) K1[mem[i]] = K1[mem[i]] + w
+		if (mem[j] < . & mem[j] >= 1 & mem[j] <= ncomm) K2[mem[j]] = K2[mem[j]] + w
+		if (mem[i] == mem[j] & mem[i] < . & mem[i] >= 1 & mem[i] <= ncomm) inw[mem[i]] = inw[mem[i]] + w
+	}
+	return((sum(inw) - resolution * sum(K1 :* K2) / m) / m)
+}
+
+/*
+	Louvain-type search for the partition that maximises Barber's bipartite modularity (see nw_modularity_bip).
+	Phase 1 moves one node at a time to the neighbouring community with the largest gain
+		gain(i -> C) = k_i,C / m - resolution * (a_i * B_C + b_i * A_C) / m^2
+	where a_i (b_i) is the mode-1 (mode-2) degree of the (super-)node i and A_C, B_C the mode-1 and mode-2 degree
+	sums of C; phase 2 merges the communities into super-nodes (carrying a, b) and repeats until nothing moves.
+	Same scheme as Louvain() with the bipartite null model in place of Newman's.  Returns the community (1..k)
+	of every node.
+*/
+real colvector nw_louvain_bip1(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar rnd, real colvector init)
+{
+	real matrix p, info
+	real colvector a, b, deg, src, dst, wt, final, comm, Ac, Bc, kin, touched, ptr, nbr, wgt, o, ei, ej, ew, cnt
+	real colvector cs, cd, keep, A2, B2, lo, hi, key, so, ww, newsrc, newdst, neww, ord
+	real scalar hasinit, lvl, m, N, r, ii, i, ci, c, q, nt, t, best, g, bestg, moved, anymove, sweep, K
+
+	p = select(pairs, (md[pairs[., 1]] :!= md[pairs[., 2]]) :& (pairs[., 3] :> 0) :& (pairs[., 3] :< .))
+	if (rows(p) == 0 | n <= 1) return((1::n))
+	m = sum(p[., 3])
+	deg = J(n, 1, 0)
+	for (r = 1; r <= rows(p); r++) {
+		deg[p[r, 1]] = deg[p[r, 1]] + p[r, 3]
+		deg[p[r, 2]] = deg[p[r, 2]] + p[r, 3]
+	}
+	a = deg :* (md :== 1)
+	b = deg :* (md :== 2)
+	src = p[., 1]
+	dst = p[., 2]
+	wt = p[., 3]
+	N = n
+	final = (1::n)
+	hasinit = (rows(init) == n)
+	lvl = 0
+	while (1) {
+		// adjacency lists of the level graph
+		ei = src \ dst
+		ej = dst \ src
+		ew = wt \ wt
+		o = order(ei, 1)
+		ei = ei[o]
+		nbr = ej[o]
+		wgt = ew[o]
+		cnt = J(N, 1, 0)
+		for (r = 1; r <= rows(ei); r++) cnt[ei[r]] = cnt[ei[r]] + 1
+		ptr = J(N + 1, 1, 1)
+		for (i = 1; i <= N; i++) ptr[i + 1] = ptr[i] + cnt[i]
+		comm = (1::N)
+		Ac = a
+		Bc = b
+		if (lvl == 0 & hasinit) {
+			// start from the partition given (the search is repeated from its own result)
+			comm = init
+			Ac = J(N, 1, 0)
+			Bc = J(N, 1, 0)
+			for (i = 1; i <= N; i++) {
+				Ac[comm[i]] = Ac[comm[i]] + a[i]
+				Bc[comm[i]] = Bc[comm[i]] + b[i]
+			}
+		}
+		kin = J(N, 1, 0)
+		touched = J(N, 1, 0)
+		moved = 0
+		anymove = 1
+		sweep = 0
+		while (anymove & sweep < 100) {
+			anymove = 0
+			sweep++
+			ord = (rnd ? unorder(N) : (1::N))
+			for (ii = 1; ii <= N; ii++) {
+				i = ord[ii]
+				ci = comm[i]
+				Ac[ci] = Ac[ci] - a[i]
+				Bc[ci] = Bc[ci] - b[i]
+				nt = 0
+				for (q = ptr[i]; q < ptr[i + 1]; q++) {
+					c = comm[nbr[q]]
+					if (kin[c] == 0) {
+						nt++
+						touched[nt] = c
+					}
+					kin[c] = kin[c] + wgt[q]
+				}
+				best = ci
+				bestg = kin[ci] / m - res * (a[i] * Bc[ci] + b[i] * Ac[ci]) / (m * m)
+				for (t = 1; t <= nt; t++) {
+					c = touched[t]
+					g = kin[c] / m - res * (a[i] * Bc[c] + b[i] * Ac[c]) / (m * m)
+					if (g > bestg + 1e-12) {
+						bestg = g
+						best = c
+					}
+				}
+				for (t = 1; t <= nt; t++) kin[touched[t]] = 0
+				comm[i] = best
+				Ac[best] = Ac[best] + a[i]
+				Bc[best] = Bc[best] + b[i]
+				if (best != ci) {
+					anymove = 1
+					moved = 1
+				}
+			}
+		}
+		if (moved == 0 & !(lvl == 0 & hasinit)) break
+		comm = nw_community_denserelabel(comm)
+		lvl++
+		K = max(comm)
+		final = comm[final]
+		cs = comm[src]
+		cd = comm[dst]
+		keep = selectindex(cs :!= cd)
+		if (rows(keep) == 0) break
+		A2 = J(K, 1, 0)
+		B2 = J(K, 1, 0)
+		for (i = 1; i <= N; i++) {
+			A2[comm[i]] = A2[comm[i]] + a[i]
+			B2[comm[i]] = B2[comm[i]] + b[i]
+		}
+		lo = rowmin((cs[keep], cd[keep]))
+		hi = rowmax((cs[keep], cd[keep]))
+		key = lo :* (K + 1) :+ hi
+		o = order(key, 1)
+		so = key[o]
+		ww = wt[keep]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		neww = panelsum(ww, info)
+		key = so[info[., 1]]
+		newsrc = floor((key :- 1) :/ (K + 1))
+		newdst = key :- newsrc :* (K + 1)
+		src = newsrc
+		dst = newdst
+		wt = neww
+		a = A2
+		b = B2
+		N = K
+	}
+	return(nw_community_denserelabel(final))
+}
+
+/*
+	Robins and Alexander (2004) global clustering of a binary biadjacency matrix B: 4 * C4 / L3, with C4 the number
+	of 4-cycles and L3 the number of paths of length 3 (L3 = sum over the ties of (k_i - 1)(k_j - 1)).  Returns
+	(coefficient, C4, L3).  Opsahl's (2013) coefficient (nw2clustering default, tnet::clustering_tm) is a
+	different quantity.
+*/
+real rowvector nw_robins_alexander(real matrix B)
+{
+	real colvector kr, kc
+	real matrix S
+	real scalar n, s, e, i, bs, c4, l3, ra
+
+	n = rows(B)
+	kr = rowsum(B)
+	kc = colsum(B)'
+	l3 = sum((B :* ((kr :- 1) * (kc :- 1)')))
+	c4 = 0
+	bs = max((1, floor(4e6 / max((n, 1)))))
+	for (s = 1; s <= n; s = s + bs) {
+		e = min((n, s + bs - 1))
+		S = B[|s, 1 \ e, .|] * B'
+		for (i = s; i <= e; i++) {
+			if (i < n) c4 = c4 + sum(S[i - s + 1, (i + 1)..n] :* (S[i - s + 1, (i + 1)..n] :- 1) :/ 2)
+		}
+	}
+	ra = .
+	if (l3 > 0) ra = 4 * c4 / l3
+	return((ra, c4, l3))
+}
+
+/*
+	Same-mode similarity or dissimilarity of the nodes of a two-mode network (nwsimilar, nwdissimilar): the profile of
+	a node is its row over the nodes of the OTHER mode, so two persons are compared over the groups they belong to
+	(R: sna::sedist and cor(t(B)) on the biadjacency matrix B, igraph::similarity).  Pairs of nodes from different
+	modes are not compared (missing).  net is the square matrix (missing cells = no tie), md the mode (1 or 2) of
+	every node; type is one of
+		similarity:    pearson, matches (share of the other-mode nodes on which both agree), hamming (number of
+		               agreements), jaccard, crossproduct (sum of the products of the tie values)
+		dissimilarity: euclidean, manhatten, nonmatches (1 - matches), dhamming (number of disagreements),
+		               djaccard (1 - jaccard)
+	Binary measures count a tie wherever the value is not 0; pearson, crossproduct, euclidean and manhatten use the
+	tie values.
+*/
+real matrix nw_twomode_profile(real matrix net, real colvector md, string scalar type)
+{
+	real matrix W, R, B, Bb, S, Z, D
+	real colvector idx, oth, kb, nz, sq
+	real scalar n, m, c, r, i
+
+	n = rows(net)
+	W = editmissing(net, 0)
+	_diag(W, 0)
+	R = J(n, n, .)
+	for (m = 1; m <= 2; m++) {
+		idx = selectindex(md :== m)
+		oth = selectindex(md :!= m)
+		r = rows(idx)
+		c = rows(oth)
+		if (r == 0 | c == 0) continue
+		B = W[idx, oth]
+		Bb = (B :!= 0)
+		kb = rowsum(Bb)
+		S = Bb * Bb'
+		if (type == "crossproduct") D = B * B'
+		else if (type == "matches") D = (c :- kb * J(1, r, 1) :- J(r, 1, 1) * kb' :+ 2 :* S) :/ c
+		else if (type == "hamming") D = c :- kb * J(1, r, 1) :- J(r, 1, 1) * kb' :+ 2 :* S
+		else if (type == "jaccard") D = S :/ (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- S)
+		else if (type == "nonmatches") D = (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- 2 :* S) :/ c
+		else if (type == "dhamming") D = kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- 2 :* S
+		else if (type == "djaccard") D = 1 :- S :/ (kb * J(1, r, 1) :+ J(r, 1, 1) * kb' :- S)
+		else if (type == "euclidean") {
+			sq = rowsum(B :^ 2)
+			D = sq * J(1, r, 1) :+ J(r, 1, 1) * sq' :- 2 :* (B * B')
+			D = sqrt(D :* (D :> 0))
+		}
+		else if (type == "manhatten") {
+			D = J(r, r, 0)
+			for (i = 1; i <= r; i++) D[i, .] = rowsum(abs(B[i, .] :- B))'
+		}
+		else if (type == "pearson") {
+			Z = B :- rowsum(B) :/ c
+			nz = sqrt(rowsum(Z :^ 2))
+			D = (Z * Z') :/ (nz * nz')
+		}
+		else _error(3498, "nw_twomode_profile: unknown type " + type)
+		R[idx, idx] = D
+	}
+	return(R)
+}
+
+/*
+	Borgatti and Everett (1997): the largest possible betweenness of a node of a mode with n nodes in a two-mode
+	network whose other mode has m nodes.
+*/
+real scalar nw_be_maxbetween(real scalar n, real scalar m)
+{
+	real scalar s, t
+
+	s = floor((n - 1) / m)
+	t = n - 1 - s * m
+	return((m^2 * (s + 1)^2 + m * (s + 1) * (2 * t - s - 1) - t * (2 * s - t + 3)) / 2)
+}
+
+/*
+	nw_louvain_bip1() from `nstart' starting orders (the first visits the nodes in their order, the others in random
+	order) and keeps the partition with the largest Barber modularity; the greedy search is order dependent.
+*/
+real colvector nw_louvain_bip(real scalar n, real matrix pairs, real colvector md, real scalar res, real scalar nstart)
+{
+	real colvector best, cur, nxt
+	real scalar bq, cq, nq, r, it
+
+	best = nw_louvain_bip1(n, pairs, md, res, 0, J(0, 1, .))
+	bq = nw_modularity_bip(n, pairs, md, best, res)
+	for (r = 1; r <= nstart; r++) {
+		if (r == 1) cur = best
+		else cur = nw_louvain_bip1(n, pairs, md, res, 1, J(0, 1, .))
+		cq = nw_modularity_bip(n, pairs, md, cur, res)
+		// repeat the search from the partition found, in random order, while it improves
+		for (it = 1; it <= 20; it++) {
+			nxt = nw_louvain_bip1(n, pairs, md, res, 1, cur)
+			nq = nw_modularity_bip(n, pairs, md, nxt, res)
+			if (nq > cq + 1e-12) {
+				cq = nq
+				cur = nxt
+			}
+			else break
+		}
+		if (cq > bq + 1e-12) {
+			bq = cq
+			best = cur
+		}
+	}
+	return(best)
+}
+
+/* (sum of the percentages, number of row pairs) of the NODF of the rows of B */
+real rowvector nw_nodf_part(real matrix B)
+{
+	real colvector k, kj, klo, si
+	real matrix S
+	real scalar n, s, e, i, tot, bs
+	real colvector ok
+
+	n = rows(B)
+	if (n < 2) return((0, 1))
+	k = rowsum(B)
+	tot = 0
+	bs = max((1, floor(4e6 / n)))
+	for (s = 1; s <= n; s = s + bs) {
+		e = min((n, s + bs - 1))
+		S = B[|s, 1 \ e, .|] * B'
+		for (i = s; i <= e; i++) {
+			if (i == n) continue
+			kj = k[|i + 1 \ n|]
+			si = S[i - s + 1, (i + 1)..n]'
+			klo = (kj :< k[i]) :* kj :+ (kj :> k[i]) :* k[i]
+			ok = (kj :!= k[i]) :& (klo :> 0)
+			if (sum(ok) > 0) tot = tot + sum(select(si, ok) :/ select(klo, ok))
+		}
+	}
+	return((100 * tot, n * (n - 1) / 2))
+}
+
+/*
+	Nestedness of a binary biadjacency matrix B (rows = one mode, columns = the other), after Almeida-Neto et al.
+	(2008): for every pair of rows with different totals the percentage of the ones of the row with the smaller
+	total that the other row shares (0 for equal totals), averaged over all pairs; the same for the columns; NODF
+	pools both sets of pairs.  Equals vegan::nestednodf(web, order = TRUE) and the NODF2 of bipartite::nested.
+	Returns (NODF, N.rows, N.columns).
+*/
+real rowvector nw_nodf(real matrix B)
+{
+	real rowvector r1, r2
+
+	r1 = nw_nodf_part(B)
+	r2 = nw_nodf_part(B')
+	return(((r1[1] + r2[1]) / (r1[2] + r2[2]), r1[1] / r1[2], r2[1] / r2[2]))
+}
+
+/*
+	Largest possible number of checkerboard units of two columns with a and b ones among n rows, constructed as in
+	bipartite::C.score (the columns are laid out so that they overlap as little as the margins allow).
+*/
+real scalar nw_cmax(real scalar a, real scalar b, real scalar n)
+{
+	real colvector c1, c2, z
+	real scalar half, rem, j
+
+	if (a == 0 | b == 0 | a == n | b == n) return(0)
+	half = floor(n / 2)
+	c1 = J(n, 1, 0)
+	c2 = J(n, 1, 0)
+	if (a <= n / 2) c1[1::(2 * a)] = vec(J(1, a, 1) \ J(1, a, 0))
+	else {
+		c1[1::(2 * half)] = vec(J(1, half, 1) \ J(1, half, 0))
+		rem = a - sum(c1)
+		z = selectindex(c1 :== 0)
+		c1[z[(rows(z) - rem + 1)::rows(z)]] = J(rem, 1, 1)
+	}
+	if (b <= n / 2) c2[1::(2 * b)] = vec(J(1, b, 0) \ J(1, b, 1))
+	else {
+		c2[1::(2 * half)] = vec(J(1, half, 0) \ J(1, half, 1))
+		rem = b - sum(c2)
+		z = selectindex(c2 :== 0)
+		c2[z[(rows(z) - rem + 1)::rows(z)]] = J(rem, 1, 1)
+	}
+	j = sum(c1 :* c2)
+	return((sum(c1) - j) * (sum(c2) - j))
+}
+
+/*
+	C-score (Stone and Roberts 1990) of the columns of the binary matrix B, as in bipartite::C.score: for every
+	pair of columns the number of checkerboard units (a - j)(b - j), a and b the column totals, j the rows in
+	which both are 1; returns (mean over the pairs, mean over the pairs of the units divided by their maximum
+	possible number, number of pairs used for the second mean).  A pair whose maximum is 0 (a column that is
+	empty or full) has no normalised value and is left out of the second mean.
+*/
+real rowvector nw_cscore(real matrix B)
+{
+	real colvector k
+	real matrix S
+	real scalar n, c, s, e, i, j, bs, tot, totn, cnt, cntn, cm, d, key
+	transmorphic scalar cache
+
+	n = rows(B)
+	c = cols(B)
+	if (c < 2) return((., ., 0))
+	k = colsum(B)'
+	cache = asarray_create("real")
+	tot = 0
+	totn = 0
+	cnt = 0
+	cntn = 0
+	bs = max((1, floor(4e6 / c)))
+	for (s = 1; s <= c; s = s + bs) {
+		e = min((c, s + bs - 1))
+		S = B[., s..e]' * B
+		for (i = s; i <= e; i++) {
+			for (j = i + 1; j <= c; j++) {
+				d = (k[i] - S[i - s + 1, j]) * (k[j] - S[i - s + 1, j])
+				tot = tot + d
+				cnt++
+				key = min((k[i], k[j])) * (n + 2) + max((k[i], k[j]))
+				if (asarray_contains(cache, key)) cm = asarray(cache, key)
+				else {
+					cm = nw_cmax(k[i], k[j], n)
+					asarray(cache, key, cm)
+				}
+				if (cm > 0) {
+					totn = totn + d / cm
+					cntn++
+				}
+			}
+		}
+	}
+	cm = .
+	if (cntn > 0) cm = totn / cntn
+	return((tot / cnt, cm, cntn))
+}
+
 /* maximum bipartite matching, native: the mode-2 partner (0 = none) of every node, mode-2 nodes 0 */
 real colvector nwg_matching(real scalar n, real matrix el, real colvector modes)
 {
@@ -4077,6 +4517,10 @@ class `NWdef' {
 	real matrix calculate_clustering()
 	real matrix calculate_balance()
 	real scalar calculate_modularity()
+	real scalar calculate_modularity_bipartite()
+	real matrix detect_communities_bipartite()
+	real scalar count_samemode_ties()
+	void permute_swap()
 	real matrix detect_communities_louvain()
 	real matrix detect_communities_labelprop()
 	real matrix calculate_concor()
@@ -4084,6 +4528,8 @@ class `NWdef' {
 	real matrix calculate_factions()
 	real matrix calculate_maxflow()
 	real matrix calculate_bipartite_matching()
+	real matrix calculate_matching_maxweight()
+	real matrix get_path_weighted()
 	real matrix calculate_pagerank()
 	real matrix calculate_randomwalk_hitting()
 	real matrix calculate_motif4()
@@ -4294,6 +4740,30 @@ void nw_set_temporal_values(pointer(class nw_def scalar) scalar p, string colvec
 real scalar nw_ties_only(pointer(class nw_def scalar) scalar p)
 {
 	return(!p->is_dense_built() & p->is_2mode_boolean() != 1)
+}
+
+/*
+	"label=mode" pairs (comma separated) of the nodes of a two-mode network that have no tie, for the edge list
+	characteristic _dta[nwtoedge_modes] (an isolated node does not appear in a list of ties, so its mode would be
+	lost); "" when the string would not fit a Stata characteristic.
+*/
+string scalar nw_isolate_modes_string(pointer(class nw_def scalar) scalar p)
+{
+	real matrix el
+	real colvector has, iso
+	string rowvector nm, md
+	string scalar res
+
+	el = p->edgelist()
+	has = J(p->get_nodes(), 1, 0)
+	if (rows(el) > 0) has[el[., 1]] = J(rows(el), 1, 1)
+	iso = selectindex(has :== 0)
+	if (rows(iso) == 0) return("")
+	nm = p->get_nodenames()
+	md = p->get_modes()
+	res = invtokens(nm[1, iso'] :+ "=" :+ md[1, iso'], ",")
+	if (strlen(res) > 60000) return("")
+	return(res)
 }
 
 /* dst := transpose of src (dst is a copy of src, or src itself) */
@@ -4510,16 +4980,20 @@ void nw_path_net(pointer(class nw_def scalar) scalar p, real matrix path, real s
 {
 	real scalar n, i, wasvalued
 	real matrix net
+	real rowvector pp
 
 	n = p->get_nodes()
+	// paths of different numbers of steps (equally long weighted paths) are padded with 0 on the right
+	pp = path[id, .]
+	pp = pp[1, (1..sum(pp :> 0))]
 	if (nw_ties_only(p)) {
 		wasvalued = p->is_valued_boolean()
-		p->set_edge_from_triplets(path[id, (1..cols(path) - 1)]', path[id, (2..cols(path))]', J(cols(path) - 1, 1, 1), p->is_directed_boolean())
+		p->set_edge_from_triplets(pp[(1..cols(pp) - 1)]', pp[(2..cols(pp))]', J(cols(pp) - 1, 1, 1), p->is_directed_boolean())
 		p->set_valued(wasvalued)
 		return
 	}
 	net = J(n, n, 0)
-	for (i = 1; i < cols(path); i++) net[path[id, i], path[id, i + 1]] = 1
+	for (i = 1; i < cols(pp); i++) net[pp[i], pp[i + 1]] = 1
 	p->set_edge(net)
 }
 
@@ -5270,7 +5744,7 @@ void nw_exp_ties(string scalar fname, string scalar vk, string scalar vl, string
 	`i   "label"' row per node, the labels read from the first n rows of
 	variable vname.
 */
-void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n){
+void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n, | real scalar n1){
 	real scalar fh
 	string scalar nl
 	string colvector lab
@@ -5278,7 +5752,8 @@ void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar
 	nl = char(10)
 	(void) _unlink(fname)
 	fh = fopen(fname, "w")
-	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + nl)
+	// a two-mode network: "*Vertices n n1", the first n1 vertices are the nodes of the first mode (Pajek's bipartite format)
+	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + (args() == 4 ? " " + strofreal(n1, "%18.0g") : "") + nl)
 	if (n > 0){
 		lab = st_sdata((1::n), vname)
 		fwrite(fh, invtokens((nw_exp_num((1::n)) :+ "   " :+ char(34) :+ lab :+ char(34) :+ nl)', ""))
@@ -5302,13 +5777,61 @@ void nw_exp_ucinet_head(string scalar fname, string rowvector names){
 }
 
 /*
+	UCINET DL file of a two-mode network: a rectangular full matrix (nr rows = mode-1 nodes, nc columns = mode-2
+	nodes) with the row and column labels; ties in a mode are not part of the format.
+*/
+void nw_exp_ucinet_rect(string scalar fname, pointer(class nw_def scalar) scalar p)
+{
+	real matrix W
+	real colvector i1, i2
+	real scalar fh, i
+	string scalar nl
+	string rowvector nm, md
+	string colvector s
+
+	nl = char(10)
+	nm = p->get_nodenames()
+	md = p->get_modes()
+	i1 = selectindex(md' :== "1")
+	i2 = selectindex(md' :== "2")
+	W = editmissing((*p->get_matrix())[i1, i2], 0)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl nr=" + strofreal(rows(i1), "%18.0g") + " nc=" + strofreal(rows(i2), "%18.0g") + nl + "format = fullmatrix" + nl)
+	fwrite(fh, "row labels:" + nl + invtokens(nm[i1], ",") + nl + "col labels:" + nl + invtokens(nm[i2], ",") + nl + "data:" + nl)
+	for (i = 1; i <= rows(i1); i++) {
+		fwrite(fh, invtokens(strofreal(W[i, .], "%18.0g")) + nl)
+	}
+	fclose(fh)
+}
+
+/*
 	GML: header and node blocks (labels from the first n rows of vname);
 	nw_exp_gml_edges() then appends the edge blocks and the closing bracket.
 */
-void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
+/*
+	Numbers as text without losing digits: 15 significant digits when that
+	reads back exactly, 17 otherwise (strofreal() with the default format
+	keeps 7 digits, and 3 from 1e7 on).
+*/
+string colvector nw_realstr(real colvector x)
+{
+	string colvector s, s17
+	real colvector bad
+
+	s = strtrim(strofreal(x, "%21.15g"))
+	bad = selectindex((strtoreal(s) :!= x) :& (x :< .))
+	if (rows(bad) > 0){
+		s17 = strtrim(strofreal(x[bad], "%21.17g"))
+		s[bad] = s17
+	}
+	return(s)
+}
+
+void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n, | string scalar mname){
 	real scalar fh
 	string scalar nl
-	string colvector lab
+	string colvector lab, mod
 
 	nl = char(10)
 	(void) _unlink(fname)
@@ -5316,7 +5839,9 @@ void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar v
 	fwrite(fh, "graph [" + nl + "  directed " + (directed ? "1" : "0") + nl)
 	if (n > 0){
 		lab = st_sdata((1::n), vname)
-		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ (nl + "  ]" + nl))', ""))
+		// a two-mode network: the attribute nwmode (1 or 2) of every node (igraph: V(g)$type <- V(g)$nwmode == 2)
+		mod = (args() == 5 ? (nl + "    nwmode ") :+ strofreal(st_data((1::n), mname), "%18.0g") : J(n, 1, ""))
+		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ mod :+ (nl + "  ]" + nl))', ""))
 	}
 	fclose(fh)
 }
@@ -5332,7 +5857,7 @@ void nw_exp_gml_edges(string scalar fname, string scalar vk, string scalar vl, s
 	chunk = 200000
 	for (a = 1; a <= n; a = a + chunk){
 		b = min((a + chunk - 1, n))
-		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ strofreal(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ nw_realstr(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
 		fwrite(fh, invtokens(s', ""))
 	}
 	fwrite(fh, "]" + nl)
@@ -5648,26 +6173,20 @@ real matrix `NWdef'::single_source_dijkstra(real matrix adjlist, real scalar s){
 	behavior exactly). An all-zero/no-edge sparse network is unvalued.
 */
 real scalar `NWdef'::check_valued(){
-	real scalar mi, ma
+	real colvector w
 
+	// A network is valued when at least one tie has a value other than
+	// 0 and 1 (shares, probabilities, a constant value of 2, negative
+	// values all count). A network whose ties are all 1 is binary.
 	if (edge_dense_built == `False' & sparse_built == `True'){
 		if (rows(cweight) == 0){
 			return(0)
 		}
-		mi = min(cweight)
-		ma = max(cweight)
+		return(any((cweight :< .) :& (cweight :!= 0) :& (cweight :!= 1)))
 	}
-	else {
-		mi = min(*get_matrix())
-		ma = max(*get_matrix())
-	}
-
-	if ((mi >= 0 &  mi <= 1) & (ma>=0 & ma <=1)) {
-		return(0)
-	}
-	else {
-		return(1)
-	}
+	// the stored values themselves: get_matrix() would already apply the current valued flag
+	ensure_dense_built()
+	return(any((edge :< .) :& (edge :!= 0) :& (edge :!= 1)))
 }
 
 /*
@@ -5992,6 +6511,50 @@ real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar 
 }
 
 /*
+	Barber's bipartite modularity of a partition of a two-mode network (see nw_modularity_bip()); the groups of the
+	two modes are scored by the cross-mode ties only.
+*/
+real scalar `NWdef'::calculate_modularity_bipartite(real matrix membership, | real scalar valued, real scalar resolution){
+	real scalar val, res
+
+	val = (args() >= 2 ? valued : 1)
+	res = (args() == 3 ? resolution : 1)
+	return(nw_modularity_bip(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), strtoreal(get_modes())', membership, res))
+}
+
+/*
+	Communities of a two-mode network by Louvain-type maximisation of Barber's bipartite modularity (see
+	nw_louvain_bip()).
+*/
+real matrix `NWdef'::detect_communities_bipartite(| real scalar valued, real scalar resolution, real scalar starts){
+	real scalar val, res, nstart
+
+	val = (args() >= 1 ? valued : 1)
+	res = (args() >= 2 ? resolution : 1)
+	nstart = (args() == 3 ? starts : 30)
+	return(nw_louvain_bip(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), strtoreal(get_modes())', res, nstart))
+}
+
+/*
+	Number of ties that join two nodes of the same mode (0 for a valid two-mode network, R: igraph::is_bipartite
+	with the declared types).  Counts each undirected tie once.
+*/
+real scalar `NWdef'::count_samemode_ties(){
+	real matrix el
+	real colvector md, bad
+	real scalar nb
+
+	if (is2mode != 1) return(0)
+	el = edgelist()
+	if (rows(el) == 0) return(0)
+	md = strtoreal(get_modes())'
+	bad = (md[el[., 1]] :== md[el[., 2]]) :& (el[., 1] :!= el[., 2]) :& (el[., 3] :< .) :& (el[., 3] :!= 0)
+	if (isdirect != 1) bad = bad :& (el[., 1] :< el[., 2])
+	nb = sum(bad)
+	return(nb)
+}
+
+/*
 	Detect communities via the Louvain method (Blondel et al. 2008)
 */
 real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scalar resolution){
@@ -6044,7 +6607,8 @@ real matrix `NWdef'::calculate_concor(real scalar splits, | real scalar valued, 
 	_diag(w, 0)
 	n = get_nodes()
 
-	if (min(rowsum(w) :+ colsum(w)') <= 0){
+	// count ties, not their sum: negative values must not cancel positive ones
+	if (min(rowsum(abs(w)) :+ colsum(abs(w))') <= 0){
 		// _error()'s own message argument silently hits an undocumented
 		// ~100-char cap ("argument out of range", r(3300)) - confirmed
 		// by bisection; this message is longer, so errprintf()+exit()
@@ -7268,6 +7832,96 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 }
 
 /*
+	calculate_matching_maxweight(): the bipartite matching of
+	maximum TOTAL tie value (igraph::max_bipartite_match with its weight
+	attribute, which is what R uses by default on a weighted graph), not of
+	maximum size: a heavy tie can beat two light ones.  Hungarian method
+	(Kuhn-Munkres, shortest augmenting paths with potentials, O(N^3) on the
+	N x N padded value matrix of the two modes, N = larger mode); ties of
+	value zero or less are absent.  The dense matrix limits it to modes of a
+	few thousand nodes.  Same return value as calculate_bipartite_matching():
+	an n x 1 column holding, for a mode-1 node, its mode-2 partner's node
+	index (0 if unmatched), 0 for every mode-2 node.
+*/
+real matrix `NWdef'::calculate_matching_maxweight(){
+	real matrix adj, W
+	real scalar n, n1, n2, N, i, j, k
+	string rowvector modes
+	real colvector match, idx1, idx2, pos, asg, u, v, p, way, minv, used
+	real scalar i0, j0, j1, delta, cur
+
+	if (is_2mode_boolean() == 0) {
+		errprintf("nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).\n")
+		exit(error(6556))
+	}
+	n = get_nodes()
+	modes = get_modes()
+	match = J(n,1,0)
+	idx1 = selectindex((modes :== "1")')
+	idx2 = selectindex((modes :== "2")')
+	n1 = rows(idx1); n2 = rows(idx2)
+	if (n1 == 0 | n2 == 0) return(match)
+	N = max((n1, n2))
+	pos = J(n,1,0)
+	pos[idx1] = (1::n1)
+	pos[idx2] = (1::n2)
+	W = J(N, N, 0)
+	adj = edgelist()
+	if (rows(adj) > 0) {
+		adj = select(adj, (adj[.,3] :> 0) :& (adj[.,3] :< .) :& (adj[.,1] :!= adj[.,2]) :& ((modes')[adj[.,1]] :== "1") :& ((modes')[adj[.,2]] :== "2"))
+		for (k=1; k<=rows(adj); k++) W[pos[adj[k,1]], pos[adj[k,2]]] = adj[k,3]
+	}
+	// minimum cost = - value; index 0 of the textbook arrays is stored at position 1
+	u = J(N+1, 1, 0); v = J(N+1, 1, 0); p = J(N+1, 1, 0); way = J(N+1, 1, 0)
+	for (i=1; i<=N; i++){
+		p[1] = i
+		j0 = 0
+		minv = J(N+1, 1, 1e300)
+		used = J(N+1, 1, 0)
+		do {
+			used[j0+1] = 1
+			i0 = p[j0+1]
+			delta = 1e300
+			j1 = 0
+			for (j=1; j<=N; j++){
+				if (used[j+1] == 0){
+					cur = -W[i0,j] - u[i0] - v[j+1]
+					if (cur < minv[j+1]){
+						minv[j+1] = cur
+						way[j+1] = j0
+					}
+					if (minv[j+1] < delta){
+						delta = minv[j+1]
+						j1 = j
+					}
+				}
+			}
+			for (j=0; j<=N; j++){
+				if (used[j+1] == 1){
+					u[p[j+1]] = u[p[j+1]] + delta
+					v[j+1] = v[j+1] - delta
+				}
+				else minv[j+1] = minv[j+1] - delta
+			}
+			j0 = j1
+		} while (p[j0+1] != 0)
+		do {
+			j1 = way[j0+1]
+			p[j0+1] = p[j1+1]
+			j0 = j1
+		} while (j0 != 0)
+	}
+	// p[j+1] = the row (mode-1 position) assigned to column (mode-2 position) j
+	for (j=1; j<=N; j++){
+		i = p[j+1]
+		if (i >= 1 & i <= n1 & j <= n2){
+			if (W[i,j] > 0) match[idx1[i]] = idx2[j]
+		}
+	}
+	return(match)
+}
+
+/*
 	calculate_pagerank(): Page & Brin's (1998) own random-walk-based
 	centrality - the stationary distribution of a "random surfer" who,
 	at each step, follows a uniformly-random OUT-tie from the current
@@ -7296,22 +7950,62 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 	networks work identically (`neighbors()`/`degree()` already fall
 	back to the symmetric case on their own).
 
+	With the optional fourth argument `weighted' = 1 the surfer follows the
+	tie i->j with probability w_ij / s_i (s_i = sum of i's tie values of
+	positive size), as igraph::page_rank does with its weight attribute;
+	the default (0) is the binary walk above, unchanged.
+
 	`damping' defaults to 0.85 (Page & Brin's own original, still the
 	universal default in every other implementation). Returns an n x 1
 	column of PageRank scores summing to 1 (a genuine probability
 	distribution), not renormalized to any other convention.
 */
-real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxiter, real scalar tol){
-	real scalar n, d, mi, tolv, iter, i, k, danglingmass, diff, outd
-	real colvector r, rnew, outdeg
-	real matrix nb
+real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxiter, real scalar tol, real scalar weighted){
+	real scalar n, d, mi, tolv, iter, i, k, danglingmass, diff, outd, wtd
+	real colvector r, rnew, outdeg, rw, cl, cw, keep, perm, str, share, cls, tgt
+	real matrix nb, info, info2
 
 	d = (args() >= 1 ? damping : 0.85)
 	mi = (args() >= 2 ? maxiter : 1000)
 	tolv = (args() >= 3 ? tol : 1e-10)
+	wtd = (args() >= 4 ? weighted : 0)
 
 	n = get_nodes()
 	if (n == 0) return(J(0,1,0))
+
+	if (wtd == 1){
+		// Weighted walk (igraph::page_rank with the weight attribute): the surfer follows the tie i->j with
+		// probability w_ij / s_i, s_i the out-strength; ties of value zero or less are not followed.
+		ensure_sparse_built()
+		rw = csr_rows(); cl = colidx; cw = cweight
+		keep = selectindex((cw :> 0) :& (cw :< .))
+		str = J(n,1,0)
+		if (rows(keep) > 0){
+			rw = rw[keep]; cl = cl[keep]; cw = cw[keep]
+			info = panelsetup(rw, 1)
+			str[rw[info[.,1]]] = panelsum(cw, info)
+			perm = order(cl, 1)
+			cls = cl[perm]
+			info2 = panelsetup(cls, 1)
+			tgt = cls[info2[.,1]]
+		}
+		else {
+			rw = J(0,1,0); cl = J(0,1,0); cw = J(0,1,0)
+		}
+		r = J(n,1,1/n)
+		for (iter=1; iter<=mi; iter++){
+			danglingmass = sum(select(r, str :== 0))
+			rnew = J(n,1,(1-d)/n + d*danglingmass/n)
+			if (rows(cw) > 0){
+				share = ((cw :/ str[rw]) :* r[rw])[perm]
+				rnew[tgt] = rnew[tgt] + d :* panelsum(share, info2)
+			}
+			diff = max(abs(rnew - r))
+			r = rnew
+			if (diff < tolv) break
+		}
+		return(r)
+	}
 
 	outdeg = J(n,1,0)
 	for (i=1; i<=n; i++) outdeg[i] = degree(i)
@@ -7355,23 +8049,35 @@ real scalar nw_hitting_cg_min()
 	Returns a 0 x 1 vector (the caller then takes the dense route) when an
 	isolate exists, or the tolerance is not reached in 5,000 iterations (e.g. a disconnected network).
 */
-real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t)
+real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t, | real scalar weighted)
 {
-	real colvector r, c, w, key, deg, x, res, z, p, q, tmp
-	real matrix info
-	real scalar n, it, rz, rz0, alpha, beta, bnorm
+	real colvector r, c, w, key, deg, x, res, z, p, q, tmp, o, wv
+	real matrix info, T
+	real scalar n, it, rz, rz0, alpha, beta, bnorm, wtd
 
+	wtd = (args() >= 3 ? weighted : 0)
 	n = thisnw->get_nodes()
 	thisnw->ensure_sparse_built()
+	if (wtd == 1){
+		// symmetrized tie values as get_matrix_mod(1, 0) defines them (the larger direction), positive ones only
+		T = nwg_symw(thisnw->edgelist(), thisnw->is_directed_boolean(), thisnw->is_valued_boolean(), 1)
+		if (rows(T) > 0) T = select(T, (T[.,1] :!= T[.,2]) :& (T[.,3] :> 0) :& (T[.,3] :< .))
+		if (rows(T) == 0) return(J(0, 1, .))
+		o = order(T[.,1] :* (n + 1) :+ T[.,2], 1)
+		r = T[o,1]; c = T[o,2]; wv = T[o,3]
+	}
+	else {
 	r = thisnw->csr_rows(); c = thisnw->colidx; w = thisnw->cweight
 	tmp = selectindex((r :!= c) :& (w :> 0))
 	if (rows(tmp) == 0) return(J(0, 1, .))
 	key = sort(uniqrows((r[tmp] :* (n + 1) :+ c[tmp]) \ (c[tmp] :* (n + 1) :+ r[tmp])), 1)
 	r = floor(key :/ (n + 1))
 	c = key :- r :* (n + 1)
+	wv = J(rows(r), 1, 1)
+	}
 	info = panelsetup(r, 1)
 	deg = J(n, 1, 0)
-	deg[r[info[., 1]]] = panelsum(J(rows(r), 1, 1), info)
+	deg[r[info[., 1]]] = panelsum(wv, info)
 	if (min(deg) == 0) return(J(0, 1, .))
 
 	// b = deg on the non-target nodes
@@ -7385,7 +8091,7 @@ real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real s
 	for (it = 1; it <= 5000; it++){
 		q = J(n, 1, 0)
 		p[t] = 0
-		q[r[info[., 1]]] = panelsum(p[c], info)
+		q[r[info[., 1]]] = panelsum(wv :* p[c], info)
 		q = deg :* p - q
 		q[t] = 0
 		alpha = rz / sum(p :* q)
@@ -7432,12 +8138,18 @@ real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real s
 	not attempted here; an unreachable node in a disconnected undirected
 	network has no finite hitting time by definition, reported as
 	missing rather than guessed).
+
+	Optional second argument `weighted' = 1: the walk steps from i to j with
+	probability w_ij / s_i (the tie values, as igraph::random_walk does);
+	the system is then (D_s - W) h = s with the strengths on the diagonal.
+	The default (0) is the simple walk above, unchanged.
 */
-real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
+real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t, | real scalar weighted){
 	real matrix A, P, M, rhs, h
-	real scalar n, i, d
+	real scalar n, i, d, wtd
 	real colvector deg
 
+	wtd = (args() >= 2 ? weighted : 0)
 	n = get_nodes()
 	if (t < 1 | t > n) {
 		errprintf("nwrandomwalk: target node index out of range.\n")
@@ -7446,11 +8158,18 @@ real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
 	// Large networks: the grounded-Laplacian system is solved by conjugate gradients on the sparse tie
 	// list (O(ties) per iteration; the dense LU below is O(n^3) and needs several n x n matrices:
 	// 65 s at 10,000 nodes), only if CG reaches its tolerance; otherwise the dense code below runs as before.
+	// With weighted = 1 the walk steps from i to j with probability w_ij / s_i (s_i = strength of i, the larger
+	// direction of a directed pair, ties of positive value only), as igraph::random_walk does with weights.
 	if (n > nw_hitting_cg_min()){
-		h = nw_hitting_cg(&this, t)
+		h = nw_hitting_cg(&this, t, wtd)
 		if (rows(h) == n) return(h)
 	}
-	A = *get_matrix_mod(0, 0)
+	if (wtd == 1){
+		A = *get_matrix_mod(1, 0)
+		_editmissing(A, 0)
+		A = A :* (A :> 0)
+	}
+	else A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
 	deg = rowsum(A)
 	if (min(deg) == 0) {
@@ -8175,6 +8894,86 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 }
 
 /*
+	get_path_weighted(ego, alter, alpha): every shortest path from ego to alter when a step along a tie of
+	value w costs w^(-alpha) (alpha = 1: 1/w, a stronger tie is shorter; alpha = -1: igraph's weights as lengths;
+	alpha = 0: every step costs 1).  Dijkstra from ego, then the paths are read backwards from alter through
+	the in-neighbours that lie on a shortest path (equal lengths within a relative 1e-10).  One path per row, the
+	node ids from ego to alter, padded with 0 on the right when equally long paths differ in their number of steps;
+	0 x 0 when alter cannot be reached.  Ties of value zero or less are not traversed.
+*/
+real matrix `NWdef'::get_path_weighted(real scalar ego, real scalar alter, real scalar alpha)
+{
+	real scalar n, m, j, u, mindist, nd, k, w, c, h, hmax, r, i
+	real colvector D, settled, nbr, idx
+	real matrix partial, done, nxt, paths
+
+	n = get_nodes()
+	ensure_sparse_built()
+	if (ego == alter) return(J(1, 1, ego))
+	D = J(n, 1, .)
+	D[ego] = 0
+	settled = J(n, 1, 0)
+	for (m=1; m<=n; m++){
+		mindist = .
+		u = 0
+		for (j=1; j<=n; j++){
+			if (settled[j] == 0 & D[j] < . & (u == 0 | D[j] < mindist)){
+				mindist = D[j]
+				u = j
+			}
+		}
+		if (u == 0) break
+		settled[u] = 1
+		if (u == alter) break
+		if (rowptr[u+1] > rowptr[u]){
+			idx = (rowptr[u]::(rowptr[u+1]-1))
+			for (k=1; k<=rows(idx); k++){
+				w = colidx[idx[k]]
+				c = cweight[idx[k]]
+				if (w == u | settled[w] | c <= 0 | c >= .) continue
+				nd = D[u] + c^(-alpha)
+				if (D[w] == . | nd < D[w]) D[w] = nd
+			}
+		}
+	}
+	if (D[alter] == .) return(J(0, 0, .))
+	// backwards from alter: a partial path is stored from its head (the node nearest to alter) outwards
+	partial = J(1, 1, alter)
+	done = J(0, 0, .)
+	hmax = 0
+	while (rows(partial) > 0){
+		nxt = J(0, cols(partial) + 1, 0)
+		for (r=1; r<=rows(partial); r++){
+			h = partial[r, cols(partial)]
+			if (h == ego){
+				if (rows(done) == 0) done = J(0, cols(partial), 0)
+				if (cols(done) < cols(partial)) done = (done, J(rows(done), cols(partial) - cols(done), 0))
+				done = done \ (partial[r, .], J(1, cols(done) - cols(partial), 0))
+				continue
+			}
+			nbr = neighbors_in(h)
+			for (i=1; i<=rows(nbr); i++){
+				j = nbr[i]
+				c = edge_weight(j, h)
+				if (j == h | c <= 0 | c >= . | D[j] == .) continue
+				if (abs(D[j] + c^(-alpha) - D[h]) <= 1e-10 * D[h]){
+					nxt = nxt \ (partial[r, .], j)
+				}
+			}
+		}
+		partial = nxt
+	}
+	// each stored path runs alter ... ego: reverse it, keeping the padding at the right
+	paths = J(rows(done), cols(done), 0)
+	for (r=1; r<=rows(done); r++){
+		k = sum(done[r, .] :> 0)
+		paths[r, (1..k)] = done[r, (k..1)]
+	}
+	if (rows(paths) > 1) paths = sort(paths, (1..cols(paths)))
+	return(paths)
+}
+
+/*
 	Weak (undirected-sense) connected components, via BFS over the sparse
 	neighbor index instead of dense row/column pulls. Component numbering
 	preserves the original dense implementation exactly: seeds are chosen
@@ -8570,10 +9369,14 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// the in-neighbor index of a directed network is built when something asks for it (ensure_reverse_built())
 	rev_pending = (isdirect & nnz > 0)
 
+	// The valued flag is fixed when a network is created (by the command that creates it) and is not
+	// re-derived from the values afterwards: a valued network stays valued, whatever its values are
+	// (even all 1).  Only a network that is not flagged valued becomes valued when ties with a value
+	// other than 0 and 1 appear in it (a transformation that creates values).
 	if (nnz > 0){
-		isvalued = (min(weight) < 0 | max(weight) > 1)
+		if (isvalued != `True') isvalued = any((weight :< .) :& (weight :!= 0) :& (weight :!= 1))
 	}
-	else {
+	else if (isvalued != `True') {
 		isvalued = `False'
 	}
 
@@ -8978,9 +9781,22 @@ real matrix `NWdef'::calculate_constraint_triplets(){
 
 void `NWdef'::permute(){
 	real matrix perm
-	real colvector inv
+	real colvector inv, md, idx
 	real matrix el
-	real scalar wasvalued
+	real scalar wasvalued, mm
+	// a two-mode network is permuted within its modes: the node labels of the mode-1 nodes are shuffled among the
+	// mode-1 positions and those of the mode-2 nodes among the mode-2 positions, so that no tie ever joins two
+	// nodes of the same mode (a joint permutation of all nodes would; R: tnet::rg_reshuffling_tm keeps the modes)
+	if (is2mode == 1){
+		md = strtoreal(get_modes())'
+		perm = (1::get_nodes())
+		for (mm = 1; mm <= 2; mm++){
+			idx = selectindex(md :== mm)
+			if (rows(idx) > 1) perm[idx] = idx[unorder(rows(idx))]
+		}
+		set_edge((*get_matrix())[perm, perm])
+		return
+	}
 	perm = unorder(get_nodes())
 	// a network held as stored ties only is permuted tie by tie: the tie (u,v) of the old network is the tie
 	// (inv[u], inv[v]) of the new one, where inv undoes perm; the dense route needs two n x n matrices
@@ -8994,6 +9810,48 @@ void `NWdef'::permute(){
 		return
 	}
 	set_edge((*get_matrix())[perm, perm])
+}
+
+/*
+	Tie-swap null model of a two-mode network (Maslov-Sneppen; R: bipartite::swap.web, tnet::rg_reshuffling_tm
+	keeps the degrees too): `nswap' attempts, each takes two ties (a,b) and (c,d) at random and replaces them by
+	(a,d) and (c,b) unless one of those exists already.  Both degree sequences, the number of ties and the tie
+	values (carried along) are preserved; no tie ever joins two nodes of the same mode.  Returns nothing; the
+	number of swaps that took place is stored in swaps_done.
+*/
+void `NWdef'::permute_swap(real scalar nswap){
+	real matrix T, e
+	real colvector md
+	real scalar m, t, r1, r2, a, b, c, d, w1, w2, k
+
+	if (is2mode != 1) _error(3498, "the tie-swap null model needs a two-mode network")
+	ensure_dense_built()
+	md = strtoreal(get_modes())'
+	e = edge
+	T = J(0, 3, 0)
+	k = get_nodes()
+	// the ties between the modes (mode 1 to mode 2)
+	T = edgelist()
+	T = select(T, (md[T[., 1]] :== 1) :& (md[T[., 2]] :== 2) :& (T[., 3] :< .) :& (T[., 3] :!= 0))
+	m = rows(T)
+	if (m < 2) return
+	for (t = 1; t <= nswap; t++){
+		r1 = ceil(uniform(1, 1) * m)
+		r2 = ceil(uniform(1, 1) * m)
+		if (r1 == r2) continue
+		a = T[r1, 1]; b = T[r1, 2]; w1 = T[r1, 3]
+		c = T[r2, 1]; d = T[r2, 2]; w2 = T[r2, 3]
+		if (a == c | b == d) continue
+		if (e[a, d] != 0 & e[a, d] < .) continue
+		if (e[c, b] != 0 & e[c, b] < .) continue
+		e[a, b] = 0; e[b, a] = 0
+		e[c, d] = 0; e[d, c] = 0
+		e[a, d] = w1; e[d, a] = w1
+		e[c, b] = w2; e[b, c] = w2
+		T[r1, .] = (a, d, w1)
+		T[r2, .] = (c, b, w2)
+	}
+	set_edge(e)
 }
 
 /*
@@ -9238,7 +10096,7 @@ real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 	real matrix adjacencyList, adjacencyCost, Cb, Stack, P, nP, S, D, Dd
 	real matrix nb, settled
-	real scalar m, k, n, s, v, j, w, idx, u, mindist, nn, cost
+	real scalar m, k, n, s, v, j, w, idx, u, mindist, nn, cost, newd
 
 	nn = get_nodes()
 	adjacencyList = J(nn, nn-1, .)
@@ -9286,12 +10144,16 @@ real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 				w=adjacencyList[v,j]
 				cost=adjacencyCost[v,j]
 				if (settled[w]) continue
-				if(D[w]==. | D[w]>D[v]+cost) {
-					D[w]=D[v]+cost
+				// path lengths are sums of 1/weight^alpha, so equal
+				// lengths differ by rounding: compare with a relative
+				// tolerance (as igraph does) instead of ==
+				newd = D[v]+cost
+				if(D[w]==. | D[w]-newd > 1e-10*newd) {
+					D[w]=newd
 					S[w]=0
 					nP[w]=1
 				}
-				if(D[w]==D[v]+cost) {
+				if(abs(D[w]-newd) <= 1e-10*newd) {
 					S[w]=S[w]+S[v]
 					P[w,nP[w]]=v; nP[w]=nP[w]+1
 				}
@@ -10310,7 +11172,9 @@ string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
 	m = rows(r)
 	if (m == 0) return(J(0, 7, ""))
 	rv = strofreal(r)
-	return((nodes[r]', nodes[c]', strofreal(w), J(m, 1, "1"), strofreal(wrev), rv, strofreal(c)))
+	// full precision (nw_realstr): strofreal() with the default format
+	// keeps 7 digits (3 from 1e7 on) and would round large or fine values
+	return((nodes[r]', nodes[c]', nw_realstr(w), J(m, 1, "1"), nw_realstr(wrev), rv, strofreal(c)))
 }
 
 /*
@@ -10463,6 +11327,8 @@ pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
 	sub->set_nodesvar(get_nodesvar())
 	sub->set_label(get_label())
 	sub->set_caption(get_caption())
+	sub->set_description_mode1(get_description_mode1())
+	sub->set_description_mode2(get_description_mode2())
 
 	sub->keep_nodes(k)
 
@@ -10499,6 +11365,8 @@ void `NWdef'::copy_subgraph_into(pointer(class `NWdef' scalar) scalar dst, rowve
 	dst->set_nodesvar(get_nodesvar())
 	dst->set_label(get_label())
 	dst->set_caption(get_caption())
+	dst->set_description_mode1(get_description_mode1())
+	dst->set_description_mode2(get_description_mode2())
 
 	dst->keep_nodes(k)
 }
@@ -11231,12 +12099,7 @@ void `NWdef'::set(string scalar networkname, string colvector nodenames, real ma
 	this.edge = edge
 	this.isdirect = isdirect
 	
-	if (max(edge) > 1 | min(edge) < 0) {
-		this.isvalued = `True'
-	}
-	else {
-		this.isvalued = `False'
-	}
+	this.isvalued = any((edge :< .) :& (edge :!= 0) :& (edge :!= 1))
 } 
 
 /*
@@ -11879,6 +12742,7 @@ void `NWdef'::zap() {
 	edge  = J(0, 0, 0)
 	isdirect = `False'
 	is2mode   = `False'
+	isvalued = `False'
 	sparse_built = `False'
 	rev_pending = 0
 }
@@ -12364,6 +13228,9 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 
 	pdefs[size]->set_label(pdefs[i]->get_label())
 	pdefs[size]->set_caption(pdefs[i]->get_caption())
+	// the level labels of a two-mode network (shown by nwsummarize) travel with the copy
+	pdefs[size]->set_description_mode1(pdefs[i]->get_description_mode1())
+	pdefs[size]->set_description_mode2(pdefs[i]->get_description_mode2())
 	make_current(size)
 
 }

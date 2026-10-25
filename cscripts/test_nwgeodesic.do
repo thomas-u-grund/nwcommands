@@ -4,7 +4,7 @@ do unw_core.do
 
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet, unconnected(99) xvars generate(_eccentricity)
+nwgeodesic mynet, unconnected(99) xvars generate(_eccentricity) binary
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -27,7 +27,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 99
 
 
-nwgeodesic mynet, sym unconnected(max) nwreplace xvars generate(_eccentricity)
+nwgeodesic mynet, sym unconnected(max) nwreplace xvars generate(_eccentricity) binary
 assert `"`r(symmetrized)'"' == `"true"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -48,7 +48,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 2
 
 
-nwgeodesic mynet, nwreplace xvars generate(_eccentricity)
+nwgeodesic mynet, nwreplace xvars generate(_eccentricity) binary
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -161,22 +161,22 @@ assert r(radius) == 1
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
 capture drop ecc
-nwgeodesic mynet, generate(ecc)
+nwgeodesic mynet, generate(ecc) binary
 assert _rc == 0
 capture confirm variable ecc
 assert _rc == 0
 
 * a second call naming the SAME variable must require nwreplace, exactly
 * like every other nwcommands generate() target.
-capture noisily nwgeodesic mynet, name(_geo2) generate(ecc)
+capture noisily nwgeodesic mynet, name(_geo2) generate(ecc) binary
 assert _rc == 99
-nwgeodesic mynet, name(_geo2) generate(ecc) nwreplace
+nwgeodesic mynet, name(_geo2) generate(ecc) nwreplace binary
 assert _rc == 0
 
 * omitting generate() entirely never creates ANY eccentricity variable,
 * under any name, default or otherwise.
 capture drop _eccentricity
-nwgeodesic mynet, name(_geo3)
+nwgeodesic mynet, name(_geo3) binary
 assert _rc == 0
 capture confirm variable _eccentricity
 assert _rc != 0
@@ -191,11 +191,11 @@ di "=== generate()-required/optional-eccentricity REGRESSION VERIFIED ==="
 * to reset _rc.
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet
+nwgeodesic mynet, binary
 assert _rc == 0
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet, sym
+nwgeodesic mynet, sym binary
 assert _rc == 0
 di "=== stale _rc leak REGRESSION VERIFIED ==="
 

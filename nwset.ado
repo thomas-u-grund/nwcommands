@@ -2,6 +2,9 @@
 capture program drop nwset	
 program nwset
 syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite REPLACE bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
+	// _nwsyntax (called below) redefines the locals valued/directed: keep the options
+	local __optvalued "`valued'"
+	local __optunvalued "`unvalued'"
 // `overwrite' was declared here but never actually connected to any
 // check anywhere in this file (confirmed directly: it was the ONLY
 // occurrence of the word in the whole file) - a network name
@@ -714,6 +717,8 @@ if "`overwrite'" != "" local replace "replace"
 		
 		// check if network is valued or not
 		mata: `netobj'->set_valued(`netobj'->check_valued())
+		if "`__optvalued'" != "" mata: `netobj'->set_valued(1)
+		if "`__optunvalued'" != "" mata: `netobj'->set_valued(0)
 
 		// If the new network lists the nodes already in the data in a
 		// different order (labs(), nodenames(), varlist), reorder the

@@ -58,7 +58,7 @@ Like n-cliques, n-clans genuinely overlap, so `nwnclan` follows [nwnclique](nwnc
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (same reasoning [nwnclique](nwnclique) already applies). Weighted: not used for membership. Signed: not checked. Two-mode: not checked. Inherits [nwnclique](nwnclique)'s own worst-case exponential enumeration cost, plus an additional per-candidate induced-subgraph diameter check.
+Binary: yes. Directed: yes, automatically symmetrized (same reasoning [nwnclique](nwnclique) already applies). Weighted: not used for membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Inherits [nwnclique](nwnclique)'s own worst-case exponential enumeration cost, plus an additional per-candidate induced-subgraph diameter check.
 
 ## Stored results
 

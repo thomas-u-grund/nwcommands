@@ -52,13 +52,15 @@ name(string)]
 ```
 `condition(density|census)` chooses what property of [netname](netname) the random draws must share, via [nwrandom](nwrandom)'s own **density()** (the default) or **census()** conditioning. **condition(density)** draws uniformly from every network with the same node count and density - the standard baseline used above. **condition(census)** instead draws uniformly from every network with the *same dyad census* (identical mutual/asymmetric/null tie counts, via [nwdyads](nwdyads)) as [netname](netname) - a stricter, reciprocity-aware null model: two directed networks can share the same overall density while differing sharply in how many ties are reciprocated, so a statistic that is unremarkable once density alone is held fixed can still be unusual once reciprocity is held fixed too (or vice versa). **condition(census)** requires a directed network - mutual/asymmetric/null dyad types have no meaning for undirected ties, where every dyad is simply tied or not.
 
+Some statistics are fixed by the dyad census (reciprocity, for example). With **condition(census)** their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.
+
 **tail()** controls which p-value(s) are reported: **upper** is the proportion of random draws with a statistic at least as large as observed (evidence the observed value is unusually *high*); **lower** is the proportion at least as small (unusually *low*); **both** (the default) reports both, plus a two-sided p-value (**r(p)**, twice the smaller one-sided p-value, capped at 1).
 
 `plot` draws a histogram of the **reps()** null draws with a dashed vertical line at the observed statistic - the standard visual check for a CUG test (is the observed value out in the tail of the null distribution, or comfortably inside it?), the same comparison R's **sna** package's **plot.cug.test()** draws for its own **cug.test()**. Grayscale by design, matching every other plot this package produces.
 
 ## Supported network types
 
-Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: no - [nwrandom](nwrandom)'s density/census conditioning used to draw comparison networks does not support two-mode networks.
+Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: not supported - error 6088; the null networks are one-mode random networks; [nwpermute](nwpermute) with `swap` draws two-mode null networks that keep both degree sequences.
 
 ## Stored results
 

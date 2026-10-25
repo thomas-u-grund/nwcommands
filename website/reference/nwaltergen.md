@@ -69,7 +69,7 @@ Missing values of *srcvar* among a node's alters are dropped before the statisti
 
 ## Supported network types
 
-Binary: yes. Directed: yes - *alter* means out-neighbors only, since exposure/influence follows tie direction (see above). Weighted: **W2** - **mean**/**sum**/**min**/**max**/**sd**/ **count**/**diversity** use only structural adjacency (tie strength does not enter); **wmean** (added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight, an explicit opt-in via a separate *stat* name rather than an automatic switch. Signed: not checked - **wmean()** would divide by a possibly near-zero or sign-cancelling weight sum for a node with negative-weighted ties, not handled distinctly. Two-mode: no - *srcvar* is read per node under the one-mode *_nwnode* indexing convention, with no mode-specific handling.
+Binary: yes. Directed: yes - *alter* means out-neighbors only, since exposure/influence follows tie direction (see above). Weighted: **W2** - **mean**/**sum**/**min**/**max**/**sd**/ **count**/**diversity** use only structural adjacency (tie strength does not enter); **wmean** (added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight, an explicit opt-in via a separate *stat* name rather than an automatic switch. Signed: not checked - **wmean()** would divide by a possibly near-zero or sign-cancelling weight sum for a node with negative-weighted ties, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 

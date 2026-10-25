@@ -2,11 +2,17 @@ capture program drop nw2toedge
 program nw2toedge
 	version 9
 	syntax [anything(name=netname)][, isolates0 compress upper egovars(varlist) altervars(varlist)  ///
-	ego(name) alter(name) full ignore2mode]
+	ego(name) alter(name) full ignore2mode ALLpairs]
 
 	unw_defs
 	_nwsyntax `netname', max(9999)
 	local nets `netname'
+	// a two-mode network is written as its ties by default (a row for every pair of nodes of different modes,
+	// zero cells included, is what allpairs gives): read back with nwfromedge, twomode or nw2fromedge the list
+	// then gives the same network
+	if "`is2mode'" == "true" & "`allpairs'" == "" {
+		local compress compress
+	}
 
 
 	if "`ego'" == "" {
@@ -153,4 +159,16 @@ program nw2toedge
 		qui keep if `nw_mode'`ego' != `nw_mode'`alter'
 	}
 
+	// level labels and the modes of isolated nodes travel with the list (nw2fromedge restores them)
+	if `: word count `nets'' == 1 & "`is2mode'" == "true" {
+		_nwsyntax `nets', max(1)
+		mata: st_local("__tm_d1", `netobj'->get_description_mode1())
+		mata: st_local("__tm_d2", `netobj'->get_description_mode2())
+		char _dta[nwtoedge_mode1desc] `"`__tm_d1'"'
+		char _dta[nwtoedge_mode2desc] `"`__tm_d2'"'
+		mata: st_local("__tm_iso", nw_isolate_modes_string(`netobj'))
+		char _dta[nwtoedge_modes] `"`__tm_iso'"'
+		mata: st_local("__tm_all", `netobj'->get_isolate_source_string())
+		if `"`__tm_all'"' != "" char _dta[nwtoedge_nodes] `"`__tm_all'"'
+	}
 end

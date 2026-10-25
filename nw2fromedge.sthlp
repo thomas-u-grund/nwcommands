@@ -99,10 +99,15 @@ automatically; pass the {it:_nwmode} variable this command creates to {opt color
 {marker project_stat}{...}
 {marker project_level}{...}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie.
+
 {title:Supported network types}
 
 {pstd}
-Two-mode: **T1**, native - this command's entire purpose is building a two-mode network directly from an edge list (ego/alter columns drawn from two distinct node sets). Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use {help nwaddnodes}'s own {bf:mode()} option afterward to add any isolates the source data could not represent.
+Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use {help nwaddnodes}'s own {bf:mode()} option afterward to add any isolates the source data could not represent.
 
 {title:One-mode projection}
 

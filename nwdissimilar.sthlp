@@ -133,6 +133,11 @@ from these alters.
 {cmd:. nwdissimilar flomarriage, type(hamming) context(outgoing)}
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::dist} on the incidence matrix).
+
 {title:Supported network types}
 
 {pstd}
@@ -145,9 +150,7 @@ weighted-aware comparison); {bf:hamming}/{bf:jaccard}/{bf:nonmatches} binarize e
 checked for automatic behavior beyond this, choose {bf:type()} to match whether tie strength
 should matter. Signed: not checked - a negative tie weight participates in {bf:euclidean}/
 {bf:manhatten}'s arithmetic like any other value, and in the binarizing types' {cmd: != 0} test
-like any nonzero value, but no dedicated signed-network semantics exist. Two-mode: not
-supported - operates on the network's own square adjacency matrix; a genuinely two-mode
-(non-square, disjoint node-set) input is not checked and not expected to behave sensibly.
+like any nonzero value, but no dedicated signed-network semantics exist. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::dist} on the incidence matrix).
 The dissimilarity network itself always carries a genuine (non-missing) diagonal of 0 (a node
 is never dissimilar from itself) and inherits its source network's own node labels by default,
 so it can be compared directly against the source network node-for-node.

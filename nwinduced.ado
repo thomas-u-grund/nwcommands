@@ -1,11 +1,12 @@
 capture program drop nwinduced
 program nwinduced, rclass
 	version 12
-	syntax [anything(name=netname)], MEASURE(string) [GENerate(string) replace silent]
+	syntax [anything(name=netname)], MEASURE(string) [GENerate(string) replace silent BINary]
 
 	_opts_oneof "degree betweenness closeness evcent" "measure" "`measure'" 6556
 
 	_nwsyntax `netname', max(1)
+	_nw2guard `netname', cmd(nwinduced)
 
 	// Directed networks are supported for betweenness/closeness/evcent
 	// (each already produces exactly one clean per-node output
@@ -62,6 +63,11 @@ program nwinduced, rclass
 		local measureopt "generate(__nwind_c)"
 	}
 
+	// tie values: betweenness, closeness and evcent use the values of a valued network (as the commands do);
+	// binary ignores them.  The degree measure is the number of ties.
+	if "`binary'" != "" | "`measure'" == "degree" {
+		local measureopt "`measureopt' binary"
+	}
 	local origname `netname'
 	local n `nodes'
 

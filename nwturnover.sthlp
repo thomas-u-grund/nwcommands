@@ -88,12 +88,17 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 models for network dynamics. {it:Social Networks} 32(1), 44-60. (the Jaccard index of network
 change, used as a standard diagnostic for whether panel-wave data is suitable for dynamic modeling)
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share
 the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not
-checked. Two-mode: not checked - operates on each network's own square adjacency matrix.
+checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 

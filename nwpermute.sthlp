@@ -28,6 +28,8 @@
 {synopt:{opt replace}}Replace existing network with permutation{p_end}
 {synopt:{opt nwreplace}}Overwrite the network named in {opt generate()} if it already exists; without it the command stops with an error{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt swap}}Two-mode network: exchange the partners of two ties at random (Maslov and Sneppen); keeps both degree sequences and the tie values; without it the labels are permuted within the modes{p_end}
+{synopt:{opt swaps(#)}}Two-mode network: the number of attempted exchanges with {opt swap}; default = ten times the number of ties{p_end}
 
 
 {title:Description}
@@ -83,10 +85,15 @@ these statistics) while keeping the overall structure of the network constant (s
 	
 	
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
 
 {title:Example}
 

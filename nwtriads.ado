@@ -5,6 +5,10 @@ program nwtriads
 	syntax [anything(name=netname)] [, PLOT NAME(string)]
 
 	_nwsyntax `netname', max(1)
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	local onedirected = "`directed'"
 
 	// The 16-type MAN census is a genuinely directed-network concept:
@@ -75,6 +79,13 @@ program nwtriads
 
 	tempname r
 	
+	if "`is2mode'" == "true" {
+		// a bipartite graph has no triangle: its transitivity is 0 whenever it has a connected triple
+		// (nwclustering would hand over to nw2clustering, which measures four-path closure instead)
+		local transitivity = cond(`r(_201)' + `r(_210)' > 0, 0, .)
+		di "{txt}Note: {bf:`netname'} is two-mode. The census counts the triples of the bipartite graph read as a one-mode graph (as igraph::triad_census does); it has no triangles, so the transitivity is 0. For closure in a two-mode network use {help nw2clustering}."
+	}
+	else {
 	_return hold `r'
 	preserve
 	// nwclustering's own generate() is now required (suite-wide
@@ -86,6 +97,7 @@ program nwtriads
 	local transitivity `r(cluster_global)'
 	restore
 	_return restore `r'
+	}
 	
 	mata: st_global("r(name)", "`netname'")
 	// Naming consistency (moderate-severity pass, information_census

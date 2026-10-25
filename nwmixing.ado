@@ -23,6 +23,10 @@ program nwmixing
 		di "{err}Network {bf:`netname'} not found."
 		error `errNWsNotFound'
 	}
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	// BUGFIX: this stored the STRING "0" or "1" (both non-empty), not a
 	// genuine boolean - so the later `if "`undirected''" != ""' display
 	// guard was unconditionally true regardless of the network's actual

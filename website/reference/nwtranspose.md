@@ -58,8 +58,6 @@ Simply transposes a network, i.e. a directed tie from node *i* to node *j* is tr
 - 5 c | 0 0 0 1 0 c |
 - hline 21
 
-- last certified : 24 Aug 2026
-
 ## Supported network types
 
-Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: not applicable - transposing a bipartite incidence structure would swap its two modes, which is exactly what [nw2project](nw2project) and the [nw2toedge](nw2toedge)/[nw2fromedge](nw2fromedge) family are for instead.
+Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: yes - the flag, the modes and the level labels are kept (the matrix of a two-mode network is symmetric).

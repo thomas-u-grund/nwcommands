@@ -94,12 +94,17 @@ Even, S. (1979). {it:Graph Algorithms}. Computer Science Press. (the vertex-spli
 reduction for vertex connectivity)
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed
 generalization here, matching {help nwkcomponents}). Weighted: not used. Signed: not checked.
-Two-mode: not checked.
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 

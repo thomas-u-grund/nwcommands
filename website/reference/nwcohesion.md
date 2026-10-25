@@ -47,7 +47,7 @@ Like [nwkcomponents](nwkcomponents), blocks can genuinely overlap (a cutset rema
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed generalization here, matching [nwkcomponents](nwkcomponents)). Weighted: not used. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed generalization here, matching [nwkcomponents](nwkcomponents)). Weighted: not used. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

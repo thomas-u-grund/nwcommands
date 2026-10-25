@@ -65,6 +65,16 @@ preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcu
 every other plot this package produces.
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nw2clustering}.
+
 {title:Supported network types}
 
 {pstd}
@@ -74,7 +84,7 @@ still runs, but 12 of the 16 categories (everything except {bf:_003}/{bf:_102}/{
 are not meaningful for undirected data and reliably return 0, since an undirected network
 has no asymmetric ties by construction - {cmd:nwtriads} prints a note to this effect when called on
 an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous
-count). Signed: not checked. Two-mode: not checked.
+count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nw2clustering}.
 
 
 {title:Limits}

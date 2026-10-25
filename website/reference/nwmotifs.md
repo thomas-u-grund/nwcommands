@@ -63,9 +63,7 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 ## Supported network types
 
-Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: not checked. Requires at least 4 nodes.
-
-`nwmotifs` enumerates every 4-node combination explicitly (O(n^4)) - fine for the moderate network sizes typical of SNA datasets, but not specially guarded against for very large networks, the same disclosed scaling limitation [nwclique](nwclique)'s own maximal-clique enumeration and [nwfactions](nwfactions)'s own combinatorial search already carry.
+Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph (`igraph::motifs`); the bipartite motifs of Simmons et al. are not offered. Requires at least 4 nodes.
 
 ## Stored results
 

@@ -50,10 +50,15 @@ new network file is saved in the working directory. When no {opt fname} is speci
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - Pajek gets the bipartite form (first line {cmd:*Vertices n n1}, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute {cmd:nwmode}. {help nwimport} reads each of the four back as a two-mode network.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - exports the network to Pajek/UCINET format largely as stored; consult the target format's own documentation for what it can represent.
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - Pajek gets the bipartite form (first line {cmd:*Vertices n n1}, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute {cmd:nwmode}. {help nwimport} reads each of the four back as a two-mode network.
 
 {title:Examples}
 

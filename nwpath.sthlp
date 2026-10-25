@@ -24,7 +24,9 @@
 {opth generate(newnetnamestub)}
 {opt sym}
 {opt nwreplace}
-{opt nopaths}]
+{opt nopaths}
+{opt binary}
+{opth alpha(real)}]
 
 
 {synoptset 23 tabbed}{...}
@@ -39,6 +41,8 @@
 {synopt:{opt sym}}Symmetrize network for calculation{p_end}
 {synopt:{opt nwreplace}}Overwrite networks with {it:newnetnamestub}{p_end}
 {synopt:{opt nopaths}}Do not print the list of paths; the results in {cmd:r()} are still returned{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opth alpha(real)}}Cost of a step along a tie of value w: 1/w^alpha (default 1 on a valued network; accepted on any network){p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -55,13 +59,18 @@ For example, if three paths are found between nodes {it:ego} and {it:alter}, the
 are produced.
 
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the shortest path is the path of least cost, a step along a tie of value w costing 1/w^alpha ({cmd:alpha(1)} by default, {it:igraph::shortest_paths} with weights 1/w; {cmd:alpha(-1)} reads the values as lengths); {cmd:r(path_cost)} is the cost, {cmd:r(path_length)} the number of steps. {opt binary} finds the paths with the fewest steps. Equally cheap paths are all reported.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes ({opt sym} to symmetrize first). Weighted: not applicable - any nonzero
 tie is treated as traversable regardless of its value; there is currently no shortest-{it:weighted}
--path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: not
-checked.
+-path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:Options}
@@ -120,6 +129,7 @@ One can now use this new network to represent the edgecolor when plotting the or
 	  {bf:r(path_length)}	 length of the shortest path (-1 if not connected)
 	  {bf:r(path_shortest)}	 same as {bf:r(path_length)}; this command currently only ever finds
 	                    shortest paths, there is no {bf:length()} option to select a longer one
+	  {bf:r(path_cost)}	 cost of the path on a valued network (sum of 1/value^alpha)
 	  {bf:r(ego)}		 nodeid of ego
 	  {bf:r(alter)}		 nodeid of alter
 

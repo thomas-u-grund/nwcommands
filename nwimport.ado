@@ -161,6 +161,8 @@ program _nwimport_pajek
 		`clear'
 		`nwclear'
 		set more off
+		// the network is valued when the file gives tie values (a third field on an edge line, a matrix with values)
+		local __haswt 0
 		preserve
 		drop _all
 		
@@ -176,6 +178,10 @@ program _nwimport_pajek
 			local f_cmd = lower("`f_cmd'")
 			if lower("`f_cmd'") == "*vertices" {
 				local size = word(`"`line'"',2)
+				// "*Vertices n n1" (Pajek's bipartite form): the first n1 vertices are the nodes of the first mode
+				local n1 ""
+				capture confirm integer number `=word(`"`line'"',3)'
+				if _rc == 0 local n1 = word(`"`line'"',3)
 				local mode = "vertices"
 				set obs `size'
 				gen _fromid = _n
@@ -285,6 +291,7 @@ program _nwimport_pajek
 					replace _toid = `alter' in `newN'
 					if (wordcount("`line'") - 2) > 0 {
 						local value = word("`line'", 3)
+						local __haswt 1
 					}
 					else {
 						local value = 1
@@ -338,6 +345,7 @@ program _nwimport_pajek
 						replace _fromid = `id_ego' in `newN'
 						replace _toid = `id_alter' in `newN'
 						replace _value = `value' in `newN'
+						if `value' != 0 & `value' != 1 local __haswt 1
 					}
 					local value = word("`line'", `next') 
 				}	
@@ -349,11 +357,155 @@ program _nwimport_pajek
 
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
 	
 		unw_defs
 		nwload, labelonly
 		qui merge m:n `nw_nodename' using `dict', nogenerate
+		if "`n1'" != "" {
+			_nwimport_apply2mode `name', n(`size') n1(`n1') labs(`labs')
+		}
+end
+
+
+capture program drop _nwimport_apply2mode
+program _nwimport_apply2mode
+	// declare the network a two-mode network after the import: the mode of every node comes either from the
+	// comma separated list modes() (parallel to labs()) or from n/n1 (the first n1 of n vertices form the first
+	// mode); a tie between two nodes of the same mode makes the file invalid
+	syntax [anything(name=netname)], LABS(string) [MODES(string) N(integer 0) N1(integer 0)]
+	unw_defs
+	_nwsyntax `netname', max(1)
+	tempname lab md
+	if `"`labs'"' != "" {
+		mata: `lab' = tokens(`"`labs'"', ","); `lab' = select(`lab', `lab' :!= ",")
+	}
+	else {
+		mata: `lab' = strofreal(1::`n')'
+	}
+	if "`modes'" != "" {
+		mata: `md' = tokens("`modes'", ","); `md' = select(`md', `md' :!= ",")
+	}
+	else {
+		mata: `md' = (J(1, `n1', "1"), J(1, `n' - `n1', "2"))
+	}
+	mata: st_local("__ok", strofreal(cols(`lab') == cols(`md')))
+	if !`__ok' {
+		mata: mata drop `lab' `md'
+		di "{txt}(note: the file does not give a mode for every node; {bf:`netname'} is not declared two-mode)"
+		exit
+	}
+	mata: `netobj'->set_2mode(1)
+	qui mata: `netobj'->set_modes_from_labeled_string(invtokens(`lab' :+ "=" :+ `md', ","))
+	mata: mata drop `lab' `md'
+	mata: st_local("__bad", strofreal(`netobj'->count_samemode_ties()))
+	if `__bad' > 0 {
+		mata: `netobj'->set_2mode(0)
+		di "{err}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode."
+		error 459
+	}
+	mata: `netobj'->clean_matrix_2mode()
+	// ties of value 1 only: a binary network (the writers add the value 1 to every tie)
+	mata: `netobj'->set_valued(`netobj'->check_valued())
+	mata: `netobj'->set_description_mode1("mode 1")
+	mata: `netobj'->set_description_mode2("mode 2")
+end
+
+
+capture program drop _nwimpdl_rect
+program _nwimpdl_rect
+	// UCINET DL with a rectangular matrix (nr rows, nc columns, format fullmatrix): rows form the first mode,
+	// columns the second; row and column labels as in nwexport (row labels: / col labels: / data:)
+	syntax anything(name=fn), ROWS(integer) COLS(integer)
+	unw_defs
+	tempname fh
+	file open `fh' using `fn', read text
+	local rl ""
+	local cl ""
+	local part ""
+	local r 0
+	preserve
+	drop _all
+	qui {
+		gen str244 _fromid = ""
+		gen str244 _toid = ""
+		gen double _value = .
+	}
+	file read `fh' line
+	while r(eof) == 0 {
+		local l = lower(trim(`"`line'"'))
+		if substr("`l'", 1, 10) == "row labels" {
+			local part "row"
+		}
+		else if substr("`l'", 1, 10) == "col labels" | substr("`l'", 1, 13) == "column labels" {
+			local part "col"
+		}
+		else if "`l'" == "data:" {
+			local part "data"
+		}
+		else if "`part'" == "row" | "`part'" == "col" {
+			local l = subinstr(trim(`"`line'"'), ",", " ", .)
+			foreach w of local l {
+				if "`part'" == "row" local rl "`rl'`w' "
+				else local cl "`cl'`w' "
+			}
+		}
+		else if "`part'" == "data" & "`l'" != "" {
+			local ++r
+			local rlab : word `r' of `rl'
+			if "`rlab'" == "" local rlab "r`r'"
+			local c 0
+			foreach v of local l {
+				local ++c
+				if real("`v'") != 0 & real("`v'") < . {
+					local clab : word `c' of `cl'
+					if "`clab'" == "" local clab "c`c'"
+					qui set obs `=_N + 1'
+					qui replace _fromid = "`rlab'" in L
+					qui replace _toid = "`clab'" in L
+					qui replace _value = real("`v'") in L
+				}
+			}
+		}
+		file read `fh' line
+	}
+	file close `fh'
+	// labels of all nodes (also the isolated ones) and the modes travel as characteristics of the list
+	local alln ""
+	local allm ""
+	forvalues i = 1/`rows' {
+		local w : word `i' of `rl'
+		if "`w'" == "" local w "r`i'"
+		local alln "`alln'`w';"
+		local allm "`allm'`w'=1,"
+	}
+	forvalues i = 1/`cols' {
+		local w : word `i' of `cl'
+		if "`w'" == "" local w "c`i'"
+		local alln "`alln'`w';"
+		local allm "`allm'`w'=2,"
+	}
+	local alln = substr("`alln'", 1, length("`alln'") - 1)
+	local allm = substr("`allm'", 1, length("`allm'") - 1)
+	if length("`allm'") <= 60000 {
+		char _dta[nwtoedge_nodes] `"`alln'"'
+		char _dta[nwtoedge_modes] `"`allm'"'
+	}
+	char _dta[nwtoedge_mode1desc] "rows"
+	char _dta[nwtoedge_mode2desc] "columns"
+	if _N == 0 {
+		di "{err}The matrix has no ties."
+		restore
+		error 6704
+	}
+	qui sum _value
+	if r(min) == 1 & r(max) == 1 {
+		nw2fromedge _fromid _toid
+	}
+	else {
+		nw2fromedge _fromid _toid _value
+	}
+	restore
 end
 
 
@@ -470,7 +622,8 @@ program _nwimport_ucinet
 		if `matrix_loaded' == 0  {
 			capture replace _fromid = trim(_fromid)
 			capture replace _toid = trim(_toid)
-			qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+			qui count if _value < . & _value != 0 & _value != 1
+			qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(r(N) > 0, "valued", "unvalued")'
 		}
 		restore
 end
@@ -629,10 +782,14 @@ program _nwimport_gml
 		gen _toid = ""
 		gen _value = .
 		local labs ""
+		local nwmodes ""
+		local __haswt 0
 		
 		file open importfile using `anything', read
 
 		local mode ""
+		local gmlvalue 1
+		local nwfromedgeopt ""
 		file read importfile line
 		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked "GML/
 		// GraphML import fixture confidence" gap): this used to loop
@@ -677,15 +834,32 @@ program _nwimport_gml
 					// fixture with labels.
 					local labs `"`labs'`nextlab',"'
 				}
+				if "``i''" == "nwmode" & "`mode'" == "node" {
+					local nwmodes "`nwmodes'``=`i'+1'',"
+				}
 				if "``i''" == "source" & "`mode'" == "edge" {
 					local mode_sub = "edge_source"
 					local source = "``=`i'+1''"
-					_insert_edge, from(`source') to(`target') value(1)
+					_insert_edge, from(`source') to(`target') value(`gmlvalue')
 				}
 				if "``i''" == "target" & "`mode'" == "edge" {
 					local mode_sub = "edge_target"
 					local target = "``=`i'+1''"
-					_insert_edge, from(`source') to(`target') value(1)
+					_insert_edge, from(`source') to(`target') value(`gmlvalue')
+				}
+				// tie value (written by nwexport as value, by other software as weight)
+				if inlist("``i''", "value", "weight") & "`mode'" == "edge" {
+					local gmlvalue = real("``=`i'+1''")
+					if `gmlvalue' >= . local gmlvalue 1
+					local __haswt 1
+					if "`source'" != "-1" & "`target'" != "-1" {
+						qui replace _value = `gmlvalue' in `=_N'
+					}
+				}
+				// graph [ directed 0|1 ]: before the first node or edge block
+				if "``i''" == "directed" & "`mode'" == "" {
+					if "``=`i'+1''" == "0" local nwfromedgeopt "undirected"
+					if "``=`i'+1''" == "1" local nwfromedgeopt "forcedirected"
 				}
 				if "``i''" == "node" {
 					local mode = "node"
@@ -694,6 +868,7 @@ program _nwimport_gml
 					local mode = "edge"
 					local target = -1
 					local source = -1
+					local gmlvalue 1
 				}
 				local i = `i' + 1
 			}
@@ -703,7 +878,14 @@ program _nwimport_gml
 		capture file close importfile
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
+		// the ids are the numbers of the node blocks: sorted as text "10" comes before "2" and the labels (in the
+		// order of the node blocks) landed on the wrong nodes from 10 nodes on
+		capture destring _fromid _toid, replace
+		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
+		if "`nwmodes'" != "" {
+			// the attribute nwmode (written by nwexport for a two-mode network) gives the mode of every node
+			_nwimport_apply2mode `name', labs(`labs') modes(`nwmodes')
+		}
 		restore
 end
 
@@ -787,7 +969,7 @@ program _nwimport_gefx
 		}	
 		capture replace _fromidnum = trim(_fromidnum)
 		capture replace _toidnum = trim(_toidnum)
-		nwfromedge _fromidnum _toidnum _value, name(`name') labs(`labs') `nwfromedgeopt'
+		nwfromedge _fromidnum _toidnum _value, name(`name') labs(`labs') `nwfromedgeopt' unvalued
 		restore
 end
 
@@ -880,6 +1062,27 @@ program _nwimport_edgelist
 		error 6704
 	}
 
+	if `c(k)' == 5 {
+		// a two-mode list written by nwexport: ego (first mode), alter (second mode), value, mode_ego, mode_alter
+		ds
+		local ego : word 1 of `r(varlist)'
+		local alter : word 2 of `r(varlist)'
+		local value : word 3 of `r(varlist)'
+		local m1 : word 4 of `r(varlist)'
+		local m2 : word 5 of `r(varlist)'
+		qui keep if `m1' != `m2'
+		qui replace `value' = 1 if `value' >= .
+		char _dta[nwtoedge_mode1desc] "mode 1"
+		char _dta[nwtoedge_mode2desc] "mode 2"
+		qui sum `value'
+		if r(min) == 1 & r(max) == 1 {
+			nw2fromedge `ego' `alter', name(`name') `xvars'
+		}
+		else {
+			nw2fromedge `ego' `alter' `value', name(`name') `xvars'
+		}
+		exit
+	}
 	if `c(k)' > 3 | `c(k)' < 2 {
 		noi di "{err}Something went wrong; data has more than three columns."
 		restore
@@ -1268,8 +1471,11 @@ program _nwimpdl
 	}
 
 	if "`rows'" != "`cols'" {
-		noi di "{err}Two-mode networks are not supported"
-		error 6088
+		// a rectangular matrix is a two-mode network: rows are the first mode, columns the second
+		file close `importfile'
+		_nwimpdl_rect `anything', rows(`rows') cols(`cols')
+		mata: st_global("r(nameoff)", "")
+		exit
 	}
 	
 	local labscount : word count `labs'

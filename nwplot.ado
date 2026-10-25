@@ -1064,12 +1064,12 @@ program nwplot, rclass
 		_nwsyntax `netname', max(1)
 		if "`directed'" == "true" {
 			tempvar nwplotdeg1 nwplotdeg2
-			qui nwdegree `netname', silent generate(`nwplotdeg1' `nwplotdeg2')
+			qui nwdegree `netname', silent binary generate(`nwplotdeg1' `nwplotdeg2')
 			qui gen _isolates = (`nwplotdeg1' == 0) & (`nwplotdeg2' == 0)
 		}
 		else {
 			tempvar nwplotdeg1
-			qui nwdegree `netname', silent generate(`nwplotdeg1')
+			qui nwdegree `netname', silent binary generate(`nwplotdeg1')
 			qui gen _isolates = (`nwplotdeg1' == 0)
 		}
 		qui count if _isolates == 1

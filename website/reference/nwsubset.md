@@ -44,7 +44,7 @@ However, the last command does not copy the node labels of network *flomarriage*
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
 
 ## See also
 

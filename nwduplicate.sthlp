@@ -43,10 +43,15 @@ For example:
 	
 	
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the copy keeps the flag, the modes and the level labels.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties. Two-mode: yes - the copy keeps the flag, the modes and the level labels.
 
 {title:See also}
 

@@ -52,6 +52,7 @@
 		{p_end}
 {p2col:{cmd: gml}}network is given in {browse "https://docs.gephi.org/desktop/User_Manual/Import/GML_File_Format/":GML file format}
 	{p_end}
+{p2col:}The tie value is read from the {cmd:value} or {cmd:weight} key of an edge (1 if absent) and the direction from the {cmd:directed} key of the graph.{p_end}
 
 
 {synoptset 20 tabbed}{...}
@@ -89,23 +90,26 @@ without downloading a local copy first, e.g.:
 {phang}
 {cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)}{p_end}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
 {bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
 values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
-values are negative. Two-mode: yes, for the formats whose own file structure distinguishes row and
-column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the same way as any other
-{help nwset}-created network.
+values are negative. Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
 
 {marker ucinet}{...}
 {title:Import Ucinet DL format}
 
 {pstd}
 {cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
-multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
-networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/UCINET_DL_Format/":here}
+multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. A rectangular matrix (nr
+rows, nc columns, format fullmatrix, with row labels and col labels) is read as a two-mode network, the rows being the first mode. For a detailed description of the Ucinet .dl file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/UCINET_DL_Format/":here}
 or the {browse "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf":Ucinet manual}.
 
 {phang}

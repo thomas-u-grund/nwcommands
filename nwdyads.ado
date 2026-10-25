@@ -17,6 +17,10 @@ program _nwdyads1
 	version 9
 	syntax anything(name=netname)
 	_nwsyntax `netname', max(1)
+	_nwvaluednote `netname'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	mata: census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
 	mata: st_numscalar("r(_001)", census[3])
@@ -46,7 +50,15 @@ program _nwdyads1
 		di "{hline 11}{c +}{hline 11}"
 		di "{res}{ralign 10:`r(_100)'}{col 12}{c |}{ralign 10:`r(_001)'}"
 		di " "
-		di "{txt}    Reciprocity: {res}`=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
+		if "`is2mode'" == "true" {
+			// only the dyads between the two modes can hold a tie (the null count is over those pairs); reciprocity of an
+			// undirected tie has no meaning
+			di "{txt}    Reciprocity: {res}n/a {txt}(undirected two-mode network)"
+			mata: st_numscalar("r(reciprocity)", .)
+		}
+		else {
+			di "{txt}    Reciprocity: {res}`=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
+		}
 	}
 	mata: st_global("r(name)", "`netname'")
 	// Naming consistency (moderate-severity pass, information_census

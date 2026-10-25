@@ -22,7 +22,10 @@ egoid(nodeid)
 alterid(nodeid)]
 generate(newnetnamestub)
 sym
-nwreplace]
+nwreplace
+nopaths
+binary
+alpha(real)]
 ```
 
 **Main**
@@ -36,6 +39,9 @@ nwreplace]
 | `generate(newnetnamestub)` | Save paths as networks beginning with *newnetnamestub* |
 | `sym` | Symmetrize network for calculation |
 | `nwreplace` | Overwrite networks with *newnetnamestub* |
+| `nopaths` | Do not print the list of paths; the results in `r()` are still returned |
+| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `alpha(real)` | Cost of a step along a tie of value w: 1/w^alpha (default 1 on a valued network; accepted on any network) |
 
 ## Description
 
@@ -86,4 +92,4 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 
 ## Supported network types
 
-Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic) for weighted distances). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic) for weighted distances). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).

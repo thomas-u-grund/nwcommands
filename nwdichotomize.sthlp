@@ -47,14 +47,18 @@ where in-place modification is the default), the network is dichotomized in plac
 {opt generate()} or {opt prefix()} is specified, in which case the original is left untouched and
 the result is saved under a new name instead.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes and the level labels are kept.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes (a no-op - every value is already either 0 or 1, so {opt threshold(1)} leaves it
 unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked -
 a negative value below {opt threshold()} is treated the same as any other sub-threshold value.
-Two-mode: not checked directly, but inherits whatever {help nwrecode}/{help nwtoedge} support for
-two-mode data.
+Two-mode: yes - the flag, the modes and the level labels are kept.
 
 {title:Examples}
 

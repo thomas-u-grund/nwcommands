@@ -49,7 +49,7 @@ silent]
 
 ## Supported network types
 
-Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network membership and alter-alter density; tie strength does not affect these measures. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix.
+Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network membership and alter-alter density; tie strength does not affect these measures. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 

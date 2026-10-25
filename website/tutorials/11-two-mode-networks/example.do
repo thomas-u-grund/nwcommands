@@ -23,6 +23,42 @@ nwcommunity women, generate(group)
 * Plot the two modes in two columns
 nwplot davis, layout(bipartite, vertical) color(_nwmode) label(_nwnode) scheme(s1network) export("plot_davis.svg") replace
 
+* Part of the network: the flag, the two modes and the level labels are kept
+nwkeepnodes davis, nodes(Brenda Charlotte Dorothy Eleanor E1 E2 E3 E4 E5) generate(small)
+nwsummarize small
+nw2degree small, generate(attsmall)
+
+* Communities of the two-mode network itself: the bipartite modularity of Barber (the default) and Newman's modularity
+nwcommunity davis, generate(comm_bip) seed(1)
+nwcommunity davis, generate(comm_one) onemode seed(1)
+nwmodularity davis, group(comm_bip)
+nwmodularity davis, group(comm_bip) onemode
+
+* How nested is the network? NODF and the C-score
+nw2nested davis
+
+* Clustering: Opsahl (default) and Robins-Alexander
+nw2clustering davis, generate(clo)
+display r(C_global)
+nw2clustering davis, ra
+
+* A null model that keeps both degree sequences
+set seed 1
+nwpermute davis, generate(davis_swap) swap
+nw2degree davis_swap, generate(att_swap) raw silent
+nw2degree davis, generate(att_raw) raw silent
+assert att_swap == att_raw
+
+* Export and import keep the two modes
+nwexport davis, type(pajek) fname(davis_pajek) replace
+nwimport davis_pajek.net, type(pajek) name(davis_back) nwappend
+nwsummarize davis_back
+erase davis_pajek.net
+
+* Commands that cannot say anything about a two-mode network stop
+capture noisily nwspectral davis, generate(sp)
+display _rc
+
 * Company directors in Sweden: 5,092 directors, 455 companies
 nwuse ../../../data/ftdirectors_se, nwclear
 nwsummarize ftdirectors_se

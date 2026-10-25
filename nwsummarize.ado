@@ -69,11 +69,11 @@ program nwinf
 		// scalars are read here, so a tempvar is all that's needed.
 		if ("`localdirected'"=="false"){
 			tempvar nwsumdeg1
-			qui nwdegree `netname', silent generate(`nwsumdeg1')
+			qui nwdegree `netname', silent binary generate(`nwsumdeg1')
 		}
 		else {
 			tempvar nwsumdeg1 nwsumdeg2
-			qui nwdegree `netname', silent generate(`nwsumdeg1' `nwsumdeg2')
+			qui nwdegree `netname', silent binary generate(`nwsumdeg1' `nwsumdeg2')
 		}
 		if ("`localdirected'"=="false"){
 			local central = `r(dg_central)'

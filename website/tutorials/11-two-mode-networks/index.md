@@ -46,8 +46,9 @@ newspaper (Davis, Gardner and Gardner 1941). A tie means that the woman attended
 ```
 
 `Two-mode: true` and the two levels tell you what you have: 18 nodes of the first mode (`woman`) and 14 of the
-second (`event`), 32 nodes and 89 ties in all. The density is computed over all pairs of nodes, so it is not
-comparable with the density of a one-mode network. The variable `_nwmode` (1 or 2) says which mode a row belongs to,
+second (`event`), 32 nodes and 89 ties in all. The density is the number of ties over the 18 x 14 = 252 pairs of one woman and one event (89 / 252 = .353; the
+`bipartite` package of R calls it connectance), so it is not comparable with the density of a one-mode network (the same
+graph read as one-mode has .179). The variable `_nwmode` (1 or 2) says which mode a row belongs to,
 and the attributes belong to one mode each: `surname` and `title` to the women, `eventdate` to the events.
 
 ## Degree in a two-mode network
@@ -132,7 +133,7 @@ first mode, `project(2)` would keep the events:
   Projected network: women
   Level: 1
   Nodes: 18
-  Ties: 278
+  Ties: 139
 
 . nwsummarize women
 --------------------------------------------------
@@ -151,8 +152,7 @@ first mode, `project(2)` would keep the events:
    Provenance:  projected from network davis, mode 1 (woman), stat=minmax
 ```
 
-The projection is an ordinary network, and all one-mode commands work on it. It has 139 ties (the line `Ties: 278`
-of `nw2project` counts each undirected tie in both directions), the tie values go up to 7 shared events, and almost
+The projection is an ordinary network, and all one-mode commands work on it. It has 139 ties, the tie values go up to 7 shared events, and almost
 all pairs of women share at least one event (density .908). That is typical of projections: a few well attended events
 link everybody, so the projection is much denser than the two-mode network it came from. Use the tie values, not
 just their presence, when you analyze it.
@@ -195,6 +195,224 @@ file plot_davis.svg saved as SVG format
 
 ![The Southern women (left) and the events they attended (right)](plot_davis.svg)
 
+## A part of the network keeps its two modes
+
+Dropping or keeping nodes does not turn a two-mode network into a one-mode network: the two-mode flag, the mode of every
+remaining node and the level labels are kept, so every two-mode command still works on the part. Here are four women
+and five events:
+
+```stata
+. nwkeepnodes davis, nodes(Brenda Charlotte Dorothy Eleanor E1 E2 E3 E4 E5) generate(small)
+
+. nwsummarize small
+--------------------------------------------------
+   Network name:  small
+   Network id:  3
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 9
+      Level 1: 4 (woman)
+      Level 2: 5 (event)
+   Selfloop: false
+   Edges: 8
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .4
+   Temporal: false
+
+. nw2degree small, generate(attsmall)
+----------------------------------------
+  Network name: small
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    attsmall |          9          .4    .3010399          0         .8
+ 
+
+```
+
+The same holds for `nwsubset`, `nwduplicate`, `nwsym`, `nwtranspose`, `nwrecode`, `nwdichotomize`, `nwaddnodes` and
+`nwpermute`. A network is declared two-mode in one place only (`nwset, twomode` or `bipartite`, `nw2fromedge`,
+`nwfromedge, twomode`, `nwimport`, `nwuse`); no command works the flag out from the ties, and `nwname`, `new2mode(true)`
+refuses a network that has no second mode or a tie inside a mode.
+
+## Communities of the two-mode network itself
+
+`nwcommunity` and `nwmodularity` use the bipartite modularity of Barber (2007) on a two-mode network: the expected
+number of ties is computed only for pairs of nodes from different modes, because no other pair can be tied. This is the
+modularity of `bipartite::computeModules` in R. The option `onemode` gives Newman's modularity of the same graph read as
+a one-mode graph, as `igraph::cluster_louvain` computes it:
+
+```stata
+. nwcommunity davis, generate(comm_bip) seed(1)
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q (Barber, two-mode): .346
+
+   comm_bip |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         12       37.50       37.50
+          2 |          6       18.75       56.25
+          3 |          9       28.12       84.38
+          4 |          5       15.62      100.00
+------------+-----------------------------------
+      Total |         32      100.00
+ 
+
+. nwcommunity davis, generate(comm_one) onemode seed(1)
+----------------------------------------
+  Network name: davis
+  Communities: 3
+  Modularity Q: .332
+
+   comm_one |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         12       37.50       37.50
+          2 |         14       43.75       81.25
+          3 |          6       18.75      100.00
+------------+-----------------------------------
+      Total |         32      100.00
+ 
+
+. nwmodularity davis, group(comm_bip)
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q (Barber, two-mode): .346
+ 
+
+. nwmodularity davis, group(comm_bip) onemode
+----------------------------------------
+  Network name: davis
+  Communities: 4
+  Modularity Q: .333
+ 
+
+```
+
+For the Southern women the search finds four groups of women and events together with Q = .346 (`computeModules` finds
+the same value); the one-mode modularity finds three groups with Q = .332. The same partition has Q = .346 as a
+bipartite and .320 as a one-mode modularity. The groups contain nodes of both modes, which is the point: a group is a
+set of women and the events they went to. The search is a Louvain-type search from several starting orders (`starts()`,
+30 by default; use `seed()` for reproducibility).
+
+## Nestedness and clustering
+
+`nw2nested` measures how nested the network is, whether the events attended by the women with few events are also
+attended by the women with many (NODF of Almeida-Neto et al. 2008, and the C-score of Stone and Roberts 1990, as in the
+`bipartite` package of R):
+
+```stata
+. nw2nested davis
+------------------------------------------------------------
+  Network name: davis
+  NODF (Almeida-Neto et al. 2008):   48.5812
+      among the nodes of mode 1:   48.2057    of mode 2:   49.2125
+  C-score, pairs of mode-2 nodes:   12.5934   normalised (0-1):    0.4494
+------------------------------------------------------------
+
+```
+
+There are two clustering coefficients for a two-mode network, and they answer different questions. `nw2clustering`
+gives the coefficient of Opsahl (2013), the share of four-paths that a fifth tie closes (R: `tnet::clustering_tm`),
+.772 here. With `ra` it gives the global coefficient of Robins and Alexander (2004), four times the number of
+four-cycles over the number of three-paths, .468 here. Say which one you report.
+
+```stata
+. nw2clustering davis, generate(clo)
+
+. display r(C_global)
+.7718968
+
+. nw2clustering davis, ra
+  Robins-Alexander clustering (4 x C4 / L3):  0.467764   (C4 = 341, L3 = 2916)
+
+```
+
+## A null model for two-mode networks
+
+`nwpermute` of a two-mode network permutes the labels within the two modes, so that no tie ever joins two women or two
+events. With `swap` it exchanges the partners of two ties at random and keeps the degree of every node (the
+`swap.web` null model of the `bipartite` package):
+
+```stata
+. set seed 1
+
+. nwpermute davis, generate(davis_swap) swap
+
+. nw2degree davis_swap, generate(att_swap) raw silent
+
+. nw2degree davis, generate(att_raw) raw silent
+
+. assert att_swap == att_raw
+
+```
+
+## Saving and exchanging two-mode networks
+
+`nwexport` writes a two-mode network in the form each format has for it, and `nwimport` reads it back as a two-mode
+network: Pajek `*Vertices n n1` (first mode first), UCINET a rectangular matrix, the plain edge list five columns
+(ego, alter, value and the mode of both nodes), GML a node attribute `nwmode`. `nwtoedge` and `nw2toedge` write the
+ties between the modes, and `nwfromedge ..., twomode` or `nw2fromedge` reads that list back:
+
+```stata
+. nwexport davis, type(pajek) fname(davis_pajek) replace
+Exporting network: davis
+Saved as file: davis_pajek.net
+
+. nwimport davis_pajek.net, type(pajek) name(davis_back) nwappend
+------------------------------
+Importing successful
+
+. nwsummarize davis_back
+--------------------------------------------------
+   Network name:  davis_back
+   Network id:  5
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 32
+      Level 1: 18 (mode 1)
+      Level 2: 14 (mode 2)
+   Selfloop: false
+   Edges: 89
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .353
+   Temporal: false
+
+. erase davis_pajek.net
+
+```
+
+Pajek and the edge list know nothing about the names of the two levels, so they come back as `mode 1` and `mode 2`;
+`nwsave` and `nwuse` keep the labels.
+
+## What stops on a two-mode network
+
+Some commands would read the blocks of the adjacency matrix between nodes of the same mode, which hold no ties:
+`nwspectral`, `nwrandomwalk`, `nwcorrelate` (the profiles of the nodes of one network), `nwhierarchy`, `nwconcor`,
+`nwfactions`, `nwcoreperiphery`, `nwqap`, `nwcug`, `nwinduced` and `nwcollapse`. They stop with one message and the
+error 6088 instead of returning missing values. Make a one-mode network of one mode with `nw2project` first, or, for
+`nwspectral` and `nwrandomwalk`, use the option `onemode` to read the bipartite graph as an ordinary graph (as `igraph`
+does). The commands that are defined on any graph (`nwcomponents`, `nwkcore`, `nwgeodesic`, `nwbetween`, `nwcloseness`,
+`nwpagerank`, ...) give the numbers of the bipartite graph; the options `twomode` of `nwcloseness` and `nwbetween` give
+the normalisations of Borgatti and Everett (1997). The table of [network types](../../nwcommands/network-types/) lists
+all commands, and the page on [two-mode networks](../../nwcommands/two-mode/) explains the rules.
+
+```stata
+. capture noisily nwspectral davis, generate(sp)
+nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold no 
+> ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a one-mod
+> e graph.
+
+. display _rc
+6088
+
+```
+
 ## A large two-mode network: company directors in Sweden
 
 `ftdirectors_se` is a subset of a data set of directors and companies compiled from the Financial Times web site
@@ -218,7 +436,7 @@ the 455 Swedish listed companies and all 5,092 directors who sit on their boards
    Edges: 5669
    Minimum value:  0
    Maximum value:  1
-   Density:  0
+   Density:  .00245
    Temporal: false
 ```
 
@@ -292,7 +510,7 @@ shared directors:
   Projected network: companies
   Level: 2
   Nodes: 455
-  Ties: 1518
+  Ties: 759
 
 . nwsummarize companies
 --------------------------------------------------
@@ -306,7 +524,7 @@ shared directors:
    Edges: 759
    Minimum value:  0
    Maximum value:  5
-   Density:  .007
+   Density:  .00735
    Temporal: false
    Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
 ```
@@ -345,6 +563,10 @@ two-mode network is stored as one matrix over both modes, so the size limits cou
 - `nw2project, project(1)` and `project(2)` give the two one-mode networks, with the number of shared neighbors as
   tie value. The projections are dense when a few nodes of the other mode have many ties.
 - After a projection, the whole one-mode toolbox applies: `nwcomponents`, `nwcommunity`, `nwdegree` and the others.
-- `nw2clustering` gives clustering coefficients for two-mode networks, and `nwplot` has `layout(bipartite)`.
+- `nw2clustering` gives clustering coefficients for two-mode networks (Opsahl by default, `ra` for Robins and Alexander), `nw2nested`
+  the nestedness, and `nwplot` has `layout(bipartite)`.
+- A two-mode network stays two-mode when you drop or keep nodes, subset it, export it or write it as an edge list.
+- `nwcommunity` and `nwmodularity` use the bipartite modularity of Barber by default (`onemode` for Newman's).
+- The commands that cannot say anything about a two-mode network stop with error 6088.
 
 The commands of this tutorial are in `example.do` in the folder of the tutorial; its log is `example.log`.

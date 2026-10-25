@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -77,7 +77,8 @@ program nwcloseness
 		// no n x n matrix: 98 s and 6.4 GB at 20,000 nodes before); the distance matrix of nwgeodesic is still built
 		// when geodesic_options are passed (alpha, unconnected, ...) or the plugin is older.
 		local __fastcl 0
-		if `"`options'"' == "" {
+		// the hop-count kernel is the binary closeness: used when the network has no tie values or binary is given
+		if `"`options'"' == "" & ("`binary'" != "" | "`valued'" == "false") {
 			mata: st_local("__fastcl", strofreal(nwg_comb_version() >= 5))
 		}
 		if `__fastcl' {
@@ -94,7 +95,7 @@ program nwcloseness
 			}
 		}
 		else {
-			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
+			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `binary' `options'
 			nwname _tempgeodesic
 			// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
 			// full n x n matrix into a second, separately-named Mata matrix
@@ -124,6 +125,16 @@ program nwcloseness
 
 		mata: nearness = J(`nodes', 1,1) :/ far
 		mata: closeness = nearness :* (`nodes' - 1)
+		if "`twomode'" != "" {
+			// Borgatti and Everett (1997): the smallest possible farness of a node is reached when it is tied to every
+			// node of the other mode (distance 1) and every other node of its own mode is at distance 2
+			if "`is2mode'" != "true" {
+				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
+				error 198
+			}
+			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); closeness = ((__md :== 1) :* (__n2 + 2 * (__n1 - 1)) :+ (__md :== 2) :* (__n1 + 2 * (__n2 - 1))) :* nearness
+			mata: mata drop __md __n1 __n2
+		}
 		local _closeness : word 1 of `generate'
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'

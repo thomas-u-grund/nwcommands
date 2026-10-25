@@ -80,13 +80,23 @@ preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcu
 {opt plot} option and {help nwtriads}'s own {opt plot} option (its 3-node analogue) use.
 Grayscale by design, matching every other plot this package produces.
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a
 directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note
 is printed to this effect. Weighted: not applicable (a motif census is inherently a binary
-count). Signed: not checked. Two-mode: not checked. Requires at least 4 nodes.
+count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered. Requires at least 4 nodes.
 
 {title:Limits}
 

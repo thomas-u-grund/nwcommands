@@ -5,6 +5,10 @@ program nwreach
 	// no-op).
 	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace force]
 	_nwsyntax `reachnet', name(reachnet)
+	_nwvaluednote `reachnet'
+	if r(shown) == 1 {
+		noi di `"`r(msg)'"'
+	}
 	unw_defs
 	_nwdenseguard, command(nwreach) nodes(`nodes') copies(2) alternative(Reachability between all pairs of nodes is an n x n matrix. Use nwcomponents for connectedness (undirected networks), nwpath for one pair, or a part of the network (nwsubset).) `force'
 
@@ -28,7 +32,7 @@ program nwreach
 	if _rc == 0 {
 		nwdrop `name'
 	}
-	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') nwreplace
+	qui nwgeodesic `reachnet', name(`name') binary `sym' unconnected(`missing2') nwreplace
 	_nwsyntax `name'
 	mata: nw_reach_inplace(`netobj', `missing2')
 	mata: `netobj'->set_valued(0)

@@ -30,6 +30,7 @@
 {synopt:{opt symmetrize}}Symmetrize a directed network before scoring (required for directed networks){p_end}
 {synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt onemode}}Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network){p_end}
 
 {p2colreset}{...}
 
@@ -49,10 +50,15 @@ than chance; higher (positive) values indicate a grouping that captures real com
 Scoring a single, all-nodes-in-one-group partition always gives {it:Q} = 0, for any network.
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the modularity of a grouping is Barber's bipartite modularity (only pairs of nodes from different modes enter the null model); {opt onemode} gives Newman's modularity of the bipartite graph read as a one-mode graph ({cmd:igraph::modularity}).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: requires {opt symmetrize} - modularity as computed here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: requires {opt symmetrize} - modularity as computed here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise. Signed: not checked. Two-mode: yes - the modularity of a grouping is Barber's bipartite modularity (only pairs of nodes from different modes enter the null model); {opt onemode} gives Newman's modularity of the bipartite graph read as a one-mode graph ({cmd:igraph::modularity}).
 
 {title:Stored results}
 

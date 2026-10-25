@@ -97,6 +97,15 @@ program nwdropnodes
 	// string gets blanks inserted by Stata (every 5,292 characters), which corrupted node names above ~900 nodes
 	tempname newnames
 	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
+	// a two-mode network stays two-mode: the mode of every surviving node and the level labels are put back
+	// after nwreplacemat has rebuilt the network (nwreplacemat sets neither)
+	local __dn2 = ("`is2mode'" == "true")
+	tempname dnmodes dnd1 dnd2
+	if `__dn2' {
+		mata: `dnmodes' = select(`netobj'->get_modes(), `keepmat'')
+		mata: `dnd1' = `netobj'->get_description_mode1()
+		mata: `dnd2' = `netobj'->get_description_mode2()
+	}
 
 	// BUGFIX: attribute values used to be read via st_data() AFTER
 	// nwreplacemat (below) had already run - but nwreplacemat physically
@@ -147,6 +156,19 @@ program nwdropnodes
 		nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
 	}
 	mata: mata drop `newnames'
+	if `__dn2' {
+		_nwsyntax `netname'
+		mata: `netobj'->set_2mode(1)
+		mata: `netobj'->set_modes(`dnmodes')
+		mata: `netobj'->set_description_mode1(`dnd1')
+		mata: `netobj'->set_description_mode2(`dnd2')
+		mata: st_local("__dnn1", strofreal(`netobj'->get_nodes_mode1()))
+		mata: st_local("__dnn2", strofreal(`netobj'->get_nodes_mode2()))
+		mata: mata drop `dnmodes' `dnd1' `dnd2'
+		if `__dnn1' == 0 | `__dnn2' == 0 {
+			di "{txt}(note: all nodes of one mode were dropped; {bf:`netname'} is still declared two-mode but one level is empty)"
+		}
+	}
 
 	// deal with attributes that should be synced with the smaller network
 	if "`attributes'" != "" {

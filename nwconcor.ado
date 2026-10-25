@@ -22,6 +22,7 @@ program nwconcor, rclass
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		noi _nw2guard `netname_temp', cmd(nwconcor)
 
 		local netmeasure "`measure'"
 		if "`netmeasure'" == "" {

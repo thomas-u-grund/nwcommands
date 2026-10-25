@@ -1,10 +1,12 @@
 capture program drop nw2clustering
 program nw2clustering
-	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string) replace]
+	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string) replace RA]
 
 	unw_defs
 
-	if "`generate'" == "" {
+	// ra gives the global coefficient of Robins and Alexander (2004), 4 C4 / L3, on the binary network
+	// instead of (generate() absent) or in addition to the local and global coefficients of Opsahl (2013)
+	if "`generate'" == "" & "`ra'" == "" {
 		di "{err}option {bf:generate()} required."
 		error 198
 	}
@@ -23,7 +25,7 @@ program nw2clustering
 	// generate() option (nwclustering/nwconcor/nwcoreperiphery/nwburt/
 	// nwbrokerage) already uses.
 	capture confirm variable `generate', exact
-	if _rc == 0 & "`replace'" == "" {
+	if _rc == 0 & "`replace'" == "" & "`generate'" != "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
 		err 99
 	}
@@ -86,11 +88,28 @@ program nw2clustering
 	// x both level()s = 8 combinations) before replacing it - every
 	// comparison matched to floating-point exactness (maxdiff=0), not
 	// merely "close enough".
-	capture drop `generate'
-	qui gen `generate' = .
-	mata: _nw2c_run(`netobj', `nodes', `level', "`measure'", "`generate'")
-	local C_avg = r(C_avg)
-	mata: st_global("r(measure)", "`measure'")
+	if "`ra'" != "" {
+		mata: st_matrix("__nw2c_ra", nw_robins_alexander(editmissing((*`netobj'->get_matrix())[selectindex(strtoreal(`netobj'->get_modes()) :== 1), selectindex(strtoreal(`netobj'->get_modes()) :== 2)], 0) :!= 0))
+		scalar __nw2c_r = __nw2c_ra[1,1]
+		scalar __nw2c_c4 = __nw2c_ra[1,2]
+		scalar __nw2c_l3 = __nw2c_ra[1,3]
+		matrix drop __nw2c_ra
+	}
+	if "`generate'" != "" {
+		capture drop `generate'
+		qui gen `generate' = .
+		mata: _nw2c_run(`netobj', `nodes', `level', "`measure'", "`generate'")
+		local C_avg = r(C_avg)
+		mata: st_global("r(measure)", "`measure'")
+	}
+	else {
+		mata: st_rclear()
+	}
+	if "`ra'" != "" {
+		mata: st_numscalar("r(ra)", st_numscalar("__nw2c_r")); st_numscalar("r(C4)", st_numscalar("__nw2c_c4")); st_numscalar("r(L3)", st_numscalar("__nw2c_l3"))
+		di "{txt}  Robins-Alexander clustering (4 x C4 / L3): {res}" %9.6f r(ra) "{txt}   (C4 = " r(C4) ", L3 = " r(L3) ")"
+		scalar drop __nw2c_r __nw2c_c4 __nw2c_l3
+	}
 	// The collision-guard `confirm variable' at the top of this program
 	// leaves its own stale, harmless nonzero `_rc' on the ordinary case
 	// where there is nothing to find - matching the SAME `getmata'/`_rc'

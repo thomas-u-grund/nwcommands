@@ -44,10 +44,15 @@ value 1 when there is at least one path between {it:nodes i} and {it:j} in the o
 
 
 
+{title:Valued networks}
+
+{pstd}
+This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as {help nwgeodesic}), {opt sym} available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as {help nwgeodesic}), {opt sym} available. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Examples}
 	

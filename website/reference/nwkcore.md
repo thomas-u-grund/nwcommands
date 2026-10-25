@@ -46,7 +46,7 @@ All calculations are performed on the undirected version of the network: for dir
 
 ## Supported network types
 
-Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching [nwcomponents](nwcomponents)'s own weak-connectivity convention and [nwsimindex](nwsimindex)'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching [nwcomponents](nwcomponents)'s own weak-connectivity convention and [nwsimindex](nwsimindex)'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

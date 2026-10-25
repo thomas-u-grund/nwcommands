@@ -18,7 +18,8 @@
 {opt target(nodename)}
 [{opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt binary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -27,6 +28,8 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own mean hitting time to {opt target()}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt onemode}}Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088){p_end}
 
 {p2colreset}{...}
 
@@ -53,13 +56,24 @@ equals 1 plus the average of its own neighbors' hitting times; the target's own 
 fixed at 0. The same "solve directly, do not simulate" discipline {help nwkatz}'s own walk-counting
 Katz centrality already established for an analogous exact random-walk quantity.
 
+{title:Valued networks}
+
+{pstd}
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the walk steps from i to j with probability w_ij / s_i (as {it:igraph::random_walk}), and the hitting times solve (D_s - W) h = s off the target, D_s the strengths; {opt binary} is the simple random walk.
+On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the hitting times of the random walk on the bipartite graph.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: not supported (a directed random walk's own hitting time is a well-defined
 but materially different quantity - not attempted here; networks are treated as undirected).
 Weighted: not checked - tie values are ignored (a random walker moves to each neighbor with EQUAL
-probability). Signed: not checked. Two-mode: not checked. Requires every node to have at least one
+probability). Signed: not checked. Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the hitting times of the random walk on the bipartite graph. Requires every node to have at least one
 tie - an isolate has no well-defined hitting time (there is no walk to take at all), and a
 disconnected network component containing {opt target()} would give some nodes an undefined
 (infinite) hitting time; both are rejected with a clear error rather than a silently wrong number.

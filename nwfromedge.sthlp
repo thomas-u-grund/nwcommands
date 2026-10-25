@@ -24,7 +24,9 @@
 {opt labs}({it:lab1 lab2 ...})
 {opt undirected}
 {opt directed}
-{opt twomode}]
+{opt twomode}
+{opt valued}
+{opt unvalued}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -35,6 +37,8 @@
 {synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
 {synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
 {synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge}, forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. See {help nw2fromedge} for the full two-mode-specific behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
+{synopt:{opt valued}}mark the network as valued (default if a value variable is given, also when every value is 1){p_end}
+{synopt:{opt unvalued}}mark the network as binary even if a value variable is given{p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 {synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
@@ -107,10 +111,15 @@ One can also transfrom any network that exists in memory into such an edgelist w
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior, where isolate preservation below does not apply). A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
 
 {title:Examples}
 

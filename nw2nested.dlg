@@ -1,0 +1,46 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nw2nested")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 170
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nw2nested - Nestedness (NODF, C-score) of a two-mode network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network:")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_sp_level 20 54 260 ., label("Mode whose pairs of nodes enter the C-score (1 or 2)")
+  SPINNER sp_level 290 54 70 ., default(2) max(2) min(1) nomem option(level)
+  TEXT tx_cx_silent 20 82 260 ., label("Suppress display of results")
+  CHECKBOX cx_silent 290 82 190 ., label("silent") option(silent)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nw2nested"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nw2nested " main.cb_net
+	beginoptions
+		optionarg main.sp_level
+		option main.cx_silent
+	endoptions
+	stata
+END

@@ -46,7 +46,7 @@ The command saves all bridges as a new network *newnetname*.
 
 ## Supported network types
 
-Binary: yes (only) - bridge status is a structural property, tie values are ignored. Directed: yes - `type()` distinguishes local/global bridges and arcs vs. edges. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - bridge status is a structural property, tie values are ignored. Directed: yes - `type()` distinguishes local/global bridges and arcs vs. edges. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## Stored results
 

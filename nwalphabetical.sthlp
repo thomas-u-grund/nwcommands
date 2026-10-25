@@ -8,6 +8,7 @@
 {p2col:{bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
 {p2col:{bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
 {p2col:{bf:{help nw2fromedge }}}Import two-mode network data from edgelist{p_end}
+{p2col:{bf:{help nw2nested }}}Nestedness (NODF, C-score) of a two-mode network{p_end}
 {p2col:{bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
