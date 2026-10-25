@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_cb_generate 20 54 260 ., label("Generate")
+  TEXT tx_cb_generate 20 54 260 ., label("Name of the new collapsed network")
   COMBOBOX cb_generate 290 54 190 ., dropdown contents(netlist) nomem option(generate)
-  TEXT tx_vr_by 20 82 260 ., label("By")
+  TEXT tx_vr_by 20 82 260 ., label("Variable defining which nodes are merged")
   VARNAME vr_by 290 82 190 ., nomem option(by)
 END
 

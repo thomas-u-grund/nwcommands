@@ -21,7 +21,7 @@ BEGIN
   TEXT tx_cx_plot 20 54 260 ., label("draw a bar chart of the 16 MAN-category counts")
   CHECKBOX cx_plot 290 54 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 82 260 ., label("name for the graph created by plot; default = triads")
-  EDIT ed_name 290 82 190 ., nomem option(name)
+  EDIT ed_name 290 82 190 ., nomem option()
 END
 
 LIST netlist

@@ -22,7 +22,7 @@ BEGIN
   EDIT ed_factor 290 54 190 ., nomem option(factor)
   TEXT tx_vr_label 20 82 260 ., label("label observations")
   VARNAME vr_label 290 82 190 ., nomem option(label)
-  TEXT tx_cx_lab 20 110 260 ., label("display node labels saved with the network (), the same convention  and  use; ta")
+  TEXT tx_cx_lab 20 110 260 ., label("Display the node labels saved with the network (takes precedence over label())")
   CHECKBOX cx_lab 290 110 190 ., label("lab") option(lab)
 END
 

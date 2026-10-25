@@ -25,7 +25,7 @@ BEGIN
   CHECKBOX cx_noopen 290 82 190 ., label("noopen") option(noopen)
 
   GROUPBOX gb_lay 10 126 530 132, label("Layout")
-  TEXT tx_cb_layout 20 136 260 ., label("layout algorithm (panel mode); see nwplot's own layout()")
+  TEXT tx_cb_layout 20 136 260 ., label("Layout algorithm (panel mode); see layout() of nwplot")
   COMBOBOX cb_layout 290 136 190 ., dropdown contents(list_layout) nomem option(layout)
   TEXT tx_cx_fixedlayout 20 164 260 ., label("compute one layout on the first network only and reuse it for every wave")
   CHECKBOX cx_fixedlayout 290 164 190 ., label("fixedlayout") option(fixedlayout)

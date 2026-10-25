@@ -32,7 +32,7 @@ BEGIN
   VARLIST vl_generate 290 194 190 ., nomem option(generate)
   TEXT tx_ed_in 20 222 260 ., label("Options for tabulating")
   EDIT ed_in 290 222 190 ., nomem option(in)
-  TEXT tx_cx_outputoff 20 250 260 ., label("Reserved/internal - has no effect on a one-mode network's own output; use  inste")
+  TEXT tx_cx_outputoff 20 250 260 ., label("Reserved/internal - has no effect on a one-mode network's own output; use silent instead")
   CHECKBOX cx_outputoff 290 250 190 ., label("outputoff") option(outputoff)
   TEXT tx_ed_out 20 278 260 ., label("Options for tabulating")
   EDIT ed_out 290 278 190 ., nomem option(out)

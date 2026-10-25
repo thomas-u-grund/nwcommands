@@ -546,7 +546,7 @@ function render(data) {
           'background-color': 'data(color)',
           'border-width': 0,
           'label': 'data(displayLabel)',
-          'font-size': 8,
+          'font-size': (data.label_font || 8),   // follows the default node size (rescaled coordinates)
           'color': '#333',
           'text-valign': 'top',
           'text-margin-y': -4

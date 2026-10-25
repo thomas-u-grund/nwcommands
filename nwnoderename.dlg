@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_ed_old 20 54 260 ., label("Old")
+  TEXT tx_ed_old 20 54 260 ., label("Current name of the node to rename")
   EDIT ed_old 290 54 190 ., nomem option(old)
-  TEXT tx_ed_new 20 82 260 ., label("New")
+  TEXT tx_ed_new 20 82 260 ., label("New name for the node")
   EDIT ed_new 290 82 190 ., nomem option(new)
 END
 

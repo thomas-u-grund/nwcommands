@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_cb_name 20 54 260 ., label("Save Simmelian ties as new network; default")
-  COMBOBOX cb_name 290 54 190 ., dropdown contents(netlist) nomem option(name)
-  TEXT tx_cx_nwreplace 20 82 260 ., label("Nwreplace")
+  TEXT tx_cb_name 20 54 260 ., label("Save Simmelian ties as new network; default _simmelian")
+  COMBOBOX cb_name 290 54 190 ., dropdown contents(netlist) nomem option()
+  TEXT tx_cx_nwreplace 20 82 260 ., label("Replace an existing network of that name")
   CHECKBOX cx_nwreplace 290 82 190 ., label("nwreplace") option(nwreplace)
 END
 

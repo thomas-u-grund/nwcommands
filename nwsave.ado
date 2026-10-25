@@ -7,8 +7,10 @@ program nwsave
 	// Removed rather than wired up, since there is no second storage format
 	// implemented anywhere in this file to select between.
 	syntax anything [, old replace *]
-	local webname = subinstr(`"`anything'"', ".dta","",.)
-	local webname = subinstr(`"`webname'"', ".nwdta","",.)
+	// anything keeps the quotes of a quoted file name (paths with spaces)
+	local webname `anything'
+	if regexm(`"`webname'"', "\.nwdta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 6)
+	else if regexm(`"`webname'"', "\.dta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 4)
 	unw_defs
 	nwload, labelonly
 
@@ -161,7 +163,7 @@ program nwsave
 	// instead of ever surfacing the real problem. `capture` the save,
 	// always restore the caller's original data either way, then
 	// re-raise the real error/rc so failures are still reported.
-	capture qui save`old' `webname'.nwdta, `replace' `options'
+	capture qui save`old' `"`webname'.nwdta"', `replace' `options'
 	local savercc = _rc
 	use `existing', clear
 	if `savercc' != 0 {

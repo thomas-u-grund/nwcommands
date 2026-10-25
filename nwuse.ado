@@ -2,8 +2,10 @@ capture program drop nwuse
 program nwuse
 	syntax anything [, nwclear nwappend force *]
 	unw_defs
-	local basename = subinstr(`"`anything'"', ".nwdta","",999)
-	local basename = subinstr(`"`basename'"', ".dta","",999)
+	// anything keeps the quotes of a quoted file name (paths with spaces)
+	local basename `anything'
+	if regexm(`"`basename'"', "\.nwdta$") local basename = substr(`"`basename'"', 1, strlen(`"`basename'"') - 6)
+	else if regexm(`"`basename'"', "\.dta$") local basename = substr(`"`basename'"', 1, strlen(`"`basename'"') - 4)
 
 	tempfile existing
 	capture save `existing'

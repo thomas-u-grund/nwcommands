@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 328, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
-  TEXT tx_ed_type 20 82 260 ., label("regression command to be used for dyad dataset; default =")
+  TEXT tx_ed_type 20 82 260 ., label("Regression command to be used for dyad dataset; default = logit")
   EDIT ed_type 290 82 190 ., nomem option(type)
   TEXT tx_ed_typeoptions 20 110 260 ., label("options to be passed on to the regression command")
   EDIT ed_typeoptions 290 110 190 ., nomem option(typeoptions)
@@ -37,7 +37,7 @@ BEGIN
   TEXT tx_cx_plot 20 278 260 ., label("draw a histogram-plus-reference-line panel per coefficient")
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
-  EDIT ed_name 290 306 190 ., nomem option(name)
+  EDIT ed_name 290 306 190 ., nomem option()
   TEXT tx_cx_force 20 334 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 334 190 ., label("force") option(force)
 END
