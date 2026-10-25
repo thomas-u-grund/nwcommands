@@ -57,7 +57,7 @@ The page is a demonstration of the view. It has no data entry, and what you chan
 
 ## The Stata commands
 
-The page above was written by these commands (`fname()` needs the release that follows core 3.3.1; the data set
+The page above was written by these commands (`fname()` needs core 3.4.0 or later; the data set
 `lazega` is in the repository and is loaded with `nwwebuse`):
 
 ```stata

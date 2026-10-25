@@ -15,7 +15,7 @@ onto one mode and plot it. The data sets, with their sources and licences, are d
 [data sets](../../datasets/#two-mode-affiliation-networks) page.
 
 {: .note }
-`davis` and `ftdirectors_se` ship with the release that follows 3.3.1. With that release installed,
+`davis` and `ftdirectors_se` ship with core 3.4.0. With version 3.4.0 or later installed,
 `nwwebuse davis` and `nwwebuse ftdirectors_se` load them, as shown below. The output on this page was produced from
 the copies in the data folder of the repository, loaded with `nwuse`, which is the command `nwwebuse` calls.
 
