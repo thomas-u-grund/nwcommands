@@ -4761,7 +4761,7 @@ string scalar nw_isolate_modes_string(pointer(class nw_def scalar) scalar p)
 	if (rows(iso) == 0) return("")
 	nm = p->get_nodenames()
 	md = p->get_modes()
-	res = invtokens(nm[iso]' :+ "=" :+ md[iso]', ",")
+	res = invtokens(nm[1, iso'] :+ "=" :+ md[1, iso'], ",")
 	if (strlen(res) > 60000) return("")
 	return(res)
 }
