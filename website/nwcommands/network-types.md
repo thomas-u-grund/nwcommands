@@ -40,7 +40,7 @@ Every network carries a *valued* flag, a *two-mode* flag and a *directed* flag, 
 | Directed | `U` | undirected networks only, or two-mode (undirected by construction) |
 | Directed | `-` | not applicable |
 
-The classes were checked by running every command on a binary, a valued, a directed and a two-mode network: the commands marked `N` under Valued are exactly those that print the note on a valued network, and the commands marked `R` or `O` under Two-mode are exactly those that stop on a two-mode network with error 6088.
+The commands marked `N` under Valued are exactly those that print the note on a valued network, and the commands marked `R` or `O` under Two-mode are exactly those that stop on a two-mode network with error 6088.
 
 ## Creating, importing and exporting networks
 
@@ -240,4 +240,3 @@ The classes were checked by running every command on a binary, a valued, a direc
 | `schemeinfo` | - | - | - | - | internal |
 | `unw_defs` | - | - | - | - | internal |
 
-The file `NETWORK_TYPES_TABLE.csv` with the same table and the full meaning of every symbol is in the documentation of the book project.
