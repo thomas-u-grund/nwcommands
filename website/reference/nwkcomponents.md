@@ -20,7 +20,8 @@ nwkcomponents
 k(int)
 generate(newvarname)
 replace
-silent]
+silent
+force]
 ```
 
 | | |
@@ -29,6 +30,7 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest qualifying k-component size |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
 ## Description
 
@@ -48,7 +50,7 @@ Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - th
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical Moody-White sense has no directed generalization here, the same reasoning [nwclique](nwclique)/ [nwkplex](nwkplex)/[nwnclique](nwnclique) already apply). Weighted: not used - only tie presence/absence affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation via max-flow is polynomial per pair, but `nwkcomponents` computes it between *every* non-adjacent pair (a deliberately simple, definitely-correct brute-force rather than the smaller reference-vertex subset a more optimized algorithm would use - see [nwclique](nwclique)'s own "Supported network types" section for the same trade-off philosophy applied there), and the overall recursive decomposition can call this repeatedly - fine for the moderate network sizes typical of SNA datasets, not recommended for very large or very dense networks.
+Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical Moody-White sense has no directed generalization here, the same reasoning [nwclique](nwclique)/ [nwkplex](nwkplex)/[nwnclique](nwnclique) already apply). Weighted: not used - only tie presence/absence affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation via max-flow is polynomial per pair, but `nwkcomponents` computes it between *every* non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller reference-vertex subset a more optimized algorithm would use), and the overall recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks (see **Limits**); for k of 3 and higher, very large or very dense networks are not recommended.
 
 ## Stored results
 

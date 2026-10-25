@@ -20,7 +20,8 @@ nwreach
 sym
 name(string)
 xvars
-nwreplace]
+nwreplace
+force]
 ```
 
 | | |
@@ -29,6 +30,7 @@ nwreplace]
 | `name(newnetname)` | Name of the new network; default = *reach* |
 | `xvars` | Generate Stata variables for the network |
 | `nwreplace` | if a network named *newnetname* already exists, drop it and use this name anyway - required, not silent (see [nwgeodesic](nwgeodesic) for the same convention) |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
 
 ## Description
 

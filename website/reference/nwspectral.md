@@ -31,6 +31,7 @@ silent]
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `replace` | Replace existing variable(s) |
 | `silent` | Suppress display of results |
+| `force` | Run the complete decomposition of a network with more than 6,000 nodes |
 
 ## Description
 

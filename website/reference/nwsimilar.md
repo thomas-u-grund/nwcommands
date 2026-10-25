@@ -29,6 +29,7 @@ xvars]
 | `context`(*[context](nwsimilar)*) | Context definition for similarity calculation; default = both (alias: `mode()`, kept for backward compatibility - [nwdissimilar](nwdissimilar), this command's own sibling, uses `context()` for the identical concept) |
 | `name`(*[newnetname](newnetname)*) | Name of the new similarity network; default = *_similar* |
 | `xvars` | Generate Stata variables for the network |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 12,900 nodes otherwise) |
 
 ## Description
 

@@ -41,6 +41,7 @@ disnet(netname)
 | `groups(int)` | Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable |
 | `equivgen(newvarname)` | Name of the variable `groups(int)` generates. **Required whenever `groups(int)` is specified** - give exactly one of `generate()` or `equivgen()` (they are the same option; alias `generate()` matches [nwcommunity](nwcommunity)/[nwspectral](nwspectral)'s own naming in this same group), not both. Has no effect, and is not required, without `groups(int)` |
 | `replace` | Replace an existing `equivgen(newvarname)` variable |
+| `force` | Cluster a network with more than 6,000 nodes (without `dismat()`) |
 
 ## Description
 

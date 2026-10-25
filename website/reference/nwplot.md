@@ -74,6 +74,8 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 . * drag nodes / edit the legend in the browser, then save both CSVs, then:
 . nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)
 ```
+How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds to about `nodefactor(0.2)` in the static graph. Without `nodefactor()`, `nwplot` therefore uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of 1.85 gives `nodefactor(0.37)`); an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group. The CSV format is unchanged.
+
 `importcoords()`/`edgeimport()` must be run against the same network, same size, as the `interactive` view they came from (row order is how nwplot matches an edit back to a node/tie, the same way `nodexy()`/`label()` already do) - re-export from `interactive` rather than reusing an old CSV after the network or an `if`/`in` restriction changes. Node size is not yet individually editable in the interactive view; the size-factor slider maps onto `nodefactor()` instead.
 
 Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or asymmetrically connected (see [nwdyads](nwdyads)). By default, asymmetrically connected dyads are represented as a straight line, whereas mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as curved lines.
@@ -216,7 +218,10 @@ Binary: yes. Weighted: yes (via `edgesize()`/`edgecolor()` - see the shortest-pa
 
 - Macros:
 - **r(export)** filename actually passed to `export()`, if specified
+- **r(fname)** path of the interactive HTML page written by `interactive`
+- **r(interactive)** same as **r(fname)**
 
 ## See also
 
-- [nwplotmatrix](nwplotmatrix)
+- [nwplotmatrix](nwplotmatrix), [nwmovie](nwmovie), [netexample](netexample)
+- A live example of the interactive view, with the commands that produced it: [Interactive demo: the Lazega advice network](../book/interactive/)

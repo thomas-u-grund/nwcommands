@@ -21,7 +21,8 @@ alpha(real)
 walks
 generate(varname)
 replace
-geodesic_options]
+geodesic_options
+force]
 ```
 
 | | |
@@ -31,7 +32,7 @@ geodesic_options]
 | `generate`(*`varname`*) | **Required.** Variable name for Katz centrality scores |
 | `replace` | Replace existing variable |
 | *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to
-the internal [nwgeodesic](nwgeodesic) call); not used when `walks` is specified |
+synopt:`force`Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
 ## Description
 

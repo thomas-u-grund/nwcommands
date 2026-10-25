@@ -21,6 +21,10 @@ n(int)
 generate(newvarname)
 replace
 minsize(int)
+maxcliques(#)
+maxtime(#)
+countonly
+nomatrix
 silent]
 ```
 
@@ -30,6 +34,10 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-n-clan membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest n-clan size to report; default = 3 |
+| `maxcliques(#)` | Stop with an error when more than this many maximal n-cliques have to be examined while looking for n-clans; default = 1,000,000 |
+| `maxtime(#)` | Stop with an error when the search has run for this many seconds without finishing; default = 60 |
+| `countonly` | Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; `generate(newvarname)` is then not needed |
+| `nomatrix` | Do not build the sets-by-nodes matrix; the `generate(newvarname)` variable and the count are still returned |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -50,17 +58,19 @@ Like n-cliques, n-clans genuinely overlap, so `nwnclan` follows [nwnclique](nwnc
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (same reasoning [nwnclique](nwnclique) already applies). Weighted: not used for membership. Signed: not checked. Two-mode: not checked. Inherits [nwnclique](nwnclique)'s own worst-case exponential enumeration cost, plus an additional per-candidate induced-subgraph diameter check - fine for the moderate network sizes typical of SNA datasets.
+Binary: yes. Directed: yes, automatically symmetrized (same reasoning [nwnclique](nwnclique) already applies). Weighted: not used for membership. Signed: not checked. Two-mode: not checked. Inherits [nwnclique](nwnclique)'s own worst-case exponential enumeration cost, plus an additional per-candidate induced-subgraph diameter check.
 
 ## Stored results
 
 **Scalars**
 
 - **r(nclans)** number of maximal n-clans found meeting `minsize(int)`
+- **r(maxsize)** size of the largest set (with `countonly` or `nomatrix`)
 
 **Matrices**
 
-- **r(nclan_matrix)** n-clans-by-nodes 0/1 membership matrix, one row per maximal n-clan
+- **r(size_table)** (with `countonly` or `nomatrix`) sizes and the number of sets of each size
+- **r(nclan_matrix)** n-clans-by-nodes 0/1 membership matrix, one row per maximal n-clan (not with `countonly` or `nomatrix`)
 
 ## References
 

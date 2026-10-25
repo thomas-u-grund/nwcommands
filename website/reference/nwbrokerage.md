@@ -32,7 +32,7 @@ silent]
 
 ## Description
 
-`nwbrokerage` counts, for every node *b*, how often it plays each of the five brokerage roles defined by Gould and Fernandez (1989). For every directed two-path *a -> b -> c* (with *a* != *c*) through *b*, the role is determined by comparing the group membership of *a*, *b* and *c* (from `group()`):
+`nwbrokerage` counts, for every node *b*, how often it plays each of the five brokerage roles defined by Gould and Fernandez (1989). For every directed two-path *a -> b -> c* (with *a* != *c*) through *b* in which *a* and *c* are not tied (no tie *a* -> *c*; two-paths that *a* could skip because it reaches *c* directly are not counted, as in Gould and Fernandez), the role is determined by comparing the group membership of *a*, *b* and *c* (from `group()`):
 
 - **coordinator***a*, *b* and *c* all in the same group
 - **gatekeeper***a* in a different group from *b*; *c* in the same group as *b*

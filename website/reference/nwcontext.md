@@ -23,7 +23,8 @@ mode(context)
 generate(newvarname)
 mat(string)
 noweight
-replace]
+replace
+force]
 ```
 
 | | |
@@ -35,6 +36,7 @@ replace]
 | `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable |
 | `noweight` | Ignore valued ties and treats all as binary |
 | `replace` | Replace `generate()`'s target variable if it already exists |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
 
 ## Description
 

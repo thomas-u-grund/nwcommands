@@ -19,7 +19,8 @@ nwlambda
 [,
 name(newnetname)
 xvars
-replace]
+replace
+force]
 ```
 
 | | |
@@ -27,6 +28,7 @@ replace]
 | `name(newnetname)` | Name of the new connectivity network; default = *lambda* |
 | `xvars` | Generate Stata variables for the new network |
 | `replace` | Replace an existing network of the same name |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
 
 ## Description
 
@@ -61,6 +63,8 @@ Binary: yes (only) - similarity is computed from binary edge-connectivity; tie v
 Borgatti, S.P., Everett, M.G., Shirey, P.R. (1990). LS sets, lambda sets and other cohesive subsets. *Social Networks* 12(4), 337-357.
 
 Menger, K. (1927). Zur allgemeinen Kurventheorie. *Fundamenta Mathematicae* 10, 96-115.
+
+The result is an *n*-by-*n* network and two matrices are held at once: above about 27,000 nodes (12 GB) the command stops at once with r(484), and `force` runs it anyway.
 
 ## See also
 

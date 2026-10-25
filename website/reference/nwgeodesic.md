@@ -4,7 +4,6 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Calculate shortest paths between nodes"
 ---
 
 # `nwgeodesic`
@@ -36,7 +35,7 @@ force]
 | `nwreplace` | Overwrite existing network *newnetname* |
 | `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
-| `force` | force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise) |
+| `force` | force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
 
 ## Description
 

@@ -59,7 +59,7 @@ This load the Florentine dataset from the internet and appends it to the existin
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved, independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved (ties, modes, labels and attributes), independent of any of these properties. Files of two-mode networks written by earlier versions, which listed every pair of nodes, still load.
 
 ## See also
 
