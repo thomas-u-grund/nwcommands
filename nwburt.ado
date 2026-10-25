@@ -6,16 +6,18 @@ program nwburt, rclass
 
 	_nwsyntax `netname'
 
-	// What kind of ties does the network store: 0 = every tie has the value 1, 1 = other positive values
-	// (valued), 2 = a negative or missing value. Valued networks get Burt's (1992) weighted measures (native
-	// kernel 40) unless binary is given, which treats every positive value as a tie.
+	// The Valued flag of the network (set when it was created, see nwset/nwfromedge) decides, as for every command
+	// with a weighted form in R: a valued network gets Burt's (1992) weighted measures (native kernel 40) unless
+	// binary is given, which treats every positive value as a tie of value 1; an unvalued network is binary.
+	// __kind (from the stored ties): 0 = every tie has the value 1, 1 = other positive values, 2 = a negative or
+	// missing value (refused).
 	local __kind 0
 	mata: st_local("__kind", strofreal(nw_burtkind(`netobj')))
 	if `__kind' == 2 {
 		di "{err}nwburt is not defined for networks with negative or missing tie values"
 		err 198
 	}
-	local __weighted = (`__kind' == 1 & "`binary'" == "")
+	local __weighted = ("`valued'" == "true" & "`binary'" == "")
 	if `__weighted' & ("`dyadredundancy'" != "" | "`dyadconstraint'" != "") {
 		di "{err}The network is valued: dyadredundancy and dyadconstraint are defined for ties that are present or absent."
 		di "{err}Add the option {bf:binary} (every positive value counts as a tie) or dichotomize the network first."

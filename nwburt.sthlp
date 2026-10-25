@@ -34,12 +34,12 @@ reach j via q instead of directly connecting to j. The level of redundancy of th
 is based on the total number of ties ego has.
 
 {pstd}
-For a {bf:valued} network the measures are Burt's (1992) weighted measures, as in {cmd:igraph::constraint(weights=)} of R (igraph) and
+For a {bf:valued} network (a network that was created with tie values, see {help nwnetworktypes}) the measures are Burt's (1992) weighted measures, as in {cmd:igraph::constraint(weights=)} of R (igraph) and
 {cmd:effective_size(weight=)} and {cmd:constraint(weight=)} of NetworkX: the strength of the relation between {it:i} and {it:j}
 is the sum of both directions, {it:a_ij} = {it:z_ij} + {it:z_ji} (for an undirected network this only doubles every
 value and changes no result), and the formulas below are applied to these strengths. With the option {opt binary} the
-tie values are ignored: every positive value counts as a tie of value 1. A network whose ties all have the value 1 is
-computed as before (the option has no effect).
+tie values are ignored: every positive value counts as a tie of value 1. A network that is not valued is computed as before
+(the option has no effect).
 
 {pstd}
 The dyadic redundancy measure calculates, for each actor in ego's neighborhood, how many of the other actors in the neighborhood are also tied to the other.  The larger the proportion of others in the neighborhood who are tied to a given "alter," the more "redundant" is ego's direct tie.
@@ -114,10 +114,10 @@ needs the plugin for a valued network too. The options {opt dyadredundancy} and
 
 {pstd}
 Binary: yes. Valued: yes, weighted (Burt 1992, see above); the option {opt binary} ignores the values. Directed: a directed {it:valued} network is
-symmetrized as in Burt, igraph and NetworkX (the strength of a relation is {it:z_ij} + {it:z_ji}). A directed network whose ties all have the value 1 is
+symmetrized as in Burt, igraph and NetworkX (the strength of a relation is {it:z_ij} + {it:z_ji}). A directed network that is not valued is
 {it:not} symmetrized: {it:p_ij} (the proportion of {it:i}'s outgoing investment in {it:j}) is computed from the outgoing ties exactly as given, the
 convention of {help nwconstraint} (igraph and NetworkX use both directions, so their values differ for such networks; symmetrize first with
-{help nwsym} to compare). Signed (negative values) and missing values: not supported, the command stops with an error. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{help nwsym} to compare, or use {opt binary} on a valued network). Signed (negative values) and missing values: not supported, the command stops with an error. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {pstd}
 Before version 3.6.0 the values of a valued network were inserted into the formulas of a binary network without
