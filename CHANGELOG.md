@@ -6,6 +6,13 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Results that change (read before you re-run old analyses)
+- **Node-level results could land on the wrong nodes.** About 20 commands (`nw2degree`, `nwaltergen`, `nwbrokerage`, `nwburt`, `nwclique`, `nwcohesion`, `nwcommunity`, `nwcomponents`, `nwconcor`, `nwcoreperiphery`, `nwego`, `nwgeodesic` (eccentricity), `nwkcomponents`, `nwkcore`, `nwkplex`, `nwnclan`, `nwnclique`, `nwspectral`, `nwturnover`, `nwutility`) wrote their result variable to rows 1 to n of the data set, whatever order the data set was in. If you had sorted or `gsort`ed the data (or used a projection of a two-mode network) before the call, values were attached to the wrong nodes. They are now matched to the nodes by name. Re-run analyses in which a data set was sorted before such a command.
+- `nwqap, qapspp` gave p = 0 for every coefficient (it compared a logit coefficient with an OLS-scale null); it now uses the partial OLS slope, so p-values change.
+- `nw2project` and `nwproject` report the number of edges (each pair once), no longer twice that.
+- `nwsummarize` of a large two-mode network reports the density over the pairs between the two modes.
+- `nwpermute, generate()` stops if the network already exists unless `nwreplace` is given (it used to overwrite silently).
+
 ### Added
 - `nwclique` and `nwkcomponents` have the option `nomatrix` (as `nwnclique`): `r(clique_matrix)` / `r(kcomp_matrix)` are not built or stored; the generated variable and the counts (`r(cliques)`, `r(kcomponents)`) are the same. Stata stores a result matrix in time that grows with the square of the number of columns (about 45 s at 100,000 nodes whatever the number of rows, a transposed matrix costs the same), so the matrix cannot be made cheaper; without it `nwclique` takes 0.26 s at 100,000 nodes instead of 37 s (it gets the clique numbers from the kernel's list of (clique, node) pairs). The default is unchanged.
 - Two two-mode example data sets, loaded with `nwwebuse`: `davis` (Southern women of Davis, Gardner and Gardner 1941: 18 women, 14 events, 89 ties; attributes surname, title, event date) and `ftdirectors_se` (a subset of the Financial Times directors-and-companies data of Evtushenko and Gastner, doi:10.5281/zenodo.3553442, CC BY 4.0: 5,092 directors, 455 companies, 5,669 ties; attributes gender, age, sector, industry, employees). Sources, licences and the changes made to the subset are in `help netexample` and the website page "Data sets". Regression test `cscripts/test_twomode_data.do`.
