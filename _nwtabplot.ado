@@ -174,7 +174,7 @@ program define _nwtabplot, sortpreserve
 			local text "maximum"
 		}
 		if `biggest' == 0 {
-			di as err "all bars zero height?"
+			noi di as err "all bars zero height?"
 			exit 498
 		}
 		if "`horizontal'" != "" {
@@ -206,7 +206,7 @@ program define _nwtabplot, sortpreserve
 		}
 		if "`offset'`zoffset'" == "" local offset 0.1
 		else if "`offset'" != "" & "`zoffset'" != "" {
-			di as err "choose between offset() and zoffset()"
+			noi di as err "choose between offset() and zoffset()"
 			exit 198
 		}
 		local sopts `options'

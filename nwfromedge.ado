@@ -323,7 +323,7 @@ program nwfromedge
 			// Error-code coherence pass: consolidated onto `errNWsExists'
 			// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 			// history of this convention's drift onto an undocumented `6099'.
-			di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+			noi di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
 			error `errNWsExists'
 		}
 	}

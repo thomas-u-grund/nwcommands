@@ -16,7 +16,7 @@ program nwcohesion, rclass
 		_nwtimeguard, command(nwcohesion) nodes(`nodes') model(power) base(27) exponent(2.1) alternative(The cohesion hierarchy needs a vertex-connectivity search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
 
 		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		local netgenerate "`generate'"

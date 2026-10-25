@@ -152,7 +152,7 @@ program nwdegree
 		// call (a real name is still required, even if the caller never
 		// reads it afterward).
 		if ("`netgenerate'" == "") {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		if ("`netgenerate'" != "" & "`directed'" == "true") {

@@ -33,7 +33,7 @@ program nwnclan, rclass
 		_nwsyntax `netname_temp'
 
 		if "`generate'" == "" & "`countonly'" == "" {
-			di "{err}option {bf:generate()} required (or {bf:countonly})."
+			noi di "{err}option {bf:generate()} required (or {bf:countonly})."
 			error 198
 		}
 		local netgenerate "`generate'"
