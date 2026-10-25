@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [3.3.1] - not yet released
+## [3.3.1] - 2026-10-25
 
 ### Fixed
 - `nwinstall, all` and `nwinstall, models` index the Mata libraries after installing (`mata mlib index`), so the model packages are found in the same session. (Each model package also indexes its own library when it is first used.)

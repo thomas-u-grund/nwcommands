@@ -86,4 +86,4 @@ undirected network with 10 ties per node: 5,000 nodes 0.6 seconds (15 seconds be
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
