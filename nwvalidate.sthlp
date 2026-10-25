@@ -47,4 +47,4 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 last certified : 25 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.4.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

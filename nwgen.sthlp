@@ -229,4 +229,4 @@ Generate a new network with a network expression:
 	{cmd:. nwsummarize bus_marr, matonly}
 
 {hline}
-{pstd}{it:nwcommands version 3.4.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
