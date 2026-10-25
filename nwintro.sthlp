@@ -154,6 +154,17 @@ the 2.4th power) of the number of nodes: 1,000 / 2,000 / 3,000 / 5,000 nodes tak
 {help nwsimilar}, {help nwsimindex} and {help nwlambda} take under 2 seconds at 5,000 nodes. {help nwtostata} needs one Stata
 variable per node and is limited by the number of variables of your Stata flavour (2,048 in Stata/BE).
 
+{pstd}
+Measured at 10,000 nodes (Stata/BE, random network with 10 ties per node): the cubic commands {help nwspectral},
+{help nwconcor} and {help nwhierarchy} (and {help nwdendrogram} of its result) need more than 5 minutes and stop with
+r(484) above 6,000 nodes unless the option {opt force} is given; {help nwcorrelate} of the nodes of one network needs about
+25 dense matrices and stops with r(484) above 7,000 nodes; {help nwqap} 40 seconds and 11.6 GB; {help nwhomophily},
+{help nwcollapse} and the uncompressed {help nwtoedge} stop above 7,071 nodes; {help nwrandom} 56 seconds and {help nwcug}
+with 5 draws more than 5 minutes (each draw shuffles the 100 million cells of the matrix). Two-mode networks
+cost the square of both modes together: 10,000 + 5,000 nodes need 7 GB. {help nwcommunity} 0.24 seconds,
+{help nwrandomwalk} 0.15 seconds, {help nwcomponents} 0.04 seconds. Most other commands finish in under 30 seconds
+(the slowest: {help nwplot} with the circle layout 39 seconds, {help nwutility} 26 seconds, {help nwkatz} 24 seconds).
+
 {marker limits_combinatorial}{...}
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
 

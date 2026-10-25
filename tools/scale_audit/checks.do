@@ -379,6 +379,26 @@ real scalar nwa_modq(string scalar v)
     return(q)
 }
 
+// hitting-time identity h(i) = 1 + mean of h over the neighbours of i (undirected simple graph), h(target) = 0, on the sample nodes
+real scalar nwa_hitcheck(string scalar v, real scalar target)
+{
+    external real colvector NWA_ukey, NWA_urp, NWA_ucl
+    real colvector h, sm, nb
+    real scalar n, i, a, bad
+    nwa_ugraph()
+    n = rows(NWA_urp) - 1
+    h = st_data((1, n), v)
+    bad = (abs(h[target]) > 1e-9)
+    sm = nwa_samples()
+    for (i = 1; i <= rows(sm); i++) {
+        a = sm[i]
+        if (a == target) continue
+        nb = NWA_ucl[(NWA_urp[a] + 1)::NWA_urp[a + 1]]
+        if (abs(h[a] - (1 + mean(h[nb]))) > 1e-6 * max((1, abs(h[a])))) bad++
+    }
+    return(bad)
+}
+
 end
 
 program nwa_truthinit
@@ -476,4 +496,13 @@ program nwa_gone
     capture nwcurrent
     local rc = _rc
     nwa_check "no network left" , c(`rc' != 0)
+end
+
+// nwa_cnt "what", if(condition) eq(expression): the number of observations satisfying the condition equals the expression
+capture program drop nwa_cnt
+program nwa_cnt
+    syntax anything(name=desc), if(string asis) eq(string asis)
+    quietly count if `if'
+    local got = r(N)
+    nwa_check `desc' , c(`got' == `eq')
 end

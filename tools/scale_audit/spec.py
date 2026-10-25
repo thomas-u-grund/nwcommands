@@ -27,8 +27,8 @@ def S(command, net, line, pre=None, attr=False, cat="linear", maxn=None, note=""
 S("nwfromedge", "edges", "nwfromedge from to, name(bench)", cat="io")
 S("nwfromedge[valued]", "edges", "nwfromedge from to val, name(bench)", cat="io")
 S("nwfromedge[undirected]", "edges", "nwfromedge from to, name(bench) undirected", cat="io")
-S("nw2fromedge", "edges", "nw2fromedge from to, name(bench)", cat="io",
-  note="edge list from[1..N], to[1..N] is read as mode 1 x mode 2")
+S("nw2fromedge", "edges2", "nw2fromedge from to, name(bench)", cat="io",
+  note="edge list from[1..N], to[1..N/2] is read as mode 1 x mode 2 (stages 0-1 used to[1..N], i.e. N + N nodes)")
 S("nwtoedge", "dir", "nwtoedge bench, ego(e_) alter(a_)", cat="io", note="creates an edge list in Stata variables")
 S("nwtoedge[valued]", "valued", "nwtoedge bench, ego(e_) alter(a_)", cat="io")
 S("nwtoedge[compress]", "dir", "nwtoedge bench, ego(e_) alter(a_) compress", cat="io", note="ties only")
@@ -50,7 +50,7 @@ S("nwtomata", "dir", "nwtomata bench, mat(M)", cat="io", note="materialises a Ma
 S("nwtomatafast", "dir", "nwtomatafast bench", cat="util")
 S("nwreplacemat", "dir", "nwreplacemat bench, newmat(M) netonly", pre=["nwtomata bench, mat(M)"], cat="io")
 S("nwset", "edges", "nwset from to, edgelist name(bench)", cat="io", note="edge-list form of nwset (stages 0-1 timed the matrix form on two variables: a 2-node network)")
-S("nw2set", "edges", "nw2set from to, edgelist name(bench)", cat="io")
+S("nw2set", "edges2", "nw2set from to, edgelist name(bench)", cat="io")
 S("nwsync", "dir", "nwsync bench", cat="io")
 
 # ---------------------------------------------------------------- description
@@ -134,8 +134,8 @@ S("nwdissimilar", "dir", "nwdissimilar bench, type(euclidean) name(dis)", cat="a
 S("nwsimindex", "undir", "nwsimindex bench, measure(jaccard) name(sidx)", cat="allpairs")
 S("nwsimmelian", "undir", "nwsimmelian bench, name(simm)", cat="allpairs")
 S("nwhierarchy", "dir", "nwhierarchy bench", cat="allpairs")
-S("nwdendrogram", "dir", "nwdendrogram", pre=["nwhierarchy bench, groups(3) generate(role)"], cat="allpairs",
-  note="the timed command is only the plot of a clustering produced by nwhierarchy")
+S("nwdendrogram", "dir", "nwdendrogram", pre=["nwhierarchy bench"], cat="allpairs",
+  note="the timed command is only the plot of a clustering produced by nwhierarchy (stage 2: without groups(3), which fails on the many tied merge heights of single linkage on a random network)")
 
 # ---------------------------------------------------------------- statistical
 S("nwcorrelate", "dir", "nwcorrelate bench bench2, permutations(5)", pre=["nwpermute bench, generate(bench2)"], cat="perm")
@@ -177,6 +177,10 @@ S("nwaddnodes", "dir", "nwaddnodes bench, nodenames(zz1, zz2) generate(an)", cat
 S("nwnoderename", "dir", "nwnoderename bench, old(n1) new(x1)", cat="manip")
 S("nwappend", "dir", "nwappend using nwa_file, force", pre=["nwsave nwa_file, replace"], cat="manip")
 S("nwexpand[attr]", "dir", "nwexpand attr, name(exp)", attr=True, cat="allpairs")
+S("nwexpand[network]", "dir", "nwexpand attr, network(bench) name(exp2)", attr=True, cat="allpairs",
+  note="stage 2: the labels of the network pass through the network() option")
+S("nwtabulate[attribute]", "dir", "nwtabulate bench, attribute(grp)", attr=True, cat="linear", note="stage 2")
+S("nwmixing[perm]", "dir", "nwmixing bench, attribute(grp) permutations(20)", attr=True, cat="perm", note="stage 2")
 S("nwattime", "edges", "nwattime bench, at(1) name(att)",
   pre=["gen byte tt = ceil(runiform()*3)", "nwset from to, time(tt) name(bench) undirected"], cat="manip",
   note="snapshot of a 3-wave temporal network")
@@ -214,7 +218,8 @@ CHK = {
     "nwtoedge": ['nwa_check "rows N*N" , c(_N == {N}*{N})'] + _EDGE("bench", 0),
     "nwtoedge[valued]": ['nwa_check "rows N*N" , c(_N == {N}*{N})'] + _EDGE("bench", 1),
     "nwtoedge[compress]": ['nwa_check "rows = ties" , c(_N == scalar(nwa_t_ties) + {N})'] + _EDGE("bench", 0),
-    "nw2toedge": [], "nw2toedge[compress]": [],
+    "nw2toedge": ['mata: st_numscalar("nwa_ton", nwa_nto())', 'nwa_check "rows = mode-1 nodes x mode-2 nodes" , c(_N == {N}*scalar(nwa_ton))', 'nwa_cnt "ties", if(bench == 1) eq(scalar(nwa_t_ties))'],
+    "nw2toedge[compress]": ['nwa_check "rows = ties" , c(_N == scalar(nwa_t_ties))'],
     "nwset": ["nwa_std bench, kind(dir)"],
     "nw2set": ["nwa_std bench, kind(two)"],
     "nwtostata": [],
@@ -254,6 +259,10 @@ CHK = {
     "nwrename": ["nwa_std bench_r"],
 }
 CHK.update({
+    "nwexpand[network]": ['nwa_netp exp2', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "labels n<number>, unique, no blank" , c(scalar(nwa_labbad) == 0)'],
+    "nwmixing[perm]": ['nwa_check "ties counted" , c(r(N) == scalar(nwa_t_ties))'],
+    "nwexpand[attr]": ['nwa_netp exp', 'nwa_check "nodes" , c(scalar(nwa_n) == {N})', 'nwa_check "labels n<number>, unique, no blank" , c(scalar(nwa_labbad) == 0)'],
+    "nwrandomwalk": ['mata: st_numscalar("nwa_x", nwa_hitcheck("rw", 1))', 'nwa_check "hitting-time equations hold on the sample nodes" , c(scalar(nwa_x) == 0)'],
     "nwcommunity": ['mata: st_numscalar("nwa_x", nwa_modq("com"))', 'nwa_check "modularity equals independent Q of the partition" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)', _V("com")],
     "nwcommunity[labelprop]": ['mata: st_numscalar("nwa_x", nwa_modq("com"))', 'nwa_check "modularity equals independent Q of the partition" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)', _V("com")],
     "nwmodularity": ['mata: st_numscalar("nwa_x", nwa_modq("grp"))', 'nwa_check "modularity equals independent Q" , c(abs(scalar(nwa_x) - r(modularity)) < 1e-6)'],
@@ -261,7 +270,7 @@ CHK.update({
     "nwspectral": ['nwa_check "components" , c(r(components) == scalar(nwa_t_ncomp))'],
     "nwkcomponents": ['nwa_check "at least one 2-component" , c(r(kcomponents) >= 1)'],
     "nwcohesion": ['nwa_check "blocks" , c(r(blocks) >= 1)', _V("coh")],
-    "nwclique": ['nwa_check "cliques found" , c(r(cliques) >= 1)', 'quietly count if !missing(cliq)', 'nwa_check "clique members" , c(r(N) >= 3 & r(N) <= {N})'],
+    "nwclique": ['nwa_check "cliques found" , c(r(cliques) >= 1)', 'nwa_cnt "no clique smaller than 3", if(cliq < 3) eq(0)'],
     "nwcoreperiphery": [_V("cp")],
     "nwconcor": [_V("cc")],
     "nwfactions": ['nwa_check "groups" , c(r(groups) == 3)'],

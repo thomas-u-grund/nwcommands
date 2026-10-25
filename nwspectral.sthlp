@@ -30,6 +30,7 @@
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt replace}}Replace existing variable(s){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt force}}Run the complete decomposition of a network with more than 6,000 nodes{p_end}
 
 {p2colreset}{...}
 
@@ -117,7 +118,9 @@ component id does.
 The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are
 returned, so the work grows with the cube of the number of nodes and the memory with its square. Measured in Stata/BE,
 random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 nodes 14 seconds, 3,000 nodes 50 seconds,
-5,000 nodes more than 180 seconds. Above 2,000 nodes the command prints a note.
+5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds (and about 3 GB). Above 2,000 nodes the command prints a note;
+above 6,000 nodes it stops with r(484) unless {opt force} is given. There is no exact shortcut for the returned
+spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
 
 {title:See also}
 

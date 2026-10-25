@@ -43,8 +43,6 @@ def build_do(rec, N, plus):
     s += f'quietly do "{HERE}/checks.do"\n'
     if rec["net"] in ("dir", "undir", "valued", "valuedu", "edges"):
         s += 'quietly nwa_truthinit\n'
-    elif rec["net"] == "two":
-        s += 'scalar nwa_t_ties = _N\n'
     for l in rec.get("pre", []):
         s += f'capture noisily {l.replace("{N}", str(N))}\n'
         s += 'if _rc {\n    display "NWAUDIT_PRE_RC=" _rc\n    exit _rc\n}\n'
@@ -190,6 +188,8 @@ def run_one(rec, N, timeout, workdir, maxmem_gb=20):
         row["rc"] = rc
         mc = re.search(r"^NWAUDIT_CHECK=(.*)$", log, re.M)
         row["correct"] = (mc.group(1).strip()[:400] if mc else "")
+        if rc != 0:
+            row["correct"] = "n/a"
         if rc == 0:
             row["outcome"] = "OK"
             if row["correct"].startswith("FAIL"):

@@ -2,7 +2,7 @@
 capture program drop nwconcor
 program nwconcor, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace SPLITs(int 1) measure(string) maxiter(int 25) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace SPLITs(int 1) measure(string) maxiter(int 25) silent force]
 	set more off
 
 	if `splits' < 1 {
@@ -77,6 +77,13 @@ program nwconcor, rclass
 		// found" 111 from this drop as the last thing to touch _rc even
 		// on a fully successful call, corrupting _rc for any caller.)
 		capture drop `netgenerate'`k'
+
+		// every iteration correlates the dense n x n matrix with itself (O(n^3)): 3,000 nodes take about a
+		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB
+		if `nodes' > 6000 & "`force'" == "" {
+			di "{err}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+			error 484
+		}
 
 		mata: st_rclear()
 		qui if _N < `nodes' {

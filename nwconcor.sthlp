@@ -32,6 +32,7 @@
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opth maxiter(int)}}Maximum number of correlation iterations per split before giving up on convergence; default = 25{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt force}}Run a network with more than 6,000 nodes{p_end}
 
 {p2colreset}{...}
 
@@ -111,7 +112,9 @@ error, not silently mishandled - see Description.
 {pstd}
 Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each
 iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds,
-2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds. Above 2,000 nodes the command prints a note.
+2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000
+nodes it stops with r(484) unless {opt force} is given. The correlation matrix is dense after the first iteration, so there
+is no sparse form of the method.
 
 {title:See also}
 

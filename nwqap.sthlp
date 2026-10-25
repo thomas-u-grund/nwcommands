@@ -240,6 +240,13 @@ values directly, at the one point internally where they are genuinely meaningful
 	  {bf:e(V)}		diagonal matrix of QAP-permutation coefficient variances
 	  {bf:e(pvalues)}	matrix with QAP p-values, in the same column order as {bf:e(b)}
 
+{title:Limits}
+
+{pstd}
+The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10
+ties per node, {cmd:type(regress)}, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB.
+Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
+
 {title:See also}
 
 	{help nwergm}, {help nwpermute}

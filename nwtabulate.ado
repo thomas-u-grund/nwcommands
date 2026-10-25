@@ -195,7 +195,8 @@ program nwtab3
 
 	di "{txt}   Attribute:  {res}`attribute'{txt}"
 	
-	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full
+	// compress: only the ties are listed (the table below counts ties only), not all N x N dyads
+	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full compress
 
 	unw_defs
 	_nwsyntax `netname'

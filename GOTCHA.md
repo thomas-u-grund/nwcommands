@@ -386,7 +386,7 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 ## Native plugin algorithm codes: keep the ranges apart
 
 `native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
-3-9 and 99-100 belong to the combinatorial kernels (`comb_handles()`), 20 is the vertex-connectivity search
+3-9, 22-24 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 25 and up for the next kernel), 20 is the vertex-connectivity search
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
@@ -416,4 +416,46 @@ set the external `nwg_comb_state` to 0 (see `cscripts/test_scale5k.do`).
 
 The rows of dropped nodes stay at the end of the data (attributes missing) and their order depends on `set sortseed`
 state, i.e. on how many sorts ran before. Compare the first `r(nodes)` rows by position and the rest as a sorted set.
+
+## Algorithm code 24 (Louvain communities); kernel version 4; Louvain bug that hid from small networks
+
+`native/nwcomb2.h` has `comb_louvain()` (code 24; `NWCOMB_VERSION` 4, `nwg_comb_version() >= 4` in Mata). It is an exact port of
+the corrected Mata `Louvain()`: same visiting order, candidates in ascending community number, a move needs a gain larger by
+more than 1e-12, communities numbered in ascending order of their old numbers. The old Mata code counted the node's own
+loop (the weight inside a super-node, present from the second level on) as a tie to its own community, so super-nodes never
+moved and the aggregation levels merged nothing: modularity was fine for ~1,000 nodes (the first level alone found 30
+communities) and collapsed above ~1,500 (3,000 nodes: 1,311 communities, Q 0.07; the right answer is ~14 communities,
+Q 0.18). No small-network test could see it because the first level already looked plausible. When you write a graph
+algorithm that aggregates, check the number of communities and Q at 3,000+ nodes against an independent computation.
+`cscripts/test_scale10k_louvain.do` compares native and Mata on 40 random networks and recovers a planted partition.
+
+## `tabulate` and `matrix rownames` stop at about 1,000 groups
+
+`tab x, matrow() matcell()` fails with r(134) ("too many values") above 1,000 distinct values in Stata/BE, and a row-name
+list of thousands of tokens exceeds the command-line limit. `nwcomponents` (sparse networks have thousands of components) and
+`nwcommunity` failed that way after the result was computed. Count in Mata (`sort`, `panelsetup`) and set row names with
+`st_matrixrowstripe()`; tabulate for display only when there are at most 1,000 groups. Mata `sort(x, -1)` of a size table breaks ties
+randomly: sort by `(-1, 2)`.
+
+## Mata traps met in stage 2
+
+- A function that declares `external real scalar x` CREATES x (as a missing value) when it does not exist: test existence with
+  `findexternal()` first (a threshold function returned `.` and silently switched an optimization off).
+- `colvector :+ rowvector` is a conformability error in Mata (only vector with matrix broadcasts): build the matrix with `J()`.
+- `v[a][b]` (chained subscripts) is not allowed; a one-line `{ ...; ... }` inside `mata ... end` of a do-file is "invalid expression".
+- The harness runs the checks after `quietly timer list`, which replaces `r()`: the command's results are kept with `_return hold`
+  and put back with `_return restore, hold` before each check line.
+- `strofreal(x)` of exact counts: compare with integer arithmetic (6 * C(n,4) = (n(n-1)/2)((n-2)(n-3)/2)), a division by 24 is not exact.
+
+## Two-mode networks are dense by definition: 15,000 nodes cost 7 GB
+
+`clean_matrix_2mode()` used to compare an n x n STRING matrix of modes (10 GB at 15,000 nodes); it blanks the same-mode cells in place
+now. The cleaned two-mode matrix still holds missing cells, so every two-mode command works on the dense matrix (10,000 + 5,000 nodes
+peak at 7 GB). `nw2toedge` without `compress` lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
+
+## The audit recipes of stages 0 and 1 measured the wrong thing in two places
+
+`nwset from to, name(x)` is the MATRIX form (two variables = a 2 x 2 matrix) and took 0.05 s at every size; the edge-list form is
+`nwset from to, edgelist name(x)`. `nw2fromedge` was fed `to` in 1..N, i.e. N + N nodes, not N + N/2. Both recipes are corrected in
+`tools/scale_audit/spec.py` (a recipe that "passes" at every size deserves a look at what network it actually built).
 

@@ -39,6 +39,8 @@ program nwcollapse
 		local name "`netname'_collapsed"
 	}
 	
+	// a run that stopped half way (e.g. nwtoedge refusing a huge network) leaves its temporary copy behind
+	capture nwdrop _temp_`original'
 	nwduplicate `original', name(_temp_`original')
 	_nwdatasync _temp_`original'
 	_nwsyntax _temp_`original'

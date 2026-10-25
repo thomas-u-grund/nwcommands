@@ -646,3 +646,157 @@ static int comb_matching(long n, long nties, const long *ei, const long *ej, con
 	if (rc == 0) pub_result(0, n, 1);
 	return rc;
 }
+
+/* ------------------------------------------------------------------ */
+/* ALG_LOUVAIN (24): Louvain community detection of nwcommunity        */
+/* ------------------------------------------------------------------ */
+/*
+	Same algorithm and visiting order as the Mata Louvain() in unw_core.do: nodes are visited in the
+	order 1..n, a node leaves its community and joins the neighbouring community (candidates in
+	ascending community number, the node's own community first as the reference) with the largest
+	gain  w(i,C)/m2 - resolution * tot(C) * k(i) / m2^2, a move needs a gain larger than the current
+	one by more than 1e-12, sweeps repeat until nothing moves (at most 100), the communities are
+	numbered 1..k in ascending order of their old numbers and become the nodes of the next level,
+	where the weight inside a community is kept as a loop (twice the sum of its tie values, plus the
+	loops of its members).  The weight of a node to its own community leaves out the node's own loop.
+	Input: one row (i, j, w) per pair i < j (symmetric simple graph, w != 0).  Output: the community
+	(1..k) of every node.
+*/
+typedef struct { long a, b; double w; } lv_edge_t;
+
+static int lv_cmp(const void *x, const void *y) {
+	const lv_edge_t *p = (const lv_edge_t *)x, *q = (const lv_edge_t *)y;
+	if (p->a != q->a) return p->a < q->a ? -1 : 1;
+	if (p->b != q->b) return p->b < q->b ? -1 : 1;
+	return 0;
+}
+
+/* sort the directed entries and add up parallel ones; returns the new length */
+static long lv_merge(lv_edge_t *E, long m) {
+	long k, o = 0;
+	qsort(E, (size_t)m, sizeof(lv_edge_t), lv_cmp);
+	for (k = 0; k < m; k++) {
+		if (o > 0 && E[o - 1].a == E[k].a && E[o - 1].b == E[k].b) E[o - 1].w += E[k].w;
+		else E[o++] = E[k];
+	}
+	return o;
+}
+
+static int comb_louvain(long n, long nties, const long *ei, const long *ej, const double *ew, double res) {
+	lv_edge_t *E = NULL;
+	long m = 0, k, cn = n, u, q, v, i, nc, sweep, ncand, a, c, iter;
+	long *map = NULL, *ptr = NULL, *idx = NULL, *comm = NULL, *lab = NULL, *cand = NULL, *seen = NULL;
+	double *wt = NULL, *selfw = NULL, *kk = NULL, *Stot = NULL, *acc = NULL, *nself = NULL;
+	double m2, kin_old, best_gain, gain, k_i;
+	long c_old, best_c, moved, stamp = 0;
+	int rc = 0;
+
+	E = (lv_edge_t *)malloc((size_t)(2 * nties + 1) * sizeof(lv_edge_t));
+	map = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	if (!E || !map) { free(E); free(map); return 2; }
+	for (k = 0; k < nties; k++) {
+		long x = ei[k], y = ej[k];
+		if (x == y || x < 1 || y < 1 || x > n || y > n || ew[k] == 0) continue;
+		E[m].a = x; E[m].b = y; E[m].w = ew[k]; m++;
+		E[m].a = y; E[m].b = x; E[m].w = ew[k]; m++;
+	}
+	m = lv_merge(E, m);
+	for (i = 1; i <= n; i++) map[i] = i;
+	selfw = (double *)calloc((size_t)(n + 2), sizeof(double));
+	if (!selfw) { free(E); free(map); return 2; }
+
+	for (iter = 0; iter < 1000; iter++) {
+		/* CSR of the current level */
+		ptr = (long *)calloc((size_t)(cn + 2), sizeof(long));
+		idx = (long *)malloc((size_t)(m + 1) * sizeof(long));
+		wt = (double *)malloc((size_t)(m + 1) * sizeof(double));
+		kk = (double *)malloc((size_t)(cn + 2) * sizeof(double));
+		Stot = (double *)malloc((size_t)(cn + 2) * sizeof(double));
+		acc = (double *)calloc((size_t)(cn + 2), sizeof(double));
+		comm = (long *)malloc((size_t)(cn + 2) * sizeof(long));
+		lab = (long *)calloc((size_t)(cn + 2), sizeof(long));
+		cand = (long *)malloc((size_t)(cn + 2) * sizeof(long));
+		seen = (long *)calloc((size_t)(cn + 2), sizeof(long));
+		if (!ptr || !idx || !wt || !kk || !Stot || !acc || !comm || !lab || !cand || !seen) { rc = 2; goto done; }
+		for (k = 0; k < m; k++) ptr[E[k].a + 1]++;
+		for (u = 1; u <= cn; u++) ptr[u + 1] += ptr[u];       /* ptr[u]..ptr[u+1]-1 = entries of node u (ptr[1] = 0) */
+		for (k = 0; k < m; k++) { idx[k] = E[k].b; wt[k] = E[k].w; }
+		m2 = 0;
+		for (u = 1; u <= cn; u++) {
+			double s = selfw[u];
+			for (q = ptr[u]; q < ptr[u + 1]; q++) s += wt[q];
+			kk[u] = s;
+			m2 += s;
+		}
+		if (m2 == 0 || cn <= 1) {
+			for (u = 1; u <= cn; u++) lab[u] = u;
+			nc = cn;
+		}
+		else {
+			for (u = 1; u <= cn; u++) { comm[u] = u; Stot[u] = kk[u]; }
+			moved = 1; sweep = 0;
+			while (moved && sweep < 100) {
+				moved = 0; sweep++;
+				for (i = 1; i <= cn; i++) {
+					c_old = comm[i]; k_i = kk[i];
+					Stot[c_old] -= k_i;
+					stamp++; ncand = 0;
+					for (q = ptr[i]; q < ptr[i + 1]; q++) {
+						c = comm[idx[q]];
+						if (seen[c] != stamp) { seen[c] = stamp; acc[c] = 0; cand[ncand++] = c; }
+						acc[c] += wt[q];
+					}
+					if (seen[c_old] != stamp) { seen[c_old] = stamp; acc[c_old] = 0; cand[ncand++] = c_old; }
+					if (ncand > 1) qsort(cand, (size_t)ncand, sizeof(long), cmp_long);
+					kin_old = acc[c_old];
+					best_c = c_old;
+					best_gain = kin_old / m2 - res * Stot[c_old] * k_i / (m2 * m2);
+					for (a = 0; a < ncand; a++) {
+						c = cand[a];
+						gain = acc[c] / m2 - res * Stot[c] * k_i / (m2 * m2);
+						if (gain > best_gain + 1e-12) { best_gain = gain; best_c = c; }
+					}
+					comm[i] = best_c;
+					Stot[best_c] += k_i;
+					if (best_c != c_old) moved = 1;
+				}
+			}
+			/* dense numbering in ascending order of the old community numbers */
+			memset(seen, 0, (size_t)(cn + 2) * sizeof(long));
+			for (u = 1; u <= cn; u++) seen[comm[u]] = 1;
+			nc = 0;
+			for (u = 1; u <= cn; u++) if (seen[u]) seen[u] = ++nc;
+			for (u = 1; u <= cn; u++) lab[u] = seen[comm[u]];
+		}
+		for (i = 1; i <= n; i++) map[i] = lab[map[i]];
+		if (nc == cn) break;
+		/* aggregate */
+		nself = (double *)calloc((size_t)(nc + 2), sizeof(double));
+		if (!nself) { rc = 2; goto done; }
+		{
+			long mm = 0;
+			lv_edge_t *E2 = (lv_edge_t *)malloc((size_t)(m + 1) * sizeof(lv_edge_t));
+			if (!E2) { free(nself); nself = NULL; rc = 2; goto done; }
+			for (u = 1; u <= cn; u++) {
+				nself[lab[u]] += selfw[u];
+				for (q = ptr[u]; q < ptr[u + 1]; q++) {
+					a = lab[u]; v = lab[idx[q]];
+					if (a == v) nself[a] += wt[q];
+					else { E2[mm].a = a; E2[mm].b = v; E2[mm].w = wt[q]; mm++; }
+				}
+			}
+			mm = lv_merge(E2, mm);
+			free(E); E = E2; m = mm;
+		}
+		free(selfw); selfw = nself; nself = NULL;
+		cn = nc;
+		free(ptr); free(idx); free(wt); free(kk); free(Stot); free(acc); free(comm); free(lab); free(cand); free(seen);
+		ptr = NULL; idx = NULL; wt = NULL; kk = NULL; Stot = NULL; acc = NULL; comm = NULL; lab = NULL; cand = NULL; seen = NULL;
+	}
+	if (res_alloc(n, 1)) rc = 2;
+	else for (i = 1; i <= n; i++) g_res[i - 1] = (double)map[i];
+done:
+	free(E); free(map); free(selfw); free(ptr); free(idx); free(wt); free(kk); free(Stot); free(acc); free(comm); free(lab); free(cand); free(seen);
+	if (rc == 0) pub_result(0, n, 1);
+	return rc;
+}

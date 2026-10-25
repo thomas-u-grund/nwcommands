@@ -283,6 +283,14 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 	  {bf:r(name_2)}	name of {it:netname2} or the expanded network 
 	  
 
+{title:Limits}
+
+{pstd}
+The correlations between the nodes of one network ({cmd:nwcorrelate} {it:netname}) are computed with about 25 dense
+node-by-node matrices at once: Stata/BE, random directed network with 10 ties per node, 5,000 nodes 10 seconds and 5.1 GB;
+the command stops with r(484) above 7,000 nodes (10,000 nodes needed more than 12 GB). The correlation of two networks
+(with {opt permutations()}) takes 16 seconds and 7 GB at 10,000 nodes.
+
 {title:See also}
 
 	{help nwtabulate}, {help nwexpand}

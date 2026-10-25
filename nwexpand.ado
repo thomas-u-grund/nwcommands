@@ -26,8 +26,10 @@ program nwexpand
 			error `errNWsNotFound'
 		}
 		_nwsyntax `network', max(1)
-		qui nwsummarize `netname'
-		local labs "`r(labs)'"
+		// the node names of the network go to nwset in a Mata variable: a long Stata option string gets a blank
+		// inserted every 5,292 characters, which damaged the names of networks above about 900 nodes
+		mata: __nwx_names = `netobj'->get_nodenames()
+		local nodenamesopt "nodenames(__nwx_names)"
 	}
 	
 	if "`if'" != "" {
@@ -138,7 +140,7 @@ program nwexpand
 		mata: st_sstore((1::rows(expnet)),"`nw_nodename'", `z')
 
 	}
-	nwset, mat(expnet) name(`name') labs(`labs') `undirected' `replace'
+	nwset, mat(expnet) name(`name') labs(`labs') `nodenamesopt' `undirected' `replace'
 	if "`xvars'" == "" {
 		nwload, xvars
 	}
@@ -148,6 +150,9 @@ program nwexpand
 	
 	capture mata: mata drop expnet 
 	capture mata: mata drop attr
+	if "`nodenamesopt'" != "" {
+		mata: mata drop __nwx_names
+	}
 end
 	
 capture mata mata drop distMat()

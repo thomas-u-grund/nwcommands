@@ -43,6 +43,7 @@
 {synopt:{opth groups(int)}}Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable{p_end}
 {synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates. {bf:Required whenever {opth groups(int)} is specified} - give exactly one of {opt generate()} or {opt equivgen()} (they are the same option; alias {opt generate()} matches {help nwcommunity}/{help nwspectral}'s own naming in this same group), not both. Has no effect, and is not required, without {opth groups(int)}{p_end}
 {synopt:{opt replace}}Replace an existing {opth equivgen(newvarname)} variable{p_end}
+{synopt:{opt force}}Cluster a network with more than 6,000 nodes (without {opt dismat()}){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -142,8 +143,9 @@ requires a matrix with no missing values, including on the diagonal.
 {pstd}
 The hierarchical clustering is Stata's {cmd:clustermat} on the dense dissimilarity matrix. Measured in Stata/BE, random
 directed network with 10 ties per node: 1,000 nodes 3 seconds, 2,000 nodes 16 seconds, 3,000 nodes 45 seconds, 5,000 nodes 170
-seconds (the dissimilarities themselves take 1 second). Above 2,000 nodes the command prints a note. {help nwdendrogram}
-of such a clustering adds the time of the plot.
+seconds (the dissimilarities themselves take 1 second). 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484)
+unless {opt force} is given (Stata keeps the dissimilarity matrix as a Stata matrix, at most 11,000 rows in Stata/BE).
+{help nwdendrogram} of such a clustering adds the time of the plot.
 
 {title:See also}
 

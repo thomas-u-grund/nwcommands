@@ -33,6 +33,12 @@ capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
 	syntax [anything(name=netname)] [, name(string) context(string)]
 	_nwsyntax `netname'
+	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
+	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
+	if `nodes' > 7000 {
+		di "{err}nwcorrelate of the nodes of network {bf:`netname'} needs about 25 dense `nodes' x `nodes' matrices (about `=round(`nodes'^2*205/1e9, .1)' GB) and is refused above 7,000 nodes."
+		error 484
+	}
 	if "`context'" == "" {
 		local context = "outgoing"
 	}

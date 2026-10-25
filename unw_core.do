@@ -753,7 +753,10 @@ real matrix Louvain(real matrix W, real scalar resolution){
 			// cost of nwcommunity/detect_communities_louvain() at
 			// n=10,000 in a fresh dev/benchmark_suite.do run (63.6s for a
 			// sparse random graph with average degree ~10).
-			idx = selectindex(W[i,.] :!= 0)
+			// the node's own loop (present from the second level on, where a super-node holds the weight inside
+			// its community) is not a tie to any community: counting it in the weight to the node's own community
+			// made every super-node stay where it was, so the aggregation levels never merged anything
+			idx = selectindex((W[i,.] :!= 0) :& ((1..n) :!= i))
 			if (cols(idx) > 0){
 				nb_w = (W[i, idx])'
 				nb_c = comm[idx',1]
@@ -3020,6 +3023,108 @@ real matrix nwg_balance(real scalar n, real matrix el)
 	return(res)
 }
 
+/*
+	Symmetric weighted pairs of an edgelist() result for the community routines: one row (i, j, w) per
+	pair i < j with the weight get_matrix_mod(val, 0) gives it, the larger of the two directed cells
+	(a missing cell counts as 0); with val = 0 the weight is 1 for a positive larger cell.  Loops are left
+	out, pairs of weight 0 too.
+*/
+real matrix nwg_symweights(real scalar n, real matrix el, real scalar val)
+{
+	real matrix p
+	real colvector lo, hi, w, key, o, ks, ws, first, f, nxt, wm, keep
+
+	if (rows(el) == 0) return(J(0, 3, 0))
+	p = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :< .))
+	if (rows(p) == 0) return(J(0, 3, 0))
+	lo = rowmin(p[., (1, 2)])
+	hi = rowmax(p[., (1, 2)])
+	w = p[., 3]
+	key = lo :* (n + 1) :+ hi
+	o = order(key, 1)
+	ks = key[o]
+	ws = w[o]
+	first = 1 \ (ks[|2 \ rows(ks)|] :!= ks[|1 \ rows(ks) - 1|])
+	f = selectindex(first)
+	nxt = J(rows(f), 1, 0)
+	keep = selectindex(f :< rows(ks))
+	if (rows(keep) > 0) {
+		nxt[keep] = (ks[f[keep] :+ 1] :== ks[f[keep]]) :* ws[f[keep] :+ 1]
+	}
+	wm = rowmax((ws[f], nxt))
+	if (val == 0) wm = (wm :> 0)
+	keep = selectindex(wm :!= 0)
+	if (rows(keep) == 0) return(J(0, 3, 0))
+	key = ks[f[keep]]
+	lo = floor(key :/ (n + 1))
+	return((lo, key :- lo :* (n + 1), wm[keep]))
+}
+
+/* Louvain communities, native: the community (1..k) of every node from the symmetric pairs (i, j, w), i < j */
+real colvector nwg_louvain(real scalar n, real matrix pairs, real scalar resolution)
+{
+	real rowvector aux
+	real scalar st
+	real matrix res
+
+	res = nwg_comb(24, n, pairs, J(0, 1, .), (resolution), aux, st)
+	if (st != 0) nwg_fail(st, "nwcommunity")
+	return(res[., 1])
+}
+
+/*
+	Newman modularity of a membership vector on the symmetric pairs (i, j, w), i < j: the sparse form of
+	Modularity() (communities are the integers 1..max(membership); nodes with any other value belong to none).
+*/
+real scalar nw_modularity_pairs(real scalar n, real matrix pairs, real matrix membership, real scalar resolution)
+{
+	real colvector mem, k, ids, ww, o, so, lab, inw, tot, c, lw
+	real matrix info
+	real scalar ncomm, m2, q, i
+
+	mem = vec(membership)
+	if (rows(pairs) == 0) return(0)
+	ids = pairs[., 1] \ pairs[., 2]
+	ww = pairs[., 3] \ pairs[., 3]
+	o = order(ids, 1)
+	so = ids[o]
+	info = panelsetup(so, 1)
+	k = J(n, 1, 0)
+	k[so[info[., 1]]] = panelsum(ww[o], info)
+	m2 = sum(k)
+	if (m2 == 0) return(0)
+	ncomm = max(mem)
+	if (ncomm == . | ncomm < 1) return(0)
+	inw = J(ncomm, 1, 0)
+	tot = J(ncomm, 1, 0)
+	lab = mem[pairs[., 1]]
+	c = selectindex((lab :== mem[pairs[., 2]]) :& (lab :== floor(lab)) :& (lab :>= 1) :& (lab :<= ncomm))
+	if (rows(c) > 0) {
+		lw = lab[c]
+		ww = pairs[c, 3]
+		o = order(lw, 1)
+		so = lw[o]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		inw[so[info[., 1]]] = 2 :* panelsum(ww, info)
+	}
+	c = selectindex((mem :== floor(mem)) :& (mem :>= 1) :& (mem :<= ncomm))
+	if (rows(c) > 0) {
+		lw = mem[c]
+		ww = k[c]
+		o = order(lw, 1)
+		so = lw[o]
+		ww = ww[o]
+		info = panelsetup(so, 1)
+		tot[so[info[., 1]]] = panelsum(ww, info)
+	}
+	q = 0
+	for (i = 1; i <= ncomm; i++) {
+		if (tot[i] != 0 | inw[i] != 0) q = q + inw[i] - resolution * tot[i]^2 / m2
+	}
+	return(q / m2)
+}
+
 /* maximum bipartite matching, native: the mode-2 partner (0 = none) of every node, mode-2 nodes 0 */
 real colvector nwg_matching(real scalar n, real matrix el, real colvector modes)
 {
@@ -4818,6 +4923,9 @@ real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar 
 	// labelprop() just below.
 	val = (args() >= 2 ? valued : 1)
 	res = (args() == 3 ? resolution : 1)
+	// large networks: the same sum over the stored ties (the dense route needs the n x n matrix and a pass over
+	// all n nodes per community)
+	if (nwg_comb_version() >= 4 & get_nodes() > 2000) return(nw_modularity_pairs(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), membership, res))
 	w = *get_matrix_mod(val,0)
 	_diag(w, 0)
 	return(Modularity(w, membership, res))
@@ -4832,6 +4940,7 @@ real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scala
 
 	val = (args() >= 1 ? valued : 1)
 	res = (args() == 2 ? resolution : 1)
+	if (nwg_comb_version() >= 4) return(nwg_louvain(get_nodes(), nwg_symweights(get_nodes(), edgelist(), val), res))
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(Louvain(w, res))
@@ -6049,6 +6158,76 @@ real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxit
 }
 
 /*
+	Smallest number of nodes for which nwrandomwalk solves its linear system by conjugate gradients
+	instead of the dense LU.  A cscript can change it through the external scalar nw_hitting_cg_min_x.
+*/
+real scalar nw_hitting_cg_min()
+{
+	pointer(real scalar) scalar px
+	px = findexternal("nw_hitting_cg_min_x")
+	if (px == NULL) return(1500)
+	return(*px)
+}
+
+/*
+	Mean hitting times to node t of the simple random walk on the symmetrized binary network: for i != t
+	h(i) = 1 + mean of h over the neighbours of i, h(t) = 0, i.e. the symmetric positive definite system
+	(D - A) h = deg on the nodes other than t (the Laplacian grounded at t).  Conjugate gradients with a
+	Jacobi preconditioner, one panelsum() per iteration, stopped at a relative residual of 1e-13.
+	Returns a 0 x 1 vector (the caller then takes the dense route) when an
+	isolate exists, or the tolerance is not reached in 5,000 iterations (e.g. a disconnected network).
+*/
+real colvector nw_hitting_cg(pointer (class nw_def scalar) scalar thisnw, real scalar t)
+{
+	real colvector r, c, w, key, deg, x, res, z, p, q, tmp
+	real matrix info
+	real scalar n, it, rz, rz0, alpha, beta, bnorm
+
+	n = thisnw->get_nodes()
+	thisnw->ensure_sparse_built()
+	r = thisnw->csr_rows(); c = thisnw->colidx; w = thisnw->cweight
+	tmp = selectindex((r :!= c) :& (w :> 0))
+	if (rows(tmp) == 0) return(J(0, 1, .))
+	key = sort(uniqrows((r[tmp] :* (n + 1) :+ c[tmp]) \ (c[tmp] :* (n + 1) :+ r[tmp])), 1)
+	r = floor(key :/ (n + 1))
+	c = key :- r :* (n + 1)
+	info = panelsetup(r, 1)
+	deg = J(n, 1, 0)
+	deg[r[info[., 1]]] = panelsum(J(rows(r), 1, 1), info)
+	if (min(deg) == 0) return(J(0, 1, .))
+
+	// b = deg on the non-target nodes
+	x = J(n, 1, 0)
+	res = deg
+	res[t] = 0
+	bnorm = sqrt(sum(res:^2))
+	z = res :/ deg
+	p = z
+	rz = sum(res :* z)
+	for (it = 1; it <= 5000; it++){
+		q = J(n, 1, 0)
+		p[t] = 0
+		q[r[info[., 1]]] = panelsum(p[c], info)
+		q = deg :* p - q
+		q[t] = 0
+		alpha = rz / sum(p :* q)
+		x = x + alpha :* p
+		res = res - alpha :* q
+		if (sqrt(sum(res:^2)) <= 1e-13 * bnorm){
+			x[t] = 0
+			return(x)
+		}
+		z = res :/ deg
+		z[t] = 0
+		rz0 = rz
+		rz = sum(res :* z)
+		beta = rz / rz0
+		p = z + beta :* p
+	}
+	return(J(0, 1, .))
+}
+
+/*
 	calculate_randomwalk_hitting(): mean hitting time from every node to
 	a given target `t' - the expected number of steps a simple random
 	walk (at each step, move to a uniformly-random NEIGHBOR of the
@@ -6085,6 +6264,13 @@ real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
 	if (t < 1 | t > n) {
 		errprintf("nwrandomwalk: target node index out of range.\n")
 		exit(error(6556))
+	}
+	// Large networks: the grounded-Laplacian system is solved by conjugate gradients on the sparse tie
+	// list (O(ties) per iteration; the dense LU below is O(n^3) and needs several n x n matrices:
+	// 65 s at 10,000 nodes), only if CG reaches its tolerance; otherwise the dense code below runs as before.
+	if (n > nw_hitting_cg_min()){
+		h = nw_hitting_cg(&this, t)
+		if (rows(h) == n) return(h)
 	}
 	A = *get_matrix_mod(0, 0)
 	_diag(A, 0)
@@ -8215,7 +8401,9 @@ real matrix `NWdef'::calculate_distances_bfs_native(){
 
 
 void `NWdef'::clean_matrix_2mode(){
-	real matrix z
+	string colvector m, u
+	real colvector idx
+	real scalar g, i
 	// General validation-stage finding (see docs/CERTIFICATION.md): this
 	// method reads/writes `edge' directly with no dense guard, unlike
 	// every other such method in this class. Its one live caller
@@ -8225,9 +8413,17 @@ void `NWdef'::clean_matrix_2mode(){
 	// caller convention, not by design. Guarded explicitly here so it is
 	// actually safe for any future caller, not just the current one.
 	ensure_dense_built()
-	z = ((J(get_nodes(),1, modes):== J(1,get_nodes(), modes')):== 1)
-	_editvalue(z, 1, .)
-	edge = edge :+ z
+	// Blank every cell whose two nodes are in the same mode. This used to build the n x n STRING matrix
+	// J(n,1,modes) :== J(1,n,modes') (about 10 GB at 15,000 nodes); the cells are now set mode by mode in
+	// place (same result: edge :+ missing is missing).
+	m = vec(modes)
+	u = uniqrows(m)
+	for (g = 1; g <= rows(u); g++){
+		idx = selectindex(m :== u[g])
+		for (i = 1; i <= rows(idx); i++){
+			edge[idx[i], idx'] = J(1, rows(idx), .)
+		}
+	}
 	sparse_built = `False'
 }
 

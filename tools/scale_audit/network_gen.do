@@ -8,6 +8,7 @@
 *               valued  directed, tie values 1..5
 *               valuedu undirected, tie values 1..5
 *               two     two-mode (nw2fromedge), N mode-1 nodes, N/2 mode-2 nodes, 10 ties per mode-1 node
+*               edges2  like edges, with the two-mode id ranges of "two" (mode 2 has N/2 nodes)
 *               edges   only the edge list variables from, to, val in memory (for nwfromedge itself)
 *               none    nothing (generator commands are measured on their own)
 *   NWA_ATTR  1 = add node attributes after loading (grp 1..5, bin 0/1, attr continuous, node_id)
@@ -18,7 +19,7 @@ clear
 set seed 20261025
 if "$NWA_KIND" != "none" {
     local N = $NWA_N
-    local two = ("$NWA_KIND" == "two")
+    local two = ("$NWA_KIND" == "two" | "$NWA_KIND" == "edges2")
     quietly set obs `=`N'*10'
     quietly gen long from = ceil(_n/10)
     if `two' {
@@ -33,9 +34,10 @@ if "$NWA_KIND" != "none" {
     quietly gen byte val = ceil(runiform()*5)
     quietly count
     display "NWAUDIT_TIES=" r(N)
+    scalar nwa_t_ties = r(N)
     * ground truth for the correctness checks (checks.do): the edge list as Mata externals
     mata: NWA_from = st_data(., "from"); NWA_to = st_data(., "to"); NWA_val = st_data(., "val")
-    if "$NWA_KIND" != "edges" {
+    if "$NWA_KIND" != "edges" & "$NWA_KIND" != "edges2" {
         timer clear 90
         timer on 90
         local opt ""
