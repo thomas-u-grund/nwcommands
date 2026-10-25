@@ -32,17 +32,17 @@ or `nwinstall, models` for all four model packages at once (`nwinstall, everythi
 
 ```stata
 . nwsaom version
-nwsaom version 1.0.1, 24oct2026
+nwsaom version 1.0.9, 26oct2026
 ```
 
 ```stata
 . nwrem version
-nwrem version 1.0.1, 24oct2026
+nwrem version 1.0.7, 26oct2026
 ```
 
 ```stata
 . nwdynam version
-nwdynam version 1.0.1, 24oct2026
+nwdynam version 1.1.2, 26oct2026
 ```
 
 
@@ -98,7 +98,8 @@ Rate parameters (estimated, one per inter-wave period):
 -------------+---------------------
         rate |    6.4783     5.2605 
           se |    1.1113     0.8674 
-Overall maximum convergence ratio: 0.097 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 

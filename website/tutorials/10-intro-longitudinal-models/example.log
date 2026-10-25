@@ -1,33 +1,24 @@
--------------------------------------------------------------------------------------------------------------------------
-      name:  <unnamed>
-       log:  /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scr
-> atchpad/web_wt/website/tutorials/10-intro-longitudinal-models/example.log
-  log type:  text
- opened on:  24 Oct 2026, 15:46:34
-
 . * Tutorial 10: Intro to Longitudinal Network Models
 . * Requires the core nwcommands and the packages nwsaom, nwrem and nwdynam.
 . 
 . nwsaom version
-nwsaom version 1.0.1, 24oct2026
+nwsaom version 1.0.9, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin proto
-> col 140)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
   compared with           : R RSiena 1.6.14
   license                 : GNU GPL-3
 
 . nwrem version
-nwrem version 1.0.1, 24oct2026
+nwrem version 1.0.7, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : none (Mata only)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
   compared with           : R relevent 1.2-1
   license                 : GNU GPL-3
 
 . nwdynam version
-nwdynam version 1.0.1, 24oct2026
+nwdynam version 1.1.2, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwdynam/lib/plugins/macos/dynam_sim_macos.plugin (ships with
->  the package, no separate version number)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
   compared with           : R goldfish 1.6.12
   license                 : GNU GPL-3
 
@@ -40,28 +31,29 @@ nwdynam version 1.0.1, 24oct2026
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 -------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
    outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
  reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
 samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
    transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
 -------------+---------------------
         rate |    6.4783     5.2605 
           se |    1.1113     0.8674 
-Overall maximum convergence ratio: 0.097 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . * Does an effect change over time?
 . estat timetest
 
 Test of time heterogeneity (score-type test; RSiena's sienaTimeTest)
-----------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Joint test of all period-specific deviations:  c =    5.3581   d.f. = 4   p-value = 0.2525
 
 Test of each effect (is its parameter the same in all periods?)
@@ -83,13 +75,13 @@ transtrip                      2      0.0931     0.449    0.5026
 . estat importance
 
 Relative importance of effects (RSiena's sienaRI); expected over the actors at the start of each period
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 effect                  estimate     s.e.     sigma   semi-std.    RI p1    RI p2
 outdegree                -2.7657   0.1526    0.4384     -1.2124   0.4253   0.4967
 reciprocity               2.4557   0.1984    0.2140      0.5255   0.3749   0.3074
 samex_smoke1              0.1333   0.1457    0.5043      0.0672   0.0376   0.0358
 transtrip                 0.6195   0.0767    0.6514      0.4036   0.1622   0.1601
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Certainty R_H of the actors' choices:   0.2677   0.3493
 RI: expected relative importance of the effect (shares sum to 1 within a period); semi-std. = estimate x sigma.
 
@@ -115,37 +107,31 @@ RI: expected relative importance of the effect (shares sum to 1 within a period)
 . nwset sender receiver, directed eventtime(t) name(chat)
 
 . nwrem chat, nodsnd nidrec
-------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Relational event model (ordinal partial likelihood, MLE)
 Network: chat                          Actors: 3
 Events: 10                             Log likelihood:  -15.9033
-------------------------------------------------------------
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       nodsnd |   1.268517   1.354189     0.94   0.349    -1.385644    3.922677
       nidrec |  -5.567583   3.511088    -1.59   0.113    -12.44919    1.314023
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 . 
 . * DyNAM on the same (directed) event log: who initiates the next event?
 . nwdynam chat, submodel(rate)
-------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Dynamic Network Actor Model - rate sub-model, no intercept (MLE)
 Network: chat                          Actors: 3
 Events: 10                             Log likelihood:  -10.9009
-------------------------------------------------------------
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
        indeg |   .1728906   1.091221     0.16   0.874    -1.965863    2.311645
       outdeg |  -.1728888    .658234    -0.26   0.793    -1.463004    1.117226
-------------------------------------------------------------------------------
-
-. log close
-      name:  <unnamed>
-       log:  /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scr
-> atchpad/web_wt/website/tutorials/10-intro-longitudinal-models/example.log
-  log type:  text
- closed on:  24 Oct 2026, 15:46:35
 -------------------------------------------------------------------------------------------------------------------------
+
+. 

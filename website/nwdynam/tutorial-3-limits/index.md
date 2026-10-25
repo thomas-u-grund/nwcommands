@@ -28,12 +28,18 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: chat                          Actors: 3
 Events: 10                             Log likelihood:   -3.9890
 ------------------------------------------------------------
-------------------------------------------------------------------------------
+------------------------------------------------------------
+Note: no usable standard error for trans.
+      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
+      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |  -16.95435   4803.848    -0.00   0.997    -9432.324    9398.415
        recip |  -.6931435   1.224744    -0.57   0.571    -3.093598    1.707311
        indeg |  -19.78143   13962.73    -0.00   0.999    -27386.22    27346.66
+Note: no usable standard error for inertia indeg.
+      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
+      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
 ------------------------------------------------------------
 ```
 
@@ -103,7 +109,8 @@ well (the standard error of `inertia` is now 1.05, against 0.41 without the two 
 
 ```stata
 . capture noisily nwdynam first439, submodel(rate) recip
-inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice sub-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
+inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice su
+> b-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
 invalid syntax
 . display "return code: " _rc
 return code: 198

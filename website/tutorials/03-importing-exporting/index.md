@@ -120,7 +120,7 @@ that are actually tied — the tie value itself is the column named after the ne
    Arcs: 113
    Minimum value:  0
    Maximum value:  1
-   Density:  .046
+   Density:  .0461
    Temporal: false
 ```
 

@@ -20,7 +20,11 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do 
+Running /Users/tgrund/Documents/Stata/profile.do ...
+
+. do run_tutorials_08-paths-ego-networks.do 
+
+. do example.do
 
 . * Tutorial 8: Paths & Ego Networks
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
@@ -30,7 +34,6 @@ Notes:
 . 
 . * Geodesics: shortest-path distance between every pair of nodes
 . nwgeodesic flomarriage, name(flodist) generate(ecc)
-Network is unvalued; alpha = 0 is ignored.
 ----------------------------------------
   Network name: flomarriage
   Network of shortest paths: flodist
@@ -75,7 +78,7 @@ macros:
    Edges: 105
    Minimum value:  1
    Maximum value:  5
-   Density:  2.486
+   Density:  2.49
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
@@ -157,8 +160,6 @@ macros:
 . 
 . * Ego networks: for each node, how many alters does it have, and how
 . * interconnected are those alters with each other
-. * nwego stores its results row by row, so put the nodes back in network
-. * order (here: alphabetical) after the gsort above
 . nwego flomarriage, sizevar(egosize) densvar(egodensity)
 ----------------------------------------
   Network name: flomarriage
@@ -189,3 +190,4 @@ macros:
 
 . 
 end of do-file
+

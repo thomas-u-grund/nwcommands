@@ -4,8 +4,8 @@
 nwwebuse lazega, nwclear
 encode practice, generate(prac)
 
-* default MCMC settings
-nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1)
+* a short interval between draws: the defaults of nwergm up to 1.1 (since 1.2 the defaults are those of R's ergm, 1024 and 16384)
+nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(50) mcmcburnin(3000)
 estat mcmcdiag
 
 * a longer interval between draws and a longer burn-in

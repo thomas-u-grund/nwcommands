@@ -1,10 +1,3 @@
--------------------------------------------------------------------------------------------------------------------------
-      name:  <unnamed>
-       log:  .../
-> atchpad/web2_wt/website/nwsaom/tutorial-2-convergence/example.log
-  log type:  text
- opened on:  24 Oct 2026, 19:44:22
-
 . * nwsaom tutorial 2: reading convergence, and what to do when it fails
 . * Requires the core nwcommands and the package nwsaom.
 . 
@@ -13,13 +6,13 @@
 . 
 . * A rich model estimated with a deliberately short third phase (k3(100)):
 . * the estimates are noisy and the run does not converge
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) a
-> ltx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(1) k3(100) detail
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) 
+> altx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(1) k3(100) detail
 -------------------------------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 -------------------------------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
       outdegree |  -1.209788   .6076227    -1.99   0.046    -2.400707   -.0188697
@@ -33,7 +26,7 @@ indegpopularity |  -.6466204   .4983963    -1.30   0.194    -1.623459    .330218
          cycle3 |   1.029549   1.018194     1.01   0.312    -.9660754    3.025173
       gwesp_.69 |   3.840171   3.118244     1.23   0.218    -2.271475    9.951818
   simx_alcohol1 |   .5145673   .3656165     1.41   0.159     -.202028    1.231163
----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
@@ -49,7 +42,7 @@ RSiena effect names:
   simx_alcohol1                 alcohol1 similarity
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   alcohol1                          2.880
-Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
   outdegree                  0.199      reciprocity                0.165
   samex_smoke1               0.049      altx_alcohol1              0.300
   egox_alcohol1              0.241      indegpopularity            0.201
@@ -80,16 +73,16 @@ tconv     .19159416     .21507889     .20131954
   3. }
 
 . display "`th'"
--1.209788342910438 2.263883290175206 .161048200899927 .0068889647862173 .1359848318693529 -.646620403954551 -.16465947714
-> 10311 -1.179726289641659 1.029548730367141 3.840171283459527 .5145672925763973
+-1.209788342910449 2.263883290175197 .1610482008999299 .0068889647862135 .1359848318693541 -.6466204039545523 -.16465947
+> 7141032 -1.179726289641548 1.029548730367219 3.840171283459446 .5145672925764175
 
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) a
-> ltx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(2) theta0(`th') detail
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) 
+> altx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(2) theta0(`th') detail
 -------------------------------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 -------------------------------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
       outdegree |   -1.20907   .5609371    -2.16   0.031    -2.308487   -.1096537
@@ -103,7 +96,7 @@ indegpopularity |  -.6432866   .3120702    -2.06   0.039    -1.254933   -.031640
          cycle3 |   1.015119   .5305186     1.91   0.056    -.0246787    2.054916
       gwesp_.69 |   3.876746   1.589124     2.44   0.015     .7621203    6.991372
   simx_alcohol1 |   .4904613   .3493353     1.40   0.160    -.1942234    1.175146
----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
@@ -119,7 +112,7 @@ RSiena effect names:
   simx_alcohol1                 alcohol1 similarity
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   alcohol1                          2.880
-Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
   outdegree                  0.063      reciprocity                0.056
   samex_smoke1               0.049      altx_alcohol1              0.025
   egox_alcohol1              0.022      indegpopularity            0.069
@@ -141,16 +134,10 @@ Overall maximum convergence ratio:  0.091
 
  ( 1)  - altx_alcohol1 + egox_alcohol1 = 0
 
-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
          (1) |   .1381488   .1399055     0.99   0.323     -.136061    .4123586
-------------------------------------------------------------------------------
-
-. log close
-      name:  <unnamed>
-       log:  .../
-> atchpad/web2_wt/website/nwsaom/tutorial-2-convergence/example.log
-  log type:  text
- closed on:  24 Oct 2026, 19:44:27
 -------------------------------------------------------------------------------------------------------------------------
+
+. 

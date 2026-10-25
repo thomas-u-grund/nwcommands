@@ -20,7 +20,11 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do 
+Running /Users/tgrund/Documents/Stata/profile.do ...
+
+. do run_tutorials_07-centrality.do 
+
+. do example.do
 
 . * Tutorial 7: Centrality
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
@@ -63,6 +67,8 @@ Notes:
 . 
 . * Closeness: how short are a node's paths to everyone else
 . nwcloseness flomarriage, generate(clo far near)
+Warning: network flomarriage is not connected; closeness uses only the nodes each node can
+>  reach (as igraph). Specify unconnected() to give missing paths a length.
 ----------------------------------------
   Network name: flomarriage
 ----------------------------------------
@@ -70,7 +76,7 @@ Notes:
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-         clo |         15    .4447452    .0801896   .3061225         .6
+         clo |         15    .4150955    .0748436   .2857143        .56
          far |         16      32.625    10.73235          0         49
         near |         15    .0296497     .005346   .0204082        .04
 
@@ -139,8 +145,9 @@ Notes:
      +-------------------------------------------------------+
      | _nwnode   deg    btw     clo     evc     pgr      ktz |
      |-------------------------------------------------------|
-  1. |  medici     6   47.5   0.600   0.430   0.144   14.000 |
+  1. |  medici     6   47.5   0.560   0.430   0.144   14.000 |
      +-------------------------------------------------------+
 
 . 
 end of do-file
+

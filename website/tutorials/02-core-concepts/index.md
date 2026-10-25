@@ -89,7 +89,7 @@ wildcard, and the `_all` keyword:
    Arcs: 113
    Minimum value:  0
    Maximum value:  1
-   Density:  .046
+   Density:  .0461
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -102,7 +102,7 @@ wildcard, and the `_all` keyword:
    Arcs: 116
    Minimum value:  0
    Maximum value:  1
-   Density:  .047
+   Density:  .0473
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -115,7 +115,7 @@ wildcard, and the `_all` keyword:
    Arcs: 122
    Minimum value:  0
    Maximum value:  1
-   Density:  .05
+   Density:  .0498
    Temporal: false
 ```
 
@@ -131,6 +131,11 @@ wildcard, and the `_all` keyword:
 
 Each of those three produces the exact same three-network listing shown above — see
 [netlist](../../reference/netlist) for the full pattern syntax (`*`, `?`, `~`, ranges).
+
+The listing shows four properties that every network carries: directed, valued, two-mode and
+the number of nodes. Commands treat them differently; the pages on
+[valued networks](/nwcommands/valued-networks/), [two-mode networks](/nwcommands/two-mode/) and
+[network types](/nwcommands/network-types/) say how.
 
 ## Networks coexist with ordinary Stata variables
 

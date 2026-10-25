@@ -37,7 +37,8 @@ egox_alcohol1 |   .0463259   .0742919     0.62   0.533    -.0992835    .1919354
 simx_alcohol1 |    .628046   .3094458     2.03   0.042     .0215433    1.234549
 -------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.096 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.096 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 Wald tests (the z and p columns) say that only `simx_alcohol1` stands out, with p = 0.042. The Wald test needs the
@@ -89,8 +90,10 @@ egox_alcohol1 |          0  (omitted)
 simx_alcohol1 |          0  (omitted)
 -------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.095 (below 0.25)
-Convergence t-ratios of 0.1 or more in absolute value: altx_alcohol1 (0.462) simx_alcohol1 (-1.987)
+Overall maximum convergence ratio: 0.095 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for altx_alcohol1 (0.462) simx_alcohol1 (-1.9
+> 87)
+Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
 ```
 
 The fixed effects are shown as `0 (omitted)` and have no standard errors. Their "convergence
