@@ -3666,6 +3666,19 @@ real matrix nw_twomode_profile(real matrix net, real colvector md, string scalar
 }
 
 /*
+	Borgatti and Everett (1997): the largest possible betweenness of a node of a mode with n nodes in a two-mode
+	network whose other mode has m nodes.
+*/
+real scalar nw_be_maxbetween(real scalar n, real scalar m)
+{
+	real scalar s, t
+
+	s = floor((n - 1) / m)
+	t = n - 1 - s * m
+	return((m^2 * (s + 1)^2 + m * (s + 1) * (2 * t - s - 1) - t * (2 * s - t + 3)) / 2)
+}
+
+/*
 	nw_louvain_bip1() from `nstart' starting orders (the first visits the nodes in their order, the others in random
 	order) and keeps the partition with the largest Barber modularity; the greedy search is order dependent.
 */
