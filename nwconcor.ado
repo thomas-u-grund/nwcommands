@@ -35,7 +35,7 @@ program nwconcor, rclass
 		_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 
 		if "`generate'" == "" {
-			di "{err}option {bf:generate()} required."
+			noi di "{err}option {bf:generate()} required."
 			error 198
 		}
 		local netgenerate "`generate'"
@@ -81,7 +81,7 @@ program nwconcor, rclass
 		// every iteration correlates the dense n x n matrix with itself (O(n^3)): 3,000 nodes take about a
 		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB
 		if `nodes' > 6000 & "`force'" == "" {
-			di "{err}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+			noi di "{err}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
 			error 484
 		}
 

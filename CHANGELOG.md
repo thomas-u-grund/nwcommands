@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- Error messages printed inside a `quietly` block were swallowed, so the user saw only "invalid syntax". Now shown: `option generate() required.` for `nw2degree`, `nwbrokerage`, `nwclique`, `nwcohesion`, `nwcommunity`, `nwconcor`, `nwcoreperiphery`, `nwdegree`, `nwkcomponents`, `nwkcore`, `nwnclan` and `nwnclique`; the "already exists" messages of `nwbetween` and `nwfromedge`; the size limit of `nwconcor`; and two messages of the bar-plot helper (`all bars zero height?`, `choose between offset() and zoffset()`).
+
 ## [3.4.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)
