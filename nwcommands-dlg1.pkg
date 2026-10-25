@@ -8,6 +8,7 @@ f nwtostata.dlg
 f nwexport.dlg
 f nwmovie.dlg
 f nw2clustering.dlg
+f nw2nested.dlg
 f nwdendrogram.dlg
 f nwconcor.dlg
 f nwreplacemat.dlg

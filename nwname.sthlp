@@ -58,10 +58,15 @@
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - {opt new2mode(true)} declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); {opt newmodes()} gives the mode of every node.
+
 {title:Supported network types}
 
 {pstd}
-Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them.
+Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them. Two-mode: yes - {opt new2mode(true)} declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); {opt newmodes()} gives the mode of every node.
 
 {title:Examples}
 

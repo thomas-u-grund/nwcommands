@@ -361,10 +361,15 @@ relational-event models, temporal ERGMs) is implemented or attempted here.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
+
 {title:Supported network types}
 
 {pstd}
-This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected.
+This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected. Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
 
 {title:Remarks}
 

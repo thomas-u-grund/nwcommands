@@ -89,14 +89,18 @@ University Press. (cliques and cohesive subgroups)
 {pstd}
 This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); cliques of three or more nodes cannot exist in a bipartite graph.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair
 mutually tied - has no directed generalization, the same reasoning {help nwcoreperiphery} already
 applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect
-clique membership. Signed: not checked. Two-mode: not checked - operates on the network's own
-square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of
+clique membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); cliques of three or more nodes cannot exist in a bipartite graph. Maximal clique enumeration is worst-case exponential in the number of
 maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct
 algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large
 network could take a long time. {help nwnclique}, {help nwnclan} and {help nwkplex} have the options {opt maxcliques()} / {opt maxplexes()}, {opt maxtime()}, {opt countonly} and {opt nomatrix} for such searches; {cmd:nwclique} has none.

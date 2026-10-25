@@ -31,6 +31,7 @@ function; default = {it:arithmetic} for a valued network, {it:binary} otherwise{
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each {opt level()}-mode
 node's own clustering coefficient{p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
+{synopt:{opt ra}}The global clustering coefficient of Robins and Alexander (2004), 4 C4 / L3 (C4 the number of four-cycles, L3 the number of paths of length three) of the binary network; {opt generate()} is then optional; results in {cmd:r(ra)}, {cmd:r(C4)}, {cmd:r(L3)}{p_end}
 
 {p2colreset}{...}
 
@@ -57,13 +58,17 @@ possible 4-path and its own coefficient is reported missing (not spuriously 0).
 forwarding {opt measure()} and {opt generate()} (always at the default {opt level(1)} in that case) -
 call {cmd:nw2clustering} directly to choose {opt level(2)} or a non-default {opt measure()}.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the clustering coefficient of Opsahl (2013), four-paths closed by a fifth tie (as {cmd:tnet::clustering_tm}); {opt ra} adds the global coefficient of Robins and Alexander (2004), 4 C4 / L3.
+
 {title:Supported network types}
 
 {pstd}
 Binary: yes (the default {opt measure(binary)} case). Directed: not checked - a two-mode network's
 ties are treated as undirected. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the 4-path's own four tie values before testing closure. Signed: not
-checked; negative tie values are not validated or rejected. Two-mode: {bf:T3} - this command's entire
-purpose is two-mode clustering; calling it on a one-mode network raises a clear error.
+checked; negative tie values are not validated or rejected. Two-mode: yes - the clustering coefficient of Opsahl (2013), four-paths closed by a fifth tie (as {cmd:tnet::clustering_tm}); {opt ra} adds the global coefficient of Robins and Alexander (2004), 4 C4 / L3.
 
 {title:Limits}
 

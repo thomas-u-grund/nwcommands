@@ -111,10 +111,15 @@ One can also transfrom any network that exists in memory into such an edgelist w
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior, where isolate preservation below does not apply). A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
 
 {title:Examples}
 

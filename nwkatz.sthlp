@@ -97,7 +97,7 @@ unless {help nwgeodesic:geodesic_options} specifies {opt nosym}). Weighted: dist
 forwarded through this command's {it:geodesic_options}; weight meaning follows whatever
 {help nwgeodesic} uses (tie strength inverted into a path cost via the Opsahl et al. formulation -
 see {help nwgeodesic} for detail), not tie strength directly. Signed: not checked; negative tie
-values are not validated or rejected. Two-mode: not checked.
+values are not validated or rejected. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:References}

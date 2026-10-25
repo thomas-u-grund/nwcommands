@@ -91,8 +91,7 @@ Binary: yes. Directed: yes, and directionality is used directly (see Description
 network type the model was originally defined for. Undirected networks are supported too, with the
 directional distinction collapsing away as described above. Weighted: not used - only the
 presence/absence of a tie determines whether a two-path exists; tie strength does not affect role
-counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency
-matrix. {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
+counts. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
 (the same convention {help nwmodularity}'s own {opt group()} option uses) - {cmd:nwbrokerage} does
 not detect groups itself; pair it with {help nwconcor}, {help nwcoreperiphery}, {help nwcommunity},
 or a substantive attribute for the grouping.

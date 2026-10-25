@@ -46,10 +46,15 @@ Build a small two-mode network (3 people x 2 events) and project it onto mode 1 
 	{cmd:. nwproject attendance, project(1) name(people_net)}
 	{cmd:. nwsummarize people_net, matonly}
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - alias of {help nw2project}.
+
 {title:Supported network types}
 
 {pstd}
-Identical to {help nw2project} - see that command's help file.
+Identical to {help nw2project} - see that command's help file. Two-mode: yes - alias of {help nw2project}.
 
 {title:Stored results}
 

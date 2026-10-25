@@ -75,8 +75,7 @@ Binary: yes. Directed: yes - the natural case (a random surfer follows ties in t
 direction); an undirected network is handled identically, since its own symmetric tie matrix
 already represents "can move either way" directly. Weighted: not checked - tie values are ignored
 (a random surfer moves to each out-neighbor with EQUAL probability, matching the classical
-definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: not
-checked.
+definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 

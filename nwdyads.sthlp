@@ -59,10 +59,15 @@ The command also returns the reciprocity of the network.
 {pstd}
 This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
 
 {title:Examples}
 	

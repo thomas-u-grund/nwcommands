@@ -99,8 +99,7 @@ Binary: yes. Directed: yes, but not symmetrized - {it:p_ij} (the proportion of {
 investment in {it:j}) is computed from the raw adjacency matrix exactly as given, same convention as
 {help nwconstraint}. Weighted: {bf:W1}, native - tie weight is used directly as {it:p_ij}'s investment
 proportion, not as a distance. Signed: not supported, same reason as {help nwconstraint} - {it:p_ij}
-is a ratio to a sum of outgoing tie weights, only meaningful when all non-negative. Two-mode: not
-checked.
+is a ratio to a sum of outgoing tie weights, only meaningful when all non-negative. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:Limits}

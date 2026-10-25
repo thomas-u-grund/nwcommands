@@ -78,10 +78,15 @@ The logic for valued networks works in exactly the same way.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes and the level labels are kept (a two-mode network is undirected already).
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - this command's entire purpose is converting a directed network to an undirected one (or checking whether it already is). Weighted: yes - {opt mode()} controls how the two directions' tie values are combined (e.g. max/min/sum) when they differ. Signed: not checked. Two-mode: not applicable - a bipartite network's own cross-mode structure has no "direction" to symmetrize in the first place.
+Binary: yes. Directed: yes - this command's entire purpose is converting a directed network to an undirected one (or checking whether it already is). Weighted: yes - {opt mode()} controls how the two directions' tie values are combined (e.g. max/min/sum) when they differ. Signed: not checked. Two-mode: yes - the flag, the modes and the level labels are kept (a two-mode network is undirected already).
 
 {title:Examples}
 

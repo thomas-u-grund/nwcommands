@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 282
+POSITION 10 10 1060 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwtoedge - Convert network to edgelist")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  GROUPBOX gb_opt 10 44 1030 216, label("Options")
   TEXT tx_cx_isolates0 20 54 260 ., label("reserved; not currently implemented")
   CHECKBOX cx_isolates0 290 54 190 ., label("isolates0") option(isolates0)
   TEXT tx_cx_compress 20 82 260 ., label("Compress edgelist")
@@ -42,6 +42,8 @@ BEGIN
   VARLIST vl_comparevars 800 166 190 ., nomem option(comparevars)
   TEXT tx_ed_comparemode 530 194 260 ., label("Comparison used for comparevars(); default = same")
   EDIT ed_comparemode 800 194 190 ., nomem option(comparemode)
+  TEXT tx_cx_allpairs 20 222 260 ., label("Two-mode network: also write the pairs without a tie (default: ties only)")
+  CHECKBOX cx_allpairs 290 222 190 ., label("allpairs") option(allpairs)
 END
 
 LIST netlist
@@ -71,6 +73,7 @@ BEGIN
 		option main.cx_ignore2mode
 		optionarg main.vl_comparevars
 		optionarg main.ed_comparemode
+		option main.cx_allpairs
 	endoptions
 	stata
 END

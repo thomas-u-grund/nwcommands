@@ -25,7 +25,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 
 {pstd}
 Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings,
-not tie values. Signed: not applicable. Two-mode: not checked.
+not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}

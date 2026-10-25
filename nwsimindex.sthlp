@@ -72,7 +72,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention {help nwkcore} uses). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention {help nwkcore} uses). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 

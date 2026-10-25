@@ -107,10 +107,15 @@ the formula above ignores tie weights.
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network a step along a tie of value w costs 1/w^alpha, with {cmd:alpha(1)} by default, so that a stronger tie is a shorter step (Opsahl et al. 2010; {it:igraph::distances} with weights 1/w, {it:tnet::distance_w}); {cmd:alpha(-1)} reads the values as lengths, as {it:igraph} does. {opt binary} (or {cmd:alpha(0)}) counts steps. Weighted distances are computed for networks of up to 100 nodes, larger networks count steps unless {opt force} is given.
 On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
 
 {title:References}
 

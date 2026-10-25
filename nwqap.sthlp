@@ -191,6 +191,11 @@ when they already were friends at time1 (glasgow1). Furthermore two individuals 
 time1 (smoke1). There is no effect for both having scored the same on sport1. 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
@@ -207,7 +212,7 @@ dependent network's tie strength is silently discarded by the chosen regression 
 continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} now warns
 explicitly when this combination is detected, rather than leaving it silent. Independent networks
 and variables are not affected - their values enter the regression directly, weighted or not.
-Signed: not checked. Two-mode: not checked. A full weighted-QAP alternative (rather than a warning)
+Signed: not checked. Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with {help nwproject}. A full weighted-QAP alternative (rather than a warning)
 remains on the roadmap as a larger follow-on.
 
 

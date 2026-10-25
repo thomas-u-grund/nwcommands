@@ -60,6 +60,11 @@ If the network is a two-mode (bipartite) network, {cmd:nwclustering} automatical
 {help nw2clustering} instead (an ordinary clustering coefficient is not meaningful on a bipartite
 network's own inherently triangle-free structure), forwarding {opt measure()} and {opt generate()}.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: delegated to {help nw2clustering}.
+
 {title:Supported network types}
 
 {pstd}
@@ -69,7 +74,7 @@ matching the directed two-path a -> i -> b convention used elsewhere in this pac
 {opt measure()} is not defined for a directed network - either choose {opt measure(binary)} or
 {opt symmetrize} the network first. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the two tie values of a potential triple's own pair of ties before testing
 closure; undirected networks only (see above). Signed: not checked; negative tie values are not
-validated or rejected. Two-mode: automatically delegated to {help nw2clustering} (see Description).
+validated or rejected. Two-mode: delegated to {help nw2clustering}.
 
 {title:Stored results}
 

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 226
+POSITION 10 10 550 254
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nw2clustering - Clustering coefficient (transitivity) of a t
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 132, label("Options")
+  GROUPBOX gb_opt 10 44 520 160, label("Options")
   TEXT tx_ed_measure 20 54 260 ., label("How to combine a 4-path's own")
   EDIT ed_measure 290 54 190 ., nomem option(measure)
   TEXT tx_sp_level 20 82 260 ., label("Which mode (1 or 2) to compute clustering scores for; default = 1")
@@ -26,6 +26,8 @@ BEGIN
   EDIT ed_generate 290 110 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 138 260 ., label("Overwrite an existing generate() variable; required if it already exists")
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
+  TEXT tx_cx_ra 20 166 260 ., label("Global coefficient of Robins and Alexander (2004), 4 C4 / L3")
+  CHECKBOX cx_ra 290 166 190 ., label("ra") option(ra)
 END
 
 LIST netlist
@@ -47,6 +49,7 @@ BEGIN
 		optionarg main.sp_level
 		optionarg main.ed_generate
 		option main.cx_replace
+		option main.cx_ra
 	endoptions
 	stata
 END

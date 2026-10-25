@@ -64,8 +64,7 @@ handling.
 Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual
 directedness (unlike {help nwlambda}, which always symmetrizes first; a flow network is inherently
 a directed concept). Weighted: yes, via {opt weighted}. Signed: not checked - a negative capacity
-has no meaning here. Two-mode: not checked (see {help nwmatching} for the two-mode/bipartite
-analog - maximum matching, not maximum flow).
+has no meaning here. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 

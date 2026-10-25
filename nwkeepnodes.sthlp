@@ -108,10 +108,15 @@ default unless {bf:netonly} is specified.
 
 
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
+
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: mode assignments are preserved for surviving nodes.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
 
 {title:Limits}
 

@@ -98,7 +98,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {pstd}
 Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share
 the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not
-checked. Two-mode: not checked - operates on each network's own square adjacency matrix.
+checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 

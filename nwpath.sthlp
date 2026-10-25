@@ -70,8 +70,7 @@ On a network that is not valued the result is the same as in earlier releases an
 {pstd}
 Binary: yes. Directed: yes ({opt sym} to symmetrize first). Weighted: not applicable - any nonzero
 tie is treated as traversable regardless of its value; there is currently no shortest-{it:weighted}
--path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: not
-checked.
+-path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 
 {title:Options}

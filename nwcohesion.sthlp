@@ -104,7 +104,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed
 generalization here, matching {help nwkcomponents}). Weighted: not used. Signed: not checked.
-Two-mode: not checked.
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 

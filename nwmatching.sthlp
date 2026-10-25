@@ -62,6 +62,11 @@ result.
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the matching is the one of largest total tie value ({it:igraph::max_bipartite_match} with its weight attribute), which can have fewer pairs than the largest matching; {cmd:r(weight)} is the total value. {opt binary} finds the matching with the most pairs.
 On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: yes - the command needs a two-mode network and finds the largest matching between the two modes ({cmd:igraph::max_bipartite_match}).
+
 {title:Supported network types}
 
 {pstd}
@@ -69,7 +74,7 @@ Binary: yes (only) - matching is a presence/absence structure; tie values are ig
 not applicable (a two-mode affiliation tie has no meaningful direction). Weighted: not applicable -
 see {help nwmaxflow} directly if a WEIGHTED assignment problem (maximum total value, not maximum
 count) is actually what is needed; that is a different, harder problem (not this command). Signed:
-not checked. Two-mode: required.
+not checked. Two-mode: yes - the command needs a two-mode network and finds the largest matching between the two modes ({cmd:igraph::max_bipartite_match}).
 
 {title:Stored results}
 

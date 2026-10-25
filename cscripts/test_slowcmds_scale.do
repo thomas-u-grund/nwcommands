@@ -375,7 +375,7 @@ forvalues s = 1/20 {
     local b = 2 + floor(runiform()*5)
     mata: st_matrix("__m2", (runiform(`a', `b') :< 0.4) :* ceil(runiform(`a', `b') :* 4))
     quietly nw2set, mat(__m2) name(bn)
-    quietly nw2toedge bn
+    quietly nw2toedge bn, allpairs
     * every dyad between the modes, once
     assert _N == `a' * `b'
     quietly nw2toedge bn, compress

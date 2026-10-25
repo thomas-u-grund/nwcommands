@@ -78,7 +78,7 @@ Binary: yes. Directed: yes - ego/alter mixing is directional for a directed netw
 {it:attribute}{cmd:_ego}/{it:attribute}{cmd:_alter} pair is not symmetric); an undirected network's
 own mixing table instead shows each edge counted from both endpoints, noted explicitly in the
 output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed:
-not checked. Two-mode: not checked.
+not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Stored results}
 

@@ -129,7 +129,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical
 Moody-White sense has no directed generalization here, the same reasoning {help nwclique}/
 {help nwkplex}/{help nwnclique} already apply). Weighted: not used - only tie presence/absence
-affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation
+affects connectivity. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Vertex-connectivity computation
 via max-flow is polynomial per pair, but {cmd:nwkcomponents} computes it between {it:every}
 non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller
 reference-vertex subset a more optimized algorithm would use), and the overall

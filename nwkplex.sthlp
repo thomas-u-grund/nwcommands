@@ -116,7 +116,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each
 member's own missing-tie count - has no natural directed generalization, the same reasoning
 {help nwclique} already applies). Weighted: not used - only presence/absence of a tie matters.
-Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix.
+Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem
 itself, true of any correct algorithm) and, for a fixed network, generally slower than
 {help nwclique}'s own clique enumeration for the same reason its own "Supported network types"

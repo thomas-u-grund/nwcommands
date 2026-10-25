@@ -110,7 +110,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 
 {pstd}
 Binary: yes. Directed: yes, automatically symmetrized (same reasoning {help nwnclique} already
-applies). Weighted: not used for membership. Signed: not checked. Two-mode: not checked. Inherits
+applies). Weighted: not used for membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Inherits
 {help nwnclique}'s own worst-case exponential enumeration cost, plus an additional per-candidate
 induced-subgraph diameter check.
 

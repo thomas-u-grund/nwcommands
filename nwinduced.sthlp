@@ -109,6 +109,11 @@ plain betweenness score).{p_end}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. The centrality measures {opt betweenness}, {opt closeness} and {opt evcent} use the tie values of a valued network, as {help nwbetween}, {help nwcloseness} and {help nwevcent} do; {opt degree} counts ties. {opt binary} ignores the values.
 On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
 
+{title:Two-mode networks}
+
+{pstd}
+Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
+
 {title:Supported network types}
 
 {pstd}
@@ -119,8 +124,7 @@ directedness); {bf:measure(degree)} does not - {help nwdegree} itself splits int
 choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear
 error) rather than guessed at. Weighted/Signed: entirely
 inherited from whichever {opt measure()} is chosen - {cmd:nwinduced} itself does not read tie
-values directly. Two-mode: not supported - operates on the network's own one-mode adjacency
-directly; a bipartite-aware variant is not attempted here.
+values directly. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
 
 {title:Limits}
 

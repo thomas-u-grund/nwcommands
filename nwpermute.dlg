@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 226
+POSITION 10 10 550 282
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwpermute - Generate permutation of a network")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 132, label("Options")
+  GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_cx_xvars 20 54 260 ., label("Generate Stata variables for the network")
   CHECKBOX cx_xvars 290 54 190 ., label("xvars") option(xvars)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing network with permutation")
@@ -26,6 +26,10 @@ BEGIN
   COMBOBOX cb_generate 290 110 190 ., dropdown contents(netlist) nomem option(generate)
   TEXT tx_cx_nwreplace 20 138 260 ., label("Replace an existing network named in generate()")
   CHECKBOX cx_nwreplace 290 138 190 ., label("nwreplace") option(nwreplace)
+  TEXT tx_cx_swap 20 166 260 ., label("Two-mode network: swap the partners of ties (keeps both degree sequences)")
+  CHECKBOX cx_swap 290 166 190 ., label("swap") option(swap)
+  TEXT tx_ed_swaps 20 194 260 ., label("Two-mode network: number of attempted swaps (default 10 x ties)")
+  EDIT ed_swaps 290 194 100 ., numonly nomem option(swaps)
 END
 
 LIST netlist
@@ -47,6 +51,8 @@ BEGIN
 		option main.cx_replace
 		option main.cx_nwreplace
 		optionarg main.cb_generate
+		option main.cx_swap
+		optionarg main.ed_swaps
 	endoptions
 	stata
 END

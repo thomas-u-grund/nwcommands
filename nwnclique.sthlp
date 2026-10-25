@@ -112,8 +112,7 @@ Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definit
 generalization, the same reasoning {help nwclique}/{help nwkplex} already apply). Weighted: not
 used for membership - {opth n(int)} counts hops, not tie strength, though the underlying distance
 calculation ({help nwgeodesic}'s own unweighted, {cmd:alpha(0)}-equivalent convention) is unaffected
-by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own
-square adjacency matrix. Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
+by weight either way. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
 exponential behaviour (a mathematical property of maximal-clique-family problems in general).
 
 {title:Limits}
