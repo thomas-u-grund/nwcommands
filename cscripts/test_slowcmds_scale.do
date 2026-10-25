@@ -398,6 +398,8 @@ foreach v in 1 2.5 {
     quietly nw2toedge, full
     assert _N == 48
     quietly nwtoedge mynet
+    assert _N == 24
+    quietly nwtoedge mynet, allpairs
     assert _N == 55
     quietly nwtoedge mynet, compress
     quietly count if mynet == `v'
