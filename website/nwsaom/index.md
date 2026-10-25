@@ -51,7 +51,8 @@ errors in `nwsaom` are the author's.
 | Data features | covariates, composition change, missing data, structural zeros |
 | Engine | a compiled, multithreaded plugin for macOS, Linux and Windows |
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
-| Version | 1.0.2 (24 October 2026) |
+| Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
+| Version | 1.0.3 (25 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
