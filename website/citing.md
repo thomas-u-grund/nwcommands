@@ -26,9 +26,9 @@ example `nwsaom version`.
 
 > Grund, T. U. (2026). *nwergm: a Stata package for exponential random graph models* (version 1.1.1) [Computer software]. [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.0.2) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
+> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.0.2) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
