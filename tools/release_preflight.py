@@ -180,7 +180,7 @@ def main():
         gen = int(m.group(1))
         need = 0
         for f in ["unw_core.do"] + glob.glob("*.ado"):
-            for k in re.findall(r"nwg_comb_version\(\)\s*>=\s*(\d+)", read(f, "")):
+            for k in re.findall(r"nwg_comb_version\(\)\s*>=\s*(\d+)", read(f, "")) + re.findall(r"nwg_comb_version\(\)\s*<\s*(\d+)", read(f, "")):
                 need = max(need, int(k))
         if need > gen:
             rec("FAIL", "plugin generation", f"the code asks for generation {need} but native/nwcomb.h says NWCOMB_VERSION {gen}")
