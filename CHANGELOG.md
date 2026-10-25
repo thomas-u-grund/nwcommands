@@ -6,6 +6,10 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Fixed (results change!)
+- Saving and reloading an undirected signed network (`nwsave` then `nwuse`, also `nwappend`) turned every negative tie into 0, so `nwbalance` then reported every triad as balanced. The same happened with `nwfromedge`, `nwset` and `nwimport` when an undirected network was built from a list that gives each tie once (`undirected`, `forceundirected`): the symmetrisation compared a value of -1 with the 0 of the absent direction and kept the 0. A tie listed in only one direction is now stored with its own value (if both directions are listed with different values the larger one is kept, as before). Networks with only non-negative values are not affected. Saved files made with 3.4.0 or earlier load as before; if you saved an undirected network with negative ties, rebuild it from the original data. `nwsym` itself is unchanged: on a directed network, `mode(max)` still treats a missing tie as 0. Regression test `cscripts/test_signfix.do`.
+- The signed example data sets are now stored with each tie once (smaller files); loading them gives the same networks.
+
 ### Added
 - Three signed example networks (one valued network with +1 and -1 ties), loaded with `nwwebuse`: `senate114` and `senate93` (US Senate co-sponsorship networks of the 114th and 93rd Congress, Neal 2020, doi:10.6084/m9.figshare.8096429, CC BY 4.0: 100 senators with 1,435 positive and 2,261 negative ties, and 101 senators with 581 positive and 1,858 negative ties; attributes state and party) and `gahuku` (alliances and enmities among the 16 Gahuku-Gama tribes, Read 1954: 29 positive and 29 negative ties). Sources, licences and the changes made to the Senate subset are in `help netexample` and the website page "Data sets"; regression test `cscripts/test_signed_data.do`.
 
