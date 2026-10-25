@@ -162,7 +162,7 @@ program nwmixing
 	capture mata: mata drop `EI_out' `pvalue' `out'
 	capture mata: mata drop `attmat'
 	
-	di "{txt}   E-I Index: {res}`=round(`r(EI_index)',0.001)'{txt}   p-value: {res}`=round(`r(EI_pvalue)',0.001)'"
+	di "{txt}   E-I Index: {res}`=strtrim(string(round(`r(EI_index)',0.001),"%9.0g"))'{txt}   p-value: {res}`=strtrim(string(round(`r(EI_pvalue)',0.001),"%9.0g"))'"
 
 	restore
 end	

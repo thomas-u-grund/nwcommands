@@ -43,7 +43,7 @@ program nwpagerank, rclass
 	tempname __nw_pr
 	mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')
 	capture drop `generate'
-	gen double `generate' = .
+	qui gen double `generate' = .
 	mata: st_store((1::`nodes'), "`generate'", `__nw_pr')
 	mata: mata drop `__nw_pr'
 

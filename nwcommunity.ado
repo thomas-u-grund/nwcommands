@@ -156,7 +156,7 @@ program nwcommunity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
+			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round(`lmod',0.001),"%9.0g"))'"
 			if `lcomm' <= 1000 {
 				noi tab `netgenerate'`k'
 			}

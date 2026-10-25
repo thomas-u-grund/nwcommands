@@ -169,9 +169,9 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local post_txt = ""
 		local varsminus = `vars' - 1
 		forvalues i = 1/`varsminus' {
-			local post_txt = "`post_txt' (`=round(temp_coeff[1,`i'], 0.0001)')"
+			local post_txt = "`post_txt' (`=strtrim(string(round(temp_coeff[1,`i'], 0.0001),"%9.0g"))')"
 		}
-		local post_txt ="(`=round(_b[_cons], 0.0001)') `post_txt'"
+		local post_txt ="(`=strtrim(string(round(_b[_cons], 0.0001),"%9.0g"))') `post_txt'"
 		post `memhold' `post_txt'
 	}
 	postclose `memhold'

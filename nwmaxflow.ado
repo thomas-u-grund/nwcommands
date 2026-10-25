@@ -50,7 +50,7 @@ program nwmaxflow, rclass
 		_nwdatasync `netname', generate(`__nw_mf_included')
 
 		capture drop `generate'
-		gen `generate' = .
+		qui gen `generate' = .
 		mata: st_store((1::`nodes'),"`generate'", `__nw_mf'[1::`nodes',1])
 	}
 	mata: mata drop `__nw_mf'

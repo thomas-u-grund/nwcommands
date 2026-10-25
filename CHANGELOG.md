@@ -11,6 +11,13 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - The Mata library `lnwcommands.mlib` is unchanged, so the model packages need no new release for this change. The Linux and Windows plugins must be rebuilt by the plugin workflow before a release (until then those platforms use the Mata code and are as slow as before).
 - `nwtriads`: the count of empty triads (`r(_003)`) is the exact integer; the Mata census could carry a rounding error of one unit in the last place (about 4e-12 at 28,643).
 
+### Fixed
+- Stray Stata messages no longer leak into the output of core commands: `(N real changes made)` from `nwtoedge` (and so from `nwmixing`, `nwtabulate`, `nwhomophily`, `nwcollapse`, `nwcorrelate`, `nwqap`), `(N missing values generated)` from `nwpagerank`, `nwfactions`, `nwneighbor`, `nwmaxflow` and `nwcorrelate`, and `variable _nwnode was str5 now str7` from `nwcollapse`. The regression test `cscripts/test_no_leaked_lines.do` scans the output of these commands.
+- Output formatting: `nwdegree` and `nwsummarize` print `Degree centralization:` with one colon (was two); `nwevcent` no longer prints a leading `.` before its note on the symmetrized network; rounded results in the display of `nwturnover`, `nwmixing`, `nwclustering`, `nwsummarize`, `nwcug` and other commands no longer show floating point artefacts such as `.5690000000000001` (return values `r()` keep full precision, only the printed text changed).
+- `nwattime` prints the number of ties of the static view (an undirected tie was counted twice in the printed line); `r(ties)` is unchanged and still counts triplet rows.
+- `nwcorrelate` with `permutations()` and `save()` stored the observed correlation as missing in the saved file; it now holds the observed value.
+- `nwbrokerage` help: states the Gould-Fernandez condition that the code applies (paths with a tie from a to c are not counted).
+
 ## [3.3.1] - 2026-10-25
 
 ### Fixed

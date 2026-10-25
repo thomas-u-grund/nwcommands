@@ -153,8 +153,8 @@ program nwclustering
 		}
 		noi di "{hline 40}"
 		noi di "{txt}    Measure: {res}`measure'"
-		noi di "{txt}    Average clustering coefficient: {res}`=round(`r(cluster_avg)',0.001)'"
-		noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
+		noi di "{txt}    Average clustering coefficient: {res}`=strtrim(string(round(`r(cluster_avg)',0.001),"%9.0g"))'"
+		noi di "{txt}    Global clustering coefficient: {res}`=strtrim(string(round(`r(cluster_global)',0.001),"%9.0g"))'"
 		noi di " "
 	}
 	if "`symmetrize'" != "" {

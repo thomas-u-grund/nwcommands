@@ -70,7 +70,7 @@ program nwcoreperiphery, rclass
 		if "`silent'" == "" {
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
-			noi di "{txt}  Core size: {res}`lcore'{txt}   Fitness: {res}`=round(`lfit',0.001)'"
+			noi di "{txt}  Core size: {res}`lcore'{txt}   Fitness: {res}`=strtrim(string(round(`lfit',0.001),"%9.0g"))'"
 			noi tab `netgenerate'`k'
 			noi di " "
 		}

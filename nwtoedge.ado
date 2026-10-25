@@ -105,7 +105,7 @@ program nwtoedge
 			gen `nw_included'_all = 0
 			local __nwtoedge_haveall = 1
 		}
-		replace `nw_included'_all = 1 if `nw_included' == 1
+		qui replace `nw_included'_all = 1 if `nw_included' == 1
 	}
 	capture drop `nw_included'
 	rename `nw_included'_all `nw_included'

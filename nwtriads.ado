@@ -116,7 +116,7 @@ program nwtriads
 	di "{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}"
 	di "{res}{ralign 10:`r(_111U)'}{col 12}{c |}{ralign 10:`r(_201)'}{col 24}{c |}{ralign 10:`r(_210)'}{col 36}{c |}{ralign 10:`r(_300)'}{col 48}{c |}"
 	di
-	di "{txt}     Transitivity: {res}`=round(`r(transitivity)',0.001)'"
+	di "{txt}     Transitivity: {res}`=strtrim(string(round(`r(transitivity)',0.001),"%9.0g"))'"
 
 	// plot(): a bar chart of the 16 MAN-category counts, via this
 	// package's own established preserve/rebuild-a-plotting-dataset/
