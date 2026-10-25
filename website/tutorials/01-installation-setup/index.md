@@ -2,7 +2,7 @@
 title: "Tutorial 1: Installation & Setup"
 parent: "nwcommands (core)"
 nav_order: 2
-description: "Installing nwcommands 3.0.0 from scratch, installing the model packages, choosing a release, and updating."
+description: "Installing nwcommands 3.0.0 and the model packages from scratch with nwinstall, everything, installing the model packages, choosing a release, and updating."
 ---
 
 # Installation & Setup
@@ -27,14 +27,22 @@ the real work.
 
 ## Installing everything
 
+Requirements: Stata 17 or later. The packages are tested with Stata 17 and 18, and StataBE is enough.
+Older versions are untested; on one, `nwinstall` and `nwversion` print a note but go on.
+
 ```stata
-. nwinstall, all
+. nwinstall, everything
 ```
 
-`nwinstall, all` downloads every command, every help file and every dialog box, one group after the
-other (command files, then help files, then dialog boxes). While it runs, Stata prints the package
-listing of the repository once for each group, so the same listing scrolls by three times. That is
-expected.
+`nwinstall, everything` installs the core and the four model packages as one consistent set. It first
+checks that every model package can be reached and that none needs a newer core, then it downloads every
+command, every help file and every dialog box of the core, one group after the other (command files, then
+help files, then dialog boxes), then the four model packages, and it prints the version of each package
+at the end. While it runs, Stata prints the package listing of the repository once for each group, so the
+same listing scrolls by several times. That is expected.
+
+To install the core only, type `nwinstall, all`. It ends with the hint `To also install the model packages
+type: nwinstall, models   (or nwinstall, everything)`.
 
 To check that the installation worked, type `which nwdegree`. Stata prints the path of the installed
 file, and `help nwcommands` opens the start page of the help. `nwversion` prints the version of the
@@ -83,23 +91,25 @@ model packages are free software under the GNU General Public License, version 3
 | `nwdynam` | dynamic network actor models (DyNAM) | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
 | `nwrem` | relational event models (REM) | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
 
-All four at once, from the core:
+If you installed the core alone (`nwinstall, all`), all four at once, from the core:
 
 ```stata
 . nwinstall, models
 ```
+
+(`nwinstall, everything` does the core and the four model packages in one step.)
 
 `nwinstall, modelpkg(nwsaom nwergm)` installs only the ones you name, and `release(v1.0.1)` picks a
 release. After the installation, `nwversion` lists each model package with its version instead of
 "not installed". Each package also has its own `<name> version` subcommand (for example
 `nwsaom version`), which stores the release in `r(version)`.
 
-For a computer without internet access, `nwinstall, models` can also read the packages from a folder
+For a computer without internet access, `nwinstall, models` and `nwinstall, everything` can also read the packages from a folder
 that contains one subfolder per package (option `modelsfrom()`; see `help nwinstall`).
 
 ## Updating vs. pinning a version
 
-Re-running `nwinstall, all` at any time re-downloads and replaces everything with whatever is
+Re-running `nwinstall, everything` (or `nwinstall, all` for the core only) at any time re-downloads and replaces everything with whatever is
 currently on the `master` branch — there's no separate "update" command, because installing
 *is* updating. The model packages update the same way: repeat the `net install` line with
 `replace`, for example

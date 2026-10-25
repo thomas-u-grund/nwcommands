@@ -14,8 +14,10 @@ description: "Install nwsaom for Stata: the core nwcommands first, then the nwsa
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
+
+`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.

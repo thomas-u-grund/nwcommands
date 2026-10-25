@@ -18,11 +18,13 @@ it but are installed separately.
 
 ```stata
 . net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
-. nwinstall, all
+. nwinstall, everything
 ```
 
-`nwinstall, all` downloads every command, all help files and every dialog box. Add `nwinstall, gui`
-for a "Network Analysis" menu in Stata. `nwinstall, models` installs the four model packages.
+`nwinstall, everything` installs the core (every command, all help files and every dialog box) and the four model
+packages. `nwinstall, all` installs the core only; `nwinstall, models` adds the model packages later. Add
+`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested with Stata 17 and 18;
+Stata BE is enough).
 `nwversion` shows the core version and which model packages are installed. See the
 [Installation & Setup](../tutorials/01-installation-setup/) tutorial for details.
 

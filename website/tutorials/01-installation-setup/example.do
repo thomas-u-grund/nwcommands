@@ -4,7 +4,7 @@
 
 net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
 net install nwcommands
-nwinstall, all
+nwinstall, everything
 
 * Check what is installed
 nwversion

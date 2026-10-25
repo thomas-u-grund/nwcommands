@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 276
+POSITION 10 10 1060 304
 
 SCRIPT PREINIT
 BEGIN
@@ -15,7 +15,7 @@ END
 
 DIALOG main, title("nwinstall - Install Stata menu/dialogs")
 BEGIN
-  GROUPBOX gb_opt 10 10 1030 216, label("Options")
+  GROUPBOX gb_opt 10 10 1030 270, label("Options")
   TEXT tx_cx_update 20 20 260 ., label("Refresh the installed menu (an internal, self-recursive flag: re-invokes nwinstall, help usermenu)")
   CHECKBOX cx_update 290 20 190 ., label("update") option(update)
   TEXT tx_ed_menu 20 48 260 ., label("install in this menu; default = 'stUser'")
@@ -46,6 +46,8 @@ BEGIN
   EDIT ed_from 800 188 190 ., nomem option(from)
   TEXT tx_ed_dest 20 216 260 ., label("with localcopy: local ado directory to copy files into; default = your PERSONAL ado directory")
   EDIT ed_dest 290 216 190 ., nomem option(dest)
+  TEXT tx_cx_everything 20 244 260 ., label("install the core and the four model packages (nwsaom, nwergm, nwdynam, nwrem)")
+  CHECKBOX cx_everything 290 244 190 ., label("everything") option(everything)
 END
 
 PROGRAM initialize
@@ -71,6 +73,7 @@ BEGIN
 		option main.cx_localcopy
 		optionarg main.ed_from
 		optionarg main.ed_dest
+		option main.cx_everything
 	endoptions
 	stata
 END

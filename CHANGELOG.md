@@ -35,6 +35,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwconstraint` (the dyadic constraint network) is not changed and still uses the tie values as they are.
 
 ### Added
+- `nwinstall, everything` installs the core (what `nwinstall, all` installs) and the four model packages (what `models` installs) as one set, checks first that every model repository can be reached and that no model needs a newer core, and prints the version of each package at the end. `from()`, `modelsfrom()` and `release()` work as for `models` (offline installs from local folders). `nwinstall, all models` is the same as `everything`.
+- `nwinstall, all` ends with a hint on how to add the model packages.
+- `nwinstall` and `nwversion` print a note (and go on) when Stata is older than version 17.
 - Mata library (rebuilt with Stata 17; the model packages must be rebuilt against it): `calculate_pagerank` and `calculate_randomwalk_hitting` take an optional weighted argument, new `get_path_weighted` and `calculate_matching_maxweight` (Hungarian method); the defaults of the existing Mata functions are unchanged.
 - Help files and dialogs of the changed commands describe the valued-network rule and the option `binary`; a page on valued networks on the website.
 
@@ -56,6 +59,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwcorrelate` stored the permuted correlations as float, so the tie handling in the p-value depended on rounding; they are now stored as double (also in the file written by `save()`).
 - `nwreach` help said the network is symmetrised by default; it is not (use `sym`). The help now says so.
 - Help for `nwdegree`, `nwbetween`, `nwcloseness` (new option `legacy`, also in its dialog), `nwsimilar` and `nwdissimilar` states the formulas used. Regression test `cscripts/test_auditfix.do`.
+
+### Changed
+- Supported Stata versions: 17 or later, tested with Stata 17 and 18 (StataBE is enough); the false "Stata 14 or later" is replaced in the README, `help nwintro`, the help of `nwinstall` and the website. The install pages and the home page lead with `nwinstall, everything`.
 
 ## [3.5.1] - 2026-10-25
 
