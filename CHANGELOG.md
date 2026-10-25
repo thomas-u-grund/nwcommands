@@ -4,8 +4,14 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [3.3.0] - not yet released
+## [3.3.0] - 2026-10-25
 Networks of 100,000 nodes: more commands work at that size, and commands that cannot are refused at once with a message and an alternative.
+
+### Important
+- The Mata library of the core changed. Install the model packages again after updating the core: nwsaom 1.0.4 or later and nwergm 1.1.2 or later (`nwinstall, models`); older model packages stop with r(3021) "class compiled at different times".
+
+### Added
+- A page "How large a network can I analyze?" on the website (and an extended Appendix H in the book) says which commands are reasonable for which network size.
 
 ### Fixed
 - Scaling audit at 100,000 nodes (stage 4; details in the audit report; Stata/BE, random directed network with 10 ties per node, 1.0 million ties, 12 GB memory cap, 300 s limit). Before: of 143 recipes 83 worked (14 of them took 10 s or more), 26 were refused by a guard, 11 in the setup (a two-mode network is one matrix over both modes), 9 were killed at 12 GB, 5 timed out, 1 stopped with r(920) and 6 with an error; none gave a wrong result. After: 93 work (15 take 10 s or more, the slowest 104 s), 36 are refused at once by a guard, 11 in the setup, 3 are not tried; none killed, none timed out, none with an unexplained error.
