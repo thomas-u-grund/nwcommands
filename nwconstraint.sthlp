@@ -16,11 +16,14 @@
 {cmdab: nwconstraint}
 [{it:{help netname}}]
 [{cmd:,}
+{opth name(newnetname)}
+{opt replace}
 {it:{help nwset:nwset_options}}]
 
 {pstd}
-where {it:nwset_options} are any options accepted by {help nwset}'s {opt mat()} form (e.g.
-{opt name()}, {opt undirected}, {opt directed}) - they are forwarded unchanged to the internal
+{opt name()} names the new network and {opt replace} overwrites an existing network of that name. The
+other {it:nwset_options} are any options accepted by {help nwset}'s {opt mat()} form (e.g.
+{opt undirected}, {opt directed}); they are forwarded unchanged to the internal
 {cmd:nwset, mat()} call that stores the result.
 
 
@@ -106,7 +109,14 @@ Press.
 The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE (killed at 12 GB before).
 
 {pstd}
-Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 10 ties per node and 100,000 nodes: 12 seconds for a directed network, 50 seconds and 7 GB for an undirected one (40 million cells).
+Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7 seconds for a directed network and 2.2 seconds for an undirected one (11 million cells; 2.9 and 9.7 seconds before).
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
+{pstd}
+The cells are computed in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise;
+both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network
+(1 second in Stata/BE for an undirected network, 10 seconds before) goes into storing the result as a network.
 
 {title:See also}
 
@@ -115,4 +125,4 @@ Above 2,000 nodes a network held as stored ties gets its constraint network from
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

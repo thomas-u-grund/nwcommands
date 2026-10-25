@@ -42,8 +42,7 @@ knowing {help nwrecode}'s own general recode-rule syntax. For anything beyond a 
 (multiple bands, missing-value handling, etc.), use {help nwrecode} directly.
 
 {pstd}
-As with {help nwrecode} (and following the package's general convention - see
-{browse "NWCOMMANDS_COMMAND_STYLE.md":the style guide}'s "Output creation" section - for commands
+As with {help nwrecode} (and following the package's general convention for commands
 where in-place modification is the default), the network is dichotomized in place unless
 {opt generate()} or {opt prefix()} is specified, in which case the original is left untouched and
 the result is saved under a new name instead.
@@ -81,4 +80,4 @@ See {help nwrecode}: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, 
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

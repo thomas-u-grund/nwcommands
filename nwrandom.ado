@@ -7,8 +7,12 @@ program nwrandom
 	// instead of erroring, unlike every sibling generator in this group
 	// (nwpref/nwlattice/nwring/nwsmall), none of which have this
 	// wildcard and all of which correctly reject unknown options.
-	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) NODENAMESmata(string) name(string) undirected xvars noreplace]
+	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) NODENAMESmata(string) name(string) undirected directed xvars noreplace]
 	unw_defs
+	if "`directed'" != "" & "`undirected'" != "" {
+		di "{err}Options {bf:directed} and {bf:undirected} cannot be combined."
+		error 198
+	}
 	
 	// Generate valid network name and valid varlist
 	// BUGFIX: an unspecified name() has always been documented/expected

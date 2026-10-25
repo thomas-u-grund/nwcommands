@@ -78,6 +78,9 @@ mutual/asymmetric/null dyad types have no meaning for undirected ties, where eve
 tied or not.
 
 {pstd}
+Some statistics are fixed by the dyad census (reciprocity, for example). With {bf:condition(census)} their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.
+
+{pstd}
 {bf:tail()} controls which p-value(s) are reported: {bf:upper} is the proportion of random draws with
 a statistic at least as large as observed (evidence the observed value is unusually {it:high});
 {bf:lower} is the proportion at least as small (unusually {it:low}); {bf:both} (the default) reports
@@ -132,4 +135,4 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

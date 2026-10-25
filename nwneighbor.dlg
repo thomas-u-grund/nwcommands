@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 188, label("Options")
-  TEXT tx_ed_ego 20 54 260 ., label("Ego")
+  TEXT tx_ed_ego 20 54 260 ., label("Node whose neighborhood is determined")
   EDIT ed_ego 290 54 190 ., nomem option(ego)
-  TEXT tx_cb_mode 20 82 260 ., label("Defines the network neighborhood of node ; default =")
+  TEXT tx_cb_mode 20 82 260 ., label("Defines the network neighborhood of node ego; default = outgoing")
   COMBOBOX cb_mode 290 82 190 ., dropdownlist contents(list_mode) nomem option(mode)
   TEXT tx_ed_generate 20 110 260 ., label("Save information about network neighbors in variable.")
   EDIT ed_generate 290 110 190 ., nomem option(generate)

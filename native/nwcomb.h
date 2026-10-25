@@ -11,7 +11,10 @@
 	Codes 22 (triad balance of nwbalance) and 23 (bipartite matching of nwmatching) were added with
 	NWCOMB_VERSION 3 (see comb_balance(), comb_matching() in nwcomb2.h), code 24 (Louvain communities of
 	nwcommunity) with NWCOMB_VERSION 4 (comb_louvain()), code 25 (distance sums of
-	nwcloseness and nwkatz) with NWCOMB_VERSION 5 (comb_distsum()).
+	nwcloseness and nwkatz) with NWCOMB_VERSION 5 (comb_distsum()), codes 26 (clustering of nwclustering), 27
+	(triad census of nwtriads) and 28 (eigenvector centrality of nwevcent) with NWCOMB_VERSION 6 (nwfast.h), 29 (nwburt), 30 (nwconstraint) and
+	31 (nwsimmelian) with NWCOMB_VERSION 7 (nwbrokerage.h).
+	Codes 34..39 (nwfast2.h, NWCOMB_VERSION 8): 34 pagerank of nwpagerank, 35 maximal cliques of nwclique.
 
 	WIRE PROTOCOL (algorithm codes 3..99, see comb_call() at the end):
 	  plugin call nwgraph_native v1 v2 v3 v4 [v5 ...], "alg n nties p1 p2 ..."
@@ -37,7 +40,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define NWCOMB_VERSION 5
+#define NWCOMB_VERSION 8
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4
@@ -1229,6 +1232,9 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 }
 
 #include "nwcomb2.h"
+#include "nwfast.h"
+#include "nwbrokerage.h"
+#include "nwfast2.h"
 
 /* ------------------------------------------------------------------ */
 /* dispatcher                                                           */
@@ -1237,7 +1243,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 static int comb_handles(const char *s) {
 	long a = (long)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
-	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 99 || a == 100);
+	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
@@ -1293,6 +1299,12 @@ static int comb_call(int argc, char *argv[]) {
 		for (k = 0; k < n; k++) { ST_double v; SF_vdata(4, k + 1, &v); nv[k] = v; }
 	}
 	res_clear();
+	if (alg >= 34 && alg <= 39) {
+		rc = comb_fast2(alg, n, nties, ei, ej, ew, nv, p);
+		free(ei); free(ej); free(ew); free(nv);
+		if (rc == 2) { res_clear(); pub_result(2, 0, 0); }
+		return rc == 198 ? 198 : 0;
+	}
 	switch (alg) {
 		case ALG_COHESION:
 			rc = comb_cohesion(n, nties, ei, ej, (long)p[3]);
@@ -1326,6 +1338,24 @@ static int comb_call(int argc, char *argv[]) {
 			break;
 		case ALG_DISTSUM:
 			rc = comb_distsum(n, nties, ei, ej, (int)p[3], p[4]);
+			break;
+		case ALG_CLUSTERING:
+			rc = comb_clustering(n, nties, ei, ej, (int)p[3]);
+			break;
+		case ALG_TRIADS:
+			rc = comb_triads(n, nties, ei, ej);
+			break;
+		case ALG_EVCENT:
+			rc = comb_evcent(n, nties, ei, ej, ew, (int)p[3], (int)p[4]);
+			break;
+		case ALG_BURT:
+			rc = comb_burt(n, nties, ei, ej, ew);
+			break;
+		case ALG_CONSTRAINT:
+			rc = comb_constraint(n, nties, ei, ej, ew);
+			break;
+		case ALG_SIMMELIAN:
+			rc = comb_simmelian(n, nties, ei, ej);
 			break;
 		default:
 			SF_error("nwgraph: unknown algorithm code\n");

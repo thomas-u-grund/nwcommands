@@ -6,6 +6,14 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## `nwsave` of a large two-mode network writes every within-mode dyad (gigabytes)
+
+`nwsave` stores a network as an edge list made with `nwtoedge ..., ignore2mode compress`. For a two-mode network that lists all pairs of nodes *inside* each mode as well (with value 0), so `davis` (32 nodes) is 365 rows but a 5,092 x 455 network came to 2.6 GB. `ftdirectors_se.nwdta` was therefore written with a copy of `nwsave.ado` that adds `keep if <network> == 1` right after the `nwtoedge` line; `nwuse` reads such a file fine (it only needs the tie rows). Do the same when you rebuild a large two-mode data file, or fix `nwsave` to skip the zero rows of two-mode networks.
+
+## The interactive page flips y; the JSON and the CSV keep Stata's orientation
+
+Cytoscape draws y downward, Stata upward. `nwedit_template.html` (and `nwmovie_template.html`) negate y when placing nodes (`y: -n.y * 1000`) and `saveNodeEdits()` negates it back, so the JSON written by `nwplot.ado`, `movieexport()` and the saved CSV all stay in Stata orientation. Do not flip in `nwplot.ado`. Also: cytoscape's arrow size is `max((13.37*w)^0.9, 29) * arrow-scale`, so it never gets smaller than for a 3 px line; the template's `arrowFit()` corrects the scale per edge. A page built from degree-scaled `nodexy()` data (usair, `Lon Lat`) is still unusably tiny at default factors (coordinates are not rescaled to 0-1.5 as `layout()` results are).
+
 ## Package manifests (`nwcommands*.pkg`) are generated — don't hand-edit them
 
 `nwcommands-ado1.pkg`/`-ado2.pkg`/`-ado3.pkg`, `nwcommands-hlp1.pkg`/`-hlp2.pkg`,
@@ -386,7 +394,7 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 ## Native plugin algorithm codes: keep the ranges apart
 
 `native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
-3-9, 22-25 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 26 and up for the next kernel), 20 is the vertex-connectivity search
+3-9, 22-31, 34-39 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 40 and up for the next kernel), 20 is the vertex-connectivity search
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
@@ -561,3 +569,66 @@ by hand "fixes" it for that session only, which hid the bug in every manual test
   index is made while only the core library is visible). Without `SMOKE_STALE` a plain new session usually finds all libraries,
   which is why a simple "install, restart, run" test passes.
 - `nwinstall, all` and `nwinstall, models` run `mata mlib index` after installing; the model packages do not rely on it.
+
+## Algorithm codes 26-28 (clustering, triad census, eigenvector centrality); kernel version 6; wired from the ado files
+
+`native/nwfast.h` (included by `nwcomb.h`, `NWCOMB_VERSION 6`) hosts the kernels of `nwclustering` (26), `nwtriads` (27) and `nwevcent` (28).
+- **The glue lives in the .ado files, not in the Mata library** (kept so for these kernels; since the "matafast" work the library may change, but every change forces new nwsaom and nwergm
+  releases, see RELEASING.md "Whenever the core Mata library changes"). Each ado has a file-scope `mata:` helper (`nw_fastclust()`, `nw_fasttriads()`, and a branch in `nw_evcentrality()`) that calls the public
+  `nwg_comb_version()` / `nwg_comb()` of the library and returns an empty matrix when the kernel is missing (plugin generation < 6, status != 0, wrong shape);
+  the ado then runs the old Mata method. Mata functions defined in an ado file are private to that file (`mata which nw_fastclust()` says "not found" from
+  outside; `program dir` lists them as `nwclustering.nw_fastclust()`), so a test cannot call them: call `nwg_comb(26, ...)` directly or compare through the command.
+- **`global NW_NOFASTKERNELS 1` forces the Mata route** (empty = native). The helpers read it with `st_global()` on every call; `cscripts/test_fastkernels.do` uses it to compare both routes.
+- **`generate()` variables of `nwclustering` and `nwevcent` are floats by default**: an old-versus-new test that compares them only compares to about 1e-7. Pre-create a `double` variable and pass `replace` (nwevcent keeps its type), or compare the kernel output.
+- **The Mata triad census is not defined for self-loops** (the loop makes a node its own connected neighbour): `nw_fasttriads()` hands such networks to the Mata census and the results stay as they were. Its 003 count is `n(n-1)(n-2)/6 - sum`, which can be off by one unit in the last place; the kernel's is the exact integer, so compare with a tolerance of 1e-6, not `==`.
+- **Equality of nwevcent with the Mata iteration is bit for bit** because the C kernel sums in the same order and `-ffp-contract=off` forbids fused multiply-adds (largest difference measured over 80 networks: 0).
+
+## A Stata option declared as lowercase `noxxx` in `syntax` sets the local `xxx`, not `noxxx`
+
+`syntax ..., noopen` makes Stata treat `noopen` as the negation of an option `open`: the local `open` is set (to `open`) when the option is absent and cleared when it is given, and the local `noopen` is always empty. `nwmovie` tested `"`noopen'" == ""` and so opened the viewer even with `noopen`. Declare it as `NOOpen` (capital letters mark the minimal abbreviation and keep `noopen` as the option name) as `nwplot` does.
+
+## Two-mode networks in edge lists: `nwtoedge, compress` used to keep the missing within-mode cells
+
+The cleaned matrix of a two-mode network holds a missing value for every pair of nodes of the same mode; the generic `nwtoedge, compress` code drops zero rows only (`abs(.)` is missing, not 0), so it kept all of them. `nwtoedge` now hands a single two-mode network with `compress` to `nw2toedge` (between-mode ties only), and `nwsave` makes the tie list of each network separately when the file holds a two-mode network (stacked, a row carries the value of its own network only; `nwuse` uses the value variable as the weight and ignores missing). The `_dta[nwtoedge_nodes]` isolate list must be cleared when several networks are stacked, or `nwuse` adds the other network's nodes to each network.
+
+
+## Algorithm codes 29-31 (nwburt, nwconstraint, nwsimmelian); kernel version 7; `native/nwbrokerage.h`
+
+Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix = fall back). Things that were not obvious:
+- **A static helper name in a new header can clash with `nwcomb2.h`** (`cmp_long` is already there): prefix helpers (`brk_`) so that several kernel headers can be merged.
+- **The big cost of `nwconstraint` at 100,000 nodes was not the kernel** (0.9 s) but `_nwsetsparse` / `set_edge_from_triplets()` in the Mata library (10 s for 11 million cells: two key sorts and, for the directed network, the sort for the in-neighbour index). Since the matafast change the kernel's ascending list is not sorted again and the in-neighbour index is built when something asks for it (see "Mata library speed-ups" below).
+- **Mata's `order()` is not stable** (see the comment in `set_edge_from_triplets()`), so the Mata `calculate_constraint_triplets()` adds equal cells in an unspecified order; the kernel adds them in the order of the tie list. Differences are 1e-16 relative, never more.
+- **A kernel result of 0 rows is legitimate** (`pub_result(0, 0, c)`): `nwg_comb()` then returns `J(0, c, .)`; the failure signal is `J(0, 0, .)` (zero columns). Test `cols()`, not only `rows()`.
+- **Kernels that return fewer rows than allocated** must set `g_res_rows` to the real count before the fetch call (it copies `g_res_rows` rows).
+- The `nwburt` hierarchy is missing for a node without ties and 1 for degree 1 (log 1 = 0); the kernel returns a missing flag in column 5 because plugin results are plain doubles.
+
+## Algorithm codes 34-35 (PageRank, maximal cliques) and the k = 2 block search; kernel version 8
+
+`native/nwfast2.h` (included by `nwcomb.h`, `NWCOMB_VERSION 8`) hosts the kernels of `nwpagerank` (34) and `nwclique` (35); the glue is a file-scope Mata helper
+in each ado (`nw2_fastpr()`, `nw2_fastcliq()`), the same pattern as codes 26-28 (`NW_NOFASTKERNELS`, empty answer = old Mata route).
+- **`st_matrix()` is quadratic in the number of columns**: storing a matrix of any number of rows costs 0.15 s at 10,000 columns, 0.7 s at 20,000, 3.4 s at 40,000 and about 45 s at
+  100,000 (measured with `J(1, c, 0)` and `J(10, c, 0)`, the same time). `nwclique` and `nwkcomponents` store one column per node (`r(clique_matrix)`, `r(kcomp_matrix)`), so
+  at 100,000 nodes that call is the whole running time once the search is native. It cannot be avoided without changing the result matrices (a transposed or one-row matrix costs the same); do not look for the time in the kernels. Both commands have the option `nomatrix` (as `nwnclique`): no matrix is built or stored, the per-node variable and the count are the same, and `nwclique` then gets them from the kernel's (clique, node) list without the cliques-by-nodes matrix.
+- **Algorithm 20 (`kconn_search()` in `nwgraph.c`) has a second route for target 2** (`kconn2_search()` in `nwfast2.h`): for target 2 the flow of a non-adjacent pair is 0 (different
+  components), 1 (no common biconnected block) or 2 (a common block), so one depth-first search with an edge stack answers all n queries; the queries are walked in the order of the flow
+  search (node order for v0, then the pairs of the neighbours of v0 in list order) and the first below 2 is reported, so `(minflow, best_s, best_t)` is identical when the connectivity is
+  below 2. It is inside the plugin, so `NW_NOFASTKERNELS` does not switch it off; compare with `fast_min_cut_search_edges()` (Mata) or with the generation 6 plugin. A self-loop in the arc
+  list sends the call to the flow search.
+- **The cliques kernel returns (clique number, node) pairs, not a dense matrix**; the helper builds the K x n matrix of 0/1. Order of the rows = order of `BronKerboschSparse()`, because the
+  pivot (first node of P then X with the most neighbours in P), P (ascending), X (insertion order) and the branch order are reproduced. P is kept ascending with tombstones and X by insertion
+  position (a stamp array with an undo log), so intersections with N(v) walk the shorter side: the top level of a sparse graph is O(sum of degrees), not O(n^2) as in Mata.
+  A stored self-loop is handed to Mata (status 3).
+- **The random generators were looked at and left alone**: `nwrandom prob()` draws n^2 uniforms to keep the seed-to-network mapping (66 s at 100,000 nodes, all drawing), `nwsmall`
+  interleaves the draws with the rewiring (4.9 of 7.4 s at 100,000 nodes), `nwring` and `nwpref` draw almost nothing (0.02 and 0.06 s of 1.4 and 1.2 s: the rest is building the network).
+
+## Mata library speed-ups ("matafast"): things that cost time to find
+
+Measured first (Mata timer, 100,000 nodes, 1 million ties): the loops over the nodes (row pointers, `csr_rows()`) cost 0.03-0.07 s each; what costs is `order()` (0.25-0.6 s per million keys, 7 s for 11 million), `asarray` (0.5 s for 100,000 names), Stata-side `merge`/`stack`/`egen group`, and `preserve`/`merge`/`gsort` in `_nwdatasync`.
+- **`set_edge_from_triplets()` skips the sort when the key (ego, alter) is strictly ascending** (the kernels, `nw_triplets_lastwins()` and `symmetrize_sparse()` hand over such lists); a strictly ascending list has no duplicates and the sort would return the identity. The row pointers come from `nw_rowptr()` (panelsetup, no loop; a list that is not ascending keeps the loop).
+- **The in-neighbour index of a directed network is built on demand** (`rev_pending`, `ensure_reverse_built()`), because it needs one more sort of all ties. Code that reads `rowptr_in`/`colidx_in`/`edgeid_in` directly must call `ensure_reverse_built()` first (or go through `neighbors_in()`, `degree_in()`, `get_indegree()`); `build_sparse_index()` still builds it at once.
+- **`panelsum()` does not skip missing values, `sum()` does**: `get_outdegree()`/`get_indegree()` use panel sums only when `cweight` has no missing value (the sums are then bit-identical to the loop of `sum()` calls: checked on 20,000 random groups).
+- **`_nwdatasync` was a no-op fast path for years**: the early `check_signatures()` call compared `is_2mode()` (the string "false", never empty) with "" and so never exited. Now the two cases that make the merge pointless are handled directly: the data hold exactly the node names in node order, or the dataset is empty (what `nwfromedge`, `nwset` and the generators leave): the indicator variable is created, nothing else changes. Everything else (other row counts, blank or long names, two-mode, a sorted dataset, `force`) still takes the preserve/merge/gsort route, because the order of rows that belong to no node is decided there. `_rc` is reset by a succeeding `capture confirm number 0` (neither `set more off`, `gen` nor `count` resets it at the top level of a do-file).
+- **`nwfromedge` builds the node dictionary in Mata** when the identifiers are integers within +-16,777,216 without missing values (table lookup, no sort); the Stata route (stack, egen group, collapse, two merges) stays for anything else and for `noclear`. A row with a missing alter is KEPT by the Stata route as a corrupt tie (ego/alter missing in the triplets: later `r(3301)` in `nwconstraint`, and a crash of the Stata process in plugin kernels were seen); do not feed such lists to the equality tests, or drop the rows first. A missing identifier therefore sends the whole list to the Stata route in order not to change anything for it.
+- **Mata `order()` ties are not reproducible** (two identical calls give different orders), so only tie-free outputs can be compared bit for bit between old and new library; the equality harness compares lists of unique keys.
+- `update_nodesvar()` uses one `sort()` of the names for networks of more than 5,000 nodes (the hash costs 0.5 s at 100,000); small networks keep the hash on purpose (a Mata sort advances the state that breaks ties in later sorts).
+

@@ -36,7 +36,9 @@
 {pstd}
 {cmd:nwbrokerage} counts, for every node {it:b}, how often it plays each of the five brokerage
 roles defined by Gould and Fernandez (1989). For every directed two-path {it:a -> b -> c} (with
-{it:a} != {it:c}) through {it:b}, the role is determined by comparing the group membership of
+{it:a} != {it:c}) through {it:b} in which {it:a} and {it:c} are not tied (no tie {it:a} -> {it:c};
+two-paths that {it:a} could skip because it reaches {it:c} directly are not counted, as in Gould and
+Fernandez), the role is determined by comparing the group membership of
 {it:a}, {it:b} and {it:c} (from {opt group()}):
 
 	{col 4}{bf:coordinator}{col 20}{it:a}, {it:b} and {it:c} all in the same group
@@ -85,7 +87,7 @@ network type the model was originally defined for. Undirected networks are suppo
 directional distinction collapsing away as described above. Weighted: not used - only the
 presence/absence of a tie determines whether a two-path exists; tie strength does not affect role
 counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency
-matrix. {opt group()} must be an existing Stata variable already aligned with the network's nodes
+matrix. {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
 (the same convention {help nwmodularity}'s own {opt group()} option uses) - {cmd:nwbrokerage} does
 not detect groups itself; pair it with {help nwconcor}, {help nwcoreperiphery}, {help nwcommunity},
 or a substantive attribute for the grouping.
@@ -97,4 +99,4 @@ or a substantive attribute for the grouping.
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

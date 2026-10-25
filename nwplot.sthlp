@@ -51,7 +51,6 @@
 {marker node_options}{...}
 {p2line}
 {synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}size of the nodes{p_end}
-{synopt:{opt force}}Draw although the matrices would not fit in memory (the command stops with r(484) above about 12,200 nodes otherwise){p_end}
 {p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}color of the nodes{p_end}
 {p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}symbol of the nodes{p_end}
 {p2col:{opth nodefactor(float)}}multiply all node sizes by a factor{p_end}
@@ -85,8 +84,9 @@
 {p2col:{it:edge_options}}Description{p_end}
 {marker edge_options}{...}
 {p2line}
-{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
-{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
+{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
+{p2col:{opt edgesizeraw}}with {opt edgesize()}: use the tie values themselves for the line widths instead of the 1 to 8 mapping (very large values are cut at 20){p_end}
+{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
@@ -131,11 +131,11 @@
 {marker layout_options}{...}
 {p2line}
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
-{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
+{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...) are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
-	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
-	to also capture the resulting coordinates{p_end}
+	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
+	to also keep the resulting coordinates{p_end}
 {p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
 	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
 {p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
@@ -144,6 +144,10 @@
 	color/shape/position data as plain JSON to {it:filename}, with no HTML page or viewer window -
 	{help nwmovie} uses this internally, once per network in its own sequence, rather than
 	re-deriving concrete colors from scratch{p_end}
+{p2col:{opt fname}({it:filename})}with {opt interactive}: write the interactive HTML page to {it:filename}
+	(".html" is added if there is no extension; a relative name is relative to the working directory;
+	an existing file is replaced) instead of a time-stamped file in Stata's temporary folder. The
+	path is displayed and returned in {cmd:r(fname)} in either case{p_end}
 {p2col:{opt noopen}}with {opt interactive}: build the interactive view but do not open a viewer
 	window for it (used together with {opt movieexport()} - {help nwmovie} does not want a viewer
 	window popping open for every network in its own sequence){p_end}
@@ -191,6 +195,7 @@
 {p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
 {p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
 {p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
+{p2col:{opt force}}draw although the matrices would not fit in memory (the command stops with r(484) above about 12,200 nodes otherwise){p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -260,6 +265,26 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
 	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
 	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+How the bring-back works: node positions come from the CSV through {opt nodexy()}; node colors and
+shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier
+on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds
+to about {cmd:nodefactor(0.2)} in the static graph. Without {opt nodefactor()}, {cmd:nwplot} therefore
+uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of
+1.85 gives {cmd:nodefactor(0.37)}); an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
+the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when
+the nodes of that group have different shapes (for example when {opt symbol()} is a second variable);
+choosing a shape there sets all nodes of the group. The CSV format is unchanged.
+
+{pstd}
+The view draws {it:y} upward, as the static plot does, for every layout and for {opt nodexy()} (with
+{cmd:nodexy(Lon Lat)} the map is upright), and the saved CSV holds the same {it:y}, so a saved layout
+comes back in the same orientation. With {opt edgesize()} the view maps the tie values linearly onto line
+widths of 1 to 8 pixels (all ties 3 pixels without {opt edgesize()}; the static plot uses the same 1 to 8 mapping); the edge-width slider is a
+multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider
+multiplies on top. {opt edgeimport()} accepts the edge file of a directed or an undirected network (the
+view lists an undirected tie once).
 
 {pstd}
 {opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
@@ -424,6 +449,8 @@ all continue to work exactly as they would without {opt export()}.
 
 	Macros:
 	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
+	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
+	  {bf:r(interactive)}	same as {bf:r(fname)}
 
 {title:Supported network types}
 
@@ -454,8 +481,11 @@ Drawing needs the network as an {it:n}-by-{it:n} matrix and about 10 copies of i
 with r(484) (32 GB at 20,000 nodes); option {opt force} runs it anyway. A picture of that many nodes is not readable: plot a part of
 the network ({help nwsubset}, {help nwego}, {help nwkcore}).
 
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
-		{help nwplotmatrix}
+		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

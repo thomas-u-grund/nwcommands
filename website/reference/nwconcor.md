@@ -33,6 +33,7 @@ silent]
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `maxiter(int)` | Maximum number of correlation iterations per split before giving up on convergence; default = 25 |
 | `silent` | Suppress display of results |
+| `force` | Run a network with more than 6,000 nodes |
 
 ## Description
 

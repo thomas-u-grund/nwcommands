@@ -73,4 +73,4 @@ a message instead of failing half way; use the Mata matrix ({help nwtomata}) for
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

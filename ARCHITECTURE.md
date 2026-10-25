@@ -24,7 +24,7 @@ Technical overview for anyone reading or extending the codebase, not just using 
 ## The core network representation
 
 `NWdef` stores each network as a sparse CSR/CSC index (`rowptr`/`colidx`/`cweight` for
-out-neighbors, a CSC-style mirror for in-neighbors on directed networks) rather than an N×N
+out-neighbors, a CSC-style mirror for in-neighbors on directed networks, built on first use for a network created from a tie list) rather than an N×N
 dense matrix. This is what makes networks with 100,000+ nodes and 1,000,000+ edges practical:
 construction, degree/neighbor queries, and the core structural algorithms (components,
 clustering, betweenness, distances) are all O(degree) or O(V+E), never O(N²).
@@ -48,11 +48,11 @@ eliminates interpreter overhead, and a bespoke kernel avoids licensing questions
 build systems a general library would bring along for a handful of functions actually used.
 
 - `nwgraph.c` — betweenness centrality (Brandes' algorithm) and unweighted distances, structured to
-  host further general graph kernels behind the same plugin binary over time. `nwcomb.h` and
-  `nwcomb2.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
+  host further general graph kernels behind the same plugin binary over time. `nwcomb.h`, `nwcomb2.h`, `nwfast.h`, `nwbrokerage.h` and `nwfast2.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
   blocking, factions, line connectivity (equivalent-flow tree), the 4-node motif census, two-mode
   clustering, triad balance, bipartite matching, Louvain communities, the distance sums behind closeness
-  and Katz (one breadth-first search per node, no distance matrix), and the exhaustive subgroup
+  and Katz (one breadth-first search per node, no distance matrix), the local clustering coefficient, the
+  triad census, eigenvector centrality, Burt's structural-hole measures, the dyadic constraint network and Simmelian ties, PageRank and maximal cliques (called from their own ado files), and the exhaustive subgroup
   searches (n-cliques, n-clans, k-plexes) with result and work limits. The Mata side (`nwg_comb()` in `unw_core.do`) probes the plugin once per session and
   keeps the older Mata code as the fallback.
 

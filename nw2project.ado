@@ -52,7 +52,7 @@ program nw2project, rclass
 	mata: `__nw_edges' = nw2project_edges(`netobj', `project', "`stat'")
 
 	mata: st_numscalar("nodes", cols(`__nw_names'))
-	mata: st_numscalar("ties", rows(`__nw_edges'))
+	mata: st_numscalar("ties", rows(`__nw_edges') / 2)
 
 	// captured from the SOURCE network's own netobj before it is
 	// reassigned to the newly-created projected network below - a

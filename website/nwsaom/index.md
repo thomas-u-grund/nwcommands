@@ -52,7 +52,7 @@ errors in `nwsaom` are the author's.
 | Engine | a compiled, multithreaded plugin for macOS, Linux and Windows |
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
 | Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
-| Version | 1.0.5 (25 October 2026) |
+| Version | 1.0.6 (25 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section

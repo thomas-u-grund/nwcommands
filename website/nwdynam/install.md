@@ -31,10 +31,10 @@ for you: `nwinstall, modelpkg(nwdynam)`, or all model packages with `nwinstall, 
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.3:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.4:
 
 ```stata
-. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.0.3/) replace
+. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.0.4/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -44,7 +44,7 @@ version produced the results.
 
 ```stata
 . nwdynam version
-nwdynam version 1.0.3, 25oct2026
+nwdynam version 1.0.4, 25oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../d/dynam_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R goldfish 1.6.12

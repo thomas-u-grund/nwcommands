@@ -18,6 +18,7 @@
 {opth generate(newvarname)}
 {opt replace}
 {opth minsize(int)}
+{opt nomatrix}
 {opt silent}]
 
 
@@ -27,6 +28,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest clique size to report; default = 3{p_end}
+{synopt:{opt nomatrix}}Do not store {bf:r(clique_matrix)}; the {opth generate(newvarname)} variable and {bf:r(cliques)} are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -63,7 +65,7 @@ value in the generated variable, not a spurious 0.
 	  {bf:r(cliques)}		number of maximal cliques found meeting {opth minsize(int)}
 
 	Matrices
-	  {bf:r(clique_matrix)}	cliques-by-nodes 0/1 membership matrix, one row per maximal clique
+	  {bf:r(clique_matrix)}	cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with {opt nomatrix})
 
 {title:Examples}
 
@@ -92,15 +94,22 @@ clique membership. Signed: not checked. Two-mode: not checked - operates on the 
 square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of
 maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct
 algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large
-network could take a long time; not specially guarded against here beyond this note.
+network could take a long time. {help nwnclique}, {help nwnclan} and {help nwkplex} have the options {opt maxcliques()} / {opt maxplexes()}, {opt maxtime()}, {opt countonly} and {opt nomatrix} for such searches; {cmd:nwclique} has none.
 
 {title:Limits}
 
 {pstd}
 Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
-are as many as its ties and were the bulk of the work). Measured in Stata/BE on a random undirected network with 10 ties drawn per
-node and {opt minsize(3)}: 10,000 nodes 0.9 seconds (77 seconds before), 20,000 nodes 3.0 seconds and 0.9 GB. The clique matrix
-({cmd:r(clique_matrix)}) has one row per clique and one column per node, so a network with many cliques needs a lot of memory.
+are as many as its ties and were the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
+(the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
+same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
+20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
+which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
+one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
+of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
+100,000 nodes take about a quarter of a second.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 
@@ -109,4 +118,4 @@ node and {opt minsize(3)}: 10,000 nodes 0.9 seconds (77 seconds before), 20,000 
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

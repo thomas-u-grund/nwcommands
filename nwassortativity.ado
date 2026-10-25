@@ -49,10 +49,10 @@ program nwassortativity, rclass
 		di "{hline 40}"
 		di "{txt}    Ties: {res}`=r(ties)'"
 		if "`weighted'" != "" {
-			di "{txt}    Weighted assortativity coefficient (Leung & Chau 2007): {res}`=round(r(assortativity),0.001)'"
+			di "{txt}    Weighted assortativity coefficient (Leung & Chau 2007): {res}`=strtrim(string(round((r(assortativity))*1000)/1000,"%9.0g"))'"
 		}
 		else {
-			di "{txt}    Assortativity coefficient: {res}`=round(r(assortativity),0.001)'"
+			di "{txt}    Assortativity coefficient: {res}`=strtrim(string(round((r(assortativity))*1000)/1000,"%9.0g"))'"
 		}
 	}
 end

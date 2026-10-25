@@ -7,8 +7,10 @@ program nwsave
 	// Removed rather than wired up, since there is no second storage format
 	// implemented anywhere in this file to select between.
 	syntax anything [, old replace *]
-	local webname = subinstr(`"`anything'"', ".dta","",.)
-	local webname = subinstr(`"`webname'"', ".nwdta","",.)
+	// anything keeps the quotes of a quoted file name (paths with spaces)
+	local webname `anything'
+	if regexm(`"`webname'"', "\.nwdta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 6)
+	else if regexm(`"`webname'"', "\.dta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 4)
 	unw_defs
 	nwload, labelonly
 
@@ -36,7 +38,47 @@ program nwsave
 		gen _nw_match_`onenet' = 1 if _nwinclude == 1
 	}
 	
-	qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+	// A two-mode network must not list the dyads inside each mode (a
+	// 5,092 x 455 network came to 2.6 GB that way): when the file holds
+	// a two-mode network, every network's tie list is made on its own
+	// (nwtoedge lists only the between-mode ties of a two-mode network)
+	// and the lists are stacked. A row then carries the tie value of its
+	// own network only, the others are missing, which nwuse ignores
+	// (the value variable is the weight of nwfromedge). Files with
+	// one-mode networks only are written as before.
+	local __nws_any2 = 0
+	qui foreach onenet in `netname' {
+		nwname `onenet'
+		if "`r(mode2)'" == "true" local __nws_any2 = 1
+	}
+	if `__nws_any2' {
+		tempfile __nws_all __nws_prep
+		qui save `__nws_prep'
+		local __nws_first = 1
+		qui foreach onenet in `netname' {
+			use `__nws_prep', clear
+			nwtoedge `onenet', egovars(_nw_match_`onenet') ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+			// the isolate list nwtoedge attaches belongs to one network
+			// only; with several networks in the file it would add
+			// another network's nodes to each one on nwuse (the
+			// single-network list stays, as before)
+			if `: word count `netname'' > 1 {
+				char _dta[nwtoedge_nodes]
+			}
+			if `__nws_first' {
+				save `__nws_all', replace
+				local __nws_first = 0
+			}
+			else {
+				append using `__nws_all'
+				save `__nws_all', replace
+			}
+		}
+		use `__nws_all', clear
+	}
+	else {
+		qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+	}
 	qui gen _nw_running = _n
 	tempfile edgelist
 	qui save`old' `edgelist', replace
@@ -121,7 +163,7 @@ program nwsave
 	// instead of ever surfacing the real problem. `capture` the save,
 	// always restore the caller's original data either way, then
 	// re-raise the real error/rc so failures are still reported.
-	capture qui save`old' `webname'.nwdta, `replace' `options'
+	capture qui save`old' `"`webname'.nwdta"', `replace' `options'
 	local savercc = _rc
 	use `existing', clear
 	if `savercc' != 0 {

@@ -2,7 +2,7 @@
 capture program drop nwkcomponents
 program nwkcomponents, rclass
 	version 12
-	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace silent force]
+	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace NOMatrix silent force]
 	set more off
 
 	if `k' < 1 {
@@ -36,13 +36,23 @@ program nwkcomponents, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
 		tempname __nw_kcomp __nw_sizes __nw_kcompnum
 		mata: `__nw_kcomp' = `netobj'->calculate_kcomponents(`k')
 		mata: `__nw_sizes' = rowsum(`__nw_kcomp')
 		mata: st_numscalar("nw_nkcomp", rows(`__nw_kcomp'))
-		mata: st_matrix("nw_kcompmatrix", (rows(`__nw_kcomp') > 0 ? `__nw_kcomp' : J(1, `nodes', 0)))
+		// (Stata stores the matrix in time growing with the square of the number of nodes: about a minute at
+		// 100,000 nodes; nomatrix leaves it out)
+		if "`nomatrix'" == "" {
+			mata: st_matrix("nw_kcompmatrix", (rows(`__nw_kcomp') > 0 ? `__nw_kcomp' : J(1, `nodes', 0)))
+		}
 		mata: `__nw_kcompnum' = (rows(`__nw_kcomp') > 0 ? editvalue(colmax(`__nw_kcomp' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
 		capture drop `netgenerate'`i'
@@ -51,7 +61,9 @@ program nwkcomponents, rclass
 		mata: mata drop `__nw_kcomp' `__nw_sizes' `__nw_kcompnum'
 
 		return scalar kcomponents = nw_nkcomp
-		return matrix kcomp_matrix = nw_kcompmatrix
+		if "`nomatrix'" == "" {
+			return matrix kcomp_matrix = nw_kcompmatrix
+		}
 		local lkcomp = nw_nkcomp
 
 		// see nwbrokerage.ado's own header comment: the "already

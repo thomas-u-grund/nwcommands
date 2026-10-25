@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_vars 20 20 260 ., label("Variables (define the network):")
   VARLIST vl_vars 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_cx_xvars 20 54 260 ., label("Xvars")
+  TEXT tx_cx_xvars 20 54 260 ., label("Also generate Stata variables for the network")
   CHECKBOX cx_xvars 290 54 190 ., label("xvars") option(xvars)
 END
 

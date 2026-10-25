@@ -113,7 +113,16 @@ program nwclustering
 	_nwsyntax `netname'
 
 	tempname __nw_clust
-	mata: `__nw_clust' = `netobj'->calculate_clustering(`__mode')
+	// binary measure: the native kernel 26 (plugin generation 6 or later) counts the closed and potential triples from
+	// the stored ties; a result of the wrong shape (older plugin, no plugin, a kernel failure) leaves the Mata path.
+	local __fast 0
+	if `__mode' == 0 {
+		mata: `__nw_clust' = nw_fastclust(`netobj'->edgelist(), `nodes', `netobj'->is_directed_boolean() != 0)
+		mata: st_local("__fast", strofreal(rows(`__nw_clust') == `nodes'))
+	}
+	if !`__fast' {
+		mata: `__nw_clust' = `netobj'->calculate_clustering(`__mode')
+	}
 	mata: st_store((1::`nodes'), "`generate'", `__nw_clust'[.,1])
 	mata: st_numscalar("clust_global", sum(`__nw_clust'[.,2]) / sum(`__nw_clust'[.,3]))
 	mata: mata drop `__nw_clust'
@@ -144,8 +153,8 @@ program nwclustering
 		}
 		noi di "{hline 40}"
 		noi di "{txt}    Measure: {res}`measure'"
-		noi di "{txt}    Average clustering coefficient: {res}`=round(`r(cluster_avg)',0.001)'"
-		noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
+		noi di "{txt}    Average clustering coefficient: {res}`=strtrim(string(round((`r(cluster_avg)')*1000)/1000,"%9.0g"))'"
+		noi di "{txt}    Global clustering coefficient: {res}`=strtrim(string(round((`r(cluster_global)')*1000)/1000,"%9.0g"))'"
 		noi di " "
 	}
 	if "`symmetrize'" != "" {
@@ -179,3 +188,24 @@ program nwclustering
 	_return restore rcluster
 end
 
+capture mata: mata drop nw_fastclust()
+mata:
+// Native clustering (kernel 26 of the nwgraph plugin) for the binary measure. el = the stored ties of the network
+// (edgelist()). Returns the n x 3 matrix of calculate_clustering(0) (ratio, closed triples, potential triples; a
+// potential count of 0 stored as missing), or a 0 x 0 matrix when the kernel is not available. Set the global
+// NW_NOFASTKERNELS to force the Mata path.
+real matrix nw_fastclust(real matrix el, real scalar n, real scalar directed)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+	real colvector pot
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 6) return(J(0, 0, .))
+	r = nwg_comb(26, n, el, J(0, 1, .), directed, aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 2) return(J(0, 0, .))
+	pot = editvalue(r[., 2], 0, .)
+	return((r[., 1] :/ pot, r[., 1], pot))
+}
+end

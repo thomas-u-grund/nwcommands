@@ -47,7 +47,7 @@ program nwrecode
 			qui recode `onenet' `rules'
 		}
 		else {
-			recode `onenet' `rules', `options'
+			qui recode `onenet' `rules', `options'
 		}
 		mata: st_local("__fast", strofreal(nw_recode_fastok(st_data(., "__nwrec_old"), st_data(., "`onenet'"))))
 		mata: st_local("__nchg", strofreal(sum(st_data(., "__nwrec_fq") :* (st_data(., "`onenet'") :!= st_data(., "__nwrec_old"))), "%18.0g"))

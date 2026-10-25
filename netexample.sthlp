@@ -26,6 +26,8 @@
         {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "sysdescribe zachary.nwdta":describe}
         {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "sysdescribe kapferer.nwdta":describe}
         {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "sysdescribe socialevolution.dta":describe}
+        {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "sysdescribe davis.nwdta":describe}
+        {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "sysdescribe ftdirectors_se.nwdta":describe}
 
 {hline}
 
@@ -634,4 +636,54 @@ Distributed with R's own {cmd:goldfish} package as {cmd:data(Social_Evolution)},
 version (fewer variables, a reduced time window) of the original Reality Commons release.
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{marker davis}
+{title:Southern women (two-mode)}
+
+{pstd}
+{bf:Networks:} {it:davis}{p_end}
+
+{pstd}
+18 women and the 14 social events they attended in 1936 in a Southern US town ("Old City"):
+32 nodes (mode 1 {it:woman}, mode 2 {it:event}) and 89 ties. Women are labeled by first name, events
+{it:E1} to {it:E14}. Attributes: {it:surname} and {it:title} (Miss or Mrs) of the women, {it:eventdate}
+of the events. The attendance matrix is the classic one distributed with many network programs; the
+data have no licence of their own and contain only the facts of who attended which event.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Davis, A., Gardner, B. B., and Gardner, M. R. (1941). Deep South: A Social Anthropological Study of
+Caste and Class. Chicago: University of Chicago Press.
+
+{hline}
+
+{marker ftdirectors_se}
+{title:Company directors in Sweden (two-mode)}
+
+{pstd}
+{bf:Networks:} {it:ftdirectors_se}{p_end}
+
+{pstd}
+5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes (mode 1
+{it:director}, mode 2 {it:company}) and 5,669 ties. Identifiers are anonymous. Attributes of the
+directors: {it:gender} and {it:age}; of the companies: {it:sector}, {it:industry} and {it:employees}.
+Missing values are empty or missing.
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Evtushenko, A. and Gastner, M. T. (2019). Data set discussed in "Beyond Fortune 500: Women in a
+Global Network of Directors". Zenodo, doi:10.5281/zenodo.3553442. Licensed under CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). The original data come from the company profiles of
+the Financial Times web site (retrieved 17 September 2016). This is a derived subset: only companies
+located in Sweden and all of their directors were kept, and only the columns named above; identifiers
+were renamed, "NA" became missing, and age and the number of employees were made numeric.
+
+{pmore}
+Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global Network of Directors.
+In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
+
+{hline}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

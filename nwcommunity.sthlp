@@ -22,7 +22,8 @@
 {opth resolution(real)}
 {opt algorithm(louvain|labelprop)}
 {opt seed(int)}
-{opt silent}]
+{opt silent}
+{opt listall}]
 
 
 {synoptset 25 tabbed}{...}
@@ -36,6 +37,7 @@
 {synopt:{opt algorithm(louvain|labelprop)}}Community-detection algorithm; default = {it:louvain}{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt listall}}Print the full table of communities; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
 
 {p2colreset}{...}
 
@@ -60,6 +62,9 @@ an incidental implementation detail: a fixed visiting order with deterministic t
 tried first and found to be not merely non-standard but actively wrong, systematically collapsing
 even simple, cleanly-separated community structure into one giant community (see
 {help nwcommunity##algorithm:Algorithm} below). Use {opt seed()} for reproducible results.
+
+{pstd}
+On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and ignores {opt seed()}.
 
 {pstd}
 {opt generate()} is required and names the new variable that stores, for each node, the
@@ -147,4 +152,4 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

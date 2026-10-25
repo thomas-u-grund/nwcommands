@@ -100,7 +100,7 @@ program nwmodularity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
+			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
 			noi di " "
 		}
 		local k = `=`k' + 1'

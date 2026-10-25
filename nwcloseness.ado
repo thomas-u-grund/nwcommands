@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -177,11 +177,13 @@ program nwcloseness
 		local k = `k' + 1	
 	}
 	mata: st_rclear()
-	di "{hline 40}"
-	di "{txt}  Network name: {res}`netname'"
-	di "{hline 40}"
-	di "{txt}    Closeness centrality"
-	sum `generate_all'
+	if "`silent'" == "" {
+		di "{hline 40}"
+		di "{txt}  Network name: {res}`netname'"
+		di "{hline 40}"
+		di "{txt}    Closeness centrality"
+		sum `generate_all'
+	}
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

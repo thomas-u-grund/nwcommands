@@ -46,7 +46,7 @@ it in double quotes.
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved, independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved (ties, modes, labels and attributes), independent of any of these properties. Files of two-mode networks written by earlier versions, which listed every pair of nodes, still load.
 
 {title:Examples}
         
@@ -68,9 +68,14 @@ This load the Florentine dataset from the internet and appends it to the existin
 
         {cmd:. nwwebuse florentine, nwappend}       
         
+{title:Limits}
+
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
 
         {help nwwebuse}, {help nwsave}, {help use}, {help nwappend}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

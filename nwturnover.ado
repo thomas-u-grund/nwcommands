@@ -44,6 +44,10 @@ program nwturnover, rclass
 	qui if _N < `nodes1' {
 		set obs `nodes1'
 	}
+	// align row i of the data set with node i of the network before the positional
+	// read/write below (see nwcommunity.ado)
+	_nwsyncrows `netname1'
+	mata: st_rclear()
 	_nwsyntax `netname1'
 	local netobj1 `netobj'
 	_nwsyntax `netname2'
@@ -87,9 +91,9 @@ program nwturnover, rclass
 		noi di "{hline 40}"
 		noi di "{txt}  Networks: {res}`netname1'{txt} -> {res}`netname2'"
 		noi di "{txt}  Stable: {res}`=nw_stable'{txt}  Formed: {res}`=nw_formed'{txt}  Dissolved: {res}`=nw_dissolved'"
-		noi di "{txt}  Jaccard index: {res}`=round(`jaccard',0.001)'"
+		noi di "{txt}  Jaccard index: {res}`=strtrim(string(round((`jaccard')*1000)/1000,"%9.0g"))'"
 		if `persistdenom' > 0 {
-			noi di "{txt}  Persistence: {res}`=round(`persistence',0.001)'"
+			noi di "{txt}  Persistence: {res}`=strtrim(string(round((`persistence')*1000)/1000,"%9.0g"))'"
 		}
 		noi di " "
 	}

@@ -20,6 +20,7 @@
 {opt generate}({it:{help varname:var1 var2 var3}})
 {opt nosym}
 {opt replace}
+{opt silent}
 {opt force}]
 
 
@@ -30,6 +31,7 @@
 {synopt:{opt generate}({it:{help varname:var1 var2 var3}})}{bf:Required.} Exactly 3 variable names to save closeness, farness and nearness scores, in that order{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
+{synopt:{opt silent}}Do not display the summary of the new variables{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 
@@ -96,4 +98,4 @@ The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

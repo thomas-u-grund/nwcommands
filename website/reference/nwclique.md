@@ -20,6 +20,7 @@ nwclique
 generate(newvarname)
 replace
 minsize(int)
+nomatrix
 silent]
 ```
 
@@ -28,6 +29,7 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-clique membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest clique size to report; default = 3 |
+| `nomatrix` | Do not store **r(clique_matrix)**; the `generate(newvarname)` variable and **r(cliques)** are still returned |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -47,7 +49,7 @@ Cliques are fundamentally different from the partitions [nwcomponents](nwcompone
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair mutually tied - has no directed generalization, the same reasoning [nwcoreperiphery](nwcoreperiphery) already applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect clique membership. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large network could take a long time; not specially guarded against here beyond this note.
+Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair mutually tied - has no directed generalization, the same reasoning [nwcoreperiphery](nwcoreperiphery) already applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect clique membership. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal clique enumeration is worst-case exponential in the number of maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large network could take a long time. [nwnclique](nwnclique), [nwnclan](nwnclan) and [nwkplex](nwkplex) have the options `maxcliques()` / `maxplexes()`, `maxtime()`, `countonly` and `nomatrix` for such searches; `nwclique` has none.
 
 ## Stored results
 
@@ -57,7 +59,7 @@ Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition
 
 **Matrices**
 
-- **r(clique_matrix)** cliques-by-nodes 0/1 membership matrix, one row per maximal clique
+- **r(clique_matrix)** cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with `nomatrix`)
 
 ## References
 

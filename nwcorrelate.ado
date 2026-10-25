@@ -31,7 +31,9 @@ end
 
 capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
-	syntax [anything(name=netname)] [, name(string) context(string)]
+	syntax [anything(name=netname)] [, name(string) context(string) UNDirected DIRected]
+	// _nwsyntax exports a local named directed: keep the options under other names
+	local _ud_opts `undirected' `directed'
 	_nwsyntax `netname'
 	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
 	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
@@ -63,7 +65,7 @@ program nwcorrelate_nodes
 	_nwsyntax `netname'
 	local origname "`netname'"
 	
-	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'")	
+	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'") `_ud_opts'	
 	_nwsyntax
 	
 	mata: st_rclear()
@@ -77,7 +79,7 @@ program nwcorrelate_nodes
 	di "{txt}  Correlation network: {res}`r(corrname)'"
 	di "{hline 40}"
 	di "{txt}    Context definition: {res}`r(context)'"
-	di "{txt}    Average correlation between nodes: {res}`=round(`r(avg_corr)',0.001)'"
+	di "{txt}    Average correlation between nodes: {res}`=strtrim(string(round((`r(avg_corr)')*1000)/1000,"%9.0g"))'"
 end
 
 
@@ -169,10 +171,18 @@ unw_defs
 		getmata correlation = corr_reps
 		capture mata: mata drop corr_reps
 		
-		gen observed = r(corr)
-		if "`save'"!= "" {
-			di "QAP results saved as: `c(pwd)'/nwcorrelationqap.dta" 
-			save "`save'", replace
+		qui gen observed = `corr'
+		if `"`save'"' != "" {
+			// save(): quoted or unquoted file name, paths with spaces allowed
+			local savefile `save'
+			if !regexm(`"`savefile'"', "\.dta$") local savefile `"`savefile'.dta"'
+			qui save `"`savefile'"', replace
+			// print the real location (a relative name is saved in the working directory)
+			local savefull `"`savefile'"'
+			if substr(`"`savefile'"', 1, 1) != "/" & substr(`"`savefile'"', 2, 1) != ":" & substr(`"`savefile'"', 1, 1) != "~" {
+				local savefull `"`c(pwd)'/`savefile'"'
+			}
+			di `"{txt}QAP results saved as: {res}`savefull'"'
 		}
 	
 		qui count
@@ -203,7 +213,7 @@ unw_defs
 			local xmax = `corr'
 		}
 		
-		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `options'	
+		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2'"') `options'	
 
 		restore
 		_return restore `myr'
@@ -220,9 +230,9 @@ unw_defs
 	di "{txt}  Network2 name: {res}`r(name_2)'"
 	
 	di "{hline 40}"
-	di "{txt}    Correlation: {res}`=round(`r(corr)',0.001)'"
+	di "{txt}    Correlation: {res}`=strtrim(string(round((`r(corr)')*1000)/1000,"%9.0g"))'"
 	if "`r(pvalue)'" != "" {
-		di "{txt}    P-value: {res}`=round(`r(pvalue)',0.001)'"
+		di "{txt}    P-value: {res}`=strtrim(string(round((`r(pvalue)')*1000)/1000,"%9.0g"))'"
 	}
 	_return hold r1
 	if "`attribute'" != "" {

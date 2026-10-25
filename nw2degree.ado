@@ -56,6 +56,12 @@ program nw2degree, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 		mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`alpha'))
 

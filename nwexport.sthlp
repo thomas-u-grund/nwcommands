@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwexport  {hline 2}}Export network as Pajek or Ucinet file{p_end}
+{p2col :nwexport  {hline 2}}Export network as Pajek, Ucinet, GML or edge list file{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -34,15 +34,19 @@
 		{p_end}
 {p2col:{cmd: ucinet}}network is saved in {help nwimport##ucinet:Ucinet .DL file format}
 		{p_end}
+{p2col:{cmd: gml}}network is saved in GML format (file ending .gml)
+		{p_end}
+{p2col:{cmd: edgelist}}network is saved as a plain-text edge list (file ending .txt)
+		{p_end}
 		
 		
 {title:Description}
 
 {pstd}
-Exports a network to either 1) Pajek .NET or 2) Ucinet .DL file format. Only exports one network and no node level
+Exports a network to 1) Pajek .NET, 2) Ucinet .DL, 3) GML or 4) plain-text edge list file format. Only exports one network and no node level
 attributes. By default, the
-new network file is saved in the working directory. When no {opt fname} is specified, the program calls the new file {it:netname.dl} (Ucinet) or
-{it:netname.net} (Pajek).
+new network file is saved in the working directory. When no {opt fname} is specified, the program calls the new file {it:netname.dl} (Ucinet),
+{it:netname.net} (Pajek), {it:netname.gml} (GML) or {it:netname.txt} (edge list).
 
 
 
@@ -75,4 +79,4 @@ ordered by the label of the alter, then of the ego.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

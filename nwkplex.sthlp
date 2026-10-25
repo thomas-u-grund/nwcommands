@@ -139,6 +139,9 @@ all of it building the 31,081 x 300 matrix; 0.04 s with {opt nomatrix}), 1,000 n
 finishing. {opt countonly} does not store the sets and is not limited by memory; {opt nomatrix} keeps the per-node
 variable and the counts but not the matrix.
 
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
 
 	{help nwclique}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
@@ -146,4 +149,4 @@ variable and the counts but not the matrix.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

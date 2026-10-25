@@ -163,7 +163,12 @@ program nwreplace, rclass
 	if ("`directed'"=="false" & `__symmetric'==0) {
 		_nwname `netname', newdirected(false)
 	}
-	if ("`valued'" == "false" & "`r(valued)'" == "false"){
+	// valued flag: set it only when the matrix really holds values outside
+	// 0/1 (__valued, from check_valued above). It used to test r(valued)
+	// AFTER the _nwname call above, which then held the network's own flag
+	// "false": every undirected network that went through the symmetry
+	// correction was marked valued although it was 0/1.
+	if ("`valued'" == "false" & `__valued' == 1){
 		_nwname `netname', newvalued(true)
 	}
 	nwsync `netname'

@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_cx_force 20 54 260 ., label("if a network in  has the same name as one already loaded, auto-renumber the inco")
+  TEXT tx_cx_force 20 54 260 ., label("If a network in using dataset has the same name as one already loaded")
   CHECKBOX cx_force 290 54 190 ., label("force") option(force)
 END
 

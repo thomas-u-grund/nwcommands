@@ -29,6 +29,7 @@ replace]
 | `name(newnetname)` | Name of the new similarity network; default = *simindex* |
 | `xvars` | Generate Stata variables for the new network |
 | `replace` | Replace an existing network of the same name |
+| `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 17,300 nodes otherwise) |
 
 ## Description
 

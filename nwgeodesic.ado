@@ -74,7 +74,10 @@ program nwgeodesic
 	_nwsyntax `name'
 	
 	if ("`valued'" == "false" & `alpha' != 1 ){
-		di "{txt}Network is unvalued; {bf:alpha = `alpha'} is ignored."
+		// say so only when alpha() was typed (the default 0 is not a request)
+		if strpos(lower(`"`0'"'), "alpha(") > 0 {
+			di "{txt}Network is unvalued; {bf:alpha = `alpha'} is ignored."
+		}
 		local alpha = 1
 	}
 	
@@ -145,6 +148,9 @@ program nwgeodesic
 	if "`eccvar'" != "" {
 		qui capture drop `eccvar'
 		qui gen `eccvar' = .
+		// align row i of the data set with node i of the network before the positional
+		// read/write below (see nwcommunity.ado)
+		_nwsyncrows `name'
 		mata: st_store((1::`nodes'), "`eccvar'", `__nw_ecc')
 	}
 	mata: mata drop `__nw_ecc'
@@ -169,7 +175,7 @@ program nwgeodesic
 		di "{txt}    Symmetrized : {res}(already undirected)"
 	}
 	if "`valued'" == "true" {
-		di "{txt}    ALpha : {res}`=round(`r(alpha)',0.001)'"
+		di "{txt}    ALpha : {res}`=strtrim(string(round((`r(alpha)')*1000)/1000,"%9.0g"))'"
 	}
 	di "    {hline 36}"
 	di "{txt}    Paths: {res}`r(numpaths)'"
@@ -180,9 +186,9 @@ program nwgeodesic
 	}
 	
 	if `r(unconnected)' == 0 | "`unconnected'" != "" {
-		di "{txt}    Average shortest path length: {res} `=round(`r(avgpath)',0.001)'"
-		di "{txt}    Diameter: {res} `=round(`r(diameter)',0.001)'"
-		di "{txt}    Radius: {res} `=round(`r(radius)',0.001)'"
+		di "{txt}    Average shortest path length: {res} `=strtrim(string(round((`r(avgpath)')*1000)/1000,"%9.0g"))'"
+		di "{txt}    Diameter: {res} `=strtrim(string(round((`r(diameter)')*1000)/1000,"%9.0g"))'"
+		di "{txt}    Radius: {res} `=strtrim(string(round((`r(radius)')*1000)/1000,"%9.0g"))'"
 	}
 	else {
 		di "{txt}    Average shortest path length: {res} (not defined)"

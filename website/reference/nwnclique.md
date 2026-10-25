@@ -21,6 +21,10 @@ n(int)
 generate(newvarname)
 replace
 minsize(int)
+maxcliques(#)
+maxtime(#)
+countonly
+nomatrix
 silent]
 ```
 
@@ -30,6 +34,10 @@ silent]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-n-clique membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest n-clique size to report; default = 3 |
+| `maxcliques(#)` | Stop with an error when more than this many maximal n-cliques of at least `minsize()` members are found (the result matrix needs sets x nodes numbers); default = 100,000 |
+| `maxtime(#)` | Stop with an error when the search has run for this many seconds without finishing; default = 60 |
+| `countonly` | Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; `generate(newvarname)` is then not needed |
+| `nomatrix` | Do not build the sets-by-nodes matrix; the `generate(newvarname)` variable and the count are still returned |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -50,17 +58,19 @@ Like cliques, n-cliques genuinely overlap - a node can belong to several at once
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique)/[nwkplex](nwkplex) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal n-clique enumeration inherits [nwclique](nwclique)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general) - fine for the moderate network sizes typical of SNA datasets, not specially guarded against here.
+Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique)/[nwkplex](nwkplex) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal n-clique enumeration inherits [nwclique](nwclique)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general).
 
 ## Stored results
 
 **Scalars**
 
 - **r(ncliques)** number of maximal n-cliques found meeting `minsize(int)`
+- **r(maxsize)** size of the largest set (with `countonly` or `nomatrix`)
 
 **Matrices**
 
-- **r(nclique_matrix)** n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique
+- **r(size_table)** (with `countonly` or `nomatrix`) sizes and the number of sets of each size
+- **r(nclique_matrix)** n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique (not with `countonly` or `nomatrix`)
 
 ## References
 

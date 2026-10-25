@@ -27,6 +27,34 @@ program nwtoedge
 		mata: st_local("__iso_srclabels", `netobj'->get_isolate_source_string())
 	}
 
+	// A single two-mode network with compress: list only the ties between
+	// the two modes, like nw2toedge does. The generic code below would
+	// list every dyad inside each mode as well (a row with a missing
+	// value each), which for a large two-mode network is gigabytes
+	// (nwsave of a 5,092 x 455 network came to 2.6 GB) and made nwexport
+	// write those rows too.
+	if "`compress'" != "" & `__iso_nwcount' == 1 & "`is2mode'" == "true" & "`numeric'" == "" & "`comparevars'" == "" {
+		local __t2opts ""
+		if "`upper'" != "" local __t2opts "`__t2opts' upper"
+		if "`full'" != "" local __t2opts "`__t2opts' full"
+		if "`isolates0'" != "" local __t2opts "`__t2opts' isolates0"
+		if "`egovars'" != "" local __t2opts "`__t2opts' egovars(`egovars')"
+		if "`altervars'" != "" local __t2opts "`__t2opts' altervars(`altervars')"
+		if "`ego'" != "" local __t2opts "`__t2opts' ego(`ego')"
+		if "`alter'" != "" local __t2opts "`__t2opts' alter(`alter')"
+		nw2toedge `netname', compress `__t2opts'
+		if "`ignore2mode'" != "" {
+			local __t2e = cond("`ego'" == "", "`nw_ego'", "`ego'")
+			local __t2a = cond("`alter'" == "", "`nw_alter'", "`alter'")
+			capture drop `nw_mode'`__t2e'
+			capture drop `nw_mode'`__t2a'
+		}
+		if "`__iso_srclabels'" != "" {
+			char _dta[nwtoedge_nodes] "`__iso_srclabels'"
+		}
+		exit
+	}
+
 	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
 	// "does this dyad share the same category?", "how far apart are
 	// ego's and alter's values?") - the Stage 5 roadmap item this adds.
@@ -105,7 +133,7 @@ program nwtoedge
 			gen `nw_included'_all = 0
 			local __nwtoedge_haveall = 1
 		}
-		replace `nw_included'_all = 1 if `nw_included' == 1
+		qui replace `nw_included'_all = 1 if `nw_included' == 1
 	}
 	capture drop `nw_included'
 	rename `nw_included'_all `nw_included'

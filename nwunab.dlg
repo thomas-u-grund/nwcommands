@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_ed_min 20 54 260 ., label("Min")
+  TEXT tx_ed_min 20 54 260 ., label("Minimum number of networks allowed; default = 1")
   EDIT ed_min 290 54 190 ., nomem option(min)
-  TEXT tx_ed_max 20 82 260 ., label("Max")
+  TEXT tx_ed_max 20 82 260 ., label("Maximum number of networks allowed")
   EDIT ed_max 290 82 190 ., nomem option(max)
 END
 

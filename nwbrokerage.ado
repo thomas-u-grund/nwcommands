@@ -6,6 +6,14 @@ program nwbrokerage, rclass
 
 	_nwsyntax `netname', max(9999)
 
+	// a string group() variable was read as all-missing and every two-path
+	// came out unclassified or as one role: refuse it
+	capture confirm numeric variable `group'
+	if _rc != 0 {
+		di "{err}group() must be a numeric variable; {bf:`group'} is a string variable (use {bf:encode `group', generate(...)} first)."
+		error 109
+	}
+
 	if `networks' > 1 {
 		local k = 1
 	}
@@ -33,6 +41,12 @@ program nwbrokerage, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
 		tempname __nw_grp __nw_brk

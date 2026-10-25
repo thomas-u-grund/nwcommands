@@ -55,7 +55,7 @@ program nwfactions, rclass
 	_nwdatasync `netname', generate(`__nw_fac_included')
 
 	capture drop `netgenerate'
-	gen `netgenerate' = .
+	qui gen `netgenerate' = .
 	mata: st_rclear()
 
 	tempname __nw_fac
@@ -75,7 +75,7 @@ program nwfactions, rclass
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network name: {res}`netname'"
-		di "{txt}  Groups: {res}`groups'{txt}   Fitness: {res}`=round(`lfit',0.001)'"
+		di "{txt}  Groups: {res}`groups'{txt}   Fitness: {res}`=strtrim(string(round((`lfit')*1000)/1000,"%9.0g"))'"
 		tab `netgenerate'
 		di " "
 	}

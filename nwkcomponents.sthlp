@@ -18,6 +18,7 @@
 {opth k(int)}
 {opth generate(newvarname)}
 {opt replace}
+{opt nomatrix}
 {opt silent}
 {opt force}]
 
@@ -28,6 +29,7 @@
 {synopt:{opth k(int)}}Minimum vertex connectivity required; default = 2{p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest qualifying k-component size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opt nomatrix}}Do not store {bf:r(kcomp_matrix)}; the {opth generate(newvarname)} variable and {bf:r(kcomponents)} are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
@@ -88,7 +90,7 @@ provides, not a reason to withhold the single-level version now.
 	  {bf:r(kcomponents)}	number of maximal k-components found
 
 	Matrices
-	  {bf:r(kcomp_matrix)}	k-components-by-nodes 0/1 membership matrix, one row per maximal k-component
+	  {bf:r(kcomp_matrix)}	k-components-by-nodes 0/1 membership matrix, one row per maximal k-component (not with {opt nomatrix})
 
 {title:Examples}
 
@@ -124,22 +126,29 @@ Moody-White sense has no directed generalization here, the same reasoning {help 
 {help nwkplex}/{help nwnclique} already apply). Weighted: not used - only tie presence/absence
 affects connectivity. Signed: not checked. Two-mode: not checked. Vertex-connectivity computation
 via max-flow is polynomial per pair, but {cmd:nwkcomponents} computes it between {it:every}
-non-adjacent pair (a deliberately simple, definitely-correct brute-force rather than the smaller
-reference-vertex subset a more optimized algorithm would use - see {help nwclique}'s own
-"Supported network types" section for the same trade-off philosophy applied there), and the overall
-recursive decomposition can call this repeatedly - fine for the moderate network sizes typical of
-SNA datasets, not recommended for very large or very dense networks.
+non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller
+reference-vertex subset a more optimized algorithm would use), and the overall
+recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks
+(see {bf:Limits}); for k of 3 and higher, very large or very dense networks are not recommended.
 
 {title:Limits}
 
 {pstd}
-The search for vertex cuts runs in compiled code and the network is not turned into a matrix. Measured in Stata/BE,
-random undirected network with about 20 ties per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.05 / 2 / 31 seconds
-(before: 25 seconds at 1,000 nodes, over 5 minutes at 5,000). The time grows about with nodes times ties; for large k
-or many cuts it is longer. Without the compiled plugin for the platform the Mata code is used and is much slower.
+The search for vertex cuts runs in compiled code and the network is not turned into a matrix. For k(2), the default, the search needs a
+single pass over the ties (the blocks of the network, one depth-first search) instead of one max-flow computation per node; for k(3) and
+higher it is still one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn
+per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds (before: 0.04 / 1.8 / 67 seconds). Both routes give the same
+components in the same order. Without the compiled plugin for the platform the Mata code is used and is much slower. For large k or many
+cuts the time is longer.
 
 {pstd}
-Every level of the recursion looks for a minimum vertex cut. Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 39 seconds; the time grows like the number of nodes to the power 2.6. When the estimated time is more than 2 minutes (about 31,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
+Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time
+is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix {cmd:r(kcomp_matrix)}
+(one row per component, one column per node): 100,000 nodes take about one minute. Option {opt nomatrix} leaves the matrix out; the variable and {cmd:r(kcomponents)} are the same. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made
+for the slower route) the command stops at once with r(484) and a message; option {opt force}
+runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 
@@ -148,4 +157,4 @@ Every level of the recursion looks for a minimum vertex cut. Measured in Stata/B
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

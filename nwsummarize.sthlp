@@ -28,7 +28,7 @@
 {synoptline}
 {synopt:{opt mat}}Display adjacency matrix of the network{p_end}
 {synopt:{opt matonly}}Only display adjacency matrix of the network{p_end}
-{synopt:{opt detail}}Calculate additional network measures, e.g. centralization, transitivity{p_end}
+{synopt:{opt detail}}Calculate additional network measures: reciprocity, transitivity and the centralization measures (their {cmd:r()} results are only filled with {opt detail}); reciprocity is displayed as n/a for an undirected network (the stored {cmd:r(reciprocity)} is unchanged){p_end}
 {synopt:{opth save(filename)}}Save network measures in file{p_end}
 {synopt:{opt silent}}Compute and return results without displaying anything{p_end}
 {synoptline}
@@ -105,7 +105,7 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 	  {bf:r(arcs)}		number of arcs (directed network)
 	  {bf:r(edges_sum)}	sum of edge values (undirected network)
 	  {bf:r(arcs_value)}	sum of arc values (directed network)
-	  {bf:r(density)}	network density
+	  {bf:r(density)}	network density (two-mode network: ties over the pairs between the two modes)
 	  {bf:r(reciprocity)}	network reciprocity
 	  {bf:r(transitivity)}	network transitivity
 	  {bf:r(missing_edges)}	number of missing (undefined) dyads
@@ -144,4 +144,4 @@ in Stata/BE (4.9 seconds and 9.4 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

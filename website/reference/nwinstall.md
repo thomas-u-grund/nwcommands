@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Install Stata menu/dialogs"
+description: "Install Stata menu/dialogs and the model packages"
 ---
 
 # `nwinstall`
 
-Install Stata menu/dialogs
+Install Stata menu/dialogs and the model packages
 
 ## Syntax
 

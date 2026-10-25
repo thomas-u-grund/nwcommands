@@ -55,12 +55,12 @@ program nwcollapse
 	_nwsyntax _temp_`original'
 	tempvar by_group by_dummy
 	gen `by_dummy' = 1
-	replace `by_dummy' = . if _n > `nodes'
+	qui replace `by_dummy' = . if _n > `nodes'
 	tempvar running
 	gen `running' = _n
 	bys `by': egen `by_group' = total(`by_dummy')
 	sort `running'
-	replace _nwnode = "new_" + _nwnode if `by_group' > 1
+	qui replace _nwnode = "new_" + _nwnode if `by_group' > 1
 	nwname _temp_`original', newlabsfromvar(_nwnode)
 	
 	nwtoedge _temp_`original', egovars(`by') altervars(`by') ego(_fromid) alter(_toid)

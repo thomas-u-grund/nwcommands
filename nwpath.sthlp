@@ -23,7 +23,8 @@
 {opth alterid(nodeid)}]
 {opth generate(newnetnamestub)}
 {opt sym}
-{opt nwreplace}]
+{opt nwreplace}
+{opt nopaths}]
 
 
 {synoptset 23 tabbed}{...}
@@ -37,6 +38,7 @@
 {synopt:{opth generate(newnetnamestub)}}Save paths as networks beginning with {it:newnetnamestub}{p_end}
 {synopt:{opt sym}}Symmetrize network for calculation{p_end}
 {synopt:{opt nwreplace}}Overwrite networks with {it:newnetnamestub}{p_end}
+{synopt:{opt nopaths}}Do not print the list of paths; the results in {cmd:r()} are still returned{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -140,4 +142,4 @@ degree to the power of the path length.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

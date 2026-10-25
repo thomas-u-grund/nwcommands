@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_ed_nodes 20 54 260 ., label("of  to be kept")
+  TEXT tx_ed_nodes 20 54 260 ., label("Numlist of nodeid's to be kept")
   EDIT ed_nodes 290 54 190 ., nomem option(nodes)
   TEXT tx_cb_generate 20 82 260 ., label("Generates a new network and does not overwrite the original network")
   COMBOBOX cb_generate 290 82 190 ., dropdown contents(netlist) nomem option(generate)

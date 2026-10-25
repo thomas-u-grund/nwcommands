@@ -9,7 +9,7 @@ return list
 nwsummarize flodist, mat
 
 * Eccentricity: the longest shortest path FROM each node
-gsort -ecc
+gsort -ecc _nwnode
 list _nwnode ecc in 1/5
 
 * Reachability: which nodes can reach which others at all (ignoring
@@ -20,5 +20,5 @@ nwsummarize floreach, mat
 * Ego networks: for each node, how many alters does it have, and how
 * interconnected are those alters with each other
 nwego flomarriage, sizevar(egosize) densvar(egodensity)
-gsort -egosize
-list _nwnode egosize egodensity in 1/5
+gsort -egosize _nwnode
+list _nwnode egosize egodensity in 1/8

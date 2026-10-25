@@ -2,7 +2,7 @@
 capture program drop nwcommunity
 program nwcommunity, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall]
 	set more off
 
 	// resolution() had no input validation at all - zero or negative
@@ -81,6 +81,12 @@ program nwcommunity, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
 		tempname __nw_comm
@@ -156,9 +162,13 @@ program nwcommunity, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Communities: {res}`lcomm'"
-			noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
-			if `lcomm' <= 1000 {
+			noi di "{txt}  Modularity Q: {res}`=strtrim(string(round((`lmod')*1000)/1000,"%9.0g"))'"
+			if `lcomm' <= 30 | (`lcomm' <= 1000 & "`listall'" != "") {
 				noi tab `netgenerate'`k'
+			}
+			else if `lcomm' <= 1000 {
+				noi tab `netgenerate'`k' if `netgenerate'`k' <= 30
+				noi di "{txt}  (first 30 of `lcomm' communities shown; use {bf:listall} for the full table)"
 			}
 			else {
 				noi di "{txt}  (the table of the `lcomm' communities is not shown; sizes are in r(comm_sizeid))"

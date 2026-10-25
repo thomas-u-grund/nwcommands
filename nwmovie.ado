@@ -36,7 +36,7 @@ program nwmovie
 	// edgecolor()/edgesize() options fail outright ("Network <x> not
 	// found") on any real use - confirmed directly, never caught before
 	// because neither had test coverage.
-	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) noopen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout]
+	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) NOOpen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout]
 	unw_defs
 
 	mata: st_local("_nwmv_pkgdir", NativeGraphInstallDir())

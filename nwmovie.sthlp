@@ -102,8 +102,7 @@ event-mode cumulative layout network).
 did: {opt colors()}/{opt symbols()}/{opt sizes()}/{opt edgecolors()}/{opt edgesizes()} each take one value PER WAVE (in the same order as
 the network list) instead of their singular counterparts' single broadcast value. Color and size (node AND edge) genuinely transition
 continuously as the movie plays - Cytoscape.js tweens node color/size natively as part of the same {opt duration()}/{opt easing()}
-animation that already moves node position, and edges (which are always fully rebuilt every transition, not kept alive across it - see
-the crash history noted in {bf:nwmovie_template.html}'s own source) get an equivalent hand-rolled tween for any edge that persists across
+animation that already moves node position, and edges (which are always fully rebuilt at every transition, not kept alive across it) get an equivalent hand-rolled tween for any edge that persists across
 the transition. Shape stays a hard switch at each wave boundary, not a continuous morph - asking Cytoscape's own animation to interpolate
 shape (circle into square, say) is not a meaningful blend, and turned out to be a genuine renderer-crash trigger during this feature's own
 development besides. A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only
@@ -191,4 +190,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

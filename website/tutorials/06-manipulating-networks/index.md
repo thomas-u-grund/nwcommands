@@ -86,9 +86,6 @@ variable's value:
 (1 real change made)
 
 . nwcollapse mynet, by(att) generate(mynet_collapsed)
-(16 real changes made, 16 to missing)
-(2 real changes made)
-(8 real changes made)
 
 . nwsummarize mynet_collapsed
 --------------------------------------------------
@@ -192,7 +189,6 @@ instead of a Stata variable:
     +-------------+
 
 . nwrecode scores (1=10) (2=20) (3=30), generate(scores_recoded)
-(3 real changes made)
 (5 changes made to scores)
 
 . nwsummarize scores_recoded, mat
@@ -253,7 +249,6 @@ else becomes 0:
     +-------------------+
 
 . nwdichotomize trade, threshold(100) generate(trade_binary)
-(3 real changes made)
 (6 changes made to trade)
 
 . nwsummarize trade_binary, mat

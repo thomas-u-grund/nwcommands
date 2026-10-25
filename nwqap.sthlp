@@ -36,7 +36,7 @@
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}modes for expanding variables to networks{p_end}
 {synopt:{opt type}({it:{help nwqap##regcmd:regcmd}})}regression command to be used for dyad dataset; default = {it:logit}{p_end}
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
-{synopt:{opt detail}}display details of regression results{p_end}
+{synopt:{opt detail}}display details of regression results and the permutation progress lines{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
 {synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 {synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
@@ -158,7 +158,7 @@ simulation study documents. Applied independently to every independent-variable 
 (the constant's own p-value is left as the plain single-permutation result, since double
 semi-partialling is not defined for an intercept). Semi-partialling itself is always a real OLS
 fit, regardless of which {opt type()} the main model itself used - Dekker, Krackhardt & Snijders'
-own procedure is defined this way for any regression type.
+own procedure is defined this way for any regression type. The observed statistic compared with the permutation draws is the same partial OLS slope (for a logit or probit model it is therefore not the printed logit coefficient, which is on another scale; the printed coefficients are those of the model).
 
 {title:Examples}
 
@@ -220,11 +220,11 @@ that only need {it:e(b)}/{it:e(V)} (e.g. {help test}, {help lincom}) work as usu
 is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a
 classical OLS/logit covariance matrix - dyadic network data violates the independent-
 observations assumption those classical formulas require, which is the entire reason QAP
-permutation testing exists in the first place. A native postestimation {help predict} does not
-work after {cmd:nwqap} returns (see {help nwqap##independentvariables:Description} above for why -
-the dyad-level dataset {bf:type()} actually fits is a transient internal detail, not the current
-dataset once {cmd:nwqap} exits); use {opth predict(newnetname)} instead to capture fitted dyad-level
-values directly, at the one point internally where they are genuinely meaningful.
+permutation testing exists in the first place. The data set holds one row per node, not per dyad,
+so fitted values cannot be stored in a variable: after {cmd:nwqap}, {cmd:predict} {it:newnetname}
+stores the dyad-level fitted values of the last model as a new valued network (the same as
+{opth predict(newnetname)} at estimation time; the values are kept in memory until the next
+{cmd:nwqap}, and {cmd:predict} takes no variable name, {cmd:if}, {cmd:in} or options).
 
 	Scalars
 	  {bf:e(N)}		number of dyad-level observations
@@ -258,4 +258,4 @@ message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs 
 	{help nwergm}, {help nwpermute}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

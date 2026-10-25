@@ -4,6 +4,18 @@ program nwdyads
 	version 9
 	syntax [anything(name=netname)],
 	
+	// netlist and wildcards (nwdyads lazega_*) as in nwsummarize; the
+	// r() results are those of the last network
+	_nwsyntax `netname', max(100000)
+	foreach onenet in `netname' {
+		_nwdyads1 `onenet'
+	}
+end
+
+capture program drop _nwdyads1
+program _nwdyads1
+	version 9
+	syntax anything(name=netname)
 	_nwsyntax `netname', max(1)
 	mata: census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
@@ -22,7 +34,7 @@ program nwdyads
 		di "{hline 11}{c +}{hline 11}{c +}{hline 11}"
 		di "{res}{ralign 10:`r(_100)'}{col 12}{c |}{ralign 10:`r(_010)'}{col 24}{c |}{ralign 10:`r(_001)'}"
 		di " "
-		di "{txt}    Reciprocity: {res}`=round(`r(reciprocity)',0.001)'"
+		di "{txt}    Reciprocity: {res}`=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
 	}
 	
 	// Display dyad census for undirected network
@@ -34,7 +46,7 @@ program nwdyads
 		di "{hline 11}{c +}{hline 11}"
 		di "{res}{ralign 10:`r(_100)'}{col 12}{c |}{ralign 10:`r(_001)'}"
 		di " "
-		di "{txt}    Reciprocity: {res}`=round(`r(reciprocity)',0.001)'"
+		di "{txt}    Reciprocity: {res}`=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
 	}
 	mata: st_global("r(name)", "`netname'")
 	// Naming consistency (moderate-severity pass, information_census

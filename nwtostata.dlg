@@ -18,9 +18,9 @@ BEGIN
   GROUPBOX gb_opt 10 10 520 104, label("Options")
   TEXT tx_ed_mat 20 20 260 ., label("name of the Mata matrix to copy into Stata variables")
   EDIT ed_mat 290 20 190 ., nomem option(mat)
-  TEXT tx_ed_gen 20 48 260 ., label("one new Stata variable name per column of")
+  TEXT tx_ed_gen 20 48 260 ., label("One new Stata variable name per column of matamatrix")
   EDIT ed_gen 290 48 190 ., nomem option(gen)
-  TEXT tx_ed_stub 20 76 260 ., label("generate columns as , , ... instead of naming")
+  TEXT tx_ed_stub 20 76 260 ., label("Generate columns as stub1, stub2, ... instead of naming them individually")
   EDIT ed_stub 290 76 190 ., nomem option(stub)
 END
 

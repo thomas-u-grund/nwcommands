@@ -75,7 +75,7 @@ Binary: yes. Directed: preserved from the source network. Weighted: preserved fr
 
 **Scalars**
 
-- **r(ties)** number of ties in the static view
+- **r(ties)** number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed *Ties* line)
 - **r(at)** the timepoint sliced at
 
 ## See also

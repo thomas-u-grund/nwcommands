@@ -16,12 +16,8 @@ program _nwdatasync
 		
 	capture confirm variable `nw_nodename'
 	
-	// Maybe datasync is not needed
-	if (_rc == 0 & _N >= `nodes' & "`force'" == ""){
-		qui putmata `nw_nodename' if _n <= `nodes' , replace
-		mata: check_signatures(`nodes', `netobj'->get_nodenames(), "`nw_nodename'", `netobj'->is_2mode())
-		mata: mata drop `nw_nodename'
-	}
+	// (A putmata/check_signatures() block stood here; its early `exit' never fired - it compared a string that is
+	// never empty - so it only cost time. The check that is worth making is the one below.)
 	
 	if `datasync' == 0 {
 		di "{txt}Warning! Datasync switched off. Variables might be corrupted."
@@ -82,6 +78,53 @@ program _nwdatasync
 		exit
 	}
 	
+	// Fast paths (large networks pay seconds for the merge below).
+	//  (1) the data already hold exactly the node names, one row per node, in node order: the merge would match
+	//      every row to its node, the rows would keep their order, and only the indicator variable would be added;
+	//  (2) the dataset has no observation (what nwfromedge, nwset and the generators leave): the merge would
+	//      append one row per node, in node order, and add the indicator variable.
+	// That is all that is done here. Anything else (other row counts, other or blank names, a two-mode network,
+	// a sorted dataset, option force, a name variable that is not a plain string of type str40 where rows are
+	// to be added, names longer than 40 characters) takes the full route below, unchanged.
+	if "`force'" == "" & "`is2mode'" != "true" & `nodes' > 0 & "`: sortedby'" == "" {
+		local __nwds_state 0
+		capture confirm variable `nw_nodename'
+		local __nwds_exists = (_rc == 0)
+		if `__nwds_exists' {
+			capture confirm string variable `nw_nodename'
+			if _rc == 0 {
+				local __nwds_type : type `nw_nodename'
+				if "`__nwds_type'" != "strL" {
+					mata: st_local("__nwds_state", strofreal(nw_sync_state(`netobj'->get_nodenames(), "`nw_nodename'", `nodes', "`__nwds_type'")))
+				}
+			}
+		}
+		else if `=_N' == 0 {
+			mata: st_local("__nwds_state", strofreal(nw_sync_state(`netobj'->get_nodenames(), "", `nodes', "str40")))
+		}
+		if `__nwds_state' > 0 {
+			if `__nwds_state' == 2 {
+				if !`__nwds_exists' {
+					qui gen str40 `nw_nodename' = ""
+				}
+				qui set obs `nodes'
+				mata: st_sstore(., "`nw_nodename'", `netobj'->get_nodenames()')
+			}
+			if "`generate'" != "" {
+				qui capture drop `generate'
+				qui gen `generate' = 1
+			}
+			else {
+				capture drop `nw_included'
+				gen `nw_included' = 1
+			}
+			// leaves _rc clean, as the full route does (see the note at the end of this program): a capture that
+			// succeeds sets _rc to 0. nwname, used for that on the full route, costs 0.06 s at 100,000 nodes
+			capture confirm number 0
+			exit
+		}
+	}
+
 	preserve
 	drop _all
 
@@ -207,8 +250,23 @@ program _nwdatasync
 
 end
 
+capture mata: mata drop nw_sync_state()
 capture mata: mata drop check_signatures()
 mata:
+// 1 when the dataset has exactly n rows and the string variable v holds, row by row, the n node names (none blank);
+// 2 when the dataset has no row, the type of v is (or will be) str40 and no name is longer than 40 characters, so that
+// n rows holding the names can be added; 0 otherwise
+real scalar nw_sync_state(string rowvector names, string scalar v, real scalar n, string scalar vtype) {
+	if (cols(names) != n) return(0)
+	if (any(names :== "")) return(0)
+	if (st_nobs() == n & v != "") return(all(st_sdata((1, n), v) :== names'))
+	if (st_nobs() == 0) {
+		if (vtype != "str40" | max(strlen(names)) > 40) return(0)
+		return(2)
+	}
+	return(0)
+}
+
 void check_signatures(real scalar nodes, string matrix nodenames, string scalar nwnode, string scalar is2mode) {
 	if ((nodenames') == st_sdata((1,nodes), nwnode)) {
 		if (is2mode != "") {

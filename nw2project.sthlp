@@ -114,7 +114,7 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 
 	Scalars
 	  {bf:r(nodes)}		number of nodes in the projected network
-	  {bf:r(ties)}		number of ties in the projected network
+	  {bf:r(ties)}		number of edges in the projected (undirected) network, each pair counted once
 
 
 {title:Supported network types}
@@ -137,4 +137,4 @@ operation - the canonical, correct way to project in this package.
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

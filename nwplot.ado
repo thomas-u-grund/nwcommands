@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -51,7 +51,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -219,8 +219,15 @@ program nwplot, rclass
 	// own value wins, else fall back to the top-level default" precedence
 	// this file already uses for sizebin() (see the __sizebin_toplevel
 	// comment above).
+	// The slider in the interactive view is a multiplier on the view's own
+	// baseline size, and the view draws on screen pixels (about 7 px per
+	// unit of Stata's msize), whereas the static graph's symbols are
+	// relative to the graph. A slider value of 1 in the view therefore
+	// corresponds to roughly 0.2 as nodefactor() in the static graph;
+	// scale the imported slider value accordingly so the bring-back looks
+	// like the view without a manual nodefactor().
 	if "`nodefactor'" == "" & "`_nwedit_nodefactor'" != "" {
-		local nodefactor = `_nwedit_nodefactor'
+		local nodefactor = `_nwedit_nodefactor' * 0.2
 	}
 	if "`nodefactor'" == "" {
 		local nodefactor = 1
@@ -763,7 +770,22 @@ program nwplot, rclass
 		}
 		local edgecolorkeys "`forcekeys'"
 
-		qui if "`forcekeys'" == "" {
+		// A continuous (non-integer or negative) edgecolor() network is cut
+		// into five classes with a light-to-dark sequential palette; integer
+		// values (0, 1, 2, ...) remain categories, one colour each.
+		nwtomata `edgecolor', mat(edgecolormat)
+		mata: st_local("_ec_nonint", strofreal(any(edgecolormat :!= trunc(edgecolormat)) | any(edgecolormat :< 0)))
+		local _ec_binned = (`_ec_nonint' == 1)
+		if `_ec_binned' {
+			mata: _nwplot_binedgecolor(5)
+			if "`edgecolorpalette'" == "" {
+				local edgecolorpalette "navy*.3 navy*.45 navy*.6 navy*.8 navy"
+			}
+			if "`forcekeys'" == "" {
+				local edgecolorkeys "`_ecbin_keys'"
+			}
+		}
+		qui if "`forcekeys'" == "" & !`_ec_binned' {
 			nwtabulate `edgecolor', matrow(r)
 			matrix edgecolor_mat = r
 			
@@ -773,11 +795,11 @@ program nwplot, rclass
 				local edgecolorkeys "`edgecolorkeys' `=`eckey'+1'"
 			}
 		}
-		nwtomata `edgecolor', mat(edgecolormat)
 		mata: edgecolormat = edgecolormat :+ 1
 		nwname `edgecolor', newdirected("`edgecolor_directed'")
 	}
 	else {
+		local _ec_binned = 0
 		mata: edgecolormat = J(`nodes',`nodes',0)
 	}
 
@@ -788,8 +810,14 @@ program nwplot, rclass
 		forvalues i = 1/ `keysused_edgecolor' {
 			local edgecolorlabel_temp : word `i' of `edgecolorkeys'
 			local edgecolororder "`edgecolororder' `=`keysused' + `i''"
-			local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
-			local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'"
+			if `_ec_binned' {
+				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''")"'
+				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''"
+			}
+			else {
+				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
+				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'"
+			}
 		}
 		local keysused = `keysused' + `keysused_edgecolor'
 	}
@@ -1222,10 +1250,17 @@ program nwplot, rclass
 	if "`edgeimport'" != "" {
 		preserve
 		import delimited "`edgeimport'", clear varnames(1) case(preserve)
-		if _N != `_nwedit_ties' {
-			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_ties' ties; re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
+		// The page lists an undirected tie once (it has no direction), the
+		// plot's tie list holds both (i,j) and (j,i): accept either count.
+		local _nwedit_expect = `_nwedit_ties'
+		if "`directed'" != "true" {
+			mata: st_local("_nwedit_expect", strofreal(sum(NumElist(plotmat)[.,1] :<= NumElist(plotmat)[.,2])))
+		}
+		if _N != `_nwedit_ties' & _N != `_nwedit_expect' {
+			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
 			error 6056
 		}
+		local _nwedit_edgehalf = (_N != `_nwedit_ties')
 		capture assert edge_row == _n
 		if _rc {
 			di "{err}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
@@ -1233,6 +1268,10 @@ program nwplot, rclass
 		}
 		mata: _nwedit_edgecolor = st_sdata(., "color")
 		mata: _nwedit_edgestyle = st_sdata(., "style")
+		if `_nwedit_edgehalf' {
+			mata: _nwedit_edgecolor = _nwedit_expandundirected(_nwedit_edgecolor, NumElist(plotmat))
+			mata: _nwedit_edgestyle = _nwedit_expandundirected(_nwedit_edgestyle, NumElist(plotmat))
+		}
 		restore
 	}
 
@@ -1467,8 +1506,22 @@ program nwplot, rclass
 		// next command ran). Built manually instead, in the OS temp dir,
 		// so its lifetime isn't tied to this program's own scope.
 		local _nwedit_out = "`c(tmpdir)'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
+		// fname(): write the interactive HTML to a chosen file instead of the
+		// time-stamped temp-folder file; ".html" is appended when the name
+		// has no extension, a relative name is taken relative to the
+		// working directory, and the file is overwritten.
+		if `"`fname'"' != "" {
+			local _nwedit_out `"`fname'"'
+			if strpos(`"`_nwedit_out'"', ".") == 0 | strpos(substr(`"`_nwedit_out'"', -6, .), ".") == 0 {
+				local _nwedit_out `"`_nwedit_out'.html"'
+			}
+			if substr(`"`_nwedit_out'"', 1, 1) != "/" & substr(`"`_nwedit_out'"', 2, 1) != ":" & substr(`"`_nwedit_out'"', 1, 1) != "~" {
+				local _nwedit_out `"`c(pwd)'/`_nwedit_out'"'
+			}
+		}
 		capture erase "`_nwedit_out'"
 		local _nwedit_isdirected = ("`directed'" == "true")
+		local _nwedit_hasedgesize = ("`edgesize'" != "")
 		// The on-canvas legend should only appear when nwplot's own real
 		// static plot would show one too -- i.e. keysused>0 territory
 		// (nwplot.ado:1932's own legend(off) gate) -- plus a single-entry
@@ -1520,11 +1573,15 @@ program nwplot, rclass
 		// show (sizekeys_legendoff set, or size() not given - the same
 		// gate nwplot's own static-plot legend loop uses), so its word
 		// count alone is the correct display gate.
+		// coordinates that are not on the canvas scale (degrees, metres, ...) are rescaled by the page builder;
+		// the default node size follows the node density of the rescaled layout
+		mata: st_local("_nwedit_k", strofreal(_nwedit_viewmap(`nodes')[5]))
+		local nodefactor_html = `nodefactor' * `_nwedit_k'
 		local _nwedit_sizelegend_n : word count `sizekeys'
 		local _nwedit_hassizelegend = (`_nwedit_sizelegend_n' > 0)
 		forvalues _nwedit_szi = 1/`_nwedit_sizelegend_n' {
 			local _nwedit_szraw : word `_nwedit_szi' of `_nwedit_sizekeys_rawnsize'
-			local _nwedit_sizelegend_px_`_nwedit_szi' = `_nwedit_szraw' * `nodefactor' * 2 * 7
+			local _nwedit_sizelegend_px_`_nwedit_szi' = `_nwedit_szraw' * `nodefactor_html' * 2 * 7
 			local _nwedit_szkeyval : word `_nwedit_szi' of `sizekeys'
 			if "`_nwedit_sizevarname'" != "" {
 				local _nwedit_sizelegend_label_`_nwedit_szi' "`_nwedit_sizevarname' = `_nwedit_szkeyval'"
@@ -1534,7 +1591,7 @@ program nwplot, rclass
 			}
 		}
 
-		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor_html', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 
 		// movieexport(): nwmovie's own hook into this same resolved-color/
 		// shape/position JSON, reusing every line of the resolution work
@@ -1547,9 +1604,12 @@ program nwplot, rclass
 		// full HTML page, as a standalone .json file - no template/
 		// vendored-JS overhead, since nwmovie assembles its own page.
 		if "`movieexport'" != "" {
-			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor_html', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 		}
 
+		if "`movieexport'" == "" {
+			di as txt "Interactive view written to {bf:`_nwedit_out'}"
+		}
 		if "`noopen'" == "" {
 			di "{text:Opening interactive view...}"
 			// Launch logic (chromeless native viewer via `winexec`, falling
@@ -1688,7 +1748,7 @@ program nwplot, rclass
 			local szkey_size : word `i' of `sizekeys_size'
 			local tempcolstyle_line = r(col_line)
 			local tempwidth_line = r(line_width)
-			local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("scheme p0")  mlcolor("`tempcolstyle_line'") mlwidth("`templine_width'") mfcolor("scheme p0")  msize(`szkey_size') `scatteropt') "'            		
+			local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol(O)  mlcolor("`tempcolstyle_line'") mlwidth(vthin) mfcolor("`tempcolstyle_line'")  msize(`szkey_size') `scatteropt') "'            		
 		}
 		local sizekeys_num : word count `sizekeys'
 	}
@@ -1697,10 +1757,29 @@ program nwplot, rclass
 	}
 	
 	// Ghost plots of size of edges
+	// edgesize(): unless edgesizeraw is given, the tie values are mapped linearly onto the
+	// widths 1 to 8 units (largest absolute value = 8, a quarter of a Stata line-width unit
+	// each, as the interactive view does in pixels), so that valued networks with large
+	// or tiny values give a readable plot. When all ties carry the same value, or without
+	// edgesize(), the plain default width is kept.
+	local esscale 0
+	local esmax 1
+	capture qui sum edgesize if edgesize < ., meanonly
+	if _rc == 0 & r(N) > 0 {
+		local esmax = max(abs(r(max)), abs(r(min)))
+		local esscale = ("`edgesizeraw'" == "" & "`edgesize'" != "" & r(max) > r(min) & `esmax' > 0)
+	}
 	if "`edgesizekeys'" != "" & "`edgesizekeys_legendoff'" == ""{
 		foreach eszkey in `edgesizekeys' {
-			local tempval_line = (`eszkey' / 2) * `edgefactor' / 2
-			local tempval_arrow = (`eszkey' + 1) * `arrowfactor' 
+			if `esscale' {
+				local tempkey_s = 1 + 7 * abs(`eszkey') / `esmax'
+				local tempval_line = (`tempkey_s' / 2) * `edgefactor' / 2
+				local tempval_arrow = (`tempkey_s' + 1) * `arrowfactor'
+			}
+			else {
+				local tempval_line = (`eszkey' / 2) * `edgefactor' / 2
+				local tempval_arrow = (`eszkey' + 1) * `arrowfactor'
+			}
 			local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 			local ghostcmd `"`ghostcmd' || (`pc' `ghost1' `ghost2' `ghost2' `ghost1' if `ghost1' !=., lpattern(solid) lwidth(`tempval_line') lcolor("scheme p0") mcolor("scheme p0") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
 		}
@@ -1820,8 +1899,15 @@ program nwplot, rclass
 			}
 			forvalues tempval_mat = 1/`tempvalue_rows'{
 				local tempval = valuerow[`tempval_mat',1]
-				local tempval_line = (`tempval' / 2) * `edgefactor' / 2
-				local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+				if `esscale' {
+					local tempval_s = 1 + 7 * abs(`tempval') / `esmax'
+					local tempval_line = (`tempval_s' / 2) * `edgefactor' / 2
+					local tempval_arrow = (`tempval_s' + 1) * `arrowfactor'
+				}
+				else {
+					local tempval_line = (`tempval' / 2) * `edgefactor' / 2
+					local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+				}
 				local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 				// BUGFIX: this formula assumes edgesize() ties are on a
 				// small scale (tie counts, small integer weights) -
@@ -1930,6 +2016,7 @@ program nwplot, rclass
 	// above)
 	return local scheme "`scheme'"
 	return local interactive "`_nwedit_out'"
+	return local fname "`_nwedit_out'"
 	return local importcoords "`importcoords'"
 
 	restore
@@ -2082,7 +2169,58 @@ end
 
 capture mata: mata drop fruchtrein()
 capture mata: mata drop getTieCoordinates()
+capture mata: mata drop _nwedit_expandundirected()
+capture mata: mata drop _nwplot_binedgecolor()
 mata:
+// edgeimport() for undirected networks: the page holds one row per
+// undirected tie (the (i,j) with i<=j); give both (i,j) and (j,i) rows of
+// the plot's tie list the value of that row.
+string colvector _nwedit_expandundirected(string colvector v, real matrix topo)
+{
+	transmorphic A
+	real colvector key, kept
+	string colvector out
+	real scalar i, mx
+	mx = max(topo[.,1] \ topo[.,2]) + 1
+	key = rowmin(topo[.,1..2]) :* mx + rowmax(topo[.,1..2])
+	kept = selectindex(topo[.,1] :<= topo[.,2])
+	A = asarray_create("real", 1)
+	for (i=1; i<=rows(kept); i++) asarray(A, key[kept[i]], v[i])
+	out = J(rows(topo), 1, "")
+	for (i=1; i<=rows(topo); i++) out[i] = asarray(A, key[i])
+	return(out)
+}
+
+// edgecolor() with a continuous network: cut the non-zero tie values into
+// nb equal-width classes 0..nb-1 (0 = no tie stays 0 as well; the caller adds 1
+// afterwards) and return the class ranges as locals.
+void _nwplot_binedgecolor(real scalar nb)
+{
+	external real matrix edgecolormat
+	real matrix b, nz
+	real scalar lo, hi, k, present
+	string scalar keys, labs
+	nz = (edgecolormat :!= 0) :& (edgecolormat :< .)
+	lo = min(select(vec(edgecolormat), vec(nz)))
+	hi = max(select(vec(edgecolormat), vec(nz)))
+	b = J(rows(edgecolormat), cols(edgecolormat), 0)
+	if (hi > lo) {
+		b = floor((edgecolormat :- lo) :/ (hi - lo) :* nb)
+		b = b :* (b :< nb) :+ (nb-1) :* (b :>= nb)
+	}
+	b = b :* nz
+	keys = ""
+	for (k=0; k<nb; k++) {
+		present = sum(nz :& (b :== k))
+		if (present > 0) {
+			keys = keys + " " + strofreal(k+1)
+			st_local("_ecbin_lo_" + strofreal(k+1), strofreal(lo + k*(hi-lo)/nb, "%9.3g"))
+			st_local("_ecbin_hi_" + strofreal(k+1), strofreal(lo + (k+1)*(hi-lo)/nb, "%9.3g"))
+		}
+	}
+	edgecolormat = b
+	st_local("_ecbin_keys", strtrim(keys))
+}
 real matrix function getTieCoordinates(
 	real matrix Coord, real matrix size, real matrix List, real matrix EColMat, real matrix ESizMat, real scalar sizefactor, real scalar doarrows, real scalar arrowgap)
 {
@@ -2330,11 +2468,40 @@ end
 // dataset variables the real twoway graph is built from a few lines below
 // (st_store'd in by this same program a little earlier) - this renders
 // what nwplot actually resolved, it does not recompute anything.
+capture mata: mata drop _nwedit_viewmap()
 capture mata: mata drop _nwedit_buildjson()
 capture mata: mata drop _nwedit_slurpfile()
 capture mata: mata drop _nwedit_buildinteractivehtml()
 capture mata: mata drop _nwedit_writejson()
 mata:
+// Viewer canvas mapping of the node coordinates (nx, ny of the plotting dataset). The page places a node at
+// 1000 x unit px. The layouts of nwplot give units between 0 and 1.5 and are kept as they are; coordinates
+// on another scale (nodexy() in degrees, metres, ... or a very small extent) are shifted to the origin and
+// scaled uniformly (aspect ratio kept) so that the larger extent is 1.5 units (1,500 px). Returns
+// (rescaled 0/1, min x, min y, scale, node size multiplier): the multiplier is 1 for the unchanged
+// layouts, and for rescaled coordinates it adapts the default node size to the node density (spacing of
+// the nodes if spread evenly over the canvas: size = 0.3 x spacing, between 8 and 34 px).
+real rowvector _nwedit_viewmap(real scalar nn)
+{
+	real colvector xv, yv
+	real scalar minx, maxx, miny, maxy, span, scale, w, h, spacing, k
+
+	xv = (st_data((1::nn), "nx") :/ 100 :- 0.05) :/ 0.9
+	yv = (st_data((1::nn), "ny") :/ 100 :- 0.05) :/ 0.9
+	if (nn < 2) return((0, 0, 0, 1, 1))
+	minx = min(xv); maxx = max(xv); miny = min(yv); maxy = max(yv)
+	if (minx >= . | miny >= .) return((0, 0, 0, 1, 1))
+	span = max((maxx - minx, maxy - miny))
+	if (span <= 0) return((0, 0, 0, 1, 1))
+	if (span >= 0.5 & span <= 3 & minx >= -1 & miny >= -1 & maxx <= 4 & maxy <= 4) return((0, 0, 0, 1, 1))
+	scale = 1.5 / span
+	w = max(((maxx - minx) * scale, 0.15))
+	h = max(((maxy - miny) * scale, 0.15))
+	spacing = 1000 * sqrt(w * h / nn)
+	k = min((max((0.3 * spacing / 22.4, 8 / 22.4)), 34 / 22.4))
+	return((1, minx, miny, scale, k))
+}
+
 // Split out of what used to be _nwedit_buildinteractivehtml()'s own body
 // (harmonisation: nwmovie's own real-world-data movie player, see
 // _nwopenviewer.ado's header for the sibling refactor) - this half does
@@ -2347,7 +2514,8 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		real scalar hasnodelegend, real scalar hasedgelegend,
 		real scalar hassizelegend, real scalar sizelegendn)
 {
-	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv
+	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv, edgewv, esv
+	real rowvector vmap
 	string colvector nlabelv
 	real matrix topology
 	string scalar json, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl, sizelbl
@@ -2372,7 +2540,17 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	nsymbolv = st_data((1::nn), "nsymbol")
 	nlabelv = st_sdata((1::nn), "nlabel")
 
+	// node coordinates on the viewer canvas (see _nwedit_viewmap())
+	vmap = _nwedit_viewmap(nn)
+	nxv = (nxv :/ 100 :- 0.05) :/ 0.9
+	nyv = (nyv :/ 100 :- 0.05) :/ 0.9
+	if (vmap[1] == 1) {
+		nxv = (nxv :- vmap[2]) :* vmap[4]
+		nyv = (nyv :- vmap[3]) :* vmap[4]
+	}
+
 	json = "{" +
+		q+"label_font"+q+":"+strofreal(8 * vmap[5])+"," +
 		q+"has_node_legend"+q+":"+(hasnodelegend==1 ? "true" : "false")+"," +
 		q+"has_edge_legend"+q+":"+(hasedgelegend==1 ? "true" : "false")+"," +
 		q+"has_size_legend"+q+":"+(hassizelegend==1 ? "true" : "false")+"," +
@@ -2430,8 +2608,8 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 			q+"size"+q+":"+strofreal(sizepx)+"," +
 			q+"color_group"+q+":"+strofreal(cg)+"," +
 			q+"shape_group"+q+":"+strofreal(sg)+"," +
-			q+"x"+q+":"+strofreal((nxv[i]/100 - 0.05)/0.9)+"," +
-			q+"y"+q+":"+strofreal((nyv[i]/100 - 0.05)/0.9) +
+			q+"x"+q+":"+strofreal(nxv[i])+"," +
+			q+"y"+q+":"+strofreal(nyv[i]) +
 			"}"
 		if (i < nn) json = json + ","
 	}
@@ -2441,6 +2619,17 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		edgecolorv = st_data((1::nties), "edgecolor")
 		recipv = st_data((1::nties), "recip")
 		topology = NumElist(plotmat)
+		// edgesize(): the page maps the tie values linearly onto line
+		// widths 1..8 px (largest |value| = 8); the width slider is a
+		// multiplier on top. Without edgesize(), or when all ties have the
+		// same value, every tie keeps the plain 3 px.
+		edgewv = J(nties, 1, 3)
+		if (st_local("_nwedit_hasedgesize") == "1") {
+			esv = abs(st_data((1::nties), "edgesize"))
+			if (max(esv) > min(esv) & max(esv) > 0) {
+				edgewv = 1 :+ 7 :* esv :/ max(esv)
+			}
+		}
 		nemitted = 0
 		for (i=1; i<=nties; i++) {
 			ecg = edgecolorv[i]
@@ -2478,7 +2667,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 				q+"edgegroup_label"+q+":"+q+edgegrouplbl+q+"," +
 				q+"color"+q+":"+q+colorstr+q+"," +
 				q+"style"+q+":"+q+shapestr+q+"," +
-				q+"width"+q+":3," +
+				q+"width"+q+":"+strofreal(edgewv[i])+"," +
 				q+"arrow"+q+":"+(doarrows==1 ? "true" : "false")+"," +
 				q+"recip"+q+":"+((isdirected==1 & recipv[i]==1) ? "true" : "false")+"," +
 				q+"edgecolor_group"+q+":"+strofreal(ecg) +

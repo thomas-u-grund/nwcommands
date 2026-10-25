@@ -76,7 +76,7 @@ existed in wave 2:
 {title:Stored results}
 
 	Scalars
-	  {bf:r(ties)}		number of ties in the static view
+	  {bf:r(ties)}		number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed {it:Ties} line)
 	  {bf:r(at)}		the timepoint sliced at
 
 
@@ -107,4 +107,4 @@ For a temporal network of more than 2,000 nodes the times (or the starts and end
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

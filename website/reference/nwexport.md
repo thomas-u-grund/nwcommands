@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Export network as Pajek or Ucinet file"
+description: "Export network as Pajek, Ucinet, GML or edge list file"
 ---
 
 # `nwexport`
 
-Export network as Pajek or Ucinet file
+Export network as Pajek, Ucinet, GML or edge list file
 
 ## Syntax
 
@@ -28,7 +28,7 @@ replace]
 
 ## Description
 
-Exports a network to either 1) Pajek .NET or 2) Ucinet .DL file format. Only exports one network and no node level attributes. By default, the new network file is saved in the working directory. When no `fname` is specified, the program calls the new file *netname.dl* (Ucinet) or *netname.net* (Pajek).
+Exports a network to 1) Pajek .NET, 2) Ucinet .DL, 3) GML or 4) plain-text edge list file format. Only exports one network and no node level attributes. By default, the new network file is saved in the working directory. When no `fname` is specified, the program calls the new file *netname.dl* (Ucinet), *netname.net* (Pajek), *netname.gml* (GML) or *netname.txt* (edge list).
 
 ## Examples
 

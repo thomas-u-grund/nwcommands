@@ -17,6 +17,9 @@ version 2.0.0
 {cmdab: nwdyads} 
 [{it:{help netname}}]
 
+{pstd}
+{it:netname} may be a list of networks or a wildcard such as {cmd:lazega_*}, as in {help nwsummarize}; the census is shown for each network and the {cmd:r()} results are those of the last one.
+
 {title:Description}
 
 {pstd}
@@ -102,4 +105,4 @@ in Stata/BE (7 seconds and 6.3 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -2,7 +2,7 @@
 capture program drop nwcomponents
 program nwcomponents, rclass
 	version 9
-	syntax [anything(name=netname)][, lgc GENerate(string) replace silent]
+	syntax [anything(name=netname)][, lgc GENerate(string) replace silent listall]
 	set more off
 
 	_nwsyntax `netname', max(9999)
@@ -48,6 +48,12 @@ program nwcomponents, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
 		_nwsyntax `netname_temp'
 		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
 
@@ -100,8 +106,12 @@ program nwcomponents, rclass
 			replace `generate'`k' = 1 if `generate'`k' == `comps_lgc' & `generate'`k' != .	
 		}
 		if "`silent'" == "" {
-			if `lcomp' <= 1000 {
+			if `lcomp' <= 30 | (`lcomp' <= 1000 & "`listall'" != "") {
 				noi tab `generate'`k'
+			}
+			else if `lcomp' <= 1000 {
+				noi tab `generate'`k' if `generate'`k' <= 30
+				noi di "{txt}  (first 30 of `lcomp' components shown; use {bf:listall} for the full table)"
 			}
 			else {
 				noi di "{txt}  (the table of the `lcomp' components is not shown; sizes are in r(comp_sizeid))"

@@ -21,8 +21,8 @@ BEGIN
   TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite network .")
   CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
   TEXT tx_cb_name 20 82 260 ., label("Save bridges as network; default = .")
-  COMBOBOX cb_name 290 82 190 ., dropdown contents(netlist) nomem option(name)
-  TEXT tx_cb_type 20 110 260 ., label("Type of bridge; default =")
+  COMBOBOX cb_name 290 82 190 ., dropdown contents(netlist) nomem option()
+  TEXT tx_cb_type 20 110 260 ., label("Type of bridge; default = global")
   COMBOBOX cb_type 290 110 190 ., dropdownlist contents(list_type) nomem option(type)
 END
 

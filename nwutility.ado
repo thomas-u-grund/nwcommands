@@ -117,6 +117,8 @@ program nwutility
 	capture drop _cost
 	capture drop _benefit
 	capture drop _util
+	// align row i of the data set with node i before writing by position
+	_nwsyncrows `netname'
 	nwtostata, mat(util) gen(_benefit _cost _util)
 	mata: mata drop util
 	mata: mata drop geonet

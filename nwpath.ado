@@ -9,7 +9,7 @@ program nwpath
 	// `name()' could not simply have aliased it (a single fixed name
 	// doesn't fit a multi-network stub the way it does for other
 	// commands in this group).
-	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string) ]
+	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string) nopaths]
 	
 	if "`sym'" != "" & "`generate'" != "" {
 		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."
@@ -114,7 +114,7 @@ program nwpath
 	}
 	di "{hline 40}"
 	
-	forvalues i = 1/`r(paths)' {
+	if "`nopaths'" == "" forvalues i = 1/`r(paths)' {
 		local p "{txt}	Path `i': {res}`ego'"
 		forvalues j = 2/`=`r(path_length)'+1' {
 			mata: st_local("next", `netobj'->get_nodenames()[`_path'[`i',`j']])

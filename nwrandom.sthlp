@@ -21,6 +21,7 @@
 {opt census}({help nwdyads:{it:mutual asym} [{it:null}]})
 {opt weights(p1, p2,...)}
 {opt undirected}
+{opt directed}
 {opth ntimes(int)}
 {opt name}({it:{help newnetname}})
 {opt labs}({it:lab1, lab2, ...})
@@ -36,6 +37,7 @@
 {synopt:{opt census}({help nwdyads:{it:mutual} [{it:asym null}]})}dyad census of the new network{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
+{synopt:{opt directed}}generate a directed network; this is the default, so the option changes nothing (it cannot be combined with {opt undirected}){p_end}
 {synopt:{opth ntimes(int)}}number of random networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:random}{p_end}
 {synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
@@ -128,4 +130,4 @@ timeout at 20,000 before); {opt prob(.0002)} at 20,000 nodes 2.8 seconds (killed
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -54,7 +54,7 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 ## Remarks
 
-The program requires some additional programs (**gsample, moremata**) that it automatically installs from the internet.
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
 ## Supported network types
 

@@ -18,6 +18,7 @@
 [{cmd:,}
 {opth generate(newnetname)}
 {opt replace}
+{opt nwreplace}
 {opt xvars}]
 
 {synoptset 25 tabbed}{...}
@@ -25,6 +26,7 @@
 {synoptline}
 {synopt:{opth generate(newnetname)}}Save permutation as new network{p_end}
 {synopt:{opt replace}}Replace existing network with permutation{p_end}
+{synopt:{opt nwreplace}}Overwrite the network named in {opt generate()} if it already exists; without it the command stops with an error{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 
@@ -109,4 +111,4 @@ in Stata/BE (killed at 12 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

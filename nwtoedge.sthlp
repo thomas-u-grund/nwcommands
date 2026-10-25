@@ -56,7 +56,7 @@ dyad pair ({it:i},{it:j}) in the network {it:netname}.
 
 {pstd}
 When a network is undirected only one entry for the dyad pair ({it:i},{it:j})
-is generated, unless option {opt full} is specified. 
+is generated, unless option {opt full} is specified. For an undirected valued network the listed pairs are those with {it:_ego} > {it:_alter}, so each tie appears once, in the row of the higher node id. 
 
 {pstd}
 When the command is used with a {help netlist}, it generates one new variable for each network {it:netname} in the list. If only one
@@ -174,6 +174,9 @@ square of the number of nodes. Measured in Stata/BE, random directed network wit
 (1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072
 nodes, 10,000 for an undirected network) the command stops with an error that recommends {opt compress}. With
 {opt compress} only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds.
+For a two-mode network {opt compress} lists only the ties between the two modes (as {help nw2toedge} does), never the pairs of nodes inside one mode.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 	
@@ -182,4 +185,4 @@ nodes, 10,000 for an undirected network) the command stops with an error that re
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

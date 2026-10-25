@@ -19,7 +19,7 @@ BEGIN
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
   TEXT tx_cb_name 20 54 260 ., label("name of the new network")
-  COMBOBOX cb_name 290 54 190 ., dropdown contents(netlist) nomem option(name)
+  COMBOBOX cb_name 290 54 190 ., dropdown contents(netlist) nomem option()
   TEXT tx_cx_replace 20 82 260 ., label("replace existing network")
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
 END

@@ -129,6 +129,9 @@ and {opt n(3)} the search took 197 seconds (and found no clan), so the default l
 large to build (more than 50 million numbers; use {opt nomatrix}), or when the search has run for {opt maxtime()}
 seconds (default 60). {opt countonly} counts and tabulates the clans by size without storing them.
 
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
 
 	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
@@ -136,4 +139,4 @@ seconds (default 60). {opt countonly} counts and tabulates the clans by size wit
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

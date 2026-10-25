@@ -116,6 +116,12 @@ program nwinf
 		mata: st_numscalar("r(nodes2)", `netobj'->get_nodes_mode2())
 		mata: st_global("r(mode1_desc)", `netobj'->get_description_mode1())
 		mata: st_global("r(mode2_desc)", `netobj'->get_description_mode2())
+		// density of a two-mode network: ties over the pairs BETWEEN the two
+		// modes (n1*n2). get_density() counts all n*(n-1) pairs when the network
+		// is held as stored ties (large networks), which understates it.
+		if r(nodes1) > 0 & r(nodes2) > 0 {
+			mata: st_numscalar("r(density)", `netobj'->get_edges_count() / (`netobj'->get_nodes_mode1() * `netobj'->get_nodes_mode2()))
+		}
 	}
 	mata: st_global("r(provenance)", `netobj'->get_provenance())
 	mata: st_global("r(temporal)", `netobj'->is_temporal())
@@ -145,9 +151,9 @@ program nwinf
 		if (r(directed) == "true"){
 			di "{txt}   Arcs: {res}`r(arcs)'"
 		}
-		di "{txt}   Minimum value: {res} `=round(`r(minval)',0.001)'"
-		di "{txt}   Maximum value: {res} `=round(`r(maxval)',0.001)'"
-		di "{txt}   Density: {res} `=round(`r(density)',0.001)'"
+		di "{txt}   Minimum value: {res} `=strtrim(string(round((`r(minval)')*1000)/1000,"%9.0g"))'"
+		di "{txt}   Maximum value: {res} `=strtrim(string(round((`r(maxval)')*1000)/1000,"%9.0g"))'"
+		di "{txt}   Density: {res} `=strtrim(string(r(density),"%9.3g"))'"
 		di "{txt}   Temporal: {res}`r(temporal)'"
 		if "`r(temporal)'" == "true" {
 			di "{txt}      Temporal type: {res}`r(temporaltype)'"
@@ -157,14 +163,19 @@ program nwinf
 		}
 
 		if "`detail'" != "" {
-			di "{txt}   Reciprocity: {res} `=round(`r(reciprocity)',0.001)'"
-			di "{txt}   Transitivity: {res} `=round(`r(transitivity)',0.001)'"
 			if (r(directed) == "false"){
-				di "{txt}   Degree centralization: {res}`=round(`r(dg_central)',0.001)'"
+				di "{txt}   Reciprocity: {res} n/a (undirected network)"
+			}
+			else {
+				di "{txt}   Reciprocity: {res} `=strtrim(string(round((`r(reciprocity)')*1000)/1000,"%9.0g"))'"
+			}
+			di "{txt}   Transitivity: {res} `=strtrim(string(round((`r(transitivity)')*1000)/1000,"%9.0g"))'"
+			if (r(directed) == "false"){
+				di "{txt}   Degree centralization: {res}`=strtrim(string(round((`r(dg_central)')*1000)/1000,"%9.0g"))'"
 			}
 			if (r(directed) == "true"){
-				di "{txt}   Indegree centralization:: {res}`=round(`r(indg_central)',0.001)'"
-				di "{txt}   Outdegree centralization:: {res}`=round(`r(outdg_central)',0.001)'"
+				di "{txt}   Indegree centralization: {res}`=strtrim(string(round((`r(indg_central)')*1000)/1000,"%9.0g"))'"
+				di "{txt}   Outdegree centralization: {res}`=strtrim(string(round((`r(outdg_central)')*1000)/1000,"%9.0g"))'"
 			}
 		}
 	}

@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 76, label("Options")
   TEXT tx_cx_alpha 20 54 260 ., label("List network names in alphabetical order (the default is creation order)")
   CHECKBOX cx_alpha 290 54 190 ., label("alpha") option(alpha)
-  TEXT tx_cx_not 20 82 260 ., label("Invert the selection - list every  loaded network instead of the ones")
+  TEXT tx_cx_not 20 82 260 ., label("Invert the selection - list every other loaded network instead of the ones named in netlist")
   CHECKBOX cx_not 290 82 190 ., label("not") option(not)
 END
 
