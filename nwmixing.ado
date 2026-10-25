@@ -185,7 +185,13 @@ program nwmixing
 	capture mata: mata drop `EI_out' `pvalue' `out'
 	capture mata: mata drop `attmat'
 	
-	di "{txt}   E-I Index: {res}`=strtrim(string(round((`r(EI_index)')*1000)/1000,"%9.0g"))'{txt}   p-value: {res}`=strtrim(string(round((`r(EI_pvalue)')*1000)/1000,"%9.0g"))'"
+	if "`r(EI_pvalue)'" == "" {
+		// permutations(1) or less: no simulation was run, so there is no p-value to print
+		di "{txt}   E-I Index: {res}`=strtrim(string(round((`r(EI_index)')*1000)/1000,"%9.0g"))'"
+	}
+	else {
+		di "{txt}   E-I Index: {res}`=strtrim(string(round((`r(EI_index)')*1000)/1000,"%9.0g"))'{txt}   p-value: {res}`=strtrim(string(round((`r(EI_pvalue)')*1000)/1000,"%9.0g"))'"
+	}
 
 	restore
 end	
