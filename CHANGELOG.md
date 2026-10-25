@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.4.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)
 - **Node-level results could land on the wrong nodes.** About 20 commands (`nw2degree`, `nwaltergen`, `nwbrokerage`, `nwburt`, `nwclique`, `nwcohesion`, `nwcommunity`, `nwcomponents`, `nwconcor`, `nwcoreperiphery`, `nwego`, `nwgeodesic` (eccentricity), `nwkcomponents`, `nwkcore`, `nwkplex`, `nwnclan`, `nwnclique`, `nwspectral`, `nwturnover`, `nwutility`) wrote their result variable to rows 1 to n of the data set, whatever order the data set was in. If you had sorted or `gsort`ed the data (or used a projection of a two-mode network) before the call, values were attached to the wrong nodes. They are now matched to the nodes by name. Re-run analyses in which a data set was sorted before such a command.

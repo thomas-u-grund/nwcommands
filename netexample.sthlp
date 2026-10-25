@@ -686,4 +686,4 @@ Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global 
 In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

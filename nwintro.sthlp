@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.3.1  25oct2026}{...}
+{* *! version 3.4.0  25oct2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro}
@@ -382,4 +382,4 @@ Please cite the software as:
 {bf:Thomas U. Grund (2014). nwcommands: Software Tools for the Statistical Modeling of Network Data in Stata. URL http://nwcommands.org}
 
 {hline}
-{pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.4.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
