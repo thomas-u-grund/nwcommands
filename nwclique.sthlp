@@ -107,7 +107,7 @@ same order. Measured in Stata/BE on a random undirected network with 10 ties dra
 which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
 one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
 of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
-100,000 nodes take about one second.
+100,000 nodes take about a quarter of a second.
 
 {title:See also}
 
