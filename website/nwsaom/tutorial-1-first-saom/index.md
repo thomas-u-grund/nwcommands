@@ -29,7 +29,7 @@ attractive"), and `nwsaom` finds the coefficients that reproduce the observed ch
 
 ```stata
 . nwsaom version
-nwsaom version 1.0.1, 24oct2026
+nwsaom version 1.0.9, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../saom_sim_macos.plugin (plugin protocol 140)
   compared with           : R RSiena 1.6.14
@@ -98,7 +98,8 @@ Rate parameters (estimated, one per inter-wave period):
 -------------+---------------------
         rate |    6.4783     5.2605 
           se |    1.1113     0.8674 
-Overall maximum convergence ratio: 0.097 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 `seed(1)` makes the run reproducible (the estimation is a stochastic simulation, so a different seed
@@ -149,7 +150,7 @@ the effect names RSiena would use for the same effects:
 ...
 RSiena effect names:
   samex_smoke1                  same smoke1
-Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
   outdegree                  0.072      reciprocity                0.072
   samex_smoke1               0.094      transtrip                  0.061
 Overall maximum convergence ratio:  0.097

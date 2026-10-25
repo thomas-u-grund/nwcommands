@@ -40,7 +40,8 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |   2.860568     .18893    15.14   0.000     2.490272    3.230864
 ------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.054 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.054 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 The model converged. Is it any good?
@@ -83,7 +84,8 @@ and the two degree effects `indegpopularity` and `outactivity`:
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip indegpopularity outactivity seed(1)
 ...
-Overall maximum convergence ratio: 0.089 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.089 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . estat gof, nsim(100) seed(7)
 
@@ -120,7 +122,8 @@ indegpopularity |  -.3861618   .5134133    -0.75   0.452    -1.392433    .620109
   outpopularity |  -.3304203   .3708519    -0.89   0.373    -1.057277    .3964361
 ---------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.150 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.150 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . estat gof, nsim(100) seed(7)
 

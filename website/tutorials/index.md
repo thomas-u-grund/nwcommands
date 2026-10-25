@@ -36,6 +36,10 @@ command directly, see the [command reference](../reference/).
    degree, projection to one mode, components, communities (bipartite modularity), nestedness, null models, saving and
    exchanging, what stops on a two-mode network, plotting; the data sets `davis` and `ftdirectors_se`
 
+Three reference pages go with these tutorials: [valued networks](/nwcommands/valued-networks/) (when a
+network counts as valued and which commands then use the tie values), [two-mode networks](/nwcommands/two-mode/)
+and [network types](/nwcommands/network-types/) (what every command does with binary, valued, two-mode and directed networks).
+
 ## Longitudinal models
 
 10. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — a first look at

@@ -32,8 +32,9 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
    transtrip |   .6202674   .0789534     7.86   0.000     .4655217    .7750132
 ------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.142 (below 0.25)
-Convergence t-ratios of 0.1 or more in absolute value: outdegree (-0.139) reciprocity (-0.130)
+Overall maximum convergence ratio: 0.142 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for outdegree (-0.139) reciprocity (-0.130)
+Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
 ```
 
 ## Maximum likelihood
@@ -51,17 +52,17 @@ Maximum likelihood estimates (Robbins-Monro on the score of the augmented data)
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.641583   .1031307   -25.61   0.000    -2.843716   -2.439451
- reciprocity |   2.221544   .1794894    12.38   0.000     1.869751    2.573336
-   transtrip |   .6929302   .0683198    10.14   0.000     .5590259    .8268346
+   outdegree |  -2.646338   .1095288   -24.16   0.000     -2.86101   -2.431665
+ reciprocity |   2.265619   .1803705    12.56   0.000     1.912099    2.619139
+   transtrip |   .6837719   .0654852    10.44   0.000     .5554233    .8121205
 ------------------------------------------------------------------------------
 Rate parameters (one per inter-wave period):
 
        period1  period2
- rate   6.3414   5.3498
-   se   0.8685   0.7943
-tconv  -0.1168  -0.1040
-Overall maximum t-ratio of the scores: 0.187 (acceptable)
+ rate   6.4886   5.4048
+   se   0.8839   0.7473
+tconv  -0.0540  -0.0422
+Overall maximum t-ratio of the scores: 0.234 (acceptable)
 ```
 
 (The method-of-moments table and its convergence line, printed first, are omitted.) The two estimators
@@ -86,16 +87,16 @@ Sampling: 20 pre-warming + 20 warming + 100 main iterations of 5 batches ...
 
 Bayesian SAOM (data augmentation)                Number of actors  =       50
 Waves: glasgow1 glasgow2 glasgow3                Saved draws       =      100
-Pre-warm 20, warm 20, main 100 x 5               Mean chain length =    560.6
-Acceptance: effects 0.474, rates 0.248; chain steps: diagonal 0.731, permute 0.808, insert-permute 0.397, delete-permute 0.353
+Pre-warm 20, warm 20, main 100 x 5               Mean chain length =    570.3
+Acceptance: effects 0.462, rates 0.270; chain steps: diagonal 0.728, permute 0.619, insert-permute 0.370, delete-permute
 -----------------------------------------------------------------------------
       Effect |Post. mean  Post. sd[95% interval]             Median      ESS
 -------------+---------------------------------------------------------------
-   outdegree |   -2.6820    0.0788   -2.8379   -2.5287   -2.6870       41
- reciprocity |    2.2182    0.1237    1.9720    2.4559    2.2205       36
-   transtrip |    0.7211    0.0578    0.6044    0.8317    0.7132       29
-rate_period1 |    6.1920    0.5676    4.9588    7.1411    6.2561       26
-rate_period2 |    5.1260    0.5098    4.3135    6.0150    5.1001       40
+   outdegree |   -2.6935    0.1232   -2.9096   -2.4620   -2.6920        9
+ reciprocity |    2.2710    0.1989    1.9126    2.6400    2.2763        8
+   transtrip |    0.7051    0.0669    0.5824    0.8292    0.6930       27
+rate_period1 |    6.0542    0.6211    5.1038    7.1997    6.0441       13
+rate_period2 |    5.3817    0.7525    4.0248    6.9119    5.2871        6
 -----------------------------------------------------------------------------
 Draws (one per main iteration) are in frame nwsaom_bayes_draws (b1..b3 effects, rate1..rate2, nchain, loglik); flat priors unless
 priormean()/priorsd()/priorrate() are given.
@@ -157,7 +158,7 @@ rate_net1    6.744
 rate_net2    1.590
   se_net1    1.001
   se_net2    0.224
-Overall maximum convergence ratio: 0.260
+Overall maximum convergence ratio: 0.260 (criterion: below 0.25; not met)
 ```
 
 The coefficients carry the prefix `net1_` or `net2_`. The overall ratio is 0.260, just above
@@ -179,7 +180,7 @@ net1_reciprocity |   2.314326   .2774067     8.34   0.000     1.770619    2.8580
 net2_reciprocity |   2.032402   .4654263     4.37   0.000     1.120184    2.944621
    net2_x_crprod |   .8226323   .6930513     1.19   0.235    -.5357232    2.180988
 ...
-Overall maximum convergence ratio: 0.179
+Overall maximum convergence ratio: 0.179 (criterion: below 0.25; met)
 ```
 
 The ratio is now 0.179, below 0.25. Each network is reciprocal (2.3 and 2.0). The two cross-network

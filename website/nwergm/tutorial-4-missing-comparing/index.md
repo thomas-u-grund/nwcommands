@@ -57,8 +57,8 @@ Log-likelihood:   -51.5543 (df = 2)   AIC:     107.1   BIC:     112.7   (MC std.
 
 ```stata
 . nwergm flomiss, edges nodecov(wealth)
-Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)likelihood and handled as in R's ergm (mi
-> ssing-data MCMLE).
+Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)likelihood and handled as in R's ergm (m
+> issing-data MCMLE).
 ...
 ```
 
@@ -91,14 +91,14 @@ with a dependence term is fitted with the missing-data MCMLE:
 --------------------------------------------------------------------------------
        flomiss | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -2.720961   .5657285    -4.81   0.000    -3.829769   -1.612154
-nodecov_wealth |   .0109066   .0051222     2.13   0.033     .0008673     .020946
-     gwesp_0.5 |   .0439604   .2876392     0.15   0.879     -.519802    .6077229
+         edges |  -2.707754   .5778785    -4.69   0.000    -3.840375   -1.575133
+nodecov_wealth |   .0109764   .0052838     2.08   0.038     .0006204    .0213324
+     gwesp_0.5 |   .0394888   .2899199     0.14   0.892    -.5287437    .6077213
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood:   -49.1501 (df = 3)   AIC:     104.3   BIC:     112.6   (MC std. err. =   .0008)
+Log-likelihood:   -49.1555 (df = 3)   AIC:     104.3   BIC:     112.6   (MC std. err. =  .00071)
 ```
 
 Two cautions. First, missing **covariate** values are refused with error 416, as in R; drop or impute
@@ -122,14 +122,14 @@ nested specifications.
 --------------------------------------------------------------------------------
      lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -2.738682   .0826148   -33.15   0.000    -2.900604    -2.57676
-        mutual |   .9914678    .154956     6.40   0.000     .6877596    1.295176
-nodematch_prac |   .9011504   .0942444     9.56   0.000     .7164347    1.085866
+         edges |  -2.741488   .0804942   -34.06   0.000    -2.899253   -2.583722
+        mutual |   .9877646   .1567102     6.30   0.000     .6806182    1.294911
+nodematch_prac |   .9045797   .0938251     9.64   0.000     .7206859    1.088474
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood: -1702.4691 (df = 3)   AIC:    3410.9   BIC:    3430.5   (MC std. err. =  .05116)
+Log-likelihood: -1702.4657 (df = 3)   AIC:    3410.9   BIC:    3430.5   (MC std. err. =  .03652)
 ```
 
 ```stata
@@ -138,15 +138,15 @@ Log-likelihood: -1702.4691 (df = 3)   AIC:    3410.9   BIC:    3430.5   (MC std.
 --------------------------------------------------------------------------------
      lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |   -3.48324   .1093771   -31.85   0.000    -3.697615   -3.268865
-        mutual |   .8028959   .1655745     4.85   0.000     .4783759    1.127416
-nodematch_prac |   .6967167   .0820735     8.49   0.000     .5358556    .8575778
-     gwesp_0.5 |   .4988006   .0614886     8.11   0.000     .3782851    .6193161
+         edges |  -3.492203     .11154   -31.31   0.000    -3.710818   -3.273589
+        mutual |   .8092037    .163594     4.95   0.000     .4885654    1.129842
+nodematch_prac |   .6905322   .0807388     8.55   0.000      .532287    .8487774
+     gwesp_0.5 |    .505571   .0633554     7.98   0.000     .3813967    .6297453
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood: -1670.9667 (df = 4)   AIC:    3349.9   BIC:    3376.0   (MC std. err. =  .09969)
+Log-likelihood: -1671.1490 (df = 4)   AIC:    3350.3   BIC:    3376.3   (MC std. err. =  .07961)
 ```
 
 `estat ic` shows the information criteria of the last fit; `estimates stats` puts the stored models in
@@ -160,9 +160,9 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |        N     ll(null)    ll(model)    df       AIC       BIC
 -------------+---------------------------------------------------------------
-   lazega_fr |     4970      -3444.9        -1671     4    3349.9      3376
+   lazega_fr |     4970      -3444.9      -1671.1     4    3350.3    3376.3
 -----------------------------------------------------------------------------
-Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood =  .09969
+Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood =  .07961
 ```
 
 ```stata
@@ -173,8 +173,8 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |          N   ll(null)  ll(model)      df        AIC        BIC
 -------------+---------------------------------------------------------------
-          m1 |      4,970  -3444.941  -1702.469       3   3410.938   3430.472
-          m2 |      4,970  -3444.941  -1670.967       4   3349.933   3375.978
+          m1 |      4,970  -3444.941  -1702.466       3   3410.931   3430.465
+          m2 |      4,970  -3444.941  -1671.149       4   3350.298   3376.343
 -----------------------------------------------------------------------------
 Note: BIC uses N = number of observations. See [R] IC note.
 ```
@@ -191,7 +191,7 @@ interpret. For nested models the likelihood-ratio test is also available:
 Likelihood-ratio test
 Assumption: m1 nested within m2
 
- LR chi2(1) =  63.00
+ LR chi2(1) =  62.63
 Prob > chi2 = 0.0000
 ```
 
@@ -217,7 +217,7 @@ with `gwesp`).
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-           p |      4,970    .1149874    .0917936   .0297929   .8006354
+           p |      4,970    .1151878    .0926555   .0295349   .8064687
 ```
 
 ```stata
@@ -226,11 +226,11 @@ with `gwesp`).
      +-------------------------+
      | tail   head           p |
      |-------------------------|
-  1. |    1      2   .02979288 |
-  2. |    1      3   .35583197 |
-  3. |    1      4   .10142015 |
-  4. |    1      5    .3056845 |
-  5. |    1      6   .03602065 |
+  1. |    1      2   .02953488 |
+  2. |    1      3   .35813408 |
+  3. |    1      4    .1017958 |
+  4. |    1      5    .3081392 |
+  5. |    1      6   .03580256 |
      +-------------------------+
 ```
 

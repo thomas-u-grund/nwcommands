@@ -20,13 +20,18 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do 
+Running /Users/tgrund/Documents/Stata/profile.do ...
+
+. do run_tutorials_03-importing-exporting.do 
+
+. do example.do
 
 . * Tutorial 3: Importing & Exporting
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
 . 
 . * Import a plain edgelist straight from a URL - no local download needed
-. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)
+. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist
+> _example.txt", type(edgelist)
 ------------------------------
 Importing successful
 
@@ -65,17 +70,17 @@ Saved as file: flobusiness.net
 
 . describe
 
-Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_57964.000001
+Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_04563.000001
  Observations:         2,500                  
-    Variables:             3                  25 Oct 2026 14:32
--------------------------------------------------------------------------------------------------------------------------
+    Variables:             3                  26 Oct 2026 00:36
+------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
--------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
 _ego            str3    %9s                   
 _alter          str3    %9s                   
 glasgow1        byte    %10.0g                
--------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
 Sorted by: _ego  _alter
 
 . list in 1/5
@@ -112,7 +117,7 @@ Sorted by: _ego  _alter
    Arcs: 113
    Minimum value:  0
    Maximum value:  1
-   Density:  .046
+   Density:  .0461
    Temporal: false
 
 . 
@@ -120,3 +125,4 @@ Sorted by: _ego  _alter
 . * full node list with the edgelist.
 . 
 end of do-file
+

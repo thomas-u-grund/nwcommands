@@ -20,7 +20,11 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do 
+Running /Users/tgrund/Documents/Stata/profile.do ...
+
+. do run_tutorials_06-manipulating-networks.do 
+
+. do example.do
 
 . * Tutorial 6: Manipulating Networks
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
@@ -118,7 +122,7 @@ Notes:
    Arcs: 113
    Minimum value:  0
    Maximum value:  1
-   Density:  .046
+   Density:  .0461
    Temporal: false
 
 . nwsymmetrize glasgow1, generate(glasgow1_sym)
@@ -135,7 +139,7 @@ Notes:
    Edges: 74
    Minimum value:  0
    Maximum value:  1
-   Density:  .06
+   Density:  .0604
    Temporal: false
 
 . nwsym glasgow1_sym, check
@@ -234,7 +238,7 @@ Notes:
    Network name:  trade_binary
    Network id:  8
    Directed: true
-   Valued: true
+   Valued: false
    Two-mode: false
    Nodes: 3
    Selfloop: false
@@ -252,3 +256,4 @@ Notes:
 
 . 
 end of do-file
+

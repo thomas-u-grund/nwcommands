@@ -92,8 +92,9 @@ network_rate |    6.5156     5.1150
           se |    1.0511     0.7958 
 behavior_r~e |    1.3450     1.7957 
           se |    0.3293     0.4649 
-Overall maximum convergence ratio: 0.160 (below 0.25)
-Convergence t-ratios of 0.1 or more in absolute value: rate_beh_period1 (0.127)
+Overall maximum convergence ratio: 0.160 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for rate_beh_period1 (0.127)
+Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
 ```
 
 The network part of the table reads as before: `gwesp_.69` is the clustering effect (the
@@ -125,7 +126,8 @@ towards their average. Swapping one for the other is a robustness check that you
 beh_quadratic |  -.0726351   .1049503    -0.69   0.489    -.2783339    .1330636
     beh_avsim |   4.005875   1.941244     2.06   0.039     .2011071    7.810643
 ...
-Overall maximum convergence ratio: 0.159 (good; all t-ratios below 0.1)
+Overall maximum convergence ratio: 0.159 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 (The network part and the rates are left out.) Selection is again estimated as about 1.5, and now
@@ -146,8 +148,9 @@ send more friendship ties and `behaltx` whether they receive more:
       behegox |   .0718023   .1271858     0.56   0.572    -.1774774    .3210819
       behaltx |  -.0519744   .1046156    -0.50   0.619    -.2570172    .1530685
 ...
-Overall maximum convergence ratio: 0.235 (below 0.25)
-Convergence t-ratios of 0.1 or more in absolute value: rate_period2 (-0.115)
+Overall maximum convergence ratio: 0.235 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for rate_period2 (-0.115)
+Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
 ```
 
 Neither is distinguishable from zero, and the similarity effect is unchanged. The overall ratio of

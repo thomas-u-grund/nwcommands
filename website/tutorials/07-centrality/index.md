@@ -61,6 +61,8 @@ measure of "brokerage" rather than direct connectivity:
 
 ```stata
 . nwcloseness flomarriage, generate(clo far near)
+Warning: network flomarriage is not connected; closeness uses only the nodes each node can
+>  reach (as igraph). Specify unconnected() to give missing paths a length.
 ----------------------------------------
   Network name: flomarriage
 ----------------------------------------
@@ -68,7 +70,7 @@ measure of "brokerage" rather than direct connectivity:
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-         clo |         15    .4447452    .0801896   .3061225         .6
+         clo |         15    .4150955    .0748436   .2857143        .56
          far |         16      32.625    10.73235          0         49
         near |         15    .0296497     .005346   .0204082        .04
 ```
@@ -76,6 +78,13 @@ measure of "brokerage" rather than direct connectivity:
 `clo` has one fewer observation than `far` - the isolated node (`pucci`, with degree 0 above)
 has no path to anyone, so closeness is undefined for it even though farness (`.` for an
 unreachable pair contributes nothing) still computes.
+
+The Florentine marriage network is not connected, and the warning says what the program then
+does: as `igraph` does, `nwcloseness` computes each node's closeness from the nodes it can
+reach, instead of giving every node outside its component an infinite distance. Add
+`unconnected()` to give the missing paths a length instead (`legacy` gives the formula of earlier releases). A valued network is a second case:
+`nwcloseness` then uses the tie values as path lengths by default, and the option `binary` gives
+the result for the bare ties (see [valued networks](/nwcommands/valued-networks/)).
 
 ## Eigenvector
 
@@ -167,7 +176,7 @@ merely the family with the most marriage ties. Looking at every measure for `med
      +-------------------------------------------------------+
      | _nwnode   deg    btw     clo     evc     pgr      ktz |
      |-------------------------------------------------------|
-  1. |  medici     6   47.5   0.600   0.430   0.144   14.000 |
+  1. |  medici     6   47.5   0.560   0.430   0.144   14.000 |
      +-------------------------------------------------------+
 ```
 
@@ -176,3 +185,7 @@ network. Which measure is "right" depends entirely on what kind of influence you
 asking about: direct access (degree), control over information flow between others
 (betweenness), efficiency of reach (closeness), prestige-by-association (eigenvector, PageRank),
 or penalized total reach (Katz).
+
+On a valued network, degree (as strength), betweenness and closeness use the tie values by
+default and the option `binary` gives the result for the bare ties; the [network types](/nwcommands/network-types/)
+page lists, for every command, what it does with valued, two-mode and directed networks.

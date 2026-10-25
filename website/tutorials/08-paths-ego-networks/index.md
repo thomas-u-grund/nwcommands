@@ -20,7 +20,6 @@ the result as a new network:
 . nwwebuse florentine, nwclear
 
 . nwgeodesic flomarriage, name(flodist) generate(ecc)
-Network is unvalued; alpha = 0 is ignored.
 ----------------------------------------
   Network name: flomarriage
   Network of shortest paths: flodist
@@ -53,7 +52,7 @@ new distance network shows every pairwise distance directly:
    Edges: 105
    Minimum value:  1
    Maximum value:  5
-   Density:  2.486
+   Density:  2.49
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
@@ -96,6 +95,11 @@ node's *eccentricity*: the length of its own single longest shortest path.
   5. |   acciaiuoli     4 |
      +--------------------+
 ```
+
+On a valued network `nwgeodesic` and `nwpath` use the tie values as distances by default; the
+option `binary` gives the number of steps instead (see [valued networks](/nwcommands/valued-networks/)).
+Which network types each command accepts is tabulated on the page
+[network types](/nwcommands/network-types/).
 
 ## Reachability
 

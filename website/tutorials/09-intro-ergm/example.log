@@ -1,19 +1,11 @@
--------------------------------------------------------------------------------------------------------------------------
-      name:  <unnamed>
-       log:  /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scr
-> atchpad/web_wt/website/tutorials/09-intro-ergm/example.log
-  log type:  text
- opened on:  24 Oct 2026, 15:46:05
-
 . * Tutorial 9: Intro to ERGM in Stata
 . * Requires the core nwcommands and the nwergm package:
 . *   net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
 . 
 . nwergm version
-nwergm version 1.0.1, 24oct2026
+nwergm version 1.2.2, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with 
-> the package, no separate version number)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with the package, no separate version number)
   compared with           : R ergm 4.12.0
   license                 : GNU GPL-3
 
@@ -57,12 +49,12 @@ Ties:                  =  20
 Directed:              =  No
 Estimation:            =  MPLE
 
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------
    flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
          edges |  -2.594929   .5360561    -4.84   0.000     -3.64558   -1.544278
 nodecov_wealth |   .0105459   .0046743     2.26   0.024     .0013845    .0197073
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 Maximum pseudolikelihood estimate (not full ERGM maximum likelihood unless the model is dyad-independent).
 
@@ -77,11 +69,11 @@ Log-likelihood:   -51.5543 (df = 2)   AIC:     107.1   BIC:     112.7   (MC std.
 
 Akaike's information criterion and Bayesian information criterion
 
------------------------------------------------------------------------------
+------------------------------------------------------------------------------
        Model |        N     ll(null)    ll(model)    df       AIC       BIC
 -------------+---------------------------------------------------------------
  flomarriage |      120      -83.178      -51.554     2    107.11    112.68
------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood =       0
 
 . 
@@ -100,8 +92,8 @@ MCMC sample size:      =  3000
 ------------------------------------------------------------------------------
  flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -1.726681   .3662283    -4.71   0.000    -2.444476   -1.008887
-    gwesp_.5 |   .1042924    .263231     0.40   0.692    -.4116309    .6202157
+       edges |  -1.711394   .3685713    -4.64   0.000    -2.433781   -.9890078
+    gwesp_.5 |   .1011908   .2595513     0.39   0.697    -.4075205     .609902
 ------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
@@ -110,7 +102,7 @@ Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
              Null Deviance:     166.4  on 120 degrees of freedom
          Residual Deviance:     108.0  on 118 degrees of freedom
 
-Log-likelihood:   -54.0058 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .00591)
+Log-likelihood:   -53.9966 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .00491)
 
 . 
 . * Simulation-based goodness of fit
@@ -119,52 +111,44 @@ Log-likelihood:   -54.0058 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std.
 Goodness-of-fit for model statistics
 
                        obs       min      mean       max  MC p-value
-edges                   20        12     20.17        30        1.00
-gwesp_.5         8.3934693-1.510e-14      8.17 25.725357        0.92
+edges                   20        12     20.56        31        1.00
+gwesp_.5         8.3934693-1.377e-13      8.71 26.122165        0.84
 
 Goodness-of-fit for minimum geodesic distance
 
                        obs       min      mean       max  MC p-value
-1                       20        12     20.17        30        1.00
-2                       35        13     31.85        55        0.78
-3                       32         7     26.31        40        0.54
-4                       15         2     12.56        28        0.78
-5                        3         0      4.83        19        1.00
-6                        0         0      1.62        13        1.00
-7                        0         0      0.54        11        1.00
-8                        0         0      0.18         8        1.00
-9                        0         0      0.09         7        1.00
-10                       0         0      0.02         2        1.00
-Inf                     15         0     21.83        80        1.00
+1                       20        12     20.56        31        1.00
+2                       35         9     33.55        59        0.86
+3                       32         7     27.00        41        0.54
+4                       15         0     12.29        27        0.76
+5                        3         0      4.37        15        0.98
+6                        0         0      1.12         9        1.00
+7                        0         0      0.27         5        1.00
+8                        0         0      0.06         3        1.00
+9                        0         0      0.02         2        1.00
+10                       0         0      0.01         1        1.00
+Inf                     15         0     20.75        80        1.00
 
 Goodness-of-fit for degree
 
                        obs       min      mean       max  MC p-value
-0                        1         0      1.15         4        1.00
-1                        4         0      2.67         8        0.58
-2                        2         1      4.44        10        0.30
-3                        6         0      4.24         8        0.46
-4                        2         0      2.09         5        1.00
-5                        0         0      0.90         3        0.86
-6                        1         0      0.39         2        0.66
-7                        0         0      0.10         1        1.00
+0                        1         0      1.13         5        1.00
+1                        4         0      2.97         8        0.82
+2                        2         1      4.24        11        0.32
+3                        6         0      3.58         7        0.30
+4                        2         0      2.22         7        1.00
+5                        0         0      1.28         6        0.62
+6                        1         0      0.42         4        0.66
+7                        0         0      0.15         2        1.00
 8                        0         0      0.01         1        1.00
-9                        0         0      0.01         1        1.00
 
 Goodness-of-fit for edgewise shared partner
 
                        obs       min      mean       max  MC p-value
-0                       12         5     12.65        21        0.98
-1                        7         0      5.94        15        1.00
-2                        1         0      1.42        10        1.00
-3                        0         0      0.13         2        1.00
+0                       12         4     12.48        19        0.90
+1                        7         0      6.59        19        0.98
+2                        1         0      1.24         9        1.00
+3                        0         0      0.23         4        1.00
 4                        0         0      0.02         1        1.00
-5                        0         0      0.01         1        1.00
 
-. log close
-      name:  <unnamed>
-       log:  /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scr
-> atchpad/web_wt/website/tutorials/09-intro-ergm/example.log
-  log type:  text
- closed on:  24 Oct 2026, 15:46:06
--------------------------------------------------------------------------------------------------------------------------
+. 

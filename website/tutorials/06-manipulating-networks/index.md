@@ -126,7 +126,7 @@ before:
    Arcs: 113
    Minimum value:  0
    Maximum value:  1
-   Density:  .046
+   Density:  .0461
    Temporal: false
 
 . nwsymmetrize glasgow1, generate(glasgow1_sym)
@@ -143,7 +143,7 @@ before:
    Edges: 74
    Minimum value:  0
    Maximum value:  1
-   Density:  .06
+   Density:  .0604
    Temporal: false
 
 . nwsym glasgow1_sym, check
@@ -256,7 +256,7 @@ else becomes 0:
    Network name:  trade_binary
    Network id:  8
    Directed: true
-   Valued: true
+   Valued: false
    Two-mode: false
    Nodes: 3
    Selfloop: false
@@ -274,4 +274,7 @@ else becomes 0:
 ```
 
 Only the two ties of value ≥ 100 (A→B at 150, B→C at 220) survive as 1; everything else,
-including the two below-threshold ties, becomes 0.
+including the two below-threshold ties, becomes 0. The result is a binary network, so its
+`Valued` flag is now `false`. The flag is set when a network is created and decides whether the
+analysis commands use the tie values or only the ties; the page on
+[valued networks](/nwcommands/valued-networks/) lists which commands do what.

@@ -54,7 +54,7 @@ indegpopularity |  -.6466204   .4983963    -1.30   0.194    -1.623459    .330218
   simx_alcohol1 |   .5145673   .3656165     1.41   0.159     -.202028    1.231163
 ---------------------------------------------------------------------------------
 ...
-Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
   outdegree                  0.199      reciprocity                0.165
   samex_smoke1               0.049      altx_alcohol1              0.300
   egox_alcohol1              0.241      indegpopularity            0.201
@@ -93,8 +93,8 @@ order of `e(b)`, so we can build the list from the matrix:
 .     local th `th' `=b[1,`j']'
 . }
 . display "`th'"
--1.209788342910438 2.263883290175206 .161048200899927 .0068889647862173 .1359848318693529 -.646620403954551 -.16465947714
-> 10311 -1.179726289641659 1.029548730367141 3.840171283459527 .5145672925763973
+-1.209788342910449 2.263883290175197 .1610482008999299 .0068889647862135 .1359848318693541 -.6466204039545523 -.16465947
+> 7141032 -1.179726289641548 1.029548730367219 3.840171283459446 .5145672925764175
 ```
 
 ```stata
@@ -116,7 +116,7 @@ indegpopularity |  -.6432866   .3120702    -2.06   0.039    -1.254933   -.031640
   simx_alcohol1 |   .4904613   .3493353     1.40   0.160    -.1942234    1.175146
 ---------------------------------------------------------------------------------
 ...
-Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
   outdegree                  0.063      reciprocity                0.056
   samex_smoke1               0.049      altx_alcohol1              0.025
   egox_alcohol1              0.022      indegpopularity            0.069

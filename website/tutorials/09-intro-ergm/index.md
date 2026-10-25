@@ -26,7 +26,7 @@ or, with the core's installer, `nwinstall, modelpkg(nwergm)`. Check what you hav
 
 ```stata
 . nwergm version
-nwergm version 1.0.1, 24oct2026
+nwergm version 1.2.2, 26oct2026
 ```
 
 
@@ -154,8 +154,8 @@ MCMC sample size:      =  3000
 ------------------------------------------------------------------------------
  flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -1.726681   .3662283    -4.71   0.000    -2.444476   -1.008887
-    gwesp_.5 |   .1042924    .263231     0.40   0.692    -.4116309    .6202157
+       edges |  -1.711394   .3685713    -4.64   0.000    -2.433781   -.9890078
+    gwesp_.5 |   .1011908   .2595513     0.39   0.697    -.4075205     .609902
 ------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
@@ -164,7 +164,7 @@ Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
              Null Deviance:     166.4  on 120 degrees of freedom
          Residual Deviance:     108.0  on 118 degrees of freedom
 
-Log-likelihood:   -54.0058 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .00591)
+Log-likelihood:   -53.9966 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .00491)
 ```
 
 
@@ -183,8 +183,8 @@ on the model's own statistics and on geodesic distances, degrees and edgewise sh
 Goodness-of-fit for model statistics
 
                        obs       min      mean       max  MC p-value
-edges                   20        12     20.17        30        1.00
-gwesp_.5         8.3934693-1.510e-14      8.17 25.725357        0.92
+edges                   20        12     20.56        31        1.00
+gwesp_.5         8.3934693-1.377e-13      8.71 26.122165        0.84
 ```
 
 A Monte Carlo p-value close to zero for a statistic means the model does not reproduce that

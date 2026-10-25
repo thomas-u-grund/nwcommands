@@ -9,7 +9,7 @@ permalink: /nwcommands/two-mode/
 # Two-mode networks
 {: .no_toc }
 
-In a two-mode (bipartite, affiliation) network there are two kinds of nodes, such as people and the events they attend, and ties run only between the kinds. This page tells you how the program knows that a network is two-mode, what every command does with it, what the results mean and where they differ from R. The [tutorial on two-mode networks](../tutorials/11-two-mode-networks/) shows the commands on the Southern women and the Swedish directors.
+In a two-mode (bipartite, affiliation) network there are two kinds of nodes, such as people and the events they attend, and ties run only between the kinds. This page tells you how the program knows that a network is two-mode, what every command does with it, what the results mean and where they differ from R. The [tutorial on two-mode networks](/tutorials/11-two-mode-networks/) shows the commands on the Southern women and the Swedish directors.
 
 1. TOC
 {:toc}

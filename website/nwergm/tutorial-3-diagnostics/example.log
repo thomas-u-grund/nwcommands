@@ -1,4 +1,3 @@
-
 . * nwergm tutorial 3: MCMC diagnostics and goodness of fit
 . * Requires the core nwcommands and the package nwergm.
 . 
@@ -7,8 +6,10 @@
 . encode practice, generate(prac)
 
 . 
-. * default MCMC settings
-. nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1)
+. * a short interval between draws: the defaults of nwergm up to 1.1 (since 1.2 the defaults are those of R's ergm, 1024
+>  and 16384)
+. nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(50) mcmcburnin(3000
+> )
 
 Exponential-family random graph model
 
@@ -22,20 +23,20 @@ MCMC sample size:      =  3000
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |  -3.374867   .1442935   -23.39   0.000    -3.657677   -3.092057
-            mutual |   .8033219     .17915     4.48   0.000     .4521944    1.154449
-    nodematch_prac |   .7218557   .0911736     7.92   0.000     .5431588    .9005526
-nodeicov_seniority |  -.0047432   .0018304    -2.59   0.010    -.0083307   -.0011558
-         gwesp_0.5 |   .5112641   .0714758     7.15   0.000      .371174    .6513541
+             edges |  -3.322119   .1437037   -23.12   0.000    -3.603773   -3.040465
+            mutual |    .810562   .1634309     4.96   0.000     .4902434    1.130881
+    nodematch_prac |   .6795895    .090628     7.50   0.000     .5019619    .8572172
+nodeicov_seniority |  -.0043864   .0020888    -2.10   0.036    -.0084803   -.0002924
+         gwesp_0.5 |   .5023746   .0653666     7.69   0.000     .3742584    .6304907
 ------------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    6889.9  on 4970 degrees of freedom
-         Residual Deviance:    3335.5  on 4965 degrees of freedom
+         Residual Deviance:    3339.2  on 4965 degrees of freedom
 
-Log-likelihood: -1667.7296 (df = 5)   AIC:    3345.5   BIC:    3378.0   (MC std. err. =  .04434)
+Log-likelihood: -1669.6228 (df = 5)   AIC:    3349.2   BIC:    3381.8   (MC std. err. =  .31714)
 
 . estat mcmcdiag
 
@@ -43,50 +44,51 @@ MCMC diagnostics for the final simulation (nwergm, method(mcmle))
 Sample size:         =    3000
 Burn-in:             =    3000
 Thinning interval:   =      50
-Acceptance rate:     =  0.6557
+Acceptance rate:     =  0.6694
 
-------------------------------------------------------------
+------------------------------------------------------------------------------------
 Statistic       |      Mean         SD    Autocorr      ESS
 ----------------+-------------------------------------------
-edges           |  545.3090    47.1413      0.9922     14.6
-mutual          |   68.9320    12.3692      0.9868     21.0
-nodematch_prac  |  394.6353    37.1673      0.9928     13.5
-nodeicov_seniority|18243.2600  1654.4490      0.9899     18.5
-gwesp_0.5       |  508.5762    89.9782      0.9925     13.5
-------------------------------------------------------------
+edges           |  578.0303    45.5309      0.9921     13.7
+mutual          |   74.7633    11.5793      0.9850     18.8
+nodematch_prac  |  407.8230    34.4362      0.9920     13.7
+nodeicov_seniority|19478.4000  1781.8600      0.9913     15.1
+gwesp_0.5       |  561.3006    86.7234      0.9913     14.6
+------------------------------------------------------------------------------------
 
 Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
+------------------------------------------------------------------------------------
 Statistic       |         z   p-value
 ----------------+----------------------
-edges           |     2.258    0.0239  *
-mutual          |     2.901    0.0037  *
-nodematch_prac  |     1.641    0.1007
-nodeicov_seniority|     2.204    0.0275  *
-gwesp_0.5       |     2.236    0.0253  *
----------------------------------------
-Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large sy
-> stematic difference between the retained sample's own early and late portions, not proof either way for a borderline z.
+edges           |     4.066    0.0000  *
+mutual          |     3.279    0.0010  *
+nodematch_prac  |     3.428    0.0006  *
+nodeicov_seniority|     5.118    0.0000  *
+gwesp_0.5       |     3.957    0.0001  *
+------------------------------------------------------------------------------------
+Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large s
+> ystematic difference between the retained sample's own early and late portions, not proof either way for a borderline 
+> z.
 
 Heidelberger-Welch stationarity + halfwidth test (pvalue=.05, eps=.1):
---------------------------------------------------------------
+------------------------------------------------------------------------------------
 Statistic       | Stationary    Start  Halfwidth   HW test
 ----------------+---------------------------------------------
-edges           |     passed        1    24.1513    passed
-mutual          |     passed        1     5.2923    passed
-nodematch_prac  |     passed        1    19.8545    passed
-nodeicov_seniority|     passed        1   754.7841    passed
-gwesp_0.5       |     passed        1    47.9225    passed
---------------------------------------------------------------
-Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), dis
-> carding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it passes
-> , FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 95% 
-> CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningful o
-> nce stationarity itself has passed.
+edges           |     passed        1    24.1402    passed
+mutual          |     passed        1     5.2340    passed
+nodematch_prac  |     passed        1    18.2623    passed
+nodeicov_seniority|     passed      301   658.1714    passed
+gwesp_0.5       |     passed        1    44.4853    passed
+------------------------------------------------------------------------------------
+Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), di
+> scarding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it pass
+> es, FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 9
+> 5% CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningf
+> ul once stationarity itself has passed.
 
 MCMLE's own convergence test was satisfied after   1 iteration(s).
-Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
+Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS 
+> above, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
 
 Sample statistics summary (centered at the observed statistics):
 
@@ -94,46 +96,46 @@ Sample statistics summary (centered at the observed statistics):
    plus standard error of the mean:
 
                         Mean          SD    Naive SE  Time-series SE
-edges                -29.691      47.141      .86068          12.326
-mutual                -5.068      12.369      .22583           2.701
-nodematch_prac       -17.365      37.167      .67858          10.133
-nodeicov_senio~y     -1135.7      1654.4      30.206          385.22
-gwesp_0.5            -47.043      89.978      1.6428          24.458
+edges                 3.0303      45.531      .83128          12.321
+mutual                .76333      11.579      .21141          2.6727
+nodematch_prac        -4.177      34.436      .62872          9.3206
+nodeicov_senio~y      99.402      1781.9      32.532          458.57
+gwesp_0.5             5.6815      86.723      1.5833          22.704
 
 2. Quantiles for each variable:
 
                         2.5%         25%         50%         75%       97.5%
-edges                -123.02         -60         -24           0          70
-mutual                   -29         -13          -5           4          17
-nodematch_prac           -93         -36         -15           9          47
-nodeicov_senio~y     -4248.1     -2313.3       -1028     -183.75      2829.1
-gwesp_0.5            -223.66     -100.21     -37.972       11.31      134.56
+edges                    -90      -23.25           4          30         101
+mutual                   -22          -7           0           9          24
+nodematch_prac           -76         -24          -2          16          68
+nodeicov_senio~y     -3245.3     -1050.5          75        1189        4136
+gwesp_0.5               -172     -43.098      6.4661       57.39      190.71
 
 Are sample statistics significantly different from observed?
 
                          edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5          (Omni)
-diff.                  -29.691          -5.068         -17.365         -1135.7         -47.043              NA
-test stat.             -2.4088         -1.8763         -1.7136         -2.9483         -1.9234          27.494
-P-val.                 .016006         .060613         .086596        .0031956         .054432        .0013651
+diff.                   3.0303          .76333          -4.177          99.402          5.6815              NA
+test stat.              .24596          .28561         -.44815          .21677          .25024          17.149
+P-val.                  .80571          .77518          .65405          .82839           .8024         .017808
 
 Sample statistics cross-correlations:
 
                            edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-edges                  1.0000000       0.8379187       0.9307332       0.9348850       0.9806397
-mutual                 0.8379187       1.0000000       0.8688813       0.7420074       0.8689281
-nodematch_prac         0.9307332       0.8688813       1.0000000       0.8503118       0.9471959
-nodeicov_senio~y       0.9348850       0.7420074       0.8503118       1.0000000       0.8982362
-gwesp_0.5              0.9806397       0.8689281       0.9471959       0.8982362       1.0000000
+edges                  1.0000000       0.8271945       0.9363273       0.9605527       0.9815277
+mutual                 0.8271945       1.0000000       0.8181614       0.7958244       0.8318259
+nodematch_prac         0.9363273       0.8181614       1.0000000       0.9043872       0.9372578
+nodeicov_senio~y       0.9605527       0.7958244       0.9043872       1.0000000       0.9443242
+gwesp_0.5              0.9815277       0.8318259       0.9372578       0.9443242       1.0000000
 
 Sample statistics auto-correlation:
 Chain 1
                            edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
 Lag 0                  1.0000000       1.0000000       1.0000000       1.0000000       1.0000000
-Lag 50                 0.9902930       0.9861118       0.9910682       0.9877743       0.9910150
-Lag 100                0.9809634       0.9724548       0.9822773       0.9763126       0.9825408
-Lag 150                0.9717263       0.9588152       0.9736510       0.9647004       0.9741028
-Lag 200                0.9626410       0.9460826       0.9648686       0.9533558       0.9657730
-Lag 250                0.9539383       0.9335834       0.9565089       0.9424099       0.9578049
+Lag 50                 0.9909336       0.9847219       0.9909380       0.9899812       0.9903170
+Lag 100                0.9820540       0.9706894       0.9822828       0.9801249       0.9812110
+Lag 150                0.9732507       0.9573892       0.9734945       0.9705890       0.9724443
+Lag 200                0.9647549       0.9457720       0.9647575       0.9612061       0.9642691
+Lag 250                0.9561144       0.9346162       0.9559702       0.9513154       0.9559531
 
 Sample statistics burn-in diagnostic (Geweke):
 Chain 1
@@ -142,21 +144,22 @@ Fraction in 1st window = 0.1
 Fraction in 2nd window = 0.5
 
                          z-score    Individual P-value
-edges                  1.7792936             0.0751916
-mutual                 2.7661574             0.0056721
-nodematch_prac         1.4684520             0.1419815
-nodeicov_senio~y       1.5850717             0.1129500
-gwesp_0.5              1.8307543             0.0671372
-Joint P-value (lower = worse):  0.0381884
+edges                  3.5560406             0.0003765
+mutual                 3.2698161             0.0010762
+nodematch_prac         3.1562684             0.0015980
+nodeicov_senio~y       4.6906069             0.0000027
+gwesp_0.5              3.6125794             0.0003032
+Joint P-value (lower = worse):  0.0180385
 
-Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimate
-> s. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate 
-> model performance. To directly assess the performance of the final model on in-model statistics, please use estat gof.
+Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimat
+> es. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understat
+> e model performance. To directly assess the performance of the final model on in-model statistics, please use estat go
+> f.
 
 . 
 . * a longer interval between draws and a longer burn-in
-. nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(1000) mcmcburnin(200
-> 00)
+. nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(1000) mcmcburnin(20
+> 000)
 
 Exponential-family random graph model
 
@@ -170,20 +173,20 @@ MCMC sample size:      =  3000
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |   -3.31567   .1327801   -24.97   0.000    -3.575914   -3.055426
-            mutual |   .8062929   .1602816     5.03   0.000     .4921466    1.120439
-    nodematch_prac |   .7002809   .0800612     8.75   0.000     .5433639    .8571979
-nodeicov_seniority |  -.0045754   .0018168    -2.52   0.012    -.0081363   -.0010145
-         gwesp_0.5 |   .4925098   .0634213     7.77   0.000     .3682063    .6168133
+             edges |     -3.322   .1322327   -25.12   0.000    -3.581171   -3.062828
+            mutual |   .8054353   .1623456     4.96   0.000     .4872438    1.123627
+    nodematch_prac |   .7085933   .0833194     8.50   0.000     .5452903    .8718963
+nodeicov_seniority |  -.0044098    .001753    -2.52   0.012    -.0078456    -.000974
+         gwesp_0.5 |   .4920627   .0629934     7.81   0.000     .3685979    .6155275
 ------------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    6889.9  on 4970 degrees of freedom
-         Residual Deviance:    3336.0  on 4965 degrees of freedom
+         Residual Deviance:    3335.4  on 4965 degrees of freedom
 
-Log-likelihood: -1667.9836 (df = 5)   AIC:    3346.0   BIC:    3378.5   (MC std. err. =   .2491)
+Log-likelihood: -1667.7124 (df = 5)   AIC:    3345.4   BIC:    3378.0   (MC std. err. =  .13051)
 
 . estat mcmcdiag
 
@@ -191,50 +194,51 @@ MCMC diagnostics for the final simulation (nwergm, method(mcmle))
 Sample size:         =    3000
 Burn-in:             =   20000
 Thinning interval:   =    1000
-Acceptance rate:     =  0.6688
+Acceptance rate:     =  0.6673
 
-------------------------------------------------------------
+------------------------------------------------------------------------------------
 Statistic       |      Mean         SD    Autocorr      ESS
 ----------------+-------------------------------------------
-edges           |  571.0987    42.1567      0.8337    272.8
-mutual          |   73.0120    10.8698      0.7540    260.8
-nodematch_prac  |  407.2043    32.2887      0.8356    214.0
-nodeicov_seniority|19286.0800  1533.9190      0.7990    335.8
-gwesp_0.5       |  548.0583    78.1940      0.8277    257.2
-------------------------------------------------------------
+edges           |  572.1920    40.0988      0.8120    294.4
+mutual          |   73.6250    10.4400      0.7226    372.5
+nodematch_prac  |  408.7103    29.6283      0.8069    291.1
+nodeicov_seniority|19333.6900  1498.0030      0.7868    327.1
+gwesp_0.5       |  552.2042    74.8614      0.8046    297.2
+------------------------------------------------------------------------------------
 
 Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
+------------------------------------------------------------------------------------
 Statistic       |         z   p-value
 ----------------+----------------------
-edges           |     0.342    0.7326
-mutual          |     0.914    0.3610
-nodematch_prac  |     0.579    0.5628
-nodeicov_seniority|    -0.237    0.8130
-gwesp_0.5       |     0.475    0.6351
----------------------------------------
-Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large sy
-> stematic difference between the retained sample's own early and late portions, not proof either way for a borderline z.
+edges           |    -0.654    0.5130
+mutual          |     0.158    0.8745
+nodematch_prac  |     0.116    0.9073
+nodeicov_seniority|    -0.267    0.7899
+gwesp_0.5       |    -0.412    0.6804
+------------------------------------------------------------------------------------
+Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large s
+> ystematic difference between the retained sample's own early and late portions, not proof either way for a borderline 
+> z.
 
 Heidelberger-Welch stationarity + halfwidth test (pvalue=.05, eps=.1):
---------------------------------------------------------------
+------------------------------------------------------------------------------------
 Statistic       | Stationary    Start  Halfwidth   HW test
 ----------------+---------------------------------------------
-edges           |     passed        1     5.0023    passed
-mutual          |     passed     1201     1.7359    passed
-nodematch_prac  |     passed      601     4.7843    passed
-nodeicov_seniority|     passed        1   164.0718    passed
-gwesp_0.5       |     passed        1     9.5563    passed
---------------------------------------------------------------
-Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), dis
-> carding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it passes
-> , FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 95% 
-> CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningful o
-> nce stationarity itself has passed.
+edges           |     passed        1     4.5809    passed
+mutual          |     passed        1     1.0603    passed
+nodematch_prac  |     passed        1     3.4033    passed
+nodeicov_seniority|     passed        1   162.3372    passed
+gwesp_0.5       |     passed        1     8.5108    passed
+------------------------------------------------------------------------------------
+Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), di
+> scarding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it pass
+> es, FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 9
+> 5% CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningf
+> ul once stationarity itself has passed.
 
 MCMLE's own convergence test was satisfied after   1 iteration(s).
-Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
+Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS 
+> above, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
 
 Sample statistics summary (centered at the observed statistics):
 
@@ -242,46 +246,46 @@ Sample statistics summary (centered at the observed statistics):
    plus standard error of the mean:
 
                         Mean          SD    Naive SE  Time-series SE
-edges                -3.9013      42.157      .76967          2.5531
-mutual                 -.988       10.87      .19846          .67398
-nodematch_prac       -4.7957      32.289      .58951          2.2092
-nodeicov_senio~y     -92.918      1533.9      28.005          83.738
-gwesp_0.5            -7.5609      78.194      1.4276          4.8781
+edges                 -2.808      40.099       .7321          2.3383
+mutual                 -.375       10.44      .19061          .54131
+nodematch_prac       -3.2897      29.628      .54094          1.7373
+nodeicov_senio~y     -45.308        1498       27.35          82.867
+gwesp_0.5             -3.415      74.861      1.3668          4.3444
 
 2. Quantiles for each variable:
 
                         2.5%         25%         50%         75%       97.5%
-edges                    -87         -31          -4          25          77
-mutual                   -22          -8          -1           6          20
-nodematch_prac           -70         -26          -5          16          57
-nodeicov_senio~y     -3019.1     -1149.3        -100         944      2997.1
-gwesp_0.5             -157.2     -57.856      -8.697      44.266      145.24
+edges                    -81         -30          -3          24          77
+mutual                   -20          -7          -1           6          21
+nodematch_prac           -61         -24          -4          17          57
+nodeicov_senio~y     -2871.1     -1074.5         -58         961      2926.2
+gwesp_0.5            -144.51     -53.576     -4.9035      46.838      147.32
 
 Are sample statistics significantly different from observed?
 
                          edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5          (Omni)
-diff.                  -3.9013           -.988         -4.7957         -92.918         -7.5609              NA
-test stat.             -1.5281         -1.4659         -2.1707         -1.1096           -1.55          21.947
-P-val.                  .12649          .14267         .029952          .26716          .12115       .00063801
+diff.                   -2.808           -.375         -3.2897         -45.308          -3.415              NA
+test stat.             -1.2009         -.69276         -1.8936         -.54675         -.78606          41.171
+P-val.                  .22981          .48846          .05828          .58455          .43183      1.6113e-07
 
 Sample statistics cross-correlations:
 
                            edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-edges                  1.0000000       0.7902510       0.9118058       0.9319016       0.9755769
-mutual                 0.7902510       1.0000000       0.7806715       0.7311440       0.8122018
-nodematch_prac         0.9118058       0.7806715       1.0000000       0.8535589       0.9148872
-nodeicov_senio~y       0.9319016       0.7311440       0.8535589       1.0000000       0.8996092
-gwesp_0.5              0.9755769       0.8122018       0.9148872       0.8996092       1.0000000
+edges                  1.0000000       0.7786710       0.9052204       0.9230313       0.9732796
+mutual                 0.7786710       1.0000000       0.7611037       0.7256550       0.8014855
+nodematch_prac         0.9052204       0.7611037       1.0000000       0.8409557       0.9061060
+nodeicov_senio~y       0.9230313       0.7256550       0.8409557       1.0000000       0.8893214
+gwesp_0.5              0.9732796       0.8014855       0.9061060       0.8893214       1.0000000
 
 Sample statistics auto-correlation:
 Chain 1
                            edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
 Lag 0                  1.0000000       1.0000000       1.0000000       1.0000000       1.0000000
-Lag 1000               0.8333236       0.7538671       0.8354509       0.7987424       0.8274527
-Lag 2000               0.6982597       0.6158105       0.7095848       0.6460213       0.6999294
-Lag 3000               0.5902230       0.5090796       0.6092752       0.5268427       0.5990497
-Lag 4000               0.5054074       0.4261846       0.5239834       0.4377212       0.5170280
-Lag 5000               0.4383644       0.3575391       0.4645226       0.3714561       0.4448320
+Lag 1000               0.8118496       0.7222515       0.8067454       0.7867417       0.8044400
+Lag 2000               0.6688183       0.5623733       0.6678626       0.6362386       0.6630061
+Lag 3000               0.5554928       0.4547214       0.5525439       0.5077722       0.5508317
+Lag 4000               0.4590591       0.3629472       0.4546141       0.3962119       0.4549849
+Lag 5000               0.3742710       0.2968030       0.3678062       0.3070427       0.3763059
 
 Sample statistics burn-in diagnostic (Geweke):
 Chain 1
@@ -290,16 +294,17 @@ Fraction in 1st window = 0.1
 Fraction in 2nd window = 0.5
 
                          z-score    Individual P-value
-edges                  0.3414212             0.7327865
-mutual                 0.9095521             0.3630588
-nodematch_prac         0.5856228             0.5581291
-nodeicov_senio~y      -0.2372464             0.8124656
-gwesp_0.5              0.4676005             0.6400703
-Joint P-value (lower = worse):  0.3719770
+edges                 -0.6376515             0.5237006
+mutual                 0.1865700             0.8519978
+nodematch_prac         0.1316181             0.8952864
+nodeicov_senio~y      -0.2523987             0.8007329
+gwesp_0.5             -0.3956372             0.6923727
+Joint P-value (lower = worse):  0.1515903
 
-Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimate
-> s. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate 
-> model performance. To directly assess the performance of the final model on in-model statistics, please use estat gof.
+Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimat
+> es. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understat
+> e model performance. To directly assess the performance of the final model on in-model statistics, please use estat go
+> f.
 
 . 
 . * goodness of fit
@@ -308,89 +313,90 @@ Note: MCMC diagnostics shown here are from the last round of simulation, prior t
 Goodness-of-fit for model statistics
 
                        obs       min      mean       max  MC p-value
-edges                  575       487    563.22       646        0.84
-mutual                  74        51     69.82        99        0.72
-nodematch_prac         412       344    402.88       458        0.88
-nodeicov_senio~y     19379     15800  18993.70     21852        0.84
-gwesp_0.5        555.61913 376.95167    534.54 690.21781        0.84
+edges                  575       504    571.86       668        1.00
+mutual                  74        52     71.76        97        0.80
+nodematch_prac         412       354    407.68       504        0.76
+nodeicov_senio~y     19379     16381  19258.90     22808        0.88
+gwesp_0.5        555.61913 404.60634    546.79 727.40261        0.84
 
 Goodness-of-fit for minimum geodesic distance
 
                        obs       min      mean       max  MC p-value
-1                      575       487    563.22       646        0.84
-2                     2316      2039   2451.46      2820        0.64
-3                     1782      1432   1758.32      2018        0.76
-4                      154        28    157.94       389        0.80
-5                        3         0      6.70        49        0.84
-6                        0         0      0.22         4        1.00
-Inf                    140         0     32.14       209        0.08
+1                      575       504    571.86       668        1.00
+2                     2316      2080   2490.06      2948        0.36
+3                     1782      1316   1742.34      2054        0.76
+4                      154        33    140.94       388        0.76
+5                        3         0      3.78        37        0.96
+6                        0         0      0.08         3        1.00
+Inf                    140         0     20.94       139        0.00
 
 Goodness-of-fit for out-degree
 
                        obs       min      mean       max  MC p-value
-0                        2         0      0.28         1        0.00
-1                        1         0      0.96         3        1.00
-2                        2         0      1.98         7        1.00
-3                        7         0      3.34         8        0.16
-4                        5         0      5.04        11        1.00
-5                        5         1      6.06        15        0.92
-6                        6         3      7.70        17        0.72
-7                        6         4      8.58        16        0.40
-8                        9         3      7.80        14        0.68
-9                        3         3      7.26        13        0.12
-10                       7         2      6.42        12        0.96
-11                       4         0      4.78        10        0.96
-12                       3         0      3.76        10        0.96
-13                       3         0      2.60         7        0.92
-14                       1         0      1.74         5        1.00
-15                       1         0      1.18         4        1.00
-16                       2         0      0.64         2        0.32
-17                       1         0      0.44         2        0.80
-18                       1         0      0.20         2        0.36
-19                       0         0      0.12         2        1.00
-20                       1         0      0.08         1        0.16
-21                       0         0      0.02         1        1.00
-22                       1         0      0.02         1        0.04
+0                        2         0      0.10         1        0.00
+1                        1         0      0.86         3        1.00
+2                        2         0      1.88         5        1.00
+3                        7         0      3.48         8        0.16
+4                        5         1      4.78        12        1.00
+5                        5         1      6.10        14        0.92
+6                        6         2      7.48        13        0.56
+7                        6         1      7.44        17        0.92
+8                        9         1      7.68        15        0.72
+9                        3         2      7.54        15        0.12
+10                       7         1      7.12        13        1.00
+11                       4         0      5.52        11        0.84
+12                       3         0      4.10         8        0.76
+13                       3         0      2.54        11        0.80
+14                       1         0      1.98         6        0.92
+15                       1         0      1.06         4        1.00
+16                       2         0      0.58         3        0.32
+17                       1         0      0.34         2        0.64
+18                       1         0      0.18         1        0.36
+19                       0         0      0.10         1        1.00
+20                       1         0      0.10         1        0.20
+22                       1         0      0.00         0        0.00
+23                       0         0      0.02         1        1.00
+25                       0         0      0.02         1        1.00
 
 Goodness-of-fit for in-degree
 
                        obs       min      mean       max  MC p-value
-0                        0         0      0.18         2        1.00
-1                        0         0      1.08         6        0.76
-2                        3         0      2.42         8        0.88
-3                        2         0      3.68         9        0.48
-4                        8         0      4.66        10        0.16
-5                        6         2      6.50        11        1.00
-6                        5         4      7.50        14        0.32
-7                        8         1      8.10        15        1.00
-8                        9         3      7.96        14        0.80
-9                        5         3      6.96        15        0.76
-10                       7         2      5.64        12        0.64
-11                       6         1      5.04        13        0.80
-12                       4         0      3.84        10        1.00
-13                       2         0      2.52         7        1.00
-14                       4         0      1.80         7        0.20
-15                       1         0      1.30         4        1.00
-16                       0         0      0.66         4        1.00
-17                       1         0      0.42         2        0.76
-18                       0         0      0.30         2        1.00
-19                       0         0      0.28         1        1.00
-20                       0         0      0.12         1        1.00
+0                        0         0      0.16         1        1.00
+1                        0         0      1.04         6        0.84
+2                        3         0      2.18         9        0.84
+3                        2         0      3.14         8        0.72
+4                        8         2      5.22        12        0.40
+5                        6         1      6.04        11        1.00
+6                        5         2      7.50        13        0.40
+7                        8         1      7.22        12        0.84
+8                        9         4      8.46        14        0.88
+9                        5         2      7.22        13        0.64
+10                       7         2      5.84        11        0.68
+11                       6         1      4.88        11        0.72
+12                       4         0      4.08         8        1.00
+13                       2         0      2.72         8        1.00
+14                       4         0      1.98         4        0.16
+15                       1         0      1.34         4        1.00
+16                       0         0      0.94         5        0.88
+17                       1         0      0.60         2        1.00
+18                       0         0      0.22         2        1.00
+19                       0         0      0.14         1        1.00
+20                       0         0      0.04         1        1.00
 21                       0         0      0.02         1        1.00
-24                       0         0      0.02         1        1.00
+23                       0         0      0.02         1        1.00
 
 Goodness-of-fit for edgewise shared partner
 
                        obs       min      mean       max  MC p-value
-0                      138       107    134.16       172        0.76
-1                      190       166    202.72       233        0.52
-2                      131        91    133.76       185        0.84
-3                       69        32     62.02        98        0.56
-4                       26        10     22.12        42        0.68
-5                       11         1      6.32        18        0.24
-6                        7         0      1.44         7        0.04
-7                        2         0      0.52         4        0.20
-8                        1         0      0.14         1        0.28
+0                      138       104    133.52       177        0.76
+1                      190       159    205.24       240        0.32
+2                      131       105    139.60       197        0.80
+3                       69        35     60.48        86        0.56
+4                       26         7     23.56        51        0.68
+5                       11         1      7.32        21        0.32
+6                        7         0      1.54         4        0.00
+7                        2         0      0.52         5        0.12
+8                        1         0      0.06         1        0.12
 9                        0         0      0.02         1        1.00
 
 . 
@@ -398,11 +404,9 @@ Goodness-of-fit for edgewise shared partner
 . nwwebuse kapferer, nwclear
 
 . capture noisily nwergm kapferer_t2, edges triangle seed(1) mcmcsamplesize(1000)
-Warning: MCMLE iter 3 - statistic(s) at column(s) 1 2 not varying this iteration - this may indicate an extreme point or 
-> dead-end configuration.
+Warning: MCMLE iter 2 - statistic(s) at column(s) 1 2 not varying this iteration - this may indicate an extreme point or
+>  dead-end configuration.
 Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.
-             ErgmMCMLE():   498  Stata returned error
-                 <istmt>:     -  function returned error
 
 . display "return code: " _rc
 return code: 498
@@ -420,79 +424,83 @@ Directed:              =  No
 Estimation:            =  MCMLE
 MCMC sample size:      =  3000
 
-------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
  kapferer_t2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -4.687943   .3238733   -14.47   0.000    -5.322723   -4.053163
-   gwesp_0.5 |   1.731426   .2009058     8.62   0.000     1.337658    2.125195
-------------------------------------------------------------------------------
+       edges |  -4.294914   .4016951   -10.69   0.000    -5.082222   -3.507606
+   gwesp_0.5 |   1.520809   .2313551     6.57   0.000     1.067362    1.974257
+------------------------------------------------------------------------------------
 
-MCMLE converged after 2 iteration(s).
+MCMLE converged after 3 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    1251.8  on 903 degrees of freedom
-         Residual Deviance:     860.4  on 901 degrees of freedom
+         Residual Deviance:     858.6  on 901 degrees of freedom
 
-Log-likelihood:  -430.2126 (df = 2)   AIC:     864.4   BIC:     874.0   (MC std. err. =  .13589)
+Log-likelihood:  -429.2887 (df = 2)   AIC:     862.6   BIC:     872.2   (MC std. err. =  .09657)
 
 . estat gof, nsim(50) seed(2)
 
 Goodness-of-fit for model statistics
 
                        obs       min      mean       max  MC p-value
-edges                  190       125    169.88       218        0.36
-gwesp_0.5        275.77262 165.84383    245.55 330.45462        0.40
+edges                  190       132    186.58       227        1.00
+gwesp_0.5        275.77262 166.16593    270.61 340.41329        0.88
 
 Goodness-of-fit for minimum geodesic distance
 
                        obs       min      mean       max  MC p-value
-1                      190       125    169.88       218        0.36
-2                      535       325    467.50       578        0.28
-3                      163        60    144.84       241        0.68
-4                       15         0      9.60        52        0.44
-5                        0         0      0.16         4        1.00
-Inf                      0         0    111.02       308        0.20
+1                      190       132    186.58       227        1.00
+2                      535       377    521.64       609        1.00
+3                      163        63    137.78       224        0.52
+4                       15         0      8.04        59        0.32
+5                        0         0      0.26         3        1.00
+Inf                      0         0     48.70       162        0.80
 
 Goodness-of-fit for degree
 
                        obs       min      mean       max  MC p-value
-0                        0         0      2.74         8        0.20
-1                        2         0      0.70         4        0.36
-2                        3         0      1.40         4        0.28
-3                        2         0      2.24         7        1.00
-4                        0         0      2.56         5        0.04
-5                        6         0      2.86         6        0.12
-6                        1         0      3.98         9        0.16
-7                        4         1      3.94         8        1.00
-8                        2         1      3.82         9        0.60
-9                        3         0      3.68         8        0.96
-10                       8         0      3.04         8        0.04
-11                       4         0      3.38        10        0.88
-12                       1         0      2.46         6        0.52
-13                       0         0      1.58         7        0.64
-14                       0         0      1.56         4        0.32
-15                       3         0      1.04         3        0.08
-16                       1         0      0.76         4        1.00
-17                       0         0      0.54         3        1.00
-18                       1         0      0.42         2        0.60
-19                       1         0      0.16         1        0.32
-20                       0         0      0.10         1        1.00
-21                       0         0      0.04         1        1.00
+0                        0         0      1.18         4        0.80
+1                        2         0      0.72         4        0.36
+2                        3         0      1.12         4        0.28
+3                        2         0      1.40         5        0.84
+4                        0         0      2.62         7        0.04
+5                        6         0      2.34         7        0.08
+6                        1         0      3.08         9        0.60
+7                        4         0      3.64         8        1.00
+8                        2         1      4.62        11        0.40
+9                        3         1      4.54         9        0.80
+10                       8         0      3.78         7        0.00
+11                       4         0      3.54         7        1.00
+12                       1         0      3.18         8        0.40
+13                       0         0      2.36         6        0.20
+14                       0         0      1.80         6        0.28
+15                       3         0      1.14         4        0.08
+16                       1         0      0.64         5        0.96
+17                       0         0      0.40         2        1.00
+18                       1         0      0.44         3        0.72
+19                       1         0      0.20         1        0.40
+20                       0         0      0.12         1        1.00
+21                       0         0      0.10         1        1.00
+22                       0         0      0.02         1        1.00
+23                       0         0      0.02         1        1.00
 25                       1         0      0.00         0        0.00
 
 Goodness-of-fit for edgewise shared partner
 
                        obs       min      mean       max  MC p-value
-0                        6         0      2.16         6        0.12
-1                       23        11     21.56        33        0.80
-2                       33        28     43.62        57        0.12
-3                       24        17     43.52        64        0.08
-4                       32         9     29.40        52        0.76
-5                       27         6     16.84        34        0.16
-6                       19         1      7.98        24        0.04
-7                       13         0      3.04        10        0.00
-8                        5         0      1.40         8        0.12
-9                        2         0      0.30         2        0.12
-10                       2         0      0.06         2        0.04
+0                        6         0      2.44         9        0.12
+1                       23        14     21.90        36        0.80
+2                       33        29     47.48        59        0.04
+3                       24        26     49.08        69        0.00
+4                       32        13     35.30        55        0.80
+5                       27         4     17.86        29        0.12
+6                       19         0      8.10        23        0.04
+7                       13         0      3.16        12        0.00
+8                        5         0      0.98         7        0.04
+9                        2         0      0.20         1        0.00
+10                       2         0      0.08         1        0.00
 12                       3         0      0.00         0        0.00
 13                       1         0      0.00         0        0.00
+
+. 

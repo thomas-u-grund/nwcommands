@@ -108,6 +108,9 @@ about the same, you are on the ridge: do not interpret the individual degree coe
 
 ```stata
 . capture noisily nwrem calls
+nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec() c
+> ovint() covevent() rsndsnd rrecsnd (see nwrem for what each computes; the development notes for what is not yet implem
+> ented).
 nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec() covint() covevent() rsndsnd rrecsnd (see nwrem ...
 . capture noisily nwrem calls, frpsndsnd covsnd(nosuchvar)
 variable nosuchvar not found
