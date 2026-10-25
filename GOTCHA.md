@@ -386,7 +386,7 @@ label, then ego label). Also: a native-plugin kernel that must reproduce Mata ar
 ## Native plugin algorithm codes: keep the ranges apart
 
 `native/nwgraph.c` dispatches on the first number of the argument string. 1-2 are betweenness and BFS distances,
-3-9, 22-28 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 29 and up for the next kernel), 20 is the vertex-connectivity search
+3-9, 22-31 and 99-100 belong to the combinatorial kernels (`comb_handles()`; use 32 and up for the next kernel), 20 is the vertex-connectivity search
 (nwkcomponents) and 21 the Kamada-Kawai iterations (nwplot layout(kk)). A range test such as 3..100 in one
 feature swallows the codes of another; when adding a kernel, pick a code outside every existing range.
 A Mata `v[p] = vals[g]` with a single distinct value fails (a 1 x 1 matrix cannot be indexed by a vector): guard the scalar case.
@@ -575,3 +575,13 @@ by hand "fixes" it for that session only, which hid the bug in every manual test
 - **The Mata triad census is not defined for self-loops** (the loop makes a node its own connected neighbour): `nw_fasttriads()` hands such networks to the Mata census and the results stay as they were. Its 003 count is `n(n-1)(n-2)/6 - sum`, which can be off by one unit in the last place; the kernel's is the exact integer, so compare with a tolerance of 1e-6, not `==`.
 - **Equality of nwevcent with the Mata iteration is bit for bit** because the C kernel sums in the same order and `-ffp-contract=off` forbids fused multiply-adds (largest difference measured over 80 networks: 0).
 
+
+## Algorithm codes 29-31 (nwburt, nwconstraint, nwsimmelian); kernel version 7; `native/nwbrokerage.h`
+
+Same pattern as 26-28 (glue in the .ado files, `NW_NOFASTKERNELS`, empty matrix = fall back). Things that were not obvious:
+- **A static helper name in a new header can clash with `nwcomb2.h`** (`cmp_long` is already there): prefix helpers (`brk_`) so that several kernel headers can be merged.
+- **The big cost of `nwconstraint` at 100,000 nodes is not the kernel** (0.9 s) but `_nwsetsparse` / `set_edge_from_triplets()` in the Mata library (10 s for 11 million cells: key sort in Mata). It cannot be sped up without changing `lnwcommands.mlib`.
+- **Mata's `order()` is not stable** (see the comment in `set_edge_from_triplets()`), so the Mata `calculate_constraint_triplets()` adds equal cells in an unspecified order; the kernel adds them in the order of the tie list. Differences are 1e-16 relative, never more.
+- **A kernel result of 0 rows is legitimate** (`pub_result(0, 0, c)`): `nwg_comb()` then returns `J(0, c, .)`; the failure signal is `J(0, 0, .)` (zero columns). Test `cols()`, not only `rows()`.
+- **Kernels that return fewer rows than allocated** must set `g_res_rows` to the real count before the fetch call (it copies `g_res_rows` rows).
+- The `nwburt` hierarchy is missing for a node without ties and 1 for degree 1 (log 1 = 0); the kernel returns a missing flag in column 5 because plugin results are plain doubles.

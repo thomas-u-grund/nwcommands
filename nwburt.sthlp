@@ -105,6 +105,15 @@ is a ratio to a sum of outgoing tie weights, only meaningful when all non-negati
 checked.
 
 
+{title:Limits}
+
+{pstd}
+The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
+platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees,
+not with {it:n}^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds,
+100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). The options {opt dyadredundancy} and {opt dyadconstraint} build
+{it:n}-by-{it:n} networks and take the dense route.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
