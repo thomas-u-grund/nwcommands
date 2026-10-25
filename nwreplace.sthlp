@@ -224,9 +224,14 @@ All network expressions, network subsetting and network conditions can be combin
 	  {bf:r(symmetric)}	1 if the network's updated adjacency matrix is symmetric, 0 otherwise
 	  {bf:r(valued)}	1 if the network is valued, 0 otherwise
 
+{title:Limits}
+
+{pstd}
+{cmd:nwreplace} evaluates an expression over the whole {it:n}-by-{it:n} network and holds three such matrices; above about 22,000 nodes (12 GB) it stops at once with r(484). Use {help nwrecode} or {help nwdichotomize} to change tie values, {help nwfromedge} or {help nwset} to add or remove ties, {help nwsubset} to work on a part of the network.
+
 {title:See also}
 
 	{help nwreplacemat}, {help nwsync}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

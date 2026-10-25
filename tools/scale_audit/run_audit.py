@@ -76,7 +76,7 @@ def build_do(rec, N, plus):
 def classify(rc, msg, text):
     if rc == 484 or "materializing a dense" in text and rc != 0:
         return "REFUSED_GUARD"
-    if rc == 900 and "allows at most" in text:       # nwtostata: more columns than the flavour has variables
+    if rc == 900 and ("allows at most" in text or "do not fit into a Stata macro" in text):       # nwtostata: more columns than the flavour has variables
         return "REFUSED_GUARD"
     if rc == 920 or "macro substitution results in line that is too long" in msg:
         return "MACRO_LIMIT"
@@ -264,6 +264,7 @@ def main():
     ap.add_argument("--workdir", default="/private/tmp/nwscale_work")
     ap.add_argument("--jobs", type=int, default=2, help="parallel Stata processes (max 2)")
     ap.add_argument("--maxmem-gb", type=float, default=20, help="kill our own Stata child above this RSS")
+    ap.add_argument("--noskip", action="store_true", help="run every recipe, even if it failed or was slow at the previous size")
     ap.add_argument("--keep", action="store_true", help="keep per-run working dirs")
     a = ap.parse_args()
     sizes = [int(x) for x in a.sizes.split(",")]
@@ -299,7 +300,7 @@ def main():
                 append_row(a.out, dict(base, outcome="NOT_TRIED_CAP",
                                        message=f"capped at N={maxn}: {rec.get('cat','')}"))
                 continue
-            pr = prev_row(rec["command"], N)
+            pr = None if a.noskip else prev_row(rec["command"], N)
             longrun = False
             if pr is not None:
                 try:

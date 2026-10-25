@@ -12,11 +12,13 @@ program nwcompressobs
 	tempvar temp
 	
 	qui gen `allmissing' = .
+	// string variables are tested against "", numeric ones against . (encode, used here before, fails above
+	// 65,536 distinct strings, e.g. the node labels of a network with more than 65,536 nodes, and then the
+	// numeric test hit a string: type mismatch)
 	qui foreach var of varlist _all {
-		capture encode `var', gen(`temp')
-		if (_rc == 0){
-			replace `allmissing' = 0 if `temp' != .
-			drop `temp'
+		capture confirm string variable `var'
+		if (_rc == 0) {
+			replace `allmissing' = 0 if `var' != ""
 		}
 		else {
 			replace `allmissing' = 0 if `var' != .

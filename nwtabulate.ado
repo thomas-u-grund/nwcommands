@@ -40,8 +40,10 @@ program nwtab1
 	_nwsyntax `netname'
 	drop _all
 	tempvar freq
-	mata: `netobj'->value_counts_to_vars(("`directed'" == "false"), "`netname'", "`freq'")
+	mata: `netobj'->value_counts_to_vars(("`directed'" == "false"), "`netname'", "`freq'", 0)
 	qui compress `netname'
+	qui summarize `freq', meanonly
+	local ndyads = r(sum)
 	
 	local ident = length("`netname'") + 20
 	di
@@ -49,7 +51,30 @@ program nwtab1
 	di "{txt}                           {txt}{col `ident'}Selfloops: {res}`selfloops'{txt}"
 	capture label def elab `edgelabs'
 	capture label val `netname' elab
-	tab `netname' [fweight = `freq'], `options'
+	if `ndyads' > 2147483647 {
+		// more dyads than Stata's frequency weights hold (2,147,483,647): the same table written out here
+		tempvar pct cum
+		qui gen double `pct' = 100 * `freq' / `ndyads'
+		qui gen double `cum' = sum(`pct')
+		local vl : value label `netname'
+		di
+		di "{txt}{ralign 12:`netname'} {c |}{ralign 16:Freq.}{ralign 10:Percent}{ralign 10:Cum.}"
+		di "{hline 13}{c +}{hline 36}"
+		forvalues r = 1/`=_N' {
+			local v = `netname'[`r']
+			local vs = string(`v', "%12.0g")
+			if "`vl'" != "" {
+				local lab : label `vl' `v', strict
+				if `"`lab'"' != "" local vs `"`lab'"'
+			}
+			di "{txt}{ralign 12:`vs'} {c |}{res}{ralign 16:" string(`freq'[`r'], "%16.0fc") "}{ralign 10:" string(`pct'[`r'], "%9.2f") "}{ralign 10:" string(`cum'[`r'], "%9.2f") "}"
+		}
+		di "{txt}{hline 13}{c +}{hline 36}"
+		di "{txt}{ralign 12:Total} {c |}{res}{ralign 16:" string(`ndyads', "%16.0fc") "}{ralign 10:100.00}"
+	}
+	else {
+		tab `netname' [fweight = `freq'], `options'
+	}
 	restore
 end
 

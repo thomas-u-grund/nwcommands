@@ -60,9 +60,14 @@ network expressions can be very complicated, no labels are copied.
 {pstd}
 Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: not checked.
 
+{title:Limits}
+
+{pstd}
+A network held as stored ties keeps the ties between the remaining nodes without an {it:n}-by-{it:n} matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for {help nwdrop}, {help nwkeep}, {help nwdropnodes} and {help nwkeepnodes}.
+
 {title:See also}
 
 	{help nwgenerate}, {help nwduplicate}
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

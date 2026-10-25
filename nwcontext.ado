@@ -2,8 +2,9 @@
 capture program drop nwcontext
 program nwcontext 
 	version 9
-	syntax [anything(name=netname)],  ATTRibute(string) [ stat(string) mode(string) GENerate(string) mat(string) noweight REPlace ]
+	syntax [anything(name=netname)],  ATTRibute(string) [ stat(string) mode(string) GENerate(string) mat(string) noweight REPlace force ]
 	_nwsyntax `netname', max(1)
+	_nwdenseguard, command(nwcontext) nodes(`nodes') copies(3) alternative(Use nwaltergen, which computes mean, sum, min, max, sd and more of the neighbors' attribute from the stored ties and scales to millions of ties.) `force'
 	
 	if "`stat'" == "" {
 		local stat = "mean"

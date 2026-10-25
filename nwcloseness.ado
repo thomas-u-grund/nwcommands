@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -69,6 +69,8 @@ program nwcloseness
 	
 	set more off
 	qui foreach netname_temp in `netname' {
+		_nwsyntax `netname_temp'
+		_nwtimeguard, command(nwcloseness) nodes(`nodes') model(bfs) netobj(`netobj') rate(6.6e8) alternative(Closeness needs one breadth-first search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
 		preserve
 		// The farness of a node is the sum of its distances to the nodes it can reach. With a plugin of the current
 		// generation it comes from one breadth-first search per node over the stored ties (kernel 25, O(nodes x ties),

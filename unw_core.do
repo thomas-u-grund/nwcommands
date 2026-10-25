@@ -371,6 +371,69 @@ string colvector modes_from_labels(string rowvector nodenames, string colvector 
 	start values, once for the end values) rather than needing a
 	separate implementation.
 */
+/*
+	The same values as build_edge_value_matrix() as a list of the cells that have one: rows (ego, alter, value)
+	sorted by ego, alter. A later row for the same pair replaces an earlier one (as the assignment into the
+	matrix did); symmetric adds the cell (alter, ego). For large networks, where the n x n matrix does not fit.
+*/
+real matrix build_edge_value_triplets(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval, real scalar symmetric)
+{
+	real colvector i1, i2, keep, ego, alt, val, key, o, last
+	real matrix T
+	real scalar n, m
+
+	n = cols(nodenames)
+	i1 = nw_label_positions(nodenames, lab1)
+	i2 = nw_label_positions(nodenames, lab2)
+	keep = nw_which((i1 :> 0) :& (i2 :> 0))
+	if (rows(keep) == 0) return(J(0, 3, 0))
+	m = rows(keep)
+	if (symmetric) {
+		// row 2k-1: (i, j); row 2k: (j, i)
+		ego = J(2 * m, 1, 0); alt = ego; val = ego
+		ego[2 * (1::m) :- 1] = i1[keep]; alt[2 * (1::m) :- 1] = i2[keep]
+		ego[2 * (1::m)] = i2[keep]; alt[2 * (1::m)] = i1[keep]
+		val[2 * (1::m) :- 1] = tval[keep]; val[2 * (1::m)] = tval[keep]
+	}
+	else {
+		ego = i1[keep]; alt = i2[keep]; val = tval[keep]
+	}
+	key = ego :* (n + 1) :+ alt
+	o = order((key, (1::rows(key))), (1, 2))
+	key = key[o]
+	// the last row of every pair
+	last = (rows(key) > 1 ? (key[|2 \ rows(key)|] :!= key[|1 \ rows(key)-1|]) \ 1 : 1)
+	o = o[nw_which(last)]
+	return((ego[o], alt[o], val[o]))
+}
+
+/* the value of cell (el[k,1], el[k,2]) in the list T = (ego, alter, value) sorted by ego, alter; missing when there is none */
+real colvector nw_triplet_values(real matrix T, real scalar n, real matrix el)
+{
+	real colvector kt, ke, k, isT, o, cnt, pos, res
+	real scalar mt, me
+
+	mt = rows(T)
+	me = rows(el)
+	res = J(me, 1, .)
+	if (mt == 0 | me == 0) return(res)
+	kt = T[., 1] :* (n + 1) :+ T[., 2]
+	ke = el[., 1] :* (n + 1) :+ el[., 2]
+	k = kt \ ke
+	isT = J(mt, 1, 1) \ J(me, 1, 0)
+	o = order((k, isT :== 0), (1, 2))
+	cnt = runningsum(isT[o])
+	pos = J(mt + me, 1, 0)
+	pos[o] = cnt
+	pos = pos[|mt + 1 \ mt + me|]
+	res = J(me, 1, .)
+	o = nw_which(pos :> 0)
+	if (rows(o) == 0) return(res)
+	o = o[nw_which(kt[pos[o]] :== ke[o])]
+	if (rows(o) > 0) res[o] = T[pos[o], 3]
+	return(res)
+}
+
 real matrix build_edge_value_matrix(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval, real scalar symmetric)
 {
 	real scalar n, k, i, j
@@ -3828,6 +3891,7 @@ class `NWdef' {
 	real matrix			edgetime
 	real matrix			edgestart
 	real matrix			edgeend
+	real scalar			timesparse
 	real matrix			eventlist
 
 	real matrix 		edge
@@ -3933,6 +3997,7 @@ class `NWdef' {
 	real matrix calculate_burt()
 	real rowvector edge_weight_row()
 	real matrix calculate_constraint_dyadic()
+	real matrix calculate_constraint_triplets()
 	real scalar dyadstate()
 	real matrix connected_neighbors()
 	real matrix calculate_assortativity_pairs()
@@ -3971,6 +4036,8 @@ class `NWdef' {
 	string scalar get_endvar()
 	string scalar get_eventtimevar()
 	pointer(real matrix) get_edge_time()
+	real scalar get_time_sparse()
+	void set_time_sparse()
 	pointer(real matrix) get_edge_start()
 	pointer(real matrix) get_edge_end()
 	pointer(real matrix) get_eventlist()
@@ -4102,10 +4169,18 @@ class `NWdef' {
 */
 real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real scalar at){
 	real matrix et, el, out
+	real colvector vt
 	real scalar k, nout, i, j, w
 	// the ties come from the stored ties (row-major order as before), not from a scan of all n^2 cells
 	et = *(p->get_edge_time())
 	el = p->edgelist()
+	if (p->get_time_sparse()) {
+		// times held as a list: the time of every stored tie in one pass
+		vt = nw_triplet_values(et, p->get_nodes(), el)
+		if (rows(el) == 0) return(J(0,3,0))
+		out = select(el, (el[.,1] :!= el[.,2]) :& (vt :!= .) :& (vt :== at) :& (el[.,3] :!= .) :& (el[.,3] :!= 0))
+		return(rows(out) == 0 ? J(0,3,0) : out)
+	}
 	out = J(rows(el), 3, 0)
 	nout = 0
 	for (k=1; k<=rows(el); k++){
@@ -4123,10 +4198,19 @@ real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real 
 
 real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real scalar at){
 	real matrix es, ee, el, out
+	real colvector vs, ve
 	real scalar k, nout, i, j, w
 	es = *(p->get_edge_start())
 	ee = *(p->get_edge_end())
 	el = p->edgelist()
+	if (p->get_time_sparse()) {
+		vs = nw_triplet_values(es, p->get_nodes(), el)
+		ve = nw_triplet_values(ee, p->get_nodes(), el)
+		if (rows(el) == 0) return(J(0,3,0))
+		// a missing end is open-ended (missing is larger than every number in Mata), a missing start is excluded
+		out = select(el, (el[.,1] :!= el[.,2]) :& (vs :!= .) :& (vs :<= at) :& (ve :> at) :& (el[.,3] :!= .) :& (el[.,3] :!= 0))
+		return(rows(out) == 0 ? J(0,3,0) : out)
+	}
 	out = J(rows(el), 3, 0)
 	nout = 0
 	for (k=1; k<=rows(el); k++){
@@ -4170,6 +4254,28 @@ real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real sca
 	out[.,1] = floor(ks :/ (n + 1))
 	out[.,2] = ks :- out[.,1] :* (n + 1)
 	return(out)
+}
+
+/*
+	Store the time of every tie (v2 empty: snapshot, one value per tie) or the start and end of every tie (v2 the
+	ends) of the one-mode network p: as n x n matrices up to 2,000 nodes, as lists of the ties that have a value
+	above (the matrices of 100,000 nodes would take 80 GB each).
+*/
+void nw_set_temporal_values(pointer(class nw_def scalar) scalar p, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric, real scalar interval)
+{
+	string rowvector names
+
+	names = p->get_nodenames()
+	if (cols(names) > 2000) {
+		p->set_time_sparse(1)
+		if (!interval) p->set_edge_time(build_edge_value_triplets(names, lab1, lab2, v1, symmetric))
+		else p->set_edge_interval(build_edge_value_triplets(names, lab1, lab2, v1, symmetric), build_edge_value_triplets(names, lab1, lab2, v2, symmetric))
+	}
+	else {
+		p->set_time_sparse(0)
+		if (!interval) p->set_edge_time(build_edge_value_matrix(names, lab1, lab2, v1, symmetric))
+		else p->set_edge_interval(build_edge_value_matrix(names, lab1, lab2, v1, symmetric), build_edge_value_matrix(names, lab1, lab2, v2, symmetric))
+	}
 }
 
 /*
@@ -6821,6 +6927,92 @@ real matrix `NWdef'::calculate_lambda(){
 }
 
 /*
+	nw_maxflow_sparse(n, el, s, t): the max-flow value and minimum cut of calculate_maxflow() below from a list
+	of arcs el = (from, to, capacity) instead of n x n capacity and flow matrices (Edmonds-Karp on the residual
+	arcs, shortest augmenting path first). Arcs with a capacity that is missing, zero or negative and self-loops
+	are ignored. Returns (side \ maxflow \ cutarcs) as calculate_maxflow() does: side = 1 for the nodes
+	reachable from s in the final residual graph (the same set for every maximum flow).
+*/
+real colvector nw_maxflow_sparse(real scalar n, real matrix el, real scalar s, real scalar t)
+{
+	real colvector from, to, cap, flow, o, start, cnt, adjarc, arcfrom, arcto, arccap, parentarc, queue, side, mark
+	real scalar m, k, i, a, u, v, qh, qt, bottleneck, maxf, ncut, r
+
+	if (rows(el) > 0) el = select(el, (el[., 3] :> 0) :& (el[., 3] :< .) :& (el[., 1] :!= el[., 2]))
+	m = rows(el)
+	// arc 2k-1: the tie (from, to, capacity); arc 2k: its reverse (capacity 0)
+	arcfrom = J(2 * m, 1, 0)
+	arcto = J(2 * m, 1, 0)
+	arccap = J(2 * m, 1, 0)
+	if (m > 0) {
+		arcfrom[2 * (1::m) :- 1] = el[., 1]
+		arcto[2 * (1::m) :- 1] = el[., 2]
+		arccap[2 * (1::m) :- 1] = el[., 3]
+		arcfrom[2 * (1::m)] = el[., 2]
+		arcto[2 * (1::m)] = el[., 1]
+	}
+	flow = J(2 * m, 1, 0)
+	// the arcs leaving each node
+	cnt = J(n, 1, 0)
+	for (k = 1; k <= 2 * m; k++) cnt[arcfrom[k]] = cnt[arcfrom[k]] + 1
+	start = runningsum(cnt) - cnt :+ 1
+	adjarc = J(2 * m, 1, 0)
+	mark = start
+	for (k = 1; k <= 2 * m; k++) {
+		adjarc[mark[arcfrom[k]]] = k
+		mark[arcfrom[k]] = mark[arcfrom[k]] + 1
+	}
+	queue = J(n, 1, 0)
+	maxf = 0
+	while (1) {
+		parentarc = J(n, 1, 0)
+		parentarc[s] = -1
+		queue[1] = s
+		qh = 1
+		qt = 1
+		while (qh <= qt & parentarc[t] == 0) {
+			u = queue[qh]
+			qh++
+			for (i = start[u]; i < start[u] + cnt[u]; i++) {
+				a = adjarc[i]
+				v = arcto[a]
+				if (parentarc[v] == 0 & arccap[a] - flow[a] > 0) {
+					parentarc[v] = a
+					qt++
+					queue[qt] = v
+				}
+			}
+		}
+		if (parentarc[t] == 0) break
+		bottleneck = .
+		v = t
+		while (v != s) {
+			a = parentarc[v]
+			if (bottleneck == . | arccap[a] - flow[a] < bottleneck) bottleneck = arccap[a] - flow[a]
+			v = arcfrom[a]
+		}
+		v = t
+		while (v != s) {
+			a = parentarc[v]
+			flow[a] = flow[a] + bottleneck
+			// the partner arc: 2k-1 <-> 2k
+			r = (mod(a, 2) == 1 ? a + 1 : a - 1)
+			flow[r] = flow[r] - bottleneck
+			v = arcfrom[a]
+		}
+		maxf = maxf + bottleneck
+	}
+	// source side of the minimum cut: nodes reachable from s in the residual graph (the last search stopped
+	// only when t was not reached, so parentarc marks exactly those)
+	side = (parentarc :!= 0)
+	ncut = 0
+	for (k = 1; k <= m; k++) {
+		if (side[arcfrom[2 * k - 1]] & !side[arcto[2 * k - 1]]) ncut++
+	}
+	return(side \ maxf \ ncut)
+}
+
+/*
 	calculate_maxflow(): max-flow value and minimum cut between a given
 	source `s' and sink `t', via the SAME generic Edmonds-Karp
 	bfs_augment() every other flow-based primitive in this file already
@@ -6856,6 +7048,12 @@ real matrix `NWdef'::calculate_maxflow(real scalar s, real scalar t, | real scal
 	if (s < 1 | s > n | t < 1 | t > n | s == t) {
 		errprintf("nwmaxflow: source and sink must be distinct, valid node indices.\n")
 		exit(error(6556))
+	}
+	// a network held as stored ties only: flow on the arcs, no n x n capacity and flow matrices
+	if (edge_dense_built == `False' & is2mode != 1) {
+		cap = edgelist()
+		if (rows(cap) > 0 & val == 0) cap[., 3] = (cap[., 3] :> 0) :* (cap[., 3] :< .)
+		return(nw_maxflow_sparse(n, cap, s, t))
 	}
 	cap = *get_matrix_mod(val, 1)
 	_diag(cap, 0)
@@ -8626,6 +8824,63 @@ real matrix `NWdef'::calculate_constraint_dyadic(){
 	return(c)
 }
 
+/*
+	The same dyadic constraint as calculate_constraint_dyadic() above, as a list of the cells that are not zero
+	(ego, alter, value), without the n x n matrix. A cell is not zero only for a direct tie or a two-step path, so
+	the list has about sum(degree^2) rows. Built from the stored ties row by row; the values equal the dense ones
+	up to the order of summation (1e-15).
+*/
+real matrix `NWdef'::calculate_constraint_triplets(){
+	real scalar n, i, q, k, a, b, ni, pos, total, p, qq
+	real colvector w, outdeg, cnt, bound, cc, vv, cu, vs, o, ok
+	real matrix T, info
+
+	n = get_nodes()
+	ensure_sparse_built()
+	w = cweight
+	_editmissing(w, 0)
+	cnt = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+	outdeg = J(n, 1, 0)
+	for (i = 1; i <= n; i++) {
+		if (cnt[i] > 0) outdeg[i] = sum(w[|rowptr[i] \ rowptr[i+1]-1|])
+	}
+	// an upper bound of the rows: the direct ties plus the two-step paths
+	bound = cnt
+	for (i = 1; i <= n; i++) {
+		if (cnt[i] > 0) bound[i] = cnt[i] + sum(cnt[colidx[|rowptr[i] \ rowptr[i+1]-1|]])
+	}
+	total = sum(bound)
+	T = J(total, 3, .)
+	pos = 0
+	for (i = 1; i <= n; i++) {
+		ni = cnt[i]
+		if (ni == 0 | outdeg[i] == 0) continue
+		a = rowptr[i]
+		b = rowptr[i+1] - 1
+		cc = colidx[|a \ b|]
+		vv = w[|a \ b|] :/ outdeg[i]
+		for (k = a; k <= b; k++) {
+			q = colidx[k]
+			if (outdeg[q] == 0 | cnt[q] == 0) continue
+			cc = cc \ colidx[|rowptr[q] \ rowptr[q+1]-1|]
+			vv = vv \ (w[k] / outdeg[i]) :* w[|rowptr[q] \ rowptr[q+1]-1|] :/ outdeg[q]
+		}
+		o = order(cc, 1)
+		cc = cc[o]
+		vv = vv[o]
+		info = panelsetup(cc, 1)
+		cu = cc[info[., 1]]
+		vs = panelsum(vv, info)
+		ok = nw_which((cu :!= i) :& (vs :!= 0))
+		p = rows(ok)
+		if (p == 0) continue
+		T[|pos+1, 1 \ pos+p, 3|] = (J(p, 1, i), cu[ok], vs[ok] :* vs[ok])
+		pos = pos + p
+	}
+	if (pos == 0) return(J(0, 3, 0))
+	return(T[|1, 1 \ pos, 3|])
+}
+
 void `NWdef'::permute(){
 	real matrix perm
 	real colvector inv
@@ -9490,6 +9745,18 @@ pointer(real matrix) `NWdef'::get_edge_time(){
 	return(&edgetime)
 }
 
+/*
+	timesparse = 1: edgetime (or edgestart and edgeend) hold a list of (ego, alter, value) rows, sorted by
+	ego, alter, instead of an n x n matrix (large networks; see build_edge_value_triplets())
+*/
+real scalar `NWdef'::get_time_sparse(){
+	return(timesparse == 1)
+}
+
+void `NWdef'::set_time_sparse(real scalar d){
+	timesparse = d
+}
+
 void `NWdef'::set_edge_interval(real matrix s, real matrix e){
 	edgestart = s
 	edgeend = e
@@ -9764,14 +10031,17 @@ void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, 
 	which must have no observations.  O(ties): the zeros are counted, not
 	listed.  What nwtabulate tabulates.
 */
-void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, string scalar vfreq){
+void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, string scalar vfreq, | real scalar fwlimit){
 	real scalar n, total, nz
 	real colvector r, c, w, cw, keep, ri, ci, rt
 	real matrix uc
 
 	n = get_nodes()
 	total = (undirected ? n*(n+1)/2 : n*n)
-	if (total > 2147483647){
+	// fwlimit (default 1): the counts are used as Stata frequency weights, which cannot exceed 2,147,483,647 in sum;
+	// nwrecode only adds them up and passes 0
+	if (args() < 4) fwlimit = 1
+	if (fwlimit & total > 2147483647){
 		error_handle("Tabulating the " + strofreal(n) + " nodes of network `" + get_name() + "' needs more than 2,147,483,647 dyad counts (Stata frequency weights). Use nwsummarize or nwdegree for networks of this size.", `errDenseTooLarge')
 	}
 	if (edgelist_sparse_ok()){
@@ -10012,7 +10282,9 @@ void `NWdef'::drop_nodes(rowvector d){
 }
 
 void `NWdef'::keep_nodes(rowvector k){
-	real matrix edge_new
+	real matrix edge_new, el
+	real colvector newid, keepc, ok
+	real scalar wasvalued
 	string matrix modes_new, nodesvar_new, nodes_new
 
 	// sparse-native networks (edge_dense_built==`False') never populate
@@ -10021,6 +10293,25 @@ void `NWdef'::keep_nodes(rowvector k){
 	// building the induced-subgraph primitive for nwcohesion (harmonisation
 	// unit 59) - every other dense-touching method already guards with
 	// this same call (see e.g. check_symmetry() above).
+	// A network held as stored ties keeps the ties between the remaining nodes, renumbered (no n x n matrix: nwdrop,
+	// nwkeep, nwsubset of a large network)
+	if (edge_dense_built == `False' & is2mode != 1 & cols(k) == cols(nodes)){
+		wasvalued = isvalued
+		el = edgelist()
+		keepc = (k')
+		newid = runningsum(keepc)
+		nodes = select(nodes, k)
+		nodesvar = select(nodesvar, k)
+		modes = modes_new
+		if (rows(el) > 0){
+			ok = selectindex(keepc[el[., 1]] :& keepc[el[., 2]])
+			if (rows(ok) > 0) el = (newid[el[ok, 1]], newid[el[ok, 2]], el[ok, 3])
+			else el = J(0, 3, 0)
+		}
+		set_edge_from_triplets(el[., 1], el[., 2], el[., 3], isdirect)
+		isvalued = wasvalued
+		return
+	}
 	ensure_dense_built()
 
 	if (cols(k) == cols(nodes)){

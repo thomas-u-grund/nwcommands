@@ -1,7 +1,7 @@
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted alpha(real 1)]
+	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted alpha(real 1) force]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -41,6 +41,7 @@ program nwbetween
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwtimeguard, command(nwbetween) nodes(`nodes') model(bfs) netobj(`netobj') rate(2.2e8) alternative(Betweenness needs one shortest-path search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
 		local oldnetname `netname_temp'
 
 		local netgenerate "`generate'"

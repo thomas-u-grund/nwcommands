@@ -4,6 +4,28 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.3.0] - 2026-10-25
+Networks of 100,000 nodes: more commands work at that size, and commands that cannot are refused at once with a message and an alternative.
+
+### Important
+- The Mata library of the core changed. Install the model packages again after updating the core: nwsaom 1.0.4 or later and nwergm 1.1.2 or later (`nwinstall, models`); older model packages stop with r(3021) "class compiled at different times".
+
+### Added
+- A page "How large a network can I analyze?" on the website (and an extended Appendix H in the book) says which commands are reasonable for which network size.
+
+### Fixed
+- Scaling audit at 100,000 nodes (stage 4; details in the audit report; Stata/BE, random directed network with 10 ties per node, 1.0 million ties, 12 GB memory cap, 300 s limit). Before: of 143 recipes 83 worked (14 of them took 10 s or more), 26 were refused by a guard, 11 in the setup (a two-mode network is one matrix over both modes), 9 were killed at 12 GB, 5 timed out, 1 stopped with r(920) and 6 with an error; none gave a wrong result. After: 93 work (15 take 10 s or more, the slowest 104 s), 36 are refused at once by a guard, 11 in the setup, 3 are not tried; none killed, none timed out, none with an unexplained error.
+  - `nwcompressobs` stopped with "type mismatch" (r(109)) above 65,536 nodes: it tried `encode` on the node labels, which fails above 65,536 distinct strings, and then compared the string variable with a number. `nwdropnodes`, `nwkeepnodes`, `nwdrop`, `nwkeep`, `nwsubset` and `nwreplace` end in `nwcompressobs`, so none of them worked on a network of more than 65,536 nodes.
+  - `nwdrop`, `nwkeep` and `nwsubset` (the Mata methods `keep_nodes()` / `drop_nodes()`) built the n x n matrix of a large network and were refused; a network held as stored ties keeps the ties between the remaining nodes, renumbered (1.0 s for 50,000 of 100,000 nodes).
+  - `nwset` with `time()` or `interval()` built n x n matrices of times (killed at 20 GB at 100,000 nodes). Above 2,000 nodes the times are kept as a list of the ties that have one; `nwattime` reads the list (1.7 s at 100,000 nodes). Two-mode temporal networks keep the matrices.
+  - `nwconstraint` of a large network (killed at 12 GB) builds the constraint network from the list of its non-zero cells (12 s directed and 50 s undirected with 40 million cells, 7 GB, at 100,000 nodes); above 2,000 nodes only `name()` and `replace` are accepted.
+  - `nwmaxflow` works arc by arc on a network held as stored ties (refused at 100,000 nodes before; 1.7 s); the matrix route is kept for dense networks and gives the same flow, cut side and cut size.
+  - `nwrecode` and `nwdichotomize` no longer stop above 46,341 nodes: the 2,147,483,647 limit belongs to `tabulate [fweight=]`, not to counting the changes. `nwtabulate` writes its table itself above that limit (the options of `tabulate` are ignored then).
+  - `nwvalidvars` with more names than a Stata macro holds stopped with r(920) after 2.7 s of work; it stops at once with r(900) and says what to use instead.
+- Commands that are dense or many minutes by nature stop at once with r(484), a message and an alternative, and `force` runs them anyway: `nwgeodesic`, `nwreach`, `nwlambda`, `nwexpand` (two n x n matrices, above about 27,000 nodes), `nwcontext` (three; names `nwaltergen`), `nwreplace` (three), and, through the new `_nwtimeguard` (limit `nw_max_seconds` = 120 s, estimated from measured rates), `nwbetween` (15 minutes at 100,000 nodes), `nwcloseness` and `nwkatz` (5 minutes: measured 302 s), `nwkcomponents` (43 minutes), `nwcohesion` (13 minutes). Before, each ran into the 300 s limit or to 12 GB.
+- Scaling harness: `--noskip` runs every recipe at every size; `nwdyadprob` is capped at 20,000 (the caller's `J(N,N,.01)` is the 80 GB); refusals by a variable-name list that does not fit into a macro count as guards.
+- `cscripts/test_scale100k.do` covers the above (sparse = dense for `nwmaxflow`, `nwconstraint` and `nwdrop` on 150 random networks, list = matrix for the temporal values, `nwattime` at 2,500 nodes, `nwcompressobs` with 70,000 labels, `nwtabulate` / `nwrecode` at 50,000 nodes, the guards and the working commands at 100,000 nodes; 8 s).
+
 ## [3.2.0] - 2026-10-25
 Large networks (to 100,000 nodes) now work, and a series of wrong results found on the way are fixed. Read "Results that change" before you re-run old analyses.
 

@@ -512,3 +512,36 @@ peak at 7 GB). `nw2toedge` without `compress` lists every pair of nodes of the t
   `nwg_comb_version() >= 5`; an older plugin ignores the extra number and would fill one column only, silently. Rebuild the plugin
   (`rm`, then `make -C native macos-nwgraph`) BEFORE running anything that loads the new `unw_core.do`; the harness picks up files the moment they
   are edited, so do not edit the worktree while an audit runs (a run in the window between the edit and the rebuild had to be discarded).
+
+## Scaling audit, stage 4 (100,000 nodes): what cost time to find
+
+- **`encode` stops at 65,536 distinct strings.** `nwcompressobs` tried `encode` on every variable and, when it failed, compared the
+  variable with `.`: for the node labels of a network with more than 65,536 nodes that is a string compared with a number
+  (r(109) "type mismatch"). `nwdropnodes`, `nwkeepnodes`, `nwdrop`, `nwkeep`, `nwsubset` and `nwreplace` all end in
+  `nwcompressobs`; none of them worked above 65,536 nodes, and the audit showed the failure only as "OTHER_ERROR" with a late
+  re-run message ("Network dn already exists"): the first run had created the network, the second showed the error that does not
+  say what failed. Test strings with `confirm string variable`, never with `encode`. Look for the same pattern in `nwexpand`
+  (`encode` of a string attribute) before trusting it above 65,536 distinct values.
+- **A quiet re-run hides the first error, a noisy one can hide the message of a guard.** `display "{err}..."` inside `quietly` prints
+  nothing (the guards of stage 3 were called outside `quietly`); `display as error "..."` always prints. `_nwdenseguard` and
+  `_nwtimeguard` use `display as error`.
+- **`nwset, time()` and `interval()` built n x n matrices of times** (80 GB each at 100,000 nodes; killed at 20 GB before the
+  command even started, so the audit row of `nwattime` said MEMORY_KILLED for a recipe whose *pre* step was the culprit). Above
+  2,000 nodes the times are kept as a list (ego, alter, value) sorted by ego and alter (`build_edge_value_triplets()`,
+  `nw_triplet_values()`, flag `timesparse`); `get_edge_time()`/`get_edge_start()`/`get_edge_end()` then return that list, not a
+  matrix. Any new reader of those three getters must test `get_time_sparse()` first. Two-mode temporal networks keep the matrices.
+- **A Mata function that uses a class must come after the class definition in `unw_core.do`** ("function ... not declared in
+  class" otherwise); `nw_set_temporal_values()` therefore sits next to `nw_ties_only()`, not next to `build_edge_value_matrix()`.
+- **`keep_nodes()`/`drop_nodes()` called `ensure_dense_built()`**, so every `nwdrop ... if` of a large network failed with the dense
+  refusal; a network held as stored ties is now renumbered tie by tie. Compare with the dense route by calling `get_matrix()` first
+  (it makes `edge_dense_built` true).
+- **`value_counts_to_vars()` has a 2,147,483,647 limit that only `tabulate [fweight=]` needs.** `nwrecode` only sums the counts and
+  passes `fwlimit = 0`; `nwtabulate` writes the table itself above the limit. Do not move the check back into the Mata function.
+- **Time guards use measured rates, not a theory.** `_nwtimeguard` (model `bfs`: seconds = nodes x 2 x ties / rate; model `power`:
+  seconds = base x (nodes/20000)^exponent). The rates come from the 20,000-node run (closeness 8.1e8 tie visits per second) corrected
+  by the single 100,000-node run that was allowed 1,500 seconds (302 s, rate 6.6e8: cache misses). If a command gets faster, change
+  the rate in the command's `_nwtimeguard` call, nowhere else. Limit: `nw_max_seconds` in `unw_defs.ado` (120).
+- **A recipe whose argument is the n x n matrix cannot be guarded** (`nwdyadprob, mat(J(N,N,.01))`: Mata builds 80 GB before the command
+  starts); the recipe is capped at 20,000 in `spec.py`.
+- **`pgrep -f run_audit` finds the shells that wait for it.** A wait loop `until ! pgrep -f run_audit...` never ends while another
+  session's wait loop (whose command line contains the same words) exists; match `ps aux | grep "[r]un_audit.py --sizes N" | grep -v zsh`.

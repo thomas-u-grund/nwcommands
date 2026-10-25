@@ -21,7 +21,8 @@
 {opth generate(newvarname)}
 {opt mat(string)}
 {opt noweight}
-{opt replace}]
+{opt replace}
+{opt force}]
 
 
 
@@ -35,6 +36,7 @@
 {synopt:{opt mat(string)}}Store the result in a Mata matrix of this name instead of generating a Stata variable{p_end}
 {synopt:{opt noweight}}Ignore valued ties and treats all as binary{p_end}
 {synopt:{opt replace}}Replace {opt generate()}'s target variable if it already exists{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -168,6 +170,11 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
 
 	{cmd:. nwplot flomarriage, label(wealth)}
 
+{title:Limits}
+
+{pstd}
+The statistics are computed on the dense network and three {it:n}-by-{it:n} matrices are held at once. Above about 22,000 nodes (12 GB) the command stops at once with r(484) and names {help nwaltergen} as the alternative: it computes the mean, sum, minimum, maximum and standard deviation of the attribute of the neighbors from the stored ties and works at 100,000 nodes and more. Option {opt force} runs the command anyway.
+
 {title:See also}
 
    {help nwneighbor}
@@ -175,4 +182,4 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

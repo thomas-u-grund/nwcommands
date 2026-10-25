@@ -19,7 +19,8 @@
 {opth unconnected(int)}
 {opt generate}({it:{help varname:var1 var2 var3}})
 {opt nosym}
-{opt replace}]
+{opt replace}
+{opt force}]
 
 
 {synoptset 30 tabbed}{...}
@@ -29,6 +30,7 @@
 {synopt:{opt generate}({it:{help varname:var1 var2 var3}})}{bf:Required.} Exactly 3 variable names to save closeness, farness and nearness scores, in that order{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 
 {title:Description}
@@ -84,6 +86,9 @@ the plugin (no matrix of distances); a platform whose plugin has not been rebuil
 random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 nodes 9.9 seconds and 0.35 GB (98 seconds and
 6.4 GB through the matrix); the time grows with the number of nodes times the number of ties.
 
+{pstd}
+The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (measured: 302 seconds, 0.6 GB). When the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
+
 {title:See also}
 
 	{help nwgeodesic}, {help nwpath}, {help nwgeodesic}, {help nwbetween}, {help nwdegree}, {help nwevcent}, {help nwkatz}
@@ -91,4 +96,4 @@ random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

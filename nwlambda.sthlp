@@ -17,7 +17,8 @@
 [{cmd:,}
 {opth name(newnetname)}
 {opt xvars}
-{opt replace}]
+{opt replace}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -25,6 +26,7 @@
 {synopt:{opth name(newnetname)}}Name of the new connectivity network; default = {it:lambda}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
+{synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
 
 {p2colreset}{...}
 
@@ -121,6 +123,9 @@ Borgatti, S.P., Everett, M.G., Shirey, P.R. (1990). LS sets, lambda sets and oth
 {pstd}
 Menger, K. (1927). Zur allgemeinen Kurventheorie. {it:Fundamenta Mathematicae} 10, 96-115.
 
+{pstd}
+The result is an {it:n}-by-{it:n} network and two matrices are held at once: above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it anyway.
+
 {title:See also}
 
 	{help nwkcomponents}, {help nwcohesion}, {help nwhierarchy}, {help nwclique}, {help nwkplex}
@@ -128,4 +133,4 @@ Menger, K. (1927). Zur allgemeinen Kurventheorie. {it:Fundamenta Mathematicae} 1
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

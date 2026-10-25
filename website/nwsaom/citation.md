@@ -9,7 +9,7 @@ description: "How to cite nwsaom, and the original papers and software it builds
 # How to cite
 
 **nwsaom.** Cite the nwsaom manual and report the version that produced your results, as printed by
-`nwsaom version` (for example "nwsaom 1.0.3"):
+`nwsaom version` (for example "nwsaom 1.0.4"):
 
 > Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.0.3.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 

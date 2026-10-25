@@ -2,9 +2,10 @@
 capture program drop nwlambda
 program nwlambda, rclass
 	version 12
-	syntax [anything(name=netname)] [, name(string) xvars replace]
+	syntax [anything(name=netname)] [, name(string) xvars replace force]
 
 	_nwsyntax `netname'
+	_nwdenseguard, command(nwlambda) nodes(`nodes') copies(2) alternative(Lambda (the number of edge-disjoint paths) is computed for every pair of nodes and stored as an n x n network. Use nwbridges for the weakest ties or a part of the network (nwsubset).) `force'
 
 	if "`name'" == "" {
 		local name "lambda"

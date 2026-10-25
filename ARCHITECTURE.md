@@ -37,6 +37,8 @@ debt: spectral analysis (`nwspectral`) needs the full eigenspectrum, not just a 
 eigenvalue, and a small induced-subgraph helper used only by n-clan diameter checks operates on
 graphs small enough that it was never worth converting.
 
+The scaling audit (`tools/scale_audit/`, 143 recipes, correctness checked against the generator) runs the core at up to 100,000 nodes with 10 ties per node: structural commands work on the stored ties; commands whose result is an N×N network by nature (all-pairs distances, similarity, `nwcontext`, two-mode networks) and the ones that need many minutes (betweenness, closeness above tens of thousands of nodes) stop at once with a message (`_nwdenseguard`, `_nwtimeguard`; option `force` overrides).
+
 ## Native (C) acceleration
 
 Each native kernel is a small, purpose-built Stata plugin, not a general-purpose graph library —

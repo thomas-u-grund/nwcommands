@@ -407,9 +407,14 @@ Programmers can use {bf:nwset} to write their own import routines  (see also {he
 file formats that are not natively supported by the {bf:nwcommands}.All you need to do is transform your data either in
 an adjacency list or an edgelist represented by Stata variables. 
 
+{title:Limits}
+
+{pstd}
+Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000 nodes; before, such a network could not be declared temporal). Two-mode temporal networks keep the matrices.
+
 {title:See also}
 
 	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project} ({help nwproject}), {help nwattime}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

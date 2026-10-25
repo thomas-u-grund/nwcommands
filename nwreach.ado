@@ -3,9 +3,10 @@ program nwreach
 	// `vars(string)' removed - it was accepted by syntax but never
 	// referenced anywhere in this file's body (a fully dead, undocumented
 	// no-op).
-	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace]
+	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace force]
 	_nwsyntax `reachnet', name(reachnet)
 	unw_defs
+	_nwdenseguard, command(nwreach) nodes(`nodes') copies(2) alternative(Reachability between all pairs of nodes is an n x n matrix. Use nwcomponents for connectedness (undirected networks), nwpath for one pair, or a part of the network (nwsubset).) `force'
 
 	if "`name'" == "" {
 		local name "`nwgen_reach'"

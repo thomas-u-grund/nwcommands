@@ -17,7 +17,8 @@
 [{cmd:,}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt force}]
 
 
 {synoptset 25 tabbed}{...}
@@ -26,6 +27,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own highest cohesion level{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 {p2colreset}{...}
 
@@ -110,6 +112,9 @@ network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 
 {cmd:r(cohesion_matrix)} has one row per block and one column per node. On a platform whose plugin file has not been
 built yet, the older Mata routine runs instead (same results, about 20 seconds at 300 nodes).
 
+{pstd}
+Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 27 seconds and 2.9 GB. When the estimated time is more than 2 minutes (about 40,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
+
 {title:See also}
 
 	{help nwkcomponents}, {help nwcomponents}, {help nwclique}, {help nwkplex}
@@ -117,4 +122,4 @@ built yet, the older Mata routine runs instead (same results, about 20 seconds a
 last certified : 22 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

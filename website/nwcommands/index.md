@@ -9,7 +9,7 @@ permalink: /nwcommands/
 # nwcommands (core)
 {: .no_toc }
 
-The core package, version 3.2.0, handles networks in Stata: it imports and exports them, generates
+The core package, version 3.3.0, handles networks in Stata: it imports and exports them, generates
 them, describes and analyzes them, and plots them. It is the base for the model packages
 ([nwsaom](../nwsaom/), [nwergm](../nwergm/), [nwdynam](../nwdynam/), [nwrem](../nwrem/)), which need
 it but are installed separately.
@@ -31,6 +31,8 @@ for a "Network Analysis" menu in Stata. `nwinstall, models` installs the four mo
 - **Tutorials** ([all tutorials](../tutorials/)): installation, core concepts, importing and exporting,
   visualization, generating and manipulating networks, centrality, paths and ego networks.
 - **Command reference** ([all commands](../reference/)): every command with its syntax and options.
+- **Size limits** ([how large a network can be](size-limits/)): which commands finish in seconds, which need
+  minutes and which are refused at which number of nodes.
 - **Model packages**: the statistical models have their own sections in the menu: [nwsaom](../nwsaom/)
   (stochastic actor-oriented models), [nwergm](../nwergm/) (exponential random graph models),
   [nwdynam](../nwdynam/) (dynamic network actor models) and [nwrem](../nwrem/) (relational event models).
@@ -49,6 +51,6 @@ representation and compiled C kernels, are chosen automatically.
 
 ## Version and license
 
-The core is version 3.2.0 (25 October 2026). It is free software under the GNU General Public License,
+The core is version 3.3.0 (25 October 2026). It is free software under the GNU General Public License,
 version 3; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages
 are separate packages under the same license.

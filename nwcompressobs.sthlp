@@ -36,9 +36,14 @@ Not applicable - trims trailing empty (all-missing) Stata observations from the 
 	{cmd:. nwcompressobs}
 	
 	
+{title:Limits}
+
+{pstd}
+All-missing observations are found by testing every variable against "" or . (string and numeric variables); above 65,536 distinct node labels the command used to stop with "type mismatch".
+
 {title:See also}
 
   {help nwdrop}, {help clear}
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

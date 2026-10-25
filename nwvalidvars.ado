@@ -8,6 +8,15 @@ program nwvalidvars
 	syntax anything(name=nodes), stub(string)
 	
 	mata: st_rclear()
+
+	// one name per node goes into a Stata macro: a list that is longer than a macro can hold (c(macrolen)) stopped
+	// with r(920) "macro substitution results in line that is too long" after minutes of work (about 20,000 nodes
+	// in Stata/BE)
+	if `nodes' * (length("`stub'") + length("`nodes'") + 2) > c(macrolen) {
+		di "{err}The `nodes' variable names do not fit into a Stata macro (at most `c(macrolen)' characters)."
+		di "{err}A network of this size cannot be held in one variable per node: work with the stored ties (nwtoedge, nwtomatafast) or a part of the network (nwsubset)."
+		exit 900
+	}
 	
 	// Generate temporary varlist and check for each variable if it already exists.
 	local varlist = "" 	

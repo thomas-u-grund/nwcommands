@@ -20,7 +20,8 @@
 {opt walks}
 {opt generate}({it:{help varname}})
 {opt replace}
-{it:{help nwgeodesic:geodesic_options}}]
+{it:{help nwgeodesic:geodesic_options}}
+{opt force}]
 
 
 {synoptset 30 tabbed}{...}
@@ -31,6 +32,7 @@
 {synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
 
 
@@ -111,6 +113,9 @@ matrix of distances, unless {it:geodesic_options} are given or the plugin is old
 as before). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB
 (99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
 
+{pstd}
+Without {opt walks} the time grows with the number of nodes times the number of ties like that of {help nwcloseness}: when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. With {opt walks} the matrix is dense and a network of more than 20,000 nodes is refused.
+
 {title:See also}
 
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
@@ -118,4 +123,4 @@ as before). Measured in Stata/BE on a random directed network with 10 ties per n
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.2.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.3.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
