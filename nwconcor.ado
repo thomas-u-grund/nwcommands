@@ -121,7 +121,8 @@ program nwconcor, rclass
 		mata: block_sizeid[.,1] = block_size
 		mata: block_sizeid[.,2] = block_id
 		mata: block_sizeid[.,3] = block_share
-		mata: block_sizeid = sort(block_sizeid, -1)
+		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
+		mata: block_sizeid = sort(block_sizeid, (-1, 2))
 		mata: st_numscalar("blocks", block_number)
 		mata: st_matrix("block_sizeid", block_sizeid)
 

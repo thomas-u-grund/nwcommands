@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- Ties are broken the same way under every seed. Mata's `sort()` and `order()` order equal keys by the state of the random-number generator, so with equal values these results changed from run to run: the order of equal-sized classes in `r(core_sizeid)` (`nwkcore`), `r(comm_sizeid)` (`nwmodularity`) and `r(block_sizeid)` (`nwconcor`) and which of two equal components `nwplot` draws first; the order of events with the same time in the `nwmovie` file; the vector of a repeated eigenvalue in `nwspectral`; the order of nodes within one group in `nwplotmatrix, group()`; and the positions in the layouts `hierarchy` and `bipartite` of `nwplot`. Equal sizes are now listed by ascending id, and the other ties keep the order of the input.
+
 ## [3.4.0] - 2026-10-25
 
 ### Results that change (read before you re-run old analyses)
