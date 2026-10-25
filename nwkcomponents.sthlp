@@ -143,8 +143,8 @@ cuts the time is longer.
 {pstd}
 Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time
 is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix {cmd:r(kcomp_matrix)}
-(one row per component, one column per node): 100,000 nodes take about one minute. When the estimated time is more than 2 minutes (about 120,000
-nodes for k(2) with the compiled plugin, about 31,000 nodes otherwise) the command stops at once with r(484) and a message; option {opt force}
+(one row per component, one column per node): 100,000 nodes take about one minute. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made
+for the slower route) the command stops at once with r(484) and a message; option {opt force}
 runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.
 
 {title:See also}
