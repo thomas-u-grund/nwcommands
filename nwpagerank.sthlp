@@ -77,6 +77,8 @@ The power iteration runs in the compiled graph plugin (the native kernel of {cmd
 and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations.
 Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.03 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes
 0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds).
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:Stored results}
 

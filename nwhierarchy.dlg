@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 282
+POSITION 10 10 1060 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwhierarchy - Hierarchical clustering of nodes (role/positio
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  GROUPBOX gb_opt 10 44 1030 216, label("Options")
   TEXT tx_ed_dismat 20 54 260 ., label("Dismat")
   EDIT ed_dismat 290 54 190 ., nomem option(dismat)
   TEXT tx_cb_disnet 20 82 260 ., label("Disnet")
@@ -40,6 +40,8 @@ BEGIN
   EDIT ed_generate 800 138 190 ., nomem option(generate)
   TEXT tx_cx_replace 530 166 260 ., label("Replace an existing  variable")
   CHECKBOX cx_replace 800 166 190 ., label("replace") option(replace)
+  TEXT tx_cx_force 20 222 260 ., label("Run despite the time or memory guard")
+  CHECKBOX cx_force 290 222 190 ., label("force") option(force)
 END
 
 LIST netlist
@@ -84,6 +86,7 @@ BEGIN
 		optionarg main.ed_equivgen
 		optionarg main.ed_generate
 		option main.cx_replace
+		option main.cx_force
 	endoptions
 	stata
 END

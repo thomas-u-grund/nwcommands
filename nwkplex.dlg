@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 254
+POSITION 10 10 550 366
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwkplex - Maximal k-plex enumeration")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 272, label("Options")
   TEXT tx_sp_k 20 54 260 ., label("How many ties each member may miss; default = 2")
   SPINNER sp_k 290 54 70 ., default(2) max(999999) min(-999999) nomem option(k)
   TEXT tx_ed_generate 20 82 260 ., label("Name of the Stata variable that stores each node's largest maximal-k-plex member")
@@ -28,6 +28,14 @@ BEGIN
   SPINNER sp_minsize 290 138 70 ., default(-1) max(999999) min(-999999) nomem option(minsize)
   TEXT tx_cx_silent 20 166 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
+  TEXT tx_ed_maxplexes 20 194 260 ., label("Stop when more than this many sets are found; default = 100000")
+  EDIT ed_maxplexes 290 194 190 ., nomem option(maxplexes)
+  TEXT tx_cx_countonly 20 222 260 ., label("Count only (store no list or matrix)")
+  CHECKBOX cx_countonly 290 222 190 ., label("countonly") option(countonly)
+  TEXT tx_cx_nomatrix 20 250 260 ., label("Do not build the sets-by-nodes matrix")
+  CHECKBOX cx_nomatrix 290 250 190 ., label("nomatrix") option(nomatrix)
+  TEXT tx_ed_maxtime 20 278 260 ., label("Stop after this many seconds; default = 60")
+  EDIT ed_maxtime 290 278 190 ., nomem option(maxtime)
 END
 
 LIST netlist
@@ -50,6 +58,10 @@ BEGIN
 		option main.cx_replace
 		optionarg main.sp_minsize
 		option main.cx_silent
+		optionarg main.ed_maxplexes
+		option main.cx_countonly
+		option main.cx_nomatrix
+		optionarg main.ed_maxtime
 	endoptions
 	stata
 END

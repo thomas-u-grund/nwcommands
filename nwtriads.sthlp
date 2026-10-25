@@ -84,7 +84,9 @@ The census is counted in the compiled graph plugin (the native kernel of {cmd:nw
 and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, {it:Social Networks} 23: 237-243): triads with at least two ties are
 enumerated from the neighbours of each node, the empty triads {bf:_003} are obtained by subtraction. Measured in Stata/BE,
 random directed network with 10 ties per node: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 1 second
-(the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route.
+(the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads {bf:r(_003)} is an exact integer.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:Examples}
 	

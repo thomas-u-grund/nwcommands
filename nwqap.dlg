@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 394
+POSITION 10 10 550 422
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwqap - Multivariate QAP regression")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 300, label("Options")
+  GROUPBOX gb_opt 10 44 520 328, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
   TEXT tx_ed_type 20 82 260 ., label("regression command to be used for dyad dataset; default =")
@@ -38,6 +38,8 @@ BEGIN
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
   EDIT ed_name 290 306 190 ., nomem option(name)
+  TEXT tx_cx_force 20 334 260 ., label("Run despite the time or memory guard")
+  CHECKBOX cx_force 290 334 190 ., label("force") option(force)
 END
 
 LIST netlist
@@ -65,6 +67,7 @@ BEGIN
 		option main.cx_qapspp
 		option main.cx_plot
 		optionarg main.ed_name
+		option main.cx_force
 	endoptions
 	stata
 END

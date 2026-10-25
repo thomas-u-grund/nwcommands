@@ -3,7 +3,7 @@ VERSION 10
 
 SYNCHRONOUS_ONLY
 INCLUDE _std_mlarge
-DEFINE _dlght   250
+DEFINE _dlght   300
 INCLUDE header
 
 HELP hlp1, view("help nwplot")
@@ -63,6 +63,7 @@ BEGIN
   VARNAME vr_nodex 110 90 80 ., label("X-Coord")
   VARNAME vr_nodey 110 110 80 ., label("Y-Coord") 
   CHECKBOX cx_norescalexy 110 130 150 ., label("Rescale off") option("norescale")
+  CHECKBOX cx_vertical 110 130 150 ., label("Two columns (vertical)") option("vertical")
   TEXT tx_iter 50 90 100 ., label("Iterations:") 
   SPINNER sp_iter 110 90 50 . ,min(20) default(200)
   CHECKBOX cx_exp 30 160 190 ., label("Export coordinates") onclickoff(script exportOff) onclickon(script exportOn)
@@ -169,6 +170,67 @@ BEGIN
   EDIT ed_scheme 140 200 200 ., nomem option(scheme)
 END
 
+DIALOG interactive, tabtitle("Interactive")
+BEGIN
+  GROUPBOX gb_int 10 5 420 175, label("Interactive view")
+  CHECKBOX cx_interactive 20 22 400 ., label("Open the plot in an interactive view (drag nodes, edit the legend)") onclickon(script intOn) onclickoff(script intOff)
+  CHECKBOX cx_noopen 40 45 380 ., label("Only write the HTML page, do not open a viewer window")
+  TEXT tx_fname 40 70 380 ., label("Write the HTML page to this file (default: a temporary file):")
+  FILE fi_fname 40 88 340 ., label("HTML file") filter("HTML|*.html|All files|*.*") save nomem option(fname)
+  TEXT tx_movie 40 118 380 ., label("Also write the resolved node and edge data as JSON (used by nwmovie):")
+  FILE fi_movie 40 136 340 ., label("JSON file") filter("JSON|*.json|All files|*.*") save nomem option(movieexport)
+  GROUPBOX gb_back 10 190 420 100, label("Bring back a saved interactive layout")
+  TEXT tx_import 20 208 400 ., label("Node CSV saved from the view (needs layout nodexy with x and y variables):")
+  FILE fi_importcoords 20 226 340 ., label("Node CSV") filter("CSV|*.csv|All files|*.*") nomem option(importcoords)
+  TEXT tx_edgeimport 20 252 400 ., label("Edge CSV saved from the view (optional):")
+  FILE fi_edgeimport 20 268 340 ., label("Edge CSV") filter("CSV|*.csv|All files|*.*") nomem option(edgeimport)
+END
+
+SCRIPT intOff
+BEGIN
+	interactive.cx_noopen.disable
+	interactive.tx_fname.disable
+	interactive.fi_fname.disable
+	interactive.tx_movie.disable
+	interactive.fi_movie.disable
+END
+
+SCRIPT intOn
+BEGIN
+	interactive.cx_noopen.enable
+	interactive.tx_fname.enable
+	interactive.fi_fname.enable
+	interactive.tx_movie.enable
+	interactive.fi_movie.enable
+END
+
+SCRIPT POSTINIT
+BEGIN
+	script intOff
+END
+
+DIALOG more, tabtitle("More options")
+BEGIN
+  TEXT tx_aspect 20 15 150 ., label("Aspect ratio:")
+  EDIT ed_aspect 175 15 120 ., nomem option(aspectratio)
+  CHECKBOX cx_arrows 20 40 380 ., label("Draw arrowheads on an undirected network") option(arrows)
+  CHECKBOX cx_force 20 62 380 ., label("Draw although the matrices would not fit in memory (force)") option(force)
+  TEXT tx_sizebin 20 90 150 ., label("Size bins (sizebin):")
+  EDIT ed_sizebin 175 90 120 ., nomem option(sizebin)
+  TEXT tx_edgefg 20 115 150 ., label("Edge foreground values:")
+  EDIT ed_edgefg 175 115 120 ., nomem option(edgeforeground)
+  TEXT tx_edgepat 20 140 150 ., label("Edge pattern palette:")
+  EDIT ed_edgepat 175 140 220 ., nomem option(edgepatternpalette)
+  TEXT tx_lineopt 20 165 150 ., label("Line options (lineopt):")
+  EDIT ed_lineopt 175 165 220 ., nomem option(lineopt)
+  TEXT tx_scatteropt 20 190 150 ., label("Scatter options (scatteropt):")
+  EDIT ed_scatteropt 175 190 220 ., nomem option(scatteropt)
+  TEXT tx_legendopt 20 215 150 ., label("Legend options (legendopt):")
+  EDIT ed_legendopt 175 215 220 ., nomem option(legendopt)
+  TEXT tx_exportopt 20 240 150 ., label("graph export options:")
+  EDIT ed_exportopt 175 240 220 ., nomem option(exportopt)
+END
+
 INCLUDE ifin
 INCLUDE gr_titles
 INCLUDE gr_legend
@@ -190,6 +252,9 @@ BEGIN
 	grid
 	nodexy
 	frucht
+	kk
+	hierarchy
+	bipartite
 END
 
 LIST layoutstyle_actions
@@ -201,6 +266,9 @@ BEGIN
 	script layoutsub_grid
 	script layoutsub_nodexy
 	script layoutsub_mds
+	script layoutsub_mds
+	script layoutsub_off
+	script layoutsub_bipartite
 END
 
 SCRIPT layoutsub_off
@@ -214,6 +282,7 @@ BEGIN
 	main.tx_iter.hide
 	main.sp_iter.hide
 	main.cx_norescalexy.hide
+	main.cx_vertical.hide
 END
 
 SCRIPT layoutsub_mds
@@ -231,6 +300,12 @@ BEGIN
 	main.vr_nodex.show
 	main.vr_nodey.show
 	main.cx_norescalexy.show
+END
+
+SCRIPT layoutsub_bipartite
+BEGIN
+	script layoutsub_off
+	main.cx_vertical.show
 END
 
 SCRIPT layoutsub_grid
@@ -331,6 +406,8 @@ BEGIN
 		put " " /program edges_outputFactor
 		put " " /program edges_outputStyle
 		put " " /program edges_outputArrow
+		put " " /program interactive_output
+		put " " /program more_output
 		put " " /program export_output
 		optionarg export.ed_colorpalette
 		optionarg export.ed_symbolpalette
@@ -371,7 +448,15 @@ BEGIN
 		if main.cx_norescalexy {
 			put " norescale"
 		}
+		if main.cx_vertical {
+			put " vertical"
+		}
 		put ")"
+	}
+	if main.cx_exp {
+		require main.ed_enodex
+		require main.ed_enodey
+		put " generate(" main.ed_enodex " " main.ed_enodey ")"
 	}
 	if main.cb_layout.iseq("nodexy") {
 		require main.vr_nodex
@@ -405,6 +490,34 @@ BEGIN
 	if edges.sp_splines.isneq(10) {
 		put " arcsplines(" edges.sp_splines ")"
 	}
+END
+
+PROGRAM interactive_output
+BEGIN
+	if interactive.cx_interactive {
+		put " interactive"
+		if interactive.cx_noopen {
+			put " noopen"
+		}
+		optionarg interactive.fi_fname
+		optionarg interactive.fi_movie
+	}
+	optionarg interactive.fi_importcoords
+	optionarg interactive.fi_edgeimport
+END
+
+PROGRAM more_output
+BEGIN
+	optionarg more.ed_aspect
+	option more.cx_arrows
+	option more.cx_force
+	optionarg more.ed_sizebin
+	optionarg more.ed_edgefg
+	optionarg more.ed_edgepat
+	optionarg more.ed_lineopt
+	optionarg more.ed_scatteropt
+	optionarg more.ed_legendopt
+	optionarg more.ed_exportopt
 END
 
 PROGRAM export_output

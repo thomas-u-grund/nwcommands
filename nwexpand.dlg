@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 310
+POSITION 10 10 550 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwexpand - Expand variable to network")
 BEGIN
   TEXT tx_vars 20 20 260 ., label("Variables (define the network):")
   VARLIST vl_vars 290 20 190 ., nomem
-  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  GROUPBOX gb_opt 10 44 520 244, label("Options")
   TEXT tx_cb_mode 20 54 260 ., label("mode used to expand variable; default =")
   COMBOBOX cb_mode 290 54 190 ., dropdownlist contents(list_mode) nomem option(mode)
   TEXT tx_cb_network 20 82 260 ., label("apply node labels of")
@@ -32,6 +32,8 @@ BEGIN
   EDIT ed_labs 290 194 190 ., nomem option(labs)
   TEXT tx_cx_replace 20 222 260 ., label("if a network named  already exists, drop it and use this name anyway (see  for t")
   CHECKBOX cx_replace 290 222 190 ., label("replace") option(replace)
+  TEXT tx_cx_force 20 250 260 ., label("Run despite the time or memory guard")
+  CHECKBOX cx_force 290 250 190 ., label("force") option(force)
 END
 
 LIST netlist
@@ -67,6 +69,7 @@ BEGIN
 		optionarg main.cb_name
 		optionarg main.ed_labs
 		option main.cx_replace
+		option main.cx_force
 	endoptions
 	stata
 END

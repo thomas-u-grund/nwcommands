@@ -365,6 +365,7 @@ program nwinstall_menu
 	window menu append item "Centrality" "Degree centrality and distribution" "db nwdegree"
 	window menu append item "Centrality" "Calculate eigenvector centrality" "db nwevcent"
 	window menu append item "Centrality" "Calculate a Katz-inspired distance-decay centrality" "db nwkatz"
+	window menu append item "Centrality" "PageRank centrality" "db nwpagerank"
 
 	window menu append submenu "Network Analysis" "Cohesion and Subgroups"
 	window menu append item "Cohesion and Subgroups" "Calculate bridges" "db nwbridges"

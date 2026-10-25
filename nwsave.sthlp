@@ -55,6 +55,13 @@ After this, one can easily load these 5 networks in a new Stata session just as 
         {cmd:. nwuse mynets}
         
 
+{title:Limits}
+
+{pstd}
+A network is stored as its list of ties, so the file of a large network is small (a two-mode network of 5,092 + 455 nodes and 5,669 ties takes 1.2 MB).
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
 
         {help nwuse}, {help nwwebuse}, {help save}

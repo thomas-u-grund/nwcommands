@@ -23,6 +23,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}Save Simmelian ties as new network; default {it:_simmelian}{p_end}
+{synopt:{opt nwreplace}}Replace the network {it:name()} if it already exists{p_end}
 
 
 {title:Description}
@@ -42,7 +43,7 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - uses {cmd:get_matrix_unvalued()} throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (a known doc/implementation gap, not yet resolved - see the alpha audit's own finding). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - uses {cmd:get_matrix_unvalued()} throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (the concept is often described in terms of strong ties; this command does not apply a strength threshold). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
 {title:References}
 
@@ -59,12 +60,14 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 
 {pstd}
 The mutual ties and the mutual neighbours they share are found from the tie lists. Measured in Stata/BE, random undirected
-network with 10 ties drawn per node: 20,000 nodes 7 seconds and 1.2 GB (12.5 GB before).
+network with 10 ties drawn per node: 20,000 nodes need 1.2 GB (12.5 GB before).
 
 {pstd}
 The mutual ties that have a mutual neighbour in common are found in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
 platform has it, and in Mata otherwise; both give the same network. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.08 seconds,
-20,000 nodes 0.2 seconds, 100,000 nodes 0.8 seconds (the Mata route needs 0.5, 2.0 and 11.6 seconds).
+20,000 nodes 0.2 seconds, 100,000 nodes 0.8 seconds (the Mata route needs 0.5, 2.0 and 11.6 seconds). A network with self-loops takes the Mata route.
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 	{help nwshared}

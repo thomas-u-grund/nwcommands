@@ -51,7 +51,6 @@
 {marker node_options}{...}
 {p2line}
 {synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}size of the nodes{p_end}
-{synopt:{opt force}}Draw although the matrices would not fit in memory (the command stops with r(484) above about 12,200 nodes otherwise){p_end}
 {p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}color of the nodes{p_end}
 {p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}symbol of the nodes{p_end}
 {p2col:{opth nodefactor(float)}}multiply all node sizes by a factor{p_end}
@@ -134,8 +133,8 @@
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
-	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
-	to also capture the resulting coordinates{p_end}
+	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
+	to also keep the resulting coordinates{p_end}
 {p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
 	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
 {p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
@@ -195,6 +194,7 @@
 {p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
 {p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
 {p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
+{p2col:{opt force}}draw although the matrices would not fit in memory (the command stops with r(484) above about 12,200 nodes otherwise){p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -471,8 +471,11 @@ Drawing needs the network as an {it:n}-by-{it:n} matrix and about 10 copies of i
 with r(484) (32 GB at 20,000 nodes); option {opt force} runs it anyway. A picture of that many nodes is not readable: plot a part of
 the network ({help nwsubset}, {help nwego}, {help nwkcore}).
 
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 {title:See also}
-		{help nwplotmatrix}
+		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
 {pstd}{it:nwcommands version 3.3.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
