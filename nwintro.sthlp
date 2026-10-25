@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.5.0  25oct2026}{...}
+{* *! version 3.5.1  25oct2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro}
@@ -331,7 +331,10 @@ The intution and usage of these network extensions is very similar to what one i
 {title:Required software}
 
 {pstd}
-The core commands need nothing beyond Stata itself (Stata 14 or later) and the files of this package: no
+Stata 17 or later. The commands are tested with Stata 17 and Stata 18. The Mata library of the package is built with Stata 17, the oldest tested version, because a library built by a newer Stata is ignored by older versions of Stata; Stata 16 and older have not been tested and are not expected to work.
+
+{pstd}
+The core commands need nothing beyond Stata itself (Stata 17 or later) and the files of this package: no
 user-written package from SSC, no internet connection after installation, and nothing is ever installed into your
 PLUS directory behind your back. (Earlier versions downloaded {bf:gsample}, {bf:moremata}, {bf:labellist} and
 {bf:tabplot} on first use; that is gone, all four are replaced by built-in code.) The statistical model packages
@@ -382,4 +385,4 @@ Please cite the software as:
 {bf:Thomas U. Grund (2014). nwcommands: Software Tools for the Statistical Modeling of Network Data in Stata. URL http://nwcommands.org}
 
 {hline}
-{pstd}{it:nwcommands version 3.5.0, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.5.1, 25 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

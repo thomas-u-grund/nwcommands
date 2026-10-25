@@ -79,4 +79,4 @@ nothing to configure. `nwergm version` shows the path of the plugin in use. The 
 
 ## Requirements
 
-Stata 14 or later (Stata BE is enough) and the core `nwcommands` with its Mata library.
+Stata 17 or later (Stata BE is enough; tested with Stata 17 and 18, the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested) and the core `nwcommands` with its Mata library.

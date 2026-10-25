@@ -6,6 +6,7 @@
 capture program drop nwvalidvars
 program nwvalidvars
 	syntax anything(name=nodes), stub(string)
+	_nwlibcheck
 	
 	mata: st_rclear()
 

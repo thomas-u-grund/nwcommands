@@ -1,6 +1,7 @@
 capture program drop nwtostata
 program nwtostata
 version 9
+	_nwlibcheck
 syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 
 	mata: st_numscalar("r(rows)", rows(`mat'))

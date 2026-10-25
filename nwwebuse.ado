@@ -37,6 +37,7 @@ program nwwebuse
 	// rather than reviving a triply-obsolete path with no current use
 	// case.
 	syntax anything [, * nwclear]
+	_nwlibcheck
 
 	`nwclear'
 	capture drop _running

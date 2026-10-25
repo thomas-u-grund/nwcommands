@@ -11,6 +11,7 @@ program nwring
 	// out of scope for this pass; see nwsmall for the small-world
 	// variant if that behavior is wanted.
 	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) undirected noreplace xvars]
+	_nwlibcheck
 
 	// BUGFIX: an unspecified name() has always been documented/expected
 	// to auto-rename on collision ("ring", "ring_1", ...) rather than

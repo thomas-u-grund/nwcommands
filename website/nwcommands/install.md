@@ -14,6 +14,8 @@ permalink: /nwcommands/install/
 . nwinstall, all
 ```
 
+Requirements: Stata 17 or later (Stata/BE is enough). Tested with Stata 17 and 18. The Mata library is built with Stata 17, the oldest tested version, because a library built by a newer Stata is ignored by older ones; Stata 16 and older are untested and not expected to work.
+
 The first line installs `nwinstall` and the landing help topics. `nwinstall, all` then downloads every
 command, all help files and every dialog box. Add `nwinstall, gui` to also get a "Network Analysis" menu in Stata.
 

@@ -6,6 +6,7 @@
 capture program drop nwtomata
 program nwtomata
 version 9
+	_nwlibcheck
 syntax [anything(name=netname)], mat(string)
 	_nwtomata `netname', mat(`mat')
  end
