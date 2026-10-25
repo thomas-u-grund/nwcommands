@@ -23,6 +23,16 @@ capture noisily nwsummarize
 assert _rc == 3499
 display "PASS libcheck missing library gives r(3499) and the message"
 
+* 2b. an old library is in use (simulated: the sentinel function of this release is not found): the message and r(3499)
+global NW_LIBCHECK_OK ""
+global NW_LIBCHECK_TEST ""
+global NW_LIBCHECK_SENTINEL "nws_function_that_does_not_exist"
+capture noisily _nwlibcheck
+assert _rc == 3499
+assert "$NW_LIBCHECK_OK" == ""
+display "PASS libcheck old library gives r(3499) and the message"
+global NW_LIBCHECK_SENTINEL ""
+
 * 3. back to normal
 global NW_LIBCHECK_TEST ""
 _nwlibcheck

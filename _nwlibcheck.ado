@@ -18,8 +18,20 @@ program define _nwlibcheck
 		capture mata: mata which `fn'()
 	}
 	if _rc == 0 {
-		global NW_LIBCHECK_OK 1
-		exit
+		* the library is usable; is it the CURRENT one? An old lnwcommands.mlib (for example from an earlier net install in the PLUS
+		* folder) can shadow it: it has nws_create() but lacks functions added later (sentinel: a function of this release)
+		local sentinel "get_nodenames_from_vector"
+		if "$NW_LIBCHECK_SENTINEL" != "" local sentinel "$NW_LIBCHECK_SENTINEL"
+		capture mata: mata which `sentinel'()
+		if _rc == 0 {
+			global NW_LIBCHECK_OK 1
+			exit
+		}
+		di as error "An OLD copy of the nwcommands Mata library (lnwcommands.mlib) is being used: it lacks functions of this version of nwcommands."
+		di as error `"Reinstall: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace"'
+		di as error "and then: nwinstall, all"
+		di as error "Remove the old copy first (it is probably in your PLUS folder): ado uninstall nwcommands"
+		exit 3499
 	}
 	di as error "The nwcommands Mata library is missing or was built by a newer Stata (your Stata: `c(stata_version)')."
 	di as error `"Reinstall: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace"'

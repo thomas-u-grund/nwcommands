@@ -16,8 +16,11 @@ was ignored)". The reverse is fine: Stata 18 reads libraries built by Stata 17. 
 `lib/build.do` of every package stops when `c(stata_version)` is higher than 17 (`NW_ALLOW_NEWER_STATA=1` overrides, for libraries that
 are never released). The only reliable check of a release candidate is to run a
 command in Stata 17 against the built library. The core has `_nwlibcheck.ado` (called by `unw_defs` and the commands that do not call it) which turns the
-failure into a readable message with exit 3499. An OLD library in the user's PLUS folder (for example from a Sep 2026 install) shadows
-the new one and gives r(3021) or other class errors; the message tells the user to `ado uninstall nwcommands` first.
+failure into a readable message with exit 3499. An OLD library in the user's PLUS folder (for example from a Sep 2026 install, which was also built with Stata 18) can shadow
+the new one (the adopath order decides): in Stata 17 it is ignored like any Stata-18 library; in Stata 18 it works but lacks newer
+functions, which gave a raw `get_nodenames_from_vector() not found`. `_nwlibcheck` also looks for one function of the current
+library (sentinel `get_nodenames_from_vector()`, change it when a release needs a newer sentinel) and then says that an OLD copy is in use
+and to `ado uninstall nwcommands` and reinstall.
 
 ## `nwsave` of a large two-mode network writes every within-mode dyad (gigabytes)
 

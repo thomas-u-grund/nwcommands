@@ -8,7 +8,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ### Fixed
 - **The Mata library could not be used in Stata 17.** The library `lnwcommands.mlib` of 3.5.0 was built with Stata 18; Stata 17 ignores a library built by a newer Stata, so every command that builds or reads a network stopped with `nws_create() not found` (r(3499)). The library is now built with Stata 17, which Stata 17 and Stata 18 both read.
-- A command that meets a missing library, or one built by a newer Stata, now says so in plain words (and how to reinstall) instead of `<istmt>: 3499 nws_create() not found`.
+- A command that meets a missing library, one built by a newer Stata, or an old copy of the library (for example left in your PLUS folder by an earlier install) now says so in plain words (and how to reinstall) instead of `<istmt>: 3499 nws_create() not found`.
 
 ### Changed
 - Requirements stated plainly: Stata 17 or later; tested with Stata 17 and Stata 18; Stata 16 and older are untested. The build script `lib/build.do` refuses to build with a Stata newer than 17 (override for experiments: environment variable `NW_ALLOW_NEWER_STATA=1`).
