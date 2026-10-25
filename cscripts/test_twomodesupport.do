@@ -475,6 +475,7 @@ di "12. export and import keep the two-mode network (Pajek, UCINET, edge list, G
 _load tm
 nwduplicate tm, name(tmr)
 nwaddnodes tmr, nodenames(piso) mode(1)
+nwaddnodes tmr, nodenames(giso) mode(2)
 tempfile base
 foreach t in pajek ucinet edgelist gml {
 	local ext = cond("`t'" == "pajek", "net", cond("`t'" == "ucinet", "dl", cond("`t'" == "gml", "gml", "txt")))
@@ -483,7 +484,7 @@ foreach t in pajek ucinet edgelist gml {
 	nwsummarize b_`t'
 	_chk `=("`r(mode2)'" == "true" & r(edges) == 12 & "`r(directed)'" == "false")' "`t': round trip keeps the flag, the 12 ties, undirected"
 	if "`t'" != "edgelist" {
-		_chk `=(r(nodes1) == 7 & r(nodes2) == 4 & r(nodes) == 11)' "`t': 7 + 4 nodes, the isolated person included"
+		_chk `=(r(nodes1) == 7 & r(nodes2) == 5 & r(nodes) == 12)' "`t': 7 + 5 nodes, the isolated person and the isolated group included"
 	}
 	else {
 		_chk `=(r(nodes1) == 6 & r(nodes2) == 4)' "`t': 6 + 4 nodes (an isolated node has no row in an edge list)"
