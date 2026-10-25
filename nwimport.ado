@@ -77,6 +77,11 @@ program nwimport
 		  capture _nwimport_compressed `fname', `options' `typeoptions'
 	}
 	if "`import_type'" == "edgelist" {
+		// forceundirected on a list: build the network undirected from the start (the missing direction of each tie gets
+		// its value); symmetrising a directed network afterwards would keep 0 instead of a negative value
+		if "`forceundirected'" != "" & strpos(" `options' `typeoptions' ", "undirected") == 0 & strpos(" `options' `typeoptions' ", "directed") == 0 {
+			local typeoptions "`typeoptions' undirected"
+		}
 		 capture _nwimport_edgelist `fname', `options' `typeoptions'
 	}
 	if "`import_type'" == "pajek" {

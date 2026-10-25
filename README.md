@@ -36,6 +36,10 @@ data commands.
   data sets: `davis` (Davis, Gardner and Gardner 1941, the Southern women: 18 women, 14 events, 89 ties;
   no licence stated for the data) and `ftdirectors_se` (Swedish company directors, a subset of
   Evtushenko and Gastner, doi:10.5281/zenodo.3553442, CC BY 4.0: 5,092 directors, 455 companies, 5,669 ties).
+  There are also three signed networks (positive and negative ties): `senate114` and `senate93` (US Senate
+  co-sponsorship networks of the 114th and 93rd Congress, Neal 2020, doi:10.6084/m9.figshare.8096429, CC BY 4.0;
+  the signs are inferred by a statistical model, not observed likes) and `gahuku` (Read 1954: alliances and
+  enmities among 16 tribes of New Guinea; no licence stated for the data).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, gui` (or `db <command>` directly) — for
