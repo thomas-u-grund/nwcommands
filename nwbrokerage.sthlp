@@ -36,7 +36,9 @@
 {pstd}
 {cmd:nwbrokerage} counts, for every node {it:b}, how often it plays each of the five brokerage
 roles defined by Gould and Fernandez (1989). For every directed two-path {it:a -> b -> c} (with
-{it:a} != {it:c}) through {it:b}, the role is determined by comparing the group membership of
+{it:a} != {it:c}) through {it:b} in which {it:a} and {it:c} are not tied (no tie {it:a} -> {it:c};
+two-paths that {it:a} could skip because it reaches {it:c} directly are not counted, as in Gould and
+Fernandez), the role is determined by comparing the group membership of
 {it:a}, {it:b} and {it:c} (from {opt group()}):
 
 	{col 4}{bf:coordinator}{col 20}{it:a}, {it:b} and {it:c} all in the same group

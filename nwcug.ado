@@ -234,17 +234,17 @@ program nwcug, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`origname'"
 		di "{txt}  Statistic: {res}`stat'/r(`rname')"
-		di "{txt}  Observed: {res}`=round(`obsval',0.001)'"
-		di "{txt}  Null mean (sd): {res}`=round(meannull,0.001)' (`=round(sdnull,0.001)')"
+		di "{txt}  Observed: {res}`=strtrim(string(round(`obsval',0.001),"%9.0g"))'"
+		di "{txt}  Null mean (sd): {res}`=strtrim(string(round(meannull,0.001),"%9.0g"))' (`=strtrim(string(round(sdnull,0.001),"%9.0g"))')"
 		di "{txt}  Reps: {res}`reps'"
 		if "`tail'" == "upper" | "`tail'" == "both" {
-			di "{txt}  p (upper tail): {res}`=round(pgreater,0.001)'"
+			di "{txt}  p (upper tail): {res}`=strtrim(string(round(pgreater,0.001),"%9.0g"))'"
 		}
 		if "`tail'" == "lower" | "`tail'" == "both" {
-			di "{txt}  p (lower tail): {res}`=round(pless,0.001)'"
+			di "{txt}  p (lower tail): {res}`=strtrim(string(round(pless,0.001),"%9.0g"))'"
 		}
 		if "`tail'" == "both" {
-			di "{txt}  p (two-sided): {res}`=round(`ptwo',0.001)'"
+			di "{txt}  p (two-sided): {res}`=strtrim(string(round(`ptwo',0.001),"%9.0g"))'"
 		}
 		di "{hline 40}"
 	}

@@ -64,6 +64,10 @@ program nwattime, rclass
 	mata: `netobj'->set_valued(`srcvalued')
 	mata: `netobj'->set_provenance("static graph view of `srcnetname' at t=`at' (`srctemporaltype')")
 
+	// displayed count: an undirected tie is stored as two triplet rows
+	// (i,j) and (j,i); r(ties) keeps counting rows (documented convention),
+	// the printed line shows true ties.
+	mata: st_local("tiesshown", strofreal(`srcdirected' ? rows(`__edges') : sum(`__edges'[.,1] :<= `__edges'[.,2])))
 	mata: mata drop `__srcnames' `__edges'
 
 	return scalar ties = ties
@@ -73,7 +77,7 @@ program nwattime, rclass
 	di "{txt}  Static graph view: {res}`name'"
 	di "{txt}  Source network: {res}`srcnetname'{txt} ({res}`srctemporaltype'{txt})"
 	di "{txt}  At: {res}`at'"
-	di "{txt}  Ties: {res}`=ties'"
+	di "{txt}  Ties: {res}`tiesshown'"
 
 	if "`xvars'" != "" {
 		nwload `name'

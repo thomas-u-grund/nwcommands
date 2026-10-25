@@ -55,10 +55,10 @@ program nwevcent
 	di "{hline 40}"
 	di "{txt}    Eigenvector centrality"
 	if `nosym' == 0 {
-		di "{txt}.   (calculated on symmetrized network)"
+		di "{txt}   (calculated on symmetrized network)"
 	}
 	if `getvalued' == 1 {
-		di "{txt}.   (calculated on tie values, not dichotomized)"
+		di "{txt}   (calculated on tie values, not dichotomized)"
 	}
 	mata: st_rclear()
 	sum `generate'

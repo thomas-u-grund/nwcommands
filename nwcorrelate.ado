@@ -77,7 +77,7 @@ program nwcorrelate_nodes
 	di "{txt}  Correlation network: {res}`r(corrname)'"
 	di "{hline 40}"
 	di "{txt}    Context definition: {res}`r(context)'"
-	di "{txt}    Average correlation between nodes: {res}`=round(`r(avg_corr)',0.001)'"
+	di "{txt}    Average correlation between nodes: {res}`=strtrim(string(round(`r(avg_corr)',0.001),"%9.0g"))'"
 end
 
 
@@ -169,7 +169,7 @@ unw_defs
 		getmata correlation = corr_reps
 		capture mata: mata drop corr_reps
 		
-		gen observed = r(corr)
+		qui gen observed = `corr'
 		if "`save'"!= "" {
 			di "QAP results saved as: `c(pwd)'/nwcorrelationqap.dta" 
 			save "`save'", replace
@@ -220,9 +220,9 @@ unw_defs
 	di "{txt}  Network2 name: {res}`r(name_2)'"
 	
 	di "{hline 40}"
-	di "{txt}    Correlation: {res}`=round(`r(corr)',0.001)'"
+	di "{txt}    Correlation: {res}`=strtrim(string(round(`r(corr)',0.001),"%9.0g"))'"
 	if "`r(pvalue)'" != "" {
-		di "{txt}    P-value: {res}`=round(`r(pvalue)',0.001)'"
+		di "{txt}    P-value: {res}`=strtrim(string(round(`r(pvalue)',0.001),"%9.0g"))'"
 	}
 	_return hold r1
 	if "`attribute'" != "" {

@@ -334,7 +334,7 @@ program nwdegree
 					// standard two-item `di "text" value' form used
 					// throughout the rest of this package, which
 					// displays missing as "." without erroring.
-					noi di "{txt}   Degree centralization:: {res}" `=round(`r(dg_central)',0.001)'
+					noi di "{txt}   Degree centralization: {res}`=strtrim(string(round(`r(dg_central)',0.001),"%9.0g"))'"
 				}
 			}
 			else {
@@ -344,8 +344,8 @@ program nwdegree
 					noi di
 					// BUGFIX: same fix as the undirected branch above -
 					// a 1-node directed network divides by zero here too.
-					noi di "{txt}   Indegree centralization:: {res}" `=round(`r(indg_central)',0.001)'
-					noi di "{txt}   Outdegree centralization:: {res}" `=round(`r(outdg_central)',0.001)'
+					noi di "{txt}   Indegree centralization: {res}`=strtrim(string(round(`r(indg_central)',0.001),"%9.0g"))'"
+					noi di "{txt}   Outdegree centralization: {res}`=strtrim(string(round(`r(outdg_central)',0.001),"%9.0g"))'"
 				}
 			}
 		}
