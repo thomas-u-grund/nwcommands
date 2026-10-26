@@ -52,6 +52,11 @@ program nwpagerank, rclass
 	mata: `__nw_pr' = nw2_fastpr(`netobj'->edgelist(), `nodes', `damping', `maxiter', `tol')
 	mata: st_local("__fast", strofreal(rows(`__nw_pr') == `nodes'))
 	}
+	else {
+	// the weighted walk has its own native kernel (plugin generation 10 or later)
+	mata: `__nw_pr' = nw2_fastprw(`netobj'->edgelist(), `nodes', `damping', `maxiter', `tol')
+	mata: st_local("__fast", strofreal(rows(`__nw_pr') == `nodes'))
+	}
 	if !`__fast' {
 		mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol', `__wtd')
 	}
@@ -72,6 +77,7 @@ program nwpagerank, rclass
 	}
 end
 
+capture mata: mata drop nw2_fastprw()
 capture mata: mata drop nw2_fastpr()
 mata:
 // Native PageRank (kernel 34 of the nwgraph plugin): the iteration of calculate_pagerank() on the stored ties
@@ -86,6 +92,21 @@ real colvector nw2_fastpr(real matrix el, real scalar n, real scalar d, real sca
 	if (n < 1) return(J(0, 1, .))
 	if (nwg_comb_version() < 8) return(J(0, 1, .))
 	r = nwg_comb(34, n, el, J(0, 1, .), (d, mi, tol), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
+	return(r)
+}
+
+// Native weighted PageRank (kernel 44, plugin generation 10): the surfer follows a tie with probability w / strength.
+real colvector nw2_fastprw(real matrix el, real scalar n, real scalar d, real scalar mi, real scalar tol)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 1, .))
+	if (n < 1) return(J(0, 1, .))
+	if (nwg_comb_version() < 10) return(J(0, 1, .))
+	r = nwg_comb(44, n, el, J(0, 1, .), (d, mi, tol), aux, st)
 	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
 	return(r)
 }

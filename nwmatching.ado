@@ -28,7 +28,16 @@ program nwmatching, rclass
 
 	tempname __nw_match
 	if `__wtd' {
-		capture noisily mata: `__nw_match' = `netobj'->calculate_matching_maxweight()
+		// native Hungarian method (plugin generation 10 or later); a result of the wrong shape (older plugin, no
+		// plugin, a kernel failure) leaves the Mata routine.  NW_NOFASTKERNELS forces the Mata routine.
+		local __fast 0
+		capture mata: `__nw_match' = nw2_fastmatch(`netobj')
+		if _rc == 0 {
+			mata: st_local("__fast", strofreal(rows(`__nw_match') == `nodes'))
+		}
+		if !`__fast' {
+			capture noisily mata: `__nw_match' = `netobj'->calculate_matching_maxweight()
+		}
 	}
 	else {
 		capture noisily mata: `__nw_match' = `netobj'->calculate_bipartite_matching()
@@ -71,5 +80,25 @@ real scalar nw_matchweight(pointer(class nw_def scalar) scalar p, real colvector
 	t = 0
 	for (i = 1; i <= rows(match); i++) if (match[i] > 0) t = t + p->edge_weight(i, match[i])
 	return(t)
+}
+end
+
+capture mata: mata drop nw2_fastmatch()
+mata:
+// Native maximum-weight matching (kernel 45 of the nwgraph plugin); a 0 x 1 vector when the kernel is not available
+real colvector nw2_fastmatch(pointer(class nw_def scalar) scalar p)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+	real colvector md
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 1, .))
+	if (p->is_2mode_boolean() == 0) return(J(0, 1, .))
+	if (nwg_comb_version() < 10) return(J(0, 1, .))
+	md = strtoreal(p->get_modes())'
+	r = nwg_comb(45, p->get_nodes(), p->edgelist(), md, J(1, 0, .), aux, st)
+	if (st != 0 | rows(r) != p->get_nodes() | cols(r) != 1) return(J(0, 1, .))
+	return(r)
 }
 end
