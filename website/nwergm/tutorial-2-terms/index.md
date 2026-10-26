@@ -18,9 +18,9 @@ and triad terms (`gwesp`, with its decay parameter).
 **Data.** Two networks that ship with `nwcommands` and are loaded with `nwwebuse`: `mesa`, the friendship
 network of 205 students in a US high school (undirected, with the attributes `grade`, `race` and `sex`),
 and `lazega`, the friendship network among 71 lawyers of a law firm (directed, with `practice`,
-`seniority` and others). The commands below were run with `nwergm` 1.0.1 and the core 3.0.0; the
+`seniority` and others). The commands below were run with `nwergm` 1.3.0 and the core 3.10.0; the
 complete script and log are in [example.do](example.do) and [example.log](example.log). Every model
-uses only terms that are in the released version 1.0.1. Models fitted by Monte Carlo involve
+uses only terms that are in the released version 1.3.0. Models fitted by Monte Carlo involve
 simulation, so a repetition with another `seed()` gives slightly different numbers.
 Output is shortened to the coefficient table and the log-likelihood line; `...` marks what is left out.
 
@@ -168,7 +168,7 @@ other terms, girl-girl is the most frequent kind of tie in these data.
 
 A term such as `mutual` (the number of reciprocated pairs) depends on more than one dyad at a time, so
 the model is dyad-dependent. `nwergm` then switches to Monte Carlo maximum likelihood on its own, and
-`seed()` makes the simulation repeatable. `nodeicov()` is the effect of a numeric attribute on
+`seed()` makes the simulation repeatable. As in R's `ergm`, the number of simulated networks adapts to the model (the iteration counts below differ between models for this reason). `nodeicov()` is the effect of a numeric attribute on
 **receiving** ties.
 
 ```stata
@@ -182,15 +182,15 @@ the model is dyad-dependent. `nwergm` then switches to Monte Carlo maximum likel
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |  -2.516783   .1054299   -23.87   0.000    -2.723422   -2.310144
-            mutual |   .9978762   .1575409     6.33   0.000     .6891017    1.306651
-    nodematch_prac |   .9083953   .0933166     9.73   0.000     .7254982    1.091292
-nodeicov_seniority |   -.006562   .0021514    -3.05   0.002    -.0107788   -.0023453
+             edges |  -2.514152   .1074062   -23.41   0.000    -2.724665    -2.30364
+            mutual |   .9874129   .1527646     6.46   0.000     .6879997    1.286826
+    nodematch_prac |   .9147415   .0937094     9.76   0.000     .7310745    1.098409
+nodeicov_seniority |   -.006675   .0022217    -3.00   0.003    -.0110295   -.0023205
 ------------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood: -1697.3338 (df = 4)   AIC:    3402.7   BIC:    3428.7   (MC std. err. =  .02686)
+Log-likelihood: -1697.6808 (df = 4)   AIC:    3403.4   BIC:    3429.4   (MC std. err. =  .14486)
 ```
 
 `mutual` is 0.99: friendships are strongly reciprocal. Lawyers of the same practice are more likely to
@@ -210,16 +210,16 @@ partner counts nearly fully). The right value is an empirical question. Here are
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |  -3.323792   .1300159   -25.56   0.000    -3.578619   -3.068966
-            mutual |   .8118747   .1619457     5.01   0.000     .4944671    1.129282
-    nodematch_prac |   .7068091   .0811852     8.71   0.000      .547689    .8659292
-nodeicov_seniority |  -.0043879   .0016961    -2.59   0.010    -.0077123   -.0010636
-         gwesp_0.5 |   .4927714   .0630313     7.82   0.000     .3692323    .6163106
+             edges |   -3.32184    .131386   -25.28   0.000    -3.579352   -3.064328
+            mutual |   .7969492   .1553399     5.13   0.000     .4924887     1.10141
+    nodematch_prac |   .7214706    .080024     9.02   0.000     .5646264    .8783149
+nodeicov_seniority |  -.0046162   .0018014    -2.56   0.010    -.0081468   -.0010856
+         gwesp_0.5 |   .4935235    .061269     8.06   0.000     .3734384    .6136085
 ------------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 2 iteration(s).
 ...
-Log-likelihood: -1668.2523 (df = 5)   AIC:    3346.5   BIC:    3379.1   (MC std. err. =  .07975)
+Log-likelihood: -1667.4731 (df = 5)   AIC:    3344.9   BIC:    3377.5   (MC std. err. =  .15171)
 ```
 
 ```stata
@@ -228,22 +228,22 @@ Log-likelihood: -1668.2523 (df = 5)   AIC:    3346.5   BIC:    3379.1   (MC std.
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |   -3.17037   .1094412   -28.97   0.000     -3.38487   -2.955869
-            mutual |   .7987458   .1583605     5.04   0.000      .488365    1.109127
-    nodematch_prac |   .6946017   .0806937     8.61   0.000      .536445    .8527583
-nodeicov_seniority |  -.0044466   .0016232    -2.74   0.006    -.0076281   -.0012651
-           gwesp_1 |   .3263843   .0377359     8.65   0.000     .2524233    .4003453
+             edges |  -3.167451   .1101029   -28.77   0.000    -3.383249   -2.951653
+            mutual |      .8028   .1607891     4.99   0.000     .4876591    1.117941
+    nodematch_prac |   .6901202   .0781094     8.84   0.000     .5370286    .8432119
+nodeicov_seniority |  -.0043719   .0016676    -2.62   0.009    -.0076403   -.0011035
+           gwesp_1 |   .3242339   .0380017     8.53   0.000     .2497519    .3987159
 ------------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 5 iteration(s).
 ...
-Log-likelihood: -1666.1471 (df = 5)   AIC:    3342.3   BIC:    3374.9   (MC std. err. =  .04272)
+Log-likelihood: -1666.0944 (df = 5)   AIC:    3342.2   BIC:    3374.7   (MC std. err. =  .11364)
 ```
 
 Both values give a clearly positive closure effect and similar other coefficients, but the two
 `gwesp` coefficients cannot be compared by size, because the statistic is scaled differently. Compare
 the models through the log-likelihood, AIC and BIC (see [Tutorial 4](../tutorial-4-missing-comparing/)):
-here -1667.8 for decay 0.5 and -1666.6 for decay 1, a small difference. To let the data choose the
+here -1667.5 for decay 0.5 and -1666.1 for decay 1, a small difference. To let the data choose the
 decay, the curved term `gwespfree()` estimates it as a parameter.
 
 ### Adding a degree term
@@ -257,20 +257,20 @@ are added in the same way:
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |   -3.35556   .1433422   -23.41   0.000    -3.636506   -3.074615
-            mutual |   .8133899   .1624744     5.01   0.000      .494946    1.131834
-    nodematch_prac |   .7103852   .0807026     8.80   0.000      .552211    .8685594
-nodeicov_seniority |  -.0045569   .0019048    -2.39   0.017    -.0082903   -.0008236
-         gwesp_0.5 |   .5028252   .0677129     7.43   0.000     .3701103    .6355401
-     gwidegree_0.5 |   1.143053   1.770761     0.65   0.519    -2.327575    4.613682
+             edges |  -3.360077   .1502866   -22.36   0.000    -3.654633    -3.06552
+            mutual |   .8002415   .1747992     4.58   0.000     .4576415    1.142842
+    nodematch_prac |   .7077244    .080161     8.83   0.000     .5506118     .864837
+nodeicov_seniority |  -.0046583   .0018977    -2.45   0.014    -.0083778   -.0009389
+         gwesp_0.5 |   .5075481   .0700989     7.24   0.000     .3701568    .6449395
+     gwidegree_0.5 |    1.78157   2.037619     0.87   0.382    -2.212089     5.77523
 ------------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 6 iteration(s).
 ...
-Log-likelihood: -1667.0046 (df = 6)   AIC:    3346.0   BIC:    3385.1   (MC std. err. =  .04225)
+Log-likelihood: -1665.6798 (df = 6)   AIC:    3343.4   BIC:    3382.4   (MC std. err. =  .12044)
 ```
 
-The coefficient of the in-degree term (1.04) is small relative to its standard error (1.59), so it adds
+The coefficient of the in-degree term (1.78) is small relative to its standard error (2.04), so it adds
 nothing here. Keep a term only if it answers your question or improves the model.
 
 ## Things to try

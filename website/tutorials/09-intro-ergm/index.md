@@ -26,12 +26,12 @@ nwinstall, models
 
 ```stata
 . nwergm version
-nwergm version 1.2.3, 26oct2026
+nwergm version 1.3.0, 26oct2026
 ```
 
 
 The same page of output also names the core package and the native plugin the package uses. The
-examples below were run with nwergm 1.0.1 and the core `nwcommands` 3.0.0.
+examples below were run with nwergm 1.3.0 and the core `nwcommands` 3.10.0.
 
 ## The idea
 
@@ -149,13 +149,13 @@ Nodes:                 =  16
 Ties:                  =  20
 Directed:              =  No
 Estimation:            =  MCMLE
-MCMC sample size:      =  3000
+MCMC sample size:      =  486
 
 ------------------------------------------------------------------------------
  flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -1.711394   .3685713    -4.64   0.000    -2.433781   -.9890078
-    gwesp_.5 |   .1011908   .2595513     0.39   0.697    -.4075205     .609902
+       edges |  -1.708273   .3711931    -4.60   0.000    -2.435798   -.9807477
+    gwesp_.5 |   .0914201   .2626228     0.35   0.728    -.4233111    .6061514
 ------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
@@ -164,9 +164,11 @@ Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
              Null Deviance:     166.4  on 120 degrees of freedom
          Residual Deviance:     108.0  on 118 degrees of freedom
 
-Log-likelihood:   -53.9966 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .00491)
+Log-likelihood:   -54.0072 (df = 2)   AIC:     112.0   BIC:     117.6   (MC std. err. =  .01069)
 ```
 
+
+As in R's `ergm`, the number of simulated networks is adaptive: `nwergm` keeps sampling until the effective sample size is large enough, so the "MCMC sample size" line reports the number of draws that this particular fit needed (486 here), not a fixed setting. The tutorial on diagnostics shows how to check a fit.
 
 Here the closure term is small and not significant once the density is accounted for, in line
 with the wealth effect being the more important explanation for these marriages.
@@ -183,8 +185,8 @@ on the model's own statistics and on geodesic distances, degrees and edgewise sh
 Goodness-of-fit for model statistics
 
                        obs       min      mean       max  MC p-value
-edges                   20        12     20.56        31        1.00
-gwesp_.5         8.3934693-1.377e-13      8.71 26.122165        0.84
+edges                   20        11     19.28        33        0.98
+gwesp_.5         8.3934693-2.753e-14      8.07 28.005678        0.76
 ```
 
 A Monte Carlo p-value close to zero for a statistic means the model does not reproduce that
