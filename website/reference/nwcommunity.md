@@ -22,10 +22,14 @@ replace
 measure(string)
 SYMmetrize
 resolution(real)
-algorithm(louvain|labelprop)
+algorithm(louvain|labelprop|dirtlpa)
 seed(int)
 silent
-listall]
+listall
+onemode
+starts(#)
+reps(#)
+minmodules(#)]
 ```
 
 | | |
@@ -35,12 +39,14 @@ listall]
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `symmetrize` | Symmetrize a directed network before detecting communities (required for directed networks) |
 | `resolution(real)` | Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects **algorithm(louvain)**'s own search, though it always affects the reported **r(modularity)** regardless of algorithm; default = 1 |
-| `algorithm(louvain\|labelprop)` | Community-detection algorithm; default = *louvain* |
+| `algorithm(louvain\|labelprop\|dirtlpa)` | Community-detection algorithm; default = *louvain*; *dirtlpa* (two-mode networks only) is the label propagation of Beckett (2016) for the bipartite modularity of Barber |
 | `seed(int)` | Set the random-number seed before detecting communities (for reproducibility with **algorithm(labelprop)**, which uses randomized sweep order and tie-breaking) |
 | `silent` | Suppress display of results |
 | `listall` | Print the full table of communities; by default at most the first 30 rows are printed, with a note. Results in `r()` are unchanged |
 | `onemode` | Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network) |
 | `starts(#)` | Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = *30*; the first starts in the order of the nodes, the others in random order (`seed()`) |
+| `reps(#)` | **algorithm(dirtlpa)**: the number of repeated runs of the label propagation for every number of starting modules (the **reps** of `bipartite::DIRT_LPA_wb_plus`); default = *10* |
+| `minmodules(#)` | **algorithm(dirtlpa)**: the smallest number of starting modules of the repeated runs (the **mini** of `bipartite::DIRT_LPA_wb_plus`); default = *4* |
 
 ## Description
 
@@ -81,6 +87,8 @@ Blondel, V.D., Guillaume, J.-L., Lambiotte, R., Lefebvre, E. (2008). Fast unfold
 
 Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 103(23), 8577-8582.
 
+Beckett, S.J. (2016). Improved community detection in weighted bipartite networks. *Royal Society Open Science* 3(1), 140536. doi:10.1098/rsos.140536.
+
 Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to detect community structures in large-scale networks. *Physical Review E* 76(3), 036106.
 
 ## See also
@@ -89,4 +97,4 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.10.0, 26 October 2026* ([check your installed version](nwversion))

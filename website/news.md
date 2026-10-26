@@ -12,6 +12,15 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: valued layouts, faster similarities, two-mode nwcug
+
+**nwcommands 3.10.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.10.0)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.1.0, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).
+
+- **Results that change: plots of valued networks.** `nwplot` and `nwmovie` (layouts `kk` and `frucht`, the defaults) now use the tie values as strengths, as `igraph::plot()` does: strongly tied nodes lie closer together. The option `binary` restores the earlier positions. Binary networks, two-mode networks, signed networks and the other layouts are not affected.
+- **`nwcug` works on two-mode networks** (it stopped with an error before) with four null models: density, the degrees of mode 1, of mode 2, or of both.
+- **Faster:** `nwcorrelate` and `nwsimilar, type(pearson)` (24 times faster at 5,000 nodes, same numbers), the other types of `nwsimilar` and `nwdissimilar`, and `nwdissimilar, type(manhatten)` (minutes before). New: `nwcommunity, algorithm(dirtlpa)` for two-mode networks (the repeated label propagation of Beckett, 2016). The compiled plug-in has to be the new one: `nwinstall` fetches it; without it the commands give the same numbers, slowly (`algorithm(dirtlpa)` stops with a message).
+- **Windows:** the compiled plug-in is built with optimisation, and all counters in it are 64 bits wide. The compiled kernels now also have a test that runs without Stata on Linux, macOS and Windows.
+
 ## 26 October 2026: nwsaom 1.1.0 and the manual for version 1.1
 
 **nwsaom 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.0)). Works with nwcommands 3.6.0 and later; no new core needed.

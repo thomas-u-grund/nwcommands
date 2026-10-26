@@ -140,4 +140,4 @@ A} 378(2), 591-602. ({opt weighted}'s own extension)
 	{help nwdegree}, {help nwclustering}, {help nwmixing}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

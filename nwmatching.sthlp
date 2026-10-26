@@ -119,4 +119,4 @@ mode; beyond that a matching of the same total value). Measured: two modes of 30
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
