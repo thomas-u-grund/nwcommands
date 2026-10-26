@@ -36,7 +36,7 @@ program nwmovie
 	// edgecolor()/edgesize() options fail outright ("Network <x> not
 	// found") on any real use - confirmed directly, never caught before
 	// because neither had test coverage.
-	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) NOOpen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout]
+	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) NOOpen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout binary nosign]
 	unw_defs
 
 	mata: st_local("_nwmv_pkgdir", NativeGraphInstallDir())
@@ -334,7 +334,7 @@ program nwmovie
 			// sequential smoke-test runs landed on the identical seed).
 			capture erase "`_nwmv_out'"
 			noi di "{txt}Resolving network {bf:`_nwmv_net'} (`_nwmv_i'/`_nwmv_k')..."
-			qui nwplot `_nwmv_net', ignorelgc interactive noopen movieexport("`_nwmv_out'") nodexy(`_nwmv_x' `_nwmv_y') `_nwmv_wave_color' `_nwmv_wave_symbol' `_nwmv_wave_size' `_nwmv_wave_edgecolor' `_nwmv_wave_edgesize' `_nwmv_label' `_nwmv_colorpalette' `_nwmv_edgecolorpalette' `_nwmv_symbolpalette' `_nwmv_scheme'
+			qui nwplot `_nwmv_net', ignorelgc interactive noopen movieexport("`_nwmv_out'") nodexy(`_nwmv_x' `_nwmv_y') `_nwmv_wave_color' `_nwmv_wave_symbol' `_nwmv_wave_size' `_nwmv_wave_edgecolor' `_nwmv_wave_edgesize' `_nwmv_label' `_nwmv_colorpalette' `_nwmv_edgecolorpalette' `_nwmv_symbolpalette' `_nwmv_scheme' `binary' `nosign'`sign'
 			capture confirm file "`_nwmv_out'"
 			if _rc {
 				di as error "nwmovie: failed to resolve network `_nwmv_net' via nwplot."

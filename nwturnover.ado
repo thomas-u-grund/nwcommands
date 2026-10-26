@@ -40,6 +40,25 @@ program nwturnover, rclass
 	}
 	local isdirected = ("`directed1'" == "true")
 
+	// a two-mode network holds MISSING in the blocks inside a mode (no tie can exist there); a copy with 0 there
+	// counts only the ties between the modes (missing != 0 would be read as a tie that is in both networks)
+	local orig1 "`netname1'"
+	local orig2 "`netname2'"
+	local made2 0
+	foreach __k in 1 2 {
+		_nwsyntax `netname`__k''
+		if "`is2mode'" == "true" {
+			capture nwdrop __nwt`__k'
+			qui nwduplicate `netname`__k'', name(__nwt`__k')
+			qui _nwsyntax __nwt`__k'
+			mata: `netobj'->set_2mode(0)
+			mata: `netobj'->set_edge(editmissing(*`netobj'->get_matrix(), 0))
+			local netname`__k' "__nwt`__k'"
+			local made2 1
+		}
+	}
+	if `made2' qui nwcurrent `orig1'
+
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
 		error 198
@@ -96,11 +115,13 @@ program nwturnover, rclass
 	// see nwbrokerage.ado's own header comment: the "already exists"
 	// probe above leaves _rc stale even after a fully successful run -
 	// reset explicitly and silently.
+	capture nwdrop __nwt1
+	capture nwdrop __nwt2
 	capture confirm variable `netgenerate', exact
 
 	if "`silent'" == "" {
 		noi di "{hline 40}"
-		noi di "{txt}  Networks: {res}`netname1'{txt} -> {res}`netname2'"
+		noi di "{txt}  Networks: {res}`orig1'{txt} -> {res}`orig2'"
 		noi di "{txt}  Stable: {res}`=nw_stable'{txt}  Formed: {res}`=nw_formed'{txt}  Dissolved: {res}`=nw_dissolved'"
 		noi di "{txt}  Jaccard index: {res}`=strtrim(string(round((`jaccard')*1000)/1000,"%9.0g"))'"
 		if `persistdenom' > 0 {

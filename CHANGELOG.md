@@ -4,6 +4,24 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.9.0] - 2026-10-26
+
+Plot appearance: `nwplot`, `nwmovie` and `nwplotmatrix` now show what a valued, signed or two-mode network is made of, and `nwturnover` is right on two-mode networks. Only the ado and help files changed: no new plugin generation, no change of the Mata library (the four model packages need no release).
+
+### Results that change (read before you re-run old analyses)
+- **`nwplot` draws the tie values of a valued network as edge widths by default** (before: all edges the same width unless `edgesize(<network>)` was given). The widths run from 1 to 4 units (largest absolute value widest, at most 15 width classes; ties of equal value keep the default width). `binary` gives the old picture. Colours never follow the values unless `edgecolor()` is given. `edgesize()` keeps its 1 to 8 range. `nwmovie` inherits the change (and passes `binary` on).
+- **`nwplot` draws a signed network (valued, negative ties) with positive ties solid navy and negative ties dashed cranberry, and a legend** (before: all ties the same colour, a negative tie looked like a positive one). The width follows the absolute value. `nosign` gives the old colours; an own `edgecolor()` wins. A negative `edgesize()` value no longer makes the plot fail.
+- **`nwplot` of a two-mode network draws the two modes with different symbols and colours and a legend** (circle and diamond; before: one symbol and colour for all nodes) unless `color()` or `symbol()` is given.
+- **`nwplotmatrix` has a colour legend (value classes) by default** (`legend(off)` as before) and, on a two-mode network, puts the nodes of one mode next to each other (unless `sortby()` or `group()` is given) with a line between the modes.
+- **`nwturnover` on two-mode networks no longer counts the cells inside a mode** (they are structurally missing, but were read as ties present in both networks, so stable, formed and dissolved ties and the Jaccard index were wrong); only ties between the modes count.
+
+### Added
+- `nwplot`: options `binary` and `nosign` (dialog: tab "More options"); stored results `r(edgewidth)`, `r(signcolor)`, `r(modesymbols)`. `nwmovie`: options `binary` and `nosign`, passed to `nwplot`. Test: `cscripts/test_plotfix.do`.
+- `nwaltergen`: `wmean` prints one note on a signed network (weights with their signs). `nwdyadprob`: `density()` without a weight network stops with r(198) and a message (was a raw r(3499)).
+
+### Fixed
+- `nwplot ... if ..., edgesize(<network>)` failed (a mistyped temporary network name); it works.
+
 ## [3.8.0] - 2026-10-26
 
 Two-mode dispatch, and the bipartite motifs of `bmotif`. Plugin generation 11 (native counting of bipartite motifs). The Mata library did not change, so the four model packages need no new release (they do not call the commands that changed and still require nwcommands 3.6.0 or later). A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) has no `nw2motifs`/`nwmotifs` on a two-mode network, the rest works as before.

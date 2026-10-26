@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -51,7 +51,10 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign * ]
+
+	// syntax names the macro of an option noXXX XXX
+	local nosign "`nosign'`sign'"
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -84,6 +87,7 @@ program nwplot, rclass
 	_nwsyntax `netname', max(1)
 	_nwdenseguard, command(nwplot) nodes(`nodes') copies(10) alternative(A picture of that many nodes is unreadable and slow: plot a part of the network (nwsubset, nwego, nwkcore) or export it with nwexport for a dedicated program.) `force'
 	qui nwsummarize `netname'
+	local __nwp_minval = r(minval)
 	if `r(density)' == 0 {
 		di "{txt}Network empty. Plotting does not make sense.{txt}"
 		exit
@@ -141,7 +145,7 @@ program nwplot, rclass
 		if "`edgesize'" != "" {
 			capture nwdrop _temp_edgesize_if
 			nwduplicate `edgesize', name(__temp_edgesize_if)
-			local edgesize "_temp_edgesize_if"
+			local edgesize "__temp_edgesize_if"
 			nwdrop __temp_edgesize_if if (!(`if'))
 		}
 		
@@ -338,6 +342,24 @@ program nwplot, rclass
 	///////////////////
 
 	preserve
+	// Two-mode network: the two modes get different node colours and symbols unless color()/symbol() are given
+	// (and a legend names them).
+	local __nwp_automode 0
+	if "`is2mode'" == "true" & ("`color'" == "" | "`symbol'" == "") {
+		local __nwp_automode 1
+		tempvar __nwp_mode
+		qui gen byte `__nwp_mode' = .
+		mata: st_store((1::`nodes'), "`__nwp_mode'", 1 :+ (strtoreal(`netobj'->get_modes()') :== 2))
+		capture label drop __nwp_modelab
+		label define __nwp_modelab 1 "mode 1" 2 "mode 2"
+		label values `__nwp_mode' __nwp_modelab
+		if "`color'" == "" local color "`__nwp_mode'"
+		if "`symbol'" == "" {
+			local symbol "`__nwp_mode', legendoff"
+			if strpos("s1color s2color economist", "`scheme'") == 0 & "`symbolpalette'" == "" local symbolpalette "circle diamond"
+		}
+		if "`legendopt'" == "" local legendopt "position(6) rows(1)"
+	}
 	if "`ifmaster'" != "" {
 		keep `ifmaster'
 	}
@@ -673,6 +695,32 @@ program nwplot, rclass
 	nwtomata `netname', mat(plotmat)
 	mata: M = (plotmat + plotmat') :/ (plotmat + plotmat')
 	mata: _editmissing(M,0)
+	// Defaults by network type (valued/signed/two-mode):
+	//  - valued network, no edgesize(): the tie values set the line widths (as if edgesize(<network>, legendoff)),
+	//    switched off by binary;
+	//  - signed network (valued, a negative tie value), no edgecolor(): positive ties solid navy, negative ties dashed
+	//    cranberry, with a legend; switched off by nosign. The width follows the absolute value.
+	local __nwp_autoes 0
+	local __nwp_autosign 0
+	if "`valued'" == "true" & "`binary'" == "" & "`edgesize'" == "" {
+		local __nwp_autoes 1
+		local edgesize "`netname'"
+		local edgesize_options ", legendoff"
+	}
+	if "`valued'" == "true" & "`nosign'" == "" & "`edgecolor'" == "" & `__nwp_minval' < 0 {
+		local __nwp_autosign 1
+		capture nwdrop __temp_sign
+		qui nwduplicate `netname', name(__temp_sign)
+		qui nwtomata __temp_sign, mat(__nwp_S)
+		mata: __nwp_S = (editmissing(__nwp_S, 0) :< 0)
+		qui nwreplacemat __temp_sign, newmat(__nwp_S)
+		capture mata: mata drop __nwp_S
+		local edgecolor "__temp_sign"
+		local edgecolor_original "sign"
+		local edgecolor_options ", edgecolorpalette(navy cranberry) edgepatternpalette(solid dash)"
+		if "`legendopt'" == "" local legendopt "position(6) rows(1)"
+	}
+
 	// Get edgesize network data
 	if "`edgesize'" != "" {
 		if "`edgesize'" == "," {
@@ -813,6 +861,11 @@ program nwplot, rclass
 			if `_ec_binned' {
 				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''")"'
 				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original': `_ecbin_lo_`edgecolorlabel_temp'' to `_ecbin_hi_`edgecolorlabel_temp''"
+			}
+			else if `__nwp_autosign' {
+				local __nwp_sl = cond(`edgecolorlabel_temp' == 1, "positive tie", "negative tie")
+				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`__nwp_sl'")"'
+				local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`__nwp_sl'"
 			}
 			else {
 				local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
@@ -1765,15 +1818,24 @@ program nwplot, rclass
 	// edgesize(), the plain default width is kept.
 	local esscale 0
 	local esmax 1
-	capture qui sum edgesize if edgesize < ., meanonly
+	// width range: 1 to 8 units for an explicit edgesize(), 1 to 4 for the automatic widths of a valued network
+	local esspan = cond(`__nwp_autoes', 3, 7)
+	tempvar __nwp_abs
+	qui gen double `__nwp_abs' = abs(edgesize) if edgesize < . & value != 0 & value < .
+	capture qui sum `__nwp_abs', meanonly
 	if _rc == 0 & r(N) > 0 {
-		local esmax = max(abs(r(max)), abs(r(min)))
+		local esmax = r(max)
+		// the widths follow the absolute value; ties of one absolute value keep the default width
 		local esscale = ("`edgesizeraw'" == "" & "`edgesize'" != "" & r(max) > r(min) & `esmax' > 0)
+		// at most 15 width classes (one pcspike layer per distinct value otherwise)
+		if `esscale' {
+			qui replace edgesize = sign(edgesize) * round(abs(edgesize) / `esmax' * 14) / 14 * `esmax' if edgesize < .
+		}
 	}
 	if "`edgesizekeys'" != "" & "`edgesizekeys_legendoff'" == ""{
 		foreach eszkey in `edgesizekeys' {
 			if `esscale' {
-				local tempkey_s = 1 + 7 * abs(`eszkey') / `esmax'
+				local tempkey_s = 1 + `esspan' * abs(`eszkey') / `esmax'
 				local tempval_line = (`tempkey_s' / 2) * `edgefactor' / 2
 				local tempval_arrow = (`tempkey_s' + 1) * `arrowfactor'
 			}
@@ -1901,13 +1963,15 @@ program nwplot, rclass
 			forvalues tempval_mat = 1/`tempvalue_rows'{
 				local tempval = valuerow[`tempval_mat',1]
 				if `esscale' {
-					local tempval_s = 1 + 7 * abs(`tempval') / `esmax'
+					local tempval_s = 1 + `esspan' * abs(`tempval') / `esmax'
 					local tempval_line = (`tempval_s' / 2) * `edgefactor' / 2
 					local tempval_arrow = (`tempval_s' + 1) * `arrowfactor'
 				}
 				else {
-					local tempval_line = (`tempval' / 2) * `edgefactor' / 2
-					local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+					local __nwp_tv = abs(`tempval')
+					if "`edgesizeraw'" == "" local __nwp_tv = 1
+					local tempval_line = (`__nwp_tv' / 2) * `edgefactor' / 2
+					local tempval_arrow = (`__nwp_tv' + 1) * `arrowfactor'
 				}
 				local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 				// BUGFIX: this formula assumes edgesize() ties are on a
@@ -2016,6 +2080,12 @@ program nwplot, rclass
 	// scheme() was given explicitly (see its own default assignment
 	// above)
 	return local scheme "`scheme'"
+	// what the network type changed in the picture: r(edgewidth) is "values" (automatic widths from the tie values),
+	// "edgesize" (edgesize() given), "binary" (no value widths); r(signcolor) 1 when positive and negative ties
+	// got their own colour and line pattern; r(modesymbols) 1 when the two modes got their own symbol and colour
+	return local edgewidth = cond(`__nwp_autoes', "values", cond("`edgesize'" != "", "edgesize", "binary"))
+	return scalar signcolor = `__nwp_autosign'
+	return scalar modesymbols = `__nwp_automode'
 	return local interactive "`_nwedit_out'"
 	return local fname "`_nwedit_out'"
 	return local importcoords "`importcoords'"
@@ -2628,7 +2698,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		if (st_local("_nwedit_hasedgesize") == "1") {
 			esv = abs(st_data((1::nties), "edgesize"))
 			if (max(esv) > min(esv) & max(esv) > 0) {
-				edgewv = 1 :+ 7 :* esv :/ max(esv)
+				edgewv = 1 :+ (st_local("__nwp_autoes") == "1" ? 5 : 7) :* esv :/ max(esv)
 			}
 		}
 		nemitted = 0
