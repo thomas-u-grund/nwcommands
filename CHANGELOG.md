@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Speed (no change in results)
+- `nwgeodesic ..., force` on an unvalued network took 37 s at 600 nodes because option `force` sent it to the Mata Dijkstra routine; it now uses the same hop-count routine as the call without `force` (0.03 s at 600 nodes, 1.2 s at 5,000). The distances are identical (checked on 90 combinations of binary, valued, directed and disconnected networks and options against 3.8.0). The Mata library did not change.
+
 ## [3.8.0] - 2026-10-26
 
 Two-mode dispatch, and the bipartite motifs of `bmotif`. Plugin generation 11 (native counting of bipartite motifs). The Mata library did not change, so the four model packages need no new release (they do not call the commands that changed and still require nwcommands 3.6.0 or later). A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) has no `nw2motifs`/`nwmotifs` on a two-mode network, the rest works as before.
