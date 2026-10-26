@@ -52,7 +52,7 @@ build systems a general library would bring along for a handful of functions act
   blocking, factions, line connectivity (equivalent-flow tree), the 4-node motif census, two-mode
   clustering, triad balance, bipartite matching, Louvain communities, the distance sums behind closeness
   and Katz (one breadth-first search per node, no distance matrix), the local clustering coefficient, the
-  triad census, eigenvector centrality, Burt's structural-hole measures, the dyadic constraint network and Simmelian ties, PageRank and maximal cliques, and the bipartite motif and node position counts of `nw2motifs` (`nwnative380.h`, one induced-subgraph count per pair or triple of nodes of one mode; called from their own ado files), and the exhaustive subgroup
+  triad census, eigenvector centrality, Burt's structural-hole measures, the dyadic constraint network and Simmelian ties, PageRank and maximal cliques, and the bipartite motif and node position counts of `nwmotifs` (`nwnative380.h`, one induced-subgraph count per pair or triple of nodes of one mode; called from their own ado files), and the exhaustive subgroup
   searches (n-cliques, n-clans, k-plexes) with result and work limits. The Mata side (`nwg_comb()` in `unw_core.do`) probes the plugin once per session and
   keeps the older Mata code as the fallback.
 

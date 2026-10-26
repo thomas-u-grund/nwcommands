@@ -106,4 +106,4 @@ and 1.3 GB), 5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

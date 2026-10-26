@@ -37,8 +37,8 @@ dataset export with ego/alter comparison variables; `nwqap`'s full `eclass` inte
 hierarchical (Sugiyama-style), and dedicated bipartite layouts.
 
 **Two-mode and temporal groundwork**: two-mode/bipartite status as a first-class, compositional
-network property (a declaration that every derived network keeps, one shared refusal for the commands that cannot work on a
-two-mode network, Barber's bipartite modularity, nestedness, the bipartite motifs and node positions of `bmotif` (`nw2motifs`), a within-mode null model, export and import in all four formats; see the page
+network property (a declaration that every derived network keeps, commands that use their two-mode form automatically on a two-mode network (`onemode` for the other), one shared refusal for the commands that cannot work on a
+two-mode network, Barber's bipartite modularity, nestedness, the bipartite motifs and node positions of `bmotif` (`nwmotifs`), a within-mode null model, export and import in all four formats; see the page
 on two-mode networks); temporal
 metadata (`time()`/`interval()`/`eventtime()`) and slicing (`nwattime`) — the foundation the
 relational-event and actor-oriented models above are built on.

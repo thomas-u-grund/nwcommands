@@ -181,4 +181,4 @@ The result is a network with a tie for every pair of nodes. Above about 27,000 n
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

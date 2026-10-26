@@ -154,4 +154,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
