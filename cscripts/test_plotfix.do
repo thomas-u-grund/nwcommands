@@ -89,6 +89,56 @@ nwuse data/glasgow, nwappend
 capture noisily nwmovie glasgow1 glasgow2, binary nosign noopen fname("`tmp'plotfix_m.html")
 assert _rc == 0
 
+* ---- nwplotmatrix: legend and a line between the modes (runs; legend(off) still possible)
+nwplotmatrix davis, lab
+nwplotmatrix davis_v
+nwplotmatrix gang_valued
+nwplotmatrix davis, legend(off)
+
+* ---- nwturnover on two-mode networks counts only ties between the modes (hand-computed)
+nwduplicate davis, name(davis2)
+nwtomata davis, mat(D)
+_nwsyntax davis
+mata:
+md = strtoreal(`netobj'->get_modes()')
+i1 = selectindex(md :== 1)
+i2 = selectindex(md :== 2)
+D2 = D
+// remove the first tie of the first two nodes of mode 1 that have one
+done = 0
+for (k = 1; k <= rows(i1) & done < 2; k++) {
+	cs = select(i2, (D[i1[k], i2]' :== 1))
+	if (rows(cs) > 0) {
+		D2[i1[k], cs[1]] = 0
+		D2[cs[1], i1[k]] = 0
+		done++
+	}
+}
+// add one tie of the last node of mode 1 that is not there
+cs = select(i2, (D[i1[rows(i1)], i2]' :== 0))
+D2[i1[rows(i1)], cs[1]] = 1
+D2[cs[1], i1[rows(i1)]] = 1
+end
+nwreplacemat davis2, newmat(D2)
+nwturnover davis davis2, generate(tov)
+assert r(stable) == 87 & r(dissolved) == 2 & r(formed) == 1
+nwturnover davis davis, generate(tov2) silent
+assert r(stable) == 89 & r(formed) == 0 & r(dissolved) == 0 & r(jaccard) == 1
+
+* ---- nwdyadprob: density() without a weight network says so
+capture nwdyadprob, density(0.1) name(dpx)
+assert _rc == 198
+
+* ---- nwaltergen wmean: one note on a signed network, none on a positive one
+log using "`tmp'plotfix_note.log", text replace
+nwload senate114, xvars
+gen xx = mod(_n, 4)
+nwaltergen wmsn = wmean(alter.xx), net(senate114)
+nwaltergen wmgv = wmean(alter.xx), net(gang_valued)
+log close
+mata: st_local("nnote", strofreal(sum(strpos(cat("`tmp'plotfix_note.log"), "note: wmean on a signed network") :> 0)))
+assert `nnote' == 1
+
 * ---- dialog
 capture db nwplot
 assert _rc == 0

@@ -11,7 +11,10 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwplot` draws a signed network (valued, negative ties) with positive ties solid navy and negative ties dashed cranberry and a legend** (before: all ties the same colour, a negative tie looked like a positive one). The width follows the absolute value. `nosign` gives the old colours; an own `edgecolor()` wins. A negative `edgesize()` value no longer makes the plot fail.
 - **`nwplot` of a two-mode network draws the two modes with different symbols and colours and a legend** (circle and diamond; before: one symbol and colour for all nodes) unless `color()` or `symbol()` is given.
 
+- **`nwturnover` on two-mode networks no longer counts the cells inside a mode** (structurally missing, read as ties present in both networks, so stable/formed/dissolved and the Jaccard index were wrong); only ties between the modes count. `nwplotmatrix` has a colour legend (value classes) by default (`legend(off)` as before) and, on a two-mode network, puts the nodes of one mode next to each other (unless `sortby()`/`group()` is given) with a line between the modes.
+
 ### Added
+- `nwaltergen`: `wmean` prints one note on a signed network (weights with their signs). `nwdyadprob`: `density()` without a weight network stops with r(198) and a message (was a raw r(3499)).
 - `nwplot`: options `binary` and `nosign` (dialog: tab "More options"); stored results `r(edgewidth)`, `r(signcolor)`, `r(modesymbols)`. `nwmovie`: options `binary` and `nosign` passed to `nwplot`. Test: `cscripts/test_plotfix.do`.
 
 ### Fixed
