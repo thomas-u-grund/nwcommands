@@ -93,6 +93,7 @@
 */
 
 #include "stplugin.h"
+#include "nwtypes.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -117,13 +118,13 @@
    adjlist_t.
    =================================================================== */
 
-static int betweenness_unweighted(long n, int directed, long *ei, long *ej, long nties) {
-	long i, k, src;
-	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
-	long *stack = NULL, *queue = NULL, *dist = NULL;
+static int betweenness_unweighted(nwint n, int directed, nwint *ei, nwint *ej, nwint nties) {
+	nwint i, k, src;
+	nwint *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
+	nwint *stack = NULL, *queue = NULL, *dist = NULL;
 	double *sigma = NULL, *delta = NULL, *Cb = NULL;
-	long *predcount = NULL, *predcap = NULL;
-	long **preds = NULL;
+	nwint *predcount = NULL, *predcap = NULL;
+	nwint **preds = NULL;
 	int rc = 0;
 
 	/* The caller (unw_core.do's own calculate_betweenness_native())
@@ -135,43 +136,43 @@ static int betweenness_unweighted(long n, int directed, long *ei, long *ej, long
 	   used ONLY for the final halving step, matching
 	   calculate_betweenness()'s own identical undirected halving in
 	   unw_core.do. */
-	deg = (long *)calloc((size_t)(n + 1), sizeof(long));
+	deg = (nwint *)calloc((size_t)(n + 1), sizeof(nwint));
 	for (i = 0; i < nties; i++) deg[ei[i]]++;
-	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
 	rowptr[1] = 0;
 	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
-	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	cursor = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
-	colidx = (long *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(long));
+	colidx = (nwint *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(nwint));
 	for (i = 0; i < nties; i++) colidx[cursor[ei[i]]++] = ej[i];
 	free(cursor); cursor = NULL;
 	free(deg); deg = NULL;
 
 	Cb = (double *)calloc((size_t)(n + 1), sizeof(double));
-	stack = (long *)malloc((size_t)n * sizeof(long));
-	queue = (long *)malloc((size_t)n * sizeof(long));
+	stack = (nwint *)malloc((size_t)n * sizeof(nwint));
+	queue = (nwint *)malloc((size_t)n * sizeof(nwint));
 	sigma = (double *)malloc((size_t)(n + 1) * sizeof(double));
-	dist = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	dist = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	delta = (double *)malloc((size_t)(n + 1) * sizeof(double));
-	predcount = (long *)malloc((size_t)(n + 1) * sizeof(long));
-	predcap = (long *)calloc((size_t)(n + 1), sizeof(long));
-	preds = (long **)calloc((size_t)(n + 1), sizeof(long *));
+	predcount = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
+	predcap = (nwint *)calloc((size_t)(n + 1), sizeof(nwint));
+	preds = (nwint **)calloc((size_t)(n + 1), sizeof(nwint *));
 	if (!Cb || !stack || !queue || !sigma || !dist || !delta || !predcount || !predcap || !preds) {
 		rc = 909;
 		goto cleanup;
 	}
 
 	for (src = 1; src <= n; src++) {
-		long sp = 0, qh = 0, qt = 0;
+		nwint sp = 0, qh = 0, qt = 0;
 		for (i = 1; i <= n; i++) { dist[i] = -1; sigma[i] = 0.0; delta[i] = 0.0; predcount[i] = 0; }
 		dist[src] = 0;
 		sigma[src] = 1.0;
 		queue[qt++] = src;
 		while (qh < qt) {
-			long v = queue[qh++];
+			nwint v = queue[qh++];
 			stack[sp++] = v;
 			for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
-				long w = colidx[k];
+				nwint w = colidx[k];
 				if (dist[w] < 0) {
 					dist[w] = dist[v] + 1;
 					queue[qt++] = w;
@@ -180,16 +181,16 @@ static int betweenness_unweighted(long n, int directed, long *ei, long *ej, long
 					sigma[w] += sigma[v];
 					if (predcount[w] >= predcap[w]) {
 						predcap[w] = predcap[w] ? predcap[w] * 2 : 4;
-						preds[w] = (long *)realloc(preds[w], (size_t)predcap[w] * sizeof(long));
+						preds[w] = (nwint *)realloc(preds[w], (size_t)predcap[w] * sizeof(nwint));
 					}
 					preds[w][predcount[w]++] = v;
 				}
 			}
 		}
 		while (sp > 0) {
-			long w = stack[--sp];
+			nwint w = stack[--sp];
 			for (k = 0; k < predcount[w]; k++) {
-				long v = preds[w][k];
+				nwint v = preds[w][k];
 				delta[v] += (sigma[v] / sigma[w]) * (1.0 + delta[w]);
 			}
 			if (w != src) Cb[w] += delta[w];
@@ -200,7 +201,7 @@ static int betweenness_unweighted(long n, int directed, long *ei, long *ej, long
 		for (i = 1; i <= n; i++) Cb[i] /= 2.0;
 	}
 
-	for (i = 1; i <= n; i++) SF_vstore(3, i, Cb[i]);
+	for (i = 1; i <= n; i++) NW_VSTORE(3, i, Cb[i]);
 
 cleanup:
 	if (preds) {
@@ -239,26 +240,26 @@ cleanup:
    interpreter overhead this whole native path exists to avoid.
    =================================================================== */
 
-static int bfs_distances_from(long n, long *ei, long *ej, long nties, long source, long nblock) {
-	long i, k, b, src;
-	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
-	long *queue = NULL, *dist = NULL;
+static int bfs_distances_from(nwint n, nwint *ei, nwint *ej, nwint nties, nwint source, nwint nblock) {
+	nwint i, k, b, src;
+	nwint *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
+	nwint *queue = NULL, *dist = NULL;
 	int rc = 0;
 
-	deg = (long *)calloc((size_t)(n + 1), sizeof(long));
+	deg = (nwint *)calloc((size_t)(n + 1), sizeof(nwint));
 	for (i = 0; i < nties; i++) deg[ei[i]]++;
-	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
 	rowptr[1] = 0;
 	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
-	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	cursor = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
-	colidx = (long *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(long));
+	colidx = (nwint *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(nwint));
 	for (i = 0; i < nties; i++) colidx[cursor[ei[i]]++] = ej[i];
 	free(cursor); cursor = NULL;
 	free(deg); deg = NULL;
 
-	dist = (long *)malloc((size_t)(n + 1) * sizeof(long));
-	queue = (long *)malloc((size_t)n * sizeof(long));
+	dist = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
+	queue = (nwint *)malloc((size_t)n * sizeof(nwint));
 	if (!dist || !queue) { rc = 909; goto cleanup; }
 
 	/* nblock sources source, source+1, ... (the default is the one source): the graph is built once for all of them and
@@ -269,12 +270,12 @@ static int bfs_distances_from(long n, long *ei, long *ej, long nties, long sourc
 		for (i = 1; i <= n; i++) dist[i] = -1;
 		dist[src] = 0;
 		{
-			long qh = 0, qt = 0;
+			nwint qh = 0, qt = 0;
 			queue[qt++] = src;
 			while (qh < qt) {
-				long v = queue[qh++];
+				nwint v = queue[qh++];
 				for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
-					long w = colidx[k];
+					nwint w = colidx[k];
 					if (dist[w] < 0) {
 						dist[w] = dist[v] + 1;
 						queue[qt++] = w;
@@ -290,8 +291,8 @@ static int bfs_distances_from(long n, long *ei, long *ej, long nties, long sourc
 		   missing rather than a sentinel like -1 that could be mistaken for
 		   a real distance. */
 		for (i = 1; i <= n; i++) {
-			if (i == src || dist[i] < 0) SF_vstore(3 + b, i, SV_missval);
-			else SF_vstore(3 + b, i, (double)dist[i]);
+			if (i == src || dist[i] < 0) NW_VSTORE(3 + b, i, SV_missval);
+			else NW_VSTORE(3 + b, i, (double)dist[i]);
 		}
 	}
 
@@ -319,31 +320,31 @@ cleanup:
    =================================================================== */
 
 typedef struct {
-	long N;              /* flow-graph nodes: in(v)=v, out(v)=n+v, 1-indexed */
-	long *head, *nxt, *to;
-	long *cap, *res;     /* base capacity and residual capacity per arc */
-	long nedge;
+	nwint N;              /* flow-graph nodes: in(v)=v, out(v)=n+v, 1-indexed */
+	nwint *head, *nxt, *to;
+	nwint *cap, *res;     /* base capacity and residual capacity per arc */
+	nwint nedge;
 } flowgraph_t;
 
-static void fg_add(flowgraph_t *g, long u, long v, long c) {
-	long e = g->nedge;
+static void fg_add(flowgraph_t *g, nwint u, nwint v, nwint c) {
+	nwint e = g->nedge;
 	g->to[e] = v; g->cap[e] = c; g->nxt[e] = g->head[u]; g->head[u] = e;
 	g->to[e + 1] = u; g->cap[e + 1] = 0; g->nxt[e + 1] = g->head[v]; g->head[v] = e + 1;
 	g->nedge += 2;
 }
 
-static int kconn_search(long n, long *ei, long *ej, long m, long target) {
-	long i, j, e, delta, v0, minflow, best_s = 0, best_t = 0, big = n + 10;
-	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
+static int kconn_search(nwint n, nwint *ei, nwint *ej, nwint m, nwint target) {
+	nwint i, j, e, delta, v0, minflow, best_s = 0, best_t = 0, big = n + 10;
+	nwint *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
 	char *isnb = NULL, *isnb2 = NULL;
-	long *queue = NULL, *parent = NULL, *stamp = NULL, curstamp = 0;
-	long *touched = NULL, ntouched = 0;
+	nwint *queue = NULL, *parent = NULL, *stamp = NULL, curstamp = 0;
+	nwint *touched = NULL, ntouched = 0;
 	flowgraph_t g;
 	int rc = 0;
-	long nv0 = 0, *nbv0 = NULL;
+	nwint nv0 = 0, *nbv0 = NULL;
 
 	memset(&g, 0, sizeof(g));
-	deg = (long *)calloc((size_t)(n + 2), sizeof(long));
+	deg = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
 	for (e = 0; e < m; e++) deg[ei[e]]++;
 	delta = deg[1]; v0 = 1;
 	for (i = 2; i <= n; i++) if (deg[i] < delta) { delta = deg[i]; v0 = i; }
@@ -354,36 +355,36 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 	/* target 2 (nwkcomponents, k = 2): the answer of every flow query is known from the blocks of one
 	   depth-first search (kconn2_search() in nwfast2.h); same queries in the same order, same result */
 	if (target == 2) {
-		long mf2, bs2, bt2;
+		nwint mf2, bs2, bt2;
 		int h = kconn2_search(n, ei, ej, m, delta, v0, &mf2, &bs2, &bt2);
 		if (h == 1) { minflow = mf2; best_s = bs2; best_t = bt2; goto done; }
 		if (h == 2) { rc = 909; goto done; }
 	}
 
-	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
 	rowptr[1] = 0;
 	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
-	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	cursor = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
-	colidx = (long *)malloc((size_t)(m > 0 ? m : 1) * sizeof(long));
+	colidx = (nwint *)malloc((size_t)(m > 0 ? m : 1) * sizeof(nwint));
 	for (e = 0; e < m; e++) colidx[cursor[ei[e]]++] = ej[e];
 
 	g.N = 2 * n;
 	g.nedge = 0;
-	g.head = (long *)calloc((size_t)(g.N + 1), sizeof(long));      /* arcs are numbered from 1; 0 = none */
+	g.head = (nwint *)calloc((size_t)(g.N + 1), sizeof(nwint));      /* arcs are numbered from 1; 0 = none */
 	{
-		long total = 2 * (n + m) + 2;
-		g.to = (long *)malloc((size_t)total * sizeof(long));
-		g.nxt = (long *)malloc((size_t)total * sizeof(long));
-		g.cap = (long *)malloc((size_t)total * sizeof(long));
-		g.res = (long *)malloc((size_t)total * sizeof(long));
+		nwint total = 2 * (n + m) + 2;
+		g.to = (nwint *)malloc((size_t)total * sizeof(nwint));
+		g.nxt = (nwint *)malloc((size_t)total * sizeof(nwint));
+		g.cap = (nwint *)malloc((size_t)total * sizeof(nwint));
+		g.res = (nwint *)malloc((size_t)total * sizeof(nwint));
 	}
-	queue = (long *)malloc((size_t)(g.N + 1) * sizeof(long));
-	parent = (long *)malloc((size_t)(g.N + 1) * sizeof(long));
-	stamp = (long *)calloc((size_t)(g.N + 1), sizeof(long));
+	queue = (nwint *)malloc((size_t)(g.N + 1) * sizeof(nwint));
+	parent = (nwint *)malloc((size_t)(g.N + 1) * sizeof(nwint));
+	stamp = (nwint *)calloc((size_t)(g.N + 1), sizeof(nwint));
 	isnb = (char *)calloc((size_t)(n + 1), 1);
 	isnb2 = (char *)calloc((size_t)(n + 1), 1);
-	touched = (long *)malloc(((size_t)target * (size_t)(2 * n + 2) + (size_t)(2 * (n + m) + 2)) * sizeof(long));
+	touched = (nwint *)malloc(((size_t)target * (size_t)(2 * n + 2) + (size_t)(2 * (n + m) + 2)) * sizeof(nwint));
 	if (!touched) { rc = 909; goto done; }
 	if (!g.head || !g.to || !g.nxt || !g.cap || !g.res || !queue || !parent || !stamp || !isnb || !isnb2) { rc = 909; goto done; }
 	/* arc index 0 is a dummy so that head[]==0 means "no arc" */
@@ -394,16 +395,16 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 	nv0 = rowptr[v0 + 1] - rowptr[v0];
 	nbv0 = colidx + rowptr[v0];
 	for (i = 0; i < nv0; i++) isnb[nbv0[i]] = 1;
-	memcpy(g.res, g.cap, (size_t)g.nedge * sizeof(long));
+	memcpy(g.res, g.cap, (size_t)g.nedge * sizeof(nwint));
 
 	/* the flow between s and t, stopping at `target' */
 #define QUERY(S, T, OUT) do { \
-	long s_ = (S), t_ = (T), maxf_ = 0; \
-	long as_ = 2 + 2 * (s_ - 1), at_ = 2 + 2 * (t_ - 1); \
+	nwint s_ = (S), t_ = (T), maxf_ = 0; \
+	nwint as_ = 2 + 2 * (s_ - 1), at_ = 2 + 2 * (t_ - 1); \
 	ntouched = 0; \
 	g.res[as_] = big; g.res[at_] = big; \
 	while (maxf_ < target) { \
-		long qh_ = 0, qt_ = 0, found_ = 0, u_, a_, v_, pf_; \
+		nwint qh_ = 0, qt_ = 0, found_ = 0, u_, a_, v_, pf_; \
 		curstamp++; \
 		queue[qt_++] = n + s_; stamp[n + s_] = curstamp; \
 		while (qh_ < qt_ && !found_) { \
@@ -427,26 +428,26 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 		maxf_ += pf_; \
 	} \
 	/* back to the base capacities: only the arcs the flow used */ \
-	{ long q_; for (q_ = 0; q_ < ntouched; q_++) { g.res[touched[q_]] = g.cap[touched[q_]]; g.res[touched[q_] ^ 1] = g.cap[touched[q_] ^ 1]; } } \
+	{ nwint q_; for (q_ = 0; q_ < ntouched; q_++) { g.res[touched[q_]] = g.cap[touched[q_]]; g.res[touched[q_] ^ 1] = g.cap[touched[q_] ^ 1]; } } \
 	g.res[as_] = g.cap[as_]; g.res[at_] = g.cap[at_]; \
 	(OUT) = maxf_; } while (0)
 
 	/* (2) v0 to every vertex it is not adjacent to */
 	for (i = 1; i <= n && !(minflow < target); i++) {
 		if (i != v0 && !isnb[i]) {
-			long f;
+			nwint f;
 			QUERY(v0, i, f);
 			if (f < minflow) { minflow = f; best_s = v0; best_t = i; }
 		}
 	}
 	/* (3) every non-adjacent pair among v0's neighbours */
 	for (i = 0; i < nv0 && !(minflow < target); i++) {
-		long ni = nbv0[i];
+		nwint ni = nbv0[i];
 		memset(isnb2, 0, (size_t)(n + 1));
 		for (e = rowptr[ni]; e < rowptr[ni + 1]; e++) isnb2[colidx[e]] = 1;
 		for (j = i + 1; j < nv0 && !(minflow < target); j++) {
 			if (!isnb2[nbv0[j]]) {
-				long f;
+				nwint f;
 				QUERY(ni, nbv0[j], f);
 				if (f < minflow) { minflow = f; best_s = ni; best_t = nbv0[j]; }
 			}
@@ -455,9 +456,9 @@ static int kconn_search(long n, long *ei, long *ej, long m, long target) {
 #undef QUERY
 
 done:
-	SF_vstore(3, 1, (double)minflow);
-	SF_vstore(3, 2, (double)best_s);
-	SF_vstore(3, 3, (double)best_t);
+	NW_VSTORE(3, 1, (double)minflow);
+	NW_VSTORE(3, 2, (double)best_s);
+	NW_VSTORE(3, 3, (double)best_t);
 	free(deg); free(rowptr); free(colidx); free(cursor);
 	free(g.head); free(g.to); free(g.nxt); free(g.cap); free(g.res);
 	free(queue); free(parent); free(stamp); free(isnb); free(isnb2); free(touched);
@@ -490,26 +491,26 @@ done:
    status.  Distances are kept as 16-bit integers (n up to 60,000).
    =================================================================== */
 
-static int kk_stress(long n, long *ei, long *ej, long m, long iter) {
-	long i, j, k, t, e, maxfinite = 0, maxdist, maxdiag = 0;
-	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL, *queue = NULL;
+static int kk_stress(nwint n, nwint *ei, nwint *ej, nwint m, nwint iter) {
+	nwint i, j, k, t, e, maxfinite = 0, maxdist, maxdiag = 0;
+	nwint *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL, *queue = NULL;
 	unsigned short *D = NULL;
 	char *loop = NULL;
 	double *px = NULL, *py = NULL;
 	int rc = 0, status = 0;
 
 	if (n > 60000) { SF_error("nwgraph: too many nodes for the layout\n"); return 198; }
-	deg = (long *)calloc((size_t)(n + 2), sizeof(long));
+	deg = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
 	loop = (char *)calloc((size_t)(n + 1), 1);
 	for (e = 0; e < m; e++) { if (ei[e] == ej[e]) loop[ei[e]] = 1; else deg[ei[e]]++; }
-	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
 	rowptr[1] = 0;
 	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
-	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	cursor = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
-	colidx = (long *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(long));
+	colidx = (nwint *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(nwint));
 	for (e = 0; e < m; e++) if (ei[e] != ej[e]) colidx[cursor[ei[e]]++] = ej[e];
-	queue = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	queue = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	D = (unsigned short *)malloc((size_t)n * (size_t)n * sizeof(unsigned short));
 	px = (double *)malloc((size_t)(n + 1) * sizeof(double));
 	py = (double *)malloc((size_t)(n + 1) * sizeof(double));
@@ -517,17 +518,17 @@ static int kk_stress(long n, long *ei, long *ej, long m, long iter) {
 
 	for (i = 1; i <= n; i++) {
 		unsigned short *Di = D + (size_t)(i - 1) * (size_t)n;
-		long qh = 0, qt = 0;
+		nwint qh = 0, qt = 0;
 		for (j = 0; j < n; j++) Di[j] = 0xFFFF;
 		Di[i - 1] = 0;
 		queue[qt++] = i;
 		while (qh < qt) {
-			long v = queue[qh++];
+			nwint v = queue[qh++];
 			for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
-				long w = colidx[k];
+				nwint w = colidx[k];
 				if (Di[w - 1] == 0xFFFF) {
 					Di[w - 1] = (unsigned short)(Di[v - 1] + 1);
-					if ((long)Di[w - 1] > maxfinite) maxfinite = Di[w - 1];
+					if ((nwint)Di[w - 1] > maxfinite) maxfinite = Di[w - 1];
 					queue[qt++] = w;
 				}
 			}
@@ -539,7 +540,7 @@ static int kk_stress(long n, long *ei, long *ej, long m, long iter) {
 	}
 	maxdist = maxfinite > maxdiag ? maxfinite : maxdiag;
 
-	for (i = 1; i <= n; i++) { ST_double v; SF_vdata(3, i, &v); px[i] = v; SF_vdata(4, i, &v); py[i] = v; }
+	for (i = 1; i <= n; i++) { ST_double v; NW_VDATA(3, i, &v); px[i] = v; NW_VDATA(4, i, &v); py[i] = v; }
 
 	for (t = 1; t <= iter && !status; t++) {
 		for (i = 1; i <= n; i++) {
@@ -563,8 +564,8 @@ static int kk_stress(long n, long *ei, long *ej, long m, long iter) {
 		}
 	}
 
-	if (!status) for (i = 1; i <= n; i++) { SF_vstore(3, i, px[i]); SF_vstore(4, i, py[i]); }
-	SF_vstore(5, 1, (double)status);
+	if (!status) for (i = 1; i <= n; i++) { NW_VSTORE(3, i, px[i]); NW_VSTORE(4, i, py[i]); }
+	NW_VSTORE(5, 1, (double)status);
 
 cleanup:
 	free(deg); free(loop); free(rowptr); free(cursor); free(colidx); free(queue); free(D); free(px); free(py);
@@ -575,14 +576,15 @@ cleanup:
    Plugin entry point
    =================================================================== */
 
-static long next_long(void) {
-	return (long)atof(strtok(NULL, " \t"));
+static nwint next_long(void) {
+	char *tk = strtok(NULL, " \t");
+	return tk ? (nwint)atof(tk) : 0;
 }
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long algcode, n, directed, nties, source, nblock = 1, target = 0, i;
-	long *ei = NULL, *ej = NULL;
+	nwint algcode, n, directed, nties, source, nblock = 1, target = 0, i;
+	nwint *ei = NULL, *ej = NULL;
 	int rc = 0;
 
 	if (argc < 1) { SF_error("nwgraph: missing argument string\n"); return(198); }
@@ -590,7 +592,7 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	argbuf = (char *)malloc(strlen(argv[0]) + 1);
 	strcpy(argbuf, argv[0]);
-	algcode  = (long)atof(strtok(argbuf, " \t"));
+	algcode  = (nwint)atof(strtok(argbuf, " \t"));
 	n        = next_long();
 	directed = next_long();
 	nties    = next_long();
@@ -598,17 +600,17 @@ STDLL stata_call(int argc, char *argv[]) {
 	   before freeing argbuf - strtok() state lives inside it. */
 	source   = (algcode == ALG_BFS_DISTANCES) ? next_long() : 0;
 	/* an optional number of consecutive sources (plugin kernel version 5): one call, one graph, nblock columns of distances */
-	if (algcode == ALG_BFS_DISTANCES) { char *tk = strtok(NULL, " \t"); if (tk) nblock = (long)atof(tk); if (nblock < 1) nblock = 1; }
+	if (algcode == ALG_BFS_DISTANCES) { char *tk = strtok(NULL, " \t"); if (tk) nblock = (nwint)atof(tk); if (nblock < 1) nblock = 1; }
 	if (algcode == ALG_KCONN_SEARCH || algcode == ALG_KK_STRESS) target = next_long();
 	free(argbuf);
 
 	if (nties > 0) {
-		ei = (long *)malloc((size_t)nties * sizeof(long));
-		ej = (long *)malloc((size_t)nties * sizeof(long));
+		ei = (nwint *)malloc((size_t)nties * sizeof(nwint));
+		ej = (nwint *)malloc((size_t)nties * sizeof(nwint));
 		for (i = 0; i < nties; i++) {
 			ST_double v;
-			SF_vdata(1, i + 1, &v); ei[i] = (long)v;
-			SF_vdata(2, i + 1, &v); ej[i] = (long)v;
+			NW_VDATA(1, i + 1, &v); ei[i] = (nwint)v;
+			NW_VDATA(2, i + 1, &v); ej[i] = (nwint)v;
 		}
 	}
 

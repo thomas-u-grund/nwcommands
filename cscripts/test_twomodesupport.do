@@ -322,7 +322,8 @@ di
 di "7. refusals: one helper, one message, error 6088"
 _load tm
 gen grp = ceil(_n / 2)
-foreach c in "nwspectral tm, generate(z)" "nwrandomwalk tm, target(p1) generate(z)" "nwcorrelate tm" "nwhierarchy tm, type(jaccard)" "nwconcor tm, generate(z)" "nwfactions tm, generate(z) groups(2)" "nwcoreperiphery tm, generate(z)" "nwcug tm, stat(density) rname(z)" "nwinduced tm, measure(degree) generate(z)" "nwcollapse (max) tm, by(grp) generate(z)" {
+* (nwcug is not in this list since 3.10.0: it draws two-mode null networks; see test_native390.do)
+foreach c in "nwspectral tm, generate(z)" "nwrandomwalk tm, target(p1) generate(z)" "nwcorrelate tm" "nwhierarchy tm, type(jaccard)" "nwconcor tm, generate(z)" "nwfactions tm, generate(z) groups(2)" "nwcoreperiphery tm, generate(z)" "nwinduced tm, measure(degree) generate(z)" "nwcollapse (max) tm, by(grp) generate(z)" {
 	_refuses "`c'"
 }
 nwset

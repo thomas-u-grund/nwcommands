@@ -478,7 +478,7 @@ Pajek, the edge list and GML keep the names of the two levels (UCINET DL has no 
 
 Some commands would read the blocks of the adjacency matrix between nodes of the same mode, which hold no ties:
 `nwspectral`, `nwrandomwalk`, `nwcorrelate` (the profiles of the nodes of one network), `nwhierarchy`, `nwconcor`,
-`nwfactions`, `nwcoreperiphery`, `nwqap`, `nwcug`, `nwinduced` and `nwcollapse`. They stop with one message and the
+`nwfactions`, `nwcoreperiphery`, `nwqap`, `nwinduced` and `nwcollapse`. They stop with one message and the
 error 6088 instead of returning missing values. Make a one-mode network of one mode with `nw2project` first, or, for
 `nwspectral` and `nwrandomwalk`, use the option `onemode` to read the bipartite graph as an ordinary graph (as `igraph`
 does). The commands that are defined on any graph (`nwcomponents`, `nwkcore`, `nwgeodesic`, `nwpagerank`, ...) give the

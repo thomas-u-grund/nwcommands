@@ -54,8 +54,9 @@ scale.
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.
-- **Two-mode kernels**: the bipartite Louvain search runs in Mata; native kernels for it and for the module search of
-  `bipartite::computeModules`, faster tie swapping and a two-mode null model for `nwcug` remain open.
+- **Two-mode kernels**: native kernels exist for the bipartite Louvain search, Beckett's DIRT_LPA+ module search
+  (`bipartite::computeModules`), tie swapping and the two-mode null models of `nwcug`; further indices of
+  `bipartite::networklevel` remain open.
 
 ## Planned / under consideration
 

@@ -151,4 +151,4 @@ Networks} 32(4), 339-344.
 	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwneighbor}
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

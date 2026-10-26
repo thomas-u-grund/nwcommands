@@ -2,7 +2,7 @@
 capture program drop nwcug
 program nwcug, rclass
 	version 12
-	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string)]
+	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string) trades(integer -1)]
 
 	// BUGFIX: reps() was never validated - reps(0) silently "succeeded"
 	// with a meaningless result (mean_null/sd_null missing, but p(two-
@@ -28,7 +28,7 @@ program nwcug, rclass
 	if "`condition'" == "" {
 		local condition "density"
 	}
-	_opts_oneof "density census" "condition" "`condition'" 6556
+	_opts_oneof "density census mode1degree mode2degree degrees" "condition" "`condition'" 6556
 
 	if `seed' != -1 {
 		set seed `seed'
@@ -45,10 +45,34 @@ program nwcug, rclass
 		di "{err}Network {bf:`netname'} not found."
 		error `errNWsNotFound'
 	}
-	_nw2guard `netname', cmd(nwcug)
+	// a two-mode network has its own null models (below); a one-mode network meets the two-mode conditions as an error
+	local __two = ("`is2mode'" == "true")
+	if `__two' {
+		if "`condition'" == "census" {
+			di "{err}condition(census) counts the dyads of a one-mode directed network; for a two-mode network use condition(density), condition(mode1degree), condition(mode2degree) or condition(degrees)."
+			error 198
+		}
+		mata: st_local("__ok", strofreal(nwg_comb_version() >= 12))
+		if "`__ok'" != "1" {
+			di "{err}nwcug for a two-mode network draws with the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing."
+			di "{err}Update it: {stata nwinstall, all}  (or reinstall the package with {bf:net install nwcommands, replace})."
+			error 198
+		}
+		if `trades' == 0 | `trades' < -1 {
+			di "{err}trades() must be at least 1."
+			error 198
+		}
+	}
+	else {
+		if inlist("`condition'", "mode1degree", "mode2degree", "degrees") {
+			di "{err}condition(`condition') is for two-mode networks; use condition(density) or condition(census) for a one-mode network."
+			error 198
+		}
+		_nw2guard `netname', cmd(nwcug)
+	}
 	local origname "`netname'"
 
-	if "`condition'" == "census" & "`directed'" != "true" {
+	if "`condition'" == "census" & "`directed'" != "true" & !`__two' {
 		di "{err}condition(census) requires a directed network - mutual/asymmetric/null dyad types only exist for directed ties; use condition(density) (the default) for an undirected network."
 		error 198
 	}
@@ -143,6 +167,37 @@ program nwcug, rclass
 	mata: nwcug_nullvals = J(`reps', 1, .)
 	local base "_nwcug_draw"
 	local drawcmd = subinstr("`stat'", "##net##", "`base'", .)
+	if `__two' {
+		// two-mode: one copy of the network is redrawn in place (native kernel 53): the same nodes, names and attributes
+		local __model = cond("`condition'" == "density", 1, cond("`condition'" == "mode1degree", 2, cond("`condition'" == "mode2degree", 3, 4)))
+		capture nwdrop `base'
+		qui nwduplicate `origname', name(`base')
+		qui _nwsyntax `base'
+		local __dobj "`netobj'"
+		qui _nwsyntax `origname'
+		tempname __T __K __M
+		mata: `__T' = J(0, 3, .)
+		mata: `__K' = J(0, 3, .)
+		mata: `__M' = J(0, 1, .)
+		mata: nw2_cugstart(`netobj', `__T', `__K', `__M')
+		mata: st_numscalar("__nwcug_nsmall", min((sum(`__M' :== 1), sum(`__M' :== 2))))
+		local __thin = `trades'
+		if `trades' < 0 local __thin = max(1, 5 * scalar(__nwcug_nsmall))
+		local __burn = 6 * `__thin'
+		forvalues i = 1/`reps' {
+			local __nt = cond(`i' == 1, `__burn', `__thin')
+			mata: st_local("__okd", strofreal(nw2_cugdraw(`__dobj', `__T', `__K', `__M', `__model', `__nt')))
+			if "`__okd'" != "1" {
+				di "{err}the native draw of the two-mode null model failed (out of memory?)."
+				error 198
+			}
+			qui `drawcmd'
+			local v = r(`rname')
+			mata: nwcug_nullvals[`i'] = `v'
+		}
+		mata: mata drop `__T' `__K' `__M'
+	}
+	else {
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
 		if "`condition'" == "census" {
@@ -154,6 +209,7 @@ program nwcug, rclass
 		qui `drawcmd'
 		local v = r(`rname')
 		mata: nwcug_nullvals[`i'] = `v'
+	}
 	}
 	capture nwdrop `base'
 	restore
@@ -252,4 +308,46 @@ program nwcug, rclass
 		}
 		di "{hline 40}"
 	}
+end
+
+capture mata: mata drop nw2_cugstart()
+capture mata: mata drop nw2_cugdraw()
+mata:
+// the cross-mode ties (mode 1, mode 2, value) of a two-mode network, the other ties, and the mode of every node
+void nw2_cugstart(pointer(class nw_def scalar) scalar p, real matrix T, real matrix K, real colvector md)
+{
+	real matrix el
+	real colvector cross
+
+	md = strtoreal(p->get_modes())'
+	el = p->edgelist()
+	if (rows(el) == 0) {
+		T = J(0, 3, .)
+		K = J(0, 3, .)
+		return
+	}
+	cross = ((md[el[., 1]] :== 1) :& (md[el[., 2]] :== 2)) :| ((md[el[., 1]] :== 2) :& (md[el[., 2]] :== 1))
+	cross = cross :& (el[., 3] :< .) :& (el[., 3] :!= 0)
+	T = select(el, cross :& (md[el[., 1]] :== 1))
+	K = select(el, !cross)
+}
+
+// One draw of the null model (kernel 53 of the nwgraph plugin) written into the network p; T is the list of ties of the
+// previous draw (the chain of the curveball trades).  Returns 1 on success.
+real scalar nw2_cugdraw(pointer(class nw_def scalar) scalar p, real matrix T, real matrix K, real colvector md, real scalar model, real scalar ntrades)
+{
+	real matrix R, el
+	real rowvector aux
+	real scalar st, wasvalued
+
+	if (rows(T) == 0) return(1)
+	R = nwg_comb(53, rows(md), T, md, (model, floor(uniform(1, 1) * 2147483646) + 1, ntrades), aux, st)
+	if (st != 0 | rows(R) != rows(T) | cols(R) != 3) return(0)
+	T = R
+	el = K \ R \ (R[., 2], R[., 1], R[., 3])
+	wasvalued = p->isvalued
+	p->set_edge_from_triplets(el[., 1], el[., 2], el[., 3], p->isdirect)
+	p->isvalued = wasvalued
+	return(1)
+}
 end

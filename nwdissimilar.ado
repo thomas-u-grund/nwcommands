@@ -103,19 +103,23 @@ program nwdissimilar
 		}
 		exit
 	}
-	if "`type'" == "euclidean" {
+	// native kernel (plugin generation 12 or later): the same cells from the sparse tie lists; an older plugin leaves the Mata functions
+	local __code = cond("`type'" == "euclidean", 6, cond("`type'" == "manhatten", 7, cond("`type'" == "nonmatches", 8, cond("`type'" == "jaccard", 9, 10))))
+	mata: __nwdissim = nw_dissimnative(`othernetobj', `__code', `dtype')
+	mata: st_local("__fast", strofreal(rows(__nwdissim) > 0))
+	if !`__fast' & "`type'" == "euclidean" {
 		mata: __nwdissim = euclidean_dissimilarity(`srcmata', `dtype')
 	}
-	if "`type'" == "manhatten" {
+	if !`__fast' & "`type'" == "manhatten" {
 		mata: __nwdissim = manhatten_dissimilarity(`srcmata', `dtype')
 	}
-	if "`type'" == "nonmatches" {
+	if !`__fast' & "`type'" == "nonmatches" {
 		mata: __nwdissim = matches_dissimilarity(`srcmata', `dtype')
 	}
-	if "`type'" == "jaccard" {
+	if !`__fast' & "`type'" == "jaccard" {
 		mata: __nwdissim = jaccard_dissimilarity(`srcmata', `dtype')
 	}
-	if "`type'" == "hamming" {
+	if !`__fast' & "`type'" == "hamming" {
 		mata: __nwdissim = hamming_dissimilarity(`srcmata', `dtype')
 	}
 	// selfloop: a (dis)similarity matrix has a genuine, meaningful
@@ -305,6 +309,77 @@ end
 
 
 
+
+capture mata: mata drop nw_dissimnative()
+mata:
+// Native node-by-node similarities (kernel 51 of the nwgraph plugin, plugin generation 12 or later): the base matrix of the
+// pairs without a tie and without a shared neighbour from per-node vectors, the other cells from the sparse tie lists.  A 0 x 0
+// matrix when the kernel is not available (older plugin, no plugin, a network with missing values, set NW_NOFASTKERNELS): the
+// caller then keeps the Mata code.
+real matrix nw_dissimnative(pointer(class nw_def scalar) scalar p, real scalar type, real scalar dtype)
+{
+	real matrix el, S, r, info
+	real colvector a, u, ii, jj, vv, iso
+	real rowvector aux
+	real scalar n, st, start, cnt, blk, k
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 12) return(J(0, 0, .))
+	n = p->get_nodes()
+	if (n < 3) return(J(0, 0, .))
+	// a tie of missing value is a tie in the Mata code but is not stored as one: only a network without such cells goes to the kernel
+	if (p->is_dense_built()) {
+		if (missing(*p->get_matrix()) > sum(diagonal(*p->get_matrix()) :>= .)) return(J(0, 0, .))
+	}
+	el = p->edgelist()
+	if (rows(el) > 0) {
+		if (any(el[., 3] :>= .)) return(J(0, 0, .))
+		el = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :!= 0))
+	}
+	r = nwg_comb(51, n, el, J(0, 1, .), (type, dtype, 0, 0, 2), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 4) return(J(0, 0, .))
+	// (the global NW_SIMMODE = dense or sparse forces one of the two ways, for the tests)
+	if (st_global("NW_SIMMODE") == "dense" | (st_global("NW_SIMMODE") != "sparse" & aux[1] > 0.3 * n * n)) {
+		// dense graph: the cells are returned as blocks of columns
+		S = J(n, n, .)
+		blk = max((1, min((1000, floor(4e6 / n)))))
+		for (start = 1; start <= n; start = start + blk) {
+			cnt = min((blk, n - start + 1))
+			r = nwg_comb(51, n, el, J(0, 1, .), (type, dtype, start, cnt, 0), aux, st)
+			if (st != 0 | rows(r) != n | cols(r) != cnt) return(J(0, 0, .))
+			S[., start::(start + cnt - 1)] = r
+		}
+		return(S)
+	}
+	a = r[., 1]
+	u = r[., 2]
+	if (type == 1) S = -(u * u')
+	else if (type == 3 | type == 5) S = J(n, n, 0)
+	else if (type == 9) S = J(n, n, 1)
+	else {
+		S = (a, J(n, 1, 1)) * (J(n, 1, 1), a)'
+		if (type == 6) S = sqrt(S)
+	}
+	if (type == 3 | type == 9) {
+		iso = selectindex(r[., 3] :!= 0)
+		if (rows(iso) > 0) S[iso, iso] = J(rows(iso), rows(iso), .)
+	}
+	start = 1
+	while (start <= n) {
+		r = nwg_comb(51, n, el, J(0, 1, .), (type, dtype, start, 2000000, 1), aux, st)
+		if (st != 0 | cols(r) != 3 | aux[1] <= start) return(J(0, 0, .))
+		if (rows(r) > 0) {
+			ii = r[., 1]
+			jj = r[., 2]
+			vv = r[., 3]
+			info = panelsetup(jj, 1)
+			for (k = 1; k <= rows(info); k++) S[ii[|info[k, 1] \ info[k, 2]|], jj[info[k, 1]]] = vv[|info[k, 1] \ info[k, 2]|]
+		}
+		start = aux[1]
+	}
+	return(S)
+}
+end
 
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

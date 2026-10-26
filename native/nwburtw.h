@@ -26,7 +26,7 @@
 
 #define ALG_BURTW 40
 
-typedef struct { long r, c; double w; } bw_tie_t;
+typedef struct { nwint r, c; double w; } bw_tie_t;
 
 static int bw_cmp(const void *x, const void *y) {
 	const bw_tie_t *a = (const bw_tie_t *)x, *b = (const bw_tie_t *)y;
@@ -34,11 +34,11 @@ static int bw_cmp(const void *x, const void *y) {
 	return (a->c > b->c) - (a->c < b->c);
 }
 
-static int comb_burtw(long n, long nties, const long *ei, const long *ej, const double *ew) {
+static int comb_burtw(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew) {
 	bw_tie_t *t = NULL;
-	long *ptr = NULL, *idx = NULL, *mark = NULL, *posn = NULL;
+	nwint *ptr = NULL, *idx = NULL, *mark = NULL, *posn = NULL;
 	double *aw = NULL, *s = NULL, *mx = NULL, *ind = NULL, *red = NULL;
-	long m = 0, u = 0, k, kk, i, maxd = 0;
+	nwint m = 0, u = 0, k, kk, i, maxd = 0;
 	int rc = 0;
 
 	t = (bw_tie_t *)malloc((size_t)(2 * nties + 1) * sizeof(bw_tie_t));
@@ -55,13 +55,13 @@ static int comb_burtw(long n, long nties, const long *ei, const long *ej, const 
 		if (u > 0 && t[u - 1].r == t[k].r && t[u - 1].c == t[k].c) t[u - 1].w += t[k].w;
 		else { t[u] = t[k]; u++; }
 	}
-	ptr = (long *)calloc((size_t)(n + 2), sizeof(long));
-	idx = (long *)malloc((size_t)(u > 0 ? u : 1) * sizeof(long));
+	ptr = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	idx = (nwint *)malloc((size_t)(u > 0 ? u : 1) * sizeof(nwint));
 	aw = (double *)malloc((size_t)(u > 0 ? u : 1) * sizeof(double));
 	s = (double *)calloc((size_t)(n > 0 ? n : 1), sizeof(double));
 	mx = (double *)calloc((size_t)(n > 0 ? n : 1), sizeof(double));
-	mark = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
-	posn = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
+	mark = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
+	posn = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
 	if (!ptr || !idx || !aw || !s || !mx || !mark || !posn) { rc = 2; goto done; }
 	for (k = 0; k < u; k++) {
 		ptr[t[k].r + 1]++;
@@ -75,9 +75,9 @@ static int comb_burtw(long n, long nties, const long *ei, const long *ej, const 
 	if (!ind || !red || res_alloc(n, 5)) { rc = 2; goto done; }
 
 	for (i = 0; i < n; i++) {
-		long a = ptr[i], b = ptr[i + 1], d = b - a, j;
+		nwint a = ptr[i], b = ptr[i + 1], d = b - a, j;
 		double o = s[i], es = 0, con = 0, avgc, z = 0, h;
-		long stamp = i + 1;
+		nwint stamp = i + 1;
 		double *r = g_res + i * 5;
 		if (d == 0) {
 			r[0] = 0; r[1] = 0; r[2] = 0; r[3] = 0; r[4] = 1;
@@ -85,12 +85,12 @@ static int comb_burtw(long n, long nties, const long *ei, const long *ej, const 
 		}
 		for (k = a; k < b; k++) { mark[idx[k]] = stamp; posn[idx[k]] = k - a; ind[k - a] = 0; red[k - a] = 0; }
 		for (k = a; k < b; k++) {
-			long q = idx[k];
+			nwint q = idx[k];
 			double piq = aw[k] / o, sq = s[q];
 			for (kk = ptr[q]; kk < ptr[q + 1]; kk++) {
-				long jn = idx[kk];
+				nwint jn = idx[kk];
 				if (mark[jn] == stamp) {
-					long jp = posn[jn];
+					nwint jp = posn[jn];
 					ind[jp] += piq * (aw[kk] / sq);      /* p(i,q) p(q,j) */
 					red[jp] += piq * (aw[kk] / mx[jn]);  /* p(i,q) m(j,q), a(j,q) = a(q,j) */
 				}

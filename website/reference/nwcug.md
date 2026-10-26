@@ -22,7 +22,8 @@ rname(string)
 [reps(int)
 seed(int)
 tail(both|upper|lower)
-condition(density|census)
+condition(density|census|mode1degree|mode2degree|degrees)
+trades(#)
 silent
 plot
 name(string)]
@@ -35,7 +36,8 @@ name(string)]
 | `reps(int)` | Number of conditioned random networks to draw; default = 1000 |
 | `seed(int)` | Set the random-number seed before drawing (for reproducibility) |
 | `tail(both\|upper\|lower)` | Which tail(s) to report a p-value for; default = *both* |
-| `condition(density\|census)` | Null model to condition random draws on; default = *density* |
+| `condition(density\|census\|mode1degree\|mode2degree\|degrees)` | Null model to condition random draws on; default = *density*; *census* for directed one-mode networks, *mode1degree*, *mode2degree* and *degrees* for two-mode networks |
+| `trades(#)` | Two-mode **condition(degrees)**: the number of curveball trades between two draws; default = 5 times the number of nodes of the smaller mode (the first draw follows 6 times that many) |
 | `silent` | Suppress display of results |
 | `plot` | Draw a histogram of the **reps()** null draws, with a dashed reference line at the observed statistic (the same comparison R's **sna::plot.cug.test()** draws) |
 | `name(string)` | Name for the graph created by `plot`; default = **cug** |
@@ -60,7 +62,7 @@ Some statistics are fixed by the dyad census (reciprocity, for example). With **
 
 ## Supported network types
 
-Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: not supported - error 6088; the null networks are one-mode random networks; [nwpermute](nwpermute) with `swap` draws two-mode null networks that keep both degree sequences.
+Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
 
 ## Stored results
 
@@ -76,6 +78,8 @@ Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends
 
 ## References
 
+Strona, G., Nappo, D., Boccacci, F., Fattorini, S., San-Miguel-Ayanz, J. (2014). A fast and unbiased procedure to randomize ecological binary matrices with fixed row and column totals. *Nature Communications* 5, 4114.
+
 Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and density with graph-level indices. *Social Networks* 21(3), 239-267.
 
 ## See also
@@ -86,4 +90,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.10.0, 26 October 2026* ([check your installed version](nwversion))

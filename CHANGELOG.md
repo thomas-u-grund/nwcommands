@@ -4,6 +4,40 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.10.0] - 2026-10-26
+
+Layouts that use the tie values, faster and wider similarity and null-model commands (native plug-in generation 12), and tests of the native kernels that run without Stata. The Mata library is unchanged (the four model packages need no release). The macOS plug-in is rebuilt; the Linux and Windows plug-ins come from the CI build after the push.
+
+### Results that change (read before you re-run old scripts)
+- **Plots of valued networks get different node positions by default.** `nwplot` (default `layout(kk)` and `layout(frucht)`) and `nwmovie`/`nwmoviexy` (each wave) now use the tie values as strengths, as `igraph::plot()` does for a graph with a `weight` attribute: strongly tied nodes lie closer together. `kk`: the ideal distance of two nodes is the shortest path with edge length 1/value; `frucht`: the attraction along a tie is multiplied by its value (`layout_with_kk(weights=)` takes edge lengths, so one passes 1/value; `layout_with_fr(weights=)` takes strengths). The values are divided by their mean first, so the unit of the values does not matter. Option `binary` restores the layouts of 3.9 and earlier (they are bit-identical for the same seed). Unvalued networks, two-mode networks, networks whose ties all have the same value, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle`, `grid` are not affected.
+- A **signed network** (a tie value that is not positive) keeps the unweighted layout and prints a note, as `igraph::plot()` does (igraph's `layout_with_fr()`/`layout_with_kk()` refuse non-positive weights; `plot()` warns and ignores the weights).
+- `nwmovie`: `binary` is now also passed to the layout of the first network.
+- `nwcug` on a two-mode network no longer stops with error 6088: it draws from four null models (see Added). One-mode networks are as before.
+- `nwcorrelate` (and with it `nwsimilar, type(pearson)`) formed the n x n matrix four times (`nwset, mat()` evaluated its argument four times): 10.6 seconds at 5,000 nodes. It is formed once now; the numbers are the same.
+
+### Added
+- **Kernel 51: node-by-node similarities** of `nwsimilar` (pearson, matches, jaccard, hamming, crossproduct), `nwdissimilar` (euclidean, manhatten, nonmatches, jaccard, hamming) and `nwcorrelate`, all contexts and valued or binary, directed or not: the cells come from the stored ties instead of dense matrix products. 5,000 nodes (10 ties per node): `nwsimilar` pearson 0.45 s (10.6 s before, 24 times faster), the other types 0.36 to 0.38 s (1.0 to 1.2 s before), `nwdissimilar, type(manhatten)` 0.37 s (about 25 minutes in Mata: it had no closed form and ran O(n^3) loops). Differences from the Mata code below 1e-13 (2,688 combinations in the development checks); a network with missing tie values and a platform with an older plug-in keep the Mata code. R: the definition written out in `tools/verify_native390.R`; `igraph::similarity` agrees on the pairs that are not adjacent.
+- **Kernel 52: `nwcommunity, algorithm(dirtlpa)`**, the label propagation LPAwb+ of Beckett (2016) in its repeated form DIRT_LPA+ (R: `bipartite::DIRT_LPA_wb_plus`), for two-mode networks; options `reps()` (default 10) and `minmodules()` (default 4) as `reps` and `mini` of the R function; reproducible with `seed()`; plug-in only (without a generation-12 plug-in the command stops with a message that asks for the update). Southern women: Barber's Q 0.3455 (the best known, as with Louvain); `ftdirectors_se`: 0.95110 in 12 seconds against 0.95101 for 100 starts of the Louvain search (0.2 seconds).
+- **Kernel 53 and `nwcug` for two-mode networks**: `condition(density|mode1degree|mode2degree|degrees)` (equivalents: `vegan::nullmodel` r00, r0, c0, curveball; `igraph::sample_bipartite(type = "gnm")`), option `trades()`; the draws are made natively on the list of ties and written into one copy of the network. The null means and standard deviations agree with `vegan::nullmodel` (Southern women, NODF).
+- **Kernel 54: the sweeps of the weighted Kamada-Kawai layout** of `_nwwlayout` (nwplot and nwmovie `layout(kk)` on valued networks) run natively: 2,000 nodes 0.74 s against 7.0 s in Mata, same start coordinates give the same layout (differences below 1e-14); the Mata code stays as the fallback.
+- `_nwwlayout.ado` (internal): the weighted layouts. `kk` with values: shortest weighted paths and Gauss-Seidel stress majorization; the sweeps run in the plug-in (kernel 54, below), the Mata code is the fallback for a missing or older plug-in (about 1.5 s for 1,000 nodes and 18 s for 5,000 nodes in Mata).
+- Dialog `nwmovie`: checkbox `binary`.
+- Test `cscripts/test_native390.do` (fixtures `cscripts/native390_fixture/`, R script `tools/verify_native390.R`).
+- Test: `cscripts/test_wlayout.do`.
+- **Tests of the native kernels without Stata** (`native/test/`): `test_kernels.c` compiles the shipped kernels against a stand-in for the plugin interface and checks 170 cases (kernels 1 to 54): every kernel against results recorded from the macOS plugin (`native/test/fixtures/golden.txt`), against the R/igraph/bmotif fixtures of the cscripts, against textbook answers (stars, paths, rings, complete graphs), properties of the null-model draws (margins and counts exact), and large sparse cases of 20,000 to 100,000 nodes with sums or cell numbers above 2^31. `make -C native test` runs it anywhere with a C compiler.
+- The workflow `.github/workflows/test-kernels.yml` runs the harness on Linux (gcc, with sanitizers), macOS (clang) and Windows (MSVC `cl`) for every push or pull request that touches `native/`, and uploads the compiler warnings. It builds and commits nothing.
+
+### Changed
+- The Windows plugin is compiled with optimisation (`/O2`); it was built without it, so the Windows kernels ran as unoptimised code. Results are unchanged.
+
+### Fixed
+- **64-bit counters in the native kernels (Windows).** The C kernels counted nodes, ties, indices, offsets and products of them in `long`, which is 32 bits in the Windows build (MSVC) and 64 bits on macOS and Linux. All 1,245 uses are now a 64-bit type (`nwint`, `native/nwtypes.h`), so a value above 2^31 can no longer wrap on Windows only. No result changes on macOS or Linux (the kernels of generation 11 are bit-identical); within the documented limit of 100,000 nodes no wrong result was found on Windows either, the change closes the latent cases (the diagnostic counters of very long searches, bit-set offsets above about 370,000 nodes, result sizes above 2^31 cells). Also: the Windows build uses the compiler's own bit-scan instruction for the lowest set bit, the headers include what they use (`<time.h>`, `<stdlib.h>`, `<string.h>`), and a malformed argument string no longer dereferences a null pointer.
+
+### Notes
+- `nwsimilar, type(pearson)` ignores `context()` (it calls `nwcorrelate` with its default, the outgoing ties); unchanged.
+- `nwsimilar, type(hamming)` counts the left-out positions i and j as matches (two per profile); unchanged, documented in the R script.
+
+
 ## [3.9.2] - 2026-10-26
 
 The "Network Analysis" menu is set up once, whatever you run and however often. Only `nwinstall` (ado, help file, dialog) and its tests changed: no command, result, Mata library or plug-in differs from 3.9.1 (the four model packages need no release).
