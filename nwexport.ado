@@ -107,6 +107,16 @@ program _nwexport_pajek
 	if "`directed'" == "true" local __head "*Arcs"
 	mata: nw_exp_ties(st_local("fname") + ".net", "`nw_ego'", "`nw_alter'", "`netname'", 0, "`__head'", char(10))
 	restore
+	// the level labels of a two-mode network: Pajek's format has no place for mode names, but a comment line
+	// (starting with %) is ignored by Pajek and by the other readers; nwimport reads the labels back from it
+	if "`is2mode'" == "true" {
+		_nwexport_levels `netname'
+		if "`r(has)'" == "1" {
+			tempfile __tmp
+			mata: nwx_insert_lines(st_local("fname") + ".net", st_local("__tmp"), "pajek", st_global("r(d1)"), st_global("r(d2)"))
+			qui copy "`__tmp'" "`fname'.net", replace
+		}
+	}
 end
 
 
@@ -242,6 +252,16 @@ program _nwexport_gml
 	sort `_rk'
 	mata: nw_exp_gml_edges(st_local("fname") + ".gml", "`nw_ego'", "`nw_alter'", "`netname'")
 	restore
+	// the level labels of a two-mode network are graph attributes (nwmodelabel1, nwmodelabel2), written after the
+	// line "directed"
+	if "`is2mode'" == "true" {
+		_nwexport_levels `netname'
+		if "`r(has)'" == "1" {
+			tempfile __tmp
+			mata: nwx_insert_lines(st_local("fname") + ".gml", st_local("__tmp"), "gml", st_global("r(d1)"), st_global("r(d2)"))
+			qui copy "`__tmp'" "`fname'.gml", replace
+		}
+	}
 end
 
 
@@ -257,6 +277,10 @@ program _nwexport_edgelist
 	unw_defs
 	_nwsyntax `netname'
 	_nwdatasync `netname'
+	_nwexport_levels `netname'
+	local __lv1 `"`r(d1)'"'
+	local __lv2 `"`r(d2)'"'
+	local __haslv = ("`r(has)'" == "1")
 
 	preserve
 	qui nwtoedge `netname', compress
@@ -280,8 +304,16 @@ program _nwexport_edgelist
 		qui replace `nw_ego' = `nw_alter' if `__swap'
 		qui replace `nw_alter' = `__t' if `__swap'
 		keep `nw_ego' `nw_alter' value
-		qui gen byte mode_ego = 1
-		qui gen byte mode_alter = 2
+		// the two columns hold the numbers 1 and 2, or the level labels of the network when it has any (then
+		// nwimport restores the labels)
+		if `__haslv' {
+			qui gen str244 mode_ego = `"`__lv1'"'
+			qui gen str244 mode_alter = `"`__lv2'"'
+		}
+		else {
+			qui gen byte mode_ego = 1
+			qui gen byte mode_alter = 2
+		}
 		rename `nw_ego' ego
 		rename `nw_alter' alter
 		order ego alter value mode_ego mode_alter
@@ -309,3 +341,57 @@ program _nwexport_modevar
 	}
 end
 
+
+// the level labels of a two-mode network: r(has) = 1 when both are set, differ and are not the defaults "mode 1" / "mode 2"
+capture program drop _nwexport_levels
+program _nwexport_levels, rclass
+	syntax [anything(name=netname)]
+	unw_defs
+	_nwsyntax `netname'
+	mata: st_local("__d1", `netobj'->get_description_mode1())
+	mata: st_local("__d2", `netobj'->get_description_mode2())
+	// no double quote inside a label (it would end the quoted label in the files)
+	local __d1 = subinstr(`"`__d1'"', `"""', "'", .)
+	local __d2 = subinstr(`"`__d2'"', `"""', "'", .)
+	local __has = (`"`__d1'"' != "" & `"`__d2'"' != "" & `"`__d1'"' != `"`__d2'"' & !(`"`__d1'"' == "mode 1" & `"`__d2'"' == "mode 2"))
+	return local has "`__has'"
+	return local d1 `"`__d1'"'
+	return local d2 `"`__d2'"'
+end
+
+capture mata: mata drop nwx_insert_lines()
+mata:
+// copies file fname to tmp with the level label lines of a two-mode network (kind pajek: one comment line at the
+// top; gml: two graph attributes after the first two lines)
+void nwx_insert_lines(string scalar fname, string scalar tmp, string scalar kind, string scalar d1, string scalar d2)
+{
+	real scalar fh, fo, k, after
+	string scalar line, buf, q
+	string colvector add
+
+	q = char(34)
+	if (kind == "pajek") {
+		after = 0
+		add = "% nwcommands level labels " + q + d1 + q + " " + q + d2 + q
+	}
+	else {
+		after = 2
+		add = ("  nwmodelabel1 " + q + d1 + q \ "  nwmodelabel2 " + q + d2 + q)
+	}
+	(void) _unlink(tmp)
+	fh = fopen(fname, "r")
+	fo = fopen(tmp, "w")
+	for (k = 1; k <= after; k++) {
+		line = fget(fh)
+		fput(fo, line)
+	}
+	for (k = 1; k <= rows(add); k++) fput(fo, add[k])
+	while (1) {
+		buf = fread(fh, 1000000)
+		if (buf == J(0, 0, "")) break
+		fwrite(fo, buf)
+	}
+	fclose(fh)
+	fclose(fo)
+}
+end

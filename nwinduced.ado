@@ -19,7 +19,7 @@ program nwinduced, rclass
 	// design decision - disclosed clearly rather than silently guessed
 	// at (docs/INDUCED_CENTRALITY_ROADMAP.md's own scope-question 2).
 	if "`directed'" == "true" & "`measure'" == "degree" {
-		di as err "nwinduced, measure(degree) does not support directed networks - nwdegree itself splits into separate outdegree/indegree variables when directed, and induced degree would need a choice between them with no single obviously-right answer. measure(betweenness/closeness/evcent) all support directed networks directly - see docs/INDUCED_CENTRALITY_ROADMAP.md."
+		di as err "nwinduced, measure(degree) does not support directed networks - nwdegree itself splits into separate outdegree/indegree variables when directed, and induced degree would need a choice between them with no single obviously-right answer. measure(betweenness/closeness/evcent) all support directed networks directly. Use the undirected version or one of these measures."
 		error 198
 	}
 
