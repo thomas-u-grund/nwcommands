@@ -691,3 +691,7 @@ The kernels 43..47 are called from small Mata functions at the end of `nwcommuni
 - A one-line `mata: for (...) { a; b }` fails with "invalid expression" (the braces); define a Mata function in a `mata:` ... `end` block of the do-file.
 - `nwclear` clears the data in memory as well; build the data after it, and `set obs` after `nwfromedge` (it leaves an empty data set) before a command stores node variables.
 - `nwgeodesic` on a valued network above 100 nodes used to fall back to the unvalued search silently (and `nwcloseness` did not pass `force` on). Fixed in generation 10 (kernels 48, 49); an old plugin stops with r(198). An error raised inside `nwgeodesic` after `nwduplicate`/`nwsym` must drop those networks again (the tempname is reused by the next call and fails with a bare r(483)).
+
+## A documented requirement that the code does not enforce: check the help file against the code (nwshared, 3.7.0)
+
+The help file of `nwshared` said "Directed: requires `undirected` to symmetrize first, else an explicit error", but 3.6.0 ran on a directed network without the option and without any message (the type table of the book listed this as a deviation). Since 3.7.0 the command stops with error 198. When a network-types table (website `network-types.md`, the book's `NETWORK_TYPES_TABLE.csv`) says "error" for a case, test the case: `capture noisily cmd ...; assert _rc == N` belongs in the command's test.
