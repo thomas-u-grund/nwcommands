@@ -30,7 +30,7 @@ for all four model packages at once (`nwinstall, everything` installs the core a
 
 ```stata
 . nwsaom version
-nwsaom version 1.0.10, 26oct2026
+nwsaom version 1.1.0, 26oct2026
 ```
 
 ```stata
