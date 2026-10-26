@@ -7,6 +7,7 @@ do unw_core.do
 *   44 weighted PageRank of nwpagerank          (exact solution of the system = igraph::page_rank with weights to 1e-7; 30 networks, fixture from tools/verify_native370.R)
 *   45 maximum-weight matching of nwmatching    (igraph::max_bipartite_match with weights, 30 networks, equal to a brute force)
 *   47 weighted betweenness of nwbetween       (igraph::betweenness with lengths 1/w, 24 networks with many tied shortest paths)
+*   48, 49 weighted closeness and distances of nwcloseness / nwgeodesic (igraph::closeness with lengths 1/w and w, 24 networks)
 *   46 tie swapping of nwpermute (swap)         (degree sequences, tie values, mode structure, seeds)
 * The Mata path is forced with the global NW_NOFASTKERNELS.  Without a plugin of generation 10 (Linux and Windows
 * binaries before the CI build, or an old plugin) the test is skipped.  Prints "native370: all equal" on success.
@@ -152,6 +153,83 @@ forvalues b = 1/24 {
 mata: st_local("mR", strofreal(n370_maxR)); st_local("mM", strofreal(n370_maxM))
 di as txt "weighted betweenness: 24 networks, max |native - igraph| = `mR', max |native - Mata| = `mM'"
 
+* ------------------------------------------------------------------ 48, 49 weighted closeness and distances
+preserve
+qui import delimited using "`fx'/cl_cells.csv", clear
+qui save `cells', replace
+qui import delimited using "`fx'/cl_nets.csv", clear
+qui save `nets', replace
+qui import delimited using "`fx'/cl_expected.csv", clear asdouble
+qui save `expd', replace
+restore
+foreach al in 1 -1 {
+	local col = cond(`al' == 1, "c1", "cm")
+	forvalues b = 1/24 {
+		preserve
+		qui use `nets', clear
+		qui keep if net == `b'
+		local n = n[1]
+		local dir = directed[1]
+		qui use `cells', clear
+		qui keep if net == `b'
+		mata: n370_el = st_data(., ("i", "j", "w"))
+		qui use `expd', clear
+		qui keep if net == `b'
+		sort node
+		mata: n370_R = st_data(., "`col'")
+		restore
+		mata: n370_M = n370_fill(n370_el, `n', 0)
+		nwclear
+		qui set obs `n'
+		if `dir' qui nwset, mat(n370_M) name(clnet) valued
+		else qui nwset, mat(n370_M) name(clnet) undirected valued
+		local nos = cond(`dir', "nosym", "")
+		foreach fl in 0 1 {
+			global NW_NOFASTKERNELS
+			if `fl' global NW_NOFASTKERNELS 1
+			qui nwcloseness clnet, generate(cl_c cl_f cl_n) replace silent `nos' alpha(`al')
+			mata: n370_V`fl' = st_data((1::`n'), "cl_c")
+			qui nwgeodesic clnet, name(gd`fl') nwreplace `nos' alpha(`al') force
+			_nwsyntax gd`fl'
+			mata: n370_G`fl' = *`netobj'->get_matrix()
+		}
+		global NW_NOFASTKERNELS
+		mata: st_local("dR", strofreal(max(abs(editvalue(n370_V0, ., -1) - editvalue(n370_R, ., -1)) :/ (1 :+ abs(editvalue(n370_R, ., 0))))))
+		mata: st_local("dM", strofreal(max(abs(editvalue(n370_V0, ., -1) - editvalue(n370_V1, ., -1)) :/ (1 :+ abs(editvalue(n370_V1, ., 0))))))
+		mata: st_local("dG", strofreal(max(abs(editvalue(n370_G0, ., -1) - editvalue(n370_G1, ., -1)))))
+		if `dR' > 1e-6 {
+			di as err "weighted closeness (alpha `al') differs from igraph in network `b': `dR'"
+			exit 9
+		}
+		if `dM' > 1e-6 | `dG' > 1e-9 {
+			di as err "weighted closeness or distances (alpha `al') native differ from Mata in network `b': `dM' `dG'"
+			exit 9
+		}
+	}
+}
+di as txt "weighted closeness: 24 networks x 2 alphas equal to igraph::closeness(weights) (reachable-nodes form) and to the Mata distances"
+* a valued network of more than 100 nodes: the weighted closeness, never the hop count; timing at 1,000 nodes
+nwclear
+clear
+set seed 4242
+qui set obs 3000
+gen long ego = ceil(runiform() * 1000)
+gen long alter = ceil(runiform() * 1000)
+gen double w = ceil(runiform() * 9)
+qui drop if ego == alter
+qui nwfromedge ego alter w, name(bigv) undirected
+qui set obs 1000
+qui nwcloseness bigv, generate(bc bf bn) replace silent
+mata: n370_Cw = st_data((1::1000), "bc")
+qui nwcloseness bigv, generate(bc bf bn) replace silent binary
+mata: n370_Cb = st_data((1::1000), "bc")
+mata: st_local("diff", strofreal(max(abs(n370_Cw - n370_Cb))))
+assert `diff' > 0.01
+* with the Mata routine (no force) the command stops instead of giving the hop count
+global NW_NOFASTKERNELS 1
+capture nwcloseness bigv, generate(bc bf bn) replace silent
+assert _rc == 198
+global NW_NOFASTKERNELS
 * ------------------------------------------------------------------ 45 maximum-weight matching
 preserve
 qui import delimited using "`fx'/mt_cells.csv", clear

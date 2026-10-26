@@ -70,6 +70,7 @@ program nwgeodesic
 	if `name_exists' {
 		capture nwdrop `name'
 	}
+	tempname __nw_gd
 	nwduplicate `netname', name(`name')
 	_nwsyntax `name'
 	
@@ -93,6 +94,29 @@ program nwgeodesic
 	
 	if (`alpha' == 0) {
 		mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "brute"))
+	}
+	else if "`valued'" == "true" {
+		// a valued network: least-cost paths of cost 1/w^alpha, whatever the size.  The native Dijkstra kernel (plugin
+		// generation 10 or later) computes them at any size; without it the Mata search is too slow above 100 nodes,
+		// and the command stops instead of silently counting steps (use binary for that, or force to wait for Mata).
+		local __ok 0
+		mata: `__nw_gd' = nw2_fastdist(`netobj', `alpha')
+		mata: st_local("__ok", strofreal(rows(`__nw_gd') == `nodes'))
+		if `__ok' {
+			mata: `netobj'->set_edge(`__nw_gd')
+		}
+		else if `nodes' > 100 & "`force'" == "" {
+			mata: mata drop `__nw_gd'
+			capture nwdrop `name'
+			if "`symmetrized'" == "true" capture nwdrop `symnet'
+			di "{err}Distances on a valued network of more than 100 nodes need the native plugin of the current version, which this platform does not have."
+			di "{err}Use option {bf:force} to compute them with the slow Mata routine, or option {bf:binary} to count steps."
+			error 198
+		}
+		else {
+			mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "dijkstra"))
+		}
+		capture mata: mata drop `__nw_gd'
 	}
 	else if (`nodes' > 100 & "`force'" == ""){
 		di "{txt}Calculated on unvalued network because network size exceeds 100."
@@ -257,3 +281,29 @@ void getgeodesic(pointer (class nw_def scalar) scalar nw)
 	}
 }
 end*/
+
+capture mata: mata drop nw2_fastdist()
+mata:
+// Native Dijkstra distances (kernel 49 of the nwgraph plugin) as an n x n matrix, 0 on the diagonal, missing = unreachable;
+// a 0 x 0 matrix when the kernel is not available.
+real matrix nw2_fastdist(pointer(class nw_def scalar) scalar p, real scalar alpha)
+{
+	real rowvector aux
+	real scalar st, n, a, b
+	real matrix el, r, D
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 10) return(J(0, 0, .))
+	n = p->get_nodes()
+	if (n < 1) return(J(0, 0, .))
+	el = p->edgelist()
+	D = J(n, n, .)
+	for (a = 1; a <= n; a = a + 400) {
+		b = min((400, n - a + 1))
+		r = nwg_comb(49, n, el, J(0, 1, .), (alpha, a, b), aux, st)
+		if (st != 0 | rows(r) != n | cols(r) != b) return(J(0, 0, .))
+		D[(a..(a + b - 1)), .] = r'
+	}
+	return(D)
+}
+end

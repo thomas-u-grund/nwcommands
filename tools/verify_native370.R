@@ -13,7 +13,7 @@ args <- commandArgs(TRUE); out <- args[1]
 # non-integer weights are multiples of 1/64: exact in the single precision in which nwset stores ties
 suppressMessages(library(igraph))
 set.seed(370)
-wr <- function(d, f) { d[] <- lapply(d, function(c) if (is.numeric(c) && !is.integer(c)) sprintf("%.17g", c) else c); write.csv(d, f, row.names = FALSE, quote = FALSE) }
+wr <- function(d, f) { d[] <- lapply(d, function(c) if (is.numeric(c) && !is.integer(c)) ifelse(is.finite(c), sprintf("%.17g", c), "") else c); write.csv(d, f, row.names = FALSE, quote = FALSE) }
 dir.create(out, showWarnings = FALSE, recursive = TRUE)
 cells <- NULL; nets <- NULL; ex <- NULL
 for (b in 1:30) {
@@ -85,3 +85,23 @@ for (b in 1:24) {
   be <- rbind(be, data.frame(net = b, node = 1:n, bt = bt))
 }
 wr(bc, file.path(out, "bt_cells.csv")); wr(bn, file.path(out, "bt_nets.csv")); wr(be, file.path(out, "bt_expected.csv"))
+
+# weighted closeness (kernels 48, 49): igraph::closeness(mode = "out", normalized = TRUE) = reachable nodes / farness, lengths
+# 1/w (alpha = 1, column c1) and w (alpha = -1, igraph's convention, column cm); disconnected networks, isolates, directed ones
+cc <- NULL; cn <- NULL; ce <- NULL
+for (b in 1:24) {
+  n <- sample(8:45, 1); dirc <- b %% 3 == 0
+  A <- matrix(0, n, n)
+  p <- runif(1, 0.03, 0.15)
+  for (i in 1:n) for (j in 1:n) if (i != j && runif(1) < p) A[i, j] <- sample(1:5, 1)
+  if (!dirc) { A[lower.tri(A)] <- t(A)[lower.tri(A)] }
+  if (sum(A) == 0) { A[1, 2] <- 1; if (!dirc) A[2, 1] <- 1 }
+  g <- graph_from_adjacency_matrix(A, mode = if (dirc) "directed" else "undirected", weighted = TRUE)
+  cl <- function(wt) { if (ecount(g) == 0) return(rep(NaN, n)); suppressWarnings(closeness(g, mode = "out", weights = wt, normalized = TRUE)) }
+  c1 <- cl(1 / E(g)$weight); cm <- cl(E(g)$weight)
+  w <- which(A != 0, arr.ind = TRUE)
+  cc <- rbind(cc, data.frame(net = b, i = w[, 1], j = w[, 2], w = A[w]))
+  cn <- rbind(cn, data.frame(net = b, n = n, directed = as.integer(dirc)))
+  ce <- rbind(ce, data.frame(net = b, node = 1:n, c1 = c1, cm = cm))
+}
+wr(cc, file.path(out, "cl_cells.csv")); wr(cn, file.path(out, "cl_nets.csv")); wr(ce, file.path(out, "cl_expected.csv"))
