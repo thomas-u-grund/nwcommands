@@ -99,7 +99,17 @@ program nwbetween
 			// weighted (Dijkstra-based) betweenness has no native
 			// backend yet - a documented follow-on, see
 			// docs/NATIVE_GRAPH_LIBRARIES.md.
-			mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness_weighted(`alpha'))
+			// native Brandes/Dijkstra (plugin generation 10 or later) on the stored ties; an older plugin or a failure
+			// leaves the Mata routine (a dense n x n work space per source, hopeless beyond a few hundred nodes)
+			mata: __nw_bw = nw2_fastbtw(`netobj', `alpha')
+			mata: st_local("__fast", strofreal(rows(__nw_bw) == `nodes'))
+			if `__fast' {
+				mata: st_store((1::`nodes'),"`netgenerate'", __nw_bw)
+			}
+			else {
+				mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness_weighted(`alpha'))
+			}
+			mata: mata drop __nw_bw
 		}
 		else {
 			// NativeGraphAvailable() (unw_core.do) transparently falls
@@ -171,3 +181,20 @@ program nwbetween
 	}
 end
 
+
+capture mata: mata drop nw2_fastbtw()
+mata:
+// Native weighted betweenness (kernel 47 of the nwgraph plugin); a 0 x 1 vector when the kernel is not available
+real colvector nw2_fastbtw(pointer(class nw_def scalar) scalar p, real scalar alpha)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 1, .))
+	if (nwg_comb_version() < 10) return(J(0, 1, .))
+	r = nwg_comb(47, p->get_nodes(), p->edgelist(), J(0, 1, .), (alpha, p->isdirect), aux, st)
+	if (st != 0 | rows(r) != p->get_nodes() | cols(r) != 1) return(J(0, 1, .))
+	return(r)
+}
+end

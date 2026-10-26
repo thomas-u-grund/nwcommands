@@ -35,7 +35,7 @@
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
 {synopt:{opt silent}}Do not display the summary of the new variables{p_end}
-{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to {help nwgeodesic}{p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 {synopt:{opt twomode}}Two-mode network: closeness is the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997){p_end}
 
@@ -106,6 +106,11 @@ random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 
 
 {pstd}
 The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (measured: 302 seconds, 0.6 GB). When the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
+
+{title:Valued networks of any size}
+
+{pstd}
+On a valued network the distances are least-cost distances (cost 1/w^alpha, {opt alpha(#)}, default 1; {opt alpha(-1)} reads the values as lengths as {it:igraph::closeness} with weights does) and closeness is the number of nodes a node can reach divided by the sum of these distances ({it:igraph::closeness} with {it:normalized = TRUE}). A kernel of the native plugin computes them for every node without the n x n distance matrix: 1,000 nodes with 3,000 ties take 0.15 seconds, 10,000 nodes 14 seconds (the Mata routine needs 3 seconds at 300 nodes and grows with the cube of the size). A valued network is never reduced to step counts silently: without the native plugin a network of more than 100 nodes stops with r(198) unless {opt force} or {opt binary} is given.
 
 {title:See also}
 

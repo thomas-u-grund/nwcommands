@@ -105,7 +105,13 @@ program nwcommunity, rclass
 			mata: `__nw_comm' = `netobj'->detect_communities_labelprop(`val')
 		}
 		else if `__bip' {
-			mata: `__nw_comm' = `netobj'->detect_communities_bipartite(`val', `resolution', `starts')
+			// native search (plugin generation 10 or later: same algorithm, random starts from a seeded generator, so
+			// set seed makes it reproducible); an older plugin or a failure leaves the Mata search
+			mata: `__nw_comm' = nw2_fastbip(`netobj', `val', `resolution', `starts')
+			mata: st_local("__fast", strofreal(rows(`__nw_comm') == `nodes'))
+			if !`__fast' {
+				mata: `__nw_comm' = `netobj'->detect_communities_bipartite(`val', `resolution', `starts')
+			}
 		}
 		else {
 			mata: `__nw_comm' = `netobj'->detect_communities_louvain(`val', `resolution')
@@ -197,4 +203,22 @@ program nwcommunity, rclass
 		}
 		local k = `=`k' + 1'
 	}
+end
+
+capture mata: mata drop nw2_fastbip()
+mata:
+// Native bipartite Louvain (kernel 43 of the nwgraph plugin); a 0 x 1 vector when the kernel is not available
+real colvector nw2_fastbip(pointer(class nw_def scalar) scalar p, real scalar val, real scalar res, real scalar starts)
+{
+	real rowvector aux
+	real scalar st, n
+	real matrix r
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 1, .))
+	if (nwg_comb_version() < 10) return(J(0, 1, .))
+	n = p->get_nodes()
+	r = nwg_comb(43, n, nwg_symweights(n, p->edgelist(), val), strtoreal(p->get_modes())', (res, starts, floor(uniform(1, 1) * 2147483646) + 1), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
+	return(r)
+}
 end

@@ -41,7 +41,7 @@
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
+{synopt:{opt force}}with a plugin of the current generation the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; without it a valued network of more than 100 nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
