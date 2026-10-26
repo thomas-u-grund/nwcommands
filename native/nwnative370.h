@@ -74,17 +74,17 @@ static uint64_t n370_next(n370_rng_t *r) {
 }
 
 /* uniform integer in 0..k-1 (k < 2^32), unbiased by rejection */
-static long n370_below(n370_rng_t *r, long k) {
+static nwint n370_below(n370_rng_t *r, nwint k) {
 	uint64_t lim = (UINT64_MAX / (uint64_t)k) * (uint64_t)k, x;
 	do { x = n370_next(r); } while (x >= lim);
-	return (long)(x % (uint64_t)k);
+	return (nwint)(x % (uint64_t)k);
 }
 
 /* ---------------------------------------------------------------- */
 /* 43: Louvain search for Barber's bipartite modularity              */
 /* ---------------------------------------------------------------- */
-typedef struct { long node, nbr, idx; double w; } lb_adj_t;
-typedef struct { double key; long idx; double w; } lb_agg_t;
+typedef struct { nwint node, nbr, idx; double w; } lb_adj_t;
+typedef struct { double key; nwint idx; double w; } lb_agg_t;
 
 static int lb_adjcmp(const void *x, const void *y) {
 	const lb_adj_t *a = (const lb_adj_t *)x, *b = (const lb_adj_t *)y;
@@ -100,9 +100,9 @@ static int lb_aggcmp(const void *x, const void *y) {
 }
 
 /* v[0..n-1] holds values 0..maxv; replaced by their rank among the distinct values (0-based); returns the number of distinct values or -1 */
-static long lb_denserank(long *v, long n, long maxv) {
-	long *rk = (long *)calloc((size_t)(maxv + 2), sizeof(long));
-	long i, c = 0;
+static nwint lb_denserank(nwint *v, nwint n, nwint maxv) {
+	nwint *rk = (nwint *)calloc((size_t)(maxv + 2), sizeof(nwint));
+	nwint i, c = 0;
 	if (!rk) return -1;
 	for (i = 0; i < n; i++) rk[v[i]] = 1;
 	for (i = 0; i <= maxv; i++) { if (rk[i]) { rk[i] = c; c++; } }
@@ -112,10 +112,10 @@ static long lb_denserank(long *v, long n, long maxv) {
 }
 
 /* Barber's Q of a membership (1-based labels) on the pairs; md[i] = 1 or 2 (0-based node ids in ps/pd) */
-static double lb_modularity(long n, long np, const long *ps, const long *pd, const double *pw, const int *md, const long *mem, double res) {
+static double lb_modularity(nwint n, nwint np, const nwint *ps, const nwint *pd, const double *pw, const int *md, const nwint *mem, double res) {
 	double m = 0, sinw = 0, sk = 0;
 	double *K1 = NULL, *K2 = NULL, *inw = NULL;
-	long ncomm = 0, r, i, j, c;
+	nwint ncomm = 0, r, i, j, c;
 	for (i = 0; i < n; i++) if (mem[i] > ncomm) ncomm = mem[i];
 	if (ncomm < 1) return 0;
 	for (r = 0; r < np; r++) if (md[ps[r]] != md[pd[r]] && pw[r] == pw[r] && pw[r] != 0) m += pw[r];
@@ -139,22 +139,22 @@ static double lb_modularity(long n, long np, const long *ps, const long *pd, con
 }
 
 /* one search of nw_louvain_bip1(); pairs ps/pd/pw already restricted to cross-mode ties of value > 0; out = labels 1..k, or NULL on failure */
-static int lb_search(long n, long np, const long *ps0, const long *pd0, const double *pw0, const int *md, double res,
-		int rnd, n370_rng_t *rng, const long *init, long *out) {
-	long *src = NULL, *dst = NULL, *final = NULL, *comm = NULL, *ptr = NULL, *nbr = NULL, *touched = NULL, *ord = NULL, *csrc = NULL, *cdst = NULL;
+static int lb_search(nwint n, nwint np, const nwint *ps0, const nwint *pd0, const double *pw0, const int *md, double res,
+		int rnd, n370_rng_t *rng, const nwint *init, nwint *out) {
+	nwint *src = NULL, *dst = NULL, *final = NULL, *comm = NULL, *ptr = NULL, *nbr = NULL, *touched = NULL, *ord = NULL, *csrc = NULL, *cdst = NULL;
 	double *wt = NULL, *a = NULL, *b = NULL, *Ac = NULL, *Bc = NULL, *kin = NULL, *wgt = NULL, *A2 = NULL, *B2 = NULL, *tmpd = NULL;
 	lb_adj_t *adj = NULL;
 	lb_agg_t *agg = NULL;
-	long L = np, N = n, lvl = 0, i, q, r, K, rc = 0, ii, nt, t, c, ci, best, sweep, na;
+	nwint L = np, N = n, lvl = 0, i, q, r, K, rc = 0, ii, nt, t, c, ci, best, sweep, na;
 	double m = 0, g, bestg;
 	int moved, anymove, hasinit = (init != NULL);
 
-	src = (long *)malloc((size_t)(np + 1) * sizeof(long));
-	dst = (long *)malloc((size_t)(np + 1) * sizeof(long));
+	src = (nwint *)malloc((size_t)(np + 1) * sizeof(nwint));
+	dst = (nwint *)malloc((size_t)(np + 1) * sizeof(nwint));
 	wt = (double *)malloc((size_t)(np + 1) * sizeof(double));
 	a = (double *)calloc((size_t)n + 1, sizeof(double));
 	b = (double *)calloc((size_t)n + 1, sizeof(double));
-	final = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	final = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	if (!src || !dst || !wt || !a || !b || !final) { rc = 2; goto done; }
 	for (r = 0; r < np; r++) {
 		src[r] = ps0[r]; dst[r] = pd0[r]; wt[r] = pw0[r];
@@ -167,15 +167,15 @@ static int lb_search(long n, long np, const long *ps0, const long *pd0, const do
 		na = 2 * L;
 		free(adj); free(ptr); free(nbr); free(wgt); free(comm); free(Ac); free(Bc); free(kin); free(touched); free(ord);
 		adj = (lb_adj_t *)malloc((size_t)(na + 1) * sizeof(lb_adj_t));
-		ptr = (long *)calloc((size_t)N + 2, sizeof(long));
-		nbr = (long *)malloc((size_t)(na + 1) * sizeof(long));
+		ptr = (nwint *)calloc((size_t)N + 2, sizeof(nwint));
+		nbr = (nwint *)malloc((size_t)(na + 1) * sizeof(nwint));
 		wgt = (double *)malloc((size_t)(na + 1) * sizeof(double));
-		comm = (long *)malloc((size_t)(N + 1) * sizeof(long));
+		comm = (nwint *)malloc((size_t)(N + 1) * sizeof(nwint));
 		Ac = (double *)calloc((size_t)N + 1, sizeof(double));
 		Bc = (double *)calloc((size_t)N + 1, sizeof(double));
 		kin = (double *)calloc((size_t)N + 1, sizeof(double));
-		touched = (long *)malloc((size_t)(N + 1) * sizeof(long));
-		ord = (long *)malloc((size_t)(N + 1) * sizeof(long));
+		touched = (nwint *)malloc((size_t)(N + 1) * sizeof(nwint));
+		ord = (nwint *)malloc((size_t)(N + 1) * sizeof(nwint));
 		if (!adj || !ptr || !nbr || !wgt || !comm || !Ac || !Bc || !kin || !touched || !ord) { rc = 2; goto done; }
 		for (r = 0; r < L; r++) {
 			adj[r].node = src[r]; adj[r].nbr = dst[r]; adj[r].idx = r; adj[r].w = wt[r];
@@ -193,7 +193,7 @@ static int lb_search(long n, long np, const long *ps0, const long *pd0, const do
 		while (anymove && sweep < 100) {
 			anymove = 0; sweep++;
 			for (i = 0; i < N; i++) ord[i] = i;
-			if (rnd) for (i = N - 1; i > 0; i--) { long j = n370_below(rng, i + 1), tmp = ord[i]; ord[i] = ord[j]; ord[j] = tmp; }
+			if (rnd) for (i = N - 1; i > 0; i--) { nwint j = n370_below(rng, i + 1), tmp = ord[i]; ord[i] = ord[j]; ord[j] = tmp; }
 			for (ii = 0; ii < N; ii++) {
 				i = ord[ii];
 				ci = comm[i];
@@ -223,16 +223,16 @@ static int lb_search(long n, long np, const long *ps0, const long *pd0, const do
 		lvl++;
 		for (i = 0; i < n; i++) final[i] = comm[final[i]];
 		/* next level graph */
-		csrc = (long *)malloc((size_t)(L + 1) * sizeof(long));
-		cdst = (long *)malloc((size_t)(L + 1) * sizeof(long));
+		csrc = (nwint *)malloc((size_t)(L + 1) * sizeof(nwint));
+		cdst = (nwint *)malloc((size_t)(L + 1) * sizeof(nwint));
 		agg = (lb_agg_t *)malloc((size_t)(L + 1) * sizeof(lb_agg_t));
 		A2 = (double *)calloc((size_t)K + 1, sizeof(double));
 		B2 = (double *)calloc((size_t)K + 1, sizeof(double));
 		if (!csrc || !cdst || !agg || !A2 || !B2) { rc = 2; goto done; }
 		{
-			long keep = 0, u = 0;
+			nwint keep = 0, u = 0;
 			for (r = 0; r < L; r++) {
-				long cs = comm[src[r]], cd = comm[dst[r]], lo, hi;
+				nwint cs = comm[src[r]], cd = comm[dst[r]], lo, hi;
 				if (cs == cd) continue;
 				lo = cs < cd ? cs : cd; hi = cs < cd ? cd : cs;
 				agg[keep].key = (double)lo * (double)(K + 1) + (double)hi; agg[keep].idx = keep; agg[keep].w = wt[r];
@@ -246,8 +246,8 @@ static int lb_search(long n, long np, const long *ps0, const long *pd0, const do
 				else { agg[u] = agg[r]; u++; }
 			}
 			for (r = 0; r < u; r++) {
-				long lo = (long)floor(agg[r].key / (double)(K + 1));
-				csrc[r] = lo; cdst[r] = (long)(agg[r].key - (double)lo * (double)(K + 1));
+				nwint lo = (nwint)floor(agg[r].key / (double)(K + 1));
+				csrc[r] = lo; cdst[r] = (nwint)(agg[r].key - (double)lo * (double)(K + 1));
 			}
 			free(src); free(dst); free(wt); free(a); free(b);
 			src = csrc; dst = cdst; csrc = cdst = NULL;
@@ -262,7 +262,7 @@ static int lb_search(long n, long np, const long *ps0, const long *pd0, const do
 	for (i = 0; i < n; i++) out[i] = final[i];
 	/* final labels: dense rank, 0-based -> 1-based */
 	{
-		long kk = lb_denserank(out, n, n);
+		nwint kk = lb_denserank(out, n, n);
 		if (kk < 0) { rc = 2; goto done; }
 		for (i = 0; i < n; i++) out[i] += 1;
 	}
@@ -270,14 +270,14 @@ done:
 	free(src); free(dst); free(wt); free(a); free(b); free(final);
 	free(adj); free(ptr); free(nbr); free(wgt); free(comm); free(Ac); free(Bc); free(kin); free(touched); free(ord);
 	free(csrc); free(cdst); free(agg); free(A2); free(B2); free(tmpd);
-	return rc;
+	return (int)rc;
 }
 
-static int comb_louvbip(long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv, double res, long nstart, double seed) {
-	long *ps = NULL, *pd = NULL, *best = NULL, *cur = NULL, *nxt = NULL, *init1 = NULL;
+static int comb_louvbip(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv, double res, nwint nstart, double seed) {
+	nwint *ps = NULL, *pd = NULL, *best = NULL, *cur = NULL, *nxt = NULL, *init1 = NULL;
 	double *pw = NULL;
 	int *md = NULL;
-	long np = 0, k, r, it, i;
+	nwint np = 0, k, r, it, i;
 	double bq, cq, nq;
 	n370_rng_t rng;
 	int rc = 0;
@@ -285,17 +285,17 @@ static int comb_louvbip(long n, long nties, const long *ei, const long *ej, cons
 	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
 	n370_seed(&rng, seed);
 	md = (int *)malloc((size_t)n * sizeof(int));
-	ps = (long *)malloc((size_t)(nties + 1) * sizeof(long));
-	pd = (long *)malloc((size_t)(nties + 1) * sizeof(long));
+	ps = (nwint *)malloc((size_t)(nties + 1) * sizeof(nwint));
+	pd = (nwint *)malloc((size_t)(nties + 1) * sizeof(nwint));
 	pw = (double *)malloc((size_t)(nties + 1) * sizeof(double));
-	best = (long *)malloc((size_t)n * sizeof(long));
-	cur = (long *)malloc((size_t)n * sizeof(long));
-	nxt = (long *)malloc((size_t)n * sizeof(long));
+	best = (nwint *)malloc((size_t)n * sizeof(nwint));
+	cur = (nwint *)malloc((size_t)n * sizeof(nwint));
+	nxt = (nwint *)malloc((size_t)n * sizeof(nwint));
 	if (!md || !ps || !pd || !pw || !best || !cur || !nxt) { rc = 2; goto done; }
 	for (i = 0; i < n; i++) md[i] = (nv[i] == 1) ? 1 : 2;
 	/* the ties that count in the search: cross-mode, value above zero */
 	for (k = 0; k < nties; k++) {
-		long x = ei[k] - 1, y = ej[k] - 1;
+		nwint x = ei[k] - 1, y = ej[k] - 1;
 		if (x < 0 || y < 0 || x >= n || y >= n) continue;
 		if (md[x] == md[y] || !(ew[k] > 0)) continue;
 		ps[np] = x; pd[np] = y; pw[np] = ew[k]; np++;
@@ -307,16 +307,16 @@ static int comb_louvbip(long n, long nties, const long *ei, const long *ej, cons
 		if ((rc = lb_search(n, np, ps, pd, pw, md, res, 0, &rng, NULL, best))) goto done;
 		bq = lb_modularity(n, np, ps, pd, pw, md, best, res);
 		for (r = 1; r <= nstart; r++) {
-			if (r == 1) memcpy(cur, best, (size_t)n * sizeof(long));
+			if (r == 1) memcpy(cur, best, (size_t)n * sizeof(nwint));
 			else if ((rc = lb_search(n, np, ps, pd, pw, md, res, 1, &rng, NULL, cur))) goto done;
 			cq = lb_modularity(n, np, ps, pd, pw, md, cur, res);
 			for (it = 1; it <= 20; it++) {
 				if ((rc = lb_search(n, np, ps, pd, pw, md, res, 1, &rng, cur, nxt))) goto done;
 				nq = lb_modularity(n, np, ps, pd, pw, md, nxt, res);
-				if (nq > cq + 1e-12) { cq = nq; memcpy(cur, nxt, (size_t)n * sizeof(long)); }
+				if (nq > cq + 1e-12) { cq = nq; memcpy(cur, nxt, (size_t)n * sizeof(nwint)); }
 				else break;
 			}
-			if (cq > bq + 1e-12) { bq = cq; memcpy(best, cur, (size_t)n * sizeof(long)); }
+			if (cq > bq + 1e-12) { bq = cq; memcpy(best, cur, (size_t)n * sizeof(nwint)); }
 		}
 	}
 	if (res_alloc(n, 1)) { rc = 2; goto done; }
@@ -332,32 +332,32 @@ done:
 /* ---------------------------------------------------------------- */
 /* 44: weighted PageRank                                             */
 /* ---------------------------------------------------------------- */
-static int comb_pagerankw(long n, long nties, const long *ei, const long *ej, const double *ew, double d, long maxiter, double tol) {
-	long *ptr = NULL, *idx = NULL;
+static int comb_pagerankw(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, double d, nwint maxiter, double tol) {
+	nwint *ptr = NULL, *idx = NULL;
 	double *w = NULL, *str = NULL, *r = NULL, *rn = NULL, *tmp = NULL;
-	long i, k, iter, tot = 0;
+	nwint i, k, iter, tot = 0;
 	int rc = 0;
 
 	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
-	ptr = (long *)calloc((size_t)n + 2, sizeof(long));
+	ptr = (nwint *)calloc((size_t)n + 2, sizeof(nwint));
 	str = (double *)calloc((size_t)n + 1, sizeof(double));
 	r = (double *)malloc((size_t)n * sizeof(double));
 	rn = (double *)malloc((size_t)n * sizeof(double));
 	tmp = (double *)malloc((size_t)n * sizeof(double));
-	idx = (long *)malloc((size_t)(nties + 1) * sizeof(long));
+	idx = (nwint *)malloc((size_t)(nties + 1) * sizeof(nwint));
 	w = (double *)malloc((size_t)(nties + 1) * sizeof(double));
 	if (!ptr || !str || !r || !rn || !tmp || !idx || !w) { rc = 2; goto done; }
 	for (k = 0; k < nties; k++) {
 		if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || !(ew[k] > 0)) continue;
 		ptr[ei[k]]++; tot++;
 	}
-	{ long run = 0; for (i = 0; i < n; i++) { long c = ptr[i + 1]; ptr[i] = run; run += c; } ptr[n] = run; }
+	{ nwint run = 0; for (i = 0; i < n; i++) { nwint c = ptr[i + 1]; ptr[i] = run; run += c; } ptr[n] = run; }
 	{
-		long *cur = (long *)malloc((size_t)n * sizeof(long));
+		nwint *cur = (nwint *)malloc((size_t)n * sizeof(nwint));
 		if (!cur) { rc = 2; goto done; }
 		for (i = 0; i < n; i++) cur[i] = ptr[i];
 		for (k = 0; k < nties; k++) {
-			long s;
+			nwint s;
 			if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || !(ew[k] > 0)) continue;
 			s = ei[k] - 1;
 			idx[cur[s]] = ej[k] - 1; w[cur[s]] = ew[k]; cur[s]++;
@@ -399,19 +399,19 @@ done:
 /* 45: maximum-weight bipartite matching (Hungarian method)          */
 /* ---------------------------------------------------------------- */
 /* cost = -W for an nr x nc matrix (nr <= nc), row-major in Wm; rowof[j] (1-based columns) = assigned row (1-based) or 0 */
-static int hung_run(long nr, long nc, const double *Wm, long *rowof) {
+static int hung_run(nwint nr, nwint nc, const double *Wm, nwint *rowof) {
 	double *u = NULL, *v = NULL, *minv = NULL;
-	long *p = NULL, *way = NULL;
+	nwint *p = NULL, *way = NULL;
 	unsigned char *used = NULL;
-	long i, j, j0, j1, i0;
+	nwint i, j, j0, j1, i0;
 	double delta, cur;
 	int rc = 0;
 
 	u = (double *)calloc((size_t)nr + 2, sizeof(double));
 	v = (double *)calloc((size_t)nc + 2, sizeof(double));
 	minv = (double *)malloc((size_t)(nc + 2) * sizeof(double));
-	p = (long *)calloc((size_t)nc + 2, sizeof(long));
-	way = (long *)calloc((size_t)nc + 2, sizeof(long));
+	p = (nwint *)calloc((size_t)nc + 2, sizeof(nwint));
+	way = (nwint *)calloc((size_t)nc + 2, sizeof(nwint));
 	used = (unsigned char *)malloc((size_t)nc + 2);
 	if (!u || !v || !minv || !p || !way || !used) { rc = 2; goto done; }
 	for (i = 1; i <= nr; i++) {
@@ -448,16 +448,16 @@ done:
 	return rc;
 }
 
-static int comb_matchw(long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv) {
-	long *pos = NULL, *idx1 = NULL, *idx2 = NULL, *rowof = NULL;
+static int comb_matchw(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv) {
+	nwint *pos = NULL, *idx1 = NULL, *idx2 = NULL, *rowof = NULL;
 	double *Wm = NULL;
-	long n1 = 0, n2 = 0, N, i, j, k, nr, nc;
+	nwint n1 = 0, n2 = 0, N, i, j, k, nr, nc;
 	int rc = 0, transposed = 0;
 
 	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
-	pos = (long *)calloc((size_t)n + 1, sizeof(long));
-	idx1 = (long *)malloc((size_t)n * sizeof(long));
-	idx2 = (long *)malloc((size_t)n * sizeof(long));
+	pos = (nwint *)calloc((size_t)n + 1, sizeof(nwint));
+	idx1 = (nwint *)malloc((size_t)n * sizeof(nwint));
+	idx2 = (nwint *)malloc((size_t)n * sizeof(nwint));
 	if (!pos || !idx1 || !idx2) { rc = 2; goto done; }
 	for (i = 0; i < n; i++) {
 		if (nv[i] == 1) { idx1[n1] = i + 1; pos[i] = ++n1; }
@@ -472,10 +472,10 @@ static int comb_matchw(long n, long nties, const long *ei, const long *ej, const
 	else { nr = n2; nc = n1; transposed = 1; }
 	if ((double)nr * (double)nc > 4e8) { rc = 2; goto done; }
 	Wm = (double *)calloc((size_t)(nr * nc) + 1, sizeof(double));
-	rowof = (long *)calloc((size_t)nc + 2, sizeof(long));
+	rowof = (nwint *)calloc((size_t)nc + 2, sizeof(nwint));
 	if (!Wm || !rowof) { rc = 2; goto done; }
 	for (k = 0; k < nties; k++) {
-		long x = ei[k], y = ej[k];
+		nwint x = ei[k], y = ej[k];
 		if (x < 1 || y < 1 || x > n || y > n || x == y) continue;
 		if (!(ew[k] > 0) || nv[x - 1] != 1 || nv[y - 1] != 2) continue;
 		if (transposed) Wm[(pos[y - 1] - 1) * nc + (pos[x - 1] - 1)] = ew[k];
@@ -502,7 +502,7 @@ done:
 /* ---------------------------------------------------------------- */
 /* 46: tie swapping (Maslov-Sneppen)                                 */
 /* ---------------------------------------------------------------- */
-typedef struct { int64_t *key; long cap, used; } sw_hash_t;
+typedef struct { int64_t *key; nwint cap, used; } sw_hash_t;
 
 static uint64_t sw_h(int64_t k) {
 	uint64_t x = (uint64_t)k;
@@ -537,18 +537,18 @@ static void sw_del(sw_hash_t *h, int64_t k) {
 	}
 }
 
-static void sw_rebuild(sw_hash_t *h, const double *T, long m, long n) {
-	long r;
+static void sw_rebuild(sw_hash_t *h, const double *T, nwint m, nwint n) {
+	nwint r;
 	for (r = 0; r < h->cap; r++) h->key[r] = SW_EMPTY;
 	h->used = 0;
 	for (r = 0; r < m; r++) sw_add(h, (int64_t)T[3 * r] * (int64_t)(n + 1) + (int64_t)T[3 * r + 1]);
 }
 
-static int comb_swap(long n, long nties, const long *ei, const long *ej, const double *ew, long nswap, double seed) {
+static int comb_swap(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, nwint nswap, double seed) {
 	double *T = NULL;
 	sw_hash_t h;
 	n370_rng_t rng;
-	long m = nties, t, r1, r2, swaps = 0, k;
+	nwint m = nties, t, r1, r2, swaps = 0, k;
 	int rc = 0;
 
 	h.key = NULL;
@@ -567,13 +567,13 @@ static int comb_swap(long n, long nties, const long *ei, const long *ej, const d
 	if (!h.key) { rc = 2; goto done; }
 	sw_rebuild(&h, T, m, n);
 	for (t = 1; t <= nswap; t++) {
-		long a, b, c, d;
+		nwint a, b, c, d;
 		double w1, w2;
 		r1 = n370_below(&rng, m);
 		r2 = n370_below(&rng, m);
 		if (r1 == r2) continue;
-		a = (long)T[3 * r1]; b = (long)T[3 * r1 + 1]; w1 = T[3 * r1 + 2];
-		c = (long)T[3 * r2]; d = (long)T[3 * r2 + 1]; w2 = T[3 * r2 + 2];
+		a = (nwint)T[3 * r1]; b = (nwint)T[3 * r1 + 1]; w1 = T[3 * r1 + 2];
+		c = (nwint)T[3 * r2]; d = (nwint)T[3 * r2 + 1]; w2 = T[3 * r2 + 2];
 		if (a == c || b == d) continue;
 		if (sw_has(&h, (int64_t)a * (n + 1) + d)) continue;
 		if (sw_has(&h, (int64_t)c * (n + 1) + b)) continue;
@@ -596,28 +596,28 @@ done:
 /* ---------------------------------------------------------------- */
 /* 47: weighted betweenness (Brandes with Dijkstra)                  */
 /* ---------------------------------------------------------------- */
-typedef struct { double d; long v; } bw_hn_t;
+typedef struct { double d; nwint v; } bw_hn_t;
 
 static int bw_less(const bw_hn_t *a, const bw_hn_t *b) {
 	return a->d < b->d || (a->d == b->d && a->v < b->v);
 }
 
-static void bw_push(bw_hn_t *h, long *hn, double d, long v) {
-	long i = (*hn)++;
+static void bw_push(bw_hn_t *h, nwint *hn, double d, nwint v) {
+	nwint i = (*hn)++;
 	h[i].d = d; h[i].v = v;
 	while (i > 0) {
-		long p = (i - 1) / 2;
+		nwint p = (i - 1) / 2;
 		if (bw_less(&h[i], &h[p])) { bw_hn_t t = h[i]; h[i] = h[p]; h[p] = t; i = p; }
 		else break;
 	}
 }
 
-static bw_hn_t bw_pop(bw_hn_t *h, long *hn) {
+static bw_hn_t bw_pop(bw_hn_t *h, nwint *hn) {
 	bw_hn_t top = h[0];
-	long i = 0, n = --(*hn);
+	nwint i = 0, n = --(*hn);
 	h[0] = h[n];
 	for (;;) {
-		long l = 2 * i + 1, r = l + 1, m = i;
+		nwint l = 2 * i + 1, r = l + 1, m = i;
 		if (l < n && bw_less(&h[l], &h[m])) m = l;
 		if (r < n && bw_less(&h[r], &h[m])) m = r;
 		if (m == i) break;
@@ -626,36 +626,36 @@ static bw_hn_t bw_pop(bw_hn_t *h, long *hn) {
 	return top;
 }
 
-static int comb_betweenw(long n, long nties, const long *ei, const long *ej, const double *ew, double alpha, int directed) {
-	long *optr = NULL, *oidx = NULL, *iptr = NULL, *pred = NULL, *npred = NULL, *order = NULL, *cur = NULL;
+static int comb_betweenw(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, double alpha, int directed) {
+	nwint *optr = NULL, *oidx = NULL, *iptr = NULL, *pred = NULL, *npred = NULL, *order = NULL, *cur = NULL;
 	double *ocost = NULL, *D = NULL, *S = NULL, *Dd = NULL, *Cb = NULL;
 	unsigned char *settled = NULL;
 	bw_hn_t *heap = NULL;
-	long i, k, s, m = 0, nord, hn;
+	nwint i, k, s, m = 0, nord, hn;
 	int rc = 0;
 
 	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
-	optr = (long *)calloc((size_t)n + 2, sizeof(long));
-	iptr = (long *)calloc((size_t)n + 2, sizeof(long));
+	optr = (nwint *)calloc((size_t)n + 2, sizeof(nwint));
+	iptr = (nwint *)calloc((size_t)n + 2, sizeof(nwint));
 	if (!optr || !iptr) { rc = 2; goto done; }
 	for (k = 0; k < nties; k++) {
 		if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || ei[k] == ej[k] || !(ew[k] > 0)) continue;
 		optr[ei[k]]++; iptr[ej[k]]++; m++;
 	}
 	{
-		long ro = 0, ri = 0;
+		nwint ro = 0, ri = 0;
 		for (i = 0; i < n; i++) {
-			long co = optr[i + 1], ci = iptr[i + 1];
+			nwint co = optr[i + 1], ci = iptr[i + 1];
 			optr[i] = ro; ro += co; iptr[i] = ri; ri += ci;
 		}
 		optr[n] = ro; iptr[n] = ri;
 	}
-	oidx = (long *)malloc((size_t)(m + 1) * sizeof(long));
+	oidx = (nwint *)malloc((size_t)(m + 1) * sizeof(nwint));
 	ocost = (double *)malloc((size_t)(m + 1) * sizeof(double));
-	pred = (long *)malloc((size_t)(m + 1) * sizeof(long));
-	cur = (long *)malloc((size_t)n * sizeof(long));
-	npred = (long *)malloc((size_t)n * sizeof(long));
-	order = (long *)malloc((size_t)n * sizeof(long));
+	pred = (nwint *)malloc((size_t)(m + 1) * sizeof(nwint));
+	cur = (nwint *)malloc((size_t)n * sizeof(nwint));
+	npred = (nwint *)malloc((size_t)n * sizeof(nwint));
+	order = (nwint *)malloc((size_t)n * sizeof(nwint));
 	D = (double *)malloc((size_t)n * sizeof(double));
 	S = (double *)malloc((size_t)n * sizeof(double));
 	Dd = (double *)malloc((size_t)n * sizeof(double));
@@ -677,12 +677,12 @@ static int comb_betweenw(long n, long nties, const long *ei, const long *ej, con
 		bw_push(heap, &hn, 0.0, s);
 		while (hn > 0) {
 			bw_hn_t t = bw_pop(heap, &hn);
-			long u = t.v;
+			nwint u = t.v;
 			if (settled[u]) continue;
 			settled[u] = 1;
 			order[nord++] = u;
 			for (k = optr[u]; k < optr[u + 1]; k++) {
-				long w = oidx[k];
+				nwint w = oidx[k];
 				double newd;
 				if (settled[w]) continue;
 				newd = D[u] + ocost[k];
@@ -697,9 +697,9 @@ static int comb_betweenw(long n, long nties, const long *ei, const long *ej, con
 			}
 		}
 		for (k = nord - 1; k >= 0; k--) {
-			long w = order[k], j;
+			nwint w = order[k], j;
 			for (j = 0; j < npred[w]; j++) {
-				long v = pred[iptr[w] + j];
+				nwint v = pred[iptr[w] + j];
 				Dd[v] += (S[v] / S[w]) * (1 + Dd[w]);
 			}
 			if (w != s) Cb[w] += Dd[w];
@@ -717,23 +717,23 @@ done:
 /* ---------------------------------------------------------------- */
 /* 48, 49: weighted distances (Dijkstra)                             */
 /* ---------------------------------------------------------------- */
-typedef struct { long *ptr, *idx; double *cost; long n; } dj_t;
+typedef struct { nwint *ptr, *idx; double *cost; nwint n; } dj_t;
 
 static void dj_free(dj_t *g) { free(g->ptr); free(g->idx); free(g->cost); g->ptr = NULL; g->idx = NULL; g->cost = NULL; }
 
-static int dj_build(dj_t *g, long n, long nties, const long *ei, const long *ej, const double *ew, double alpha) {
-	long k, i, *cur;
+static int dj_build(dj_t *g, nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, double alpha) {
+	nwint k, i, *cur;
 	g->n = n; g->idx = NULL; g->cost = NULL;
-	g->ptr = (long *)calloc((size_t)n + 2, sizeof(long));
+	g->ptr = (nwint *)calloc((size_t)n + 2, sizeof(nwint));
 	if (!g->ptr) return 2;
 	for (k = 0; k < nties; k++) {
 		if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || ei[k] == ej[k] || !(ew[k] > 0)) continue;
 		g->ptr[ei[k]]++;
 	}
-	{ long run = 0; for (i = 0; i < n; i++) { long c = g->ptr[i + 1]; g->ptr[i] = run; run += c; } g->ptr[n] = run; }
-	g->idx = (long *)malloc((size_t)(g->ptr[n] + 1) * sizeof(long));
+	{ nwint run = 0; for (i = 0; i < n; i++) { nwint c = g->ptr[i + 1]; g->ptr[i] = run; run += c; } g->ptr[n] = run; }
+	g->idx = (nwint *)malloc((size_t)(g->ptr[n] + 1) * sizeof(nwint));
 	g->cost = (double *)malloc((size_t)(g->ptr[n] + 1) * sizeof(double));
-	cur = (long *)malloc((size_t)n * sizeof(long));
+	cur = (nwint *)malloc((size_t)n * sizeof(nwint));
 	if (!g->idx || !g->cost || !cur) { free(cur); dj_free(g); return 2; }
 	for (i = 0; i < n; i++) cur[i] = g->ptr[i];
 	for (k = 0; k < nties; k++) {
@@ -747,18 +747,18 @@ static int dj_build(dj_t *g, long n, long nties, const long *ei, const long *ej,
 }
 
 /* D[0..n-1] = distance from s (-1 = unreachable); heap has room for ptr[n]+2 entries; settled is scratch */
-static void dj_run(const dj_t *g, long s, double *D, bw_hn_t *heap, unsigned char *settled) {
-	long i, k, hn = 0, n = g->n;
+static void dj_run(const dj_t *g, nwint s, double *D, bw_hn_t *heap, unsigned char *settled) {
+	nwint i, k, hn = 0, n = g->n;
 	for (i = 0; i < n; i++) { D[i] = -1; settled[i] = 0; }
 	D[s] = 0;
 	bw_push(heap, &hn, 0.0, s);
 	while (hn > 0) {
 		bw_hn_t t = bw_pop(heap, &hn);
-		long u = t.v;
+		nwint u = t.v;
 		if (settled[u]) continue;
 		settled[u] = 1;
 		for (k = g->ptr[u]; k < g->ptr[u + 1]; k++) {
-			long w = g->idx[k];
+			nwint w = g->idx[k];
 			double nd = D[u] + g->cost[k];
 			if (settled[w]) continue;
 			if (D[w] < 0 || nd < D[w]) { D[w] = nd; bw_push(heap, &hn, nd, w); }
@@ -766,12 +766,12 @@ static void dj_run(const dj_t *g, long s, double *D, bw_hn_t *heap, unsigned cha
 	}
 }
 
-static int comb_distw(long n, long nties, const long *ei, const long *ej, const double *ew, double alpha, long start, long count, int block) {
+static int comb_distw(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, double alpha, nwint start, nwint count, int block) {
 	dj_t g;
 	double *D = NULL;
 	unsigned char *settled = NULL;
 	bw_hn_t *heap = NULL;
-	long s, i;
+	nwint s, i;
 	int rc = 0;
 
 	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
@@ -792,7 +792,7 @@ static int comb_distw(long n, long nties, const long *ei, const long *ej, const 
 	else {
 		if (res_alloc(n, 2)) { rc = 2; goto done; }
 		for (s = 0; s < n; s++) {
-			double sum = 0; long cnt = 0;
+			double sum = 0; nwint cnt = 0;
 			dj_run(&g, s, D, heap, settled);
 			for (i = 0; i < n; i++) if (i != s && D[i] >= 0) { sum += D[i]; cnt++; }
 			g_res[2 * s] = sum; g_res[2 * s + 1] = (double)cnt;
@@ -805,15 +805,15 @@ done:
 }
 
 /* called by comb_call() for the codes 43..49 */
-static int comb_n370(long alg, long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv, const double *p) {
+static int comb_n370(nwint alg, nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv, const double *p) {
 	switch (alg) {
-		case ALG_LOUVBIP:   return comb_louvbip(n, nties, ei, ej, ew, nv, p[3], (long)p[4], p[5]);
-		case ALG_PAGERANKW: return comb_pagerankw(n, nties, ei, ej, ew, p[3], (long)p[4], p[5]);
+		case ALG_LOUVBIP:   return comb_louvbip(n, nties, ei, ej, ew, nv, p[3], (nwint)p[4], p[5]);
+		case ALG_PAGERANKW: return comb_pagerankw(n, nties, ei, ej, ew, p[3], (nwint)p[4], p[5]);
 		case ALG_MATCHW:    return comb_matchw(n, nties, ei, ej, ew, nv);
-		case ALG_SWAP:      return comb_swap(n, nties, ei, ej, ew, (long)p[3], p[4]);
+		case ALG_SWAP:      return comb_swap(n, nties, ei, ej, ew, (nwint)p[3], p[4]);
 		case ALG_BETWEENW:  return comb_betweenw(n, nties, ei, ej, ew, p[3], (int)p[4]);
 		case ALG_DISTSUMW:  return comb_distw(n, nties, ei, ej, ew, p[3], 0, 0, 0);
-		case ALG_DISTBLOCK: return comb_distw(n, nties, ei, ej, ew, p[3], (long)p[4], (long)p[5], 1);
+		case ALG_DISTBLOCK: return comb_distw(n, nties, ei, ej, ew, p[3], (nwint)p[4], (nwint)p[5], 1);
 		default: SF_error("nwgraph: unknown algorithm code\n"); return 198;
 	}
 }

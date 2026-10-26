@@ -155,20 +155,20 @@ static double n380_ch(double n, int r) {
 
 /* one side of the biadjacency structure */
 typedef struct {
-	long nS, nT;
-	const long *sptr, *sidx;   /* S -> T */
-	const long *tptr, *tidx;   /* T -> S */
-	const long *snode, *tnode; /* network node (0-based) of S and T vertices */
+	nwint nS, nT;
+	const nwint *sptr, *sidx;   /* S -> T */
+	const nwint *tptr, *tidx;   /* T -> S */
+	const nwint *snode, *tnode; /* network node (0-based) of S and T vertices */
 } n380_side_t;
 
 typedef struct { int cls; int pos; double val; } n380_ent_t;
 
 /* credit one tuple of S nodes (k, network nodes sn[]) with class sizes np[] and class members cl[p] (T vertex numbers) */
-static void n380_apply(double *out, long P, const n380_side_t *G, int k, const long *sn, const long *np,
-		long *const *cl, const n380_cfglist_t *L) {
+static void n380_apply(double *out, nwint P, const n380_side_t *G, int k, const nwint *sn, const nwint *np,
+		nwint *const *cl, const n380_cfglist_t *L) {
 	n380_ent_t ent[1024];
 	int nent = 0, ic, p, e;
-	long q;
+	nwint q;
 	for (ic = 0; ic < L->ncfg; ic++) {
 		const n380_cfg_t *c = &L->cfg[ic];
 		double tot = 1.0, per[N380_MAXCLS + 1];
@@ -195,32 +195,32 @@ static void n380_apply(double *out, long P, const n380_side_t *G, int k, const l
 		}
 	}
 	for (e = 0; e < nent; e++) {
-		const long *m = cl[ent[e].cls];
-		long cnt = np[ent[e].cls];
+		const nwint *m = cl[ent[e].cls];
+		nwint cnt = np[ent[e].cls];
 		for (q = 0; q < cnt; q++) out[G->tnode[m[q]] * P + ent[e].pos - 1] += ent[e].val;
 	}
 }
 
-static void n380_k1(double *out, long P, const n380_side_t *G, const n380_cfglist_t *L) {
-	long u;
+static void n380_k1(double *out, nwint P, const n380_side_t *G, const n380_cfglist_t *L) {
+	nwint u;
 	for (u = 0; u < G->nS; u++) {
-		long np[N380_MAXCLS + 1], sn[3];
-		long *cl[N380_MAXCLS + 1];
-		long d = G->sptr[u + 1] - G->sptr[u];
+		nwint np[N380_MAXCLS + 1], sn[3];
+		nwint *cl[N380_MAXCLS + 1];
+		nwint d = G->sptr[u + 1] - G->sptr[u];
 		if (d == 0) continue;
 		np[1] = d;
-		cl[1] = (long *)(G->sidx + G->sptr[u]);
+		cl[1] = (nwint *)(G->sidx + G->sptr[u]);
 		sn[0] = G->snode[u];
 		n380_apply(out, P, G, 1, sn, np, cl, L);
 	}
 }
 
 /* class buckets of the T nodes of the S nodes sv[0..k-1]; returns 0, or 1 when out of memory (scratch given) */
-static void n380_classes(const n380_side_t *G, int k, const long *sv, unsigned char *msk, long *touched, long *buf,
-		long *np, long **cl) {
-	long nt = 0, i, w;
+static void n380_classes(const n380_side_t *G, int k, const nwint *sv, unsigned char *msk, nwint *touched, nwint *buf,
+		nwint *np, nwint **cl) {
+	nwint nt = 0, i, w;
 	int j, p, ncls = (1 << k) - 1;
-	long off[N380_MAXCLS + 2], fill[N380_MAXCLS + 2];
+	nwint off[N380_MAXCLS + 2], fill[N380_MAXCLS + 2];
 	for (j = 0; j < k; j++) {
 		for (i = G->sptr[sv[j]]; i < G->sptr[sv[j] + 1]; i++) {
 			w = G->sidx[i];
@@ -239,28 +239,28 @@ static void n380_classes(const n380_side_t *G, int k, const long *sv, unsigned c
 	}
 }
 
-static int n380_k2(double *out, long P, const n380_side_t *G, const n380_cfglist_t *L) {
-	long *cnt = (long *)calloc((size_t)(G->nS > 0 ? G->nS : 1), sizeof(long));
-	long *tch = (long *)malloc((size_t)(G->nS > 0 ? G->nS : 1) * sizeof(long));
+static int n380_k2(double *out, nwint P, const n380_side_t *G, const n380_cfglist_t *L) {
+	nwint *cnt = (nwint *)calloc((size_t)(G->nS > 0 ? G->nS : 1), sizeof(nwint));
+	nwint *tch = (nwint *)malloc((size_t)(G->nS > 0 ? G->nS : 1) * sizeof(nwint));
 	unsigned char *msk = (unsigned char *)calloc((size_t)(G->nT > 0 ? G->nT : 1), 1);
-	long *touched = (long *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(long));
-	long *buf = (long *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(long));
-	long u, i, j, ntc;
+	nwint *touched = (nwint *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(nwint));
+	nwint *buf = (nwint *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(nwint));
+	nwint u, i, j, ntc;
 	if (!cnt || !tch || !msk || !touched || !buf) { free(cnt); free(tch); free(msk); free(touched); free(buf); return 2; }
 	for (u = 0; u < G->nS; u++) {
 		ntc = 0;
 		for (i = G->sptr[u]; i < G->sptr[u + 1]; i++) {
-			long w = G->sidx[i];
+			nwint w = G->sidx[i];
 			for (j = G->tptr[w]; j < G->tptr[w + 1]; j++) {
-				long v = G->tidx[j];
+				nwint v = G->tidx[j];
 				if (v <= u) continue;
 				if (cnt[v] == 0) tch[ntc++] = v;
 				cnt[v]++;
 			}
 		}
 		for (i = 0; i < ntc; i++) {
-			long v = tch[i], sv[2], np[N380_MAXCLS + 1], sn[3];
-			long *cl[N380_MAXCLS + 1];
+			nwint v = tch[i], sv[2], np[N380_MAXCLS + 1], sn[3];
+			nwint *cl[N380_MAXCLS + 1];
 			cnt[v] = 0;
 			sv[0] = u; sv[1] = v;
 			n380_classes(G, 2, sv, msk, touched, buf, np, cl);
@@ -273,8 +273,8 @@ static int n380_k2(double *out, long P, const n380_side_t *G, const n380_cfglist
 }
 
 /* common neighbour of two S nodes by merging the sorted lists */
-static int n380_common(const n380_side_t *G, long a, long b) {
-	long i = G->sptr[a], ie = G->sptr[a + 1], j = G->sptr[b], je = G->sptr[b + 1];
+static int n380_common(const n380_side_t *G, nwint a, nwint b) {
+	nwint i = G->sptr[a], ie = G->sptr[a + 1], j = G->sptr[b], je = G->sptr[b + 1];
 	while (i < ie && j < je) {
 		if (G->sidx[i] == G->sidx[j]) return 1;
 		if (G->sidx[i] < G->sidx[j]) i++; else j++;
@@ -282,16 +282,16 @@ static int n380_common(const n380_side_t *G, long a, long b) {
 	return 0;
 }
 
-static int n380_k3(double *out, long P, const n380_side_t *G, const n380_cfglist_t *L) {
-	long nS = G->nS;
+static int n380_k3(double *out, nwint P, const n380_side_t *G, const n380_cfglist_t *L) {
+	nwint nS = G->nS;
 	unsigned char *bits = NULL;
-	long words = (nS + 7) / 8;
-	long *cnt = (long *)calloc((size_t)(nS > 0 ? nS : 1), sizeof(long));
-	long *nh = (long *)malloc((size_t)(nS > 0 ? nS : 1) * sizeof(long));
+	nwint words = (nS + 7) / 8;
+	nwint *cnt = (nwint *)calloc((size_t)(nS > 0 ? nS : 1), sizeof(nwint));
+	nwint *nh = (nwint *)malloc((size_t)(nS > 0 ? nS : 1) * sizeof(nwint));
 	unsigned char *msk = (unsigned char *)calloc((size_t)(G->nT > 0 ? G->nT : 1), 1);
-	long *touched = (long *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(long));
-	long *buf = (long *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(long));
-	long b, i, j, ia, ic;
+	nwint *touched = (nwint *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(nwint));
+	nwint *buf = (nwint *)malloc((size_t)(G->nT > 0 ? G->nT : 1) * sizeof(nwint));
+	nwint b, i, j, ia, ic;
 	int usebits = (nS <= 8192);
 	if (!cnt || !nh || !msk || !touched || !buf) { free(cnt); free(nh); free(msk); free(touched); free(buf); return 2; }
 	if (usebits) {
@@ -299,20 +299,20 @@ static int n380_k3(double *out, long P, const n380_side_t *G, const n380_cfglist
 		if (!bits) { free(cnt); free(nh); free(msk); free(touched); free(buf); return 2; }
 		for (b = 0; b < nS; b++) {
 			for (i = G->sptr[b]; i < G->sptr[b + 1]; i++) {
-				long w = G->sidx[i];
+				nwint w = G->sidx[i];
 				for (j = G->tptr[w]; j < G->tptr[w + 1]; j++) {
-					long v = G->tidx[j];
+					nwint v = G->tidx[j];
 					if (v != b) bits[b * words + (v >> 3)] |= (unsigned char)(1 << (v & 7));
 				}
 			}
 		}
 	}
 	for (b = 0; b < nS; b++) {
-		long nn = 0;
+		nwint nn = 0;
 		for (i = G->sptr[b]; i < G->sptr[b + 1]; i++) {
-			long w = G->sidx[i];
+			nwint w = G->sidx[i];
 			for (j = G->tptr[w]; j < G->tptr[w + 1]; j++) {
-				long v = G->tidx[j];
+				nwint v = G->tidx[j];
 				if (v == b) continue;
 				if (cnt[v] == 0) nh[nn++] = v;
 				cnt[v]++;
@@ -321,8 +321,8 @@ static int n380_k3(double *out, long P, const n380_side_t *G, const n380_cfglist
 		for (i = 0; i < nn; i++) cnt[nh[i]] = 0;
 		for (ia = 0; ia < nn; ia++) {
 			for (ic = ia + 1; ic < nn; ic++) {
-				long a = nh[ia], c = nh[ic], sv[3], np[N380_MAXCLS + 1], sn[3];
-				long *cl[N380_MAXCLS + 1];
+				nwint a = nh[ia], c = nh[ic], sv[3], np[N380_MAXCLS + 1], sn[3];
+				nwint *cl[N380_MAXCLS + 1];
 				int adjac;
 				adjac = usebits ? ((bits[a * words + (c >> 3)] >> (c & 7)) & 1) : n380_common(G, a, c);
 				if (adjac && !(b < a && b < c)) continue;
@@ -338,17 +338,17 @@ static int n380_k3(double *out, long P, const n380_side_t *G, const n380_cfglist
 }
 
 static int n380_cmp_long(const void *a, const void *b) {
-	long x = *(const long *)a, y = *(const long *)b;
+	nwint x = *(const nwint *)a, y = *(const nwint *)b;
 	return x < y ? -1 : (x > y ? 1 : 0);
 }
 
-static int comb_bmotif(long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv, int six) {
-	long P = six ? 148 : 46;
+static int comb_bmotif(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv, int six) {
+	nwint P = six ? 148 : 46;
 	int maxn = six ? 6 : 5;
-	long *rid = NULL, *cid = NULL, *rnode = NULL, *cnode = NULL;
-	long nR = 0, nC = 0, k, r, c, e;
-	long *rp = NULL, *ri = NULL, *cp = NULL, *ci = NULL, *rdeg = NULL, *cdeg = NULL, *pr = NULL, *pc = NULL;
-	long nm = 0;
+	nwint *rid = NULL, *cid = NULL, *rnode = NULL, *cnode = NULL;
+	nwint nR = 0, nC = 0, k, r, c, e;
+	nwint *rp = NULL, *ri = NULL, *cp = NULL, *ci = NULL, *rdeg = NULL, *cdeg = NULL, *pr = NULL, *pc = NULL;
+	nwint nm = 0;
 	double *out;
 	n380_side_t GR, GC;
 	n380_cfglist_t *L = NULL;
@@ -358,10 +358,10 @@ static int comb_bmotif(long n, long nties, const long *ei, const long *ej, const
 	if (res_alloc(n, P)) return 2;
 	out = g_res;
 	memset(out, 0, (size_t)(n > 0 ? n * P : 1) * sizeof(double));
-	rid = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
-	cid = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
-	rnode = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
-	cnode = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
+	rid = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
+	cid = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
+	rnode = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
+	cnode = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
 	if (!rid || !cid || !rnode || !cnode) { rc = 2; goto done; }
 	for (k = 0; k < n; k++) {
 		rid[k] = cid[k] = -1;
@@ -369,35 +369,35 @@ static int comb_bmotif(long n, long nties, const long *ei, const long *ej, const
 		else if (nv[k] == 2) { cid[k] = nC; cnode[nC++] = k; }
 	}
 	/* cross-mode ties as (row, column) pairs */
-	pr = (long *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(long));
-	pc = (long *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(long));
+	pr = (nwint *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(nwint));
+	pc = (nwint *)malloc((size_t)(nties > 0 ? nties : 1) * sizeof(nwint));
 	if (!pr || !pc) { rc = 2; goto done; }
 	for (e = 0; e < nties; e++) {
-		long a = ei[e] - 1, b = ej[e] - 1;
+		nwint a = ei[e] - 1, b = ej[e] - 1;
 		if (a < 0 || b < 0 || a >= n || b >= n) continue;
 		if (!(ew[e] > 0)) continue;
 		if (rid[a] >= 0 && cid[b] >= 0) { pr[nm] = rid[a]; pc[nm] = cid[b]; nm++; }
 		else if (rid[b] >= 0 && cid[a] >= 0) { pr[nm] = rid[b]; pc[nm] = cid[a]; nm++; }
 	}
-	rdeg = (long *)calloc((size_t)nR + 1, sizeof(long));
-	rp = (long *)calloc((size_t)nR + 2, sizeof(long));
-	ri = (long *)malloc((size_t)(nm > 0 ? nm : 1) * sizeof(long));
-	cdeg = (long *)calloc((size_t)nC + 1, sizeof(long));
-	cp = (long *)calloc((size_t)nC + 2, sizeof(long));
-	ci = (long *)malloc((size_t)(nm > 0 ? nm : 1) * sizeof(long));
+	rdeg = (nwint *)calloc((size_t)nR + 1, sizeof(nwint));
+	rp = (nwint *)calloc((size_t)nR + 2, sizeof(nwint));
+	ri = (nwint *)malloc((size_t)(nm > 0 ? nm : 1) * sizeof(nwint));
+	cdeg = (nwint *)calloc((size_t)nC + 1, sizeof(nwint));
+	cp = (nwint *)calloc((size_t)nC + 2, sizeof(nwint));
+	ci = (nwint *)malloc((size_t)(nm > 0 ? nm : 1) * sizeof(nwint));
 	if (!rdeg || !rp || !ri || !cdeg || !cp || !ci) { rc = 2; goto done; }
 	for (e = 0; e < nm; e++) rdeg[pr[e]]++;
 	for (r = 0; r < nR; r++) rp[r + 1] = rp[r] + rdeg[r];
 	{
-		long *fill = (long *)calloc((size_t)nR + 1, sizeof(long));
-		long w = 0;
+		nwint *fill = (nwint *)calloc((size_t)nR + 1, sizeof(nwint));
+		nwint w = 0;
 		if (!fill) { rc = 2; goto done; }
 		for (e = 0; e < nm; e++) ri[rp[pr[e]] + fill[pr[e]]++] = pc[e];
 		free(fill);
 		/* sort and unique every row, compact */
 		for (r = 0; r < nR; r++) {
-			long s = rp[r], t2 = rp[r + 1], u, last = -1, startw = w;
-			qsort(ri + s, (size_t)(t2 - s), sizeof(long), n380_cmp_long);
+			nwint s = rp[r], t2 = rp[r + 1], u, last = -1, startw = w;
+			qsort(ri + s, (size_t)(t2 - s), sizeof(nwint), n380_cmp_long);
 			for (u = s; u < t2; u++) if (ri[u] != last) { last = ri[u]; ri[w++] = last; }
 			rdeg[r] = w - startw;
 		}
@@ -408,7 +408,7 @@ static int comb_bmotif(long n, long nties, const long *ei, const long *ej, const
 	for (e = 0; e < nm; e++) cdeg[ri[e]]++;
 	for (c = 0; c < nC; c++) cp[c + 1] = cp[c] + cdeg[c];
 	{
-		long *fill = (long *)calloc((size_t)nC + 1, sizeof(long));
+		nwint *fill = (nwint *)calloc((size_t)nC + 1, sizeof(nwint));
 		if (!fill) { rc = 2; goto done; }
 		for (r = 0; r < nR; r++) for (e = rp[r]; e < rp[r + 1]; e++) ci[cp[ri[e]] + fill[ri[e]]++] = r;
 		free(fill);
