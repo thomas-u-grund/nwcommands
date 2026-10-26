@@ -214,8 +214,6 @@ The graph itself is unaffected by `export()` - it remains the normal, currently 
 
 Binary: yes. Weighted: yes. On a valued network the widths of the edges follow the tie values by default (as `edgesize(`*network*`)` with 1 to 4 units; `binary` switches it off; `edgesize()` sets the 1 to 8 range and any other network). The values never change the colour of an edge unless you ask for it with `edgecolor()`. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and the width follows the absolute value (`nosign` switches the colours off; `binary` keeps the colours and drops the widths). The layouts (`layout()`) use the ties, not their values. Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual) dyads are curved apart from their asymmetric counterparts by default (`arcstyle(automatic)`) so both directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless `color()` or `symbol()` is given; `layout(bipartite)` puts the two modes in two rows (`igraph::layout_as_bipartite`). Self-loops: not rendered - a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded in the package's own visualization roadmap rather than fixed here.
 
-Stored results: `r(edgewidth)` (`values`, `edgesize` or `binary`), `r(signcolor)` (1 if the sign colours were used) and `r(modesymbols)` (1 if the two modes got their own symbols).
-
 ## Stored results
 
 `nwplot` is `rclass`.
@@ -224,6 +222,11 @@ Stored results: `r(edgewidth)` (`values`, `edgesize` or `binary`), `r(signcolor)
 - **r(export)** filename actually passed to `export()`, if specified
 - **r(fname)** path of the interactive HTML page written by `interactive`
 - **r(interactive)** same as **r(fname)**
+- **r(edgewidth)** `values`, `edgesize` or `binary`: how the edge widths were set
+
+- Scalars:
+- **r(signcolor)** 1 if the sign colours (solid navy, dashed cranberry) were used
+- **r(modesymbols)** 1 if the two modes of a two-mode network got their own symbols
 
 ## See also
 
