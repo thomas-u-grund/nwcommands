@@ -89,7 +89,7 @@ does.
 
 {pstd}
 A handful of commands (the {cmd:nw2*} family, e.g. {help nw2degree}, {help nw2project}, {help nw2clustering},
-{help nw2nested}) exist because the statistic itself is different for bipartite data. Measures that have a two-mode
+{help nw2nested}, {help nw2motifs}) exist because the statistic itself is different for bipartite data. Measures that have a two-mode
 form in R use it by default on a two-mode network ({help nwcommunity} and {help nwmodularity}: the bipartite
 modularity of Barber; {help nwsimilar} and {help nwdissimilar}: nodes are compared with nodes of their own mode); the
 option {opt onemode} (or, for the normalisations of Borgatti and Everett, {opt twomode}) chooses the other form. The

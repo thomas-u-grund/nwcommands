@@ -153,6 +153,7 @@ The commands marked `N` under Valued are exactly those that print the note on a 
 | `nwshared` | + | N | G | P | requires the option `undirected` on a directed network (error 198 otherwise) |
 | `nwclustering` | + | O | D | D | measure(); weighted not for directed |
 | `nw2clustering` | + | O | Q | U | Opsahl 2013; ra: Robins-Alexander 2004 |
+| `nw2motifs` | + | N | Q | U | bipartite motifs of Simmons et al. (bmotif): 17 motifs, 44 with `sixnode`, node positions; counts ties above zero |
 | `nw2nested` | + | I | Q | U | NODF and C-score |
 | `nwbalance` | + | I | G | D | signed networks; a bipartite graph has no triangle |
 | `nwcommunity` | + | O | N | P | two-mode: Barber modularity; onemode for Newman |

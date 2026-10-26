@@ -30,6 +30,9 @@
 {title:Description}
 
 {pstd}
+For a two-mode network, {help nw2motifs} is the two-mode counterpart: it counts the 17 bipartite motifs of two to five nodes (44 with six) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them.
+
+{pstd}
 {cmd:nwmotifs} classifies every induced 4-node subgraph of the network into one of 6
 "motif" shapes (Milo et al. 2002's own term for a small, recurring, structurally-distinct
 connectivity pattern), plus a residual bucket for the other, disconnected 4-node cases - the
@@ -88,7 +91,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered.
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. ({cmd:bmotif}) are counted by {help nw2motifs}, the two-mode counterpart of this command.
 
 {title:Supported network types}
 
@@ -96,7 +99,7 @@ Two-mode: same as for the bipartite graph read as a one-mode network (valid; no 
 Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a
 directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note
 is printed to this effect. Weighted: not applicable (a motif census is inherently a binary
-count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered. Requires at least 4 nodes.
+count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. ({cmd:bmotif}) are counted by {help nw2motifs}, the two-mode counterpart of this command. Requires at least 4 nodes.
 
 {title:Limits}
 
@@ -139,7 +142,7 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
 
 {title:See also}
 
-    {help nwtriads}, {help nwcug}, {help nwclustering}
+    {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 last certified : 31 Aug 2026
 

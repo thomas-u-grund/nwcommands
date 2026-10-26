@@ -30,6 +30,8 @@ name(string)]
 
 ## Description
 
+For a two-mode network, [nw2motifs](nw2motifs) is the two-mode counterpart: it counts the 17 bipartite motifs of two to five nodes (44 with six) of Simmons et al. (2019), as `bmotif` does, and the positions of the nodes in them.
+
 `nwmotifs` classifies every induced 4-node subgraph of the network into one of 6 "motif" shapes (Milo et al. 2002's own term for a small, recurring, structurally-distinct connectivity pattern), plus a residual bucket for the other, disconnected 4-node cases - the same "every case exhaustively accounted for" census convention [nwtriads](nwtriads)'s own 3-node MAN census already established one dimension down, generalized here to 4 nodes.
 
 The 6 connected shapes, by increasing edge count:
@@ -63,7 +65,7 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 ## Supported network types
 
-Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph (`igraph::motifs`); the bipartite motifs of Simmons et al. are not offered. Requires at least 4 nodes.
+Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph (`igraph::motifs`); the bipartite motifs of Simmons et al. (`bmotif`) are counted by [nw2motifs](nw2motifs), the two-mode counterpart of this command. Requires at least 4 nodes.
 
 ## Stored results
 
@@ -87,7 +89,7 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ## See also
 
-- [nwtriads](nwtriads), [nwcug](nwcug), [nwclustering](nwclustering)
+- [nw2motifs](nw2motifs) (the bipartite motifs of a two-mode network, the two-mode counterpart), [nwtriads](nwtriads), [nwcug](nwcug), [nwclustering](nwclustering)
 
 - last certified : 31 Aug 2026
 

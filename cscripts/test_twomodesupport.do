@@ -543,7 +543,7 @@ nwspectral r6, generate(sp6) silent
 _near `=r(algebraic_connectivity)' 1 1e-9 "ring of 6: algebraic connectivity 1"
 
 di
-foreach d in nwcommunity nwmodularity nwspectral nwrandomwalk nwsimilar nwdissimilar nwpermute nwexport nwimport nw2nested nw2clustering nw2degree nw2project nwcloseness nwbetween {
+foreach d in nwcommunity nwmodularity nwspectral nwrandomwalk nwsimilar nwdissimilar nwpermute nwexport nwimport nw2nested nw2motifs nw2clustering nw2degree nw2project nwcloseness nwbetween {
 	capture db `d'
 	_chk `=(_rc == 0)' "dialog `d' opens (capture db, rc `=_rc')"
 }

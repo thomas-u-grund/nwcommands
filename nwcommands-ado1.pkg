@@ -22,6 +22,7 @@ f animate.ado
 f nw2clustering.ado
 f nw2degree.ado
 f nw2fromedge.ado
+f nw2motifs.ado
 f nw2nested.ado
 f nw2project.ado
 f nw2set.ado

@@ -695,3 +695,29 @@ The kernels 43..47 are called from small Mata functions at the end of `nwcommuni
 ## A documented requirement that the code does not enforce: check the help file against the code (nwshared, 3.7.0)
 
 The help file of `nwshared` said "Directed: requires `undirected` to symmetrize first, else an explicit error", but 3.6.0 ran on a directed network without the option and without any message (the type table of the book listed this as a deviation). Since 3.7.0 the command stops with error 198. When a network-types table (website `network-types.md`, the book's `NETWORK_TYPES_TABLE.csv`) says "error" for a case, test the case: `capture noisily cmd ...; assert _rc == N` belongs in the command's test.
+
+## `nw2motifs`: the numbering of motifs and positions is bmotif's, not a canonical one; the dictionary is generated
+
+The ids of the 44 motifs and the 148 node positions are those of `bmotif` 2.0.2, and they are not what one would
+derive (for example position 1 is the *column* of the single-tie motif, position 2 the row; motif 2 is one row with two
+columns, motif 3 two rows with one column; the motifs of the same size are ordered by the bmotif authors). The table the
+kernel uses (`native/nwbmotif_dict.h`) is therefore generated from the R package by `tools/gen_bmotif_dict.R` (it builds
+every connected bipartite graph up to six nodes, asks `mcount` which motif it is and `node_positions` which positions its
+nodes hold), never typed in. The same ranges of positions per motif are repeated in the Mata block at the end of
+`nw2motifs.ado` (`nw2m_dict()`, used for the frequencies, the normalisations and the labels): change both together; the
+test compares every motif and every node against the R values, so a mismatch shows. Rows of `bmotif` = mode 1 of the
+network. `bmotif` counts *induced* connected subgraphs (a 2 x 2 path and a four-cycle are different motifs, and a set of
+nodes is exactly one motif). `bmotif::node_positions` normalises "position" over all nodes of the matrix it is given:
+with `level = "all"` that is rows and columns together, which is what `posnorm(position)` does (a position belongs to
+rows or to columns only, so the result is the same as per level). `mcount` needs `normalisation`, `mean_weight` and
+`standard_dev` given (no defaults in 2.0.2), and its six-node mode needs memory of the order of n^3: the fixture uses a
+10-firm subsample of the directors for the six-node comparison.
+
+Two traps met while adding it. (1) `nw2set, mat(A)` takes the *columns* of `A` as mode 1 (the variables of the help file's
+"level 1") and the rows as mode 2; to get the rows of a biadjacency matrix as mode 1 pass its transpose (the test does).
+`nw2fromedge ego alter` has the ego variable as mode 1. (2) `_nwdeploy` (the manifest generator) rewrites more than the new
+command: it re-chunks the `.pkg` files, retitles `nwtopical`/`nwalphabetical` entries from the current help titles, lists
+`nwqap_p` as "no help file yet" and, because `_nwsyncrows.ado` and `nwqap_p.ado` were in the `.pkg` files but not in
+`_pkg_ado.txt`, dropped both (the installed command `nw2degree` needs `_nwsyncrows`). Both are now in `_pkg_ado.txt`; for a
+small addition the `.pkg`, `nwtopical.sthlp` and `nwalphabetical.sthlp` lines were added by hand, in the order the generator
+uses, and `versionlog.sh` (rewritten with a timestamp for every file by every run) was left alone.

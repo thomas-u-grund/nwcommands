@@ -4,6 +4,14 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+Plugin generation 11 (native counting of bipartite motifs). The Mata library did not change.
+
+### Added
+- **`nw2motifs`**, the bipartite motifs of a two-mode network (Simmons et al. 2019, `bmotif`; Baker et al. 2015; Stouffer et al. 2012): the 17 motifs of two to five nodes (44 with the option `sixnode`), their frequencies (`r(motifs)`, with the four normalisations of `bmotif::mcount` through `normalise`) and, for every node, the number of times it holds each of the 46 (148) node positions, stored in variables (`generate()`) or a matrix (`matrix()`), with the twelve normalisations of `bmotif::node_positions` (`posnorm()`). Motif and position numbering are those of `bmotif` (table in the help file). The counting runs in the native plugin without matrices of the size of the network (the 5,092 + 455 directors: the motifs and positions up to five nodes in 0.04 s, up to six nodes in 0.05 s; `bmotif::mcount` and `node_positions` together need 54 s for the five-node set and cannot do six nodes on that network). Results equal `bmotif::mcount` and `bmotif::node_positions` (bmotif 2.0.2) on the toy network, the Southern women, the Swedish directors, a subsample of them and 34 random networks (4 of them larger), for the motif table and for every node (`cscripts/test_nw2motifs.do`, fixture `cscripts/native380_fixture`, made by `tools/verify_native380.R`). A valued network counts the ties above zero (the usual note); the weighted measures of `bmotif` are not offered. A plugin older than the command (or missing for the platform) stops the command with a message that tells how to update; there is no slow Mata fallback.
+- `nwmotifs` points to `nw2motifs` as its two-mode counterpart.
+
 ## [3.7.0] - 2026-10-26
 
 Plugin generation 10 (native kernels for the two-mode and valued commands), valued closeness at any size, level labels of two-mode networks in files, and a few corrections. The Mata library did not change. The four model packages are released with it as patch releases (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8; they still work with nwcommands 3.6.0). A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) keeps the Mata code and gives the same results, slowly.
