@@ -123,7 +123,7 @@ static double lb_modularity(long n, long np, const long *ps, const long *pd, con
 	K1 = (double *)calloc((size_t)ncomm + 1, sizeof(double));
 	K2 = (double *)calloc((size_t)ncomm + 1, sizeof(double));
 	inw = (double *)calloc((size_t)ncomm + 1, sizeof(double));
-	if (!K1 || !K2 || !inw) { free(K1); free(K2); free(inw); return 0.0 / 0.0; }
+	if (!K1 || !K2 || !inw) { free(K1); free(K2); free(inw); return NAN; }
 	for (r = 0; r < np; r++) {
 		double w = pw[r];
 		if (md[ps[r]] == md[pd[r]] || !(w == w) || w == 0) continue;
