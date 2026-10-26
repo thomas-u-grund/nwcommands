@@ -75,7 +75,7 @@ The stored result **r(bw_central)** is Freeman's betweenness centralization, com
 
 ## Performance
 
-The default (unweighted) mode of `nwbetween` transparently uses a compiled native (C) implementation of the same algorithm when one is available for the current platform (currently: macOS), falling back to an identical, fully-supported Mata implementation everywhere else - there is nothing to configure and no difference in the result, only in how fast it is computed (a native run at 10,000 nodes was measured faster than the Mata implementation at just 1,000). `weighted` still always uses the Mata implementation.
+The default (unweighted) mode of `nwbetween` transparently uses a compiled native (C) implementation of the same algorithm when one is available for the current platform (currently: macOS), falling back to an identical, fully-supported Mata implementation everywhere else - there is nothing to configure and no difference in the result, only in how fast it is computed (a native run at 10,000 nodes was measured faster than the Mata implementation at just 1,000). The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same result as the Mata routine: 1,000 nodes with 3,000 valued ties take 0.13 seconds (Mata: 111 seconds), 10,000 nodes 15 seconds; the Mata routine needs a dense work space of n x n cells for every node and is not usable above a few hundred nodes.
 
 ## Supported network types
 
@@ -95,4 +95,4 @@ Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted 
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

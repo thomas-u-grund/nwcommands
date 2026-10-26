@@ -35,7 +35,7 @@ legacy]
 | `nosym` | do not symmetrize network before calculation of shortest paths |
 | `replace` | overwrite existing *var1, var2, var3* (or *_closeness, _farness, _nearness*); required if they already exist |
 | `silent` | Do not display the summary of the new variables |
-| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to [nwgeodesic](nwgeodesic) |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
 | `twomode` | Two-mode network: closeness is the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997) |
 
@@ -77,4 +77,4 @@ Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

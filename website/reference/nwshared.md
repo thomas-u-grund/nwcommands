@@ -34,7 +34,7 @@ This command calculates for each connected pair of nodes (i,j) the number of nod
 
 ## Supported network types
 
-Binary: yes (only) - shared-tie/exposure counting is a structural property, tie values are ignored (via [nwsym](nwsym)'s own binarizing `generate()` path). Directed: requires `undirected` to symmetrize first, else an explicit error. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+Binary: yes (only) - shared-tie/exposure counting is a structural property, tie values are ignored (via [nwsym](nwsym)'s own binarizing `generate()` path). Directed: requires `undirected` to symmetrize first; on a directed network without it the command stops with error 198. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
 
@@ -44,4 +44,4 @@ Binary: yes (only) - shared-tie/exposure counting is a structural property, tie 
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

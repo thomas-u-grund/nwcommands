@@ -64,4 +64,4 @@ Binary: yes. Directed: yes - this command's entire purpose is transposing a netw
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

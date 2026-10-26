@@ -26,7 +26,7 @@ or, with the core's installer, `nwinstall, modelpkg(nwergm)`. Check what you hav
 
 ```stata
 . nwergm version
-nwergm version 1.2.2, 26oct2026
+nwergm version 1.2.3, 26oct2026
 ```
 
 

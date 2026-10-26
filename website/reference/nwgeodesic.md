@@ -36,7 +36,7 @@ binary]
 | `nwreplace` | Overwrite existing network *newnetname* |
 | `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
-| `force` | force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise); also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
+| `force` | with a plugin of the current generation the least-cost distances of a valued network are computed natively at any size and `force` is not needed; without it a valued network of more than 100 nodes stops with r(198) unless `force` (slow Mata routine) or `binary` (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
@@ -97,4 +97,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

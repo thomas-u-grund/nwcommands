@@ -48,7 +48,7 @@ listall]
 
 **algorithm(labelprop)** uses genuinely randomized sweep order and tie-breaking (unlike Louvain's own fixed, reproducible sweep order) - this is a deliberate, load-bearing part of the algorithm, not an incidental implementation detail: a fixed visiting order with deterministic tie-breaking was tried first and found to be not merely non-standard but actively wrong, systematically collapsing even simple, cleanly-separated community structure into one giant community (see [Algorithm](nwcommunity) below). Use `seed()` for reproducible results.
 
-On dense networks **algorithm(labelprop)** can collapse to a single community; compare the reported modularity with that of **algorithm(louvain)** before relying on it. Louvain is deterministic and ignores `seed()`.
+On dense networks **algorithm(labelprop)** can collapse to a single community; compare the reported modularity with that of **algorithm(louvain)** before relying on it. Louvain is deterministic and ignores `seed()`. The two-mode search draws its random starting orders from the seed: the same `seed()` (or `set seed`) gives the same communities, whatever the platform; with a plugin of the current generation the search is about 25 times faster than the older Mata search (the Mata code is used when the plugin is older), and the two reach the same modularity up to the luck of the random starts (Southern women: identical, 0.3455).
 
 `generate()` is required and names the new variable that stores, for each node, the id of the community it was assigned to.
 
@@ -89,4 +89,4 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
