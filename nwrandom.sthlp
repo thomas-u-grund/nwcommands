@@ -130,4 +130,4 @@ timeout at 20,000 before); {opt prob(.0002)} at 20,000 nodes 2.8 seconds (killed
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
