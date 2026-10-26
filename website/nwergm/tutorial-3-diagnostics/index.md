@@ -26,6 +26,8 @@ Up to `nwergm` 1.1 the sampler kept a draw every 50 steps after a burn-in of 3,0
 those of R's `ergm` (`mcmcinterval(1024)`, `mcmcburnin(16384)`). The first fit below gives the old values
 explicitly, because it is a good example of a chain that mixes badly; the fits of the other tutorials use the new defaults.
 
+Since 1.3.0 the sample size of a default fit is adaptive, as in R: each iteration draws a base sample and keeps sampling until the effective sample size reaches 64 (`mcmleeffectivesize()`, default 64). `mcmleeffectivesize(0)` gives the fixed-size samples of earlier versions, and then `mcmcsamplesize()` is the number of draws; otherwise it is the base size. The fits shown on this page were run before 1.3.0, so a default fit now prints a different number of draws.
+
 ```stata
 . nwwebuse lazega, nwclear
 . encode practice, generate(prac)

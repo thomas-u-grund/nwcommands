@@ -70,6 +70,7 @@ R-style terms inside Stata options; a fit is stored in `e()` like any Stata esti
 | `Symmetrize(~triangle, rule="strong")` | `operators(Symmetrize(triangle, rule(strong)))` (version 1.1.0) |
 | `ergm(..., estimate="MPLE")`, `main.method=` | `estimate(mple)`, `mainmethod(mcmle)` or `mainmethod(sa)` |
 | `control.ergm(MCMC.burnin=, MCMC.interval=, MCMC.samplesize=, MCMLE.maxit=)` | `mcmcburnin()`, `mcmcinterval()`, `mcmcsamplesize()`, `mcmleiterations()` |
+| `control.ergm(MCMLE.effectiveSize=)` | `mcmleeffectivesize()` (version 1.3.0; default 64 as in R, `0` for fixed-size samples) |
 | `constraints = ~edges`, `obs.constraints = ~...` | `constraints(edges)`, `obsconstraints(...)` |
 | `offset(edges)` with `offset.coef` | `offset(edges #)` |
 | `coef(fit)`, `vcov(fit)` | `e(b)`, `e(V)`; `matrix list e(b)` |
