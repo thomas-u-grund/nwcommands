@@ -1,0 +1,129 @@
+name: Test native kernels
+
+# Stata-free tests of the native C kernels (native/test/test_kernels.c) on Linux (gcc), macOS (clang) and
+# Windows (MSVC cl, the compiler of the Windows plugin build).  Builds nothing that is shipped, commits
+# nothing, publishes nothing.  The plugin builds stay in build-plugins.yml.
+#
+# Findings of the compiler warnings (integer truncation, constant overflow, sign mixes in the kernels)
+# are collected in the uploaded logs; they do not fail the job, the harness result does.
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "native/**"
+      - "cscripts/native370_fixture/**"
+      - "cscripts/native380_fixture/**"
+      - "cscripts/burt_valued_fixture/**"
+      - ".github/workflows/test-kernels.yml"
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - "native/**"
+      - ".github/workflows/test-kernels.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  linux-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (gcc -O2, warnings on)
+        run: |
+          mkdir -p out
+          gcc --version | head -1
+          gcc -O2 -ffp-contract=off -Wall -Wextra -Wconversion -Wno-sign-conversion \
+            -Inative/test/stub -Inative native/test/test_kernels.c -o out/test_kernels -lm 2> out/warnings-gcc-O2.txt || { cat out/warnings-gcc-O2.txt; exit 1; }
+          echo "warnings: $(grep -c 'warning:' out/warnings-gcc-O2.txt || true)"
+      - name: Run the harness
+        run: ./out/test_kernels | tee out/log-gcc-O2.txt
+      - name: Build and run with -O0
+        run: |
+          gcc -O0 -ffp-contract=off -Inative/test/stub -Inative native/test/test_kernels.c -o out/test_kernels_O0 -lm
+          ./out/test_kernels_O0 --small | tee out/log-gcc-O0.txt
+      - name: Build and run with sanitizers (undefined behaviour, address)
+        run: |
+          gcc -O1 -g -fsanitize=undefined,address -fno-omit-frame-pointer -ffp-contract=off \
+            -Inative/test/stub -Inative native/test/test_kernels.c -o out/test_kernels_san -lm
+          ASAN_OPTIONS=detect_leaks=0 ./out/test_kernels_san --small | tee out/log-gcc-san.txt
+          ASAN_OPTIONS=detect_leaks=0 ./out/test_kernels_san --only large_clustering | tee -a out/log-gcc-san.txt
+          ASAN_OPTIONS=detect_leaks=0 ./out/test_kernels_san --only large_bmotif | tee -a out/log-gcc-san.txt
+          ASAN_OPTIONS=detect_leaks=0 ./out/test_kernels_san --small --only none --stress 1200 | tee -a out/log-gcc-san.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kernel-tests-linux
+          path: out/*.txt
+
+  macos-clang:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (clang -O2, warnings on)
+        run: |
+          mkdir -p out
+          clang --version | head -1
+          clang -O2 -ffp-contract=off -Wall -Wextra -Wconversion -Wshorten-64-to-32 -Wno-sign-conversion \
+            -Inative/test/stub -Inative native/test/test_kernels.c -o out/test_kernels -lm 2> out/warnings-clang-O2.txt || { cat out/warnings-clang-O2.txt; exit 1; }
+          echo "warnings: $(grep -c 'warning:' out/warnings-clang-O2.txt || true)"
+      - name: Run the harness
+        run: ./out/test_kernels | tee out/log-clang-O2.txt
+      - name: Build and run with sanitizers (undefined behaviour, address)
+        run: |
+          clang -O1 -g -fsanitize=undefined,address -fno-omit-frame-pointer -ffp-contract=off \
+            -Inative/test/stub -Inative native/test/test_kernels.c -o out/test_kernels_san -lm
+          ./out/test_kernels_san --small | tee out/log-clang-san.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kernel-tests-macos
+          path: out/*.txt
+
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # same action as build-plugins.yml: finds whatever MSVC the runner has and sets up the environment
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Build with the flags of the plugin build (cl, no /O option) plus /W4
+        shell: cmd
+        run: |
+          mkdir out
+          cl /nologo /W4 /DSYSTEM=STWIN32 /I native\test\stub /I native native\test\test_kernels.c /Fe:out\test_kernels_plugin_flags.exe /Fo:out\plugin_flags_ > out\warnings-msvc-W4.txt 2>&1
+          set BUILD_RC=%ERRORLEVEL%
+          type out\warnings-msvc-W4.txt
+          exit /b %BUILD_RC%
+      - name: Run the harness (plugin flags, without the large cases)
+        shell: cmd
+        run: |
+          out\test_kernels_plugin_flags.exe --small > out\log-msvc-plugin-flags.txt 2>&1
+          set RUN_RC=%ERRORLEVEL%
+          type out\log-msvc-plugin-flags.txt
+          exit /b %RUN_RC%
+      - name: Build optimised (cl /O2) and run everything
+        shell: cmd
+        run: |
+          cl /nologo /O2 /W3 /DSYSTEM=STWIN32 /I native\test\stub /I native native\test\test_kernels.c /Fe:out\test_kernels.exe /Fo:out\o2_ > out\warnings-msvc-O2.txt 2>&1
+          set BUILD_RC=%ERRORLEVEL%
+          type out\warnings-msvc-O2.txt
+          if not "%BUILD_RC%"=="0" exit /b %BUILD_RC%
+          out\test_kernels.exe > out\log-msvc-O2.txt 2>&1
+          set RUN_RC=%ERRORLEVEL%
+          type out\log-msvc-O2.txt
+          exit /b %RUN_RC%
+      - name: Findings in the warning logs (informational, never fails)
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem out\warnings-msvc-*.txt | ForEach-Object { Select-String -Path $_.FullName -Pattern 'C4244|C4267|C4305|C4307|C4309|C4018|C4146|C4310|C4334' | Select-Object -First 200 | ForEach-Object { $_.Line } }
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kernel-tests-windows
+          path: out/*.txt
