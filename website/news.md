@@ -17,7 +17,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 **nwergm 1.3.0: faster, R's sampling defaults** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.0)). It works with nwcommands 3.6.0 and later.
 
 - **Results that change slightly.** The default Monte Carlo maximum likelihood fit now uses R's adaptive sample size and R's convergence test (as in `ergm`'s `MCMLE.effectiveSize` and its default termination), instead of a fixed 3,000 draws per iteration. A default fit therefore uses different draws and its estimates differ a little from those of 1.2.x. Over 20 seeds the mean estimates agree with R's within 0.04 of an R standard error on five models. The option `mcmleeffectivesize(0)` restores the algorithm of 1.2.3.
-- **Faster.** On the eight benchmark models, nwergm is 2.4 to 7.7 times faster than R's `ergm` 4.12.0 (median of five fits, same networks, default settings, run at the same time on the author's machine while it was under shared load; 1.2.3 was slower than R on seven of the eight). Your times depend on the model and the machine. The compiled sampling kernels are faster, and the Windows plug-in is built with optimisation.
+- **Faster.** On the eight benchmark models, nwergm is 2.9 to 9.4 times faster than R's `ergm` 4.12.0 (median of seven fits, same networks, default settings, R and nwergm run in turn, one fit at a time, on an idle machine; 1.2.3 was slower than R on six of the eight). Your times depend on the model and the machine. The compiled sampling kernels are faster, and the Windows plug-in is built with optimisation.
 
 ## 26 October 2026: nwdynam 1.2.0 and nwrem 1.0.10
 
