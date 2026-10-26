@@ -2,7 +2,7 @@
 capture program drop nwcommunity
 program nwcommunity, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall ONEmode STARTs(int 30)]
+	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent listall ONEmode STARTs(int 30) REPs(int 10) MINModules(int 4)]
 	set more off
 
 	// resolution() had no input validation at all - zero or negative
@@ -22,12 +22,16 @@ program nwcommunity, rclass
 	if "`algorithm'" == "" {
 		local algorithm "louvain"
 	}
-	_opts_oneof "louvain labelprop" "algorithm" "`algorithm'" 6556
+	_opts_oneof "louvain labelprop dirtlpa" "algorithm" "`algorithm'" 6556
 
 	if `seed' != -1 {
 		set seed `seed'
 	}
 
+	if `reps' < 1 | `minmodules' < 1 {
+		di "{err}Options {bf:reps()} and {bf:minmodules()} must be at least 1."
+		error 198
+	}
 	if `starts' < 1 {
 		di "{err}Option {bf:starts()} must be at least 1."
 		error 198
@@ -85,6 +89,16 @@ program nwcommunity, rclass
 		local __bip = ("`is2mode'" == "true" & "`onemode'" == "")
 		local __qtype = cond(`__bip', "barber", "newman")
 		local __qlab = cond(`__bip', "{space 1}(Barber, two-mode)", "")
+		if "`algorithm'" == "dirtlpa" {
+			if !`__bip' {
+				noi di "{err}{bf:algorithm(dirtlpa)} is for two-mode networks (without the option {bf:onemode}); a one-mode network is searched with {bf:louvain} or {bf:labelprop}."
+				error 198
+			}
+			if `resolution' != 1 {
+				noi di "{err}{bf:algorithm(dirtlpa)} maximises Barber's modularity with the resolution 1; {bf:resolution()} is not available for it."
+				error 198
+			}
+		}
 
 		capture drop `netgenerate'`k'
 		gen `netgenerate'`k' = .
@@ -103,6 +117,16 @@ program nwcommunity, rclass
 		tempname __nw_comm
 		if "`algorithm'" == "labelprop" {
 			mata: `__nw_comm' = `netobj'->detect_communities_labelprop(`val')
+		}
+		else if "`algorithm'" == "dirtlpa" {
+			// Beckett's (2016) DIRT_LPA+ (native only: the kernel 52 of the plugin, generation 12 or later); set seed controls it
+			mata: `__nw_comm' = nw2_fastdirt(`netobj', `val', `minmodules', `reps')
+			mata: st_local("__fast", strofreal(rows(`__nw_comm') == `nodes'))
+			if !`__fast' {
+				noi di "{err}{bf:algorithm(dirtlpa)} needs the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing, or could not run."
+				noi di "{err}Update it: {stata nwinstall, all}  (or reinstall the package with {bf:net install nwcommands, replace}); {bf:algorithm(louvain)} works with any plugin."
+				error 198
+			}
 		}
 		else if `__bip' {
 			// native search (plugin generation 10 or later: same algorithm, random starts from a seeded generator, so
@@ -206,6 +230,7 @@ program nwcommunity, rclass
 end
 
 capture mata: mata drop nw2_fastbip()
+capture mata: mata drop nw2_fastdirt()
 mata:
 // Native bipartite Louvain (kernel 43 of the nwgraph plugin); a 0 x 1 vector when the kernel is not available
 real colvector nw2_fastbip(pointer(class nw_def scalar) scalar p, real scalar val, real scalar res, real scalar starts)
@@ -218,6 +243,20 @@ real colvector nw2_fastbip(pointer(class nw_def scalar) scalar p, real scalar va
 	if (nwg_comb_version() < 10) return(J(0, 1, .))
 	n = p->get_nodes()
 	r = nwg_comb(43, n, nwg_symweights(n, p->edgelist(), val), strtoreal(p->get_modes())', (res, starts, floor(uniform(1, 1) * 2147483646) + 1), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
+	return(r)
+}
+
+// Beckett's DIRT_LPA+ (kernel 52 of the nwgraph plugin, generation 12 or later); a 0 x 1 vector when the kernel is not available
+real colvector nw2_fastdirt(pointer(class nw_def scalar) scalar p, real scalar val, real scalar mini, real scalar reps)
+{
+	real rowvector aux
+	real scalar st, n
+	real matrix r
+
+	if (nwg_comb_version() < 12) return(J(0, 1, .))
+	n = p->get_nodes()
+	r = nwg_comb(52, n, nwg_symweights(n, p->edgelist(), val), strtoreal(p->get_modes())', (mini, reps, floor(uniform(1, 1) * 2147483646) + 1), aux, st)
 	if (st != 0 | rows(r) != n | cols(r) != 1) return(J(0, 1, .))
 	return(r)
 }

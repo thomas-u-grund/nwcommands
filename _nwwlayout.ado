@@ -45,6 +45,7 @@ capture mata: mata drop nw_wdist()
 capture mata: mata drop nw_wkklayout()
 capture mata: mata drop nw_wfruchtrein()
 capture mata: mata drop nw_wbox()
+capture mata: mata drop nw_wkk_native()
 mata:
 
 // P: raw tie matrix.  S: symmetric strength matrix (mean tie strength 1, zero diagonal) when the code is 0.
@@ -143,6 +144,9 @@ real matrix nw_wkklayout(real matrix S, real scalar Iter, | real matrix Start)
 	V = rows(S)
 	if (args() == 3 & rows(Start) == V & cols(Start) == 2) Pos = Start
 	else Pos = jumble(circlelayout(V))
+	// native sweeps (kernel 54 of the nwgraph plugin, plugin generation 12 or later): the same distances and sweeps in C; a plugin that
+	// is older or missing, or two coinciding nodes (the loop below draws random numbers), leave the interpreted code
+	if (nw_wkk_native(S, Pos, Iter)) return(nw_wbox(Pos, S))
 	Winv = nw_wdist(S)
 	Winv = 1 :/ Winv
 	_diag(Winv, 0)
@@ -213,5 +217,48 @@ real matrix nw_wfruchtrein(real matrix M, real scalar Iter)
 		temperature = temperature - temperature / 10
 	}
 	return(Pos)
+}
+// The sweeps of nw_wkklayout() in kernel 54 of the nwgraph plugin.  Returns 1 and the new coordinates in Pos when the plugin did them.
+real scalar nw_wkk_native(real matrix S, real matrix Pos, real scalar Iter)
+{
+	real scalar n, m, j, junk, nobs
+	real colvector nz
+	real matrix T, R
+	string scalar origframe
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(0)
+	if (nwg_comb_version() < 12) return(0)
+	n = rows(S)
+	if (n < 2 | n > 40000) return(0)
+	nz = selectindex(vec(S) :> 0)
+	m = length(nz)
+	T = (mod(nz :- 1, n) :+ 1, floor((nz :- 1) :/ n) :+ 1, vec(S)[nz])
+	nz = .
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_comb")
+	stata("frame create __nwgraph_comb")
+	st_framecurrent("__nwgraph_comb")
+	nobs = max((2 * n, m, 1))
+	st_addobs(nobs)
+	junk = st_addvar("double", ("v1", "v2", "v3", "v4"))
+	if (m > 0) st_store((1::m), ("v1", "v2", "v3"), T)
+	st_store((1::(2 * n)), "v4", (Pos[., 1] \ Pos[., 2]))
+	st_numscalar("__nwg_status", .)
+	st_numscalar("__nwg_a1", .)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	R = J(0, 0, .)
+	if (_stata("plugin call nwgraph_native v1 v2 v3 v4, " + char(34) + "54 " + strofreal(n) + " " + strofreal(m) + " " + strofreal(Iter) + char(34), 1) == 0) {
+		if (st_numscalar("__nwg_status") == 0 & st_numscalar("__nwg_a1") == 0) {
+			junk = st_addvar("double", ("v5", "v6"))
+			if (_stata("plugin call nwgraph_native v1 v2 v3 v4 v5 v6, " + char(34) + "99 0 0 2" + char(34), 1) == 0) R = st_data((1::n), ("v5", "v6"))
+		}
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_comb")
+	if (rows(R) == n & cols(R) == 2) {
+		Pos = R
+		return(1)
+	}
+	return(0)
 }
 end

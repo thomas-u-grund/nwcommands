@@ -158,6 +158,11 @@ so it can be compared directly against the source network node-for-node.
 {title:Limits}
 
 {pstd}
+With the native plugin of nwcommands 3.10.0 or later (plugin generation 12) the cells are formed from the stored ties and not from
+dense matrix products: 5,000 nodes of the same network take 0.4 seconds for every type (1.0 to 1.2 seconds with the Mata code; {opt type(manhatten)} had no closed form and took a time proportional to the cube of the number of nodes in Mata, about 25 minutes at 5,000 nodes). The results are those of the Mata code
+(differences below 1e-13). A network with missing tie values, and a platform whose plugin is older, use the Mata code.
+
+{pstd}
 The result is a dense {it:n}-by-{it:n} valued network. About 8 matrices of that size are held at once (10,000 nodes: 4 seconds and
 6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000
 nodes); option {opt force} runs it anyway. The node labels of the new network are the labels of the old one at any size (they used to

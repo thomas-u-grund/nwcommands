@@ -17,6 +17,7 @@
 	Codes 34..39 (nwfast2.h, NWCOMB_VERSION 8): 34 pagerank of nwpagerank, 35 maximal cliques of nwclique.
 	Code 40 (nwburtw.h, NWCOMB_VERSION 9): weighted Burt measures of nwburt for valued networks (41, 42 reserved).
 	Code 50 (nwnative380.h, NWCOMB_VERSION 11): node position counts of the bipartite motifs of nw2motifs.
+	Codes 51..60 (nwnative390.h, NWCOMB_VERSION 12): node-by-node similarities, DIRT_LPA+ communities, two-mode null-model draws.
 	Codes 43..49 (nwnative370.h, NWCOMB_VERSION 10): bipartite Louvain (Barber) of nwcommunity, weighted pagerank of nwpagerank,
 	maximum-weight matching of nwmatching, tie swapping of nwpermute, weighted betweenness of nwbetween, weighted distances of nwcloseness and nwgeodesic.
 
@@ -51,7 +52,7 @@
 #endif
 #include "nwtypes.h"
 
-#define NWCOMB_VERSION 11
+#define NWCOMB_VERSION 12
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4
@@ -1253,6 +1254,7 @@ static int comb_cluster2(nwint n, nwint nties, const nwint *ei, const nwint *ej,
 #include "nwburtw.h"
 #include "nwnative370.h"
 #include "nwnative380.h"
+#include "nwnative390.h"
 
 /* ------------------------------------------------------------------ */
 /* dispatcher                                                           */
@@ -1261,7 +1263,7 @@ static int comb_cluster2(nwint n, nwint nties, const nwint *ei, const nwint *ej,
 static int comb_handles(const char *s) {
 	nwint a = (nwint)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
-	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || (a >= 43 && a <= 49) || a == 50 || a == 99 || a == 100);
+	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || (a >= 43 && a <= 49) || a == 50 || (a >= 51 && a <= 60) || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
@@ -1311,10 +1313,11 @@ static int comb_call(int argc, char *argv[]) {
 			NW_VDATA(3, k + 1, &v); ew[k] = v;
 		}
 	}
-	if (alg == ALG_FACTIONS || alg == ALG_CLUSTER2 || alg == ALG_MATCHING || alg == ALG_LOUVBIP || alg == ALG_MATCHW || alg == ALG_BMOTIF) {
-		nv = (double *)malloc((size_t)(n > 0 ? n : 1) * sizeof(double));
+	if (alg == ALG_FACTIONS || alg == ALG_CLUSTER2 || alg == ALG_MATCHING || alg == ALG_LOUVBIP || alg == ALG_MATCHW || alg == ALG_BMOTIF || (alg >= 52 && alg <= 60)) {
+		{ nwint nvn = (alg == 54) ? 2 * n : n;   /* kernel 54 takes two values per node */
+		nv = (double *)malloc((size_t)(nvn > 0 ? nvn : 1) * sizeof(double));
 		if (!nv) { free(ei); free(ej); free(ew); pub_result(2, 0, 0); return 0; }
-		for (k = 0; k < n; k++) { ST_double v; NW_VDATA(4, k + 1, &v); nv[k] = v; }
+		for (k = 0; k < nvn; k++) { ST_double v; NW_VDATA(4, k + 1, &v); nv[k] = v; } }
 	}
 	res_clear();
 	if (alg >= 34 && alg <= 39) {
@@ -1325,6 +1328,12 @@ static int comb_call(int argc, char *argv[]) {
 	}
 	if (alg >= 43 && alg <= 49) {
 		rc = comb_n370(alg, n, nties, ei, ej, ew, nv, p);
+		free(ei); free(ej); free(ew); free(nv);
+		if (rc == 2) { res_clear(); pub_result(2, 0, 0); }
+		return rc == 198 ? 198 : 0;
+	}
+	if (alg >= 51 && alg <= 60) {
+		rc = comb_n390(alg, n, nties, ei, ej, ew, nv, p);
 		free(ei); free(ej); free(ew); free(nv);
 		if (rc == 2) { res_clear(); pub_result(2, 0, 0); }
 		return rc == 198 ? 198 : 0;
