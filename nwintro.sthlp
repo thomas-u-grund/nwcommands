@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.7.0  26oct2026}{...}
+{* *! version 3.8.0  26oct2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro}
@@ -216,12 +216,12 @@ both modes and are refused above 20,000 nodes in total ({help nw2fromedge}).
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
 
 {pstd}
-{help nwcohesion}, {help nwfactions}, {help nwlambda}, {help nwmotifs}, {help nw2clustering} and {help nwinduced}
+{help nwcohesion}, {help nwfactions}, {help nwlambda}, {help nwmotifs}, {help nwclustering} (on a two-mode network) and {help nwinduced}
 with {opt measure(degree)} run in compiled code on the list of ties and no longer build N-by-N matrices
 (except that {help nwlambda}'s result is itself a dense N-by-N network). Measured in Stata/BE on a random network with
 10 ties drawn per node, seconds at 300 / 1,000 / 5,000 nodes: {cmd:nwcohesion} 0.02 / 0.10 / 1.4, {cmd:nwfactions}
 0.02 / 0.02 / 0.05, {cmd:nwlambda} 0.02 / 0.09 / 1.9 (1.4 GB at 5,000 nodes), {cmd:nwmotifs} 0.006 / 0.014 / 0.05,
-{cmd:nw2clustering} (N and N/2 nodes) 0.09 / 0.24 / 1.4, {cmd:nwinduced, measure(degree)} 0.02 / 0.03 / 0.09.
+{cmd:nwclustering} on a two-mode network (N and N/2 nodes) 0.09 / 0.24 / 1.4, {cmd:nwinduced, measure(degree)} 0.02 / 0.03 / 0.09.
 Before, each of them took from 11 seconds to more than a minute at 300 nodes. {cmd:nwinduced} with betweenness,
 closeness or eigenvector centrality still recomputes the measure for every node left out and takes minutes at a few
 hundred nodes.
@@ -385,4 +385,4 @@ Please cite the software as:
 {bf:Thomas U. Grund (2014). nwcommands: Software Tools for the Statistical Modeling of Network Data in Stata. URL http://nwcommands.org}
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

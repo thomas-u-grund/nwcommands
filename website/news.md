@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: bipartite motifs, and a two-mode network gets its two-mode form
+
+**nwcommands 3.8.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.8.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **nwcommands 3.8.0. Results change for two-mode networks; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.8.0).**
+  - *A network declares itself two-mode, and the commands follow.* A command that has a two-mode form of the same concept uses it automatically on a two-mode network, and the option `onemode` gives the one-mode computation of the bipartite graph. `nwdegree`, `nwclustering` and `nwmotifs` use the two-mode degree, the two-mode clustering coefficients and the bipartite motifs; `nwcloseness` and `nwbetween` give the normalisations of Borgatti and Everett by default (`twomode` is still accepted). `nw2degree`, `nw2clustering` and `nw2motifs` remain as aliases with the same options and results. One-mode networks and calls with `onemode` give what 3.7.0 gave. The rule is explained on the page on [two-mode networks](/nwcommands/two-mode/).
+  - *Bipartite motifs.* `nwmotifs` (and `nw2motifs`) on a two-mode network counts the 17 bipartite motifs of two to five nodes (44 with `sixnode`) of Simmons et al. (2019) and the positions of every node in them. The counts equal `bmotif` in R; on the 5,092 + 455 company directors the five-node set takes 0.04 s, where `bmotif` needs 54 s (see the [size page](/nwcommands/size-limits/)). Update the plugin with `nwinstall`.
+
 ## 26 October 2026: faster valued and two-mode commands, valued closeness at any size
 
 **nwcommands 3.7.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.7.0)), **nwsaom 1.0.10** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.10)), **nwergm 1.2.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.3)), **nwdynam 1.1.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.1.3)), **nwrem 1.0.8** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.8))

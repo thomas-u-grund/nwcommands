@@ -419,6 +419,7 @@ program nwinstall_menu
 	window menu append item "Centrality" "PageRank centrality" "db nwpagerank"
 
 	window menu append submenu "Network Analysis" "Cohesion and Subgroups"
+	window menu append item "Cohesion and Subgroups" "Bipartite motifs of a two-mode network" "db nw2motifs"
 	window menu append item "Cohesion and Subgroups" "Nestedness (NODF, C-score) of a two-mode network" "db nw2nested"
 	window menu append item "Cohesion and Subgroups" "Calculate bridges" "db nwbridges"
 	window menu append item "Cohesion and Subgroups" "Maximal clique enumeration" "db nwclique"

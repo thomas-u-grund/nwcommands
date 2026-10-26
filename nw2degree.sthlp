@@ -37,6 +37,9 @@
 {title:Description}
 
 {pstd}
+{cmd:nw2degree} is the form of {help nwdegree} for a two-mode network: {cmd:nwdegree} uses it by default on a two-mode network (and {opt onemode} forces the one-mode degree). The two names give the same result with the same options.
+
+{pstd}
 {cmd:nw2degree} calculates degree centrality for a two-mode (bipartite) network, using the
 normalization of Borgatti and Everett (1997). A node's ordinary (raw) degree can only ever reach as
 high as the size of the {it:other} mode - a mode-1 node can tie to at most every mode-2 node, never
@@ -133,4 +136,4 @@ not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by
 last certified : 02 Sep 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

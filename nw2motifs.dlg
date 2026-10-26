@@ -1,0 +1,77 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nw2motifs")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 280
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nw2motifs - Bipartite motifs of a two-mode network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network:")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 224, label("Options")
+  TEXT tx_cx_sixnode 20 54 260 ., label("Count the motifs of six nodes too")
+  CHECKBOX cx_sixnode 290 54 190 ., label("sixnode") option(sixnode)
+  TEXT tx_ed_generate 20 82 260 ., label("Variable stub for the node position counts")
+  EDIT ed_generate 290 82 190 ., nomem option(generate)
+  TEXT tx_cx_replace 20 110 260 ., label("Replace existing variables")
+  CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
+  TEXT tx_ed_matrix 20 138 260 ., label("Matrix name for the node position counts")
+  EDIT ed_matrix 290 138 190 ., nomem option(matrix)
+  TEXT tx_cx_normalise 20 166 260 ., label("Add the normalised frequencies to the motif table")
+  CHECKBOX cx_normalise 290 166 190 ., label("normalise") option(normalise)
+  TEXT tx_cb_posnorm 20 194 260 ., label("Normalisation of the node position counts")
+  COMBOBOX cb_posnorm 290 194 190 ., dropdown contents(pnlist) nomem option(posnorm)
+  TEXT tx_cx_silent 20 222 260 ., label("Suppress display of results")
+  CHECKBOX cx_silent 290 222 190 ., label("silent") option(silent)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+LIST pnlist
+BEGIN
+	none
+	sum
+	position
+	sizeclass
+	sizeclass_plus1
+	sizeclass_NAzero
+	levelsize
+	levelsize_plus1
+	levelsize_NAzero
+	motif
+	motif_plus1
+	motif_NAzero
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nw2motifs"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nw2motifs " main.cb_net
+	beginoptions
+		option main.cx_sixnode
+		optionarg main.ed_generate
+		option main.cx_replace
+		optionarg main.ed_matrix
+		option main.cx_normalise
+		optionarg main.cb_posnorm
+		option main.cx_silent
+	endoptions
+	stata
+END

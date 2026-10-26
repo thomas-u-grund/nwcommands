@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.7.0  26oct2026}{...}
+{* *! version 3.8.0  26oct2026}{...}
 {phang}
 {help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network programs
  
@@ -8,6 +8,7 @@
 {p2col:{bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
 {p2col:{bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
 {p2col:{bf:{help nw2fromedge }}}Import two-mode network data from edgelist{p_end}
+{p2col:{bf:{help nw2motifs }}}Bipartite motifs of a two-mode network{p_end}
 {p2col:{bf:{help nw2nested }}}Nestedness (NODF, C-score) of a two-mode network{p_end}
 {p2col:{bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
@@ -151,4 +152,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -24,6 +24,8 @@ replace
 silent
 force
 binary
+twomode
+onemode
 legacy]
 ```
 
@@ -37,7 +39,8 @@ legacy]
 | `silent` | Do not display the summary of the new variables |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to [nwgeodesic](nwgeodesic) |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
-| `twomode` | Two-mode network: closeness is the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997) |
+| `twomode` | Two-mode network: the default; accepted as a synonym of the default (closeness is the smallest possible farness of a node of its mode divided by its farness, Borgatti and Everett 1997) |
+| `onemode` | Two-mode network: the closeness of the bipartite graph read as a one-mode graph, without the normalisation of Borgatti and Everett (the result of earlier releases) |
 
 ## Description
 
@@ -67,7 +70,7 @@ Closeness as defined above ((nodes - 1) / farness) is only defined for a connect
 
 ## Supported network types
 
-Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `nosym` convention as [nwkatz](nwkatz)/[nwevcent](nwevcent)), `nosym` available. Weighted: inherited entirely from whatever [nwgeodesic](nwgeodesic) options are passed through (this command has no `weighted`/`alpha()` of its own). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option `twomode` divides the smallest possible farness of a node of its mode by its farness (Borgatti and Everett 1997).
+Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `nosym` convention as [nwkatz](nwkatz)/[nwevcent](nwevcent)), `nosym` available. Weighted: inherited entirely from whatever [nwgeodesic](nwgeodesic) options are passed through (this command has no `weighted`/`alpha()` of its own). Signed: not checked. Two-mode: two-mode form by default - the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997; `twomode` is accepted as a synonym); `onemode` forces the one-mode closeness of the bipartite graph.
 
 ## See also
 
@@ -77,4 +80,4 @@ Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" `
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

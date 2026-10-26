@@ -28,6 +28,8 @@ in(tabulate_opt)
 out(tabulate_opt)
 tabulate_opt
 outputoff
+onemode
+raw
 binary]
 ```
 
@@ -38,13 +40,15 @@ binary]
 | `generate`(*`varlist`*) | **Required.** Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if `isolates` is also given, an extra name for the isolate indicator |
 | `replace` | Overwrite existing variables *varlist* |
 | `silent` | Surpress output |
-| `outputoff` | Reserved/internal - has no effect on a one-mode network's own output; use `silent` instead. Only meaningful when [netname](netname) turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to [nw2degree](nw2degree)) |
+| `outputoff` | Reserved/internal - has no effect on a one-mode network's own output; use `silent` instead. Only meaningful when [netname](netname) turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no two-mode form and were ignored) |
 | `isolates` | Generate variable for network isolates |
 | `standardize` | Divide degree or strength by N - 1 |
 | `in`(*`tabulate_opt`*) | Options for tabulating *indegree* |
 | `out`(*`tabulate_opt`*) | Options for tabulating *outdegree* |
 | *`tabulate_opt`* | Options for tabulating *degree* |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `onemode` | Two-mode network: compute the one-mode degree of the bipartite graph instead of the two-mode degree (the default) |
+| `raw` | Two-mode network: the number of ties itself, not divided by the size of the other mode (`tnet::degree_tm`) |
 
 ## Description
 
@@ -108,7 +112,7 @@ The next example saves the out- and indegree centrality in the variables *myout*
 
 ## Supported network types
 
-Binary: yes. Directed: yes - generates separate *_indegree*/*_outdegree* (or *_instrength*/ *_outstrength* for a valued network) automatically. Weighted: **W1**, native - the Opsahl et al. (2010) generalized degree formula above is the command's default and only formulation, controlled by `alpha()`; weight meaning is tie strength, used directly (not a distance). Signed: not checked. Two-mode: delegated to [nw2degree](nw2degree).
+Binary: yes. Directed: yes - generates separate *_indegree*/*_outdegree* (or *_instrength*/ *_outstrength* for a valued network) automatically. Weighted: **W1**, native - the Opsahl et al. (2010) generalized degree formula above is the command's default and only formulation, controlled by `alpha()`; weight meaning is tie strength, used directly (not a distance). Signed: not checked. Two-mode: two-mode form by default (the number of ties divided by the size of the other mode, `raw`: the count); `onemode` forces the one-mode computation on the bipartite graph ([nw2degree](nw2degree) is an alias).
 
 ## References
 
@@ -121,4 +125,4 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

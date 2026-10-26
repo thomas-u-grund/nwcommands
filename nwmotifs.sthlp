@@ -17,7 +17,14 @@
 [{cmd:,}
 {opt silent}
 {opt plot}
-{opt name(string)}]
+{opt name(string)}
+{opt onemode}
+{opt six:node}
+{opt gen:erate(stub)}
+{opt replace}
+{opt mat:rix(name)}
+{opt norm:alise}
+{opt posn:orm(type)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -25,9 +32,19 @@
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt plot}}Draw a bar chart of the 7 category counts{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:motifs}{p_end}
+{synopt:{opt onemode}}Two-mode network: the 4-node census of the bipartite graph read as a one-mode graph, instead of the bipartite motifs (the default){p_end}
+{synopt:{opt six:node}}Two-mode network: count the motifs of six nodes too (44 motifs and 148 node positions instead of 17 and 46){p_end}
+{synopt:{opt gen:erate(stub)}}Two-mode network: store the node position counts in the variables {it:stub}1, {it:stub}2, ...{p_end}
+{synopt:{opt replace}}Two-mode network: replace existing variables{p_end}
+{synopt:{opt mat:rix(name)}}Two-mode network: store the node position counts in a Stata matrix{p_end}
+{synopt:{opt norm:alise}}Two-mode network: add the four normalised frequencies of {cmd:bmotif::mcount} to the motif table{p_end}
+{synopt:{opt posn:orm(type)}}Two-mode network: normalise the node position counts as {cmd:bmotif::node_positions}{p_end}
 {p2colreset}{...}
 
 {title:Description}
+
+{pstd}
+On a two-mode network {cmd:nwmotifs} counts the 17 bipartite motifs of two to five nodes (44 with {opt sixnode}) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them; the options for that form are described in {help nw2motifs}, which is the same command under its older name. {opt onemode} gives the 4-node census of the bipartite graph read as a one-mode graph (the result of earlier releases).
 
 {pstd}
 {cmd:nwmotifs} classifies every induced 4-node subgraph of the network into one of 6
@@ -88,7 +105,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered.
+Two-mode: two-mode form by default - the bipartite motifs of Simmons et al. (2019; {cmd:bmotif}) and the positions of the nodes in them; {opt onemode} forces the 4-node census of the bipartite graph read as a one-mode graph ({cmd:igraph::motifs}); {help nw2motifs} is an alias.
 
 {title:Supported network types}
 
@@ -96,7 +113,7 @@ Two-mode: same as for the bipartite graph read as a one-mode network (valid; no 
 Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a
 directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note
 is printed to this effect. Weighted: not applicable (a motif census is inherently a binary
-count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph ({cmd:igraph::motifs}); the bipartite motifs of Simmons et al. are not offered. Requires at least 4 nodes.
+count). Signed: not checked. Two-mode: two-mode form by default - the bipartite motifs of Simmons et al. (2019; {cmd:bmotif}) and the positions of the nodes in them; {opt onemode} forces the 4-node census of the bipartite graph read as a one-mode graph ({cmd:igraph::motifs}); {help nw2motifs} is an alias. Requires at least 4 nodes.
 
 {title:Limits}
 
@@ -139,9 +156,9 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
 
 {title:See also}
 
-    {help nwtriads}, {help nwcug}, {help nwclustering}
+    {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

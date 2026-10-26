@@ -1,7 +1,7 @@
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force TWOmode]
+	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force TWOmode ONEmode]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -120,7 +120,17 @@ program nwbetween
 			mata: st_store((1::`nodes'),"`netgenerate'", NativeGraphAvailable() ? `netobj'->calculate_betweenness_native() : `netobj'->calculate_betweenness())
 		}
 
-		if "`twomode'" != "" {
+		// a two-mode network gets the standardisation of Borgatti and Everett (1997) by default; onemode gives the one-mode betweenness
+		// (with standardize as for any graph); twomode (the earlier way to ask for it) is accepted as a synonym
+		if "`twomode'" != "" & "`onemode'" != "" {
+			noi di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
+			error 198
+		}
+		local __tm = ("`twomode'" != "" | ("`is2mode'" == "true" & "`onemode'" == ""))
+		// Freeman's centralisation is computed from the raw scores
+		tempvar __rawbtw
+		qui gen double `__rawbtw' = `netgenerate'
+		if `__tm' {
 			// Borgatti and Everett (1997): the largest possible betweenness of a node of a mode with n nodes, the other
 			// mode having m nodes (a node that lies on every path between the other nodes of its mode): with
 			// s = floor((n - 1) / m) and t = n - 1 - s m, (m^2 (s+1)^2 + m (s+1) (2t - s - 1) - t (2s - t + 3)) / 2
@@ -154,7 +164,7 @@ program nwbetween
 		if `__wtd' {
 			noi di "{txt}    (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha')"
 		}
-		if "`twomode'" != "" {
+		if `__tm' {
 			noi di "{txt}    (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)"
 		}
 		else if "`standardize'" != "" {
@@ -172,12 +182,9 @@ program nwbetween
 		// standardize if it was requested.
 		local bwdiv = 1
 		if "`directed'" != "true" local bwdiv = 2
+		// __rawbtw holds the raw scores whatever standardisation was applied to the stored variable
 		local bwscale = 1
-		if "`standardize'" != "" {
-			if "`directed'" == "true" local bwscale = (`nodes' - 1) * (`nodes' - 2)
-			else local bwscale = (`nodes' - 1) * (`nodes' - 2) / 2
-		}
-		mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(st_data((1::`nodes'), "`netgenerate'"))) :- st_data((1::`nodes'), "`netgenerate'")) * `bwscale' / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1) / `bwdiv'))
+		mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(st_data((1::`nodes'), "`__rawbtw'"))) :- st_data((1::`nodes'), "`__rawbtw'")) * `bwscale' / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1) / `bwdiv'))
 	}
 end
 

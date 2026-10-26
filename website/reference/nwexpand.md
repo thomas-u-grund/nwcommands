@@ -136,4 +136,4 @@ Binary: source attribute values can be binary or continuous - `mode()` selects t
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

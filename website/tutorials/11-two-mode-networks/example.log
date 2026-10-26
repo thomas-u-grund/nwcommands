@@ -20,7 +20,7 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do 
+. do example.do
 
 . * Tutorial 9: Two-mode networks
 . * The two data sets are loaded from the data folder of the repository here;
@@ -47,8 +47,9 @@ Notes:
    Temporal: false
 
 . 
-. * Degree in a two-mode network: the number of ties divided by the size of the other mode
-. nw2degree davis, generate(att)
+. * Degree in a two-mode network: nwdegree recognises the network and divides the number of ties by the size of the other
+>  mode
+. nwdegree davis, generate(att)
 ----------------------------------------
   Network name: davis
 
@@ -183,7 +184,7 @@ file plot_davis.svg saved as SVG format
    Density:  .4
    Temporal: false
 
-. nw2degree small, generate(attsmall)
+. nwdegree small, generate(attsmall)
 ----------------------------------------
   Network name: small
 
@@ -202,10 +203,10 @@ file plot_davis.svg saved as SVG format
 
    comm_bip |      Freq.     Percent        Cum.
 ------------+-----------------------------------
-          1 |         12       37.50       37.50
-          2 |          6       18.75       56.25
-          3 |          9       28.12       84.38
-          4 |          5       15.62      100.00
+          1 |          5       15.62       15.62
+          2 |          9       28.12       43.75
+          3 |         12       37.50       81.25
+          4 |          6       18.75      100.00
 ------------+-----------------------------------
       Total |         32      100.00
  
@@ -250,14 +251,85 @@ file plot_davis.svg saved as SVG format
 ------------------------------------------------------------
 
 . 
-. * Clustering: Opsahl (default) and Robins-Alexander
-. nw2clustering davis, generate(clo)
+. * Clustering: nwclustering recognises the network too; Opsahl (default) and Robins-Alexander
+. nwclustering davis, generate(clo)
 
 . display r(C_global)
 .7718968
 
-. nw2clustering davis, ra
+. nwclustering davis, ra
   Robins-Alexander clustering (4 x C4 / L3):  0.467764   (C4 = 341, L3 = 2916)
+
+. 
+. * Motifs: the bipartite motifs of Simmons et al. and the positions of the nodes in them
+. nwmotifs davis, generate(np)
+Bipartite motifs of davis: 2 to 5 nodes; rows = mode 1 (18 nodes), columns = mode 2 (14 nodes)
+------------------------------------------
+ motif  nodes    r x c           frequency
+------------------------------------------
+     1      2      1x1                  89
+     2      3      1x2                 214
+     3      3      2x1                 322
+     4      4      3x1                 878
+     5      4      2x2                1552
+     6      4      2x2                 341
+     7      4      1x3                 328
+     8      5      4x1                1883
+     9      5      3x2                4288
+    10      5      3x2                1867
+    11      5      3x2                2415
+    12      5      3x2                 389
+    13      5      2x3                2249
+    14      5      2x3                1733
+    15      5      2x3                1284
+    16      5      2x3                 267
+    17      5      1x4                 341
+------------------------------------------
+Node position counts stored in np1 to np46 (position ids of bmotif), nodes in network order.
+
+. list _nwnode np1 np2 np3 np4 np5 np6 in 1/3, noobs
+
+  +-----------------------------------------------+
+  |   _nwnode   np1   np2   np3   np4   np5   np6 |
+  |-----------------------------------------------|
+  |    Brenda     0     7     0    21     0    46 |
+  | Charlotte     0     4     0     6     0    24 |
+  |   Dorothy     0     2     0     1     0    24 |
+  +-----------------------------------------------+
+
+. 
+. * Closeness and betweenness are normalised for the two modes (Borgatti and Everett); onemode gives the numbers of the b
+> ipartite graph read as a one-mode graph
+. nwcloseness davis, generate(cl_ cf_ cn_) silent
+
+. nwcloseness davis, generate(clo1 cfo1 cno1) onemode silent
+
+. summarize cl_ clo1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         cl_ |         32    .6591892    .0993221   .5238096   .8461539
+        clo1 |         32    .4413106    .0612054   .3690476   .5961539
+
+. nwbetween davis, generate(bw) silent
+----------------------------------------
+  Network name: davis
+----------------------------------------
+    Betweenness centrality
+    (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)
+
+. nwbetween davis, generate(bw1) onemode silent
+----------------------------------------
+  Network name: davis
+----------------------------------------
+    Betweenness centrality
+
+. summarize bw bw1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+          bw |         32    .0451195    .0606926   .0019535   .2438195
+         bw1 |         32       20.25    27.37569   .8693194   110.2064
 
 . 
 . * A null model that keeps both degree sequences
@@ -265,9 +337,9 @@ file plot_davis.svg saved as SVG format
 
 . nwpermute davis, generate(davis_swap) swap
 
-. nw2degree davis_swap, generate(att_swap) raw silent
+. nwdegree davis_swap, generate(att_swap) raw silent
 
-. nw2degree davis, generate(att_raw) raw silent
+. nwdegree davis, generate(att_raw) raw silent
 
 . assert att_swap == att_raw
 
@@ -289,8 +361,8 @@ Importing successful
    Valued: false
    Two-mode: true
    Nodes: 32
-      Level 1: 18 (mode 1)
-      Level 2: 14 (mode 2)
+      Level 1: 18 (woman)
+      Level 2: 14 (event)
    Selfloop: false
    Edges: 89
    Minimum value:  0
@@ -331,7 +403,7 @@ nwspectral does not support two-mode networks (davis): it reads the blocks betwe
    Density:  .00245
    Temporal: false
 
-. nw2degree ftdirectors_se, generate(deg)
+. nwdegree ftdirectors_se, generate(deg)
 ----------------------------------------
   Network name: ftdirectors_se
 
@@ -415,6 +487,9 @@ Female |  1.190244      1025
 
 . display r(max)
 304
+
+. 
+end of do-file
 
 . 
 end of do-file

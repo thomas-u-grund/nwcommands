@@ -49,4 +49,4 @@ For most network commands a netname is optional. When no netname is explicitly s
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

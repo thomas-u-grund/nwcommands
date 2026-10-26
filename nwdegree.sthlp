@@ -27,6 +27,8 @@
 {opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
 {it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}
 {opt outputoff}
+{opt onemode}
+{opt raw}
 
 {opt binary}]
 
@@ -38,13 +40,15 @@
 {synopt:{opt generate}({it:{help varlist}})}{bf:Required.} Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if {opt isolates} is also given, an extra name for the isolate indicator{p_end}
 {synopt:{opt replace}}Overwrite existing variables {it:varlist}{p_end}
 {synopt:{opt silent}}Surpress output{p_end}
-{synopt:{opt outputoff}}Reserved/internal - has no effect on a one-mode network's own output; use {opt silent} instead. Only meaningful when {help netname} turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to {help nw2degree}){p_end}
+{synopt:{opt outputoff}}Reserved/internal - has no effect on a one-mode network's own output; use {opt silent} instead. Only meaningful when {help netname} turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no two-mode form and were ignored){p_end}
 {synopt:{opt isolates}}Generate variable for network isolates{p_end}
 {synopt:{opt standardize}}Divide degree or strength by N - 1{p_end}
 {synopt:{opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:indegree}{p_end}
 {synopt:{opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:outdegree}{p_end}
 {synopt:{it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}}Options for tabulating {it:degree}{p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt onemode}}Two-mode network: compute the one-mode degree of the bipartite graph instead of the two-mode degree (the default){p_end}
+{synopt:{opt raw}}Two-mode network: the number of ties itself, not divided by the size of the other mode ({cmd:tnet::degree_tm}){p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -95,7 +99,7 @@ On a network that is not valued the result is the same as in earlier releases an
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: delegated to {help nw2degree}.
+Two-mode: two-mode form by default - the degree of a node of a two-mode network is its number of ties divided by the size of the other mode (Borgatti and Everett 1997; {opt raw} gives the count itself, {cmd:tnet::degree_tm}); {opt onemode} forces the one-mode computation on the bipartite graph. {help nw2degree} is the same command under its older name and takes the same options.
 
 {title:Supported network types}
 
@@ -104,7 +108,7 @@ Binary: yes. Directed: yes - generates separate {it:_indegree}/{it:_outdegree} (
 {it:_outstrength} for a valued network) automatically. Weighted: {bf:W1}, native - the Opsahl et al.
 (2010) generalized degree formula above is the command's default and only formulation, controlled
 by {opt alpha()}; weight meaning is tie strength, used directly (not a distance). Signed: not
-checked. Two-mode: delegated to {help nw2degree}.
+checked. Two-mode: two-mode form by default (the number of ties divided by the size of the other mode, {opt raw}: the count); {opt onemode} forces the one-mode computation on the bipartite graph ({help nw2degree} is an alias).
 
 
 {title:References}
@@ -164,4 +168,4 @@ The next example saves the out- and indegree centrality in the variables {it:myo
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

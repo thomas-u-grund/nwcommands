@@ -55,4 +55,4 @@ Keep only certain nodes of a network, using `if`:
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

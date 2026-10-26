@@ -154,4 +154,4 @@ than 50,000,000 dyads), before any matrix is built (it used to be killed at 12 G
 	{help nwdyadprob}
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

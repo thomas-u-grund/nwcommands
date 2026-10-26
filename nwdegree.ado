@@ -2,7 +2,7 @@
 capture program drop nwdegree
 program nwdegree
 	version 9
-	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) *]
+	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) ONEmode RAW *]
 	set more off
 
 	// This command's own doc has always described netlist (multi-network)
@@ -47,6 +47,40 @@ program nwdegree
 		}
 	}
 
+	// Two-mode networks: the degree of a two-mode network (the number of ties divided by the size of the other mode, tnet::degree_tm)
+	// is used by default; onemode forces the one-mode computation on the bipartite graph.  nw2degree is an alias of this form.
+	if "`onemode'" == "" {
+		local __all2 1
+		local __netlist "`netname'"
+		foreach netname_temp in `netname' {
+			_nwsyntax `netname_temp'
+			if "`is2mode'" != "true" local __all2 0
+		}
+		local netname "`__netlist'"
+		if `__all2' {
+			local ignored_opts ""
+			if "`isolates'" != "" local ignored_opts "`ignored_opts' isolates"
+			if "`standardize'" != "" local ignored_opts "`ignored_opts' standardize"
+			if "`in'" != "" local ignored_opts "`ignored_opts' in()"
+			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
+			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
+			if "`ignored_opts'" != "" {
+				noi di "{txt}note: two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'} ({bf:onemode} gives the one-mode computation)"
+			}
+			local __fwd ""
+			if "`alpha'" != "" local __fwd "alpha(`alpha')"
+			if "`binary'" != "" local __fwd "`__fwd' binary"
+			if "`raw'" != "" local __fwd "`__fwd' raw"
+			_nwdegree_two `netname', generate(`generate') `replace' `silent' `__fwd'
+			capture confirm number 1
+			exit
+		}
+	}
+	else if "`raw'" != "" {
+		noi di "{err}Option {bf:raw} is the two-mode degree and cannot be combined with {bf:onemode}."
+		error 198
+	}
+
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 
@@ -79,21 +113,22 @@ program nwdegree
 		// self-flagged as a real gap in docs/NETWORK_TYPE_MATRIX.md
 		// and closed 2026-09-02), so it is forwarded like any other
 		// shared option instead.
-		if "`is2mode'" == "true" {
+		if "`is2mode'" == "true" & "`onemode'" == "" {
+			// a list that mixes two-mode and one-mode networks: each network gets its own form
 			local ignored_opts ""
 			if "`isolates'" != "" local ignored_opts "`ignored_opts' isolates"
 			if "`standardize'" != "" local ignored_opts "`ignored_opts' standardize"
 			if "`in'" != "" local ignored_opts "`ignored_opts' in()"
 			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
 			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
-			noi di "{txt}note: `netname_temp' is a two-mode network - using {bf:nw2degree} instead."
 			if "`ignored_opts'" != "" {
-				noi di "{txt}      the following option(s) have no bipartite equivalent and were ignored:{bf:`ignored_opts'}"
+				noi di "{txt}note: `netname_temp' is a two-mode network: its two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'}"
 			}
 			local __fwd ""
 			if "`alpha'" != "" local __fwd "alpha(`alpha')"
 			if "`binary'" != "" local __fwd "`__fwd' binary"
-			noi nw2degree `netname_temp', generate(`generate') `replace' `silent' `__fwd'
+			if "`raw'" != "" local __fwd "`__fwd' raw"
+			noi _nwdegree_two `netname_temp', generate(`generate') `replace' `silent' `__fwd'
 			continue
 		}
 
@@ -464,3 +499,116 @@ program nwdegree
 
 end
 
+
+capture program drop _nwdegree_two
+program _nwdegree_two, rclass
+	version 12
+	syntax [anything(name=netname)][, GENerate(string) replace silent alpha(string) BINary RAW]
+	set more off
+
+	_nwsyntax `netname', max(9999)
+	if "`alpha'" != "" {
+		capture confirm number `alpha'
+		if _rc {
+			di "{err}Option {bf:alpha()} must be a number."
+			error 198
+		}
+		if "`binary'" != "" & real("`alpha'") != 0 {
+			di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
+			error 198
+		}
+	}
+
+	if `networks' > 1 {
+		local k = 1
+	}
+
+	qui foreach netname_temp in `netname' {
+		_nwsyntax `netname_temp'
+
+		if "`is2mode'" != "true" {
+			noi di "{err}nwdegree: onemode is required to use the one-mode form of `netname_temp'."
+			error 198
+		}
+
+		if "`generate'" == "" {
+			noi di "{err}option {bf:generate()} required."
+			error 198
+		}
+		local netgenerate "`generate'"
+
+		capture confirm variable `netgenerate'`k', exact
+		if _rc == 0 & "`replace'" == "" {
+			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
+			err 99
+		}
+
+		// BUGFIX: a bare "capture drop X" is subject to Stata's default
+		// variable-name abbreviation (set varabbrev on) - if X does NOT
+		// exist yet but a DIFFERENT, longer variable happens to have X
+		// as a literal prefix (e.g. calling nwdegree on a netlist mixing
+		// a two-mode network with a one-mode one: this redirect's own
+		// unsuffixed base name is always a prefix of nwdegree's own
+		// suffixed one-mode output, "basevar_netname"), this silently
+		// dropped that unrelated, already-computed variable instead of
+		// safely no-op'ing - confirmed directly while writing the Paths
+		// & Ego Networks / centrality tutorials' own test coverage.
+		// Guarding the drop behind the same exact-match confirm already
+		// used for the "already exists" check above eliminates the
+		// ambiguity entirely: skip the drop when the exact name doesn't
+		// exist (nothing to safely drop), and once it's confirmed to
+		// exist, Stata always resolves an exact literal match over an
+		// abbreviation candidate, so the drop can no longer go astray.
+		capture confirm variable `netgenerate'`k', exact
+		if _rc == 0 {
+			drop `netgenerate'`k'
+		}
+		gen `=cond("`valued'" == "true", "double", "")' `netgenerate'`k' = .
+		mata: st_rclear()
+		qui if _N < `nodes' {
+			set obs `nodes'
+		}
+		// align row i of the data set with node i of this network before the
+		// positional st_store() below (a data set that was sorted or reordered, or
+		// synced to another network such as a two-mode projection, would otherwise
+		// receive the values on the wrong rows)
+		_nwsyncrows `netname_temp'
+		mata: st_rclear()
+		_nwsyntax `netname_temp'
+		// tie values: the strength on a valued network (as nwdegree), the number of ties with binary or alpha(0)
+		local __alpha 0
+		if "`alpha'" != "" {
+			local __alpha = real("`alpha'")
+		}
+		else if "`valued'" == "true" & "`binary'" == "" {
+			local __alpha 1
+		}
+		if "`raw'" != "" {
+			// the degree itself (tnet::degree_tm, igraph::degree), without the division by the size of the other mode
+			mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`__alpha') :* ((strtoreal(`netobj'->get_modes()) :== 1)' :* `netobj'->get_nodes_mode2() :+ (strtoreal(`netobj'->get_modes()) :== 2)' :* `netobj'->get_nodes_mode1()))
+		}
+		else {
+			mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`__alpha'))
+		}
+
+		// see nwbrokerage.ado's own header comment for why this is
+		// needed: quietly/mata:-only commands above do not refresh _rc
+		// on their own, so the "already exists" probe's own stale rc
+		// would otherwise leak out as this command's own exit code.
+		capture confirm variable `netgenerate'`k', exact
+
+		if "`silent'" == "" {
+			noi di "{hline 40}"
+			noi di "{txt}  Network name: {res}`netname_temp'"
+			if "`raw'" != "" noi di "{txt}  (raw degree: not divided by the size of the other mode)"
+			if "`valued'" == "true" {
+				if `__alpha' == 0 noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"
+				else if `__alpha' == 1 noi di "{txt}  (valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties)"
+				else noi di "{txt}  (valued network: degree is k (s/k)^alpha, alpha = `__alpha')"
+			}
+			noi sum `netgenerate'`k'
+			noi di " "
+		}
+		local k = `=`k' + 1'
+	}
+end

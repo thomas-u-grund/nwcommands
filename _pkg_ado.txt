@@ -11,11 +11,13 @@ f _nwevalnetexp.ado
 f _nwnodeid.ado
 f _nwnodelab.ado
 f _nwsetobs.ado
+f _nwsyncrows.ado
 f _opts_oneof.ado
 f animate.ado
 f nw2clustering.ado
 f nw2degree.ado
 f nw2fromedge.ado
+f nw2motifs.ado
 f nw2nested.ado
 f nw2project.ado
 f nw2set.ado
@@ -121,6 +123,7 @@ f nwpref.ado
 f nwpreserve.ado
 f nwproject.ado
 f nwqap.ado
+f nwqap_p.ado
 f nwrandom.ado
 f nwrandomwalk.ado
 f nwreach.ado

@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode legacy *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode ONEmode legacy *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -162,7 +162,14 @@ program nwcloseness
 			}
 			noi di "{txt}Warning: network {bf:`netname_temp'} is not connected; closeness `__how'. Specify {bf:unconnected()} to give missing paths a length."
 		}
-		if "`twomode'" != "" {
+		// a two-mode network gets the normalisation of Borgatti and Everett (1997) by default; onemode gives the one-mode closeness of the
+		// bipartite graph; twomode (the earlier way to ask for it) is accepted as a synonym
+		if "`twomode'" != "" & "`onemode'" != "" {
+			noi di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
+			error 198
+		}
+		local __tm = ("`twomode'" != "" | ("`is2mode'" == "true" & "`onemode'" == ""))
+		if `__tm' {
 			// Borgatti and Everett (1997): the smallest possible farness of a node is reached when it is tied to every
 			// node of the other mode (distance 1) and every other node of its own mode is at distance 2
 			if "`is2mode'" != "true" {

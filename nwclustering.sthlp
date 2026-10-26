@@ -19,7 +19,10 @@
 {opt SYMmetrize}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt level(#)}
+{opt ra}
+{opt onemode}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -35,6 +38,9 @@ weighted {opt measure()} on a directed network - see Supported network types bel
 clustering coefficient{p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt level(#)}}Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = {it:1}{p_end}
+{synopt:{opt ra}}Two-mode network: the global coefficient of Robins and Alexander (2004), 4 C4 / L3, as {cmd:r(ra)}; {opt generate()} is then optional{p_end}
+{synopt:{opt onemode}}Two-mode network: the one-mode coefficient of the bipartite graph (always 0, the graph has no triangles) instead of the two-mode coefficient of Opsahl (2013), the default{p_end}
 
 {p2colreset}{...}
 
@@ -56,14 +62,16 @@ whole network - not the same quantity as the average of per-node ratios, since i
 potential triple equally rather than every node equally).
 
 {pstd}
-If the network is a two-mode (bipartite) network, {cmd:nwclustering} automatically switches to
-{help nw2clustering} instead (an ordinary clustering coefficient is not meaningful on a bipartite
-network's own inherently triangle-free structure), forwarding {opt measure()} and {opt generate()}.
+If the network is a two-mode (bipartite) network, {cmd:nwclustering} uses the two-mode form by default: the
+coefficient of Opsahl (2013) (the share of four-paths that a fifth tie closes, {cmd:tnet::clustering_tm}), and with
+{opt ra} the global coefficient of Robins and Alexander (2004). An ordinary clustering coefficient is not meaningful on a
+bipartite network's own inherently triangle-free structure; {opt onemode} computes it anyway. {help nw2clustering} is the
+same command under its older name and takes the same options.
 
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: delegated to {help nw2clustering}.
+Two-mode: two-mode form by default (Opsahl 2013; {opt ra}: Robins and Alexander 2004); {opt onemode} forces the one-mode computation on the bipartite graph ({help nw2clustering} is an alias).
 
 {title:Supported network types}
 
@@ -74,7 +82,7 @@ matching the directed two-path a -> i -> b convention used elsewhere in this pac
 {opt measure()} is not defined for a directed network - either choose {opt measure(binary)} or
 {opt symmetrize} the network first. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the two tie values of a potential triple's own pair of ties before testing
 closure; undirected networks only (see above). Signed: not checked; negative tie values are not
-validated or rejected. Two-mode: delegated to {help nw2clustering}.
+validated or rejected. Two-mode: two-mode form by default (Opsahl 2013; {opt ra}: Robins and Alexander 2004); {opt onemode} forces the one-mode computation on the bipartite graph ({help nw2clustering} is an alias).
 
 {title:Stored results}
 
@@ -116,4 +124,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

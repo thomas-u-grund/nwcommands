@@ -21,7 +21,10 @@ measure(string)
 SYMmetrize
 generate(newvarname)
 replace
-silent]
+silent
+level(#)
+ra
+onemode]
 ```
 
 | | |
@@ -37,6 +40,9 @@ weighted `measure()` on a directed network - see Supported network types below) 
 clustering coefficient |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
 | `silent` | Suppress display of results |
+| `level(#)` | Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = *1* |
+| `ra` | Two-mode network: the global coefficient of Robins and Alexander (2004), 4 C4 / L3, as `r(ra)`; `generate()` is then optional |
+| `onemode` | Two-mode network: the one-mode coefficient of the bipartite graph (always 0, the graph has no triangles) instead of the two-mode coefficient of Opsahl (2013), the default |
 
 ## Description
 
@@ -44,7 +50,7 @@ clustering coefficient |
 
 `generate()` is required and names the new variable that holds each node's own clustering coefficient, and returns both the network-level average (**r(cluster_avg)**, the mean of the per-node values) and the network-level global clustering coefficient (**r(cluster_global)**, the ratio of the total count of closed triples to the total count of potential triples across the whole network - not the same quantity as the average of per-node ratios, since it weights every potential triple equally rather than every node equally).
 
-If the network is a two-mode (bipartite) network, `nwclustering` automatically switches to [nw2clustering](nw2clustering) instead (an ordinary clustering coefficient is not meaningful on a bipartite network's own inherently triangle-free structure), forwarding `measure()` and `generate()`.
+If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mode form by default: the coefficient of Opsahl (2013) (the share of four-paths that a fifth tie closes, `tnet::clustering_tm`), and with `ra` the global coefficient of Robins and Alexander (2004). An ordinary clustering coefficient is not meaningful on a bipartite network's own inherently triangle-free structure; `onemode` computes it anyway. [nw2clustering](nw2clustering) is the same command under its older name and takes the same options.
 
 ## Examples
 
@@ -56,7 +62,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` automatically s
 
 ## Supported network types
 
-Binary: yes (the default `measure(binary)` case). Directed: yes for `measure(binary)` (each node's own potential triples are formed from one in-neighbor paired with one out-neighbor, matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted `measure()` is not defined for a directed network - either choose `measure(binary)` or `symmetrize` the network first. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the two tie values of a potential triple's own pair of ties before testing closure; undirected networks only (see above). Signed: not checked; negative tie values are not validated or rejected. Two-mode: delegated to [nw2clustering](nw2clustering).
+Binary: yes (the default `measure(binary)` case). Directed: yes for `measure(binary)` (each node's own potential triples are formed from one in-neighbor paired with one out-neighbor, matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted `measure()` is not defined for a directed network - either choose `measure(binary)` or `symmetrize` the network first. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the two tie values of a potential triple's own pair of ties before testing closure; undirected networks only (see above). Signed: not checked; negative tie values are not validated or rejected. Two-mode: two-mode form by default (Opsahl 2013; `ra`: Robins and Alexander 2004); `onemode` forces the one-mode computation on the bipartite graph ([nw2clustering](nw2clustering) is an alias).
 
 ## Stored results
 
@@ -82,4 +88,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
