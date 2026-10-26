@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 422
+POSITION 10 10 550 478
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwdegree - Degree centrality and distribution")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 328, label("Options")
+  GROUPBOX gb_opt 10 44 520 384, label("Options")
   TEXT tx_cx_replace 20 54 260 ., label("Overwrite existing variables")
   CHECKBOX cx_replace 290 54 190 ., label("replace") option(replace)
   TEXT tx_cx_standardize 20 82 260 ., label("Divide degree or strength by N - 1")
@@ -40,6 +40,10 @@ BEGIN
   CHECKBOX cx_binary 290 306 190 ., label("binary") option(binary)
   TEXT tx_ed_ties 20 334 260 ., label("Variables for the number of ties (valued network): one name, or outdegree and indegree")
   EDIT ed_ties 290 334 190 ., nomem option(ties)
+  TEXT tx_cx_onemode 20 362 260 ., label("Two-mode network: one-mode degree of the bipartite graph (default: two-mode degree)")
+  CHECKBOX cx_onemode 290 362 190 ., label("onemode") option(onemode)
+  TEXT tx_cx_raw 20 390 260 ., label("Two-mode network: raw degree, not divided by the size of the other mode")
+  CHECKBOX cx_raw 290 390 190 ., label("raw") option(raw)
 END
 
 LIST netlist
@@ -68,6 +72,8 @@ BEGIN
 		optionarg main.ed_out
 		option main.cx_binary
 		optionarg main.ed_ties
+		option main.cx_onemode
+		option main.cx_raw
 	endoptions
 	stata
 END

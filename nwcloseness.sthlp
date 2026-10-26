@@ -23,6 +23,8 @@
 {opt silent}
 {opt force}
 {opt binary}
+{opt twomode}
+{opt onemode}
 {opt legacy}]
 
 
@@ -37,7 +39,8 @@
 {synopt:{opt silent}}Do not display the summary of the new variables{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to {help nwgeodesic}{p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
-{synopt:{opt twomode}}Two-mode network: closeness is the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997){p_end}
+{synopt:{opt twomode}}Two-mode network: the default; accepted as a synonym of the default (closeness is the smallest possible farness of a node of its mode divided by its farness, Borgatti and Everett 1997){p_end}
+{synopt:{opt onemode}}Two-mode network: the closeness of the bipartite graph read as a one-mode graph, without the normalisation of Borgatti and Everett (the result of earlier releases){p_end}
 
 
 {title:Description}
@@ -81,12 +84,12 @@ On a network that is not valued the result is the same as in earlier releases an
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides the smallest possible farness of a node of its mode by its farness (Borgatti and Everett 1997).
+Two-mode: two-mode form by default - the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997; {opt twomode} is accepted as a synonym); {opt onemode} forces the one-mode closeness of the bipartite graph.
 
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {opt nosym} convention as {help nwkatz}/{help nwevcent}), {opt nosym} available. Weighted: inherited entirely from whatever {help nwgeodesic} options are passed through (this command has no {opt weighted}/{opt alpha()} of its own). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides the smallest possible farness of a node of its mode by its farness (Borgatti and Everett 1997).
+Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {opt nosym} convention as {help nwkatz}/{help nwevcent}), {opt nosym} available. Weighted: inherited entirely from whatever {help nwgeodesic} options are passed through (this command has no {opt weighted}/{opt alpha()} of its own). Signed: not checked. Two-mode: two-mode form by default - the smallest possible farness of a node of its mode divided by its farness (Borgatti and Everett 1997; {opt twomode} is accepted as a synonym); {opt onemode} forces the one-mode closeness of the bipartite graph.
 
 {title:Examples}
 	
@@ -119,4 +122,4 @@ On a valued network the distances are least-cost distances (cost 1/w^alpha, {opt
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

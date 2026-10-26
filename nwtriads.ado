@@ -81,9 +81,9 @@ program nwtriads
 	
 	if "`is2mode'" == "true" {
 		// a bipartite graph has no triangle: its transitivity is 0 whenever it has a connected triple
-		// (nwclustering would hand over to nw2clustering, which measures four-path closure instead)
+		// (nwclustering gives the four-path closure of Opsahl on a two-mode network instead)
 		local transitivity = cond(`r(_201)' + `r(_210)' > 0, 0, .)
-		di "{txt}Note: {bf:`netname'} is two-mode. The census counts the triples of the bipartite graph read as a one-mode graph (as igraph::triad_census does); it has no triangles, so the transitivity is 0. For closure in a two-mode network use {help nw2clustering}."
+		di "{txt}Note: {bf:`netname'} is two-mode. The census counts the triples of the bipartite graph read as a one-mode graph (as igraph::triad_census does); it has no triangles, so the transitivity is 0. For closure in a two-mode network use {help nwclustering} (its default on a two-mode network)."
 	}
 	else {
 	_return hold `r'

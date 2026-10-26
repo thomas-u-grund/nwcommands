@@ -16,9 +16,8 @@
 or two-mode (bipartite) - see {help nwintro} for the underlying data model. No single command
 supports every combination equally: some are inherently structural and apply unchanged to any
 network (e.g. {help nwdrop}); some have a well-defined weighted generalization but a separate
-binary-only default (e.g. {help nwclustering}); some are only meaningful for one-mode data and
-redirect automatically to a {cmd:nw2*} counterpart when given a two-mode network (e.g.
-{help nwdegree} redirecting to {help nw2degree}); a few are simply not implemented for a
+binary-only default (e.g. {help nwclustering}); some have a two-mode form of the same concept that they use
+automatically on a two-mode network (e.g. {help nwdegree}; the option {opt onemode} forces the one-mode computation); a few are simply not implemented for a
 combination yet.
 
 {pstd}
@@ -49,7 +48,7 @@ Measures that have a weighted form in R use the tie values of a valued network b
 definition and print the line "(note: tie values are ignored; this measure is binary)" on a valued network. The
 website page on valued networks lists all commands.
 
-{title:Two-mode networks and the nw2* family}
+{title:Two-mode networks and the nw2* names}
 
 {pstd}
 Every network carries a {it:Two-mode} flag (shown by {help nwsummarize}). It is set when the network is created, by
@@ -72,8 +71,9 @@ command does with a two-mode network:
 {cmd:bipartite}); the rest of the sentence says what changes.
 
 {phang2}
-{bf:Two-mode: delegated to ...} {help nwdegree} and {help nwclustering} hand a two-mode network to {help nw2degree}
-and {help nw2clustering} and say so.
+{bf:Two-mode: two-mode form by default ...} The command has a two-mode form of the same statistic and uses it on a
+two-mode network without being asked; the option {opt onemode} forces the one-mode computation on the bipartite graph.
+{help nwdegree}, {help nwclustering}, {help nwmotifs}, {help nwcloseness} and {help nwbetween} are of this kind.
 
 {phang2}
 {bf:Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation)}
@@ -88,12 +88,17 @@ the error 6088. Make a one-mode network of one mode with {help nwproject} first.
 does.
 
 {pstd}
-A handful of commands (the {cmd:nw2*} family, e.g. {help nw2degree}, {help nw2project}, {help nw2clustering},
-{help nw2nested}, {help nw2motifs}) exist because the statistic itself is different for bipartite data. Measures that have a two-mode
-form in R use it by default on a two-mode network ({help nwcommunity} and {help nwmodularity}: the bipartite
-modularity of Barber; {help nwsimilar} and {help nwdissimilar}: nodes are compared with nodes of their own mode); the
-option {opt onemode} (or, for the normalisations of Borgatti and Everett, {opt twomode}) chooses the other form. The
-website page on two-mode networks and the table of network types list all commands.
+{bf:The rule.} A network declares itself two-mode when it is created. A command that has a two-mode form of the same
+concept uses that form automatically on a two-mode network, and the option {opt onemode} forces the one-mode
+computation on the bipartite graph (what {cmd:igraph} does with a bipartite graph). {help nwdegree}
+(number of ties over the size of the other mode, {cmd:raw} for the count), {help nwclustering} (Opsahl 2013; {opt ra}:
+Robins and Alexander 2004), {help nwmotifs} (the bipartite motifs of Simmons et al. 2019), {help nwcloseness} and
+{help nwbetween} (the normalisations of Borgatti and Everett 1997; {opt twomode} is accepted as a synonym of the default),
+{help nwcommunity} and {help nwmodularity} (the bipartite modularity of Barber) and {help nwsimilar} and
+{help nwdissimilar} (nodes are compared with nodes of their own mode) follow it. The names {help nw2degree},
+{help nw2clustering} and {help nw2motifs} remain as aliases of the main commands with the options they always had.
+{help nw2project} and {help nw2nested} have no one-mode counterpart and keep their own names. The website page on
+two-mode networks and the table of network types list all commands.
 
 {title:Weighted (valued) networks}
 
@@ -163,7 +168,7 @@ unweighted 0/1 network work), {bf:Directed} (does an asymmetric network work, an
 symmetrization required or automatic), {bf:Weighted} (does tie strength enter the calculation, or
 is it ignored/dichotomized), {bf:Signed} (are negative tie values handled distinctly from "no tie",
 or silently treated the same), and {bf:Two-mode} (does the command work on bipartite data directly,
-redirect to a {cmd:nw2*} counterpart, or not apply). "Not applicable" is used, not silently omitted,
+use its two-mode form by default, or not apply). "Not applicable" is used, not silently omitted,
 for commands with no network-type-dependent behavior at all (e.g. purely structural commands like
 {help nwrename}).
 
@@ -189,4 +194,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 {help nwintro}, {help nwtopical}, {help nw2set:introduction to two-mode networks}
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

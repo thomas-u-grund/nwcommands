@@ -73,7 +73,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nw2clustering}.
+Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nwclustering} (its default on a two-mode network).
 
 {title:Supported network types}
 
@@ -84,7 +84,7 @@ still runs, but 12 of the 16 categories (everything except {bf:_003}/{bf:_102}/{
 are not meaningful for undirected data and reliably return 0, since an undirected network
 has no asymmetric ties by construction - {cmd:nwtriads} prints a note to this effect when called on
 an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous
-count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nw2clustering}.
+count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nwclustering} (its default on a two-mode network).
 
 
 {title:Limits}
@@ -149,4 +149,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

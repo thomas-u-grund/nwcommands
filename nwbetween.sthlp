@@ -24,7 +24,9 @@
 {opt weighted}
 {opt alpha(real)}
 {opt force}
-{opt binary}]
+{opt binary}
+{opt twomode}
+{opt onemode}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -38,7 +40,8 @@
 {synopt:{opt alpha(real)}}weight-to-distance exponent used with {opt weighted}; default = 1{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
-{synopt:{opt twomode}}Two-mode network: betweenness divided by the largest value a node of its mode can reach (Borgatti and Everett 1997){p_end}
+{synopt:{opt twomode}}Two-mode network: the default; accepted as a synonym of the default (betweenness divided by the largest value a node of its mode can reach, Borgatti and Everett 1997; {opt standardize} is this standardisation on a two-mode network){p_end}
+{synopt:{opt onemode}}Two-mode network: the betweenness of the bipartite graph read as a one-mode graph, not divided by the largest possible value (the result of earlier releases; {opt standardize} then divides as for any graph){p_end}
 
 
 {title:Description}
@@ -123,7 +126,7 @@ On a network that is not valued the result is the same as in earlier releases an
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997).
+Two-mode: two-mode form by default - betweenness divided by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997; {opt twomode} is accepted as a synonym); {opt onemode} forces the one-mode betweenness of the bipartite graph.
 
 {title:Supported network types}
 
@@ -141,7 +144,7 @@ implied, always an explicit opt-in. Signed: ties with weight less than or equal 
 negative ties, are treated as no tie at all in both the default and {opt weighted} cases - a
 negative (e.g. antagonistic) tie is not distinguished from an absent one, and {opt weighted}'s
 {it:weight^alpha} cost is undefined for a negative base in general, so signed networks are not
-natively supported by either mode. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the option {opt twomode} divides by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997).
+natively supported by either mode. Two-mode: two-mode form by default - betweenness divided by the largest betweenness a node of its mode can reach in a two-mode network (Borgatti and Everett 1997; {opt twomode} is accepted as a synonym); {opt onemode} forces the one-mode betweenness of the bipartite graph.
 
 
 {title:References}
@@ -166,4 +169,4 @@ Betweenness needs one shortest-path search from every node, so the time grows wi
 last certified : 23 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -288,13 +288,17 @@ foreach x in tm davis {
 	_nodeorder `x'
 	nwcloseness `x', generate(cl`k' fa`k' ne`k') twomode silent
 	_cmpvar cl`k' R_`k'_beclose 1e-6 "`x' two-mode closeness = minimum farness / farness"
-	nwcloseness `x', generate(clo`k' fao`k' neo`k') silent
+	nwcloseness `x', generate(clo`k' fao`k' neo`k') onemode silent
+	nwcloseness `x', generate(cld`k' fad`k' ned`k') silent
+	_cmpvar cld`k' R_`k'_beclose 1e-6 "`x' closeness: two-mode form is the default"
 	mata: st_numscalar("__same", max(abs(st_data((1, `=cond("`x'" == "tm", 10, 32)'), "clo`k'") :- st_data((1, `=cond("`x'" == "tm", 10, 32)'), "cl`k'"))))
-	_chk `=(scalar(__same) > 1e-3)' "`x' closeness without twomode keeps its one-mode normalisation (differs from the two-mode one)"
+	_chk `=(scalar(__same) > 1e-3)' "`x' closeness with onemode keeps its one-mode normalisation (differs from the two-mode one)"
 	nwbetween `x', generate(bt`k') twomode silent
 	_cmpvar bt`k' R_`k'_bebtw 1e-6 "`x' two-mode betweenness = betweenness / Borgatti-Everett maximum"
-	nwbetween `x', generate(bto`k') silent
-	_cmpvar bto`k' R_`k'_btw 1e-3 "`x' betweenness unchanged without twomode (igraph::betweenness)"
+	nwbetween `x', generate(bto`k') onemode silent
+	nwbetween `x', generate(btd`k') silent
+	_cmpvar btd`k' R_`k'_bebtw 1e-6 "`x' betweenness: two-mode form is the default"
+	_cmpvar bto`k' R_`k'_btw 1e-3 "`x' betweenness with onemode unchanged (igraph::betweenness)"
 }
 nwrandom 8, prob(.4) name(o8) undirected
 capture nwbetween o8, generate(bx) twomode silent

@@ -41,6 +41,9 @@
 {title:Description}
 
 {pstd}
+{cmd:nw2motifs} is the form of {help nwmotifs} for a two-mode network: {cmd:nwmotifs} uses it by default on a two-mode network (and {opt onemode} forces the 4-node census of the bipartite graph). The two names give the same result with the same options.
+
+{pstd}
 {cmd:nw2motifs} counts the bipartite motifs of a two-mode network: the small connected patterns of ties between two sets of nodes that make up the building blocks of species-by-site, plant-pollinator and membership networks (Baker et al. 2015; Simmons et al. 2019, {it:Methods in Ecology and Evolution}). There are 17 motifs of two to five nodes and 27 more of six nodes (44 in all), and each motif has one or more {it:positions} (46 for the five-node set, 148 with six nodes): the nodes of a motif that are not equivalent, such as the end and the middle of a path. The command gives two things.
 
 {phang2}1. The {bf:motif table}, the number of times each motif occurs in the network (what {cmd:bmotif::mcount} returns), shown on screen and returned in {cmd:r(motifs)}.{p_end}
@@ -231,4 +234,4 @@ Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutiona
 {help nwmotifs}, {help nw2set}, {help nw2nested}, {help nw2clustering}, {help nw2degree}, {help nwnetworktypes}
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

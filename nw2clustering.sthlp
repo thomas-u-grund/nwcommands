@@ -38,6 +38,9 @@ node's own clustering coefficient{p_end}
 {title:Description}
 
 {pstd}
+{cmd:nw2clustering} is the form of {help nwclustering} for a two-mode network: {cmd:nwclustering} uses it by default on a two-mode network (and {opt onemode} forces the one-mode coefficient). The two names give the same result with the same options.
+
+{pstd}
 {cmd:nw2clustering} calculates the two-mode (bipartite) analogue of the ordinary clustering
 coefficient (see {help nwclustering}) using the 4-path / 6-cycle definition of Opsahl (2013) and
 Robins & Alexander (2004): an ordinary triangle cannot exist in a two-mode network (a tie only ever
@@ -114,4 +117,4 @@ distance in bipartite graphs. {it:Computational & Mathematical Organization Theo
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
