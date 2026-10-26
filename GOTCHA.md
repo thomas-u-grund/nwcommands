@@ -739,3 +739,7 @@ A command that has a two-mode form of the same concept (`nwdegree`, `nwclusterin
 ## `nwplot` sign colours: an undirected tie is in the plot's tie list twice (3.9.0)
 
 The tie list that `nwplot` draws holds both (i,j) and (j,i) of an undirected tie. Solid lines hide that (the same pixels twice), but a dashed line drawn twice with opposite phases looks solid, so the negative ties of a signed network were drawn as a mix of dashed and solid lines. The sign-colour path now draws every undirected tie once (`__nwp_drawonce`, both `pcspike` calls of the edge loop). Anything new that draws a pattern (dash, dot) per tie has to do the same.
+
+## `nwgeodesic ... force` on an unvalued network was 1000 times slower than without it (fixed 2026-10-26)
+
+`force` only waives the 100-node refusal for VALUED networks without the plugin; the unvalued branch tested `nodes > 100 & force == ""`, so with `force` it fell through to the Mata `"dijkstra"` routine (37 s at 600 nodes) while the default path used the native hop-count routine. Time the same command with and without each option before blaming the result network: the distance call was the whole cost, `nwduplicate`/`set_edge` take milliseconds.
