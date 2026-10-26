@@ -75,6 +75,14 @@ string scalar gg_args(real scalar alg, real scalar n, real scalar nties, real ro
 void gg_comb(string scalar path, string scalar name, real scalar alg, real scalar n, real matrix ties,
 		real colvector nv, real rowvector par)
 {
+	gg_comb_x(path, name, alg, n, ties, nv, par, 0)
+}
+
+// skipres = 1: record the status and the published scalars only (a1.. : used where the result matrix itself
+// (community labels) may legitimately differ between platforms, e.g. DIRT_LPA+ keeps only the modularity Q)
+void gg_comb_x(string scalar path, string scalar name, real scalar alg, real scalar n, real matrix ties,
+		real colvector nv, real rowvector par, real scalar skipres)
+{
 	real scalar fh, st, j, k, nties, m, c, allint
 	string scalar tol, s
 	real rowvector aux
@@ -93,7 +101,7 @@ void gg_comb(string scalar path, string scalar name, real scalar alg, real scala
 	if (rows(nv) > 0) gg_var(fh, 4, nv)
 	fput(fh, "xs __nwg_status " + gg_num(st) + " 0")
 	for (j = 1; j <= 4; j++) if (aux[j] < .) fput(fh, "xs __nwg_a" + strofreal(j) + " " + gg_num(aux[j]) + " " + gg_num(1e-9 * (aux[j] != trunc(aux[j]))))
-	if (st == 0 & rows(res) > 0 & cols(res) > 0) {
+	if (!skipres & st == 0 & rows(res) > 0 & cols(res) > 0) {
 		fput(fh, "xr " + strofreal(rows(res)) + " " + strofreal(cols(res)))
 		tol = ""
 		for (c = 1; c <= cols(res); c++) {
@@ -274,3 +282,152 @@ gg_comb(G, "distsumw_directed_22", 48, 22, A, J(0, 1, .), (1))
 gg_comb(G, "distblock_directed_22", 49, 22, A, J(0, 1, .), (1, 3, 5))
 end
 di as txt "golden fixtures written to $NWGOLD"
+
+* ---- plugin generation 12 (kernels 51 to 54) ---------------------------------------------------------
+* needs a generation-12 plugin on the adopath; the data sets are read from data/ of the repository
+mata:
+// kernel 54: the sweeps of the weighted Kamada-Kawai layout. Ties (i, j, w) in v1..v3, the start coordinates in
+// v4 (first n rows x, next n rows y), argument "54 n nties iterations"; result: n x 2 coordinates, scalar a1 = status
+void gg_kkw(string scalar path, string scalar name, real scalar n, real matrix ties, real matrix pos, real scalar iter)
+{
+	string scalar origframe, argstr
+	real scalar nties, fh, k, st, nr, nc
+	real rowvector junk
+	real matrix res
+
+	nties = rows(ties)
+	origframe = st_framecurrent()
+	stata("capture frame drop __gg")
+	stata("frame create __gg")
+	st_framecurrent("__gg")
+	st_addobs(max((2 * n, nties, 1)))
+	junk = st_addvar("double", ("v1", "v2", "v3", "v4"))
+	st_store((1::nties), ("v1", "v2", "v3"), ties)
+	st_store((1::(2 * n)), "v4", (pos[., 1] \ pos[., 2]))
+	argstr = "54 " + strofreal(n) + " " + strofreal(nties) + " " + strofreal(iter)
+	st_numscalar("__nwg_status", .)
+	st_numscalar("__nwg_a1", .)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("plugin call nwgraph_native v1 v2 v3 v4, " + char(34) + argstr + char(34))
+	st = st_numscalar("__nwg_status")
+	nr = st_numscalar("__nwg_rows")
+	nc = st_numscalar("__nwg_cols")
+	junk = st_addvar("double", ("v5", "v6"))
+	stata("plugin call nwgraph_native v1 v2 v3 v4 v5 v6, " + char(34) + "99 0 0 2" + char(34))
+	res = st_data((1::n), ("v5", "v6"))
+	st_framecurrent(origframe)
+	stata("capture frame drop __gg")
+	if (st != 0 | nr != n | nc != 2) _error("kernel 54 failed")
+	fh = fopen(path, "a")
+	fput(fh, "case " + name)
+	fput(fh, "args " + argstr)
+	gg_var(fh, 1, ties[., 1])
+	gg_var(fh, 2, ties[., 2])
+	gg_var(fh, 3, ties[., 3])
+	gg_var(fh, 4, (pos[., 1] \ pos[., 2]))
+	fput(fh, "xs __nwg_status 0 0")
+	fput(fh, "xr " + strofreal(n) + " 2 1e-9 1e-9")
+	for (k = 1; k <= n; k++) fput(fh, gg_num(res[k, 1]) + " " + gg_num(res[k, 2]))
+	fput(fh, "end")
+	fclose(fh)
+}
+
+// kernel 51: one call (type, dtype, start, count, mode)
+void gg_sim(string scalar path, string scalar name, real scalar n, real matrix A, real scalar type, real scalar dtype,
+		real scalar start, real scalar count, real scalar mode)
+{
+	real matrix el
+	el = A
+	if (rows(el) > 0) el = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :!= 0))
+	gg_comb(path, name, 51, n, el, J(0, 1, .), (type, dtype, start, count, mode))
+}
+end
+
+mata: G = st_global("G")
+set seed 20261027
+mata:
+// ---- 51: all ten types, all contexts, on a small directed valued network and a small undirected binary one
+A = gg_graph(12, 0.30, 1, 3, 0)
+for (ty = 1; ty <= 10; ty++) for (dt = (ty == 1 ? 1 : 0); dt <= (ty == 1 ? 3 : 2); dt++)
+	gg_sim(G, "simnodes_dir12_t" + strofreal(ty) + "_d" + strofreal(dt), 12, A, ty, dt, 1, 12, 0)
+A = gg_graph(10, 0.35, 0, 0, 0)
+for (ty = 1; ty <= 10; ty++) gg_sim(G, "simnodes_undir10_t" + strofreal(ty), 10, A, ty, (ty == 1 ? 3 : 0), 1, 10, 0)
+// a mid-size network (50 nodes): the five types of nwsimilar / nwdissimilar that the command help names
+A = gg_graph(50, 0.08, 1, 3, 0)
+for (q = 1; q <= 5; q++) {
+	ty = (1, 2, 3, 5, 7)[q]
+	gg_sim(G, "simnodes_dir50_t" + strofreal(ty), 50, A, ty, (ty == 1 ? 3 : 0), 1, 50, 0)
+}
+gg_sim(G, "simnodes_dir50_t1_block", 50, A, 1, 1, 21, 15, 0)
+gg_sim(G, "simnodes_dir50_t7_block", 50, A, 7, 2, 40, 11, 0)
+gg_sim(G, "simnodes_dir50_t1_probe", 50, A, 1, 3, 0, 0, 2)
+gg_sim(G, "simnodes_dir50_t1_sparse", 50, A, 1, 1, 1, 2000000, 1)
+gg_sim(G, "simnodes_dir50_t2_sparse", 50, A, 2, 0, 1, 2000000, 1)
+gg_sim(G, "simnodes_dir50_t7_sparse", 50, A, 7, 0, 1, 2000000, 1)
+A = gg_graph(50, 0.10, 0, 0, 0)
+gg_sim(G, "simnodes_undir50_t1", 50, A, 1, 3, 1, 50, 0)
+gg_sim(G, "simnodes_undir50_t3", 50, A, 3, 0, 1, 50, 0)
+// a sparse mid-size network with isolates (nodes 41..60 have no ties): zero-variance nodes of pearson
+A = gg_graph(40, 0.12, 1, 2, 0)
+gg_sim(G, "simnodes_isolates60_t1", 60, A, 1, 3, 1, 60, 0)
+gg_sim(G, "simnodes_isolates60_t1_sparse", 60, A, 1, 3, 1, 2000000, 1)
+gg_sim(G, "simnodes_isolates60_t9", 60, A, 9, 0, 1, 60, 0)
+
+// ---- 52: DIRT_LPA+ (only the modularity Q and the number of runs are recorded: the labels are arbitrary)
+// Southern women and a random bipartite network: ties once, (mode 1 node, mode 2 node), weights as nwg_symweights makes them
+end
+qui nwuse data/davis, nwclear
+qui _nwsyntax davis
+mata:
+MD = strtoreal(`netobj'->get_modes())'
+EL = `netobj'->edgelist()
+EL = select(EL, (MD[EL[., 1]] :== 1) :& (MD[EL[., 2]] :== 2) :& (EL[., 3] :!= 0))
+for (sd = 1; sd <= 3; sd++) gg_comb_x(G, "dirtlpa_davis_seed" + strofreal(sd), 52, rows(MD), EL, MD, (4, 10, 1000 * sd + 7), 1)
+gg_comb_x(G, "dirtlpa_davis_reps1", 52, rows(MD), EL, MD, (2, 1, 99), 1)
+B = gg_bip(20, 26, 0.18, 3, 1);  md = (J(20, 1, 1) \ J(26, 1, 2))
+for (sd = 1; sd <= 3; sd++) gg_comb_x(G, "dirtlpa_random20_26_seed" + strofreal(sd), 52, 46, B, md, (4, 8, 31 * sd), 1)
+B = gg_bip(60, 45, 0.06, 0, 1);  md = (J(60, 1, 1) \ J(45, 1, 2))
+gg_comb_x(G, "dirtlpa_random60_45", 52, 105, B, md, (4, 5, 4242), 1)
+
+// ---- 53: two-mode cug draws: all four conditions (1 density, 2 mode 1 degrees, 3 mode 2 degrees, 4 both: curveball)
+// full result recorded (the draws use the kernel's own integer generator); the harness also checks margins and counts
+for (model = 1; model <= 4; model++) {
+	gg_comb(G, "nullbip_davis_model" + strofreal(model), 53, rows(MD), EL, MD, (model, 2026 + model, 100))
+	B = gg_bip(15, 22, 0.25, 0, 1);  md = (J(15, 1, 1) \ J(22, 1, 2))
+	gg_comb(G, "nullbip_random15_22_model" + strofreal(model), 53, 37, B, md, (model, 77 * model, 60))
+}
+B = gg_bip(12, 9, 0.30, 4, 1);  md = (J(12, 1, 1) \ J(9, 1, 2))
+gg_comb(G, "nullbip_valued12_9_model4", 53, 21, B, md, (4, 5, 25))
+
+// ---- 54: the sweeps of the weighted Kamada-Kawai layout, from fixed start coordinates
+A = gg_graph(14, 0.30, 0, 5, 0)
+A = select(A, A[., 1] :!= A[., 2])
+P = J(14, 2, .)
+for (i = 1; i <= 14; i++) P[i, .] = (cos(2 * pi() * i / 14) + 0.013 * i, sin(2 * pi() * i / 14) - 0.007 * i)
+gg_kkw(G, "kkw_random14", 14, A, P, 20)
+// a ring of 12 plus chords with values 1..4, start on a spiral
+A = J(0, 3, .)
+for (i = 1; i <= 12; i++) {
+	j = mod(i, 12) + 1
+	w = 1 + mod(i, 4)
+	A = A \ (i, j, w) \ (j, i, w)
+}
+A = A \ (1, 7, 2) \ (7, 1, 2) \ (3, 10, 4) \ (10, 3, 4)
+P = J(12, 2, .)
+for (i = 1; i <= 12; i++) P[i, .] = (i * cos(i) / 4, i * sin(i) / 4)
+gg_kkw(G, "kkw_ring12_chords", 12, A, P, 30)
+// a graph with two components (distances to the other component are replaced by the longest distance plus the mean length)
+A = gg_graph(10, 0.45, 0, 3, 0)
+A = A \ (11, 12, 2) \ (12, 11, 2) \ (12, 13, 1) \ (13, 12, 1) \ (13, 14, 3) \ (14, 13, 3) \ (14, 11, 2) \ (11, 14, 2)
+A = select(A, A[., 1] :!= A[., 2])
+P = J(14, 2, .)
+for (i = 1; i <= 14; i++) P[i, .] = (cos(1 + 2 * i), sin(3 * i)) * i / 5
+gg_kkw(G, "kkw_two_components14", 14, A, P, 25)
+// a mid-size network of 120 nodes
+A = gg_graph(120, 0.05, 0, 6, 0)
+A = select(A, A[., 1] :!= A[., 2])
+P = J(120, 2, .)
+for (i = 1; i <= 120; i++) P[i, .] = (cos(2 * pi() * i / 120) * 3 + 0.02 * mod(i * 7, 11), sin(2 * pi() * i / 120) * 3 + 0.02 * mod(i * 5, 13))
+gg_kkw(G, "kkw_random120", 120, A, P, 15)
+end
+di as txt "golden fixtures (generation 12 kernels) appended to $NWGOLD"

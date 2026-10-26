@@ -987,6 +987,195 @@ static void test_properties(void) {
 	}
 }
 
+
+/* ================================================================== */
+/* kernels 51 to 54 (plugin generation 12): properties and large cases    */
+/* ================================================================== */
+
+static int cmp_i64(const void *a, const void *b) { int64_t x = *(const int64_t *)a, y = *(const int64_t *)b; return x < y ? -1 : x > y; }
+
+/*
+	Null-model draw (53) on a random two-mode network: the number of ties is kept by every condition; the degrees of mode 1
+	(condition 2), of mode 2 (condition 3) or of both (condition 4) are kept exactly; no tie is repeated; every tie joins
+	the two modes.  n1 x n2 nodes, density p; ntrades = the curveball trades of condition 4.
+*/
+static int check_nullbip(const char *name, int64_t n1, int64_t n2, double p, int model, int64_t ntrades, char *why, size_t whylen) {
+	int64_t n = n1 + n2, i, j, m = 0, cap, k, *d1a, *d2a, *d1b, *d2b, *key;
+	int64_t *ei, *ej;
+	double *md, *ew;
+	kres_t r;
+	char par[80];
+	int ok = 1;
+	cap = (int64_t)(p * (double)n1 * (double)n2 * 1.2) + 1000;
+	ei = (int64_t *)malloc((size_t)cap * sizeof(int64_t)); ej = (int64_t *)malloc((size_t)cap * sizeof(int64_t));
+	ew = (double *)malloc((size_t)cap * sizeof(double)); md = (double *)malloc((size_t)n * sizeof(double));
+	d1a = (int64_t *)calloc((size_t)n1 + 1, sizeof(int64_t)); d1b = (int64_t *)calloc((size_t)n1 + 1, sizeof(int64_t));
+	d2a = (int64_t *)calloc((size_t)n2 + 1, sizeof(int64_t)); d2b = (int64_t *)calloc((size_t)n2 + 1, sizeof(int64_t));
+	for (k = 0; k < n; k++) md[k] = k < n1 ? 1 : 2;
+	if (p * (double)n1 * (double)n2 < 5e6) {
+		for (i = 1; i <= n1; i++) for (j = 1; j <= n2; j++) if (rndu() < p && m < cap) { ei[m] = i; ej[m] = n1 + j; ew[m] = 1; d1a[i]++; d2a[j]++; m++; }
+	} else {
+		/* a large sparse network: draw the ties one by one (a repeated pair is skipped) */
+		int64_t target = (int64_t)(p * (double)n1 * (double)n2), t;
+		for (t = 0; t < target && m < cap; t++) { i = 1 + (int64_t)(rnd64() % (uint64_t)n1); j = 1 + (int64_t)(rnd64() % (uint64_t)n2); ei[m] = i; ej[m] = n1 + j; ew[m] = 1; m++; }
+		{ /* remove repeated pairs */
+			int64_t *kk2 = (int64_t *)malloc((size_t)m * sizeof(int64_t)), q = 0;
+			for (k = 0; k < m; k++) kk2[k] = (ei[k] - 1) * n2 + (ej[k] - n1 - 1);
+			qsort(kk2, (size_t)m, sizeof(int64_t), cmp_i64);
+			for (k = 0; k < m; k++) if (k == 0 || kk2[k] != kk2[k - 1]) { ei[q] = kk2[k] / n2 + 1; ej[q] = n1 + kk2[k] % n2 + 1; q++; }
+			m = q; free(kk2);
+			for (k = 0; k < m; k++) { d1a[ei[k]]++; d2a[ej[k] - n1]++; }
+		}
+	}
+	snprintf(par, sizeof par, "%d %d %lld", model, 12345 + model, (long long)ntrades);
+	r = run_comb(53, n, m, ei, ej, ew, md, par);
+	why[0] = 0;
+	if (r.rc != 0 || r.status != 0 || r.rows != m || r.cols != 3) { ok = 0; snprintf(why, whylen, "%s model %d: status %d rc %d size %lld x %lld, expected %lld x 3", name, model, r.status, r.rc, (long long)r.rows, (long long)r.cols, (long long)m); }
+	else {
+		key = (int64_t *)malloc((size_t)m * sizeof(int64_t));
+		for (k = 0; k < m && ok; k++) {
+			int64_t a = (int64_t)r.res[3 * k], b = (int64_t)r.res[3 * k + 1];
+			if (a < 1 || a > n1 || b < n1 + 1 || b > n) { ok = 0; snprintf(why, whylen, "%s model %d: tie %lld joins %lld and %lld, not mode 1 and mode 2", name, model, (long long)k + 1, (long long)a, (long long)b); break; }
+			d1b[a]++; d2b[b - n1]++;
+			key[k] = (a - 1) * n2 + (b - n1 - 1);
+		}
+		if (ok) {
+			qsort(key, (size_t)m, sizeof(int64_t), cmp_i64);
+			for (k = 1; k < m; k++) if (key[k] == key[k - 1]) { ok = 0; snprintf(why, whylen, "%s model %d: a tie is repeated", name, model); break; }
+		}
+		if (ok && (model == 2 || model == 4)) for (i = 1; i <= n1; i++) if (d1a[i] != d1b[i]) { ok = 0; snprintf(why, whylen, "%s model %d: degree of mode 1 node %lld changed", name, model, (long long)i); break; }
+		if (ok && (model == 3 || model == 4)) for (j = 1; j <= n2; j++) if (d2a[j] != d2b[j]) { ok = 0; snprintf(why, whylen, "%s model %d: degree of mode 2 node %lld changed", name, model, (long long)j); break; }
+		free(key);
+	}
+	kres_free(&r);
+	free(ei); free(ej); free(ew); free(md); free(d1a); free(d1b); free(d2a); free(d2b);
+	return ok;
+}
+
+static void test_native390(void) {
+	int model;
+	double t0;
+
+	/* null-model draws: margins exact, counts kept */
+	if (selected("nullbip_margins")) {
+		int ok = 1;
+		char why[300];
+		for (model = 1; model <= 4 && ok; model++) {
+			ok = check_nullbip("40 x 60, p = 0.15", 40, 60, 0.15, model, 400, why, sizeof why);
+			if (ok) ok = check_nullbip("90 x 25, p = 0.30", 90, 25, 0.30, model, 400, why, sizeof why);
+			if (ok) ok = check_nullbip("7 x 5, p = 0.60", 7, 5, 0.60, model, 50, why, sizeof why);
+		}
+		if (ok) result("nullbip_margins", 1, "(3 networks, conditions 1 to 4: counts, degrees, no repeated tie)");
+		else result("nullbip_margins", 0, "%s", why);
+	}
+
+	/* similarity of a star (51): a leaf's column and the centre's column have closed forms; the formulas are calibrated on
+	   a star of 10 nodes and must scale with n (the cells are doubles, but sums over 2n ties and the n-by-n dimensions are not) */
+	if (selected("simnodes_star") && !g_small) {
+		int64_t ns = 10, nl = 100000, k;
+		int types[3] = {7, 5, 3}, q, ok = 1;
+		char why[300] = "";
+		t0 = now_s();
+		for (q = 0; q < 3 && ok; q++) {
+			graph_t gs = g_star(ns), gl = g_star(nl);
+			kres_t rs, rl;
+			char par[64];
+			double cs, cl, ls, ll;
+			snprintf(par, sizeof par, "%d 0 2 1 0", types[q]);   /* column 2 = a leaf; cells (i,2) for every i */
+			rs = run_comb(51, ns, gs.m, gs.ei, gs.ej, gs.ew, NULL, par);
+			rl = run_comb(51, nl, gl.m, gl.ei, gl.ej, gl.ew, NULL, par);
+			if (rs.status != 0 || rl.status != 0 || rs.rows != ns || rl.rows != nl || rs.cols != 1 || rl.cols != 1) { ok = 0; snprintf(why, sizeof why, "type %d: status %d / %d size %lld / %lld", types[q], rs.status, rl.status, (long long)rs.rows, (long long)rl.rows); }
+			else {
+				cs = rs.res[0]; cl = rl.res[0];            /* cell (centre, leaf) */
+				ls = rs.res[2]; ll = rl.res[2];            /* cell (another leaf, leaf) */
+				if (types[q] == 7) {                       /* manhatten: differs in every other leaf, in and out: linear in n - 2 */
+					if (cl / (double)(nl - 2) != cs / (double)(ns - 2) || ll != ls) { ok = 0; snprintf(why, sizeof why, "type 7: centre-leaf %.17g (n=%lld) vs %.17g (n=%lld)", cl, (long long)nl, cs, (long long)ns); }
+				} else if (cl != cs || ll != ls) { ok = 0; snprintf(why, sizeof why, "type %d: cells depend on n: %.17g %.17g / %.17g %.17g", types[q], cs, cl, ls, ll); }
+				for (k = 3; k < nl && ok; k += 997) if (rl.res[k] != ll) { ok = 0; snprintf(why, sizeof why, "type %d: leaf cell %lld = %.17g, expected %.17g", types[q], (long long)k + 1, rl.res[k], ll); }
+			}
+			kres_free(&rs); kres_free(&rl); g_free(&gs); g_free(&gl);
+		}
+		if (ok) result("simnodes_star", 1, "(star of 100,000 nodes: cells of a leaf column as on a star of 10; %.1fs)", now_s() - t0);
+		else result("simnodes_star", 0, "%s", why);
+	}
+
+	/* null-model draws where n1 * n2 exceeds 2^31 (gnm samples cell numbers up to 2.5e9) and the degree-preserving draws on 100,000 nodes */
+	if (selected("nullbip_large") && !g_small) {
+		int ok = 1;
+		char why[300] = "";
+		t0 = now_s();
+		for (model = 1; model <= 4 && ok; model++) ok = check_nullbip("50,000 x 50,000, 120,000 ties", 50000, 50000, 120000.0 / 2.5e9, model, 100000, why, sizeof why);
+		if (ok) result("nullbip_large", 1, "(50,000 x 50,000 = 2.5e9 cells > 2^31, conditions 1 to 4; %.1fs)", now_s() - t0);
+		else result("nullbip_large", 0, "%s", why);
+	}
+
+	/* DIRT_LPA+ (52) on disjoint complete two-mode blocks: the right answer is one module per block (Barber's Q = 1 - 1/blocks) */
+	if (selected("dirtlpa_blocks")) {
+		int64_t nb = g_small ? 40 : 500, bs = 4, n = nb * 2 * bs, m = 0, b, i, j;
+		int64_t *ei = (int64_t *)malloc((size_t)(nb * bs * bs + 1) * sizeof(int64_t)), *ej = (int64_t *)malloc((size_t)(nb * bs * bs + 1) * sizeof(int64_t));
+		double *ew = (double *)malloc((size_t)(nb * bs * bs + 1) * sizeof(double)), *md = (double *)malloc((size_t)n * sizeof(double));
+		kres_t r;
+		double expq = 1.0 - 1.0 / (double)nb;
+		t0 = now_s();
+		for (b = 0; b < nb; b++) {
+			for (i = 0; i < bs; i++) { md[b * 2 * bs + i] = 1; md[b * 2 * bs + bs + i] = 2; }
+			for (i = 0; i < bs; i++) for (j = 0; j < bs; j++) { ei[m] = b * 2 * bs + i + 1; ej[m] = b * 2 * bs + bs + j + 1; ew[m] = 1; m++; }
+		}
+		r = run_comb(52, n, m, ei, ej, ew, md, "4 3 99");
+		result("dirtlpa_blocks", r.status == 0 && r.rows == n && fabs(r.a[1] - expq) < 1e-9, "(%lld blocks of 4 x 4: Q = %.6f, expected %.6f; %.1fs)", (long long)nb, r.a[1], expq, now_s() - t0);
+		kres_free(&r); free(ei); free(ej); free(ew); free(md);
+	}
+
+	/* weighted Kamada-Kawai (54): every coordinate is finite, the layout is not the start, ties of larger value end up closer */
+	if (selected("kkw_properties")) {
+		int64_t n = g_small ? 300 : 1500, i, k, m = 0, cap = n * 12;
+		int64_t *ei = (int64_t *)malloc((size_t)cap * sizeof(int64_t)), *ej = (int64_t *)malloc((size_t)cap * sizeof(int64_t));
+		double *ew = (double *)malloc((size_t)cap * sizeof(double)), *nv = (double *)malloc((size_t)(2 * n) * sizeof(double));
+		int ok = 1;
+		double moved = 0, dlo = 0, dhi = 0, nlo = 0, nhi = 0;
+		char par[64];
+		t0 = now_s();
+		for (i = 1; i <= n; i++) for (k = 1; k <= 5; k++) {   /* a ring with chords; values 1 or 8 */
+			int64_t j = (i + k * k * 7 - 1) % n + 1;
+			double w = (k == 1) ? 8.0 : 1.0;
+			if (j == i) continue;
+			ei[m] = i; ej[m] = j; ew[m] = w; m++; ei[m] = j; ej[m] = i; ew[m] = w; m++;
+		}
+		for (i = 0; i < n; i++) { nv[i] = cos(6.283185307179586 * (double)i / (double)n) * 5 + 0.01 * (double)(i % 7); nv[n + i] = sin(6.283185307179586 * (double)i / (double)n) * 5 + 0.01 * (double)(i % 5); }
+		snprintf(par, sizeof par, "10");
+		{
+			char args[128];
+			(void)par;
+			/* the kernel takes the start coordinates in variable 4 (2n values) */
+			{
+				int64_t rows = 2 * n > m ? 2 * n : m, q;
+				double v;
+				t_store_reset(rows); t_scal_clear();
+				for (q = 0; q < m; q++) { t_col(1)[q] = (double)ei[q]; t_col(2)[q] = (double)ej[q]; t_col(3)[q] = ew[q]; }
+				for (q = 0; q < 2 * n; q++) t_col(4)[q] = nv[q];
+				snprintf(args, sizeof args, "54 %lld %lld 10", (long long)n, (long long)m);
+				ok = call_plugin(args) == 0 && t_scal("__nwg_status", &v) && v == 0;
+				if (ok) {
+					int64_t row;
+					if (call_plugin("99 0 0 2") != 0) ok = 0;
+					else for (row = 0; row < n; row++) {
+						double x = t_col(5)[row], y = t_col(6)[row];
+						if (!(fabs(x) < 1e6) || !(fabs(y) < 1e6)) { ok = 0; break; }
+						moved += fabs(x - nv[row]) + fabs(y - nv[n + row]);
+					}
+					if (ok) for (q = 0; q < m; q++) {
+						double dx = t_col(5)[ei[q] - 1] - t_col(5)[ej[q] - 1], dy = t_col(6)[ei[q] - 1] - t_col(6)[ej[q] - 1], d = sqrt(dx * dx + dy * dy);
+						if (ew[q] > 4) { dhi += d; nhi += 1; } else { dlo += d; nlo += 1; }
+					}
+				}
+				res_clear();
+			}
+		}
+		result("kkw_properties", ok && moved > 1 && nlo > 0 && nhi > 0 && dhi / nhi < dlo / nlo, "(%lld nodes: mean length of ties of value 8 = %.3f, of value 1 = %.3f; %.1fs)", (long long)n, nhi > 0 ? dhi / nhi : -1.0, nlo > 0 ? dlo / nlo : -1.0, now_s() - t0);
+		free(ei); free(ej); free(ew); free(nv);
+	}
+}
+
 /* ================================================================== */
 /* large synthetic cases: values above 2^31, known answers                */
 /* ================================================================== */
@@ -1217,6 +1406,7 @@ int main(int argc, char **argv) {
 	test_ext_bmotif();
 	test_analytic();
 	test_properties();
+	test_native390();
 	test_large();
 	if (g_stress > 0) test_stress(g_stress, 0.2);
 	res_clear();
