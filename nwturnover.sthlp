@@ -98,7 +98,7 @@ This measure uses the presence of ties only (R has no weighted form of it either
 {pstd}
 Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share
 the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not
-checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+checked. Two-mode: yes - only the ties between the two modes are counted (the cells inside a mode cannot hold ties and are left out); both networks should have the same modes.
 
 {title:Limits}
 
@@ -113,4 +113,4 @@ stored ties. Measured in Stata/BE, random directed network with 10 ties per node
 last certified : 22 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

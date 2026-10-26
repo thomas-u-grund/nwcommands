@@ -68,6 +68,13 @@ program nwplotmatrix
 	gen `_sorting' = _n
 	if "`sortby'" == "" {
 		local sortby `_sorting'
+		// two-mode network: the nodes of one mode next to each other (rows keep their order inside a mode)
+		if "`is2mode'" == "true" {
+			tempvar _mode
+			qui gen byte `_mode' = .
+			mata: st_store((1::`nodes'), "`_mode'", strtoreal(`netobj'->get_modes()'))
+			local sortby `_mode'
+		}
 	}
 	
 	qui if "`group'" != "" {
@@ -101,6 +108,26 @@ program nwplotmatrix
 	local options "`oldoptions'"
 	local lcolor `"`oldlcolor'"'
 	
+	// two-mode network: a line between the two modes (when the nodes of one mode are next to each other)
+	if "`is2mode'" == "true" {
+		mata: st_local("__nwpm_md", invtokens(`netobj'->get_modes()))
+		local __nwpm_xl ""
+		local __nwpm_yl ""
+		forvalues i = 2/`nodes' {
+			local __nwpm_a = `_sorting'[`i']
+			local __nwpm_b = `_sorting'[`=`i'-1']
+			if word("`__nwpm_md'", `__nwpm_a') != word("`__nwpm_md'", `__nwpm_b') {
+				local __nwpm_xl "`__nwpm_xl' `=`i'-0.5'"
+				local __nwpm_yl "`__nwpm_yl' `=2 - `i' - 0.5'"
+			}
+		}
+		if "`__nwpm_xl'" != "" {
+			local xlinecmd `"`xlinecmd' xline(`__nwpm_xl', lcolor(black) lwidth(medium))"'
+			local ylinecmd `"`ylinecmd' yline(`__nwpm_yl', lcolor(black) lwidth(medium))"'
+		}
+	}
+	local lgd "auto"
+	if `"`legend'"' != "" local lgd `"`legend'"'
 	if "`lab'" != "" {
 		local label `nw_nodename'
 	}
@@ -109,7 +136,7 @@ program nwplotmatrix
 		local l label(`label')
 	}
 	//nwsociomatrix_noif `netname', `xlinecmd' `ylinecmd' `lab' label(`label') `nodichotomize' background(`background') ylabel(`labelopt' `ylabel') xlabel(`labelopt' `xlabel') legendopt(`legendopt') color(`colorpalette') lcolor(`lcolor') legend(`legend') `tievalue' tievalueopt(`tievalueopt') `options'
-	qui plotmatrix, `xlinecmd' `ylinecmd' `l' legend(off) `freq' tievalueopt(`tievalueopt') ylabel(, angle(0) `ylabel') xlabel(, angle(90) `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
+	qui plotmatrix, `xlinecmd' `ylinecmd' `l' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, angle(0) `ylabel') xlabel(, angle(90) `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
 	restore
 end
 
@@ -156,6 +183,7 @@ local nx = colsof(`mat')
 
 /* the data of the boxes, built directly (no svmat/stack: Stata/BE holds at most
    2,048 variables, and a variable per column was a second copy of the matrix) */
+local __nwpm_splitgiven = ("`split'" != "")
 _mkdata, mat(`mat') split(`split')
 if "`split'" == "" local split "`r(split)'"
 
@@ -168,6 +196,29 @@ foreach num of numlist `split' {
   local prev `num'
 }
 local lablist `"`lablist' "`prev'" "' 
+// a binary matrix (cells 0 and 1 only) and no split(): name the two classes instead of "0-1" and "1-1.001"
+if !`__nwpm_splitgiven' {
+	qui count if col1 < . & col1 != 0 & col1 != 1
+	local __nwpm_other = r(N)
+	qui count if col1 == 0
+	local __nwpm_n0 = r(N)
+	qui count if col1 == 1
+	local __nwpm_n1 = r(N)
+	if `__nwpm_other' == 0 & `__nwpm_n0' > 0 & `__nwpm_n1' > 0 {
+		// the colour class (cb) of the cells 0 and 1; the other classes stay empty
+		qui sum cb if col1 == 0, meanonly
+		local __nwpm_c0 = r(min)
+		qui sum cb if col1 == 1, meanonly
+		local __nwpm_c1 = r(min)
+		local lablist ""
+		forvalues __nwpm_i = 1/`=max(`__nwpm_c0', `__nwpm_c1')' {
+			local __nwpm_l "-"
+			if `__nwpm_i' == `__nwpm_c0' local __nwpm_l "no tie"
+			if `__nwpm_i' == `__nwpm_c1' local __nwpm_l "tie"
+			local lablist `"`lablist' "`__nwpm_l'" "'
+		}
+	}
+}
 
 /*************************************************************************************** 
  * The colour list...get the levels and produce the colours 
@@ -244,6 +295,7 @@ local i 1
 		if r(N)>0 {
 			if "`done`c''" == "" {
 				local clab: word `c' of `lablist'
+				local clab : subinstr local clab `"""' "", all
 				local clegord "`clegord' `i'"
 				local cleg `" `cleg' label(`i' "`clab'")"'
 				local numb`c' `i'
@@ -339,6 +391,9 @@ replace xx = xx + `gap' if temp == 2 | temp == 3
 replace yy = yy + `gap' if (temp == 1 | temp == 2) 
 replace yy = yy - `gap' if (temp == 3 | temp == 4) 
 
+if `"`legend'"' == "auto" {
+	local legend `"order(`clegord') `cleg' rows(1) position(6) size(small)"'
+}
 twoway `txt', `scaleOff' legend(`legend') xlabel(`xlab', nogrid) ylabel(`ylab', nogrid) xtitle("") ytitle("") graphregion( c(white) lp(blank)) `twoway_opt' 
 end
 

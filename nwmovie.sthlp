@@ -38,6 +38,8 @@ temporal network - there is no separate option to choose between them.
 {synopt:{opt noopen}}build the .html file but do not open it in a viewer{p_end}
 {synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
 {synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below){p_end}
+{synopt:{opt binary}}{bf:panel mode}: passed on to {help nwplot}: ignore the tie values (no value widths){p_end}
+{synopt:{opt nosign}}{bf:panel mode}: passed on to {help nwplot}: no sign colours on signed networks{p_end}
 {synopt:{opth iterations(int)}}iterations for the layout algorithm; default 500{p_end}
 {synopt:{opt color}({it:{help varname}})}color nodes by this variable (broadcast to every network/the cumulative event-mode layout network){p_end}
 {synopt:{opt symbol}({it:{help varname}})}shape nodes by this variable (broadcast to every network){p_end}
@@ -178,8 +180,7 @@ Same data again, with a custom display title per wave (default, without {opt tit
 {title:Supported network types}
 
 {pstd}
-Panel mode: binary yes, directed yes, weighted see {help nwplot}, signed not checked, two-mode not checked (animates whichever networks
-are given exactly as {help nwplot} would render each one). Event mode: exactly the input {help nwrem} already accepts - a one-mode,
+Panel mode: binary yes, directed yes, weighted and signed as {help nwplot} (tie values set the line widths, negative ties are drawn dashed in a second colour; the options {opt binary} and {opt nosign} are passed on), two-mode: each network is drawn as {help nwplot} would (a symbol and a colour per mode; the layout is the one of {opt layout()}, not bipartite unless you give it). Event mode: exactly the input {help nwrem} already accepts - a one-mode,
 event-type temporal network built via {help nwset}'s {opt eventtime()} option; two-mode is not currently combinable with {opt eventtime()}
 at the {help nwset} level (a separate, already-tracked composability gap).
 
@@ -190,4 +191,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

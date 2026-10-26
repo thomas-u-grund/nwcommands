@@ -89,6 +89,8 @@ All normal `options for lines` can be applied as well.
 
 ## Supported network types
 
+The colour legend names the value classes of the cells ('no tie' and 'tie' on a binary network; a `legend()` of your own replaces it, `legend(off)` removes it). On a two-mode network the nodes of one mode are placed next to each other (unless `sortby()` or `group()` is given) and a line separates the modes.
+
 Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike [nwplot](nwplot)'s node-link layout, which needs `arrows` to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
@@ -99,4 +101,4 @@ Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible d
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))

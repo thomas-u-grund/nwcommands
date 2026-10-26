@@ -20,7 +20,8 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-. do example.do
+
+. do example.do 
 
 . * Tutorial 9: Two-mode networks
 . * The two data sets are loaded from the data folder of the repository here;
@@ -487,9 +488,6 @@ Female |  1.190244      1025
 
 . display r(max)
 304
-
-. 
-end of do-file
 
 . 
 end of do-file

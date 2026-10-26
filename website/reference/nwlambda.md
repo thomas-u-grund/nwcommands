@@ -74,4 +74,4 @@ The result is an *n*-by-*n* network and two matrices are held at once: above abo
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))

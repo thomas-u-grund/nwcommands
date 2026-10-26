@@ -105,6 +105,16 @@ Don't reach for `edgesize()` here to make the path stand out further - it scales
 non-path edge exactly zero-width (invisible), leaving only the path on the plot. `edgecolor()`
 alone is the right tool for a discrete highlight/no-highlight distinction like this.
 
+## What the plot shows by default for valued, signed and two-mode networks
+
+The networks above are binary, so every tie looks the same. Since version 3.9.0 `nwplot` shows more when the network is not binary, without any option:
+
+- **Valued network:** the tie values set the widths of the lines (one to four units, the largest absolute value widest). `binary` draws all lines equally wide; `edgesize()` chooses the variable or the width range yourself.
+- **Signed network** (a valued network with negative ties): positive ties are solid navy lines and negative ties dashed cranberry lines, with a legend; the width follows the absolute value. `nosign` switches the colours off, and an `edgecolor()` of your own replaces them.
+- **Two-mode network:** the two modes get different symbols (circle, diamond) and colours, with a legend, unless `color()` or `symbol()` is given. `layout(bipartite)` puts the two modes in two rows or columns ([tutorial 11](../11-two-mode-networks/)).
+
+`nwplotmatrix` has a legend of the value classes in the same way (`legend(off)` removes it) and, for a two-mode network, puts the nodes of one mode next to each other with a line between the modes.
+
 ## Interactive plots
 
 `interactive` writes the plot as a self-contained web page (the drawing library is inside the file;

@@ -123,7 +123,7 @@ nwplot chesapeake, arcstyle(straight) edgesize(clog) layout(mds) interactive noo
 _vf2_json "vf2_es.html" "width"
 mata: st_numscalar("wmin", min(_vf2_vals)); st_numscalar("wmax", max(_vf2_vals))
 assert wmin >= 1 - 1e-6 & wmax <= 8 + 1e-6 & wmax - wmin > 3
-nwplot chesapeake, arcstyle(straight) interactive noopen fname(vf2_es0)
+nwplot chesapeake, arcstyle(straight) binary interactive noopen fname(vf2_es0)
 _vf2_json "vf2_es0.html" "width"
 mata: st_numscalar("wmin", min(_vf2_vals)); st_numscalar("wmax", max(_vf2_vals))
 assert wmin == 3 & wmax == 3

@@ -87,6 +87,8 @@
 {p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
 {p2col:{opt edgesizeraw}}with {opt edgesize()}: use the tie values themselves for the line widths instead of the 1 to 8 mapping (very large values are cut at 20){p_end}
 {p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
+{p2col:{opt binary}}ignore the tie values: on a valued network the widths of the edges follow the tie values by default (1 to 4 units, the largest absolute value is the widest; all ties of equal value keep the default width); {opt binary} draws all edges with the same width{p_end}
+{p2col:{opt nosign}}on a signed network (valued, with negative ties) positive ties are drawn solid in navy and negative ties dashed in cranberry, with a legend (the line pattern keeps them apart in black and white); {opt nosign} switches that off. {opt edgecolor()} given by you takes the place of the sign colours{p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
@@ -451,6 +453,11 @@ all continue to work exactly as they would without {opt export()}.
 	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
 	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
 	  {bf:r(interactive)}	same as {bf:r(fname)}
+	  {bf:r(edgewidth)}	{cmd:values}, {cmd:edgesize} or {cmd:binary}: how the edge widths were set
+
+	Scalars:
+	  {bf:r(signcolor)}	1 if the sign colours (solid navy, dashed cranberry) were used
+	  {bf:r(modesymbols)}	1 if the two modes of a two-mode network got their own symbols
 
 {title:Two-mode networks}
 
@@ -460,10 +467,14 @@ Two-mode: yes - plots the nodes and the ties between the modes; {opt layout(bipa
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Weighted: yes (via {opt edgesize()}/{opt edgecolor()} - see the shortest-path example above).
+Binary: yes. Weighted: yes. On a valued network the widths of the edges follow the tie values by default (as {cmd:edgesize(}{it:network}{cmd:)} with 1 to 4 units;
+{opt binary} switches it off; {opt edgesize()} sets the 1 to 8 range and any other network). The values never change the colour of an
+edge unless you ask for it with {opt edgecolor()}. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and
+the width follows the absolute value ({opt nosign} switches the colours off; {opt binary} keeps the colours and drops the widths).
+The layouts ({opt layout()}) use the ties, not their values.
 Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
 dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
-directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}); the two modes are not coloured differently unless a variable holding the mode (1 or 2) per node is passed to {opt color()} or {opt symbol()}. Self-loops: not rendered -
+directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless {opt color()} or {opt symbol()} is given; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}). Self-loops: not rendered -
 a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
 in the package's own visualization roadmap rather than fixed here.
 
@@ -488,4 +499,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

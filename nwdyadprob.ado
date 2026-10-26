@@ -3,6 +3,11 @@ program nwdyadprob
 	syntax [anything(name=weightnet)],  [ weights(string) density(string) mat(string) name(string) labs(passthru) xvars undirected]
 	
 	unw_defs
+
+	if "`density'" != "" & "`weightnet'" == "" & "`mat'" == "" {
+		di "{err}Option {bf:density()} needs a weight network or {bf:mat()}: {bf:nwdyadprob} {it:weightnet}{bf:, density(}{it:#}{bf:)} places the ties with probabilities proportional to the tie values of the weight network (or of the matrix in {bf:mat()}). Without either use {help nwrandom}."
+		error 198
+	}
 	
 	// BUGFIX: an unspecified name() has always been documented/expected
 	// to auto-rename on collision ("dyadprob", "dyadprob_1", ...) rather

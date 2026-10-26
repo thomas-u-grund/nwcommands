@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.8.0  26oct2026}{...}
+{* *! version 3.9.0  26oct2026}{...}
 
 {pstd}
 New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
@@ -39,4 +39,4 @@ nwcommands is free software under the GNU General Public License, version 3, as 
                *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}
 
 {hline}
-{pstd}{it:nwcommands version 3.8.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

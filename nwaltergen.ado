@@ -89,6 +89,12 @@ program nwaltergen
 	}
 
 	_nwsyntax `net'
+	if "`stat'" == "wmean" & "`valued'" == "true" {
+		qui nwsummarize `netname'
+		if r(minval) < 0 {
+			di "{txt}(note: {bf:wmean} on a signed network uses the tie values as weights with their signs; the sum of the weights can be close to zero and the result is then not a mean of the alters' values)"
+		}
+	}
 	if "`net'" == "" {
 		di "{txt}(no network name given: using the current network {bf:`netname'})"
 	}

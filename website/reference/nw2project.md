@@ -109,4 +109,4 @@ Binary: yes. Directed: not checked - the source two-mode network's ties are trea
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))

@@ -731,3 +731,15 @@ A command that has a two-mode form of the same concept (`nwdegree`, `nwclusterin
 - **`onemode` of `nwdegree`/`nwmotifs`/`nwclustering` runs the old one-mode code on the bipartite matrix** (no copy of the network is made, unlike `_nw2guard ..., allowone`): `nwdegree` then counts the ties, `nwmotifs` gives the 4-node census, `nwclustering` 0. `test_dispatch380` compares them with `cscripts/dispatch380_fixture.dta`, made by `dispatch380_makefixture.do` in a tree without the dispatch (3.7.0 plus `nw2motifs`); re-make it there, never in a tree with the dispatch.
 - The old note "using nw2degree instead" is gone; the only note left names the options that have no two-mode form and were ignored.
 - The help files: the second of the four fixed wordings is now "Two-mode: two-mode form by default ... `onemode` ..." (was "delegated to ..."). The type tables (`website/nwcommands/network-types.md`, the book's `NETWORK_TYPES_TABLE.csv` and `app_network_types.tex`) give these commands the code `N`; the code `D` for two-mode is not used any more.
+
+## `syntax` names the macro of an option `noXXX` after `XXX`
+
+`nwplot` declares `binary nosign`; inside the program the option `nosign` arrives in the local `sign` (value "nosign"), not in `nosign`, so `if "`nosign'" == ""` was always true and the option did nothing (found 2026-10-26 with `r(signcolor)` in `cscripts/test_plotfix.do`). `nwplot.ado` and `nwmovie.ado` combine both (`local nosign "`nosign'`sign'"`). A new option must not start with `no` unless you want this rule.
+
+## `nwplot` sign colours: an undirected tie is in the plot's tie list twice (3.9.0)
+
+The tie list that `nwplot` draws holds both (i,j) and (j,i) of an undirected tie. Solid lines hide that (the same pixels twice), but a dashed line drawn twice with opposite phases looks solid, so the negative ties of a signed network were drawn as a mix of dashed and solid lines. The sign-colour path now draws every undirected tie once (`__nwp_drawonce`, both `pcspike` calls of the edge loop). Anything new that draws a pattern (dash, dot) per tie has to do the same.
+
+## `nwgeodesic ... force` on an unvalued network was 1000 times slower than without it (fixed 2026-10-26)
+
+`force` only waives the 100-node refusal for VALUED networks without the plugin; the unvalued branch tested `nodes > 100 & force == ""`, so with `force` it fell through to the Mata `"dijkstra"` routine (37 s at 600 nodes) while the default path used the native hop-count routine. Time the same command with and without each option before blaming the result network: the distance call was the whole cost, `nwduplicate`/`set_edge` take milliseconds.

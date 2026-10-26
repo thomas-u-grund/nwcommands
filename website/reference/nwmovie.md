@@ -32,6 +32,8 @@ temporal network - there is no separate option to choose between them.
 | `noopen` | build the .html file but do not open it in a viewer |
 | `layout`(*[layout](nwplot)*) | **panel mode**: layout algorithm - see [nwplot](nwplot)'s own `layout()`; any value other than the **kk** default disables the per-wave transitioning below and falls back to `fixedlayout`'s one-shared-layout behavior, since only **kk** has a "warm start" to relax from |
 | `fixedlayout` | **panel mode**: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below) |
+| `binary` | **panel mode**: passed on to [nwplot](nwplot): ignore the tie values (no value widths) |
+| `nosign` | **panel mode**: passed on to [nwplot](nwplot): no sign colours on signed networks |
 | `iterations(int)` | iterations for the layout algorithm; default 500 |
 | `color`(*`varname`*) | color nodes by this variable (broadcast to every network/the cumulative event-mode layout network) |
 | `symbol`(*`varname`*) | shape nodes by this variable (broadcast to every network) |
@@ -114,7 +116,7 @@ Same data again, with a custom display title per wave (default, without `titles(
 
 ## Supported network types
 
-Panel mode: binary yes, directed yes, weighted see [nwplot](nwplot), signed not checked, two-mode not checked (animates whichever networks are given exactly as [nwplot](nwplot) would render each one). Event mode: exactly the input `nwrem` already accepts - a one-mode, event-type temporal network built via [nwset](nwset)'s `eventtime()` option; two-mode is not currently combinable with `eventtime()` at the [nwset](nwset) level (a separate, already-tracked composability gap).
+Panel mode: binary yes, directed yes, weighted and signed as [nwplot](nwplot) (tie values set the line widths, negative ties are drawn dashed in a second colour; the options `binary` and `nosign` are passed on), two-mode: each network is drawn as [nwplot](nwplot) would (a symbol and a colour per mode; the layout is the one of `layout()`, not bipartite unless you give it). Event mode: exactly the input `nwrem` already accepts - a one-mode, event-type temporal network built via [nwset](nwset)'s `eventtime()` option; two-mode is not currently combinable with `eventtime()` at the [nwset](nwset) level (a separate, already-tracked composability gap).
 
 ## See also
 
@@ -124,4 +126,4 @@ Panel mode: binary yes, directed yes, weighted see [nwplot](nwplot), signed not 
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
