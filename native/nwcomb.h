@@ -16,8 +16,8 @@
 	31 (nwsimmelian) with NWCOMB_VERSION 7 (nwbrokerage.h).
 	Codes 34..39 (nwfast2.h, NWCOMB_VERSION 8): 34 pagerank of nwpagerank, 35 maximal cliques of nwclique.
 	Code 40 (nwburtw.h, NWCOMB_VERSION 9): weighted Burt measures of nwburt for valued networks (41, 42 reserved).
-	Codes 43..47 (nwnative370.h, NWCOMB_VERSION 10): bipartite Louvain (Barber) of nwcommunity, weighted pagerank of nwpagerank,
-	maximum-weight matching of nwmatching, tie swapping of nwpermute, weighted betweenness of nwbetween (48, 49 reserved).
+	Codes 43..49 (nwnative370.h, NWCOMB_VERSION 10): bipartite Louvain (Barber) of nwcommunity, weighted pagerank of nwpagerank,
+	maximum-weight matching of nwmatching, tie swapping of nwpermute, weighted betweenness of nwbetween, weighted distances of nwcloseness and nwgeodesic.
 
 	WIRE PROTOCOL (algorithm codes 3..99, see comb_call() at the end):
 	  plugin call nwgraph_native v1 v2 v3 v4 [v5 ...], "alg n nties p1 p2 ..."

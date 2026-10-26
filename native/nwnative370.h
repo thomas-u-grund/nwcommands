@@ -36,7 +36,13 @@
 	                 counts are accumulated in the order in which the nodes are settled (equal distances are
 	                 settled in node order, as the linear scan of the Mata routine does).  Ties = edgelist().
 	                 directed = 0 halves the sums.  Result n x 1.
-	48..49 reserved.
+	48  distsumw     par: alpha.  Weighted distance sums for nwcloseness on valued networks: Dijkstra from every node,
+	                 cost of a tie of value w > 0 is w^(-alpha), self-loops and ties of value zero or less are
+	                 left out.  Ties = edgelist().  Result n x 2 = (sum of the distances to the other nodes that can be
+	                 reached, number of those nodes).  No n x n matrix.
+	49  distblock    par: alpha start count.  The distances of nwgeodesic on a valued network: Dijkstra from the nodes
+	                 start..start+count-1 (1-based).  Result n x count: column c = distances from node start+c to every
+	                 node (missing = unreachable, 0 for the node itself).
 */
 
 #define ALG_LOUVBIP  43
@@ -44,6 +50,8 @@
 #define ALG_MATCHW   45
 #define ALG_SWAP     46
 #define ALG_BETWEENW 47
+#define ALG_DISTSUMW 48
+#define ALG_DISTBLOCK 49
 
 /* ---------------------------------------------------------------- */
 /* generator: xorshift64* seeded by SplitMix64                       */
@@ -706,7 +714,97 @@ done:
 	return rc;
 }
 
-/* called by comb_call() for the codes 43..47 */
+/* ---------------------------------------------------------------- */
+/* 48, 49: weighted distances (Dijkstra)                             */
+/* ---------------------------------------------------------------- */
+typedef struct { long *ptr, *idx; double *cost; long n; } dj_t;
+
+static void dj_free(dj_t *g) { free(g->ptr); free(g->idx); free(g->cost); g->ptr = NULL; g->idx = NULL; g->cost = NULL; }
+
+static int dj_build(dj_t *g, long n, long nties, const long *ei, const long *ej, const double *ew, double alpha) {
+	long k, i, *cur;
+	g->n = n; g->idx = NULL; g->cost = NULL;
+	g->ptr = (long *)calloc((size_t)n + 2, sizeof(long));
+	if (!g->ptr) return 2;
+	for (k = 0; k < nties; k++) {
+		if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || ei[k] == ej[k] || !(ew[k] > 0)) continue;
+		g->ptr[ei[k]]++;
+	}
+	{ long run = 0; for (i = 0; i < n; i++) { long c = g->ptr[i + 1]; g->ptr[i] = run; run += c; } g->ptr[n] = run; }
+	g->idx = (long *)malloc((size_t)(g->ptr[n] + 1) * sizeof(long));
+	g->cost = (double *)malloc((size_t)(g->ptr[n] + 1) * sizeof(double));
+	cur = (long *)malloc((size_t)n * sizeof(long));
+	if (!g->idx || !g->cost || !cur) { free(cur); dj_free(g); return 2; }
+	for (i = 0; i < n; i++) cur[i] = g->ptr[i];
+	for (k = 0; k < nties; k++) {
+		if (ei[k] < 1 || ej[k] < 1 || ei[k] > n || ej[k] > n || ei[k] == ej[k] || !(ew[k] > 0)) continue;
+		g->idx[cur[ei[k] - 1]] = ej[k] - 1;
+		g->cost[cur[ei[k] - 1]] = pow(ew[k], -alpha);
+		cur[ei[k] - 1]++;
+	}
+	free(cur);
+	return 0;
+}
+
+/* D[0..n-1] = distance from s (-1 = unreachable); heap has room for ptr[n]+2 entries; settled is scratch */
+static void dj_run(const dj_t *g, long s, double *D, bw_hn_t *heap, unsigned char *settled) {
+	long i, k, hn = 0, n = g->n;
+	for (i = 0; i < n; i++) { D[i] = -1; settled[i] = 0; }
+	D[s] = 0;
+	bw_push(heap, &hn, 0.0, s);
+	while (hn > 0) {
+		bw_hn_t t = bw_pop(heap, &hn);
+		long u = t.v;
+		if (settled[u]) continue;
+		settled[u] = 1;
+		for (k = g->ptr[u]; k < g->ptr[u + 1]; k++) {
+			long w = g->idx[k];
+			double nd = D[u] + g->cost[k];
+			if (settled[w]) continue;
+			if (D[w] < 0 || nd < D[w]) { D[w] = nd; bw_push(heap, &hn, nd, w); }
+		}
+	}
+}
+
+static int comb_distw(long n, long nties, const long *ei, const long *ej, const double *ew, double alpha, long start, long count, int block) {
+	dj_t g;
+	double *D = NULL;
+	unsigned char *settled = NULL;
+	bw_hn_t *heap = NULL;
+	long s, i;
+	int rc = 0;
+
+	if (n <= 0) { if (res_alloc(0, 1)) return 2; pub_result(0, 0, 1); return 0; }
+	if (dj_build(&g, n, nties, ei, ej, ew, alpha)) return 2;
+	D = (double *)malloc((size_t)n * sizeof(double));
+	settled = (unsigned char *)malloc((size_t)n);
+	heap = (bw_hn_t *)malloc((size_t)(g.ptr[n] + 2) * sizeof(bw_hn_t));
+	if (!D || !settled || !heap) { rc = 2; goto done; }
+	if (block) {
+		if (start < 1 || count < 1 || start + count - 1 > n) { rc = 2; goto done; }
+		if (res_alloc(n, count)) { rc = 2; goto done; }
+		for (s = 0; s < count; s++) {
+			dj_run(&g, start - 1 + s, D, heap, settled);
+			for (i = 0; i < n; i++) g_res[i * count + s] = D[i] < 0 ? SV_missval : D[i];
+		}
+		pub_result(0, n, count);
+	}
+	else {
+		if (res_alloc(n, 2)) { rc = 2; goto done; }
+		for (s = 0; s < n; s++) {
+			double sum = 0; long cnt = 0;
+			dj_run(&g, s, D, heap, settled);
+			for (i = 0; i < n; i++) if (i != s && D[i] >= 0) { sum += D[i]; cnt++; }
+			g_res[2 * s] = sum; g_res[2 * s + 1] = (double)cnt;
+		}
+		pub_result(0, n, 2);
+	}
+done:
+	free(D); free(settled); free(heap); dj_free(&g);
+	return rc;
+}
+
+/* called by comb_call() for the codes 43..49 */
 static int comb_n370(long alg, long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv, const double *p) {
 	switch (alg) {
 		case ALG_LOUVBIP:   return comb_louvbip(n, nties, ei, ej, ew, nv, p[3], (long)p[4], p[5]);
@@ -714,6 +812,8 @@ static int comb_n370(long alg, long n, long nties, const long *ei, const long *e
 		case ALG_MATCHW:    return comb_matchw(n, nties, ei, ej, ew, nv);
 		case ALG_SWAP:      return comb_swap(n, nties, ei, ej, ew, (long)p[3], p[4]);
 		case ALG_BETWEENW:  return comb_betweenw(n, nties, ei, ej, ew, p[3], (int)p[4]);
+		case ALG_DISTSUMW:  return comb_distw(n, nties, ei, ej, ew, p[3], 0, 0, 0);
+		case ALG_DISTBLOCK: return comb_distw(n, nties, ei, ej, ew, p[3], (long)p[4], (long)p[5], 1);
 		default: SF_error("nwgraph: unknown algorithm code\n"); return 198;
 	}
 }
