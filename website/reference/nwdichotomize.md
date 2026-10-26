@@ -61,4 +61,4 @@ Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` l
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

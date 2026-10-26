@@ -95,8 +95,11 @@ forvalues s = 1/20 {
     quietly nwturnover de de_p, generate(t2) silent
     assert `st1' == r(stable) & `fo1' == r(formed) & `di1' == r(dissolved)
 
-    quietly nwshared sp, name(sp_s)
-    quietly nwshared de, name(de_s)
+    * 3.7.0: nwshared on a directed network needs the option undirected
+    local shopt ""
+    if `dir' == 1 local shopt "undirected"
+    quietly nwshared sp, name(sp_s) `shopt'
+    quietly nwshared de, name(de_s) `shopt'
     nwt20_matrix sp_s A
     nwt20_matrix de_s B
     mata: st_numscalar("bad", sum(A :!= B))

@@ -3,7 +3,7 @@
 . *   net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
 . 
 . nwergm version
-nwergm version 1.2.2, 26oct2026
+nwergm version 1.2.3, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with the package, no separate version number)
   compared with           : R ergm 4.12.0

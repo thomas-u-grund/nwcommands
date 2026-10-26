@@ -32,17 +32,17 @@ or `nwinstall, models` for all four model packages at once (`nwinstall, everythi
 
 ```stata
 . nwsaom version
-nwsaom version 1.0.9, 26oct2026
+nwsaom version 1.0.10, 26oct2026
 ```
 
 ```stata
 . nwrem version
-nwrem version 1.0.7, 26oct2026
+nwrem version 1.0.8, 26oct2026
 ```
 
 ```stata
 . nwdynam version
-nwdynam version 1.1.2, 26oct2026
+nwdynam version 1.1.3, 26oct2026
 ```
 
 

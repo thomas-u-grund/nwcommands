@@ -81,7 +81,22 @@ program nwcloseness
 		if `"`options'"' == "" & ("`binary'" != "" | "`valued'" == "false") {
 			mata: st_local("__fastcl", strofreal(nwg_comb_version() >= 5))
 		}
-		if `__fastcl' {
+		// valued network, least-cost distances: the Dijkstra kernel (plugin generation 10 or later) gives the sums for any
+		// size without the n x n distance matrix; alpha(#) is the only option it takes (alpha(0) is the hop count)
+		local __wcl 0
+		local __wa 1
+		if `"`options'"' == "" | regexm(`"`options'"', "^alpha\(([^)]*)\)$") {
+			if `"`options'"' != "" local __wa = real(strtrim(regexs(1)))
+			if "`valued'" == "true" & "`binary'" == "" & `__wa' != . {
+				if `__wa' == 0 {
+					mata: st_local("__fastcl", strofreal(nwg_comb_version() >= 5 & st_global("NW_NOFASTKERNELS") == ""))
+				}
+				else {
+					mata: st_local("__wcl", strofreal(nwg_comb_version() >= 10 & st_global("NW_NOFASTKERNELS") == ""))
+				}
+			}
+		}
+		if `__fastcl' | `__wcl' {
 			tempname __symnet
 			local __src `netname_temp'
 			if "`symopt'" != "" {
@@ -89,7 +104,12 @@ program nwcloseness
 				local __src `__symnet'
 			}
 			_nwsyntax `__src'
-			mata: reach = nw_distance_sums(`netobj', 0, 0)
+			if `__wcl' {
+				mata: reach = nw2_wsums(`netobj', `__wa')
+			}
+			else {
+				mata: reach = nw_distance_sums(`netobj', 0, 0)
+			}
 			mata: far = reach[., 1]
 			mata: reach = reach[., 2]
 			if "`symopt'" != "" {
@@ -97,7 +117,7 @@ program nwcloseness
 			}
 		}
 		else {
-			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `binary' `options'
+			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `binary' `force' `options'
 			nwname _tempgeodesic
 			// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
 			// full n x n matrix into a second, separately-named Mata matrix
@@ -155,7 +175,7 @@ program nwcloseness
 		local _closeness : word 1 of `generate'
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'
-		if !`__fastcl' {
+		if !`__fastcl' & !`__wcl' {
 			nwdrop _tempgeodesic
 		}
 		restore
@@ -215,3 +235,19 @@ program nwcloseness
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+
+capture mata: mata drop nw2_wsums()
+mata:
+// Weighted distance sums (kernel 48 of the nwgraph plugin): n x 2 = (sum of the least-cost distances to the nodes a node
+// can reach, number of those nodes), cost 1/w^alpha
+real matrix nw2_wsums(pointer(class nw_def scalar) scalar p, real scalar alpha)
+{
+	real rowvector aux
+	real scalar st
+	real matrix r
+
+	r = nwg_comb(48, p->get_nodes(), p->edgelist(), J(0, 1, .), (alpha), aux, st)
+	if (st != 0 | rows(r) != p->get_nodes() | cols(r) != 2) nwg_fail(st, "nwcloseness")
+	return(r)
+}
+end

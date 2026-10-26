@@ -42,7 +42,7 @@ This example loads the [Florentine marriage data](netexample) and exports to bot
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - Pajek gets the bipartite form (first line `*Vertices n n1`, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute `nwmode`. [nwimport](nwimport) reads each of the four back as a two-mode network.
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - Pajek gets the bipartite form (first line `*Vertices n n1`, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute `nwmode`. [nwimport](nwimport) reads each of the four back as a two-mode network. The level labels of the two modes (for example *women* and *events*) are kept in three of the formats: Pajek has no place for names of modes, so they are written as a comment line (starting with %) before `*Vertices`, which Pajek ignores; in GML they are the graph attributes `nwmodelabel1` and `nwmodelabel2`; in the edge list the columns of the modes hold the labels instead of 1 and 2 (1 and 2 when the network has no labels of its own). UCINET DL has no place for them: a file read back gets the labels *rows* and *columns*.
 
 ## See also
 
@@ -52,4 +52,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - 
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

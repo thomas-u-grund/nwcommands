@@ -150,7 +150,7 @@ The commands marked `N` under Valued are exactly those that print the note on a 
 | `nwnclique` | + | N | G | S |  |
 | `nwlambda` | + | I | G | S | edge-disjoint paths; nwmaxflow, weighted for capacities |
 | `nwsimmelian` | + | N | G | D | needs triangles: all 0 in a bipartite graph |
-| `nwshared` | + | N | G | P | needs undirected to symmetrize first |
+| `nwshared` | + | N | G | P | requires the option `undirected` on a directed network (error 198 otherwise) |
 | `nwclustering` | + | O | D | D | measure(); weighted not for directed |
 | `nw2clustering` | + | O | Q | U | Opsahl 2013; ra: Robins-Alexander 2004 |
 | `nw2nested` | + | I | Q | U | NODF and C-score |

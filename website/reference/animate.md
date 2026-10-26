@@ -54,4 +54,4 @@ scatter le year if year <= `i', xscale(range(1900 2000)) name(le`i')
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

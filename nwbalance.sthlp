@@ -105,4 +105,4 @@ node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the older
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

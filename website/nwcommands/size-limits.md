@@ -50,6 +50,8 @@ a message (error code 484) and does nothing. Sizes are numbers of nodes.
 | `nwconstraint` | 5,000 nodes: 0.4 s | 100,000 nodes: 10.4 s in the audit; 2.2 s (undirected) and 0.70 s (directed) after the later speed round, with 5 ties drawn per node | Not tried beyond 100,000 nodes; above 2,000 nodes only `name()` and `replace` are accepted | Run on a sample or a component first |
 | `nwcloseness`, `nwkatz` | 20,000 nodes: 10 s | About 63,000 nodes inside the 2-minute limit | Above about 63,000 nodes (100,000: estimated 5 minutes; one run with `force` took 302 s) | `nwdegree`, `nwpagerank`, or run on a part of the network (`nwsubset`) |
 | `nwbetween` | 10,000 nodes: 8 s | 20,000 nodes: 29 s; about 36,000 inside the limit | Above about 36,000 nodes (100,000: estimated 15 minutes, not measured) | As above |
+| Valued networks (tie values used, version 3.7.0 with the new plugin): `nwbetween`, `nwcloseness` | 1,000 nodes: 0.13 s (`nwbetween`), 0.15 s (`nwcloseness`) | 10,000 nodes: 14.5 s (`nwbetween`), 14.3 s (`nwcloseness`), with 3 ties drawn per node | Without the new plugin (or without `force`) a valued network of more than 100 nodes stops with error 198 in `nwcloseness` and `nwgeodesic` | Update the plugin with `nwinstall`; `binary` gives the hop count |
+| Two-mode networks with tie values or in a community search: `nwcommunity`, `nwmatching` (valued), `nwpermute, swap` | The 5,092 + 455 directors: `nwcommunity` 0.09 s, `nwmatching` 0.2 s, `nwpermute, swap` with 100,000 attempts 0.02 s | | | |
 | `nwkcomponents` with `k(2)` | 5,000 nodes: 0.1 s; 20,000 nodes: 1.0 s | 100,000 nodes: about 60 s with `force` (most of it is Stata storing the result matrix) | Above about 31,000 nodes without `force` (the guard is unchanged, although `k(2)` is now much faster) | `nwcomponents`, `nwkcore`, or a part of the network |
 | `nwcohesion` (and `nwkcomponents` with other values of `k`, not measured) | 10,000 nodes: 6 s | 20,000 nodes: 27 s for `nwcohesion`; about 40,000 inside the limit | Above about 40,000 nodes (100,000: estimated 13 minutes, not measured) | `nwcomponents`, `nwkcore`, or a part of the network |
 | Results with one value per pair of nodes: `nwgeodesic`, `nwreach`, `nwlambda`, `nwexpand`, `nwcontext`, `nwreplace` | 10,000 nodes: 0.5 to 7 s | 20,000 nodes: 2 to 30 s | Above about 27,000 nodes (`nwcontext`, `nwreplace`: 22,000) because the result needs 8 bytes times n times n per matrix | `nwcloseness`, `nwcomponents`, `nwpath`, `nwaltergen`, or a part of the network |
@@ -110,7 +112,36 @@ Two limits remain, and they are Stata's, not the kernels':
 - **`nwclique` with `nomatrix`:** the matrix is not built or stored, and the variable and `r(cliques)` stay the same: 100,000 nodes take 0.26 s instead of 36.7 s (random network with 5 ties drawn per node; `nwkcomponents` has the same option).
 - **`nwconstraint`:** after the speed round of the Mata library, 100,000 nodes take 2.2 s for an undirected and 0.70 s for a directed network (5 ties drawn per node; 9.7 and 2.9 s before).
 
-Nothing else on this page was measured again. In particular, `nwbetween`, `nwcloseness`, `nwkatz` and the commands with
+### Valued and two-mode networks (version 3.7.0)
+
+Version 3.7.0 adds compiled kernels for commands that work with tie values or on two-mode networks. Seconds of the complete command,
+Stata/BE 18 on an Apple-silicon Mac, random sparse valued undirected networks with 3 ties per node (values 1 to 9); "Mata" is the code of
+version 3.6.0, which is still used where the plugin of your platform is older. Results are equal to the Mata code (PageRank and betweenness to 1e-9)
+and to R's igraph.
+
+| Command | Input | Mata | Plugin |
+|---|---|---|---|
+| `nwbetween` (valued) | 300 nodes | 3.28 | 0.020 |
+| | 1,000 nodes | 110.6 | 0.13 |
+| | 5,000 nodes | not run (n-by-n work space per source) | 3.4 |
+| | 10,000 nodes | not run | 14.5 |
+| `nwcloseness` (valued) | 300 nodes | 3.18 (with `force`) | 0.024 |
+| | 1,000 / 5,000 / 10,000 nodes | not run | 0.15 / 3.4 / 14.3 |
+| `nwgeodesic` (valued), distance matrix | 1,000 nodes | not run | 0.14 |
+| `nwcommunity` (two-mode, 30 starts) | Southern women (32 nodes) | 0.026 | 0.007 |
+| | 5,092 + 455 directors, 5,669 ties | 2.38 | 0.088 |
+| `nwmatching` (valued, two-mode) | 100 + 100 nodes | 0.025 | 0.008 |
+| | 300 + 300 nodes | 0.33 | 0.013 |
+| | 455 + 5,092 nodes | not possible (dense matrix) | 0.21 |
+| `nwpermute, swap` (100,000 attempts) | 5,092 + 455 directors | 0.138 | 0.020 |
+| `nwpagerank` (valued) | 1,000 / 5,000 / 10,000 nodes | 0.026 / 0.046 / 0.087 | 0.013 / 0.029 / 0.049 |
+
+`nwbetween` on a valued network was the bottleneck: the Mata routine allocates an n-by-n work matrix for every source node. Weighted PageRank and tie
+swapping were already fast in Mata; the plugin adds a small factor and avoids the n-by-n matrix. The random starting orders of the two-mode search and of
+the tie swapping come from a generator of their own, so the same `set seed` gives the same result on every platform with the new plugin, but not the
+draws of the Mata code; Barber's Q is equal on the Southern women (0.3455) and the same within the run-to-run variation on the directors.
+
+Nothing else on this page was measured again. In particular, `nwbetween` and `nwcloseness` on binary networks, `nwkatz` and the commands with
 an n-by-n result are as limited as before.
 
 ## Compared with R's igraph

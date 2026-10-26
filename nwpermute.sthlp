@@ -88,7 +88,7 @@ these statistics) while keeping the overall structure of the network constant (s
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
+Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}). {opt swap} works on the list of ties (no n x n matrix) in a kernel of the native plugin when your platform's plugin has it: 100,000 attempts on 5,669 ties take 0.02 seconds; the random exchanges are drawn from the seed ({cmd:set seed}) and are the same on every platform with that kernel, but are not the draws of the Mata routine.
 
 {title:Supported network types}
 
@@ -118,4 +118,4 @@ in Stata/BE (killed at 12 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

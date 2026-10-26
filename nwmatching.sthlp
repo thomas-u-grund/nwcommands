@@ -106,6 +106,12 @@ the older Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata
 mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the older code did not
 finish in 180 seconds and used 4 GB).
 
+{pstd}
+The matching of largest total tie value (valued networks) is computed by the Hungarian method in a kernel of the native plugin, with the same
+result as the Mata routine (the same matching also when several matchings have the same total value, up to 1,500 nodes in the larger
+mode; beyond that a matching of the same total value). Measured: two modes of 300 nodes 0.013 seconds (Mata 0.33 seconds); 455 and 5,092 nodes
+0.2 seconds, which the Mata routine cannot do (it needs a dense matrix of the larger mode squared).
+
 {title:See also}
 
 	{help nwmaxflow}, {help nw2project}, {help nw2set}, {help nw2fromedge}
@@ -113,4 +119,4 @@ finish in 180 seconds and used 4 GB).
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -81,4 +81,4 @@ Two-mode: yes - builds the two-mode network from two columns of ids; the two col
 
 ---
 
-*nwcommands version 3.6.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))

@@ -66,7 +66,7 @@ even simple, cleanly-separated community structure into one giant community (see
 {help nwcommunity##algorithm:Algorithm} below). Use {opt seed()} for reproducible results.
 
 {pstd}
-On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and ignores {opt seed()}.
+On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and ignores {opt seed()}. The two-mode search draws its random starting orders from the seed: the same {opt seed()} (or {cmd:set seed}) gives the same communities, whatever the platform; with a plugin of the current generation the search is about 25 times faster than the older Mata search (the Mata code is used when the plugin is older), and the two reach the same modularity up to the luck of the random starts (Southern women: identical, 0.3455).
 
 {pstd}
 {opt generate()} is required and names the new variable that stores, for each node, the
@@ -159,4 +159,4 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

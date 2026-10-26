@@ -60,7 +60,7 @@ that of a one-mode network. The declaration is checked: both modes must hold nod
 the same mode ({cmd:nwname, new2mode(true)} on a one-mode network is an error). Every command that derives a network
 from a two-mode network ({help nwdropnodes}, {help nwkeepnodes}, {help nwsubset}, {help nwduplicate}, {help nwsym},
 {help nwtranspose}, {help nwrecode}, {help nwdichotomize}, {help nwaddnodes}, {help nwpermute}) keeps the flag, the
-modes and the level labels. {help nwexport} and {help nwimport} keep them in all four formats; an edge list written
+modes and the level labels. {help nwexport} and {help nwimport} keep the flag and the modes in all four formats and the level labels in Pajek, GML and edge list files (UCINET DL has no place for them); an edge list written
 by {help nwtoedge} or {help nw2toedge} holds the ties between the modes and reads back as the same network.
 
 {pstd}
@@ -189,4 +189,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 {help nwintro}, {help nwtopical}, {help nw2set:introduction to two-mode networks}
 
 {hline}
-{pstd}{it:nwcommands version 3.6.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.7.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

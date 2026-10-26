@@ -33,10 +33,10 @@ This installs the latest release (the state of the main branch). As a shortcut, 
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.7:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.8:
 
 ```stata
-. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.0.7/) replace
+. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.0.8/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -46,7 +46,7 @@ version produced the results.
 
 ```stata
 . nwrem version
-nwrem version 1.0.7, 26oct2026
+nwrem version 1.0.8, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : none (Mata only)
   compared with           : R relevent 1.2-1

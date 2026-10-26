@@ -3,7 +3,7 @@
 . * Run from this folder; the data are in ../data (events and actor attributes).
 . 
 . nwrem version
-nwrem version 1.0.7, 26oct2026
+nwrem version 1.0.8, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : none (Mata only)
   compared with           : R relevent 1.2-1

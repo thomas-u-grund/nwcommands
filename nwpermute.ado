@@ -32,7 +32,9 @@ program nwpermute
 	}
 	if "`generate'" == "" & "`replace'" != "" {
 		if "`swap'" != "" {
-			mata: `netobj'->permute_swap(`swaps')
+			// native tie swapping (plugin generation 10 or later) on the stored ties; an older plugin or a failure leaves the Mata routine
+			mata: st_local("__done", strofreal(nw2_swap(`netobj', `swaps')))
+			if "`__done'" != "1" mata: `netobj'->permute_swap(`swaps')
 		}
 		else {
 			mata: `netobj'->permute()
@@ -48,7 +50,9 @@ program nwpermute
 		nwduplicate `netname', name(`generate')
 		_nwsyntax `generate'
 		if "`swap'" != "" {
-			mata: `netobj'->permute_swap(`swaps')
+			// native tie swapping (plugin generation 10 or later) on the stored ties; an older plugin or a failure leaves the Mata routine
+			mata: st_local("__done", strofreal(nw2_swap(`netobj', `swaps')))
+			if "`__done'" != "1" mata: `netobj'->permute_swap(`swaps')
 		}
 		else {
 			mata: `netobj'->permute()
@@ -57,4 +61,37 @@ program nwpermute
 	if "`xvars'" != "" {
 		nwload `netname'
 	}
+end
+
+capture mata: mata drop nw2_swap()
+mata:
+// Native tie swapping (kernel 46 of the nwgraph plugin): the cross-mode ties are swapped on the list of ties, no
+// n x n matrix is built.  Returns 1 when the network has been changed (or has nothing to swap), 0 when the kernel is
+// not available.  The generator is seeded from uniform(), so set seed makes the result reproducible.
+real scalar nw2_swap(pointer(class nw_def scalar) scalar p, real scalar nswap)
+{
+	real matrix el, T, R, keep
+	real colvector md, cross
+	real rowvector aux
+	real scalar st, n, wasvalued
+
+	if (st_global("NW_NOFASTKERNELS") != "") return(0)
+	if (nwg_comb_version() < 10) return(0)
+	n = p->get_nodes()
+	md = strtoreal(p->get_modes())'
+	el = p->edgelist()
+	if (rows(el) == 0) return(1)
+	cross = ((md[el[., 1]] :== 1) :& (md[el[., 2]] :== 2)) :| ((md[el[., 1]] :== 2) :& (md[el[., 2]] :== 1))
+	cross = cross :& (el[., 3] :< .) :& (el[., 3] :!= 0)
+	T = select(el, cross :& (md[el[., 1]] :== 1))
+	if (rows(T) < 2) return(1)
+	R = nwg_comb(46, n, T, J(0, 1, .), (nswap, floor(uniform(1, 1) * 2147483646) + 1), aux, st)
+	if (st != 0 | rows(R) != rows(T) | cols(R) != 3) return(0)
+	keep = select(el, !cross)
+	el = keep \ R \ (R[., 2], R[., 1], R[., 3])
+	wasvalued = p->isvalued
+	p->set_edge_from_triplets(el[., 1], el[., 2], el[., 3], p->isdirect)
+	p->isvalued = wasvalued
+	return(1)
+}
 end
