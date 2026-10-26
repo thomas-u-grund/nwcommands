@@ -18,6 +18,11 @@ nwclear
 nwset, mat((0,1,0,1\0,0,1,0\0,0,0,1\1,0,0,0)) name(dnet2) directed
 capture noisily nwshared dnet2, name(sharedundir) undirected
 assert _rc == 0
+* 3.7.0: a directed network without the option stops with r(198), as documented
+capture noisily nwshared dnet2, name(sharednoopt)
+assert _rc == 198
+nwvalidate sharednoopt
+assert "`r(exists)'" == "false"
 di "=== undirected REGRESSION VERIFIED ==="
 
 * moderate-severity pass, generators_derived group: naming consistency -

@@ -21,6 +21,13 @@ program nwshared
 	}
 	unw_defs
 	_nwsyntax `netname'
+	// A directed network needs the option undirected (documented): shared
+	// ties are a property of the symmetric network. Before 3.7.0 the
+	// command ran on a directed network without it and without a message.
+	if "`directed'" == "true" & "`undirected'" == "" {
+		di "{err}Network {bf:`netname'} is directed: {bf:nwshared} needs the option {bf:undirected} (it symmetrizes the network first)."
+		error 198
+	}
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
