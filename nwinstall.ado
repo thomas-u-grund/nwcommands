@@ -1,10 +1,33 @@
 capture program drop nwinstall
-program nwinstall
-	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string)]
+program nwinstall, rclass
+	// nogui is read from the raw command line: with the option gui declared, Stata would swallow nogui as its negation
+	local __raw = lower(`"`0'"')
+	local nogui = cond(regexm(`"`__raw'"', "(^|[ ,])nogui([ ,]|$)"), "nogui", "")
+	if "`nogui'" != "" local 0 = ustrregexra(`"`0'"', "(?i)(^|[ ,])nogui(?=[ ,]|$)", "$1")
+	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string) DUPcheck]
 	
 	// supported Stata versions: 17 and 18 (the Mata libraries are built with Stata 17); older versions are untested, not blocked
 	if c(stata_version) < 17 {
 		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
+	}
+
+	// dupcheck: report dialog files that exist in more than one folder of the ado path (read-only, nothing is changed)
+	if "`dupcheck'" != "" {
+		nwinstall_dlgscan
+		return scalar ndup = r(ndup)
+		exit
+	}
+
+	// nogui: leave the "Network Analysis" menu and the profile.do line out (for all and everything)
+	if "`nogui'" != "" {
+		if "`everything'`all'" == "" {
+			di as err "nogui can only be used together with all or everything"
+			exit 198
+		}
+		if "`gui'`permanently'`usermenu'" != "" {
+			di as err "nogui cannot be combined with gui, permanently or usermenu"
+			exit 198
+		}
 	}
 
 	// everything = the core (exactly what all installs) plus the four model packages (what models installs), as one consistent set
@@ -38,6 +61,7 @@ program nwinstall
 		// ADD NEW PACKAGES HERE	
 	}
 	
+	local pathgiven = ("`path'" != "")
 	if "`path'" == "" {
 		local path "`c(pwd)'"
 	}
@@ -55,7 +79,7 @@ program nwinstall
 	if "`all'" != "" {
 		local help = "help"
 		local dialog = "dialog"
-		local permanently = "permanently"
+		if "`nogui'" == "" local permanently = "permanently"
 	}
 
 	// Offline install path (see the "Computers without internet access
@@ -193,18 +217,28 @@ program nwinstall
 
 	set more off
 	
+	local __nw_guimsg ""
 	if "`remove'" != "" {
 		window menu clear
 		window menu refresh
-		capture ado uninstall "nwcommands-dlg"
-		capture ado uninstall "nwcommands-ado"
-		capture ado uninstall "nwcommands-hlp"
+		// the ado, help and dialog files are installed as numbered packages (nwcommands-ado1, -ado2, ...); the unnumbered names are the older layout
+		foreach __pk in ado hlp dlg {
+			capture ado uninstall "nwcommands-`__pk'"
+			forvalues __i = 1/30 {
+				capture ado uninstall "nwcommands-`__pk'`__i'"
+			}
+		}
 		capture ado uninstall "nwcommands-ext"
 		capture ado uninstall "nwcommands-ext1"
 		local permanently "permanently"
 	}
-	else {
-		qui nwinstall_menu, menu("`menu'")
+	else if "`nogui'" == "" {
+		// the menu is built after "window menu clear" (inside nwinstall_menu), so running this twice in one session shows each entry once;
+		// a failure here (for example a Stata without window menus) is only a warning and never stops an install or a batch run
+		capture noisily qui nwinstall_menu, menu("`menu'")
+		if _rc {
+			di as text "nwinstall: the menu could not be built in this session (error " _rc "); the installation itself is complete. Try  nwinstall, usermenu  in an interactive Stata."
+		}
 	}
 		
 		
@@ -217,28 +251,52 @@ program nwinstall
 		// profile.do. Now the new content goes to a temp file, is verified, and replaces the
 		// original with Stata's own copy (no shell, no quoting issue, same on every OS); the
 		// original is never erased, and any failure leaves it untouched (or restores it).
+		// The line "nwinstall, usermenu" is written at most once: older spellings of it count as the same line,
+		// and a menu line of any other origin (or in another profile.do that Stata reads) stops us from adding a second menu.
+		local otherprof ""
+		nwinstall_otherprofiles, path(`"`path'"') `=cond(`pathgiven', "explicit", "")'
+		local otherprof `"`r(files)'"'
 		capture findfile "profile.do", path(`"`path'"')
 		if _rc == 0 {
 			local existingProfile `"`r(fn)'"'
-			if "`remove'" != "" {
-				nwinstall_rewriteprofile, file(`"`existingProfile'"') tmp(`"`path'/profile_nwinstall.tmp"') action(remove)
-			}
-			else {
-				nwinstall_rewriteprofile, file(`"`existingProfile'"') tmp(`"`path'/profile_nwinstall.tmp"') action(add)
-			}
+			local targetfile `"`existingProfile'"'
+			nwinstall_rewriteprofile, file(`"`existingProfile'"') tmp(`"`path'/profile_nwinstall.tmp"') action(`=cond("`remove'" != "", "remove", "add")') others(`"`otherprof'"')
+			local __nw_status "`r(status)'"
 		}
 		else if "`remove'" == "" {
-			// no profile.do yet: create it
-			capture file open `fh2' using `"`path'/profile.do"', write text
-			if _rc != 0 {
-				di as error `"nwinstall: could not create `path'/profile.do (rc = `=_rc')"'
+			// no profile.do yet: create it, unless a menu line already exists in another profile.do that Stata reads
+			local targetfile `"`path'/profile.do"'
+			nwinstall_scanmany, files(`"`otherprof'"')
+			if r(nmenu) > 0 {
+				local __nw_status "elsewhere"
+				di as text `"nwinstall: the menu is already started from `r(first)' (line: `r(line)'); no second line was added, and no new profile.do was created."'
 			}
 			else {
-				file write `fh2' `"nwinstall, usermenu"' _n
-				file close `fh2'
+				capture file open `fh2' using `"`path'/profile.do"', write text
+				if _rc != 0 {
+					di as error `"nwinstall: could not create `path'/profile.do (rc = `=_rc')"'
+					local __nw_status "failed"
+				}
+				else {
+					file write `fh2' `"nwinstall, usermenu"' _n
+					file close `fh2'
+					local __nw_status "added"
+				}
 			}
 		}
+		if "`remove'" == "" {
+			if "`__nw_status'" == "added" local __nw_guimsg `"Network Analysis menu: installed. The line 'nwinstall, usermenu' was added to `targetfile'; the menu is built once each time Stata starts."'
+			if "`__nw_status'" == "present" local __nw_guimsg `"Network Analysis menu: already set up in `targetfile'; the line was not added a second time."'
+		}
 	}	
+
+	if "`remove'" == "" & ("`dialog'" != "" | "`all'" != "" | "`localcopy'" != "") {
+		// read-only: a dialog file that exists in several folders of the ado path is used from the first one only
+		nwinstall_dlgscan
+	}
+
+	if "`__nw_guimsg'" != "" di as text _n `"`__nw_guimsg'"'
+	else if "`nogui'" != "" & "`remove'" == "" di as text _n "Network Analysis menu: not installed (nogui). To add it later type: nwinstall, gui"
 
 	if "`everything'" != "" & "`remove'" == "" {
 		// the versions of the whole set, as nwversion shows them (the model packages are indexed by the Mata call above)
@@ -298,15 +356,108 @@ program nwinstall_countlines, rclass
 end
 
 
+capture program drop nwinstall_classify
+program nwinstall_classify, rclass
+	// Classifies one line of a profile.do (r(kind)):
+	//   ours     "nwinstall, usermenu" or the older "nwinstall, downloadoff" (any spacing, case, quietly/capture prefix, trailing // comment)
+	//   legacy   "run nwinstall_dlg.do", the line nwcommands 1.1.x wrote (that do-file no longer exists)
+	//   foreign  a menu line of another origin: "window menu ... Network Analysis", nwcommands menu, nw_menu, nwmenu
+	//   other    anything else (including comments)
+	syntax , line(string)
+	local t = strtrim(`"`line'"')
+	local k "other"
+	if substr(`"`t'"', 1, 1) != "*" & substr(`"`t'"', 1, 2) != "//" {
+		local cpos = strpos(`"`t'"', " //")
+		if `cpos' > 0 local t = substr(`"`t'"', 1, `cpos' - 1)
+		local n = lower(`"`t'"')
+		local n = subinstr(`"`n'"', " ", "", .)
+		local n = subinstr(`"`n'"', char(9), "", .)
+		local n = subinstr(`"`n'"', char(34), "", .)
+		foreach pre in capturenoisily quietly noisily capture quiet qui cap {
+			if substr(`"`n'"', 1, strlen("`pre'") + 9) == "`pre'nwinstall" local n = substr(`"`n'"', strlen("`pre'") + 1, .)
+		}
+		if `"`n'"' == "nwinstall,usermenu" | `"`n'"' == "nwinstall,downloadoff" local k "ours"
+		else if inlist(`"`n'"', "runnwinstall_dlg.do", "donwinstall_dlg.do", "runnwinstall_dlg", "donwinstall_dlg") local k "legacy"
+		else if strpos(`"`n'"', "windowmenu") > 0 & strpos(`"`n'"', "networkanalysis") > 0 local k "foreign"
+		else if inlist(`"`n'"', "nwcommandsmenu", "nw_menu", "nwmenu", "nwcommands_menu", "nwcommands,menu") local k "foreign"
+		else if substr(`"`n'"', 1, 8) == "nw_menu," | substr(`"`n'"', 1, 7) == "nwmenu," local k "foreign"
+	}
+	return local kind "`k'"
+end
+
+
+capture program drop nwinstall_otherprofiles
+program nwinstall_otherprofiles, rclass
+	// The profile.do files Stata may read besides the one nwinstall edits (read-only use): the folders STATA, SITE, PERSONAL and the current folder;
+	// when path() was not given also the user's Stata folder in the home directory. The target file itself is left out.
+	syntax , path(string) [explicit]
+	local dirs `"`c(sysdir_stata)' `c(sysdir_site)' `c(sysdir_personal)' `c(pwd)'"'
+	if "`explicit'" == "" {
+		local home : environ HOME
+		if `"`home'"' != "" local dirs `"`dirs' `home'/Documents/Stata `home'"'
+	}
+	local tgt = subinstr(`"`path'/profile.do"', "//", "/", .)
+	local out ""
+	foreach d of local dirs {
+		local f = subinstr(`"`d'/profile.do"', "//", "/", .)
+		capture confirm file `"`f'"'
+		if _rc == 0 & `"`f'"' != `"`tgt'"' & strpos(`" `out' "', `" "`f'" "') == 0 {
+			local out `"`out' "`f'""'
+		}
+	}
+	return local files `"`out'"'
+end
+
+
+capture program drop nwinstall_scanmany
+program nwinstall_scanmany, rclass
+	// Reads the given profile.do files (read-only) and reports lines that already start a "Network Analysis" menu
+	syntax [, files(string)]
+	local nmenu = 0
+	local first ""
+	local fline ""
+	capture findfile nwinstall_dlg.do
+	local legacyalive = (_rc == 0)
+	tempname fh
+	foreach f of local files {
+		capture file open `fh' using `"`f'"', read text
+		if _rc continue
+		capture {
+			file read `fh' line
+			while r(eof) == 0 {
+				nwinstall_classify, line(`"`line'"')
+				local kind "`r(kind)'"
+				if "`kind'" == "ours" | "`kind'" == "foreign" | ("`kind'" == "legacy" & `legacyalive') {
+					local ++nmenu
+					if `"`first'"' == "" {
+						local first `"`f'"'
+						local fline `"`line'"'
+					}
+				}
+				file read `fh' line
+			}
+		}
+		capture file close `fh'
+	}
+	return scalar nmenu = `nmenu'
+	return local first `"`first'"'
+	return local line `"`fline'"'
+end
+
+
 capture program drop nwinstall_rewriteprofile
-program nwinstall_rewriteprofile
-	// Adds (action(add)) or removes (action(remove)) the line "nwinstall, usermenu"
-	// ("nwinstall, downloadoff", written by older versions, counts as the same line) in profile.do.
+program nwinstall_rewriteprofile, rclass
+	// Adds (action(add)) or removes (action(remove)) the line "nwinstall, usermenu" in profile.do, so that it is there at most once.
+	//  - "nwinstall, downloadoff" (older versions) and other spellings of the same line count as the same line; a second copy is dropped on add;
+	//  - add: nothing is added when the file (or one of others()) already contains a menu line of another origin; the line and file are named in a message;
+	//  - remove: our lines and the old "run nwinstall_dlg.do" line are removed; other menu lines are left alone and named in a message.
 	// Safe edit: new content -> tmp file, verified by line count, backup of the original, replace
 	// via -copy- (no shell), verify again, restore the backup on any failure. The original is
 	// never erased; if anything fails it is left as it was and a message is printed.
-	syntax , file(string) tmp(string) action(string)
+	// r(status): added, present, removed, skipped (other menu line), elsewhere (menu line in another profile.do), unchanged, failed
+	syntax , file(string) tmp(string) action(string) [others(string)]
 	tempname fin fout
+	return local status "failed"
 	capture erase `"`tmp'"'
 	capture file open `fin' using `"`file'"', read text
 	if _rc != 0 {
@@ -320,28 +471,57 @@ program nwinstall_rewriteprofile
 		di as error `"nwinstall: cannot write the temporary file `tmp' (rc = `rc'); profile.do left unchanged"'
 		exit
 	}
-	local found = 0
+	capture findfile nwinstall_dlg.do
+	local legacyalive = (_rc == 0)
+	local nours = 0
+	local nforeign = 0
+	local nlegacy = 0
+	local foreignline ""
+	local changed = 0
 	local nout = 0
 	capture {
 		file read `fin' line
 		while r(eof) == 0 {
-			local t = strtrim(`"`line'"')
-			if `"`t'"' == "nwinstall, usermenu" | `"`t'"' == "nwinstall, downloadoff" {
-				local found = 1
+			nwinstall_classify, line(`"`line'"')
+			local kind "`r(kind)'"
+			if "`kind'" == "ours" {
+				local ++nours
+				if "`action'" == "add" & `nours' == 1 {
+					file write `fout' `"`line'"' _n
+					local ++nout
+				}
+				else local changed = 1
+			}
+			else if "`kind'" == "legacy" {
+				local ++nlegacy
 				if "`action'" == "add" {
 					file write `fout' `"`line'"' _n
 					local ++nout
 				}
+				else local changed = 1
 			}
 			else {
+				if "`kind'" == "foreign" {
+					local ++nforeign
+					if `"`foreignline'"' == "" local foreignline `"`line'"'
+				}
 				file write `fout' `"`line'"' _n
 				local ++nout
 			}
 			file read `fin' line
 		}
-		if "`action'" == "add" & `found' == 0 {
-			file write `fout' `"nwinstall, usermenu"' _n
-			local ++nout
+		// add the line only when no menu line exists anywhere
+		if "`action'" == "add" & `nours' == 0 & `nforeign' == 0 & !(`nlegacy' > 0 & `legacyalive') {
+			nwinstall_scanmany, files(`"`others'"')
+			if r(nmenu) == 0 {
+				file write `fout' `"nwinstall, usermenu"' _n
+				local ++nout
+				local changed = 1
+			}
+			else {
+				local elsewhere `"`r(first)'"'
+				local elseline `"`r(line)'"'
+			}
 		}
 	}
 	local rc = _rc
@@ -352,9 +532,32 @@ program nwinstall_rewriteprofile
 		di as error `"nwinstall: editing profile.do failed (rc = `rc'); profile.do left unchanged"'
 		exit
 	}
+	// messages about lines we leave alone
+	if "`action'" == "add" {
+		if `nforeign' > 0 & `nours' == 0 {
+			di as text `"nwinstall: `file' already contains a menu line of another origin: `foreignline'"'
+			di as text "  No second menu was added. If that line starts the nwcommands menu, you can delete it and run  nwinstall, gui  again."
+		}
+		if `nlegacy' > 0 & !`legacyalive' {
+			di as text `"nwinstall: `file' contains the line  run nwinstall_dlg.do  (from nwcommands 1.1.x). That file no longer exists; the line does nothing and can be deleted."'
+		}
+		if `"`elsewhere'"' != "" {
+			di as text `"nwinstall: the menu is already started from `elsewhere' (line: `elseline'); no second line was added to `file'."'
+		}
+	}
+	else if `nforeign' > 0 {
+		di as text `"nwinstall: `file' contains a menu line of another origin that was left alone: `foreignline'"'
+	}
+	if "`action'" == "add" {
+		local status = cond(`nours' > 0 | `nforeign' > 0 | (`nlegacy' > 0 & `legacyalive'), "present", cond(`"`elsewhere'"' != "", "elsewhere", "added"))
+		if `nours' > 0 & `changed' == 0 local status "present"
+		if `nforeign' > 0 & `nours' == 0 local status "skipped"
+	}
+	else local status = cond(`changed', "removed", "unchanged")
 	// nothing to change
-	if (`found' == 1 & "`action'" == "add") | (`found' == 0 & "`action'" == "remove") {
+	if !`changed' {
 		capture erase `"`tmp'"'
+		return local status "`status'"
 		exit
 	}
 	nwinstall_countlines, file(`"`tmp'"')
@@ -387,6 +590,53 @@ program nwinstall_rewriteprofile
 	}
 	capture erase `"`tmp'"'
 	capture erase `"`bak'"'
+	return local status "`status'"
+end
+
+
+capture program drop nwinstall_dlgscan
+program nwinstall_dlgscan, rclass
+	// Read-only: lists dialog files (.dlg) of nwcommands and of the model packages that exist in more than one folder of the ado path.
+	// Stata uses the first one found; the others are never used. Nothing is deleted.
+	local names ""
+	foreach d in PLUS PERSONAL {
+		local dd : sysdir `d'
+		foreach sub in "" n s d m {
+			capture local fl : dir `"`dd'`sub'"' files "nw*.dlg"
+			if _rc == 0 local names `"`names' `fl'"'
+		}
+	}
+	local names : list uniq names
+	local ndup = 0
+	foreach f of local names {
+		local hits ""
+		local nh = 0
+		capture findfile `f', all
+		if _rc == 0 {
+			// with several hits r(fn) is a list of quoted paths, with one hit a plain path
+			local all_ `"`r(fn)'"'
+			if substr(`"`all_'"', 1, 1) == char(34) {
+				foreach h of local all_ {
+					local ++nh
+					local hits `"`hits' "`h'""'
+				}
+			}
+			else {
+				local nh = 1
+				local hits `""`all_'""'
+			}
+		}
+		if `nh' > 1 {
+			local ++ndup
+			gettoken win rest : hits
+			di as text `"nwinstall: the dialog file `f' exists in `nh' places; Stata uses the first one, `win'. The others are ignored:"'
+			foreach h of local rest {
+				di as text `"    `h'"'
+			}
+		}
+	}
+	if `ndup' > 0 di as text "  Nothing was deleted. Remove the older copies by hand (or reinstall with  nwinstall, dialog) so that only one remains."
+	return scalar ndup = `ndup'
 end
 
 
@@ -396,6 +646,8 @@ program nwinstall_menu
 	if "`menu'" == "" {
 		local menu "stUser"
 	}
+	// start from an empty user menu, so that building the menu a second time in the same session shows every entry once
+	window menu clear
 	window menu append submenu "`menu'" "Network Analysis"
 
 	window menu append item "Network Analysis" "Example Networks" "help netexample"

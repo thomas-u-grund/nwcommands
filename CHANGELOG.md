@@ -4,6 +4,22 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.9.2] - 2026-10-26
+
+The "Network Analysis" menu is set up once, whatever you run and however often. Only `nwinstall` (ado, help file, dialog) and its tests changed: no command, result, Mata library or plug-in differs from 3.9.1 (the four model packages need no release).
+
+### Results that change (read before you re-run old install scripts)
+- **`nwinstall` never writes the menu line twice.** The line `nwinstall, usermenu` is kept at most once in `profile.do`: the older `nwinstall, downloadoff` (and spellings with other spacing or a `quietly`) count as the same line, and extra copies already in the file are dropped when you run `gui`, `all` or `everything` (the rest of the file is kept byte for byte). A menu line of another origin (your own `window menu ... "Network Analysis"` line, `nw_menu`, a menu line in another `profile.do` that Stata reads) stops `nwinstall` from adding a second menu; it names the line and the file. Before, running `nwinstall, gui` after a hand-written menu line gave two menus.
+- **The menu is rebuilt from an empty User menu**, so running `nwinstall` twice in one session shows each entry once (before: twice). This clears other entries you added to the User menu in that session.
+- `nwinstall, gui`, `all` and `everything` print one line about the menu ("installed", or "already set up in ...").
+- **`nwinstall, remove` now also uninstalls the numbered packages** (`nwcommands-ado1`, `-hlp1`, `-dlg1`, ...); before it only tried the unnumbered names of the old layout and left the files behind.
+
+### Added
+- `nwinstall, everything` (and `all`) set up the menu and the dialog boxes permanently (this was already so in 3.9.1; the help and the website now say it). New option `nogui` (dialog: checkbox) leaves the menu and the `profile.do` line out. `models` and `modelpkg()` alone never touch the menu.
+- `nwinstall, dupcheck` reports dialog files (`.dlg`) that exist in more than one folder of the ado path and says which copy Stata uses; nothing is deleted. `all`, `dialog` and `localcopy` run it at the end. It returns `r(ndup)`.
+- A menu that cannot be built (batch run, Stata without menus) is a note, not an error: an install in a do-file or CI run goes on.
+- Test: `cscripts/test_nwinstall_gui.do`; `cscripts/test_nwinstall_everything.do` extended (one line after `everything` twice, `nogui`, `remove`).
+
 ## [3.9.1] - 2026-10-26
 
 ### Added

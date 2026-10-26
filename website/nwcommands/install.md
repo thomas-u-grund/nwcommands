@@ -21,8 +21,7 @@ libraries are built with Stata 17, and older versions are untested.
 
 The first line installs `nwinstall` and the landing help topics. `nwinstall, everything` then downloads the
 core (every command, all help files and every dialog box) and the four model packages, checks first that every
-package can be reached, and prints the version of each package at the end. Add `nwinstall, gui` to also get a
-"Network Analysis" menu in Stata.
+package can be reached, sets up the "Network Analysis" menu in Stata's User menu (one line in your `profile.do`, written only once, however often you run the command), and prints the version of each package at the end. Add `nogui` (`nwinstall, everything nogui`) to leave the menu out.
 
 ## The core only
 
@@ -59,6 +58,6 @@ or pick one on its own page. `nwinstall, everything` does both steps at once.
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.9.1/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.9.2/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release and installing on
 computers without internet access or administrator rights.

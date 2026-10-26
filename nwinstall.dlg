@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 304
+POSITION 10 10 1060 332
 
 SCRIPT PREINIT
 BEGIN
@@ -15,7 +15,7 @@ END
 
 DIALOG main, title("nwinstall - Install Stata menu/dialogs")
 BEGIN
-  GROUPBOX gb_opt 10 10 1030 270, label("Options")
+  GROUPBOX gb_opt 10 10 1030 298, label("Options")
   TEXT tx_cx_update 20 20 260 ., label("Refresh the installed menu (an internal, self-recursive flag: re-invokes nwinstall, help usermenu)")
   CHECKBOX cx_update 290 20 190 ., label("update") option(update)
   TEXT tx_ed_menu 20 48 260 ., label("install in this menu; default = 'stUser'")
@@ -48,6 +48,10 @@ BEGIN
   EDIT ed_dest 290 216 190 ., nomem option(dest)
   TEXT tx_cx_everything 20 244 260 ., label("install the core and the four model packages (nwsaom, nwergm, nwdynam, nwrem)")
   CHECKBOX cx_everything 290 244 190 ., label("everything") option(everything)
+  TEXT tx_cx_nogui 530 244 260 ., label("do not install the menu (with all or everything; profile.do is left alone)")
+  CHECKBOX cx_nogui 800 244 190 ., label("nogui") option(nogui)
+  TEXT tx_cx_dupcheck 20 272 260 ., label("report dialog files that exist in more than one folder (changes nothing)")
+  CHECKBOX cx_dupcheck 290 272 190 ., label("dupcheck") option(dupcheck)
 END
 
 PROGRAM initialize
@@ -74,6 +78,8 @@ BEGIN
 		optionarg main.ed_from
 		optionarg main.ed_dest
 		option main.cx_everything
+		option main.cx_nogui
+		option main.cx_dupcheck
 	endoptions
 	stata
 END
