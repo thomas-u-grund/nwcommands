@@ -16,16 +16,14 @@ GNU General Public License, version 3, and it needs the core installed first.
 
 | | |
 |---|---|
-| Current version | 1.0.1 |
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwsaom](https://github.com/thomas-u-grund/nwsaom) |
-| Install | `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)` |
-| Or from the core | `nwinstall, modelpkg(nwsaom)` |
-| Specific release | `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.1/) replace` |
+| Install | `nwinstall, modelpkg(nwsaom)` (after the core; `nwinstall, everything` installs the core and the four model packages) |
+| Version | `nwsaom version`; release history on [GitHub](https://github.com/thomas-u-grund/nwsaom/releases) |
+| Without `nwinstall` | `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace` |
 
 `nwsaom version` shows the installed release and `nwversion` lists all model packages. Updating the
-core never overwrites the package; to update the package, repeat the `net install` line with
-`replace`. Inside Stata, `help nwsaom` gives the complete syntax, options and examples.
+core never overwrites the package; to update the package, repeat the `nwinstall` line. Inside Stata, `help nwsaom` gives the complete syntax, options and examples.
 
 Section: [nwsaom](../nwsaom/), with an installation page, worked tutorials and a guide for RSiena users. `nwsaom` follows the R package RSiena and is not a replacement for it.
 

@@ -15,7 +15,7 @@ A short list, kept small on purpose. It names what to cite for the software and 
 - Grund, T. U. (2027). *Network Analysis with Stata: Concepts, Methods, and Applications.* Stata Press, College Station, TX. Forthcoming.
 - Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.0.3.* Zenodo. [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-How to cite each package is on the [citing page](../citing/). Articles on the model packages are in preparation.
+How to cite each package is on the [citing page](../citing/). A Stata Journal article on nwsaom is in preparation.
 
 ## Methods papers behind the packages
 
