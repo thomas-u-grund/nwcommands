@@ -12,6 +12,11 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: nwdynam 1.2.0 and nwrem 1.0.10
+
+- **nwdynam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.0)). When the compiled plugin file is missing for your platform, a fit of the original structural effect set (choice and rate sub-models) now prints one warning line and runs on the slower Mata engine, as nwergm does; before, the fallback was silent. Results are unchanged.
+- **nwrem 1.0.10** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.10)). The speed statement in the help is replaced by timings of 26 October 2026 against R's relevent: the ratio of the times ranged from 0.75 to 36 over five effect sets and 200 to 20,000 events; nwrem is slower with the recency effects at up to 1,000 events. See [nwrem and R's relevent](/nwrem/r-relevent/). No change in results.
+
 ## 26 October 2026: the menu is installed once
 
 **nwcommands 3.9.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.2)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.0.11, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).
