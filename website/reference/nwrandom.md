@@ -100,4 +100,4 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

@@ -58,4 +58,4 @@ Not applicable - `nwtostata` copies an arbitrary, already-existing Mata matrix i
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

@@ -198,7 +198,7 @@ program _nwmotifs_two, rclass
 		scalar drop __nw2m_rc
 		if `rc' == 1 {
 			di "{err}{bf:nw2motifs} runs in the native plugin of nwcommands and the plugin of this installation is older than the command (or there is no plugin for this platform)."
-			di "{err}Update the installation: {bf:net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/) replace} and restart Stata."
+			di "{err}Update the installation: {bf:net install nwcommands, from(https://nwcommands.org/net/) replace} (or, if that address is not reachable: {bf:net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/) replace}) and restart Stata."
 			exit 198
 		}
 		di "{err}nw2motifs: the native plugin ran out of memory or returned an unexpected result."

@@ -99,11 +99,11 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 {pstd}
 New to nwcommands? The full install is two commands:
 
-	{cmd:. net install nwcommands}{p_end}
+	{cmd:. net install nwcommands, from(https://nwcommands.org/net/) replace}{p_end}
 	{cmd:. nwinstall, everything}
 
 {pstd}
-The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); the second downloads
+The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); if {cmd:nwcommands.org} cannot be reached, {cmd:from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")} works as well. The second downloads
 everything else - the core commands, all help files, and the dialog boxes, installed permanently - and the four model packages
 {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}. To install the core only, type {cmd:nwinstall, all}.
 nwcommands needs Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
@@ -118,7 +118,7 @@ This installs a menu for the nwcommands:
 {marker offline}{title:Computers without internet access or admin rights}
 
 {pstd}
-The two-command install above needs {cmd:net install} to reach GitHub, and writes into a
+The two-command install above needs {cmd:net install} to reach nwcommands.org and GitHub, and writes into a
 Stata-managed ado directory. Some machines - locked-down office computers, air-gapped
 servers, anywhere outbound internet access is blocked - cannot do either. For these,
 {opt localcopy} installs by copying files directly from an nwcommands folder you already
@@ -179,4 +179,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.1, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

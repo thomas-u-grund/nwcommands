@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.9.0** (26 October 2026)
+**Version 3.9.1** (26 October 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -56,7 +56,7 @@ variable budget unless you ask it to.
 ## Installation
 
 ```stata
-. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
+. net install nwcommands, from(https://nwcommands.org/net/) replace
 . nwinstall, all
 ```
 

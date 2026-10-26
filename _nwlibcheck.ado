@@ -28,13 +28,15 @@ program define _nwlibcheck
 			exit
 		}
 		di as error "An OLD copy of the nwcommands Mata library (lnwcommands.mlib) is being used: it lacks functions of this version of nwcommands."
-		di as error `"Reinstall: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace"'
+		di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
+		di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
 		di as error "and then: nwinstall, all"
 		di as error "Remove the old copy first (it is probably in your PLUS folder): ado uninstall nwcommands"
 		exit 3499
 	}
 	di as error "The nwcommands Mata library is missing or was built by a newer Stata (your Stata: `c(stata_version)')."
-	di as error `"Reinstall: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace"'
+	di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
+	di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
 	di as error "and then: nwinstall, all"
 	di as error "If you have an old copy in your PLUS folder, remove it first: ado uninstall nwcommands"
 	exit 3499

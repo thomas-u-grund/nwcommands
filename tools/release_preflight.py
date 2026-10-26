@@ -214,6 +214,19 @@ def main():
         else:
             rec("PASS", "website shows the core version", ver)
         rec("FAIL" if placeholder else "PASS", "website has no 'DD Month' date placeholder", ", ".join(placeholder))
+        # short install address https://nwcommands.org/net/: the deploy workflow must copy the starter after the Jekyll build
+        wf = read(".github/workflows/deploy-site.yml", "")
+        okwf = "run: bash tools/make_net_dir.sh" in wf and wf.find("run: bash tools/make_net_dir.sh") > wf.find("jekyll build") > 0 and '"nwcommands.pkg"' in wf
+        rec("PASS" if okwf else "FAIL", "deploy workflow copies the starter to net/ after the build", "" if okwf else "deploy-site.yml lacks the make_net_dir.sh step after 'jekyll build' or the nwcommands.pkg trigger path")
+        if a.post and not a.no_network:
+            import urllib.request
+            try:
+                with urllib.request.urlopen("https://nwcommands.org/net/stata.toc", timeout=20) as r:
+                    body = r.read().decode("utf-8", "replace")
+                ok = r.status == 200 and ("version " + ver) in body
+                rec("PASS" if ok else "FAIL", "https://nwcommands.org/net/stata.toc reachable and current", "" if ok else f"status {r.status}, version {ver} not in the file (deploy not finished?)")
+            except Exception as e:
+                rec("FAIL", "https://nwcommands.org/net/stata.toc reachable and current", str(e))
 
     # 11 model clones
     for name in MODELS:

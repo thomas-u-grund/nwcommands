@@ -84,4 +84,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

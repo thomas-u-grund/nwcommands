@@ -84,4 +84,4 @@ See {help nwrecode}: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, 
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.9.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.1, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

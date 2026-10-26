@@ -15,13 +15,13 @@ could plausibly have *generated* it, and estimates that process from the data.
 ## Installing nwergm
 
 `nwergm` is its own package (GPL-3), separate from the core `nwcommands`. Install the core first
-(see [Installation & Setup](../01-installation-setup/)), then the model package:
+(see [Installation & Setup](../01-installation-setup/)), then the model packages:
 
 ```stata
-net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
+nwinstall, models
 ```
 
-or, with the core's installer, `nwinstall, modelpkg(nwergm)`. Check what you have with
+(`nwinstall, everything` does the core and the models in one step; `nwinstall, modelpkg(nwergm)` installs this package only.) Check what you have with
 `nwergm version`, which prints the package release and stores it in `r(version)`:
 
 ```stata

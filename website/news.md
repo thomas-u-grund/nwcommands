@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: a short install address
+
+**nwcommands 3.9.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.1)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **The core now installs from a short address:** `net install nwcommands, from(https://nwcommands.org/net/) replace`, then `nwinstall, everything`. The long GitHub address (`https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/`) keeps working, and so do the tagged addresses of older releases. Nothing else changes: no command, result or plug-in differs from 3.9.0.
+
 ## 26 October 2026: plots show tie values, signs and the two modes
 
 **nwcommands 3.9.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).

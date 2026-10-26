@@ -6,6 +6,18 @@ on:
     paths:
       - "website/**"
       - ".github/workflows/deploy-site.yml"
+      # the starter package copied to https://nwcommands.org/net/ (tools/make_net_dir.sh)
+      - "stata.toc"
+      - "nwcommands.pkg"
+      - "nwinstall.ado"
+      - "nwinstall_models.ado"
+      - "nwversion.ado"
+      - "nwinstall.sthlp"
+      - "nwversion.sthlp"
+      - "nwcommands.sthlp"
+      - "nwintro.sthlp"
+      - "nwstart.sthlp"
+      - "tools/make_net_dir.sh"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +52,11 @@ jobs:
         env:
           JEKYLL_ENV: production
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+
+      # AFTER the build: Jekyll would drop underscore files and process the others. Short install address
+      # net install nwcommands, from(https://nwcommands.org/net/) replace
+      - name: Copy the starter package to net/
+        run: bash tools/make_net_dir.sh website/_site/net
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
