@@ -4,12 +4,12 @@
 nwwebuse lazega, nwclear
 encode practice, generate(prac)
 
-* a short interval between draws: the defaults of nwergm up to 1.1 (since 1.2 the defaults are those of R's ergm, 1024 and 16384)
-nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(50) mcmcburnin(3000)
+* a fixed-size sample with a short interval between draws (the fits of nwergm up to 1.2): a chain that mixes badly
+nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(50) mcmcburnin(3000) mcmleeffectivesize(0)
 estat mcmcdiag
 
-* a longer interval between draws and a longer burn-in
-nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1) mcmcinterval(1000) mcmcburnin(20000)
+* the defaults of nwergm 1.3 (R's interval and burn-in, adaptive sample size)
+nwergm lazega_fr, edges mutual nodematch(prac) nodeicov(seniority) gwesp(0.5) seed(1)
 estat mcmcdiag
 
 * goodness of fit

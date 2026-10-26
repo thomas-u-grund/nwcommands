@@ -17,7 +17,7 @@ defined on, **two-mode** terms for networks between two kinds of nodes (people a
 
 **Data.** The Florentine marriage network and the Lazega friendship network (both shipped with
 `nwcommands`), and a small two-mode network of 30 people and 12 clubs that is **simulated** in the
-script (so that you can recreate it exactly; it is not a real data set). Run with the core 3.0.0; the
+script (so that you can recreate it exactly; it is not a real data set). Run with `nwergm` 1.3.0 and the core 3.10.0; the
 script and log are in [example.do](example.do) and [example.log](example.log).
 Output is shortened to the coefficient table and the log-likelihood line.
 
@@ -37,14 +37,14 @@ parameter drops out. Compare the unconstrained and the constrained fit:
 --------------------------------------------------------------------------------
    flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -2.601731   .5516856    -4.72   0.000    -3.683015   -1.520447
-nodecov_wealth |    .010747   .0050312     2.14   0.033     .0008861    .0206079
-     gwesp_0.5 |  -.0155111   .2702111    -0.06   0.954    -.5451152    .5140929
+         edges |  -2.599772   .5426303    -4.79   0.000    -3.663308   -1.536237
+nodecov_wealth |   .0107953   .0051785     2.08   0.037     .0006457    .0209449
+     gwesp_0.5 |  -.0170638   .2676109    -0.06   0.949    -.5415716    .5074439
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood:   -51.5535 (df = 3)   AIC:     109.1   BIC:     117.5   (MC std. err. =  .00031)
+Log-likelihood:   -51.5528 (df = 3)   AIC:     109.1   BIC:     117.5   (MC std. err. =  .00149)
 ```
 
 ```stata
@@ -54,13 +54,13 @@ Log-likelihood:   -51.5535 (df = 3)   AIC:     109.1   BIC:     117.5   (MC std.
    flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
          edges |          0  (omitted)
-nodecov_wealth |   .0102325   .0051168     2.00   0.046     .0002038    .0202612
-     gwesp_0.5 |   .0356296   .2746778     0.13   0.897     -.502729    .5739883
+nodecov_wealth |   .0100932   .0048998     2.06   0.039     .0004898    .0196966
+     gwesp_0.5 |   .0213663   .2638801     0.08   0.935    -.4958292    .5385619
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood:   -55.2627 (df = 2)   AIC:     114.5   BIC:     120.1   (MC std. err. =  .15074)
+Log-likelihood:   -55.3402 (df = 2)   AIC:     114.7   BIC:     120.3   (MC std. err. =  .16122)
 ```
 
 `nwergm` prints a note that the constraint holds `edges` constant, and the coefficient of `edges` is
@@ -134,19 +134,19 @@ dyad-dependent:
 ----------------------------------------------------------------------------------
            clubs | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------+----------------------------------------------------------------
-           edges |  -.7311237   .1727851    -4.23   0.000    -1.069776   -.3924711
-nodemix_kind_2_1 |  -1.503362   .3983645    -3.77   0.000    -2.284142   -.7225817
-nodemix_kind_1_2 |  -2.243641   .6135545    -3.66   0.000    -3.446186   -1.041096
-nodemix_kind_2_2 |  -.0679029   .3766518    -0.18   0.857    -.8061268    .6703211
-  bgwdegree2_0.5 |  -1.788379    1.47199    -1.21   0.224    -4.673427    1.096668
+           edges |  -.7414179   .1930383    -3.84   0.000    -1.119766   -.3630697
+nodemix_kind_2_1 |  -1.506756   .4068944    -3.70   0.000    -2.304254   -.7092575
+nodemix_kind_1_2 |  -2.212356   .5936993    -3.73   0.000    -3.375985   -1.048727
+nodemix_kind_2_2 |  -.0559743   .4063925    -0.14   0.890    -.8524889    .7405403
+  bgwdegree2_0.5 |  -1.690794   1.394711    -1.21   0.225    -4.424378     1.04279
 ----------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 2 iteration(s).
 ...
-Log-likelihood:  -160.2587 (df = 5)   AIC:     330.5   BIC:     349.9   (MC std. err. =  .08311)
+Log-likelihood:  -160.1196 (df = 5)   AIC:     330.2   BIC:     349.7   (MC std. err. =   .0943)
 ```
 
-The geometrically weighted degree of the clubs, with decay 0.5, is not significant here (-1.78, s.e. 1.45):
+The geometrically weighted degree of the clubs, with decay 0.5, is not significant here (-1.69, s.e. 1.39):
 there is no evidence that the popularity of the clubs is unevenly distributed. The other terms for
 two-mode networks are listed in `help nwergm_bipartite`: concurrency, minimum degree and degree ranges,
 stars, covariate ranges, shared-partner terms (`dsp`, `gwdsp`, `coincidence`) and the curved versions with an
@@ -170,20 +170,20 @@ unusually often connected, over and above the model for the two-mode ties.
 ----------------------------------------------------------------------------------
            clubs | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------+----------------------------------------------------------------
-           edges |  -1.115536   .3680386    -3.03   0.002    -1.836878   -.3941935
-nodemix_kind_2_1 |  -1.719906   .5034645    -3.42   0.001    -2.706678   -.7331337
-nodemix_kind_1_2 |  -2.339619   .6306518    -3.71   0.000    -3.575674   -1.103565
-nodemix_kind_2_2 |  -.2481904   .4301325    -0.58   0.564    -1.091235    .5948538
-     Proj1~edges |   .1732472   .1869192     0.93   0.354    -.1931076    .5396021
-  Proj1~triangle |   -.011537    .025884    -0.45   0.656    -.0622688    .0391948
+           edges |  -1.103858   .3445076    -3.20   0.001     -1.77908   -.4286353
+nodemix_kind_2_1 |  -1.775325   .5405127    -3.28   0.001    -2.834711   -.7159399
+nodemix_kind_1_2 |  -2.355423   .6577301    -3.58   0.000     -3.64455   -1.066296
+nodemix_kind_2_2 |  -.3295673   .4577906    -0.72   0.472     -1.22682    .5676857
+     Proj1~edges |   .1847007    .198093     0.93   0.351    -.2035545    .5729559
+  Proj1~triangle |   -.012532   .0275408    -0.46   0.649    -.0665108    .0414469
 ----------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 3 iteration(s).
 ...
-Log-likelihood:  -159.8953 (df = 6)   AIC:     331.8   BIC:     355.1   (MC std. err. =  .03188)
+Log-likelihood:  -158.9038 (df = 6)   AIC:     329.8   BIC:     353.1   (MC std. err. =  .09301)
 ```
 
-Neither projected term is significant (`Proj1~edges` 0.18, s.e. 0.19), as the data were generated
+Neither projected term is significant (`Proj1~edges` 0.18, s.e. 0.20), as the data were generated
 without any such structure.
 
 **`Symmetrize()`** evaluates a term on the undirected network that is obtained from a directed one.
@@ -196,22 +196,22 @@ counts triangles among mutual friendships:
 ---------------------------------------------------------------------------------------------
                   lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------------------+----------------------------------------------------------------
-                      edges |  -2.735312   .0817972   -33.44   0.000    -2.895632   -2.574992
-                     mutual |   .9106177   .1723656     5.28   0.000     .5727873    1.248448
-             nodematch_prac |   .8949306    .094184     9.50   0.000     .7103335    1.079528
-Symmetrize(strong)~triangle |    .748699   .4483014     1.67   0.095    -.1299556    1.627354
+                      edges |  -2.736101   .0829356   -32.99   0.000    -2.898652    -2.57355
+                     mutual |    .900128   .1705302     5.28   0.000     .5658949    1.234361
+             nodematch_prac |   .8942052   .1007393     8.88   0.000     .6967598    1.091651
+Symmetrize(strong)~triangle |   .7278742   .4769188     1.53   0.127    -.2068695    1.662618
 ---------------------------------------------------------------------------------------------
 
-MCMLE converged after 1 iteration(s).
+MCMLE converged after 2 iteration(s).
 ...
-Log-likelihood: -1701.3376 (df = 4)   AIC:    3410.7   BIC:    3436.7   (MC std. err. =  .05874)
+Log-likelihood: -1702.0947 (df = 4)   AIC:    3412.2   BIC:    3438.2   (MC std. err. =  .08466)
 ```
 
-Closure among reciprocated friendships is strongly positive (1.02, s.e. 0.27), on top of the
-reciprocity (`mutual`) and same-practice effects. The AIC of this model (3414.9) can be compared with the two Lazega models of
-[ERGM 4](../tutorial-4-missing-comparing/), which have the same other terms and the same N: 3410.9 without a
-closure term and 3349.9 with `gwesp(0.5)`. Closure among *reciprocated* friendships alone does not improve
-the model, while the `gwesp` term does: the closure in this network is not restricted to mutual ties.
+Closure among reciprocated friendships is positive but not significant (0.73, s.e. 0.48, p = 0.13), next to the
+reciprocity (`mutual`) and same-practice effects. The AIC of this model (3412.2) can be compared with the two Lazega models of
+[ERGM 4](../tutorial-4-missing-comparing/), which have the same other terms and the same N: 3409.9 without a
+closure term and 3349.9 with `gwesp(0.5)`. Closure among *reciprocated* friendships alone hardly improves
+the model (3412.2 against 3409.9), while the `gwesp` term does: the closure in this network is not restricted to mutual ties.
 
 Operators cannot be combined with `constraints()`, `obsconstraints()`, `freedyads()`, `blockdiag()` or
 `fixdensity`, and a curved (free-decay) term cannot be used inside an operator. The complete list

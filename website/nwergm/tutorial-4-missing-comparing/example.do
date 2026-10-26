@@ -22,9 +22,9 @@ display "missing dyads: " e(nmissing) "   informative dyads: " e(N)
 * ---- comparing models for the Lazega friendship network
 nwwebuse lazega, nwclear
 encode practice, generate(prac)
-nwergm lazega_fr, edges mutual nodematch(prac) seed(1) mcmcinterval(1000) mcmcburnin(20000)
+nwergm lazega_fr, edges mutual nodematch(prac) seed(1)
 estimates store m1
-nwergm lazega_fr, edges mutual nodematch(prac) gwesp(0.5) seed(1) mcmcinterval(1000) mcmcburnin(20000)
+nwergm lazega_fr, edges mutual nodematch(prac) gwesp(0.5) seed(1)
 estimates store m2
 estat ic
 estimates stats m1 m2
