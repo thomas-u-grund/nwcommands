@@ -16,16 +16,14 @@ GNU General Public License, version 3, and it needs the core installed first.
 
 | | |
 |---|---|
-| Current version | 1.0.1 |
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam) |
-| Install | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
-| Or from the core | `nwinstall, modelpkg(nwdynam)` |
-| Specific release | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.0.1/) replace` |
+| Install | `nwinstall, modelpkg(nwdynam)` (after the core; `nwinstall, everything` installs the core and the four model packages) |
+| Version | `nwdynam version`; release history on [GitHub](https://github.com/thomas-u-grund/nwdynam/releases) |
+| Without `nwinstall` | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/) replace` |
 
 `nwdynam version` shows the installed release and `nwversion` lists all model packages. Updating the
-core never overwrites the package; to update the package, repeat the `net install` line with
-`replace`. Inside Stata, `help nwdynam` gives the complete syntax, options and examples.
+core never overwrites the package; to update the package, repeat the `nwinstall` line. Inside Stata, `help nwdynam` gives the complete syntax, options and examples.
 
 What it offers:
 

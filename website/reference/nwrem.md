@@ -16,16 +16,14 @@ GNU General Public License, version 3, and it needs the core installed first.
 
 | | |
 |---|---|
-| Current version | 1.0.1 |
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem) |
-| Install | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
-| Or from the core | `nwinstall, modelpkg(nwrem)` |
-| Specific release | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.0.1/) replace` |
+| Install | `nwinstall, modelpkg(nwrem)` (after the core; `nwinstall, everything` installs the core and the four model packages) |
+| Version | `nwrem version`; release history on [GitHub](https://github.com/thomas-u-grund/nwrem/releases) |
+| Without `nwinstall` | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/) replace` |
 
 `nwrem version` shows the installed release and `nwversion` lists all model packages. Updating the
-core never overwrites the package; to update the package, repeat the `net install` line with
-`replace`. Inside Stata, `help nwrem` gives the complete syntax, options and examples.
+core never overwrites the package; to update the package, repeat the `nwinstall` line. Inside Stata, `help nwrem` gives the complete syntax, options and examples.
 
 What it offers:
 
