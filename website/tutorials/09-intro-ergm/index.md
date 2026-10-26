@@ -26,12 +26,12 @@ nwinstall, models
 
 ```stata
 . nwergm version
-nwergm version 1.3.0, 26oct2026
+nwergm version 1.3.1, 26oct2026
 ```
 
 
 The same page of output also names the core package and the native plugin the package uses. The
-examples below were run with nwergm 1.3.0 and the core `nwcommands` 3.10.0.
+examples below were run with nwergm 1.3.1 and the core `nwcommands` 3.10.0.
 
 ## The idea
 

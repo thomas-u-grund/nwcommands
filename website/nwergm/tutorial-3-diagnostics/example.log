@@ -86,7 +86,9 @@ Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-
 
 MCMLE's own convergence test was satisfied after   1 iteration(s).
 Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
+> bove, and consider raising mcmleeffectivesize() (the target effective sample size of the adaptive sample; mcmleiteratio
+> ns() if the iterations ran out) if acceptance rate or ESS looks poor. For a fit with a fixed-size sample (mcmleeffectiv
+> esize(0)) raise mcmcsamplesize() or mcmcinterval() instead.
 
 Sample statistics summary (centered at the observed statistics):
 
@@ -189,7 +191,8 @@ Log-likelihood: -1667.4731 (df = 5)   AIC:    3344.9   BIC:    3377.5   (MC std.
 MCMC diagnostics for the final simulation (nwergm, method(mcmle))
 Sample size:         =     486
 Burn-in:             =   16384
-Thinning interval:   =    1024
+Thinning interval:   =    2048
+Requested interval:  =    1024  (raised by the adaptive sampler)
 Acceptance rate:     =  0.6692
 
 ------------------------------------------------------------
@@ -233,7 +236,9 @@ Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-
 
 MCMLE's own convergence test was satisfied after   2 iteration(s).
 Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider increasing mcmcsamplesize()/mcmleiterations() if acceptance rate or ESS looks poor.
+> bove, and consider raising mcmleeffectivesize() (the target effective sample size of the adaptive sample; mcmleiteratio
+> ns() if the iterations ran out) if acceptance rate or ESS looks poor. For a fit with a fixed-size sample (mcmleeffectiv
+> esize(0)) raise mcmcsamplesize() or mcmcinterval() instead.
 
 Sample statistics summary (centered at the observed statistics):
 

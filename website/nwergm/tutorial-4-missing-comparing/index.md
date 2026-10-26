@@ -14,7 +14,7 @@ description: "Fit an ERGM to a network with missing dyads, compare models with A
 * Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
 
 **Data.** The Florentine marriage network (16 families, with `wealth`) and the Lazega friendship
-network (71 lawyers). Run with `nwergm` 1.3.0 and core 3.10.0; the script and log are in
+network (71 lawyers). Run with `nwergm` 1.3.1 and core 3.10.0; the script and log are in
 [example.do](example.do) and [example.log](example.log). Output is shortened to the coefficient
 table and the log-likelihood line; `...` marks what is left out.
 

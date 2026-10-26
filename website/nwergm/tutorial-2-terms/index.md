@@ -18,9 +18,9 @@ and triad terms (`gwesp`, with its decay parameter).
 **Data.** Two networks that ship with `nwcommands` and are loaded with `nwwebuse`: `mesa`, the friendship
 network of 205 students in a US high school (undirected, with the attributes `grade`, `race` and `sex`),
 and `lazega`, the friendship network among 71 lawyers of a law firm (directed, with `practice`,
-`seniority` and others). The commands below were run with `nwergm` 1.3.0 and the core 3.10.0; the
+`seniority` and others). The commands below were run with `nwergm` 1.3.1 and the core 3.10.0; the
 complete script and log are in [example.do](example.do) and [example.log](example.log). Every model
-uses only terms that are in the released version 1.3.0. Models fitted by Monte Carlo involve
+uses only terms that are in the released version 1.3.1. Models fitted by Monte Carlo involve
 simulation, so a repetition with another `seed()` gives slightly different numbers.
 Output is shortened to the coefficient table and the log-likelihood line; `...` marks what is left out.
 

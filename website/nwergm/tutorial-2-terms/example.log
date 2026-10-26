@@ -2,7 +2,7 @@
 . * Requires the core nwcommands and the package nwergm.
 . 
 . nwergm version
-nwergm version 1.3.0, 26oct2026
+nwergm version 1.3.1, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with the package, no separate version number)
   compared with           : R ergm 4.12.0
