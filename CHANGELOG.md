@@ -9,6 +9,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwexport` and `nwimport` keep the level labels of a two-mode network (for example "women" / "events"): Pajek gets a comment line before `*Vertices` (Pajek ignores it), GML the graph attributes `nwmodelabel1` and `nwmodelabel2`, the edge list the labels in the mode columns instead of 1 and 2. UCINET DL has no place for them (a file read back has the labels "rows" and "columns"). Test: `cscripts/test_small370.do`.
 - `nwimport, type(ucinet)`: a rectangular matrix with the same number of rows and columns (`nr=` and `nc=` given, for example 3 women by 3 events) was read as a one-mode network and failed; it is now read as a two-mode network.
 - `nwinduced` error message for a directed network no longer points to an internal file.
+- Website pages and logs show "plugin build" instead of "plugin protocol" in the output of `nwsaom version`.
 - `nwmixing` printed stray "invalid name" lines before the table (fixed in 3.6.0, see below); `test_small370.do` repeats the check.
 
 ## [3.6.0] - 2026-10-26

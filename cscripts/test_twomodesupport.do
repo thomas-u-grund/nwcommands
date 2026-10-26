@@ -508,6 +508,8 @@ _chk `=(_N == 12)' "all four formats hold the same 12 ties"
 * the Pajek file is the bipartite form
 file open fh using "`base'_pajek.net", read text
 file read fh line
+* a comment line with the level labels (starting with %) may come first
+if substr(trim(`"`line'"'), 1, 1) == "%" file read fh line
 _chk `=(trim(`"`line'"') == "*Vertices 12 7")' "Pajek header is *Vertices 12 7 (`line')"
 file close fh
 * edge lists: nwtoedge / nwfromedge and nw2toedge / nw2fromedge

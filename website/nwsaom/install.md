@@ -48,7 +48,7 @@ version produced the results.
 . nwsaom version
 nwsaom version 1.0.9, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : .../saom_sim_macos.plugin (plugin protocol 140)
+  native plugin           : .../saom_sim_macos.plugin (plugin build 140)
   compared with           : R RSiena 1.6.14
   license                 : GNU GPL-3
 ```

@@ -4,21 +4,21 @@
 . nwsaom version
 nwsaom version 1.0.9, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin build 140)
   compared with           : R RSiena 1.6.14
   license                 : GNU GPL-3
 
 . nwrem version
 nwrem version 1.0.7, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin build 140)
   compared with           : R relevent 1.2-1
   license                 : GNU GPL-3
 
 . nwdynam version
 nwdynam version 1.1.2, 26oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin protocol 140)
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwsaom/lib/plugins/macos/saom_sim_macos.plugin (plugin build 140)
   compared with           : R goldfish 1.6.12
   license                 : GNU GPL-3
 
