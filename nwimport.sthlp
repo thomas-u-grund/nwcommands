@@ -284,4 +284,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 	geoff,john,michael
 
 {hline}
-{pstd}{it:nwcommands version 3.9.1, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

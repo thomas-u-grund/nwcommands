@@ -9,6 +9,26 @@ capture program drop nwversion
 capture program drop nwinstall_models
 clear all
 set linesize 240
+capture program drop tcount
+program tcount, rclass
+	// number of "nwinstall, usermenu" lines and of all lines of a file
+	syntax , file(string)
+	tempname h
+	local n = 0
+	local tot = 0
+	capture file open `h' using `"`file'"', read text
+	if _rc == 0 {
+		file read `h' line
+		while r(eof) == 0 {
+			local ++tot
+			if strtrim(`"`line'"') == "nwinstall, usermenu" local ++n
+			file read `h' line
+		}
+		file close `h'
+	}
+	return scalar n = `n'
+	return scalar tot = `tot'
+end
 
 local core "`c(pwd)'"
 if `"$NWMODELS"' == "" {
@@ -22,6 +42,7 @@ capture mkdir "`scratch'/plus"
 capture mkdir "`scratch'/personal"
 capture mkdir "`scratch'/prof"
 capture mkdir "`scratch'/prof2"
+capture mkdir "`scratch'/prof4"
 sysdir set PLUS "`scratch'/plus"
 sysdir set PERSONAL "`scratch'/personal"
 cd "`scratch'"
@@ -48,6 +69,9 @@ while r(eof) == 0 {
 }
 file close `fh'
 assert `hint' == 1
+* all (and everything) set up the menu once: one line in profile.do
+tcount, file("`scratch'/prof2/profile.do")
+assert r(n) == 1 & r(tot) == 1
 foreach p in nwsaom nwergm nwdynam nwrem {
 	capture confirm file "`scratch'/plus/`=substr("`p'",1,1)'/`p'.ado"
 	assert _rc != 0
@@ -77,6 +101,56 @@ while r(eof) == 0 {
 file close `fh'
 assert `nver' == 4
 assert `hint' == 0
+
+* 3b. everything also sets up the menu: one line, said once; a second run does not add another
+tcount, file("`scratch'/prof/profile.do")
+assert r(n) == 1 & r(tot) == 1
+local said 0
+file open `fh' using "`scratch'/every.log", read text
+file read `fh' line
+while r(eof) == 0 {
+	if strpos(`"`line'"', "Network Analysis menu: installed.") local ++said
+	file read `fh' line
+}
+file close `fh'
+assert `said' == 1
+nwinstall, everything from("`core'") modelsfrom("`models'") path("`scratch'/prof")
+tcount, file("`scratch'/prof/profile.do")
+assert r(n) == 1 & r(tot) == 1
+capture confirm file "`scratch'/prof/profile.do.nwinstall_bak"
+assert _rc != 0
+
+* 3c. nogui: everything without the menu and without touching any profile.do
+log using "`scratch'/nogui.log", text replace name(noguirun)
+nwinstall, everything nogui from("`core'") modelsfrom("`models'") path("`scratch'/prof4")
+log close noguirun
+capture confirm file "`scratch'/prof4/profile.do"
+assert _rc != 0
+local said 0
+file open `fh' using "`scratch'/nogui.log", read text
+file read `fh' line
+while r(eof) == 0 {
+	if strpos(`"`line'"', "not installed (nogui)") local said 1
+	file read `fh' line
+}
+file close `fh'
+assert `said' == 1
+
+* 3d. remove takes the line out again (profile.do keeps its other content: here none) and leaves no second copy
+nwinstall, remove path("`scratch'/prof")
+tcount, file("`scratch'/prof/profile.do")
+assert r(n) == 0 & r(tot) == 0
+nwinstall, models remove
+foreach p in nwsaom nwergm nwdynam nwrem {
+	capture confirm file "`scratch'/plus/`=substr("`p'",1,1)'/`p'.ado"
+	assert _rc != 0
+}
+capture confirm file "`scratch'/plus/n/nwdegree.ado"
+assert _rc != 0
+* the same set once more for the checks below
+nwinstall, everything from("`core'") modelsfrom("`models'") path("`scratch'/prof")
+tcount, file("`scratch'/prof/profile.do")
+assert r(n) == 1 & r(tot) == 1
 
 * nwversion lists five versions
 nwversion

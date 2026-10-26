@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: the menu is installed once
+
+**nwcommands 3.9.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.2)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **`nwinstall, everything` (and `all`) set up the "Network Analysis" menu and the dialog boxes, and never twice:** the start-up line in `profile.do` is written once (the older `nwinstall, downloadoff` counts as the same line), a menu you built yourself is respected, and running the command again shows each entry once. New option `nogui` leaves the menu out; `nwinstall, dupcheck` lists dialog files that exist in two folders. `nwinstall, remove` now also removes the numbered packages. No command or result differs from 3.9.1.
+
 ## 26 October 2026: a short install address
 
 **nwcommands 3.9.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.1)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).

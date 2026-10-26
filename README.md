@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.9.1** (26 October 2026)
+**Version 3.9.2** (26 October 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -45,7 +45,7 @@ data commands.
   databases (route data of about 2014) and stay under their Open Database License (ODbL 1.0), not the GPL-3.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
-  "Network Analysis" menu after `nwinstall, gui` (or `db <command>` directly) — for
+  "Network Analysis" menu (set up by `nwinstall, all` and `nwinstall, everything`, or later by `nwinstall, gui`; or `db <command>` directly) — for
   users who prefer point-and-click to typing syntax.
 
 Every command works alongside ordinary Stata variables — a network can be loaded as Stata
@@ -64,9 +64,10 @@ variable budget unless you ask it to.
 
 The first line installs just `nwinstall` itself and the landing help topics; `nwinstall,
 all` then downloads everything else — every command, all help files, and all 120 dialog
-boxes — and installs them permanently. Add `nwinstall, gui` to also add a "Network
-Analysis" menu to Stata's own User menu, so every command is reachable through a dialog box,
-not just the command line. See `help nwinstall` for the full option reference.
+boxes — and sets up a "Network Analysis" menu in Stata's own User menu (one line in your
+`profile.do`, written only once), so every command is reachable through a dialog box, not just
+the command line. Add `nogui` to leave the menu out. `nwinstall, everything` does the same for
+the core and the four model packages. See `help nwinstall` for the full option reference.
 
 **No internet access or admin rights?** `nwinstall, localcopy` installs by copying files
 directly from an nwcommands folder you already have (zip, USB drive, shared network drive) into

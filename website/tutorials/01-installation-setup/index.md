@@ -38,11 +38,11 @@ Older versions are untested; on one, `nwinstall` and `nwversion` print a note bu
 `nwinstall, everything` installs the core and the four model packages as one consistent set. It first
 checks that every model package can be reached and that none needs a newer core, then it downloads every
 command, every help file and every dialog box of the core, one group after the other (command files, then
-help files, then dialog boxes), then the four model packages, and it prints the version of each package
-at the end. While it runs, Stata prints the package listing of the repository once for each group, so the
+help files, then dialog boxes), then the four model packages, then it sets up the "Network Analysis" menu
+(see below), and it prints the version of each package at the end. While it runs, Stata prints the package listing of the repository once for each group, so the
 same listing scrolls by several times. That is expected.
 
-To install the core only, type `nwinstall, all`. It ends with the hint `To also install the model packages
+To install the core only, type `nwinstall, all` (it also sets up the menu; add `nogui` to both commands to leave the menu out). It ends with the hint `To also install the model packages
 type: nwinstall, models   (or nwinstall, everything)`.
 
 To check that the installation worked, type `which nwdegree`. Stata prints the path of the installed
@@ -65,8 +65,8 @@ written on; yours will differ.
 
 ## The Network Analysis menu
 
-Add `gui` to also install a "Network Analysis" menu in Stata's own User menu, so every command is
-reachable through a dialog box, not just the command line:
+`nwinstall, everything` (and `nwinstall, all`) also install a "Network Analysis" menu in Stata's own User menu, so every command is
+reachable through a dialog box, not just the command line. To add the menu to an installation that has none, or to repair it, type:
 
 ```stata
 . nwinstall, gui
@@ -74,7 +74,11 @@ reachable through a dialog box, not just the command line:
 
 `gui` is the current name of the option; the older name `permanently` still works. The option changes
 your Stata start-up file (`profile.do`), so that the menu is there each time you start Stata. To take
-the menu out again, type `nwinstall, remove`.
+the menu out again, type `nwinstall, remove`. The start-up line is written once: running `nwinstall`
+again, or having the older `nwinstall, downloadoff` line in `profile.do`, never gives you a second menu. If your
+`profile.do` already builds a "Network Analysis" menu in some other way, `nwinstall` tells you and adds nothing.
+To install without the menu, add `nogui`: `nwinstall, everything nogui`. If a dialog file exists in two folders of
+the ado path, `nwinstall, dupcheck` shows which copy Stata uses; nothing is deleted.
 
 This is worth doing even if you are comfortable typing syntax. nwcommands has 120 dialog boxes
 covering nearly every command, and they are a fast way to check an option name or its exact syntax

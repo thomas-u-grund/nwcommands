@@ -33,6 +33,8 @@ from(string)
 dest(string)
 models
 everything
+nogui
+dupcheck
 modelpkg(namelist)
 release(string)
 modelsfrom(string)]
@@ -40,8 +42,8 @@ modelsfrom(string)]
 
 | | |
 |---|---|
-| `gui` | install the "Network Analysis" menu and the dialog boxes permanently on your Stata (the older name `permanently` still works) |
-| `remove` | remove the "Network Analysis" menu from your Stata |
+| `gui` | install the "Network Analysis" menu permanently on your Stata (the older name `permanently` still works); it is set up once, however often you type it - see [The menu is installed once](nwinstall) |
+| `remove` | remove the "Network Analysis" menu from your Stata, the line `nwinstall, usermenu` from **profile.do**, and the nwcommands files |
 | `help` | download the help files |
 | `ado` | download the core command (.ado) files |
 | `ext` | accepted for backward compatibility, does nothing (the "extension" commands it used to download separately - [nwdissimilar](nwdissimilar), [nwhierarchy](nwhierarchy), [nwdendrogram](nwdendrogram) - are ordinary commands shipped with every other `ado`/`help` install, and were never genuinely distinct from the rest of the package) |
@@ -50,13 +52,15 @@ modelsfrom(string)]
 | `update` | refresh the installed menu (an internal, self-recursive flag: re-invokes `nwinstall, help usermenu`) |
 | `downloadoff` | rebuild the menu from what is already installed, without downloading anything (used internally by **profile.do** integration; equivalent to `usermenu` for this purpose) |
 | `menu(string)` | install in this menu; default = "stUser" |
-| `all` | download the core commands, help files, and dialog boxes, and install them permanently |
+| `all` | download the core commands, help files, and dialog boxes, and set up the menu (as `gui`); with `nogui` the menu is left out |
 | `path(string)` | directory where profile.do is installed; default: sysdir_stata |
 | `localcopy` | install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see [Computers without internet access or admin rights](nwinstall) below |
 | `from(string)` | with `localcopy`: the local folder to copy nwcommands files from; default: the current directory |
 | `dest(string)` | with `localcopy`: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case) |
 | `models` | also install the four model packages `nwsaom`, `nwergm`, `nwdynam` and `nwrem` (see below); with `remove` they are uninstalled |
-| `everything` | install the core (everything `all` installs) and the four model packages (what `models` installs) as one set, and show all five versions at the end |
+| `everything` | install the core (everything `all` installs) and the four model packages (what `models` installs) as one set, set up the menu (as `gui`), and show all five versions at the end |
+| `nogui` | with `all` or `everything`: do not set up the menu and do not touch **profile.do** |
+| `dupcheck` | report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing |
 | `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
 | `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
 | `modelsfrom(string)` | with `models`: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs) |
@@ -71,4 +75,4 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.2, 26 October 2026* ([check your installed version](nwversion))

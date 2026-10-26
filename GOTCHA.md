@@ -747,3 +747,13 @@ The tie list that `nwplot` draws holds both (i,j) and (j,i) of an undirected tie
 ## `nwgeodesic ... force` on an unvalued network was 1000 times slower than without it (fixed 2026-10-26)
 
 `force` only waives the 100-node refusal for VALUED networks without the plugin; the unvalued branch tested `nodes > 100 & force == ""`, so with `force` it fell through to the Mata `"dijkstra"` routine (37 s at 600 nodes) while the default path used the native hop-count routine. Time the same command with and without each option before blaming the result network: the distance call was the whole cost, `nwduplicate`/`set_edge` take milliseconds.
+
+
+## nwinstall: `all` already sets up the menu; an option called `nogui` is swallowed by `gui`; the menu is "cleared, then built" (3.9.2)
+
+- `nwinstall, all` (and so `everything`) has always set `permanently`, i.e. it writes `nwinstall, usermenu` to profile.do and builds the menu. Older README/website texts said "add `gui` to also get the menu"; that was wrong. `models`/`modelpkg()` alone never touch the menu. `nogui` (3.9.2) turns it off for `all`/`everything`.
+- With the option `gui` declared in `syntax`, Stata reads a typed `nogui` as the negation of `gui` and sets nothing, no error. `nwinstall` therefore reads `nogui` from the raw `0` and removes it before `syntax`. Do not declare an option whose name is `no` + another option.
+- The menu is built after `window menu clear` inside `nwinstall_menu`; Stata has no listing of menu items, so tests check the structure of the program statically (no title appended twice) and the profile.do lines. In `-e` batch mode `window menu` prints "request ignored because of batch mode" and returns 0.
+- The profile.do line has existed in four spellings: `run nwinstall_dlg.do` (1.1.x), `nwinstall, downloadoff` (1.2 to 2.x), `nwinstall, usermenu` (3.x). `nwinstall_classify` recognises them; anything else that looks like a menu line is "foreign" and is never deleted.
+- `nwinstall, remove` used to try `ado uninstall nwcommands-ado` etc. only; the files live in the numbered packages (`-ado1`, `-hlp1`, `-dlg1`, ...), so nothing was removed.
+- In a macro, `findfile name, all` returns r(fn) as a list of quoted paths (plain path with one hit). Reading source files that contain backticks into a macro needs them replaced first (`filefilter`), or the line breaks the quote balance (test_nwinstall_gui.do).
