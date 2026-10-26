@@ -87,4 +87,4 @@ Blau, P.M. (1977). *Inequality and Heterogeneity: A Primitive Theory of Social S
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))

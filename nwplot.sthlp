@@ -453,6 +453,11 @@ all continue to work exactly as they would without {opt export()}.
 	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
 	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
 	  {bf:r(interactive)}	same as {bf:r(fname)}
+	  {bf:r(edgewidth)}	{cmd:values}, {cmd:edgesize} or {cmd:binary}: how the edge widths were set
+
+	Scalars:
+	  {bf:r(signcolor)}	1 if the sign colours (solid navy, dashed cranberry) were used
+	  {bf:r(modesymbols)}	1 if the two modes of a two-mode network got their own symbols
 
 {title:Two-mode networks}
 
@@ -472,9 +477,6 @@ dyads are curved apart from their asymmetric counterparts by default ({opt arcst
 directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless {opt color()} or {opt symbol()} is given; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}). Self-loops: not rendered -
 a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
 in the package's own visualization roadmap rather than fixed here.
-
-{pstd}
-Stored results: {cmd:r(edgewidth)} ({cmd:values}, {cmd:edgesize} or {cmd:binary}), {cmd:r(signcolor)} (1 if the sign colours were used) and {cmd:r(modesymbols)} (1 if the two modes got their own symbols).
 
 {title:Limits}
 

@@ -212,7 +212,9 @@ The graph itself is unaffected by `export()` - it remains the normal, currently 
 
 ## Supported network types
 
-Binary: yes. Weighted: yes (via `edgesize()`/`edgecolor()` - see the shortest-path example above). Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual) dyads are curved apart from their asymmetric counterparts by default (`arcstyle(automatic)`) so both directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; `layout(bipartite)` puts the two modes in two rows (`igraph::layout_as_bipartite`); the two modes are not coloured differently unless a variable holding the mode (1 or 2) per node is passed to `color()` or `symbol()`. Self-loops: not rendered - a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded in the package's own visualization roadmap rather than fixed here.
+Binary: yes. Weighted: yes. On a valued network the widths of the edges follow the tie values by default (as `edgesize(`*network*`)` with 1 to 4 units; `binary` switches it off; `edgesize()` sets the 1 to 8 range and any other network). The values never change the colour of an edge unless you ask for it with `edgecolor()`. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and the width follows the absolute value (`nosign` switches the colours off; `binary` keeps the colours and drops the widths). The layouts (`layout()`) use the ties, not their values. Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual) dyads are curved apart from their asymmetric counterparts by default (`arcstyle(automatic)`) so both directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless `color()` or `symbol()` is given; `layout(bipartite)` puts the two modes in two rows (`igraph::layout_as_bipartite`). Self-loops: not rendered - a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded in the package's own visualization roadmap rather than fixed here.
+
+Stored results: `r(edgewidth)` (`values`, `edgesize` or `binary`), `r(signcolor)` (1 if the sign colours were used) and `r(modesymbols)` (1 if the two modes got their own symbols).
 
 ## Stored results
 
@@ -229,4 +231,4 @@ Binary: yes. Weighted: yes (via `edgesize()`/`edgecolor()` - see the shortest-pa
 
 ---
 
-*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))

@@ -4,8 +4,8 @@ program nwdyadprob
 	
 	unw_defs
 
-	if "`density'" != "" & "`weightnet'" == "" {
-		di "{err}Option {bf:density()} needs a weight network: {bf:nwdyadprob} {it:weightnet}{bf:, density(}{it:#}{bf:)} places the ties with probabilities proportional to its tie values. Without a weight network use {bf:mat()} or {help nwrandom}."
+	if "`density'" != "" & "`weightnet'" == "" & "`mat'" == "" {
+		di "{err}Option {bf:density()} needs a weight network or {bf:mat()}: {bf:nwdyadprob} {it:weightnet}{bf:, density(}{it:#}{bf:)} places the ties with probabilities proportional to the tie values of the weight network (or of the matrix in {bf:mat()}). Without either use {help nwrandom}."
 		error 198
 	}
 	

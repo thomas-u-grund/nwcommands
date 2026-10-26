@@ -12,6 +12,15 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: plots show tie values, signs and the two modes
+
+**nwcommands 3.9.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **nwcommands 3.9.0. The default pictures of `nwplot`, `nwmovie` and `nwplotmatrix` change for valued, signed and two-mode networks, and `nwturnover` changes on two-mode networks; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.0).**
+  - *Valued networks.* `nwplot` draws the tie values as edge widths (`binary` gives the old picture). *Signed networks.* Positive ties are solid navy, negative ties dashed cranberry, with a legend (`nosign` gives the old colours); the width follows the absolute value. *Two-mode networks.* The two modes get different symbols and colours and a legend unless `color()` or `symbol()` is given.
+  - *`nwplotmatrix`* has a colour legend by default and, for a two-mode network, groups the nodes by mode with a line between the modes. *`nwturnover`* on a two-mode network counts only the ties between the modes (the cells inside a mode were counted as ties present in both networks, so the counts and the Jaccard index were wrong).
+  - *Also.* `nwdyadprob` with `density()` and no weight network stops with a message; `nwaltergen, wmean` notes that the weights of a signed network keep their signs; `nwplot ... if ..., edgesize()` works.
+
 ## 26 October 2026: bipartite motifs, and a two-mode network gets its two-mode form
 
 **nwcommands 3.8.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.8.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
