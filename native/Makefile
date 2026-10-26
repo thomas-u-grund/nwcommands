@@ -19,6 +19,7 @@
 #
 # macOS (universal binary, as in Stata's documented recipe):  make macos
 # Linux (run on a Linux host or CI runner):                   make unix
+# Tests without Stata (any platform with a C compiler):          make test
 # Windows (Visual Studio x64 Native Tools prompt):
 #     cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c ^
 #        /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
@@ -26,7 +27,7 @@
 CC = clang
 CFLAGS = -O2 -ffp-contract=off -Wall -Ispi
 
-.PHONY: macos unix clean macos-nwgraph unix-nwgraph
+.PHONY: macos unix clean macos-nwgraph unix-nwgraph test
 
 macos: macos-nwgraph
 
@@ -51,6 +52,13 @@ unix-nwgraph:
 	@echo "Built ../lib/plugins/unix/nwgraph_unix.plugin"
 	@file ../lib/plugins/unix/nwgraph_unix.plugin
 
+# Stata-free test of the kernels (no plugin, no Stata): see test/README.txt and
+# .github/workflows/test-kernels.yml.  Run from native/; --small skips the cases of 66,000 nodes and more.
+test:
+	$(CC) -O2 -ffp-contract=off -Wall -Wextra -Itest/stub -I. test/test_kernels.c -o test/test_kernels -lm
+	cd .. && native/test/test_kernels
+
 clean:
+	rm -f test/test_kernels
 	rm -f nwgraph.x86_64 nwgraph.arm64 \
 		../lib/plugins/macos/nwgraph_macos.plugin ../lib/plugins/unix/nwgraph_unix.plugin

@@ -31,6 +31,7 @@ BEGIN
   CHECKBOX cx_fixedlayout 290 164 190 ., label("fixedlayout") option(fixedlayout)
   TEXT tx_sp_iterations 20 192 260 ., label("iterations for the layout algorithm; default = 500")
   SPINNER sp_iterations 290 192 70 ., default(500) max(999999) min(1) nomem option(iterations)
+  CHECKBOX cx_binary 380 192 155 ., label("binary (ignore tie values)") option(binary)
   TEXT tx_ed_duration 20 220 260 ., label("panel mode: milliseconds per wave-to-wave transition; default = 800")
   EDIT ed_duration 290 220 100 ., numonly nomem option(duration)
   TEXT tx_ed_easing 20 248 260 ., label("panel mode: Cytoscape.js easing name; default = ease-in-out-cubic")
@@ -109,6 +110,7 @@ BEGIN
 		optionarg main.cb_layout
 		option main.cx_fixedlayout
 		optionarg main.sp_iterations
+		option main.cx_binary
 		optionarg main.ed_duration
 		optionarg main.ed_easing
 		optionarg main.ed_window

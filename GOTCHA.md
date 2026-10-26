@@ -6,6 +6,18 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## `nwset, mat(<expression>)` evaluates the expression four times
+
+`nwset` reads its `mat()` argument as a Mata expression and uses it for the row count, the column count, the number of modes and the copy. An expensive expression such as `netobj->correlate_nodes(1)` (2.5 seconds at 5,000 nodes) ran four times: `nwcorrelate` took 10.3 seconds instead of 2.7. Form the matrix once in a Mata variable (a `tempname`) and pass its name. The native similarity kernels (plugin generation 12) return a matrix from a base matrix plus the cells that differ; the global `NW_SIMMODE` (`dense` or `sparse`) forces one of the two ways for the tests.
+
+## Mata cannot broadcast a column against a row, and `max()` is not Stata's
+
+`a :+ a'` raises conformability error 3200 for a column `a` (build the outer sum as `(a, J(n,1,1)) * (J(n,1,1), a)'`, one BLAS call). In a Stata `local x = max(...)` the function takes plain arguments (`max(1, 5*scalar(s))`); the Mata form `max((1, x))` gives "invalid name".
+
+## Mata variables that a function fills must exist before the call
+
+`mata: myfun(netobj, T, K, M)` with `T` not yet defined stops with 3499 `__000002 not found`: define the output arguments first (`mata: T = J(0,3,.)`). Also: `cat > /tmp/x` without input hangs a shell tool call (it reads stdin).
+
 ## Mata libraries must be built with the OLDEST supported Stata (Stata 17), never a newer one
 
 The 2026-10-25 releases (core 3.5.0, nwsaom 1.0.7, nwergm 1.2.0, nwdynam 1.1.0, nwrem 1.0.5) shipped `.mlib` files built with Stata 18.
@@ -757,3 +769,18 @@ The tie list that `nwplot` draws holds both (i,j) and (j,i) of an undirected tie
 - The profile.do line has existed in four spellings: `run nwinstall_dlg.do` (1.1.x), `nwinstall, downloadoff` (1.2 to 2.x), `nwinstall, usermenu` (3.x). `nwinstall_classify` recognises them; anything else that looks like a menu line is "foreign" and is never deleted.
 - `nwinstall, remove` used to try `ado uninstall nwcommands-ado` etc. only; the files live in the numbered packages (`-ado1`, `-hlp1`, `-dlg1`, ...), so nothing was removed.
 - In a macro, `findfile name, all` returns r(fn) as a list of quoted paths (plain path with one hit). Reading source files that contain backticks into a macro needs them replaced first (`filefilter`), or the line breaks the quote balance (test_nwinstall_gui.do).
+
+
+## Native kernels: `long` is 32 bits under MSVC; no `long` for sizes (2026-10-26)
+
+- The Windows plugin is built with `cl` (MSVC), where `long` has 32 bits (macOS and Linux: 64). Nothing showed the difference because the CI builds only compiled the plugin and no test ran on Windows or Linux. All kernels now use `nwint` (`int64_t`, `native/nwtypes.h`) for indices, counters, offsets and products; `size_t` for byte counts with EACH factor cast before the multiplication (`(size_t)a * (size_t)b * sizeof(x)`); `uint64_t` for bit sets and generator state. Never write a plain `long` in `native/` and never print a 64-bit value with `%ld` (cast to `long long`, `%lld`).
+- The old code was less wrong than feared: the authors had kept sums in `double` and used `int64_t` in the motif census, so compiling the OLD sources with `long` forced to 32 bits (`-Dlong=int`, the harness supports `-DNW_EMULATE_LONG32`) and running all 88 cases plus a 3,500-node dense stress run under UBSan found no overflow. What remains with 32-bit `long` are latent cases beyond the documented limits (diagnostic counters of very long searches, bit-set offsets above about 370,000 nodes). Do not take the old harness result as proof for new code: write the new kernel with `nwint` from the start.
+- `native/test/test_kernels.c` compiles `nwgraph.c` itself against `native/test/stub/stplugin.h`, so it tests the shipped kernels but not Stata's plugin interface, the ado/Mata glue, the GUI or the codesign step. The golden file is the macOS plugin's answer: when a kernel changes ON PURPOSE (new `NWCOMB_VERSION`), regenerate it with `native/test/tools/make_golden_fixtures.do` (README in that folder) and read the diff.
+- The harness defines the missing value as 2^1023 (`SV_missval`) and treats NaN as missing, as Stata does when a plugin stores a NaN. Results from `long double` code (the dangling-node sum of PageRank) can differ in the last bits between Linux/Intel (80-bit), Windows and Apple silicon (64-bit): the harness compares floating-point results with 1e-9 relative tolerance, integer-valued results exactly.
+- The Windows plugin line in `build-plugins.yml` (`cl /LD /DSYSTEM=STWIN32 ...`) has no `/O2`: `cl` without an optimisation option does not optimise. Not changed here; the optimised build is what `test-kernels.yml` times. Consider `/O2` at the next plugin rebuild.
+- The time limit of the n-clique/n-clan/k-plex searches uses `clock()`: CPU time on macOS and Linux, wall-clock time on Windows.
+
+
+## Mata functions defined in an ado file are gone after the program has run (`_nwwlayout.ado`)
+
+The weighted layouts (`kk`, `frucht` with tie values) are Mata functions in `_nwwlayout.ado`, not in `unw_core.do`, so adding them needed no Mata-library change and no rebuild of the four model packages. Mata functions defined below `end` of an ado program exist only while the program runs: `mata: mata which nw_wkklayout()` (or a direct call from a do-file) afterwards says "not found". Call them through the program (`_nwwlayout, pmat() method() iterations() out() [start()]`, which hands the coordinates back in a Mata matrix of the name you give) and test them through `nwplot`/`nwmovie`. The program returns `r(weighted)` = 0 when the values cannot be used (signed network, all ties equal, fewer than two nodes), and the caller then runs the old unweighted code unchanged: that is how unvalued networks stay bit-identical. Speed: the compiled `kk` kernel (`ALG_KK_STRESS` in `native/nwgraph.c`) takes only a 0/1 network; a weighted kernel (Dijkstra distances, then the same sweeps) would make the weighted `kk` about 15 times faster.

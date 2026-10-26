@@ -66,7 +66,16 @@ program nwcorrelate_nodes
 	_nwsyntax `netname'
 	local origname "`netname'"
 	
-	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'") `_ud_opts'	
+	// the matrix is formed once (as an expression nwset would evaluate it four times); the native kernel (plugin generation 12 or
+	// later) forms it from the sparse tie lists, an older plugin leaves correlate_nodes()
+	tempname __nwcor
+	mata: `__nwcor' = nw_corrnative(`netobj', `neighborhood')
+	mata: st_local("__fast", strofreal(rows(`__nwcor') > 0))
+	if !`__fast' {
+		mata: `__nwcor' = `netobj'->correlate_nodes(`neighborhood')
+	}
+	nwset, mat(`__nwcor') name("`name'") `_ud_opts'
+	capture mata: mata drop `__nwcor'
 	_nwsyntax
 	
 	mata: st_rclear()
@@ -244,7 +253,63 @@ unw_defs
 	_return restore r1
 end
 
+capture mata: mata drop nw_corrnative()
+mata:
+// Native node-by-node similarities (kernel 51 of the nwgraph plugin, plugin generation 12 or later): the base matrix of the
+// pairs without a tie and without a shared neighbour from per-node vectors, the other cells from the sparse tie lists.  A 0 x 0
+// matrix when the kernel is not available (older plugin, no plugin, a network with missing values, set NW_NOFASTKERNELS): the
+// caller then keeps the Mata code.
+real matrix nw_corrnative(pointer(class nw_def scalar) scalar p, real scalar nb)
+{
+	real matrix el, S, r, info
+	real colvector a, u, ii, jj, vv, iso
+	real rowvector aux
+	real scalar n, st, start, cnt, blk, k
 
-
-
-
+	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
+	if (nwg_comb_version() < 12) return(J(0, 0, .))
+	n = p->get_nodes()
+	if (n < 3) return(J(0, 0, .))
+	// a tie of missing value is a tie in the Mata code but is not stored as one: only a network without such cells goes to the kernel
+	if (p->is_dense_built()) {
+		if (missing(*p->get_matrix()) > sum(diagonal(*p->get_matrix()) :>= .)) return(J(0, 0, .))
+	}
+	el = p->edgelist()
+	if (rows(el) > 0) {
+		if (any(el[., 3] :>= .)) return(J(0, 0, .))
+		el = select(el, (el[., 1] :!= el[., 2]) :& (el[., 3] :!= 0))
+	}
+	r = nwg_comb(51, n, el, J(0, 1, .), (1, nb, 0, 0, 2), aux, st)
+	if (st != 0 | rows(r) != n | cols(r) != 4) return(J(0, 0, .))
+	// (the global NW_SIMMODE = dense or sparse forces one of the two ways, for the tests)
+	if (st_global("NW_SIMMODE") == "dense" | (st_global("NW_SIMMODE") != "sparse" & aux[1] > 0.3 * n * n)) {
+		// dense graph: the cells are returned as blocks of columns
+		S = J(n, n, .)
+		blk = max((1, min((1000, floor(4e6 / n)))))
+		for (start = 1; start <= n; start = start + blk) {
+			cnt = min((blk, n - start + 1))
+			r = nwg_comb(51, n, el, J(0, 1, .), (1, nb, start, cnt, 0), aux, st)
+			if (st != 0 | rows(r) != n | cols(r) != cnt) return(J(0, 0, .))
+			S[., start::(start + cnt - 1)] = r
+		}
+		return(S)
+	}
+	a = r[., 1]
+	u = r[., 2]
+	S = -(u * u')
+	start = 1
+	while (start <= n) {
+		r = nwg_comb(51, n, el, J(0, 1, .), (1, nb, start, 2000000, 1), aux, st)
+		if (st != 0 | cols(r) != 3 | aux[1] <= start) return(J(0, 0, .))
+		if (rows(r) > 0) {
+			ii = r[., 1]
+			jj = r[., 2]
+			vv = r[., 3]
+			info = panelsetup(jj, 1)
+			for (k = 1; k <= rows(info); k++) S[ii[|info[k, 1] \ info[k, 2]|], jj[info[k, 1]]] = vv[|info[k, 1] \ info[k, 2]|]
+		}
+		start = aux[1]
+	}
+	return(S)
+}
+end

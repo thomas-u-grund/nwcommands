@@ -50,11 +50,11 @@ Animate two waves of a network (accepts exactly the same arguments as {help nwmo
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - a direct alias for {help nwmovie}; see that command's own identical classification.
+Binary: yes. Directed: yes. Weighted: yes (on valued networks the layouts use the tie values; {opt binary} switches that off, see {help nwplot##valuedlayout:nwplot}). Signed: not checked. Two-mode: not checked - a direct alias for {help nwmovie}; see that command's own identical classification.
 
 {title:See also}
 
 	{help nwmovie}, {help nwplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir lib\plugins\windows
           cd native
-          cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
+          cl /LD /O2 /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
       - name: Fetch WebView2 SDK + WIL headers (nwedit_viewer dependency)
         shell: cmd
         run: |

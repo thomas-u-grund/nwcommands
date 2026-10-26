@@ -87,7 +87,7 @@
 {p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
 {p2col:{opt edgesizeraw}}with {opt edgesize()}: use the tie values themselves for the line widths instead of the 1 to 8 mapping (very large values are cut at 20){p_end}
 {p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
-{p2col:{opt binary}}ignore the tie values: on a valued network the widths of the edges follow the tie values by default (1 to 4 units, the largest absolute value is the widest; all ties of equal value keep the default width); {opt binary} draws all edges with the same width{p_end}
+{p2col:{opt binary}}ignore the tie values: on a valued network the widths of the edges follow the tie values by default (1 to 4 units, the largest absolute value is the widest; all ties of equal value keep the default width) and the layouts {cmd:kk} and {cmd:frucht} use them as strengths; {opt binary} draws all edges with the same width and lays the nodes out as for an unvalued network{p_end}
 {p2col:{opt nosign}}on a signed network (valued, with negative ties) positive ties are drawn solid in navy and negative ties dashed in cranberry, with a legend (the line pattern keeps them apart in black and white); {opt nosign} switches that off. {opt edgecolor()} given by you takes the place of the sign colours{p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
@@ -174,9 +174,9 @@
 {p2line}
 {p2col:{cmd: mds}}modern multidimensional scaling{p_end}
 {p2col:{cmd: mdsclassical}}classical multidimensional scaling{p_end}
-{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout
+{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout; on a valued network the attraction along a tie is multiplied by the tie value (see {help nwplot##valuedlayout:Valued networks and layouts})
 		{p_end}
-{p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout. Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override this scaling{p_end}
+{p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout; on a valued network the distances follow the tie values (see {help nwplot##valuedlayout:Valued networks and layouts}). Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override this scaling{p_end}
 {p2col:{cmd: hierarchy}}Sugiyama-style layered/hierarchical layout - assigns nodes to top-down layers by longest path from sources and orders each layer to reduce edge crossings; meant for directed, roughly acyclic networks (org charts, dependency/citation graphs, event sequences). An undirected network, or one with cycles, still plots (no error, no crash) but degrades to a less meaningful ordering, since there is no edge direction to layer by{p_end}
 {p2col:{cmd: bipartite}}dedicated two-mode layout - the two modes placed in two parallel rows (or two columns with the {opt vertical} sub-option), ordered to reduce crossings between them; requires a two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode}){p_end}
 {p2col:{cmd: circle}}circle layout
@@ -471,12 +471,28 @@ Binary: yes. Weighted: yes. On a valued network the widths of the edges follow t
 {opt binary} switches it off; {opt edgesize()} sets the 1 to 8 range and any other network). The values never change the colour of an
 edge unless you ask for it with {opt edgecolor()}. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and
 the width follows the absolute value ({opt nosign} switches the colours off; {opt binary} keeps the colours and drops the widths).
-The layouts ({opt layout()}) use the ties, not their values.
+The layouts {cmd:kk} (the default) and {cmd:frucht} use the tie values as strengths on a valued network (see {help nwplot##valuedlayout:Valued networks and layouts}; {opt binary} switches it off), the other layouts use the ties only.
 Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
 dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
 directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless {opt color()} or {opt symbol()} is given; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}). Self-loops: not rendered -
 a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
 in the package's own visualization roadmap rather than fixed here.
+
+{marker valuedlayout}{...}
+{title:Valued networks and layouts}
+
+{pstd}
+On a valued network (one-mode, all tie values positive) the default layout {cmd:kk} and the layout {cmd:frucht} use the tie values as tie
+strengths, as {cmd:igraph::plot()} does for a graph with a {cmd:weight} edge attribute ({cmd:layout_with_fr(weights=)},
+{cmd:layout_with_kk(weights=)}): strongly tied nodes end up close together. {cmd:frucht}: the attraction along a tie is multiplied by
+its value. {cmd:kk}: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's
+{cmd:layout_with_kk()} takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean,
+so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both
+directions counts with its larger value. {opt binary} lays the nodes out as for an unvalued network (the layouts
+of nwcommands 3.9 and earlier). If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as {cmd:igraph::plot()} does ({cmd:layout_with_fr()} and
+{cmd:layout_with_kk()} refuse non-positive weights). Two-mode networks, and the layouts {cmd:mds}, {cmd:mdsclassical},
+{cmd:hierarchy}, {cmd:bipartite}, {cmd:circle} and {cmd:grid}, do not use the values. {cmd:kk} with values needs the
+shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
 
 {title:Limits}
 
@@ -499,4 +515,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -235,7 +235,7 @@ program nwmovie
 			// network analysis already assumes elsewhere in this
 			// package, e.g. nwsaom's own wave1()/wave2()).
 			tempvar _nwmv_x _nwmv_y
-			qui nwplot `_nwmv_first', ignorelgc `_nwmv_layout' iterations(`iterations') generate(`_nwmv_x' `_nwmv_y') noopen
+			qui nwplot `_nwmv_first', ignorelgc `_nwmv_layout' iterations(`iterations') generate(`_nwmv_x' `_nwmv_y') noopen `binary'
 			capture graph close _nwplot_interactive
 			graph drop _all
 		}
@@ -255,7 +255,7 @@ program nwmovie
 			// reliably callable from a different .ado file's Mata
 			// code - confirmed directly - which is why these moved.
 			tempvar _nwmv_x1 _nwmv_y1
-			qui nwplot `_nwmv_first', ignorelgc iterations(`iterations') generate(`_nwmv_x1' `_nwmv_y1') noopen
+			qui nwplot `_nwmv_first', ignorelgc iterations(`iterations') generate(`_nwmv_x1' `_nwmv_y1') noopen `binary'
 			capture graph close _nwplot_interactive
 			graph drop _all
 			mata: _nwmv_prevpos = (st_data(., "`_nwmv_x1'"), st_data(., "`_nwmv_y1'"))
@@ -310,13 +310,24 @@ program nwmovie
 				// store, so st_matrix() on it reads back an empty 0x0
 				// matrix instead - referencing it directly here instead.
 				nwtomata `_nwmv_net', mat(`_nwmv_wavemat')
+				// a valued one-mode wave is laid out with the tie values (as nwplot does for wave 1; binary switches it off)
+				local _nwmv_wlay 0
+				if "`binary'" == "" {
+					_nwsyntax `_nwmv_net', other(_nwmvw)
+					if "`_nwmvwvalued'" == "true" & "`_nwmvwis2mode'" != "true" {
+						_nwwlayout, pmat(`_nwmv_wavemat') method(kk) iterations(`iterations') out(_nwmv_newpos) start(_nwmv_prevpos) quiet
+						local _nwmv_wlay = r(weighted)
+					}
+				}
 				mata: _nwmv_waveM = `_nwmv_wavemat'
 				mata: _nwmv_waveM = (_nwmv_waveM :+ _nwmv_waveM') :/ (_nwmv_waveM :+ _nwmv_waveM')
 				mata: _editmissing(_nwmv_waveM, 0)
 				// kklayout() lives in unw_core.do (compiled into
 				// lib/lnwcommands.mlib), so it is directly callable here
 				// with no Stata-matrix round trip needed.
-				mata: _nwmv_prevpos = kklayout(_nwmv_waveM, `iterations', _nwmv_prevpos)
+				if `_nwmv_wlay' mata: _nwmv_prevpos = _nwmv_newpos
+				else mata: _nwmv_prevpos = kklayout(_nwmv_waveM, `iterations', _nwmv_prevpos)
+				capture mata: mata drop _nwmv_newpos
 				qui gen `_nwmv_x' = .
 				qui gen `_nwmv_y' = .
 				mata: st_store((1::rows(_nwmv_prevpos)), ("`_nwmv_x'","`_nwmv_y'"), _nwmv_prevpos)

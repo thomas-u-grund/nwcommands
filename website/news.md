@@ -17,6 +17,22 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 - **nwdynam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.0)). When the compiled plugin file is missing for your platform, a fit of the original structural effect set (choice and rate sub-models) now prints one warning line and runs on the slower Mata engine, as nwergm does; before, the fallback was silent. Results are unchanged.
 - **nwrem 1.0.10** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.10)). The speed statement in the help is replaced by timings of 26 October 2026 against R's relevent: the ratio of the times ranged from 0.75 to 36 over five effect sets and 200 to 20,000 events; nwrem is slower with the recency effects at up to 1,000 events. See [nwrem and R's relevent](/nwrem/r-relevent/). No change in results.
 
+## 26 October 2026: valued layouts, faster similarities, two-mode nwcug
+
+**nwcommands 3.10.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.10.0)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.1.0, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).
+
+- **Results that change: plots of valued networks.** `nwplot` and `nwmovie` (layouts `kk` and `frucht`, the defaults) now use the tie values as strengths, as `igraph::plot()` does: strongly tied nodes lie closer together. The option `binary` restores the earlier positions. Binary networks, two-mode networks, signed networks and the other layouts are not affected.
+- **`nwcug` works on two-mode networks** (it stopped with an error before) with four null models: density, the degrees of mode 1, of mode 2, or of both.
+- **Faster:** `nwcorrelate` and `nwsimilar, type(pearson)` (24 times faster at 5,000 nodes, same numbers), the other types of `nwsimilar` and `nwdissimilar`, and `nwdissimilar, type(manhatten)` (minutes before). New: `nwcommunity, algorithm(dirtlpa)` for two-mode networks (the repeated label propagation of Beckett, 2016). The compiled plug-in has to be the new one: `nwinstall` fetches it; without it the commands give the same numbers, slowly (`algorithm(dirtlpa)` stops with a message).
+- **Windows:** the compiled plug-in is built with optimisation, and all counters in it are 64 bits wide. The compiled kernels now also have a test that runs without Stata on Linux, macOS and Windows.
+
+## 26 October 2026: nwsaom 1.1.0 and the manual for version 1.1
+
+**nwsaom 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **A warning when `nwsaom` has to use the slow Mata engine.** If the compiled plugin cannot be used (its file is missing for your platform, it is older than the model needs, or the model is outside what the plugin covers), `nwsaom` now prints one line before the estimation starts that says why, as `nwergm` already did. Before, the fit ran for a very long time without a message. The results do not change.
+- **Manual for version 1.1.** The nwsaom manual is relabelled and brought up to date: installation with `nwinstall`, the rule that tie values must be 0 or 1, the warning, and the changes of the releases since the last manual. It is archived at Zenodo under the same DOI of all versions, [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); cite it with that DOI and the exact package version from `nwsaom version`.
+
 ## 26 October 2026: the menu is installed once
 
 **nwcommands 3.9.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.2)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.0.11, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).

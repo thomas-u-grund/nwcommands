@@ -38,7 +38,7 @@ temporal network - there is no separate option to choose between them.
 {synopt:{opt noopen}}build the .html file but do not open it in a viewer{p_end}
 {synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
 {synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below){p_end}
-{synopt:{opt binary}}{bf:panel mode}: passed on to {help nwplot}: ignore the tie values (no value widths){p_end}
+{synopt:{opt binary}}{bf:panel mode}: passed on to {help nwplot}: ignore the tie values (no value widths, and the layouts of valued networks are those of unvalued networks){p_end}
 {synopt:{opt nosign}}{bf:panel mode}: passed on to {help nwplot}: no sign colours on signed networks{p_end}
 {synopt:{opth iterations(int)}}iterations for the layout algorithm; default 500{p_end}
 {synopt:{opt color}({it:{help varname}})}color nodes by this variable (broadcast to every network/the cumulative event-mode layout network){p_end}
@@ -84,7 +84,8 @@ still letting the layout itself resettle as the network's structure changes wave
 original behavior instead: one node layout, computed once on the first network only and reused unchanged for every wave - the layout
 itself never moves, at the cost of never reflecting how the network's own structure is changing. An explicit {opt layout()} other than
 {bf:kk} also falls back to this one-shared-layout behavior (see {opt layout()} above), since the per-wave transition relies on {bf:kk}'s
-own warm-start.
+own warm-start. On valued networks every wave's layout uses the tie values as strengths (strongly tied nodes close together), exactly as in
+{help nwplot##valuedlayout:nwplot}; {opt binary} switches that off.
 
 {pstd}
 {bf:Event mode} takes exactly one network declared via {help nwset}'s {opt eventtime()} option - a stream of timestamped
@@ -191,4 +192,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

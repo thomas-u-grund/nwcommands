@@ -1,5 +1,5 @@
 v 3
-d nwcommands: Network Analysis for Stata (version 3.9.2, 26oct2026)
+d nwcommands: Network Analysis for Stata (version 3.10.0, 26oct2026)
 
 p nwcommands
 d nwcommands. Start here - net install this first, then run nwinstall, all

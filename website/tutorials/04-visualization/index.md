@@ -41,6 +41,8 @@ file plot_basic.svg saved as SVG format
 |---|---|
 | ![Circle layout](plot_circle.svg) | ![Kamada-Kawai force-directed layout](plot_kk.svg) |
 
+On a valued network the layouts `kk` and `frucht` use the tie values as strengths (since nwcommands 3.10.0, as `igraph::plot()` does for a graph with a `weight` attribute): strongly tied nodes lie closer together, and the edge widths show the same values. The option `binary` draws the layout from the pattern of ties only, as earlier versions did. A network with negative values keeps the layout of the pattern, and so do the layouts `circle`, `mds`, `hierarchy` and `bipartite`.
+
 ## Styling by attribute
 
 `color()`, `symbol()`, and `size()` each take a variable and map its values onto the plot:

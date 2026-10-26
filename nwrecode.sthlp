@@ -164,4 +164,4 @@ value, or turns ties into missing values, recodes the whole matrix (guarded at 2
 	{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case)
 
 {hline}
-{pstd}{it:nwcommands version 3.9.2, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

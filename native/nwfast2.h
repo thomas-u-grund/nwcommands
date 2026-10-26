@@ -24,11 +24,11 @@
 /* ---------------------------------------------------------------- */
 /* 34: pagerank                                                      */
 /* ---------------------------------------------------------------- */
-static int comb_pagerank(long n, long nties, const long *ei, const long *ej, double d, long maxiter, double tol) {
+static int comb_pagerank(nwint n, nwint nties, const nwint *ei, const nwint *ej, double d, nwint maxiter, double tol) {
 	csr_t O;
 	double *r = NULL, *rn = NULL, *dmass_dummy = NULL;
-	long *outd = NULL;
-	long i, k, iter;
+	nwint *outd = NULL;
+	nwint i, k, iter;
 	int rc = 0;
 
 	(void)dmass_dummy;
@@ -36,7 +36,7 @@ static int comb_pagerank(long n, long nties, const long *ei, const long *ej, dou
 	if (csr_from_edges(&O, n, nties, ei, ej, NULL, 0, 0, 0)) return 2;
 	r = (double *)malloc((size_t)n * sizeof(double));
 	rn = (double *)malloc((size_t)n * sizeof(double));
-	outd = (long *)malloc((size_t)n * sizeof(long));
+	outd = (nwint *)malloc((size_t)n * sizeof(nwint));
 	if (!r || !rn || !outd) { rc = 2; goto done; }
 	for (i = 0; i < n; i++) { outd[i] = O.ptr[i + 1] - O.ptr[i]; r[i] = 1.0 / (double)n; }
 	for (iter = 1; iter <= maxiter; iter++) {
@@ -72,33 +72,33 @@ done:
 /* 35: maximal cliques                                               */
 /* ---------------------------------------------------------------- */
 typedef struct {
-	long n;
-	const long *ptr, *idx;      /* symmetric, sorted, loop-free neighbour lists, 0-based */
-	long minsize;
-	long *mk; long mkstamp;     /* marker with stamps (no clearing) */
-	long *xl, *xt;              /* membership of the current X lists: level token, position */
-	long level;                 /* last level token handed out */
-	long *R; long rlen;         /* the current clique */
-	long *out; long outlen, outcap; long ncl;
-	long *ulog; long ulen, ucap; /* undo log of xl/xt writes: (node, old xl, old xt) */
+	nwint n;
+	const nwint *ptr, *idx;      /* symmetric, sorted, loop-free neighbour lists, 0-based */
+	nwint minsize;
+	nwint *mk; nwint mkstamp;     /* marker with stamps (no clearing) */
+	nwint *xl, *xt;              /* membership of the current X lists: level token, position */
+	nwint level;                 /* last level token handed out */
+	nwint *R; nwint rlen;         /* the current clique */
+	nwint *out; nwint outlen, outcap; nwint ncl;
+	nwint *ulog; nwint ulen, ucap; /* undo log of xl/xt writes: (node, old xl, old xt) */
 	int oom;
 } qbk_t;
 
-static int qbk_isnb(const qbk_t *b, long u, long w) {
-	long lo = b->ptr[u], hi = b->ptr[u + 1] - 1;
+static int qbk_isnb(const qbk_t *b, nwint u, nwint w) {
+	nwint lo = b->ptr[u], hi = b->ptr[u + 1] - 1;
 	while (lo <= hi) {
-		long mid = (lo + hi) / 2;
-		long x = b->idx[mid];
+		nwint mid = (lo + hi) / 2;
+		nwint x = b->idx[mid];
 		if (x == w) return 1;
 		if (x < w) lo = mid + 1; else hi = mid - 1;
 	}
 	return 0;
 }
 
-static int qbk_push_out(qbk_t *b, long v) {
+static int qbk_push_out(qbk_t *b, nwint v) {
 	if (b->outlen == b->outcap) {
-		long nc = b->outcap ? b->outcap * 2 : 1024;
-		long *p = (long *)realloc(b->out, (size_t)nc * sizeof(long));
+		nwint nc = b->outcap ? b->outcap * 2 : 1024;
+		nwint *p = (nwint *)realloc(b->out, (size_t)nc * sizeof(nwint));
 		if (!p) return 1;
 		b->out = p; b->outcap = nc;
 	}
@@ -106,10 +106,10 @@ static int qbk_push_out(qbk_t *b, long v) {
 	return 0;
 }
 
-static int qbk_log(qbk_t *b, long w) {
+static int qbk_log(qbk_t *b, nwint w) {
 	if (b->ulen + 3 > b->ucap) {
-		long nc = b->ucap ? b->ucap * 2 : 3072;
-		long *p = (long *)realloc(b->ulog, (size_t)nc * sizeof(long));
+		nwint nc = b->ucap ? b->ucap * 2 : 3072;
+		nwint *p = (nwint *)realloc(b->ulog, (size_t)nc * sizeof(nwint));
 		if (!p) return 1;
 		b->ulog = p; b->ucap = nc;
 	}
@@ -117,18 +117,18 @@ static int qbk_log(qbk_t *b, long w) {
 	return 0;
 }
 
-typedef struct { long t, w; } qbk_pair_t;
+typedef struct { nwint t, w; } qbk_pair_t;
 static int qbk_paircmp(const void *a, const void *b) {
-	long x = ((const qbk_pair_t *)a)->t, y = ((const qbk_pair_t *)b)->t;
+	nwint x = ((const qbk_pair_t *)a)->t, y = ((const qbk_pair_t *)b)->t;
 	return (x > y) - (x < y);
 }
 
 /* P: ascending node ids, np entries (with "alive" flags); X: list in insertion order, nx entries, room for xcap */
-static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X, long nx, long xcap) {
-	long i, k, v, u, best, cnt, level = 0, ulog0 = 0, nalive, nbranch, *branch = NULL, *bidx = NULL;
-	long *nP = NULL, *nX = NULL; 
+static void qbk_search(qbk_t *b, nwint *P, unsigned char *alive, nwint np, nwint *X, nwint nx, nwint xcap) {
+	nwint i, k, v, u, best, cnt, level = 0, ulog0 = 0, nalive, nbranch, *branch = NULL, *bidx = NULL;
+	nwint *nP = NULL, *nX = NULL; 
 	qbk_pair_t *pairs = NULL;
-	long stamp;
+	nwint stamp;
 
 	if (b->oom) return;
 	if (np == 0 && nx == 0) {
@@ -152,8 +152,8 @@ static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X
 	/* branch: the members of P that are not neighbours of the pivot */
 	stamp = ++b->mkstamp;
 	for (k = b->ptr[u]; k < b->ptr[u + 1]; k++) b->mk[b->idx[k]] = stamp;
-	branch = (long *)malloc((size_t)(np > 0 ? np : 1) * sizeof(long));
-	bidx = (long *)malloc((size_t)(np > 0 ? np : 1) * sizeof(long));
+	branch = (nwint *)malloc((size_t)(np > 0 ? np : 1) * sizeof(nwint));
+	bidx = (nwint *)malloc((size_t)(np > 0 ? np : 1) * sizeof(nwint));
 	if (!branch || !bidx) { b->oom = 1; goto done; }
 	nbranch = 0;
 	for (i = 0; i < np; i++) if (b->mk[P[i]] != stamp) { branch[nbranch] = P[i]; bidx[nbranch] = i; nbranch++; }
@@ -166,13 +166,13 @@ static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X
 	}
 	nalive = np;
 	for (i = 0; i < nbranch; i++) {
-		long dv, m, px;
+		nwint dv, m, px;
 		v = branch[i];
 		dv = b->ptr[v + 1] - b->ptr[v];
 		/* newP = P (current) intersect N(v), ascending */
-		nP = (long *)malloc((size_t)((nalive < dv ? nalive : dv) + 1) * sizeof(long));
+		nP = (nwint *)malloc((size_t)((nalive < dv ? nalive : dv) + 1) * sizeof(nwint));
 		/* newX = X intersect N(v), in X order */
-		nX = (long *)malloc((size_t)((nx < dv ? nx : dv) + 1) * sizeof(long));
+		nX = (nwint *)malloc((size_t)((nx < dv ? nx : dv) + 1) * sizeof(nwint));
 		if (!nP || !nX) { free(nP); free(nX); nP = nX = NULL; b->oom = 1; goto done; }
 		m = 0;
 		if (np <= dv * 4) {
@@ -180,9 +180,9 @@ static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X
 		}
 		else {
 			for (k = b->ptr[v]; k < b->ptr[v + 1]; k++) {
-				long w = b->idx[k], lo = 0, hi = np - 1;
+				nwint w = b->idx[k], lo = 0, hi = np - 1;
 				while (lo <= hi) {
-					long mid = (lo + hi) / 2;
+					nwint mid = (lo + hi) / 2;
 					if (P[mid] == w) { if (alive[mid]) nP[m++] = w; break; }
 					if (P[mid] < w) lo = mid + 1; else hi = mid - 1;
 				}
@@ -197,7 +197,7 @@ static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X
 			pairs = (qbk_pair_t *)malloc((size_t)(dv + 1) * sizeof(qbk_pair_t));
 			if (!pairs) { free(nP); free(nX); nP = nX = NULL; b->oom = 1; goto done; }
 			for (k = b->ptr[v]; k < b->ptr[v + 1]; k++) {
-				long w = b->idx[k];
+				nwint w = b->idx[k];
 				if (b->xl[w] == level) { pairs[m].t = b->xt[w]; pairs[m].w = w; m++; }
 			}
 			qsort(pairs, (size_t)m, sizeof(qbk_pair_t), qbk_paircmp);
@@ -206,10 +206,10 @@ static void qbk_search(qbk_t *b, long *P, unsigned char *alive, long np, long *X
 		}
 		/* the child: its P is all alive, its X has room for the nodes it will append */
 		{
-			long cx = m, *nXc;
+			nwint cx = m, *nXc;
 			unsigned char *ca;
-			long clen = px;
-			nXc = (long *)realloc(nX, (size_t)(cx + clen + 1) * sizeof(long));
+			nwint clen = px;
+			nXc = (nwint *)realloc(nX, (size_t)(cx + clen + 1) * sizeof(nwint));
 			ca = (unsigned char *)malloc((size_t)(clen > 0 ? clen : 1));
 			if (!nXc || !ca) { if (nXc) nX = nXc; free(nP); free(nX); free(ca); nP = nX = NULL; b->oom = 1; goto done; }
 			nX = nXc;
@@ -234,7 +234,7 @@ done:
 	while (b->ulen > ulog0 && level) {
 		b->ulen -= 3;
 		{
-			long w = b->ulog[b->ulen];
+			nwint w = b->ulog[b->ulen];
 			b->xl[w] = b->ulog[b->ulen + 1];
 			b->xt[w] = b->ulog[b->ulen + 2];
 		}
@@ -242,49 +242,49 @@ done:
 	free(branch); free(bidx);
 }
 
-static int comb_cliques(long n, long nties, const long *ei, const long *ej, long minsize) {
-	long m2 = 2 * nties, k, i, j, w;
-	long *R = NULL, *C = NULL, *perm = NULL, *ptr = NULL, *idx = NULL;
-	long *P = NULL;
+static int comb_cliques(nwint n, nwint nties, const nwint *ei, const nwint *ej, nwint minsize) {
+	nwint m2 = 2 * nties, k, i, j, w;
+	nwint *R = NULL, *C = NULL, *perm = NULL, *ptr = NULL, *idx = NULL;
+	nwint *P = NULL;
 	unsigned char *alive = NULL;
 	qbk_t b;
 	int rc = 0;
 
 	memset(&b, 0, sizeof(b));
 	for (k = 0; k < nties; k++) if (ei[k] == ej[k]) { pub_result(3, 0, 0); return 0; }
-	R = (long *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(long));
-	C = (long *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(long));
+	R = (nwint *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(nwint));
+	C = (nwint *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(nwint));
 	if (!R || !C) { rc = 2; goto done; }
 	for (k = 0; k < nties; k++) { R[2 * k] = ei[k]; C[2 * k] = ej[k]; R[2 * k + 1] = ej[k]; C[2 * k + 1] = ei[k]; }
 	perm = fast_sort_rc(n, m2, R, C);
 	if (m2 > 0 && !perm) { rc = 2; goto done; }
-	ptr = (long *)calloc((size_t)(n + 2), sizeof(long));
-	idx = (long *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(long));
+	ptr = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	idx = (nwint *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(nwint));
 	if (!ptr || !idx) { rc = 2; goto done; }
 	/* sorted by (row, col); drop duplicates */
 	j = 0;
 	for (i = 0; i < m2; i++) {
-		long q = perm[i];
+		nwint q = perm[i];
 		if (j > 0 && R[q] == R[perm[i - 1]] && C[q] == C[perm[i - 1]]) continue;
 		idx[j++] = C[q] - 1;
 		ptr[R[q]]++;
 	}
 	{
-		long run = 0;
-		for (i = 0; i < n; i++) { long c = ptr[i + 1]; ptr[i] = run; run += c; }
+		nwint run = 0;
+		for (i = 0; i < n; i++) { nwint c = ptr[i + 1]; ptr[i] = run; run += c; }
 		ptr[n] = run;
 	}
 	b.n = n; b.ptr = ptr; b.idx = idx; b.minsize = minsize;
-	b.mk = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
-	b.xl = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
-	b.xt = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
-	b.R = (long *)malloc((size_t)(n + 1) * sizeof(long));
-	P = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
+	b.mk = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
+	b.xl = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
+	b.xt = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
+	b.R = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
+	P = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
 	alive = (unsigned char *)malloc((size_t)(n > 0 ? n : 1));
 	if (!b.mk || !b.xl || !b.xt || !b.R || !P || !alive) { rc = 2; goto done; }
 	for (i = 0; i < n; i++) { P[i] = i; alive[i] = 1; }
 	{
-		long *X0 = (long *)malloc((size_t)(n + 1) * sizeof(long));
+		nwint *X0 = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 		if (!X0) { rc = 2; goto done; }
 		qbk_search(&b, P, alive, n, X0, 0, n);
 		free(X0);
@@ -313,30 +313,30 @@ done:
    Returns 1 when handled (results in *mf, *bs, *bt), 0 when the input is not covered (a self-loop: the
    caller runs the flow search), 2 when out of memory.
    ---------------------------------------------------------------- */
-static int kconn2_search(long n, const long *ei, const long *ej, long m, long delta, long v0, long *mf, long *bs, long *bt) {
-	long e, i, j, k, v, w, nb = 0, top, ntop;
-	long *ptr = NULL, *adj = NULL, *cur = NULL, *disc = NULL, *low = NULL, *par = NULL, *it = NULL;
-	long *stk = NULL, *sa = NULL, *sb = NULL, *bhead = NULL, *bnext = NULL, *bid = NULL, *last = NULL, *bmark = NULL;
-	long nbl = 0, nmem = 0, cnt = 0, minflow = delta, best_s = 0, best_t = 0, firstq_s = 0, firstq_t = 0, counter = 0;
+static int kconn2_search(nwint n, const nwint *ei, const nwint *ej, nwint m, nwint delta, nwint v0, nwint *mf, nwint *bs, nwint *bt) {
+	nwint e, i, j, k, v, w, nb = 0, top, ntop;
+	nwint *ptr = NULL, *adj = NULL, *cur = NULL, *disc = NULL, *low = NULL, *par = NULL, *it = NULL;
+	nwint *stk = NULL, *sa = NULL, *sb = NULL, *bhead = NULL, *bnext = NULL, *bid = NULL, *last = NULL, *bmark = NULL;
+	nwint nbl = 0, nmem = 0, cnt = 0, minflow = delta, best_s = 0, best_t = 0, firstq_s = 0, firstq_t = 0, counter = 0;
 	char *isnb = NULL, *isnb2 = NULL;
 	int rc = 1;
 
 	for (e = 0; e < m; e++) if (ei[e] == ej[e]) return 0;
-	ptr = (long *)calloc((size_t)(n + 2), sizeof(long));
-	adj = (long *)malloc((size_t)(m > 0 ? m : 1) * sizeof(long));
-	cur = (long *)malloc((size_t)(n + 2) * sizeof(long));
-	disc = (long *)calloc((size_t)(n + 2), sizeof(long));
-	low = (long *)calloc((size_t)(n + 2), sizeof(long));
-	par = (long *)calloc((size_t)(n + 2), sizeof(long));
-	it = (long *)malloc((size_t)(n + 2) * sizeof(long));
-	stk = (long *)malloc((size_t)(n + 2) * sizeof(long));
-	sa = (long *)malloc((size_t)(m + 1) * sizeof(long));
-	sb = (long *)malloc((size_t)(m + 1) * sizeof(long));
-	bhead = (long *)malloc((size_t)(n + 2) * sizeof(long));
-	bnext = (long *)malloc((size_t)(2 * n + 4) * sizeof(long));
-	bid = (long *)malloc((size_t)(2 * n + 4) * sizeof(long));
-	last = (long *)malloc((size_t)(n + 2) * sizeof(long));
-	bmark = (long *)calloc((size_t)(n + 2), sizeof(long));
+	ptr = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	adj = (nwint *)malloc((size_t)(m > 0 ? m : 1) * sizeof(nwint));
+	cur = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
+	disc = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	low = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	par = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
+	it = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
+	stk = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
+	sa = (nwint *)malloc((size_t)(m + 1) * sizeof(nwint));
+	sb = (nwint *)malloc((size_t)(m + 1) * sizeof(nwint));
+	bhead = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
+	bnext = (nwint *)malloc((size_t)(2 * n + 4) * sizeof(nwint));
+	bid = (nwint *)malloc((size_t)(2 * n + 4) * sizeof(nwint));
+	last = (nwint *)malloc((size_t)(n + 2) * sizeof(nwint));
+	bmark = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
 	isnb = (char *)calloc((size_t)(n + 2), 1);
 	isnb2 = (char *)calloc((size_t)(n + 2), 1);
 	if (!ptr || !adj || !cur || !disc || !low || !par || !it || !stk || !sa || !sb || !bhead || !bnext || !bid || !last || !bmark || !isnb || !isnb2) { rc = 2; goto out; }
@@ -367,17 +367,17 @@ static int kconn2_search(long n, const long *ei, const long *ej, long m, long de
 		else {
 			top--;
 			if (top > 0) {
-				long u = stk[top - 1];
+				nwint u = stk[top - 1];
 				if (low[v] < low[u]) low[u] = low[v];
 				if (low[v] >= disc[u]) {
 					/* a block closes at u: pop its edges down to (u, v) */
 					nbl++;
 					while (ntop > 0) {
-						long a, b, x2;
+						nwint a, b, x2;
 						ntop--;
 						a = sa[ntop]; b = sb[ntop];
 						for (x2 = 0; x2 < 2; x2++) {
-							long z = x2 ? b : a;
+							nwint z = x2 ? b : a;
 							if (last[z] != nbl) {
 								last[z] = nbl;
 								bnext[nmem] = bhead[z]; bid[nmem] = nbl; bhead[z] = nmem; nmem++;
@@ -391,14 +391,14 @@ static int kconn2_search(long n, const long *ei, const long *ej, long m, long de
 	}
 	/* the queries in the order of the flow search */
 	{
-		long nv0 = ptr[v0 + 1] - ptr[v0];
-		const long *nbv0 = adj + ptr[v0];
-		long stampc = 0;
+		nwint nv0 = ptr[v0 + 1] - ptr[v0];
+		const nwint *nbv0 = adj + ptr[v0];
+		nwint stampc = 0;
 		for (i = 0; i < nv0; i++) isnb[nbv0[i]] = 1;
 		/* blocks of v0 */
 		for (k = bhead[v0]; k >= 0; k = bnext[k]) bmark[bid[k]] = 1;
 		for (i = 1; i <= n; i++) {
-			long f;
+			nwint f;
 			if (i == v0 || isnb[i]) continue;
 			if (!disc[i]) f = 0;
 			else {
@@ -413,12 +413,12 @@ static int kconn2_search(long n, const long *ei, const long *ej, long m, long de
 		for (k = bhead[v0]; k >= 0; k = bnext[k]) bmark[bid[k]] = 0;
 		/* non-adjacent pairs among the neighbours of v0 */
 		for (i = 0; i < nv0 && !(minflow < 2); i++) {
-			long ni = nbv0[i];
+			nwint ni = nbv0[i];
 			stampc++;
 			for (e = ptr[ni]; e < ptr[ni + 1]; e++) isnb2[adj[e]] = 1;
 			for (k = bhead[ni]; k >= 0; k = bnext[k]) bmark[bid[k]] = stampc;
 			for (j = i + 1; j < nv0 && !(minflow < 2); j++) {
-				long nj = nbv0[j], f = 1;
+				nwint nj = nbv0[j], f = 1;
 				if (isnb2[nj]) continue;
 				for (k = bhead[nj]; k >= 0; k = bnext[k]) if (bmark[bid[k]] == stampc) { f = 2; break; }
 				cnt++;
@@ -437,11 +437,11 @@ out:
 }
 
 /* called by comb_call() for the codes 34..39 */
-static int comb_fast2(long alg, long n, long nties, const long *ei, const long *ej, const double *ew, const double *nv, const double *p) {
+static int comb_fast2(nwint alg, nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv, const double *p) {
 	(void)ew; (void)nv;
 	switch (alg) {
-		case ALG_PAGERANK: return comb_pagerank(n, nties, ei, ej, p[3], (long)p[4], p[5]);
-		case ALG_CLIQUES:  return comb_cliques(n, nties, ei, ej, (long)p[3]);
+		case ALG_PAGERANK: return comb_pagerank(n, nties, ei, ej, p[3], (nwint)p[4], p[5]);
+		case ALG_CLIQUES:  return comb_cliques(n, nties, ei, ej, (nwint)p[3]);
 		default: SF_error("nwgraph: unknown algorithm code\n"); return 198;
 	}
 }
