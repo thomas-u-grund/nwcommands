@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: nwergm 1.3.1
+
+**nwergm 1.3.1: corrections** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.1)). No estimate changes.
+
+- **`estat mcmcdiag`.** With `quietly` the command now prints nothing (a stray row was printed before). The header shows the thinning interval of the final sample and, when the adaptive sampler spaced the draws further apart than requested, a line `Requested interval`. The note at the end of the report now advises `mcmleeffectivesize()` (and `mcmcsamplesize()` or `mcmcinterval()` for fixed-size samples).
+- **Documentation.** The README is updated and the manual for the 1.3 series is in the repository. The speed statement is corrected: on the eight benchmark models nwergm 1.3 is 2.9 to 9.4 times faster than R's `ergm` 4.12.0, and 1.2.3 was slower than R on six of the eight.
+
 ## 26 October 2026: nwergm 1.3.0
 
 **nwergm 1.3.0: faster, R's sampling defaults** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.0)). It works with nwcommands 3.6.0 and later.

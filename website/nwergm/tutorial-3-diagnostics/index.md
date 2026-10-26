@@ -16,7 +16,7 @@ reproduce the network?* (`estat gof`). The page also shows a model that cannot b
   `estat mcmcdiag`; `estat gof` works for every fit.
 
 **Data.** The Lazega lawyers' friendship network (directed, 71 lawyers) and the Kapferer tailor shop
-network (undirected, 43 workers), both shipped with `nwcommands`. Run with `nwergm` 1.3.0 and core 3.10.0;
+network (undirected, 43 workers), both shipped with `nwcommands`. Run with `nwergm` 1.3.1 and core 3.10.0;
 the script and log are in [example.do](example.do) and [example.log](example.log). The output of
 `estat mcmcdiag` and `estat gof` is long, so only the first tables are shown here.
 
@@ -29,7 +29,7 @@ effective sample size reaches 64 (`mcmleeffectivesize()`, default 64). `mcmleeff
 fixed-size samples of earlier versions; `mcmcsamplesize()` is then the number of draws, otherwise it is the base size.
 
 The first fit below asks for the old behaviour explicitly (a short interval and a fixed sample of 3,000 draws), because it is
-a good example of a chain that mixes badly. The second fit uses the 1.3.0 defaults. Both are 1.3.0 output.
+a good example of a chain that mixes badly. The second fit uses the 1.3.0 defaults. Both are 1.3.1 output.
 
 ```stata
 . nwwebuse lazega, nwclear
@@ -95,8 +95,9 @@ How to read it:
 - **Acceptance rate** is the share of proposed changes that the sampler accepted; very low values mean
   that the sampler hardly moves.
 - **Autocorr** is the correlation between draws that are `Thinning interval` steps apart. Values near 1
-  mean that consecutive draws are nearly copies of each other.
-- **ESS**, the effective sample size, is the number of independent draws that the 3,000 draws are worth.
+  mean that consecutive draws are nearly copies of each other. The interval shown is that of the final sample; when
+  the adaptive sampler had to space the draws further apart than requested, a line `Requested interval` says so.
+- **ESS**, the effective sample size, is the number of independent draws that the 3,000 draws of this fit are worth.
   Here it is 14 to 19 for every statistic: the estimates rest on very little information, although the
   sample looks large.
 - **Geweke** compares the start and the end of the chain. A star marks a statistic whose chain is
@@ -133,7 +134,8 @@ Log-likelihood: -1667.4731 (df = 5)   AIC:    3344.9   BIC:    3377.5   (MC std.
 MCMC diagnostics for the final simulation (nwergm, method(mcmle))
 Sample size:         =     486
 Burn-in:             =   16384
-Thinning interval:   =    1024
+Thinning interval:   =    2048
+Requested interval:  =    1024  (raised by the adaptive sampler)
 Acceptance rate:     =  0.6692
 
 ------------------------------------------------------------
@@ -161,7 +163,9 @@ gwesp_0.5       |    -1.501    0.1335
 
 The coefficients barely moved (for example `gwesp_0.5` 0.502 and 0.494, `mutual` 0.811 and 0.797), but
 the autocorrelation fell from 0.99 to 0.55-0.67 and the ESS rose from 14-19 to 74-120. This fit needed 486 draws
-(the table of the fit prints "MCMC sample size"), a sixth of the 3,000 of the first fit, and is worth far more. One Geweke statistic is still flagged
+(the table of the fit prints "MCMC sample size"), a sixth of the 3,000 of the first fit, and is worth far more. Its draws are
+2,048 steps apart, not the 1,024 that were requested: the adaptive sampler doubles the spacing whenever the sample has doubled in
+size, and the header of `estat mcmcdiag` shows the spacing of the final sample, with the requested interval on the line below. One Geweke statistic is still flagged
 (`mutual`, z = -1.97, p = 0.049), only just: with five statistics, one borderline flag is not alarming, but it is a reason to look at the
 trace (`estat mcmcdiag, plot`) and to raise the target (`mcmleeffectivesize(200)`) for a final analysis. Note that
 even then the autocorrelation is far from zero: independence is not needed, only enough effective draws.
@@ -275,7 +279,8 @@ is loose about connectedness; adding a degree term such as `gwdegree()` would be
 1. Read the warnings printed during estimation; "not varying" or "did not mix" means the model is
    degenerate or the sampler is stuck.
 2. `estat mcmcdiag`: look at ESS (the default aims for at least 64 per statistic; for a final analysis, hundreds rather than tens), Geweke and the acceptance rate.
-3. If the diagnostics are poor, raise `mcmleeffectivesize()` (the target for the adaptive sample), `mcmcinterval()`, `mcmcburnin()` and `mcmcsamplesize()`;
+3. If the diagnostics are poor, raise `mcmleeffectivesize()` (the target for the adaptive sample; the note at the end of the report
+   suggests it), `mcmcinterval()` and `mcmcburnin()`. For a fit with a fixed-size sample (`mcmleeffectivesize(0)`) raise `mcmcsamplesize()` or `mcmcinterval()` instead;
    `estat mcmcdiag, plot` draws trace plots for a visual check.
 4. If the sampler is stuck or the fit will not converge, change the terms (for example `triangle` to
    `gwesp()`), not the settings.

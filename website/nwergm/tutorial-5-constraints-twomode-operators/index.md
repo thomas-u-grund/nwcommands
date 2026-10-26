@@ -17,7 +17,7 @@ defined on, **two-mode** terms for networks between two kinds of nodes (people a
 
 **Data.** The Florentine marriage network and the Lazega friendship network (both shipped with
 `nwcommands`), and a small two-mode network of 30 people and 12 clubs that is **simulated** in the
-script (so that you can recreate it exactly; it is not a real data set). Run with `nwergm` 1.3.0 and the core 3.10.0; the
+script (so that you can recreate it exactly; it is not a real data set). Run with `nwergm` 1.3.1 and the core 3.10.0; the
 script and log are in [example.do](example.do) and [example.log](example.log).
 Output is shortened to the coefficient table and the log-likelihood line.
 

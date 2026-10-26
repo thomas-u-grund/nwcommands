@@ -26,7 +26,7 @@ The DOI is the one of all versions of the manual; the label "1.1" is the series 
 
 **nwergm, nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwergm: a Stata package for exponential random graph models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
+> Grund, T. U. (2026). *nwergm: a Stata package for exponential random graph models* (version 1.3.1) [Computer software]. [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
