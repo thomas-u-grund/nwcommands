@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 366
+POSITION 10 10 550 394
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcug - Conditional Uniform Graph (CUG) test")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 272, label("Options")
+  GROUPBOX gb_opt 10 44 520 300, label("Options")
   TEXT tx_ed_stat 20 54 260 ., label("Command template used to compute the test statistic")
   EDIT ed_stat 290 54 190 ., nomem option(stat)
   TEXT tx_ed_rname 20 82 260 ., label("Name of the r() scalar of the command to use as the test statistic")
@@ -30,12 +30,14 @@ BEGIN
   COMBOBOX cb_tail 290 166 190 ., dropdownlist contents(list_tail) nomem option(tail)
   TEXT tx_cb_condition 20 194 260 ., label("Null model to condition random draws on; default = density")
   COMBOBOX cb_condition 290 194 190 ., dropdownlist contents(list_condition) nomem option(condition)
-  TEXT tx_cx_silent 20 222 260 ., label("Suppress display of results")
-  CHECKBOX cx_silent 290 222 190 ., label("silent") option(silent)
-  TEXT tx_cx_plot 20 250 260 ., label("draw a histogram of the null draws with a reference line at the observed value")
-  CHECKBOX cx_plot 290 250 190 ., label("plot") option(plot)
-  TEXT tx_ed_name 20 278 260 ., label("name for the graph created by plot; default = cug")
-  EDIT ed_name 290 278 190 ., nomem option()
+  TEXT tx_sp_trades 20 222 260 ., label("Two-mode degrees: curveball trades between two draws (default 5 x smaller mode)")
+  SPINNER sp_trades 290 222 70 ., default(-1) max(999999) min(-1) nomem option(trades)
+  TEXT tx_cx_silent 20 250 260 ., label("Suppress display of results")
+  CHECKBOX cx_silent 290 250 190 ., label("silent") option(silent)
+  TEXT tx_cx_plot 20 278 260 ., label("draw a histogram of the null draws with a reference line at the observed value")
+  CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
+  TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot; default = cug")
+  EDIT ed_name 290 306 190 ., nomem option()
 END
 
 LIST netlist
@@ -54,6 +56,9 @@ LIST list_condition
 BEGIN
 	density
 	census
+	mode1degree
+	mode2degree
+	degrees
 END
 
 PROGRAM initialize
@@ -74,6 +79,7 @@ BEGIN
 		optionarg main.sp_seed
 		optionarg main.cb_tail
 		optionarg main.cb_condition
+		optionarg main.sp_trades
 		option main.cx_silent
 		option main.cx_plot
 		optionarg main.ed_name

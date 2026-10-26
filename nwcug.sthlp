@@ -20,7 +20,8 @@
 [{opth reps(int)}
 {opt seed(int)}
 {opt tail(both|upper|lower)}
-{opt condition(density|census)}
+{opt condition(density|census|mode1degree|mode2degree|degrees)}
+{opt trades(#)}
 {opt silent}
 {opt plot}
 {opt name(string)}]
@@ -33,7 +34,8 @@
 {synopt:{opth reps(int)}}Number of conditioned random networks to draw; default = 1000{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before drawing (for reproducibility){p_end}
 {synopt:{opt tail(both|upper|lower)}}Which tail(s) to report a p-value for; default = {it:both}{p_end}
-{synopt:{opt condition(density|census)}}Null model to condition random draws on; default = {it:density}{p_end}
+{synopt:{opt condition(density|census|mode1degree|mode2degree|degrees)}}Null model to condition random draws on; default = {it:density}; {it:census} for directed one-mode networks, {it:mode1degree}, {it:mode2degree} and {it:degrees} for two-mode networks{p_end}
+{synopt:{opt trades(#)}}Two-mode {bf:condition(degrees)}: the number of curveball trades between two draws; default = 5 times the number of nodes of the smaller mode (the first draw follows 6 times that many){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt plot}}Draw a histogram of the {bf:reps()} null draws, with a dashed reference line at the observed statistic (the same comparison R's {bf:sna::plot.cug.test()} draws){p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:cug}{p_end}
@@ -96,7 +98,22 @@ every other plot this package produces.
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: not supported - error 6088; the null networks are one-mode random networks; {help nwpermute} with {opt swap} draws two-mode null networks that keep both degree sequences.
+For a two-mode network the null networks are two-mode networks with the same nodes (and the same node names and attributes) as {help netname}; the draws are made by a kernel of the native plugin of nwcommands 3.10.0 or later (a clear message asks for the update otherwise), so the time of a test is that of the statistic. The conditions are
+{p_end}
+
+{phang2}{bf:condition(density)} (the default): the same number of ties between a random mode-1 node and a random mode-2 node, no pair twice ({cmd:igraph::sample_bipartite(type = "gnm")}, {cmd:vegan::nullmodel(method = "r00")}).{p_end}
+{phang2}{bf:condition(mode1degree)}: every mode-1 node keeps its degree and takes its partners at random among all mode-2 nodes ({cmd:vegan} method {cmd:r0}).{p_end}
+{phang2}{bf:condition(mode2degree)}: the same for the mode-2 nodes ({cmd:vegan} method {cmd:c0}).{p_end}
+{phang2}{bf:condition(degrees)}: both degree sequences stay, the curveball algorithm of Strona et al. (2014) ({cmd:vegan} method {cmd:curveball}; the same null model as {help nwpermute} with {opt swap}, which exchanges the partners of two ties). The draws form a chain; {opt trades()} sets the number of trades between two draws.{p_end}
+
+{pstd}
+The values of a valued two-mode network are shuffled over the ties of every draw (the number of ties and the degrees count ties, not values). {bf:condition(census)} counts the dyads of a directed one-mode network and is refused for a two-mode network (error 198); the two-mode conditions are refused for a one-mode network. For example, to test whether the nestedness of the Southern women is unusual for their degrees:
+
+	{cmd:. nwuse davis, nwclear}
+	{cmd:. nwcug davis, stat(nw2nested ##net##) rname(nodf) condition(degrees) reps(1000) seed(1)}
+
+{pstd}
+The means and standard deviations of the null distributions agree with those of {cmd:vegan::nullmodel} in R (1,000 draws of the nestedness NODF of the Southern women: 36.98 against 36.78 for {it:density}, 38.81 against 38.81 for {it:mode1degree}, 44.53 against 44.53 for {it:mode2degree}, 48.36 against 48.43 for {it:degrees}).
 
 {title:Supported network types}
 
@@ -104,7 +121,7 @@ Two-mode: not supported - error 6088; the null networks are one-mode random netw
 Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: depends entirely on
 {bf:stat()} - {cmd:nwcug} itself only draws random comparison networks and calls whatever command
 {bf:stat()} names, so it inherits that command's own support. Signed: same as weighted, depends on
-{bf:stat()}. Two-mode: not supported - error 6088; the null networks are one-mode random networks; {help nwpermute} with {opt swap} draws two-mode null networks that keep both degree sequences.
+{bf:stat()}. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
 
 {title:Stored results}
 
@@ -118,6 +135,9 @@ Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: dep
 	  {bf:r(p)}		two-sided p-value (2 * min(p_greater, p_less), capped at 1)
 
 {title:References}
+
+{pstd}
+Strona, G., Nappo, D., Boccacci, F., Fattorini, S., San-Miguel-Ayanz, J. (2014). A fast and unbiased procedure to randomize ecological binary matrices with fixed row and column totals. {it:Nature Communications} 5, 4114.
 
 {pstd}
 Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and density with graph-level

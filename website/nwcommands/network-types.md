@@ -171,7 +171,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nw2motifs` | + | N | Q | U | only |  | alias of nwmotifs on a two-mode network: bipartite motifs of Simmons et al. (bmotif): 17 motifs, 44 with sixnode, node positions; counts ties above zero; Bipartite motifs need the plug-in of core 3.9.0. |
 | `nw2nested` | + | I | Q | U |  | ● | NODF and C-score |
 | `nwbalance` | + | I | G | D | ● | ○ | signed networks; a bipartite graph has no triangle; only the sign of a tie value enters |
-| `nwcommunity` | + | O | N | P | ● | ○ | two-mode: Barber modularity; onemode for Newman |
+| `nwcommunity` | + | O | N | P | ● | ○ | two-mode: Barber modularity; onemode for Newman; algorithm(dirtlpa) (Beckett 2016, two-mode, plug-in only) |
 | `nwmodularity` | + | O | N | P |  | ● | two-mode: Barber modularity; onemode for Newman |
 | `nwspectral` | + | O | O | S |  | ● | Fiedler vector, algebraic connectivity |
 
@@ -179,10 +179,10 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwsimilar` | + | O | N | D |  | ● | two-mode: nodes compared within their own mode, other mode missing |
-| `nwdissimilar` | + | O | N | D |  | ● | two-mode: nodes compared within their own mode, other mode missing |
+| `nwsimilar` | + | O | N | D | ● | ○ | two-mode: nodes compared within their own mode, other mode missing |
+| `nwdissimilar` | + | O | N | D | ● | ○ | two-mode: nodes compared within their own mode, other mode missing |
 | `nwsimindex` | + | N | G | S |  | ● | Jaccard index of the neighbour sets; between the modes 0 |
-| `nwcorrelate` | + | O | R | D |  | ● | two networks are correlated as usual; the profiles of one network are refused on a two-mode network |
+| `nwcorrelate` | + | O | R | D | ● | ○ | two networks are correlated as usual; the profiles of one network are refused on a two-mode network |
 | `nwhierarchy` | + | O | R | - |  | ● | hierarchical clustering of the profiles |
 | `nwdendrogram` | + | - | - | - |  |  | draws the result of nwhierarchy; it reads no network and does not stop on a two-mode network (nwhierarchy does) |
 | `nwconcor` | + | O | R | D |  | ● | CONCOR blockmodel |
@@ -193,7 +193,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwcug` | + | I | R | D |  | ● | conditional uniform graph draws; nwpermute, swap is the two-mode null model |
+| `nwcug` | + | I | N | D | only | ● | conditional uniform graph draws; two-mode: condition(density, mode1degree, mode2degree, degrees) with the native draws (plug-in only for the two-mode form; the one-mode form is Mata) |
 | `nwqap` | + | O | R | D |  | ● | QAP regression over the dyads |
 | `nwturnover` | + | N | N | D |  | ● | compares two networks of the same nodes; on a two-mode network only the ties between the modes count |
 

@@ -6,6 +6,18 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## `nwset, mat(<expression>)` evaluates the expression four times
+
+`nwset` reads its `mat()` argument as a Mata expression and uses it for the row count, the column count, the number of modes and the copy. An expensive expression such as `netobj->correlate_nodes(1)` (2.5 seconds at 5,000 nodes) ran four times: `nwcorrelate` took 10.3 seconds instead of 2.7. Form the matrix once in a Mata variable (a `tempname`) and pass its name. The native similarity kernels (plugin generation 12) return a matrix from a base matrix plus the cells that differ; the global `NW_SIMMODE` (`dense` or `sparse`) forces one of the two ways for the tests.
+
+## Mata cannot broadcast a column against a row, and `max()` is not Stata's
+
+`a :+ a'` raises conformability error 3200 for a column `a` (build the outer sum as `(a, J(n,1,1)) * (J(n,1,1), a)'`, one BLAS call). In a Stata `local x = max(...)` the function takes plain arguments (`max(1, 5*scalar(s))`); the Mata form `max((1, x))` gives "invalid name".
+
+## Mata variables that a function fills must exist before the call
+
+`mata: myfun(netobj, T, K, M)` with `T` not yet defined stops with 3499 `__000002 not found`: define the output arguments first (`mata: T = J(0,3,.)`). Also: `cat > /tmp/x` without input hangs a shell tool call (it reads stdin).
+
 ## Mata libraries must be built with the OLDEST supported Stata (Stata 17), never a newer one
 
 The 2026-10-25 releases (core 3.5.0, nwsaom 1.0.7, nwergm 1.2.0, nwdynam 1.1.0, nwrem 1.0.5) shipped `.mlib` files built with Stata 18.

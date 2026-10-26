@@ -4,6 +4,24 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+Native plug-in generation 12 (kernels 51 to 53, proposed as core 3.10.0). The Mata library is unchanged (no lockstep release of the model packages). The macOS plug-in is rebuilt; the Linux and Windows plug-ins come from the CI build after the push.
+
+### Results that change (read before you re-run old scripts)
+- `nwcorrelate` (and with it `nwsimilar, type(pearson)`) formed the n x n matrix four times (`nwset, mat()` evaluated its argument four times): 10.6 seconds at 5,000 nodes. It is formed once now; the numbers are the same.
+- `nwcug` on a two-mode network no longer stops with error 6088; see Added.
+
+### Added
+- **Kernel 51: node-by-node similarities** of `nwsimilar` (pearson, matches, jaccard, hamming, crossproduct), `nwdissimilar` (euclidean, manhatten, nonmatches, jaccard, hamming) and `nwcorrelate`, all contexts and valued or binary, directed or not: the cells come from the stored ties instead of dense matrix products. 5,000 nodes (10 ties per node): `nwsimilar` pearson 0.45 s (10.6 s before, 24 times faster), the other types 0.36 to 0.38 s (1.0 to 1.2 s before), `nwdissimilar, type(manhatten)` 0.37 s (about 25 minutes in Mata: it had no closed form and ran O(n^3) loops). Differences from the Mata code below 1e-13 (2,688 combinations in the development checks); a network with missing tie values and a platform with an older plug-in keep the Mata code. R: the definition written out in `tools/verify_native390.R`; `igraph::similarity` agrees on the pairs that are not adjacent.
+- **Kernel 52: `nwcommunity, algorithm(dirtlpa)`**, the label propagation LPAwb+ of Beckett (2016) in its repeated form DIRT_LPA+ (R: `bipartite::DIRT_LPA_wb_plus`), for two-mode networks; options `reps()` (default 10) and `minmodules()` (default 4) as `reps` and `mini` of the R function; reproducible with `seed()`; plug-in only (without a generation-12 plug-in the command stops with a message that asks for the update). Southern women: Barber's Q 0.3455 (the best known, as with Louvain); `ftdirectors_se`: 0.95110 in 12 seconds against 0.95101 for 100 starts of the Louvain search (0.2 seconds).
+- **Kernel 53 and `nwcug` for two-mode networks**: `condition(density|mode1degree|mode2degree|degrees)` (equivalents: `vegan::nullmodel` r00, r0, c0, curveball; `igraph::sample_bipartite(type = "gnm")`), option `trades()`; the draws are made natively on the list of ties and written into one copy of the network. The null means and standard deviations agree with `vegan::nullmodel` (Southern women, NODF).
+- Test `cscripts/test_native390.do` (fixtures `cscripts/native390_fixture/`, R script `tools/verify_native390.R`); timings in the book folder `docs/NATIVE390_TIMINGS.md`.
+
+### Notes
+- `nwsimilar, type(pearson)` ignores `context()` (it calls `nwcorrelate` with its default, the outgoing ties); unchanged.
+- `nwsimilar, type(hamming)` counts the left-out positions i and j as matches (two per profile); unchanged, documented in the R script.
+
 ## [3.9.2] - 2026-10-26
 
 The "Network Analysis" menu is set up once, whatever you run and however often. Only `nwinstall` (ado, help file, dialog) and its tests changed: no command, result, Mata library or plug-in differs from 3.9.1 (the four model packages need no release).
