@@ -75,4 +75,4 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

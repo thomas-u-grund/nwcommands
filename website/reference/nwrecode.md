@@ -111,4 +111,4 @@ Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid c
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

@@ -1,8 +1,8 @@
-*! version 3.9.0  26oct2026  nwversion: version of the nwcommands core and of the installed model packages
+*! version 3.9.1  26oct2026  nwversion: version of the nwcommands core and of the installed model packages
 capture program drop nwversion
 program define nwversion, rclass
 	version 14
-	local nwv "3.9.0"
+	local nwv "3.9.1"
 	local nwd "26oct2026"
 	di as text _n "nwcommands " as res "`nwv'" as text " (`nwd'), core package; Stata " as res c(stata_version) as text ", " as res c(os)
 	if c(stata_version) < 17 {

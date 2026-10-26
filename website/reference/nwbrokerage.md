@@ -74,4 +74,4 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 
 ---
 
-*nwcommands version 3.9.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))

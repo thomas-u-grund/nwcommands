@@ -22,12 +22,10 @@ Each is a separate GPL-3 package that needs the core `nwcommands`
 (see [Installation & Setup](../01-installation-setup/)):
 
 ```stata
-net install nwsaom,  from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)
-net install nwrem,   from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)
-net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
+nwinstall, models
 ```
 
-or `nwinstall, models` for all four model packages at once (`nwinstall, everything` installs the core as well). Each package reports its own release
+for all four model packages at once (`nwinstall, everything` installs the core as well; a single package: `nwinstall, modelpkg(nwsaom)`). Each package reports its own release
 (and stores it in `r(version)`):
 
 ```stata

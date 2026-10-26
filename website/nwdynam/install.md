@@ -13,7 +13,7 @@ description: "Install nwdynam for Stata: the core nwcommands first, then the nwd
 ## 1. The core
 
 ```stata
-. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
+. net install nwcommands, from(https://nwcommands.org/net/) replace
 . nwinstall, everything
 ```
 
@@ -25,11 +25,16 @@ internet access or administrator rights.
 ## 2. nwdynam
 
 ```stata
+. nwinstall, models
+```
+
+If you used `nwinstall, everything` above, the model packages are already installed; after `nwinstall, all` (core only) add them with `nwinstall, models`. Repeating either command updates them. To install nwdynam only, or a specific tagged version, use its own address:
+
+```stata
 . net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
 ```
 
-This installs the latest release (the state of the main branch). As a shortcut, the core can install it
-for you: `nwinstall, modelpkg(nwdynam)`, or all model packages with `nwinstall, models`.
+(`nwinstall, modelpkg(nwdynam)` does the same from the core.)
 
 ### A specific release
 

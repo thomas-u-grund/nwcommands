@@ -22,6 +22,10 @@ functions, which gave a raw `get_nodenames_from_vector() not found`. `_nwlibchec
 library (sentinel `get_nodenames_from_vector()`, change it when a release needs a newer sentinel) and then says that an OLD copy is in use
 and to `ado uninstall nwcommands` and reinstall.
 
+## `https://nwcommands.org/net/` is built by the deploy workflow, not by Jekyll
+
+GitHub Pages cannot redirect, so the short install address serves a copy of the starter package (`stata.toc` reduced to the starter, `nwcommands.pkg` and the files it lists) that `tools/make_net_dir.sh` puts into `website/_site/net/` after `jekyll build`. A copy placed in `website/` would be processed by Jekyll, which drops underscore-prefixed files and rewrites front-matter-like text. The step runs only on pushes to `main` that touch the trigger `paths` of `.github/workflows/deploy-site.yml`; a starter file missing from that list goes stale. `net install` needs every file of the `.pkg`: check with `tools/test_net_dir.sh`.
+
 ## `nwsave` of a large two-mode network writes every within-mode dyad (gigabytes)
 
 `nwsave` stores a network as an edge list made with `nwtoedge ..., ignore2mode compress`. For a two-mode network that lists all pairs of nodes *inside* each mode as well (with value 0), so `davis` (32 nodes) is 365 rows but a 5,092 x 455 network came to 2.6 GB. `ftdirectors_se.nwdta` was therefore written with a copy of `nwsave.ado` that adds `keep if <network> == 1` right after the `nwtoedge` line; `nwuse` reads such a file fine (it only needs the tie rows). Do the same when you rebuild a large two-mode data file, or fix `nwsave` to skip the zero rows of two-mode networks.

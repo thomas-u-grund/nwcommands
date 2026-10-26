@@ -4,6 +4,14 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.9.1] - 2026-10-26
+
+### Added
+- The short install address `https://nwcommands.org/net/`: `net install nwcommands, from(https://nwcommands.org/net/) replace`. The deploy workflow copies the starter package (`stata.toc` with the starter entry, `nwcommands.pkg` and the files it lists) into `net/` of the website after the site build (`tools/make_net_dir.sh`; test: `tools/test_net_dir.sh`). The GitHub address keeps working and `nwinstall` still fetches the rest from GitHub. The install lines in the README, help files, error messages and the website show the short address first.
+- `tools/release_preflight.py` checks that the deploy workflow copies the starter and, with `--post`, that `https://nwcommands.org/net/stata.toc` is reachable.
+
+No command, result, Mata library or plug-in changes.
+
 ## [3.9.0] - 2026-10-26
 
 Plot appearance: `nwplot`, `nwmovie` and `nwplotmatrix` now show what a valued, signed or two-mode network is made of, and `nwturnover` is right on two-mode networks. Only the ado and help files changed: no new plugin generation, no change of the Mata library (the four model packages need no release).

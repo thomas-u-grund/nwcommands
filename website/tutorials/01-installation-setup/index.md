@@ -17,11 +17,12 @@ package (`nwinstall` itself), and finally `nwinstall` downloads everything else 
 ## Installing from scratch
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from(https://nwcommands.org/net/) replace
 ```
 
-`net from` lists the packages in the repository. `net install nwcommands` installs only the
+(If `nwcommands.org` is not reachable from your network, the same starter package is at
+`https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/`.)
+`net install nwcommands` installs only the
 `nwinstall` command and a few landing help topics. That is deliberately small, so the next step can do
 the real work.
 
@@ -86,10 +87,10 @@ model packages are free software under the GNU General Public License, version 3
 
 | Package | Model | Install |
 |---|---|---|
-| `nwsaom` | stochastic actor-oriented models (SAOM) | `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)` |
-| `nwergm` | exponential random graph models (ERGM) | `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)` |
-| `nwdynam` | dynamic network actor models (DyNAM) | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
-| `nwrem` | relational event models (REM) | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
+| `nwsaom` | stochastic actor-oriented models (SAOM) | `nwinstall, models` installs all four; one only: `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)` |
+| `nwergm` | exponential random graph models (ERGM) | `nwinstall, models` installs all four; one only: `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)` |
+| `nwdynam` | dynamic network actor models (DyNAM) | `nwinstall, models` installs all four; one only: `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
+| `nwrem` | relational event models (REM) | `nwinstall, models` installs all four; one only: `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
 
 If you installed the core alone (`nwinstall, all`), all four at once, from the core:
 
@@ -111,7 +112,7 @@ that contains one subfolder per package (option `modelsfrom()`; see `help nwinst
 
 Re-running `nwinstall, everything` (or `nwinstall, all` for the core only) at any time re-downloads and replaces everything with whatever is
 currently on the `master` branch — there's no separate "update" command, because installing
-*is* updating. The model packages update the same way: repeat the `net install` line with
+*is* updating. The model packages update the same way: repeat `nwinstall, models` (or `nwinstall, everything`), or, for a single package, its `net install` line with
 `replace`, for example
 
 ```stata

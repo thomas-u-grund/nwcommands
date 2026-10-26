@@ -13,7 +13,7 @@ description: "Install nwergm for Stata: the core nwcommands first, then the nwer
 ## 1. The core
 
 ```stata
-. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
+. net install nwcommands, from(https://nwcommands.org/net/) replace
 . nwinstall, everything
 ```
 
@@ -25,11 +25,16 @@ internet access or administrator rights.
 ## 2. nwergm
 
 ```stata
+. nwinstall, models
+```
+
+If you used `nwinstall, everything` above, the model packages are already installed; after `nwinstall, all` (core only) add them with `nwinstall, models`. Repeating either command updates them. To install nwergm only, or a specific tagged version, use its own address:
+
+```stata
 . net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
 ```
 
-This installs the state of the main branch of the repository. As a shortcut, the core can install it for you:
-`nwinstall, modelpkg(nwergm)`, or all four model packages with `nwinstall, models`.
+(`nwinstall, modelpkg(nwergm)` does the same from the core.)
 
 ### A specific release
 
@@ -63,7 +68,7 @@ the complete documentation.
 
 ## Updating
 
-Repeat the `net install` line with `replace`:
+Repeat `nwinstall, models` (or `nwinstall, everything`), or, for this package only, its `net install` line with `replace`:
 
 ```stata
 . net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace
