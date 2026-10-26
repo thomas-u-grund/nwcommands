@@ -217,9 +217,9 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwplot` | + | V | N | D | ● | ○ | layout(bipartite) puts the two modes in two rows; values set the widths (binary), signs the colour and dash (nosign), the modes get symbols; legend |
+| `nwplot` | + | V | N | D | ● | ○ | layout(bipartite) puts the two modes in two rows; values set the widths and, in the layouts kk and frucht, pull strongly tied nodes together (binary); signs the colour and dash (nosign), the modes get symbols; legend |
 | `nwplotmatrix` | + | K | N | D |  |  | colour legend of the value classes (legend(off) switches off); a two-mode network is sorted by mode with a line between the modes |
-| `nwmovie` | + | V | - | D | ● | ○ | temporal networks; widths, sign colours and binary/nosign as nwplot; not two-mode |
+| `nwmovie` | + | V | - | D | ● | ○ | temporal networks; widths, layouts, sign colours and binary/nosign as nwplot; not two-mode |
 | `nwmoviexy` | + | V | - | D | ● | ○ | alias of nwmovie |
 | `animate` | - | - | - | - |  |  | help page |
 

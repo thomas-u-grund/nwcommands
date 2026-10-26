@@ -974,11 +974,23 @@ program nwplot, rclass
 		mata: Coord = netplotmds(M, `iterations')
 	}
 
-	if ("`layout'"=="frucht" & `nodes' > 1){
+	// Layouts that use the tie values (kk and frucht on a valued, one-mode network; `binary' switches it off):
+	// _nwwlayout.ado.  When it cannot use the values (signed network, all ties equal) the unweighted code below runs.
+	local __nwp_wlayout 0
+	if ("`layout'"=="frucht" | "`layout'"=="kk") & `nodes' > 1 & "`valued'" == "true" & "`binary'" == "" & "`is2mode'" != "true" {
+		local __nwp_witer = `iterations'
+		if "`layout'" == "kk" & `iterations' == 1000 {
+			local __nwp_witer = min(1000, max(10, floor(28000000 / (`nodes'^2))))
+		}
+		_nwwlayout, pmat(plotmat) method(`layout') iterations(`__nwp_witer') out(Coord)
+		local __nwp_wlayout = r(weighted)
+	}
+
+	if ("`layout'"=="frucht" & `nodes' > 1 & !`__nwp_wlayout'){
 		mata: Coord = fruchtrein(M, `iterations')
 	}
 
-	if ("`layout'"=="kk" & `nodes' > 1){
+	if ("`layout'"=="kk" & `nodes' > 1 & !`__nwp_wlayout'){
 		// `kk' is now the default layout (previously mds/mdsclassical,
 		// chosen by node count) - but its own cost is quadratic in
 		// nodes AND linear in iterations() (confirmed by direct timing:

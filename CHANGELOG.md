@@ -4,6 +4,20 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+Layouts that use the tie values. Mata library and plug-ins unchanged (the new code is in the ado file `_nwwlayout.ado`), so the four model packages need no release.
+
+### Results that change (read before you re-run old scripts)
+- **Plots of valued networks get different node positions by default.** `nwplot` (default `layout(kk)` and `layout(frucht)`) and `nwmovie`/`nwmoviexy` (each wave) now use the tie values as strengths, as `igraph::plot()` does for a graph with a `weight` attribute: strongly tied nodes lie closer together. `kk`: the ideal distance of two nodes is the shortest path with edge length 1/value; `frucht`: the attraction along a tie is multiplied by its value (`layout_with_kk(weights=)` takes edge lengths, so one passes 1/value; `layout_with_fr(weights=)` takes strengths). The values are divided by their mean first, so the unit of the values does not matter. Option `binary` restores the layouts of 3.9 and earlier (they are bit-identical for the same seed). Unvalued networks, two-mode networks, networks whose ties all have the same value, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle`, `grid` are not affected.
+- A **signed network** (a tie value that is not positive) keeps the unweighted layout and prints a note, as `igraph::plot()` does (igraph's `layout_with_fr()`/`layout_with_kk()` refuse non-positive weights; `plot()` warns and ignores the weights).
+- `nwmovie`: `binary` is now also passed to the layout of the first network.
+
+### Added
+- `_nwwlayout.ado` (internal): the weighted layouts. `kk` with values runs in Mata (shortest weighted paths and Gauss-Seidel stress majorization): about 1.5 s for 1,000 nodes and 18 s for 5,000 nodes (the unweighted `kk` uses the plug-in: 0.07 s and 1.2 s).
+- Dialog `nwmovie`: checkbox `binary`.
+- Test: `cscripts/test_wlayout.do`.
+
 ## [3.9.2] - 2026-10-26
 
 The "Network Analysis" menu is set up once, whatever you run and however often. Only `nwinstall` (ado, help file, dialog) and its tests changed: no command, result, Mata library or plug-in differs from 3.9.1 (the four model packages need no release).
