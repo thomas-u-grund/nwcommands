@@ -16,6 +16,13 @@ Plugin generation 10 (native kernels for the two-mode and valued commands). The 
 - Native kernels in the core plugin: the bipartite (Barber) search of `nwcommunity` on two-mode networks (27 times faster on the 5,092 + 455 directors: 2.4 s to 0.09 s), the weighted walk of `nwpagerank`, the maximum-weight matching of `nwmatching` on valued networks (Hungarian method; the 455 + 5,092 case of the directors takes 0.2 s, the Mata routine cannot do it), the tie swapping of `nwpermute, swap` (works on the list of ties, no n x n matrix) and the weighted betweenness of `nwbetween` on valued networks (1,000 nodes: 0.13 s instead of 111 s; 10,000 nodes 15 s). Results equal the Mata routines (PageRank and betweenness to 1e-9, the matching exactly up to 1,500 nodes in the larger mode and with the same total value above), and R: `igraph::page_rank`, `igraph::betweenness` with lengths 1/w, `igraph::max_bipartite_match` with weights (all in `cscripts/test_native370.do`).
 - The random starting orders of the two-mode search of `nwcommunity` and the exchanges of `nwpermute, swap` come from a generator of their own that is seeded from `set seed` (or `seed()`): the same seed gives the same result on every platform with the new plugin. They are therefore not the same draws as in the Mata code; Barber's Q is the same on the Southern women (0.3455) and statistically the same on the directors.
 
+### Fixed
+- `nwexport` and `nwimport` keep the level labels of a two-mode network (for example "women" / "events"): Pajek gets a comment line before `*Vertices` (Pajek ignores it), GML the graph attributes `nwmodelabel1` and `nwmodelabel2`, the edge list the labels in the mode columns instead of 1 and 2. UCINET DL has no place for them (a file read back has the labels "rows" and "columns"). Test: `cscripts/test_small370.do`.
+- `nwimport, type(ucinet)`: a rectangular matrix with the same number of rows and columns (`nr=` and `nc=` given, for example 3 women by 3 events) was read as a one-mode network and failed; it is now read as a two-mode network.
+- `nwinduced` error message for a directed network no longer points to an internal file.
+- Website pages and logs show "plugin build" instead of "plugin protocol" in the output of `nwsaom version`.
+- `nwmixing` printed stray "invalid name" lines before the table (fixed in 3.6.0, see below); `test_small370.do` repeats the check.
+
 ## [3.6.0] - 2026-10-26
 
 This release changes results for valued networks and for two-mode networks. Read the first list before you re-run old analyses. The native plugin has a new generation (9, for the weighted `nwburt`); the Mata library changed, so the four model packages are released in step (nwsaom 1.0.9, nwergm 1.2.2, nwdynam 1.1.2, nwrem 1.0.7).

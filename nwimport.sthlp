@@ -93,7 +93,7 @@ without downloading a local copy first, e.g.:
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
+Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); the level labels written by {help nwexport} come back (Pajek comment line, GML graph attributes {cmd:nwmodelabel1} and {cmd:nwmodelabel2}, edge list columns; not UCINET); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
 
 {title:Supported network types}
 
@@ -101,7 +101,7 @@ Two-mode: yes - the four formats written by {help nwexport} come back as a two-m
 Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
 {bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
 values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
-values are negative. Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
+values are negative. Two-mode: yes - the four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); the level labels written by {help nwexport} come back (Pajek comment line, GML graph attributes {cmd:nwmodelabel1} and {cmd:nwmodelabel2}, edge list columns; not UCINET); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
 
 {marker ucinet}{...}
 {title:Import Ucinet DL format}

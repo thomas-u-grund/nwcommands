@@ -176,6 +176,11 @@ program _nwimport_pajek
 			// get first word
 			local f_cmd : word 1 of `line'
 			local f_cmd = lower("`f_cmd'")
+			// the level labels of a two-mode network (comment line written by nwexport)
+			if "`f_cmd'" == "%" & word(`"`line'"', 2) == "nwcommands" & word(`"`line'"', 3) == "level" & word(`"`line'"', 4) == "labels" {
+				local __lv1 = subinstr(word(`"`line'"', 5), char(34), "", .)
+				local __lv2 = subinstr(word(`"`line'"', 6), char(34), "", .)
+			}
 			if lower("`f_cmd'") == "*vertices" {
 				local size = word(`"`line'"',2)
 				// "*Vertices n n1" (Pajek's bipartite form): the first n1 vertices are the nodes of the first mode
@@ -363,7 +368,7 @@ program _nwimport_pajek
 		nwload, labelonly
 		qui merge m:n `nw_nodename' using `dict', nogenerate
 		if "`n1'" != "" {
-			_nwimport_apply2mode `name', n(`size') n1(`n1') labs(`labs')
+			_nwimport_apply2mode `name', n(`size') n1(`n1') labs(`labs') desc1(`"`__lv1'"') desc2(`"`__lv2'"')
 		}
 end
 
@@ -373,7 +378,7 @@ program _nwimport_apply2mode
 	// declare the network a two-mode network after the import: the mode of every node comes either from the
 	// comma separated list modes() (parallel to labs()) or from n/n1 (the first n1 of n vertices form the first
 	// mode); a tie between two nodes of the same mode makes the file invalid
-	syntax [anything(name=netname)], LABS(string) [MODES(string) N(integer 0) N1(integer 0)]
+	syntax [anything(name=netname)], LABS(string) [MODES(string) N(integer 0) N1(integer 0) DESC1(string) DESC2(string)]
 	unw_defs
 	_nwsyntax `netname', max(1)
 	tempname lab md
@@ -407,8 +412,13 @@ program _nwimport_apply2mode
 	mata: `netobj'->clean_matrix_2mode()
 	// ties of value 1 only: a binary network (the writers add the value 1 to every tie)
 	mata: `netobj'->set_valued(`netobj'->check_valued())
-	mata: `netobj'->set_description_mode1("mode 1")
-	mata: `netobj'->set_description_mode2("mode 2")
+	// the level labels, if the file holds them
+	if `"`desc1'"' == "" | `"`desc2'"' == "" {
+		local desc1 "mode 1"
+		local desc2 "mode 2"
+	}
+	mata: `netobj'->set_description_mode1(`"`desc1'"')
+	mata: `netobj'->set_description_mode2(`"`desc2'"')
 end
 
 
@@ -834,6 +844,13 @@ program _nwimport_gml
 					// fixture with labels.
 					local labs `"`labs'`nextlab',"'
 				}
+				// the level labels of a two-mode network: graph attributes written by nwexport
+				if "``i''" == "nwmodelabel1" & "`mode'" == "" {
+					local __lv1 `"``=`i'+1''"'
+				}
+				if "``i''" == "nwmodelabel2" & "`mode'" == "" {
+					local __lv2 `"``=`i'+1''"'
+				}
 				if "``i''" == "nwmode" & "`mode'" == "node" {
 					local nwmodes "`nwmodes'``=`i'+1'',"
 				}
@@ -884,7 +901,7 @@ program _nwimport_gml
 		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
 		if "`nwmodes'" != "" {
 			// the attribute nwmode (written by nwexport for a two-mode network) gives the mode of every node
-			_nwimport_apply2mode `name', labs(`labs') modes(`nwmodes')
+			_nwimport_apply2mode `name', labs(`labs') modes(`nwmodes') desc1(`"`__lv1'"') desc2(`"`__lv2'"')
 		}
 		restore
 end
@@ -1072,8 +1089,25 @@ program _nwimport_edgelist
 		local m2 : word 5 of `r(varlist)'
 		qui keep if `m1' != `m2'
 		qui replace `value' = 1 if `value' >= .
-		char _dta[nwtoedge_mode1desc] "mode 1"
-		char _dta[nwtoedge_mode2desc] "mode 2"
+		// the columns mode_ego and mode_alter hold 1 and 2, or the level labels of the two modes
+		local __lv1 "mode 1"
+		local __lv2 "mode 2"
+		capture confirm string variable `m1'
+		local __s1 = (_rc == 0)
+		capture confirm string variable `m2'
+		local __s2 = (_rc == 0)
+		if _N > 0 {
+			local __a = `m1'[1]
+			local __b = `m2'[1]
+			if `__s1' == 0 local __a = string(`__a')
+			if `__s2' == 0 local __b = string(`__b')
+			if !(`"`__a'"' == "1" & `"`__b'"' == "2") & `"`__a'"' != `"`__b'"' {
+				local __lv1 `"`__a'"'
+				local __lv2 `"`__b'"'
+			}
+		}
+		char _dta[nwtoedge_mode1desc] `"`__lv1'"'
+		char _dta[nwtoedge_mode2desc] `"`__lv2'"'
 		qui sum `value'
 		if r(min) == 1 & r(max) == 1 {
 			nw2fromedge `ego' `alter', name(`name') `xvars'
@@ -1470,8 +1504,9 @@ program _nwimpdl
 		local firstword = lower("`firstword'")
 	}
 
-	if "`rows'" != "`cols'" {
-		// a rectangular matrix is a two-mode network: rows are the first mode, columns the second
+	if "`rows'" != "`cols'" | ("`rows'" != "" & "`cols'" != "") {
+		// a rectangular matrix (nr= and nc= given, also when both are equal) is a two-mode network: rows are the first
+		// mode, columns the second
 		file close `importfile'
 		_nwimpdl_rect `anything', rows(`rows') cols(`cols')
 		mata: st_global("r(nameoff)", "")
