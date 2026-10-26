@@ -4,12 +4,14 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.7.0] - 2026-10-26
 
-Plugin generation 10 (native kernels for the two-mode and valued commands). The Mata library did not change, so the model packages need no rebuild. A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) keeps the Mata code and gives the same results, slowly.
+Plugin generation 10 (native kernels for the two-mode and valued commands), valued closeness at any size, level labels of two-mode networks in files, and a few corrections. The Mata library did not change. The four model packages are released with it as patch releases (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8; they still work with nwcommands 3.6.0). A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) keeps the Mata code and gives the same results, slowly.
 
 ### Results that change (read before you re-run old analyses)
 - **A valued network of more than 100 nodes no longer gets the hop-count closeness or distances silently.** `nwgeodesic` (and through it `nwcloseness`) computed the distances of a valued network of more than 100 nodes on the unvalued network and only said so ("Calculated on unvalued network because network size exceeds 100"); `nwcloseness` never passed `force` on, so the weighted closeness was out of reach. They now compute the least-cost distances (cost 1/w^alpha, `alpha(-1)` = igraph's lengths) at any size with the native plugin; closeness, farness and nearness of such networks therefore differ from before (they used steps). A platform whose plugin is older stops with r(198) unless `force` (slow Mata routine) or `binary` (steps) is given. `force` of `nwcloseness` is passed on to `nwgeodesic`.
+- **`nwshared` on a directed network without the option `undirected` now stops with error 198** and a message, as its help file always said. 3.6.0 ran without the option and without a message. Add `undirected` (the network is symmetrized first) to get the earlier result.
+- **The native bipartite Louvain search of `nwcommunity` does not give the partition of the Mata search for the same seed** (the two use different random generators and neighbour orders). With the new plugin the result is the same on every platform for a given seed; Barber's Q is the same on the Southern women (0.3455) and statistically the same on larger networks. `nwpermute, swap` draws differently for the same reason (see Added).
 
 ### Added
 - Native Dijkstra kernels for `nwcloseness` (sums and reachability without the n x n matrix: 1,000 nodes 0.15 s, 10,000 nodes 14 s) and `nwgeodesic` on valued networks; equal to the Mata distances and to `igraph::closeness` with lengths 1/w and w (reachable-nodes form).
@@ -19,6 +21,7 @@ Plugin generation 10 (native kernels for the two-mode and valued commands). The 
 ### Fixed
 - `nwexport` and `nwimport` keep the level labels of a two-mode network (for example "women" / "events"): Pajek gets a comment line before `*Vertices` (Pajek ignores it), GML the graph attributes `nwmodelabel1` and `nwmodelabel2`, the edge list the labels in the mode columns instead of 1 and 2. UCINET DL has no place for them (a file read back has the labels "rows" and "columns"). Test: `cscripts/test_small370.do`.
 - `nwimport, type(ucinet)`: a rectangular matrix with the same number of rows and columns (`nr=` and `nc=` given, for example 3 women by 3 events) was read as a one-mode network and failed; it is now read as a two-mode network.
+- `nwshared`: the documented requirement of `undirected` on a directed network is now enforced (see Results that change); help, test and the network-types tables say so.
 - `nwinduced` error message for a directed network no longer points to an internal file.
 - Website pages and logs show "plugin build" instead of "plugin protocol" in the output of `nwsaom version`.
 - `nwmixing` printed stray "invalid name" lines before the table (fixed in 3.6.0, see below); `test_small370.do` repeats the check.
