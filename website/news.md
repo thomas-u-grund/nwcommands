@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: help files corrected
+
+**nwsaom 1.0.11**, **nwergm 1.2.4**, **nwdynam 1.1.4** and **nwrem 1.0.9** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.4)). Help text and README only; no change in results, no new core needed (they work with nwcommands 3.6.0 and later).
+
+- **nwergm:** the help file now describes the software as it is: the sampler, the change statistics and the pseudolikelihood design matrix run in a compiled plugin, the Mata implementation is a slow fallback used for tests and comparison, a valued network is fitted as the binary graph with one note, 125 of the 139 terms of `ergm` 4.12.0 are implemented, and the page range of Geyer and Thompson (1992) is 657-683. The timing ratios of an earlier benchmark are removed: speed relative to R depends on the model.
+- **nwsaom, nwdynam, nwrem:** references to development scripts and internal notes removed from the help files; install lines in the README start with `nwinstall`.
+
 ## 26 October 2026: a short install address
 
 **nwcommands 3.9.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.1)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
