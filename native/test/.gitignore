@@ -1,0 +1,5 @@
+test_kernels
+test_kernels.exe
+*.obj
+*.ilk
+*.pdb

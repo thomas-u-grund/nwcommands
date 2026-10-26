@@ -4,6 +4,18 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **64-bit counters in the native kernels (Windows).** The C kernels counted nodes, ties, indices, offsets and products of them in `long`, which is 32 bits in the Windows build (MSVC) and 64 bits on macOS and Linux. All 1,245 uses are now a 64-bit type (`nwint`, `native/nwtypes.h`), so a value above 2^31 can no longer wrap on Windows only. No result changes on macOS or Linux (bit-identical; plugin generation unchanged); within the documented limit of 100,000 nodes no wrong result was found on Windows either, the change closes the latent cases (the diagnostic counters of very long searches, bit-set offsets above about 370,000 nodes, result sizes above 2^31 cells). Also: the Windows build uses the compiler's own bit-scan instruction for the lowest set bit, the headers include what they use (`<time.h>`, `<stdlib.h>`, `<string.h>`), and a malformed argument string no longer dereferences a null pointer.
+
+### Changed
+- The Windows plugin is compiled with optimisation (`/O2`); it was built without it, so the Windows kernels ran as unoptimised code. Results are unchanged.
+
+### Added
+- **Tests of the native kernels without Stata** (`native/test/`): `test_kernels.c` compiles the shipped kernels against a stand-in for the plugin interface and checks 88 cases: every kernel against results recorded from the macOS plugin (`native/test/fixtures/golden.txt`), against the R/igraph/bmotif fixtures of the cscripts, against textbook answers (stars, paths, rings, complete graphs), and large sparse cases of 20,000 to 100,000 nodes with sums above 2^31. `make -C native test` runs it anywhere with a C compiler.
+- The workflow `.github/workflows/test-kernels.yml` runs the harness on Linux (gcc, with sanitizers), macOS (clang) and Windows (MSVC `cl`) for every push or pull request that touches `native/`, and uploads the compiler warnings. It builds and commits nothing.
+
 ## [3.9.2] - 2026-10-26
 
 The "Network Analysis" menu is set up once, whatever you run and however often. Only `nwinstall` (ado, help file, dialog) and its tests changed: no command, result, Mata library or plug-in differs from 3.9.1 (the four model packages need no release).

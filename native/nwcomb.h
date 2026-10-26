@@ -41,8 +41,15 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <stdint.h>
+#include <time.h>
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
+#include "nwtypes.h"
 
 #define NWCOMB_VERSION 11
 
@@ -65,11 +72,11 @@
 /* ------------------------------------------------------------------ */
 
 /* work counters (published for diagnostics) */
-static long g_nsearch = 0, g_nquery = 0, g_nbfs = 0;
+static nwint g_nsearch = 0, g_nquery = 0, g_nbfs = 0;
 static int g_oom = 0;
 
 static double *g_res = NULL;
-static long g_res_rows = 0, g_res_cols = 0;
+static nwint g_res_rows = 0, g_res_cols = 0;
 
 static void res_clear(void) {
 	free(g_res);
@@ -77,7 +84,7 @@ static void res_clear(void) {
 	g_res_rows = g_res_cols = 0;
 }
 
-static int res_alloc(long rows, long cols) {
+static int res_alloc(nwint rows, nwint cols) {
 	res_clear();
 	g_res = (double *)malloc((size_t)((rows * cols) > 0 ? rows * cols : 1) * sizeof(double));
 	if (!g_res) return 1;
@@ -99,21 +106,21 @@ static void pub_a(int i, double v) {
 	SF_scal_save(buf, v);
 }
 
-static void pub_result(long status, long rows, long cols) {
+static void pub_result(nwint status, nwint rows, nwint cols) {
 	pub("__nwg_status", (double)status);
 	pub("__nwg_rows", (double)rows);
 	pub("__nwg_cols", (double)cols);
 }
 
 typedef struct {
-	long *a;
-	long len, cap;
+	nwint *a;
+	nwint len, cap;
 } ilist_t;
 
-static int il_push(ilist_t *l, long v) {
+static int il_push(ilist_t *l, nwint v) {
 	if (l->len == l->cap) {
-		long nc = l->cap ? l->cap * 2 : 64;
-		long *p = (long *)realloc(l->a, (size_t)nc * sizeof(long));
+		nwint nc = l->cap ? l->cap * 2 : 64;
+		nwint *p = (nwint *)realloc(l->a, (size_t)nc * sizeof(nwint));
 		if (!p) return 1;
 		l->a = p;
 		l->cap = nc;
@@ -142,6 +149,10 @@ static int popc64(uint64_t x) {
 static int ctz64(uint64_t x) {
 #if defined(__GNUC__) || defined(__clang__)
 	return __builtin_ctzll(x);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+	unsigned long idx;   /* the type _BitScanForward64 wants: a 32-bit unsigned long under MSVC, on purpose */
+	_BitScanForward64(&idx, x);
+	return (int)idx;
 #else
 	int c = 0;
 	while (!(x & 1ULL)) { x >>= 1; c++; }
@@ -154,9 +165,9 @@ static int ctz64(uint64_t x) {
 /* ------------------------------------------------------------------ */
 
 typedef struct {
-	long n;
-	long *ptr;      /* n+1 */
-	long *idx;      /* ptr[n] */
+	nwint n;
+	nwint *ptr;      /* n+1 */
+	nwint *idx;      /* ptr[n] */
 	double *w;      /* ptr[n] or NULL */
 } csr_t;
 
@@ -168,12 +179,12 @@ static void csr_free(csr_t *g) {
 /* ei/ej are 1-based ids; the order of the input inside a row is kept.
    only_pos: drop ties whose weight is not > 0 (ew must then be given);
    noloop: drop self ties. */
-static int csr_from_edges(csr_t *g, long n, long m, const long *ei, const long *ej,
+static int csr_from_edges(csr_t *g, nwint n, nwint m, const nwint *ei, const nwint *ej,
 		const double *ew, int only_pos, int noloop, int keep_w) {
-	long i, k, tot = 0;
-	long *cur;
+	nwint i, k, tot = 0;
+	nwint *cur;
 	g->n = n; g->ptr = NULL; g->idx = NULL; g->w = NULL;
-	g->ptr = (long *)calloc((size_t)(n + 2), sizeof(long));
+	g->ptr = (nwint *)calloc((size_t)(n + 2), sizeof(nwint));
 	if (!g->ptr) return 1;
 	for (k = 0; k < m; k++) {
 		if (only_pos && !(ew[k] > 0)) continue;
@@ -183,21 +194,21 @@ static int csr_from_edges(csr_t *g, long n, long m, const long *ei, const long *
 	}
 	/* ptr currently holds counts at index id (1-based); prefix-sum into 0-based starts */
 	{
-		long run = 0;
+		nwint run = 0;
 		for (i = 0; i < n; i++) {
-			long c = g->ptr[i + 1];
+			nwint c = g->ptr[i + 1];
 			g->ptr[i] = run;
 			run += c;
 		}
 		g->ptr[n] = run;
 	}
-	g->idx = (long *)malloc((size_t)(tot > 0 ? tot : 1) * sizeof(long));
+	g->idx = (nwint *)malloc((size_t)(tot > 0 ? tot : 1) * sizeof(nwint));
 	if (keep_w) g->w = (double *)malloc((size_t)(tot > 0 ? tot : 1) * sizeof(double));
-	cur = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	cur = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	if (!g->idx || (keep_w && !g->w) || !cur) { free(cur); return 1; }
 	for (i = 0; i < n; i++) cur[i] = g->ptr[i];
 	for (k = 0; k < m; k++) {
-		long r;
+		nwint r;
 		if (only_pos && !(ew[k] > 0)) continue;
 		if (noloop && ei[k] == ej[k]) continue;
 		r = ei[k] - 1;
@@ -209,11 +220,11 @@ static int csr_from_edges(csr_t *g, long n, long m, const long *ei, const long *
 	return 0;
 }
 
-static int has_nbr(const csr_t *g, long u, long v) {
+static int has_nbr(const csr_t *g, nwint u, nwint v) {
 	/* neighbour lists are sorted ascending (the Mata side guarantees it) */
-	long lo = g->ptr[u], hi = g->ptr[u + 1] - 1;
+	nwint lo = g->ptr[u], hi = g->ptr[u + 1] - 1;
 	while (lo <= hi) {
-		long mid = (lo + hi) / 2;
+		nwint mid = (lo + hi) / 2;
 		if (g->idx[mid] == v) return 1;
 		if (g->idx[mid] < v) lo = mid + 1; else hi = mid - 1;
 	}
@@ -221,10 +232,10 @@ static int has_nbr(const csr_t *g, long u, long v) {
 }
 
 /* index into idx/w of the entry (u -> v), or -1 */
-static long find_nbr(const csr_t *g, long u, long v) {
-	long lo = g->ptr[u], hi = g->ptr[u + 1] - 1;
+static nwint find_nbr(const csr_t *g, nwint u, nwint v) {
+	nwint lo = g->ptr[u], hi = g->ptr[u + 1] - 1;
 	while (lo <= hi) {
-		long mid = (lo + hi) / 2;
+		nwint mid = (lo + hi) / 2;
 		if (g->idx[mid] == v) return mid;
 		if (g->idx[mid] < v) lo = mid + 1; else hi = mid - 1;
 	}
@@ -236,37 +247,37 @@ static long find_nbr(const csr_t *g, long u, long v) {
 /* ------------------------------------------------------------------ */
 
 typedef struct {
-	long n;
-	long *ptr, *idx;
+	nwint n;
+	nwint *ptr, *idx;
 } lg_t;
 
-static long *g_loc = NULL;      /* orig node -> local index, -1 outside; size n of the full graph */
+static nwint *g_loc = NULL;      /* orig node -> local index, -1 outside; size n of the full graph */
 
 static void lg_free(lg_t *g) {
 	free(g->ptr); free(g->idx);
 	g->ptr = NULL; g->idx = NULL; g->n = 0;
 }
 
-static int lg_build(const csr_t *G, const long *nodes, long len, lg_t *g) {
-	long i, k, tot = 0, p;
+static int lg_build(const csr_t *G, const nwint *nodes, nwint len, lg_t *g) {
+	nwint i, k, tot = 0, p;
 	g->n = len; g->ptr = NULL; g->idx = NULL;
 	for (i = 0; i < len; i++) g_loc[nodes[i]] = i;
-	g->ptr = (long *)malloc((size_t)(len + 1) * sizeof(long));
+	g->ptr = (nwint *)malloc((size_t)(len + 1) * sizeof(nwint));
 	if (!g->ptr) return 1;
 	for (i = 0; i < len; i++) {
-		long c = 0, u = nodes[i];
+		nwint c = 0, u = nodes[i];
 		for (k = G->ptr[u]; k < G->ptr[u + 1]; k++) if (g_loc[G->idx[k]] >= 0) c++;
 		g->ptr[i] = tot;
 		tot += c;
 	}
 	g->ptr[len] = tot;
-	g->idx = (long *)malloc((size_t)(tot > 0 ? tot : 1) * sizeof(long));
+	g->idx = (nwint *)malloc((size_t)(tot > 0 ? tot : 1) * sizeof(nwint));
 	if (!g->idx) { for (i = 0; i < len; i++) g_loc[nodes[i]] = -1; return 1; }
 	for (i = 0; i < len; i++) {
-		long u = nodes[i];
+		nwint u = nodes[i];
 		p = g->ptr[i];
 		for (k = G->ptr[u]; k < G->ptr[u + 1]; k++) {
-			long l = g_loc[G->idx[k]];
+			nwint l = g_loc[G->idx[k]];
 			if (l >= 0) g->idx[p++] = l;      /* monotone map keeps the ascending order */
 		}
 	}
@@ -290,14 +301,14 @@ static int lg_build(const csr_t *G, const long *nodes, long len, lg_t *g) {
 /* ------------------------------------------------------------------ */
 
 typedef struct {
-	long n, E;
+	nwint n, E;
 	int bignum;
 	int *to, *rev, *cap0, *res;
-	long *ptr;              /* 2n+1 */
-	long *split_in;         /* arc index of x_in -> x_out */
+	nwint *ptr;              /* 2n+1 */
+	nwint *split_in;         /* arc index of x_in -> x_out */
 	int *vis, *queue, *pe, *queue2, *visF, *visB, *peF, *peB;
 	int stamp;
-	long *touched; long ntouched, captouched;
+	nwint *touched; nwint ntouched, captouched;
 } vs_t;
 
 static void vs_free(vs_t *vs) {
@@ -308,16 +319,16 @@ static void vs_free(vs_t *vs) {
 }
 
 static int vs_init(vs_t *vs, const lg_t *g) {
-	long n = g->n, N = 2 * n, E = 2 * (n + g->ptr[n]), u, k, v, a, b;
-	long *pos;
+	nwint n = g->n, N = 2 * n, E = 2 * (n + g->ptr[n]), u, k, v, a, b;
+	nwint *pos;
 	memset(vs, 0, sizeof(*vs));
 	vs->n = n; vs->E = E; vs->bignum = (int)(n + 10);
 	vs->to = (int *)malloc((size_t)E * sizeof(int));
 	vs->rev = (int *)malloc((size_t)E * sizeof(int));
 	vs->cap0 = (int *)malloc((size_t)E * sizeof(int));
 	vs->res = (int *)malloc((size_t)E * sizeof(int));
-	vs->ptr = (long *)malloc((size_t)(N + 1) * sizeof(long));
-	vs->split_in = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
+	vs->ptr = (nwint *)malloc((size_t)(N + 1) * sizeof(nwint));
+	vs->split_in = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
 	vs->vis = (int *)calloc((size_t)N, sizeof(int));
 	vs->queue = (int *)malloc((size_t)N * sizeof(int));
 	vs->pe = (int *)malloc((size_t)N * sizeof(int));
@@ -326,7 +337,7 @@ static int vs_init(vs_t *vs, const lg_t *g) {
 	vs->visB = (int *)calloc((size_t)N, sizeof(int));
 	vs->peF = (int *)malloc((size_t)N * sizeof(int));
 	vs->peB = (int *)malloc((size_t)N * sizeof(int));
-	pos = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	pos = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	if (!vs->to || !vs->rev || !vs->cap0 || !vs->res || !vs->ptr || !vs->split_in || !vs->vis || !vs->queue || !vs->pe || !vs->queue2 || !vs->visF || !vs->visB || !vs->peF || !vs->peB || !pos) {
 		free(pos); vs_free(vs); return 1;
 	}
@@ -349,8 +360,8 @@ static int vs_init(vs_t *vs, const lg_t *g) {
 		for (k = g->ptr[u]; k < g->ptr[u + 1]; k++) {
 			v = g->idx[k];
 			if (v > u) {
-				long j = k - g->ptr[u];
-				long i;
+				nwint j = k - g->ptr[u];
+				nwint i;
 				for (i = pos[v]; g->idx[g->ptr[v] + i] != u; i++) ;
 				pos[v] = i + 1;
 				a = vs->ptr[n + u] + 1 + j;           /* out_u -> in_v */
@@ -372,10 +383,10 @@ static int vs_init(vs_t *vs, const lg_t *g) {
 	return 0;
 }
 
-static int vs_touch(vs_t *vs, long a) {
+static int vs_touch(vs_t *vs, nwint a) {
 	if (vs->ntouched == vs->captouched) {
-		long nc = vs->captouched ? vs->captouched * 2 : 256;
-		long *p = (long *)realloc(vs->touched, (size_t)nc * sizeof(long));
+		nwint nc = vs->captouched ? vs->captouched * 2 : 256;
+		nwint *p = (nwint *)realloc(vs->touched, (size_t)nc * sizeof(nwint));
 		if (!p) return 1;
 		vs->touched = p;
 		vs->captouched = nc;
@@ -388,7 +399,7 @@ static int vs_touch(vs_t *vs, long a) {
    forward from s over residual arcs and backward from t over the reverse arcs. On success the
    path is s ..(peF).. m ..(peB).. t and the meeting node m is returned in *meet. */
 static int vs_bibfs(vs_t *vs, int s, int t, int *meet) {
-	long fh = 0, ft = 0, bh = 0, bt = 0, a, e1, lvl;
+	nwint fh = 0, ft = 0, bh = 0, bt = 0, a, e1, lvl;
 	int u, v;
 	int *qf = vs->queue, *qb = vs->queue2;
 	vs->visF[s] = vs->stamp;
@@ -437,16 +448,16 @@ static int vs_bibfs(vs_t *vs, int s, int t, int *meet) {
 /* Augments from the out-node of s to the in-node of t until no path is left or the flow reaches `limit`.
    The split arcs of s and t must already have been raised. Leaves the residual capacities changed
    (vs_reset undoes them). s and t must not be adjacent, so every path has unit bottleneck. */
-static long vs_augment(vs_t *vs, long s, long t, long limit) {
-	long n = vs->n, flow = 0;
+static nwint vs_augment(vs_t *vs, nwint s, nwint t, nwint limit) {
+	nwint n = vs->n, flow = 0;
 	int v, m;
 	vs->stamp++;
 	g_nquery++;
 	while (flow < limit && (g_nbfs++, vs_bibfs(vs, (int)(n + s), (int)t, &m))) {
 		v = m;
 		while (v != (int)(n + s)) {                 /* source side of the path */
-			long a = vs->peF[v];
-			long r = vs->rev[a];
+			nwint a = vs->peF[v];
+			nwint r = vs->rev[a];
 			vs->res[a] -= 1;
 			vs->res[r] += 1;
 			if (vs_touch(vs, a) || vs_touch(vs, r)) { g_oom = 1; return flow; }
@@ -454,8 +465,8 @@ static long vs_augment(vs_t *vs, long s, long t, long limit) {
 		}
 		v = m;
 		while (v != (int)t) {                        /* sink side of the path */
-			long a = vs->peB[v];
-			long r = vs->rev[a];
+			nwint a = vs->peB[v];
+			nwint r = vs->rev[a];
 			vs->res[a] -= 1;
 			vs->res[r] += 1;
 			if (vs_touch(vs, a) || vs_touch(vs, r)) { g_oom = 1; return flow; }
@@ -468,14 +479,14 @@ static long vs_augment(vs_t *vs, long s, long t, long limit) {
 }
 
 static void vs_reset(vs_t *vs) {
-	long i;
+	nwint i;
 	for (i = 0; i < vs->ntouched; i++) vs->res[vs->touched[i]] = vs->cap0[vs->touched[i]];
 	vs->ntouched = 0;
 }
 
 /* local vertex connectivity of the nonadjacent pair (s,t), but not more than limit */
-static long vs_query(vs_t *vs, long s, long t, long limit) {
-	long f;
+static nwint vs_query(vs_t *vs, nwint s, nwint t, nwint limit) {
+	nwint f;
 	vs->res[vs->split_in[s]] = vs->bignum;
 	vs->res[vs->split_in[t]] = vs->bignum;
 	f = vs_augment(vs, s, t, limit);
@@ -493,23 +504,23 @@ static long vs_query(vs_t *vs, long s, long t, long limit) {
    only records a pair when its flow is strictly smaller.                   */
 /* ------------------------------------------------------------------ */
 
-static long fmc_search(const lg_t *g, int has_target, long target, long *bs, long *bt) {
-	long n = g->n, i, v0, delta, minflow, f, a, b;
-	long *mark = NULL;
+static nwint fmc_search(const lg_t *g, int has_target, nwint target, nwint *bs, nwint *bt) {
+	nwint n = g->n, i, v0, delta, minflow, f, a, b;
+	nwint *mark = NULL;
 	vs_t vs;
-	long stamp = 0;
+	nwint stamp = 0;
 	g_nsearch++;
 	*bs = -1; *bt = -1;
 	delta = -1; v0 = 0;
 	for (i = 0; i < n; i++) {
-		long d = g->ptr[i + 1] - g->ptr[i];
+		nwint d = g->ptr[i + 1] - g->ptr[i];
 		if (delta < 0 || d < delta) { delta = d; v0 = i; }
 	}
 	minflow = delta;
 	if (n <= 1) return minflow;
 	/* the degree bound is already below the target: the Mata search runs no query either */
 	if (has_target && minflow < target) return minflow;
-	mark = (long *)calloc((size_t)n, sizeof(long));
+	mark = (nwint *)calloc((size_t)n, sizeof(nwint));
 	if (!mark) { g_oom = 1; return minflow; }
 	if (vs_init(&vs, g)) { g_oom = 1; free(mark); return minflow; }
 
@@ -523,8 +534,8 @@ static long fmc_search(const lg_t *g, int has_target, long target, long *bs, lon
 		}
 	}
 	{
-		long nv = g->ptr[v0 + 1] - g->ptr[v0];
-		const long *nb = g->idx + g->ptr[v0];
+		nwint nv = g->ptr[v0 + 1] - g->ptr[v0];
+		const nwint *nb = g->idx + g->ptr[v0];
 		for (a = 0; a < nv && !g_oom && !(has_target && minflow < target); a++) {
 			stamp++;
 			for (i = g->ptr[nb[a]]; i < g->ptr[nb[a] + 1]; i++) mark[g->idx[i]] = stamp;
@@ -543,14 +554,14 @@ static long fmc_search(const lg_t *g, int has_target, long target, long *bs, lon
 }
 
 /* port of min_vertex_cutset_edges_given; cut must hold n entries; returns its size */
-static long cutset_given(const lg_t *g, long minflow, long bs, long bt, long *cut) {
-	long n = g->n, i, j, v, a, nc = 0, delta, v0, qh, qt, e1;
+static nwint cutset_given(const lg_t *g, nwint minflow, nwint bs, nwint bt, nwint *cut) {
+	nwint n = g->n, i, j, v, a, nc = 0, delta, v0, qh, qt, e1;
 	vs_t vs;
 	if (bs < 0) {
 		if (minflow == 0) return 0;
 		delta = -1; v0 = 0;
 		for (i = 0; i < n; i++) {
-			long d = g->ptr[i + 1] - g->ptr[i];
+			nwint d = g->ptr[i + 1] - g->ptr[i];
 			if (delta < 0 || d < delta) { delta = d; v0 = i; }
 		}
 		for (j = g->ptr[v0]; j < g->ptr[v0 + 1]; j++) cut[nc++] = g->idx[j];
@@ -559,7 +570,7 @@ static long cutset_given(const lg_t *g, long minflow, long bs, long bt, long *cu
 	if (vs_init(&vs, g)) { g_oom = 1; return 0; }
 	vs.res[vs.split_in[bs]] = vs.bignum;
 	vs.res[vs.split_in[bt]] = vs.bignum;
-	(void)vs_augment(&vs, bs, bt, (long)vs.bignum * 4);
+	(void)vs_augment(&vs, bs, bt, (nwint)vs.bignum * 4);
 	if (g_oom) { vs_free(&vs); return 0; }
 	/* nodes reachable from the out-node of bs in the residual graph of the maximum flow */
 	vs.stamp++;
@@ -595,8 +606,8 @@ typedef struct {
 	ilist_t bs, bt;     /* witness pair of the connectivity search that certified the block (local indices) */
 } blocks_t;
 
-static int blocks_add(blocks_t *b, const long *nodes, long len, long kappa, long bs, long bt) {
-	long i;
+static int blocks_add(blocks_t *b, const nwint *nodes, nwint len, nwint kappa, nwint bs, nwint bt) {
+	nwint i;
 	if (il_push(&b->start, b->nodes.len)) return 1;
 	if (il_push(&b->kappa, kappa)) return 1;
 	if (il_push(&b->bs, bs) || il_push(&b->bt, bt)) return 1;
@@ -608,15 +619,15 @@ static void blocks_free(blocks_t *b) {
 	il_free(&b->nodes); il_free(&b->start); il_free(&b->kappa); il_free(&b->bs); il_free(&b->bt);
 }
 
-static long blocks_count(const blocks_t *b) { return b->start.len; }
-static long blocks_lo(const blocks_t *b, long i) { return b->start.a[i]; }
-static long blocks_hi(const blocks_t *b, long i) { return i + 1 < b->start.len ? b->start.a[i + 1] : b->nodes.len; }
+static nwint blocks_count(const blocks_t *b) { return b->start.len; }
+static nwint blocks_lo(const blocks_t *b, nwint i) { return b->start.a[i]; }
+static nwint blocks_hi(const blocks_t *b, nwint i) { return i + 1 < b->start.len ? b->start.a[i + 1] : b->nodes.len; }
 
 /* port of KComponentsEdges: appends every maximal set with connectivity >= k found inside nodes */
-static int kcomp_rec(const csr_t *G, const long *nodes, long len, long k, const long *pre, blocks_t *out) {
+static int kcomp_rec(const csr_t *G, const nwint *nodes, nwint len, nwint k, const nwint *pre, blocks_t *out) {
 	lg_t lg;
-	long bs, bt, conn, nc, i, c, ncomp, qh, qt, u, l;
-	long *cut = NULL, *queue = NULL;
+	nwint bs, bt, conn, nc, i, c, ncomp, qh, qt, u, l;
+	nwint *cut = NULL, *queue = NULL;
 	int *comp = NULL;
 	char *incut = NULL;
 	int rc = 0;
@@ -631,10 +642,10 @@ static int kcomp_rec(const csr_t *G, const long *nodes, long len, long k, const 
 		/* a search that ran to the end returns the exact connectivity of the block: keep it for the hierarchy */
 		return blocks_add(out, nodes, len, conn, bs, bt);
 	}
-	cut = (long *)malloc((size_t)(len + 1) * sizeof(long));
+	cut = (nwint *)malloc((size_t)(len + 1) * sizeof(nwint));
 	incut = (char *)calloc((size_t)len, 1);
 	comp = (int *)malloc((size_t)len * sizeof(int));
-	queue = (long *)malloc((size_t)len * sizeof(long));
+	queue = (nwint *)malloc((size_t)len * sizeof(nwint));
 	if (!cut || !incut || !comp || !queue) { rc = 1; goto done; }
 	nc = cutset_given(&lg, conn, bs, bt, cut);
 	if (g_oom) { rc = 1; goto done; }
@@ -650,7 +661,7 @@ static int kcomp_rec(const csr_t *G, const long *nodes, long len, long k, const 
 		while (qh < qt) {
 			u = queue[qh++];
 			for (l = lg.ptr[u]; l < lg.ptr[u + 1]; l++) {
-				long w = lg.idx[l];
+				nwint w = lg.idx[l];
 				if (!incut[w] && !comp[w]) { comp[w] = (int)ncomp; queue[qt++] = w; }
 			}
 		}
@@ -658,10 +669,10 @@ static int kcomp_rec(const csr_t *G, const long *nodes, long len, long k, const 
 	lg_free(&lg);
 	free(cut); cut = NULL; free(queue); queue = NULL;
 	for (c = 1; c <= ncomp && !rc; c++) {
-		long cnt = 0, p = 0;
-		long *child;
+		nwint cnt = 0, p = 0;
+		nwint *child;
 		for (i = 0; i < len; i++) if (comp[i] == c || incut[i]) cnt++;
-		child = (long *)malloc((size_t)(cnt > 0 ? cnt : 1) * sizeof(long));
+		child = (nwint *)malloc((size_t)(cnt > 0 ? cnt : 1) * sizeof(nwint));
 		if (!child) { rc = 1; break; }
 		for (i = 0; i < len; i++) if (comp[i] == c || incut[i]) child[p++] = nodes[i];
 		rc = kcomp_rec(G, child, cnt, k, NULL, out);
@@ -677,10 +688,10 @@ done:
    ended with the witness pair (bs,bt); the Mata hierarchy recomputes both, and the search that certifies a
    block of the parent's k-component step is the same sequence of queries as the one that measures it, so the
    values are identical. */
-static int cohesion_rec(const csr_t *G, const long *nodes, long len, long kappa, long bs, long bt, blocks_t *out) {
-	long i, nb;
+static int cohesion_rec(const csr_t *G, const nwint *nodes, nwint len, nwint kappa, nwint bs, nwint bt, blocks_t *out) {
+	nwint i, nb;
 	blocks_t kc;
-	long pre[3];
+	nwint pre[3];
 	int rc = 0;
 	memset(&kc, 0, sizeof(kc));
 	if (kappa < 0) {
@@ -699,10 +710,10 @@ static int cohesion_rec(const csr_t *G, const long *nodes, long len, long kappa,
 	if (kcomp_rec(G, nodes, len, kappa + 1, pre, &kc)) { blocks_free(&kc); return 1; }
 	nb = blocks_count(&kc);
 	for (i = 0; i < nb && !rc; i++) {
-		long lo = blocks_lo(&kc, i), hi = blocks_hi(&kc, i);
-		long *child = (long *)malloc((size_t)(hi - lo > 0 ? hi - lo : 1) * sizeof(long));
+		nwint lo = blocks_lo(&kc, i), hi = blocks_hi(&kc, i);
+		nwint *child = (nwint *)malloc((size_t)(hi - lo > 0 ? hi - lo : 1) * sizeof(nwint));
 		if (!child) { rc = 1; break; }
-		memcpy(child, kc.nodes.a + lo, (size_t)(hi - lo) * sizeof(long));
+		memcpy(child, kc.nodes.a + lo, (size_t)(hi - lo) * sizeof(nwint));
 		rc = cohesion_rec(G, child, hi - lo, kc.kappa.a[i], kc.bs.a[i], kc.bt.a[i], out);
 		free(child);
 	}
@@ -711,16 +722,16 @@ static int cohesion_rec(const csr_t *G, const long *nodes, long len, long kappa,
 }
 
 /* args: n ; ties: symmetric 0/1 sorted list (both directions).  extra p1 = k (0 = hierarchy) */
-static int comb_cohesion(long n, long nties, const long *ei, const long *ej, long kk) {
+static int comb_cohesion(nwint n, nwint nties, const nwint *ei, const nwint *ej, nwint kk) {
 	csr_t G;
 	blocks_t B;
-	long *all, i, b, nb, tot, r;
+	nwint *all, i, b, nb, tot, r;
 	int rc = 0;
 	memset(&B, 0, sizeof(B));
 	g_oom = 0;
 	if (csr_from_edges(&G, n, nties, ei, ej, NULL, 0, 1, 0)) return 2;
-	g_loc = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
-	all = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
+	g_loc = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
+	all = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
 	if (!g_loc || !all) { csr_free(&G); free(g_loc); free(all); g_loc = NULL; return 2; }
 	for (i = 0; i < n; i++) { g_loc[i] = -1; all[i] = i; }
 	if (kk <= 0) rc = cohesion_rec(&G, all, n, -1, -1, -1, &B);
@@ -733,7 +744,7 @@ static int comb_cohesion(long n, long nties, const long *ei, const long *ej, lon
 	if (res_alloc(tot, 3)) { blocks_free(&B); return 2; }
 	r = 0;
 	for (b = 0; b < nb; b++) {
-		long lo = blocks_lo(&B, b), hi = blocks_hi(&B, b), j;
+		nwint lo = blocks_lo(&B, b), hi = blocks_hi(&B, b), j;
 		for (j = lo; j < hi; j++) {
 			g_res[r * 3 + 0] = (double)(b + 1);
 			g_res[r * 3 + 1] = (double)(B.nodes.a[j] + 1);
@@ -755,12 +766,12 @@ static int comb_cohesion(long n, long nties, const long *ei, const long *ej, lon
 /* ------------------------------------------------------------------ */
 
 typedef struct {
-	long n, m2;             /* nodes, arcs */
-	long *ptr, *to;         /* CSR of arcs, arc a pairs with rev[a] */
-	long *rev;
+	nwint n, m2;             /* nodes, arcs */
+	nwint *ptr, *to;         /* CSR of arcs, arc a pairs with rev[a] */
+	nwint *rev;
 	signed char *cap, *cap0;
-	long *level, *it, *queue;
-	long *stk;
+	nwint *level, *it, *queue;
+	nwint *stk;
 } din_t;
 
 static void din_free(din_t *d) {
@@ -771,25 +782,25 @@ static void din_free(din_t *d) {
 
 /* G: symmetric simple graph (each undirected tie in both directions). */
 static int din_init(din_t *d, const csr_t *G) {
-	long n = G->n, m2 = G->ptr[n], u, k, v, p;
-	long *pos;
+	nwint n = G->n, m2 = G->ptr[n], u, k, v, p;
+	nwint *pos;
 	memset(d, 0, sizeof(*d));
 	d->n = n; d->m2 = m2;
-	d->ptr = (long *)malloc((size_t)(n + 1) * sizeof(long));
-	d->to = (long *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(long));
-	d->rev = (long *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(long));
+	d->ptr = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
+	d->to = (nwint *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(nwint));
+	d->rev = (nwint *)malloc((size_t)(m2 > 0 ? m2 : 1) * sizeof(nwint));
 	d->cap = (signed char *)malloc((size_t)(m2 > 0 ? m2 : 1));
 	d->cap0 = (signed char *)malloc((size_t)(m2 > 0 ? m2 : 1));
-	d->level = (long *)malloc((size_t)n * sizeof(long));
-	d->it = (long *)malloc((size_t)n * sizeof(long));
-	d->queue = (long *)malloc((size_t)n * sizeof(long));
-	d->stk = (long *)malloc((size_t)(n + 1) * sizeof(long));
-	pos = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	d->level = (nwint *)malloc((size_t)n * sizeof(nwint));
+	d->it = (nwint *)malloc((size_t)n * sizeof(nwint));
+	d->queue = (nwint *)malloc((size_t)n * sizeof(nwint));
+	d->stk = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
+	pos = (nwint *)malloc((size_t)(n + 1) * sizeof(nwint));
 	if (!d->ptr || !d->to || !d->rev || !d->cap || !d->cap0 || !d->level || !d->it || !d->queue || !d->stk || !pos) {
 		free(pos); din_free(d); return 1;
 	}
-	memcpy(d->ptr, G->ptr, (size_t)(n + 1) * sizeof(long));
-	memcpy(d->to, G->idx, (size_t)m2 * sizeof(long));
+	memcpy(d->ptr, G->ptr, (size_t)(n + 1) * sizeof(nwint));
+	memcpy(d->to, G->idx, (size_t)m2 * sizeof(nwint));
 	for (u = 0; u < n; u++) pos[u] = d->ptr[u];
 	/* the reverse of arc (u -> v) is the arc (v -> u): found by the position of u in v's list;
 	   because lists are sorted and symmetric, walk u ascending and v's cursor advances in step. */
@@ -810,9 +821,9 @@ static int din_init(din_t *d, const csr_t *G) {
 	return 0;
 }
 
-static int din_bfs(din_t *d, long s, long t) {
-	long qh = 0, qt = 0, u, k, v;
-	long i;
+static int din_bfs(din_t *d, nwint s, nwint t) {
+	nwint qh = 0, qt = 0, u, k, v;
+	nwint i;
 	for (i = 0; i < d->n; i++) d->level[i] = -1;
 	d->level[s] = 0;
 	d->queue[qt++] = s;
@@ -831,12 +842,12 @@ static int din_bfs(din_t *d, long s, long t) {
 }
 
 /* maximum flow s -> t, at most ub; leaves cap[] residual. returns the flow */
-static long din_flow(din_t *d, long s, long t, long ub) {
-	long flow = 0, top, u, k, v;
-	long n = d->n;
+static nwint din_flow(din_t *d, nwint s, nwint t, nwint ub) {
+	nwint flow = 0, top, u, k, v;
+	nwint n = d->n;
 	memcpy(d->cap, d->cap0, (size_t)(d->m2 > 0 ? d->m2 : 1));
 	while (flow < ub && din_bfs(d, s, t)) {
-		long i;
+		nwint i;
 		for (i = 0; i < n; i++) d->it[i] = d->ptr[i];
 		while (flow < ub) {
 			/* iterative DFS for one augmenting path in the level graph; stk holds arcs */
@@ -876,8 +887,8 @@ static long din_flow(din_t *d, long s, long t, long ub) {
 }
 
 /* residual reachability from s (after din_flow has stopped because no path remains) */
-static void din_reach(din_t *d, long s, char *inX) {
-	long qh = 0, qt = 0, u, k, v, i;
+static void din_reach(din_t *d, nwint s, char *inX) {
+	nwint qh = 0, qt = 0, u, k, v, i;
 	for (i = 0; i < d->n; i++) inX[i] = 0;
 	inX[s] = 1;
 	d->queue[qt++] = s;
@@ -890,16 +901,16 @@ static void din_reach(din_t *d, long s, char *inX) {
 	}
 }
 
-static int comb_lambda(long n, long nties, const long *ei, const long *ej) {
+static int comb_lambda(nwint n, nwint nties, const nwint *ei, const nwint *ej) {
 	csr_t G;
 	din_t d;
-	long s, t, i, f, ub, ds, dt;
-	long *par, *fl;
+	nwint s, t, i, f, ub, ds, dt;
+	nwint *par, *fl;
 	char *inX;
 	if (csr_from_edges(&G, n, nties, ei, ej, NULL, 0, 1, 0)) return 2;
 	if (din_init(&d, &G)) { csr_free(&G); return 2; }
-	par = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
-	fl = (long *)calloc((size_t)(n > 0 ? n : 1), sizeof(long));
+	par = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
+	fl = (nwint *)calloc((size_t)(n > 0 ? n : 1), sizeof(nwint));
 	inX = (char *)malloc((size_t)(n > 0 ? n : 1));
 	if (!par || !fl || !inX) { free(par); free(fl); free(inX); din_free(&d); csr_free(&G); return 2; }
 	for (s = 1; s < n; s++) {
@@ -956,20 +967,20 @@ static double fac_fit(const fac_stat_t *st, double W, double P) {
 static double fac_cmp(double x) { return isnan(x) ? INFINITY : x; }
 
 /* ties: symmetric weighted list (both directions); v4 holds the starting groups (1..K) */
-static int comb_factions(long n, long nties, const long *ei, const long *ej, const double *ew,
-		double *grp0, long K, long maxiter) {
+static int comb_factions(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew,
+		double *grp0, nwint K, nwint maxiter) {
 	csr_t G;
 	fac_stat_t st;
-	long i, k, g, sweep, moved, orig, bestg;
-	long *grp, *size;
+	nwint i, k, g, sweep, moved, orig, bestg;
+	nwint *grp, *size;
 	double *S, W, P, bestfit, fit1, nnz = 0, w0 = 0;
 	int allsame = 1;
 	if (csr_from_edges(&G, n, nties, ei, ej, ew, 0, 1, 1)) return 2;
-	grp = (long *)malloc((size_t)n * sizeof(long));
-	size = (long *)calloc((size_t)(K + 2), sizeof(long));
+	grp = (nwint *)malloc((size_t)n * sizeof(nwint));
+	size = (nwint *)calloc((size_t)(K + 2), sizeof(nwint));
 	S = (double *)malloc((size_t)(K + 2) * sizeof(double));
 	if (!grp || !size || !S) { free(grp); free(size); free(S); csr_free(&G); return 2; }
-	for (i = 0; i < n; i++) { grp[i] = (long)grp0[i]; size[grp[i]]++; }
+	for (i = 0; i < n; i++) { grp[i] = (nwint)grp0[i]; size[grp[i]]++; }
 	st.SA = 0; st.SA2 = 0; st.M = (double)n * (double)(n - 1);
 	for (k = 0; k < G.ptr[n]; k++) {
 		double w = G.w[k];
@@ -1023,18 +1034,18 @@ static int comb_factions(long n, long nties, const long *ei, const long *ej, con
 /* 4-node motif census (induced), exact integer arithmetic               */
 /* ------------------------------------------------------------------ */
 
-static int comb_motif4(long n, long nties, const long *ei, const long *ej) {
+static int comb_motif4(nwint n, nwint nties, const nwint *ei, const nwint *ej) {
 	csr_t G;
-	long u, v, k, l, w;
-	long *mark, *tv;
+	nwint u, v, k, l, w;
+	nwint *mark, *tv;
 	int64_t star = 0, pathsub = 0, cyc2 = 0, paw = 0, dia = 0, k4 = 0, tri3 = 0, sumpath = 0;
 	int64_t ind[6];
 	double total;
-	long *cnt;
+	nwint *cnt;
 	if (csr_from_edges(&G, n, nties, ei, ej, NULL, 0, 1, 0)) return 2;
-	mark = (long *)malloc((size_t)n * sizeof(long));
-	tv = (long *)calloc((size_t)n, sizeof(long));
-	cnt = (long *)calloc((size_t)n, sizeof(long));
+	mark = (nwint *)malloc((size_t)n * sizeof(nwint));
+	tv = (nwint *)calloc((size_t)n, sizeof(nwint));
+	cnt = (nwint *)calloc((size_t)n, sizeof(nwint));
 	if (!mark || !tv || !cnt) { free(mark); free(tv); free(cnt); csr_free(&G); return 2; }
 	for (u = 0; u < n; u++) mark[u] = -1;
 
@@ -1062,8 +1073,8 @@ static int comb_motif4(long n, long nties, const long *ei, const long *ej) {
 			if (v <= u) continue;
 			{
 				int64_t te = 0;
-				long nw = 0;
-				long wbuf_n = 0;
+				nwint nw = 0;
+				nwint wbuf_n = 0;
 				(void)nw; (void)wbuf_n;
 				for (l = G.ptr[v]; l < G.ptr[v + 1]; l++) {
 					w = G.idx[l];
@@ -1089,7 +1100,7 @@ static int comb_motif4(long n, long nties, const long *ei, const long *ej) {
 	for (u = 0; u < n; u++) {
 		ilist_t touched = {0, 0, 0};
 		for (k = G.ptr[u]; k < G.ptr[u + 1]; k++) {
-			long x = G.idx[k];
+			nwint x = G.idx[k];
 			for (l = G.ptr[x]; l < G.ptr[x + 1]; l++) {
 				w = G.idx[l];
 				if (w > u) {
@@ -1107,13 +1118,13 @@ static int comb_motif4(long n, long nties, const long *ei, const long *ej) {
 	}
 	/* K4: tie (a,b), a<b, common neighbours c,d > b with c-d tied */
 	{
-		long *wl = (long *)malloc((size_t)(n > 0 ? n : 1) * sizeof(long));
+		nwint *wl = (nwint *)malloc((size_t)(n > 0 ? n : 1) * sizeof(nwint));
 		if (!wl) { free(mark); free(tv); free(cnt); csr_free(&G); return 2; }
 		for (u = 0; u < n; u++) mark[u] = -1;
 		for (u = 0; u < n; u++) {
 			for (k = G.ptr[u]; k < G.ptr[u + 1]; k++) mark[G.idx[k]] = u;
 			for (k = G.ptr[u]; k < G.ptr[u + 1]; k++) {
-				long nwl = 0, a, b;
+				nwint nwl = 0, a, b;
 				v = G.idx[k];
 				if (v <= u) continue;
 				for (l = G.ptr[v]; l < G.ptr[v + 1]; l++) {
@@ -1166,25 +1177,25 @@ static int comb_motif4(long n, long nties, const long *ei, const long *ej) {
 
 /* measure: 0 binary, 1 arithmetic, 2 geometric, 3 maximum, 4 minimum.
    ties: raw out-neighbour lists with weights (as stored); v4 = 1 for the nodes of the requested level */
-static int comb_cluster2(long n, long nties, const long *ei, const long *ej, const double *ew,
+static int comb_cluster2(nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew,
 		const double *lvl, int measure) {
 	csr_t G;
-	long ci, c, ia0, ia1, ie0, ie2, a0, a1, e0, e2, k;
-	long *mark;
-	long stamp = 0;
+	nwint ci, c, ia0, ia1, ie0, ie2, a0, a1, e0, e2, k;
+	nwint *mark;
+	nwint stamp = 0;
 	double total_pot = 0, total_clo = 0;
 	if (csr_from_edges(&G, n, nties, ei, ej, ew, 0, 0, 1)) return 2;
-	mark = (long *)calloc((size_t)n, sizeof(long));
+	mark = (nwint *)calloc((size_t)n, sizeof(nwint));
 	if (!mark || res_alloc(n, 2)) { free(mark); csr_free(&G); return 2; }
 	for (ci = 0; ci < n; ci++) { g_res[ci * 2] = 0; g_res[ci * 2 + 1] = 0; }
 	for (c = 0; c < n; c++) {
-		long pc0 = G.ptr[c], pc1 = G.ptr[c + 1];
+		nwint pc0 = G.ptr[c], pc1 = G.ptr[c + 1];
 		double pot = 0, clo = 0;
 		if (!(lvl[c] > 0.5)) continue;
 		for (ia0 = pc0; ia0 < pc1; ia0++) {
 			double w2 = 0;
 			a0 = G.idx[ia0];
-			if (measure) { long q = find_nbr(&G, a0, c); w2 = q >= 0 ? G.w[q] : 0; }
+			if (measure) { nwint q = find_nbr(&G, a0, c); w2 = q >= 0 ? G.w[q] : 0; }
 			for (ia1 = pc0; ia1 < pc1; ia1++) {
 				double w3 = 0;
 				if (ia1 == ia0) continue;
@@ -1194,7 +1205,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 					double w1 = 0;
 					e0 = G.idx[ie0];
 					if (e0 == c) continue;
-					if (measure) { long q = find_nbr(&G, e0, a0); w1 = q >= 0 ? G.w[q] : 0; }
+					if (measure) { nwint q = find_nbr(&G, e0, a0); w1 = q >= 0 ? G.w[q] : 0; }
 					stamp++;
 					for (k = G.ptr[e0]; k < G.ptr[e0 + 1]; k++) mark[G.idx[k]] = stamp;
 					for (ie2 = G.ptr[a1]; ie2 < G.ptr[a1 + 1]; ie2++) {
@@ -1214,7 +1225,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 							}
 						}
 						for (k = G.ptr[e2]; k < G.ptr[e2 + 1]; k++) {
-							long a2 = G.idx[k];
+							nwint a2 = G.idx[k];
 							if (mark[a2] == stamp && a2 != a0 && a2 != a1) { closed = 1; break; }
 						}
 						pot += m;
@@ -1248,7 +1259,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 /* ------------------------------------------------------------------ */
 
 static int comb_handles(const char *s) {
-	long a = (long)atof(s);
+	nwint a = (nwint)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
 	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || (a >= 43 && a <= 49) || a == 50 || a == 99 || a == 100);
 }
@@ -1257,8 +1268,8 @@ static int comb_call(int argc, char *argv[]) {
 	char *buf;
 	double p[16];
 	int np = 0, i;
-	long alg, n, nties, k;
-	long *ei = NULL, *ej = NULL;
+	nwint alg, n, nties, k;
+	nwint *ei = NULL, *ej = NULL;
 	double *ew = NULL, *nv = NULL;
 	int rc = 0;
 	char *tok;
@@ -1270,9 +1281,9 @@ static int comb_call(int argc, char *argv[]) {
 	tok = strtok(buf, " \t");
 	while (tok && np < 16) { p[np++] = atof(tok); tok = strtok(NULL, " \t"); }
 	free(buf);
-	alg = (long)p[0];
-	n = (long)p[1];
-	nties = (long)p[2];
+	alg = (nwint)p[0];
+	n = (nwint)p[1];
+	nties = (nwint)p[2];
 
 	if (alg == ALG_VERSION) {
 		pub("__nwg_ver", (double)NWCOMB_VERSION);
@@ -1280,30 +1291,30 @@ static int comb_call(int argc, char *argv[]) {
 	}
 	if (alg == ALG_FETCH) {
 		/* p[3] = number of output columns, written to variables 5.. */
-		long r, c, cols = (long)p[3];
+		nwint r, c, cols = (nwint)p[3];
 		for (c = 0; c < cols && c < g_res_cols; c++)
 			for (r = 0; r < g_res_rows; r++)
-				SF_vstore(5 + c, r + 1, g_res[r * g_res_cols + c]);
+				NW_VSTORE(5 + c, r + 1, g_res[r * g_res_cols + c]);
 		res_clear();
 		return 0;
 	}
 
 	if (nties > 0) {
-		ei = (long *)malloc((size_t)nties * sizeof(long));
-		ej = (long *)malloc((size_t)nties * sizeof(long));
+		ei = (nwint *)malloc((size_t)nties * sizeof(nwint));
+		ej = (nwint *)malloc((size_t)nties * sizeof(nwint));
 		ew = (double *)malloc((size_t)nties * sizeof(double));
 		if (!ei || !ej || !ew) { free(ei); free(ej); free(ew); pub_result(2, 0, 0); return 0; }
 		for (k = 0; k < nties; k++) {
 			ST_double v;
-			SF_vdata(1, k + 1, &v); ei[k] = (long)v;
-			SF_vdata(2, k + 1, &v); ej[k] = (long)v;
-			SF_vdata(3, k + 1, &v); ew[k] = v;
+			NW_VDATA(1, k + 1, &v); ei[k] = (nwint)v;
+			NW_VDATA(2, k + 1, &v); ej[k] = (nwint)v;
+			NW_VDATA(3, k + 1, &v); ew[k] = v;
 		}
 	}
 	if (alg == ALG_FACTIONS || alg == ALG_CLUSTER2 || alg == ALG_MATCHING || alg == ALG_LOUVBIP || alg == ALG_MATCHW || alg == ALG_BMOTIF) {
 		nv = (double *)malloc((size_t)(n > 0 ? n : 1) * sizeof(double));
 		if (!nv) { free(ei); free(ej); free(ew); pub_result(2, 0, 0); return 0; }
-		for (k = 0; k < n; k++) { ST_double v; SF_vdata(4, k + 1, &v); nv[k] = v; }
+		for (k = 0; k < n; k++) { ST_double v; NW_VDATA(4, k + 1, &v); nv[k] = v; }
 	}
 	res_clear();
 	if (alg >= 34 && alg <= 39) {
@@ -1326,10 +1337,10 @@ static int comb_call(int argc, char *argv[]) {
 	}
 	switch (alg) {
 		case ALG_COHESION:
-			rc = comb_cohesion(n, nties, ei, ej, (long)p[3]);
+			rc = comb_cohesion(n, nties, ei, ej, (nwint)p[3]);
 			break;
 		case ALG_FACTIONS:
-			rc = comb_factions(n, nties, ei, ej, ew, nv, (long)p[3], (long)p[4]);
+			rc = comb_factions(n, nties, ei, ej, ew, nv, (nwint)p[3], (nwint)p[4]);
 			break;
 		case ALG_LAMBDATREE:
 			rc = comb_lambda(n, nties, ei, ej);
