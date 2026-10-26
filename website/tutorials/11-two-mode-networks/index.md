@@ -53,11 +53,13 @@ and the attributes belong to one mode each: `surname` and `title` to the women, 
 
 ## Degree in a two-mode network
 
-`nw2degree` counts the ties of each node. In a two-mode network it divides the count by the number of nodes in the
-*other* mode, so a woman who attended all 14 events has the value 1. Multiplying back gives plain counts:
+`nwdegree` counts the ties of each node. It recognises a two-mode network (a network declares itself two-mode when it is
+created) and uses the two-mode form of the degree automatically: it divides the count by the number of nodes in the
+*other* mode, so a woman who attended all 14 events has the value 1. Multiplying back gives plain counts (the option
+`raw` gives the counts themselves, and `onemode` the degree of the bipartite graph read as a one-mode graph):
 
 ```stata
-. nw2degree davis, generate(att)
+. nwdegree davis, generate(att)
 ----------------------------------------
   Network name: davis
 
@@ -221,7 +223,7 @@ and five events:
    Density:  .4
    Temporal: false
 
-. nw2degree small, generate(attsmall)
+. nwdegree small, generate(attsmall)
 ----------------------------------------
   Network name: small
 
@@ -253,10 +255,10 @@ a one-mode graph, as `igraph::cluster_louvain` computes it:
 
    comm_bip |      Freq.     Percent        Cum.
 ------------+-----------------------------------
-          1 |         12       37.50       37.50
-          2 |          6       18.75       56.25
-          3 |          9       28.12       84.38
-          4 |          5       15.62      100.00
+          1 |          5       15.62       15.62
+          2 |          9       28.12       43.75
+          3 |         12       37.50       81.25
+          4 |          6       18.75      100.00
 ------------+-----------------------------------
       Total |         32      100.00
  
@@ -315,21 +317,103 @@ attended by the women with many (NODF of Almeida-Neto et al. 2008, and the C-sco
 
 ```
 
-There are two clustering coefficients for a two-mode network, and they answer different questions. `nw2clustering`
-gives the coefficient of Opsahl (2013), the share of four-paths that a fifth tie closes (R: `tnet::clustering_tm`),
+There are two clustering coefficients for a two-mode network, and they answer different questions. `nwclustering`
+(which uses the two-mode form on a two-mode network) gives the coefficient of Opsahl (2013), the share of four-paths that a fifth tie closes (R: `tnet::clustering_tm`),
 .772 here. With `ra` it gives the global coefficient of Robins and Alexander (2004), four times the number of
 four-cycles over the number of three-paths, .468 here. Say which one you report.
 
 ```stata
-. nw2clustering davis, generate(clo)
+. nwclustering davis, generate(clo)
 
 . display r(C_global)
 .7718968
 
-. nw2clustering davis, ra
+. nwclustering davis, ra
   Robins-Alexander clustering (4 x C4 / L3):  0.467764   (C4 = 341, L3 = 2916)
 
 ```
+
+## Motifs: what shapes the network is made of
+
+A **bipartite motif** is a small connected pattern of women and events, such as one woman at one event (motif 1), a woman at two events (motif 2) or a four-cycle of two women who both attended two events (motif 6). `nwmotifs` counts the 17 motifs of two to five nodes (the option `sixnode` adds the 27 motifs of six nodes) in the way of Simmons et al. (2019) and numbers them as the R package `bmotif` does, so that the table can be compared with R. It also counts, for every node, how often the node takes each of the 46 positions in the motifs (the position ids are those of `bmotif`) and stores them in the variables `np1` to `np46`:
+
+```stata
+. nwmotifs davis, generate(np)
+Bipartite motifs of davis: 2 to 5 nodes; rows = mode 1 (18 nodes), columns = mode 2 (14 nodes)
+------------------------------------------
+ motif  nodes    r x c           frequency
+------------------------------------------
+     1      2      1x1                  89
+     2      3      1x2                 214
+     3      3      2x1                 322
+     4      4      3x1                 878
+     5      4      2x2                1552
+     6      4      2x2                 341
+     7      4      1x3                 328
+     8      5      4x1                1883
+     9      5      3x2                4288
+    10      5      3x2                1867
+    11      5      3x2                2415
+    12      5      3x2                 389
+    13      5      2x3                2249
+    14      5      2x3                1733
+    15      5      2x3                1284
+    16      5      2x3                 267
+    17      5      1x4                 341
+------------------------------------------
+Node position counts stored in np1 to np46 (position ids of bmotif), nodes in network order.
+
+. list _nwnode np1 np2 np3 np4 np5 np6 in 1/3, noobs
+
+  +-----------------------------------------------+
+  |   _nwnode   np1   np2   np3   np4   np5   np6 |
+  |-----------------------------------------------|
+  |    Brenda     0     7     0    21     0    46 |
+  | Charlotte     0     4     0     6     0    24 |
+  |   Dorothy     0     2     0     1     0    24 |
+  +-----------------------------------------------+
+```
+
+Motif 6 is the four-cycle: two women who attended the same two events. There are 341 of them among the 18 women and 14 events, which is the number C4 behind the Robins-Alexander coefficient above. The position counts say what role a node plays in each motif. `np1` and `np2` are the two positions of motif 1 (a single tie), `np3` and `np4` those of motif 2 (one woman at two events), `np5` and `np6` those of motif 3 (two women at one event). A node can only take the positions of its own mode, so for a woman `np1`, `np3` and `np5` are 0. Brenda's `np2` = 7 is the number of events she attended, her `np4` = 21 the number of pairs of her events (7 over 2) and her `np6` = 46 the number of times she shared an event with another woman (the other guests, event by event). Each count is a number of occurrences of the motif that contain the node, so the positions of all nodes add up to the motif frequencies times the number of nodes of the motif. `nwmotifs, onemode` counts the 4-node subgraphs of the bipartite graph read as a one-mode graph instead (what `igraph::motifs` gives); the numbering and the counts of the bipartite motifs are those of the R package `bmotif` (Simmons et al. 2019).
+
+## Closeness and betweenness for two modes
+
+`nwcloseness` and `nwbetween` are defined on any graph, but in a two-mode network a woman can be at most one step from every event and two steps from every other woman, so the raw numbers of the bipartite graph are not comparable between the two modes. The commands therefore normalise as Borgatti and Everett (1997) do: closeness is the smallest possible farness of a node of its mode divided by its farness, and betweenness is divided by the largest value a node of its mode can reach. `onemode` gives the numbers of the bipartite graph read as a one-mode graph (the `twomode` option of earlier versions is the default now and still accepted):
+
+```stata
+. nwcloseness davis, generate(cl_ cf_ cn_) silent
+
+. nwcloseness davis, generate(clo1 cfo1 cno1) onemode silent
+
+. summarize cl_ clo1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         cl_ |         32    .6591892    .0993221   .5238096   .8461539
+        clo1 |         32    .4413106    .0612054   .3690476   .5961539
+
+. nwbetween davis, generate(bw) silent
+----------------------------------------
+  Network name: davis
+----------------------------------------
+    Betweenness centrality
+    (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)
+
+. nwbetween davis, generate(bw1) onemode silent
+----------------------------------------
+  Network name: davis
+----------------------------------------
+    Betweenness centrality
+
+. summarize bw bw1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+          bw |         32    .0451195    .0606926   .0019535   .2438195
+         bw1 |         32       20.25    27.37569   .8693194   110.2064
+```
+
+The normalised closeness of the nodes runs from .52 to .85 (mean .66) and the raw closeness of the bipartite graph from .37 to .60; the normalised betweenness runs from .002 to .24, the raw betweenness from .87 to 110. Compare nodes of the same mode with each other; the normalisation makes the two modes comparable.
 
 ## A null model for two-mode networks
 
@@ -342,9 +426,9 @@ events. With `swap` it exchanges the partners of two ties at random and keeps th
 
 . nwpermute davis, generate(davis_swap) swap
 
-. nw2degree davis_swap, generate(att_swap) raw silent
+. nwdegree davis_swap, generate(att_swap) raw silent
 
-. nw2degree davis, generate(att_raw) raw silent
+. nwdegree davis, generate(att_raw) raw silent
 
 . assert att_swap == att_raw
 
@@ -374,8 +458,8 @@ Importing successful
    Valued: false
    Two-mode: true
    Nodes: 32
-      Level 1: 18 (mode 1)
-      Level 2: 14 (mode 2)
+      Level 1: 18 (woman)
+      Level 2: 14 (event)
    Selfloop: false
    Edges: 89
    Minimum value:  0
@@ -387,8 +471,8 @@ Importing successful
 
 ```
 
-Pajek and the edge list know nothing about the names of the two levels, so they come back as `mode 1` and `mode 2`;
-`nwsave` and `nwuse` keep the labels.
+Pajek, the edge list and GML keep the names of the two levels (UCINET DL has no place for them and gives `rows` and
+`columns`), and `nwsave` and `nwuse` keep them too.
 
 ## What stops on a two-mode network
 
@@ -397,9 +481,8 @@ Some commands would read the blocks of the adjacency matrix between nodes of the
 `nwfactions`, `nwcoreperiphery`, `nwqap`, `nwcug`, `nwinduced` and `nwcollapse`. They stop with one message and the
 error 6088 instead of returning missing values. Make a one-mode network of one mode with `nw2project` first, or, for
 `nwspectral` and `nwrandomwalk`, use the option `onemode` to read the bipartite graph as an ordinary graph (as `igraph`
-does). The commands that are defined on any graph (`nwcomponents`, `nwkcore`, `nwgeodesic`, `nwbetween`, `nwcloseness`,
-`nwpagerank`, ...) give the numbers of the bipartite graph; the options `twomode` of `nwcloseness` and `nwbetween` give
-the normalisations of Borgatti and Everett (1997). The table of [network types](../../nwcommands/network-types/) lists
+does). The commands that are defined on any graph (`nwcomponents`, `nwkcore`, `nwgeodesic`, `nwpagerank`, ...) give the
+numbers of the bipartite graph. The table of [network types](../../nwcommands/network-types/) lists
 all commands, and the page on [two-mode networks](../../nwcommands/two-mode/) explains the rules.
 
 ```stata
@@ -443,7 +526,7 @@ the 455 Swedish listed companies and all 5,092 directors who sit on their boards
 The commands are the same, only the size differs: 5,547 nodes and 5,669 ties. How many boards does a director sit on?
 
 ```stata
-. nw2degree ftdirectors_se, generate(deg)
+. nwdegree ftdirectors_se, generate(deg)
 ----------------------------------------
   Network name: ftdirectors_se
 
@@ -559,12 +642,13 @@ two-mode network is stored as one matrix over both modes, so the size limits cou
 ## What to remember
 
 - `nwsummarize` shows `Two-mode: true` and the sizes of the two modes; `_nwmode` marks the mode of each row.
-- `nw2degree` divides the number of ties by the size of the other mode; multiply back for counts.
+- A command that has a two-mode form of the same concept uses it automatically on a two-mode network, and `onemode` forces the one-mode computation. `nwdegree` divides the number of ties by the size of the other mode (`raw` gives the counts).
 - `nw2project, project(1)` and `project(2)` give the two one-mode networks, with the number of shared neighbors as
   tie value. The projections are dense when a few nodes of the other mode have many ties.
 - After a projection, the whole one-mode toolbox applies: `nwcomponents`, `nwcommunity`, `nwdegree` and the others.
-- `nw2clustering` gives clustering coefficients for two-mode networks (Opsahl by default, `ra` for Robins and Alexander), `nw2nested`
-  the nestedness, and `nwplot` has `layout(bipartite)`.
+- `nwclustering` gives clustering coefficients for two-mode networks (Opsahl by default, `ra` for Robins and Alexander), `nwmotifs` the bipartite motifs and the position of every node in them, `nw2nested`
+  the nestedness, and `nwplot` has `layout(bipartite)`. The older names `nw2degree`, `nw2clustering` and `nw2motifs` still work.
+- `nwcloseness` and `nwbetween` normalise for the two modes (Borgatti and Everett); `onemode` gives the raw numbers.
 - A two-mode network stays two-mode when you drop or keep nodes, subset it, export it or write it as an edge list.
 - `nwcommunity` and `nwmodularity` use the bipartite modularity of Barber by default (`onemode` for Newman's).
 - The commands that cannot say anything about a two-mode network stop with error 6088.

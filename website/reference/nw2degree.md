@@ -35,6 +35,8 @@ binary]
 
 ## Description
 
+`nw2degree` is the form of [nwdegree](nwdegree) for a two-mode network: `nwdegree` uses it by default on a two-mode network (and `onemode` forces the one-mode degree). The two names give the same result with the same options.
+
 `nw2degree` calculates degree centrality for a two-mode (bipartite) network, using the normalization of Borgatti and Everett (1997). A node's ordinary (raw) degree can only ever reach as high as the size of the *other* mode - a mode-1 node can tie to at most every mode-2 node, never to another mode-1 node - so [nwdegree](nwdegree)'s usual *n - 1* normalization does not apply here. Instead, each node's raw degree is divided by the size of the mode it does *not* belong to:
 
 *C'D(i) = degree(i) / n_other*, where *n_other* is the number of nodes in the other mode
@@ -89,4 +91,4 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

@@ -34,15 +34,19 @@ A two-mode network is stored as one square matrix over the nodes of both modes. 
 
 `nwdropnodes`, `nwkeepnodes`, `nwsubset`, `nwduplicate`, `nwsym`, `nwtranspose`, `nwrecode`, `nwdichotomize`, `nwaddnodes` (the option `mode()` is required) and `nwpermute` return a two-mode network with the modes of the remaining nodes and the level labels. (Before this version, `nwdropnodes` and `nwkeepnodes` returned a one-mode network, and the other commands lost the level labels.) `nwcollapse` refuses a two-mode network. `nw2project` and `nwproject` return an ordinary one-mode network of one mode.
 
+## The rule: a two-mode network gets its two-mode form
+
+A network declares itself two-mode when it is created. A command that has a two-mode form of the same concept uses that form **automatically** on a two-mode network, and the option `onemode` forces the one-mode computation on the bipartite graph, which is what `igraph` does with a bipartite graph. The commands are `nwdegree`, `nwclustering`, `nwmotifs`, `nwcloseness`, `nwbetween`, `nwcommunity`, `nwmodularity`, `nwsimilar` and `nwdissimilar`. The older names `nw2degree`, `nw2clustering` and `nw2motifs` stay as aliases of `nwdegree`, `nwclustering` and `nwmotifs` (same options, same results) and still stop on a one-mode network. `nw2project` and `nw2nested` have no one-mode counterpart and keep their own names.
+
 ## What each command does
 
 The help file of every command states in its section "Supported network types" one of four fixed wordings:
 
 | Wording | Meaning | Commands |
 |---|---|---|
-| **Two-mode: yes** - what changes | The command uses the two modes the way R does. | `nw2clustering`, `nw2degree`, `nw2project`, `nw2nested`, `nw2motifs`, `nwmatching`, `nwcommunity`, `nwmodularity`, `nwsimilar`, `nwdissimilar`, `nwpermute`, `nwdyads`, `nwsummarize`, `nwexport`, `nwimport`, `nwtoedge`, `nw2toedge`, `nwplot` and the commands that keep the modes above |
-| **Two-mode: delegated to ...** | The command hands a two-mode network to the two-mode command and says so. | `nwdegree` (to `nw2degree`), `nwclustering` (to `nw2clustering`) |
-| **Two-mode: same as for the bipartite graph read as a one-mode network** | The measure is defined on any graph and the number is right for the bipartite graph; nothing is printed. | `nwcomponents`, `nwkcore`, `nwgeodesic`, `nwbetween`, `nwcloseness`, `nwevcent`, `nwpagerank`, `nwburt`, `nwconstraint`, `nwbridges`, `nwcohesion`, `nwmotifs`, `nwtriads`, ... (see the [table](../network-types/)) |
+| **Two-mode: yes** - what changes | The command uses the two modes the way R does. | `nw2project`, `nw2nested`, `nwmatching`, `nwpermute`, `nwdyads`, `nwsummarize`, `nwexport`, `nwimport`, `nwtoedge`, `nw2toedge`, `nwplot` and the commands that keep the modes above |
+| **Two-mode: two-mode form by default ...** | The command has a two-mode form of the same concept and uses it on a two-mode network; `onemode` forces the one-mode computation. | `nwdegree`, `nwclustering`, `nwmotifs`, `nwcloseness`, `nwbetween`, `nwcommunity`, `nwmodularity`, `nwsimilar`, `nwdissimilar` (`nw2degree`, `nw2clustering`, `nw2motifs` are aliases) |
+| **Two-mode: same as for the bipartite graph read as a one-mode network** | The measure is defined on any graph and the number is right for the bipartite graph; nothing is printed. | `nwcomponents`, `nwkcore`, `nwgeodesic`, `nwevcent`, `nwpagerank`, `nwburt`, `nwconstraint`, `nwbridges`, `nwcohesion`, `nwtriads`, ... (see the [table](../network-types/)) |
 | **Two-mode: not supported - error 6088** | The command would read the blocks between nodes of the same mode, which hold no ties. It stops with one message. | `nwspectral`, `nwrandomwalk`, `nwcorrelate`, `nwhierarchy`, `nwconcor`, `nwfactions`, `nwcoreperiphery`, `nwqap`, `nwcug`, `nwinduced`, `nwcollapse` |
 
 The message is the same for all of them: "*command* does not support two-mode networks (*net*): it reads the blocks between nodes of the same mode, which hold no ties. Make a one-mode network of one mode first (nwproject)." `nwspectral` and `nwrandomwalk` add that the option `onemode` reads the bipartite graph as a one-mode graph, which is what `igraph` does (the Laplacian spectrum and the hitting times of a random walk exist for a bipartite graph).
@@ -51,20 +55,20 @@ The message is the same for all of them: "*command* does not support two-mode ne
 
 | Command | Two-mode result | R |
 |---|---|---|
-| `nw2degree` | degree divided by the size of the other mode (Borgatti and Everett 1997); `raw` gives the count | `tnet::degree_tm` (the count) |
-| `nw2clustering` | Opsahl's (2013) coefficient, the share of four-paths closed by a fifth tie: Southern women .772, directors .0029 | `tnet::clustering_tm` |
-| `nw2clustering, ra` | Robins and Alexander's (2004) global coefficient 4 C4 / L3: Southern women .468, directors .0228 | (formula; `igraph` has none) |
+| `nwdegree` (`nw2degree`) | degree divided by the size of the other mode (Borgatti and Everett 1997); `raw` gives the count | `tnet::degree_tm` (the count) |
+| `nwclustering` (`nw2clustering`) | Opsahl's (2013) coefficient, the share of four-paths closed by a fifth tie: Southern women .772, directors .0029 | `tnet::clustering_tm` |
+| `nwclustering, ra` | Robins and Alexander's (2004) global coefficient 4 C4 / L3: Southern women .468, directors .0228 | (formula; `igraph` has none) |
 | `nw2project` | the projection onto one mode; `stat(count)` is the number of shared nodes, `stat(newman)` Newman's weight 1/(k - 1) per shared node | `igraph::bipartite_projection`, `tnet::projecting_tm` |
 | `nw2nested` | NODF and the C-score (Southern women NODF 48.6, C-score normalised .449) | `vegan::nestednodf`, `bipartite::nested`, `bipartite::C.score` |
-| `nw2motifs` | the 17 bipartite motifs of two to five nodes (44 with `sixnode`) of Simmons et al. (2019) and the 46 (148) positions of every node; counts ties above zero (Southern women: 89 single ties, 4-cycles motif 6 = 341, as `bmotif`) | `bmotif::mcount`, `bmotif::node_positions` |
+| `nwmotifs` (`nw2motifs`) | the 17 bipartite motifs of two to five nodes (44 with `sixnode`) of Simmons et al. (2019) and the 46 (148) positions of every node; counts ties above zero (Southern women: 89 single ties, 4-cycles motif 6 = 341, as `bmotif`) | `bmotif::mcount`, `bmotif::node_positions` |
 | `nwcommunity`, `nwmodularity` | Barber's (2007) bipartite modularity; `onemode` gives Newman's. Southern women: Q .3455 with 4 communities, as `computeModules` | `bipartite::computeModules` |
 | `nwsimilar`, `nwdissimilar` | a node is compared with the nodes of its own mode over the nodes of the other mode; pairs of nodes from different modes are missing | `sna::sedist`, `cor`, `dist` on the incidence matrix |
 | `nwpermute` | the labels are permuted within the modes; `swap` exchanges the partners of two ties and keeps both degree sequences | `tnet::rg_reshuffling_tm`, `bipartite::swap.web` |
-| `nwcloseness, twomode`, `nwbetween, twomode` | the normalisations of Borgatti and Everett (1997) | (formulas) |
+| `nwcloseness`, `nwbetween` | the normalisations of Borgatti and Everett (1997): the smallest possible farness over the farness, the betweenness over the largest possible value of a node of its mode; `onemode` gives the raw numbers of the bipartite graph (`twomode`, the earlier way to ask for the normalisation, is accepted) | (formulas; `igraph::closeness`, `igraph::betweenness` for `onemode`) |
 | `nwmatching` | maximum matching between the modes | `igraph::max_bipartite_match` |
 | `nwdyads` | null dyads counted over the pairs between the modes (Southern women 163 of 252 pairs); reciprocity is shown as n/a | |
 
-Two things are worth knowing. The density of a two-mode network is the number of ties over the pairs of one node of each mode (Southern women .353 = 89 / 252, the connectance of the `bipartite` package), not over all pairs of nodes. And `nw2degree`, `nw2clustering` and `nw2project` need a two-mode network and stop on a one-mode network.
+Two things are worth knowing. The density of a two-mode network is the number of ties over the pairs of one node of each mode (Southern women .353 = 89 / 252, the connectance of the `bipartite` package), not over all pairs of nodes. And `nw2degree`, `nw2clustering`, `nw2motifs`, `nw2project` and `nw2nested` need a two-mode network and stop on a one-mode network; `nwdegree`, `nwclustering` and `nwmotifs` work on both.
 
 ## Edge lists and files
 
@@ -83,7 +87,7 @@ Pajek, the edge list and GML do not carry the names of the two levels; they come
 
 ## Not done yet
 
-Native kernels for the bipartite Louvain search and Beckett's DIRT_LPA+ (`computeModules`) module search, fast tie swapping for networks with hundreds of thousands of ties, bipartite motifs (`bmotif`), a two-mode null model for `nwcug`, and the further indices of `bipartite::networklevel` (H2' and others). Two-mode exponential random graph terms (b1 and b2) belong to `nwergm`; the core only keeps the flag and the modes correct for them.
+Native kernels for the bipartite Louvain search and Beckett's DIRT_LPA+ (`computeModules`) module search, fast tie swapping for networks with hundreds of thousands of ties, a two-mode null model for `nwcug`, and the further indices of `bipartite::networklevel` (H2' and others). Two-mode exponential random graph terms (b1 and b2) belong to `nwergm`; the core only keeps the flag and the modes correct for them.
 
 ## References
 

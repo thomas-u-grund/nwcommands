@@ -44,7 +44,7 @@ Commands that transform a network (`nwkeepnodes`, `nwdropnodes`, `nwsubset`, `nw
 | Command | What the values do | R equivalent |
 |---|---|---|
 | `nwdegree` | degree is the **strength** (sum of the tie values); `alpha(a)` gives k (s/k)^a with k the number of ties and s the strength (Opsahl et al. 2010); `binary` or `alpha(0)` the number of ties; `ties()` stores the tie counts next to the strength; the output shows the mean number of ties and the mean strength | `igraph::strength`, `tnet::degree_w` (`igraph::degree` is the tie count) |
-| `nw2degree` | the same for the two modes of a two-mode network (divided by the size of the other mode) | `tnet::degree_tm` |
+| `nwdegree` (`nw2degree`) on a two-mode network | the same for the two modes of a two-mode network (divided by the size of the other mode) | `tnet::degree_tm` |
 | `nwgeodesic` | a step along a tie of value w costs 1/w^alpha, alpha = 1 by default, so a stronger tie is shorter; `alpha(-1)` reads the values as lengths; `binary` counts steps | `igraph::distances(weights = 1/w)`; `tnet::distance_w` |
 | `nwcloseness` | closeness from those distances | `igraph::closeness(weights = 1/w)` |
 | `nwbetween` | shortest paths of least cost 1/w^alpha; tied shortest paths are recognised with a relative tolerance of 1e-10 | `igraph::betweenness(weights = 1/w)`; `tnet::betweenness_w` |

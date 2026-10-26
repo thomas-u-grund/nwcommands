@@ -19,7 +19,14 @@ nwmotifs
 [,
 silent
 plot
-name(string)]
+name(string)
+onemode
+six:node
+gen:erate(stub)
+replace
+mat:rix(name)
+norm:alise
+posn:orm(type)]
 ```
 
 | | |
@@ -27,10 +34,17 @@ name(string)]
 | `silent` | Suppress display of results |
 | `plot` | Draw a bar chart of the 7 category counts |
 | `name(string)` | Name for the graph created by `plot`; default = **motifs** |
+| `onemode` | Two-mode network: the 4-node census of the bipartite graph read as a one-mode graph, instead of the bipartite motifs (the default) |
+| `six:node` | Two-mode network: count the motifs of six nodes too (44 motifs and 148 node positions instead of 17 and 46) |
+| `gen:erate(stub)` | Two-mode network: store the node position counts in the variables *stub*1, *stub*2, ... |
+| `replace` | Two-mode network: replace existing variables |
+| `mat:rix(name)` | Two-mode network: store the node position counts in a Stata matrix |
+| `norm:alise` | Two-mode network: add the four normalised frequencies of `bmotif::mcount` to the motif table |
+| `posn:orm(type)` | Two-mode network: normalise the node position counts as `bmotif::node_positions` |
 
 ## Description
 
-For a two-mode network, [nw2motifs](nw2motifs) is the two-mode counterpart: it counts the 17 bipartite motifs of two to five nodes (44 with six) of Simmons et al. (2019), as `bmotif` does, and the positions of the nodes in them.
+On a two-mode network `nwmotifs` counts the 17 bipartite motifs of two to five nodes (44 with `sixnode`) of Simmons et al. (2019), as `bmotif` does, and the positions of the nodes in them; the options for that form are described in [nw2motifs](nw2motifs), which is the same command under its older name. `onemode` gives the 4-node census of the bipartite graph read as a one-mode graph (the result of earlier releases).
 
 `nwmotifs` classifies every induced 4-node subgraph of the network into one of 6 "motif" shapes (Milo et al. 2002's own term for a small, recurring, structurally-distinct connectivity pattern), plus a residual bucket for the other, disconnected 4-node cases - the same "every case exhaustively accounted for" census convention [nwtriads](nwtriads)'s own 3-node MAN census already established one dimension down, generalized here to 4 nodes.
 
@@ -65,7 +79,7 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 ## Supported network types
 
-Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the 4-node census counts all subgraphs of the bipartite graph (`igraph::motifs`); the bipartite motifs of Simmons et al. (`bmotif`) are counted by [nw2motifs](nw2motifs), the two-mode counterpart of this command. Requires at least 4 nodes.
+Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: two-mode form by default - the bipartite motifs of Simmons et al. (2019; `bmotif`) and the positions of the nodes in them; `onemode` forces the 4-node census of the bipartite graph read as a one-mode graph (`igraph::motifs`); [nw2motifs](nw2motifs) is an alias. Requires at least 4 nodes.
 
 ## Stored results
 
@@ -95,4 +109,4 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

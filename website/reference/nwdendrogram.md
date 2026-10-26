@@ -29,4 +29,4 @@ Not applicable - visualizes an existing hierarchical-clustering result (from [nw
 
 ---
 
-*nwcommands version 3.7.0, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.8.0, 26 October 2026* ([check your installed version](nwversion))

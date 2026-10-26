@@ -144,6 +144,17 @@ draws of the Mata code; Barber's Q is equal on the Southern women (0.3455) and t
 Nothing else on this page was measured again. In particular, `nwbetween` and `nwcloseness` on binary networks, `nwkatz` and the commands with
 an n-by-n result are as limited as before.
 
+### Bipartite motifs (version 3.8.0)
+
+`nwmotifs` on a two-mode network (the command `nw2motifs`) counts the 17 bipartite motifs of two to five nodes and the positions of every node in them in the compiled plugin, without matrices of the size of the network. Seconds of the complete command, Stata/BE 18 on an Apple-silicon Mac, the Swedish directors (5,092 + 455 nodes, 5,669 ties); `bmotif` 2.0.2 in R needs 54 s for `mcount` and `node_positions` of the five-node set together and cannot do the six-node set on this network. The counts are equal to `bmotif`.
+
+| Input | `nwmotifs` (motif table) | with the node positions (`generate()`) | R `bmotif` (table and positions) |
+|---|---|---|---|
+| Swedish directors, motifs up to five nodes | 0.015 | 0.04 | 54 |
+| Swedish directors, with `sixnode` | | 0.05 | not possible (memory) |
+
+The node positions are stored in up to 46 (148 with `sixnode`) variables, one per position, so the output of the directors needs 5,547 observations times 46 variables; `matrix()` is refused above the matrix limit of your Stata flavor (`c(max_matdim)`).
+
 ## Compared with R's igraph
 
 R's igraph is the usual yardstick for network software, so this section compares the two. It is based on one
