@@ -44,7 +44,7 @@ The help file of every command states in its section "Supported network types" o
 
 | Wording | Meaning | Commands |
 |---|---|---|
-| **Two-mode: yes** - what changes | The command uses the two modes the way R does. | `nw2project`, `nw2nested`, `nwmatching`, `nwpermute`, `nwdyads`, `nwsummarize`, `nwexport`, `nwimport`, `nwtoedge`, `nw2toedge`, `nwplot` and the commands that keep the modes above |
+| **Two-mode: yes** - what changes | The command uses the two modes the way R does. | `nw2project`, `nw2nested`, `nwmatching`, `nwpermute`, `nwdyads`, `nwsummarize`, `nwexport`, `nwimport`, `nwtoedge`, `nw2toedge`, `nwplot`, `nwplotmatrix`, `nwturnover` and the commands that keep the modes above |
 | **Two-mode: two-mode form by default ...** | The command has a two-mode form of the same concept and uses it on a two-mode network; `onemode` forces the one-mode computation. | `nwdegree`, `nwclustering`, `nwmotifs`, `nwcloseness`, `nwbetween`, `nwcommunity`, `nwmodularity`, `nwsimilar`, `nwdissimilar` (`nw2degree`, `nw2clustering`, `nw2motifs` are aliases) |
 | **Two-mode: same as for the bipartite graph read as a one-mode network** | The measure is defined on any graph and the number is right for the bipartite graph; nothing is printed. | `nwcomponents`, `nwkcore`, `nwgeodesic`, `nwevcent`, `nwpagerank`, `nwburt`, `nwconstraint`, `nwbridges`, `nwcohesion`, `nwtriads`, ... (see the [table](../network-types/)) |
 | **Two-mode: not supported - error 6088** | The command would read the blocks between nodes of the same mode, which hold no ties. It stops with one message. | `nwspectral`, `nwrandomwalk`, `nwcorrelate`, `nwhierarchy`, `nwconcor`, `nwfactions`, `nwcoreperiphery`, `nwqap`, `nwcug`, `nwinduced`, `nwcollapse` |

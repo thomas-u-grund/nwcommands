@@ -183,6 +183,7 @@ local nx = colsof(`mat')
 
 /* the data of the boxes, built directly (no svmat/stack: Stata/BE holds at most
    2,048 variables, and a variable per column was a second copy of the matrix) */
+local __nwpm_splitgiven = ("`split'" != "")
 _mkdata, mat(`mat') split(`split')
 if "`split'" == "" local split "`r(split)'"
 
@@ -195,6 +196,29 @@ foreach num of numlist `split' {
   local prev `num'
 }
 local lablist `"`lablist' "`prev'" "' 
+// a binary matrix (cells 0 and 1 only) and no split(): name the two classes instead of "0-1" and "1-1.001"
+if !`__nwpm_splitgiven' {
+	qui count if col1 < . & col1 != 0 & col1 != 1
+	local __nwpm_other = r(N)
+	qui count if col1 == 0
+	local __nwpm_n0 = r(N)
+	qui count if col1 == 1
+	local __nwpm_n1 = r(N)
+	if `__nwpm_other' == 0 & `__nwpm_n0' > 0 & `__nwpm_n1' > 0 {
+		// the colour class (cb) of the cells 0 and 1; the other classes stay empty
+		qui sum cb if col1 == 0, meanonly
+		local __nwpm_c0 = r(min)
+		qui sum cb if col1 == 1, meanonly
+		local __nwpm_c1 = r(min)
+		local lablist ""
+		forvalues __nwpm_i = 1/`=max(`__nwpm_c0', `__nwpm_c1')' {
+			local __nwpm_l "-"
+			if `__nwpm_i' == `__nwpm_c0' local __nwpm_l "no tie"
+			if `__nwpm_i' == `__nwpm_c1' local __nwpm_l "tie"
+			local lablist `"`lablist' "`__nwpm_l'" "'
+		}
+	}
+}
 
 /*************************************************************************************** 
  * The colour list...get the levels and produce the colours 
@@ -271,6 +295,7 @@ local i 1
 		if r(N)>0 {
 			if "`done`c''" == "" {
 				local clab: word `c' of `lablist'
+				local clab : subinstr local clab `"""' "", all
 				local clegord "`clegord' `i'"
 				local cleg `" `cleg' label(`i' "`clab'")"'
 				local numb`c' `i'

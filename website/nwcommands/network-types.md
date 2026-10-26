@@ -181,7 +181,7 @@ The commands marked `N` under Valued are exactly those that print the note on a 
 |---|:-:|:-:|:-:|:-:|---|
 | `nwcug` | + | I | R | D | conditional uniform graph draws; nwpermute, swap is the two-mode null model |
 | `nwqap` | + | O | R | D | QAP regression over the dyads |
-| `nwturnover` | + | N | G | D | compares two networks of the same nodes |
+| `nwturnover` | + | N | N | D | compares two networks of the same nodes; on a two-mode network only the ties between the modes count |
 
 ## Random and structured generators
 
@@ -203,10 +203,10 @@ The commands marked `N` under Valued are exactly those that print the note on a 
 
 | Command | Binary | Valued | Two-mode | Directed | Note |
 |---|:-:|:-:|:-:|:-:|---|
-| `nwplot` | + | O | N | D | layout(bipartite) puts the two modes in two rows; edgesize() uses the values |
-| `nwplotmatrix` | + | K | G | D | the matrix includes the empty blocks of a two-mode network |
-| `nwmovie` | + | O | - | D | temporal networks; weighted as nwplot (edgesize()); not two-mode |
-| `nwmoviexy` | + | O | - | D | alias of nwmovie |
+| `nwplot` | + | V | N | D | layout(bipartite) puts the two modes in two rows; values set the widths (binary), signs the colour and dash (nosign), the modes get symbols; legend |
+| `nwplotmatrix` | + | K | N | D | colour legend of the value classes (legend(off) switches off); a two-mode network is sorted by mode with a line between the modes |
+| `nwmovie` | + | V | - | D | temporal networks; widths, sign colours and binary/nosign as nwplot; not two-mode |
+| `nwmoviexy` | + | V | - | D | alias of nwmovie |
 | `animate` | - | - | - | - | help page |
 
 ## Bookkeeping, utilities and help pages
