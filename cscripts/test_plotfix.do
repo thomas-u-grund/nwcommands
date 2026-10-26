@@ -143,9 +143,9 @@ assert `nnote' == 1
 capture db nwplot
 assert _rc == 0
 
-di "test_plotfix: all passed"
-
 * ---- nwplotmatrix: binary network legend names the two classes (no error), two-mode network runs
-nwuse davis, nwclear
+nwuse data/davis, nwclear
 nwplotmatrix davis
 graph drop _all
+
+di "test_plotfix: all passed"
