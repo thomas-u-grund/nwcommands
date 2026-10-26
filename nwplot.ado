@@ -1363,6 +1363,10 @@ program nwplot, rclass
 	qui replace straight = 0 if "`arcstyle'" == "curved"
 	qui replace straight = 1 if "`arcstyle'" == "straight"
 	qui gen arrow = straight
+	// sign colours with a dashed line: an undirected tie is in the list twice ((i,j) and (j,i)); two dashed lines with
+	// opposite phases look solid, so every undirected tie is drawn once
+	qui gen byte __nwp_drawonce = 1
+	if `__nwp_autosign' & "`directed'" != "true" qui replace __nwp_drawonce = (sx < ex) | (sx == ex & sy <= ey)
 	
 	if ("`arcstyle'" != "straight"){
 		di "{txt}Generating splines..."
@@ -2003,10 +2007,10 @@ program nwplot, rclass
 				local tempecol_orig = `tempecol' - 1
 				local foregroundcheck : list tempecol_orig in edgeforeground
 				if `foregroundcheck' == 0 {
-					local pccmd `"`pccmd' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
+					local pccmd `"`pccmd' (pcspike sy sx ey ex if value != 0 & __nwp_drawonce == 1 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & __nwp_drawonce == 1 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
 				}
 				else {
-					local pccmdforeground `"`pccmdforeground' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
+					local pccmdforeground `"`pccmdforeground' (pcspike sy sx ey ex if value != 0 & __nwp_drawonce == 1 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & __nwp_drawonce == 1 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
 				}
 			}
 		}

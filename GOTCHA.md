@@ -735,3 +735,7 @@ A command that has a two-mode form of the same concept (`nwdegree`, `nwclusterin
 ## `syntax` names the macro of an option `noXXX` after `XXX`
 
 `nwplot` declares `binary nosign`; inside the program the option `nosign` arrives in the local `sign` (value "nosign"), not in `nosign`, so `if "`nosign'" == ""` was always true and the option did nothing (found 2026-10-26 with `r(signcolor)` in `cscripts/test_plotfix.do`). `nwplot.ado` and `nwmovie.ado` combine both (`local nosign "`nosign'`sign'"`). A new option must not start with `no` unless you want this rule.
+
+## `nwplot` sign colours: an undirected tie is in the plot's tie list twice (3.9.0)
+
+The tie list that `nwplot` draws holds both (i,j) and (j,i) of an undirected tie. Solid lines hide that (the same pixels twice), but a dashed line drawn twice with opposite phases looks solid, so the negative ties of a signed network were drawn as a mix of dashed and solid lines. The sign-colour path now draws every undirected tie once (`__nwp_drawonce`, both `pcspike` calls of the edge loop). Anything new that draws a pattern (dash, dot) per tie has to do the same.
