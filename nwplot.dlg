@@ -216,6 +216,8 @@ BEGIN
   EDIT ed_aspect 175 15 120 ., nomem option(aspectratio)
   CHECKBOX cx_arrows 20 40 380 ., label("Draw arrowheads on an undirected network") option(arrows)
   CHECKBOX cx_force 20 62 380 ., label("Draw although the matrices would not fit in memory (force)") option(force)
+  CHECKBOX cx_binary 20 262 190 ., label("Ignore tie values (binary)") option(binary)
+  CHECKBOX cx_nosign 220 262 190 ., label("No sign colours (nosign)") option(nosign)
   TEXT tx_sizebin 20 90 150 ., label("Size bins (sizebin):")
   EDIT ed_sizebin 175 90 120 ., nomem option(sizebin)
   TEXT tx_edgefg 20 115 150 ., label("Edge foreground values:")
@@ -512,6 +514,8 @@ BEGIN
 	optionarg more.ed_aspect
 	option more.cx_arrows
 	option more.cx_force
+	option more.cx_binary
+	option more.cx_nosign
 	optionarg more.ed_sizebin
 	optionarg more.ed_edgefg
 	optionarg more.ed_edgepat

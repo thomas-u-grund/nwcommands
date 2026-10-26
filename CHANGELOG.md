@@ -4,6 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- **`nwplot` draws the tie values of a valued network as edge widths by default** (before: all edges the same width unless `edgesize(<network>)` was given). The widths run from 1 to 4 units (largest absolute value widest, at most 15 width classes; ties of equal value keep the default width). `binary` gives the old picture. Colours never follow the values unless `edgecolor()` is given. `edgesize()` keeps its 1 to 8 range. `nwmovie` inherits the change (and passes `binary` on).
+- **`nwplot` draws a signed network (valued, negative ties) with positive ties solid navy and negative ties dashed cranberry and a legend** (before: all ties the same colour, a negative tie looked like a positive one). The width follows the absolute value. `nosign` gives the old colours; an own `edgecolor()` wins. A negative `edgesize()` value no longer makes the plot fail.
+- **`nwplot` of a two-mode network draws the two modes with different symbols and colours and a legend** (circle and diamond; before: one symbol and colour for all nodes) unless `color()` or `symbol()` is given.
+
+### Added
+- `nwplot`: options `binary` and `nosign` (dialog: tab "More options"); stored results `r(edgewidth)`, `r(signcolor)`, `r(modesymbols)`. `nwmovie`: options `binary` and `nosign` passed to `nwplot`. Test: `cscripts/test_plotfix.do`.
+
+### Fixed
+- `nwplot ... if ..., edgesize(<network>)` failed (a mistyped temporary network name); it works.
+
 ## [3.7.0] - 2026-10-26
 
 Plugin generation 10 (native kernels for the two-mode and valued commands), valued closeness at any size, level labels of two-mode networks in files, and a few corrections. The Mata library did not change. The four model packages are released with it as patch releases (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8; they still work with nwcommands 3.6.0). A platform whose plugin has not been rebuilt yet (Linux, Windows before the CI build) keeps the Mata code and gives the same results, slowly.

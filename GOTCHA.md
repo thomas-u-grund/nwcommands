@@ -695,3 +695,7 @@ The kernels 43..47 are called from small Mata functions at the end of `nwcommuni
 ## A documented requirement that the code does not enforce: check the help file against the code (nwshared, 3.7.0)
 
 The help file of `nwshared` said "Directed: requires `undirected` to symmetrize first, else an explicit error", but 3.6.0 ran on a directed network without the option and without any message (the type table of the book listed this as a deviation). Since 3.7.0 the command stops with error 198. When a network-types table (website `network-types.md`, the book's `NETWORK_TYPES_TABLE.csv`) says "error" for a case, test the case: `capture noisily cmd ...; assert _rc == N` belongs in the command's test.
+
+## `syntax` names the macro of an option `noXXX` after `XXX`
+
+`nwplot` declares `binary nosign`; inside the program the option `nosign` arrives in the local `sign` (value "nosign"), not in `nosign`, so `if "`nosign'" == ""` was always true and the option did nothing (found 2026-10-26 with `r(signcolor)` in `cscripts/test_plotfix.do`). `nwplot.ado` and `nwmovie.ado` combine both (`local nosign "`nosign'`sign'"`). A new option must not start with `no` unless you want this rule.
