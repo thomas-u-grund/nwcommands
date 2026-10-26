@@ -183,7 +183,7 @@ the method, and nothing here claims that they reproduce any particular published
 ## Plotting the two modes
 
 `layout(bipartite)` places the two modes in two rows, ordered to reduce crossings; `vertical` makes them two columns,
-which gives the names room:
+which gives the names room. Since version 3.9.0 `nwplot` also draws the two modes with different symbols (circles for the first mode, diamonds for the second) and one colour each on its own; here `color(_nwmode)` is given, so only the symbols and the legend come from that default, and `symbol()` or `color()` of your own replaces it:
 
 ```stata
 . nwplot davis, layout(bipartite, vertical) color(_nwmode) label(_nwnode) scheme(s1network) export("plot_davis.svg") repl
