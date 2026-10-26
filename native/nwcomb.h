@@ -16,6 +16,7 @@
 	31 (nwsimmelian) with NWCOMB_VERSION 7 (nwbrokerage.h).
 	Codes 34..39 (nwfast2.h, NWCOMB_VERSION 8): 34 pagerank of nwpagerank, 35 maximal cliques of nwclique.
 	Code 40 (nwburtw.h, NWCOMB_VERSION 9): weighted Burt measures of nwburt for valued networks (41, 42 reserved).
+	Code 50 (nwnative380.h, NWCOMB_VERSION 11): node position counts of the bipartite motifs of nw2motifs.
 	Codes 43..49 (nwnative370.h, NWCOMB_VERSION 10): bipartite Louvain (Barber) of nwcommunity, weighted pagerank of nwpagerank,
 	maximum-weight matching of nwmatching, tie swapping of nwpermute, weighted betweenness of nwbetween, weighted distances of nwcloseness and nwgeodesic.
 
@@ -43,7 +44,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define NWCOMB_VERSION 10
+#define NWCOMB_VERSION 11
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4
@@ -1240,6 +1241,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 #include "nwfast2.h"
 #include "nwburtw.h"
 #include "nwnative370.h"
+#include "nwnative380.h"
 
 /* ------------------------------------------------------------------ */
 /* dispatcher                                                           */
@@ -1248,7 +1250,7 @@ static int comb_cluster2(long n, long nties, const long *ei, const long *ej, con
 static int comb_handles(const char *s) {
 	long a = (long)atof(s);
 	/* codes 20 and 21 belong to the k-connectivity search and the Kamada-Kawai kernel in nwgraph.c */
-	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || (a >= 43 && a <= 49) || a == 99 || a == 100);
+	return ((a >= 3 && a <= 9) || a == 22 || a == 23 || a == 24 || a == 25 || a == 26 || a == 27 || a == 28 || (a >= 29 && a <= 31) || (a >= 34 && a <= 39) || (a >= 40 && a <= 42) || (a >= 43 && a <= 49) || a == 50 || a == 99 || a == 100);
 }
 
 static int comb_call(int argc, char *argv[]) {
@@ -1298,7 +1300,7 @@ static int comb_call(int argc, char *argv[]) {
 			SF_vdata(3, k + 1, &v); ew[k] = v;
 		}
 	}
-	if (alg == ALG_FACTIONS || alg == ALG_CLUSTER2 || alg == ALG_MATCHING || alg == ALG_LOUVBIP || alg == ALG_MATCHW) {
+	if (alg == ALG_FACTIONS || alg == ALG_CLUSTER2 || alg == ALG_MATCHING || alg == ALG_LOUVBIP || alg == ALG_MATCHW || alg == ALG_BMOTIF) {
 		nv = (double *)malloc((size_t)(n > 0 ? n : 1) * sizeof(double));
 		if (!nv) { free(ei); free(ej); free(ew); pub_result(2, 0, 0); return 0; }
 		for (k = 0; k < n; k++) { ST_double v; SF_vdata(4, k + 1, &v); nv[k] = v; }
@@ -1315,6 +1317,12 @@ static int comb_call(int argc, char *argv[]) {
 		free(ei); free(ej); free(ew); free(nv);
 		if (rc == 2) { res_clear(); pub_result(2, 0, 0); }
 		return rc == 198 ? 198 : 0;
+	}
+	if (alg == ALG_BMOTIF) {
+		rc = comb_bmotif(n, nties, ei, ej, ew, nv, (int)p[3]);
+		free(ei); free(ej); free(ew); free(nv);
+		if (rc == 2) { res_clear(); pub_result(2, 0, 0); }
+		return 0;
 	}
 	switch (alg) {
 		case ALG_COHESION:
