@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 26 October 2026: nwsaom 1.1.0 and the manual for version 1.1
+
+**nwsaom 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **A warning when `nwsaom` has to use the slow Mata engine.** If the compiled plugin cannot be used (its file is missing for your platform, it is older than the model needs, or the model is outside what the plugin covers), `nwsaom` now prints one line before the estimation starts that says why, as `nwergm` already did. Before, the fit ran for a very long time without a message. The results do not change.
+- **Manual for version 1.1.** The nwsaom manual is relabelled and brought up to date: installation with `nwinstall`, the rule that tie values must be 0 or 1, the warning, and the changes of the releases since the last manual. It is archived at Zenodo under the same DOI of all versions, [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); cite it with that DOI and the exact package version from `nwsaom version`.
+
 ## 26 October 2026: the menu is installed once
 
 **nwcommands 3.9.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.2)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.0.11, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).

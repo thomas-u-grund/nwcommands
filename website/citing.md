@@ -20,7 +20,9 @@ example `nwsaom version`.
 
 **nwsaom.** Cite the manual. It has a DOI:
 
-> Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.0.3.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
+> Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.1.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
+
+The DOI is the one of all versions of the manual; the label "1.1" is the series and holds for all versions 1.1.x. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.1.0").
 
 **nwergm, nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
@@ -62,7 +64,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.11/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.1.0/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments
