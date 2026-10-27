@@ -143,6 +143,8 @@ program nwimport
 		noi di `"{err}{it:Loading networks from file {bf:`fname'} failed}"'
 		error 6750
 	}
+	capture mata: mata drop __nwimport_*
+	capture confirm number 0
 end
 	
 	
@@ -1247,7 +1249,7 @@ capture program drop _nwimpdl_fullmatrix
 program _nwimpdl_fullmatrix
 	syntax, filehandler(string) nodes(int) nets(int) [directed netlabs(string) labs(string)  diagonal(string) rowlabsembedded collabsembedded]
 
-	mata: onenet = J(`nodes', `nodes', 0)
+	mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 	
 	file read `filehandler' line	
 	local lc = 1
@@ -1288,19 +1290,19 @@ program _nwimpdl_fullmatrix
 					local x = `x' + 1
 				}
 				if "`oneword'" != "0" {
-					mata: onenet[`x', `y'] = `oneword'
+					mata: __nwimport_onenet[`x', `y'] = `oneword'
 				}
 				// one network complete
 				if `y' == `nodes' & `x' == `nodes' {
 					local onename : word `netcounter' of `netlabs'
-					mata: st_numscalar("r(issymmetric)", issymmetric(onenet))
+					mata: st_numscalar("r(issymmetric)", issymmetric(__nwimport_onenet))
 					local symmetric = `r(issymmetric)'
-					nwset, name(`onename') labs(`labs') mat(onenet) 
+					nwset, name(`onename') labs(`labs') mat(__nwimport_onenet) 
 					if "`symmetric'" == "1" & "`directed'" == "" {
 						nwsym `onename'
 					}
 					
-					mata: onenet = J(`nodes', `nodes', 0)
+					mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 					local x = 1
 					local y = 0
 					local netcounter = `netcounter' + 1
@@ -1317,7 +1319,7 @@ capture program drop _nwimpdl_lowerhalf
 program _nwimpdl_lowerhalf
 	syntax, filehandler(string) nodes(int) nets(int) [ directed netlabs(string) labs(string)  diagonal(string) rowlabsembedded collabsembedded]
 
-	mata: onenet = J(`nodes', `nodes', 0)
+	mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 	
 	file read `filehandler' line	
 	local lc = 1
@@ -1355,13 +1357,13 @@ program _nwimpdl_lowerhalf
 			
 			di "x:`x'  y:`y'  v:`oneword'"
 						
-			mata: onenet[`x',`y'] = `oneword'
-			mata: onenet[`y',`x'] = `oneword'
+			mata: __nwimport_onenet[`x',`y'] = `oneword'
+			mata: __nwimport_onenet[`y',`x'] = `oneword'
 		
 			if (`y' == `nodes' & `x' == `nodes' - `ab') {
 				local onename : word `netcounter' of `netlabs'
-				nwset, name(`onename') labs(`labs') mat(onenet) 
-				mata: onenet = J(`nodes', `nodes', 0)
+				nwset, name(`onename') labs(`labs') mat(__nwimport_onenet) 
+				mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 				local x = 0
 				local y = 0 + `ab'
 				local netcounter = `netcounter' + 1

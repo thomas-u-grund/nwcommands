@@ -120,6 +120,7 @@ program _nwdatasync
 			}
 			// leaves _rc clean, as the full route does (see the note at the end of this program): a capture that
 			// succeeds sets _rc to 0. nwname, used for that on the full route, costs 0.06 s at 100,000 nodes
+			capture mata: mata drop `nodename'
 			capture confirm number 0
 			exit
 		}

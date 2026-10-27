@@ -86,13 +86,13 @@ program nwexpand
 	}
 
 	// generate network
-	mata: attr = st_data((1::`nodes'),"`varlist'")
+	mata: __nwexpand_attr = st_data((1::`nodes'),"`varlist'")
 	if "`mode'" == "" {
 		di "{txt}Option {it:mode(same)} selected."
 		local mode = "same"
 	}
 	// the expanded matrix is built row by row (one n x n matrix, not the five of the matrix-product version)
-	mata: expnet = nwexpand_matrix(attr, "`mode'")
+	mata: __nwexpand_expnet = nwexpand_matrix(__nwexpand_attr, "`mode'")
 	if inlist("`mode'", "absdist", "absdistinv", "same") {
 		local undirected "undirected"
 	}
@@ -101,11 +101,11 @@ program nwexpand
 	if _rc != 0 {
 		gen `nw_nodename' = "          "
 		tempname z
-		mata: `z' = (J(rows(expnet),1,"`cDftNodepref'") + strofreal((1::rows(expnet))))
-		mata: st_sstore((1::rows(expnet)),"`nw_nodename'", `z')
+		mata: `z' = (J(rows(__nwexpand_expnet),1,"`cDftNodepref'") + strofreal((1::rows(__nwexpand_expnet))))
+		mata: st_sstore((1::rows(__nwexpand_expnet)),"`nw_nodename'", `z')
 
 	}
-	nwset, mat(expnet) name(`name') labs(`labs') `nodenamesopt' `undirected' `replace'
+	nwset, mat(__nwexpand_expnet) name(`name') labs(`labs') `nodenamesopt' `undirected' `replace'
 	if "`xvars'" == "" {
 		nwload, xvars
 	}
@@ -113,11 +113,13 @@ program nwexpand
 		nwload
 	}
 	
-	capture mata: mata drop expnet 
-	capture mata: mata drop attr
+	capture mata: mata drop __nwexpand_expnet 
+	capture mata: mata drop __nwexpand_attr
 	if "`nodenamesopt'" != "" {
 		mata: mata drop __nwx_names
 	}
+	capture mata: mata drop __nwexpand_*
+	capture confirm number 0
 end
 	
 capture mata mata drop distMat()

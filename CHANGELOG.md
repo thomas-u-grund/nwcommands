@@ -6,12 +6,13 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [3.11.0] - 2026-10-27
 
-A fix for a clash between a user's own Mata variable and the network registry. The Mata library is unchanged (the library hash is the same as in 3.10.0), so the four model packages need no release and work with 3.10.0 and with 3.11.0.
+Fixes for clashes between your own Mata variables and the Mata variables of nwcommands. The Mata library is unchanged (the library hash is the same as in 3.10.0), so the four model packages need no release and work with 3.10.0 and with 3.11.0.
 
 ### Changed
 - **The registry of networks is now the Mata global `__nw` (it was `nw`).** This is visible only to scripts that address the registry directly: `nw.nws.pdefs[1]` must now be written `__nw.nws.pdefs[1]`, and `r(netobj)` strings that a script stored before upgrading must be created again. Code that uses `r(netobj)`, `_nwsyntax` or the `nwtomata` commands needs no change.
 
 ### Fixed
+- **Commands no longer overwrite or delete your own Mata variables.** About 30 commands (among them `nwplot`, `nwcommunity`, `nwcomponents`, `nwkcore`, `nwconcor`, `nwcloseness`, `nwburt`, `nwqap`, `nwmixing`, `nwexpand`, `nwlattice`, `nwneighbor`, `nwutility`, `nwset`, `nwcorrelate`, `nwdendrogram`) used short global Mata names such as `Coord`, `M`, `temp`, `reach`, `far` or `comm_id` for their own work. A variable of yours with the same name was replaced, and often deleted when the command finished. They now use private names (`__nwplot_Coord` and so on) and remove them again; several commands (`nwtriads`, `nwmotifs`, `nwmixing`, `nwcug`, `nwdyadprob`, `nwfromedge`, `nwhierarchy`, `nwimport`, `nwload`) also no longer leave temporary Mata variables behind. The new test `test_mata_userspace.do` guards this.
 - **A Mata variable called `nw` broke every command.** The registry of all networks was the global Mata variable `nw`, so a user's own `nw` (a common name) replaced it and the next command stopped with "type mismatch: exp.exp: transmorphic found where struct expected" (cured only by `mata: mata clear`). The registry is now `__nw`. Scripts that address the registry directly (`nw.nws.pdefs[1]`, `r(netobj)` strings stored for later) must say `__nw.nws.pdefs[1]`; code that goes through `r(netobj)` or `_nwsyntax` needs no change. The Mata library is unchanged.
 
 ## [3.10.0] - 2026-10-26

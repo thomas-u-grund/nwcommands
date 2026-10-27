@@ -78,13 +78,13 @@ program nwdendrogram
 	}
 	
 	qui if "`label'" != "" {
-		capture mata: mata drop myord mylab
-		putmata myord = `ord'
-		putmata mylab = `label'
-		mata: mylab = mylab[myord]
+		capture mata: mata drop __nwdendrogram_myord __nwdendrogram_mylab
+		putmata __nwdendrogram_myord = `ord'
+		putmata __nwdendrogram_mylab = `label'
+		mata: __nwdendrogram_mylab = __nwdendrogram_mylab[__nwdendrogram_myord]
 		capture drop __`label'
-		getmata __`label' = mylab, replace
-		capture mata: mata drop myord mylab
+		getmata __`label' = __nwdendrogram_mylab, replace
+		capture mata: mata drop __nwdendrogram_myord __nwdendrogram_mylab
 		local label = "__`label'"
 	}
 	
@@ -112,6 +112,8 @@ program nwdendrogram
 	capture drop __lev*
 	restore
 	
+	capture mata: mata drop __nwdendrogram_*
+	capture confirm number 0
 end
 
 capture program drop dendrogram_classes

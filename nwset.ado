@@ -601,8 +601,8 @@ if "`overwrite'" != "" local replace "replace"
 				}
 			}
 
-			mata: mode1 = cols(`mat')
-			mata: st_local("mode1", strofreal(mode1))
+			mata: __nwset_mode1 = cols(`mat')
+			mata: st_local("mode1", strofreal(__nwset_mode1))
 			// a square matrix of a one-mode network needs no cut-down: one copy, not two
 			if "`bipartite'" == "" {
 				mata: `__nwnew' = `mat'
@@ -611,7 +611,7 @@ if "`overwrite'" != "" local replace "replace"
 				mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")
 			}
 			mata: `__modes' = J(cols(`__nwnew'), 1, 2)
-			mata: `__modes'[(1::mode1),1] = J(mode1, 1, 1)
+			mata: `__modes'[(1::__nwset_mode1),1] = J(__nwset_mode1, 1, 1)
 			mata: `__modes'=strofreal(`__modes')'
 		}
 				
@@ -733,7 +733,7 @@ if "`overwrite'" != "" local replace "replace"
 		_nwdatasync
 	}
 	
-	 capture mata: mata drop mode1
+	 capture mata: mata drop __nwset_mode1
 	 capture mata: mata drop `__modes'
 	 capture mata: mata drop `__nwnew' 
 	 capture mata: mata drop `__nwnodenames'

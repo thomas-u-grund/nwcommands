@@ -45,9 +45,9 @@ program nwneighbor
 	if "`mode'" == "either"{
 		mata: __nb = uniqrows(`netobj'->neighbors(`egoid') \ `netobj'->neighbors_in(`egoid'))
 	}
-	mata: _select = J(1, `nodes', 0)
-	mata: _select[__nb'] = J(1, rows(__nb), 1)
-	mata: neighbors = select((`netobj'->get_nodenames() \ strofreal(1::`netobj'->get_nodes())'), _select)
+	mata: __nwneighbor_select = J(1, `nodes', 0)
+	mata: __nwneighbor_select[__nb'] = J(1, rows(__nb), 1)
+	mata: __nwneighbor_neighbors = select((`netobj'->get_nodenames() \ strofreal(1::`netobj'->get_nodes())'), __nwneighbor_select)
 	mata: mata drop __nb
 
 	// subnet(): induced ego-network extraction (ego + its own neighbors,
@@ -76,13 +76,13 @@ program nwneighbor
 	// `generate()''s own neighbor-only variable, and must not silently
 	// gain ego's own position too) with ego's own position added in.
 	if "`subnet'" != "" {
-		mata: __nwneighbor_sel = _select
+		mata: __nwneighbor_sel = __nwneighbor_select
 		mata: __nwneighbor_sel[`egoid'] = 1
 		nwvalidate `subnet'
 		if "`r(exists)'" == "true" {
 			if "`subreplace'" == "" {
 				di "{err}Network {bf:`subnet'} already exists; use {bf:subreplace}"
-				capture mata: mata drop neighbors
+				capture mata: mata drop __nwneighbor_neighbors
 				err 99
 			}
 			capture nwdrop `subnet'
@@ -114,7 +114,7 @@ program nwneighbor
 	if (_rc != 0 | "`replace'" != "") & "`generate'" != "" {
 		capture drop `generate'
 		qui gen `generate' =.
-		mata: st_store((1::`nodes'), "`generate'", _select')
+		mata: st_store((1::`nodes'), "`generate'", __nwneighbor_select')
 	}
 	mata: st_rclear()
 	capture mata: st_global("r(ego)", "`ego'")
@@ -131,14 +131,14 @@ program nwneighbor
 	// AMONG multiple neighbors at all. Fixed to genuinely pick a random
 	// COLUMN (one whole neighbor, name+id together), then take that
 	// neighbor's own name (row 1).
-	mata: st_numscalar("__nwneighbor_n", cols(neighbors))
+	mata: st_numscalar("__nwneighbor_n", cols(__nwneighbor_neighbors))
 	if `=__nwneighbor_n' > 0 {
-		capture mata: st_global("r(oneneighbor)", neighbors[1, runiformint(1,1,1,`=__nwneighbor_n')])
+		capture mata: st_global("r(oneneighbor)", __nwneighbor_neighbors[1, runiformint(1,1,1,`=__nwneighbor_n')])
 	}
 	else {
 		mata: st_global("r(oneneighbor)", "")
 	}
-	mata: st_numscalar("r(num_neighbors)", cols(neighbors))
+	mata: st_numscalar("r(num_neighbors)", cols(__nwneighbor_neighbors))
 	scalar drop __nwneighbor_n
 
 	di ""
@@ -148,8 +148,8 @@ program nwneighbor
 	di "{txt}    Ego        :   {res}`ego' (`r(egoid)')"
 	di "{txt}    Neighbors  : {res}" _continue
 	di ""
-	mata: neighbors'
-	mata: st_matrix("r(neighbors)", strtoreal(neighbors'[.,2]))
+	mata: __nwneighbor_neighbors'
+	mata: st_matrix("r(neighbors)", strtoreal(__nwneighbor_neighbors'[.,2]))
 	di ""
 	di "{hline 40}"
 	if `"`__nwneighbor_subnetmsg'"' != "" {
@@ -157,6 +157,8 @@ program nwneighbor
 		di "{hline 40}"
 	}
 
-	capture mata: mata drop neighbors
+	capture mata: mata drop __nwneighbor_neighbors
+	capture mata: mata drop __nwneighbor_*
+	capture confirm number 0
 end
 

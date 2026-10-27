@@ -268,6 +268,10 @@ program nwdyadprob
 		nwload
 	}
 
+	capture mata: mata drop `__nwnew'
+	capture mata: mata drop `__matcopy'
+	capture mata: mata drop `m'
+	capture confirm number 0
 end
 
 capture mata: mata drop getNetFromProbs()

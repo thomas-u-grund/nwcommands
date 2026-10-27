@@ -177,6 +177,8 @@ program nwtriads
 		restore
 		di as txt "(plot saved as {bf:`name'}; triad-category counts for `netname')"
 	}
+	capture mata: mata drop `triadcensus'
+	capture confirm number 0
 end
 
 capture mata: mata drop nw_fasttriads()

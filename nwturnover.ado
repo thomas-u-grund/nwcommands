@@ -92,9 +92,9 @@ program nwturnover, rclass
 	mata: st_numscalar("nw_dissolved", sum(`__nw_pernode'[.,3]) / `divisor')
 
 	mata: `__nw_turnrate' = J(`nodes1', 1, .)
-	mata: nw_denom_total = rowsum(`__nw_pernode')
-	mata: `__nw_turnrate'[selectindex(nw_denom_total :> 0)] = `__nw_pernode'[selectindex(nw_denom_total :> 0),1] :/ nw_denom_total[selectindex(nw_denom_total :> 0)]
-	mata: mata drop nw_denom_total
+	mata: __nwturnover_denom_total = rowsum(`__nw_pernode')
+	mata: `__nw_turnrate'[selectindex(__nwturnover_denom_total :> 0)] = `__nw_pernode'[selectindex(__nwturnover_denom_total :> 0),1] :/ __nwturnover_denom_total[selectindex(__nwturnover_denom_total :> 0)]
+	mata: mata drop __nwturnover_denom_total
 
 	capture drop `netgenerate'
 	qui gen `netgenerate' = .
@@ -129,4 +129,6 @@ program nwturnover, rclass
 		}
 		noi di " "
 	}
+	capture mata: mata drop __nwturnover_*
+	capture confirm number 0
 end

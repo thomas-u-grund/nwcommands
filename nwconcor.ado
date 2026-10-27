@@ -114,18 +114,18 @@ program nwconcor, rclass
 
 		qui tab `netgenerate'`k', matrow(block_id) matcell(block_size)
 
-		mata: block_id = st_matrix("block_id")
-		mata: block_number = rows(block_id)
-		mata: block_size = st_matrix("block_size")
-		mata: block_share = block_size :/ (sum(block_size))
-		mata: block_sizeid = J(block_number, 3, 0)
-		mata: block_sizeid[.,1] = block_size
-		mata: block_sizeid[.,2] = block_id
-		mata: block_sizeid[.,3] = block_share
+		mata: __nwconcor_block_id = st_matrix("block_id")
+		mata: __nwconcor_block_number = rows(__nwconcor_block_id)
+		mata: __nwconcor_block_size = st_matrix("block_size")
+		mata: __nwconcor_block_share = __nwconcor_block_size :/ (sum(__nwconcor_block_size))
+		mata: __nwconcor_block_sizeid = J(__nwconcor_block_number, 3, 0)
+		mata: __nwconcor_block_sizeid[.,1] = __nwconcor_block_size
+		mata: __nwconcor_block_sizeid[.,2] = __nwconcor_block_id
+		mata: __nwconcor_block_sizeid[.,3] = __nwconcor_block_share
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
-		mata: block_sizeid = sort(block_sizeid, (-1, 2))
-		mata: st_numscalar("blocks", block_number)
-		mata: st_matrix("block_sizeid", block_sizeid)
+		mata: __nwconcor_block_sizeid = sort(__nwconcor_block_sizeid, (-1, 2))
+		mata: st_numscalar("blocks", __nwconcor_block_number)
+		mata: st_matrix("block_sizeid", __nwconcor_block_sizeid)
 
 		matrix colnames block_sizeid = size blockid share
 
@@ -138,7 +138,7 @@ program nwconcor, rclass
 		}
 		matrix rownames block_sizeid = `rowlabs'
 		return matrix block_sizeid = block_sizeid
-		mata: mata drop block_number block_share block_id block_size block_sizeid
+		mata: mata drop __nwconcor_block_number __nwconcor_block_share __nwconcor_block_id __nwconcor_block_size __nwconcor_block_sizeid
 
 		if "`silent'" == "" {
 			noi di "{hline 40}"
@@ -149,4 +149,6 @@ program nwconcor, rclass
 		}
 		local k = `=`k' + 1'
 	}
+	capture mata: mata drop __nwconcor_*
+	capture confirm number 0
 end

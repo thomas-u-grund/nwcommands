@@ -16,6 +16,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 **nwcommands 3.11.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.0)). The four model packages are unchanged by this release (they work with it and with 3.10.0).
 
+- **Commands no longer overwrite or delete your own Mata variables.** About 30 commands (among them `nwplot`, `nwcommunity`, `nwcomponents`, `nwcloseness`, `nwqap`, `nwburt`) used short global Mata names such as `Coord`, `M`, `temp` or `reach` for their own work; a variable of yours with the same name was replaced and often deleted. They now use private names and remove them again.
 - **A Mata variable called `nw` no longer breaks nwcommands.** A variable of that name in your own Mata session replaced the list of networks that nwcommands keeps, and the next command stopped with "type mismatch: exp.exp: transmorphic found where struct expected" (only `mata: mata clear` helped). The list is now stored under the name `__nw`, so your own `nw`, `A`, `D` or `p` are safe.
 - **Only for programmers:** a script that addresses the list directly must now write `__nw.nws.pdefs[1]` instead of `nw.nws.pdefs[1]`. Scripts that use `r(netobj)` or `_nwsyntax` need no change; strings from `r(netobj)` that a script saved before the upgrade must be created again.
 

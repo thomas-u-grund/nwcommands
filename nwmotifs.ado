@@ -122,6 +122,8 @@ program nwmotifs, rclass
 		restore
 		di as txt "(plot saved as {bf:`name'}; motif-category counts for `netname')"
 	}
+	capture mata: mata drop `mc'
+	capture confirm number 0
 end
 
 capture program drop _nwmotifs_two

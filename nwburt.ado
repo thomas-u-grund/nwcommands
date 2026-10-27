@@ -72,10 +72,10 @@ program nwburt, rclass
 				mata: `__burt' = `netobj'->calculate_burt()
 			}
 		}
-		mata: effsize = `__burt'[.,1]
-		mata: efficiency = `__burt'[.,2]
-		mata: constraint = `__burt'[.,3]
-		mata: h = `__burt'[.,4]
+		mata: __nwburt_effsize = `__burt'[.,1]
+		mata: __nwburt_efficiency = `__burt'[.,2]
+		mata: __nwburt_constraint = `__burt'[.,3]
+		mata: __nwburt_h = `__burt'[.,4]
 		mata: mata drop `__burt'
 	}
 	else {
@@ -97,25 +97,25 @@ program nwburt, rclass
 		if `__kind' == 1 mata: `onenet' = (`onenet' :> 0) :* (`onenet' :< .)
 		mata: _diag(`onenet', J(`nodes',1,0))
 
-		mata: dr = dyadicredundancy(`onenet')
-		mata: dc = dyadicconstraint(`onenet')
+		mata: __nwburt_dr = dyadicredundancy(`onenet')
+		mata: __nwburt_dc = dyadicconstraint(`onenet')
 
 		if "`dyadredundancy'" != "" {
 			capture nwdrop dyadredundancy
-			nwset, name(dyadredundancy) mat(dr)
+			nwset, name(dyadredundancy) mat(__nwburt_dr)
 			_nwsyntax `netname'
 		}
 		if "`dyadconstraint'" != "" {
 			capture nwdrop dyadconstraint
-			nwset, name(dyadconstraint) mat(dc)
+			nwset, name(dyadconstraint) mat(__nwburt_dc)
 			_nwsyntax `netname'
 		}
 
-		mata: effsize = rowsum(`onenet') - rowsum(dr)
-		mata: efficiency = effsize :/ rowsum(`onenet')
-		mata: constraint = rowsum(dc)
-		mata: h = hierarchy(`onenet', dc)
-		mata: mata drop dr dc
+		mata: __nwburt_effsize = rowsum(`onenet') - rowsum(__nwburt_dr)
+		mata: __nwburt_efficiency = __nwburt_effsize :/ rowsum(`onenet')
+		mata: __nwburt_constraint = rowsum(__nwburt_dc)
+		mata: __nwburt_h = hierarchy(`onenet', __nwburt_dc)
+		mata: mata drop __nwburt_dr __nwburt_dc
 	}
 
 	capture drop _effsize
@@ -130,12 +130,12 @@ program nwburt, rclass
 	// read/write below (see nwcommunity.ado)
 	_nwsyncrows `netname'
 
-	mata: st_store((1::`nodes'), "_effsize", effsize)
-	mata: st_store((1::`nodes'), "_efficiency", efficiency)
-	mata: st_store((1::`nodes'), "_constraint", constraint)
-	mata: st_store((1::`nodes'), "_hierarchy", h)
+	mata: st_store((1::`nodes'), "_effsize", __nwburt_effsize)
+	mata: st_store((1::`nodes'), "_efficiency", __nwburt_efficiency)
+	mata: st_store((1::`nodes'), "_constraint", __nwburt_constraint)
+	mata: st_store((1::`nodes'), "_hierarchy", __nwburt_h)
 
-	mata: mata drop effsize efficiency constraint h
+	mata: mata drop __nwburt_effsize __nwburt_efficiency __nwburt_constraint __nwburt_h
 
 	return scalar nodes = `nodes'
 	return scalar weighted = `__weighted'
@@ -160,6 +160,8 @@ program nwburt, rclass
 	// the last step, matching this package's own established idiom for
 	// exactly this situation.
 	capture confirm number 1
+	capture mata: mata drop __nwburt_*
+	capture confirm number 0
 end
 
 capture mata: mata drop nw_fastburt()

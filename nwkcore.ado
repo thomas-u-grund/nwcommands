@@ -65,18 +65,18 @@ program nwkcore, rclass
 
 		qui tab `netgenerate'`k', matrow(core_id) matcell(core_size)
 
-		mata: core_id = st_matrix("core_id")
-		mata: core_number = rows(core_id)
-		mata: core_size = st_matrix("core_size")
-		mata: core_share = core_size :/ (sum(core_size))
-		mata: core_sizeid = J(core_number, 3, 0)
-		mata: core_sizeid[.,1] = core_size
-		mata: core_sizeid[.,2] = core_id
-		mata: core_sizeid[.,3] = core_share
+		mata: __nwkcore_core_id = st_matrix("core_id")
+		mata: __nwkcore_core_number = rows(__nwkcore_core_id)
+		mata: __nwkcore_core_size = st_matrix("core_size")
+		mata: __nwkcore_core_share = __nwkcore_core_size :/ (sum(__nwkcore_core_size))
+		mata: __nwkcore_core_sizeid = J(__nwkcore_core_number, 3, 0)
+		mata: __nwkcore_core_sizeid[.,1] = __nwkcore_core_size
+		mata: __nwkcore_core_sizeid[.,2] = __nwkcore_core_id
+		mata: __nwkcore_core_sizeid[.,3] = __nwkcore_core_share
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
-		mata: core_sizeid = sort(core_sizeid, (-1, 2))
-		mata: st_matrix("core_sizeid", core_sizeid)
-		mata: st_numscalar("corelevels", core_number)
+		mata: __nwkcore_core_sizeid = sort(__nwkcore_core_sizeid, (-1, 2))
+		mata: st_matrix("core_sizeid", __nwkcore_core_sizeid)
+		mata: st_numscalar("corelevels", __nwkcore_core_number)
 
 		matrix colnames core_sizeid = size coreid share
 
@@ -90,7 +90,7 @@ program nwkcore, rclass
 		}
 		matrix rownames core_sizeid = `rowlabs'
 		return matrix core_sizeid = core_sizeid
-		mata: mata drop core_number core_share core_id core_size core_sizeid
+		mata: mata drop __nwkcore_core_number __nwkcore_core_share __nwkcore_core_id __nwkcore_core_size __nwkcore_core_sizeid
 
 		if "`silent'" == "" {
 			noi di "{hline 40}"
@@ -101,4 +101,6 @@ program nwkcore, rclass
 		}
 		local k = `=`k' + 1'
 	}
+	capture mata: mata drop __nwkcore_*
+	capture confirm number 0
 end

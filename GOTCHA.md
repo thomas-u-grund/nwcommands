@@ -6,6 +6,14 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## No plain-named globals in Mata from ado code: tempname or `__nw` prefix, enforced by `test_mata_userspace.do`
+
+Every `mata: x = ...` typed by an ado file at the top level creates a GLOBAL Mata variable, in the same name space as the user's own Mata session. Plain names (`Coord`, `M`, `temp`, `reach`, `far`, `comm_id`, `onenet`, `plotmat` ...) overwrote the user's variables of the same name, and the usual `mata: mata drop x` at the end then deleted the user's variable. Found 2026-10 (56 assignment sites in 23 commands, `nwplot` the largest). The rule:
+- Name a temporary Mata variable with `tempname` (the name is `__000001`), or with the prefix `__nw<command>_` (for example `__nwplot_Coord`), never with a short name. A name that an option passes on (`nwtomata, mat()`, `nwset, mat()`, `putmata`, `getmata`) follows the same rule. Functions defined in a `mata:` block have their own local variables; only what the ado code types at the top level is global. `external` declarations in function bodies must use the same private name.
+- Drop what you create, on every exit of the program: the last line of the main program drops the whole family (`capture mata: mata drop __nwplot_*`; the wildcard works). `mata drop a b c` stops at the first name that does not exist and drops nothing (`capture` hides this), and `mata drop a, b` with commas never works: drop one name per `capture` or use the wildcard. A `tempname` is not removed by Stata, drop it before every `exit` too (`_nwdatasync`'s early `exit` left one behind).
+- State kept on purpose is named `__nw...` and listed in the test (`__nwqapfit`, the fitted values for `predict` after `nwqap`; `nwg_comb_state`, a plug-in check of the library).
+- `test_mata_userspace.do` defines about 100 common user names (real, string, struct), runs about 70 commands and checks after each that every name still has its value and that no new global Mata variable remains. Add every new command or option that creates a Mata variable to it. Stata matrices and variables with plain names are a different name space and not covered.
+
 ## The registry of networks is the Mata global `__nw` (not `nw`)
 
 Until 3.10.0 it was called `nw`, so a user variable `nw` in a Mata session replaced the registry ("type mismatch: exp.exp: transmorphic found where struct expected"; `A`, `D`, `p` are harmless). The ado files take the name from `unw_defs` (`` `nw' ``, `` `nws' ``); a few files spell `__nw.nws` out. Never reintroduce a short global name for package state. The Mata library source (`unw_core.do`) only mentions it in comments, which is why the rename needed no library rebuild.

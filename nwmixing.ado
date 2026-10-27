@@ -137,7 +137,9 @@ program nwmixing
 	mata: st_matrix("r(col)", `__nwcol')
 	mata: st_matrix("r(row)", `__nwrow')
 	
-	capture mata: mata drop `__nwtable', `__nwcol', `__nwrow', `__nwinternal', `__nwexternal', `__nwei_index' 
+	foreach __nwm in `__nwtable' `__nwcol' `__nwrow' `__nwinternal' `__nwexternal' `__nwei_index' {
+		capture mata: mata drop `__nwm'
+	}
 
 	local EI_index = `r(EI_index)'
 
@@ -186,7 +188,9 @@ program nwmixing
 	_return restore res1
 	capture mata: st_numscalar("r(EI_pvalue)", `pvalue')
 	
-	capture mata: mata drop `EI_out' `pvalue' `out'
+	foreach __nwm in `EI_out' `EI_qap' `pvalue' `out' {
+		capture mata: mata drop `__nwm'
+	}
 	capture mata: mata drop `attmat'
 	
 	if "`r(EI_pvalue)'" == "" {

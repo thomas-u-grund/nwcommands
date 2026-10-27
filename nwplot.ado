@@ -416,7 +416,7 @@ program nwplot, rclass
 		if "`rescale'" == "" {	
 			tempvar __color
 			egen `__color' = group(`varlist')
-			mata: ncolor = st_data((1,`nodes'),st_varindex("`__color'"))
+			mata: __nwplot_ncolor = st_data((1,`nodes'),st_varindex("`__color'"))
 			if "`forcekeys'" == "" {
 				qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
 				forvalues i = 1/`r(r)' {
@@ -431,7 +431,7 @@ program nwplot, rclass
 			}
 		}
 		else {
-			mata: ncolor = st_data((1,`nodes'),st_varindex("`varlist'"))
+			mata: __nwplot_ncolor = st_data((1,`nodes'),st_varindex("`varlist'"))
 			if "`forcekeys'" == "" {
 				qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
 				forvalues i = 1/`r(r)' {
@@ -448,11 +448,11 @@ program nwplot, rclass
 		}
 	}
 	else {
-		mata: ncolor = J(`nodes',1,1)
+		mata: __nwplot_ncolor = J(`nodes',1,1)
 		local colorkeys = ""
 	}
 	if "`importcoords'" != "" {
-		_nwedit_buildgroupmap, groupvec(ncolor) valuevec(_nwedit_color) prefix(_nwedit_colormap)
+		_nwedit_buildgroupmap, groupvec(__nwplot_ncolor) valuevec(_nwedit_color) prefix(_nwedit_colormap)
 	}
 	if "`colorkeys_legendoff'" == ""{
 		local keysused : word count `colorkeys'
@@ -511,7 +511,7 @@ program nwplot, rclass
 		if "`rescale'" == "" {	
 			tempvar __symbol
 			egen `__symbol' = group(`varlist')
-			mata: nsymbol = st_data((1,`nodes'),st_varindex("`__symbol'"))
+			mata: __nwplot_nsymbol = st_data((1,`nodes'),st_varindex("`__symbol'"))
 			if "`forcekeys'" == "" {
 				qui tab `varlist' if _n <= `nodes', matrow(symbolkeysmap)
 				forvalues i = 1/`r(r)' {
@@ -526,7 +526,7 @@ program nwplot, rclass
 			}
 		}
 		else {
-			mata: nsymbol = st_data((1,`nodes'),st_varindex("`varlist'"))
+			mata: __nwplot_nsymbol = st_data((1,`nodes'),st_varindex("`varlist'"))
 			if "`forcekeys'" == "" {
 				qui tab `varlist' if _n <= `nodes', matrow(symbolkeysmap)
 				forvalues i = 1/`r(r)' {
@@ -542,10 +542,10 @@ program nwplot, rclass
 		}
 	}
 	else {
-		mata: nsymbol = J(`nodes',1,1)
+		mata: __nwplot_nsymbol = J(`nodes',1,1)
 	}
 	if "`importcoords'" != "" {
-		_nwedit_buildgroupmap, groupvec(nsymbol) valuevec(_nwedit_shape) prefix(_nwedit_shapemap)
+		_nwedit_buildgroupmap, groupvec(__nwplot_nsymbol) valuevec(_nwedit_shape) prefix(_nwedit_shapemap)
 	}
 
 	local keysused_symbol : word count `symbolkeys'
@@ -633,7 +633,7 @@ program nwplot, rclass
 				local sizekeys_size_temp = `sizekeys_size_temp' * `nodefactor' * 2/20
 				local sizekeys_size "`sizekeys_size' `sizekeys_size_temp'"
 			}
-			mata: nsize = st_data((1,`nodes'),st_varindex("__size"))
+			mata: __nwplot_nsize = st_data((1,`nodes'),st_varindex("__size"))
 		}
 		else {
 			local sizekeys_size ""
@@ -641,14 +641,14 @@ program nwplot, rclass
 				local sizekeys_size "`sizekeys_size' `= 0.04 * `szkey''"
 				local _nwedit_sizekeys_rawnsize "`_nwedit_sizekeys_rawnsize' `= 40 * `szkey''"
 			}
-			mata: nsize = st_data((1,`nodes'),st_varindex("__size"))
-			mata: nsize = nsize :*40
+			mata: __nwplot_nsize = st_data((1,`nodes'),st_varindex("__size"))
+			mata: __nwplot_nsize = __nwplot_nsize :*40
 		}
 		local nodefactor = `nodefactor' / 20
 		capture drop __size
 	}
 	else {
-		mata: nsize = J(`nodes',1,80)
+		mata: __nwplot_nsize = J(`nodes',1,80)
 		local sizekeys ""
 	}
 	
@@ -675,14 +675,14 @@ program nwplot, rclass
 		if _rc != 0 {
 			tempvar nlabel_string
 			tostring `label', generate(`nlabel_string') force
-			mata: nlabel = st_sdata((1,`nodes'),st_varindex("`nlabel_string'"))
+			mata: __nwplot_nlabel = st_sdata((1,`nodes'),st_varindex("`nlabel_string'"))
 		}
 		else {
-			mata: nlabel = st_sdata((1,`nodes'),st_varindex("`label'"))
+			mata: __nwplot_nlabel = st_sdata((1,`nodes'),st_varindex("`label'"))
 		}
 	}
 	else {
-		mata: nlabel = J(`nodes',1,"")
+		mata: __nwplot_nlabel = J(`nodes',1,"")
 	}
 
 	////////////////////
@@ -692,9 +692,9 @@ program nwplot, rclass
 	////////////////////
 	
 	// Get network data
-	nwtomata `netname', mat(plotmat)
-	mata: M = (plotmat + plotmat') :/ (plotmat + plotmat')
-	mata: _editmissing(M,0)
+	nwtomata `netname', mat(__nwplot_plotmat)
+	mata: __nwplot_M = (__nwplot_plotmat + __nwplot_plotmat') :/ (__nwplot_plotmat + __nwplot_plotmat')
+	mata: _editmissing(__nwplot_M,0)
 	// Defaults by network type (valued/signed/two-mode):
 	//  - valued network, no edgesize(): the tie values set the line widths (as if edgesize(<network>, legendoff)),
 	//    switched off by binary;
@@ -758,11 +758,11 @@ program nwplot, rclass
 		if "`forcekeys'" == "" {
 			local edgesizekeys "`r(minval)' `r(maxval)'"
 		}
-		nwtomata `edgesize', mat(edgesizemat)
+		nwtomata `edgesize', mat(__nwplot_edgesizemat)
 		nwname `edgesize', newdirected("`edgesize_directed'")
 	}
 	else {
-		mata: edgesizemat = J(`nodes',`nodes',1)
+		mata: __nwplot_edgesizemat = J(`nodes',`nodes',1)
 		local edgesizekeys ""
 	}
 	
@@ -821,8 +821,8 @@ program nwplot, rclass
 		// A continuous (non-integer or negative) edgecolor() network is cut
 		// into five classes with a light-to-dark sequential palette; integer
 		// values (0, 1, 2, ...) remain categories, one colour each.
-		nwtomata `edgecolor', mat(edgecolormat)
-		mata: st_local("_ec_nonint", strofreal(any(edgecolormat :!= trunc(edgecolormat)) | any(edgecolormat :< 0)))
+		nwtomata `edgecolor', mat(__nwplot_edgecolormat)
+		mata: st_local("_ec_nonint", strofreal(any(__nwplot_edgecolormat :!= trunc(__nwplot_edgecolormat)) | any(__nwplot_edgecolormat :< 0)))
 		local _ec_binned = (`_ec_nonint' == 1)
 		if `_ec_binned' {
 			mata: _nwplot_binedgecolor(5)
@@ -843,12 +843,12 @@ program nwplot, rclass
 				local edgecolorkeys "`edgecolorkeys' `=`eckey'+1'"
 			}
 		}
-		mata: edgecolormat = edgecolormat :+ 1
+		mata: __nwplot_edgecolormat = __nwplot_edgecolormat :+ 1
 		nwname `edgecolor', newdirected("`edgecolor_directed'")
 	}
 	else {
 		local _ec_binned = 0
-		mata: edgecolormat = J(`nodes',`nodes',0)
+		mata: __nwplot_edgecolormat = J(`nodes',`nodes',0)
 	}
 
 	local edgecolororder = ""
@@ -964,14 +964,14 @@ program nwplot, rclass
 	// each of the 7 different layout algorithms individually tolerate
 	// a degenerate 1-node input.
 	if (`nodes' == 1) {
-		mata: Coord = J(1,2,0.5)
+		mata: __nwplot_Coord = J(1,2,0.5)
 	}
 	if ("`layout'"=="_layoutfunction" & `nodes' > 1) {
 		gettoken _layoutfcn _layoutfcnopt: _layoutfunction, parse(",")
-		mata: Coord = `_layoutfcn'(M`_layoutfcnopt')
+		mata: __nwplot_Coord = `_layoutfcn'(__nwplot_M`_layoutfcnopt')
 	}
 	if ("`layout'"== "mds" & `nodes' > 1){
-		mata: Coord = netplotmds(M, `iterations')
+		mata: __nwplot_Coord = netplotmds(__nwplot_M, `iterations')
 	}
 
 	// Layouts that use the tie values (kk and frucht on a valued, one-mode network; `binary' switches it off):
@@ -982,12 +982,12 @@ program nwplot, rclass
 		if "`layout'" == "kk" & `iterations' == 1000 {
 			local __nwp_witer = min(1000, max(10, floor(28000000 / (`nodes'^2))))
 		}
-		_nwwlayout, pmat(plotmat) method(`layout') iterations(`__nwp_witer') out(Coord)
+		_nwwlayout, pmat(__nwplot_plotmat) method(`layout') iterations(`__nwp_witer') out(__nwplot_Coord)
 		local __nwp_wlayout = r(weighted)
 	}
 
 	if ("`layout'"=="frucht" & `nodes' > 1 & !`__nwp_wlayout'){
-		mata: Coord = fruchtrein(M, `iterations')
+		mata: __nwplot_Coord = fruchtrein(__nwplot_M, `iterations')
 	}
 
 	if ("`layout'"=="kk" & `nodes' > 1 & !`__nwp_wlayout'){
@@ -1009,7 +1009,7 @@ program nwplot, rclass
 		if `iterations' == 1000 {
 			local kk_iter = min(1000, max(10, floor(28000000 / (`nodes'^2))))
 		}
-		mata: Coord = kklayout(M, `kk_iter')
+		mata: __nwplot_Coord = kklayout(__nwplot_M, `kk_iter')
 	}
 
 	if ("`layout'"=="hierarchy" & `nodes' > 1){
@@ -1026,10 +1026,10 @@ program nwplot, rclass
 		// missing off-diagonal cells (confirmed directly) - cleared to
 		// 0 here rather than left missing, since a Mata `!=0' comparison
 		// on a missing value would otherwise evaluate as true.
-		mata: Mdir = plotmat
-		mata: _editmissing(Mdir, 0)
-		mata: Coord = sugiyamalayout(Mdir, `iterations')
-		mata: mata drop Mdir
+		mata: __nwplot_Mdir = __nwplot_plotmat
+		mata: _editmissing(__nwplot_Mdir, 0)
+		mata: __nwplot_Coord = sugiyamalayout(__nwplot_Mdir, `iterations')
+		mata: mata drop __nwplot_Mdir
 	}
 
 	if ("`layout'"=="bipartite" & `nodes' > 1){
@@ -1037,17 +1037,17 @@ program nwplot, rclass
 			di "{err}Option {bf:layout(bipartite)} requires a two-mode network; network `netname' is not two-mode."
 			error 198
 		}
-		mata: Mdir2 = plotmat
-		mata: _editmissing(Mdir2, 0)
-		mata: modevec = `netobj'->get_modes()
-		mata: Coord = bipartitelayout(Mdir2, modevec, `=("`layout_bipartite_vertical'"!="")')
-		mata: mata drop Mdir2 modevec
+		mata: __nwplot_Mdir2 = __nwplot_plotmat
+		mata: _editmissing(__nwplot_Mdir2, 0)
+		mata: __nwplot_modevec = `netobj'->get_modes()
+		mata: __nwplot_Coord = bipartitelayout(__nwplot_Mdir2, __nwplot_modevec, `=("`layout_bipartite_vertical'"!="")')
+		mata: mata drop __nwplot_Mdir2 __nwplot_modevec
 	}
 
     qui if ("`layout'"=="mdsclassical" & `nodes' > 1 ){
 		// Coordinates matrix to be populated
-		mata: Coord = J(`nodes', 2, 0)
-		mata: Coord[.,1] = J(`nodes', 1, 1.5) 
+		mata: __nwplot_Coord = J(`nodes', 2, 0)
+		mata: __nwplot_Coord[.,1] = J(`nodes', 1, 1.5) 
 		// Deal with isolates
 		//
 		// was "nwgen `_isolates' = isolates(`netname')" - "isolates(" is
@@ -1177,17 +1177,17 @@ program nwplot, rclass
 		local compnum_nonisol = `compnum' - `isol'
 		qui tab `_component', matrow(comp_id) matcell(comp_freq)
 
-		mata: comp_id = st_matrix("comp_id")
-		mata: comp_freq = st_matrix("comp_freq")
-		mata: comp_freqid = J(rows(comp_id), 2,0)
-		mata: comp_freqid[.,1] = comp_freq
-		mata: comp_freqid[.,2] = comp_id
+		mata: __nwplot_comp_id = st_matrix("comp_id")
+		mata: __nwplot_comp_freq = st_matrix("comp_freq")
+		mata: __nwplot_comp_freqid = J(rows(__nwplot_comp_id), 2,0)
+		mata: __nwplot_comp_freqid[.,1] = __nwplot_comp_freq
+		mata: __nwplot_comp_freqid[.,2] = __nwplot_comp_id
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
-		mata: comp_freqid = sort(comp_freqid, (-1, 2))
-		mata: comp_nonisol = sum((comp_freqid[.,1] :> 1))
-		mata: st_numscalar("r(comp_nonisol)", comp_nonisol)
+		mata: __nwplot_comp_freqid = sort(__nwplot_comp_freqid, (-1, 2))
+		mata: __nwplot_comp_nonisol = sum((__nwplot_comp_freqid[.,1] :> 1))
+		mata: st_numscalar("r(comp_nonisol)", __nwplot_comp_nonisol)
 		local comp_nonisol = `r(comp_nonisol)'
-		mata: st_matrix("comp_freqid", comp_freqid)
+		mata: st_matrix("comp_freqid", __nwplot_comp_freqid)
 
 		// Find overall layout
 		// Default = number of (non-isolates) components (undirected)
@@ -1210,36 +1210,36 @@ program nwplot, rclass
 			gen _id = _n
 
 			nwdrop `netname'_comp`i' if `_component' != comp_freqid[`i', 2]
-			nwtomata `netname'_comp`i', mat(compmat)
+			nwtomata `netname'_comp`i', mat(__nwplot_compmat)
 			// Original id's of selected nodes
-			mata: original_id = st_data((1::rows(compmat)), "_id")
+			mata: __nwplot_original_id = st_data((1::rows(__nwplot_compmat)), "_id")
 
 			// Calculate mds coordinates of network i
-			mata: compM = (compmat :+ compmat') :/ (compmat :+ compmat')
-			mata: _editmissing(compM,0)
-			mata: Coord_comp = mmdslayout(compM)
+			mata: __nwplot_compM = (__nwplot_compmat :+ __nwplot_compmat') :/ (__nwplot_compmat :+ __nwplot_compmat')
+			mata: _editmissing(__nwplot_compM,0)
+			mata: __nwplot_Coord_comp = mmdslayout(__nwplot_compM)
 			//noi mata: Coord_comp = correctCoordClash(Coord_comp, compM, (.05 * `nodeclashchange'), `nodeproximity') 
 			// Adjust coordinates for position in layout
 			// Deal with largest component
 			if `i' == 1  & `components' != 1 {
-				mata: Coord_comp[.,1] = Coord_comp[.,1] :* 0.9
+				mata: __nwplot_Coord_comp[.,1] = __nwplot_Coord_comp[.,1] :* 0.9
 				if `components' == 1 {
-					mata: Coord_comp[.,1] = Coord_comp[.,1] :+ 0.125
+					mata: __nwplot_Coord_comp[.,1] = __nwplot_Coord_comp[.,1] :+ 0.125
 				}
 			}
 			if `i' == 1  & `components' == 1 {
-				mata: Coord_comp[.,1] = Coord_comp[.,1] :+ 0.125
+				mata: __nwplot_Coord_comp[.,1] = __nwplot_Coord_comp[.,1] :+ 0.125
 			}
 			
 			// Deal with second largest component
 			if `i' == 2 {
-				mata: Coord_comp[.,1] = (Coord_comp[.,1] :*0.45):+ 1.1
-				mata: Coord_comp[.,2] = (Coord_comp[.,2] :*0.45):+ .5
+				mata: __nwplot_Coord_comp[.,1] = (__nwplot_Coord_comp[.,1] :*0.45):+ 1.1
+				mata: __nwplot_Coord_comp[.,2] = (__nwplot_Coord_comp[.,2] :*0.45):+ .5
 			}	
 			
 			// Assign adjusted coordinates to original network
-			mata: Coord[original_id,.] = Coord_comp
-			mata: mata drop original_id
+			mata: __nwplot_Coord[__nwplot_original_id,.] = __nwplot_Coord_comp
+			mata: mata drop __nwplot_original_id
 			nwdrop `netname'_comp`i'
 		}
 
@@ -1262,14 +1262,14 @@ program nwplot, rclass
 		// left-out node's own y along that same x=1.5 column, matching
 		// the k/num_isol convention netplotmds()/kklayout() already use
 		// for their own isolates.
-		mata: __mdsc_dispcomp = comp_freqid[(1::`components'), 2]
+		mata: __mdsc_dispcomp = __nwplot_comp_freqid[(1::`components'), 2]
 		mata: __mdsc_allcomp = st_data(., "`_component'")
 		mata: __mdsc_isdisp = J(rows(__mdsc_allcomp), 1, 0)
 		mata: for (__mdsc_k=1; __mdsc_k<=rows(__mdsc_dispcomp); __mdsc_k++) __mdsc_isdisp = __mdsc_isdisp :| (__mdsc_allcomp :== __mdsc_dispcomp[__mdsc_k])
 		mata: __mdsc_leftidx = selectindex(__mdsc_isdisp :== 0)
 		mata: st_numscalar("r(mdsc_nleft)", rows(__mdsc_leftidx))
 		if `r(mdsc_nleft)' > 0 {
-			mata: Coord[__mdsc_leftidx, 2] = (1::rows(__mdsc_leftidx)) :/ rows(__mdsc_leftidx)
+			mata: __nwplot_Coord[__mdsc_leftidx, 2] = (1::rows(__mdsc_leftidx)) :/ rows(__mdsc_leftidx)
 		}
 		mata: mata drop __mdsc_dispcomp __mdsc_allcomp __mdsc_isdisp __mdsc_leftidx __mdsc_k
 
@@ -1278,13 +1278,13 @@ program nwplot, rclass
 	capture replace `label' = `_orig_label'
 	
 	if ("`layout'"=="circle" & `nodes' > 1){
-		mata: Coord = circlelayout(rows(M))
+		mata: __nwplot_Coord = circlelayout(rows(__nwplot_M))
 	}
 	if ("`layout'"=="grid" & `nodes' > 1){
 		if "`layout_gridcols'" == "" {
 			local layout_gridcols = ceil(sqrt(`nodes'))
 		}
-		mata: Coord = gridlayout(rows(M), `layout_gridcols')
+		mata: __nwplot_Coord = gridlayout(rows(__nwplot_M), `layout_gridcols')
 	}
 	if ("`layout'"=="nodexy" & `nodes' > 1){
 		// BUGFIX: layout(nodexy) without also specifying nodexy(xvar
@@ -1296,15 +1296,15 @@ program nwplot, rclass
 			di "{err}Option {bf:nodexy(xvar yvar)} is required with {bf:layout(nodexy)}."
 			error 198
 		}
-		mata: Coord = J(rows(M),2,0)
-		mata: Coord[.,1] = st_data((1,rows(M)),"`nodex'")
-		mata: Coord[.,2] = st_data((1,rows(M)),"`nodey'")
+		mata: __nwplot_Coord = J(rows(__nwplot_M),2,0)
+		mata: __nwplot_Coord[.,1] = st_data((1,rows(__nwplot_M)),"`nodex'")
+		mata: __nwplot_Coord[.,2] = st_data((1,rows(__nwplot_M)),"`nodey'")
 	}
 	
 	
 	// Obtain tie coordinates
-	mata: TC = getTieCoordinates(Coord,nsize,NumElist(plotmat), edgecolormat, edgesizemat, `nodefactor', `doarrows', `arrowgap')
-	mata: st_numscalar("r(TC)", rows(TC))
+	mata: __nwplot_TC = getTieCoordinates(__nwplot_Coord,__nwplot_nsize,NumElist(__nwplot_plotmat), __nwplot_edgecolormat, __nwplot_edgesizemat, `nodefactor', `doarrows', `arrowgap')
+	mata: st_numscalar("r(TC)", rows(__nwplot_TC))
 	local minObs = max(`r(TC)', `nodes')
 	local _nwedit_ties = `r(TC)'
 
@@ -1320,7 +1320,7 @@ program nwplot, rclass
 		// plot's tie list holds both (i,j) and (j,i): accept either count.
 		local _nwedit_expect = `_nwedit_ties'
 		if "`directed'" != "true" {
-			mata: st_local("_nwedit_expect", strofreal(sum(NumElist(plotmat)[.,1] :<= NumElist(plotmat)[.,2])))
+			mata: st_local("_nwedit_expect", strofreal(sum(NumElist(__nwplot_plotmat)[.,1] :<= NumElist(__nwplot_plotmat)[.,2])))
 		}
 		if _N != `_nwedit_ties' & _N != `_nwedit_expect' {
 			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
@@ -1335,8 +1335,8 @@ program nwplot, rclass
 		mata: _nwedit_edgecolor = st_sdata(., "color")
 		mata: _nwedit_edgestyle = st_sdata(., "style")
 		if `_nwedit_edgehalf' {
-			mata: _nwedit_edgecolor = _nwedit_expandundirected(_nwedit_edgecolor, NumElist(plotmat))
-			mata: _nwedit_edgestyle = _nwedit_expandundirected(_nwedit_edgestyle, NumElist(plotmat))
+			mata: _nwedit_edgecolor = _nwedit_expandundirected(_nwedit_edgecolor, NumElist(__nwplot_plotmat))
+			mata: _nwedit_edgestyle = _nwedit_expandundirected(_nwedit_edgestyle, NumElist(__nwplot_plotmat))
 		}
 		restore
 	}
@@ -1361,11 +1361,11 @@ program nwplot, rclass
 	qui gen edgecolor = .
 	qui gen edgesize = .
 	
-	mata: st_numscalar("r(ties)", rows(TC))
+	mata: st_numscalar("r(ties)", rows(__nwplot_TC))
 	if `r(ties)' > 0 {
-		mata: st_store((1::rows(TC)),("sx","sy","ex","ey","value","recip","edgecolor", "edgesize"),TC[.,.])
+		mata: st_store((1::rows(__nwplot_TC)),("sx","sy","ex","ey","value","recip","edgecolor", "edgesize"),__nwplot_TC[.,.])
 		if "`edgeimport'" != "" {
-			mata: _nwedit_edgecolorvec = st_data((1::rows(TC)), "edgecolor")
+			mata: _nwedit_edgecolorvec = st_data((1::rows(__nwplot_TC)), "edgecolor")
 			_nwedit_buildgroupmap, groupvec(_nwedit_edgecolorvec) valuevec(_nwedit_edgecolor) prefix(_nwedit_edgecolormap)
 			_nwedit_buildgroupmap, groupvec(_nwedit_edgecolorvec) valuevec(_nwedit_edgestyle) prefix(_nwedit_edgestylemap)
 		}
@@ -1386,11 +1386,11 @@ program nwplot, rclass
 		qui nwplotsplines, unbend(straight) arrow(arrow) x1(sx) y1(sy) x2(ex) y2(ey) bend(`arcbend') splines(`arcsplines')
 	}
 	
-	mata: st_store((1::rows(Coord)),("nx","ny"), Coord[.,.])
-	mata: st_store((1::rows(nsize)),("nsize"), nsize[.,.])
-	mata: st_store((1::rows(ncolor)),("ncolor"), ncolor[.,.])
-	mata: st_store((1::rows(ncolor)),("nsymbol"), nsymbol[.,.])
-	mata: st_sstore((1::rows(nlabel)),("nlabel"), nlabel[.,.])
+	mata: st_store((1::rows(__nwplot_Coord)),("nx","ny"), __nwplot_Coord[.,.])
+	mata: st_store((1::rows(__nwplot_nsize)),("nsize"), __nwplot_nsize[.,.])
+	mata: st_store((1::rows(__nwplot_ncolor)),("ncolor"), __nwplot_ncolor[.,.])
+	mata: st_store((1::rows(__nwplot_ncolor)),("nsymbol"), __nwplot_nsymbol[.,.])
+	mata: st_sstore((1::rows(__nwplot_nlabel)),("nlabel"), __nwplot_nlabel[.,.])
 	
 	local binfactor = 1/`sizebin'
 	qui replace nsize = (ceil(nsize * `binfactor'))* `sizebin'
@@ -2126,13 +2126,13 @@ program nwplot, rclass
 		}
 		qui gen `generate_x' = .
 		qui gen `generate_y' = .
-		mata: st_store((1::rows(Coord)),("`generate_x'","`generate_y'"), (Coord[.,.]:/100))
+		mata: st_store((1::rows(__nwplot_Coord)),("`generate_x'","`generate_y'"), (__nwplot_Coord[.,.]:/100))
 		qui replace `generate_x' = (`generate_x' - 0.05) / 0.9
 		qui replace `generate_y' = (`generate_y' - 0.05) / 0.9
 	}
-	mata: mata drop plotmat nsize ncolor nlabel Coord edgesizemat edgecolormat
-	capture mata: mata drop Coord_comp compM comp_freq comp_id comp_freqid compmat comp_share comp_nonisol
-	capture mata: mata drop TC M nsymbol
+	mata: mata drop __nwplot_plotmat __nwplot_nsize __nwplot_ncolor __nwplot_nlabel __nwplot_Coord __nwplot_edgesizemat __nwplot_edgecolormat
+	capture mata: mata drop __nwplot_Coord_comp __nwplot_compM __nwplot_comp_freq __nwplot_comp_id __nwplot_comp_freqid __nwplot_compmat __nwplot_comp_nonisol
+	capture mata: mata drop __nwplot_TC __nwplot_M __nwplot_nsymbol
 	capture nwdrop __temp* 
 	
 	capture mat drop edgecolorrow
@@ -2142,7 +2142,7 @@ program nwplot, rclass
 	capture mat drop nsizerow
 	capture mat drop nsymblrow
 	capture mat drop colorkeysmap
-	capture mata drop symbolkeysmap
+	capture matrix drop symbolkeysmap
 
 	//qui nwload `masternetname', labelonly
 
@@ -2167,6 +2167,8 @@ program nwplot, rclass
 	// interpreter's real _rc state, which only a capture-wrapped
 	// command can deterministically set. Reset explicitly and silently.
 	capture confirm number 1
+	capture mata: mata drop __nwplot_*
+	capture confirm number 0
 end
 	
 capture program drop _getvaluelabel
@@ -2283,16 +2285,16 @@ string colvector _nwedit_expandundirected(string colvector v, real matrix topo)
 // afterwards) and return the class ranges as locals.
 void _nwplot_binedgecolor(real scalar nb)
 {
-	external real matrix edgecolormat
+	external real matrix __nwplot_edgecolormat
 	real matrix b, nz
 	real scalar lo, hi, k, present
 	string scalar keys, labs
-	nz = (edgecolormat :!= 0) :& (edgecolormat :< .)
-	lo = min(select(vec(edgecolormat), vec(nz)))
-	hi = max(select(vec(edgecolormat), vec(nz)))
-	b = J(rows(edgecolormat), cols(edgecolormat), 0)
+	nz = (__nwplot_edgecolormat :!= 0) :& (__nwplot_edgecolormat :< .)
+	lo = min(select(vec(__nwplot_edgecolormat), vec(nz)))
+	hi = max(select(vec(__nwplot_edgecolormat), vec(nz)))
+	b = J(rows(__nwplot_edgecolormat), cols(__nwplot_edgecolormat), 0)
 	if (hi > lo) {
-		b = floor((edgecolormat :- lo) :/ (hi - lo) :* nb)
+		b = floor((__nwplot_edgecolormat :- lo) :/ (hi - lo) :* nb)
 		b = b :* (b :< nb) :+ (nb-1) :* (b :>= nb)
 	}
 	b = b :* nz
@@ -2305,7 +2307,7 @@ void _nwplot_binedgecolor(real scalar nb)
 			st_local("_ecbin_hi_" + strofreal(k+1), strofreal(lo + (k+1)*(hi-lo)/nb, "%9.3g"))
 		}
 	}
-	edgecolormat = b
+	__nwplot_edgecolormat = b
 	st_local("_ecbin_keys", strtrim(keys))
 }
 real matrix function getTieCoordinates(
@@ -2616,7 +2618,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	// never-assigned local of the same name (confirmed directly: omitting
 	// this crashed NumElist() with a conformability error, since it was
 	// being handed a 0x0 matrix).
-	external real matrix plotmat
+	external real matrix __nwplot_plotmat
 
 	q = char(34)
 
@@ -2705,7 +2707,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	if (nties > 0) {
 		edgecolorv = st_data((1::nties), "edgecolor")
 		recipv = st_data((1::nties), "recip")
-		topology = NumElist(plotmat)
+		topology = NumElist(__nwplot_plotmat)
 		// edgesize(): the page maps the tie values linearly onto line
 		// widths 1..8 px (largest |value| = 8); the width slider is a
 		// multiplier on top. Without edgesize(), or when all ties have the
