@@ -86,5 +86,5 @@ R-style terms inside Stata options; a fit is stored in `e()` like any Stata esti
 
 ## Where next
 
-[Terms](../terms/) is a map of the term families, and the tutorials ([ERGM 2](../tutorial-2-terms/) onward) use the
+[Terms](../terms/) is a map of the term families, and the tutorials ([Tutorial 2](../tutorial-2-terms/) onward) use the
 commands above on real data. The complete syntax is in Stata's `help nwergm`.

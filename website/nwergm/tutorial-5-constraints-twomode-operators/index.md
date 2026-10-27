@@ -5,13 +5,13 @@ nav_order: 6
 description: "Restrict the sample space with constraints(), model two-mode (bipartite) networks, and use operator terms such as Symmetrize and Project in nwergm."
 ---
 
-# ERGM 5: Constraints, two-mode networks and operators
+# Tutorial 5: Constraints, two-mode networks and operators
 
 **Goal.** Three tools beyond the basic model: **constraints** that restrict the networks the model is
 defined on, **two-mode** terms for networks between two kinds of nodes (people and clubs), and
 **operators** that evaluate terms on a derived network.
 
-* Builds on [ERGM 2](../tutorial-2-terms/) to [ERGM 4](../tutorial-4-missing-comparing/).
+* Builds on [Tutorial 2](../tutorial-2-terms/) to [Tutorial 4](../tutorial-4-missing-comparing/).
 * Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
 * **The operators in the last section need `nwergm` 1.1.0 or later.** The other sections work with 1.0.1 as well.
 
@@ -209,7 +209,7 @@ Log-likelihood: -1702.0947 (df = 4)   AIC:    3412.2   BIC:    3438.2   (MC std.
 
 Closure among reciprocated friendships is positive but not significant (0.73, s.e. 0.48, p = 0.13), next to the
 reciprocity (`mutual`) and same-practice effects. The AIC of this model (3412.2) can be compared with the two Lazega models of
-[ERGM 4](../tutorial-4-missing-comparing/), which have the same other terms and the same N: 3409.9 without a
+[Tutorial 4](../tutorial-4-missing-comparing/), which have the same other terms and the same N: 3409.9 without a
 closure term and 3349.9 with `gwesp(0.5)`. Closure among *reciprocated* friendships alone hardly improves
 the model (3412.2 against 3409.9), while the `gwesp` term does: the closure in this network is not restricted to mutual ties.
 

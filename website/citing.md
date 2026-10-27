@@ -24,9 +24,13 @@ example `nwsaom version`.
 
 The DOI is the one of all versions of the manual; the label "1.1" is the series and holds for all versions 1.1.x. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.1.0").
 
-**nwergm, nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
+**nwergm.** Cite the manual. It has a DOI:
 
-> Grund, T. U. (2026). *nwergm: a Stata package for exponential random graph models* (version 1.3.1) [Computer software]. [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
+> Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual for version 1.3.* Zenodo. [https://doi.org/10.5281/zenodo.23661332](https://doi.org/10.5281/zenodo.23661332)
+
+The label "1.3" is the series and holds for all versions 1.3.x. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.3.1").
+
+**nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
@@ -36,7 +40,7 @@ Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this
 
 The model packages follow established R packages and methods papers, which you should cite as well.
 Each section lists them: [nwsaom](../nwsaom/citation/), [nwdynam](../nwdynam/citation/),
-[nwrem](../nwrem/citation/) and [nwergm](../nwergm/).
+[nwrem](../nwrem/citation/) and [nwergm](../nwergm/citation/).
 
 ## Licenses
 

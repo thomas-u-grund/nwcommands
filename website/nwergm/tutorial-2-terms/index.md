@@ -5,13 +5,13 @@ nav_order: 3
 description: "How to choose and read the terms of an ERGM with nwergm: structural, degree, triad and covariate terms, nodematch and nodemix, and the decay of gwesp."
 ---
 
-# ERGM 2: Terms and model specification
+# Tutorial 2: Terms and model specification
 
 **Goal.** Learn how a model is written in `nwergm` and how to read the coefficient of each kind of
 term: covariate terms (`nodematch`, `nodefactor`, `nodemix`, `nodeicov`), structural terms (`mutual`)
 and triad terms (`gwesp`, with its decay parameter).
 
-* This is the second ERGM tutorial. It builds on [Intro to ERGM in Stata](../../tutorials/09-intro-ergm/),
+* This is Tutorial 2. It builds on [Tutorial 1: A first ERGM](../../tutorials/09-intro-ergm/),
   which fits a first model and explains `edges`, MPLE and MCMLE.
 * You need the core `nwcommands` and the package `nwergm` (see [Install](../install/)).
 

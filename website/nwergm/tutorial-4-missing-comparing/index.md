@@ -5,12 +5,12 @@ nav_order: 5
 description: "Fit an ERGM to a network with missing dyads, compare models with AIC, BIC and likelihood-ratio tests, and compute predicted tie probabilities."
 ---
 
-# ERGM 4: Missing data and comparing models
+# Tutorial 4: Missing data and comparing models
 
 **Goal.** Fit a model when some dyads were not observed, and choose between models with `estat ic`,
 `estimates stats` and `lrtest`. At the end, `predict` gives the probability of each tie under the model.
 
-* Builds on [ERGM 2](../tutorial-2-terms/) and [ERGM 3](../tutorial-3-diagnostics/).
+* Builds on [Tutorial 2](../tutorial-2-terms/) and [Tutorial 3](../tutorial-3-diagnostics/).
 * Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
 
 **Data.** The Florentine marriage network (16 families, with `wealth`) and the Lazega friendship
@@ -246,5 +246,5 @@ the conditional log-odds.
 
 ## Where next
 
-[ERGM 5](../tutorial-5-constraints-twomode-operators/) covers constraints on the sample space,
+[Tutorial 5](../tutorial-5-constraints-twomode-operators/) covers constraints on the sample space,
 two-mode networks and the operators. The details on missing data and fit statistics are in `help nwergm_fit`.

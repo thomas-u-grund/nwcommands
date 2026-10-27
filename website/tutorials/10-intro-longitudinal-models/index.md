@@ -7,7 +7,7 @@ description: "Stochastic actor-oriented models (nwsaom), relational event models
 
 # Intro to Longitudinal Network Models
 
-[Intro to ERGM](../09-intro-ergm) modeled a single, static network. Three model packages
+[Tutorial 1](../09-intro-ergm) modeled a single, static network. Three model packages
 for network *change* build on the core, each for a different kind of longitudinal data:
 
 | Package | Model | Data |
