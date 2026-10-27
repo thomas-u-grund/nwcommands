@@ -38,7 +38,7 @@ nwfromedge from to, name(g1) directed
 nwdegree g1, generate(od id) silent
 quietly summarize od
 assert r(sum) == `ties'
-mata: g1p = nw.nws.pdefs[nw.nws.get_index_of("g1")]
+mata: g1p = __nw.nws.pdefs[__nw.nws.get_index_of("g1")]
 mata: st_numscalar("nodes1", g1p->get_nodes())
 local nodes1 = scalar(nodes1)
 assert `nodes1' >= `n'
@@ -59,7 +59,7 @@ assert r(nodes) == `nodes1'
 nwdegree g2, generate(od2 id2) silent
 quietly summarize od2
 assert r(sum) == `ties'
-mata: g2p = nw.nws.pdefs[nw.nws.get_index_of("g2")]
+mata: g2p = __nw.nws.pdefs[__nw.nws.get_index_of("g2")]
 mata: st_numscalar("isdense", g1p->is_dense_built() + g2p->is_dense_built())
 assert scalar(isdense) == 0
 
@@ -89,7 +89,7 @@ assert r(nodes) == `nodes1'
 nwdegree g1, generate(od3 id3) silent
 quietly summarize od3
 assert r(sum) == `ties'
-mata: g1p = nw.nws.pdefs[nw.nws.get_index_of("g1")]
+mata: g1p = __nw.nws.pdefs[__nw.nws.get_index_of("g1")]
 mata: st_numscalar("isdense", g1p->is_dense_built())
 assert scalar(isdense) == 0
 

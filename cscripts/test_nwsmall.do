@@ -6,7 +6,7 @@ set more off
 
 nwclear
 nwsmall 20, k(2) prob(.0)
-mata: z = (*nw.nws.pdefs[1]->get_matrix())[1,8]
+mata: z = (*__nw.nws.pdefs[1]->get_matrix())[1,8]
 mata: st_numscalar("z", z)
 assert z == 0
 

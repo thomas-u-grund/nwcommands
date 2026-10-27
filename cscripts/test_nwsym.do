@@ -4,40 +4,40 @@ do unw_core.do
 
 nwclear
 nwset, mat((1,1,0\0,0,0\1,0,0))
-mata: sym = (*nw.nws.pdefs[1]->get_matrix()) == (*nw.nws.pdefs[1]->get_matrix())'
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix()) == (*__nw.nws.pdefs[1]->get_matrix())'
 mata: st_numscalar("s", sym)
 assert s == 0
 
 nwsym
-mata: sym = (*nw.nws.pdefs[1]->get_matrix()) == (*nw.nws.pdefs[1]->get_matrix())'
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix()) == (*__nw.nws.pdefs[1]->get_matrix())'
 mata: st_numscalar("s", sym)
 assert s == 1
 
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0))
 nwsym, mode(min)
-mata: sym = (*nw.nws.pdefs[1]->get_matrix())[1,2]
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix())[1,2]
 mata: st_numscalar("s", sym)
 assert s == 2
 
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0))
 nwsym, mode(max)
-mata: sym = (*nw.nws.pdefs[1]->get_matrix())[1,2]
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix())[1,2]
 mata: st_numscalar("s", sym)
 assert s == 4
 
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0))
 nwsym, mode(sum)
-mata: sym = (*nw.nws.pdefs[1]->get_matrix())[1,2]
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix())[1,2]
 mata: st_numscalar("s", sym)
 assert s == 6
 
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0))
 nwsym, mode(mean)
-mata: sym = (*nw.nws.pdefs[1]->get_matrix())[1,2]
+mata: sym = (*__nw.nws.pdefs[1]->get_matrix())[1,2]
 mata: st_numscalar("s", sym)
 assert s == 3
 
@@ -113,14 +113,14 @@ nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
 capture noisily nwsym replacetest, replace generate(x) mode(max)
 assert _rc == 198
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
+mata: assert((*__nw.nws.pdefs[__nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
 
 * `replace' alone: in-place, identical to the bare-call default.
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
 nwsym replacetest, replace mode(max)
 assert _rc == 0
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
+mata: assert((*__nw.nws.pdefs[__nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
 
 * bare call (no replace, no generate()) still symmetrizes in place -
 * unchanged default, since ~8 other commands call nwsym bare internally.
@@ -128,15 +128,15 @@ nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
 nwsym replacetest, mode(max)
 assert _rc == 0
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
+mata: assert((*__nw.nws.pdefs[__nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
 
 * generate() alone: unchanged, original untouched, new copy created.
 nwclear
 nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
 nwsym replacetest, generate(replacetest_g) mode(max)
 assert _rc == 0
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest_g")]->get_matrix())[1,2] == 4)
+mata: assert((*__nw.nws.pdefs[__nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
+mata: assert((*__nw.nws.pdefs[__nw.nws.get_index_of("replacetest_g")]->get_matrix())[1,2] == 4)
 di "=== replace/generate() REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via

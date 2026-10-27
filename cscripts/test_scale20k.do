@@ -370,7 +370,7 @@ set seed 3
 quietly nwpref 12000, name(big) undirected
 _nwsyntax big
 assert `nodes' == 12000
-mata: st_numscalar("m", rows(nw.nws.pdefs[nw.nws.get_index_of("big")]->edgelist()))
+mata: st_numscalar("m", rows(__nw.nws.pdefs[__nw.nws.get_index_of("big")]->edgelist()))
 * the seed block of 2 nodes holds one tie, every later node adds 2 ties (each in both directions)
 assert scalar(m) == 2 * (1 + 2 * (12000 - 2))
 display "=== nwpref with 12,000 nodes ==="
@@ -418,9 +418,9 @@ quietly nwpref 20000, name(f20) undirected
 timer off 1
 quietly timer list 1
 assert r(t1) < 60
-mata: st_numscalar("m", rows(nw.nws.pdefs[nw.nws.get_index_of("r20")]->edgelist()))
+mata: st_numscalar("m", rows(__nw.nws.pdefs[__nw.nws.get_index_of("r20")]->edgelist()))
 assert scalar(m) == 20000 * 10
-mata: st_numscalar("m", rows(nw.nws.pdefs[nw.nws.get_index_of("d20")]->edgelist()))
+mata: st_numscalar("m", rows(__nw.nws.pdefs[__nw.nws.get_index_of("d20")]->edgelist()))
 assert scalar(m) == floor(20000 * 19999 * .0002)
 nwdrop _all
 quietly nwring 20000, k(5) name(r20)

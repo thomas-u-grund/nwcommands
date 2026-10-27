@@ -46,13 +46,13 @@ program unw_defs
 
 	//static objects
 	
-	c_local nw_static = "nw"
+	c_local nw_static = "__nw"
 	c_local nws_static = "nws"
 	c_local nwsder_static = "nwsder"
 
-	c_local nw = "nw"
-	c_local nws = "nw.nws"
-	c_local nwsder = "nw.nwsder"
+	c_local nw = "__nw"
+	c_local nws = "__nw.nws"
+	c_local nwsder = "__nw.nwsder"
 	
 	//class definitions
 	c_local vxNWs		nws

@@ -117,7 +117,7 @@ set seed 12345
 nwqap glasgow2 glasgow1 smoke1 sport1, permutations(20) predict(fitted_opt)
 nwsummarize fitted_opt
 assert abs(r(density) - 0) >= 0
-mata: st_numscalar("m1", sum(*nw.nws.pdefs[nw.nws.get_index_of_current()]->get_matrix()))
+mata: st_numscalar("m1", sum(*__nw.nws.pdefs[__nw.nws.get_index_of_current()]->get_matrix()))
 nwsummarize fitted_post
 local d1 = r(density)
 nwsummarize fitted_opt

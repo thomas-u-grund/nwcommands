@@ -24,7 +24,7 @@ do unw_core.do
 nwclear
 nwset, mat(J(2,2,0)) name(trip) directed labs(N1,N2)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("trip")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("trip")]
 p->create_by_name(("A","B","C","D","E","F"))
 ego = (1\1\2\3\4\4\5)
 alter = (2\3\3\4\5\6\6)
@@ -61,7 +61,7 @@ assert r(ncomp) == 1
 nwclear
 nwset, mat(J(2,2,0)) name(empty) directed labs(N1,N2)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("empty")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("empty")]
 p->create_by_name(("X","Y","Z"))
 p->set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
 st_numscalar("r(deg1)", p->degree(1))
@@ -80,7 +80,7 @@ assert r(msum) == 0
 nwclear
 nwset, mat(J(2,2,0)) name(bignet) directed labs(N1,N2)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("bignet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("bignet")]
 p->create_by_name("n" :+ strofreal((1..25000)))
 ego = (1::25000)
 alter = (2::25001)
@@ -92,5 +92,5 @@ st_numscalar("r(deg1)", p->degree(1))
 end
 assert r(dense) == 0
 assert r(deg1) == 1
-capture mata: m = *nw.nws.pdefs[nw.nws.get_index_of("bignet")]->get_matrix()
+capture mata: m = *__nw.nws.pdefs[__nw.nws.get_index_of("bignet")]->get_matrix()
 assert _rc == 484

@@ -85,8 +85,8 @@ assert r(communities) <= 8
 mata: st_numscalar("dummy", 1)
 quietly nwmodularity p, group(cm) silent
 local qd = r(modularity)
-mata: st_numscalar("nn", nw.nws.pdefs[nw.nws.get_index_of("p")]->get_nodes())
-mata: pp = nw.nws.pdefs[nw.nws.get_index_of("p")]
+mata: st_numscalar("nn", __nw.nws.pdefs[__nw.nws.get_index_of("p")]->get_nodes())
+mata: pp = __nw.nws.pdefs[__nw.nws.get_index_of("p")]
 mata: st_numscalar("qs", nw_modularity_pairs(240, nwg_symweights(240, pp->edgelist(), 1), st_data((1,240), "cm"), 1))
 assert abs(scalar(qs) - `qd') < 1e-10
 display "=== sparse modularity equals the dense one ==="

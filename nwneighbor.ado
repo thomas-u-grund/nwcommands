@@ -101,7 +101,7 @@ program nwneighbor
 		local __nwneighbor_origname `netname'
 		tempname __nwneighbor_src
 		mata: `__nwneighbor_src' = `netobj'
-		mata: nw.nws.add("`subnet'")
+		mata: __nw.nws.add("`subnet'")
 		_nwsyntax `subnet'
 		mata: `__nwneighbor_src'->copy_subgraph_into(`netobj', __nwneighbor_sel)
 		mata: `netobj'->set_name("`subnet'")

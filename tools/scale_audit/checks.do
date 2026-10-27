@@ -442,7 +442,7 @@ end
 // nwa_netp name: loads nwa_* scalars of the named network
 program nwa_netp
     args name
-    mata: nwa_p = nw.nws.pdefs[nw.nws.get_index_of("`name'")]
+    mata: nwa_p = __nw.nws.pdefs[__nw.nws.get_index_of("`name'")]
     mata: nwa_net(nwa_p)
 end
 

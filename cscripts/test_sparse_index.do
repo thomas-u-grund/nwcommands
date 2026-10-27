@@ -59,7 +59,7 @@ end
 nwclear
 nwset, mat((0,4,0,0\0,0,2,0\0,0,0,1\3,0,0,0)) name(dirnet) directed labs(A,B,C,D)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("dirnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("dirnet")]
 match_out = J(1,4,.)
 match_in  = J(1,4,.)
 for (i=1;i<=4;i++){
@@ -93,7 +93,7 @@ assert r(el_wsum) == 10
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(undirnet) undirected labs(X,Y,Z)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("undirnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("undirnet")]
 st_numscalar("r(match)", sort(p->neighbors(1),1) == sort(p->neighbors_in(1),1))
 st_numscalar("r(deg)", p->degree(1))
 end
@@ -104,7 +104,7 @@ assert r(deg) == 2
 nwclear
 nwset, mat((0,0,0\0,0,0\0,0,0)) name(emptynet) labs(P,Q,R)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("emptynet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("emptynet")]
 st_numscalar("r(deg)", p->degree(1))
 st_numscalar("r(rows)", rows(p->edgelist()))
 end
@@ -115,7 +115,7 @@ assert r(rows) == 0
 nwclear
 nwset, mat((1,1,0\0,0,1\0,0,0)) name(selfloopnet) directed selfloop labs(A,B,C)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("selfloopnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("selfloopnet")]
 st_numscalar("r(deg1)", p->degree(1))
 st_numscalar("r(he11)", p->has_edge(1,1))
 st_numscalar("r(w11)", p->edge_weight(1,1))
@@ -128,7 +128,7 @@ assert r(w11) == 1
 nwclear
 nwset, mat((J(5,5,1) - I(5))) name(k5) undirected labs(N1,N2,N3,N4,N5)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("k5")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("k5")]
 ok = 1
 for (i=1;i<=5;i++){
 	ok = ok & (p->degree(i)==4)
@@ -152,7 +152,7 @@ replace ego = "delta" in 4
 replace alter = "beta" in 4
 nwfromedge ego alter, name(strnet) directed
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("strnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("strnet")]
 st_numscalar("r(nodes)", p->get_nodes())
 st_numscalar("r(edges)", rows(p->edgelist()))
 end
@@ -164,7 +164,7 @@ assert r(edges) == 4
 nwclear
 nwset, mat((0,1,0,0,0,0\1,0,1,0,0,0\0,1,0,0,0,0\0,0,0,0,0,0\0,0,0,0,0,1\0,0,0,0,1,0)) name(compnet) undirected labs(A,B,C,D,E,F)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("compnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("compnet")]
 dense_comp = p->calculate_components()
 bfs_comp = bfs_components(p)
 st_numscalar("r(ncomp_dense)", max(dense_comp))
@@ -195,7 +195,7 @@ nwclear
 nwset, mat((0,5\0,0)) name(mutnet) directed labs(M,N)
 nwaddnodes mutnet, nodenames(O)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("mutnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("mutnet")]
 st_numscalar("r(nodes)", p->get_nodes())
 st_numscalar("r(deg1)", p->degree(1))
 st_numscalar("r(deg3)", p->degree(3))
@@ -207,7 +207,7 @@ assert r(deg3) == 0
 // --- cache invalidation: raw-pointer mutation via nwreplace ---
 nwreplace mutnet[1,3] = 9
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("mutnet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("mutnet")]
 st_numscalar("r(deg1)", p->degree(1))
 end
 assert r(deg1) == 2
@@ -226,7 +226,7 @@ nwclear
 set obs 20
 nwrandom 20, density(1) name(densenet)
 mata:
-p = nw.nws.pdefs[nw.nws.get_index_of("densenet")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("densenet")]
 el = p->edgelist()
 st_numscalar("r(n)", p->get_nodes())
 st_numscalar("r(nnz)", rows(el))

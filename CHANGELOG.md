@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **A Mata variable called `nw` broke every command.** The registry of all networks was the global Mata variable `nw`, so a user's own `nw` (a common name) replaced it and the next command stopped with "type mismatch: exp.exp: transmorphic found where struct expected" (cured only by `mata: mata clear`). The registry is now `__nw`. Scripts that address the registry directly (`nw.nws.pdefs[1]`, `r(netobj)` strings stored for later) must say `__nw.nws.pdefs[1]`; code that goes through `r(netobj)` or `_nwsyntax` needs no change. The Mata library is unchanged.
+
 ## [3.10.0] - 2026-10-26
 
 Layouts that use the tie values, faster and wider similarity and null-model commands (native plug-in generation 12), and tests of the native kernels that run without Stata. The Mata library is unchanged (the four model packages need no release). The macOS plug-in is rebuilt; the Linux and Windows plug-ins come from the CI build after the push.

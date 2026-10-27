@@ -6,6 +6,10 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## The registry of networks is the Mata global `__nw` (not `nw`)
+
+Until 3.10.0 it was called `nw`, so a user variable `nw` in a Mata session replaced the registry ("type mismatch: exp.exp: transmorphic found where struct expected"; `A`, `D`, `p` are harmless). The ado files take the name from `unw_defs` (`` `nw' ``, `` `nws' ``); a few files spell `__nw.nws` out. Never reintroduce a short global name for package state. The Mata library source (`unw_core.do`) only mentions it in comments, which is why the rename needed no library rebuild.
+
 ## `nwset, mat(<expression>)` evaluates the expression four times
 
 `nwset` reads its `mat()` argument as a Mata expression and uses it for the row count, the column count, the number of modes and the copy. An expensive expression such as `netobj->correlate_nodes(1)` (2.5 seconds at 5,000 nodes) ran four times: `nwcorrelate` took 10.3 seconds instead of 2.7. Form the matrix once in a Mata variable (a `tempname`) and pass its name. The native similarity kernels (plugin generation 12) return a matrix from a base matrix plus the cells that differ; the global `NW_SIMMODE` (`dense` or `sparse`) forces one of the two ways for the tests.

@@ -76,7 +76,7 @@ nwclear
 set obs 5
 gen x = _n
 nwexpand x, mode(absdistinv) name(absdinvtest)
-mata: __p = nw.nws.pdefs[nw.nws.get_index_of("absdinvtest")]
+mata: __p = __nw.nws.pdefs[__nw.nws.get_index_of("absdinvtest")]
 mata: st_numscalar("__minval", min(select(vec(*__p->get_matrix()), vec(*__p->get_matrix()) :!= .)))
 assert __minval >= 0
 mata: mata drop __p

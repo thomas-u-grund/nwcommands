@@ -40,17 +40,17 @@ assert `"`r(networks)'"' == `"1"'
 
 nwclear
 nwset, mat(J(4,4,1)) labs(a,b)
-mata: st_local("lab1", nw.nws.pdefs[1]->nodes[1])
+mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
 assert "`lab1'" == "a"
 
 nwclear
 nwset, mat(J(4,4,1)) labs(a,b,c,d,e,f,g,h)
-mata: st_local("lab1", nw.nws.pdefs[1]->nodes[1])
+mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
 assert "`lab1'" == "a"
 
 nwclear
 nwset, mat(J(4,4,1)) labs(a,a)
-mata: st_local("lab1", nw.nws.pdefs[1]->nodes[1])
+mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
 rcof `"assert "`lab1'" == "a""' != 0
 
 nwclear
@@ -63,7 +63,7 @@ gen v5 = (_n < 3)
 gen nodelab = "mynode" + string(_n)
 
 nwset v*, labsfromvar(nodelab)
-mata: st_local("lab1", nw.nws.pdefs[1]->nodes[1])
+mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
 assert "`lab1'" == "mynode1"
 
 nwclear
@@ -76,24 +76,24 @@ gen v5 = (_n < 3)
 gen nodelab = "mynode" + string(_n)
 
 nwset v*, labsfromvar(nodelab) bipartite
-mata: st_local("lab1", nw.nws.pdefs[1]->nodes[6])
+mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[6])
 assert "`lab1'" == "mynode1"
 
 nwclear
 nwset, mat(J(4,4,2)) name("second")
-mata: st_numscalar("val", strtoreal(nw.nws.pdefs[1]->get_edgelist(0)[1,3]))
+mata: st_numscalar("val", strtoreal(__nw.nws.pdefs[1]->get_edgelist(0)[1,3]))
 assert val == .
 
 nwclear
 nwset, mat(J(4,4,2)) name("second") selfloop
-mata: st_numscalar("val", strtoreal(nw.nws.pdefs[1]->get_edgelist(0)[1,3]))
+mata: st_numscalar("val", strtoreal(__nw.nws.pdefs[1]->get_edgelist(0)[1,3]))
 assert val == 2
 
 nwclear
 nwset, mat(J(4,4,2)) name("second") bipartite
-mata: st_numscalar("val1", strtoreal(nw.nws.pdefs[1]->get_edgelist(0)[2,3]))
+mata: st_numscalar("val1", strtoreal(__nw.nws.pdefs[1]->get_edgelist(0)[2,3]))
 assert val1 == .
-mata: st_numscalar("val2", strtoreal(nw.nws.pdefs[1]->get_edgelist(0)[5,3]))
+mata: st_numscalar("val2", strtoreal(__nw.nws.pdefs[1]->get_edgelist(0)[5,3]))
 assert val2 == 2
 
 * vars() lets a caller explicitly name the Stata variables nwload will

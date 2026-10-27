@@ -53,9 +53,9 @@ end
 
 forvalues k = 1/40 {
     nwt100_net `k' `=15 + `k'' `=mod(`k', 2)'
-    mata: st_numscalar("ok", t100_maxflow(nw.nws.pdefs[nw.nws.get_index_of("sp")], 1, 7, 0))
+    mata: st_numscalar("ok", t100_maxflow(__nw.nws.pdefs[__nw.nws.get_index_of("sp")], 1, 7, 0))
     assert scalar(ok) == 1
-    mata: st_numscalar("ok", t100_maxflow(nw.nws.pdefs[nw.nws.get_index_of("sp")], 3, 2, 1))
+    mata: st_numscalar("ok", t100_maxflow(__nw.nws.pdefs[__nw.nws.get_index_of("sp")], 3, 2, 1))
     assert scalar(ok) == 1
 }
 display "nwmaxflow: sparse = dense (80 networks)"
@@ -77,7 +77,7 @@ real scalar t100_constraint(pointer(class nw_def scalar) scalar p)
 end
 forvalues k = 1/40 {
     nwt100_net `=100+`k'' `=20 + `k'' `=mod(`k', 2)'
-    mata: st_numscalar("ok", t100_constraint(nw.nws.pdefs[nw.nws.get_index_of("sp")]))
+    mata: st_numscalar("ok", t100_constraint(__nw.nws.pdefs[__nw.nws.get_index_of("sp")]))
     assert scalar(ok) == 1
 }
 display "nwconstraint: cells = dense (40 networks, directed and undirected, valued)"
@@ -86,13 +86,13 @@ display "nwconstraint: cells = dense (40 networks, directed and undirected, valu
 forvalues k = 1/30 {
     nwt100_net `=200+`k'' `=18 + `k'' `=mod(`k', 2)'
     quietly nwduplicate sp, name(de)
-    mata: nw.nws.pdefs[nw.nws.get_index_of("de")]->get_matrix()
+    mata: __nw.nws.pdefs[__nw.nws.get_index_of("de")]->get_matrix()
     quietly nwdrop sp if mod(_n, 3) == 0
     quietly nwdrop de if mod(_n, 3) == 0
-    mata: A = nw.nws.pdefs[nw.nws.get_index_of("sp")]->edgelist(); B = nw.nws.pdefs[nw.nws.get_index_of("de")]->edgelist()
+    mata: A = __nw.nws.pdefs[__nw.nws.get_index_of("sp")]->edgelist(); B = __nw.nws.pdefs[__nw.nws.get_index_of("de")]->edgelist()
     mata: st_numscalar("ok", rows(A) == rows(B) ? all(A :== B) : 0)
     assert scalar(ok) == 1
-    mata: st_numscalar("ok", all(nw.nws.pdefs[nw.nws.get_index_of("sp")]->get_nodenames() :== nw.nws.pdefs[nw.nws.get_index_of("de")]->get_nodenames()))
+    mata: st_numscalar("ok", all(__nw.nws.pdefs[__nw.nws.get_index_of("sp")]->get_nodenames() :== __nw.nws.pdefs[__nw.nws.get_index_of("de")]->get_nodenames()))
     assert scalar(ok) == 1
 }
 display "nwdrop: stored ties = dense (30 networks)"
@@ -153,7 +153,7 @@ local n3 = r(N)
 tempfile tdat
 quietly save `tdat'
 quietly nwset from to, time(tt) name(tm)
-mata: st_numscalar("sp", nw.nws.pdefs[nw.nws.get_index_of("tm")]->get_time_sparse())
+mata: st_numscalar("sp", __nw.nws.pdefs[__nw.nws.get_index_of("tm")]->get_time_sparse())
 assert scalar(sp) == 1
 quietly nwattime tm, at(2) name(tm2)
 assert r(ties) == `n2'
@@ -185,7 +185,7 @@ quietly nwtabulate big
 mata: st_numscalar("ok", 1)
 quietly nwrecode big(1=2), generate(big2)
 assert r(N) < . | 1
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("big2")]; el = p->edgelist(); st_numscalar("mx", max(el[., 3]))
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("big2")]; el = p->edgelist(); st_numscalar("mx", max(el[., 3]))
 assert scalar(mx) == 2
 display "nwtabulate, nwrecode: 50,000 nodes (2.5e9 dyads)"
 

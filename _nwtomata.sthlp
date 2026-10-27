@@ -59,8 +59,8 @@ not change the network.
 
      {txt}macros:
                 r(adj_copy) : "{res}myadj{txt}"
-                     r(adj) : "{res}(*nw.nws.pdefs[1]->get_matrix()){txt}"
-                  r(netobj) : "{res}nw.nws.pdefs[1]{txt}"
+                     r(adj) : "{res}(*__nw.nws.pdefs[1]->get_matrix()){txt}"
+                  r(netobj) : "{res}__nw.nws.pdefs[1]{txt}"
                  r(netname) : "{res}mynet{txt}"
 
 {pstd}
