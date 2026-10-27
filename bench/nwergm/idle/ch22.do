@@ -1,4 +1,6 @@
-global NWERGM "/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/ergm130t"
+* SCR: the scratch folder holding the installed trees (set the environment variable SCR before starting Stata)
+global SCR : env SCR
+global NWERGM "$SCR/ergm130t"
 do hdr.do
 do loadnet.do
 do models.do

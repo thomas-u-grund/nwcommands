@@ -1,6 +1,7 @@
 #!/bin/zsh
+: "${SCR:?set SCR to the scratch folder that holds the installed trees}"
 # strictly sequential, interleaved R / 1.2.3 / 1.3.0
-cd /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../idle
+cd $SCR/idle
 OUT=${OUT:-idle_all.csv}
 S18=/Applications/Stata/StataBE.app/Contents/MacOS/StataBE
 MODELS=(${=MODELS:-B1 B2 B3 B4 B5 B6 Lazega Mesa})
@@ -14,7 +15,7 @@ for m in $MODELS; do
       if [[ $impl == R ]]; then
         perl -e 'alarm shift; exec @ARGV' 600 /usr/local/bin/Rscript one_r.R $m $r $L $OUT > /dev/null 2>>err_R.log
       else
-        [[ $impl == v123 ]] && W=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../ergm123 || W=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../ergm130t
+        [[ $impl == v123 ]] && W=$SCR/ergm123 || W=$SCR/ergm130t
         printf 'global NWERGM "%s"\nglobal MODEL "%s"\nglobal REP %s\nglobal LOAD %s\nglobal OUT "%s"\nglobal IMPL "%s"\ndo one.do\n' $W $m $r $L $OUT $impl > run_$impl.do
         perl -e 'alarm shift; exec @ARGV' 600 $S18 -e do run_$impl.do > /dev/null 2>&1
         mv run_$impl.log log_${impl}_${m}_$r.log 2>/dev/null

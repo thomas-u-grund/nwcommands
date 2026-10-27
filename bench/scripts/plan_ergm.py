@@ -4,7 +4,7 @@ import os, sys, subprocess, csv, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import benchlib
 BENCH = os.environ["BENCH"]; SCR = os.environ["SCR"]
-STATA = "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"; RSCRIPT = "/usr/local/bin/Rscript"
+STATA = os.environ.get("STATA", "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"); RSCRIPT = "/usr/local/bin/Rscript"
 IDLE = SCR + "/idle"; NWERGM = SCR + "/ergm130t"
 raw = BENCH + "/raw/ergm_sanity.csv"
 os.chdir(IDLE)     # the nwergm scripts read the networks from their own folder

@@ -6,7 +6,7 @@ import benchlib
 
 BENCH = os.environ["BENCH"]
 SCR = os.environ["SCR"]
-STATA = "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"
+STATA = os.environ.get("STATA", "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE")
 RSCRIPT = "/usr/local/bin/Rscript"
 NWC = SCR + "/r3100"
 NWS = SCR + "/speed/nwsaom"

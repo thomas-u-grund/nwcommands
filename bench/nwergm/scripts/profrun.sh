@@ -1,7 +1,8 @@
 #!/bin/zsh
+: "${SCR:?set SCR to the scratch folder that holds the installed trees}"
 # usage: profrun.sh <nwergm dir> <stata> <tag> <secs> <extra> <csv> <models...>
 W=$1; v=$2; tag=$3; secs=$4; extra=$5; csv=$6; shift 6
-cd /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/ergmspeed/rc
+cd $SCR/ergmspeed/rc
 [[ $v == 17 ]] && B="/Applications/Stata 17.0/StataBE.app/Contents/MacOS/StataBE" || B=/Applications/Stata/StataBE.app/Contents/MacOS/StataBE
 for m in $@; do
   seed=${m#*:}; mm=${m%%:*}; [[ $seed == $m ]] && seed=1

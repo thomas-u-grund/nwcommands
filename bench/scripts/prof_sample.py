@@ -18,7 +18,7 @@ if os.path.exists(wd + "/ready.txt"): os.remove(wd + "/ready.txt")
 if impl == "R":
     argv = ["/usr/local/bin/Rscript", BENCH + "/scripts/prof_loop.R", model, reps]
 else:
-    argv = ["/Applications/Stata/StataBE.app/Contents/MacOS/StataBE", "-e", "do", BENCH + "/scripts/prof_loop.do"]
+    argv = [os.environ.get("STATA", "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"), "-e", "do", BENCH + "/scripts/prof_loop.do"]
 p = subprocess.Popen(argv, env=env, cwd=wd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 for _ in range(120):                      # bounded wait for the fit loop to start
     if os.path.exists(wd + "/ready.txt"): break

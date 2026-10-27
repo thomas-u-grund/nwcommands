@@ -1,7 +1,8 @@
 #!/bin/zsh
-cd /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../idle/exrun
+: "${SCR:?set SCR to the scratch folder that holds the installed trees}"
+cd $SCR/idle/exrun
 S18=/Applications/Stata/StataBE.app/Contents/MacOS/StataBE
-export NWCORE=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../r3100 NWERGM=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../ergm130t NWPLUS=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad/idle/../idle/plus
+export NWCORE=$SCR/r3100 NWERGM=$SCR/ergm130t NWPLUS=$SCR/idle/plus
 st() { echo "$1 start $(date +%T) load $(uptime | sed 's/.*averages: //')" >> extras_progress.txt; perl -e 'alarm shift; exec @ARGV' 600 $S18 -e do $1.do >/dev/null 2>&1; echo "$1 end $(date +%T)" >> extras_progress.txt; }
 rm -f r/timing_nonative.csv
 st t_main

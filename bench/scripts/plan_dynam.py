@@ -4,7 +4,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import benchlib
 BENCH = os.environ["BENCH"]; SCR = os.environ["SCR"]
-STATA = "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"; RSCRIPT = "/usr/local/bin/Rscript"
+STATA = os.environ.get("STATA", "/Applications/Stata/StataBE.app/Contents/MacOS/StataBE"); RSCRIPT = "/usr/local/bin/Rscript"
 NWC = SCR + "/r3100"; PLUS = SCR + "/speed/plus_empty"; S = BENCH + "/scripts"
 TREE = SCR + "/speed/nwdynam"; TREE_NP = SCR + "/speed/nwdynam_noplug"
 SIZES = ["e200_n20", "e1000_n30", "e5000_n20", "e5000_n50", "e5000_n100", "e20000_n100"]

@@ -1,7 +1,8 @@
 #!/bin/zsh
+: "${SCR:?set SCR to the scratch folder that holds the installed trees}"
 # usage: suite.sh <nwergm dir> <17|18> <outdir> <jobs> [tests...]   (library mode if LIBMODE=1: no cd-sourced mlib removal)
 W=$1; v=$2; OUT=$3; jobs=${4:-2}; shift 4
-S=/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad
+S=$SCR
 CORE=$S/r391
 [[ $v == 17 ]] && STATA="/Applications/Stata 17.0/StataBE.app/Contents/MacOS/StataBE" || STATA=/Applications/Stata/StataBE.app/Contents/MacOS/StataBE
 mkdir -p $OUT/plus $OUT/logs

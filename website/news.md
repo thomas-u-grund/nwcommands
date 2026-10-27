@@ -17,6 +17,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 **nwsaom 1.1.1: faster estimation** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.1)). Works with nwcommands 3.6.0 and later. Results are unchanged: with a fixed seed every estimate, standard error and statistic is identical to that of 1.1.0.
 
 - **Faster.** Estimation with the compiled plugin is faster, most of all for two-mode networks (the two-mode benchmark model is about three times as fast) and for fits that need many Robbins-Monro steps. On the 28 benchmark models nwsaom is now 1.5 to 9.0 times as fast as RSiena 1.6.14 on one thread (median 2.1), and no model is slower.
+- **Speed against RSiena.** On one thread nwsaom 1.1.1 was faster than RSiena in all 28 models of our benchmark (median 2.1 times, 1.5 to 9.0), but only 1.5 to 1.8 times for large networks; see [Speed compared with R](../nwcommands/speed/#nwsaom-and-rsiena).
 - **Older plugin files.** A plugin binary that has not been rebuilt yet works with the new library and gives the same numbers, only more slowly.
 
 ## 26 October 2026: nwergm 1.3.1

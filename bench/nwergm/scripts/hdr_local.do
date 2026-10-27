@@ -1,8 +1,10 @@
+* SCR: the scratch folder holding the installed trees (set the environment variable SCR before starting Stata)
+global SCR : env SCR
 * Local header of the check scripts: released trees, scratch PLUS. Set global NWERGM before calling to use another nwergm tree (default: v1.3.0).
 clear all
 set more off
 capture program drop nwinstall
-local scr "/private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/f80eded9-2ca1-45e7-9a6b-23ada6a895b2/scratchpad"
+local scr "$SCR"
 if "$NWERGM" == "" global NWERGM "`scr'/ergm130"
 if "$PLUSDIR" == "" global PLUSDIR "`scr'/paperw130"
 capture mkdir "$PLUSDIR"
