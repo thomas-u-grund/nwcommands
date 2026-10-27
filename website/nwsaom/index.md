@@ -64,6 +64,13 @@ errors in `nwsaom` are the author's.
 - [Tutorial 4: Selection and influence](tutorial-4-selection-influence/): friendship and drinking together.
 - [Tutorial 5: Testing and comparing](tutorial-5-testing-comparing/): `estat score`, `estat timetest`, `estat importance`, `fix()`.
 - [Tutorial 6: Beyond the basic model](tutorial-6-beyond/): maximum likelihood, Bayesian estimation, several networks.
+- [Tutorial 7: Changing actor sets and missing data](tutorial-7-composition-missing/): `present()`, `joinat()`/`leaveat()`, `missnet()`, `missbeh()`: actors who join or leave, and missing data.
+- [Tutorial 8: Time-varying and dyadic covariates](tutorial-8-covariates/): `tvcov()` and `dyadcov()`: covariates that change over time and covariates of pairs.
+- [Tutorial 9: Undirected and two-mode networks](tutorial-9-undirected-twomode/): undirected networks (`symtype()`) and two-mode networks.
+- [Tutorial 10: Endowment, creation, interactions and rate effects](tutorial-10-endowment-interaction-rate/): `endow()`/`creation()`, `interact()`, `ratecov()`, `outrate`.
+- [Tutorial 11: Simulation and what-if analysis](tutorial-11-simulation/): `estat simulate`, `nwsaom simulate`, `estat mems`.
+- [Tutorial 12: Conditional and unconditional estimation, threads and speed](tutorial-12-estimation-speed/): conditional and unconditional estimation, `cores()`, `k0()`/`k3()`.
+- [Tutorial 13: Combining several groups with a meta-analysis](tutorial-13-meta-analysis/): `nwsaom meta` for several groups (RSiena's `siena08`).
 - [nwsaom and RSiena](rsiena/): what is the same, what differs, a translation table.
 - [Effects](effects/): an overview of the effect families.
 - [How to cite](citation/)

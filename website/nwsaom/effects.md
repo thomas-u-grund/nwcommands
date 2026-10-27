@@ -1,7 +1,7 @@
 ---
 title: "Effects"
 parent: "nwsaom (SAOM)"
-nav_order: 9
+nav_order: 16
 permalink: /nwsaom/effects/
 description: "An overview of the effect families of nwsaom; the full list is in help nwsaom and in the manual."
 ---
@@ -31,5 +31,7 @@ naming it as an option. This page is only a map; the complete list, with RSiena'
 
 Used in the tutorials: [1](../tutorial-1-first-saom/) (baseline, closure, covariates),
 [3](../tutorial-3-goodness-of-fit/) (degree effects, `gwesp`), [4](../tutorial-4-selection-influence/)
-(behavior effects), [6](../tutorial-6-beyond/) (cross-network effects). For how the effects relate to RSiena's
+(behavior effects), [6](../tutorial-6-beyond/) (cross-network effects),
+[8](../tutorial-8-covariates/) (changing and dyadic covariates), [9](../tutorial-9-undirected-twomode/) (undirected and two-mode networks) and
+[10](../tutorial-10-endowment-interaction-rate/) (endowment, creation, interactions, rate effects). For how the effects relate to RSiena's
 table see [nwsaom and RSiena](../rsiena/).
