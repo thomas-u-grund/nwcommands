@@ -5,9 +5,9 @@ nav_order: 11
 description: "Stochastic actor-oriented models (nwsaom), relational event models (nwrem) and dynamic network actor models (nwdynam): installing the packages and a first model of each."
 ---
 
-# Intro to Longitudinal Network Models
+# Tutorial 10: Intro to Longitudinal Network Models
 
-[Tutorial 1](../09-intro-ergm) modeled a single, static network. Three model packages
+The [first ERGM tutorial](../09-intro-ergm) modeled a single, static network. Three model packages
 for network *change* build on the core, each for a different kind of longitudinal data:
 
 | Package | Model | Data |

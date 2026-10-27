@@ -13,6 +13,11 @@ The core package, version 3.10.0, handles networks in Stata: it imports and expo
 them, describes and analyzes them, and plots them. It is the base for the model packages
 ([nwsaom](../nwsaom/), [nwergm](../nwergm/), [nwdynam](../nwdynam/), [nwrem](../nwrem/)), which need
 it but are installed separately.
+{: .fs-6 .fw-300 }
+
+[Install](#install){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Start with Tutorial 1](../tutorials/01-installation-setup/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Command reference](../reference/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## Install
 

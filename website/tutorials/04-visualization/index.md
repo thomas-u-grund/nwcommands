@@ -5,7 +5,7 @@ nav_order: 5
 description: "Plot styling and network movies."
 ---
 
-# Visualization
+# Tutorial 4: Visualization
 
 `nwplot` draws a network directly from the current or a named network object, with no manual
 edge-list-to-coordinates plumbing required. This tutorial covers styling a static plot, exporting

@@ -5,7 +5,7 @@ nav_order: 8
 description: "Degree, betweenness, closeness, eigenvector, PageRank, and Katz centrality."
 ---
 
-# Centrality
+# Tutorial 7: Centrality
 
 "How central is this node?" has more than one answer — each of nwcommands' six centrality
 commands captures a different notion of importance. This tutorial runs all six on the same

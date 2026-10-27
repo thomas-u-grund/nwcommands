@@ -5,7 +5,7 @@ nav_order: 9
 description: "Geodesics, reachability, and ego-network extraction."
 ---
 
-# Paths & Ego Networks
+# Tutorial 8: Paths & Ego Networks
 
 Beyond a single shortest path between two named nodes (covered in
 [Visualization](../04-visualization) via `nwpath`), this tutorial covers three ways of

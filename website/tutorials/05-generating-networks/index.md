@@ -5,7 +5,7 @@ nav_order: 6
 description: "Random, small-world, preferential-attachment, and lattice networks."
 ---
 
-# Generating Networks
+# Tutorial 5: Generating Networks
 
 Sometimes you don't want real data at all — you want a network with known, controllable
 properties, to teach a concept, test a method, or run a simulation against. nwcommands ships

@@ -5,7 +5,7 @@ nav_order: 7
 description: "Subsetting, collapsing, symmetrizing, recoding, and dichotomizing."
 ---
 
-# Manipulating Networks
+# Tutorial 6: Manipulating Networks
 
 Once a network is loaded, you'll often need to reshape it before analysis: pull out a subset of
 nodes, merge nodes together, drop directionality, or remap tie values. This tutorial covers the
