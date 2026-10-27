@@ -1,0 +1,10 @@
+R,N1,27387,True,libsystem_kernel.dylib=18509,RSiena.so=6372,libR.dylib=1173,libsystem_m.dylib=452,libsystem_platform.dylib=370,libsystem_malloc.dylib=301,libc++abi.dylib=198,libsystem_c.dylib=12
+R,N2,27589,True,libsystem_kernel.dylib=18653,RSiena.so=7218,libR.dylib=739,libsystem_m.dylib=435,libsystem_malloc.dylib=207,libsystem_platform.dylib=170,libc++abi.dylib=161,libsystem_c.dylib=6
+nwsaom,N2,27328,True,libsystem_kernel.dylib=18437,saom_sim_macos.plugin=5991,libsystem_m.dylib=1989,libsystem_platform.dylib=408,StataBE=261,libdyld.dylib=141,libsystem_malloc.dylib=81,libsystem_c.dylib=12
+R,R1,27732,True,libsystem_kernel.dylib=18755,RSiena.so=7802,libR.dylib=732,libsystem_m.dylib=183,libsystem_platform.dylib=92,libc++abi.dylib=87,libsystem_malloc.dylib=81
+nwsaom,R1,27460,True,libsystem_kernel.dylib=18450,saom_sim_macos.plugin=7433,libsystem_m.dylib=967,libsystem_platform.dylib=229,libdyld.dylib=210,StataBE=111,libsystem_malloc.dylib=52,libsystem_c.dylib=8
+R,X2,27471,True,libsystem_kernel.dylib=18645,RSiena.so=5344,libR.dylib=1913,libsystem_platform.dylib=671,libsystem_malloc.dylib=435,libc++abi.dylib=317,libsystem_m.dylib=146
+nwsaom,X2,181943,True,libsystem_kernel.dylib=174027,libsystem_platform.dylib=3505,StataBE=2396,saom_sim_macos.plugin=1709,libsystem_malloc.dylib=164,libsystem_c.dylib=57,libsystem_m.dylib=47,libdyld.dylib=33
+R,X1,27696,True,libsystem_kernel.dylib=18664,RSiena.so=7798,libR.dylib=415,libsystem_malloc.dylib=294,libc++abi.dylib=246,libsystem_platform.dylib=157,libsystem_m.dylib=122
+nwsaom,X1,182207,True,libsystem_kernel.dylib=173975,saom_sim_macos.plugin=4652,libsystem_platform.dylib=1740,StataBE=1508,libsystem_m.dylib=147,libsystem_malloc.dylib=123,libsystem_c.dylib=36,libdyld.dylib=26
+nwsaom_mata,N1,26668,True,libsystem_kernel.dylib=18475,StataBE=6641,libsystem_malloc.dylib=1067,libsystem_platform.dylib=298,libsystem_c.dylib=170,libsystem_m.dylib=17

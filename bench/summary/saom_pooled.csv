@@ -1,0 +1,4 @@
+set,cells,median_ratio,min_ratio,max_ratio,cells_below_1
+saom_main,20,1.94,1.38,9.04,0
+saom_extra,8,2.23,0.64,6.57,1
+saom_all,28,1.99,0.64,9.04,1

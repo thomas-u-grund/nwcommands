@@ -1,0 +1,4 @@
+cell,plugin_n,plugin_med,mata_n,mata_med,mata_min,mata_max,mata_errors,slowdown,note
+N1,3,0.212,3,46.9,41.2,155,0,221,
+N2,1,0.991,1,449,449,449,0,453,
+U1,3,0.100,0,,,,3,,Mata engine does not support this model (error)

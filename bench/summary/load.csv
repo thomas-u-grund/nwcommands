@@ -1,0 +1,12 @@
+file,fits,load_min,load_median,load_mean,load_p90,load_max,share_below_4,fits_with_other_R_or_Stata_process
+dynam.csv,304,1.71,2.39,2.44,2.85,3.26,1.00,0
+rem.csv,444,1.43,2.09,2.27,2.91,14.07,0.99,0
+saom_cores.csv,42,2.03,2.71,3.08,4.45,6.93,0.88,0
+saom_extra.csv,112,2.19,2.75,2.79,3.18,3.71,1.00,0
+saom_main.csv,260,1.94,2.68,2.71,3.03,3.90,1.00,0
+saom_main_firstpass_S500_R5_slowphase.csv,38,1.75,2.75,2.75,3.44,4.06,0.97,0
+saom_mata.csv,14,1.75,2.09,2.13,2.89,2.89,1.00,0
+saom_versions.csv,12,2.23,2.54,2.55,2.79,2.87,1.00,0
+saom_x2abl.csv,50,2.09,2.35,2.36,2.57,2.72,1.00,0
+ALL raw files (without first pass and sanity),1238,1.43,2.44,2.49,3.00,14.07,0.99,0
+"ergm_idle (nwergm run, 27 Oct 2026)",168,3.01,3.25,3.43,3.94,6.98,0.92,0

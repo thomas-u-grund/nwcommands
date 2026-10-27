@@ -1,0 +1,5 @@
+model,n_rsiena,n_nwsaom,rsiena_med,rsiena_min,rsiena_max,nwsaom_med,nwsaom_min,nwsaom_max,ratio,conv_rsiena,conv_nwsaom,max_diff_se,worst_param
+S500,3,3,364,327,393,238,227,246,1.53,3/3,3/3,0.07,gwesp
+T200,5,7,68.6,66.3,70.8,44.0,42.7,45.5,1.56,5/5,7/7,0.06,reciprocity
+R4,5,5,92.6,86.4,96.6,94.7,88.1,103,0.98,4/5,5/5,0.03,inpop
+R5,5,5,113,110,115,108,106,108,1.05,4/5,5/5,0.02,reciprocity

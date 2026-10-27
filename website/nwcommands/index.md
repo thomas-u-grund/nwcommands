@@ -40,6 +40,8 @@ Stata BE is enough).
 - **Command reference** ([all commands](../reference/)): every command with its syntax and options.
 - **Size limits** ([how large a network can be](size-limits/)): which commands finish in seconds, which need
   minutes and which are refused at which number of nodes.
+- **Speed** ([the model packages against R](speed/)): run times of nwergm, nwsaom, nwdynam and nwrem against ergm,
+  RSiena, goldfish and relevent, and the cases where they are not faster.
 - **Valued networks** ([which commands use tie values](valued-networks/)): when a network is valued, which commands
   use the values by default, which ignore them, and the option `binary`.
 - **Two-mode networks** ([what the commands do with a two-mode network](two-mode/)): how a two-mode network is declared

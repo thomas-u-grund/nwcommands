@@ -1,7 +1,7 @@
 ---
 title: "Two-mode networks"
 parent: "nwcommands (core)"
-nav_order: 4
+nav_order: 5
 description: "How the core commands treat two-mode (bipartite, affiliation) networks: how a network is declared, which commands use the two modes, which accept the bipartite graph as it is, which stop, and how to get the one-mode version."
 permalink: /nwcommands/two-mode/
 ---
