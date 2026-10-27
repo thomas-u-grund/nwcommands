@@ -83,7 +83,7 @@ errors in `nwsaom` are the author's.
 - The manual (PDF), archived at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); also in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf)
 - Stata's own documentation: `help nwsaom`, `help nwsaom_estat`, `help nwsaom_remarks`; or the
   [`nwsaom` reference page](../reference/nwsaom)
-- A Stata Journal article on `nwsaom` is in preparation.
+- The paper on `nwsaom` is in preparation; the current version is on the [literature page](../literature/).
 
 The core `nwcommands` is introduced in the [tutorials](../tutorials/); the other model
 packages are described in [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
