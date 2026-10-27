@@ -15,8 +15,8 @@ change over time.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-saom/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[nwsaom on GitHub](https://github.com/thomas-u-grund/nwsaom){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Manual on Zenodo](https://doi.org/10.5281/zenodo.23623807){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Manual](https://doi.org/10.5281/zenodo.23623807){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[nwsaom on GitHub](https://github.com/thomas-u-grund/nwsaom){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23623807.svg)](https://doi.org/10.5281/zenodo.23623807)
 

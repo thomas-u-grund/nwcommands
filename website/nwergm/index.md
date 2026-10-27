@@ -15,6 +15,7 @@ local patterns (reciprocity, clustering, homophily) build it.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with the intro tutorial](../tutorials/09-intro-ergm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Manual](https://github.com/thomas-u-grund/nwergm/blob/main/manual/nwergm_manual.pdf){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwergm on GitHub](https://github.com/thomas-u-grund/nwergm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## What nwergm is
