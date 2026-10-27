@@ -164,7 +164,7 @@ program nwcug, rclass
 	tempname origlabs
 	mata: `origlabs' = `netobj'->get_nodenames()
 
-	mata: nwcug_nullvals = J(`reps', 1, .)
+	mata: __nwcug_nullvals = J(`reps', 1, .)
 	local base "_nwcug_draw"
 	local drawcmd = subinstr("`stat'", "##net##", "`base'", .)
 	if `__two' {
@@ -193,7 +193,7 @@ program nwcug, rclass
 			}
 			qui `drawcmd'
 			local v = r(`rname')
-			mata: nwcug_nullvals[`i'] = `v'
+			mata: __nwcug_nullvals[`i'] = `v'
 		}
 		mata: mata drop `__T' `__K' `__M'
 	}
@@ -208,7 +208,7 @@ program nwcug, rclass
 		}
 		qui `drawcmd'
 		local v = r(`rname')
-		mata: nwcug_nullvals[`i'] = `v'
+		mata: __nwcug_nullvals[`i'] = `v'
 	}
 	}
 	capture nwdrop `base'
@@ -223,15 +223,15 @@ program nwcug, rclass
 	// comparisons (missing sorts as larger than any real number, so an
 	// uncaught missing draw would silently count as "greater than
 	// observed" and never "less than").
-	mata: st_numscalar("nmiss", missing(nwcug_nullvals))
+	mata: st_numscalar("nmiss", missing(__nwcug_nullvals))
 	if nmiss > 0 {
 		di "{err}stat() returned a missing r(`rname') on `=nmiss' of `reps' draws - results below are unreliable; check that stat()'s own statistic is defined for every network `condition'-conditioned random draws can produce."
 	}
 
-	mata: st_numscalar("meannull", mean(nwcug_nullvals))
-	mata: st_numscalar("sdnull", sqrt(variance(nwcug_nullvals)))
-	mata: st_numscalar("pgreater", mean(nwcug_nullvals :>= `obsval'))
-	mata: st_numscalar("pless", mean(nwcug_nullvals :<= `obsval'))
+	mata: st_numscalar("meannull", mean(__nwcug_nullvals))
+	mata: st_numscalar("sdnull", sqrt(variance(__nwcug_nullvals)))
+	mata: st_numscalar("pgreater", mean(__nwcug_nullvals :>= `obsval'))
+	mata: st_numscalar("pless", mean(__nwcug_nullvals :<= `obsval'))
 
 	// plot(): a histogram of the `reps' null draws with a dashed
 	// reference line at the observed statistic - the same comparison
@@ -248,7 +248,7 @@ program nwcug, rclass
 		preserve
 		qui drop _all
 		mata: st_addobs(`reps')
-		mata: st_store(., st_addvar("double", "nwcug_null"), nwcug_nullvals)
+		mata: st_store(., st_addvar("double", "nwcug_null"), __nwcug_nullvals)
 		// The reference line is drawn as its own foreground plot layer
 		// (a two-point vertical segment on a hidden, fixed-0/1 second
 		// y-axis) rather than via xline() - xline()/yline() are
@@ -270,7 +270,7 @@ program nwcug, rclass
 		di as txt "(plot saved as {bf:`name'}; histogram of the `reps' null draws under condition(`condition'), dashed line marks the observed value)"
 	}
 
-	mata: mata drop nwcug_nullvals
+	mata: mata drop __nwcug_nullvals
 
 	local ptwo = min(2*min(pgreater,pless), 1)
 
@@ -308,6 +308,9 @@ program nwcug, rclass
 		}
 		di "{hline 40}"
 	}
+	capture mata: mata drop `origlabs'
+	capture mata: mata drop __nwcug_*
+	capture confirm number 0
 end
 
 capture mata: mata drop nw2_cugstart()

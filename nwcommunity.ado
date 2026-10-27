@@ -182,17 +182,17 @@ program nwcommunity, rclass
 		mata: __nwc_vals = st_data((1::`nodes'), "`netgenerate'`k'")
 		mata: __nwc_sorted = sort(__nwc_vals, 1)
 		mata: __nwc_info = panelsetup(__nwc_sorted, 1)
-		mata: comm_number = rows(__nwc_info)
-		mata: comm_id = __nwc_sorted[__nwc_info[.,1]]
-		mata: comm_size = __nwc_info[.,2] :- __nwc_info[.,1] :+ 1
-		mata: comm_share = comm_size :/ (sum(comm_size))
-		mata: comm_sizeid = J(comm_number, 3, 0)
-		mata: comm_sizeid[.,1] = comm_size
-		mata: comm_sizeid[.,2] = comm_id
-		mata: comm_sizeid[.,3] = comm_share
-		mata: comm_sizeid = sort(comm_sizeid, (-1, 2))
-		mata: st_numscalar("communities", comm_number)
-		mata: st_matrix("comm_sizeid", comm_sizeid)
+		mata: __nwcommunity_comm_number = rows(__nwc_info)
+		mata: __nwcommunity_comm_id = __nwc_sorted[__nwc_info[.,1]]
+		mata: __nwcommunity_comm_size = __nwc_info[.,2] :- __nwc_info[.,1] :+ 1
+		mata: __nwcommunity_comm_share = __nwcommunity_comm_size :/ (sum(__nwcommunity_comm_size))
+		mata: __nwcommunity_comm_sizeid = J(__nwcommunity_comm_number, 3, 0)
+		mata: __nwcommunity_comm_sizeid[.,1] = __nwcommunity_comm_size
+		mata: __nwcommunity_comm_sizeid[.,2] = __nwcommunity_comm_id
+		mata: __nwcommunity_comm_sizeid[.,3] = __nwcommunity_comm_share
+		mata: __nwcommunity_comm_sizeid = sort(__nwcommunity_comm_sizeid, (-1, 2))
+		mata: st_numscalar("communities", __nwcommunity_comm_number)
+		mata: st_matrix("comm_sizeid", __nwcommunity_comm_sizeid)
 
 		matrix colnames comm_sizeid = size compid share
 
@@ -202,11 +202,11 @@ program nwcommunity, rclass
 		local lcomm = communities
 		local lmod = modularity
 
-		mata: __nwc_stripe = J(comm_number, 2, "")
-		mata: __nwc_stripe[., 2] = "comm" :+ strofreal((1::comm_number))
+		mata: __nwc_stripe = J(__nwcommunity_comm_number, 2, "")
+		mata: __nwc_stripe[., 2] = "comm" :+ strofreal((1::__nwcommunity_comm_number))
 		mata: st_matrixrowstripe("comm_sizeid", __nwc_stripe)
 		return matrix comm_sizeid = comm_sizeid
-		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid __nwc_vals __nwc_sorted __nwc_info __nwc_stripe
+		mata: mata drop __nwcommunity_comm_number __nwcommunity_comm_share __nwcommunity_comm_id __nwcommunity_comm_size __nwcommunity_comm_sizeid __nwc_vals __nwc_sorted __nwc_info __nwc_stripe
 
 		if "`silent'" == "" {
 			noi di "{hline 40}"
@@ -227,6 +227,8 @@ program nwcommunity, rclass
 		}
 		local k = `=`k' + 1'
 	}
+	capture mata: mata drop __nwcommunity_*
+	capture confirm number 0
 end
 
 capture mata: mata drop nw2_fastbip()

@@ -47,10 +47,10 @@ program nwutility
 			di "{err}network {bf:`intrvalue'} of wrong size"
 			error `errNWsSizeMismatch'
 		}
-		nwtomata `intrvalue', mat(checkedvalue)
+		nwtomata `intrvalue', mat(__nwutility_checkedvalue)
 	}
 	else {
-		mata: checkedvalue = (I(`netnodes') :- 1) :*(-1)
+		mata: __nwutility_checkedvalue = (I(`netnodes') :- 1) :*(-1)
 	}
 
 	if "`intrcost'" != "" {
@@ -64,11 +64,11 @@ program nwutility
 		// own network was resolved just above but never actually
 		// used, so checkedcost always held intrvalue's matrix (or
 		// was undefined if intrvalue() wasn't also passed).
-		nwtomata `intrcost', mat(checkedcost)
+		nwtomata `intrcost', mat(__nwutility_checkedcost)
 	}
 	else {
 		// y_ij = cost for every tied pair (help: "default = cost")
-		mata: checkedcost = (I(`netnodes') :- 1) :*(-1) :* `cost'
+		mata: __nwutility_checkedcost = (I(`netnodes') :- 1) :*(-1) :* `cost'
 	}
 
 	local netname `netname_backup'
@@ -92,7 +92,7 @@ program nwutility
 	local __ub "binary"
 	if strpos(lower(`"`options'"'), "alpha(") > 0 local __ub ""
 	qui nwgeodesic `netname', name(_temp_util) `__ub' `options'
-	nwtomata _temp_util, mat(geonet)
+	nwtomata _temp_util, mat(__nwutility_geonet)
 	// the diagonal (self-distance) is stored as missing, per this
 	// package's convention - distance_distribution()'s own dist>0
 	// check already excludes it correctly once it's a real number,
@@ -100,10 +100,10 @@ program nwutility
 	// so max(geonet) would otherwise be missing instead of the
 	// network's true longest shortest path, breaking the matrix
 	// size (J(nodes, missing, 0)) used to tabulate it.
-	mata: _diag(geonet, 0)
+	mata: _diag(__nwutility_geonet, 0)
 	nwdrop _temp_util
 	if ("`intrvalue'" == "" & "`intrcost'" == ""){
-		mata: util = util_simple(distance_distribution(geonet), `benefit', `cost')
+		mata: __nwutility_util = util_simple(distance_distribution(__nwutility_geonet), `benefit', `cost')
 	}
 	else {
 		// "nw" is this package's own reserved global Mata identifier
@@ -112,20 +112,22 @@ program nwutility
 		// here clobbered that global, corrupting package state and
 		// crashing the very next Mata statement with a class/real
 		// type mismatch. Renamed to avoid the collision.
-		nwtomata `netname', mat(netmat)
-		mata: util = util_weighted(netmat, geonet, checkedvalue, checkedcost, `benefit')
-		mata: mata drop netmat
-		mata: mata drop checkedcost checkedvalue
+		nwtomata `netname', mat(__nwutility_netmat)
+		mata: __nwutility_util = util_weighted(__nwutility_netmat, __nwutility_geonet, __nwutility_checkedvalue, __nwutility_checkedcost, `benefit')
+		mata: mata drop __nwutility_netmat
+		mata: mata drop __nwutility_checkedcost __nwutility_checkedvalue
 	}
 	capture drop _cost
 	capture drop _benefit
 	capture drop _util
 	// align row i of the data set with node i before writing by position
 	_nwsyncrows `netname'
-	nwtostata, mat(util) gen(_benefit _cost _util)
-	mata: mata drop util
-	mata: mata drop geonet
+	nwtostata, mat(__nwutility_util) gen(_benefit _cost _util)
+	mata: mata drop __nwutility_util
+	mata: mata drop __nwutility_geonet
     
+	capture mata: mata drop __nwutility_*
+	capture confirm number 0
 end
 
 capture mata mata drop distance_distribution()

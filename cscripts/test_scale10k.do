@@ -26,7 +26,7 @@ forvalues s = 1/30 {
     quietly duplicates drop a b, force
     quietly nw2fromedge a b, name(t)
     _nwsyntax t
-    mata: p = nw.nws.pdefs[nw.nws.get_index_of("t")]
+    mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("t")]
     mata: M = *p->get_matrix()
     // reference: the old definition blanked every cell whose two nodes have the same mode (diagonal included)
     mata: md = vec(p->get_modes()); z = ((J(rows(md), 1, md') :== J(1, rows(md), md)) :== 1)
@@ -50,7 +50,7 @@ quietly nw2fromedge a b, name(big)
 timer off 1
 quietly timer list 1
 assert r(t1) < 30
-mata: st_numscalar("nn", nw.nws.pdefs[nw.nws.get_index_of("big")]->get_nodes())
+mata: st_numscalar("nn", __nw.nws.pdefs[__nw.nws.get_index_of("big")]->get_nodes())
 assert scalar(nn) == 3000
 display "=== 3,000-node two-mode network built ==="
 
@@ -73,7 +73,7 @@ local nodes_total = 0
 forvalues i = 1/`nc' {
     local nodes_total = `nodes_total' + S[`i', 1]
 }
-mata: st_numscalar("nn", nw.nws.pdefs[nw.nws.get_index_of("sp")]->get_nodes())
+mata: st_numscalar("nn", __nw.nws.pdefs[__nw.nws.get_index_of("sp")]->get_nodes())
 assert `nodes_total' == scalar(nn)
 assert S[1, 1] >= S[`nc', 1]
 local rn : rownames S
@@ -97,8 +97,8 @@ quietly duplicates drop from to, force
 quietly nwfromedge from to, name(big)
 quietly gen double at = ceil(runiform()*3)
 quietly nwexpand at, network(big) name(ex) mode(same)
-mata: pe = nw.nws.pdefs[nw.nws.get_index_of("ex")]
-mata: pb = nw.nws.pdefs[nw.nws.get_index_of("big")]
+mata: pe = __nw.nws.pdefs[__nw.nws.get_index_of("ex")]
+mata: pb = __nw.nws.pdefs[__nw.nws.get_index_of("big")]
 mata: st_numscalar("same", all(vec(pe->get_nodenames()) :== vec(pb->get_nodenames())))
 assert scalar(same) == 1
 display "=== nwexpand: 1,500 node names intact ==="

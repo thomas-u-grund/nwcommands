@@ -34,27 +34,27 @@ nw2fromedge ego alter value, name(mynet)
 // origin, project(1) is the one that means persons - reconfirmed
 // directly against the doc's own hand-worked values (unchanged).
 nw2project mynet, project(1) name(minmax_test)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("minmax_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("minmax_test")]
 mata: st_numscalar("r(minmax)", p->edge_weight(1,2))
 assert reldif(r(minmax), 5) < 1e-8
 
 nw2project mynet, project(1) name(min_test) stat(min)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("min_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("min_test")]
 mata: st_numscalar("r(min)", p->edge_weight(1,2))
 assert reldif(r(min), 1) < 1e-8
 
 nw2project mynet, project(1) name(max_test) stat(max)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("max_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("max_test")]
 mata: st_numscalar("r(max)", p->edge_weight(1,2))
 assert reldif(r(max), 7) < 1e-8
 
 nw2project mynet, project(1) name(sum_test) stat(sum)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("sum_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("sum_test")]
 mata: st_numscalar("r(sum)", p->edge_weight(1,2))
 assert reldif(r(sum), 14) < 1e-8
 
 nw2project mynet, project(1) name(mean_test) stat(mean)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("mean_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("mean_test")]
 mata: st_numscalar("r(mean)", p->edge_weight(1,2))
 assert reldif(r(mean), 3.5) < 1e-8
 
@@ -63,7 +63,7 @@ di "=== ALL 5 STAT FORMULAS MATCH THE DOCUMENTED WORKED EXAMPLE EXACTLY ==="
 // project(2) is now correctly institutions (LiU/Oxford, 2 of them) -
 // swapped from the pre-fix "project(1)" for the same reason as above.
 nw2project mynet, project(2) name(inst_test)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("inst_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("inst_test")]
 mata: st_numscalar("r(nodes)", p->get_nodes())
 assert r(nodes) == 2
 
@@ -83,7 +83,7 @@ replace ego = "C" in 6
 replace alter = "Z" in 6
 nw2fromedge ego alter, name(unvnet)
 nw2project unvnet, project(1) name(unv_test)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("unv_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("unv_test")]
 mata: p->get_nodenames()
 mata: st_numscalar("r(AB)", p->has_edge(1,2))
 mata: st_numscalar("r(AC)", p->has_edge(1,3))
@@ -99,11 +99,11 @@ di "=== UNVALUED SHARED-COUNT DEFAULT VERIFIED ==="
 
 nwclear
 nwset, mat((0,0,0\0,0,0\0,0,0)) name(disconnected_bip) labs(P1,P2,P3)
-mata: p3 = nw.nws.pdefs[nw.nws.get_index_of("disconnected_bip")]
+mata: p3 = __nw.nws.pdefs[__nw.nws.get_index_of("disconnected_bip")]
 mata: p3->set_2mode(1)
 mata: p3->set_modes(("1","1","2"))
 nw2project disconnected_bip, project(1) name(isolate_test)
-mata: p4 = nw.nws.pdefs[nw.nws.get_index_of("isolate_test")]
+mata: p4 = __nw.nws.pdefs[__nw.nws.get_index_of("isolate_test")]
 mata: st_numscalar("r(nodes)", p4->get_nodes())
 mata: st_numscalar("r(edges)", rows(p4->edgelist()))
 assert r(nodes) == 2
@@ -180,22 +180,22 @@ replace value = 5 in 4
 nw2fromedge ego alter value, name(structnet)
 
 nw2project structnet, project(1) name(count_test) stat(count)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("count_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("count_test")]
 mata: st_numscalar("r(count)", p->edge_weight(1,2))
 assert reldif(r(count), 2) < 1e-8
 
 nw2project structnet, project(1) name(binary_test) stat(binary)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("binary_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("binary_test")]
 mata: st_numscalar("r(binary)", p->edge_weight(1,2))
 assert reldif(r(binary), 1) < 1e-8
 
 nw2project structnet, project(1) name(jaccard_test) stat(jaccard)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("jaccard_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("jaccard_test")]
 mata: st_numscalar("r(jaccard)", p->edge_weight(1,2))
 assert reldif(r(jaccard), 1) < 1e-8
 
 nw2project structnet, project(1) name(cosine_test) stat(cosine)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("cosine_test")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("cosine_test")]
 mata: st_numscalar("r(cosine)", p->edge_weight(1,2))
 assert reldif(r(cosine), 1) < 1e-8
 di "=== COUNT/BINARY/JACCARD/COSINE ON FULLY-OVERLAPPING NEIGHBORS (=1) VERIFIED ==="
@@ -218,12 +218,12 @@ replace alter = "LiU" in 5
 nw2fromedge ego alter, name(partialnet)
 
 nw2project partialnet, project(1) name(jaccard_partial) stat(jaccard)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("jaccard_partial")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("jaccard_partial")]
 mata: st_numscalar("r(jaccardp)", p->edge_weight(1,2))
 assert reldif(r(jaccardp), 2/3) < 1e-6
 
 nw2project partialnet, project(1) name(cosine_partial) stat(cosine)
-mata: p = nw.nws.pdefs[nw.nws.get_index_of("cosine_partial")]
+mata: p = __nw.nws.pdefs[__nw.nws.get_index_of("cosine_partial")]
 mata: st_numscalar("r(cosinep)", p->edge_weight(1,2))
 assert reldif(r(cosinep), 2/sqrt(6)) < 1e-6
 di "=== JACCARD/COSINE ON PARTIAL-OVERLAP NEIGHBORS VERIFIED ==="

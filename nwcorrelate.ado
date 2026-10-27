@@ -27,6 +27,8 @@ program nwcorrelate
 	if `networks' == 1 & "`attribute'" == ""{
 		nwcorrelate_nodes `netname', `options'
 	}
+	capture mata: mata drop __nwcorrelate_*
+	capture confirm number 0
 end
 
 capture program drop nwcorrelate_nodes
@@ -170,7 +172,7 @@ unw_defs
 	
 	// Calculate correlations of network2 with permutations of network1
 	if (`permutations' > 1) {
-		mata: corr_reps = correlate_nets_rep(`permutations', (*`netobj1'->get_matrix()), (*`netobj2'->get_matrix()))
+		mata: __nwcorrelate_corr_reps = correlate_nets_rep(`permutations', (*`netobj1'->get_matrix()), (*`netobj2'->get_matrix()))
 		capture _return drop _all
 		tempname myr
 		_return hold `myr'
@@ -178,8 +180,8 @@ unw_defs
 		preserve
 		drop _all
 		
-		getmata correlation = corr_reps, double
-		capture mata: mata drop corr_reps
+		getmata correlation = __nwcorrelate_corr_reps, double
+		capture mata: mata drop __nwcorrelate_corr_reps
 		
 		qui gen observed = `corr'
 		if `"`save'"' != "" {
@@ -206,11 +208,11 @@ unw_defs
 		}
 		local count_out `r(N)'
 		
-		mata: _pvalue = `count_out' / `count_total'
+		mata: __nwcorrelate_pvalue = `count_out' / `count_total'
 		
 		_pctile correlation, percentiles(2.5 97.5)
-		mata: _lb = `r(r1)'
-		mata: _ub = `r(r2)'
+		mata: __nwcorrelate_lb = `r(r1)'
+		mata: __nwcorrelate_ub = `r(r2)'
 		
 		qui sum correlation
 		local xmin = r(min)
@@ -228,12 +230,11 @@ unw_defs
 		restore
 		_return restore `myr'
 	
-		mata: st_numscalar("r(lb)", _lb)
-		mata: st_numscalar("r(ub)", _ub)
-		mata: st_numscalar("r(pvalue)", _pvalue)
-		capture mata: mata drop _lb _ub _pvalue
+		mata: st_numscalar("r(lb)", __nwcorrelate_lb)
+		mata: st_numscalar("r(ub)", __nwcorrelate_ub)
+		mata: st_numscalar("r(pvalue)", __nwcorrelate_pvalue)
+		capture mata: mata drop __nwcorrelate_lb __nwcorrelate_ub __nwcorrelate_pvalue
 	}
-	capture mata: mata drop ifmata
 	
 	di "{hline 40}"
 	di "{txt}  Network1 name: {res}`r(name_1)'"

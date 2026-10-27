@@ -44,7 +44,7 @@ qui {
 nwclear
 nwimport `"`matcsv'.csv"', type(matrix, rownames) name(rowlabtest)
 assert _rc == 0
-mata: __p = nw.nws.pdefs[nw.nws.get_index_of("rowlabtest")]
+mata: __p = __nw.nws.pdefs[__nw.nws.get_index_of("rowlabtest")]
 mata: st_matrix("__rowlabnames", J(1,1,1))
 mata: st_local("__n1", __p->get_nodenames()[1,1])
 mata: st_local("__n2", __p->get_nodenames()[1,2])
@@ -83,7 +83,7 @@ qui {
 nwclear
 nwimport `"`matcsv2'.csv"', type(matrix) name(headertest)
 assert _rc == 0
-mata: __p2 = nw.nws.pdefs[nw.nws.get_index_of("headertest")]
+mata: __p2 = __nw.nws.pdefs[__nw.nws.get_index_of("headertest")]
 mata: st_local("__hn1", __p2->get_nodenames()[1,1])
 assert "`__hn1'" == "thomas"
 mata: mata drop __p2
@@ -184,7 +184,7 @@ assert _rc == 0
 _nwsyntax gmltest
 assert `nodes' == 3
 assert "`directed'" == "true"
-mata: __pg = nw.nws.pdefs[nw.nws.get_index_of("gmltest")]
+mata: __pg = __nw.nws.pdefs[__nw.nws.get_index_of("gmltest")]
 mata: st_local("__gn1", __pg->get_nodenames()[1,1])
 mata: st_local("__gn2", __pg->get_nodenames()[1,2])
 mata: st_local("__gn3", __pg->get_nodenames()[1,3])

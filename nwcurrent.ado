@@ -5,11 +5,11 @@ program nwcurrent
 	unw_defs
 	
 	if ("`id'" != "") {
-		mata: nw.nws.make_current(`id')
+		mata: __nw.nws.make_current(`id')
 	}
 	else if ("`netname'" != ""){
 		_nwsyntax `netname', max(1)
-		mata: nw.nws.make_current_from_name("`netname'")
+		mata: __nw.nws.make_current_from_name("`netname'")
 	}
 	
 	_nwsyntax

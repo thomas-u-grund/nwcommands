@@ -105,13 +105,13 @@ program nwcloseness
 			}
 			_nwsyntax `__src'
 			if `__wcl' {
-				mata: reach = nw2_wsums(`netobj', `__wa')
+				mata: __nwcloseness_reach = nw2_wsums(`netobj', `__wa')
 			}
 			else {
-				mata: reach = nw_distance_sums(`netobj', 0, 0)
+				mata: __nwcloseness_reach = nw_distance_sums(`netobj', 0, 0)
 			}
-			mata: far = reach[., 1]
-			mata: reach = reach[., 2]
+			mata: __nwcloseness_far = __nwcloseness_reach[., 1]
+			mata: __nwcloseness_reach = __nwcloseness_reach[., 2]
 			if "`symopt'" != "" {
 				nwdrop `__symnet'
 			}
@@ -133,25 +133,25 @@ program nwcloseness
 			// in cscripts/test_nwcloseness.do.
 			_nwsyntax _tempgeodesic
 			mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
-			mata: far = rowsum(*`netobj'->get_matrix())
+			mata: __nwcloseness_far = rowsum(*`netobj'->get_matrix())
 
 			// number of other nodes each node can reach (the diagonal of the
 			// distance matrix is 0 or missing and is not counted)
-			mata: reach = rowsum((*`netobj'->get_matrix()) :< .) :- (diagonal(*`netobj'->get_matrix()) :< .)
+			mata: __nwcloseness_reach = rowsum((*`netobj'->get_matrix()) :< .) :- (diagonal(*`netobj'->get_matrix()) :< .)
 		}
 		_nwsyntax `netname_temp'
 
-		mata: nearness = J(`nodes', 1,1) :/ far
+		mata: __nwcloseness_nearness = J(`nodes', 1,1) :/ __nwcloseness_far
 		// Closeness is the number of nodes a node can reach divided by
 		// the sum of its distances to them (igraph's definition). On a
 		// connected network that is (nodes - 1) * nearness; legacy keeps
 		// (nodes - 1) * nearness whatever the connectedness.
-		mata: st_local("__disc", strofreal(max(reach :< (`nodes' - 1))))
+		mata: st_local("__disc", strofreal(max(__nwcloseness_reach :< (`nodes' - 1))))
 		if `__disc' & "`legacy'" == "" {
-			mata: closeness = reach :/ far
+			mata: __nwcloseness_closeness = __nwcloseness_reach :/ __nwcloseness_far
 		}
 		else {
-			mata: closeness = nearness :* (`nodes' - 1)
+			mata: __nwcloseness_closeness = __nwcloseness_nearness :* (`nodes' - 1)
 		}
 		if `__disc' {
 			if "`legacy'" == "" {
@@ -176,7 +176,7 @@ program nwcloseness
 				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
 				error 198
 			}
-			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); closeness = ((__md :== 1) :* (__n2 + 2 * (__n1 - 1)) :+ (__md :== 2) :* (__n1 + 2 * (__n2 - 1))) :* nearness
+			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); __nwcloseness_closeness = ((__md :== 1) :* (__n2 + 2 * (__n1 - 1)) :+ (__md :== 2) :* (__n1 + 2 * (__n2 - 1))) :* __nwcloseness_nearness
 			mata: mata drop __md __n1 __n2
 		}
 		local _closeness : word 1 of `generate'
@@ -221,13 +221,13 @@ program nwcloseness
 		qui capture drop `_nearness'`k'
 		qui gen `_nearness'`k' =.
 		
-		mata: st_store((1::`nodes'),"`_closeness'`k'",closeness)
-		mata: st_store((1::`nodes'),"`_farness'`k'",far)
-		mata: st_store((1::`nodes'),"`_nearness'`k'",nearness)
+		mata: st_store((1::`nodes'),"`_closeness'`k'",__nwcloseness_closeness)
+		mata: st_store((1::`nodes'),"`_farness'`k'",__nwcloseness_far)
+		mata: st_store((1::`nodes'),"`_nearness'`k'",__nwcloseness_nearness)
 	
 		local generate_all "`generate_all' `_closeness'`k' `_farness'`k' `_nearness'`k'"
 		capture drop `included'
-		mata: mata drop closeness far nearness reach
+		mata: mata drop __nwcloseness_closeness __nwcloseness_far __nwcloseness_nearness __nwcloseness_reach
 		
 		local k = `k' + 1	
 	}
@@ -239,6 +239,8 @@ program nwcloseness
 		di "{txt}    Closeness centrality"
 		sum `generate_all'
 	}
+	capture mata: mata drop __nwcloseness_*
+	capture confirm number 0
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

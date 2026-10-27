@@ -113,4 +113,4 @@ stored ties. Measured in Stata/BE, random directed network with 10 ties per node
 last certified : 22 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

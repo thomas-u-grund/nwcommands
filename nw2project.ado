@@ -74,14 +74,14 @@ program nw2project, rclass
 	}
 	local provnote "`provnote', stat=`stat'"
 
-	mata: nw.nws.add("`name'")
+	mata: __nw.nws.add("`name'")
 	_nwsyntax `name'
 	mata: `netobj'->create_by_name_sparse(`__nw_names')
 	// BUGFIX: create_by_name_sparse() calls zap() internally (wiping
 	// every field, including `name', back to blank - see its own header
 	// comment in unw_core.do), and nothing here re-set it afterward, so
 	// the projected network's own internal name field stayed blank even
-	// though nw.nws's separate container-level name list correctly said
+	// though __nw.nws's separate container-level name list correctly said
 	// "`name'" existed. Explicit-netname code paths never noticed
 	// (they resolve names via the container list, not this field), but
 	// any *bare*/"current network" code path does read this field

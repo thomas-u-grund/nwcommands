@@ -49,7 +49,7 @@ quietly timer list 1
 display "nwfromedge, `distinct' nodes, `ties' ties: " r(t1) " s"
 assert r(t1) < 60
 
-mata: bigp = nw.nws.pdefs[nw.nws.get_index_of("big")]
+mata: bigp = __nw.nws.pdefs[__nw.nws.get_index_of("big")]
 mata: st_numscalar("isdense", bigp->is_dense_built())
 assert scalar(isdense) == 0
 mata: st_numscalar("bn", bigp->get_nodes())
@@ -87,7 +87,7 @@ duplicates drop from to, force
 nwfromedge from to, name(big2)
 nwname big2
 assert "`r(directed)'" == "true"
-mata: bigp2 = nw.nws.pdefs[nw.nws.get_index_of("big2")]
+mata: bigp2 = __nw.nws.pdefs[__nw.nws.get_index_of("big2")]
 mata: st_numscalar("isdense", bigp2->is_dense_built())
 assert scalar(isdense) == 0
 
@@ -102,7 +102,7 @@ duplicates drop from to, force
 nwfromedge from to, name(big3) forceundirected
 nwname big3
 assert "`r(directed)'" == "false"
-mata: bigp3 = nw.nws.pdefs[nw.nws.get_index_of("big3")]
+mata: bigp3 = __nw.nws.pdefs[__nw.nws.get_index_of("big3")]
 mata: st_numscalar("isdense", bigp3->is_dense_built())
 assert scalar(isdense) == 0
 nwdegree big3, generate(deg) silent
@@ -187,7 +187,7 @@ forvalues rep = 1/40 {
 	nwfromedge a b w, name(t1)
 	nwname t1
 	local isdir = ("`r(directed)'" == "true")
-	mata: tp = nw.nws.pdefs[nw.nws.get_index_of("t1")]
+	mata: tp = __nw.nws.pdefs[__nw.nws.get_index_of("t1")]
 	mata: expect = (st_numscalar("issym") ? nwfe_symmax(ref) : ref)
 	mata: st_numscalar("same", all(tp->get_matrix_copy() :== expect) & rows(expect) == tp->get_nodes())
 	if scalar(same) != 1 | `isdir' != (1 - `issym') {
@@ -199,7 +199,7 @@ forvalues rep = 1/40 {
 	nwclear
 	use `base', clear
 	nwfromedge a b w, name(t2) forcedirected
-	mata: tp = nw.nws.pdefs[nw.nws.get_index_of("t2")]
+	mata: tp = __nw.nws.pdefs[__nw.nws.get_index_of("t2")]
 	mata: st_numscalar("same", all(tp->get_matrix_copy() :== ref))
 	if scalar(same) != 1 {
 		display as error "rep `rep': forcedirected adjacency mismatch"
@@ -211,7 +211,7 @@ forvalues rep = 1/40 {
 	use `base', clear
 	nwfromedge a b w, name(t3) forceundirected
 	nwname t3
-	mata: tp = nw.nws.pdefs[nw.nws.get_index_of("t3")]
+	mata: tp = __nw.nws.pdefs[__nw.nws.get_index_of("t3")]
 	mata: st_numscalar("same", all(tp->get_matrix_copy() :== nwfe_symmax(ref)))
 	if scalar(same) != 1 | "`r(directed)'" != "false" {
 		display as error "rep `rep': forceundirected adjacency mismatch"
@@ -222,7 +222,7 @@ forvalues rep = 1/40 {
 	nwclear
 	use `base', clear
 	nwfromedge a b w, name(t4) directed labprefix(q)
-	mata: tp = nw.nws.pdefs[nw.nws.get_index_of("t4")]
+	mata: tp = __nw.nws.pdefs[__nw.nws.get_index_of("t4")]
 	mata: st_numscalar("same", all(tp->get_nodenames() :== ("q" :+ strofreal(ids')))) 
 	if scalar(same) != 1 {
 		display as error "rep `rep': node labels/order mismatch"

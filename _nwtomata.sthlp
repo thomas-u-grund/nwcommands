@@ -59,8 +59,8 @@ not change the network.
 
      {txt}macros:
                 r(adj_copy) : "{res}myadj{txt}"
-                     r(adj) : "{res}(*nw.nws.pdefs[1]->get_matrix()){txt}"
-                  r(netobj) : "{res}nw.nws.pdefs[1]{txt}"
+                     r(adj) : "{res}(*__nw.nws.pdefs[1]->get_matrix()){txt}"
+                  r(netobj) : "{res}__nw.nws.pdefs[1]{txt}"
                  r(netname) : "{res}mynet{txt}"
 
 {pstd}
@@ -101,4 +101,4 @@ when doing so because you might corrupt your network data. This displays the act
 last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

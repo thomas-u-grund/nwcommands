@@ -315,6 +315,7 @@ On the state of 2026-10-25 (`origin/main`): `--post` passes everything except th
 - [ ] CHANGELOG entry (Results that change first); data sets/help/dialogs/README/ROADMAP/ARCHITECTURE done
 - [ ] `python3 tools/set_version.py X.Y.Z [date]`; `python3 tools/check_version.py`
 - [ ] full core suite, Stata 17: 0 errors, 0 NOT RUN; Stata 18: same
+- [ ] `cscripts/test_mata_userspace.do` passes (ado code touches no Mata variable of the user and leaves no global Mata variable behind; GOTCHA "No plain-named globals in Mata"); when a command was added or changed, add it to the test
 - [ ] website: news, packages table, core page (+ real date), install.md, citing.md, datasets, reference pages
 - [ ] commit "Release X.Y.Z ..."; `python3 tools/release_preflight.py` all PASS
 - [ ] `git push origin develop`; if `native/` changed: CI green, bot commit pulled, key tests with CI plugin, `--require-pushed`

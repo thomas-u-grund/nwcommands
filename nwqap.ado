@@ -31,7 +31,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	_nw2guard `net', cmd(nwqap)
 	_nwdenseguard, command(nwqap) nodes(`nodes') copies(15) alternative(QAP regresses the dyads of the networks, one observation per pair of nodes: `=`nodes'*(`nodes'-1)' here. Use a part of the network (nwsubset, nwego) or nwcorrelate for the correlation of two networks.) `force'
-	nwtomata `net', mat(dvnet)
+	nwtomata `net', mat(__nwqap_dvnet)
 
 	// Binary-outcome regression commands (logit is this command's own
 	// default) treat any nonzero dependent-variable value as a positive
@@ -51,7 +51,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 
 	// Generate dataset in long format.
-	mata: datalong = J((`nodes' * `nodes'),`vars', 0)
+	mata: __nwqap_datalong = J((`nodes' * `nodes'),`vars', 0)
 	
 	local i = 1
 	local t = 1
@@ -68,10 +68,10 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 				di "{err}Networks of different size."
 				error 6056
 			}
-			nwtomata `entry', mat(onenet)
-			mata: _diag(onenet, J(rows(onenet), 1, .))
-			mata: temp = transformIntoLong(onenet)
-			mata: datalong[,`i'] = temp
+			nwtomata `entry', mat(__nwqap_onenet)
+			mata: _diag(__nwqap_onenet, J(rows(__nwqap_onenet), 1, .))
+			mata: __nwqap_temp = transformIntoLong(__nwqap_onenet)
+			mata: __nwqap_datalong[,`i'] = __nwqap_temp
 			local i = `i' + 1
 			local prefix "`prefix' `nextname'"
 		}
@@ -97,10 +97,10 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			// confirmed directly: two nwexpand calls in the same session
 			// only corrupt each other's data when network() is omitted.
 			nwexpand `entry', name(_tempexpand) mode("``t''") nodes(`nodes') network(`net')
-			nwtomata _tempexpand, mat(onenet)
-			mata: _diag(onenet, J(rows(onenet), 1, .))
-			mata: temp = transformIntoLong(onenet)
-			mata: datalong[,`i'] = temp
+			nwtomata _tempexpand, mat(__nwqap_onenet)
+			mata: _diag(__nwqap_onenet, J(rows(__nwqap_onenet), 1, .))
+			mata: __nwqap_temp = transformIntoLong(__nwqap_onenet)
+			mata: __nwqap_datalong[,`i'] = __nwqap_temp
 			local i = `i' + 1
 			nwdrop _tempexpand
 			if "``t''" == "" {
@@ -120,7 +120,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	qui foreach entry in `formula' {
 		gen `entry' = .
 	}
-	mata: st_store(.,.,datalong)
+	mata: st_store(.,.,__nwqap_datalong)
 		
 	tempname memhold
     tempfile results
@@ -153,9 +153,9 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local permok = 0
 		while `permok' == 0 {
 			local permattempts = `permattempts' + 1
-			mata: perm_net = permute_net(dvnet)
-			mata: net_long = transformIntoLong(perm_net)
-			mata: st_store(., "`net'", net_long)
+			mata: __nwqap_perm_net = permute_net(__nwqap_dvnet)
+			mata: __nwqap_net_long = transformIntoLong(__nwqap_perm_net)
+			mata: st_store(., "`net'", __nwqap_net_long)
 			capture `type' `formula', `typeoptions'
 			if _rc == 0 {
 				local permok = 1
@@ -222,7 +222,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	capture qui predict `__nw_fittedvar'
 	local __nw_havefit = (_rc == 0)
 	if `__nw_havefit' {
-		mata: fitted_long = st_data(., "`__nw_fittedvar'")
+		mata: __nwqap_fitted_long = st_data(., "`__nw_fittedvar'")
 	}
 	else if "`predict'" != "" {
 		di "{err}predict() is not available for {bf:type(`type')}."
@@ -372,9 +372,9 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// of which model the real coefficients were fit with).
 	if "`qapspp'" != "" {
 		forvalues k = 1/`=`vars'-1' {
-			mata: dsp_res = _nwqap_dsp_pvalue(datalong, `nodes', `k', `permutations', st_matrix("reg_results")[1,`k'])
-			mata: st_local("__dsp_p", strofreal(dsp_res[1,1]))
-			mata: st_local("__dsp_var", strofreal(dsp_res[1,2]))
+			mata: __nwqap_dsp_res = _nwqap_dsp_pvalue(__nwqap_datalong, `nodes', `k', `permutations', st_matrix("reg_results")[1,`k'])
+			mata: st_local("__dsp_p", strofreal(__nwqap_dsp_res[1,1]))
+			mata: st_local("__dsp_var", strofreal(__nwqap_dsp_res[1,2]))
 			mat pvalues[1,`k'] = `__dsp_p'
 			mat permvar[1,`k'] = `__dsp_var'
 		}
@@ -410,12 +410,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// actual (possibly auto-incremented) target name via nwvalidate before
 	// calling nwset, so nwset is only ever asked to create under a name
 	// already confirmed free.
-	capture mata: mata drop nwqap_fitted_last
+	capture mata: mata drop __nwqapfit
 	if `__nw_havefit' {
-		mata: fitted_mat = transformOutOfLong(fitted_long, `nodes')
-		mata: _diag(fitted_mat, J(`nodes', 1, 0))
+		mata: __nwqap_fitted_mat = transformOutOfLong(__nwqap_fitted_long, `nodes')
+		mata: _diag(__nwqap_fitted_mat, J(`nodes', 1, 0))
 		// kept for the postestimation command  predict newnetname
-		mata: nwqap_fitted_last = fitted_mat
+		mata: __nwqapfit = __nwqap_fitted_mat
 		local __nw_fit_directed "`directed'"
 		local __nw_fit_labs `"`labs'"'
 	}
@@ -423,14 +423,14 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		nwvalidate `predict'
 		local predict = r(validname)
 		if "`directed'" == "true" {
-			qui nwset, mat(fitted_mat) name(`predict') directed labs(`labs')
+			qui nwset, mat(__nwqap_fitted_mat) name(`predict') directed labs(`labs')
 		}
 		else {
-			qui nwset, mat(fitted_mat) name(`predict') undirected labs(`labs')
+			qui nwset, mat(__nwqap_fitted_mat) name(`predict') undirected labs(`labs')
 		}
 	}
 	if `__nw_havefit' {
-		mata: mata drop fitted_long fitted_mat
+		mata: mata drop __nwqap_fitted_long __nwqap_fitted_mat
 	}
 
 	//  Display results.
@@ -525,8 +525,10 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	ereturn scalar permutations = `permutations'
 	ereturn matrix pvalues pvalues
-	mata: mata drop datalong net_long perm_net onenet dvnet
+	mata: mata drop __nwqap_datalong __nwqap_net_long __nwqap_perm_net __nwqap_onenet __nwqap_dvnet
 
+	capture mata: mata drop __nwqap_*
+	capture confirm number 0
 end
 
 capture mata mata drop transformIntoLong()

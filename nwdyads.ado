@@ -10,6 +10,8 @@ program nwdyads
 	foreach onenet in `netname' {
 		_nwdyads1 `onenet'
 	}
+	capture mata: mata drop __nwdyads_*
+	capture confirm number 0
 end
 
 capture program drop _nwdyads1
@@ -21,13 +23,13 @@ program _nwdyads1
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
 	}
-	mata: census = `netobj'->calculate_dyadcensus()
+	mata: __nwdyads_census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
-	mata: st_numscalar("r(_001)", census[3])
-	mata: st_numscalar("r(_010)", census[2])
-	mata: st_numscalar("r(_100)", census[1])
-	mata: st_numscalar("r(reciprocity)", census[1] / (census[1] + census[2]))
-	mata: mata drop census
+	mata: st_numscalar("r(_001)", __nwdyads_census[3])
+	mata: st_numscalar("r(_010)", __nwdyads_census[2])
+	mata: st_numscalar("r(_100)", __nwdyads_census[1])
+	mata: st_numscalar("r(reciprocity)", __nwdyads_census[1] / (__nwdyads_census[1] + __nwdyads_census[2]))
+	mata: mata drop __nwdyads_census
 	
 	// Display dyad census of directed network
 	if ("`directed'" == "true" ) {

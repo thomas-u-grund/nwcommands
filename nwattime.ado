@@ -51,7 +51,7 @@ program nwattime, rclass
 
 	mata: st_numscalar("ties", rows(`__edges'))
 
-	mata: nw.nws.add("`name'")
+	mata: __nw.nws.add("`name'")
 	_nwsyntax `name'
 	mata: `netobj'->create_by_name_sparse(`__srcnames')
 	// BUGFIX (see docs/CERTIFICATION.md unit 42): create_by_name_sparse()

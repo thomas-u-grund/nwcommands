@@ -17,8 +17,8 @@ do unw_core.do
 * Undirected, unvalued: triangle {1,2,3}, disconnected pair {4,5}, isolate {6}
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,0\0,0,0,1,0,0\0,0,0,0,0,0)) undirected
-mata: D1brute = nw.nws.pdefs[1]->calculate_distances(0, "brute")
-mata: D1dijkstra = nw.nws.pdefs[1]->calculate_distances(1, "dijkstra")
+mata: D1brute = __nw.nws.pdefs[1]->calculate_distances(0, "brute")
+mata: D1dijkstra = __nw.nws.pdefs[1]->calculate_distances(1, "dijkstra")
 mata: assert(D1brute[1,1] == .)
 mata: assert(D1brute[2,1] == 1)
 mata: assert(D1brute[3,1] == 1)
@@ -30,15 +30,15 @@ mata: assert(D1dijkstra[1,1] == 0)
 mata: assert(D1dijkstra[2,1] == 1)
 mata: assert(D1dijkstra[4,1] == .)
 mata: assert(D1dijkstra[6,6] == 0)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,4) == -1)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,3) == 1)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,6) == -1)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,4) == -1)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,3) == 1)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,6) == -1)
 
 * Directed, valued 4-cycle: 1->2 (w=2), 2->3 (w=3), 3->4 (w=1), 4->1 (w=1)
 nwclear
 nwset, mat((0,2,0,0\0,0,3,0\0,0,0,1\1,0,0,0)) directed
-mata: D2brute = nw.nws.pdefs[1]->calculate_distances(0, "brute")
-mata: D2dijkstra = nw.nws.pdefs[1]->calculate_distances(1, "dijkstra")
+mata: D2brute = __nw.nws.pdefs[1]->calculate_distances(0, "brute")
+mata: D2dijkstra = __nw.nws.pdefs[1]->calculate_distances(1, "dijkstra")
 mata: assert(D2brute[1,1] == .)
 mata: assert(D2brute[1,2] == 1)
 mata: assert(D2brute[1,3] == 2)
@@ -51,11 +51,11 @@ mata: assert(reldif(D2dijkstra[2,1], 2.333333333333) < 1E-6)
 mata: assert(D2dijkstra[1,1] == 0)
 * calculate_distance_pair() is always unweighted (hop count), regardless
 * of the network being valued - respects directedness (forward only)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,3) == 2)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(3,1) == 2)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,3) == 2)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(3,1) == 2)
 * alpha=0: every positive tie costs 1 (unweighted), even via the
 * "dijkstra" alg path - matches the brute hop-count matrix exactly
-mata: D2dijkstra0 = nw.nws.pdefs[1]->calculate_distances(0, "dijkstra")
+mata: D2dijkstra0 = __nw.nws.pdefs[1]->calculate_distances(0, "dijkstra")
 mata: assert(D2dijkstra0[1,2] == 1)
 mata: assert(D2dijkstra0[1,3] == 2)
 mata: assert(D2dijkstra0[1,4] == 3)
@@ -66,14 +66,14 @@ mata: assert(D2dijkstra0[1,4] == 3)
 * squared-matrix diagonal)
 nwclear
 nwset, mat((0,1,1,0\1,0,0,0\0,1,0,0\0,0,0,0)) directed
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,1) == 2)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,1) == 2)
 
 * calculate_distances_without(): undirected path graph 1-2-3-4-5 (a tree -
 * removing any single edge always disconnects, so every adjacent pair
 * must come back -1)
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected
-mata: DW1 = nw.nws.pdefs[1]->calculate_distances_without()
+mata: DW1 = __nw.nws.pdefs[1]->calculate_distances_without()
 mata: assert(DW1[2,1] == -1)
 mata: assert(DW1[3,2] == -1)
 mata: assert(DW1[4,3] == -1)
@@ -84,7 +84,7 @@ mata: assert(DW1[1,1] == 0)
 * node has exactly one out-edge, so removing it always disconnects
 nwclear
 nwset, mat((0,1,0\0,0,1\1,0,0)) directed
-mata: DW2 = nw.nws.pdefs[1]->calculate_distances_without()
+mata: DW2 = __nw.nws.pdefs[1]->calculate_distances_without()
 mata: assert(DW2[1,2] == -1)
 mata: assert(DW2[2,3] == -1)
 mata: assert(DW2[3,1] == -1)
@@ -96,7 +96,7 @@ mata: assert(DW2[3,1] == -1)
 * removing 1->2 (and the unrelated 2->1) still finds the alternate path.
 nwclear
 nwset, mat((0,1,1,0\1,0,0,0\0,1,0,0\0,0,0,0)) directed
-mata: DW3 = nw.nws.pdefs[1]->calculate_distances_without()
+mata: DW3 = __nw.nws.pdefs[1]->calculate_distances_without()
 mata: assert(DW3[1,2] == 2)
 mata: assert(DW3[2,1] == -1)
 mata: assert(DW3[3,2] == -1)
@@ -109,18 +109,18 @@ mata: assert(DW3[3,2] == -1)
 * returns standalone, when the self-loop edge is NOT excluded).
 nwclear
 nwset, mat((1,1,1\1,0,0\0,0,0)) directed selfloop
-mata: DW4 = nw.nws.pdefs[1]->calculate_distances_without()
+mata: DW4 = __nw.nws.pdefs[1]->calculate_distances_without()
 mata: assert(DW4[1,1] == 2)
 mata: assert(DW4[1,2] == -1)
 mata: assert(DW4[1,3] == -1)
-mata: assert(nw.nws.pdefs[1]->calculate_distance_pair(1,1) == 1)
+mata: assert(__nw.nws.pdefs[1]->calculate_distance_pair(1,1) == 1)
 
 * edge_dense_built stays 0 throughout every one of the above sparse-native
 * distance computations - the whole point of this migration
 nwclear
 nwset, mat(J(2,2,0)) name(sparsedistnet) directed labs(N1,N2)
 mata:
-p5 = nw.nws.pdefs[nw.nws.get_index_of("sparsedistnet")]
+p5 = __nw.nws.pdefs[__nw.nws.get_index_of("sparsedistnet")]
 p5->create_by_name(("n1","n2","n3"))
 ego5 = (1\2\3)
 alter5 = (2\3\1)

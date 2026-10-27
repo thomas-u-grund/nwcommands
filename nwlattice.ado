@@ -72,7 +72,7 @@ program nwlattice
 
 	
 	// Generate network	
-	mata: newmat = J(`nodes',`nodes', 0)
+	mata: __nwlattice_newmat = J(`nodes',`nodes', 0)
 	forvalues i = 1/`nodes' {
 		local right = `i' + 1
 		local left = `i' - 1
@@ -80,8 +80,8 @@ program nwlattice
 		local up = `i' - `cols'
 		local down = `i' + `cols'
 		
-		if ((mod(`=`right'-1', `cols') != 0) & `right' <= `nodes') mata: newmat[`i', `right'] = 1
-		if ((mod(`left', `cols') != 0) & `left' > 1) mata: newmat[`i', `left'] = 1
+		if ((mod(`=`right'-1', `cols') != 0) & `right' <= `nodes') mata: __nwlattice_newmat[`i', `right'] = 1
+		if ((mod(`left', `cols') != 0) & `left' > 1) mata: __nwlattice_newmat[`i', `left'] = 1
 		// BUGFIX: was unconditional - a targeted patch for the left-
 		// neighbor condition above excluding node 2's own tie back to
 		// node 1 (`left' > 1' skips `left'==1, i.e. i==2), executed on
@@ -95,9 +95,9 @@ program nwlattice
 		// general condition instead could alter which ties get created
 		// - not attempted here without the same cross-validation rigor
 		// a correctness-affecting formula change would need).
-		if (`nodes' >= 2) mata: newmat[2,1]=1
-		if (`up' > 0) mata: newmat[`i', `up'] = 1 
-		if (`down' > 0 & `down' <= `nodes') mata: newmat[`i', `down'] = 1
+		if (`nodes' >= 2) mata: __nwlattice_newmat[2,1]=1
+		if (`up' > 0) mata: __nwlattice_newmat[`i', `up'] = 1 
+		if (`down' > 0 & `down' <= `nodes') mata: __nwlattice_newmat[`i', `down'] = 1
 		
 		// BUGFIX: xwrap/ywrap's own implementations were swapped relative
 		// to nwlattice.sthlp's documented meaning ("xwrap: wrap
@@ -117,14 +117,14 @@ program nwlattice
 		// the wrong option name).
 		if "`xwrap'" != "" {
 			if mod(`i' - 1, `cols') == 0 {
-				mata: newmat[`i',(`i' + `cols' - 1)] = 1
-				mata: newmat[(`i' + `cols' - 1), `i'] = 1
+				mata: __nwlattice_newmat[`i',(`i' + `cols' - 1)] = 1
+				mata: __nwlattice_newmat[(`i' + `cols' - 1), `i'] = 1
 			}
 		}
 		if "`ywrap'" != "" {
 			if `i' <= `cols'{
-				mata: newmat[`i',(`i' + ((`rows' - 1) * `cols'))] = 1
-				mata: newmat[(`i' + ((`rows' - 1) * `cols')), `i'] = 1
+				mata: __nwlattice_newmat[`i',(`i' + ((`rows' - 1) * `cols'))] = 1
+				mata: __nwlattice_newmat[(`i' + ((`rows' - 1) * `cols')), `i'] = 1
 			}
 		}
 		
@@ -132,7 +132,7 @@ program nwlattice
 	}
 	
 	mata: st_rclear()
-	nwset, mat(newmat) vars(`latticevars') name(`name') `undirected' labs(`labs')
+	nwset, mat(__nwlattice_newmat) vars(`latticevars') name(`name') `undirected' labs(`labs')
 	if "`xvars'" == "" {
 		nwload `randomname', xvars
 	}
@@ -140,7 +140,9 @@ program nwlattice
 		nwload `randomname'
 	}
 	mata: st_global("r(netlist)", "`name'")
-	mata: mata drop newmat
+	mata: mata drop __nwlattice_newmat
+	capture mata: mata drop __nwlattice_*
+	capture confirm number 0
 end
 
 

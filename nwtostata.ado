@@ -31,7 +31,7 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 		foreach x of newlist `gen' {
 			quietly gen `x' = .
 		}
-		mata: st_view(nwtostataview=.,(1,rows(`mat')),tokens("`gen'"))
+		mata: st_view(__nwtostata_view=.,(1,rows(`mat')),tokens("`gen'"))
 	}
 	
 	if "`stub'" != "" {
@@ -47,12 +47,14 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 			quietly gen `stub'`i' =.
 		}
 		unab vars : `stub'*
-		mata: st_view(nwtostataview=.,(1,rows(`mat')),tokens("`vars'"))
+		mata: st_view(__nwtostata_view=.,(1,rows(`mat')),tokens("`vars'"))
 	}
-	mata: nwtostataview[.,.] = `mat'
+	mata: __nwtostata_view[.,.] = `mat'
 	capture quietly compress `gen'
 	capture quietly compress `stub'*
-	mata: mata drop nwtostataview
+	mata: mata drop __nwtostata_view
+	capture mata: mata drop __nwtostata_*
+	capture confirm number 0
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

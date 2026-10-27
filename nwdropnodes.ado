@@ -60,7 +60,9 @@ program nwdropnodes
 	local i = 0
 	
 	if "`keepmat'" == "" {
-		local keepmat = "keepmat"
+		// private name: a Mata matrix of the user (also one called keepmat) is not touched
+		local keepmat = "__nwdropnodes_keepmat"
+		local __dnprivate 1
 		mata: `keepmat' = J(`nodes',1,1)
 		foreach onenode in `nodelist' {
 			if `onenode' <= `nodes' {
@@ -69,8 +71,8 @@ program nwdropnodes
 		}
 	}
 	else {
-		mata: keepmatSize = rows(`keepmat')
-		mata: st_numscalar("r(keepmatsize)", keepmatSize)
+		mata: __nwdropnodes_keepmatSize = rows(`keepmat')
+		mata: st_numscalar("r(keepmatsize)", __nwdropnodes_keepmatSize)
 		if `r(keepmatsize)' != `nodes' {
 			mata: `keepmat' = J(`nodes',1,1)
 			di "{txt}Warning: Mata matrix {bf:keepmat} has the wrong size; no nodes dropped."
@@ -175,17 +177,19 @@ program nwdropnodes
 		local attri = 0
 		foreach attr of varlist `attributes' {
 			local attri = `attri' + 1
-			mata: subattr = select(`attrstash'`attri', `keepvector'')
-			mata: st_view(attrview=.,(1,sum(`keepvector')), "`attr'")
+			mata: __nwdropnodes_subattr = select(`attrstash'`attri', `keepvector'')
+			mata: st_view(__nwdropnodes_attrview=.,(1,sum(`keepvector')), "`attr'")
 			replace `attr' = .
-			mata: attrview[.,.] = subattr
+			mata: __nwdropnodes_attrview[.,.] = __nwdropnodes_subattr
 			mata: mata drop `attrstash'`attri'
 		}
-		mata: mata drop subattr
+		mata: mata drop __nwdropnodes_subattr
 	}
 	mata: mata drop `keepnet' `keepvector'
 	mata: st_rclear()
 	nwcompressobs
+	if "`__dnprivate'" != "" capture mata: mata drop `keepmat'
+	capture confirm number 0
 end
 
 

@@ -134,7 +134,7 @@ program nwgeodesic
 	
 	// Deal with non-existing paths
 	if "`unconnected'" != "" {
-		mata: d = diagonal(*`netobj'->get_matrix())
+		mata: __nwgeodesic_d = diagonal(*`netobj'->get_matrix())
 		if "`unconnected'" == "max" {
 			mata: st_local("unconnected", strofreal(max(*`netobj'->get_matrix())+1))
 			mata: _editvalue((*`netobj'->get_matrix()),., `unconnected')
@@ -143,8 +143,8 @@ program nwgeodesic
 		if _rc == 0 {
 			mata: _editvalue((*`netobj'->get_matrix()),.,`unconnected')
 		}
-		mata: _diag((*`netobj'->get_matrix()), d)
-		mata: mata drop d
+		mata: _diag((*`netobj'->get_matrix()), __nwgeodesic_d)
+		mata: mata drop __nwgeodesic_d
 	}
 
 	mata: st_numscalar("r(nodes)", `nodes')
@@ -157,14 +157,14 @@ program nwgeodesic
 	
 	// Get average shortest path length
 	tempname s
-	mata: _sum = sum(*`netobj'->get_matrix())
+	mata: __nwgeodesic_sum = sum(*`netobj'->get_matrix())
 
-	mata: st_numscalar("r(avgpath)", (_sum / (`r(numpaths)')))
+	mata: st_numscalar("r(avgpath)", (__nwgeodesic_sum / (`r(numpaths)')))
 	if ("`directed'" == "false"){
-		mata: st_numscalar("r(avgpath)", (_sum / (`r(numpaths)' * 2)))
+		mata: st_numscalar("r(avgpath)", (__nwgeodesic_sum / (`r(numpaths)' * 2)))
 		mata: st_numscalar("r(unconnected)",(`r(unconnected)' / 2))
 	}		
-	mata: mata drop _sum
+	mata: mata drop __nwgeodesic_sum
 	
 	// Get rest
 	mata: st_global("r(netname)","`origname'")
@@ -266,6 +266,8 @@ program nwgeodesic
 	// nwbrokerage.ado already use for the identical situation.
 	capture confirm variable `nw_nodename', exact
 	_return restore _geo
+	capture mata: mata drop __nwgeodesic_*
+	capture confirm number 0
 end
 
 /*

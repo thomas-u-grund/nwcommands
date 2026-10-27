@@ -140,7 +140,7 @@ program nwinduced, rclass
 		mata: `__nwind_src' = `netobj'
 		mata: `__nwind_sel' = J(1, `n', 1)
 		mata: `__nwind_sel'[`v'] = 0
-		mata: nw.nws.add("__nwind_sub")
+		mata: __nw.nws.add("__nwind_sub")
 		_nwsyntax __nwind_sub
 		mata: `__nwind_src'->copy_subgraph_into(`netobj', `__nwind_sel')
 		mata: `netobj'->set_name("__nwind_sub")

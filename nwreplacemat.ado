@@ -53,13 +53,17 @@ program nwreplacemat
 		error 198
 	}
 
+	tempname __rmm
+	local __matname "`newmat'"
 	capture mat list `newmat'
 	if _rc == 0 {
-		mata: `newmat' = st_matrix("`newmat'")
+		// a Stata matrix is copied to a Mata matrix with a private name (the user's own Mata variables are not touched)
+		mata: `__rmm' = st_matrix("`newmat'")
+		local __matname "`__rmm'"
 	}
 
-	mata: st_numscalar("r(matrows)", rows(`newmat'))
-	mata: st_numscalar("r(matcols)", cols(`newmat'))
+	mata: st_numscalar("r(matrows)", rows(`__matname'))
+	mata: st_numscalar("r(matcols)", cols(`__matname'))
 	local matrows = r(matrows)
 	local matcols = r(matcols)
 
@@ -95,7 +99,7 @@ program nwreplacemat
 			// matrix's own dimensions, so set_nodenames() must be
 			// updated too or the object would report the OLD node count
 			// forever despite holding a differently-sized edge matrix.
-			mata: `netobj'->set_edge(`newmat')
+			mata: `netobj'->set_edge(`__matname')
 			if "`labsmata'" != "" {
 				mata: `netobj'->set_nodenames(`labsmata')
 			}
@@ -159,7 +163,7 @@ program nwreplacemat
 		// a two-mode network keeps no tie inside a mode: refuse a matrix that has one (before anything is changed)
 		if "`is2mode'" == "true" {
 			tempname __md2 __bm2
-			mata: `__md2' = strtoreal(`netobj'->get_modes())'; `__bm2' = editmissing(`newmat', 0); _diag(`__bm2', 0)
+			mata: `__md2' = strtoreal(`netobj'->get_modes())'; `__bm2' = editmissing(`__matname', 0); _diag(`__bm2', 0)
 			mata: st_local("__bad2", strofreal(sum((`__bm2' :!= 0) :& ((`__md2' * J(1, rows(`__md2'), 1)) :== (J(rows(`__md2'), 1, 1) * `__md2''))) / 2))
 			mata: mata drop `__md2' `__bm2'
 			if `__bad2' > 0 {
@@ -167,7 +171,7 @@ program nwreplacemat
 				error 459
 			}
 		}
-		mata: `netobj'->set_edge(`newmat')
+		mata: `netobj'->set_edge(`__matname')
 		if "`netonly'" == "" {
 			if "`sync'" == "" {
 				nwsync `netname'
@@ -189,7 +193,7 @@ program nwreplacemat
 	}
 
 	// check for directed/undirected of new network and adjust if necessary
-	mata: st_numscalar("r(directed)", (issymmetric(`newmat') == 1))
+	mata: st_numscalar("r(directed)", (issymmetric(`__matname') == 1))
 
 	// was "global nwdirected_`id' = ..." - same legacy-global issue as
 	// above; set_directed() is the modern equivalent (matches
@@ -203,6 +207,8 @@ program nwreplacemat
 
 	// the valued flag follows the new values (a network created empty is unvalued until now)
 	mata: `netobj'->set_valued(("`__wasv'" == "true") | `netobj'->check_valued())
+	capture mata: mata drop `__rmm'
+	capture confirm number 0
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

@@ -13,7 +13,7 @@ program nwqap_p
 		di "{err}predict after {bf:nwqap} takes only a new network name: {bf:predict} {it:newnetname}"
 		error 198
 	}
-	capture mata: st_numscalar("__nwqap_ok", rows(nwqap_fitted_last))
+	capture mata: st_numscalar("__nwqap_ok", rows(__nwqapfit))
 	if _rc != 0 | scalar(__nwqap_ok) == . {
 		di "{err}the fitted values of the last {bf:nwqap} are no longer in memory; rerun {bf:nwqap}"
 		error 498
@@ -22,10 +22,10 @@ program nwqap_p
 	nwvalidate `newnet'
 	local newnet = r(validname)
 	if "`e(fit_directed)'" == "true" {
-		qui nwset, mat(nwqap_fitted_last) name(`newnet') directed labs(`e(fit_labs)')
+		qui nwset, mat(__nwqapfit) name(`newnet') directed labs(`e(fit_labs)')
 	}
 	else {
-		qui nwset, mat(nwqap_fitted_last) name(`newnet') undirected labs(`e(fit_labs)')
+		qui nwset, mat(__nwqapfit) name(`newnet') undirected labs(`e(fit_labs)')
 	}
 	di "{txt}(fitted values stored as network {res}`newnet'{txt})"
 end

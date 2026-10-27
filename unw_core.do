@@ -11302,7 +11302,7 @@ void `NWdef'::keep_nodes(rowvector k){
 	nwcohesion's Moody-White hierarchy, nwego's induced ego-network
 	extraction) that need to keep re-deriving further subgraphs from the
 	ORIGINAL network at each step. The returned instance is never added
-	to the network store (`nw.nws' names/pdefs) - it exists only as long
+	to the network store (`__nw.nws' names/pdefs) - it exists only as long
 	as the caller holds the pointer, so purely-internal recursive use
 	never pollutes the user-visible named-network namespace. set_selfloop()
 	is called before set_edge() (the reverse of `NWsdef'::duplicate()'s
@@ -11340,9 +11340,9 @@ pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
 	extract_subgraph() above, but writes into an ALREADY-REGISTERED
 	`NWdef' instance (`dst') instead of allocating and returning a fresh,
 	unregistered one - for a caller that needs the induced subgraph to
-	become a genuine, user-visible named network in the `nw.nws' store
+	become a genuine, user-visible named network in the `__nw.nws' store
 	(e.g. nwneighbor's own `subnet()' option), matching nw2project.ado's
-	own established "nw.nws.add(name), _nwsyntax name, populate netobj
+	own established "__nw.nws.add(name), _nwsyntax name, populate netobj
 	directly" registration pattern rather than trying to splice a
 	standalone extract_subgraph() pointer into that registry after the
 	fact (unsupported/unverified). Deliberately NOT implemented by having
@@ -12811,7 +12811,7 @@ void `NWdef'::dumper(string scalar prefix) {
 
 	// edges
 	// General validation-stage finding (see docs/CERTIFICATION.md): this
-	// debug-only dump (invoked manually, e.g. `nw.nws.dumper()`, no .ado
+	// debug-only dump (invoked manually, e.g. `__nw.nws.dumper()`, no .ado
 	// command calls it) read `edge' directly with no dense guard - would
 	// have silently printed "no edges" for every node on a sparse-
 	// natively-built network instead of erroring or reflecting reality.

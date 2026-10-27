@@ -166,7 +166,7 @@ assert scalar(mf_bad) == 0
 nwset, mat(J(30, 30, 0)) name(mf1)
 mata:
 bad = 0
-p = nw.nws.pdefs[nw.nws.get_index_of("mf1")]
+p = __nw.nws.pdefs[__nw.nws.get_index_of("mf1")]
 for (t = 1; t <= 60; t++) {
 	n = 30
 	m = 2 + floor(runiform(1,1) * 200)
@@ -384,7 +384,7 @@ quietly nwconstraint big, name(c1)
 global NW_NOFASTKERNELS 1
 quietly nwconstraint big, name(c2)
 global NW_NOFASTKERNELS
-mata: pa = nw.nws.pdefs[nw.nws.get_index_of("c1")]; pb = nw.nws.pdefs[nw.nws.get_index_of("c2")]
+mata: pa = __nw.nws.pdefs[__nw.nws.get_index_of("c1")]; pb = __nw.nws.pdefs[__nw.nws.get_index_of("c2")]
 mata: ea = pa->edgelist(); eb = pb->edgelist()
 mata: st_numscalar("mf_c", rows(ea) == rows(eb) & all(ea[.,1::2] :== eb[.,1::2]) & max(abs(ea[.,3] :- eb[.,3])) < 1e-12)
 assert scalar(mf_c) == 1
