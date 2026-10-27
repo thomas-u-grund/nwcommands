@@ -1,0 +1,15 @@
+pkg,cell,group,rank,impl,rep,status,load1,n_other,wall,secs,converged,iters,ll,names,ests,ses,info,start
+saom,N1,saommata,0,nwsaom,1,ok,2.89,0,1.08,0.2060,1,.,.,outdegree	reciprocity	rate1,-2.249604557	2.466210232	5.499766211,.1248134433	.2371179151	.8417655268,1.1.0 engine native stata 18,2026-10-27 03:22:48
+saom,N1,saommata,0,nwsaom_mata,1,ok,2.89,0,222.46,155.0700,1,.,.,outdegree	reciprocity	rate1,-2.255571938	2.484038568	5.482080072,.1255294611	.250710668	.8749676611,1.1.0 engine mata stata 18,2026-10-27 03:26:31
+saom,N1,saommata,0,nwsaom,2,ok,2.09,0,1.09,0.2120,1,.,.,outdegree	reciprocity	rate1,-2.252778942	2.469546407	5.479362749,.138003201	.2630000962	.8266251528,1.1.0 engine native stata 18,2026-10-27 03:26:32
+saom,N1,saommata,0,nwsaom_mata,2,ok,2.09,0,85.48,46.9260,1,.,.,outdegree	reciprocity	rate1,-2.245180767	2.469593249	5.46481859,.125356938	.2341905392	.8210726103,1.1.0 engine mata stata 18,2026-10-27 03:27:57
+saom,N1,saommata,0,nwsaom,3,ok,1.83,0,1.11,0.2320,1,.,.,outdegree	reciprocity	rate1,-2.25151529	2.471721421	5.48535061,.1276035323	.2477277423	.8447386634,1.1.0 engine native stata 18,2026-10-27 03:27:58
+saom,N1,saommata,0,nwsaom_mata,3,ok,1.83,0,80.23,41.1580,1,.,.,outdegree	reciprocity	rate1,-2.253654888	2.462941084	5.529204432,.1307345221	.248748599	.8156700753,1.1.0 engine mata stata 18,2026-10-27 03:29:19
+saom,U1,saommata,1,nwsaom,1,ok,2.23,0,1.00,0.1000,1,.,.,outdegree	rate1,-1.362764826	1.981385771,.1190988634	.2910903745,1.1.0 engine native stata 18,2026-10-27 03:29:20
+saom,U1,saommata,1,nwsaom_mata,1,error,2.23,0,39.35,,,,,,,,,2026-10-27 03:29:59
+saom,U1,saommata,1,nwsaom,2,ok,2.2,0,0.98,0.0990,1,.,.,outdegree	rate1,-1.357550226	1.968491277,.1188057038	.2994841237,1.1.0 engine native stata 18,2026-10-27 03:30:00
+saom,U1,saommata,1,nwsaom_mata,2,error,2.2,0,40.05,,,,,,,,,2026-10-27 03:30:40
+saom,U1,saommata,1,nwsaom,3,ok,1.89,0,0.98,0.1290,1,.,.,outdegree	rate1,-1.352379449	1.963906955,.1175055168	.2951402595,1.1.0 engine native stata 18,2026-10-27 03:30:41
+saom,U1,saommata,1,nwsaom_mata,3,error,1.89,0,39.80,,,,,,,,,2026-10-27 03:31:21
+saom,N2,saommata,2,nwsaom,1,ok,1.82,0,1.85,0.9910,1,.,.,outdegree	reciprocity	gwesp_.69	rate1	rate2,-2.854048306	2.565096856	1.624341348	6.599434623	5.261872152,.1325533985	.1850641116	.166353454	1.201718565	.8940311827,1.1.0 engine native stata 18,2026-10-27 03:31:23
+saom,N2,saommata,2,nwsaom_mata,1,ok,1.75,0,488.33,448.9080,1,.,.,outdegree	reciprocity	gwesp_.69	rate1	rate2,-2.836573232	2.549217604	1.621038368	6.512880791	5.202741168,.137255501	.1937097997	.1624221293	1.131036885	.879550556,1.1.0 engine mata stata 18,2026-10-27 03:39:31

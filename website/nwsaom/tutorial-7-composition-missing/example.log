@@ -1,0 +1,282 @@
+. * nwsaom tutorial 7: changing actor sets and missing data
+. * Requires the core nwcommands and the package nwsaom.
+. 
+. nwwebuse glasgow, nwclear
+
+. 
+. * Baseline: the complete data
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.697225   .1121093   -24.06   0.000    -2.916956   -2.477495
+ reciprocity |   2.465242     .19969    12.35   0.000     2.073857    2.856627
+   transtrip |   .6289044   .0714796     8.80   0.000     .4888069     .769002
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5028     5.2629 
+          se |    1.1067     0.8923 
+Overall maximum convergence ratio: 0.190 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * ---------------------------------------------------------------
+. * Part 1: composition change. We pretend that pupils 1-4 joined the
+. * school after wave 1 and that pupils 5-7 left after wave 2.
+. * An absent actor's ties must be coded 0 before the actor joins and
+. * kept at the last observed values after the actor leaves.
+. * ---------------------------------------------------------------
+. nwtomata glasgow1, mat(G1)
+
+. nwtomata glasgow2, mat(G2)
+
+. nwtomata glasgow3, mat(G3)
+
+. mata:
+------------------------------------------------- mata (type end to exit) --------------------------
+: G1[1::4, .] = J(4, 50, 0)
+
+: G1[., 1::4] = J(50, 4, 0)
+
+: G3[5::7, .] = G2[5::7, .]
+
+: G3[., 5::7] = G2[., 5::7]
+
+: st_matrix("C1", G1)
+
+: st_matrix("C2", G2)
+
+: st_matrix("C3", G3)
+
+: end
+----------------------------------------------------------------------------------------------------
+
+. nwset, mat(C1) directed name(comp1)
+
+. nwset, mat(C2) directed name(comp2)
+
+. nwset, mat(C3) directed name(comp3)
+
+. 
+. * One 0/1 variable per wave: is the pupil present?
+. generate byte pres1 = _n > 4
+
+. generate byte pres2 = 1
+
+. generate byte pres3 = !inrange(_n, 5, 7)
+
+. tabulate pres1
+
+      pres1 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |          4        8.00        8.00
+          1 |         46       92.00      100.00
+------------+-----------------------------------
+      Total |         50      100.00
+
+. tabulate pres3
+
+      pres3 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |          3        6.00        6.00
+          1 |         47       94.00      100.00
+------------+-----------------------------------
+      Total |         50      100.00
+
+. 
+. nwsaom, waves(comp1 comp2 comp3) outdegree reciprocity transtrip present(pres1 pres2 pres3) seed(4
+> )
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: comp1 comp2 comp3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+comp1_to_c~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.514709   .1123886   -22.38   0.000    -2.734987   -2.294432
+ reciprocity |   2.383011   .1944882    12.25   0.000     2.001821    2.764201
+   transtrip |   .5621572   .0847645     6.63   0.000     .3960219    .7282926
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    8.2471     4.5747 
+          se |    1.7841     0.7200 
+Overall maximum convergence ratio: 0.169 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * What goes wrong if the model is not told about the changes
+. nwsaom, waves(comp1 comp2 comp3) outdegree reciprocity transtrip seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: comp1 comp2 comp3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+comp1_to_c~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |   -2.62262   .1121841   -23.38   0.000    -2.842496   -2.402743
+ reciprocity |   2.456261    .196206    12.52   0.000     2.071704    2.840818
+   transtrip |   .6072784   .0879736     6.90   0.000     .4348533    .7797034
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    7.5197     4.2130 
+          se |    1.4456     0.6905 
+Overall maximum convergence ratio: 0.066 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * Joiners and leavers at times inside a period (RSiena's time scale:
+. * wave 1 = time 1, wave 3 = time 3). Pupils 1-4 join at time 1.5,
+. * pupils 5-7 leave at time 2.5. An actor who is absent at a wave
+. * has no ties in that wave's data.
+. mata:
+------------------------------------------------- mata (type end to exit) --------------------------
+: T1 = G1
+
+: T3 = G3
+
+: T3[5::7, .] = J(3, 50, 0)
+
+: T3[., 5::7] = J(50, 3, 0)
+
+: st_matrix("T1", T1)
+
+: st_matrix("T2", G2)
+
+: st_matrix("T3", T3)
+
+: end
+----------------------------------------------------------------------------------------------------
+
+. nwset, mat(T1) directed name(timed1)
+
+. nwset, mat(T2) directed name(timed2)
+
+. nwset, mat(T3) directed name(timed3)
+
+. generate double jn = 1
+
+. replace jn = 1.5 if _n <= 4
+(4 real changes made)
+
+. generate double lv = 3
+
+. replace lv = 2.5 if inrange(_n, 5, 7)
+(3 real changes made)
+
+. nwsaom, waves(timed1 timed2 timed3) outdegree reciprocity transtrip joinat(jn) leaveat(lv) seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: timed1 timed2 timed3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+timed1_to_~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.613242   .1205242   -21.68   0.000    -2.849465   -2.377019
+ reciprocity |   2.467177   .2110509    11.69   0.000     2.053525    2.880829
+   transtrip |    .570416   .0827945     6.89   0.000     .4081418    .7326903
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    8.1907     6.4872 
+          se |    2.0645     1.0973 
+Overall maximum convergence ratio: 0.140 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * ---------------------------------------------------------------
+. * Part 2: missing data. Pupils 8 and 9 did not answer in wave 2:
+. * their nominations are unknown (missnet), and so are their alcohol
+. * values (missbeh).
+. * ---------------------------------------------------------------
+. mata:
+------------------------------------------------- mata (type end to exit) --------------------------
+: M2 = J(50, 50, 0)
+
+: M2[8::9, .] = J(2, 50, 1)
+
+: _diag(M2, 0)
+
+: st_matrix("miss1", J(50, 50, 0))
+
+: st_matrix("miss2", M2)
+
+: st_matrix("miss3", J(50, 50, 0))
+
+: end
+----------------------------------------------------------------------------------------------------
+
+. generate byte mb1 = 0
+
+. generate byte mb2 = inlist(_n, 8, 9)
+
+. generate byte mb3 = 0
+
+. 
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip missnet(miss1 miss2 miss
+> 3) seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.747335   .1397676   -19.66   0.000    -3.021274   -2.473395
+ reciprocity |   2.544075   .2319734    10.97   0.000     2.089416    2.998735
+   transtrip |   .6478841   .0805108     8.05   0.000     .4900857    .8056824
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.1345     5.2180 
+          se |    1.0683     0.8978 
+Overall maximum convergence ratio: 0.072 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol
+> 1 alcohol2 alcohol3) linear quadratic avalt missbeh(mb1 mb2 mb3) seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+Behavior: alcohol1 alcohol2 alcohol3
+----------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    outdegree |  -2.922766   .1522532   -19.20   0.000    -3.221176   -2.624355
+  reciprocity |   2.468063   .1988948    12.41   0.000     2.078236    2.857889
+    gwesp_.69 |   1.604373   .1615976     9.93   0.000     1.287647    1.921098
+       behsim |   1.426698    .615931     2.32   0.021     .2194952      2.6339
+   beh_linear |   .4229424   .2706495     1.56   0.118    -.1075208    .9534057
+beh_quadratic |  -.6064355   .4572518    -1.33   0.185    -1.502633    .2897615
+    beh_avalt |   1.346736   1.122016     1.20   0.230    -.8523742    3.545846
+-------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+network_rate |    6.5868     5.1593 
+          se |    1.2039     0.9752 
+behavior_r~e |    1.1568     1.8091 
+          se |    0.3251     0.4882 
+Overall maximum convergence ratio: 0.110 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 

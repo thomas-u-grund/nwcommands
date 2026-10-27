@@ -193,10 +193,11 @@ this small, artificial example. After `multinet`, `estat score` and `estat timet
 - **Two-mode networks** (for example pupils and clubs): `nwsaom` detects a bipartite network
   declared with `nwset, bipartite` and lets the actors choose among the events. See "Two-mode networks"
   in `help nwsaom_remarks`.
-- **A behavior in a multinet model**, **undirected networks** (`symmetric`, `symtype()`),
-  **composition change** (`present()`), **missing data** (`missnet()`, `missbeh()`),
-  **structural zeros** (`structural()`), **a covariate-dependent rate** (`ratecov()`) and
-  **combining several groups** (`nwsaom meta`, RSiena's `siena08`) are in `help nwsaom` and
-  `help nwsaom_meta`.
+- **Undirected networks** (`symtype()`) and two-mode networks are in [Tutorial 9](../tutorial-9-undirected-twomode/),
+  **composition change** (`present()`) and **missing data** (`missnet()`, `missbeh()`) in [Tutorial 7](../tutorial-7-composition-missing/),
+  **a covariate-dependent rate** (`ratecov()`), endowment and creation effects and interactions in
+  [Tutorial 10](../tutorial-10-endowment-interaction-rate/), simulation in [Tutorial 11](../tutorial-11-simulation/) and
+  **combining several groups** (`nwsaom meta`, RSiena's `siena08`) in [Tutorial 13](../tutorial-13-meta-analysis/) and **estimating several groups jointly** (`groups()`) in [Tutorial 14](../tutorial-14-several-groups/).
+  A behavior in a multinet model and **structural zeros** (`structural()`) are in `help nwsaom` and `help nwsaom_remarks`.
 - [nwsaom and RSiena](../rsiena/) lists what is different from RSiena; the
   [effect overview](../effects/) lists the effect families.

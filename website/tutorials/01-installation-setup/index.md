@@ -5,7 +5,7 @@ nav_order: 2
 description: "Installing nwcommands 3.0.0 and the model packages from scratch with nwinstall, everything, installing the model packages, choosing a release, and updating."
 ---
 
-# Installation & Setup
+# Tutorial 1: Installation & Setup
 
 This page covers the core `nwcommands` (version 3.0.0) and the four model packages (`nwsaom`,
 `nwergm`, `nwdynam`, `nwrem`), which are installed separately.

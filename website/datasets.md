@@ -23,7 +23,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 50 girls from a school in the West of Scotland, friendship nominations (up to twelve best friends) at three waves, directed. Networks `glasgow1`, `glasgow2`, `glasgow3` (113, 116 and 122 ties). Attributes: smoking, alcohol use and sport at each wave.
 - **Source:** an excerpt of the Teenage Friends and Lifestyle Study. Michell, L. and Amos, A. (1997), *Social Science & Medicine* 44, 1861-1869; Pearson, M. and Michell, L. (2000), *Drugs: Education, Prevention and Policy* 7, 21-37; Pearson, M. and West, P. (2003), *Connections* 25(2), 59-76.
 - **Load:** `nwwebuse glasgow`
-- **Used in:** [nwsaom tutorials 1](../nwsaom/tutorial-1-first-saom/), [4](../nwsaom/tutorial-4-selection-influence/), [5](../nwsaom/tutorial-5-testing-comparing/) and [6](../nwsaom/tutorial-6-beyond/).
+- **Used in:** [nwsaom tutorials 1](../nwsaom/tutorial-1-first-saom/), [4](../nwsaom/tutorial-4-selection-influence/), [5](../nwsaom/tutorial-5-testing-comparing/), [6](../nwsaom/tutorial-6-beyond/), [7](../nwsaom/tutorial-7-composition-missing/), [9](../nwsaom/tutorial-9-undirected-twomode/), [10](../nwsaom/tutorial-10-endowment-interaction-rate/), [11](../nwsaom/tutorial-11-simulation/), [12](../nwsaom/tutorial-12-estimation-speed/) and [14](../nwsaom/tutorial-14-several-groups/) (as csv files, the 50 pupils cut into three groups).
 
 ### s50
 - **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
@@ -35,7 +35,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 26 students (17 girls, 9 boys) in their first year of secondary school, friendship at four waves three months apart, directed. Networks `klas12b_wave1` to `klas12b_wave4`, plus `klas12b_primary` (same primary school). Attributes: delinquency (four waves), alcohol (waves 2-4), sex, age, ethnicity, religion, school advice.
 - **Source:** collected by Andrea Knecht (supervised by Chris Baerveldt, University of Utrecht), 2003-2004. Knecht, A. (2008), *Friendship Selection and Friends' Influence*, PhD dissertation, University of Utrecht. Knecht, Snijders, Baerveldt, Steglich and Raub, "Friendship and delinquency: selection and influence processes in early adolescence", *Social Development*, [doi:10.1111/j.1467-9507.2009.00564.x](https://doi.org/10.1111/j.1467-9507.2009.00564.x).
 - **Load:** `nwwebuse klas12b`
-- **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
+- **Used in:** [nwsaom tutorial 8](../nwsaom/tutorial-8-covariates/) (changing and dyadic covariates).
 
 ### hpotter: peer support in the Harry Potter books
 - **What:** support ties among 64 characters in each of the six books (`hpbook1` to `hpbook6`), directed. Attributes: school year, gender, house.
@@ -102,7 +102,7 @@ Both data sets are two-mode networks: nodes of the first mode (people, `_nwmode`
 - **Source:** Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South: A Social Anthropological Study of Caste and Class*, University of Chicago Press. The attendance matrix is the classic one that is distributed with many network programs; the names are the pseudonyms of the book.
 - **Licence and redistribution:** Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South: A Social Anthropological Study of Caste and Class*, University of Chicago Press. The attendance matrix, the pseudonymous names and the event dates are those of the 1941 publication as distributed in the CRAN package manynet and in other network software. The data have no licence statement of their own, so no licence is asserted here: they are facts (who attended which event), not covered by the GPL-3 of this package, and are redistributed with citation of the source.
 - **Load:** `nwwebuse davis`
-- **Used in:** [Tutorial 9 (two-mode networks)](../tutorials/11-two-mode-networks/); examples for `nwdegree`, `nw2project` and `nwcommunity`.
+- **Used in:** [Tutorial 9 (two-mode networks)](../tutorials/11-two-mode-networks/), [nwsaom tutorial 9](../nwsaom/tutorial-9-undirected-twomode/); examples for `nwdegree`, `nw2project` and `nwcommunity`.
 
 ### ftdirectors_se: company directors in Sweden
 - **What:** 5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes and 5,669 ties, undirected, unvalued. Network `ftdirectors_se`, mode 1 `director`, mode 2 `company`. Directors and companies carry only anonymous identifiers (`P00001`..., `C0001`...). Attributes of the directors: `gender` (1,025 women, 3,485 men, 582 unknown) and `age`; attributes of the companies: `sector`, `industry` and `employees` (number of employees). Missing values are empty (text) or missing (numbers). Most directors sit on one board (390 sit on two to seven), and the projection to the companies (759 ties) falls apart into many small groups of interlocked companies and a large number of companies with no shared director.
@@ -184,7 +184,7 @@ The Siena project describes and distributes its example data at [stats.ox.ac.uk/
 | van Duijn students | no |
 | Knecht classroom | yes: `nwwebuse klas12b` |
 | Teenage Friends and Lifestyle Study (the `s50` excerpt and Glasgow) | yes: `nwwebuse s50` and `nwwebuse glasgow` |
-| Baerveldt | no |
+| Baerveldt | four classes as csv files with [nwsaom tutorial 13](../nwsaom/tutorial-13-meta-analysis/) and [14](../nwsaom/tutorial-14-several-groups/); not in `nwwebuse` |
 | Harry Potter | yes: `nwwebuse hpotter` |
 | Lazega lawyers | yes: `nwwebuse lazega` |
 

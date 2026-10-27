@@ -1,0 +1,17 @@
+pkg,impl,fits,ok,converged,timeout,error,skipped
+dynam,gf_default,66,66,66,0,0,0
+dynam,gf_default_c,66,66,66,0,0,0
+dynam,gf_gather,66,66,66,0,0,0
+dynam,nwdynam,66,66,66,0,0,0
+dynam,nwdynam_mata,40,40,40,0,0,0
+ergm,ergm 4.12.0,56,56,56,0,0,0
+ergm,nwergm 1.2.3,56,56,56,0,0,0
+ergm,nwergm 1.3.0,56,56,56,0,0,0
+rem,nwrem,152,151,151,1,0,0
+rem,relevent_hessF,148,144,144,2,0,2
+rem,relevent_hessT,148,142,142,4,0,2
+saom,RSiena,229,228,212,0,1,0
+saom,nwsaom,242,242,240,0,0,0
+saom,nwsaom_1.0.10,6,6,6,0,0,0
+saom,nwsaom_1.1.0,6,6,6,0,0,0
+saom,nwsaom_mata,7,4,4,0,3,0

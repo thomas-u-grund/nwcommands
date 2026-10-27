@@ -62,3 +62,4 @@ website/vendor/
 # files written into the working directory by some tests
 /flobusiness.net
 /flomarriage.dl
+!bench/scripts/*.R

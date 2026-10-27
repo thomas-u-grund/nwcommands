@@ -5,7 +5,7 @@ nav_order: 4
 description: "Edgelists, UCINET/Pajek formats, and moving networks in and out of nwcommands."
 ---
 
-# Importing & Exporting
+# Tutorial 3: Importing & Exporting
 
 Real network data rarely arrives as an nwcommands-native object — it's a text file, a UCINET
 matrix, or something a collaborator built in Pajek. This tutorial covers moving data across that

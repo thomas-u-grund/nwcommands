@@ -1,0 +1,11 @@
+profile,active_samples,idle_samples,top images (share of active samples)
+R_N1,8893,18494,RSiena.so=71.7%,libR.dylib=13.2%,libsystem_m.dylib=5.1%,libsystem_platform.dylib=4.2%,libsystem_malloc.dylib=3.4%,libc++abi.dylib=2.2%
+R_N2,8936,18653,RSiena.so=80.8%,libR.dylib=8.3%,libsystem_m.dylib=4.9%,libsystem_malloc.dylib=2.3%,libsystem_platform.dylib=1.9%,libc++abi.dylib=1.8%
+R_R1,8977,18755,RSiena.so=86.9%,libR.dylib=8.2%,libsystem_m.dylib=2.0%,libsystem_platform.dylib=1.0%,libc++abi.dylib=1.0%,libsystem_malloc.dylib=0.9%
+R_X1,9032,18664,RSiena.so=86.3%,libR.dylib=4.6%,libsystem_malloc.dylib=3.3%,libc++abi.dylib=2.7%,libsystem_platform.dylib=1.7%,libsystem_m.dylib=1.4%
+R_X2,8854,18617,RSiena.so=60.4%,libR.dylib=21.6%,libsystem_platform.dylib=7.6%,libsystem_malloc.dylib=4.9%,libc++abi.dylib=3.6%,libsystem_m.dylib=1.6%
+nwsaom_N2,8897,18431,saom_sim_macos.plugin=67.3%,libsystem_m.dylib=22.4%,libsystem_platform.dylib=4.6%,StataBE=2.9%,libdyld.dylib=1.6%,libsystem_malloc.dylib=0.9%
+nwsaom_R1,9010,18450,saom_sim_macos.plugin=82.5%,libsystem_m.dylib=10.7%,libsystem_platform.dylib=2.5%,libdyld.dylib=2.3%,StataBE=1.2%,libsystem_malloc.dylib=0.6%
+nwsaom_X1,8542,173665,saom_sim_macos.plugin=54.5%,libsystem_platform.dylib=20.4%,StataBE=17.7%,libsystem_kernel.dylib=3.6%,libsystem_m.dylib=1.7%,libsystem_malloc.dylib=1.4%
+nwsaom_X2,8713,173230,libsystem_platform.dylib=40.2%,StataBE=27.5%,saom_sim_macos.plugin=19.6%,libsystem_kernel.dylib=9.1%,libsystem_malloc.dylib=1.9%,libsystem_c.dylib=0.7%
+nwsaom_mata_N1,8228,18440,StataBE=80.7%,libsystem_malloc.dylib=13.0%,libsystem_platform.dylib=3.6%,libsystem_c.dylib=2.1%,libsystem_kernel.dylib=0.4%,libsystem_m.dylib=0.2%

@@ -17,13 +17,6 @@ network models, from the Stata command line or from dialog boxes.
 [Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-```stata
-. nwwebuse florentine, nwclear
-. nwplot flomarriage, label(_nwnode)
-. nwbetween flomarriage
-. sum _between
-```
-
 ## The packages
 
 nwcommands is a family of five packages. The core handles networks (134 commands and 120 dialog boxes).
@@ -34,7 +27,7 @@ General Public License, version 3.
 | Package | What it does | Follows | Version |
 |---|---|---|---|
 | [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.10.0 |
-| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.1.0 |
+| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.2.0 |
 | [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.3.1 |
 | [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.2.0 |
 | [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.10 |
@@ -65,12 +58,23 @@ Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough)
 `nwversion` shows the installed versions. More on installation, releases and computers without
 internet access: [Installation & Setup](tutorials/01-installation-setup/).
 
+After installing, try this: it loads the Florentine marriage network, plots it, and computes each family's betweenness centrality.
+
+```stata
+. nwwebuse florentine, nwclear
+. nwplot flomarriage, label(_nwnode)
+. nwbetween flomarriage
+. sum _between
+```
+
 ## Where to start
 
 - New to networks in Stata: the [tutorials](tutorials/), starting with Installation & Setup and Core Concepts.
 - You know the command you want: the [command reference](reference/).
 - Coming from R (RSiena, statnet, goldfish, relevent): [nwsaom and RSiena](nwsaom/rsiena/) and the
   "Follows" column above.
+- How fast the model packages are compared with R: [Speed compared with R](nwcommands/speed/) (faster in most of our
+  benchmark models, not in all).
 - Citing the software, licenses and releases: [Citing and licenses](citing/).
 - Problems: issues with the core go to the
   [nwcommands repository](https://github.com/thomas-u-grund/nwcommands/issues); issues with a model

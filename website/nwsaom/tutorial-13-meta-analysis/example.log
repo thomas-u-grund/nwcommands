@@ -1,0 +1,206 @@
+. * nwsaom tutorial 13: combining several groups with a meta-analysis
+. * Requires the core nwcommands and the package nwsaom.
+. * The eight csv files (school1_wave1.csv ... school4_wave2.csv) must be in
+. * the current folder; they are on the website next to this tutorial.
+. 
+. * Four school classes, each observed twice. For each class: read the two
+. * adjacency matrices, remove the (few) self-ties, describe the class, fit
+. * the same model, and store the result.
+. forvalues s = 1/4 {
+  2.     forvalues w = 1/2 {
+  3.         import delimited using "school`s'_wave`w'.csv", clear
+  4.         local n = _N
+  5.         mkmat v1-v`n', matrix(X`w')
+  6.         matrix X`w' = X`w' - diag(vecdiag(X`w'))
+  7.     }
+  8.     clear
+  9.     nwclear
+ 10.     nwset, mat(X1) directed name(school`s'_w1)
+ 11.     nwset, mat(X2) directed name(school`s'_w2)
+ 12.     nwsaom describe, waves(school`s'_w1 school`s'_w2)
+ 13.     display as text _newline "School `s'"
+ 14.     nwsaom, wave1(school`s'_w1) wave2(school`s'_w2) outdegree reciprocity transtrip seed(5)
+ 15.     estimates store school`s'
+ 16. }
+(encoding automatically selected: UTF-8)
+(45 vars, 45 obs)
+(encoding automatically selected: UTF-8)
+(45 vars, 45 obs)
+
+Network data: 2 waves, 45 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1              104      0.0525         2.311
+2              142      0.0717         3.156
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          64       78        40    0.352       118
+----------------------------------------------------------
+
+School 1
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: school1_w1 -> school1_w2
+Actors: 45                             Estimated rate:  7.134 (1.231)
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+school1_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.269302   .1159112   -19.58   0.000    -2.496483    -2.04212
+ reciprocity |    1.56099   .2544959     6.13   0.000     1.062187    2.059793
+   transtrip |   .4678417   .0606097     7.72   0.000     .3490489    .5866345
+------------------------------------------------------------------------------
+Overall maximum convergence ratio: 0.101 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+(encoding automatically selected: UTF-8)
+(37 vars, 37 obs)
+(encoding automatically selected: UTF-8)
+(37 vars, 37 obs)
+
+Network data: 2 waves, 37 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1               38      0.0285         1.027
+2               69      0.0518         1.865
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          21       48        17    0.244        65
+  (Jaccard below 0.3: few ties stay, so the data say little about the change process; see the SAOM l
+> iterature)
+----------------------------------------------------------
+
+School 2
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: school2_w1 -> school2_w2
+Actors: 37                             Estimated rate:  3.637 (0.657)
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+school2_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |   -2.32756   .2064312   -11.28   0.000    -2.732157   -1.922962
+ reciprocity |    2.58864   .3985567     6.50   0.000     1.807483    3.369797
+   transtrip |   1.133352   .3058146     3.71   0.000      .533966    1.732737
+------------------------------------------------------------------------------
+Overall maximum convergence ratio: 0.115 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+(encoding automatically selected: UTF-8)
+(33 vars, 33 obs)
+(encoding automatically selected: UTF-8)
+(33 vars, 33 obs)
+
+Network data: 2 waves, 33 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1               45      0.0426         1.364
+2               36      0.0341         1.091
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          22       14        23    0.373        37
+----------------------------------------------------------
+
+School 3
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: school3_w1 -> school3_w2
+Actors: 33                             Estimated rate:  3.099 (0.805)
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+school3_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -3.339907   .4513279    -7.40   0.000    -4.224494   -2.455321
+ reciprocity |   2.230471   .7497075     2.98   0.003     .7610711    3.699871
+   transtrip |   1.067139   .2882565     3.70   0.000     .5021666    1.632111
+------------------------------------------------------------------------------
+Overall maximum convergence ratio: 0.114 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+(encoding automatically selected: UTF-8)
+(36 vars, 36 obs)
+(encoding automatically selected: UTF-8)
+(36 vars, 36 obs)
+
+Network data: 2 waves, 36 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1               59      0.0468         1.639
+2               88      0.0698         2.444
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          32       56        27    0.278        83
+  (Jaccard below 0.3: few ties stay, so the data say little about the change process; see the SAOM l
+> iterature)
+----------------------------------------------------------
+
+School 4
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: school4_w1 -> school4_w2
+Actors: 36                             Estimated rate:  6.190 (1.272)
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+school4_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.005943   .1370439   -14.64   0.000    -2.274544   -1.737341
+ reciprocity |   1.540736   .2872241     5.36   0.000     .9777869    2.103685
+   transtrip |   .4943343   .1090715     4.53   0.000     .2805581    .7081106
+------------------------------------------------------------------------------
+Overall maximum convergence ratio: 0.065 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * Combine: the mean effect, the between-class standard deviation,
+. * and a test of whether the classes differ
+. nwsaom meta school1 school2 school3 school4
+
+Meta-analysis of 4 fits (RSiena siena08): estimates with a standard error of at least 10 are exclude
+> d
+Tests of mean parameters use a t distribution with n-1 d.f. (n = number of included groups).
+
+IWLS estimates (Snijders & Baerveldt 2003)
+--------------------------------------------------------------------------------
+      effect |   n      mean     s.e.       t       p       sd        Q    p(Q)
+-------------+------------------------------------------------------------------
+   outdegree |   4   -2.3772   0.2535   -9.38   0.003   0.5069     9.05   0.029
+ reciprocity |   4    1.8653   0.2664    7.00   0.006   0.5328     5.91   0.116
+   transtrip |   4    0.6958   0.1734    4.01   0.028   0.3468     8.39   0.039
+--------------------------------------------------------------------------------
+
+Maximum likelihood under normality with  95% profile-likelihood intervals
+----------------------------------------------------------------------------------------------
+      effect |     mean     s.e.     lower    upper        sd    lower    upper
+-------------+--------------------------------------------------------------------------------
+   outdegree |  -2.2339   0.0940   -2.7705  -2.0006    0.0829   0.0000   0.7810
+ reciprocity |   1.8256   0.2162    1.3163   2.5174    0.2423   0.0000   1.0805
+   transtrip |   0.5115   0.0514    0.4104   1.0354    0.0001   0.0000   0.6001
+----------------------------------------------------------------------------------------------
+
+Fisher's combination of one-sided tests (chi-squared, 2n d.f.)
+----------------------------------------------------------
+      effect |     right       p      left       p
+-------------+--------------------------------------------
+   outdegree |     0.000   1.000   807.018   0.000
+ reciprocity |   138.037   0.000     0.003   1.000
+   transtrip |   127.633   0.000     0.000   1.000
+----------------------------------------------------------
+Correlation of estimates and standard errors (Spearman, t approximation for p): see r(meta) columns 
+> corr, corr_p.
+
+. 
+. * The numbers are kept in r()
+. nwsaom meta school1 school2 school3 school4, notable
+
+. matrix list r(theta), format(%7.3f)
+
+r(theta)[4,3]
+      outdegree  reciprocity    transtrip
+y1       -2.269        1.561        0.468
+y1       -2.328        2.589        1.133
+y1       -3.340        2.230        1.067
+y1       -2.006        1.541        0.494
+
+. matrix list r(se), format(%7.3f)
+
+r(se)[4,3]
+       c1     c2     c3
+r1  0.116  0.254  0.061
+r1  0.206  0.399  0.306
+r1  0.451  0.750  0.288
+r1  0.137  0.287  0.109
+
+. 

@@ -1,0 +1,7 @@
+cell,rsiena_n,rsiena_med,nwsaom_n,nwsaom_med,ratio,rsiena_conv,nwsaom_conv
+X2 (all five effects),7,0.965,7,1.51,0.64,,
+X2_no_antiiniso2,5,0.540,5,0.784,0.69,5/5,5/5
+X2_no_cycle4,5,0.528,5,0.825,0.64,5/5,5/5
+X2_no_indegpopularity,5,0.554,5,0.871,0.64,5/5,5/5
+X2_no_outactivity,5,0.550,5,0.887,0.62,5/5,5/5
+X2_no_outiso,5,0.553,5,0.854,0.65,5/5,5/5

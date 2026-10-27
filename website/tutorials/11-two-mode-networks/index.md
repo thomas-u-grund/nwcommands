@@ -5,7 +5,7 @@ nav_order: 10
 description: "Two-mode (affiliation) networks: people and the events or companies they attend; degree, projection to one mode, components, community detection and plotting, with the data sets davis and ftdirectors_se."
 ---
 
-# Two-mode networks
+# Tutorial 9: Two-mode networks
 
 In a **two-mode** (affiliation) network there are two kinds of nodes, and ties run only between the kinds, never
 inside one: women and the social events they attend, directors and the companies on whose boards they sit. This

@@ -5,9 +5,9 @@ nav_order: 11
 description: "Stochastic actor-oriented models (nwsaom), relational event models (nwrem) and dynamic network actor models (nwdynam): installing the packages and a first model of each."
 ---
 
-# Intro to Longitudinal Network Models
+# Tutorial 10: Intro to Longitudinal Network Models
 
-[Tutorial 1](../09-intro-ergm) modeled a single, static network. Three model packages
+The [first ERGM tutorial](../09-intro-ergm) modeled a single, static network. Three model packages
 for network *change* build on the core, each for a different kind of longitudinal data:
 
 | Package | Model | Data |
@@ -48,13 +48,21 @@ The examples below were run with release 1.0.1 of each package and the core `nwc
 
 ## Stochastic actor-oriented models (SAOM)
 
-> **Full nwsaom tutorials.** This page is an overview. `nwsaom` has its own section with six worked tutorials, each with real output:
+> **Full nwsaom tutorials.** This page is an overview. `nwsaom` has its own section with thirteen worked tutorials, each with real output:
 > 1. [A first SAOM](../../nwsaom/tutorial-1-first-saom/)
 > 2. [Convergence](../../nwsaom/tutorial-2-convergence/)
 > 3. [Goodness of fit](../../nwsaom/tutorial-3-goodness-of-fit/)
 > 4. [Selection and influence](../../nwsaom/tutorial-4-selection-influence/)
 > 5. [Testing and comparing](../../nwsaom/tutorial-5-testing-comparing/)
 > 6. [Beyond the basic model](../../nwsaom/tutorial-6-beyond/)
+> 7. [Changing actor sets and missing data](../../nwsaom/tutorial-7-composition-missing/)
+> 8. [Time-varying and dyadic covariates](../../nwsaom/tutorial-8-covariates/)
+> 9. [Undirected and two-mode networks](../../nwsaom/tutorial-9-undirected-twomode/)
+> 10. [Endowment, creation, interactions and rate effects](../../nwsaom/tutorial-10-endowment-interaction-rate/)
+> 11. [Simulation and what-if analysis](../../nwsaom/tutorial-11-simulation/)
+> 12. [Conditional and unconditional estimation, threads and speed](../../nwsaom/tutorial-12-estimation-speed/)
+> 13. [Combining several groups with a meta-analysis](../../nwsaom/tutorial-13-meta-analysis/)
+> 14. [Several groups at once](../../nwsaom/tutorial-14-several-groups/)
 >
 > See also [nwsaom and RSiena](../../nwsaom/rsiena/) and the [installation page](../../nwsaom/install/).
 {: .note }
@@ -150,7 +158,7 @@ RI: expected relative importance of the effect (shares sum to 1 within a period)
 
 Reciprocity and the outdegree term dominate the actors' choices; smoking similarity hardly
 matters. Further postestimation includes `estat gof` (goodness of fit), `estat score` (a test of
-effects held fixed with `fix()`) and `estat simulate`. This is only an overview; the [nwsaom section](../../nwsaom/) has six worked tutorials, an
+effects held fixed with `fix()`) and `estat simulate`. This is only an overview; the [nwsaom section](../../nwsaom/) has thirteen worked tutorials, an
 installation page and a guide for RSiena users. Beyond this model, `nwsaom` also fits
 co-evolving behavior (`behavior()`), several dependent networks (`nwsaom multinet`), maximum
 likelihood instead of the method of moments (`ml`), and Bayesian estimation (`nwsaom bayes`); see

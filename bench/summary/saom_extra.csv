@@ -1,0 +1,9 @@
+model,n_rsiena,n_nwsaom,rsiena_med,rsiena_min,rsiena_max,nwsaom_med,nwsaom_min,nwsaom_max,ratio,conv_rsiena,conv_nwsaom,max_diff_se,worst_param
+X1,7,7,4.42,4.33,4.46,2.31,1.85,2.45,1.91,1/7,7/7,0.07,dep|Rate|||rate|1
+X2,7,7,0.965,0.887,0.979,1.51,1.32,1.58,0.64,7/7,7/7,0.04,dep|outIso|||eval|
+X3,7,7,6.08,6.03,6.35,2.37,2.21,2.48,2.56,7/7,7/7,0.02,friend|Rate|||rate|1
+X4,7,7,13.5,13.1,14.1,2.05,2.01,2.29,6.57,6/7,7/7,0.03,net2|density|||eval|
+X5,7,7,18.6,18.5,19.5,6.32,6.25,6.65,2.94,6/7,7/7,0.05,friend|altX|smoke||eval|
+X6,7,7,5.11,4.96,5.43,1.80,1.74,1.89,2.84,7/7,7/7,0.04,net|density|||eval|
+X7,7,7,6.74,6.47,7.65,4.39,3.88,4.77,1.54,7/7,7/7,0.03,net|Rate|||rate|2
+X8,7,7,4.55,4.27,4.80,2.53,2.43,2.82,1.80,6/7,6/7,0.07,net|recip|||eval|

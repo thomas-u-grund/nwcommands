@@ -5,7 +5,7 @@ nav_order: 3
 description: "What a network is in nwcommands: the current-network model, netname/netlist, and working alongside ordinary Stata variables."
 ---
 
-# Core Concepts
+# Tutorial 2: Core Concepts
 
 Ordinary Stata holds one dataset in memory at a time. nwcommands adds a second kind of object
 alongside it — a **network** — and, unlike a dataset, you can have several networks loaded at

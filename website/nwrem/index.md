@@ -43,6 +43,7 @@ the sister package that splits each event into the choice of the actor and the c
 | Agreement with relevent | coefficients and log likelihoods compared with `rem.dyad()` of relevent 1.2-1 on identical simulated event sequences |
 | Not implemented | triadic and shared-partner effects, fixed effects, the waiting-time (non-ordinal) likelihood, Bayesian estimation |
 | Engine | Mata (no compiled plugin) |
+| Speed | Faster than relevent with degree, inertia and covariate effects (up to 41 times when relevent computes its Hessian, as nwrem always does), slower with recency effects; see [Speed compared with R](../nwcommands/speed/#nwrem-and-relevent) |
 | Version | 1.0.10 (26 October 2026) |
 | License | GNU General Public License, version 3 |
 

@@ -52,7 +52,8 @@ errors in `nwsaom` are the author's.
 | Engine | a compiled, multithreaded plugin for macOS, Linux and Windows |
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
 | Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
-| Version | 1.1.0 (26 October 2026) |
+| Speed | On one thread faster than RSiena in all 28 benchmark models of the article (median 2.1 times); see [Speed compared with R](../nwcommands/speed/#nwsaom-and-rsiena) |
+| Version | 1.2.0 (27 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
@@ -64,6 +65,14 @@ errors in `nwsaom` are the author's.
 - [Tutorial 4: Selection and influence](tutorial-4-selection-influence/): friendship and drinking together.
 - [Tutorial 5: Testing and comparing](tutorial-5-testing-comparing/): `estat score`, `estat timetest`, `estat importance`, `fix()`.
 - [Tutorial 6: Beyond the basic model](tutorial-6-beyond/): maximum likelihood, Bayesian estimation, several networks.
+- [Tutorial 7: Changing actor sets and missing data](tutorial-7-composition-missing/): `present()`, `joinat()`/`leaveat()`, `missnet()`, `missbeh()`: actors who join or leave, and missing data.
+- [Tutorial 8: Time-varying and dyadic covariates](tutorial-8-covariates/): `tvcov()` and `dyadcov()`: covariates that change over time and covariates of pairs.
+- [Tutorial 9: Undirected and two-mode networks](tutorial-9-undirected-twomode/): undirected networks (`symtype()`) and two-mode networks.
+- [Tutorial 10: Endowment, creation, interactions and rate effects](tutorial-10-endowment-interaction-rate/): `endow()`/`creation()`, `interact()`, `ratecov()`, `outrate`.
+- [Tutorial 11: Simulation and what-if analysis](tutorial-11-simulation/): `estat simulate`, `nwsaom simulate`, `estat mems`.
+- [Tutorial 12: Conditional and unconditional estimation, threads and speed](tutorial-12-estimation-speed/): conditional and unconditional estimation, `cores()`, `k0()`/`k3()`.
+- [Tutorial 13: Combining several groups with a meta-analysis](tutorial-13-meta-analysis/): `nwsaom meta` for several groups (RSiena's `siena08`).
+- [Tutorial 14: Several groups at once](tutorial-14-several-groups/): one model for all groups with `groups()` and `gwaves()` (RSiena's `sienaGroupCreate`).
 - [nwsaom and RSiena](rsiena/): what is the same, what differs, a translation table.
 - [Effects](effects/): an overview of the effect families.
 - [How to cite](citation/)

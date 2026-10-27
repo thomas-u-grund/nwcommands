@@ -13,8 +13,8 @@ part of the output, and know when you can trust it.
 **Data.** Three yearly waves of friendship among 50 pupils in a Scottish school, with the pupils'
 smoking, drinking and sport at each wave. These are the data that RSiena ships as `s50`. They are
 available from the nwcommands website, so no file is needed. You need the core `nwcommands` and the
-`nwsaom` package (see [Install](../install/)); the commands below were run with `nwsaom` 1.0.1
-and the core 3.0.0. The complete script and log are in
+`nwsaom` package (see [Install](../install/)); the commands below were run with `nwsaom` 1.1.1
+and the core 3.10.0. The complete script and log are in
 [example.do](example.do) and [example.log](example.log).
 
 ## What a SAOM does, in three sentences
@@ -29,7 +29,7 @@ attractive"), and `nwsaom` finds the coefficients that reproduce the observed ch
 
 ```stata
 . nwsaom version
-nwsaom version 1.1.0, 26oct2026
+nwsaom version 1.1.1, 27oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../saom_sim_macos.plugin (plugin build 140)
   compared with           : R RSiena 1.6.14

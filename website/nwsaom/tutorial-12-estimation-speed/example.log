@@ -1,0 +1,204 @@
+. * nwsaom tutorial 12: conditional and unconditional estimation, threads and speed
+. * Requires the core nwcommands and the package nwsaom.
+. 
+. nwwebuse glasgow, nwclear
+
+. 
+. * The default for a network-only model: conditional estimation
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.854856   .1400576   -20.38   0.000    -3.129364   -2.580348
+ reciprocity |   2.578892   .2021555    12.76   0.000     2.182674    2.975109
+   gwesp_.69 |   1.617413    .164666     9.82   0.000     1.294673    1.940152
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5511     5.2412 
+          se |    1.0627     0.8944 
+Overall maximum convergence ratio: 0.095 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. display e(conditional)
+1
+
+. matrix list e(rates)
+
+e(rates)[1,2]
+        period1    period2
+rate  6.5511083  5.2412283
+
+. 
+. * Unconditional estimation: the rates are estimated like the other parameters
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.810665   .1386126   -20.28   0.000     -3.08234   -2.538989
+ reciprocity |   2.525851    .190443    13.26   0.000      2.15259    2.899112
+   gwesp_.69 |   1.586733   .1643596     9.65   0.000     1.264594    1.908872
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5512     5.2774 
+          se |    1.1503     0.9639 
+Overall maximum convergence ratio: 0.117 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. display e(conditional)
+0
+
+. matrix list e(rates)
+
+e(rates)[1,2]
+        period1    period2
+rate  6.5511843  5.2773608
+
+. 
+. * A model with a co-evolving behavior is always unconditional
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behavior(alcohol1 alcoh
+> ol2 alcohol3) linear quadratic avalt seed(4)
+----------------------------------------------------------------------------------------------------
+SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+Behavior: alcohol1 alcohol2 alcohol3
+----------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    outdegree |  -2.814302   .1305773   -21.55   0.000    -3.070229   -2.558375
+  reciprocity |   2.508239   .1940713    12.92   0.000     2.127866    2.888611
+    gwesp_.69 |   1.598756   .1545302    10.35   0.000     1.295882    1.901629
+   beh_linear |    .433306   .2458313     1.76   0.078    -.0485145    .9151264
+beh_quadratic |  -.5378829   .3190152    -1.69   0.092    -1.163141    .0873755
+    beh_avalt |   1.314275   .9087988     1.45   0.148    -.4669378    3.095488
+-------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+network_rate |    6.5594     5.3153 
+          se |    1.0927     0.9757 
+behavior_r~e |    1.2354     1.6715 
+          se |    0.3484     0.4157 
+Overall maximum convergence ratio: 0.138 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. display e(conditional)
+0
+
+. 
+. * Restarting an unconditional fit: coefficients (theta0) and rates (rate0)
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional s
+> eed(4)
+
+. matrix b = e(b)
+
+. matrix r = e(rates)
+
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional theta0(`=
+> b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(5)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.815351   .1309199   -21.50   0.000     -3.07195   -2.558753
+ reciprocity |   2.533411   .1892364    13.39   0.000     2.162514    2.904307
+   gwesp_.69 |   1.588418   .1657104     9.59   0.000     1.263631    1.913204
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5886     5.3371 
+          se |    1.0602     0.8057 
+Overall maximum convergence ratio: 0.064 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * ---------------------------------------------------------------
+. * Speed. The simulations run in a compiled plugin on several threads.
+. * cores(1) uses one thread, the default uses all physical cores. The
+. * results for a given seed are identical.
+. * ---------------------------------------------------------------
+. display e(engine)
+native
+
+. timer clear
+
+. timer on 1
+
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity
+>  outactivity seed(4) cores(1)
+
+. timer off 1
+
+. matrix b1 = e(b)
+
+. timer on 2
+
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity
+>  outactivity seed(4)
+
+. timer off 2
+
+. matrix b2 = e(b)
+
+. display "largest difference between the two sets of estimates: " mreldif(b1, b2)
+largest difference between the two sets of estimates: 0
+
+. timer list
+   1:      1.33 /        1 =       1.3290
+   2:      0.68 /        1 =       0.6830
+
+. 
+. * ---------------------------------------------------------------
+. * The length of the estimation: k0() simulations in phase 1, k3()
+. * in phase 3. More simulations give smaller convergence t-ratios
+. * and a steadier covariance matrix.
+. * ---------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(4) k0(100) k3(3000
+> ) detail
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.853009   .1314381   -21.71   0.000    -3.110623   -2.595395
+ reciprocity |   2.573407   .1911977    13.46   0.000     2.198666    2.948147
+   gwesp_.69 |   1.611978   .1587291    10.16   0.000     1.300875    1.923082
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5956     5.2375 
+          se |    1.1635     0.8800 
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+RSiena effect names:
+  gwesp_.69                     GWESP I -> K -> J (69)
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a sepa
+> rate criterion):
+  outdegree                 -0.052      reciprocity               -0.047
+  gwesp_.69                 -0.077
+Overall maximum convergence ratio:  0.090
+
+. 
