@@ -15,7 +15,7 @@ local patterns (reciprocity, clustering, homophily) build it.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with the intro tutorial](../tutorials/09-intro-ergm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Manual](https://github.com/thomas-u-grund/nwergm/blob/main/manual/nwergm_manual.pdf){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Manual](https://doi.org/10.5281/zenodo.23661332){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwergm on GitHub](https://github.com/thomas-u-grund/nwergm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## What nwergm is
@@ -58,13 +58,13 @@ The operator terms (`operators()`), the term `balance`, the curved two-mode term
 ## In this section
 
 - [Install](install/): core first, then `nwergm`; releases, updating, the plugin.
-- [Intro to ERGM in Stata](../tutorials/09-intro-ergm/): a first model, information criteria, a Monte Carlo fit and goodness of fit.
-- [Terms](terms/): a map of the term families.
-- [ERGM 2: Terms and model specification](tutorial-2-terms/): covariate, structural and triad terms and how to read them.
-- [ERGM 3: Diagnostics and goodness of fit](tutorial-3-diagnostics/): `estat mcmcdiag`, `estat gof` and what to do when a fit does not converge.
-- [ERGM 4: Missing data and comparing models](tutorial-4-missing-comparing/): missing dyads, `estat ic`, `lrtest`, `predict`.
-- [ERGM 5: Constraints, two-mode networks and operators](tutorial-5-constraints-twomode-operators/).
+- [Tutorial 1: A first ERGM](../tutorials/09-intro-ergm/): a first model, information criteria, a Monte Carlo fit and goodness of fit.
+- [Tutorial 2: Terms and model specification](tutorial-2-terms/): covariate, structural and triad terms and how to read them.
+- [Tutorial 3: Diagnostics and goodness of fit](tutorial-3-diagnostics/): `estat mcmcdiag`, `estat gof` and what to do when a fit does not converge.
+- [Tutorial 4: Missing data and comparing models](tutorial-4-missing-comparing/): missing dyads, `estat ic`, `lrtest`, `predict`.
+- [Tutorial 5: Constraints, two-mode networks and operators](tutorial-5-constraints-twomode-operators/).
 - [nwergm and R's ergm](rergm/): what is the same, what differs, a translation table.
+- [Terms](terms/): a map of the term families.
 - [How to cite](citation/)
 
 ## Links

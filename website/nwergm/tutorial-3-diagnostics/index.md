@@ -5,13 +5,13 @@ nav_order: 4
 description: "Check a Monte Carlo ERGM fit with estat mcmcdiag, judge it with estat gof, and what to do when a model does not converge."
 ---
 
-# ERGM 3: Diagnostics and goodness of fit
+# Tutorial 3: Diagnostics and goodness of fit
 
 **Goal.** Know when a Monte Carlo ERGM fit can be trusted. Two questions need two tools:
 *did the simulation behind the estimates behave?* (`estat mcmcdiag`) and *does the fitted model
 reproduce the network?* (`estat gof`). The page also shows a model that cannot be fitted and what to do about it.
 
-* Builds on [ERGM 2](../tutorial-2-terms/). Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
+* Builds on [Tutorial 2](../tutorial-2-terms/). Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
 * Dyad-independent models are fitted by pseudolikelihood, involve no simulation and need no
   `estat mcmcdiag`; `estat gof` works for every fit.
 
@@ -170,7 +170,7 @@ size, and the header of `estat mcmcdiag` shows the spacing of the final sample, 
 trace (`estat mcmcdiag, plot`) and to raise the target (`mcmleeffectivesize(200)`) for a final analysis. Note that
 even then the autocorrelation is far from zero: independence is not needed, only enough effective draws.
 
-The default fit with `seed(1)` is the same fit as in [ERGM 2](../tutorial-2-terms/) and prints the same numbers there. The
+The default fit with `seed(1)` is the same fit as in [Tutorial 2](../tutorial-2-terms/) and prints the same numbers there. The
 first fit above differs from it because its settings differ. A different `seed()` or a different setting
 gives slightly different numbers; treat differences of this size as simulation noise.
 
@@ -211,7 +211,7 @@ infinite distance (not connected) are less well reproduced (observed 140, simula
 handful of rows are flagged: out-degree 0 (two lawyers send no nominations; the model simulates 0.24 on
 average, p = 0.00), out-degree 9 and 22 (both p = 0.04). With about 60 rows, a few
 small p-values are expected by chance; look for patterns, not single rows. A systematic gap, for
-example too few high-degree nodes, would suggest adding a degree term (see [ERGM 2](../tutorial-2-terms/)).
+example too few high-degree nodes, would suggest adding a degree term (see [Tutorial 2](../tutorial-2-terms/)).
 
 ## A model that cannot be fitted
 
@@ -295,5 +295,5 @@ is loose about connectedness; adding a degree term such as `gwdegree()` would be
 
 ## Where next
 
-[ERGM 4](../tutorial-4-missing-comparing/) turns to missing dyads and to comparing models.
+[Tutorial 4](../tutorial-4-missing-comparing/) turns to missing dyads and to comparing models.
 The syntax of both tools is in `help nwergm_estat`.

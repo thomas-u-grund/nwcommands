@@ -9,9 +9,11 @@ description: "How to cite nwergm, and the statnet and ergm papers it builds on."
 # How to cite
 
 **nwergm.** Cite the package by repository and report the version that produced your results, as printed by
-`nwergm version` (for example "nwergm 1.3.1"). There is no archived record with a DOI yet.
+`nwergm version` (for example "nwergm 1.3.1"). Cite the manual, which has a DOI:
 
-> Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata* (version 1.3.1). [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
+> Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual for version 1.3.* Zenodo. [https://doi.org/10.5281/zenodo.23661332](https://doi.org/10.5281/zenodo.23661332)
+
+The label "1.3" is the series of the manual and holds for all versions 1.3.x. Source code and releases are at [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm).
 
 Give the version printed by `nwergm version`: the operator terms and some other additions need version 1.1.0 or later.
 

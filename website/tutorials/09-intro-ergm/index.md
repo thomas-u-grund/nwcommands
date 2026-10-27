@@ -5,7 +5,7 @@ nav_order: 2
 description: "Exponential-family random graph models with the nwergm package: a first model, missing data, information criteria and goodness of fit."
 ---
 
-# Intro to ERGM in Stata
+# Tutorial 1: A first ERGM
 
 Every tutorial so far has treated a network's structure as a fixed thing to *describe* — count
 ties, compute centrality, extract a path. An **exponential-family random graph model (ERGM)**
