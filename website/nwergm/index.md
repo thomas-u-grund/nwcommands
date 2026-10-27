@@ -40,7 +40,7 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 
 | | |
 |---|---|
-| Terms | 125 of the 139 terms of R's `ergm` 4.12.0 (89.9%), and 125 of the 126 that apply to binary networks (99%); the missing ones are the 13 terms for valued networks and the operator `B`, see [nwergm and R's ergm](rergm/). These counts are those of version 1.1.0; version 1.0.1 has about 110 of the 139 terms.|
+| Terms | 125 of the 139 terms of R's `ergm` 4.12.0 (89.9%), and 125 of the 126 that apply to binary networks (99%); the missing ones are the 13 terms for valued networks and the operator `B`, see [nwergm and R's ergm](rergm/). |
 | Agreement with ergm | for each term, the observed statistics, the maximum pseudolikelihood estimates and the Monte Carlo maximum likelihood estimates were compared with `ergm` 4.12.0 |
 | Estimators | maximum pseudolikelihood (also penalized and other variants), Monte Carlo maximum likelihood, contrastive divergence, stochastic approximation |
 | Networks | directed, undirected and two-mode (bipartite), binary ties |
