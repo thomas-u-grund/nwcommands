@@ -16,7 +16,16 @@ A short list, kept small on purpose. It names what to cite for the software and 
 - Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.2.* Zenodo (all versions). [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 - Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual for version 1.3.* Zenodo. [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-How to cite each package is on the [citing page](../citing/). A Stata Journal article on nwsaom is in preparation.
+How to cite each package is on the [citing page](../citing/).
+
+## Papers about the software
+
+Current versions, as PDF files. The first two are under review, the other two are in preparation; the text may change before publication.
+
+- Grund, T. U. *nwcommands: Scalable and extensible network analysis in Stata.* Under review. [PDF](../papers/grund_nwcommands_paper.pdf)
+- Grund, T. U. *nwplot: Flexible, publication-quality network visualization in Stata.* Under review. [PDF](../papers/grund_nwplot_paper.pdf)
+- Grund, T. U. *nwergm: Native exponential-family random graph models in Stata.* In preparation. [PDF](../papers/grund_nwergm_paper.pdf)
+- Grund, T. U. *Fast estimation of stochastic actor-oriented network models in Stata* (nwsaom). In preparation. [PDF](../papers/grund_nwsaom_paper.pdf)
 
 ## Methods papers behind the packages
 
