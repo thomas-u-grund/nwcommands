@@ -24,7 +24,7 @@ Current versions, as PDF files. The first two are under review, the other two ar
 
 - Grund, T. U. *nwcommands: Scalable and extensible network analysis in Stata.* Under review. [PDF](../papers/grund_nwcommands_paper.pdf)
 - Grund, T. U. *nwplot: Flexible, publication-quality network visualization in Stata.* Under review. [PDF](../papers/grund_nwplot_paper.pdf)
-- Grund, T. U. *nwergm: Native exponential-family random graph models in Stata.* In preparation. [PDF](../papers/grund_nwergm_paper.pdf)
+- Grund, T. U. *Native exponential-family random graph models in Stata* (nwergm). In preparation. [PDF](../papers/grund_nwergm_paper.pdf)
 - Grund, T. U. *Fast estimation of stochastic actor-oriented network models in Stata* (nwsaom). In preparation. [PDF](../papers/grund_nwsaom_paper.pdf)
 
 ## Methods papers behind the packages
