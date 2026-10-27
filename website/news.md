@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 27 October 2026: nwergm 1.3.2
+
+**nwergm 1.3.2: housekeeping** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.2)). No change in the commands or the estimates.
+
+- **README.** The manual's address on Zenodo (all versions) is given, with the advice to cite it together with the package version printed by `nwergm version`.
+- **Development scripts.** The benchmark preparation script no longer depends on the internal name of the core's network registry.
+
 ## 27 October 2026: nwsaom 1.2.0 and the manual for version 1.2
 
 **nwsaom 1.2.0: several groups at once** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.2.0)). Works with nwcommands 3.6.0 and later; no new core needed.
