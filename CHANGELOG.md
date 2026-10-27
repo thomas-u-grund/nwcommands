@@ -4,7 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.11.0] - 2026-10-27
+
+A fix for a clash between a user's own Mata variable and the network registry. The Mata library is unchanged (the library hash is the same as in 3.10.0), so the four model packages need no release and work with 3.10.0 and with 3.11.0.
+
+### Changed
+- **The registry of networks is now the Mata global `__nw` (it was `nw`).** This is visible only to scripts that address the registry directly: `nw.nws.pdefs[1]` must now be written `__nw.nws.pdefs[1]`, and `r(netobj)` strings that a script stored before upgrading must be created again. Code that uses `r(netobj)`, `_nwsyntax` or the `nwtomata` commands needs no change.
 
 ### Fixed
 - **A Mata variable called `nw` broke every command.** The registry of all networks was the global Mata variable `nw`, so a user's own `nw` (a common name) replaced it and the next command stopped with "type mismatch: exp.exp: transmorphic found where struct expected" (cured only by `mata: mata clear`). The registry is now `__nw`. Scripts that address the registry directly (`nw.nws.pdefs[1]`, `r(netobj)` strings stored for later) must say `__nw.nws.pdefs[1]`; code that goes through `r(netobj)` or `_nwsyntax` needs no change. The Mata library is unchanged.

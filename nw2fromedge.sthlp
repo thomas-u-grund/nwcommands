@@ -211,4 +211,4 @@ A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw
 last certified : 29 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.10.0, 26 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
