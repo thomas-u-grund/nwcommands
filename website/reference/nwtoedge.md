@@ -57,29 +57,29 @@ For example,
 
 ```stata
 . nwwebuse glasgow1
-```
-- . nwtoedge glasgow1, egovars(sport1)
-- . list
-- hline 9c -hline 7c -hline 10c -hline 13
-- c | _ego _alter glasgow1 from_sport1 c |
-- hline 9c -hline 7c -hline 10c -hline 13
-- 1. c | 1 1 0 regular c |
-- 2. c | 1 2 0 regular c |
-- 3. c | 1 3 0 regular c |
-- 4. c | 1 4 0 regular c |
-- 5. c | 1 5 0 regular c |
-- hline 9c -hline 7c -hline 10c -hline 13
-- 6. c | 1 6 0 regular c |
-- .....
-- hline 9c -hline 7c -hline 10c -hline 13
-- 11. c | 1 11 1 regular c |
-- 12. c | 1 12 0 regular c |
-- 13. c | 1 13 0 regular c |
-- 14. c | 1 14 1 regular c |
-- 15. c | 1 15 0 regular c |
-- hline 9c -hline 7c -hline 10c -hline 13
-- .....
+. nwtoedge glasgow1, egovars(sport1)
+. list
 
+    +------------------------------------------+
+    | _ego    _alter    glasgow1   from_sport1 |
+    |------------------------------------------|
+ 1. |       1       1          0       regular |
+ 2. |       1       2          0       regular |
+ 3. |       1       3          0       regular |
+ 4. |       1       4          0       regular |
+ 5. |       1       5          0       regular |
+    |------------------------------------------|
+ 6. |       1       6          0       regular |
+              .....
+    |------------------------------------------|
+11. |       1      11          1       regular |
+12. |       1      12          0       regular |
+13. |       1      13          0       regular |
+14. |       1      14          1       regular |
+15. |       1      15          0       regular |
+    |------------------------------------------|
+              .....
+```
 loads the [Glasgow data](netexample) and transforms the network *glasgow1* in an edgelist. For example, *glasgow1[11] = 1* means, that there is a network tie from node 1 to node 11. It also generates a new variable *from_sport1*, which holds in this case information about the attribute of the sender of a tie on the original variable *sport1*.
 
 For two-mode networks see [introduction to two-mode networks](nw2set)) and [nw2toedge](nw2toedge).
@@ -91,29 +91,31 @@ The command can also transform two (or more) networks in edgelists at the same t
 ```
 This generates a dataset with one variable for each network, *glasgow1* and *glasgow2*:
 
-- . list
-- hline 9c -hline 7c -hline 10c -hline 10
-- c | _ego _alter glasgow1 glasgow2 c |
-- hline 9c -hline 7c -hline 10c -hline 10
-- 1. c | 1 1 0 0 c |
-- 2. c | 1 2 0 0 c |
-- 3. c | 1 3 0 0 c |
-- 4. c | 1 4 0 0 c |
-- 5. c | 1 5 0 0 c |
-- hline 9c -hline 7c -hline 10c -hline 10
-- 6. c | 1 6 0 0 c |
-- 7. c | 1 7 0 0 c |
-- 8. c | 1 8 0 0 c |
-- 9. c | 1 9 0 0 c |
-- 10. c | 1 10 0 1 c |
-- hline 9c -hline 7c -hline 10c -hline 10
-- 11. c | 1 11 1 0 c |
-- 12. c | 1 12 0 0 c |
-- 13. c | 1 13 0 0 c |
-- 14. c | 1 14 1 1 c |
-- 15. c | 1 15 0 0 c |
-- .....
+```stata
+. list
 
+    +---------------------------------------+
+    | _ego    _alter    glasgow1   glasgow2 |
+    |---------------------------------------|
+ 1. |       1       1          0          0 |
+ 2. |       1       2          0          0 |
+ 3. |       1       3          0          0 |
+ 4. |       1       4          0          0 |
+ 5. |       1       5          0          0 |
+    |---------------------------------------|
+ 6. |       1       6          0          0 |
+ 7. |       1       7          0          0 |
+ 8. |       1       8          0          0 |
+ 9. |       1       9          0          0 |
+10. |       1      10          0          1 |
+    |---------------------------------------|
+11. |       1      11          1          0 |
+12. |       1      12          0          0 |
+13. |       1      13          0          0 |
+14. |       1      14          1          1 |
+15. |       1      15          0          0 |
+              .....
+```
 `comparevars(varlist)` adds an ego/alter *comparison* column for each listed variable, alongside (not instead of) whatever `egovars()`/`altervars()` already add - e.g. "do ego and alter share the same value" or "how far apart are their values", rather than just the two raw values side by side. `comparemode()` picks which comparison (any [nwexpand mode](nwexpand) - **same** (the default), **dist**, **absdist**, **distinv**, **absdistinv**, **sender**, **receiver**) applies to every variable in `comparevars()`; each variable is internally expanded via [nwexpand](nwexpand) itself (so the exact same, already-certified comparison logic is used, not a reimplementation) and the resulting column is named *mode_varname* - matching [nwexpand](nwexpand)'s own default naming - e.g. `comparevars(sport1)` with the default **comparemode(same)** adds a column named *same_sport1*. **dist**/**distinv**/**sender**/ **receiver** comparisons are directional (ego's value relative to alter's, not the reverse), so adding one automatically triggers the same "any directed network in the list forces `full`" rule already used for a mixed directed/undirected [netlist](netlist) - every dyad appears in both directions, so the signed comparison is preserved correctly for both.
 
 ```stata

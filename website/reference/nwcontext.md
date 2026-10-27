@@ -64,37 +64,39 @@ By default, nodes with missing attributes are excluded from the calculation.
 
 This example loads the Florentine marriage data. The variable *wealth* indicates how rich each family is. ** nwcontext** generates different variables: *w_avg* = average wealth of network neighbors,  *w_min* = wealth of poorest network neighbor, *w_min* = wealth of richest network neighbor, *w_sd* = standard deviation of wealth over network neighbors.
 
-- . nwwebuse florentine
-- . nwcontext flomarriage, attribute(wealth) generate(w_avg)
-- . nwcontext flomarriage, attribute(wealth) generate(w_min) stat(min)
-- . nwcontext flomarriage, attribute(wealth) generate(w_max) stat(max)
-- . nwcontext flomarriage, attribute(wealth) generate(w_sd) stat(sd)
+```stata
+. nwwebuse florentine
+. nwcontext flomarriage, attribute(wealth) generate(w_avg)
+. nwcontext flomarriage, attribute(wealth) generate(w_min) stat(min)
+. nwcontext flomarriage, attribute(wealth) generate(w_max) stat(max)
+. nwcontext flomarriage, attribute(wealth) generate(w_sd) stat(sd)
 
-- . list w*
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
-- c | wealth w_avg w_min w_max w_sd c |
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
-- 1. c | 10 103 103 103 0 c |
-- 2. c | 36 47.66667 8 103 40.33471 c |
-- 3. c | 55 61.5 20 103 41.5 c |
-- 4. c | 44 67.66666 8 146 57.86382 c |
-- 5. c | 20 83.33334 49 146 44.37968 c |
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
-- 6. c | 32 36 36 36 0 c |
-- 7. c | 8 42.5 36 48 4.330127 c |
-- 8. c | 42 8 8 8 0 c |
-- 9. c | 103 31 10 55 17.26268 c |
-- 10. c | 48 10 10 10 0 c |
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
-- 11. c | 49 70 20 146 54.626 c |
-- 12. c | 3 . . . . c |
-- 13. c | 27 99 48 146 40.10819 c |
-- 14. c | 10 75.5 48 103 27.5 c |
-- 15. c | 146 35 20 49 11.89538 c |
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
-- 16. c | 48 46 8 103 41.04469 c |
-- hline 8c -hline 10c -hline 10c -hline 10c -hline 10
+. list w*
 
+    +----------------------------------------------------+
+    | wealth      w_avg      w_min      w_max       w_sd |
+    |----------------------------------------------------|
+ 1. |     10        103        103        103          0 |
+ 2. |     36   47.66667          8        103   40.33471 |
+ 3. |     55       61.5         20        103       41.5 |
+ 4. |     44   67.66666          8        146   57.86382 |
+ 5. |     20   83.33334         49        146   44.37968 |
+    |----------------------------------------------------|
+ 6. |     32         36         36         36          0 |
+ 7. |      8       42.5         36         48   4.330127 |
+ 8. |     42          8          8          8          0 |
+ 9. |    103         31         10         55   17.26268 |
+10. |     48         10         10         10          0 |
+    |----------------------------------------------------|
+11. |     49         70         20        146     54.626 |
+12. |      3          .          .          .          . |
+13. |     27         99         48        146   40.10819 |
+14. |     10       75.5         48        103       27.5 |
+15. |    146         35         20         49   11.89538 |
+    |----------------------------------------------------|
+16. |     48         46          8        103   41.04469 |
+    +----------------------------------------------------+
+```
 You can plot the florentine marriage network with *wealth* as node label to better understand how these values come about:
 
 ```stata

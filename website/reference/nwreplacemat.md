@@ -50,19 +50,21 @@ to overwrite the automatic setting afterwards.
 
 This example generates a ring lattice first (*mynet*), but then replaces the adjacency matrix of this network with a new Mata matrix **J(5,5,99)**.
 
-- . nwring 5, k(1), name(mynet)
-- . mata: net = J(5,5,99)
-- . nwreplacemat mynet, newmat(net)
-- . nwsummarize mynet, matonly
+```stata
+. nwring 5, k(1), name(mynet)
+. mata: net = J(5,5,99)
+. nwreplacemat mynet, newmat(net)
+. nwsummarize mynet, matonly
 
-- 1 2 3 4 5
-- hline 25
-- 1 c | 0 c |
-- 2 c | 99 0 c |
-- 3 c | 99 99 0 c |
-- 4 c | 99 99 99 0 c |
-- 5 c | 99 99 99 99 0 c |
-- hline 25
+     1   2   3   4   5
+  +-------------------------+
+1 |  0                      |
+2 |  99   0                 |
+3 |  99   99   0            |
+4 |  99   99   99   0       |
+5 |  99   99   99   99   0  |
+  +-------------------------+
+```
 
 ## Supported network types
 

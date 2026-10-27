@@ -52,8 +52,7 @@ A node with no ties at all (in any direction) has no tie profile to compare agai
 . * pucci is an isolate in this network - CONCOR requires every node to have a tie
 . nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)
 . nwconcor flomarriage2, generate(_concor)
-```
-```stata
+
 . nwconcor flomarriage2, splits(2) generate(_concor) replace
 ```
 

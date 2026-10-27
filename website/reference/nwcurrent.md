@@ -34,18 +34,20 @@ The *current network* is simply the last network that has been [set](nwset), [im
 
 ## Examples
 
-- . nwwebuse florentine
-- . nwcurrent
-- hline 40
-- Current network: flomarriage
-- Number of nodes: 16
-- hline 40
+```stata
+. nwwebuse florentine
+. nwcurrent
+----------------------------------------
+   Current network:  flomarriage
+   Number of nodes:  16
+----------------------------------------
 
-- . nwcurrent flobusiness
-- hline 40
-- Current network: flobusiness
-- Number of nodes: 16
-- hline 40
+. nwcurrent flobusiness
+----------------------------------------
+   Current network:  flobusiness
+   Number of nodes:  16
+----------------------------------------
+```
 
 ## Supported network types
 
@@ -53,11 +55,13 @@ Not applicable - reports or sets which network is the "current" one; does not re
 
 ## Stored results
 
-- Scalars:
-- r(networks) number of networks
+```stata
+Scalars:
+  r(networks)	number of networks
 
-- Macros:
-- r(current) name of current network
+Macros:
+  r(current)	name of current network
+```
 
 ---
 

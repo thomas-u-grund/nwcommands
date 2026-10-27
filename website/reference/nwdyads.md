@@ -45,21 +45,23 @@ The command also returns the reciprocity of the network.
 
 ```stata
 . nwwebuse florentine
+. nwdyads flomarriage
+
+    Dyad census:  flomarriage
+
+    Mutual |      Null
+-----------+-----------
+        20 |       100
+
+. nwwebuse glasgow
+. nwdyads glasgow3
+
+    Dyad census:  glasgow3
+
+    Mutual |      Asym |      Null
+-----------+-----------+-----------
+        45 |        32 |      1148
 ```
-- . nwdyads flomarriage
-- Dyad census: flomarriage
-
-- Mutualc |Null
-- hline 11c +hline 11
-- 20c |100
-
-- . nwwebuse glasgow
-- . nwdyads glasgow3
-- Dyad census: glasgow3
-
-- Mutualc |Asymc |Null
-- hline 11c +hline 11c +hline 11
-- 45c |32c |1148
 
 ## Supported network types
 

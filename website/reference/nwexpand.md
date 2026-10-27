@@ -55,19 +55,19 @@ An example demonstrates how this works. First, we generate a small dataset with 
 . set obs 6
 . gen gender = (_n > 3)
 . list gender
-```
-- hline 8
-- c | gender c |
-- hline 8
-- 1. c | 0 c |
-- 2. c | 0 c |
-- 3. c | 0 c |
-- 4. c | 1 c |
-- 5. c | 1 c |
-- hline 8
-- 6. c | 1 c |
-- hline 8
 
+   +--------+
+   | gender |
+   |--------|
+1. |      0 |
+2. |      0 |
+3. |      0 |
+4. |      1 |
+5. |      1 |
+   |--------|
+6. |      1 |
+   +--------+
+```
 Next, we use *nwexpand* to generate a new network from this variable. This generate a new network called *same_gender*.
 
 ```stata
@@ -77,18 +77,19 @@ By looking closer at the adjacency matrix *M* of this new network we see how the
 
 *M_ij = (varname[i] == varname[j])*.
 
-- . nwsummarize same_gender, matonly
+```stata
+. nwsummarize same_gender, matonly
 
-- 1 2 3 4 5 6
-- hline 25
-- 1 c | 0 c |
-- 2 c | 1 0 c |
-- 3 c | 1 1 0 c |
-- 4 c | 0 0 0 0 c |
-- 5 c | 0 0 0 1 0 c |
-- 6 c | 0 0 0 1 1 0 c |
-- hline 25
-
+     1   2   3   4   5   6
+  +-------------------------+
+1 |  0                      |
+2 |  1   0                  |
+3 |  1   1   0              |
+4 |  0   0   0   0          |
+5 |  0   0   0   1   0      |
+6 |  0   0   0   1   1   0  |
+  +-------------------------+
+```
 Alternatively, let us select another mode to illustrate the difference. This command generates a new network called *dist_gender* with the following adjacency matrix:
 
 *M_ij = (varname[i] - varname[j])*.
@@ -96,17 +97,17 @@ Alternatively, let us select another mode to illustrate the difference. This com
 ```stata
 . nwexpand gender, mode(dist)
 . nwsummarize dist_gender, matonly
-```
-- 1 2 3 4 5 6
-- hline 31
-- 1 c | 0 0 0 -1 -1 -1 c |
-- 2 c | 0 0 0 -1 -1 -1 c |
-- 3 c | 0 0 0 -1 -1 -1 c |
-- 4 c | 1 1 1 0 0 0 c |
-- 5 c | 1 1 1 0 0 0 c |
-- 6 c | 1 1 1 0 0 0 c |
-- hline 31
 
+      1    2    3    4    5    6
+  +-------------------------------+
+1 |   0    0    0   -1   -1   -1  |
+2 |   0    0    0   -1   -1   -1  |
+3 |   0    0    0   -1   -1   -1  |
+4 |   1    1    1    0    0    0  |
+5 |   1    1    1    0    0    0  |
+6 |   1    1    1    0    0    0  |
+  +-------------------------------+
+```
 Generally, creating networks like this can be extremely useful for many purposes. For example, one can use it to plot the edgecolors of ties differently when two nodes have the same value on some attribute. This example loads the *gang* network and plots the color of ties in such a way that it shows if two gang members (who co-offend with each other) were either 1) both in prison before or 2) both not in prison before.
 
 ```stata

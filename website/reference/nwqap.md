@@ -81,24 +81,24 @@ Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Reg
 . nwwebuse glasgow
 . nwqap glasgow2 glasgow1 smoke1 sport1
 . nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)
+
+        Multiple Regression Quadratic Assignment Procedure
+
+          Estimation    =  QAP
+          Regression    =  logit
+          Permutations  =  500
+          Number of vertices=  50
+          Number of arcs=  116
+
+-----------------------+-------------------------
+              glasgow2 |      Coef.    P-value
+-----------------------+-------------------------
+              glasgow1 |   3.652579        0
+           same_smoke1 |    .514058     .018
+           same_sport1 |    .217359     .394
+                 _cons |  -4.125208
+-----------------------+-------------------------
 ```
-- Multiple Regression Quadratic Assignment Procedure
-
-- Estimation= QAP
-- Regression= logit
-- Permutations= 500
-- Number of vertices= 50
-- Number of arcs= 116
-
-- hline 23c TThline 25
-- glasgow2c |Coef.P-value
-- hline 23c +hline 25
-- glasgow1c |3.6525790
-- same_smoke1c |.514058.018
-- same_sport1c |.217359.394
-- _consc |-4.125208
-- hline 23c BThline 25
-
 This example shows that two individuals are more likely to be friends at time2 (glasgow2) when they already were friends at time1 (glasgow1). Furthermore two individuals *i* and *j* are more likely to be friends at time2 when they both scored the same on smoking at time1 (smoke1). There is no effect for both having scored the same on sport1.
 
 ## Supported network types

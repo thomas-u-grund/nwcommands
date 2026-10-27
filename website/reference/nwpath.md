@@ -78,17 +78,18 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 ```stata
 . nwwebuse florentine
 . nwpath flobusiness, ego(medici) alter(peruzzi)
-```
-- hline 40
-- Network: flobusiness
-- hline 40
-- Ego : medici
-- Alter : peruzzi
-- Shortest path length : 3
-- hline 40
 
-- Path 1: medici => barbadori => castellani => peruzzi
-- Path 2: medici => ridolfi => strozzi => peruzzi
+----------------------------------------
+  Network: flobusiness
+----------------------------------------
+    Ego                  : medici
+    Alter                : peruzzi
+    Shortest path length : 3
+----------------------------------------
+
+  Path 1:  medici => barbadori => castellani => peruzzi
+  Path 2:  medici => ridolfi => strozzi => peruzzi
+```
 
 ## Supported network types
 

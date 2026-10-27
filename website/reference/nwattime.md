@@ -54,14 +54,11 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 ```stata
 . clear
 . input ego alter wave
-```
-- 1 2 1
-- 2 3 1
-- 1 3 2
-- 2 3 2
-- 3 4 3
-
-```stata
+1 2 1
+2 3 1
+1 3 2
+2 3 2
+3 4 3
 . end
 . nwset ego alter, time(wave) name(mynet)
 . nwattime mynet, at(2) name(wave2)

@@ -37,8 +37,8 @@ This is the network version of `unab`. `nwunab` expands and unabbreviates a [net
 . nwwebuse glasgow, nwclear
 . nwunab nets : glasg*
 . di `nets'
+glasgow1 glasgow2 glasgow3
 ```
-- glasgow1 glasgow2 glasgow3
 
 ## Supported network types
 

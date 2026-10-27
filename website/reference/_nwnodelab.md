@@ -34,20 +34,21 @@ Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are 
 ```stata
 . nwwebuse florentine
 . _nwnodelab flomarriage, nodeid(9)
+
+        Network: flomarriage
+        ---------------
+          Nodeid: 9
+          Nodelab: medici
+
+. return list
+
+scalars:
+                r(nodeid) =  9
+
+macros:
+                r(netname) : "flomarriage"
+                r(nodelab) : "medici"
 ```
-- Network: flomarriage
-- hline 15
-- Nodeid: 9
-- Nodelab: medici
-
-- . return list
-
-- scalars:
-- r(nodeid) = 9
-
-- macros:
-- r(netname) : "flomarriage"
-- r(nodelab) : "medici"
 
 ## Stored results
 

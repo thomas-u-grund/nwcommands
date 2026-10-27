@@ -32,8 +32,8 @@ binary]
 | `walks` | switch to the literature's own genuine walk-counting Katz/Bonacich centrality, *(I - alpha*A)^-1 * 1*, instead of this command's own default distance-decay formula (see Description) |
 | `generate`(*`varname`*) | **Required.** Variable name for Katz centrality scores |
 | `replace` | Replace existing variable |
-| *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to
-synopt:`force`Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
+| *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to |
+| `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description

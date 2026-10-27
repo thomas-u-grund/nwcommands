@@ -31,8 +31,9 @@ threshold(#)
 
 `nwdichotomize` converts a valued (weighted) network into a binary one: any dyad whose value is greater than or equal to `threshold()` becomes 1, every other dyad (including missing ties) becomes 0. It is a thin convenience wrapper around [nwrecode](nwrecode) - internally it is exactly equivalent to
 
-- `. nwrecode` *netname* `(`*threshold*`/max=1) (min/max=0)`
-
+```stata
+. nwrecode netname (threshold/max=1) (min/max=0)
+```
 - - given its own name specifically so the common "binarize at a cutoff" operation does not require
 - knowing [nwrecode](nwrecode)'s own general recode-rule syntax. For anything beyond a single cutoff
 - (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode) directly.

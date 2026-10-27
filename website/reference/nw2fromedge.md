@@ -40,26 +40,28 @@ A two-mode network consists of two sets of units (e. g. people and events) and r
 
 An edgelist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, the data
 
-- . use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/institutions.dta", clear
-- . list _all
-- hline 10c -hline 11c -hline 7
-- c | person institu~n years c |
-- hline 10c -hline 11c -hline 7
-- 1. c | Thomas Oxford 5 c |
-- 2. c | Peter Oxford 7 c |
-- 3. c | Tim Oxford 4 c |
-- 4. c | Peter LiU 1 c |
-- 5. c | Tim LiU 1 c |
-- hline 10c -hline 11c -hline 7
-- 6. c | Thomas LiU 1 c |
-- 7. c | Mathilde UdeM 5 c |
-- 8. c | Thomas UdeM 1 c |
-- 9. c | Michael ETH 3 c |
-- 10. c | Michael Groningen 5 c |
-- hline 10c -hline 11c -hline 7
-- 11. c | Thomas ETH 1 c |
-- hline 10c -hline 11c -hline 7
+```stata
+. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/institutions.dta", clear
+. list _all
 
+    +------------------------------+
+    |   person   institu~n   years |
+    |------------------------------|
+ 1. |   Thomas      Oxford       5 |
+ 2. |    Peter      Oxford       7 |
+ 3. |      Tim      Oxford       4 |
+ 4. |    Peter         LiU       1 |
+ 5. |      Tim         LiU       1 |
+    |------------------------------|
+ 6. |   Thomas         LiU       1 |
+ 7. | Mathilde        UdeM       5 |
+ 8. |   Thomas        UdeM       1 |
+ 9. |  Michael         ETH       3 |
+10. |  Michael   Groningen       5 |
+    |------------------------------|
+11. |   Thomas         ETH       1 |
+    +------------------------------+
+```
 stores information about the affiliation of individual researchers.
 
 The following command declares such data as two-mode network data:

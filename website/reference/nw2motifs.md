@@ -98,19 +98,16 @@ Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued
 `nw2motifs` stores in `r()`:
 
 - **Scalars**
-
-- synopt:`r(sixnode)`1 if the motifs of six nodes were counted
-- synopt:`r(n_mode1)`number of nodes of mode 1 (rows)
-- synopt:`r(n_mode2)`number of nodes of mode 2 (columns)
+- **`r(sixnode)`** --- 1 if the motifs of six nodes were counted
+- **`r(n_mode1)`** --- number of nodes of mode 1 (rows)
+- **`r(n_mode2)`** --- number of nodes of mode 2 (columns)
 
 - **Matrices**
-
-- synopt:`r(motifs)`17 x 3 (44 x 3 with `sixnode`): motif, nodes, frequency; 17 x 7 (44 x 7) with `normalise`, with the columns normalise_sum, normalise_sizeclass, normalise_levelsize and normalise_nodesets added
+- **`r(motifs)`** --- 17 x 3 (44 x 3 with `sixnode`): motif, nodes, frequency; 17 x 7 (44 x 7) with `normalise`, with the columns normalise_sum, normalise_sizeclass, normalise_levelsize and normalise_nodesets added
 
 - **Macros**
-
-- synopt:`r(netname)`name of the network
-- synopt:`r(posnorm)`the normalisation of the node position counts
+- **`r(netname)`** --- name of the network
+- **`r(posnorm)`** --- the normalisation of the node position counts
 
 ## References
 

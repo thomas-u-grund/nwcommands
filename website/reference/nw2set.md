@@ -62,8 +62,8 @@ In this dummy example we create 5 observations and 3 new variables v1-v3. After 
 ```stata
 . nwclear
 . set obs 5
-. forvalues i = 1/3{
-gen v = 0
+. forvalues i = 1/3 {
+     gen v = 0
 }
 . nw2set v*
 ```
@@ -75,14 +75,15 @@ In this case, the command interprets the variables `varlist` as egdelist (see [n
 
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, imagine the following kind of data:
 
-- hline 18c -
-- c | fromid toid c |
-- hline 18c -
-- 1. c | Peter LiU c |
-- 2. c | Andreas UCD c |
-- 3. c | Thomas UCD c |
-- hline 18c -
-
+```stata
+   +-------------------+
+   |  fromid      toid |
+   |-------------------|
+1. |  Peter       LiU  |
+2. |  Andreas     UCD  |
+3. |  Thomas      UCD  |
+   +-------------------+
+```
 We can declare this data as a two-mode network like this:
 
 ```stata

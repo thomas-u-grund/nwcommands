@@ -58,8 +58,9 @@ Either **prob()**, **density()** or **census()** needs to be specified.
 
 With option **weights(***p1, p2,...***)** the command generates a weighted network. Here, *p_k* stands for the probability to sample tie weight *k*. The probabilities *p1, p2..., pn* do not necessarily have to sum up to one; they are standardized. For example, the following produces a random network with 10 nodes, where each tie has the probability 0.5 to exist. Furthermore, each one of these randomly sampled ties gets assigned a tie weight because of option **weights()**. In this case, **weights(0.0, 0.3,0.7)** indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with probability 0.3 and tie weight 3 with probability 0.7.
 
-- cmd. nwrandom 10, prob(.5) weights(0.0, 0.3, 0.7)
-
+```stata
+. nwrandom 10, prob(.5) weights(0.0, 0.3, 0.7)
+```
 The command can also be used to generate many random networks at the same time. For example, the following command produces 100 random networks, where ties have the probability 0.1 to exist.
 
 **. nwrandom 50, prob(.1) ntimes(100)**
