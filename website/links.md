@@ -35,5 +35,5 @@ permalink: /links/
 ## Our own
 
 - GitHub: [nwcommands](https://github.com/thomas-u-grund/nwcommands), [nwsaom](https://github.com/thomas-u-grund/nwsaom), [nwergm](https://github.com/thomas-u-grund/nwergm), [nwdynam](https://github.com/thomas-u-grund/nwdynam), [nwrem](https://github.com/thomas-u-grund/nwrem). Questions and problems: [Get help and community](../help/).
-- The nwsaom manual at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807). The nwergm manual at Zenodo: [doi:10.5281/zenodo.23661332](https://doi.org/10.5281/zenodo.23661332).
+- The nwsaom manual at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807). The nwergm manual at Zenodo: [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331).
 - The [nwcommands mailing list](https://groups.google.com/g/nwcommands), for announcements only.
