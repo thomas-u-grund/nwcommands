@@ -73,6 +73,8 @@ After installing, try this: it loads the Florentine marriage network, plots it, 
 - You know the command you want: the [command reference](reference/).
 - Coming from R (RSiena, statnet, goldfish, relevent): [nwsaom and RSiena](nwsaom/rsiena/) and the
   "Follows" column above.
+- How fast the model packages are compared with R: [Speed compared with R](nwcommands/speed/) (faster in most of our
+  benchmark models, not in all).
 - Citing the software, licenses and releases: [Citing and licenses](citing/).
 - Problems: issues with the core go to the
   [nwcommands repository](https://github.com/thomas-u-grund/nwcommands/issues); issues with a model

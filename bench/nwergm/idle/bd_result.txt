@@ -1,0 +1,4 @@
+. display "RESULT bd(maxout=30): " r(t1) " seconds, iterations " e(mcmle_iterations) " converged " e(converged)
+RESULT bd(maxout=30): 3.601 seconds, iterations 4 converged 1
+. display "RESULT unconstrained: " r(t2) " seconds, iterations " e(mcmle_iterations)
+RESULT unconstrained: .202 seconds, iterations 4

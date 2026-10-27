@@ -1,0 +1,31 @@
+cell,group,nwrem_n,nwrem_med,nwrem_min,nwrem_max,nwrem_iters,nwrem_conv,relevent_hessT_n,relevent_hessT_med,relevent_hessT_min,relevent_hessT_max,relevent_hessT_iters,relevent_hessT_conv,agree_relevent_hessT,relevent_hessF_n,relevent_hessF_med,relevent_hessF_min,relevent_hessF_max,relevent_hessF_iters,relevent_hessF_conv,agree_relevent_hessF
+S1_nodsnd_nidrec_e200,rem_S1_nodsnd_nidrec,7,0.045,0.043,0.056,,7/7,7,0.196,0.164,0.215,,7/7,0.00,7,0.156,0.149,0.169,,7/7,0.00
+S1_nodsnd_nidrec_e1000,rem_S1_nodsnd_nidrec,7,0.446,0.441,0.455,,7/7,7,1.63,1.62,1.65,,7/7,0.00,7,1.12,1.11,1.13,,7/7,0.00
+S1_nodsnd_nidrec_e5000_n20,rem_S1_nodsnd_nidrec,7,1.75,1.75,1.77,,7/7,7,4.48,4.46,4.54,,7/7,0.00,7,3.35,3.29,3.41,,7/7,0.00
+S1_nodsnd_nidrec_e5000,rem_S1_nodsnd_nidrec,7,6.58,6.57,6.59,,7/7,7,24.8,24.7,24.9,,7/7,0.01,7,17.5,17.5,17.5,,7/7,0.01
+S1_nodsnd_nidrec_e5000_n100,rem_S1_nodsnd_nidrec,5,14.8,14.8,23.9,,5/5,5,90.4,57.6,102,,5/5,0.00,5,53.9,39.2,63.3,,5/5,0.00
+S1_nodsnd_nidrec_e20000,rem_S1_nodsnd_nidrec,3,72.2,72.1,72.4,,3/3,3,392,388,396,,3/3,0.00,3,345,328,356,,3/3,0.00
+S2_degree4_e200,rem_S2_degree4,7,0.075,0.073,0.092,,7/7,7,0.259,0.259,0.261,,7/7,0.00,7,0.136,0.135,0.136,,7/7,0.00
+S2_degree4_e1000,rem_S2_degree4,7,0.549,0.546,0.554,,7/7,7,2.97,2.85,3.05,,7/7,0.00,7,1.50,1.44,1.68,,7/7,0.00
+S2_degree4_e5000_n20,rem_S2_degree4,7,2.15,2.15,2.18,,7/7,7,8.01,7.57,8.20,,7/7,0.00,7,4.70,4.52,4.92,,7/7,0.00
+S2_degree4_e5000,rem_S2_degree4,7,6.90,6.88,6.91,,7/7,7,48.0,47.3,50.7,,7/7,0.00,7,28.8,27.8,30.6,,7/7,0.00
+S2_degree4_e5000_n100,rem_S2_degree4,5,40.9,40.7,41.0,,5/5,5,153,151,157,,5/5,0.00,5,72.8,72.3,73.9,,5/5,0.00
+S2_degree4_e20000,rem_S2_degree4,1,149,149,149,,1/1,0,>600 (time-out),,,,,,1,575,575,575,,1/1,0.02
+S3_degree4_inertia_e200,rem_S3_degree4_inertia,7,0.204,0.193,0.207,,7/7,7,4.93,4.79,5.62,,7/7,0.00,7,2.40,2.33,2.51,,7/7,0.00
+S3_degree4_inertia_e1000,rem_S3_degree4_inertia,5,1.84,1.73,2.37,,5/5,5,76.1,75.4,77.0,,5/5,0.00,5,34.1,33.5,34.7,,5/5,0.00
+S3_degree4_inertia_e5000_n20,rem_S3_degree4_inertia,3,6.23,6.08,6.44,,3/3,3,214,213,214,,3/3,0.00,3,119,119,120,,3/3,0.00
+S3_degree4_inertia_e5000,rem_S3_degree4_inertia,1,26.2,26.2,26.2,,1/1,0,>600 (time-out),,,,,,0,>600 (time-out),,,,,
+S3_degree4_inertia_e5000_n100,rem_S3_degree4_inertia,5,122,117,124,,5/5,0,not run,,,,,,0,not run,,,,,
+S3_degree4_inertia_e20000,rem_S3_degree4_inertia,1,428,428,428,,1/1,0,not run,,,,,,0,not run,,,,,
+S4_recency_e200,rem_S4_recency,7,0.306,0.297,0.325,,7/7,7,0.353,0.348,0.355,,7/7,0.00,7,0.218,0.217,0.223,,7/7,0.00
+S4_recency_e1000,rem_S4_recency,7,4.01,3.72,5.07,,7/7,7,3.91,3.89,4.01,,7/7,0.00,7,2.39,2.34,2.69,,7/7,0.00
+S4_recency_e5000_n20,rem_S4_recency,7,21.9,21.7,22.2,,7/7,7,10.9,10.8,11.4,,7/7,0.00,7,6.93,6.48,7.31,,7/7,0.00
+S4_recency_e5000,rem_S4_recency,5,75.9,75.0,77.2,,5/5,5,80.5,78.9,81.8,,5/5,0.00,5,58.6,42.8,59.9,,5/5,0.01
+S4_recency_e5000_n100,rem_S4_recency,3,181,177,191,,3/3,3,201,201,202,,3/3,0.00,3,125,122,126,,3/3,0.00
+S4_recency_e20000,rem_S4_recency,0,>600 (time-out),,,,,0,>600 (time-out),,,,,,1,588,588,588,,1/1,
+S5_covariates_e200,rem_S5_covariates,7,0.159,0.156,0.167,,7/7,7,0.479,0.477,0.496,,7/7,0.00,7,0.281,0.277,0.291,,7/7,0.00
+S5_covariates_e1000,rem_S5_covariates,7,1.71,1.64,1.76,,7/7,7,4.83,4.75,5.45,,7/7,0.00,7,2.57,2.54,3.20,,7/7,0.00
+S5_covariates_e5000_n20,rem_S5_covariates,7,5.68,5.51,5.88,,7/7,7,13.3,12.8,13.8,,7/7,0.00,7,8.18,7.92,8.39,,7/7,0.00
+S5_covariates_e5000,rem_S5_covariates,5,24.7,24.2,25.4,,5/5,5,79.3,78.5,80.3,,5/5,0.00,5,48.4,47.1,49.6,,5/5,0.00
+S5_covariates_e5000_n100,rem_S5_covariates,3,94.4,94.2,94.7,,3/3,3,297,294,299,,3/3,0.00,3,163,162,167,,3/3,0.00
+S5_covariates_e20000,rem_S5_covariates,1,439,439,439,,1/1,0,>600 (time-out),,,,,,0,>600 (time-out),,,,,

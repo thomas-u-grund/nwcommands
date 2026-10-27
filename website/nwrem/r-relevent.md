@@ -67,15 +67,7 @@ R edgelist matrix you declare the events with `nwset ..., eventtime()`, add acto
 
 ## Speed
 
-`nwrem` runs in Mata (there is no compiled plugin). On 26 October 2026 we timed it against `rem.dyad()` of relevent 1.2-1 (ordinal likelihood, covariance matrix computed by both) on simulated event streams of 200 to 20,000 events among 20 to 100 actors (Apple M5 Pro, Stata 17, R 4.6; median of 5 fits, fewer for the largest). The time of relevent divided by the time of `nwrem` ranged from 0.75 to 36:
-
-- degree effects (`nodsnd nidrec nidsnd nodrec`): `nwrem` faster by 1.3 to 5.9 times (the two-effect model at 200 events: equal, 0.92); covariate effects: 1.7 to 2.5 times;
-- with `frpsndsnd frrecsnd` added: 14 times (200 events) and 36 times (1,000 events); at 5,000 events relevent needed more than 10 minutes, `nwrem` 34 seconds;
-- recency effects (`rsndsnd rrecsnd`): `nwrem` slightly slower up to 1,000 events (0.75 to 0.9 times the speed of relevent), about equal at 5,000 events; with 20,000 events neither finished within 10 minutes;
-- the largest fits of `nwrem` (20,000 events, 100 actors) took 1.6 to 9.5 minutes;
-- relevent with `hessian=FALSE` is 1.4 to 2.2 times faster than in these timings; `nwrem` always computes the covariance matrix.
-
-The coefficients of the two programs agree to about three significant digits, not to six, because each stops at its own convergence tolerance. Timings depend on the machine, the data and the effects.
+`nwrem` runs in Mata (there is no compiled plugin). On 26 and 27 October 2026 we timed it against `rem.dyad()` of relevent 1.2-1 on simulated event streams of 200 to 20,000 events among 20 to 100 actors (Apple M5 Pro, Stata 18, R 4.6.0). `nwrem` always computes the covariance matrix, so the like-for-like setting in relevent is `hessian=TRUE`; relevent's default is `hessian=FALSE`, and both were timed. `nwrem` was faster than relevent with degree, inertia and covariate effects (up to 41 times with the Hessian) and slower than relevent without the Hessian with the recency effects (`rsndsnd rrecsnd`). The tables, the cases with a time-out and the method are on the page [Speed compared with R](../../nwcommands/speed/#nwrem-and-relevent). The coefficients of the two programs agree to about three significant digits, not to six, because each stops at its own convergence tolerance. Timings depend on the machine, the data and the effects.
 
 ## Acknowledgment
 
