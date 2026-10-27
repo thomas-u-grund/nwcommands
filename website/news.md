@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwcommands 3.11.1
+
+**nwcommands 3.11.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.1)). The four model packages are unchanged by this release.
+
+- **Your own Stata matrices and scalars are no longer overwritten.** `nwcomponents`, `nwkcore`, `nwconcor`, `nwcommunity`, `nwmodularity`, `nwplot` and `nwqap` worked in matrices and scalars with plain names such as `comp_id`, `comp_sizeid`, `components` or `pvalues`. A matrix or scalar of yours with the same name was replaced or removed. They now use private temporary names; the results in `r()` and `e()` are unchanged.
+- **`nwplot` with `components()` no longer stops with error 3301** when the data set has more or fewer rows than the network has nodes.
+
 ## 27 October 2026: nwcommands 3.11.0
 
 **nwcommands 3.11.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.0)). The four model packages are unchanged by this release (they work with it and with 3.10.0).

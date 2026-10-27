@@ -134,4 +134,4 @@ spectrum: only the Fiedler vector could be had from a sparse iteration, which th
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

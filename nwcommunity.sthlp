@@ -168,4 +168,4 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 10,
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
