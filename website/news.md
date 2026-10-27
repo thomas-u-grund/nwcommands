@@ -12,7 +12,7 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
-## 28 October 2026: nwcommands 3.11.1
+## 27 October 2026: nwcommands 3.11.1
 
 **nwcommands 3.11.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.1)). The four model packages are unchanged by this release.
 

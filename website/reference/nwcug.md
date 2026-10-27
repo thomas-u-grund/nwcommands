@@ -90,4 +90,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.11.1, 28 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))

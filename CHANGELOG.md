@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [3.11.1] - 2026-10-28
+## [3.11.1] - 2026-10-27
 
 Fixes for clashes between your own Stata matrices, scalars and variables and those of nwcommands, and one plot error. The Mata library is unchanged, so the four model packages need no release.
 

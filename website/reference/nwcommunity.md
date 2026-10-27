@@ -97,4 +97,4 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 
 ---
 
-*nwcommands version 3.11.1, 28 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))

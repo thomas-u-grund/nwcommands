@@ -69,4 +69,4 @@ in the return vector. When no node with the specified label is found in network 
    {help _nwnodelab}, {help nodeid}
 
 {hline}
-{pstd}{it:nwcommands version 3.11.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

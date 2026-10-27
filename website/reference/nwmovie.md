@@ -126,4 +126,4 @@ Panel mode: binary yes, directed yes, weighted and signed as [nwplot](nwplot) (t
 
 ---
 
-*nwcommands version 3.11.1, 28 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))
