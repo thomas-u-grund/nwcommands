@@ -78,16 +78,17 @@ The remaining four options score the **shared-neighbor structure itself** rather
 
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5 years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 
-- hline 12c -hline 8
-- c | stat c | value c |
-- hline 12c -hline 8
-- c | min c | 1 c |
-- c | max c | 7 c |
-- c | sum c | 14 c |
-- c | mean c | 3.5 c |
-- c | minmax c | 5 c |
-- hline 12c -hline 8
-
+```stata
++---------------------+
+| stat      | value  |
+|---------------------|
+| min       |   1    |
+| max       |   7    |
+| sum       |  14    |
+| mean      | 3.5    |
+| minmax    |   5    |
++---------------------+
+```
 The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](netname), and [nwsummarize](nwsummarize), which displays it.
 
 ## Supported network types

@@ -38,25 +38,26 @@ force]
 
 ## Examples
 
-- . nwclear
-- . nwrandom 10, prob(.1)
-- . nwreach random, sym
-- . nwsummarize _reach, matonly
+```stata
+. nwclear
+. nwrandom 10, prob(.1)
+. nwreach random, sym
+. nwsummarize _reach, matonly
 
-- 1 2 3 4 5 6 7 8 9 10
-- hline 51
-- 1 c | 0 c |
-- 2 c | 1 0 c |
-- 3 c | 1 1 0 c |
-- 4 c | 1 1 1 0 c |
-- 5 c | 1 1 1 1 0 c |
-- 6 c | 1 1 1 1 1 0 c |
-- 7 c | 1 1 1 1 1 1 0 c |
-- 8 c | 0 0 0 0 0 0 0 0 c |
-- 9 c | 1 1 1 1 1 1 1 0 0 c |
-- 10 c | 1 1 1 1 1 1 1 0 1 0 c |
-- hline 51
-
+      1    2    3    4    5    6    7    8    9   10
+   +---------------------------------------------------+
+ 1 |   0                                               |
+ 2 |   1    0                                          |
+ 3 |   1    1    0                                     |
+ 4 |   1    1    1    0                                |
+ 5 |   1    1    1    1    0                           |
+ 6 |   1    1    1    1    1    0                      |
+ 7 |   1    1    1    1    1    1    0                 |
+ 8 |   0    0    0    0    0    0    0    0            |
+ 9 |   1    1    1    1    1    1    1    0    0       |
+10 |   1    1    1    1    1    1    1    0    1    0  |
+   +---------------------------------------------------+
+```
 In this example, there is basically one isolate node (node 8) who is unconnected from everybody else.
 
 ## Supported network types

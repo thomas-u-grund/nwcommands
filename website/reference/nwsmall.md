@@ -64,7 +64,9 @@ Either option **prob()** or **shortcuts()** needs to be specified.
 
 With option **weights(***p1, p2,...***)** the command generates a weighted network. Here, *p_k* stands for the probability to sample tie weight *k*. The probabilities *p1, p2..., pn* do not necessarily have to sum up to one; they are standardized. For example, the following produces a small-world network with 20 nodes. Furthermore, each one of these sampled ties gets assigned a tie weight because of option **weights()**. In this case, **weights(0.0, 0.3,0.7)** indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with probability 0.3 and tie weight 3 with probability 0.7.
 
-- cmd. nwsmall 20, k(2) prob(.2) weights(0.0, 0.3, 0.7)
+```stata
+. nwsmall 20, k(2) prob(.2) weights(0.0, 0.3, 0.7)
+```
 
 ## Examples
 

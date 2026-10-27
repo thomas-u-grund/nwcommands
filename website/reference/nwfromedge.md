@@ -51,24 +51,26 @@ unvalued]
 
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, the data
 
-- hline 14c -
-- c | fromid toid c |
-- hline 14c -
-- 1. c | 1 2 c |
-- 2. c | 2 3 c |
-- 3. c | 4 2 c |
-- hline 14c -
-
+```stata
+   +---------------+
+   |  fromid  toid |
+   |---------------|
+1. |  1       2    |
+2. |  2       3    |
+3. |  4       2    |
+   +---------------+
+```
 stores information about three *ties* (1=>2), (2=>3) and (4=>2) among four unique network nodes. The variables defining the edges can also be `string` variables.
 
-- hline 25c -
-- c | fromid toid valuec |
-- hline 25c -
-- 1. c | Peter Thomas 1 c |
-- 2. c | Tim Peter 3 c |
-- 3. c | Mathilde Thomas 2 c |
-- hline 25c -
-
+```stata
+   +--------------------------+
+   |  fromid    toid     value|
+   |--------------------------|
+1. |  Peter     Thomas   1    |
+2. |  Tim       Peter    3    |
+3. |  Mathilde  Thomas   2    |
+   +--------------------------+
+```
 Here, there are also three relationships: (Peter => Thomas), (Tim => Peter) and (Mathilde => Thomas).
 
 The following command declares such data as network data:

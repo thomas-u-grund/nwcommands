@@ -27,29 +27,33 @@ new(new_nwnode)
 
 ## Examples
 
-- . nwclear
-- . nwrandom 4, prob(1) name(mynet)
-- . list _nwnode _nwinclude
-- hline 9c -hline 10
-- c | _nwnode _nwinc~e c |
-- hline 9c -hline 10
-- 1. c | n1 1 c |
-- 2. c | n2 1 c |
-- 3. c | n3 1 c |
-- 4. c | n4 1 c |
-- hline 9c -hline 10
+```stata
+. nwclear
+. nwrandom 4, prob(1) name(mynet)
+. list _nwnode _nwinclude
 
-- . nwnoderename mynet, old(n1) new(x1)
-- . list _nwnode _nwinclude
-- hline 9c -hline 10
-- c | _nwnode _nwinc~e c |
-- hline 9c -hline 10
-- 1. c | x1 1 c |
-- 2. c | n2 1 c |
-- 3. c | n3 1 c |
-- 4. c | n4 1 c |
-- 5. c | n1 0 c |
-- hline 9c -hline 10
+   +--------------------+
+   | _nwnode   _nwinc~e |
+   |--------------------|
+1. |      n1          1 |
+2. |      n2          1 |
+3. |      n3          1 |
+4. |      n4          1 |
+   +--------------------+
+
+. nwnoderename mynet, old(n1) new(x1)
+. list _nwnode _nwinclude
+
+   +--------------------+
+   | _nwnode   _nwinc~e |
+   |--------------------|
+1. |      x1          1 |
+2. |      n2          1 |
+3. |      n3          1 |
+4. |      n4          1 |
+5. |      n1          0 |
+   +--------------------+
+```
 
 ## Supported network types
 

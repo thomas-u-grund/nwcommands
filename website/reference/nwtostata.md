@@ -24,8 +24,7 @@ mat(matamatrix)
 |---|---|
 | `mat(matamatrix)` | name of the Mata matrix to copy into Stata variables |
 | `gen(namelist)` | one new Stata variable name per column of *matamatrix* |
-| `stub(string)` | generate columns as *stub*`1`, *stub*`2`, ... instead of naming
-them individually |
+| `stub(string)` | generate columns as *stub*`1`, *stub*`2`, ... instead of naming them individually |
 
 ## Description
 
@@ -39,8 +38,7 @@ This is a low-level utility for programmers moving data between Mata and Stata d
 . mata: m = (1,2 \ 3,4 \ 5,6)
 . nwtostata, mat(m) gen(a b)
 . list
-```
-```stata
+
 . mata: m = (1,2 \ 3,4 \ 5,6)
 . nwtostata, mat(m) stub(col)
 . list

@@ -91,6 +91,8 @@ def _specific_inline(s: str) -> str:
 
 
 def _specific_plain(s: str) -> str:
+    s = re.sub(r"\{hline\s+(\d+)\}", lambda m: "-" * int(m.group(1)), s)
+    s = re.sub(r"\{c ([A-Z|+-]+)\}", lambda m: _CHAR.get(m.group(1), ""), s)
     s = DROP_TAGS.sub("", s)
     s = re.sub(r"\{space\s+\d+\}", " ", s)
     s = re.sub(r"\{c -\(\}", "{", s)
@@ -150,6 +152,155 @@ def plain(s: str) -> str:
     return _converge(s, _specific_plain)
 
 
+# ---------------------------------------------------------------------------
+# Display rendering of example blocks (what Stata itself would print)
+# ---------------------------------------------------------------------------
+_CHAR = {"|": "|", "-": "-", "+": "+", "TLC": "+", "TRC": "+", "BLC": "+",
+         "BRC": "+", "TT": "+", "BT": "+", "LT": "|", "RT": "|",
+         "-(": "{", ")-": "}", "'g": "`", "g'": "'"}
+_NOARG = {"com", "txt", "res", "err", "inp", "sf", "bf", "it", "input", "text",
+          "result", "error", "smcl", "p_end", "cmd", "...", "hi", "ul on", "ul off",
+          "reset", "p2colreset", "synoptline"}
+_COLOUR = {"com", "txt", "res", "err", "inp", "sf", "bf", "it", "input",
+           "text", "result", "error", "hi", "cmd", "ul", "opt", "cmdab",
+           "ul", "title", "stata", "help", "helpb", "browse", "net",
+           "manhelp", "mansection", "manlink", "manpage", "view", "bind",
+           "inp", "dtype", "synopt", "p2col"}
+
+
+def _split_arg(inner):
+    """'name args:text' -> (name, args, text); text None if no colon."""
+    m = re.match(r"([A-Za-z_.']+)", inner)
+    name = m.group(1) if m else ""
+    rest = inner[len(name):]
+    i = 0
+    if rest.lstrip().startswith('"'):
+        q = rest.index('"')
+        j = rest.find('"', q + 1)
+        i = j + 1 if j != -1 else len(rest)
+    k = rest.find(":", i)
+    if k == -1:
+        return name, rest.strip(), None
+    return name, rest[:k].strip(), rest[k + 1:]
+
+
+def _balanced(s, i):
+    depth = 0
+    for j in range(i, len(s)):
+        if s[j] == "{":
+            depth += 1
+        elif s[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return True
+    return False
+
+
+def smcl_display(s, start_col=0):
+    """Render one SMCL line the way Stata shows it in a log (plain text)."""
+    out = []
+    n = len(s)
+    i = 0
+
+    def cur():
+        return len("".join(out).split("\n")[-1]) + start_col
+
+    while i < n:
+        ch = s[i]
+        if ch != "{":
+            out.append(ch)
+            i += 1
+            continue
+        if not _balanced(s, i):
+            out.append(ch)  # stray literal brace
+            i += 1
+            continue
+        inner, i = read_balanced(s, i)
+        inner = inner.strip()
+        if inner == "" or inner in _NOARG:
+            continue
+        name, arg, text = _split_arg(inner)
+        if name == "hline":
+            nn = re.match(r"\d+", arg)
+            out.append("-" * (int(nn.group(0)) if nn else 78))
+        elif name == "col" and text is None:
+            nn = re.match(r"\d+", arg)
+            if nn:
+                out.append(" " * max(0, int(nn.group(0)) - 1 - cur()))
+        elif name == "space" and text is None:
+            nn = re.match(r"\d+", arg)
+            out.append(" " * (int(nn.group(0)) if nn else 1))
+        elif name == "dup" and text is not None:
+            nn = re.match(r"\d+", arg)
+            out.append(smcl_display(text) * (int(nn.group(0)) if nn else 1))
+        elif name == "c" and text is None:
+            a = arg.strip()
+            if a in _CHAR:
+                out.append(_CHAR[a])
+            elif a.isdigit():
+                out.append(chr(int(a)))
+            else:
+                out.append("")
+        elif name in ("ralign", "lalign", "center", "rcenter") and text is not None:
+            nn = re.match(r"\d+", arg)
+            t = smcl_display(text)
+            w = int(nn.group(0)) if nn else len(t)
+            out.append(t.ljust(w) if name == "lalign" else
+                       t.rjust(w) if name == "ralign" else t.center(w))
+        elif name in ("right", "center", "lalign") and text is not None:
+            out.append(smcl_display(text))
+        elif name in ("stata", "help", "helpb", "browse", "net", "manhelp",
+                      "mansection", "manlink", "manpage", "view", "bind") \
+                and text is not None:
+            out.append(smcl_display(text))
+        elif text is not None:
+            out.append(smcl_display(text))
+        else:
+            continue
+    return "".join(out)
+
+
+_CODE_TRIGGER = re.compile(
+    r"\s*(?:\{(?:com|txt|res|err|inp|input|result|text|error|sf)\}"
+    r"|\{cmd\}\.|\{hline\s+\d+\}|\{c\s+(?:TLC|TRC|BLC|BRC|LT|RT|TT|BT|\|)\}|\{cmd:\.)")
+
+
+def is_code_start(line):
+    return bool(_CODE_TRIGGER.match(line))
+
+
+def is_code_cont(line, after_blank=False):
+    # a space-indented line right after a blank line is prose ("    See"),
+    # not part of the block; tab-indented / tagged lines still are
+    return ((line[:1] == "\t" or (line[:1] == " " and not after_blank))
+            or is_code_start(line)
+            or bool(re.match(r"\{(?:col|ralign|lalign|center|space|dup)\s", line))
+            or line.lstrip().startswith("{cmd:"))
+
+
+def render_code_block(lines):
+    out = []
+    for ln in lines:
+        lead = ln[: len(ln) - len(ln.lstrip(" \t"))]
+        ln = lead.expandtabs(8) + ln[len(lead):]
+        r = smcl_display(ln.rstrip()).rstrip()
+        out.append(r)
+    # collapse runs of blank lines, trim the ends
+    res = []
+    for r in out:
+        if r == "" and (not res or res[-1] == ""):
+            continue
+        res.append(r)
+    while res and res[-1] == "":
+        res.pop()
+    # command lines (". cmd") start at column 0 as in a log; everything else
+    # is dedented by its common indent so relative alignment is kept
+    prompt = [bool(re.match(r"\s*\. ", r)) for r in res]
+    ind = min((len(r) - len(r.lstrip()) for r, pr in zip(res, prompt)
+               if r and not pr), default=0)
+    return [r.lstrip() if pr else r[ind:] for r, pr in zip(res, prompt)]
+
+
 def get_section(text, name):
     """Return the raw content of {title:name} ... up to the next {title:...}."""
     pattern = re.compile(
@@ -180,12 +331,17 @@ def paragraphs_to_md(raw: str) -> str:
     list_buf = []
     mode = None  # "prose" after {pstd}/{p ...}; None = verbatim-eligible
 
+    pending_blank = []
+
     def flush_code():
         if code_buf:
-            out.append("```stata")
-            out.extend(code_buf)
-            out.append("```")
+            rendered = render_code_block(code_buf)
+            if rendered:
+                out.append("```stata")
+                out.extend(rendered)
+                out.append("```")
             code_buf.clear()
+        pending_blank.clear()
 
     def flush_para():
         if para_buf:
@@ -263,6 +419,29 @@ def paragraphs_to_md(raw: str) -> str:
             else:
                 desc_parts.append(line)
                 continue
+        # example block (Stata input and output as shown in a log): starts at
+        # a line with a colour tag / {hline N} / {c |} / {cmd:. ...} (outside a
+        # {pstd} paragraph, apart from {cmd:. ...}); continues over
+        # tab-indented lines and over blank lines that are followed by more
+        # of the block; ends at the first line that is neither.
+        if code_buf:
+            if stripped == "":
+                pending_blank.append(line)
+                continue
+            if mode != "prose" and is_code_cont(line, bool(pending_blank)):
+                code_buf.extend(pending_blank)
+                pending_blank.clear()
+                code_buf.append(line)
+                continue
+            flush_all()
+            mode = None
+            if stripped == "":
+                continue
+        elif (mode != "prose" and is_code_start(line)) or \
+                (stripped.startswith("{cmd:. ") or stripped.startswith("{cmd:.}")):
+            flush_all()
+            code_buf.append(line)
+            continue
         # paragraph-indent directive lines, alone on a line: start a
         # reflowable prose paragraph.
         if re.fullmatch(r"\{p(?:std|more2?|hang2?)\}(?:\{\.\.\.\})?", stripped):
@@ -286,7 +465,7 @@ def paragraphs_to_md(raw: str) -> str:
         # bullet/definition-list item. Uses balanced-brace matching for the
         # label (often itself a nested tag, e.g. {bf:e(N)}) and a plain
         # search for the closing {p_end}, mirroring the {cmd:} handling below.
-        p2col_m = re.match(r"\{p2col(?:\s+[\d ]+)?:", stripped)
+        p2col_m = re.match(r"\{(?:p2col|synopt)(?:\s+[\d ]+)?:", stripped)
         if p2col_m:
             flush_para()
             flush_verbatim()
@@ -309,18 +488,14 @@ def paragraphs_to_md(raw: str) -> str:
             inner = content[len("cmd:") :]
             remainder = stripped[after:].strip()
             if remainder in ("", "{p_end}"):
-                flush_para()
-                flush_verbatim()
-                flush_list()
-                code_buf.append(plain(inner))
+                flush_all()
+                code_buf.append(line)
                 continue
             # a handful of source files have a stray literal brace outside
             # the {cmd:...} tag (a typo for {c -(}/{c )-}) - keep it verbatim
             if re.fullmatch(r"[{}]*", remainder):
-                flush_para()
-                flush_verbatim()
-                flush_list()
-                code_buf.append(plain(inner) + remainder)
+                flush_all()
+                code_buf.append(line)
                 continue
         if stripped == "":
             flush_all()
@@ -373,13 +548,19 @@ def parse_syntax_and_options(raw: str):
         else:
             opt = inline(inner)
             pend = raw.find("{p_end}", after)
-            if pend == -1:
+            nxt = tag_re.search(raw, after)
+            if nxt and (pend == -1 or nxt.start() < pend):
+                # a row whose {p_end} is missing in the help file: it ends
+                # where the next row starts
+                desc_raw = raw[after:nxt.start()]
+                pos = nxt.start()
+            elif pend == -1:
                 desc_raw = raw[after:]
                 pos = n
             else:
                 desc_raw = raw[after:pend]
                 pos = pend + len("{p_end}")
-            desc = inline(desc_raw)
+            desc = re.sub(r"\s*\n\s*", " ", inline(desc_raw))
             current_rows.append((opt, desc))
     if current_group is not None or current_rows:
         groups.append((current_group, current_rows))
@@ -528,6 +709,28 @@ def parse_topical(path: Path):
     return tree
 
 
+def keep_hand_front_matter(stem, md):
+    """Front matter keys that were added by hand to an existing page in
+    website/reference/ (grand_parent, ...) and that the converter does not
+    write itself are carried over, so regenerating does not lose them."""
+    old = REPO / "website" / "reference" / f"{stem}.md"
+    if not old.exists():
+        return md
+    m = re.match(r"---\n(.*?)\n---\n", old.read_text(), re.S)
+    if not m:
+        return md
+    new_m = re.match(r"---\n(.*?)\n---\n", md, re.S)
+    new_keys = {l.split(":", 1)[0] for l in new_m.group(1).split("\n")}
+    extra = [l for l in m.group(1).split("\n")
+             if ":" in l and l.split(":", 1)[0] not in new_keys]
+    if not extra:
+        return md
+    lines = new_m.group(1).split("\n")
+    k = next((i for i, l in enumerate(lines) if l.startswith("parent:")), len(lines) - 1)
+    lines[k + 1:k + 1] = extra
+    return "---\n" + "\n".join(lines) + "\n---\n" + md[new_m.end():]
+
+
 def main():
     tree = parse_topical(REPO / "nwtopical.sthlp")
 
@@ -596,6 +799,7 @@ def main():
     for f in STHLP_FILES:
         try:
             cmd_name, short_desc, md = convert_file(f)
+            md = keep_hand_front_matter(f.stem, md)
             (REF_OUT / f"{f.stem}.md").write_text(md)
             n_ok += 1
         except Exception as e:

@@ -61,8 +61,7 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 . nwplot, gen(xcoord ycoord)
 . replace xcoord = .2 if _n < 5
 . nwplot, nodexy(xcoord ycoord)
-```
-```stata
+
 . * fixed coordinates across two waves of the same network
 . nwplot wave1, generate(x1 y1)
 . nwplot wave2, nodexy(x1 y1)
@@ -105,16 +104,13 @@ Colors, symbols and size of nodes can be changed accoring to a `varname`. Furthe
 . nwwebuse glasgow, nwclear
 . nwplot glasgow1, color(smoke1)
 . nwplot, color(smoke1, colorpalette(red yellow cyan))
-```
-```stata
+
 . nwplot glasgow1, symbol(sport1)
 . nwplot glasgow1, symbol(sport1, symbolpalette(T S))
-```
-```stata
+
 . nwplot glasgow1, size(alcohol1)
 . nwplot, size(alcohol1, forcekeys1(1 5 10 20))
-```
-```stata
+
 . nwplot glasgow1, size(alcohol1) color(smoke1) symbol(sport1)
 ```
 nwcommands ships three schemes purpose-built for network plots - s1network, s2network, and s3network - each giving node fill and edge line colors that are visually distinct by default (an ordinary Stata scheme such as the default **stcolor** typically does not, since a single data series' marker and connecting line usually should match - reasonable for an ordinary statistical graph, not for a network plot). `nwplot` defaults to **s1network** unless `scheme()` is specified explicitly.
@@ -129,6 +125,8 @@ nwcommands ships three schemes purpose-built for network plots - s1network, s2ne
 ```
 ```stata
 . nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(economist)
+```
+```stata
 . set scheme s2network
 ```
 This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path to color the edges of the original network and change the size of the edges on this path.

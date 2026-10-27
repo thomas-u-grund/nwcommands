@@ -72,31 +72,34 @@ The stored results **r(dg_central)** (undirected), **r(indg_central)** and **r(o
 
 - This is the example used in Opsahl et al. (2010, Table 1):
 
-- . nwclear
-- . nwset, mat((.,4,4,0,0,0\
-- 4,.,2,1,1,0\
-- 4,2,.,0,0,0\
-- 0,1,0,.,0,0\
-- 0,1,0,0,.,7\
-- 0,0,0,0,7,.)) undirected labs(A, B, C, D, E, F)
-- . qui nwdegree, alpha(0) generate(deg0)
-- . qui nwdegree, alpha(.5) generate(deg0_5)
-- . qui nwdegree, alpha(1) generate(deg1)
-- . qui nwdegree, alpha(1.5) generate(deg1_5)
+```stata
+. nwclear
+. nwset, mat((.,4,4,0,0,0\
+              4,.,2,1,1,0\
+              4,2,.,0,0,0\
+              0,1,0,.,0,0\
+              0,1,0,0,.,7\
+              0,0,0,0,7,.)) undirected labs(A, B, C, D, E, F)
 
-- . list deg*
-- hline 6c -hline 11c -hline 6c -hline 11
-- c | deg0 deg0_5 deg1 deg1_5 c |
-- hline 6c -hline 11c -hline 6c -hline 11
-- 1. c | 2 4 8 16 c |
-- 2. c | 4 5.6568542 8 11.313708 c |
-- 3. c | 2 3.4641016 6 10.392304 c |
-- 4. c | 1 1 1 1 c |
-- 5. c | 2 4 8 16 c |
-- hline 6c -hline 11c -hline 6c -hline 11
-- 6. c | 1 2.6457512 7 18.52026 c |
-- hline 6c -hline 11c -hline 6c -hline 11
+. qui nwdegree, alpha(0) generate(deg0)
+. qui nwdegree, alpha(.5) generate(deg0_5)
+. qui nwdegree, alpha(1) generate(deg1)
+. qui nwdegree, alpha(1.5) generate(deg1_5)
 
+. list deg*
+
+   +-------------------------------------+
+   | deg0      deg0_5   deg1      deg1_5 |
+   |-------------------------------------|
+1. |    2           4      8          16 |
+2. |    4   5.6568542      8   11.313708 |
+3. |    2   3.4641016      6   10.392304 |
+4. |    1           1      1           1 |
+5. |    2           4      8          16 |
+   |-------------------------------------|
+6. |    1   2.6457512      7    18.52026 |
+   +-------------------------------------+
+```
 In the following example, the degree distributions for in- and outdegree are saved in Stata matrices *matindeg* and *matoutdeg*:
 
 ```stata

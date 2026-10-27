@@ -41,14 +41,13 @@ Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued
 `nw2nested` stores in `r()`:
 
 - **Scalars**
-
-- synopt:`r(nodf)`NODF, percent
-- synopt:`r(nodf_mode1)`NODF among the nodes of mode 1, percent
-- synopt:`r(nodf_mode2)`NODF among the nodes of mode 2, percent
-- synopt:`r(cscore)`mean number of checkerboard units per pair
-- synopt:`r(cscore_norm)`mean normalised C-score, 0 to 1 (`bipartite` reports it times 100)
-- synopt:`r(cscore_pairs)`number of pairs in the normalised mean
-- synopt:`r(level)`mode of the C-score pairs
+- **`r(nodf)`** --- NODF, percent
+- **`r(nodf_mode1)`** --- NODF among the nodes of mode 1, percent
+- **`r(nodf_mode2)`** --- NODF among the nodes of mode 2, percent
+- **`r(cscore)`** --- mean number of checkerboard units per pair
+- **`r(cscore_norm)`** --- mean normalised C-score, 0 to 1 (`bipartite` reports it times 100)
+- **`r(cscore_pairs)`** --- number of pairs in the normalised mean
+- **`r(level)`** --- mode of the C-score pairs
 
 ## References
 

@@ -18,16 +18,16 @@ nwrecode [netlist] (rule)
 [(rule) ...]
 [, generate(newnetlist) prefix(str) test]
 where the most common forms for rule are
-hline 16c TThline 13c TThline 27
-c | rule           c | Example     c | Meaning                   c |
-hline 16c +hline 13c +hline 27
-c | # = #          c | 3 = 1       c | 3 recoded to 1            c |
-c | # # = #        c | 2 . = 9     c | 2 and . recoded to 9      c |
-c | #/# = #        c | 1/5 = 4     c | 1 through 5 recoded to 4  c |
-c | nonm:issing = # c | nonmiss = 8 c | all other nonmissing to 8 c |
-c | mis:sing = #    c | miss = 9    c | all other missings to 9   c | 
-c | else  = #      c | else = 44   c | all other to 44           c |
-hline 16c BThline 13c BThline 27
++----------------+-------------+---------------------------+
+| rule           | Example     | Meaning                   |
+|----------------+-------------+---------------------------|
+| # = #          | 3 = 1       | 3 recoded to 1            |
+| # # = #        | 2 . = 9     | 2 and . recoded to 9      |
+| #/# = #        | 1/5 = 4     | 1 through 5 recoded to 4  |
+| nonm:issing = # | nonmiss = 8 | all other nonmissing to 8 |
+| mis:sing = #    | miss = 9    | all other missings to 9   | 
+| else  = #      | else = 44   | all other to 44           |
++----------------+-------------+---------------------------+
 The keyword rules missing, nonmissing, and else must be the
 last rules specified.  else may not be combined with missing or 
 nonmissing.

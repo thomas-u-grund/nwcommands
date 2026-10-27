@@ -47,11 +47,9 @@ Social networks are frequently found to be assortative by degree (popular people
 ```stata
 . nwwebuse glasgow, nwclear
 . nwassortativity glasgow1
-```
-```stata
+
 . nwassortativity glasgow1, attribute(sport1)
-```
-```stata
+
 . nwassortativity glasgow1, weighted
 ```
 

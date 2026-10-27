@@ -41,45 +41,45 @@ silent
 
 ```stata
 . nwwebuse florentine
+. nwsummarize flomarriage
+--------------------------------------------------
+   Network name:  flomarriage
+   Network id:  2
+   Nodes: 16
+   Directed: false
+   Valued:  false
+   Two-mode: false
+   Selfloop: false
+   Edges: 20
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .1666666666666667
+
+. nwclear
+. nwrandom 5, prob(.2) name(mynet)
+. nwsummarize mynet, mat
+--------------------------------------------------
+   Network name:  mynet
+   Network id:  1
+   Nodes: 5
+   Directed: true
+   Valued:  false
+   Two-mode: false
+   Selfloop: false
+   Arcs: 5
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .25
+
+     1   2   3   4   5
+  +---------------------+
+1 |  0   0   0   0   1  |
+2 |  0   0   0   0   0  |
+3 |  0   0   0   0   1  |
+4 |  0   0   0   0   0  |
+5 |  1   1   0   1   0  |
+  +---------------------+
 ```
-- cmd. nwsummarize flomarriage
-- hline 50
-- Network name: flomarriage
-- Network id: 2
-- Nodes: 16
-- Directed: false
-- Valued: false
-- Two-mode: false
-- Selfloop: false
-- Edges: 20
-- Minimum value: 0
-- Maximum value: 1
-- Density: .1666666666666667
-
-- . nwclear
-- . nwrandom 5, prob(.2) name(mynet)
-- . nwsummarize mynet, mat
-- hline 50
-- Network name: mynet
-- Network id: 1
-- Nodes: 5
-- Directed: true
-- Valued: false
-- Two-mode: false
-- Selfloop: false
-- Arcs: 5
-- Minimum value: 0
-- Maximum value: 1
-- Density: .25
-
-- 1 2 3 4 5
-- hline 21
-- 1 c | 0 0 0 0 1 c |
-- 2 c | 0 0 0 0 0 c |
-- 3 c | 0 0 0 0 1 c |
-- 4 c | 0 0 0 0 0 c |
-- 5 c | 1 1 0 1 0 c |
-- hline 21
 
 ## Supported network types
 

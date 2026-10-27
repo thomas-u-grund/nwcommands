@@ -25,10 +25,8 @@ ds_options]
 | | |
 |---|---|
 | `alpha` | List network names in alphabetical order (the default is creation order) |
-| `not` | Invert the selection - list every *other* loaded network instead of the ones
-named in *netlist* |
-| *ds_options* | Any other option is forwarded to Stata's own `ds` (e.g. `varwidth`,
-which controls the display's own column width) |
+| `not` | Invert the selection - list every *other* loaded network instead of the ones named in *netlist* |
+| *ds_options* | Any other option is forwarded to Stata's own `ds` (e.g. `varwidth`, which controls the display's own column width) |
 
 ## Description
 

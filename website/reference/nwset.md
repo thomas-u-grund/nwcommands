@@ -92,8 +92,8 @@ In this dummy example, we create 5 new variables v1-v5 and set a network from th
 
 ```stata
 . nwclear
-. forvalues i = 1/5{
-gen v = 0
+. forvalues i = 1/5 {
+     gen v = 0
 }
 . nwset v*
 ```
@@ -101,17 +101,16 @@ After that we can display the networks that have been set (see also [nwsummarize
 
 ```stata
 . nwset, detail
+--------------------------------------------------
+ 1) Current Network
+--------------------------------------------------
+   Network name: network
+   Directed: true
+   Nodes: 5
+   Network id: 1
+   Variables: v1 v2 v3 v4 v5
+   Labels: v1 v2 v3 v4 v5
 ```
-- hline 50
-- 1) Current Network
-- hline 50
-- Network name: network
-- Directed: true
-- Nodes: 5
-- Network id: 1
-- Variables: v1 v2 v3 v4 v5
-- Labels: v1 v2 v3 v4 v5
-
 There is exactly one network. When neither **name()**, **vars()**, or **labs()** are specified, the command comes up with a suggestion to fill this meta-information.
 
 **ul:2. Declare edgelist from variables**
@@ -120,24 +119,26 @@ In this case, the command interprets the variables `varlist` as egdelist (see [n
 
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, the data
 
-- hline 14c -
-- c | fromid toid c |
-- hline 14c -
-- 1. c | 1 2 c |
-- 2. c | 2 3 c |
-- 3. c | 4 2 c |
-- hline 14c -
-
+```stata
+   +---------------+
+   |  fromid  toid |
+   |---------------|
+1. |  1       2    |
+2. |  2       3    |
+3. |  4       2    |
+   +---------------+
+```
 stores information about three *ties* (1=>2), (2=>3) and (4=>2) among four unique network nodes. The variables defining the edges can also be `string` variables.
 
-- hline 25c -
-- c | fromid toid valuec |
-- hline 25c -
-- 1. c | Peter Thomas 1 c |
-- 2. c | Tim Peter 3 c |
-- 3. c | Mathilde Thomas 2 c |
-- hline 25c -
-
+```stata
+   +--------------------------+
+   |  fromid    toid     value|
+   |--------------------------|
+1. |  Peter     Thomas   1    |
+2. |  Tim       Peter    3    |
+3. |  Mathilde  Thomas   2    |
+   +--------------------------+
+```
 Here, there are also three relationships: (Peter => Thomas), (Tim => Peter) and (Mathilde => Thomas).
 
 The following command declares such data as network data and gives the new network the name *mynet*:
@@ -160,24 +161,25 @@ This also generates a network called *network*. When no **name()** for a network
 
 Now a network called *network* exists and we can interact with it. For example, we can get a summary of the network:
 
-- . nwsummarize network, mat
-- hline 50
-- Network name: network
-- Network id: 1
-- Directed: true
-- Nodes: 4
-- Arcs: 8
-- Minimum value: 0
-- Maximum value: 1
-- Density: .6666666666666666
-- 1 2 3 4
-- hline 17
-- 1 c | 0 1 0 0 c |
-- 2 c | 1 0 0 1 c |
-- 3 c | 1 1 0 0 c |
-- 4 c | 1 1 1 0 c |
-- hline 17
-
+```stata
+. nwsummarize network, mat
+--------------------------------------------------
+   Network name:  network
+   Network id:  1
+   Directed: true
+   Nodes: 4
+   Arcs: 8
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .6666666666666666
+     1   2   3   4
+  +-----------------+
+1 |  0   1   0   0  |
+2 |  1   0   0   1  |
+3 |  1   1   0   0  |
+4 |  1   1   1   0  |
+  +-----------------+
+```
 **ul:4. Declare a two-mode network**
 
 A two-mode (bipartite) network has two distinct sets of nodes ("modes"), with ties running only *between* the two sets, never within either one - e.g. people and the organisations they belong to. Two-mode status is stored directly on the network object itself (queryable via [nwsummarize](nwsummarize) or [nwname](nwname)'s own **r(mode2)**/**r(nodes1)**/**r(nodes2)** results), the same as directed/valued/selfloop status - there are two ways to declare one, matching the two input shapes **nwset** already supports for one-mode networks:

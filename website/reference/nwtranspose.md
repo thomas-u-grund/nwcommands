@@ -33,30 +33,32 @@ Simply transposes a network, i.e. a directed tie from node *i* to node *j* is tr
 
 ## Examples
 
-- . nwclear
-- . nwrandom 5, prob(.3) name(net)
-- . nwsummarize net, matonly
+```stata
+. nwclear
+. nwrandom 5, prob(.3) name(net)
+. nwsummarize net, matonly
 
-- 1 2 3 4 5
-- hline 21
-- 1 c | 0 0 1 0 0 c |
-- 2 c | 1 0 0 0 0 c |
-- 3 c | 0 0 0 1 0 c |
-- 4 c | 1 1 0 0 1 c |
-- 5 c | 0 0 1 0 0 c |
-- hline 21
+     1   2   3   4   5
+  +---------------------+
+1 |  0   0   1   0   0  |
+2 |  1   0   0   0   0  |
+3 |  0   0   0   1   0  |
+4 |  1   1   0   0   1  |
+5 |  0   0   1   0   0  |
+  +---------------------+
 
-- . nwtranspose net, generate(net_transp)
-- . nwsummarize net_transp, matonly
+. nwtranspose net, generate(net_transp)
+. nwsummarize net_transp, matonly
 
-- 1 2 3 4 5
-- hline 21
-- 1 c | 0 1 0 1 0 c |
-- 2 c | 0 0 0 1 0 c |
-- 3 c | 1 0 0 0 1 c |
-- 4 c | 0 0 1 0 0 c |
-- 5 c | 0 0 0 1 0 c |
-- hline 21
+     1   2   3   4   5
+  +---------------------+
+1 |  0   1   0   1   0  |
+2 |  0   0   0   1   0  |
+3 |  1   0   0   0   1  |
+4 |  0   0   1   0   0  |
+5 |  0   0   0   1   0  |
+  +---------------------+
+```
 
 ## Supported network types
 

@@ -22,9 +22,7 @@ generate(namelist)]
 
 | | |
 |---|---|
-| `generate(namelist)` | Up to 3 names, for the per-node balance ratio, count of balanced
-triads, and count of closed triads a node belongs to; default =
-*_balance _baltriad _clotriad* |
+| `generate(namelist)` | Up to 3 names, for the per-node balance ratio, count of balanced triads, and count of closed triads a node belongs to; default = *_balance _baltriad _clotriad* |
 
 ## Description
 
@@ -39,14 +37,14 @@ For each node, `nwbalance` generates the number of closed triads it belongs to, 
 ```stata
 . nwset, mat((0,1,1,-1\1,0,1,-1\1,1,0,1\-1,-1,1,0)) undirected labs(A,B,C,D)
 . nwbalance
-```
-- hline 40
-- Network name: network
-- hline 40
-- Closed triad: 4
-- Balanced triad: 2
-- Unbalanced triad: 2
 
+----------------------------------------
+  Network name: network
+----------------------------------------
+    Closed triad: 4
+    Balanced triad: 2
+    Unbalanced triad: 2
+```
 Of the 4 triads in this network, *A-B-C* (all positive) and *A-B-D* (two negative ties) are balanced; *A-C-D* and *B-C-D* (one negative tie each) are not.
 
 ## Supported network types

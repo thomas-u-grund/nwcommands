@@ -32,10 +32,10 @@ For example, [nwimport](nwimport) automatically checks if a network (e.g. Ucinet
 . nwwebuse florentine
 . nwissymmetric flomarriage
 . return list
-```
-- scalars:
-- r(issymmetric) = 1
 
+scalars:
+        r(issymmetric) = 1
+```
 Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**false** string macros most other boolean-flag results in this group use (e.g. [nwname](nwname)'s **r(directed)**), since it is a computed test result rather than a stored network property.
 
 ## Supported network types

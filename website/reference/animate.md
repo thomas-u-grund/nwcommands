@@ -47,7 +47,7 @@ graphs(_all | g1 g2 g3...)
 . webuse uslifeexp
 . graph drop _all
 . forvalues i = 1900(10)2000 {
-scatter le year if year <= `i', xscale(range(1900 2000)) name(le`i')
+      scatter le year if year <= `i', xscale(range(1900 2000)) name(le`i')
 }
 . animate lifemovie, graphs(_all)
 ```

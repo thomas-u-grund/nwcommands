@@ -38,41 +38,43 @@ Produces a random permutation of the network [netname](netname). In such a permu
 
 A simple example illustrates what the command does. First, we generate a regular lattice network.
 
-- . nwclear
-- . nwlattice 3 3
-- . nwsummarize lattice, matonly
+```stata
+. nwclear
+. nwlattice 3 3
+. nwsummarize lattice, matonly
 
-- 1 2 3 4 5 6 7 8 9
-- hline 37
-- 1 c | 0 c |
-- 2 c | 1 0 c |
-- 3 c | 0 1 0 c |
-- 4 c | 1 0 0 0 c |
-- 5 c | 0 1 0 1 0 c |
-- 6 c | 0 0 1 0 1 0 c |
-- 7 c | 0 0 0 1 0 0 0 c |
-- 8 c | 0 0 0 0 1 0 1 0 c |
-- 9 c | 0 0 0 0 0 1 0 1 0 c |
-- hline 37
-
+     1   2   3   4   5   6   7   8   9
+  +-------------------------------------+
+1 |  0                                  |
+2 |  1   0                              |
+3 |  0   1   0                          |
+4 |  1   0   0   0                      |
+5 |  0   1   0   1   0                  |
+6 |  0   0   1   0   1   0              |
+7 |  0   0   0   1   0   0   0          |
+8 |  0   0   0   0   1   0   1   0      |
+9 |  0   0   0   0   0   1   0   1   0  |
+  +-------------------------------------+
+```
 Now, let us permute the network *lattice*.
 
-- . nwpermute lattice, replace
-- . nwsummarize lattice, matonly
+```stata
+. nwpermute lattice, replace
+. nwsummarize lattice, matonly
 
-- 1 2 3 4 5 6 7 8 9
-- hline 37
-- 1 c | 0 c |
-- 2 c | 1 0 c |
-- 3 c | 0 0 0 c |
-- 4 c | 0 0 1 0 c |
-- 5 c | 1 0 0 0 0 c |
-- 6 c | 0 1 0 1 0 0 c |
-- 7 c | 0 0 0 0 1 0 0 c |
-- 8 c | 0 0 1 0 0 0 1 0 c |
-- 9 c | 0 1 0 1 1 0 0 1 0 c |
-- hline 37
-
+     1   2   3   4   5   6   7   8   9
+  +-------------------------------------+
+1 |  0                                  |
+2 |  1   0                              |
+3 |  0   0   0                          |
+4 |  0   0   1   0                      |
+5 |  1   0   0   0   0                  |
+6 |  0   1   0   1   0   0              |
+7 |  0   0   0   0   1   0   0          |
+8 |  0   0   1   0   0   0   1   0      |
+9 |  0   1   0   1   1   0   0   1   0  |
+  +-------------------------------------+
+```
 The structure of the network remains exactly the same, however, the nodes have a different order. Often, such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for these statistics) while keeping the overall structure of the network constant (see more [nwqap](nwqap), [nwcorrelate](nwcorrelate)).
 
 ## Supported network types

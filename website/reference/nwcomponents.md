@@ -42,18 +42,18 @@ Calculate the components of a network or a list of networks. A component is a se
 ```stata
 . nwwebuse florentine, nwclear
 . nwcomponents flomarriage, generate(_component)
+
+----------------------------------------
+  Network name: flomarriage
+  Components: 2
+
+ _component |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         15       93.75       93.75
+          2 |          1        6.25      100.00
+------------+-----------------------------------
+      Total |         16      100.00
 ```
-- hline 40
-- Network name: flomarriage
-- Components: 2
-
-- _component c | Freq. Percent Cum.
-- hline 12c +hline 35
-- 1 c | 15 93.75 93.75
-- 2 c | 1 6.25 100.00
-- hline 12c +hline 35
-- Total c | 16 100.00
-
 This shows that there are two components in the Florentine marriage network. All except one node belong to the first component. Some alternative ways how the commands can be used.
 
 ```stata

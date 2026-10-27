@@ -40,16 +40,17 @@ subreplace]
 
 ## Examples
 
-- . nwwebuse florentine, nwclear
-- . nwneighbor flobusiness, ego(ginori)
+```stata
+. nwwebuse florentine, nwclear
+. nwneighbor flobusiness, ego(ginori)
 
-- hline 40
-- Network: flobusiness
-- hline 40
-- Ego : ginori
-- Neighbors : barbadori , medici
-- hline 40
-
+----------------------------------------
+  Network: flobusiness
+----------------------------------------
+    Ego        : ginori
+    Neighbors  : barbadori , medici
+----------------------------------------
+```
 This shows that the "ginori" family has business relationships with the "barbadori" and the "medici".
 
 ## Supported network types

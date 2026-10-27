@@ -26,21 +26,23 @@ nwrename (old1 old2 ...) (new1 new2 ...)
 
 ## Examples
 
-- . nwwebuse florentine, nwclear
+```stata
+. nwwebuse florentine, nwclear
 
-- (2 networks)
-- hline 20
-- flobusiness
-- flomarriage
+(2 networks)
+--------------------
+        flobusiness
+        flomarriage
 
-- . nwds
-- flobusinessflomarriage
+. nwds
+flobusiness    flomarriage
 
-- . nwrename flobusiness business
-- . nwrename flomarriage marriage
+. nwrename flobusiness business
+. nwrename flomarriage marriage
 
-- . nwds
-- businessmarriage
+. nwds
+business    marriage
+```
 
 ## Supported network types
 

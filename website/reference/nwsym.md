@@ -55,23 +55,23 @@ This loads the Glasgow data and symmetrizes the network *glasgow1*. After that t
 ```stata
 . nwwebuse glasgow, nwclear
 . nwsym glasgow1
-```
-```stata
-. nwsym glasgow1, check
-```
-- hline 50
-- Network name: glasgow1
-- Directed: false
-- Symmetric: true
 
+. nwsym glasgow1, check
+--------------------------------------------------
+   Network name:  glasgow1
+   Directed: false
+   Symmetric: true
+```
 This example only checks for symmetry, but does not change anything. Notice that by default **nwrandom** produces a directed network. However, a complete network (produced with `prob(1))`, where everybody is connected with everybody else, is also symmetric.
 
-- . nwrandom 10, prob(1)
-- . nwsym, check
-- hline 50
-- Network name: network
-- Directed: true
-- Symmetric: true
+```stata
+. nwrandom 10, prob(1)
+. nwsym, check
+--------------------------------------------------
+   Network name:  network
+   Directed: true
+   Symmetric: true
+```
 
 ## Supported network types
 

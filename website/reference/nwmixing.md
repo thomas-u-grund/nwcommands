@@ -29,21 +29,14 @@ tab_options]
 
 | | |
 |---|---|
-| `attribute(varname)` | Categorical (string or numeric) node attribute to cross-tabulate
-ties by |
-| `eiplot` | Plot the null (QAP-permutation) distribution of the E-I index, with the observed
-value marked |
-| `eiplotoptions(string)` | Additional options forwarded to the `eiplot`'s own
-`kdensity` |
+| `attribute(varname)` | Categorical (string or numeric) node attribute to cross-tabulate ties by |
+| `eiplot` | Plot the null (QAP-permutation) distribution of the E-I index, with the observed value marked |
+| `eiplotoptions(string)` | Additional options forwarded to the `eiplot`'s own `kdensity` |
 | `plot` | Plot the ego/alter mixing table via `tabplot` |
 | `plotoptions(string)` | Additional options forwarded to `plot`'s own `tabplot` |
-| `permutations(int)` | Number of QAP permutations for the E-I index's own null
-distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the
-observed table/index are reported) |
-| `save(filename)` | Save the QAP permutation draws (variable *EI_simulated*) and the
-observed value (variable *EI_observed*) to a new dataset |
-| *tab_options* | Any other option is forwarded to the underlying `tab`
-call that builds the mixing table (e.g. `row`, `column`, `cell`) |
+| `permutations(int)` | Number of QAP permutations for the E-I index's own null distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the observed table/index are reported) |
+| `save(filename)` | Save the QAP permutation draws (variable *EI_simulated*) and the observed value (variable *EI_observed*) to a new dataset |
+| *tab_options* | Any other option is forwarded to the underlying `tab` call that builds the mixing table (e.g. `row`, `column`, `cell`) |
 
 ## Description
 

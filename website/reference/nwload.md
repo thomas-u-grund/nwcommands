@@ -29,10 +29,7 @@ force]
 
 | | |
 |---|---|
-| `xvars` | Run only a lightweight [_nwdatasync](_nwdatasync) sync and exit immediately - does NOT itself
-materialize the adjacency-matrix Stata variables the way a bare `nwload` call does; despite the
-similar name, this is a different operation from the `xvars` option other nwcommands (network
-generators) offer |
+| `xvars` | Run only a lightweight [_nwdatasync](_nwdatasync) sync and exit immediately - does NOT itself materialize the adjacency-matrix Stata variables the way a bare `nwload` call does; despite the similar name, this is a different operation from the `xvars` option other nwcommands (network generators) offer |
 | `nocurrent` | Only load network as Stata variables, but do not make it the *current network* |
 | `labelonly` | Only load the node labels as Stata variable |
 | `generate(varname)` | Generate flag for nodes of the loaded network; default = *_nwinclude* |

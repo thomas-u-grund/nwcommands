@@ -49,8 +49,7 @@ ntimes(int)]
 . nwclear
 . nwlattice 4 4
 . nwplot, label(_nodeid)
-```
-```stata
+
 . nwclear
 . nwlattice 4 4, xwrap ywrap
 . nwplot, layout(grid) label(_nodeid)

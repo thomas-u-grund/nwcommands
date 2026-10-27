@@ -55,28 +55,31 @@ This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a 
 
 ## Examples
 
-- . nwwebuse glasgow, nwclear
-- . nwtriads glasgow3
-- Triad census: glasgow3
+```stata
+. nwwebuse glasgow, nwclear
 
-- 003c |012c |021Dc |021Uc |
-- hline 11c +hline 11c +hline 11c +hline 11c +
-- 16086c |1401c |4c |8c |
+. nwtriads glasgow3
 
-- 021Cc |030Tc |030Cc |102c |
-- hline 11c +hline 11c +hline 11c +hline 11c +
-- 7c |1c |0c |1969c |
+    Triad census:  glasgow3
 
-- 120Dc |120Uc |120Cc |111Dc |
-- hline 11c +hline 11c +hline 11c +hline 11c +
-- 3c |28c |33c |4c |
+       003 |       012 |      021D |      021U |
+-----------+-----------+-----------+-----------+
+     16086 |      1401 |         4 |         8 |
 
-- 111Uc |201c |210c |300c |
-- hline 11c +hline 11c +hline 11c +hline 11c +
-- 1c |17c |26c |12c |
+      021C |      030T |      030C |       102 |
+-----------+-----------+-----------+-----------+
+         7 |         1 |         0 |      1969 |
 
-- Transitivity: .4830508474576271
+      120D |      120U |      120C |      111D |
+-----------+-----------+-----------+-----------+
+         3 |        28 |        33 |         4 |
 
+      111U |       201 |       210 |       300 |
+-----------+-----------+-----------+-----------+
+         1 |        17 |        26 |        12 |
+
+     Transitivity: .4830508474576271
+```
 This example shows, e.g. that in the *glasgow3* network, there are 12 triads where all nodes *i*, *j* and *k* are directely connected with each other.
 
 ## Supported network types

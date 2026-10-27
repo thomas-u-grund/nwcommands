@@ -50,7 +50,9 @@ With a probability *1 - prob*, this new node connects to *m* existing nodes with
 
 With option **weights(***p1, p2,...***)** the command generates a weighted network. Here, *p_k* stands for the probability to sample tie weight *k*. The probabilities *p1, p2..., pn* do not necessarily have to sum up to one; they are standardized. For example, the following assigns a tie weight to each tie because of option **weights()**. In this case, **weights(0.0, 0.3,0.7)** indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with probability 0.3 and tie weight 3 with probability 0.7.
 
-- cmd. nwpref 20, prob(1) undirected weights(0.0, 0.3, 0.7)
+```stata
+. nwpref 20, prob(1) undirected weights(0.0, 0.3, 0.7)
+```
 
 ## Examples
 
@@ -58,8 +60,7 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwclear
 . nwpref 20, undirected
 . nwplot, layout(circle)
-```
-```stata
+
 . nwpref 20, prob(1) undirected
 . nwplot, layout(circle)
 ```

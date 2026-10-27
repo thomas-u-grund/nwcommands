@@ -25,13 +25,9 @@ replace]
 
 | | |
 |---|---|
-| `measure(binary\|arithmetic\|geometric\|maximum\|minimum)` | How to combine a 4-path's own
-four tie values; *binary* dichotomizes every tie to presence/absence first;
-*arithmetic*/*geometric*/*maximum*/*minimum* combine the four raw tie values via that
-function; default = *arithmetic* for a valued network, *binary* otherwise |
+| `measure(binary\|arithmetic\|geometric\|maximum\|minimum)` | How to combine a 4-path's own four tie values; *binary* dichotomizes every tie to presence/absence first; *arithmetic*/*geometric*/*maximum*/*minimum* combine the four raw tie values via that function; default = *arithmetic* for a valued network, *binary* otherwise |
 | `level(int)` | Which mode (1 or 2) to compute clustering scores for; default = 1 |
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each `level()`-mode
-node's own clustering coefficient |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each `level()`-mode node's own clustering coefficient |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
 | `ra` | The global clustering coefficient of Robins and Alexander (2004), 4 C4 / L3 (C4 the number of four-cycles, L3 the number of paths of length three) of the binary network; `generate()` is then optional; results in `r(ra)`, `r(C4)`, `r(L3)` |
 
