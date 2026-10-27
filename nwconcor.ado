@@ -112,11 +112,12 @@ program nwconcor, rclass
 		mata: st_store((1::`nodes'),"`netgenerate'`k'", `__nw_concor')
 		mata: mata drop `__nw_concor'
 
-		qui tab `netgenerate'`k', matrow(block_id) matcell(block_size)
+		tempname __t1 __t2 __t3 __t4
+		qui tab `netgenerate'`k', matrow(`__t1') matcell(`__t2')
 
-		mata: __nwconcor_block_id = st_matrix("block_id")
+		mata: __nwconcor_block_id = st_matrix("`__t1'")
 		mata: __nwconcor_block_number = rows(__nwconcor_block_id)
-		mata: __nwconcor_block_size = st_matrix("block_size")
+		mata: __nwconcor_block_size = st_matrix("`__t2'")
 		mata: __nwconcor_block_share = __nwconcor_block_size :/ (sum(__nwconcor_block_size))
 		mata: __nwconcor_block_sizeid = J(__nwconcor_block_number, 3, 0)
 		mata: __nwconcor_block_sizeid[.,1] = __nwconcor_block_size
@@ -124,20 +125,20 @@ program nwconcor, rclass
 		mata: __nwconcor_block_sizeid[.,3] = __nwconcor_block_share
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
 		mata: __nwconcor_block_sizeid = sort(__nwconcor_block_sizeid, (-1, 2))
-		mata: st_numscalar("blocks", __nwconcor_block_number)
-		mata: st_matrix("block_sizeid", __nwconcor_block_sizeid)
+		mata: st_numscalar("`__t3'", __nwconcor_block_number)
+		mata: st_matrix("`__t4'", __nwconcor_block_sizeid)
 
-		matrix colnames block_sizeid = size blockid share
+		matrix colnames `__t4' = size blockid share
 
-		return scalar blocks = blocks
-		local lblocks = blocks
+		return scalar blocks = `__t3'
+		local lblocks = `__t3'
 
 		local rowlabs ""
-		forvalues i = 1/`=blocks'{
+		forvalues i = 1/`=scalar(`__t3')'{
 			local rowlabs "`rowlabs' block`i'"
 		}
-		matrix rownames block_sizeid = `rowlabs'
-		return matrix block_sizeid = block_sizeid
+		matrix rownames `__t4' = `rowlabs'
+		return matrix block_sizeid = `__t4'
 		mata: mata drop __nwconcor_block_number __nwconcor_block_share __nwconcor_block_id __nwconcor_block_size __nwconcor_block_sizeid
 
 		if "`silent'" == "" {

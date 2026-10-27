@@ -402,10 +402,10 @@ program nwplot, rclass
 		// Use forced keys
 		local j = 1
 		if "`forcekeys'" != "" {
-			qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
+			qui tab `varlist' if _n <= `nodes', matrow(__nwp_colorkeysmap)
 			foreach i in `forcekeys' {
 				local colororder "`colororder' `j'"
-				local ckey = colorkeysmap[`i', 1]
+				local ckey = __nwp_colorkeysmap[`i', 1]
 				_getvaluelabel `varlist', key(`ckey')
 				local colorlabels `"`colorlabels' label(`j' "`r(key_label)'")"'
 				local j = `j' + 1
@@ -418,9 +418,9 @@ program nwplot, rclass
 			egen `__color' = group(`varlist')
 			mata: __nwplot_ncolor = st_data((1,`nodes'),st_varindex("`__color'"))
 			if "`forcekeys'" == "" {
-				qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
+				qui tab `varlist' if _n <= `nodes', matrow(__nwp_colorkeysmap)
 				forvalues i = 1/`r(r)' {
-					local ckey = colorkeysmap[`i', 1]
+					local ckey = __nwp_colorkeysmap[`i', 1]
 					local colorkeys "`colorkeys' `i'"
 					local colororder "`colororder' `i'"
 					_getvaluelabel `varlist', key(`ckey')
@@ -433,11 +433,11 @@ program nwplot, rclass
 		else {
 			mata: __nwplot_ncolor = st_data((1,`nodes'),st_varindex("`varlist'"))
 			if "`forcekeys'" == "" {
-				qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
+				qui tab `varlist' if _n <= `nodes', matrow(__nwp_colorkeysmap)
 				forvalues i = 1/`r(r)' {
 
 
-					local ckey = colorkeysmap[`i', 1]
+					local ckey = __nwp_colorkeysmap[`i', 1]
 					local colorkeys "`colorkeys' `ckey'"
 					local colororder "`colororder' `i'"
 					_getvaluelabel `varlist', key(`ckey')
@@ -513,10 +513,10 @@ program nwplot, rclass
 			egen `__symbol' = group(`varlist')
 			mata: __nwplot_nsymbol = st_data((1,`nodes'),st_varindex("`__symbol'"))
 			if "`forcekeys'" == "" {
-				qui tab `varlist' if _n <= `nodes', matrow(symbolkeysmap)
+				qui tab `varlist' if _n <= `nodes', matrow(__nwp_symbolkeysmap)
 				forvalues i = 1/`r(r)' {
 					local j = `i' + `keysused'
-					local skey = symbolkeysmap[`i', 1]
+					local skey = __nwp_symbolkeysmap[`i', 1]
 					local symbolkeys "`symbolkeys' `i'"
 					local symbolorder "`symbolorder' `j'"
 					_getvaluelabel `varlist', key(`skey')
@@ -528,10 +528,10 @@ program nwplot, rclass
 		else {
 			mata: __nwplot_nsymbol = st_data((1,`nodes'),st_varindex("`varlist'"))
 			if "`forcekeys'" == "" {
-				qui tab `varlist' if _n <= `nodes', matrow(symbolkeysmap)
+				qui tab `varlist' if _n <= `nodes', matrow(__nwp_symbolkeysmap)
 				forvalues i = 1/`r(r)' {
 					local j = `i' + `keysused'
-					local skey = symbolkeysmap[`i', 1]
+					local skey = __nwp_symbolkeysmap[`i', 1]
 					local symbolkeys "`symbolkeys' `skey'"
 					local symbolorder "`symbolorder' `j'"
 					_getvaluelabel `varlist', key(`skey')
@@ -599,8 +599,8 @@ program nwplot, rclass
 		// representative points, e.g. min/max - the SAME count and values
 		// the real static plot's own size legend shows) - NOT one entry
 		// per distinct value actually in the data (an earlier version of
-		// this fix used `nsizerow' for that instead, which is wrong: for a
-		// continuous size() variable, nsizerow can have a dozen-plus
+		// this fix used `__nwp_nsizerow' for that instead, which is wrong: for a
+		// continuous size() variable, __nwp_nsizerow can have a dozen-plus
 		// distinct rendered sizes, one per near-unique data value, while
 		// nwplot's real legend has always shown just the representative
 		// range). Deliberately NOT reusing `sizekeys_size' below for this -
@@ -835,11 +835,11 @@ program nwplot, rclass
 		}
 		qui if "`forcekeys'" == "" & !`_ec_binned' {
 			nwtabulate `edgecolor', matrow(r)
-			matrix edgecolor_mat = r
+			matrix __nwp_edgecolor_mat = r
 			
-			local edgecolor_matrows = rowsof(edgecolor_mat)
+			local edgecolor_matrows = rowsof(__nwp_edgecolor_mat)
 			forvalues i = 1/`edgecolor_matrows'{
-				local eckey = edgecolor_mat[`i',1]
+				local eckey = __nwp_edgecolor_mat[`i',1]
 				local edgecolorkeys "`edgecolorkeys' `=`eckey'+1'"
 			}
 		}
@@ -1162,7 +1162,7 @@ program nwplot, rclass
 		// locals (confirmed via a direct grep across the whole file -
 		// nothing downstream ever references either one; the real
 		// downstream driver is "comp_nonisol", computed independently a
-		// few lines below from comp_freqid) - left in place rather than
+		// few lines below from __nwp_comp_freqid) - left in place rather than
 		// removed, since deleting unrelated dead code is out of scope
 		// for this fix.
 		tempvar _component
@@ -1175,10 +1175,10 @@ program nwplot, rclass
 
 		local compnum = r(components)
 		local compnum_nonisol = `compnum' - `isol'
-		qui tab `_component', matrow(comp_id) matcell(comp_freq)
+		qui tab `_component', matrow(__nwp_comp_id) matcell(__nwp_comp_freq)
 
-		mata: __nwplot_comp_id = st_matrix("comp_id")
-		mata: __nwplot_comp_freq = st_matrix("comp_freq")
+		mata: __nwplot_comp_id = st_matrix("__nwp_comp_id")
+		mata: __nwplot_comp_freq = st_matrix("__nwp_comp_freq")
 		mata: __nwplot_comp_freqid = J(rows(__nwplot_comp_id), 2,0)
 		mata: __nwplot_comp_freqid[.,1] = __nwplot_comp_freq
 		mata: __nwplot_comp_freqid[.,2] = __nwplot_comp_id
@@ -1187,7 +1187,7 @@ program nwplot, rclass
 		mata: __nwplot_comp_nonisol = sum((__nwplot_comp_freqid[.,1] :> 1))
 		mata: st_numscalar("r(comp_nonisol)", __nwplot_comp_nonisol)
 		local comp_nonisol = `r(comp_nonisol)'
-		mata: st_matrix("comp_freqid", __nwplot_comp_freqid)
+		mata: st_matrix("__nwp_comp_freqid", __nwplot_comp_freqid)
 
 		// Find overall layout
 		// Default = number of (non-isolates) components (undirected)
@@ -1203,16 +1203,16 @@ program nwplot, rclass
 			local components = 5
 		}
 		
+		nwtomata `netname', mat(__nwplot_compfull)
+
 		// Go through all (non-isolates) components (that should be plotted in boxes) from large to small
 		qui forvalues i = 1/`components' {
-			nwduplicate `netname', name(`netname'_comp`i')
-			capture drop _id
-			gen _id = _n
-
-			nwdrop `netname'_comp`i' if `_component' != comp_freqid[`i', 2]
-			nwtomata `netname'_comp`i', mat(__nwplot_compmat)
-			// Original id's of selected nodes
-			mata: __nwplot_original_id = st_data((1::rows(__nwplot_compmat)), "_id")
+			// Original id's of the nodes in component i, taken from the component vector
+			// (not from a copy of the network and a row-number variable in the data set: when the data
+			// set has more or fewer rows than the network has nodes, the rows no longer matched the
+			// nodes and the assignment below failed with r(3301))
+			mata: __nwplot_original_id = selectindex(st_data((1::`nodes'), "`_component'") :== __nwplot_comp_freqid[`i', 2])
+			mata: __nwplot_compmat = __nwplot_compfull[__nwplot_original_id, __nwplot_original_id]
 
 			// Calculate mds coordinates of network i
 			mata: __nwplot_compM = (__nwplot_compmat :+ __nwplot_compmat') :/ (__nwplot_compmat :+ __nwplot_compmat')
@@ -1240,7 +1240,6 @@ program nwplot, rclass
 			// Assign adjusted coordinates to original network
 			mata: __nwplot_Coord[__nwplot_original_id,.] = __nwplot_Coord_comp
 			mata: mata drop __nwplot_original_id
-			nwdrop `netname'_comp`i'
 		}
 
 		// REAL BUG FOUND AND FIXED: every node's own coordinate starts
@@ -1263,7 +1262,7 @@ program nwplot, rclass
 		// the k/num_isol convention netplotmds()/kklayout() already use
 		// for their own isolates.
 		mata: __mdsc_dispcomp = __nwplot_comp_freqid[(1::`components'), 2]
-		mata: __mdsc_allcomp = st_data(., "`_component'")
+		mata: __mdsc_allcomp = st_data((1::`nodes'), "`_component'")
 		mata: __mdsc_isdisp = J(rows(__mdsc_allcomp), 1, 0)
 		mata: for (__mdsc_k=1; __mdsc_k<=rows(__mdsc_dispcomp); __mdsc_k++) __mdsc_isdisp = __mdsc_isdisp :| (__mdsc_allcomp :== __mdsc_dispcomp[__mdsc_k])
 		mata: __mdsc_leftidx = selectindex(__mdsc_isdisp :== 0)
@@ -1273,7 +1272,7 @@ program nwplot, rclass
 		}
 		mata: mata drop __mdsc_dispcomp __mdsc_allcomp __mdsc_isdisp __mdsc_leftidx __mdsc_k
 
-		capture drop _id
+		mata: mata drop __nwplot_compfull
 	}
 	capture replace `label' = `_orig_label'
 	
@@ -1394,23 +1393,23 @@ program nwplot, rclass
 	
 	local binfactor = 1/`sizebin'
 	qui replace nsize = (ceil(nsize * `binfactor'))* `sizebin'
-	qui tab nsize, matrow(nsizerow)
+	qui tab nsize, matrow(__nwp_nsizerow)
 	qui sum nsize
 	local sizemin = r(min)
 	local sizemax = r(max)	
 	
 	// Prepare plots and legend
-	qui tab ncolor, matrow(ncolorrow)
-	local ncols = rowsof(ncolorrow)
+	qui tab ncolor, matrow(__nwp_ncolorrow)
+	local ncols = rowsof(__nwp_ncolorrow)
 	if `ncols' == 0 { 
 		local ncols = 1
 	}
 	
-	qui tab nsymbol, matrow(nsymbolrow)
-	local symbs = rowsof(nsymbolrow)
+	qui tab nsymbol, matrow(__nwp_nsymbolrow)
+	local symbs = rowsof(__nwp_nsymbolrow)
 	
-	qui tab nsize, matrow(nsizerow)	
-	local sizs = rowsof(nsizerow)
+	qui tab nsize, matrow(__nwp_nsizerow)	
+	local sizs = rowsof(__nwp_nsizerow)
 
 	if "`interactive'" != "" {
 		di "{text:Preparing interactive view...}"
@@ -1442,7 +1441,7 @@ program nwplot, rclass
 		local _nwedit_colorpending_n = 0
 		local _nwedit_colorplots ""
 		forvalues _nwedit_ci = 1/`ncols' {
-			local _nwedit_cg = ncolorrow[`_nwedit_ci', 1]
+			local _nwedit_cg = __nwp_ncolorrow[`_nwedit_ci', 1]
 			if "`importcoords'" != "" & "`_nwedit_colormap_`_nwedit_cg''" != "" {
 				local _nwedit_htmlcolor_`_nwedit_cg' "`_nwedit_colormap_`_nwedit_cg''"
 			}
@@ -1508,7 +1507,7 @@ program nwplot, rclass
 		}
 
 		forvalues _nwedit_si = 1/`symbs' {
-			local _nwedit_sg = nsymbolrow[`_nwedit_si', 1]
+			local _nwedit_sg = __nwp_nsymbolrow[`_nwedit_si', 1]
 			if "`importcoords'" != "" & "`_nwedit_shapemap_`_nwedit_sg''" != "" {
 				local _nwedit_htmlshape_`_nwedit_sg' "`_nwedit_shapemap_`_nwedit_sg''"
 			}
@@ -1609,7 +1608,7 @@ program nwplot, rclass
 
 		// Node SIZE legend entries -- same discrete-legend idea as color/
 		// shape/edgecolor above, but keyed positionally rather than by a
-		// _getcolorstyle group id: `nsizerow' (from `qui tab nsize' earlier
+		// _getcolorstyle group id: `__nwp_nsizerow' (from `qui tab nsize' earlier
 		// in this program) gives the distinct SCALED node-size values
 		// actually present in the rendered data, in the exact same units
 		// as the per-node nsizev the mata function below reads -- reusing
@@ -1637,7 +1636,7 @@ program nwplot, rclass
 		// actually rendered (see the long comment above where
 		// `_nwedit_sizekeys_rawnsize' is built, next to `sizekeys_size',
 		// for why an earlier version of this fix got that wrong - it used
-		// `nsizerow', which for a continuous size() variable can have a
+		// `__nwp_nsizerow', which for a continuous size() variable can have a
 		// dozen-plus distinct rendered sizes, one per near-unique data
 		// value). `sizekeys' is already "" whenever no size legend should
 		// show (sizekeys_legendoff set, or size() not given - the same
@@ -1903,17 +1902,17 @@ program nwplot, rclass
 	// Prepare scatter commands to plot nodes
 	local scattercmd ""	
 	local scattercmdforeground ""
-	local tempsize_rows = rowsof(nsizerow)
+	local tempsize_rows = rowsof(__nwp_nsizerow)
 	
 	// Size of nodes
 	forvalues tempsiz_mat = 1/`tempsize_rows'{
-		local tempsiz = nsizerow[`tempsiz_mat',1] 
+		local tempsiz = __nwp_nsizerow[`tempsiz_mat',1] 
 		// Color of nodes
 		forvalues i = 1/`ncols' {
 			// Symbol of nodes
 			forvalues j = 1/`symbs'{
-				local tempcol = ncolorrow[`i', 1]
-				local tempsymb = nsymbolrow[`j',1]
+				local tempcol = __nwp_ncolorrow[`i', 1]
+				local tempsymb = __nwp_nsymbolrow[`j',1]
 				_getcolorstyle, i(`tempcol') j(`tempsymb') colorpalette(`colorpalette') symbolpalette(`symbolpalette') scheme(`scheme') mlcolor(`mlcolor_color') mlwidth(`mlwidth_color')
 				local tempsiz_node = `tempsiz' * `nodefactor' * 2
 				local tempcolstyle_fill = r(col_fill)
@@ -1950,9 +1949,9 @@ program nwplot, rclass
 	// network - no off-diagonal pair can even exist) leaves `edgesize'/
 	// `edgecolor' entirely missing for every observation in this
 	// tie-level dataset - `tab' finds no categories to tabulate and
-	// does not create `matrow(valuerow)'/`matrow(edgecolorrow)' at all
+	// does not create `matrow(__nwp_valuerow)'/`matrow(__nwp_edgecolorrow)' at all
 	// in that case (not merely empty matrices - the locals are left
-	// completely undefined), crashing the very next line ("valuerow
+	// completely undefined), crashing the very next line ("__nwp_valuerow
 	// not found", r(111)). There is nothing to draw on the edge side of
 	// the plot when there are no edges, so this whole block is skipped
 	// entirely rather than trying to make `tab' tolerate an all-missing
@@ -1960,13 +1959,13 @@ program nwplot, rclass
 	// already-initialized "no edges" values ("||"/"").
 	qui count if edgesize < .
 	if r(N) > 0 {
-		qui tab edgesize, matrow(valuerow)
-		local tempvalue_rows = rowsof(valuerow)
-		qui tab edgecolor, matrow(edgecolorrow)
-		local tempecol_rows = rowsof(edgecolorrow)
+		qui tab edgesize, matrow(__nwp_valuerow)
+		local tempvalue_rows = rowsof(__nwp_valuerow)
+		qui tab edgecolor, matrow(__nwp_edgecolorrow)
+		local tempecol_rows = rowsof(__nwp_edgecolorrow)
 
 		forvalues tempecol_mat = 1/`tempecol_rows'{
-			local tempecol = edgecolorrow[`tempecol_mat',1]
+			local tempecol = __nwp_edgecolorrow[`tempecol_mat',1]
 			_getcolorstyle, i(`tempecol') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
 			local temppattern = r(edgepattern)
 			local tempcolstyle = r(edgecol)
@@ -1977,7 +1976,7 @@ program nwplot, rclass
 				local temppattern "`_nwedit_edgestylemap_`tempecol''"
 			}
 			forvalues tempval_mat = 1/`tempvalue_rows'{
-				local tempval = valuerow[`tempval_mat',1]
+				local tempval = __nwp_valuerow[`tempval_mat',1]
 				if `esscale' {
 					local tempval_s = 1 + `esspan' * abs(`tempval') / `esmax'
 					local tempval_line = (`tempval_s' / 2) * `edgefactor' / 2
@@ -2131,18 +2130,18 @@ program nwplot, rclass
 		qui replace `generate_y' = (`generate_y' - 0.05) / 0.9
 	}
 	mata: mata drop __nwplot_plotmat __nwplot_nsize __nwplot_ncolor __nwplot_nlabel __nwplot_Coord __nwplot_edgesizemat __nwplot_edgecolormat
-	capture mata: mata drop __nwplot_Coord_comp __nwplot_compM __nwplot_comp_freq __nwplot_comp_id __nwplot_comp_freqid __nwplot_compmat __nwplot_comp_nonisol
+	capture mata: mata drop __nwplot_Coord_comp __nwplot_compM __nwplot_comp_freq __nwplot_comp_id __nwplot_comp_freqid __nwplot_compmat __nwplot_compfull __nwplot_comp_nonisol
 	capture mata: mata drop __nwplot_TC __nwplot_M __nwplot_nsymbol
 	capture nwdrop __temp* 
 	
-	capture mat drop edgecolorrow
-	capture mat drop valuerow
-	capture mat drop nsymbolrow
-	capture mat drop ncolorrow
-	capture mat drop nsizerow
-	capture mat drop nsymblrow
-	capture mat drop colorkeysmap
-	capture matrix drop symbolkeysmap
+	capture mat drop __nwp_edgecolorrow
+	capture mat drop __nwp_valuerow
+	capture mat drop __nwp_nsymbolrow
+	capture mat drop __nwp_ncolorrow
+	capture mat drop __nwp_nsizerow
+	capture mat drop __nwp_nsymblrow
+	capture mat drop __nwp_colorkeysmap
+	capture matrix drop __nwp_symbolkeysmap
 
 	//qui nwload `masternetname', labelonly
 
@@ -2646,7 +2645,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		q+"size_legend"+q+":["
 	// Independent of the per-node loop below -- a fixed, small list of
 	// {label, size_px} entries built from the `_nwedit_sizelegend_*' locals
-	// nwplot.ado stashed just before this call (nsizerow-derived, so
+	// nwplot.ado stashed just before this call (__nwp_nsizerow-derived, so
 	// already in the same CSS-px scale `sizepx' below computes per node).
 	for (i=1; i<=sizelegendn; i++) {
 		sizelbl = subinstr(subinstr(st_local("_nwedit_sizelegend_label_" + strofreal(i)), char(92), ""), q, "")

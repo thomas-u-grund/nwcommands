@@ -60,14 +60,15 @@ program nwkcore, rclass
 		tempname __nw_core
 		mata: `__nw_core' = `netobj'->calculate_kcore()
 		mata: st_store((1::`nodes'),"`netgenerate'`k'", `__nw_core')
-		mata: st_numscalar("maxcore", max(`__nw_core'))
+		tempname __t1 __t2 __t3 __t4 __t5
+		mata: st_numscalar("`__t1'", max(`__nw_core'))
 		mata: mata drop `__nw_core'
 
-		qui tab `netgenerate'`k', matrow(core_id) matcell(core_size)
+		qui tab `netgenerate'`k', matrow(`__t2') matcell(`__t3')
 
-		mata: __nwkcore_core_id = st_matrix("core_id")
+		mata: __nwkcore_core_id = st_matrix("`__t2'")
 		mata: __nwkcore_core_number = rows(__nwkcore_core_id)
-		mata: __nwkcore_core_size = st_matrix("core_size")
+		mata: __nwkcore_core_size = st_matrix("`__t3'")
 		mata: __nwkcore_core_share = __nwkcore_core_size :/ (sum(__nwkcore_core_size))
 		mata: __nwkcore_core_sizeid = J(__nwkcore_core_number, 3, 0)
 		mata: __nwkcore_core_sizeid[.,1] = __nwkcore_core_size
@@ -75,21 +76,21 @@ program nwkcore, rclass
 		mata: __nwkcore_core_sizeid[.,3] = __nwkcore_core_share
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
 		mata: __nwkcore_core_sizeid = sort(__nwkcore_core_sizeid, (-1, 2))
-		mata: st_matrix("core_sizeid", __nwkcore_core_sizeid)
-		mata: st_numscalar("corelevels", __nwkcore_core_number)
+		mata: st_matrix("`__t4'", __nwkcore_core_sizeid)
+		mata: st_numscalar("`__t5'", __nwkcore_core_number)
 
-		matrix colnames core_sizeid = size coreid share
+		matrix colnames `__t4' = size coreid share
 
-		return scalar maxcore = maxcore
-		local lmax = maxcore
-		local lcorelevels = corelevels
+		return scalar maxcore = `__t1'
+		local lmax = `__t1'
+		local lcorelevels = `__t5'
 
 		local rowlabs ""
 		forvalues i = 1/`lcorelevels'{
 			local rowlabs "`rowlabs' core`i'"
 		}
-		matrix rownames core_sizeid = `rowlabs'
-		return matrix core_sizeid = core_sizeid
+		matrix rownames `__t4' = `rowlabs'
+		return matrix core_sizeid = `__t4'
 		mata: mata drop __nwkcore_core_number __nwkcore_core_share __nwkcore_core_id __nwkcore_core_size __nwkcore_core_sizeid
 
 		if "`silent'" == "" {

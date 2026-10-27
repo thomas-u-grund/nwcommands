@@ -148,11 +148,12 @@ program nwcommunity, rclass
 		// corrupting the reported r(modularity) for the community
 		// partition detect_communities_louvain()/labelprop() actually
 		// searched for under measure(binary).
+		tempname __t1 __t2 __t3
 		if `__bip' {
-			mata: st_numscalar("modularity", `netobj'->calculate_modularity_bipartite(`__nw_comm', `val', `resolution'))
+			mata: st_numscalar("`__t1'", `netobj'->calculate_modularity_bipartite(`__nw_comm', `val', `resolution'))
 		}
 		else {
-			mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_comm', `val', `resolution'))
+			mata: st_numscalar("`__t1'", `netobj'->calculate_modularity(`__nw_comm', `val', `resolution'))
 		}
 		mata: mata drop `__nw_comm'
 
@@ -191,21 +192,21 @@ program nwcommunity, rclass
 		mata: __nwcommunity_comm_sizeid[.,2] = __nwcommunity_comm_id
 		mata: __nwcommunity_comm_sizeid[.,3] = __nwcommunity_comm_share
 		mata: __nwcommunity_comm_sizeid = sort(__nwcommunity_comm_sizeid, (-1, 2))
-		mata: st_numscalar("communities", __nwcommunity_comm_number)
-		mata: st_matrix("comm_sizeid", __nwcommunity_comm_sizeid)
+		mata: st_numscalar("`__t2'", __nwcommunity_comm_number)
+		mata: st_matrix("`__t3'", __nwcommunity_comm_sizeid)
 
-		matrix colnames comm_sizeid = size compid share
+		matrix colnames `__t3' = size compid share
 
-		return scalar modularity = modularity
+		return scalar modularity = `__t1'
 		return local modularity_type "`__qtype'"
-		return scalar communities = communities
-		local lcomm = communities
-		local lmod = modularity
+		return scalar communities = `__t2'
+		local lcomm = `__t2'
+		local lmod = `__t1'
 
 		mata: __nwc_stripe = J(__nwcommunity_comm_number, 2, "")
 		mata: __nwc_stripe[., 2] = "comm" :+ strofreal((1::__nwcommunity_comm_number))
-		mata: st_matrixrowstripe("comm_sizeid", __nwc_stripe)
-		return matrix comm_sizeid = comm_sizeid
+		mata: st_matrixrowstripe("`__t3'", __nwc_stripe)
+		return matrix comm_sizeid = `__t3'
 		mata: mata drop __nwcommunity_comm_number __nwcommunity_comm_share __nwcommunity_comm_id __nwcommunity_comm_size __nwcommunity_comm_sizeid __nwc_vals __nwc_sorted __nwc_info __nwc_stripe
 
 		if "`silent'" == "" {

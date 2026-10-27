@@ -58,20 +58,21 @@ program nwmodularity, rclass
 		// never be forwarded, so calculate_modularity() always scored on
 		// the network's raw valued weights regardless of what measure()
 		// requested - measure(binary) was a complete no-op.
+		tempname __t1 __t2 __t3 __t4
 		if `__bip' {
-			mata: st_numscalar("modularity", `netobj'->calculate_modularity_bipartite(`__nw_group', `val', `resolution'))
+			mata: st_numscalar("`__t1'", `netobj'->calculate_modularity_bipartite(`__nw_group', `val', `resolution'))
 		}
 		else {
-			mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_group', `val', `resolution'))
+			mata: st_numscalar("`__t1'", `netobj'->calculate_modularity(`__nw_group', `val', `resolution'))
 		}
-		mata: st_numscalar("communities", max(`__nw_group'))
+		mata: st_numscalar("`__t2'", max(`__nw_group'))
 		mata: mata drop `__nw_group'
 
-		return scalar modularity = modularity
+		return scalar modularity = `__t1'
 		return local modularity_type "`__qtype'"
-		return scalar communities = communities
-		local lcomm = communities
-		local lmod = modularity
+		return scalar communities = `__t2'
+		local lcomm = `__t2'
+		local lmod = `__t1'
 
 		// same fix as nwcommunity.ado's own identical bug: `tab ...,
 		// matrow() matcell()' crashes ("too many values", r134) once
@@ -94,14 +95,14 @@ program nwmodularity, rclass
 		mata: __nwmodularity_comm_sizeid[.,3] = __nwmodularity_comm_share
 		// ties in size: ascending id (a sort on the size alone orders equal sizes by the state of the random-number generator)
 		mata: __nwmodularity_comm_sizeid = sort(__nwmodularity_comm_sizeid, (-1, 2))
-		mata: st_matrix("comm_sizeid", __nwmodularity_comm_sizeid)
-		mata: st_numscalar("commnum", __nwmodularity_comm_number)
-		matrix colnames comm_sizeid = size compid share
+		mata: st_matrix("`__t3'", __nwmodularity_comm_sizeid)
+		mata: st_numscalar("`__t4'", __nwmodularity_comm_number)
+		matrix colnames `__t3' = size compid share
 
 		mata: __nwm_stripe = J(__nwmodularity_comm_number, 2, "")
 		mata: for (__nwm_i=1; __nwm_i<=__nwmodularity_comm_number; __nwm_i++) __nwm_stripe[__nwm_i,2] = "comm" + strofreal(__nwm_i)
-		mata: st_matrixrowstripe("comm_sizeid", __nwm_stripe)
-		return matrix comm_sizeid = comm_sizeid
+		mata: st_matrixrowstripe("`__t3'", __nwm_stripe)
+		return matrix comm_sizeid = `__t3'
 		mata: mata drop __nwmodularity_comm_number __nwmodularity_comm_share __nwmodularity_comm_id __nwmodularity_comm_size __nwmodularity_comm_sizeid __nwm_vals __nwm_sorted __nwm_info __nwm_stripe __nwm_i
 
 		// Consistency (moderate-severity pass, community_spectral group):

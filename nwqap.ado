@@ -166,11 +166,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			}
 		}
 
-		mat temp_coeff = e(b)
+		mat __nwqap_temp_coeff = e(b)
 		local post_txt = ""
 		local varsminus = `vars' - 1
 		forvalues i = 1/`varsminus' {
-			local post_txt = "`post_txt' (`=strtrim(string(round(temp_coeff[1,`i'], 0.0001),"%9.0g"))')"
+			local post_txt = "`post_txt' (`=strtrim(string(round(__nwqap_temp_coeff[1,`i'], 0.0001),"%9.0g"))')"
 		}
 		local post_txt ="(`=strtrim(string(round(_b[_cons], 0.0001),"%9.0g"))') `post_txt'"
 		post `memhold' `post_txt'
@@ -199,7 +199,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		di "{err}The observed-data model could not be fit ({bf:`type' `formula'} failed, error `=_rc') - this can happen with perfect prediction/separation, a fully degenerate dependent network, or a misspecified model. Try {bf:detail} to see the underlying regression command's own error text."
 		error _rc
 	}
-	mat reg_results = e(b)
+	mat __nwqap_reg_results = e(b)
 
 	// predict(): captured HERE, not after the eclass ereturn post further
 	// down - this is the one point in the whole program where the
@@ -234,7 +234,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	if "`save'" != "" {
 		save "`save'", replace
 	}	
-	matrix pvalues = J(1, `vars', .)
+	matrix __nwqap_pvalues = J(1, `vars', .)
 	// QAP-based variance of each coefficient, from its own permutation
 	// distribution - not a classical OLS/logit variance (which is
 	// exactly what QAP permutation testing exists to avoid trusting:
@@ -243,7 +243,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// genuinely valid e(V) for eclass/postestimation support, rather
 	// than either fabricating an invalid classical one or leaving
 	// postestimation commands like `test'/`lincom' unusable.
-	matrix permvar = J(1, `vars', .)
+	matrix __nwqap_permvar = J(1, `vars', .)
 	// plot(): one histogram-plus-reference-line panel per coefficient,
 	// each built the SAME way R's sna::plot.qaptest() draws a single
 	// coefficient's own permutation null - a dashed line at the
@@ -262,14 +262,14 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// name, or a bare nodal-attribute name like "smoke1") rather than
 	// the actual fitted coefficient name it corresponds to. The
 	// dependent-variable token's own iteration (`entry'=="`net'")
-	// computes results for the CONSTANT (reg_results[1,`vars'], the
+	// computes results for the CONSTANT (__nwqap_reg_results[1,`vars'], the
 	// last column) - correct data, but a panel titled "glasgow2" for
 	// what is really the model's own constant is misleading, not
 	// merely stylistic; likewise a bare nodal attribute like "smoke1"
 	// is fit as "same_smoke1" (mode()'s own dyadic expansion) and
 	// should say so.
 	//
-	// `reg_results' (== e(b) from the internal `type' `formula'' call,
+	// `__nwqap_reg_results' (== e(b) from the internal `type' `formula'' call,
 	// captured above) is NOT a source for these names - its columns
 	// are named after the literal formula() tokens (e.g. plain
 	// "smoke1"), since that is what was actually regressed; the
@@ -288,11 +288,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	local k = 1
 	qui foreach entry in `formula' {
 		if ("`entry'" == "`net'") {
-			local orig_result = reg_results[1,`vars']
+			local orig_result = __nwqap_reg_results[1,`vars']
 			local __coefname "_cons"
 		}
 		else {
-			local orig_result = reg_results[1,`k']
+			local orig_result = __nwqap_reg_results[1,`k']
 			local __coefname : word `=`k'+1' of `prefix'
 		}
 
@@ -338,12 +338,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			local p = "."
 		}
 		if ("`entry'" == "`net'") {
-			mat pvalues[1,`vars'] = `p'
-			mat permvar[1,`vars'] = `entryvar'
+			mat __nwqap_pvalues[1,`vars'] = `p'
+			mat __nwqap_permvar[1,`vars'] = `entryvar'
 		}
 		else {
-			mat pvalues[1,`k'] = `p'
-			mat permvar[1,`k'] = `entryvar'
+			mat __nwqap_pvalues[1,`k'] = `p'
+			mat __nwqap_permvar[1,`k'] = `entryvar'
 			local k = `k' + 1
 		}
 	}
@@ -361,7 +361,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 
 	// qapspp: double semi-partialling (Dekker, Krackhardt & Snijders
 	// 2007) - see this file's own {help nwqap##qapspp:qapspp} doc
-	// section for the full account. Overwrites pvalues[1,k]/permvar[1,k]
+	// section for the full account. Overwrites __nwqap_pvalues[1,k]/__nwqap_permvar[1,k]
 	// for each independent-variable column only (k=1..`vars'-1) - the
 	// constant's own p-value (column `vars', already set above) is left
 	// as the plain single-permutation result; DSP is not defined for it.
@@ -372,11 +372,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// of which model the real coefficients were fit with).
 	if "`qapspp'" != "" {
 		forvalues k = 1/`=`vars'-1' {
-			mata: __nwqap_dsp_res = _nwqap_dsp_pvalue(__nwqap_datalong, `nodes', `k', `permutations', st_matrix("reg_results")[1,`k'])
+			mata: __nwqap_dsp_res = _nwqap_dsp_pvalue(__nwqap_datalong, `nodes', `k', `permutations', st_matrix("__nwqap_reg_results")[1,`k'])
 			mata: st_local("__dsp_p", strofreal(__nwqap_dsp_res[1,1]))
 			mata: st_local("__dsp_var", strofreal(__nwqap_dsp_res[1,2]))
-			mat pvalues[1,`k'] = `__dsp_p'
-			mat permvar[1,`k'] = `__dsp_var'
+			mat __nwqap_pvalues[1,`k'] = `__dsp_p'
+			mat __nwqap_permvar[1,`k'] = `__dsp_var'
 		}
 	}
 
@@ -465,11 +465,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	di "{txt}{hline `=`max_l' + 3'}{c TT}{hline 25}"
 	di "{col 2}{ralign `=`max_l'+1':`net'}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 11'}Coef.{col `=`max_l' + 20'}P-value"
 	di "{hline `=`max_l' + 3'}{c +}{hline 25}"
-	local constant = round(reg_results[1,`=`vars''], 0.001)
+	local constant = round(__nwqap_reg_results[1,`=`vars''], 0.001)
 
 	forvalues k=2/`vars'{
-		local coeff = `=round(float(reg_results[1,`=`k'-1']), 0.001)'
-		local pvalue = `=round(float(pvalues[1,`=`k'-1']),0.001)'
+		local coeff = `=round(float(__nwqap_reg_results[1,`=`k'-1']), 0.001)'
+		local pvalue = `=round(float(__nwqap_pvalues[1,`=`k'-1']),0.001)'
 		di as text "{txt}{col 2}{ralign `=`max_l'+1':``k''}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`coeff'}{col `=`max_l' + 20'}{ralign 5:`pvalue'}"
 	}
 	di "{txt}{col 2}{ralign `=`max_l'+1':_cons}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`constant'}"
@@ -497,8 +497,8 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local ivnames "`ivnames' ``k''"
 	}
 	tempname b V
-	matrix `b' = reg_results
-	matrix `V' = diag(permvar)
+	matrix `b' = __nwqap_reg_results
+	matrix `V' = diag(__nwqap_permvar)
 	// Some regression commands (e.g. logit) attach their own equation
 	// name (their depvar) to e(b)'s column stripe, while regress does
 	// not - a bare "matrix colnames" call preserves any equation name
@@ -524,7 +524,8 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		ereturn local fit_labs `"`__nw_fit_labs'"'
 	}
 	ereturn scalar permutations = `permutations'
-	ereturn matrix pvalues pvalues
+	ereturn matrix pvalues __nwqap_pvalues
+	capture matrix drop __nwqap_reg_results __nwqap_permvar __nwqap_temp_coeff
 	mata: mata drop __nwqap_datalong __nwqap_net_long __nwqap_perm_net __nwqap_onenet __nwqap_dvnet
 
 	capture mata: mata drop __nwqap_*
