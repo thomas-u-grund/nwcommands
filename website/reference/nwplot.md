@@ -232,4 +232,4 @@ Binary: yes. Weighted: yes. On a valued network the widths of the edges follow t
 
 ---
 
-*nwcommands version 3.11.0, 27 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))

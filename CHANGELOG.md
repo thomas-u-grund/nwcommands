@@ -4,6 +4,17 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.11.1] - 2026-10-27
+
+Fixes for clashes between your own Stata matrices, scalars and variables and those of nwcommands, and one plot error. The Mata library is unchanged, so the four model packages need no release.
+
+### Fixed
+- **Commands no longer overwrite or delete your own Stata matrices, scalars and variables.** `nwcomponents`, `nwkcore`, `nwconcor`, `nwcommunity`, `nwmodularity`, `nwplot` and `nwqap` used plain names for their working matrices and scalars (`comp_id`, `comp_sizeid`, `block_id`, `core_id`, `comm_sizeid`, `components`, `communities`, `modularity`, `nsizerow`, `pvalues`, `permvar`, `reg_results` and others). A matrix or scalar of yours with the same name was replaced, and often removed when the command finished (`nwplot` also created and dropped a variable `_id`). They now use private temporary names. The results in `r()` and `e()` are the same. The new test `test_stata_userspace.do` guards this.
+- **`nwplot` with `components()` stopped with error 3301 (subscript invalid)** when the data set had more or fewer rows than the network has nodes (for example after you worked with a smaller network on the same data). The nodes of each component are now found from the network itself.
+
+### Known limitation
+- When a command stops with an error half way, its private Mata variables (names starting with `__nw`) can stay until the next run or `mata: mata clear`. They never replace your own variables.
+
 ## [3.11.0] - 2026-10-27
 
 Fixes for clashes between your own Mata variables and the Mata variables of nwcommands. The Mata library is unchanged (the library hash is the same as in 3.10.0), so the four model packages need no release and work with 3.10.0 and with 3.11.0.

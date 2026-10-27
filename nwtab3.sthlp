@@ -106,4 +106,4 @@ version: 2.0.0
 certified: 12 Jul 2016, 18:18:52
 
 {hline}
-{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

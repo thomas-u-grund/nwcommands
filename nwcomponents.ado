@@ -82,20 +82,21 @@ program nwcomponents, rclass
 		mata: __nwcomponents_comp_sizeid[.,2] = __nwcomponents_comp_id
 		mata: __nwcomponents_comp_sizeid[.,3] = __nwcomponents_comp_share
 		mata: __nwcomponents_comp_sizeid = sort(__nwcomponents_comp_sizeid, (-1, 2))
-		mata: st_numscalar("components", __nwcomponents_comp_number)
-		mata: st_matrix("comp_sizeid", __nwcomponents_comp_sizeid)
+		tempname __nwcc_m __nwcc_n
+		mata: st_numscalar("`__nwcc_n'", __nwcomponents_comp_number)
+		mata: st_matrix("`__nwcc_m'", __nwcomponents_comp_sizeid)
 		// the (first) largest component, for the lgc option
 		mata: st_numscalar("__nwcc_lgc", __nwcomponents_comp_id[selectindex(__nwcomponents_comp_size :== max(__nwcomponents_comp_size))[1]])
 
-		matrix colnames comp_sizeid = size compid share
+		matrix colnames `__nwcc_m' = size compid share
 
-		return scalar components = components
-		local lcomp = components
+		return scalar components = `__nwcc_n'
+		local lcomp = `__nwcc_n'
 
 		mata: __nwcc_stripe = J(__nwcomponents_comp_number, 2, "")
 		mata: __nwcc_stripe[., 2] = "comp" :+ strofreal((1::__nwcomponents_comp_number))
-		mata: st_matrixrowstripe("comp_sizeid", __nwcc_stripe)
-		return matrix comp_sizeid = comp_sizeid
+		mata: st_matrixrowstripe("`__nwcc_m'", __nwcc_stripe)
+		return matrix comp_sizeid = `__nwcc_m'
 		mata: mata drop __nwcomponents_comp_number __nwcomponents_comp_share __nwcomponents_comp_id __nwcomponents_comp_size __nwcomponents_comp_sizeid __nwcc_vals __nwcc_sorted __nwcc_info __nwcc_stripe
 
 		// Consistency (moderate-severity pass, cohesion_subgroups group):

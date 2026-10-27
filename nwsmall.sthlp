@@ -130,4 +130,4 @@ the same network). 20,000 nodes with {opt k(5)}: 1 second (killed at 12 GB befor
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 {hline}
-{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

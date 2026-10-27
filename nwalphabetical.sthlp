@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.11.0  27oct2026}{...}
+{* *! version 3.11.1  27oct2026}{...}
 {phang}
 {help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network programs
  
@@ -152,4 +152,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.11.0, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
