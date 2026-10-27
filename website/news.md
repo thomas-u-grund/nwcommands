@@ -12,6 +12,15 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 27 October 2026: nwsaom 1.2.0 and the manual for version 1.2
+
+**nwsaom 1.2.0: several groups at once** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.2.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Joint estimation of several groups.** The new option `groups(varname)` fits one model to several groups (for example school classes) with shared effects and one rate per period of each group, as RSiena's `sienaGroupCreate()` with `siena07()` does. `gwaves()` allows different numbers of waves in different groups. It works with actor, dyadic and changing covariates, rate covariates, interactions, composition change, missing data and a co-evolving behavior, and `estat timetest` and `estat score` work after such a fit. Estimates, rates and standard errors agree with RSiena 1.6.14. Not yet available with groups: maximum likelihood and Bayesian estimation, `estat gof`, `estat simulate` and `estat importance`, two-mode and undirected networks, `multinet`, several behaviors and a few effects with group-pooled constants.
+- **Composition change.** An actor who leaves at an observation now acts in the period that starts at its last wave, as in RSiena's `sienaCompositionChange()`. A network effect of the dependent behavior now skips ties whose behavior value was missing at the start of the period (`behegox`, `behaltx`, `behegoplusalt`, `behsim`), as RSiena does.
+- **Two-mode tools.** `nwsaom describe` reports two-mode networks correctly (actors, events, attendances), and `nwsaom simulate` and `estat simulate` work for two-mode models. `nwsaom meta, rates` now combines the rate parameters.
+- **Manual for version 1.2.** The manual has a new chapter on several groups and the meta-analysis, with worked examples. The new tutorials 7 to 14 of the nwsaom section cover composition change and missing data, covariates over time, undirected and two-mode networks, endowment and creation effects, simulation, estimation options and speed, meta-analysis, and several groups.
+
 ## 27 October 2026: nwsaom 1.1.1
 
 **nwsaom 1.1.1: faster estimation** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.1)). Works with nwcommands 3.6.0 and later. Results are unchanged: with a fixed seed every estimate, standard error and statistic is identical to that of 1.1.0.
