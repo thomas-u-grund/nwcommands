@@ -17,13 +17,6 @@ network models, from the Stata command line or from dialog boxes.
 [Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-```stata
-. nwwebuse florentine, nwclear
-. nwplot flomarriage, label(_nwnode)
-. nwbetween flomarriage
-. sum _between
-```
-
 ## The packages
 
 nwcommands is a family of five packages. The core handles networks (134 commands and 120 dialog boxes).
@@ -64,6 +57,15 @@ Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough)
 
 `nwversion` shows the installed versions. More on installation, releases and computers without
 internet access: [Installation & Setup](tutorials/01-installation-setup/).
+
+After installing, try this: it loads the Florentine marriage network, plots it, and computes each family's betweenness centrality.
+
+```stata
+. nwwebuse florentine, nwclear
+. nwplot flomarriage, label(_nwnode)
+. nwbetween flomarriage
+. sum _between
+```
 
 ## Where to start
 
