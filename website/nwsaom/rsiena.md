@@ -1,7 +1,7 @@
 ---
 title: "nwsaom and RSiena"
 parent: "nwsaom (SAOM)"
-nav_order: 15
+nav_order: 16
 permalink: /nwsaom/rsiena/
 description: "What nwsaom shares with RSiena, what it lacks, how it was compared, and a translation table from RSiena functions to nwsaom commands."
 ---
@@ -36,8 +36,11 @@ Not implemented in `nwsaom`:
 
 - the generalised method of moments estimator;
 - the settings model;
-- a hierarchical Bayesian analysis of several groups, and the joint estimation of one model in several groups
-  (groups fitted separately can be combined with `nwsaom meta`, the counterpart of `siena08`);
+- a hierarchical Bayesian analysis of several groups (the joint estimation of one model in several groups is
+  the option `groups()`, see [Tutorial 14](../tutorial-14-several-groups/); groups fitted separately can be combined
+  with `nwsaom meta`, the counterpart of `siena08`). With `groups()`, maximum likelihood and Bayesian estimation,
+  `estat gof`, `estat simulate` and `estat importance`, two-mode and non-directed networks, several networks
+  and a few effects are not yet available;
 - the continuous (stochastic differential equation) behavior;
 - inside `nwsaom multinet`: composition change, missing ties, `estat gof`, `estat importance` and `estat simulate`.
 
@@ -77,6 +80,7 @@ on every model; further threads come on top. The numbers are in the manual and a
 | `sienaGOF`, `plot.sienaGOF` | `estat gof` |
 | `sienaTimeTest` | `estat timetest` |
 | `sienaRI` | `estat importance` |
+| `sienaGroupCreate` and `siena07` | `groups()` (and `gwaves()`) on a data set with the groups stacked |
 | `siena08` | `nwsaom meta` |
 | `sienaCompositionChange` | `present()`, `joinat()`, `leaveat()` |
 | missing data in `sienaDataCreate` | `missnet()`, `missbeh()` |

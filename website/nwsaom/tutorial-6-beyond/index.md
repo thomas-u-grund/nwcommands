@@ -197,7 +197,7 @@ this small, artificial example. After `multinet`, `estat score` and `estat timet
   **composition change** (`present()`) and **missing data** (`missnet()`, `missbeh()`) in [Tutorial 7](../tutorial-7-composition-missing/),
   **a covariate-dependent rate** (`ratecov()`), endowment and creation effects and interactions in
   [Tutorial 10](../tutorial-10-endowment-interaction-rate/), simulation in [Tutorial 11](../tutorial-11-simulation/) and
-  **combining several groups** (`nwsaom meta`, RSiena's `siena08`) in [Tutorial 13](../tutorial-13-meta-analysis/).
+  **combining several groups** (`nwsaom meta`, RSiena's `siena08`) in [Tutorial 13](../tutorial-13-meta-analysis/) and **estimating several groups jointly** (`groups()`) in [Tutorial 14](../tutorial-14-several-groups/).
   A behavior in a multinet model and **structural zeros** (`structural()`) are in `help nwsaom` and `help nwsaom_remarks`.
 - [nwsaom and RSiena](../rsiena/) lists what is different from RSiena; the
   [effect overview](../effects/) lists the effect families.

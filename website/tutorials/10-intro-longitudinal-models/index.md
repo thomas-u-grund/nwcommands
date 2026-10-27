@@ -62,6 +62,7 @@ The examples below were run with release 1.0.1 of each package and the core `nwc
 > 11. [Simulation and what-if analysis](../../nwsaom/tutorial-11-simulation/)
 > 12. [Conditional and unconditional estimation, threads and speed](../../nwsaom/tutorial-12-estimation-speed/)
 > 13. [Combining several groups with a meta-analysis](../../nwsaom/tutorial-13-meta-analysis/)
+> 14. [Several groups at once](../../nwsaom/tutorial-14-several-groups/)
 >
 > See also [nwsaom and RSiena](../../nwsaom/rsiena/) and the [installation page](../../nwsaom/install/).
 {: .note }

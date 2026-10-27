@@ -23,7 +23,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 50 girls from a school in the West of Scotland, friendship nominations (up to twelve best friends) at three waves, directed. Networks `glasgow1`, `glasgow2`, `glasgow3` (113, 116 and 122 ties). Attributes: smoking, alcohol use and sport at each wave.
 - **Source:** an excerpt of the Teenage Friends and Lifestyle Study. Michell, L. and Amos, A. (1997), *Social Science & Medicine* 44, 1861-1869; Pearson, M. and Michell, L. (2000), *Drugs: Education, Prevention and Policy* 7, 21-37; Pearson, M. and West, P. (2003), *Connections* 25(2), 59-76.
 - **Load:** `nwwebuse glasgow`
-- **Used in:** [nwsaom tutorials 1](../nwsaom/tutorial-1-first-saom/), [4](../nwsaom/tutorial-4-selection-influence/), [5](../nwsaom/tutorial-5-testing-comparing/), [6](../nwsaom/tutorial-6-beyond/), [7](../nwsaom/tutorial-7-composition-missing/), [9](../nwsaom/tutorial-9-undirected-twomode/), [10](../nwsaom/tutorial-10-endowment-interaction-rate/), [11](../nwsaom/tutorial-11-simulation/) and [12](../nwsaom/tutorial-12-estimation-speed/).
+- **Used in:** [nwsaom tutorials 1](../nwsaom/tutorial-1-first-saom/), [4](../nwsaom/tutorial-4-selection-influence/), [5](../nwsaom/tutorial-5-testing-comparing/), [6](../nwsaom/tutorial-6-beyond/), [7](../nwsaom/tutorial-7-composition-missing/), [9](../nwsaom/tutorial-9-undirected-twomode/), [10](../nwsaom/tutorial-10-endowment-interaction-rate/), [11](../nwsaom/tutorial-11-simulation/), [12](../nwsaom/tutorial-12-estimation-speed/) and [14](../nwsaom/tutorial-14-several-groups/) (as csv files, the 50 pupils cut into three groups).
 
 ### s50
 - **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
@@ -184,7 +184,7 @@ The Siena project describes and distributes its example data at [stats.ox.ac.uk/
 | van Duijn students | no |
 | Knecht classroom | yes: `nwwebuse klas12b` |
 | Teenage Friends and Lifestyle Study (the `s50` excerpt and Glasgow) | yes: `nwwebuse s50` and `nwwebuse glasgow` |
-| Baerveldt | four classes as csv files with [nwsaom tutorial 13](../nwsaom/tutorial-13-meta-analysis/); not in `nwwebuse` |
+| Baerveldt | four classes as csv files with [nwsaom tutorial 13](../nwsaom/tutorial-13-meta-analysis/) and [14](../nwsaom/tutorial-14-several-groups/); not in `nwwebuse` |
 | Harry Potter | yes: `nwwebuse hpotter` |
 | Lazega lawyers | yes: `nwwebuse lazega` |
 

@@ -152,6 +152,14 @@ y1       -3.340        2.230        1.067
 y1       -2.006        1.541        0.494
 ```
 
+## Meta-analysis or one joint model?
+
+The meta-analysis fits every class on its own and asks how much the classes differ. The other way to use several groups is to fit **one model to all
+classes at once**, with the option `groups()`: the classes then share the same effect parameters (and have rates of their own), and the estimates and standard errors
+use the information of all classes together. [Tutorial 14](../tutorial-14-several-groups/) does this with the same four classes and compares the two: when the classes are small, or you believe they follow the same
+process, the joint model is the better choice; when the question is how much the classes differ, as here, the meta-analysis is. The heterogeneity tests above
+(p(Q) = 0.029 for outdegree and 0.039 for closure) are a reason for caution with a joint model of these four classes.
+
 ## Some cautions
 
 - Four groups are very few for estimating a standard deviation. Meta-analysis is more informative with more groups; the numbers above show the method, not conclusions about Dutch classes.
@@ -175,4 +183,4 @@ Snijders, T.A.B. and Baerveldt, C. (2003). A multilevel network study of the eff
 
 ## Where next
 
-The reference page of [`nwsaom`](../../reference/nwsaom) lists all commands and options; the page [nwsaom and RSiena](../rsiena/) lists what is different from RSiena.
+[Tutorial 14](../tutorial-14-several-groups/) estimates one model for all groups at once and compares it with this meta-analysis. The reference page of [`nwsaom`](../../reference/nwsaom) lists all commands and options; the page [nwsaom and RSiena](../rsiena/) lists what is different from RSiena.

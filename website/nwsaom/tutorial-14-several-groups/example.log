@@ -1,0 +1,541 @@
+
+. * nwsaom tutorial 14: several groups at once (joint estimation with groups())
+. * Requires the core nwcommands and the package nwsaom, version 1.2 or later.
+. * The csv files (school1_wave1.csv ... school4_wave2.csv and s50g_actors.csv,
+. * s50g_wave1.csv ... s50g_wave3.csv) must be in the current folder; they are on
+. * the website next to this tutorial.
+. 
+. nwclear
+
+. 
+. * ---- Part 1: four school classes -------------------------------------------
+. * For each class: read the two adjacency matrices (removing the few self-ties),
+. * make the two networks of the class (for the separate fits of Part 2) and add
+. * the matrices to two block-diagonal matrices B1 and B2 (for the joint fit).
+. mata: B1 = J(0, 0, .); B2 = J(0, 0, .)
+
+. local sizes ""
+
+. forvalues s = 1/4 {
+  2.     forvalues w = 1/2 {
+  3.         quietly import delimited using "school`s'_wave`w'.csv", clear
+  4.         local n = _N
+  5.         quietly mkmat v1-v`n', matrix(X`w')
+  6.         matrix X`w' = X`w' - diag(vecdiag(X`w'))
+  7.         mata: B`w' = blockdiag(B`w', st_matrix("X`w'"))
+  8.     }
+  9.     nwset, mat(X1) directed name(school`s'_w1) nooutput
+ 10.     nwset, mat(X2) directed name(school`s'_w2) nooutput
+ 11.     local sizes "`sizes' `n'"
+ 12. }
+
+. 
+. * The stacked data set: one row per pupil (151), a group variable class,
+. * and the wave networks w1 and w2 of all classes together (no ties between classes)
+. clear
+
+. mata: st_matrix("G1", B1); st_matrix("G2", B2)
+
+. quietly set obs `=rowsof(G1)'
+
+. quietly generate byte class = .
+
+. local first = 1
+
+. local s = 0
+
+. foreach n of local sizes {
+  2.     local ++s
+  3.     quietly replace class = `s' in `first'/`=`first'+`n'-1'
+  4.     local first = `first' + `n'
+  5. }
+
+. nwset, mat(G1) directed name(w1) nooutput
+
+. nwset, mat(G2) directed name(w2) nooutput
+
+. 
+. tabulate class
+
+      class |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         45       29.80       29.80
+          2 |         37       24.50       54.30
+          3 |         33       21.85       76.16
+          4 |         36       23.84      100.00
+------------+-----------------------------------
+      Total |        151      100.00
+
+. nwsaom describe, waves(w1 w2)
+
+Network data: 2 waves, 151 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1              246      0.0109         1.629
+2              335      0.0148         2.219
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2         139      196       107    0.314       303
+----------------------------------------------------------
+
+. 
+. * ---- Part 2: one joint model for all classes -------------------------------
+. nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip seed(5)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: w1 w2
+Actors: 151                            Periods: 4
+Groups: 4 (variable class), actors per group: 45, 37, 33, 36; waves per group: 2, 2, 2, 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+    w1_to_w2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.247226   .0808946   -27.78   0.000    -2.405776   -2.088675
+ reciprocity |    1.86988   .1595137    11.72   0.000     1.557239    2.182522
+   transtrip |   .4650632   .0590168     7.88   0.000     .3493924    .5807339
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period3    period5    period7 
+-------------+-------------------------------------------
+        rate |    6.4599     5.3856     2.2902     8.1389 
+          se |    1.0048     1.3792     0.5385     1.9861 
+Overall maximum convergence ratio: 0.067 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. estimates store joint
+
+. 
+. * what the fit stored about the groups
+. display "groups: " e(ngroups) "   actors: " e(N)
+groups: 4   actors: 151
+
+. matrix list e(groupn)
+
+e(groupn)[1,4]
+    c1  c2  c3  c4
+r1  45  37  33  36
+
+. matrix list e(rates_group)
+
+e(rates_group)[1,4]
+    period1  period3  period5  period7
+r1        1        2        3        4
+
+. matrix list e(rates_period)
+
+e(rates_period)[1,4]
+    period1  period3  period5  period7
+r1        1        3        5        7
+
+. 
+. * ---- Part 3: joint model or meta-analysis? ---------------------------------
+. * the same classes fitted one at a time, then combined
+. forvalues s = 1/4 {
+  2.     quietly nwsaom, wave1(school`s'_w1) wave2(school`s'_w2) outdegree reciprocity transtrip see
+> d(5)
+  3.     estimates store school`s'
+  4. }
+
+. estimates table school1 school2 school3 school4, b(%7.3f) se(%7.3f)
+
+------------------------------------------------------
+    Variable | school1   school2   school3   school4  
+-------------+----------------------------------------
+   outdegree |  -2.269    -2.328    -3.340    -2.006  
+             |   0.116     0.206     0.451     0.137  
+ reciprocity |   1.561     2.589     2.230     1.541  
+             |   0.254     0.399     0.750     0.287  
+   transtrip |   0.468     1.133     1.067     0.494  
+             |   0.061     0.306     0.288     0.109  
+------------------------------------------------------
+                                          Legend: b/se
+
+. nwsaom meta school1 school2 school3 school4
+
+Meta-analysis of 4 fits (RSiena siena08): estimates with a standard error of at least 10 are exclude
+> d
+Tests of mean parameters use a t distribution with n-1 d.f. (n = number of included groups).
+
+IWLS estimates (Snijders & Baerveldt 2003)
+--------------------------------------------------------------------------------
+      effect |   n      mean     s.e.       t       p       sd        Q    p(Q)
+-------------+------------------------------------------------------------------
+   outdegree |   4   -2.3772   0.2535   -9.38   0.003   0.5069     9.05   0.029
+ reciprocity |   4    1.8653   0.2664    7.00   0.006   0.5328     5.91   0.116
+   transtrip |   4    0.6958   0.1734    4.01   0.028   0.3468     8.39   0.039
+--------------------------------------------------------------------------------
+
+Maximum likelihood under normality with  95% profile-likelihood intervals
+----------------------------------------------------------------------------------------------
+      effect |     mean     s.e.     lower    upper        sd    lower    upper
+-------------+--------------------------------------------------------------------------------
+   outdegree |  -2.2339   0.0940   -2.7705  -2.0006    0.0829   0.0000   0.7810
+ reciprocity |   1.8256   0.2162    1.3163   2.5174    0.2423   0.0000   1.0805
+   transtrip |   0.5115   0.0514    0.4104   1.0354    0.0001   0.0000   0.6001
+----------------------------------------------------------------------------------------------
+
+Fisher's combination of one-sided tests (chi-squared, 2n d.f.)
+----------------------------------------------------------
+      effect |     right       p      left       p
+-------------+--------------------------------------------
+   outdegree |     0.000   1.000   807.018   0.000
+ reciprocity |   138.037   0.000     0.003   1.000
+   transtrip |   127.633   0.000     0.000   1.000
+----------------------------------------------------------
+Correlation of estimates and standard errors (Spearman, t approximation for p): see r(meta) columns 
+> corr, corr_p.
+
+. 
+. * the joint estimate next to the average of the classes and the meta-analysis mean
+. quietly nwsaom meta school1 school2 school3 school4, notable
+
+. matrix T = r(theta)
+
+. matrix meanT = J(1, 4, 0.25) * T
+
+. matrix MM = r(meta)
+
+. local c = colnumb(MM, "iwls_mean")
+
+. matrix iwls = MM[1..3, `c']'
+
+. estimates restore joint
+(results joint are active now)
+
+. matrix jt = e(b)
+
+. matrix cmp = meanT \ iwls \ jt
+
+. matrix rownames cmp = avg_classes meta_IWLS joint
+
+. matrix colnames cmp = outdegree reciprocity transtrip
+
+. matrix list cmp, format(%7.3f)
+
+cmp[3,3]
+               outdegree  reciprocity    transtrip
+avg_classes       -2.486        1.980        0.791
+  meta_IWLS       -2.377        1.865        0.696
+      joint       -2.247        1.870        0.465
+
+. 
+. * a joint model in which reciprocity may differ for class 2
+. generate byte c2 = (class == 2)
+
+. nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#recip
+> rocity) seed(5)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: w1 w2
+Actors: 151                            Periods: 4
+Groups: 4 (variable class), actors per group: 45, 37, 33, 36; waves per group: 2, 2, 2, 2
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+                    w1_to_w2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-----------------------------+----------------------------------------------------------------
+                   outdegree |  -2.239454   .0868974   -25.77   0.000     -2.40977   -2.069138
+                 reciprocity |   1.885847    .163172    11.56   0.000     1.566036    2.205659
+                     egox_c2 |   .1364565   .1939773     0.70   0.482    -.2437321    .5166451
+                   transtrip |   .4965696   .0615531     8.07   0.000     .3759277    .6172114
+interact_egox_c2_reciprocity |   1.119204   .3962136     2.82   0.005     .3426394    1.895768
+----------------------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period3    period5    period7 
+-------------+-------------------------------------------
+        rate |    6.6290     3.8926     2.2962     8.9635 
+          se |    1.0231     0.7912     0.5301     2.4642 
+Overall maximum convergence ratio: 0.121 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. 
+. * ---- Part 4: a behavior in several groups, and unequal waves ---------------
+. * 50 pupils (RSiena's s50 data) cut into three groups of 15, 20 and 15; the
+. * variables are group and alcohol use at three waves (alc1 alc2 alc3)
+. nwclear
+
+. quietly import delimited using "s50g_actors.csv", clear
+
+. forvalues w = 1/3 {
+  2.     preserve
+  3.     quietly import delimited using "s50g_wave`w'.csv", clear varnames(nonames)
+  4.     quietly mkmat v*, matrix(W`w')
+  5.     restore
+  6.     nwset, mat(W`w') directed name(g`w') nooutput
+  7. }
+
+. tabulate group
+
+      group |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         15       30.00       30.00
+          2 |         20       40.00       70.00
+          3 |         15       30.00      100.00
+------------+-----------------------------------
+      Total |         50      100.00
+
+. summarize alc1 alc2 alc3
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        alc1 |         50        2.88    1.118308          1          5
+        alc2 |         50         3.1     1.19949          1          5
+        alc3 |         50        3.36    .9847822          1          5
+
+. nwsaom describe, waves(g1 g2 g3)
+
+Network data: 3 waves, 50 actors, directed
+----------------------------------------------------------
+wave          ties     density   avg. degree
+1               89      0.0363         1.780
+2               72      0.0294         1.440
+3               68      0.0278         1.360
+----------------------------------------------------------
+period      kept  created dissolved  Jaccard   Hamming
+1->2          46       26        43    0.400        69
+2->3          47       21        25    0.505        46
+----------------------------------------------------------
+
+. 
+. * network and behavior together
+. nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
+>     behavior(alc1 alc2 alc3) linear quadratic avalt behegox behaltx seed(1)
+----------------------------------------------------------------------------------------------------
+SAOM co-evolution (Method of Moments), waves: g1 g2 g3
+Actors: 50                             Periods: 6
+Behavior: alc1 alc2 alc3
+Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 3, 3
+----------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+     g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    outdegree |  -2.979649   .2695164   -11.06   0.000    -3.507892   -2.451407
+  reciprocity |    2.93249   .3884028     7.55   0.000     2.171235    3.693746
+    transtrip |   .6542929   .1518174     4.31   0.000     .3567362    .9518496
+      behegox |   .0223577   .1753387     0.13   0.899    -.3212998    .3660153
+      behaltx |   .0115348   .1772157     0.07   0.948    -.3358017    .3588713
+   beh_linear |   .3858774   .1753668     2.20   0.028     .0421649      .72959
+beh_quadratic |  -.2719056    .139211    -1.95   0.051    -.5447541    .0009429
+    beh_avalt |   .5038188   .3862251     1.30   0.192    -.2531685    1.260806
+-------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2    period4    period5    period7    period8 
+-------------+-----------------------------------------------------------------
+network_rate |    3.6297     1.9451     5.7289     2.3628     1.1390     2.3669 
+          se |    1.3939     0.9042     1.8273     0.6066     0.5659     1.0102 
+behavior_r~e |    1.2869     1.4586     1.8702     2.0337     0.6656     1.4133 
+          se |    0.5556     0.7007     0.6802     0.8578     0.3447     0.6553 
+Overall maximum convergence ratio: 0.200 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. matrix list e(rates)
+
+e(rates)[1,6]
+        period1    period2    period4    period5    period7    period8
+rate  3.6297499  1.9450693  5.7288919  2.3627917  1.1389703  2.3669469
+
+. matrix list e(rates_beh)
+
+e(rates_beh)[1,6]
+            period1    period2    period4    period5    period7    period8
+rate_beh  1.2869125  1.4586062  1.8701735  2.0337265  .66555973  1.4132895
+
+. 
+. * groups with different waves: group 2 observed at waves 1 and 2, group 3 at waves 2 and 3
+. nwsaom, waves(g1 g2 g3) groups(group) gwaves(2: 1 2 | 3: 2 3) outdegree reciprocity transtrip seed
+> (1)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: g1 g2 g3
+Actors: 50                             Periods: 4
+Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 2, 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+    g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.682548   .2634191   -10.18   0.000     -3.19884   -2.166256
+ reciprocity |   2.623762   .3910328     6.71   0.000     1.857352    3.390172
+   transtrip |    .554422   .1317472     4.21   0.000     .2962022    .8126417
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2    period4    period6 
+-------------+-------------------------------------------
+        rate |    3.1495     1.5944     5.2404     2.0249 
+          se |    1.0063     0.6410     1.3535     0.7708 
+Overall maximum convergence ratio: 0.038 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. matrix list e(groupwaves)
+
+e(groupwaves)[1,3]
+    c1  c2  c3
+r1   3   2   2
+
+. matrix list e(rates_group)
+
+e(rates_group)[1,4]
+    period1  period2  period4  period6
+r1        1        1        2        3
+
+. matrix list e(rates_period)
+
+e(rates_period)[1,4]
+    period1  period2  period4  period6
+r1        1        2        4        6
+
+. 
+. * ---- Part 5: after the fit -------------------------------------------------
+. * time heterogeneity, per effect, per group and per period
+. nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip egox(alc) altx(alc) uncondit
+> ional seed(1)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: g1 g2 g3
+Actors: 50                             Periods: 6
+Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 3, 3
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+    g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.976298   .2657362   -11.20   0.000    -3.497131   -2.455464
+ reciprocity |   2.919964   .3902747     7.48   0.000      2.15504    3.684889
+    altx_alc |   .0061617   .1321751     0.05   0.963    -.2528968    .2652201
+    egox_alc |  -.0533429   .1334337    -0.40   0.689    -.3148682    .2081825
+   transtrip |   .6515672   .1553679     4.19   0.000     .3470518    .9560827
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2    period4    period5    period7    period8 
+-------------+-----------------------------------------------------------------
+        rate |    3.5947     1.8560     5.6084     2.3745     1.0733     2.3782 
+          se |    1.4350     0.8444     1.9027     0.7427     0.4763     0.9785 
+Overall maximum convergence ratio: 0.140 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+. estat timetest, fixrates
+
+Test of time heterogeneity (score-type test; RSiena's sienaTimeTest)
+----------------------------------------------------------------------
+Joint test of all period-specific deviations:  c =   36.3357   d.f. = 25   p-value = 0.0667
+
+Test of each effect (is its parameter the same in all periods?)
+effect                           c  d.f.   p-value
+outdegree                    3.080     5    0.6876
+reciprocity                  2.672     5    0.7503
+altx_alc                    10.794     5    0.0556
+egox_alc                     8.384     5    0.1363
+transtrip                   11.680     5    0.0394
+
+Test of each group (are the parameters of the periods of the group the same as in the other groups?)
+group                            c  d.f.   p-value
+Group 1                      2.320     5    0.8033
+Group 2                     13.036    10    0.2217
+Group 3                     21.967    10    0.0153
+
+Test of each period (all effects)
+period                           c  d.f.   p-value
+Period 1                     2.320     5    0.8033
+Period 2                     6.085     5    0.2980
+Period 3                     8.021     5    0.1551
+Period 4                     7.133     5    0.2109
+Period 5                    18.300     5    0.0026
+Period 6                     4.452     5    0.4864
+
+Period-specific deviations (one-step estimates) and separate tests
+effect                    period   deviation         c   p-value
+outdegree                      2      0.2988     0.274    0.6010
+outdegree                      3      1.6235     0.427    0.5136
+outdegree                      4     -0.7329     1.279    0.2580
+outdegree                      5     -1.3394     0.146    0.7020
+outdegree                      6      1.6103     1.591    0.2072
+reciprocity                    2     -1.0102     0.159    0.6905
+reciprocity                    3     -2.1005     1.911    0.1669
+reciprocity                    4      0.7115     0.033    0.8552
+reciprocity                    5      0.1293     0.767    0.3812
+reciprocity                    6     -1.0216     0.574    0.4488
+altx_alc                       2      0.8134     4.967    0.0258
+altx_alc                       3      0.2044     0.072    0.7885
+altx_alc                       4     -0.0930     0.855    0.3551
+altx_alc                       5     -0.1689     5.891    0.0152
+altx_alc                       6      0.3480     0.042    0.8374
+egox_alc                       2     -0.1810     2.700    0.1003
+egox_alc                       3     -0.3759     0.032    0.8586
+egox_alc                       4     -0.5497     0.835    0.3608
+egox_alc                       5     -0.7085     5.245    0.0220
+egox_alc                       6     -0.2133     0.008    0.9278
+transtrip                      2     -0.0329     1.817    0.1776
+transtrip                      3     -0.6396     2.752    0.0971
+transtrip                      4     -0.0458     0.054    0.8170
+transtrip                      5      1.6144     9.134    0.0025
+transtrip                      6     -0.6095     0.000    0.9910
+
+. matrix list r(group)
+
+r(group)[3,2]
+           c1         c2
+r1  2.3204642          5
+r2  13.035727         10
+r3  21.966799         10
+
+. matrix list r(period)
+
+r(period)[6,2]
+           c1         c2
+r1  2.3204642          5
+r2  6.0854359          5
+r3  8.0214088          5
+r4  7.1334805          5
+r5  18.300069          5
+r6  4.4515339          5
+
+. 
+. * score test: fit the model with the two alcohol effects held fixed at 0, then test them
+. nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip egox(alc) altx(alc) fix(egox
+> (alc) altx(alc)) unconditional seed(1)
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, unconditional), waves: g1 g2 g3
+Actors: 50                             Periods: 6
+Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 3, 3
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+    g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.982433   .2715569   -10.98   0.000    -3.514675   -2.450191
+ reciprocity |   2.930401   .4131673     7.09   0.000     2.120608    3.740194
+    altx_alc |          0  (omitted)
+    egox_alc |          0  (omitted)
+   transtrip |   .6550717   .1414021     4.63   0.000     .3779285    .9322148
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2    period4    period5    period7    period8 
+-------------+-----------------------------------------------------------------
+        rate |    3.5847     1.8840     5.7248     2.3821     1.0858     2.3902 
+          se |    1.6374     0.8798     1.8793     0.7317     0.4706     0.9830 
+Overall maximum convergence ratio: 0.107 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for altx_alc (0.211) egox
+> _alc (0.424)
+Convergence is good only if both criteria are met. Refit starting from these estimates with theta0()
+> ; see nwsaom.
+
+. estat score
+
+Generalised score-type test of the model restricted by:
+  (1)  altx_alc                 =    0.0000
+  (2)  egox_alc                 =    0.0000
+------------------------------------------------------------
+Joint test:  c =    0.1870   d.f. = 2   p-value = 0.9107
+  (1) altx_alc separately: c =   0.0405  d.f. = 1  p-value = 0.8404   one-sided:  -0.2014
+  (2) egox_alc separately: c =   0.1719  d.f. = 1  p-value = 0.6785   one-sided:  -0.4146
+
+One-step estimates (restricted estimate plus the one-step correction):
+  outdegree                 -2.9696
+  reciprocity                2.9125
+  altx_alc                   0.0082
+  egox_alc                  -0.0542
+  transtrip                  0.6555
+  rate1                      3.6195
+  rate2                      1.8886
+  rate3                      5.6898
+  rate4                      2.3420
+  rate5                      1.1046
+  rate6                      2.3453

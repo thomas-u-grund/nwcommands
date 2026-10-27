@@ -71,6 +71,7 @@ errors in `nwsaom` are the author's.
 - [Tutorial 11: Simulation and what-if analysis](tutorial-11-simulation/): `estat simulate`, `nwsaom simulate`, `estat mems`.
 - [Tutorial 12: Conditional and unconditional estimation, threads and speed](tutorial-12-estimation-speed/): conditional and unconditional estimation, `cores()`, `k0()`/`k3()`.
 - [Tutorial 13: Combining several groups with a meta-analysis](tutorial-13-meta-analysis/): `nwsaom meta` for several groups (RSiena's `siena08`).
+- [Tutorial 14: Several groups at once](tutorial-14-several-groups/): one model for all groups with `groups()` and `gwaves()` (RSiena's `sienaGroupCreate`).
 - [nwsaom and RSiena](rsiena/): what is the same, what differs, a translation table.
 - [Effects](effects/): an overview of the effect families.
 - [How to cite](citation/)
