@@ -317,9 +317,6 @@ form between the two groups. This changes the Glasgow data, so the numbers are n
 
 ```stata
 . nwsaom, waves(sz1 sz2 sz3) outdegree reciprocity transtrip seed(1)
-  1250
-  1250
-  1250
 ----------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: sz1 sz2 sz3
 Actors: 50                             Periods: 2
@@ -341,9 +338,9 @@ Overall maximum convergence ratio: 0.093 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
-The three numbers printed first are the number of fixed dyads in each wave (1,250 each). Fixed dyads cannot
-change, so ties can only form or be dropped between pupils in the same group, and the estimates describe tie
-formation inside the two groups. Use 10 for dyads that must stay empty and 11 for dyads that must stay tied.
+There are 1,250 fixed dyads in each wave (25 x 25 in each direction). Fixed dyads cannot change, so ties can
+only form or be dropped between pupils in the same group, and the estimates describe tie formation inside the
+two groups. Use 10 for dyads that must stay empty and 11 for dyads that must stay tied.
 RSiena uses the same codes, and the older option `structural()` that takes a matrix still works but is
 deprecated.
 

@@ -328,9 +328,6 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . nwsaom, waves(sz1 sz2 sz3) outdegree reciprocity transtrip seed(1)
-  1250
-  1250
-  1250
 ----------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: sz1 sz2 sz3
 Actors: 50                             Periods: 2
