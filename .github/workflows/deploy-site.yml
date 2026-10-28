@@ -58,6 +58,11 @@ jobs:
       - name: Copy the starter package to net/
         run: bash tools/make_net_dir.sh website/_site/net
 
+      # The old install address (net from http://www.nwcommands.org/main) still appears in old instructions and papers:
+      # serve the same starter package there, so that those commands reach the current installer
+      - name: Copy the starter package to main/ (old address)
+        run: bash tools/make_net_dir.sh website/_site/main
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
