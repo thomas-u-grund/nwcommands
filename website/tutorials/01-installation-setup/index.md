@@ -84,7 +84,7 @@ your Stata start-up file (`profile.do`), so that the menu is there each time you
 the menu out again, type `nwinstall, remove`. The start-up line is written once: running `nwinstall`
 again, or having the older `nwinstall, downloadoff` line in `profile.do`, never gives you a second menu. If your
 `profile.do` already builds a "Network Analysis" menu in some other way, `nwinstall` tells you and adds nothing.
-If the model packages are installed, their dialogs appear under "Statistical Models" in two submenus of their own: "Stochastic actor-oriented models (nwsaom)" and "Exponential random graph models (nwergm)". A submenu is shown only when that package's dialogs are installed.
+If the model packages are installed, there is one entry for each of them under "Statistical Models": "Stochastic actor-oriented model (nwsaom)" and "Exponential random graph model (nwergm)". The other dialogs of a package (Bayesian estimation, several networks, postestimation, simulation and so on) open from buttons inside its main dialog. An entry is shown only when that package's dialogs are installed.
 
 To install without the menu, add `nogui`: `nwinstall, everything nogui`. If a dialog file exists in two folders of
 the ado path, `nwinstall, dupcheck` shows which copy Stata uses; nothing is deleted.

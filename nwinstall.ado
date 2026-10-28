@@ -711,19 +711,12 @@ program nwinstall_menu
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 
-	// Dialogs of the separate model packages: listed only when the package's dialog file is installed
-	// (nwsaom and nwergm have dialogs; nwdynam and nwrem have none)
+	// Model packages: ONE menu entry per package (nwsaom, nwergm); every other dialog of a package (Bayes, several networks,
+	// postestimation, simulation, ...) opens from a button inside the main dialog. An entry is listed only when the
+	// package's dialog file is installed (nwdynam and nwrem have no dialogs)
 	local __nwmodeldlg ""
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom|Stochastic actor-oriented model (nwsaom)""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_multinet|nwsaom: two networks that change together (multinet)""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_multiplex|nwsaom: multiplex networks""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_bayes|nwsaom: Bayesian estimation""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_meta|nwsaom: combine estimates from several groups (meta)""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_describe|nwsaom: describe the data""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom_estat|nwsaom: postestimation statistics""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwergm_simulate|nwergm: simulate networks""'
-	local __nwmodeldlg `"`__nwmodeldlg' "nwergm_estat|nwergm: postestimation and goodness of fit""'
 	local __nwfirst = 1
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")
