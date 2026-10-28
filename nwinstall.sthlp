@@ -104,7 +104,7 @@ The line is never written twice, however often you run {cmd:nwinstall}:
 {phang2}o  The older spellings of the line ({cmd:nwinstall, downloadoff}, extra spaces, a {cmd:quietly} in front) count as the same line; extra copies are dropped, and the rest of your {bf:profile.do} is kept as it was.{p_end}
 {phang2}o  If {bf:profile.do} (or another {bf:profile.do} Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a {it:Network Analysis} menu in some other way, for example with a {cmd:window menu} line of your own, no second menu is added; {cmd:nwinstall} names the line and the file in a message. Lines it cannot identify with certainty are never deleted.{p_end}
 {phang2}o  Within one session the menu is rebuilt from an empty {it:User} menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the {it:User} menu in that session.{p_end}
-{phang2}o  The menu entries of the model packages {cmd:nwsaom} and {cmd:nwergm} appear only when the package's dialog boxes are installed.{p_end}
+{phang2}o  The menu entries of the model packages {cmd:nwsaom} and {cmd:nwergm} appear only when the package's dialog boxes are installed. They are grouped in the submenus {it:Stochastic actor-oriented models (nwsaom)} and {it:Exponential random graph models (nwergm)} under {it:Statistical Models}.{p_end}
 {phang2}o  If the menu cannot be built (a Stata without menus, a batch run), you get a note and the installation goes on; nothing fails.{p_end}
 {phang2}o  {cmd:nwinstall, remove} takes the menu, the {cmd:nwinstall, usermenu} line and the nwcommands files away again.{p_end}
 
@@ -202,4 +202,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.0, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

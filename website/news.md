@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwcommands 3.12.0, nwsaom 1.3.2 and nwergm 1.3.3
+
+**nwcommands 3.12.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.0)), **nwsaom 1.3.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.2)) and **nwergm 1.3.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.3)). Menus and dialog boxes only; no change in commands or estimates.
+
+- **Menu.** Under "Network Analysis" > "Statistical Models" the dialogs of nwsaom and nwergm are now in two submenus (one for each package) instead of one long list.
+- **Dialog boxes.** The main nwsaom dialog has a group "Related dialogs" with buttons for Bayesian estimation, several networks, multiplex networks, postestimation, describing the data and the meta-analysis. The main nwergm dialog has buttons for simulation and for postestimation and goodness of fit. The describe dialog of nwsaom has the missing field for two-mode networks.
+
 ## 28 October 2026: nwsaom 1.3.1
 
 **nwsaom 1.3.1: one cosmetic fix** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.1)). With structural zeros and ones, `nwsaom` no longer prints a stray line with the number of fixed dyads before the results. Nothing else changes: the estimates, the plugin and the Mata libraries are the same as in 1.3.0.

@@ -16,7 +16,7 @@ example `nwsaom version`.
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.11.1) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.12.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 
@@ -68,7 +68,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.3.1/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.3.2/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments
