@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwsaom 1.3.3
+
+**nwsaom 1.3.3: fix for the main dialog box** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.3)). In all earlier versions the OK button of the main nwsaom dialog (`db nwsaom`) did nothing: no command and no message appeared. This is fixed. The commands, estimates, the plugin and the Mata libraries are unchanged. Typing the command was never affected.
+
 ## 28 October 2026: nwcommands 3.12.1, nwsaom 1.3.2 and nwergm 1.3.3
 
 **nwcommands 3.12.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.1)), **nwsaom 1.3.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.2)) and **nwergm 1.3.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.3)). Menus and dialog boxes only; no change in commands or estimates.
