@@ -85,4 +85,4 @@ Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt 
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.11.1, 27 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.0, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

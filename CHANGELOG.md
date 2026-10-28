@@ -4,6 +4,13 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.12.0] - 2026-10-28
+
+The dialogs of the model packages are no longer one flat list in the menu.
+
+### Changed
+- **Menu layout.** With `nwinstall, gui`, the "Statistical Models" menu keeps its four core entries (correlate, CUG, QAP, utility scores) and adds one submenu per model package: "Stochastic actor-oriented models (nwsaom)" (fit a model, several networks that change together, multiplex networks, Bayesian estimation, meta-analysis, describe the data, postestimation) and "Exponential random graph models (nwergm)" (fit a model, simulate networks, postestimation and goodness of fit). Entries and submenus appear only for dialogs that are installed. The Mata library is unchanged, so the model packages need no release.
+
 ## [3.11.1] - 2026-10-27
 
 Fixes for clashes between your own Stata matrices, scalars and variables and those of nwcommands, and one plot error. The Mata library is unchanged, so the four model packages need no release.
