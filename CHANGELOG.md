@@ -4,6 +4,13 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.12.1] - 2026-10-28
+
+Menu change that 3.12.0 described but did not contain.
+
+### Changed
+- **Menu.** With `nwinstall, gui`, the "Statistical Models" menu keeps its four core entries and has exactly one entry for each model package: "Stochastic actor-oriented model (nwsaom)" and "Exponential random graph model (nwergm)". The other dialogs of these packages (Bayesian estimation, several networks, multiplex, meta-analysis, describe, postestimation, simulation) are opened by buttons in the main dialogs of nwsaom 1.3.2 and nwergm 1.3.3. Before, all of them were listed in the menu one after the other.
+
 ## [3.12.0] - 2026-10-28
 
 The dialogs of the model packages are no longer one flat list in the menu.

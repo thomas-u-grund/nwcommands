@@ -59,4 +59,4 @@ since it is a computed test result rather than a stored network property.
 	{help nwsym}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.12.0, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -103,4 +103,4 @@ A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} ca
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.12.0, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
