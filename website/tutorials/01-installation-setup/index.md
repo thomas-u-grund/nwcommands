@@ -11,8 +11,8 @@ This page covers the core `nwcommands` (version 3.0.0) and the four model packag
 `nwergm`, `nwdynam`, `nwrem`), which are installed separately.
 
 nwcommands isn't on Stata's built-in SSC-style search path, so installing the core is a two-step
-process: first you tell Stata *where* to look (`net from`), then you install a small bootstrap
-package (`nwinstall` itself), and finally `nwinstall` downloads everything else for you.
+process: first you install a small starter package (`nwinstall` itself) from the address of the project, and
+then `nwinstall, everything` downloads everything else for you.
 
 ## Installing from scratch
 
@@ -41,6 +41,11 @@ command, every help file and every dialog box of the core, one group after the o
 help files, then dialog boxes), then the four model packages, then it sets up the "Network Analysis" menu
 (see below), and it prints the version of each package at the end. While it runs, Stata prints the package listing of the repository once for each group, so the
 same listing scrolls by several times. That is expected.
+
+**If Stata answers `option everything not allowed`:** an older copy of `nwinstall` is still loaded in this Stata
+session (for example because your `profile.do` calls `nwinstall`, or you used it earlier in the session). The
+`net install` line replaced the files on disk but not the program in memory. Type `program drop nwinstall` (or
+restart Stata) and run `nwinstall, everything` again.
 
 To install the core only, type `nwinstall, all` (it also sets up the menu; add `nogui` to both commands to leave the menu out). It ends with the hint `To also install the model packages
 type: nwinstall, models   (or nwinstall, everything)`.
