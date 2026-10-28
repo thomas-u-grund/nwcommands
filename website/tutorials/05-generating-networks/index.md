@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 5: Generating Networks"
 parent: "nwcommands (core)"
-nav_order: 5
+nav_order: 6
 description: "Random, small-world, preferential-attachment, and lattice networks."
 ---
 
