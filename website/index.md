@@ -54,9 +54,11 @@ added later with `nwinstall, models` (repeating `nwinstall, everything` or `nwin
 
 Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
 
-If Stata answers `option everything not allowed`, an older `nwinstall` is still loaded in this Stata session (for
-example from your `profile.do`). Type `program drop nwinstall` (or restart Stata) and run `nwinstall, everything`
-again.
+If Stata answers `option everything not allowed`, an older `nwinstall` is being used. Type `which nwinstall`: the
+path should point into Stata's `ado/plus` folder. If it says `./nwinstall.ado`, an old copy lies in the folder
+Stata was started from (the current folder is searched first): change to another folder with `cd`. If an older
+copy is loaded in memory (for example by your `profile.do`), type `program drop nwinstall` (or restart Stata).
+Then run `nwinstall, everything` again.
 
 `nwversion` shows the installed versions. More on installation, releases and computers without
 internet access: [Installation & Setup](tutorials/01-installation-setup/).
