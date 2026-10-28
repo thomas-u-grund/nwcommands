@@ -357,7 +357,7 @@ program _nwdeploy
 	file open `toc' using stata.toc, replace write
 	file write `toc' "v 3" _n
 	file write `toc' "d nwcommands: Network Analysis for Stata`=cond("$NW_VERSION" != "", " (version $NW_VERSION, `d')", "")'" _n
-	file write `toc' _n "p nwcommands" _n "d nwcommands. Start here - net install this first, then run nwinstall, all" _n
+	file write `toc' _n "p nwcommands" _n "d nwcommands. Start here - net install this first, then run nwinstall, everything" _n
 	forvalues i = 1/`nadochunks' {
 		file write `toc' _n "p nwcommands-ado`i'" _n "d nwcommands-ado. Social Network Analysis Using Stata (part `i' of `nadochunks')" _n
 	}
