@@ -1,7 +1,7 @@
 ---
 title: "Valued networks"
 parent: "nwcommands (core)"
-nav_order: 4
+nav_order: 14
 description: "How the core commands treat networks whose ties carry values: when a network is valued, which commands use the values, which ignore them, and how to get the binary result."
 permalink: /nwcommands/valued-networks/
 ---

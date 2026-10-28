@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 9: Two-mode networks"
 parent: "nwcommands (core)"
-nav_order: 20
+nav_order: 9
 description: "Two-mode (affiliation) networks: people and the events or companies they attend; degree, projection to one mode, components, community detection and plotting, with the data sets davis and ftdirectors_se."
 ---
 
