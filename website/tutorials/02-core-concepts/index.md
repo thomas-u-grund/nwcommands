@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: Core Concepts"
 parent: "nwcommands (core)"
-nav_order: 3
+nav_order: 13
 description: "What a network is in nwcommands: the current-network model, netname/netlist, and working alongside ordinary Stata variables."
 ---
 
