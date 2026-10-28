@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwsaom 1.3.0 and the manual for version 1.3
+
+**nwsaom 1.3.0: structural zeros and ones, more for several groups** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Structural zeros and ones.** The values 10 and 11 in the wave networks (RSiena's codes for dyads that cannot change, fixed at 0 or 1) are now accepted and handled as RSiena does, for directed, undirected and two-mode networks with any number of waves, together with missing data, composition change, endowment and creation effects, rate covariates, one or several behaviors and `nwsaom multinet`. The postestimation commands work for such fits. The option `structural()` with a matrix still works as a deprecated alternative.
+- **Several groups.** `estat gof`, `estat simulate`, `nwsaom simulate` and `estat importance` now work per group. The centered degree effects, `avdeg` and the `ownx` effects use per-group constants, as RSiena does. `joinat()` and `leaveat()`, `behrate()` and undirected networks work with groups, and `gwaves()` without `groups()` stops with an error.
+- **Manual for version 1.3.** The chapters on several groups and on structural zeros and ones are updated.
+
 ## 27 October 2026: nwcommands 3.11.1
 
 **nwcommands 3.11.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.1)). The four model packages are unchanged by this release.
