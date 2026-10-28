@@ -287,7 +287,7 @@ program _nwdeploy
 	// `net install nwcommands' then `nwinstall, all'.
 	file open deploy_boot using nwcommands.pkg, replace write
 	file write deploy_boot "v 3" _n
-	file write deploy_boot "d nwcommands. Start here - installs nwinstall and the landing help topics; run nwinstall, all next" _n
+	file write deploy_boot "d nwcommands. Start here - installs nwinstall and the landing help topics; run nwinstall, everything next" _n
 	file write deploy_boot "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
 	file write deploy_boot "d email: thomas.u.grund@gmail.com" _n
 	file write deploy_boot "d Distribution-Date: `d'" _n
