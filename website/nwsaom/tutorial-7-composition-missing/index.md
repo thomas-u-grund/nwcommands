@@ -289,6 +289,64 @@ This is the co-evolution model of [Tutorial 4](../tutorial-4-selection-influence
 For `avalt` and `avsim` the treatment of missing values is an approximation, which is the more noticeable the more values are
 missing; the package help describes the limits.
 
+## Dyads that cannot change: structural zeros and ones
+
+Sometimes some pairs of actors can never be tied (for example pupils in different classrooms), or are always
+tied. RSiena calls these *structural zeros* and *structural ones*. They go into the wave data as special
+values: **10** marks a dyad that is fixed at "no tie" and **11** a dyad that is fixed at "tie". `nwsaom`
+recognizes the codes by itself, no option is needed, and they may differ from wave to wave. As an
+illustration we pretend that pupils 1 to 25 and pupils 26 to 50 sit in different classrooms, so that no tie can
+form between the two groups. This changes the Glasgow data, so the numbers are not findings about the school.
+
+```stata
+. nwtomata glasgow1, mat(S1)
+. nwtomata glasgow2, mat(S2)
+. nwtomata glasgow3, mat(S3)
+. mata:
+: S1[1::25, 26::50] = J(25, 25, 10)
+: S1[26::50, 1::25] = J(25, 25, 10)
+: (the same two lines for S2 and S3)
+: st_matrix("SZ1", S1)
+: st_matrix("SZ2", S2)
+: st_matrix("SZ3", S3)
+: end
+. nwset, mat(SZ1) directed name(sz1)
+. nwset, mat(SZ2) directed name(sz2)
+. nwset, mat(SZ3) directed name(sz3)
+```
+
+```stata
+. nwsaom, waves(sz1 sz2 sz3) outdegree reciprocity transtrip seed(1)
+  1250
+  1250
+  1250
+----------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: sz1 sz2 sz3
+Actors: 50                             Periods: 2
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+  sz1_to_sz3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.998832   .2326355   -12.89   0.000    -3.454789   -2.542874
+ reciprocity |   2.956383      .3586     8.24   0.000      2.25354    3.659226
+   transtrip |    .669171   .1110585     6.03   0.000     .4515003    .8868417
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+----------------------
+        rate |    4.7306     3.0467 
+          se |    0.8863     0.6340 
+Overall maximum convergence ratio: 0.093 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+```
+
+The three numbers printed first are the number of fixed dyads in each wave (1,250 each). Fixed dyads cannot
+change, so ties can only form or be dropped between pupils in the same group, and the estimates describe tie
+formation inside the two groups. Use 10 for dyads that must stay empty and 11 for dyads that must stay tied.
+RSiena uses the same codes, and the older option `structural()` that takes a matrix still works but is
+deprecated.
+
 ## Things to try
 
 - Let more pupils join or leave, and see how the rates change.

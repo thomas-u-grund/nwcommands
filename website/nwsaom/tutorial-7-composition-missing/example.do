@@ -82,3 +82,32 @@ generate byte mb3 = 0
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip missnet(miss1 miss2 miss3) seed(4)
 
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt missbeh(mb1 mb2 mb3) seed(4)
+
+* ---------------------------------------------------------------
+* Part 4: dyads that cannot change (structural zeros and ones).
+* We pretend that pupils 1-25 and pupils 26-50 sit in different
+* classrooms, so that no tie can ever form between the two groups.
+* In the wave data, a dyad that cannot change is coded 10 (it is
+* fixed at "no tie") or 11 (it is fixed at "tie"). 0 and 1 keep
+* their usual meaning.
+* ---------------------------------------------------------------
+nwwebuse glasgow, nwclear
+nwtomata glasgow1, mat(S1)
+nwtomata glasgow2, mat(S2)
+nwtomata glasgow3, mat(S3)
+mata:
+S1[1::25, 26::50] = J(25, 25, 10)
+S1[26::50, 1::25] = J(25, 25, 10)
+S2[1::25, 26::50] = J(25, 25, 10)
+S2[26::50, 1::25] = J(25, 25, 10)
+S3[1::25, 26::50] = J(25, 25, 10)
+S3[26::50, 1::25] = J(25, 25, 10)
+st_matrix("SZ1", S1)
+st_matrix("SZ2", S2)
+st_matrix("SZ3", S3)
+end
+nwset, mat(SZ1) directed name(sz1)
+nwset, mat(SZ2) directed name(sz2)
+nwset, mat(SZ3) directed name(sz3)
+
+nwsaom, waves(sz1 sz2 sz3) outdegree reciprocity transtrip seed(1)
