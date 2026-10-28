@@ -12,7 +12,7 @@ Network analysis in Stata: import, generate, describe, analyze and plot networks
 network models, from the Stata command line or from dialog boxes.
 {: .fs-6 .fw-300 }
 
-[Install](#install-in-three-steps){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Install](#install-in-two-steps){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 }
@@ -34,8 +34,8 @@ General Public License, version 3.
 
 Not sure which one you need? See [Which package do I need?](which-package/).
 
-## Install in three steps
-{: #install-in-three-steps }
+## Install in two steps
+{: #install-in-two-steps }
 
 ```stata
 . net install nwcommands, from(https://nwcommands.org/net/) replace
@@ -44,10 +44,9 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 
 1. The first line installs `nwinstall` itself and the landing help topics.
 2. `nwinstall, everything` downloads everything else: the core (every command, all help files and every dialog
-   box) and the four model packages, and prints the version of each at the end.
-3. `nwinstall, everything` also sets up the "Network Analysis" menu in Stata's User menu (one line in your
-   `profile.do`, never written twice). Add `nogui` to leave it out; `nwinstall, gui` adds it later (the older
-   option name `permanently` still works).
+   box) and the four model packages, sets up the "Network Analysis" menu in Stata's User menu (one line in your
+   `profile.do`, never written twice), and prints the version of each package at the end. Add `nogui` to leave
+   the menu out; `nwinstall, gui` adds it later (the older option name `permanently` still works).
 
 To install the core only, type `nwinstall, all` instead of `nwinstall, everything`; the model packages can be
 added later with `nwinstall, models` (repeating `nwinstall, everything` or `nwinstall, models` also updates them). To install one model package only, for example nwsaom, type
