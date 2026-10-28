@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwsaom 1.3.4
+
+**nwsaom 1.3.4: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.4)). Dialogs only; the commands and estimates are unchanged.
+
+- **Simulation dialog.** New dialog `db nwsaom_simulate`, opened by the button "Simulate..." on the last tab ("Related") of the main dialog. It simulates the last fitted model (`estat simulate`) or a model you specify yourself, with `theta()` and `rates()`. It creates one network called `sim` by default.
+- **Network type.** A new drop-down "Network type" in the main dialog (set from the first wave you choose) greys out the effects that do not apply to directed, undirected or two-mode networks.
+- **Buttons and commands.** The buttons that open the related dialogs work without an error message, and the commands built by the dialogs have single blanks between options and none before a closing bracket.
+
 ## 28 October 2026: nwergm 1.3.5
 
 **nwergm 1.3.5: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.5)). Dialogs only; the commands and estimates are unchanged.
