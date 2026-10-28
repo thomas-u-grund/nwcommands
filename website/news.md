@@ -12,6 +12,16 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwergm 1.3.5
+
+**nwergm 1.3.5: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.5)). Dialogs only; the commands and estimates are unchanged.
+
+- **Buttons.** The buttons "Simulate networks..." and "Postestimation and goodness of fit..." in the main dialog opened their dialogs with an error message from Stata; they work now.
+- **Cleaner commands.** The commands built by the dialogs no longer have a blank before a closing bracket, and the terms are separated by one blank (`edges mutual gwesp(0.5)`).
+- **Terms.** The geometrically weighted terms (`gwesp`, `gwdsp`, `gwnsp`, `gwdegree` and their relatives) are now on the Triads and Degree tabs.
+- **Simulate from the last fit.** The simulate dialog starts with the choice "Use the model of the last nwergm fit", which is on after a fit.
+- **Network type.** A new "Type" drop-down (set automatically when you choose a network) greys out the terms that do not apply, for example the directed terms on an undirected network.
+
 ## 28 October 2026: nwsaom 1.3.3
 
 **nwsaom 1.3.3: fix for the main dialog box** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.3)). In all earlier versions the OK button of the main nwsaom dialog (`db nwsaom`) did nothing: no command and no message appeared. This is fixed. The commands, estimates, the plugin and the Mata libraries are unchanged. Typing the command was never affected.
