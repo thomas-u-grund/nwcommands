@@ -68,7 +68,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.3.0/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.3.1/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

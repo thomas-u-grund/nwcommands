@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 28 October 2026: nwsaom 1.3.1
+
+**nwsaom 1.3.1: one cosmetic fix** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.1)). With structural zeros and ones, `nwsaom` no longer prints a stray line with the number of fixed dyads before the results. Nothing else changes: the estimates, the plugin and the Mata libraries are the same as in 1.3.0.
+
 ## 28 October 2026: nwsaom 1.3.0 and the manual for version 1.3
 
 **nwsaom 1.3.0: structural zeros and ones, more for several groups** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.0)). Works with nwcommands 3.6.0 and later; no new core needed.
