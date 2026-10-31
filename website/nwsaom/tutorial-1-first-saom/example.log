@@ -2,9 +2,11 @@
 . * Requires the core nwcommands and the package nwsaom.
 . 
 . nwsaom version
-nwsaom version 1.1.1, 27oct2026
+nwsaom version 1.4.0, 30oct2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : .../ (plugin build 140)
+  native plugin           : /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/b3b3
+> 75aa-592a-469c-9829-89fd91746b19/scratchpad/g14/lib/plugins/macos/saom_sim_macos.plugin (plugin bu
+> ild 152)
   compared with           : R RSiena 1.6.14
   license                 : GNU GPL-3
 
@@ -12,13 +14,13 @@ nwsaom version 1.1.1, 27oct2026
 
 . describe
 
-Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/glasgow.nwdta
+Contains data from /Users/tgrund/FILES_NEW/SOFTWARE/nwcommands_main/data/glasgow.nwdta
  Observations:            50                  
     Variables:            11                  14 May 2019 16:09
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 _nwnode         str3    %9s                   
 _nwinclude      float   %9.0g                 
 alcohol1        byte    %20.0g     alclbl     
@@ -30,72 +32,77 @@ smoke3          byte    %11.0g     smklbl
 sport1          byte    %11.0g     sprlbl     
 sport2          byte    %11.0g     sprlbl     
 sport3          byte    %11.0g     sprlbl     
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 Sorted by: 
      Note: Dataset has changed since last saved.
 
 . nwsaom describe, waves(glasgow1 glasgow2 glasgow3)
 
 Network data: 3 waves, 50 actors, directed
--------------------------------------------------------------------------------------------------------------------------
-wave          ties     density   avg. degree
-1              113      0.0461         2.260
-2              116      0.0473         2.320
-3              122      0.0498         2.440
--------------------------------------------------------------------------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          57       59        56    0.331       115
-2->3          66       56        50    0.384       106
--------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |      113      0.0461         2.260
+           2 |      116      0.0473         2.320
+           3 |      122      0.0498         2.440
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      57        59         56     0.331       115
+        2->3 |      66        56         50     0.384       106
+----------------------------------------------------------------------
 
 . 
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
    outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
  reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
 samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
    transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
--------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.4783     5.2605 
           se |    1.1113     0.8674 
 Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1) detail
--------------------------------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1) de
+> tail
+----------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
    outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
  reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
 samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
    transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
--------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.4783     5.2605 
           se |    1.1113     0.8674 
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
-Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a sepa
+> rate criterion):
   outdegree                  0.072      reciprocity                0.072
   samex_smoke1               0.094      transtrip                  0.061
 Overall maximum convergence ratio:  0.097
-
-. 
+.

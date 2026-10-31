@@ -20,7 +20,7 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    7.4252     5.5577 
           se |    1.4258     0.9936 
 Overall maximum convergence ratio: 0.082 (criterion: below 0.25; met)
@@ -49,7 +49,7 @@ transtiescreation |   2.396332   .5770431     4.15   0.000     1.265348    3.527
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.3342     5.0200 
           se |    1.1150     0.8223 
 Overall maximum convergence ratio: 0.126 (criterion: below 0.25; met)
@@ -73,7 +73,7 @@ reciprocitycreation |   4.080603   .4319001     9.45   0.000     3.234095    4.9
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    4.5166     3.7584 
           se |    0.6481     0.5292 
 Overall maximum convergence ratio: 0.125 (criterion: below 0.25; met)
@@ -99,7 +99,7 @@ altxcreation_alcohol1 |   .2663148   .1141502     2.33   0.020     .0425845    .
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    7.5216     5.8361 
           se |    1.4005     1.1486 
 Overall maximum convergence ratio: 0.090 (criterion: below 0.25; met)
@@ -107,12 +107,12 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . * On a behavior
-. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear q
-> uadraticendow quadraticcreation seed(4)
+. nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadrati
+> cendow quadraticcreation seed(4)
 ----------------------------------------------------------------------------------------------------
-SAOM co-evolution (Method of Moments), waves: glasgow1 -> glasgow2
-Actors: 50                             Network rate:  5.530 (0.850)
-Behavior: alcohol1 alcohol2            Behavior rate:  1.242 (0.311)
+SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2
+Actors: 50                             Periods: 1
+Behavior: alcohol1 alcohol2
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
   glasgow1_to_glasgow2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -123,6 +123,14 @@ Behavior: alcohol1 alcohol2            Behavior rate:  1.242 (0.311)
    beh_quadratic_endow |   .1106879   .4323379     0.26   0.798    -.7366789    .9580547
 beh_quadratic_creation |   -.217134   .4636833    -0.47   0.640    -1.125937    .6916686
 ----------------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+network_rate |    5.5303 
+          se |    0.8496 
+behavior_r~e |    1.2417 
+          se |    0.3115 
 Overall maximum convergence ratio: 0.133 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -149,7 +157,7 @@ interact_nodeocov_reciprocity |  -.1488986   .2342888    -0.64   0.525    -.6080
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    7.5984     5.6681 
           se |    1.4431     1.0199 
 (conditional: rate = mean time to reach the observed distance, se = its SD)
@@ -186,7 +194,7 @@ interact_nodematch_nodeocov |  -.4448597   .1660293    -2.68   0.007    -.770271
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    7.5054     5.6764 
           se |    1.4264     1.0365 
 Overall maximum convergence ratio: 0.081 (criterion: below 0.25; met)
@@ -213,7 +221,7 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    7.1977     5.7059 
           se |    1.4212     1.0823 
 Covariate-rate coefficient (alcohol1):    0.4191 (se 0.1443)
@@ -243,11 +251,10 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    3.9495     2.9879 
           se |    0.8066     0.5726 
 Covariate-rate coefficient (outrate):    0.2462 (se 0.2564)
 Overall maximum convergence ratio: 0.103 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
-
-. 
+.

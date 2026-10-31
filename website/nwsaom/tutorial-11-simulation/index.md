@@ -19,10 +19,10 @@ Stata 18, and checked in Stata 17. The complete script and log are in [example.d
 Fit a model for one period:
 
 ```stata
-. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip seed(4)
+. nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip seed(4)
 ----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: glasgow1 -> glasgow2
-Actors: 50                             Estimated rate:  6.206 (1.029)
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2
+Actors: 50                             Periods: 1
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 glasgow1_t~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -31,6 +31,12 @@ glasgow1_t~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |   2.157208   .2343807     9.20   0.000      1.69783    2.616586
    transtrip |   .5941483    .105325     5.64   0.000     .3877151    .8005816
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+        rate |    6.2065 
+          se |    1.0294 
 Overall maximum convergence ratio: 0.045 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
@@ -64,15 +70,19 @@ second observed wave:
 . nwsaom describe, waves(glasgow2 sim_1_p1)
 
 Network data: 2 waves, 50 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1              116      0.0473         2.320
-2               97      0.0396         1.940
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          31       66        85    0.170       151
-  (Jaccard below 0.3: few ties stay, so the data say little about the change process; see the SAOM literature)
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |      116      0.0473         2.320
+           2 |       97      0.0396         1.940
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      31        66         85     0.170       151
+----------------------------------------------------------------------
+Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about change.
 ```
 
 Only 31 ties are present in both the observed second wave (116 ties) and this simulated network (97 ties), so the Jaccard index is 0.17. That shows how much room for chance the process leaves: one
@@ -84,7 +94,7 @@ You do not need a fit to simulate. `nwsaom simulate` takes the same model descri
 the rates (`rates()`; one per period), and runs the process without estimating anything. The coefficients are listed in the order of the coefficient table of a fit of the same model:
 
 ```stata
-. nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip theta(-2.7 2.4 0.6) rates(6) nsim(100) seed(5)
+. nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 2.4 0.6) rates(6) nsim(100) seed(5)
 Simulation from the fitted model: 100 replication(s) of 1 period(s).
 Mean over replications (observed end wave in brackets):
 period          ties      mutual    transitive    behavior
@@ -95,7 +105,7 @@ With coefficients close to the estimates, the simulated networks resemble the ob
 tendency to reciprocate (the second coefficient is zero):
 
 ```stata
-. nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip theta(-2.7 0 0.6) rates(6) nsim(100) seed(5)
+. nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 0 0.6) rates(6) nsim(100) seed(5)
 Simulation from the fitted model: 100 replication(s) of 1 period(s).
 Mean over replications (observed end wave in brackets):
 period          ties      mutual    transitive    behavior

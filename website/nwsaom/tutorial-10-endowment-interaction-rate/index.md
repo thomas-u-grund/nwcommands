@@ -145,11 +145,12 @@ so this is a hint for further analysis, not a finding.
 The behavior side has the same options (`linearendow`/`linearcreation`, `quadraticendow`/`quadraticcreation`, `avalt`, `avsim`):
 
 ```stata
-. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(4)
+. nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadrati
+> cendow quadraticcreation seed(4)
 ----------------------------------------------------------------------------------------------------
-SAOM co-evolution (Method of Moments), waves: glasgow1 -> glasgow2
-Actors: 50                             Network rate:  5.530 (0.850)
-Behavior: alcohol1 alcohol2            Behavior rate:  1.242 (0.311)
+SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2
+Actors: 50                             Periods: 1
+Behavior: alcohol1 alcohol2
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
   glasgow1_to_glasgow2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -160,6 +161,14 @@ Behavior: alcohol1 alcohol2            Behavior rate:  1.242 (0.311)
    beh_quadratic_endow |   .1106879   .4323379     0.26   0.798    -.7366789    .9580547
 beh_quadratic_creation |   -.217134   .4636833    -0.47   0.640    -1.125937    .6916686
 ----------------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+network_rate |    5.5303 
+          se |    0.8496 
+behavior_r~e |    1.2417 
+          se |    0.3115 
 Overall maximum convergence ratio: 0.133 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```

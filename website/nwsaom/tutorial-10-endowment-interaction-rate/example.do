@@ -20,7 +20,7 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) creation(altx:alcohol1) seed(4)
 
 * On a behavior
-nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(4)
+nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(4)
 
 * ---------------------------------------------------------------
 * Part 2: interactions. Does the pull of reciprocity depend on how much
