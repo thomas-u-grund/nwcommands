@@ -34,7 +34,7 @@ between actors. `nwdynam` follows the R package goldfish and is not a replacemen
 implementation and the more complete program, and the page [nwdynam and goldfish](r-goldfish/) says what `nwdynam` has and what
 it lacks. `nwdynam` is not affiliated with or endorsed by the authors of goldfish; errors in `nwdynam` are
 the author's. For how a DyNAM differs from the other longitudinal models of the nwcommands family, see
-[Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/); the sister package for
+[Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/); the sister package for
 the simpler relational event model is [nwrem](../nwrem/).
 
 ## Key facts

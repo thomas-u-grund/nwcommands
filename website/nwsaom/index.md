@@ -86,4 +86,4 @@ errors in `nwsaom` are the author's.
 - The paper on `nwsaom` is in preparation; the current version is on the [literature page](../literature/).
 
 The core `nwcommands` is introduced in the [tutorials](../tutorials/); the other model
-packages are described in [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+packages are described in [Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/).

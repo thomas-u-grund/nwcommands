@@ -1,0 +1,165 @@
+. do example.do
+
+. * nwcommands tutorial 17: networks over time
+. * Requires the core nwcommands.
+. nwwebuse glasgow, nwclear
+
+. 
+. * 1. Three waves of the same friendship network
+. nwsummarize glasgow1
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .0461
+   Temporal: false
+
+. nwsummarize glasgow2
+--------------------------------------------------
+   Network name:  glasgow2
+   Network id:  2
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 116
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .0473
+   Temporal: false
+
+. nwsummarize glasgow3
+--------------------------------------------------
+   Network name:  glasgow3
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 122
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .0498
+   Temporal: false
+
+. 
+. * 2. How much did the ties change between waves?
+. nwturnover glasgow1 glasgow2, generate(stab12)
+----------------------------------------
+  Networks: glasgow1 -> glasgow2
+  Stable: 57  Formed: 59  Dissolved: 56
+  Jaccard index: .331
+  Persistence: .504
+ 
+
+. return list
+
+scalars:
+        r(persistence) =  .504424778761062
+            r(jaccard) =  .3313953488372093
+          r(dissolved) =  56
+             r(formed) =  59
+             r(stable) =  57
+
+. nwturnover glasgow2 glasgow3, generate(stab23)
+----------------------------------------
+  Networks: glasgow2 -> glasgow3
+  Stable: 66  Formed: 56  Dissolved: 50
+  Jaccard index: .384
+  Persistence: .569
+ 
+
+. summarize stab12 stab23
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      stab12 |         48    .3944444    .3421413          0          1
+      stab23 |         48    .3881944    .3075288          0          1
+
+. 
+. * 3. Is the change in the same direction as the correlation?
+. nwcorrelate glasgow1 glasgow2
+----------------------------------------
+  Network1 name: glasgow1
+  Network2 name: glasgow2
+----------------------------------------
+    Correlation: .473
+
+. nwcorrelate glasgow2 glasgow3
+----------------------------------------
+  Network1 name: glasgow2
+  Network2 name: glasgow3
+----------------------------------------
+    Correlation: .532
+
+. 
+. * 4. A temporal edge list: one network, tie times as data
+. clear
+
+. input ego alter wave
+
+           ego      alter       wave
+  1. 1 2 1
+  2. 2 3 1
+  3. 1 3 2
+  4. 2 3 2
+  5. 3 4 3
+  6. end
+
+. nwset ego alter, time(wave) name(mynet)
+
+. nwattime mynet, at(1) name(t1)
+----------------------------------------
+  Static graph view: t1
+  Source network: mynet (snapshot)
+  At: 1
+  Ties: 1
+
+. nwattime mynet, at(2) name(t2)
+----------------------------------------
+  Static graph view: t2
+  Source network: mynet (snapshot)
+  At: 2
+  Ties: 2
+
+. nwsummarize t2
+--------------------------------------------------
+   Network name:  t2
+   Network id:  6
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 4
+   Selfloop: false
+   Arcs: 2
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .167
+   Temporal: false
+   Provenance:  static graph view of mynet at t=2 (snapshot)
+
+. nwattime mynet, at(3) name(t3)
+----------------------------------------
+  Static graph view: t3
+  Source network: mynet (snapshot)
+  At: 3
+  Ties: 1
+
+. nwturnover t1 t2, generate(stab_t12)
+----------------------------------------
+  Networks: t1 -> t2
+  Stable: 0  Formed: 2  Dissolved: 1
+  Jaccard index: 0
+  Persistence: 0
+ 
+
+. 

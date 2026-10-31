@@ -91,7 +91,7 @@ files back with `importcoords()` and `edgeimport()`, and tell `nwplot` where the
 The edits are matched to the nodes by row number, so run this on the same network, with the same sort order and the
 same `if` and `in` restrictions. The slider for node size is converted so that the static plot has the proportions
 of the view; an explicit `nodefactor()` or `edgefactor()` wins over the saved values. The
-[visualization tutorial](../../tutorials/04-visualization/#the-workflow-explore-in-the-browser-finish-in-stata)
+[visualization tutorial](../../tutorials/05-visualization/#the-workflow-explore-in-the-browser-finish-in-stata)
 runs this step on a saved pair of files and shows the result, and [nwplot](../../reference/nwplot) lists all
 options.
 

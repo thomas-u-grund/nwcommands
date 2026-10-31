@@ -50,7 +50,7 @@ name(string)]
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwcug flomarriage, stat(nwcomponents ##net##, replace) rname(components) reps(1000) seed(12345)
+. nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(1000) seed(12345)
 ```
 `condition(density|census)` chooses what property of [netname](netname) the random draws must share, via [nwrandom](nwrandom)'s own **density()** (the default) or **census()** conditioning. **condition(density)** draws uniformly from every network with the same node count and density - the standard baseline used above. **condition(census)** instead draws uniformly from every network with the *same dyad census* (identical mutual/asymmetric/null tie counts, via [nwdyads](nwdyads)) as [netname](netname) - a stricter, reciprocity-aware null model: two directed networks can share the same overall density while differing sharply in how many ties are reciprocated, so a statistic that is unremarkable once density alone is held fixed can still be unusual once reciprocity is held fixed too (or vice versa). **condition(census)** requires a directed network - mutual/asymmetric/null dyad types have no meaning for undirected ties, where every dyad is simply tied or not.
 

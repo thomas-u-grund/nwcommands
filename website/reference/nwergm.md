@@ -37,4 +37,4 @@ A first model:
 . nwergm flomarriage, edges nodecov(wealth)
 ```
 
-Section: [nwergm](../nwergm/). First tutorial: [Tutorial 1: A first ERGM](../tutorials/09-intro-ergm/). `nwergm` follows the R package `ergm` (statnet) and is not a replacement for it.
+Section: [nwergm](../nwergm/). First tutorial: [Tutorial 1: A first ERGM](/nwergm/tutorial-1-first-ergm/). `nwergm` follows the R package `ergm` (statnet) and is not a replacement for it.
