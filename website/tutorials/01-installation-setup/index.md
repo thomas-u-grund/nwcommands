@@ -121,6 +121,23 @@ release. After the installation, `nwversion` lists each model package with its v
 For a computer without internet access, `nwinstall, models` and `nwinstall, everything` can also read the packages from a folder
 that contains one subfolder per package (option `modelsfrom()`; see `help nwinstall`).
 
+## If a plugin does not work on your computer
+
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows. If the plugin of your platform is
+missing or does not load (Stata then reports a plugin error, or a command warns that it is falling back to a slower route), compile it on your own computer:
+
+```stata
+. nwinstall, buildplugin(nwsaom)
+```
+
+`buildplugin()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam` or `all`. The command fetches the C source from GitHub, compiles it with the compiler of
+your computer and installs the plugin where `net install` puts it, keeping an existing file as a `.prev` copy. This works on macOS and Linux and needs a C
+compiler and `make`: on a Mac the command line tools of Xcode (`xcode-select --install`), on Linux `gcc` and `make`. Restart Stata afterwards.
+
+A plugin depends on the operating system and the processor, not on the version or the flavour (BE, SE, MP) of Stata, so a plugin built on your computer
+works in every Stata installed there. If you would rather look at the source or build it by hand, `net get nwsaom, from(https://nwcommands.org/net/)` copies
+the C files, the `Makefile` and a short build note into your current folder.
+
 ## Updating vs. pinning a version
 
 Re-running `nwinstall, everything` (or `nwinstall, all` for the core only) at any time re-downloads and replaces everything with whatever is
