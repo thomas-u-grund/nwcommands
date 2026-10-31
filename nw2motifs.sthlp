@@ -234,4 +234,4 @@ Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutiona
 {help nwmotifs}, {help nw2set}, {help nw2nested}, {help nw2clustering}, {help nw2degree}, {help nwnetworktypes}
 
 {hline}
-{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

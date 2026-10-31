@@ -45,7 +45,8 @@ program nwcoreperiphery, rclass
 
 		local val = ("`netmeasure'" == "valued")
 
-		capture drop `netgenerate'`k'
+		capture confirm new variable `netgenerate'`k'
+		if _rc capture drop `netgenerate'`k'
 		gen `netgenerate'`k' = .
 		mata: st_rclear()
 		qui if _N < `nodes' {

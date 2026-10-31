@@ -6,6 +6,15 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## `capture drop <name>` deletes a variable that merely STARTS with the name (found and fixed 2026-10-31, 3.12.2)
+
+Stata's `drop` accepts unique abbreviations (`set varabbrev on`, the default). `capture drop `generate'` meant to clear an old result also deleted any variable the user owned of which the name is the only match for that prefix: `nwfactions, generate(fac)` removed `faction`. Never drop a user-named variable directly. Guard it:
+```
+capture confirm new variable `generate'
+if _rc capture drop `generate'
+```
+`confirm new variable` fails only when a variable of exactly that name exists, so the following `drop` then hits exactly that variable (an exact name always wins over abbreviation). Applies to every `generate()`-style option and every `capture drop `x'`k''`. Test: `test_dropabbrev.do` (add new generating commands to it).
+
 ## No plain-named globals in Mata from ado code: tempname or `__nw` prefix, enforced by `test_mata_userspace.do`
 
 Every `mata: x = ...` typed by an ado file at the top level creates a GLOBAL Mata variable, in the same name space as the user's own Mata session. Plain names (`Coord`, `M`, `temp`, `reach`, `far`, `comm_id`, `onenet`, `plotmat` ...) overwrote the user's variables of the same name, and the usual `mata: mata drop x` at the end then deleted the user's variable. Found 2026-10 (56 assignment sites in 23 commands, `nwplot` the largest). The rule:

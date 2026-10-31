@@ -44,7 +44,8 @@ program nwcomponents, rclass
 			err 99
 		}
 		
-		capture drop `generate'`k'
+		capture confirm new variable `generate'`k'
+		if _rc capture drop `generate'`k'
 		gen `generate'`k' = .
 		mata: st_rclear()
 		qui if _N < `nodes' {

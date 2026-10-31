@@ -91,7 +91,8 @@ program nwspectral, rclass
 	mata: st_numscalar("nw_spectral_algconn", `__nw_EV'[1,2])
 	mata: `__nw_fiedler' = `__nw_EC'[.,2]
 
-	capture drop `netgenerate'
+	capture confirm new variable `netgenerate'
+	if _rc capture drop `netgenerate'
 	qui gen `netgenerate' = .
 	mata: st_store((1::`nodes'), "`netgenerate'", `__nw_fiedler')
 	if "`bipartition'" != "" {

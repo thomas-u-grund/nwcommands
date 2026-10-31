@@ -67,7 +67,8 @@ program nwbrokerage, rclass
 
 		local ri = 1
 		foreach role of local roles {
-			capture drop `netgenerate'_`role'`k'
+			capture confirm new variable `netgenerate'_`role'`k'
+			if _rc capture drop `netgenerate'_`role'`k'
 			gen `netgenerate'_`role'`k' = .
 			mata: st_store((1::`nodes'), "`netgenerate'_`role'`k'", `__nw_brk'[.,`ri'])
 			local ri = `ri' + 1

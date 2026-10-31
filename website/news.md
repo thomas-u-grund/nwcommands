@@ -12,6 +12,18 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 31 October 2026: nwcommands 3.12.2 and nwsaom 1.4.1
+
+**nwcommands 3.12.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.2)). Bug fix: `generate()` no longer deletes a variable of yours whose name starts with the new name. Stata's `drop` accepts abbreviations, so `nwfactions, generate(fac)` used to remove a variable called `faction`. 29 commands are fixed.
+
+**nwsaom 1.4.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.4.1)). Works with nwcommands 3.6.0 and later.
+
+- **`waves()` is the documented way to give the waves**, with a list of networks, a wildcard (`waves(friend*)`) or a range. `wave1()` and `wave2()` still work.
+- **`degree` and `density`** are accepted as names of the `outdegree` effect, so output for undirected networks no longer says "outdegree".
+- **`nwsaom describe`** prints Stata-style tables.
+- **`estat mems`** also works after a fit with `waves()` of two waves.
+- The tutorials and the article on the [literature page](/literature/) are updated.
+
 ## 30 October 2026: nwsaom 1.4.0
 
 **nwsaom 1.4.0: several groups with several behaviors** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.4.0)). Works with nwcommands 3.6.0 and later; no new core needed.

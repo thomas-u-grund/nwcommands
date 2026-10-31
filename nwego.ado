@@ -64,9 +64,11 @@ program nwego, rclass
 
 		tempname __nw_ego
 		mata: `__nw_ego' = `netobj'->calculate_egostats()
-		capture drop `netsizevar'`k'
+		capture confirm new variable `netsizevar'`k'
+		if _rc capture drop `netsizevar'`k'
 		gen `netsizevar'`k' = .
-		capture drop `netdensvar'`k'
+		capture confirm new variable `netdensvar'`k'
+		if _rc capture drop `netdensvar'`k'
 		gen `netdensvar'`k' = .
 		mata: st_store((1::`nodes'), "`netsizevar'`k'", `__nw_ego'[.,1])
 		mata: st_store((1::`nodes'), "`netdensvar'`k'", `__nw_ego'[.,2])

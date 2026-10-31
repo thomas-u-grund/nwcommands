@@ -34,7 +34,8 @@ program nwcontext
 		di "{err}option {bf:generate()} required."
 		error 198
 	}
-	capture drop `generate'
+	capture confirm new variable `generate'
+	if _rc capture drop `generate'
 	
 	_nwdatasync `netname'
 	_nwsyntax `netname', max(1)

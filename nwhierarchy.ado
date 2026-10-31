@@ -99,7 +99,8 @@ program nwhierarchy, rclass
 			di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"
 			err 99
 		}
-		capture drop `netgenerate'
+		capture confirm new variable `netgenerate'
+		if _rc capture drop `netgenerate'
 		cluster generate `netgenerate' = groups(`groups'), name(`nwhier_clustername')
 		return scalar groups = `groups'
 		return local rolevar "`netgenerate'"

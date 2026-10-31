@@ -60,7 +60,8 @@ program nwpagerank, rclass
 	if !`__fast' {
 		mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol', `__wtd')
 	}
-	capture drop `generate'
+	capture confirm new variable `generate'
+	if _rc capture drop `generate'
 	qui gen double `generate' = .
 	mata: st_store((1::`nodes'), "`generate'", `__nw_pr')
 	mata: mata drop `__nw_pr'

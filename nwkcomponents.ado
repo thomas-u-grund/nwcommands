@@ -64,7 +64,8 @@ program nwkcomponents, rclass
 		}
 		mata: `__nw_kcompnum' = (rows(`__nw_kcomp') > 0 ? editvalue(colmax(`__nw_kcomp' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
-		capture drop `netgenerate'`i'
+		capture confirm new variable `netgenerate'`i'
+		if _rc capture drop `netgenerate'`i'
 		gen `netgenerate'`i' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_kcompnum')
 		mata: mata drop `__nw_kcomp' `__nw_sizes' `__nw_kcompnum'

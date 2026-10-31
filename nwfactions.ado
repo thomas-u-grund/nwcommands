@@ -55,7 +55,8 @@ program nwfactions, rclass
 	tempvar __nw_fac_included
 	_nwdatasync `netname', generate(`__nw_fac_included')
 
-	capture drop `netgenerate'
+	capture confirm new variable `netgenerate'
+	if _rc capture drop `netgenerate'
 	qui gen `netgenerate' = .
 	mata: st_rclear()
 

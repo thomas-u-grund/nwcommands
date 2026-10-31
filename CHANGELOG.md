@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.12.2] - 2026-10-31
+
+### Fixed
+- **`generate()` no longer deletes a variable whose name starts with the new name.** Stata's `drop` accepts a unique abbreviation, so `nwfactions, generate(fac)` removed the user's variable `faction` before creating `fac`. 37 sites in 29 commands (`nwfactions`, `nwkcore`, `nwcomponents`, `nwcommunity`, `nwcoreperiphery`, `nwclustering`, `nwbetween`, `nwkatz`, `nwplot`, `_nwdatasync` and others) now drop an old result only if the variable exists under exactly that name (`capture confirm new variable`). Test `test_dropabbrev.do`.
+
 ## [3.12.1] - 2026-10-28
 
 Menu change that 3.12.0 described but did not contain.

@@ -52,4 +52,4 @@ See {help nwsym}.
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

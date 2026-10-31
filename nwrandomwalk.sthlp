@@ -112,4 +112,4 @@ node: 10,000 nodes 0.15 seconds and 0.2 GB (65 seconds and 4 GB with the dense s
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

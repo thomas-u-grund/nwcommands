@@ -258,14 +258,17 @@ program nwkatz
 	// nwdegree and nwcloseness, instead of failing with r(459).
 	_nwsetobs `original'
 	if "`origdirected'" == "true" {
-		capture drop `generate'_out
-		capture drop `generate'_in
+		capture confirm new variable `generate'_out
+		if _rc capture drop `generate'_out
+		capture confirm new variable `generate'_in
+		if _rc capture drop `generate'_in
 		getmata `generate'_out = `__nw_out', double force
 		getmata `generate'_in = `__nw_in', double force
 		mata: mata drop `__nw_out' `__nw_in'
 	}
 	else {
-		capture drop `generate'
+		capture confirm new variable `generate'
+		if _rc capture drop `generate'
 		getmata `generate' = `__nw_all', double force
 		mata: mata drop `__nw_all'
 	}

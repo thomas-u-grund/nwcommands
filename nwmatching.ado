@@ -45,7 +45,8 @@ program nwmatching, rclass
 	if _rc != 0 {
 		exit _rc
 	}
-	capture drop `generate'
+	capture confirm new variable `generate'
+	if _rc capture drop `generate'
 	gen `generate' = .
 	mata: st_store((1::`nodes'), "`generate'", `__nw_match')
 
