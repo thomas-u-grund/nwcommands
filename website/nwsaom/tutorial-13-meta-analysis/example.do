@@ -19,7 +19,7 @@ forvalues s = 1/4 {
     nwset, mat(X2) directed name(school`s'_w2)
     nwsaom describe, waves(school`s'_w1 school`s'_w2)
     display as text _newline "School `s'"
-    nwsaom, wave1(school`s'_w1) wave2(school`s'_w2) outdegree reciprocity transtrip seed(5)
+    nwsaom, waves(school`s'_w1 school`s'_w2) outdegree reciprocity transtrip seed(5)
     estimates store school`s'
 }
 

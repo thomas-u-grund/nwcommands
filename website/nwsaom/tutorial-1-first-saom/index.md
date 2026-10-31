@@ -49,16 +49,20 @@ before an estimation:
 . nwsaom describe, waves(glasgow1 glasgow2 glasgow3)
 
 Network data: 3 waves, 50 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1              113      0.0461         2.260
-2              116      0.0473         2.320
-3              122      0.0498         2.440
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          57       59        56    0.331       115
-2->3          66       56        50    0.384       106
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |      113      0.0461         2.260
+           2 |      116      0.0473         2.320
+           3 |      122      0.0498         2.440
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      57        59         56     0.331       115
+        2->3 |      66        56         50     0.384       106
+----------------------------------------------------------------------
 ```
 
 The density barely moves, but the network is far from static: between the first two waves 57 ties
@@ -169,7 +173,7 @@ produced the results, which you should quote when you report an analysis.
 
 - Replace `samex(smoke1)` with `egox(smoke1) altx(smoke1)`: do smokers send or receive more
   friendship nominations?
-- Fit the model with only the two waves `wave1(glasgow1) wave2(glasgow2)`.
+- Fit the model with only the two waves `waves(glasgow1 glasgow2)`.
 - Use a different `seed()` and see how much the coefficients move; this is the simulation noise.
 - Add `indegpopularity` and `outactivity` (a tendency for popular pupils to attract more ties, and
   for active pupils to send more).

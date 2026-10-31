@@ -57,7 +57,7 @@ matrix list e(rates_period)
 * ---- Part 3: joint model or meta-analysis? ---------------------------------
 * the same classes fitted one at a time, then combined
 forvalues s = 1/4 {
-    quietly nwsaom, wave1(school`s'_w1) wave2(school`s'_w2) outdegree reciprocity transtrip seed(5)
+    quietly nwsaom, waves(school`s'_w1 school`s'_w2) outdegree reciprocity transtrip seed(5)
     estimates store school`s'
 }
 estimates table school1 school2 school3 school4, b(%7.3f) se(%7.3f)

@@ -39,16 +39,20 @@ We make the Glasgow networks undirected: a tie exists if at least one of the two
 . nwsaom describe, waves(u1 u2 u3)
 
 Network data: 3 waves, 50 actors, undirected
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1               74      0.0604         2.960
-2               81      0.0661         3.240
-3               77      0.0629         3.080
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          43       38        31    0.384        69
-2->3          47       30        34    0.423        64
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |       74      0.0604         2.960
+           2 |       81      0.0661         3.240
+           3 |       77      0.0629         3.080
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      43        38         31     0.384        69
+        2->3 |      47        30         34     0.423        64
+----------------------------------------------------------------------
 ```
 
 "Undirected" appears in the first line: ties are counted once per pair, so there are 74 ties among 50 pupils at the first wave. There is no
