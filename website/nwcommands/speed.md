@@ -1,7 +1,7 @@
 ---
 title: "Speed compared with R"
 parent: "nwcommands (core)"
-nav_order: 13
+nav_order: 22
 description: "Run times of nwergm, nwsaom, nwdynam and nwrem against ergm, RSiena, goldfish and relevent on the same data, with the cases where the Stata package is not faster."
 permalink: /nwcommands/speed/
 ---

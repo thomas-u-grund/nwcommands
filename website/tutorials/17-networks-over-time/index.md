@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 17: Networks over Time"
 parent: "nwcommands (core)"
-nav_order: 18
+nav_order: 17
 description: "Repeated observations of the same network: how many ties were kept, formed and dissolved between waves (nwturnover), correlation between waves, and slicing a temporal edge list into snapshots (nwattime)."
 ---
 

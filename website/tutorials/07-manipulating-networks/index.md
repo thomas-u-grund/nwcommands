@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 7: Manipulating Networks"
 parent: "nwcommands (core)"
-nav_order: 8
+nav_order: 7
 description: "Subsetting, collapsing, symmetrizing, recoding, and dichotomizing."
 ---
 

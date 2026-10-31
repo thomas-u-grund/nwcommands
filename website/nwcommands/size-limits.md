@@ -1,7 +1,7 @@
 ---
 title: "How large a network?"
 parent: "nwcommands (core)"
-nav_order: 12
+nav_order: 21
 description: "Which core commands are comfortable, workable or refused at which network size, from measured run times."
 permalink: /nwcommands/size-limits/
 ---
