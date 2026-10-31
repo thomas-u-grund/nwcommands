@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 30 October 2026: nwsaom 1.4.0
+
+**nwsaom 1.4.0: several groups with several behaviors** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.4.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Several groups, several behaviors.** `groups()` now works with several co-evolving behaviors (`behavior(a1 a2 a3 : ... | b1 b2 b3 : ...)`). Every behavior has its own mean and similarity mean in each group and its own rate in each period of each group, as in RSiena. A model with alcohol use and smoking in three groups agrees with RSiena 1.6.14 in the effects of the network and of both behaviors and in all rates.
+- **Manual for version 1.4.** The chapter on several groups is updated; the counts of RSiena's effects now state only how many of its 1,201 effects `nwsaom` implements.
+
 ## 28 October 2026: nwsaom 1.3.4
 
 **nwsaom 1.3.4: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.4)). Dialogs only; the commands and estimates are unchanged.
