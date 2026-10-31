@@ -1,0 +1,268 @@
+. do example.do
+
+. * nwcommands tutorial 11: cohesion and subgroups
+. * Requires the core nwcommands.
+. 
+. * 1. Components: who can reach whom?
+. nwwebuse mesa, nwclear
+
+. nwsummarize mesa
+--------------------------------------------------
+   Network name:  mesa
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 205
+   Selfloop: false
+   Edges: 203
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .00971
+   Temporal: false
+
+. nwcomponents mesa, generate(compid) silent
+
+. display r(components)
+68
+
+. bysort compid: generate csize = _N
+
+. tabulate csize
+
+      csize |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         57       27.80       27.80
+          2 |          8        3.90       31.71
+          3 |         12        5.85       37.56
+          4 |          8        3.90       41.46
+        120 |        120       58.54      100.00
+------------+-----------------------------------
+      Total |        205      100.00
+
+. nwcomponents mesa, generate(lgc) lgc silent
+
+. tabulate lgc
+
+        lgc |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         85       41.46       41.46
+          1 |        120       58.54      100.00
+------------+-----------------------------------
+      Total |        205      100.00
+
+. 
+. * 2. A small network with a known group structure: Sampson's monks
+. nwwebuse sampson, nwclear
+
+. list in 1/6
+
+     +----------------------------------------------+
+     |     _nwnode   _nwinc~e    faction   cloist~e |
+     |----------------------------------------------|
+  1. |      Albert          1      Turks      FALSE |
+  2. |       Amand          1   Outcasts      FALSE |
+  3. |     Ambrose          1      Loyal      FALSE |
+  4. |       Basil          1   Outcasts       TRUE |
+  5. |    Berthold          1      Loyal      FALSE |
+     |----------------------------------------------|
+  6. | Bonaventure          1      Loyal       TRUE |
+     +----------------------------------------------+
+
+. nwsymmetrize samplike, generate(likes)
+
+. nwsummarize likes
+--------------------------------------------------
+   Network name:  likes
+   Network id:  5
+   Directed: false
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Edges: 60
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .392
+   Temporal: false
+
+. 
+. * 3. Dense cores: k-cores, cliques and k-plexes
+. nwkcore likes, generate(kcore)
+(note: tie values are ignored; this measure is binary)
+----------------------------------------
+  Network name: likes
+  Max coreness (degeneracy): 5
+
+      kcore |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          4 |          4       22.22       22.22
+          5 |         14       77.78      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. nwclique likes, generate(clique) minsize(4)
+(note: tie values are ignored; this measure is binary)
+----------------------------------------
+  Network name: likes
+  Maximal cliques (size >= 4): 7
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      clique |         12    5.083333    .9962049          4          6
+ 
+
+. nwkplex likes, k(2) generate(plex) minsize(5)
+(note: tie values are ignored; this measure is binary)
+----------------------------------------
+  Network name: likes
+  Maximal 2-plexes (size >= 5): 21
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        plex |         18    5.722222    .4608886          5          6
+ 
+
+. 
+. * 4. Communities
+. nwcommunity likes, generate(comm)
+----------------------------------------
+  Network name: likes
+  Communities: 3
+  Modularity Q: .349
+
+       comm |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          7       38.89       38.89
+          2 |          7       38.89       77.78
+          3 |          4       22.22      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. tabulate comm faction
+
+           |             faction
+      comm |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         7          0          0 |         7 
+         2 |         0          0          7 |         7 
+         3 |         0          4          0 |         4 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. encode faction, generate(fnum)
+
+. nwmodularity likes, group(fnum)
+----------------------------------------
+  Network name: likes
+  Communities: 3
+  Modularity Q: .349
+ 
+
+. nwmodularity likes, group(comm)
+----------------------------------------
+  Network name: likes
+  Communities: 3
+  Modularity Q: .349
+ 
+
+. nwcommunity likes, generate(comm2) resolution(2)
+----------------------------------------
+  Network name: likes
+  Communities: 5
+  Modularity Q: .069
+
+      comm2 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          3       16.67       16.67
+          2 |          4       22.22       38.89
+          3 |          4       22.22       61.11
+          4 |          4       22.22       83.33
+          5 |          3       16.67      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. tabulate comm2 faction
+
+           |             faction
+     comm2 |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         3          0          0 |         3 
+         2 |         0          4          0 |         4 
+         3 |         0          0          4 |         4 
+         4 |         4          0          0 |         4 
+         5 |         0          0          3 |         3 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. 
+. * 5. A fixed number of groups, and core and periphery
+. nwfactions likes, groups(3) generate(fgroup)
+----------------------------------------
+  Network name: likes
+  Groups: 3   Fitness: .611
+
+     fgroup |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          7       38.89       38.89
+          2 |          7       38.89       77.78
+          3 |          4       22.22      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. tabulate fgroup faction
+
+           |             faction
+    fgroup |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         0          0          7 |         7 
+         2 |         7          0          0 |         7 
+         3 |         0          4          0 |         4 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. nwcoreperiphery likes, generate(cp)
+----------------------------------------
+  Network name: likes
+  Core size: 3   Fitness: .25
+
+         cp |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         15       83.33       83.33
+          1 |          3       16.67      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. tabulate cp faction
+
+           |             faction
+        cp |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         0 |         6          4          5 |        15 
+         1 |         1          0          2 |         3 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. 
+. * 6. Plot
+. nwplot likes, color(faction) label(_nwnode) scheme(s1network) export("plot_sampson_faction.svg") r
+> eplace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_sampson_faction.svg...
+(file plot_sampson_faction.svg not found)
+file plot_sampson_faction.svg saved as SVG format
+
+. nwplot likes, color(comm) label(_nwnode) scheme(s1network) export("plot_sampson_comm.svg") replace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_sampson_comm.svg...
+(file plot_sampson_comm.svg not found)
+file plot_sampson_comm.svg saved as SVG format
+
+. 

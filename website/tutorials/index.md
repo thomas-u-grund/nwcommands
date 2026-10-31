@@ -35,6 +35,12 @@ command directly, see the [command reference](../reference/).
 - [Tutorial 9: Two-mode Networks](11-two-mode-networks/) — affiliation data (people and events or companies):
    degree, projection to one mode, components, communities (bipartite modularity), nestedness, null models, saving and
    exchanging, what stops on a two-mode network, plotting; the data sets `davis` and `ftdirectors_se`
+- [Tutorial 11: Cohesion and Subgroups](12-cohesion-subgroups/) — components, k-cores, cliques, k-plexes, communities,
+   a fixed number of groups, core and periphery: what each notion means and which command to use
+- [Tutorial 12: Homophily, Assortativity and Mixing](13-homophily-mixing/) — do similar nodes connect? assortativity, mixing tables
+   and the E-I index, correlation of two networks
+- [Tutorial 13: Testing Hypotheses about Networks](14-testing/) — conditional uniform graph tests (`nwcug`), QAP correlation
+   and QAP regression
 
 Three reference pages go with these tutorials: [valued networks](/nwcommands/valued-networks/) (when a
 network counts as valued and which commands then use the tie values), [two-mode networks](/nwcommands/two-mode/)

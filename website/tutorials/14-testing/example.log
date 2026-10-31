@@ -1,0 +1,92 @@
+. do example.do
+
+. * nwcommands tutorial 13: testing hypotheses about networks
+. * Requires the core nwcommands.
+. 
+. * 1. Is a statistic unusual for a network of this size and density? (CUG test)
+. nwwebuse florentine, nwclear
+
+. nwsummarize flomarriage
+--------------------------------------------------
+   Network name:  flomarriage
+   Network id:  2
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 16
+   Selfloop: false
+   Edges: 20
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .167
+   Temporal: false
+
+. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) reps(500) seed(12345)
+----------------------------------------
+  Network: flomarriage
+  Statistic: nwtriads ##net##/r(transitivity)
+  Observed: .191
+  Null mean (sd): .149 (.082)
+  Reps: 500
+  p (upper tail): .316
+  p (lower tail): .696
+  p (two-sided): .632
+----------------------------------------
+
+. nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(
+> 500) seed(12345)
+----------------------------------------
+  Network: flomarriage
+  Statistic: nwcomponents ##net##, generate(cc) replace silent/r(components)
+  Observed: 2
+  Null mean (sd): 1.986 (.812)
+  Reps: 500
+  p (upper tail): .706
+  p (lower tail): .762
+  p (two-sided): 1
+----------------------------------------
+
+. 
+. * 2. Is one network related to another? (QAP correlation)
+. nwwebuse glasgow, nwclear
+
+. nwcorrelate glasgow1 glasgow2
+----------------------------------------
+  Network1 name: glasgow1
+  Network2 name: glasgow2
+----------------------------------------
+    Correlation: .473
+
+. nwcorrelate glasgow1 glasgow2, permutations(500)
+----------------------------------------
+  Network1 name: glasgow1
+  Network2 name: glasgow2
+----------------------------------------
+    Correlation: .473
+    P-value: 0
+
+. 
+. * 3. Does a covariate explain ties? (QAP regression)
+. nwqap glasgow2 glasgow1 smoke1 sport1
+
+
+
+Multiple Regression Quadratic Assignment Procedure
+
+  Estimation            =  QAP
+  Regression            =  logit
+  Permutations          =  500
+  Number of vertices    =  50
+  Number of arcs        =  116
+
+-------------------------------------------------
+              glasgow2 |      Coef.    P-value
+-----------------------+-------------------------
+              glasgow1 |      3.653        0
+           same_smoke1 |       .514     .042
+           same_sport1 |       .217     .344
+                 _cons |     -4.125
+-------------------------------------------------
+
+
+. 

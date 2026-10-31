@@ -1,0 +1,137 @@
+. do example.do
+
+. * nwcommands tutorial 12: homophily, assortativity and mixing
+. * Requires the core nwcommands.
+. nwwebuse glasgow, nwclear
+
+. nwsummarize glasgow1
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .0461
+   Temporal: false
+
+. summarize sport1 smoke1 alcohol1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      sport1 |         50        1.74    .4430875          1          2
+      smoke1 |         50        1.38     .725343          1          3
+    alcohol1 |         50        2.88    1.118308          1          5
+
+. 
+. * 1. Assortativity: correlate a number across ties
+. nwassortativity glasgow1
+
+  Network name: glasgow1
+  Attribute: degree
+----------------------------------------
+    Ties: 74
+    Assortativity coefficient: .172
+
+. nwassortativity glasgow1, attribute(alcohol1)
+
+  Network name: glasgow1
+  Attribute: alcohol1
+----------------------------------------
+    Ties: 74
+    Assortativity coefficient: .323
+
+. nwassortativity glasgow1, attribute(sport1)
+
+  Network name: glasgow1
+  Attribute: sport1
+----------------------------------------
+    Ties: 74
+    Assortativity coefficient: .069
+
+. 
+. * 2. Mixing tables for a categorical attribute
+. nwmixing glasgow1, attribute(sport1) permutations(500)
+
+   Network:  glasgow1      Directed: true
+   Attribute:  sport1
+
+ sport1_ego | sport1_alter
+            | not regular     regular        Total
+------------+-------------------------------------
+not regular |          13          17           30
+regular     |          21          62           83
+------------+-------------------------------------
+Total       |          34          79          113
+
+   E-I Index: -.327   p-value: .348
+
+. nwmixing glasgow1, attribute(smoke1) permutations(500)
+
+   Network:  glasgow1      Directed: true
+   Attribute:  smoke1
+
+ smoke1_ego | smoke1_alter
+            |         non occassional     regular        Total
+------------+-------------------------------------------------
+non         |          71           5          11           87
+occassional |           5           2           4           11
+regular     |           7           5           3           15
+------------+-------------------------------------------------
+Total       |          83          12          18          113
+
+   E-I Index: -.345   p-value: .22
+
+. nwmixing glasgow1, attribute(smoke1) permutations(1) row
+
+   Network:  glasgow1      Directed: true
+   Attribute:  smoke1
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+            |           smoke1_alter
+ smoke1_ego |       non  occassion    regular |     Total
+------------+---------------------------------+----------
+        non |        71          5         11 |        87 
+            |     81.61       5.75      12.64 |    100.00 
+------------+---------------------------------+----------
+occassional |         5          2          4 |        11 
+            |     45.45      18.18      36.36 |    100.00 
+------------+---------------------------------+----------
+    regular |         7          5          3 |        15 
+            |     46.67      33.33      20.00 |    100.00 
+------------+---------------------------------+----------
+      Total |        83         12         18 |       113 
+            |     73.45      10.62      15.93 |    100.00 
+   E-I Index: -.345
+
+. 
+. * 3. Is the network the same later? Correlate two waves
+. nwcorrelate glasgow1 glasgow2
+----------------------------------------
+  Network1 name: glasgow1
+  Network2 name: glasgow2
+----------------------------------------
+    Correlation: .473
+
+. 
+. * 4. Plot
+. nwplot glasgow1, color(smoke1) label(_nwnode) scheme(s1network) export("plot_glasgow_smoke.svg") r
+> eplace
+Calculating node coordinates...
+Generating splines...
+Plotting network...
+Exporting graph to plot_glasgow_smoke.svg...
+(file plot_glasgow_smoke.svg not found)
+file plot_glasgow_smoke.svg saved as SVG format
+
+. 
