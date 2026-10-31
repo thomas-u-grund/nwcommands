@@ -15,6 +15,7 @@ for f in stata.toc nwcommands.pkg $(awk '$1=="f" || $1=="F" {print $2}' "$REPO/n
     # only the starter is served here: the other packages of stata.toc (nwcommands-ado1 ...) are not in net/
     awk '$1=="p"{skip=($2!="nwcommands")} !skip' "$REPO/stata.toc" > "$OUT/stata.toc"
   else
+    mkdir -p "$(dirname "$OUT/$f")"
     cp -p "$REPO/$f" "$OUT/$f"
   fi
   n=$((n+1))

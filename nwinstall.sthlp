@@ -36,7 +36,10 @@
 {opt dupcheck}
 {opth modelpkg(namelist)}
 {opth release(string)}
-{opth modelsfrom(string)}]
+{opth modelsfrom(string)}
+{opth buildplugin(namelist)}
+{opth buildfrom(string)}
+{opt buildkeep}]
 
 
 
@@ -64,6 +67,9 @@
 {synopt:{opt nogui}}with {opt all} or {opt everything}: do not set up the menu and do not touch {bf:profile.do}{p_end}
 {synopt:{opt dupcheck}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
 {synopt:{opth modelpkg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
+{synopt:{opth buildplugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; {cmd:all} for all four) and install them; macOS and Linux; used alone{p_end}
+{synopt:{opth buildfrom(string)}}with {opt buildplugin()}: a folder or URL with one subfolder per package that holds the source in {cmd:native/}; default: the GitHub repositories{p_end}
+{synopt:{opt buildkeep}}with {opt buildplugin()}: keep the build folder (it holds the build log){p_end}
 {synopt:{opth release(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
 {synopt:{opth modelsfrom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
 {synoptline}
@@ -111,6 +117,29 @@ The line is never written twice, however often you run {cmd:nwinstall}:
 {pstd}
 {opt dupcheck} lists dialog files that exist in more than one folder of the ado path (for example an old copy in your PERSONAL folder next to the installed one). Stata uses the first copy it finds; {cmd:nwinstall} tells you which one that is and deletes nothing.
 {cmd:nwinstall, all} runs this check at the end.
+
+{marker buildplugin}{...}
+{title:Building the plugins on this computer}
+
+{pstd}
+{cmd:nwinstall} installs compiled plugins for macOS, Linux and Windows. If the plugin of your platform is missing, older than the
+{cmd:.ado} files, or does not load on your computer (for example a Linux system with an older C library), you can compile it yourself:
+
+{phang2}{cmd:. nwinstall, buildplugin(nwsaom)}{p_end}
+{phang2}{cmd:. nwinstall, buildplugin(all)}{p_end}
+
+{pstd}
+The command copies the C source of the package from its GitHub repository (the same source that {cmd:net get} <package> copies), compiles it
+with the compiler of your computer and puts the plugin where {cmd:net install} puts it, in the folder of the PLUS directory; an existing plugin
+is kept as a file with the extension {cmd:.prev}. Restart Stata afterwards, because a plugin that is already loaded is not replaced in a running session.
+The plugin does not depend on the version or the flavour of Stata (BE, SE, MP; the plugin interface is the same), only on the operating system and
+the processor, so a plugin built on your computer works in every Stata of that computer.
+
+{pstd}
+You need a compiler and {cmd:make}: on macOS the command line tools of Xcode (type {cmd:xcode-select --install} in the Terminal), on Linux {cmd:gcc} and {cmd:make}
+(for example the package {cmd:build-essential}). The build was tested on macOS. On Windows the command stops with a message; the
+Visual Studio command line builds the plugin from the same source, and the build note that comes with the source ({cmd:net get} <package>) gives the command.
+{opt buildfrom()} points to a local copy of the repositories instead of GitHub, and {opt release()} to a tagged release.
 
 {title:Supported network types}
 

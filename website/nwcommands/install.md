@@ -55,6 +55,21 @@ The statistical models are separate packages that need the core: [nwsaom](../../
 
 or pick one on its own page. `nwinstall, everything` does both steps at once.
 
+## Compiling the plugins on your own computer
+
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows. If the plugin of your platform is
+missing, is older than the `.ado` files or does not work on your system, compile it there:
+
+```stata
+. nwinstall, buildplugin(all)
+```
+
+`buildplugin()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam` or `all`. The command fetches the C source from the GitHub repositories, compiles it with
+the compiler of your computer (macOS and Linux; a C compiler and `make` are needed: on a Mac the command line tools of Xcode, `xcode-select --install`; on
+Linux `gcc` and `make`) and installs the plugins where `net install` puts them. Restart Stata afterwards. A plugin depends on the operating system and the
+processor, not on the version or the flavour of Stata, so one built on your computer works in every Stata installed there. The routine was tested on macOS.
+The source of each package is also available with `net get`, for example `net get nwcommands, from(https://nwcommands.org/net/)`, together with a short build note.
+
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.

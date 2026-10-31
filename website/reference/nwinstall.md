@@ -37,7 +37,10 @@ nogui
 dupcheck
 modelpkg(namelist)
 release(string)
-modelsfrom(string)]
+modelsfrom(string)
+buildplugin(namelist)
+buildfrom(string)
+buildkeep]
 ```
 
 | | |
@@ -62,6 +65,9 @@ modelsfrom(string)]
 | `nogui` | with `all` or `everything`: do not set up the menu and do not touch **profile.do** |
 | `dupcheck` | report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing |
 | `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
+| `buildplugin(namelist)` | compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; `all` for all four) and install them; macOS and Linux; used alone |
+| `buildfrom(string)` | with `buildplugin()`: a folder or URL with one subfolder per package that holds the source in `native/`; default: the GitHub repositories |
+| `buildkeep` | with `buildplugin()`: keep the build folder (it holds the build log) |
 | `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
 | `modelsfrom(string)` | with `models`: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs) |
 
@@ -75,4 +81,4 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 
 ---
 
-*nwcommands version 3.9.2, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.12.2, 31 October 2026* ([check your installed version](nwversion))

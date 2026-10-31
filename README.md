@@ -13,6 +13,10 @@ data commands.
 . sum _between
 ```
 
+## Native plugins
+
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows, and the C source: `net get nwcommands, from(https://nwcommands.org/net/)` (or `net get <package>` for a model package) copies it, and it is in `native/` of each repository. If a shipped plugin is missing for a platform, is older than the `.ado` files or does not load, `nwinstall, buildplugin(all)` compiles the plugins on your computer (macOS and Linux; needs a C compiler and `make`).
+
 ## What's here
 
 - **Import / export**: edgelists, adjacency matrices, UCINET/Pajek-style formats

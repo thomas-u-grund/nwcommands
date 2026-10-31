@@ -11,6 +11,8 @@ on:
       - "nwcommands.pkg"
       - "nwinstall.ado"
       - "nwinstall_models.ado"
+      - "nwinstall_buildplugin.ado"
+      - "native/**"
       - "nwversion.ado"
       - "nwinstall.sthlp"
       - "nwversion.sthlp"
