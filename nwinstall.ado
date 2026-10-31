@@ -4,11 +4,18 @@ program nwinstall, rclass
 	local __raw = lower(`"`0'"')
 	local nogui = cond(regexm(`"`__raw'"', "(^|[ ,])nogui([ ,]|$)"), "nogui", "")
 	if "`nogui'" != "" local 0 = ustrregexra(`"`0'"', "(?i)(^|[ ,])nogui(?=[ ,]|$)", "$1")
-	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string) DUPcheck]
+	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string) DUPcheck BUILDplugin(string) BUILDFrom(string) BUILDKeep]
 	
 	// supported Stata versions: 17 and 18 (the Mata libraries are built with Stata 17); older versions are untested, not blocked
 	if c(stata_version) < 17 {
 		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
+	}
+
+	// buildplugin(): compile the native plugins of the core and the model packages on this computer (nwinstall_buildplugin.ado)
+	if "`buildplugin'" != "" {
+		nwinstall_buildplugin, pkgs(`buildplugin') from(`buildfrom') release(`release') `=cond("`buildkeep'" != "", "keep", "")' dest(`dest')
+		return add
+		exit
 	}
 
 	// dupcheck: report dialog files that exist in more than one folder of the ado path (read-only, nothing is changed)

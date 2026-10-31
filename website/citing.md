@@ -16,7 +16,7 @@ example `nwsaom version`.
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.12.2) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.13.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 
@@ -28,11 +28,11 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.3.5").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.3.6").
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.2.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.0.10) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
@@ -68,7 +68,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.4.1/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.4.2/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

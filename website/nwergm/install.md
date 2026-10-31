@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.3.5:
+Every release is tagged on GitHub and each tag has its own address. For version 1.3.6:
 
 ```stata
-. net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/v1.3.5/) replace
+. net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/v1.3.6/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results. The operator terms and the other additions describ
 
 ```stata
 . nwergm version
-nwergm version 1.3.5, 28oct2026
+nwergm version 1.3.6, 31oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with 
 > the package, no separate version number)
@@ -83,6 +83,23 @@ The Monte Carlo sampler at the heart of a dyad-dependent fit runs in a compiled 
 macOS, Linux and Windows. It is installed together with the package and found automatically; there is
 nothing to configure. `nwergm version` shows the path of the plugin in use. The help file
 (`help nwergm`, section on performance) says what happens on a platform without a plugin.
+
+### If the plugin does not work on your computer
+
+If the plugin of your platform is missing, older than the `.ado` files (the Linux and Windows files are built by an
+automatic process and can lag behind the macOS file for a while), or does not load on your system, compile it on your own computer:
+
+```stata
+. nwinstall, buildplugin(nwergm)
+```
+
+The command fetches the C source of the package from its GitHub repository, compiles it with the compiler of your computer and
+installs the plugin where `net install` puts it (an existing file is kept with the extension `.prev`). You need a C compiler and
+`make`: on a Mac the command line tools of Xcode (`xcode-select --install` in the Terminal), on Linux `gcc` and `make`. Restart Stata
+afterwards. A plugin depends on the operating system and the processor, not on the version or the flavour of Stata (BE, SE, MP), so a plugin built
+on your computer works in every Stata installed there. The routine was tested on macOS; on Windows it stops with a message and the
+build note that comes with the source gives the command for the Visual Studio command line. The source is free software (GPL-3); `net get nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main)`
+copies it into the current directory, and it is in the folder `native/` of the [repository](https://github.com/thomas-u-grund/nwergm).
 
 ## Requirements
 

@@ -47,7 +47,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood and gradient (macOS, Linux, Windows); the optimization runs in Mata |
 | Speed | Faster than goldfish in our benchmark: 7.7 to 76 times for the original structural effects (compiled plug-in), 1.2 to 2.4 times for an effect set that runs in Mata, with the gain shrinking as the number of actors grows; see [Speed compared with R](../nwcommands/speed/#nwdynam-and-goldfish) |
-| Version | 1.2.0 (26 October 2026) |
+| Version | 1.2.1 (31 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section

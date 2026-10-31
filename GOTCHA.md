@@ -6,6 +6,10 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## C source in a `.pkg`: `f` lines are ancillary by file extension, `net get` flattens and lower-cases (2026-10-31)
+
+Stata decides from the extension whether an `f` line of a `.pkg` is installed by `net install` (`.ado`, `.sthlp`, `.dlg`, `.mlib`, `.plugin`, ...) or only offered by `net get` as an ancillary file (`.c`, `.h`, `.txt`, `.mm`, `.cpp`, `Makefile`, ...); no letter other than `f`/`g` is needed (an `F` line installs). `net get` copies every file into the **current directory by base name** and writes `Makefile` as `makefile`, so the layout `native/` + `native/spi/` is lost: every package ships a `*_native_readme.txt` that says how to rebuild it, and `nwinstall, buildplugin()` (`nwinstall_buildplugin.ado`) recreates the layout itself by fetching the files one by one with `copy`. A new C or header file must be added to the `f` list of the package (`_pkg_boot.txt` AND `nwcommands.pkg` for the core: the starter is not generated from the lists), to `files_<pkg>` in `nwinstall_buildplugin.ado` if the plugin needs it, and `tools/make_net_dir.sh` needs the `mkdir -p` it has. Basenames must stay unique within a package. `shell` does not return the exit code of the command in `_rc`: the build routine tests for marker files.
+
 ## `capture drop <name>` deletes a variable that merely STARTS with the name (found and fixed 2026-10-31, 3.12.2)
 
 Stata's `drop` accepts unique abbreviations (`set varabbrev on`, the default). `capture drop `generate'` meant to clear an old result also deleted any variable the user owned of which the name is the only match for that prefix: `nwfactions, generate(fac)` removed `faction`. Never drop a user-named variable directly. Guard it:
