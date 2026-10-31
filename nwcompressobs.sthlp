@@ -46,4 +46,4 @@ All-missing observations are found by testing every variable against "" or . (st
   {help nwdrop}, {help clear}
 
 {hline}
-{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.13.0, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

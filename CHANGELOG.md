@@ -4,7 +4,9 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.13.0] - 2026-10-31
+
+The native plugins can be compiled on the user's own computer.
 
 ### Added
 - **`nwinstall, buildplugin(...)` compiles the native plugins on the computer that needs them.** `buildplugin(nwcommands)`, `buildplugin(nwsaom)`, `buildplugin(nwergm)`, `buildplugin(nwdynam)` or `buildplugin(all)` fetches the C source from the repositories (`buildfrom()` reads a local copy, `release()` a tagged release), compiles it with the compiler of the computer (macOS and Linux; a C compiler and `make` are needed) and installs the plugin where `net install` puts it, keeping an existing file as `.prev`. It is the fallback for a platform whose shipped plugin is missing, older than the `.ado` files or does not load. Tested on macOS (Apple silicon, Stata 17); on Windows the command stops with a message. Test `test_buildplugin.do`.

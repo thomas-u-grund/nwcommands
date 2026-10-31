@@ -25,4 +25,4 @@ f native/nwedit_viewer_win.cpp
 f native/Makefile
 f native/spi/stplugin.c
 f native/spi/stplugin.h
-f native/nwgraph_native_readme.txt
+f nwgraph_native_readme.txt

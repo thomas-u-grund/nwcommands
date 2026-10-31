@@ -111,4 +111,4 @@ far (a different stream; {cmd:rdiscrete()} takes at most 10,000 probabilities, w
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.13.0, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -125,4 +125,4 @@ is no sparse form of the method.
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
 
 {hline}
-{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.13.0, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

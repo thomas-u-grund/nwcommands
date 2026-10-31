@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 31 October 2026: plugins you can compile yourself (nwcommands 3.13.0, nwsaom 1.4.2, nwergm 1.3.6, nwdynam 1.2.1)
+
+**nwcommands 3.13.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.0)). If the shipped plugin of a package does not work on your computer (another operating system or processor than the one it was built for, or a file that does not load), `nwinstall, buildplugin(nwsaom)` fetches the C source, compiles it with the compiler of your computer (macOS and Linux; a C compiler and `make` are needed) and installs the plugin. `buildplugin(nwcommands)`, `buildplugin(nwergm)`, `buildplugin(nwdynam)` and `buildplugin(all)` work the same way. The C source of all plugins is now also part of the packages: `net get nwsaom, from(https://nwcommands.org/net/)` copies it. See [installation](nwcommands/install).
+
+**nwsaom 1.4.2**, **nwergm 1.3.6** and **nwdynam 1.2.1** ship the C source of their plugins, and the messages that report a missing plugin point to `nwinstall, buildplugin()`. In nwsaom, `nwsaom meta` and the postestimation commands (`estat score`, `timetest`, `importance`, `gof`, `simulate`) print Stata-style tables; the numbers are unchanged. The manuals and articles describe the new routine.
+
 ## 31 October 2026: nwcommands 3.12.2 and nwsaom 1.4.1
 
 **nwcommands 3.12.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.2)). Bug fix: `generate()` no longer deletes a variable of yours whose name starts with the new name. Stata's `drop` accepts abbreviations, so `nwfactions, generate(fac)` used to remove a variable called `faction`. 29 commands are fixed.

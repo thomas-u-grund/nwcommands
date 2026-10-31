@@ -73,6 +73,6 @@ The source of each package is also available with `net get`, for example `net ge
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.12.2/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.13.0/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release and installing on
 computers without internet access or administrator rights.

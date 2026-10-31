@@ -81,4 +81,4 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 
 ---
 
-*nwcommands version 3.12.2, 31 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.13.0, 31 October 2026* ([check your installed version](nwversion))
