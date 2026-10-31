@@ -46,10 +46,14 @@ coefficients and the fitted rate, 100 times:
 
 ```stata
 . estat simulate, nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1          115.4 ( 116)    35.6 (  35)      90.3 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |   115.4   116    35.6    35    90.3    88
+---------------------------------------------------------
 ```
 
 The line compares the *average* simulated end network with the observed one: 115.4 ties against 116 observed, 35.6 mutual dyads against 35, and 90.3 transitive
@@ -95,10 +99,14 @@ the rates (`rates()`; one per period), and runs the process without estimating a
 
 ```stata
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 2.4 0.6) rates(6) nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1          105.4 ( 116)    33.9 (  35)      72.6 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |   105.4   116    33.9    35    72.6    88
+---------------------------------------------------------
 ```
 
 With coefficients close to the estimates, the simulated networks resemble the observed second wave (105 ties on average against 116, 34 mutual dyads against 35, 73 transitive triples against 88). Now the same world without any
@@ -106,10 +114,14 @@ tendency to reciprocate (the second coefficient is zero):
 
 ```stata
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 0 0.6) rates(6) nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1           39.8 ( 116)     0.6 (  35)       1.2 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |    39.8   116     0.6    35     1.2    88
+---------------------------------------------------------
 ```
 
 Without reciprocity, the simulated networks have only 40 ties (against 105), almost no mutual dyads (0.6) and hardly any

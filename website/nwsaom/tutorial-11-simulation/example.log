@@ -37,10 +37,14 @@ y1   -2.5302421     2.157208    .59414831
 . 
 . * Simulate the fitted model 100 times, starting from the observed first wave
 . estat simulate, nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1          115.4 ( 116)    35.6 (  35)      90.3 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |   115.4   116    35.6    35    90.3    88
+---------------------------------------------------------
 
 . matrix list r(obs)
 
@@ -70,10 +74,14 @@ transitive: mean  90.3, sd  50.1
 . * Save the simulated end networks and compare one with the observed
 . * second wave
 . estat simulate, nsim(3) seed(5) generate(sim)
-Simulation from the fitted model: 3 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1          121.0 ( 116)    35.3 (  35)     108.3 (  88)
+Simulation from the fitted model: 3 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |   121.0   116    35.3    35   108.3    88
+---------------------------------------------------------
 
 . nwsaom describe, waves(glasgow2 sim_1_p1)
 
@@ -99,20 +107,26 @@ Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about cha
 . * reciprocity, transtrip; rates() has one rate per period.
 . * ---------------------------------------------------------------
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 2.4 0.6) rate
-> s(6) nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1          105.4 ( 116)    33.9 (  35)      72.6 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |   105.4   116    33.9    35    72.6    88
+---------------------------------------------------------
 
 . 
 . * The same world without any tendency to reciprocate
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 0 0.6) rates(
-> 6) nsim(100) seed(5)
-Simulation from the fitted model: 100 replication(s) of 1 period(s).
-Mean over replications (observed end wave in brackets):
-period          ties      mutual    transitive    behavior
-1           39.8 ( 116)     0.6 (  35)       1.2 (  88)
+Simulation from the fitted model: 100 replication(s) of 1 period(s)
+Sim is the mean over the replications, Obs the observed end wave.
+
+             |          Ties        Mutual    Transitive
+      period |     Sim   Obs     Sim   Obs     Sim   Obs
+-------------+-------------------------------------------
+           1 |    39.8   116     0.6    35     1.2    88
+---------------------------------------------------------
 
 . 
 . * ---------------------------------------------------------------

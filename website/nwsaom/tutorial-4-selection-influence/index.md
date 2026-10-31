@@ -187,12 +187,16 @@ and it simulates network and behavior together (here after the `avsim` model, th
 . estat gof, nsim(100) seed(7)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Outdegree     | Mahalanobis dist. =   13.530   p =  0.140 (no evidence against fit)
-Indegree      | Mahalanobis dist. =   11.373   p =  0.340 (no evidence against fit)
-Geodesic      | Mahalanobis dist. =   29.953   p =  0.000 (evidence AGAINST fit)
-Behavior      | Mahalanobis dist. =    0.981   p =  0.910 (no evidence against fit)
-------------------------------------------------------------
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |        13.530    0.140       ok
+            Indegree |        11.373    0.340       ok
+            Geodesic |        29.953    0.000 rejected
+            Behavior |         0.981    0.910       ok
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic gof_behavior
 ```
 
 The behavior distribution is reproduced very well. The geodesic distances are not, as in the

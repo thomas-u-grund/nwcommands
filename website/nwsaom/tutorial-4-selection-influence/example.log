@@ -165,12 +165,15 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . estat gof, nsim(100) seed(7)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Outdegree     | Mahalanobis dist. =   13.530   p =  0.140 (no evidence against fit)
-Indegree      | Mahalanobis dist. =   11.373   p =  0.340 (no evidence against fit)
-Geodesic      | Mahalanobis dist. =   29.953   p =  0.000 (evidence AGAINST fit)
-Behavior      | Mahalanobis dist. =    0.981   p =  0.910 (no evidence against fit)
-------------------------------------------------------------
-p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |        13.530    0.140       ok
+            Indegree |        11.373    0.340       ok
+            Geodesic |        29.953    0.000 rejected
+            Behavior |         0.981    0.910       ok
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
 Violin plots: gof_outdegree gof_indegree gof_geodesic gof_behavior
+
 .
