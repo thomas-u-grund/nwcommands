@@ -103,23 +103,28 @@ produces, and that is exactly what the score test tests. Now:
 ```stata
 . estat score
 
-Generalised score-type test of the model restricted by:
-  (1)  altx_alcohol1            =    0.0000
-  (2)  egox_alcohol1            =    0.0000
-  (3)  simx_alcohol1            =    0.0000
-------------------------------------------------------------
-Joint test:  c =    4.9899   d.f. = 3   p-value = 0.1725
-  (1) altx_alcohol1 separately: c =   0.2070  d.f. = 1  p-value = 0.6491   one-sided:  -0.4550
-  (2) egox_alcohol1 separately: c =   0.0017  d.f. = 1  p-value = 0.9671   one-sided:   0.0412
-  (3) simx_alcohol1 separately: c =   4.4401  d.f. = 1  p-value = 0.0351   one-sided:   2.1072
+Score-type test of the restricted model (as RSiena score.Test)
+Tests whether the fixed effects below differ from their fixed values.
 
-One-step estimates (restricted estimate plus the one-step correction):
-  outdegree                 -2.6811
-  reciprocity                2.4278
-  altx_alcohol1             -0.0427
-  egox_alcohol1              0.0264
-  transtrip                  0.6133
-  simx_alcohol1              0.5837
+            effect |  Fixed at     chi2  d.f. Prob>chi2 One-sided z
+-------------------+-----------------------------------------------
+     altx_alcohol1 |    0.0000    0.207     1    0.6491      -0.455
+     egox_alcohol1 |    0.0000    0.002     1    0.9671       0.041
+     simx_alcohol1 |    0.0000    4.440     1    0.0351       2.107
+-------------------+-----------------------------------------------
+        Joint test |              4.990     3    0.1725
+-------------------------------------------------------------------
+
+One-step estimates (restricted estimate plus the one-step correction)
+            effect |  Estimate
+-------------------+----------
+         outdegree |   -2.6811
+       reciprocity |    2.4278
+     altx_alcohol1 |   -0.0427
+     egox_alcohol1 |    0.0264
+         transtrip |    0.6133
+     simx_alcohol1 |    0.5837
+------------------------------
 ```
 
 How to read it. The joint test of all three effects is not significant (p = 0.17): drinking as a
@@ -143,27 +148,31 @@ An SAOM assumes that the coefficients are the same in every period. With three o
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(1)
 . estat timetest
 
-Test of time heterogeneity (score-type test; RSiena's sienaTimeTest)
-----------------------------------------------------------------------
-Joint test of all period-specific deviations:  c =    8.0217   d.f. = 6   p-value = 0.2365
+Test of time heterogeneity (score-type test; as RSiena sienaTimeTest)
+Is the parameter of an effect the same in all periods?
 
-Test of each effect (is its parameter the same in all periods?)
-effect                           c  d.f.   p-value
-outdegree                    0.017     1    0.8955
-reciprocity                  0.755     1    0.3848
-altx_alcohol1                2.449     1    0.1176
-egox_alcohol1                1.631     1    0.2016
-transtrip                    0.330     1    0.5657
-simx_alcohol1                1.292     1    0.2557
+            effect |      chi2  d.f.  Prob>chi2
+-------------------+---------------------------
+         outdegree |     0.017     1     0.8955
+       reciprocity |     0.755     1     0.3848
+     altx_alcohol1 |     2.449     1     0.1176
+     egox_alcohol1 |     1.631     1     0.2016
+         transtrip |     0.330     1     0.5657
+     simx_alcohol1 |     1.292     1     0.2557
+-------------------+---------------------------
+        Joint test |     8.022     6     0.2365
+-----------------------------------------------
 
 Period-specific deviations (one-step estimates) and separate tests
-effect                    period   deviation         c   p-value
-outdegree                      2     -0.3116     0.017    0.8955
-reciprocity                    2      0.7407     0.755    0.3848
-altx_alcohol1                  2      0.1365     2.449    0.1176
-egox_alcohol1                  2      0.0821     1.631    0.2016
-transtrip                      2      0.0519     0.330    0.5657
-simx_alcohol1                  2     -0.8234     1.292    0.2557
+            effect |  Period   Deviation      chi2  Prob>chi2
+-------------------+-----------------------------------------
+         outdegree |       2     -0.3116     0.017     0.8955
+       reciprocity |       2      0.7407     0.755     0.3848
+     altx_alcohol1 |       2      0.1365     2.449     0.1176
+     egox_alcohol1 |       2      0.0821     1.631     0.2016
+         transtrip |       2      0.0519     0.330     0.5657
+     simx_alcohol1 |       2     -0.8234     1.292     0.2557
+-------------------------------------------------------------
 ```
 
 The joint test (p = 0.24) and every single test are far from significant: the effects can be
@@ -181,18 +190,20 @@ averages over the actors (`sienaRI`):
 ```stata
 . estat importance
 
-Relative importance of effects (RSiena's sienaRI); expected over the actors at the start of each period
-------------------------------------------------------------------------------
-effect                  estimate     s.e.     sigma   semi-std.    RI p1    RI p2
-outdegree                -2.7046   0.1133    0.4384     -1.1857   0.4083   0.4719
-reciprocity               2.4224   0.1930    0.2140      0.5184   0.3510   0.2906
-altx_alcohol1            -0.0519   0.0712    1.1027     -0.0573   0.0204   0.0193
-egox_alcohol1             0.0463   0.0743    0.4948      0.0229   0.0137   0.0128
-transtrip                 0.6295   0.0735    0.6514      0.4101   0.1577   0.1584
-simx_alcohol1             0.6280   0.3094    0.2259      0.1419   0.0489   0.0469
-------------------------------------------------------------------------------
-Certainty R_H of the actors' choices:   0.2765   0.3479
-RI: expected relative importance of the effect (shares sum to 1 within a period); semi-std. = estimate x sigma.
+Relative importance of effects (as RSiena sienaRI)
+Expected over the actors at the start of each period
+            effect | Estimate  Std. err.    Sigma  Semi-std.     RI p1     RI p2
+-------------------+------------------------------------------------------------
+         outdegree |  -2.7046     0.1133   0.4384    -1.1857    0.4083    0.4719
+       reciprocity |   2.4224     0.1930   0.2140     0.5184    0.3510    0.2906
+     altx_alcohol1 |  -0.0519     0.0712   1.1027    -0.0573    0.0204    0.0193
+     egox_alcohol1 |   0.0463     0.0743   0.4948     0.0229    0.0137    0.0128
+         transtrip |   0.6295     0.0735   0.6514     0.4101    0.1577    0.1584
+     simx_alcohol1 |   0.6280     0.3094   0.2259     0.1419    0.0489    0.0469
+-------------------+------------------------------------------------------------
+     Certainty R_H |                                            0.2765    0.3479
+--------------------------------------------------------------------------------
+RI: share of the effect in the actors' choices. Semi-std. = estimate x sigma.
 ```
 
 The columns `RI p1` and `RI p2` are the shares of importance in each period (each column adds up to 1).

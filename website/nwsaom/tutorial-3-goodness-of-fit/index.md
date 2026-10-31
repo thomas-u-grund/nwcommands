@@ -50,12 +50,14 @@ The model converged. Is it any good?
 . estat gof, nsim(100) seed(7)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Outdegree     | Mahalanobis dist. =    5.875   p =  0.550 (no evidence against fit)
-Indegree      | Mahalanobis dist. =    8.594   p =  0.370 (no evidence against fit)
-Geodesic      | Mahalanobis dist. =  209.758   p =  0.000 (evidence AGAINST fit)
-------------------------------------------------------------
-p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |         5.875    0.550       ok
+            Indegree |         8.594    0.370       ok
+            Geodesic |       209.758    0.000 rejected
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
 Violin plots: gof_outdegree gof_indegree gof_geodesic
 ```
 
@@ -90,11 +92,15 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . estat gof, nsim(100) seed(7)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Outdegree     | Mahalanobis dist. =    3.318   p =  0.870 (no evidence against fit)
-Indegree      | Mahalanobis dist. =    6.876   p =  0.490 (no evidence against fit)
-Geodesic      | Mahalanobis dist. =   19.007   p =  0.000 (evidence AGAINST fit)
-------------------------------------------------------------
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |         3.318    0.870       ok
+            Indegree |         6.876    0.490       ok
+            Geodesic |        19.007    0.000 rejected
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic
 ```
 
 The distance fell from 209.8 to 19.0, which is a large improvement, but the p-value is still below
@@ -128,11 +134,15 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . estat gof, nsim(100) seed(7)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Outdegree     | Mahalanobis dist. =    3.688   p =  0.830 (no evidence against fit)
-Indegree      | Mahalanobis dist. =    4.087   p =  0.790 (no evidence against fit)
-Geodesic      | Mahalanobis dist. =    8.904   p =  0.170 (no evidence against fit)
-------------------------------------------------------------
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |         3.688    0.830       ok
+            Indegree |         4.087    0.790       ok
+            Geodesic |         8.904    0.170       ok
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic
 ```
 
 All three statistics are now within what the model can produce.
@@ -160,9 +170,13 @@ default. It can be requested explicitly:
 . estat gof, nsim(100) seed(7) stats(triad)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
-------------------------------------------------------------
-Triad         | Mahalanobis dist. =   90.343   p =  0.000 (evidence AGAINST fit)
-------------------------------------------------------------
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+               Triad |        90.343    0.000 rejected
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
+Violin plots: gof_triad
 ```
 
 Even this model does not reproduce the triad census, which is a stricter test than the other three. How much
@@ -174,10 +188,14 @@ tests each period separately:
 . estat gof, nsim(100) seed(7) stats(outdegree) join(off)
 
 Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (one test per period)
-------------------------------------------------------------
-Outdegree (period 1)    | Mahalanobis dist. =    3.863   p =  0.730 (no evidence against fit)
-Outdegree (period 2)    | Mahalanobis dist. =    7.579   p =  0.330 (no evidence against fit)
-------------------------------------------------------------
+
+           statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+Outdegree (period 1) |         3.863    0.730       ok
+Outdegree (period 2) |         7.579    0.330       ok
+------------------------------------------------------
+Fit is rejected when P < 0.05 (one-tailed test).
+Violin plots: gof_outdegree_p1 gof_outdegree_p2
 ```
 
 ## Things to try
