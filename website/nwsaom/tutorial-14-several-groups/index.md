@@ -146,14 +146,14 @@ Fit the same four classes one by one and combine the fits, as in Tutorial 13:
 ```stata
 . nwsaom meta school1 school2 school3 school4
 
-IWLS estimates (Snijders & Baerveldt 2003)
---------------------------------------------------------------------------------
-      effect |   n      mean     s.e.       t       p       sd        Q    p(Q)
--------------+------------------------------------------------------------------
-   outdegree |   4   -2.3772   0.2535   -9.38   0.003   0.5069     9.05   0.029
- reciprocity |   4    1.8653   0.2664    7.00   0.006   0.5328     5.91   0.116
-   transtrip |   4    0.6958   0.1734    4.01   0.028   0.3468     8.39   0.039
---------------------------------------------------------------------------------
+IWLS estimates (Snijders and Baerveldt 2003)
+-------------------------------------------------------------------------------
+      effect |   n      Mean  Std. err.       t   P>|t|      SD       Q     P>Q
+-------------+-----------------------------------------------------------------
+   outdegree |   4   -2.3772     0.2535   -9.38   0.003  0.5069    9.05   0.029
+ reciprocity |   4    1.8653     0.2664    7.00   0.006  0.5328    5.91   0.116
+   transtrip |   4    0.6958     0.1734    4.01   0.028  0.3468    8.39   0.039
+-------------------------------------------------------------------------------
 ```
 
 (The rest of the meta-analysis output is in the log.) Next to each other, the simple average of the four class estimates, the mean of the meta-analysis and the estimate of the joint model:

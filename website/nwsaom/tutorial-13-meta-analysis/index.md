@@ -83,52 +83,64 @@ Reciprocity and closure are positive in every class, but they differ in size: cl
 ```stata
 . nwsaom meta school1 school2 school3 school4
 
-Meta-analysis of 4 fits (RSiena siena08): estimates with a standard error of at least 10 are excluded
-Tests of mean parameters use a t distribution with n-1 d.f. (n = number of included groups).
+Meta-analysis of 4 fits (as RSiena siena08)
+Estimates with a standard error of 10 or more are excluded;
+tests of the means use a t distribution with n-1 d.f.
 
-IWLS estimates (Snijders & Baerveldt 2003)
---------------------------------------------------------------------------------
-      effect |   n      mean     s.e.       t       p       sd        Q    p(Q)
--------------+------------------------------------------------------------------
-   outdegree |   4   -2.3772   0.2535   -9.38   0.003   0.5069     9.05   0.029
- reciprocity |   4    1.8653   0.2664    7.00   0.006   0.5328     5.91   0.116
-   transtrip |   4    0.6958   0.1734    4.01   0.028   0.3468     8.39   0.039
---------------------------------------------------------------------------------
+IWLS estimates (Snijders and Baerveldt 2003)
+-------------------------------------------------------------------------------
+      effect |   n      Mean  Std. err.       t   P>|t|      SD       Q     P>Q
+-------------+-----------------------------------------------------------------
+   outdegree |   4   -2.3772     0.2535   -9.38   0.003  0.5069    9.05   0.029
+ reciprocity |   4    1.8653     0.2664    7.00   0.006  0.5328    5.91   0.116
+   transtrip |   4    0.6958     0.1734    4.01   0.028  0.3468    8.39   0.039
+-------------------------------------------------------------------------------
 
-Maximum likelihood under normality with  95% profile-likelihood intervals
-----------------------------------------------------------------------------------------------
-      effect |     mean     s.e.     lower    upper        sd    lower    upper
--------------+--------------------------------------------------------------------------------
-   outdegree |  -2.2339   0.0940   -2.7705  -2.0006    0.0829   0.0000   0.7810
- reciprocity |   1.8256   0.2162    1.3163   2.5174    0.2423   0.0000   1.0805
-   transtrip |   0.5115   0.0514    0.4104   1.0354    0.0001   0.0000   0.6001
-----------------------------------------------------------------------------------------------
+Maximum likelihood under normality: mean of the parameter
+----------------------------------------------------------
+      effect |      Mean  Std. err.   [95% conf. interval]
+-------------+--------------------------------------------
+   outdegree |   -2.2339     0.0940      -2.7705   -2.0006
+ reciprocity |    1.8256     0.2162       1.3163    2.5174
+   transtrip |    0.5115     0.0514       0.4104    1.0354
+----------------------------------------------------------
+
+Maximum likelihood under normality: standard deviation between groups
+------------------------------------------------
+      effect |        SD    [95% conf. interval]
+-------------+----------------------------------
+   outdegree |    0.0829        0.0000    0.7810
+ reciprocity |    0.2423        0.0000    1.0805
+   transtrip |    0.0001        0.0000    0.6001
+------------------------------------------------
 
 Fisher's combination of one-sided tests (chi-squared, 2n d.f.)
 ----------------------------------------------------------
-      effect |     right       p      left       p
+             |         Right-sided          Left-sided
+      effect |     chi2  Prob>chi2     chi2  Prob>chi2
 -------------+--------------------------------------------
-   outdegree |     0.000   1.000   807.018   0.000
- reciprocity |   138.037   0.000     0.003   1.000
-   transtrip |   127.633   0.000     0.000   1.000
+   outdegree |    0.000      1.000  807.018      0.000
+ reciprocity |  138.037      0.000    0.003      1.000
+   transtrip |  127.633      0.000    0.000      1.000
 ----------------------------------------------------------
-Correlation of estimates and standard errors (Spearman, t approximation for p): see r(meta) columns corr, corr_p.
+Correlations of estimates and standard errors are in r(meta).
+
 ```
 
-Read the output in three parts.
+Read the output in four tables: the IWLS estimates, the two maximum likelihood tables (means, and standard deviations between classes) and Fisher's combination of tests.
 
 **IWLS estimates** (the robust estimate of Snijders and Baerveldt). For every effect: the number of classes used (`n`), the estimated mean across classes and its standard error, a t test of the mean
-(with *n* - 1 = 3 degrees of freedom), `sd`, the estimated standard deviation of the effect *between* classes, and `Q`, a test of heterogeneity with its p-value `p(Q)`.
+(`t` and `P>|t|`, with *n* - 1 = 3 degrees of freedom), `SD`, the estimated standard deviation of the effect *between* classes, and `Q`, a test of heterogeneity with its p-value `P>Q`.
 
 - The typical **reciprocity** effect is 1.87 (se 0.27, p = 0.006), the typical **closure** effect 0.70 (se 0.17, p = 0.028), and the typical **outdegree** effect -2.38 (se 0.25).
-- The classes differ in the outdegree and in the closure effects (p(Q) = 0.029 and 0.039) but there is no clear evidence of difference for reciprocity (p(Q) = 0.116). The estimated
-  standard deviations between classes are 0.51, 0.53 and 0.35. A small p(Q) means: more variation than the standard errors of the single fits can account for.
+- The classes differ in the outdegree and in the closure effects (P>Q = 0.029 and 0.039) but there is no clear evidence of difference for reciprocity (P>Q = 0.116). The estimated
+  standard deviations between classes are 0.51, 0.53 and 0.35. A small P>Q means: more variation than the standard errors of the single fits can account for.
 
 **Maximum likelihood** under normality gives the mean and the between-class standard deviation again, with profile-likelihood confidence intervals. The ML means (-2.23, 1.83 and 0.51) are
 close to the IWLS ones, and the intervals for the standard deviations are wide (for example 0 to 1.08 for reciprocity): with only four classes the size of the differences
 between classes cannot be pinned down. Treat all the standard deviations as rough.
 
-**Fisher's combination of one-sided tests** asks whether the effect has the same *sign* in all classes: the "right" column tests for a positive effect, the "left" for a negative one. Here positive
+**Fisher's combination of one-sided tests** asks whether the effect has the same *sign* in all classes: the "right-sided" columns test for a positive effect, the "left-sided" for a negative one. Here positive
 reciprocity and closure (right-tailed p < 0.001) and a negative outdegree effect (left-tailed p < 0.001) hold in the combination of the classes.
 
 The last line points to the correlation between estimates and standard errors in `r(meta)`; a strong correlation would suggest that the estimates are biased.
