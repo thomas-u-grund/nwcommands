@@ -18,8 +18,7 @@ and the more complete program.
 ## What is the same
 
 - **The model and the effects.** The effect library follows RSiena's table of effects. In the effects table of
-  RSiena 1.6.6 (`getEffects()` over twelve data configurations) 1,121 rows are planned for `nwsaom`;
-  1,058 of them (94%) are implemented, and every implemented effect was compared with `siena07`.
+  RSiena 1.6.6 (`getEffects()` over twelve data configurations) 1,201 rows, `nwsaom` implements 1,058 of them, and every implemented effect was compared with `siena07`.
   The effects that RSiena 1.6.7 to 1.6.14 added or changed (for example WXZX and the two-mode
   toU) are implemented and compared with RSiena 1.6.14 but are not part of these counts; the counts
   change with RSiena releases.
@@ -39,8 +38,7 @@ Not implemented in `nwsaom`:
 - a hierarchical Bayesian analysis of several groups (the joint estimation of one model in several groups is
   the option `groups()`, see [Tutorial 14](../tutorial-14-several-groups/); groups fitted separately can be combined
   with `nwsaom meta`, the counterpart of `siena08`). With `groups()`, maximum likelihood and Bayesian estimation,
-  `estat gof`, `estat simulate` and `estat importance`, two-mode and non-directed networks, several networks
-  and a few effects are not yet available;
+  two-mode networks, several networks, structural zeros and ones and time-varying dyadic covariates are not yet available;
 - the continuous (stochastic differential equation) behavior;
 - inside `nwsaom multinet`: composition change, missing ties, `estat gof`, `estat importance` and `estat simulate`.
 
