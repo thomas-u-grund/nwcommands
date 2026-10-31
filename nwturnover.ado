@@ -96,7 +96,8 @@ program nwturnover, rclass
 	mata: `__nw_turnrate'[selectindex(__nwturnover_denom_total :> 0)] = `__nw_pernode'[selectindex(__nwturnover_denom_total :> 0),1] :/ __nwturnover_denom_total[selectindex(__nwturnover_denom_total :> 0)]
 	mata: mata drop __nwturnover_denom_total
 
-	capture drop `netgenerate'
+	capture confirm new variable `netgenerate'
+	if _rc capture drop `netgenerate'
 	qui gen `netgenerate' = .
 	mata: st_store((1::`nodes1'), "`netgenerate'", `__nw_turnrate')
 	mata: mata drop `__nw_pernode' `__nw_turnrate'

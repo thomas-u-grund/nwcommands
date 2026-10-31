@@ -53,7 +53,7 @@ the options and the names that R uses, are in Stata's help files:
 
 ## Where to see them in use
 
-- [Tutorial 1: A first ERGM](../../tutorials/09-intro-ergm/): `edges`, `nodecov`, `gwesp`.
+- [Tutorial 1: A first ERGM](/nwergm/tutorial-1-first-ergm/): `edges`, `nodecov`, `gwesp`.
 - [Tutorial 2](../tutorial-2-terms/): `nodematch`, `nodematchdiff`, `nodefactor`, `nodemix`, `mutual`, `nodeicov`, `gwesp`, `gwidegree`.
 - [Tutorial 5](../tutorial-5-constraints-twomode-operators/): two-mode terms and operators.
 

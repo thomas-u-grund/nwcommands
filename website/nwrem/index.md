@@ -30,7 +30,7 @@ reciprocity of receipt, recency, and covariates of actors and of pairs. The esti
 `nwrem` is for people who work in Stata, or prefer it to R, and who have a stream of timed events between actors.
 `nwrem` follows the R package relevent and is not a replacement for it: relevent is the reference implementation and the more complete program, and the page
 [nwrem and relevent](r-relevent/) says what `nwrem` has and what it lacks. `nwrem` is not affiliated with or endorsed by the authors of relevent; errors in `nwrem` are the author's. For how a REM differs from the other longitudinal
-models of the nwcommands family, see [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/);
+models of the nwcommands family, see [Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/);
 the sister package that splits each event into the choice of the actor and the choice of the partner is [nwdynam](../nwdynam/).
 
 ## Key facts

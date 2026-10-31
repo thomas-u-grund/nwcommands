@@ -1,0 +1,192 @@
+. do example.do
+
+. * nwcommands tutorial 16: valued networks
+. * Requires the core nwcommands.
+. nwwebuse sampson, nwclear
+
+. 
+. * 1. A valued network: how many times was a pair named?
+. nwsymmetrize samplike, generate(likes)
+
+. nwsummarize likes
+--------------------------------------------------
+   Network name:  likes
+   Network id:  5
+   Directed: false
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Edges: 60
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .392
+   Temporal: false
+
+. 
+. * 2. A network from an edge list with a value variable
+. clear
+
+. input str5 ego str5 alter int mails
+
+           ego      alter     mails
+  1. "Ann" "Bob" 12
+  2. "Ann" "Cy"   1
+  3. "Bob" "Cy"   5
+  4. "Cy"  "Dee"  2
+  5. "Dee" "Ann"  7
+  6. end
+
+. nwfromedge ego alter mails, name(mailnet) directed
+
+. nwsummarize mailnet
+--------------------------------------------------
+   Network name:  mailnet
+   Network id:  6
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 4
+   Selfloop: false
+   Arcs: 5
+   Minimum value:  0
+   Maximum value:  12
+   Density:  .417
+   Temporal: false
+
+. 
+. * 3. Degree is strength for a valued network
+. nwwebuse sampson, nwclear
+
+. nwsymmetrize samplike, generate(likes)
+
+. nwdegree likes, generate(strength)
+----------------------------------------
+  Network name: likes
+----------------------------------------
+  (valued network: degree is the strength, the sum of the tie values; binary gives the number of tie
+> s)
+    Degree distribution
+
+   strength |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          9 |          1        5.56        5.56
+         10 |          3       16.67       22.22
+         11 |          2       11.11       33.33
+         12 |          1        5.56       38.89
+         13 |          6       33.33       72.22
+         14 |          2       11.11       83.33
+         18 |          1        5.56       88.89
+         22 |          1        5.56       94.44
+         23 |          1        5.56      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+  Mean number of ties (out): 6.667   mean strength (out): 13.44
+
+   Degree centralization: .632
+
+. nwdegree likes, generate(ties) binary
+----------------------------------------
+  Network name: likes
+----------------------------------------
+  (valued network, tie values not used: degree is the number of ties)
+    Degree distribution
+
+       ties |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          4 |          1        5.56        5.56
+          5 |          4       22.22       27.78
+          6 |          5       27.78       55.56
+          7 |          3       16.67       72.22
+          8 |          3       16.67       88.89
+         10 |          1        5.56       94.44
+         11 |          1        5.56      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+  Mean number of ties (out): 6.667   mean strength (out): 13.44
+
+   Degree centralization: .287
+
+. summarize strength ties
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    strength |         18    13.44444    3.883937          9         23
+        ties |         18    6.666667     1.81497          4         11
+
+. 
+. * 4. Clustering, weighted and binary
+. nwclustering likes, generate(wclu) silent
+
+. nwclustering likes, generate(bclu) measure(binary) silent
+
+. summarize wclu bclu
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        wclu |         18    .5075819    .1789176       .225   .8888889
+        bclu |         18    .4925926      .17616         .2   .8333333
+
+. 
+. nwbetween likes, generate(wbtw) silent
+----------------------------------------
+  Network name: likes
+----------------------------------------
+    Betweenness centrality
+    (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = 1)
+
+. nwbetween likes, generate(bbtw) binary silent
+----------------------------------------
+  Network name: likes
+----------------------------------------
+    Betweenness centrality
+
+. correlate wbtw bbtw
+(obs=18)
+
+             |     wbtw     bbtw
+-------------+------------------
+        wbtw |   1.0000
+        bbtw |   0.7912   1.0000
+
+
+. 
+. * 5. Dichotomize with a cutoff
+. nwdichotomize likes, threshold(2) generate(likes2)
+(120 changes made to likes)
+
+. nwsummarize likes2
+--------------------------------------------------
+   Network name:  likes2
+   Network id:  6
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Edges: 37
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .242
+   Temporal: false
+
+. nwdegree likes2, generate(deg2)
+----------------------------------------
+  Network name: likes2
+----------------------------------------
+    Degree distribution
+
+       deg2 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          2 |          1        5.56        5.56
+          3 |          5       27.78       33.33
+          4 |          8       44.44       77.78
+          5 |          1        5.56       83.33
+          6 |          1        5.56       88.89
+          7 |          2       11.11      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+
+   Degree centralization: .191
+
+. 

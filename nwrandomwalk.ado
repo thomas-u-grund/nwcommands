@@ -43,7 +43,8 @@ program nwrandomwalk, rclass
 	if _rc != 0 {
 		exit _rc
 	}
-	capture drop `generate'
+	capture confirm new variable `generate'
+	if _rc capture drop `generate'
 	gen double `generate' = .
 	mata: st_store((1::`nodes'), "`generate'", `__nw_ht')
 	mata: mata drop `__nw_ht'

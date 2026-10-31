@@ -19,7 +19,7 @@
  11.     nwset, mat(X2) directed name(school`s'_w2)
  12.     nwsaom describe, waves(school`s'_w1 school`s'_w2)
  13.     display as text _newline "School `s'"
- 14.     nwsaom, wave1(school`s'_w1) wave2(school`s'_w2) outdegree reciprocity transtrip seed(5)
+ 14.     nwsaom, waves(school`s'_w1 school`s'_w2) outdegree reciprocity transtrip seed(5)
  15.     estimates store school`s'
  16. }
 (encoding automatically selected: UTF-8)
@@ -28,19 +28,23 @@
 (45 vars, 45 obs)
 
 Network data: 2 waves, 45 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1              104      0.0525         2.311
-2              142      0.0717         3.156
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          64       78        40    0.352       118
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |      104      0.0525         2.311
+           2 |      142      0.0717         3.156
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      64        78         40     0.352       118
+----------------------------------------------------------------------
 
 School 1
 ----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: school1_w1 -> school1_w2
-Actors: 45                             Estimated rate:  7.134 (1.231)
+SAOM (Method of Moments, conditional), waves: school1_w1 school1_w2
+Actors: 45                             Periods: 1
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 school1_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -49,6 +53,12 @@ school1_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |    1.56099   .2544959     6.13   0.000     1.062187    2.059793
    transtrip |   .4678417   .0606097     7.72   0.000     .3490489    .5866345
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+        rate |    7.1345 
+          se |    1.2306 
 Overall maximum convergence ratio: 0.101 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (encoding automatically selected: UTF-8)
@@ -57,21 +67,24 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (37 vars, 37 obs)
 
 Network data: 2 waves, 37 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1               38      0.0285         1.027
-2               69      0.0518         1.865
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          21       48        17    0.244        65
-  (Jaccard below 0.3: few ties stay, so the data say little about the change process; see the SAOM l
-> iterature)
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |       38      0.0285         1.027
+           2 |       69      0.0518         1.865
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      21        48         17     0.244        65
+----------------------------------------------------------------------
+Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about change.
 
 School 2
 ----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: school2_w1 -> school2_w2
-Actors: 37                             Estimated rate:  3.637 (0.657)
+SAOM (Method of Moments, conditional), waves: school2_w1 school2_w2
+Actors: 37                             Periods: 1
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 school2_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -80,6 +93,12 @@ school2_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |    2.58864   .3985567     6.50   0.000     1.807483    3.369797
    transtrip |   1.133352   .3058146     3.71   0.000      .533966    1.732737
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+        rate |    3.6365 
+          se |    0.6570 
 Overall maximum convergence ratio: 0.115 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (encoding automatically selected: UTF-8)
@@ -88,19 +107,23 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (33 vars, 33 obs)
 
 Network data: 2 waves, 33 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1               45      0.0426         1.364
-2               36      0.0341         1.091
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          22       14        23    0.373        37
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |       45      0.0426         1.364
+           2 |       36      0.0341         1.091
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      22        14         23     0.373        37
+----------------------------------------------------------------------
 
 School 3
 ----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: school3_w1 -> school3_w2
-Actors: 33                             Estimated rate:  3.099 (0.805)
+SAOM (Method of Moments, conditional), waves: school3_w1 school3_w2
+Actors: 33                             Periods: 1
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 school3_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -109,6 +132,12 @@ school3_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |   2.230471   .7497075     2.98   0.003     .7610711    3.699871
    transtrip |   1.067139   .2882565     3.70   0.000     .5021666    1.632111
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+        rate |    3.0987 
+          se |    0.8047 
 Overall maximum convergence ratio: 0.114 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (encoding automatically selected: UTF-8)
@@ -117,21 +146,24 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 (36 vars, 36 obs)
 
 Network data: 2 waves, 36 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1               59      0.0468         1.639
-2               88      0.0698         2.444
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          32       56        27    0.278        83
-  (Jaccard below 0.3: few ties stay, so the data say little about the change process; see the SAOM l
-> iterature)
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |       59      0.0468         1.639
+           2 |       88      0.0698         2.444
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      32        56         27     0.278        83
+----------------------------------------------------------------------
+Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about change.
 
 School 4
 ----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: school4_w1 -> school4_w2
-Actors: 36                             Estimated rate:  6.190 (1.272)
+SAOM (Method of Moments, conditional), waves: school4_w1 school4_w2
+Actors: 36                             Periods: 1
 ----------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 school4_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
@@ -140,6 +172,12 @@ school4_w1~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
  reciprocity |   1.540736   .2872241     5.36   0.000     .9777869    2.103685
    transtrip |   .4943343   .1090715     4.53   0.000     .2805581    .7081106
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1 
+-------------+-----------
+        rate |    6.1900 
+          se |    1.2724 
 Overall maximum convergence ratio: 0.065 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -188,19 +226,18 @@ Correlation of estimates and standard errors (Spearman, t approximation for p): 
 . matrix list r(theta), format(%7.3f)
 
 r(theta)[4,3]
-      outdegree  reciprocity    transtrip
-y1       -2.269        1.561        0.468
-y1       -2.328        2.589        1.133
-y1       -3.340        2.230        1.067
-y1       -2.006        1.541        0.494
+           outdegree  reciprocity    transtrip
+school1       -2.269        1.561        0.468
+school2       -2.328        2.589        1.133
+school3       -3.340        2.230        1.067
+school4       -2.006        1.541        0.494
 
 . matrix list r(se), format(%7.3f)
 
 r(se)[4,3]
-       c1     c2     c3
-r1  0.116  0.254  0.061
-r1  0.206  0.399  0.306
-r1  0.451  0.750  0.288
-r1  0.137  0.287  0.109
-
-. 
+           outdegree  reciprocity    transtrip
+school1        0.116        0.254        0.061
+school2        0.206        0.399        0.306
+school3        0.451        0.750        0.288
+school4        0.137        0.287        0.109
+.

@@ -94,7 +94,8 @@ program nwclustering
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
 		err 99
 	}
-	capture drop `generate'
+	capture confirm new variable `generate'
+	if _rc capture drop `generate'
 	qui gen `generate' = .
 
 	_nwsyntax `netname'
@@ -320,7 +321,8 @@ program _nwclustering_two
 		matrix drop __nw2c_ra
 	}
 	if "`generate'" != "" {
-		capture drop `generate'
+		capture confirm new variable `generate'
+		if _rc capture drop `generate'
 		qui gen `generate' = .
 		mata: _nw2c_run(`netobj', `nodes', `level', "`measure'", "`generate'")
 		local C_avg = r(C_avg)

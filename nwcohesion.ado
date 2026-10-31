@@ -55,7 +55,8 @@ program nwcohesion, rclass
 		mata: st_matrix("nw_cohesionlevels", `__nw_hier'[.,1])
 		mata: `__nw_cohnum' = colmax(`__nw_hier'[.,2..cols(`__nw_hier')] :* `__nw_hier'[.,1])'
 
-		capture drop `netgenerate'`i'
+		capture confirm new variable `netgenerate'`i'
+		if _rc capture drop `netgenerate'`i'
 		gen `netgenerate'`i' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_cohnum')
 		mata: mata drop `__nw_hier' `__nw_cohnum'

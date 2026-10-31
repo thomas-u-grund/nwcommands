@@ -17,16 +17,20 @@
 . nwsaom describe, waves(u1 u2 u3)
 
 Network data: 3 waves, 50 actors, undirected
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1               74      0.0604         2.960
-2               81      0.0661         3.240
-3               77      0.0629         3.080
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2          43       38        31    0.384        69
-2->3          47       30        34    0.423        64
-----------------------------------------------------------
+-----------------------------------------------------
+        wave |     ties     density   avg. degree
+-------------+---------------------------------------
+           1 |       74      0.0604         2.960
+           2 |       81      0.0661         3.240
+           3 |       77      0.0629         3.080
+-----------------------------------------------------
+
+----------------------------------------------------------------------
+      period |    kept   created  dissolved   Jaccard   Hamming
+-------------+--------------------------------------------------------
+        1->2 |      43        38         31     0.384        69
+        2->3 |      47        30         34     0.423        64
+----------------------------------------------------------------------
 
 . 
 . * No reciprocity effect: every tie is reciprocated by definition.
@@ -46,7 +50,7 @@ samex_smoke1 |   .2002612    .188039     1.06   0.287    -.1682885     .568811
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    2.4826     2.0093 
           se |    0.4241     0.3160 
 Overall maximum convergence ratio: 0.094 (criterion: below 0.25; met)
@@ -69,7 +73,7 @@ samex_smoke1 |   .1235281     .12458     0.99   0.321    -.1206443    .3677004
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    5.0775     4.0687 
           se |    0.8474     0.6750 
 Overall maximum convergence ratio: 0.077 (criterion: below 0.25; met)
@@ -90,7 +94,7 @@ samex_smoke1 |    .153545   .1718964     0.89   0.372    -.1833656    .4904557
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    0.4712     0.3753 
           se |    0.0856     0.0660 
 Overall maximum convergence ratio: 0.030 (criterion: below 0.25; met)
@@ -102,7 +106,6 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 reciprocity is not meaningful under symmetric - every tie is reciprocated by construction once both 
 > directions are forced equal, so this effect's own statistic is a constant (RSiena itself does not 
 > offer recip for a non-directed dependent variable).
-invalid syntax
 
 . display "return code: " _rc
 return code: 198
@@ -226,7 +229,7 @@ indegpopularity |   .5911646   .0942954     6.27   0.000      .406349    .775980
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |   11.5125     9.9544 
           se |    2.4674     2.1855 
 Overall maximum convergence ratio: 0.082 (criterion: below 0.25; met)
@@ -249,7 +252,7 @@ indegpopularity |   .5775975   .0940682     6.14   0.000     .3932272    .761967
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |   11.4227    10.0482 
           se |    2.6326     2.1795 
 Overall maximum convergence ratio: 0.095 (criterion: below 0.25; met)
@@ -273,10 +276,9 @@ indegpopularity |  -.1428934   .2334045    -0.61   0.540    -.6003578    .314570
 Rate parameters (estimated, one per inter-wave period):
 
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |   13.0694    11.1071 
           se |    2.3102     2.0313 
 Overall maximum convergence ratio: 0.143 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
-
-. 
+.

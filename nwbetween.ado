@@ -76,7 +76,8 @@ program nwbetween
 			noi di "{err}Variable {bf:`netgenerate'} already exists; use {bf:replace} or {bf:generate()}"
 			err 99
 		}
-		capture drop `netgenerate'
+		capture confirm new variable `netgenerate'
+		if _rc capture drop `netgenerate'
 		generate `netgenerate' = .
 
 		// Per Stata's own [P] syntax convention for a "no"-prefixed

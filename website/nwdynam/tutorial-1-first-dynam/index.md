@@ -16,7 +16,7 @@ caller, the person called and the time (in seconds) of the call. The two data fi
 the `nwdynam` package (see [Install](../install/)); the commands were run with `nwdynam` 1.0.1 and the core
 3.0.0. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 For a short, general introduction to event models, see
-[Intro to Longitudinal Network Models](../../tutorials/10-intro-longitudinal-models/).
+[Intro to Longitudinal Network Models](../../tutorials/19-intro-longitudinal-models/).
 
 ## What a DyNAM does, in four sentences
 

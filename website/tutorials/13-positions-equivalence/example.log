@@ -1,0 +1,120 @@
+. do example.do
+
+. * nwcommands tutorial 13: positions and structural equivalence
+. * Requires the core nwcommands.
+. set graphics off
+
+. nwwebuse sampson, nwclear
+
+. nwsummarize samplike
+--------------------------------------------------
+   Network name:  samplike
+   Network id:  4
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Arcs: 88
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .288
+   Temporal: false
+
+. 
+. * 1. How different are two nodes' tie profiles?
+. nwdissimilar samplike, type(euclidean) name(dist)
+
+. nwdissimilar samplike, type(jaccard) name(jdist)
+
+. nwsimilar samplike, name(sim)
+
+. nwsummarize sim
+--------------------------------------------------
+   Network name:  sim
+   Network id:  7
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Arcs: 304
+   Minimum value:  -.392
+   Maximum value:  .945
+   Density:  .993
+   Temporal: false
+
+. 
+. * 2. Hierarchical clustering of the nodes
+. nwhierarchy samplike, type(jaccard) linkage(averagelinkage) groups(3) equivgen(equiv)
+
+. tabulate equiv faction
+
+           |             faction
+     equiv |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         0          0          7 |         7 
+         2 |         0          4          0 |         4 
+         3 |         7          0          0 |         7 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. nwdendrogram _nwhierarchy_role, label(_nwnode)
+
+. graph export "dendrogram_sampson.svg", replace
+(file dendrogram_sampson.svg not found)
+file dendrogram_sampson.svg saved as SVG format
+
+. 
+. * 3. Blocks with CONCOR
+. nwconcor samplike, generate(block) splits(2)
+----------------------------------------
+  Network name: samplike
+  Splits: 2   Blocks found: 4
+
+      block |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          7       38.89       38.89
+          2 |          3       16.67       55.56
+          3 |          4       22.22       77.78
+          4 |          4       22.22      100.00
+------------+-----------------------------------
+      Total |         18      100.00
+ 
+
+. tabulate block faction
+
+           |             faction
+     block |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         0          0          7 |         7 
+         2 |         0          3          0 |         3 
+         3 |         3          1          0 |         4 
+         4 |         4          0          0 |         4 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. 
+. * 4. Spectral partition
+. nwspectral samplike, generate(fiedler) bipartition
+----------------------------------------
+  Network name: samplike
+  Connected components: 1
+  Algebraic connectivity: 3.403
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     fiedler |         18    2.56e-09    .2425356  -.4544007   .3320163
+ 
+
+. tabulate fiedlersign faction
+
+fiedlersig |             faction
+         n |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+        -1 |         0          4          6 |        10 
+         1 |         7          0          1 |         8 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. 

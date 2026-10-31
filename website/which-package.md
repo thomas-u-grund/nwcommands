@@ -43,4 +43,4 @@ package you need, see the Install page in each package's section.
 ## Longitudinal models side by side
 
 For a first comparison of nwsaom, nwdynam and nwrem on the same kind of data, see
-[Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+[Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/).

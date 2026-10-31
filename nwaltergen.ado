@@ -135,7 +135,8 @@ program nwaltergen
 		mata: `__nw_alterstat' = `netobj'->calculate_alterstat_hop(`__nw_srcvar', "`stat'", `hop')
 	}
 
-	capture drop `newvarname'
+	capture confirm new variable `newvarname'
+	if _rc capture drop `newvarname'
 	qui gen `newvarname' = .
 	mata: st_store((1::`nodes'), "`newvarname'", `__nw_alterstat')
 	mata: mata drop `__nw_srcvar' `__nw_alterstat'

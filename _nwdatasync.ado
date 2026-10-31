@@ -111,7 +111,8 @@ program _nwdatasync
 				mata: st_sstore(., "`nw_nodename'", `netobj'->get_nodenames()')
 			}
 			if "`generate'" != "" {
-				qui capture drop `generate'
+				qui capture confirm new variable `generate'
+				qui if _rc capture drop `generate'
 				qui gen `generate' = 1
 			}
 			else {
@@ -205,13 +206,17 @@ program _nwdatasync
 	}
 
 	tempvar current
-	qui capture drop `generate'
+	if "`generate'" != "" {
+		qui capture confirm new variable `generate'
+		qui if _rc capture drop `generate'
+	}
 	qui merge n:1 (`nw_nodename') using `f', generate(`current')
 
 	qui replace `current' = (`current' != 1)
 	gsort -`current' +`nodeindex'
 	qui if "`generate'" != "" {
-		capture drop `generate'
+		capture confirm new variable `generate'
+		if _rc capture drop `generate'
 		gen `generate' = (`current'==1)
 	}
 	else {

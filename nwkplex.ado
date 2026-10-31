@@ -97,7 +97,8 @@ program nwkplex, rclass
 			mata: st_numscalar("nw_nnwkplex", nwg_enum_count)
 			mata: st_numscalar("nw_maxnwkplex", nwg_enum_max)
 			mata: st_matrix("nw_tabnwkplex", nwg_enum_hist)
-			capture drop `netgenerate'`i'
+			capture confirm new variable `netgenerate'`i'
+			if _rc capture drop `netgenerate'`i'
 			gen `netgenerate'`i' = .
 			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
 			mata: mata drop `__nw_kplex'
@@ -124,7 +125,8 @@ program nwkplex, rclass
 		mata: st_matrix("nw_kplexmatrix", (rows(`__nw_kplex') > 0 ? `__nw_kplex' : J(1, `nodes', 0)))
 		mata: `__nw_kplexnum' = (rows(`__nw_kplex') > 0 ? editvalue(colmax(`__nw_kplex' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
-		capture drop `netgenerate'`i'
+		capture confirm new variable `netgenerate'`i'
+		if _rc capture drop `netgenerate'`i'
 		gen `netgenerate'`i' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_kplexnum')
 		mata: mata drop `__nw_kplex' `__nw_sizes' `__nw_kplexnum'

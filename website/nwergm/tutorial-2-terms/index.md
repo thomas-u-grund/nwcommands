@@ -11,7 +11,7 @@ description: "How to choose and read the terms of an ERGM with nwergm: structura
 term: covariate terms (`nodematch`, `nodefactor`, `nodemix`, `nodeicov`), structural terms (`mutual`)
 and triad terms (`gwesp`, with its decay parameter).
 
-* This is Tutorial 2. It builds on [Tutorial 1: A first ERGM](../../tutorials/09-intro-ergm/),
+* This is Tutorial 2. It builds on [Tutorial 1: A first ERGM](/nwergm/tutorial-1-first-ergm/),
   which fits a first model and explains `edges`, MPLE and MCMLE.
 * You need the core `nwcommands` and the package `nwergm` (see [Install](../install/)).
 

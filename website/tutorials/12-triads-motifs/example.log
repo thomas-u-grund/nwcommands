@@ -1,0 +1,115 @@
+. do example.do
+
+. * nwcommands tutorial 12: dyads, triads and motifs
+. * Requires the core nwcommands.
+. nwwebuse sampson, nwclear
+
+. nwsummarize samplike
+--------------------------------------------------
+   Network name:  samplike
+   Network id:  4
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Arcs: 88
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .288
+   Temporal: false
+
+. 
+. * 1. The dyad census
+. nwdyads samplike
+(note: tie values are ignored; this measure is binary)
+
+    Dyad census:  samplike
+
+    Mutual |      Asym |      Null
+-----------+-----------+-----------
+        28 |        32 |        93
+ 
+    Reciprocity: .467
+
+. 
+. * 2. The triad census
+. nwtriads samplike
+(note: tie values are ignored; this measure is binary)
+----------------------------------------
+  Network name: samplike
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .44
+    Global clustering coefficient: .407
+ 
+
+    Triad census:  samplike
+
+       003 |       012 |      021D |      021U |
+-----------+-----------+-----------+-----------+
+       167 |       205 |        12 |        24 |
+
+      021C |      030T |      030C |       102 |
+-----------+-----------+-----------+-----------+
+        24 |         5 |         0 |       190 |
+
+      120D |      120U |      120C |      111D |
+-----------+-----------+-----------+-----------+
+        15 |         6 |         5 |        68 |
+
+      111U |       201 |       210 |       300 |
+-----------+-----------+-----------+-----------+
+        34 |        35 |        18 |         8 |
+
+     Transitivity: .407
+
+. 
+. * 3. Clustering and transitivity
+. nwclustering samplike, generate(clu)
+----------------------------------------
+  Network name: samplike
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .44
+    Global clustering coefficient: .407
+ 
+
+. summarize clu
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         clu |         18    .4400548    .2156577   .1666667          1
+
+. 
+. * 4. Motifs
+. nwmotifs samplike
+(note: tie values are ignored; this measure is binary)
+Note: samplike is directed - the 4-node motif census below
+treats every tie as undirected (a directed 4-node census has 218
+distinct isomorphism classes and is not attempted here); see
+nwtriads for a genuinely directed 3-node census.
+
+    4-node motif census: samplike
+
+          path |          star |         cycle |           paw |
+---------------+---------------+---------------+---------------+
+           444 |           126 |            53 |           298 |
+
+       diamond |            k4 |      disconn. |
+---------------+---------------+---------------+
+            91 |            24 |          2024 |
+
+. 
+. * 5. Signed networks: structural balance
+. nwset, mat((0,1,1,-1\1,0,1,-1\1,1,0,1\-1,-1,1,0)) undirected labs(A,B,C,D) name(signed)
+
+. nwbalance signed
+----------------------------------------
+  Network name: signed
+----------------------------------------
+    Closed triad: 4
+    Balanced triad: 2
+    Unbalanced triad: 2
+
+. 

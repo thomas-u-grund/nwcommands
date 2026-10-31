@@ -29,7 +29,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
 - **Source:** the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as `s50` with RSiena; the networks are the same as in `glasgow` above (the tie counts agree at all three waves), which also has the sport variable. References as for `glasgow`.
 - **Load:** `nwwebuse s50`
-- **Used in:** [Tutorial 10 (longitudinal models: an overview)](../tutorials/10-intro-longitudinal-models/).
+- **Used in:** [Tutorial 19 (longitudinal models: an overview)](../tutorials/19-intro-longitudinal-models/).
 
 ### klas12b: a Dutch school class
 - **What:** 26 students (17 girls, 9 boys) in their first year of secondary school, friendship at four waves three months apart, directed. Networks `klas12b_wave1` to `klas12b_wave4`, plus `klas12b_primary` (same primary school). Attributes: delinquency (four waves), alcohol (waves 2-4), sex, age, ethnicity, religion, school advice.
@@ -67,7 +67,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 16 Renaissance Florentine families, marriage ties (`flomarriage`, undirected, 20 ties) and business ties (`flobusiness`, undirected, 15 ties). Attributes: wealth and number of priorates.
 - **Source:** Padgett, J. F. (1994), *Marriage and Elite Structure in Renaissance Florence, 1282-1500*, paper delivered to the Social Science History Association; Breiger, R. and Pattison, P. (1986), "Cumulated social roles", *Social Networks* 8, 215-256.
 - **Load:** `nwwebuse florentine`
-- **Used in:** the core tutorials [3](../tutorials/03-importing-exporting/), [6](../tutorials/06-manipulating-networks/) and [7](../tutorials/07-centrality/).
+- **Used in:** the core tutorials [3](../tutorials/03-importing-exporting/), [6](../tutorials/07-manipulating-networks/) and [7](../tutorials/08-centrality/).
 
 ### sampson: Sampson's monastery
 - **What:** 18 novice monks; ranked choices (1 to 3, valued, directed) at three times (`samplk1` to `samplk3`) and a liking ranking (`samplike`, 88 ties). Attributes: faction (Loyal, Turks, Outcasts) and "Cloisterville".
@@ -102,7 +102,7 @@ Both data sets are two-mode networks: nodes of the first mode (people, `_nwmode`
 - **Source:** Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South: A Social Anthropological Study of Caste and Class*, University of Chicago Press. The attendance matrix is the classic one that is distributed with many network programs; the names are the pseudonyms of the book.
 - **Licence and redistribution:** Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South: A Social Anthropological Study of Caste and Class*, University of Chicago Press. The attendance matrix, the pseudonymous names and the event dates are those of the 1941 publication as distributed in the CRAN package manynet and in other network software. The data have no licence statement of their own, so no licence is asserted here: they are facts (who attended which event), not covered by the GPL-3 of this package, and are redistributed with citation of the source.
 - **Load:** `nwwebuse davis`
-- **Used in:** [Tutorial 9 (two-mode networks)](../tutorials/11-two-mode-networks/), [nwsaom tutorial 9](../nwsaom/tutorial-9-undirected-twomode/); examples for `nwdegree`, `nw2project` and `nwcommunity`.
+- **Used in:** [Tutorial 15 (two-mode networks)](../tutorials/15-two-mode-networks/), [nwsaom tutorial 9](../nwsaom/tutorial-9-undirected-twomode/); examples for `nwdegree`, `nw2project` and `nwcommunity`.
 
 ### ftdirectors_se: company directors in Sweden
 - **What:** 5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes and 5,669 ties, undirected, unvalued. Network `ftdirectors_se`, mode 1 `director`, mode 2 `company`. Directors and companies carry only anonymous identifiers (`P00001`..., `C0001`...). Attributes of the directors: `gender` (1,025 women, 3,485 men, 582 unknown) and `age`; attributes of the companies: `sector`, `industry` and `employees` (number of employees). Missing values are empty (text) or missing (numbers). Most directors sit on one board (390 sit on two to seven), and the projection to the companies (759 ties) falls apart into many small groups of interlocked companies and a large number of companies with no shared director.
@@ -110,7 +110,7 @@ Both data sets are two-mode networks: nodes of the first mode (people, `_nwmode`
 - **Changes (derived data set):** this is a subset of the original data, adapted by Thomas U. Grund. Only the companies located in Sweden and all of their directors were kept. Of the original columns, the director's gender and age and the company's sector, industry and number of employees were kept; the other columns were dropped. The identifiers were renamed, the entry "NA" was turned into a missing value, age and the number of employees were made numeric, and the result was stored in the nwcommands network file format. No values were otherwise altered.
 - **Licence and redistribution:** Evtushenko, A. and Gastner, M. T. (2019), *Data set discussed in "Beyond Fortune 500: Women in a Global Network of Directors"*, Zenodo, https://doi.org/10.5281/zenodo.3553442, licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/); see also Evtushenko, A. and Gastner, M. T. (2020), "Beyond Fortune 500: Women in a Global Network of Directors", in Cherifi, H. et al. (eds.), *Complex Networks and Their Applications VIII*, Springer, 586-598. The original data were generated from the company profiles of the Financial Times web site (retrieved 17 September 2016). This file is a derived subset, adapted by Thomas U. Grund: only the companies located in Sweden and all of their directors were kept (5,092 directors, 455 companies, 5,669 ties); of the original columns only the director's gender and age and the company's sector, industry and number of employees were kept; identifiers were renamed, "NA" entries were turned into missing values, age and number of employees were made numeric, and the result was stored in the nwcommands network file format. This file stays under CC BY 4.0 (attribution required); it is not covered by the GPL-3 of the code.
 - **Load:** `nwwebuse ftdirectors_se`
-- **Used in:** [Tutorial 9 (two-mode networks)](../tutorials/11-two-mode-networks/); examples for `nwdegree`, `nw2project`, `nwcommunity` and for the homophily and assortativity commands. For plots use the projection to the companies; the director side is large.
+- **Used in:** [Tutorial 15 (two-mode networks)](../tutorials/15-two-mode-networks/); examples for `nwdegree`, `nw2project`, `nwcommunity` and for the homophily and assortativity commands. For plots use the projection to the companies; the director side is large.
 
 ## Signed networks
 

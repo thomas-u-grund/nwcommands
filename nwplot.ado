@@ -2118,8 +2118,10 @@ program nwplot, rclass
 			local generate_y = "_y_coord"
 		}
 		
-		capture drop `generate_x'
-		capture drop `generate_y'
+		capture confirm new variable `generate_x'
+		if _rc capture drop `generate_x'
+		capture confirm new variable `generate_y'
+		if _rc capture drop `generate_y'
 		if _N < `nodes' {
 			set obs `nodes'
 		}

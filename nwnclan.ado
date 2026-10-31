@@ -97,7 +97,8 @@ program nwnclan, rclass
 			mata: st_numscalar("nw_nnwnclan", nwg_enum_count)
 			mata: st_numscalar("nw_maxnwnclan", nwg_enum_max)
 			mata: st_matrix("nw_tabnwnclan", nwg_enum_hist)
-			capture drop `netgenerate'`i'
+			capture confirm new variable `netgenerate'`i'
+			if _rc capture drop `netgenerate'`i'
 			gen `netgenerate'`i' = .
 			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
 			mata: mata drop `__nw_nclan'
@@ -124,7 +125,8 @@ program nwnclan, rclass
 		mata: st_matrix("nw_nclanmatrix", (rows(`__nw_nclan') > 0 ? `__nw_nclan' : J(1, `nodes', 0)))
 		mata: `__nw_nclannum' = (rows(`__nw_nclan') > 0 ? editvalue(colmax(`__nw_nclan' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
-		capture drop `netgenerate'`i'
+		capture confirm new variable `netgenerate'`i'
+		if _rc capture drop `netgenerate'`i'
 		gen `netgenerate'`i' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_nclannum')
 		mata: mata drop `__nw_nclan' `__nw_sizes' `__nw_nclannum'

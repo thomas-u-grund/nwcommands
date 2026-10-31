@@ -77,7 +77,8 @@ program nwconcor, rclass
 		// so moving it after would leave the harmless "variable not
 		// found" 111 from this drop as the last thing to touch _rc even
 		// on a fully successful call, corrupting _rc for any caller.)
-		capture drop `netgenerate'`k'
+		capture confirm new variable `netgenerate'`k'
+		if _rc capture drop `netgenerate'`k'
 
 		// every iteration correlates the dense n x n matrix with itself (O(n^3)): 3,000 nodes take about a
 		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB

@@ -112,7 +112,8 @@ program nwneighbor
 
 	capture confirm variable `generate'
 	if (_rc != 0 | "`replace'" != "") & "`generate'" != "" {
-		capture drop `generate'
+		capture confirm new variable `generate'
+		if _rc capture drop `generate'
 		qui gen `generate' =.
 		mata: st_store((1::`nodes'), "`generate'", __nwneighbor_select')
 	}

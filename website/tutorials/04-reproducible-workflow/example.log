@@ -1,0 +1,180 @@
+. do example.do
+
+. * nwcommands tutorial 4: a reproducible workflow
+. * Requires the core nwcommands.
+. version 17
+
+. clear all
+
+. set seed 20261031
+
+. 
+. * 1. Raw data: one file of ties, one file of people (written here so the script is self-contained)
+. input str6 ego str6 alter
+
+           ego      alter
+  1. "Ann" "Bob"
+  2. "Ann" "Cy"
+  3. "Bob" "Cy"
+  4. "Cy"  "Dee"
+  5. "Dee" "Eli"
+  6. "Eli" "Fay"
+  7. "Dee" "Fay"
+  8. end
+
+. export delimited using "edges.csv", replace
+file edges.csv saved
+
+. clear
+
+. input str6 name str6 dept byte age
+
+          name       dept       age
+  1. "Ann" "sales" 31
+  2. "Bob" "sales" 45
+  3. "Cy"  "tech"  38
+  4. "Dee" "tech"  29
+  5. "Eli" "tech"  52
+  6. "Fay" "sales" 41
+  7. end
+
+. export delimited using "people.csv", replace
+file people.csv saved
+
+. 
+. * 2. Read the ties and build the network
+. clear
+
+. import delimited using "edges.csv", varnames(1) stringcols(_all) clear
+(encoding automatically selected: ISO-8859-1)
+(2 vars, 7 obs)
+
+. nwfromedge ego alter, name(friends) undirected
+
+. nwsummarize friends
+--------------------------------------------------
+   Network name:  friends
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 6
+   Selfloop: false
+   Edges: 7
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .467
+   Temporal: false
+
+. 
+. * 3. Attach the node attributes by name
+. generate name = _nwnode
+
+. preserve
+
+. import delimited using "people.csv", varnames(1) stringcols(1 2) clear
+(encoding automatically selected: ISO-8859-1)
+(3 vars, 6 obs)
+
+. tempfile people
+
+. save `people'
+file /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_66581.000002 saved as .dta format
+
+. restore
+
+. merge 1:1 name using `people', nogenerate
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                                 6  
+    -----------------------------------------
+
+. list, noobs
+
+  +-----------------------------------------+
+  | _nwnode   _nwinc~e   name    dept   age |
+  |-----------------------------------------|
+  |     Ann          1    Ann   sales    31 |
+  |     Bob          1    Bob   sales    45 |
+  |      Cy          1     Cy    tech    38 |
+  |     Dee          1    Dee    tech    29 |
+  |     Eli          1    Eli    tech    52 |
+  |-----------------------------------------|
+  |     Fay          1    Fay   sales    41 |
+  +-----------------------------------------+
+
+. 
+. * 4. Analyse and keep the results as variables
+. nwdegree friends, generate(deg) silent
+
+. nwbetween friends, generate(btw) silent
+----------------------------------------
+  Network name: friends
+----------------------------------------
+    Betweenness centrality
+
+. list name dept age deg btw, noobs
+
+  +--------------------------------+
+  | name    dept   age   deg   btw |
+  |--------------------------------|
+  |  Ann   sales    31     2     0 |
+  |  Bob   sales    45     2     0 |
+  |   Cy    tech    38     3     6 |
+  |  Dee    tech    29     3     6 |
+  |  Eli    tech    52     2     0 |
+  |--------------------------------|
+  |  Fay   sales    41     2     0 |
+  +--------------------------------+
+
+. 
+. * 5. Save everything: network and attributes in one file
+. nwsave friends_project, replace
+
+. nwclear
+
+. clear
+
+. nwuse friends_project
+
+. nwsummarize friends
+--------------------------------------------------
+   Network name:  friends
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 6
+   Selfloop: false
+   Edges: 7
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .467
+   Temporal: false
+
+. 
+. * 6. Hand the network to another program
+. nwtoedge friends
+
+. keep if friends == 1
+(14 observations deleted)
+
+. keep _ego _alter
+
+. export delimited using "friends_edges.csv", replace
+(file friends_edges.csv not found)
+file friends_edges.csv saved
+
+. type friends_edges.csv
+_ego,_alter
+Bob,Ann
+Cy,Ann
+Cy,Bob
+Dee,Cy
+Eli,Dee
+Fay,Dee
+Fay,Eli
+
+. 

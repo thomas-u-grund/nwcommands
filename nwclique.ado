@@ -83,7 +83,8 @@ program nwclique, rclass
 			mata: mata drop `__nw_cliq' `__nw_sizes'
 		}
 
-		capture drop `netgenerate'`k'
+		capture confirm new variable `netgenerate'`k'
+		if _rc capture drop `netgenerate'`k'
 		gen `netgenerate'`k' = .
 		mata: st_store((1::`nodes'), "`netgenerate'`k'", `__nw_cliqnum')
 		mata: mata drop `__nw_cliqnum'

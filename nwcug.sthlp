@@ -64,7 +64,7 @@ is the caller's responsibility, since the same command runs once per random draw
 test whether the Florentine marriage network's component count is unusual for its size and density:
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcug flomarriage, stat(nwcomponents ##net##, replace) rname(components) reps(1000) seed(12345)}
+	{cmd:. nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(1000) seed(12345)}
 
 {pstd}
 {opt condition(density|census)} chooses what property of {help netname} the random draws must
@@ -159,4 +159,4 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.12.1, 28 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.12.2, 31 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
