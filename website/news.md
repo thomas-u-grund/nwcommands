@@ -23,6 +23,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 - **`nwsaom describe`** prints Stata-style tables.
 - **`estat mems`** also works after a fit with `waves()` of two waves.
 - The tutorials and the article on the [literature page](/literature/) are updated.
+- **Nineteen core tutorials in a logical order.** New: reproducible workflow, brokerage and structural holes, triads/dyads/motifs, positions and equivalence, valued networks, networks over time; cohesion and subgroups, homophily and mixing, and testing hypotheses are also new. The existing tutorials are renumbered; the old addresses redirect. The first ERGM tutorial now sits in the [nwergm section](/nwergm/tutorial-1-first-ergm/).
 
 ## 30 October 2026: nwsaom 1.4.0
 
