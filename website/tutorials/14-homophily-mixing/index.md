@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 14: Homophily, Assortativity & Mixing"
 parent: "nwcommands (core)"
-nav_order: 15
+nav_order: 14
 description: "Do similar people connect? Assortativity of a number across ties, mixing tables and the E-I index for a category, and the correlation of two networks, on the Glasgow friendship panel."
 ---
 

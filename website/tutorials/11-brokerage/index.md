@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 11: Brokerage & Structural Holes"
 parent: "nwcommands (core)"
-nav_order: 12
+nav_order: 11
 description: "Who connects otherwise separate parts of a network? Burt's structural hole measures, bridges, Gould-Fernandez brokerage roles and Simmelian ties."
 ---
 

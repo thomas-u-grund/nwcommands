@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 4: Reproducible Workflow"
 parent: "nwcommands (core)"
-nav_order: 5
+nav_order: 4
 description: "A complete analysis in one do-file: ties and people from CSV files, a network with node attributes, results kept as variables, saving the network project, and handing the ties to another program."
 ---
 

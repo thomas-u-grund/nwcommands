@@ -1,7 +1,7 @@
 ---
 title: "Network types"
 parent: "nwcommands (core)"
-nav_order: 6
+nav_order: 25
 description: "Which network types each core command supports: binary, valued, two-mode, directed. One row per command."
 permalink: /nwcommands/network-types/
 ---

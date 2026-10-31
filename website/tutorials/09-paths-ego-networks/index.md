@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 9: Paths & Ego Networks"
 parent: "nwcommands (core)"
-nav_order: 10
+nav_order: 9
 description: "Geodesics, reachability, and ego-network extraction."
 ---
 

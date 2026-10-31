@@ -1,7 +1,7 @@
 ---
 title: "Command reference"
 parent: "nwcommands (core)"
-nav_order: 11
+nav_order: 26
 has_children: false
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 16: Valued Networks"
 parent: "nwcommands (core)"
-nav_order: 17
+nav_order: 16
 description: "Networks whose ties carry numbers: how a network becomes valued, how degree, clustering and betweenness use the values by default, the binary option, and dichotomizing at a cutoff."
 ---
 
