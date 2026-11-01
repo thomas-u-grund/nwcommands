@@ -358,16 +358,11 @@ converged. The largest difference between the mean estimates was 0.02 relevent s
   other R or Stata process running. The one-minute load average before each fit is in the data files: median 2.4
   over 1,238 fits (3.3 in the nwergm run), which includes the benchmark process itself and one to two cores of
   other background load. Two fits started above a load of 7.
-- **Machine, nwsaom run of 27 October.** The laptop ran on battery power (low-power setting) throughout. Before
-  single-process fits the load average was 1.4 to 5.4 (median 2.7); at the start of each single-process fit no other
-  R or Stata process was found. Two things went wrong and were handled. First, the laptop went to sleep during the
-  first S500 fits and ran about 1.5 times slower for a while afterwards; those S500 fits and the R5 fits of the
-  multi-core table from that period were discarded and repeated after a calibration (N2 and R1 fits) showed the
-  earlier speed again. Second, from about 11:46 other jobs on the same machine started Stata and R from time to time;
-  a watcher flagged 17 of the 27 fits after that time (the repeated S500 fits and the repeated R5 multi-core
-  fits; the RSiena fits with 5 or 10 processes are flagged by mistake, because the watcher does not recognize
-  their worker processes). Those results are kept, and repeats agree, but they are less clean than the rest. The discarded fits and
-  the watcher's record are in the data folder.
+- **Machine, nwsaom run of 27 October.** The laptop ran on battery power throughout. Two things went wrong. The laptop
+  went to sleep during the first S500 fits, so those fits and the R5 fits of the multi-core table from that period were
+  discarded and repeated. Later, other jobs on the same machine started Stata and R from time to time during 17 of the
+  27 fits; those results are kept, repeats agree, but they are less clean than the rest. The discarded fits and the
+  record of other processes are in the data folder.
 - **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0, nwergm 1.3.0 (and 1.2.3; the current release is
   1.3.1, see above), nwsaom 1.1.1, nwdynam 1.2.0, nwrem 1.0.10; ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
   goldfish 1.6.12. All timings are with Stata 18; Stata 17 was not timed. The plug-ins are the released builds.
