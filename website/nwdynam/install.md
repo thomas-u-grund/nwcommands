@@ -64,6 +64,10 @@ this website were run from a source checkout; a normal installation shows the di
 The release is stored in `r(version)`, and after a fit in `e(version)`; quote it when you report an analysis.
 `nwversion` lists the core and all installed model packages. `help nwdynam` opens the complete documentation.
 
+## Without internet access
+
+On a computer without internet access, install from zip files. Download the [nwdynam zip](https://github.com/thomas-u-grund/nwdynam/archive/refs/heads/main.zip) and the [nwcommands zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) elsewhere, unzip them, rename the unzipped `nwdynam-main` folder to `nwdynam`, and run `nwinstall, localcopy all` in the core folder followed by `nwinstall, modelpkg(nwdynam) modelsfrom("<folder that holds nwdynam>")`. The steps, with all five zip files, are on the [installation page of the core](../../nwcommands/install/#no-internet-access-or-administrator-rights).
+
 ## Updating
 
 Repeat the `net install` line with `replace`. Updating the core never overwrites `nwdynam`, and updating

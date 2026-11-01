@@ -108,6 +108,7 @@ program nwinstall, rclass
 		capture mkdir "`dest'"
 		if "`ado'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_ado.txt") from("`from'") dest("`dest'")
+			capture copy "`from'/nwinstall_buildplugin.ado" "`dest'/nwinstall_buildplugin.ado", replace
 		}
 		if "`help'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_hlp.txt") from("`from'") dest("`dest'")
@@ -847,7 +848,11 @@ program nwinstall_copymanifest
 	while r(eof) == 0 {
 		if substr(`"`line'"', 1, 2) == "f " {
 			local relfile = substr(`"`line'"', 3, .)
-			local basefile = subinstr("`relfile'", "lib/", "", .)
+			// flatten to the file name: lib/lnwcommands.mlib and lib/plugins/<os>/<plugin> end up directly in dest
+			local basefile "`relfile'"
+			while strpos("`basefile'", "/") {
+				local basefile = substr("`basefile'", strpos("`basefile'", "/") + 1, .)
+			}
 			capture copy "`from'/`relfile'" "`dest'/`basefile'", replace
 		}
 		file read `fh' line

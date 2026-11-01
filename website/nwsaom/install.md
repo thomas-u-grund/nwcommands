@@ -65,6 +65,10 @@ distribution date of the core.) The release is stored in `r(version)`, and after
 quote it when you report an analysis. `nwversion` lists the core and all installed model packages.
 `help nwsaom` opens the complete documentation.
 
+## Without internet access
+
+On a computer without internet access, install from zip files. Download the [nwsaom zip](https://github.com/thomas-u-grund/nwsaom/archive/refs/heads/main.zip) and the [nwcommands zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) elsewhere, unzip them, rename the unzipped `nwsaom-main` folder to `nwsaom`, and run `nwinstall, localcopy all` in the core folder followed by `nwinstall, modelpkg(nwsaom) modelsfrom("<folder that holds nwsaom>")`. The steps, with all five zip files, are on the [installation page of the core](../../nwcommands/install/#no-internet-access-or-administrator-rights).
+
 ## Updating
 
 Repeat `nwinstall, models` (or `nwinstall, everything`), or, for this package only, its `net install` line with `replace`:

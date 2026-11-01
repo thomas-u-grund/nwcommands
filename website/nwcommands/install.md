@@ -70,9 +70,34 @@ Linux `gcc` and `make`) and installs the plugins where `net install` puts them. 
 processor, not on the version or the flavour of Stata, so one built on your computer works in every Stata installed there. The routine was tested on macOS.
 The source of each package is also available with `net get`, for example `net get nwcommands, from(https://nwcommands.org/net/)`, together with a short build note.
 
+## No internet access or administrator rights?
+
+Download the packages as zip files on a computer that has internet access, carry them over (USB drive, shared drive, email), and install from the unzipped folders. This needs no internet connection and no administrator rights on the target computer; the files go into your personal ado folder.
+
+| Package | Zip file (current release) |
+|---|---|
+| nwcommands (core, always needed) | [nwcommands.zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) |
+| nwsaom | [nwsaom.zip](https://github.com/thomas-u-grund/nwsaom/archive/refs/heads/main.zip) |
+| nwergm | [nwergm.zip](https://github.com/thomas-u-grund/nwergm/archive/refs/heads/main.zip) |
+| nwdynam | [nwdynam.zip](https://github.com/thomas-u-grund/nwdynam/archive/refs/heads/main.zip) |
+| nwrem | [nwrem.zip](https://github.com/thomas-u-grund/nwrem/archive/refs/heads/main.zip) |
+
+A particular release has its own zip, for example `https://github.com/thomas-u-grund/nwsaom/archive/refs/tags/v1.4.2.zip`. Take the model packages you need; each needs the core. The core zip is about 10 MB.
+
+1. Unzip the core zip. GitHub names the folder `nwcommands-main`.
+2. Make a new folder for the model packages, unzip the model zips into it and rename each unzipped folder to the plain package name: `nwsaom-main` becomes `nwsaom`, `nwergm-main` becomes `nwergm`, and so on. The installer looks for these names.
+3. In Stata, go to the core folder, copy the core into your personal ado folder, then install the models from their folder:
+
+```stata
+. cd "C:\path\to\nwcommands-main"
+. nwinstall, localcopy all
+. nwinstall, models modelsfrom("C:\path\to\models")
+```
+
+Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only some packages. Add `nwinstall, gui` for the *Network Analysis* menu. The compiled plugins for Windows, macOS and Linux are in the zips, so nothing has to be built; if one does not work on your computer, see [Compiling the plugins on your own computer](#compiling-the-plugins-on-your-own-computer): `nwinstall, buildplugin()` can compile it from the same source if a C compiler is installed. `help nwinstall` has the full list of options, including `dest()` for another target folder.
+
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.13.0/`.
-The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release and installing on
-computers without internet access or administrator rights.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.13.1/`.
+The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.
