@@ -64,6 +64,10 @@ checkout; a normal installation shows the distribution date of the core.) The re
 after a fit in `e(version)`; quote it when you report an analysis. `nwversion` lists the core and all installed model
 packages. `help nwrem` opens the complete documentation.
 
+## Without internet access
+
+On a computer without internet access, install from zip files. Download the [nwrem zip](https://github.com/thomas-u-grund/nwrem/archive/refs/heads/main.zip) and the [nwcommands zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) elsewhere, unzip them, rename the unzipped `nwrem-main` folder to `nwrem`, and run `nwinstall, localcopy all` in the core folder followed by `nwinstall, modelpkg(nwrem) modelsfrom("<folder that holds nwrem>")`. The steps, with all five zip files, are on the [installation page of the core](../../nwcommands/install/#no-internet-access-or-administrator-rights).
+
 ## Updating
 
 Repeat the `net install` line with `replace`. Updating the core never overwrites `nwrem`, and updating `nwrem` never

@@ -66,6 +66,10 @@ core.) The release is stored in `r(version)`, and after a fit in `e(version)`; q
 report an analysis. `nwversion` lists the core and all installed model packages. `help nwergm` opens
 the complete documentation.
 
+## Without internet access
+
+On a computer without internet access, install from zip files. Download the [nwergm zip](https://github.com/thomas-u-grund/nwergm/archive/refs/heads/main.zip) and the [nwcommands zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) elsewhere, unzip them, rename the unzipped `nwergm-main` folder to `nwergm`, and run `nwinstall, localcopy all` in the core folder followed by `nwinstall, modelpkg(nwergm) modelsfrom("<folder that holds nwergm>")`. The steps, with all five zip files, are on the [installation page of the core](../../nwcommands/install/#no-internet-access-or-administrator-rights).
+
 ## Updating
 
 Repeat `nwinstall, models` (or `nwinstall, everything`), or, for this package only, its `net install` line with `replace`:
