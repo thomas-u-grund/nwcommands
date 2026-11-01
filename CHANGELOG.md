@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **`nwinstall, localcopy all` now copies the plugins and `nwinstall_buildplugin.ado`.** The offline install copied the Mata library and the `.ado`, help and dialog files, but silently skipped the compiled core plugins (the files under `lib/plugins/<os>/` were copied to a folder that did not exist) and did not copy `nwinstall_buildplugin.ado`, so `nwinstall, buildplugin()` was missing on a computer installed this way. Test `test_localcopy.do`.
+
 ## [3.13.0] - 2026-10-31
 
 The native plugins can be compiled on the user's own computer.

@@ -164,7 +164,26 @@ mechanism.
 
 ## No internet access or admin rights?
 
-`nwinstall, localcopy` installs by copying files directly from an nwcommands folder you already
-have (zip, USB drive, shared network drive) into your own PERSONAL ado directory — no download,
-no admin rights needed. See the "Computers without internet access or admin rights" section of
-`help nwinstall` for the full option reference.
+Download the packages as zip files on a computer that has internet access, carry them over (USB drive, shared drive, email), and install from the unzipped folders. This needs no internet connection and no administrator rights on the target computer; the files go into your personal ado folder.
+
+| Package | Zip file (current release) |
+|---|---|
+| nwcommands (core, always needed) | [nwcommands.zip](https://github.com/thomas-u-grund/nwcommands/archive/refs/heads/main.zip) |
+| nwsaom | [nwsaom.zip](https://github.com/thomas-u-grund/nwsaom/archive/refs/heads/main.zip) |
+| nwergm | [nwergm.zip](https://github.com/thomas-u-grund/nwergm/archive/refs/heads/main.zip) |
+| nwdynam | [nwdynam.zip](https://github.com/thomas-u-grund/nwdynam/archive/refs/heads/main.zip) |
+| nwrem | [nwrem.zip](https://github.com/thomas-u-grund/nwrem/archive/refs/heads/main.zip) |
+
+A particular release has its own zip, for example `https://github.com/thomas-u-grund/nwsaom/archive/refs/tags/v1.4.2.zip`. Take the model packages you need; each needs the core. The core zip is about 10 MB.
+
+1. Unzip the core zip. GitHub names the folder `nwcommands-main`.
+2. Make a new folder for the model packages, unzip the model zips into it and rename each unzipped folder to the plain package name: `nwsaom-main` becomes `nwsaom`, `nwergm-main` becomes `nwergm`, and so on. The installer looks for these names.
+3. In Stata, go to the core folder, copy the core into your personal ado folder, then install the models from their folder:
+
+```stata
+. cd "C:\path\to\nwcommands-main"
+. nwinstall, localcopy all
+. nwinstall, models modelsfrom("C:\path\to\models")
+```
+
+Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only some packages. Add `nwinstall, gui` for the *Network Analysis* menu. The compiled plugins for Windows, macOS and Linux are in the zips, so nothing has to be built; if one does not work on your computer, see the section above, *If a plugin does not work on your computer*, and `nwinstall, buildplugin()` can compile it from the same source if a C compiler is installed. `help nwinstall` has the full list of options, including `dest()` for another target folder.
