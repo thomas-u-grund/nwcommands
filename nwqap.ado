@@ -333,7 +333,8 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local outer = `upper' + `lower'
 		count
 		local total = r(N)
-		local p = `outer' / `total'
+		// plus-one (Monte Carlo) correction: the observed value counts as one more draw of the null
+		local p = (`outer' + 1) / (`total' + 1)
 		if "`novariation'" == "true" {
 			local p = "."
 		}
@@ -683,7 +684,7 @@ real rowvector _nwqap_dsp_pvalue(real matrix datalong, real scalar nodes,
 	upper_mark = mean_null + diff
 	lower_mark = mean_null - diff
 	outer = sum(nulldist :> upper_mark) + sum(nulldist :< lower_mark)
-	p = outer / permutations
+	p = (outer + 1) / (permutations + 1)
 
 	return((p, var_null))
 }

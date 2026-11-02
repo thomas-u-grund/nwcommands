@@ -130,8 +130,8 @@ Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: dep
 	  {bf:r(reps)}		number of random draws
 	  {bf:r(mean_null)}	mean of the statistic across random draws
 	  {bf:r(sd_null)}	standard deviation of the statistic across random draws
-	  {bf:r(p_greater)}	proportion of random draws >= observed (upper-tail p-value)
-	  {bf:r(p_less)}	proportion of random draws <= observed (lower-tail p-value)
+	  {bf:r(p_greater)}	(1 + number of random draws >= observed)/(draws + 1) (upper-tail p-value, never 0)
+	  {bf:r(p_less)}	(1 + number of random draws <= observed)/(draws + 1) (lower-tail p-value, never 0)
 	  {bf:r(p)}		two-sided p-value (2 * min(p_greater, p_less), capped at 1)
 
 {title:References}

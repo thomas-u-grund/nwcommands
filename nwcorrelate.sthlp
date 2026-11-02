@@ -197,7 +197,7 @@ This correlates two networks with each other:
 	{txt}  Network2 name: {res}flobusiness
 	{hline 40}
 	{txt}    Correlation: {res}.372{txt}
-	{txt}    P-value: 0{txt}
+	{txt}    P-value: .002{txt}
 	
 {pstd}
 In this case, there is a moderate positive correlation between the two networks, i.e. ties in the business network are
@@ -282,7 +282,7 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 
 	Scalars:
 	  {bf:r(corr)}		correlation coefficient
-	  {bf:r(pvalue)}	p-value of correlation coefficient
+	  {bf:r(pvalue)}	two-sided Monte Carlo p-value of the correlation, 2(1 + k)/(R + 1) with k the number of the R permutations in the smaller tail (never 0; at most 1)
 	  {bf:r(ub)}		upper bound, 95% confidence interval
 	  {bf:r(lb)}		lower bound, 95% confidence interval
 
