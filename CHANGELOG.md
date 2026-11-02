@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **`nwplot, edgecolor()` on an undirected network colored only one direction of a directed colors network.** `nwpath, generate()` stores a path as a directed network (i to j in the direction of the walk). Used as `edgecolor(sp_1)` on an undirected network, a tie whose stored direction was the other one stayed gray: the Medici-Peruzzi path of the Florentine marriage network (three ties) showed two highlighted ties, in the picture and on the interactive page. A tie of an undirected network is now colored if either direction of the colors network is set. New test `cscripts/test_nwplot_pathcolor.do`.
+
 ## [3.13.1] - 2026-11-01
 
 Patch release: the offline install.
