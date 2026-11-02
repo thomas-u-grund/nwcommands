@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 ## [Unreleased]
 
 ### Changed
+- **`nwmixing` reports a Monte Carlo p-value that is never 0.** The permutation p-value is now 2(1 + k)/(R + 1), with k the number of the R permutations in the smaller tail, so that the observed value counts as one more draw. With 100 permutations the smallest p-value is 0.020, where the old formula printed 0. `r(EI_pvalue)` has the same meaning otherwise (two-sided).
 - **`db nwplot` dialog is wider.** The dialog has six tabs, and their titles were cut off at the old width (460 pixels); it now uses the standard wide size (600 pixels). No change to any command or option.
 
 ## [3.13.2] - 2026-11-02

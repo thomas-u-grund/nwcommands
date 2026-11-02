@@ -166,7 +166,9 @@ program nwmixing
 		// permutation p-value (twice the smaller tail, capped at 1),
 		// which needs no assumption about which side of the null the
 		// observed value should fall on.
-		mata: `pvalue' = 2 * min((sum(`EI_qap' :>= `EI_index'), sum(`EI_qap' :<= `EI_index'))) / `permutations'
+		// plus-one (Monte Carlo) correction: the observed value counts as one more draw of the null, so the p-value
+		// can never be exactly 0; the smallest possible value is 2/(permutations+1)
+		mata: `pvalue' = 2 * (1 + min((sum(`EI_qap' :>= `EI_index'), sum(`EI_qap' :<= `EI_index')))) / (`permutations' + 1)
 		mata: `pvalue' = min((`pvalue', 1))
 		
 		drop _all

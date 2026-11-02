@@ -84,7 +84,7 @@ not checked. Two-mode: same as for the bipartite graph read as a one-mode networ
 
 	Scalars
 	  {bf:r(EI_index)}		the observed E-I index
-	  {bf:r(EI_pvalue)}		two-sided QAP permutation p-value (only when {opt permutations()} > 1)
+	  {bf:r(EI_pvalue)}		two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0 (only when {opt permutations()} > 1)
 
 	Macros
 	  {bf:r(netname)}		the network name
