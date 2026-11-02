@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Changed
+- **`db nwplot` dialog is wider.** The dialog has six tabs, and their titles were cut off at the old width (460 pixels); it now uses the standard wide size (600 pixels). No change to any command or option.
+
 ## [3.13.2] - 2026-11-02
 
 Patch release: path highlighting.
