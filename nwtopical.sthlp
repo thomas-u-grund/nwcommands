@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.13.1  01nov2026}{...}
+{* *! version 3.13.2  2nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} 
 {hline 2} Topical list of network commands
@@ -308,4 +308,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.13.1, 1 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.13.2, 2 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

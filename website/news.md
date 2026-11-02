@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 2 November 2026: nwcommands 3.13.2
+
+**nwcommands 3.13.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.2)). Fix for path highlighting: `nwplot, edgecolor()` on an undirected network colored only one direction of a directed colors network, so the path stored by `nwpath, generate()` showed two of its three ties (in the picture and on the interactive page). Every tie of the path is now colored.
+
 ## 1 November 2026: nwcommands 3.13.1
 
 **nwcommands 3.13.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.1)). Fix for the offline install: `nwinstall, localcopy all` now copies the compiled plugins and the `nwinstall, buildplugin()` routine, which it had skipped. The [installation page](/nwcommands/install/) now has links to the zip files of all five packages and the three commands for installing from them on a computer without internet access.

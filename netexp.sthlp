@@ -86,4 +86,4 @@ This evaluates whatever is in {it:netexp} and generates a new mata matrix {it:ma
 result of the network expression.
 
 {hline}
-{pstd}{it:nwcommands version 3.13.1, 1 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.13.2, 2 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
