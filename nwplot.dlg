@@ -2,7 +2,7 @@ VERSION 10
 
 
 SYNCHRONOUS_ONLY
-INCLUDE _std_mlarge
+INCLUDE _std_wide
 DEFINE _dlght   300
 INCLUDE header
 

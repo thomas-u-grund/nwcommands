@@ -230,8 +230,9 @@ program nwcug, rclass
 
 	mata: st_numscalar("meannull", mean(__nwcug_nullvals))
 	mata: st_numscalar("sdnull", sqrt(variance(__nwcug_nullvals)))
-	mata: st_numscalar("pgreater", mean(__nwcug_nullvals :>= `obsval'))
-	mata: st_numscalar("pless", mean(__nwcug_nullvals :<= `obsval'))
+	// plus-one (Monte Carlo) correction: the observed value counts as one more draw of the null, so a tail p-value is never 0
+	mata: st_numscalar("pgreater", (1 + sum(__nwcug_nullvals :>= `obsval')) / (rows(__nwcug_nullvals) + 1))
+	mata: st_numscalar("pless", (1 + sum(__nwcug_nullvals :<= `obsval')) / (rows(__nwcug_nullvals) + 1))
 
 	// plot(): a histogram of the `reps' null draws with a dashed
 	// reference line at the observed statistic - the same comparison

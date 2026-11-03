@@ -200,15 +200,15 @@ unw_defs
 		qui count
 		local count_total `r(N)'
 
-		if `corr' > 0 {
-			qui count if correlation >= `corr'
-		}
-		else {
-			qui count if correlation <= `corr'	
-		}
-		local count_out `r(N)'
+		qui count if correlation >= `corr'
+		local count_ge `r(N)'
+		qui count if correlation <= `corr'
+		local count_le `r(N)'
+		local count_out = min(`count_ge', `count_le')
 		
-		mata: __nwcorrelate_pvalue = `count_out' / `count_total'
+		// plus-one (Monte Carlo) correction: the observed correlation counts as one more draw of the null;
+		// two-sided, as the other permutation tests: twice the smaller tail, at most 1
+		mata: __nwcorrelate_pvalue = min((1, 2 * (`count_out' + 1) / (`count_total' + 1)))
 		
 		_pctile correlation, percentiles(2.5 97.5)
 		mata: __nwcorrelate_lb = `r(r1)'
