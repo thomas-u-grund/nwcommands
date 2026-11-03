@@ -1,6 +1,7 @@
 f nwinstall.ado
 f nwinstall_models.ado
 f nwinstall_buildplugin.ado
+f nwinstall_buildmata.ado
 f nwversion.ado
 f nwinstall.sthlp
 f nwversion.sthlp

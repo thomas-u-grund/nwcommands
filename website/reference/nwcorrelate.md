@@ -86,7 +86,7 @@ Binary: yes. Directed: yes, via `context(incoming|outgoing|both)` for the node-c
 
 - Scalars:
 - **r(corr)** correlation coefficient
-- **r(pvalue)** p-value of correlation coefficient
+- **r(pvalue)** two-sided Monte Carlo p-value of the correlation, 2(1 + k)/(R + 1) with k the number of the R permutations in the smaller tail (never 0; at most 1)
 - **r(ub)** upper bound, 95% confidence interval
 - **r(lb)** lower bound, 95% confidence interval
 
@@ -108,4 +108,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.14.0, 3 November 2026* ([check your installed version](nwversion))

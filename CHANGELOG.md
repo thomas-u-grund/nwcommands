@@ -4,11 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.14.0] - 2026-11-03
 
-### Changed
+Minor release: Monte Carlo p-values that are never 0, and the Mata libraries can be rebuilt on the user's computer. The Mata library and the plugins are unchanged.
+
+### Results that change
 - **`nwmixing` reports a Monte Carlo p-value that is never 0.** The permutation p-value is now 2(1 + k)/(R + 1), with k the number of the R permutations in the smaller tail, so that the observed value counts as one more draw. With 100 permutations the smallest p-value is 0.020, where the old formula printed 0. `r(EI_pvalue)` has the same meaning otherwise (two-sided).
 - **The permutation and simulation tests report Monte Carlo p-values that are never 0.** `nwcug` (tail p-values (1 + k)/(R + 1); the two-sided value is twice the smaller tail, at most 1), `nwcorrelate` (now two-sided, 2(1 + k)/(R + 1); it was one-sided and could print 0) and `nwqap` (two-tailed, (k + 1)/(R + 1), also with `qapspp`) count the observed value as one more draw of the null, as `nwmixing` does. The smallest p-value of 1,000 draws is 0.001 (tail) or 0.002 (two-sided); of 500 draws, 0.002 and 0.004.
+
+### Added
+- **`nwinstall, buildmata(...)` rebuilds the Mata libraries with the Stata that is running (fallback and repair).** A library built by a newer Stata is ignored by an older one (r(3499), every Mata function "not found"); a library built by the Stata that runs always loads. `buildmata(all)` fetches the Mata source of the core and of every installed model package from the GitHub repositories (`buildfrom()` for a local copy, `release()` for a tag), compiles it, and installs the libraries where Stata finds the current ones, keeping the old file as `.prev`. Rebuilding the core always rebuilds the installed nwsaom and nwergm libraries too (they are compiled against it). The build clears the data and the Mata objects in memory and refuses to run when data is loaded (error 4). The same option works for nwsaom, nwergm, nwdynam and nwrem (`buildmata(nwsaom)`). `nwinstall, localcopy` copies the new `nwinstall_buildmata.ado`. Test: `cscripts/test_buildmata.do`.
+- The messages of `_nwlibcheck` (library missing, too new, or old) point to `nwinstall, buildmata(all)`.
+
+### Changed
 - **`db nwplot` dialog is wider.** The dialog has six tabs, and their titles were cut off at the old width (460 pixels); it now uses the standard wide size (600 pixels). No change to any command or option.
 
 ## [3.13.2] - 2026-11-02

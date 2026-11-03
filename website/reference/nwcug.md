@@ -72,8 +72,8 @@ Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends
 - **r(reps)** number of random draws
 - **r(mean_null)** mean of the statistic across random draws
 - **r(sd_null)** standard deviation of the statistic across random draws
-- **r(p_greater)** proportion of random draws >= observed (upper-tail p-value)
-- **r(p_less)** proportion of random draws <= observed (lower-tail p-value)
+- **r(p_greater)** (1 + number of random draws >= observed)/(draws + 1) (upper-tail p-value, never 0)
+- **r(p_less)** (1 + number of random draws <= observed)/(draws + 1) (lower-tail p-value, never 0)
 - **r(p)** two-sided p-value (2 * min(p_greater, p_less), capped at 1)
 
 ## References
@@ -90,4 +90,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.14.0, 3 November 2026* ([check your installed version](nwversion))

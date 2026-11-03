@@ -192,4 +192,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.13.2, 2 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.14.0, 3 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

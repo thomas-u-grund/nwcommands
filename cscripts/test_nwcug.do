@@ -23,13 +23,14 @@ assert r(obs) == 2
 assert r(reps) == 500
 assert r(mean_null) == 1
 assert r(sd_null) == 0
-assert r(p_greater) == 0
+* plus-one Monte Carlo p-values (never 0): no draw reaches 2, all 500 draws are <= 2
+assert reldif(r(p_greater), 1/501) < 1e-12
 assert r(p_less) == 1
-assert r(p) == 0
+assert reldif(r(p), 2/501) < 1e-12
 
 * reproducibility: identical seed -> identical results
 nwcug twoclique, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(500) seed(20260821)
-assert r(p_greater) == 0
+assert reldif(r(p_greater), 1/501) < 1e-12
 assert r(mean_null) == 1
 
 

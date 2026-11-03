@@ -1,4 +1,4 @@
-*! version 3.5.1  25oct2026 _nwlibcheck - clear message when the nwcommands Mata library is missing or cannot be used by this Stata
+*! version 3.6.0  03nov2026 _nwlibcheck - clear message when the nwcommands Mata library is missing or cannot be used by this Stata
 * Copyright (C) 2026 Thomas U. Grund
 * This file is part of nwcommands (GPL-3, see the file LICENSE).
 * A Mata library (.mlib) compiled by a NEWER Stata than the one running is silently ignored ("... is too new to be run by this version
@@ -31,6 +31,7 @@ program define _nwlibcheck
 		di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
 		di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
 		di as error "and then: nwinstall, all"
+		di as error "If that does not help, build the library with your own Stata: nwinstall, buildmata(all)"
 		di as error "Remove the old copy first (it is probably in your PLUS folder): ado uninstall nwcommands"
 		exit 3499
 	}
@@ -38,6 +39,7 @@ program define _nwlibcheck
 	di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
 	di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
 	di as error "and then: nwinstall, all"
+	di as error "If a newer Stata built the shipped library, build it with your own Stata: nwinstall, buildmata(all)"
 	di as error "If you have an old copy in your PLUS folder, remove it first: ado uninstall nwcommands"
 	exit 3499
 end

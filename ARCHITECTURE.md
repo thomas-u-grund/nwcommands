@@ -18,7 +18,9 @@ Technical overview for anyone reading or extending the codebase, not just using 
   fully-supported Mata fallback; a plugin's absence on a given platform is never an error, only
   a slower default. The C source ships with the packages (`net get`), and `nwinstall, buildplugin()`
   compiles the plugins of the core and of the model packages on the user's own computer when a shipped
-  binary is missing or does not work there.
+  binary is missing or does not work there. In the same way `nwinstall, buildmata()` rebuilds the Mata
+  libraries with the Stata that runs when a shipped library does not load (it fetches the `unw_*.do` source
+  and rebuilds the core first, because the libraries of nwsaom and nwergm are compiled against it).
 - **`cscripts/`** — the regression-test suite, one file per command family, run in both "dev
   mode" (against the Mata source directly) and "production mode" (against the compiled
   `.mlib`/plugins).

@@ -39,6 +39,7 @@ modelpkg(namelist)
 release(string)
 modelsfrom(string)
 buildplugin(namelist)
+buildmata(namelist)
 buildfrom(string)
 buildkeep]
 ```
@@ -66,8 +67,9 @@ buildkeep]
 | `dupcheck` | report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing |
 | `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
 | `buildplugin(namelist)` | compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; `all` for all four) and install them; macOS and Linux; used alone |
-| `buildfrom(string)` | with `buildplugin()`: a folder or URL with one subfolder per package that holds the source in `native/`; default: the GitHub repositories |
-| `buildkeep` | with `buildplugin()`: keep the build folder (it holds the build log) |
+| `buildmata(namelist)` | rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; `all` for the core and every installed package); the repair if the shipped library was built by a newer Stata (r(3499)); clears the data and the Mata objects in memory; used alone |
+| `buildfrom(string)` | with `buildplugin()` or `buildmata()`: a folder or URL with one subfolder per package that holds the source (`native/` for the plugins, the `unw_*.do` files for the Mata libraries); default: the GitHub repositories |
+| `buildkeep` | with `buildplugin()` or `buildmata()`: keep the build folder (it holds the build log) |
 | `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
 | `modelsfrom(string)` | with `models`: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs) |
 

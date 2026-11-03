@@ -38,6 +38,7 @@
 {opth release(string)}
 {opth modelsfrom(string)}
 {opth buildplugin(namelist)}
+{opth buildmata(namelist)}
 {opth buildfrom(string)}
 {opt buildkeep}]
 
@@ -68,8 +69,9 @@
 {synopt:{opt dupcheck}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
 {synopt:{opth modelpkg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
 {synopt:{opth buildplugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; {cmd:all} for all four) and install them; macOS and Linux; used alone{p_end}
-{synopt:{opth buildfrom(string)}}with {opt buildplugin()}: a folder or URL with one subfolder per package that holds the source in {cmd:native/}; default: the GitHub repositories{p_end}
-{synopt:{opt buildkeep}}with {opt buildplugin()}: keep the build folder (it holds the build log){p_end}
+{synopt:{opth buildmata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; {cmd:all} for the core and every installed package); the repair if the shipped library was built by a newer Stata; used alone{p_end}
+{synopt:{opth buildfrom(string)}}with {opt buildplugin()} or {opt buildmata()}: a folder or URL with one subfolder per package that holds the source ({cmd:native/} for the plugins, the {cmd:unw_*.do} files for the Mata libraries); default: the GitHub repositories{p_end}
+{synopt:{opt buildkeep}}with {opt buildplugin()} or {opt buildmata()}: keep the build folder (it holds the build log){p_end}
 {synopt:{opth release(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
 {synopt:{opth modelsfrom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
 {synoptline}
@@ -140,6 +142,33 @@ You need a compiler and {cmd:make}: on macOS the command line tools of Xcode (ty
 (for example the package {cmd:build-essential}). The build was tested on macOS. On Windows the command stops with a message; the
 Visual Studio command line builds the plugin from the same source, and the build note that comes with the source ({cmd:net get} <package>) gives the command.
 {opt buildfrom()} points to a local copy of the repositories instead of GitHub, and {opt release()} to a tagged release.
+
+{marker buildmata}{...}
+{title:Rebuilding the Mata libraries on this computer}
+
+{pstd}
+The Mata libraries ({cmd:lnwcommands.mlib}, {cmd:lnwsaom1.mlib}, {cmd:lnwsaom2.mlib}, {cmd:lnwergm.mlib}, {cmd:lnwdynam.mlib}, {cmd:lnwrem.mlib}) are
+built with Stata 17. A library built by an {it:older} Stata loads in every later Stata, but a library built by a {it:newer} Stata is silently ignored
+by an older one (the message is "compiled by Stata 18, is too new to be run by this version of Stata and so was ignored"), and every Mata function is
+then "not found", r(3499). If that happens, or if the shipped libraries do not load for another reason, build them with your own Stata:
+
+{phang2}{cmd:. nwinstall, buildmata(all)}{p_end}
+{phang2}{cmd:. nwinstall, buildmata(nwsaom)}{p_end}
+
+{pstd}
+The command copies the Mata source of each package from its GitHub repository, compiles it with the Stata that is running, and puts the libraries where
+Stata finds the current ones (normally the folder of the PLUS directory); an existing library is kept as a file with the extension {cmd:.prev}.
+{cmd:buildmata(all)} builds the core and every installed model package. Restart Stata afterwards.
+
+{pstd}
+Three things to know. First, the build {bf:clears the data and the Mata objects in memory}, including loaded networks; the command stops
+with error 4 if there is data in memory, so save your work first. Second, the libraries of nwsaom and nwergm are compiled against the core library and are
+only accepted by exactly that core library (error 3021 otherwise). Rebuilding the core therefore always rebuilds the installed nwsaom and nwergm
+libraries as well, in the right order, and {cmd:buildmata(nwsaom)} alone compiles against the core library that is installed. Third, a build takes a few
+minutes (the core source has more than 13,000 lines), needs the internet unless {opt buildfrom()} points to a local copy, and uses the source
+of the current release: update the packages first ({cmd:nwinstall, all}, {cmd:nwinstall, models}) and then rebuild.
+{opt buildfrom()} points to a local copy of the repositories, {opt release()} to a tagged release, and {opt dest()} puts the libraries into another folder.
+The shipped libraries are the better choice when they load: a build with your own Stata is the fallback and the repair.
 
 {title:Supported network types}
 
@@ -231,4 +260,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.13.2, 2 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.14.0, 3 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

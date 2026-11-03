@@ -12,6 +12,7 @@ on:
       - "nwinstall.ado"
       - "nwinstall_models.ado"
       - "nwinstall_buildplugin.ado"
+      - "nwinstall_buildmata.ado"
       - "native/**"
       - "nwversion.ado"
       - "nwinstall.sthlp"

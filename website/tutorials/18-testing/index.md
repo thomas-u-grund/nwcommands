@@ -36,15 +36,15 @@ goes, and the name of the `r()` result to use:
   Observed: .191
   Null mean (sd): .149 (.082)
   Reps: 500
-  p (upper tail): .316
-  p (lower tail): .696
-  p (two-sided): .632
+  p (upper tail): .317
+  p (lower tail): .697
+  p (two-sided): .635
 ----------------------------------------
 ```
 
 The Florentine marriage network has transitivity .19; random networks with its 16 nodes and 20 ties
 average .15 (standard deviation .08). The observed value is well within the range of chance (two-sided
-p = .63), so with this small network we cannot say that marriage ties close triangles more than random
+p = .64), so with this small network we cannot say that marriage ties close triangles more than random
 ties would. `seed()` makes the result reproducible.
 
 A command that needs further options gets them inside `stat()`. `nwcomponents` requires `generate()`, and
@@ -58,7 +58,7 @@ it runs once for each random network, so add `replace`:
   Observed: 2
   Null mean (sd): 1.986 (.812)
   Reps: 500
-  p (upper tail): .706
+  p (upper tail): .707
   p (lower tail): .762
   p (two-sided): 1
 ----------------------------------------
@@ -85,10 +85,10 @@ destroys its link to the other, and the correlation is recomputed `permutations(
   Network2 name: glasgow2
 ----------------------------------------
     Correlation: .473
-    P-value: 0
+    P-value: .004
 ```
 
-A p-value of 0 means that no permuted network reached .473 in 500 tries; report it as p < 1/500 = .002.
+The p-value counts the observed correlation as one more draw of the null, so it is never 0: with 500 permutations the smallest two-sided value is 2/501 = .004, and .004 here means that no permuted network reached .473. Report it as p < .004.
 
 ## What explains the ties? QAP regression
 
@@ -111,17 +111,17 @@ Multiple Regression Quadratic Assignment Procedure
 -------------------------------------------------
               glasgow2 |      Coef.    P-value
 -----------------------+-------------------------
-              glasgow1 |      3.653        0
-           same_smoke1 |       .514     .042
-           same_sport1 |       .217     .344
+              glasgow1 |      3.653     .002
+           same_smoke1 |       .514     .044
+           same_sport1 |       .217     .345
                  _cons |     -4.125
 -------------------------------------------------
 ```
 
 The model is a logit for the presence of a tie in wave 2. A friendship that existed in wave 1 raises the log-odds
 of a friendship in wave 2 by 3.65 (an odds ratio of about 39), even with the other terms held fixed. Pupils with
-the same smoking category are more likely to be friends (coefficient .51, p = .042), but the same sport category
-shows no clear effect (p = .34). The coefficients are those of an ordinary logit; only the p-values come from the permutations.
+the same smoking category are more likely to be friends (coefficient .51, p = .044), but the same sport category
+shows no clear effect (p = .35). The coefficients are those of an ordinary logit; only the p-values come from the permutations.
 
 ## Which test when?
 
