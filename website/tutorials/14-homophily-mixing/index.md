@@ -98,7 +98,7 @@ regular     |          21          62           83
 ------------+-------------------------------------
 Total       |          34          79          113
 
-   E-I Index: -.327   p-value: .348
+   E-I Index: -.327   p-value: .351
 ```
 
 Of 113 arcs, 75 (13 + 62) join pupils of the same sport category: an E-I index of -.33. That looks like
@@ -123,7 +123,7 @@ regular     |           7           5           3           15
 ------------+-------------------------------------------------
 Total       |          83          12          18          113
 
-   E-I Index: -.345   p-value: .22
+   E-I Index: -.345   p-value: .224
 ```
 
 Any other option is passed on to the underlying `tabulate`, so row percentages show where each group's ties go:

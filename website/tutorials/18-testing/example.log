@@ -28,9 +28,9 @@
   Observed: .191
   Null mean (sd): .149 (.082)
   Reps: 500
-  p (upper tail): .316
-  p (lower tail): .696
-  p (two-sided): .632
+  p (upper tail): .317
+  p (lower tail): .697
+  p (two-sided): .635
 ----------------------------------------
 
 . nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(
@@ -41,7 +41,7 @@
   Observed: 2
   Null mean (sd): 1.986 (.812)
   Reps: 500
-  p (upper tail): .706
+  p (upper tail): .707
   p (lower tail): .762
   p (two-sided): 1
 ----------------------------------------
@@ -63,7 +63,7 @@
   Network2 name: glasgow2
 ----------------------------------------
     Correlation: .473
-    P-value: 0
+    P-value: .004
 
 . 
 . * 3. Does a covariate explain ties? (QAP regression)
@@ -82,9 +82,9 @@ Multiple Regression Quadratic Assignment Procedure
 -------------------------------------------------
               glasgow2 |      Coef.    P-value
 -----------------------+-------------------------
-              glasgow1 |      3.653        0
-           same_smoke1 |       .514     .042
-           same_sport1 |       .217     .344
+              glasgow1 |      3.653     .002
+           same_smoke1 |       .514     .044
+           same_sport1 |       .217     .345
                  _cons |     -4.125
 -------------------------------------------------
 

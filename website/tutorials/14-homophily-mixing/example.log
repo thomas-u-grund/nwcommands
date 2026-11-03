@@ -68,7 +68,7 @@ regular     |          21          62           83
 ------------+-------------------------------------
 Total       |          34          79          113
 
-   E-I Index: -.327   p-value: .348
+   E-I Index: -.327   p-value: .351
 
 . nwmixing glasgow1, attribute(smoke1) permutations(500)
 
@@ -84,7 +84,7 @@ regular     |           7           5           3           15
 ------------+-------------------------------------------------
 Total       |          83          12          18          113
 
-   E-I Index: -.345   p-value: .22
+   E-I Index: -.345   p-value: .224
 
 . nwmixing glasgow1, attribute(smoke1) permutations(1) row
 

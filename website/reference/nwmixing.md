@@ -62,7 +62,7 @@ Binary: yes. Directed: yes - ego/alter mixing is directional for a directed netw
 **Scalars**
 
 - **r(EI_index)** the observed E-I index
-- **r(EI_pvalue)** two-sided QAP permutation p-value (only when `permutations()` > 1)
+- **r(EI_pvalue)** two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0 (only when `permutations()` > 1)
 
 **Macros**
 
@@ -85,4 +85,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.14.0, 3 November 2026* ([check your installed version](nwversion))
