@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 3 November 2026: nwcommands 3.14.0
+
+**nwcommands 3.14.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.14.0)). If a Mata library does not load in your Stata (for example error r(3499) because the shipped library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds the libraries of the core and of the installed model packages with your own Stata: it fetches the Mata source from GitHub, compiles it and keeps the old file as a `.prev` copy. It clears the data and the Mata objects in memory, so save first. The messages that report a missing or unusable library point to it. See [Installing nwcommands](nwcommands/install/#rebuilding-the-mata-libraries-on-your-own-computer). No command's results change.
+
 ## 2 November 2026: nwcommands 3.13.2
 
 **nwcommands 3.13.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.2)). Fix for path highlighting: `nwplot, edgecolor()` on an undirected network colored only one direction of a directed colors network, so the path stored by `nwpath, generate()` showed two of its three ties (in the picture and on the interactive page). Every tie of the path is now colored.

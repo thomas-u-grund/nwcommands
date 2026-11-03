@@ -69,4 +69,4 @@ This command is mostly used for programming with networks.
    {help _nwnodeid}, {help nodeid:nodelab}, {help nodeid}
 
 {hline}
-{pstd}{it:nwcommands version 3.13.2, 2 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.14.0, 3 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
