@@ -4,7 +4,7 @@ program nwinstall, rclass
 	local __raw = lower(`"`0'"')
 	local nogui = cond(regexm(`"`__raw'"', "(^|[ ,])nogui([ ,]|$)"), "nogui", "")
 	if "`nogui'" != "" local 0 = ustrregexra(`"`0'"', "(?i)(^|[ ,])nogui(?=[ ,]|$)", "$1")
-	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string) DUPcheck BUILDplugin(string) BUILDFrom(string) BUILDKeep]
+	syntax [, update menu(string) usermenu gui permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs EVERYthing MODELPkg(string) RELease(string) MODELSFrom(string) DUPcheck BUILDplugin(string) BUILDMata(string) BUILDFrom(string) BUILDKeep]
 	
 	// supported Stata versions: 17 and 18 (the Mata libraries are built with Stata 17); older versions are untested, not blocked
 	if c(stata_version) < 17 {
@@ -14,6 +14,13 @@ program nwinstall, rclass
 	// buildplugin(): compile the native plugins of the core and the model packages on this computer (nwinstall_buildplugin.ado)
 	if "`buildplugin'" != "" {
 		nwinstall_buildplugin, pkgs(`buildplugin') from(`buildfrom') release(`release') `=cond("`buildkeep'" != "", "keep", "")' dest(`dest')
+		return add
+		exit
+	}
+
+	// buildmata(): rebuild the Mata libraries with the Stata that is running (fallback and repair, nwinstall_buildmata.ado)
+	if "`buildmata'" != "" {
+		nwinstall_buildmata, pkgs(`buildmata') from(`"`buildfrom'"') release(`release') `=cond("`buildkeep'" != "", "keep", "")' dest(`dest')
 		return add
 		exit
 	}
@@ -109,6 +116,7 @@ program nwinstall, rclass
 		if "`ado'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_ado.txt") from("`from'") dest("`dest'")
 			capture copy "`from'/nwinstall_buildplugin.ado" "`dest'/nwinstall_buildplugin.ado", replace
+			capture copy "`from'/nwinstall_buildmata.ado" "`dest'/nwinstall_buildmata.ado", replace
 		}
 		if "`help'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_hlp.txt") from("`from'") dest("`dest'")

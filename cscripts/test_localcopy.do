@@ -6,7 +6,7 @@ local here `"`c(pwd)'"'
 local dest "`c(tmpdir)'/nwlocalcopy_`=string(runiformint(100000, 999999))'"
 mkdir "`dest'"
 nwinstall, localcopy all from("`here'") dest("`dest'")
-foreach f in nwinstall.ado nwinstall_buildplugin.ado nwinstall_models.ado nwset.ado nwset.sthlp lnwcommands.mlib nwgraph_macos.plugin nwgraph_unix.plugin nwgraph_windows.plugin nwedit_viewer_macos nwedit_viewer_unix nwedit_viewer_windows.exe {
+foreach f in nwinstall.ado nwinstall_buildplugin.ado nwinstall_buildmata.ado nwinstall_models.ado nwset.ado nwset.sthlp lnwcommands.mlib nwgraph_macos.plugin nwgraph_unix.plugin nwgraph_windows.plugin nwedit_viewer_macos nwedit_viewer_unix nwedit_viewer_windows.exe {
 	confirm file "`dest'/`f'"
 }
 capture confirm file "`dest'/plugins"

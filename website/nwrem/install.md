@@ -80,6 +80,23 @@ changes the core. `net describe nwrem` shows the installed version and distribut
 Unlike `nwdynam`, `nwrem` has no compiled plugin: it runs entirely in Stata and Mata, so there is nothing platform-specific to
 install, and `nwrem version` says "none (Mata only)".
 
+## Rebuilding the Mata libraries on your own computer
+
+The Mata libraries of the packages are built with Stata 17. A library built by an older Stata loads in every later Stata, but a library built by a *newer* Stata is
+ignored by an older one (Stata says "compiled by Stata 18, is too new to be run by this version of Stata and so was ignored", and every Mata function is then "not found",
+r(3499)). If that happens, build the libraries with your own Stata:
+
+```stata
+. nwinstall, buildmata(nwrem)
+```
+
+The command fetches the Mata source from the GitHub repositories, compiles it with the Stata that is running and installs the libraries where Stata finds the current
+ones, keeping an existing file as a `.prev` copy. `buildmata()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam`, `nwrem` or `all` (the core and every installed package).
+Three things to know: the build **clears the data and the Mata objects in memory** (it stops with error 4 if data is loaded, so save first); the libraries of nwsaom and
+nwergm are compiled against the core library, so rebuilding the core rebuilds the installed nwsaom and nwergm libraries as well; and a build takes a few minutes.
+Update the packages first (`nwinstall, all` and `nwinstall, models`), because the source of the current release is used. Restart Stata afterwards. The shipped
+libraries are the better choice when they load; a build with your own Stata is the fallback and the repair.
+
 ## Requirements
 
 - Stata 17 or later; Stata/BE is enough. Tested with Stata 17 and 18 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested). The examples on this site used Stata/BE 18.

@@ -15,7 +15,7 @@ data commands.
 
 ## Native plugins
 
-The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows, and the C source: `net get nwcommands, from(https://nwcommands.org/net/)` (or `net get <package>` for a model package) copies it, and it is in `native/` of each repository. If a shipped plugin is missing for a platform, is older than the `.ado` files or does not load, `nwinstall, buildplugin(all)` compiles the plugins on your computer (macOS and Linux; needs a C compiler and `make`).
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows, and the C source: `net get nwcommands, from(https://nwcommands.org/net/)` (or `net get <package>` for a model package) copies it, and it is in `native/` of each repository. If a shipped plugin is missing for a platform, is older than the `.ado` files or does not load, `nwinstall, buildplugin(all)` compiles the plugins on your computer (macOS and Linux; needs a C compiler and `make`). The Mata libraries are built with Stata 17; if one of them does not load in your Stata (r(3499), for example after a library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds them with your own Stata (fallback and repair; it clears the data and the Mata objects in memory).
 
 ## What's here
 
