@@ -4,11 +4,20 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.14.0] - 2026-11-03
+
+Minor release: the Mata libraries can be rebuilt on the user's computer. No change of the Mata library, the plugins or any command's results.
 
 ### Added
 - **`nwinstall, buildmata(...)` rebuilds the Mata libraries with the Stata that is running (fallback and repair).** A library built by a newer Stata is ignored by an older one (r(3499), every Mata function "not found"); a library built by the Stata that runs always loads. `buildmata(all)` fetches the Mata source of the core and of every installed model package from the GitHub repositories (`buildfrom()` for a local copy, `release()` for a tag), compiles it, and installs the libraries where Stata finds the current ones, keeping the old file as `.prev`. Rebuilding the core always rebuilds the installed nwsaom and nwergm libraries too (they are compiled against it). The build clears the data and the Mata objects in memory and refuses to run when data is loaded (error 4). The same option works for nwsaom, nwergm, nwdynam and nwrem (`buildmata(nwsaom)`). `nwinstall, localcopy` copies the new `nwinstall_buildmata.ado`. Test: `cscripts/test_buildmata.do`.
 - The messages of `_nwlibcheck` (library missing, too new, or old) point to `nwinstall, buildmata(all)`.
+
+## [3.13.2] - 2026-11-02
+
+Patch release: path highlighting.
+
+### Fixed
+- **`nwplot, edgecolor()` on an undirected network colored only one direction of a directed colors network.** `nwpath, generate()` stores a path as a directed network (i to j in the direction of the walk). Used as `edgecolor(sp_1)` on an undirected network, a tie whose stored direction was the other one stayed gray: the Medici-Peruzzi path of the Florentine marriage network (three ties) showed two highlighted ties, in the picture and on the interactive page. A tie of an undirected network is now colored if either direction of the colors network is set. New test `cscripts/test_nwplot_pathcolor.do`.
 
 ## [3.13.1] - 2026-11-01
 

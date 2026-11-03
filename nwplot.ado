@@ -844,6 +844,12 @@ program nwplot, rclass
 			}
 		}
 		mata: __nwplot_edgecolormat = __nwplot_edgecolormat :+ 1
+		// An undirected network has one tie per pair, but the network that gives the colors
+		// may be directed (nwpath, generate() stores a path as i->j only, in the direction of
+		// the walk): a tie is colored if either direction of the colors network is set.
+		if "`directed'" != "true" {
+			mata: __nwplot_edgecolormat = __nwplot_edgecolormat :+ (__nwplot_edgecolormat' :> __nwplot_edgecolormat) :* (__nwplot_edgecolormat' :- __nwplot_edgecolormat)
+		}
 		nwname `edgecolor', newdirected("`edgecolor_directed'")
 	}
 	else {
