@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.15.3] - 2026-11-04
+
+### Fixed
+- **`nwplot` no longer drops ties when edge widths vary.** Each tie was matched to its width class by an exact comparison of two decimal numbers, which failed for some values, so that those ties were not drawn at all (in the Chesapeake food web, 6 of the ties with `edgesize()` by flow, 5 on a log scale). The comparison now allows for rounding.
+
 ## [3.15.2] - 2026-11-04
 
 ### Fixed
