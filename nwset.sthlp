@@ -393,7 +393,7 @@ larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
-option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network. When not specified, the program
+option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
 automatically labels nodes according the variables that have been set.
 
 {pstd}
@@ -427,4 +427,4 @@ Options {opt time()} and {opt interval()} of a one-mode network of more than 2,0
 	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project} ({help nwproject}), {help nwattime}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.2, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

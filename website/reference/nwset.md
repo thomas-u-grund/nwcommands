@@ -53,7 +53,7 @@ nwset, nwclear
 | `replace` | Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning |
 | `overwrite` | Backward-compatible alias for `replace` |
 | `nodenames(string)` | Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of `labs()` |
-| `labs`(*lab1, lab2,...*) | Node labels |
+| `labs`(*lab1, lab2,...*) | Node labels; they must be unique (error 198 otherwise) |
 | `labsfromvar(varname)` | Use information in varname as node labels |
 | `vars(varlist)` | Save network node identifiers/labels from these existing Stata variables instead of generating new ones (the inverse of `xvars`); must have as many entries as there are nodes |
 | `biprownames(varname)` | `bipartite` only: use this variable's own values as mode-1 row names instead of the default sequential numbering |

@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 4 November 2026: nwcommands 3.15.2
+
+**nwcommands 3.15.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.2)). Two mistakes that used to pass without an error are now caught. `nwset` refuses repeated node labels (`labs(A,A,B)` was accepted and the labels were quietly replaced by `n1`, `n2`, ...), and `nwload` says when it replaces the variables of the network loaded before and stops instead of overwriting a variable of your own that has a node's name (option `overwrite` to allow it).
+
 ## 4 November 2026: nwsaom 1.5.1
 
 **nwsaom 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.1)). A model that names no variable of the data now leaves the data in memory alone. Fitting a network with other node names than the rows of the data (one class of a stacked data set, say) used to extend the data by its nodes and re-sort them.

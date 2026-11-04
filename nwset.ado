@@ -626,6 +626,25 @@ if "`overwrite'" != "" local replace "replace"
 		local notvalid 0
 		
 		if "`labs'" != "" & "`labsfromvar'" == "" {
+			// get_nodenames_from_string() replaces repeated labels by
+			// n1, n2, ... without a word; refuse them instead, and say
+			// when the number of labels does not match the nodes
+			mata: __nwset_lv = tokens(`"`labs'"', ","); __nwset_lv = select(__nwset_lv, __nwset_lv :!= ",")'
+			mata: __nwset_d = nw_set_duplabels(__nwset_lv)
+			mata: st_local("__nwset_dups", rows(__nwset_d) ? invtokens(__nwset_d') : "")
+			capture mata: mata drop __nwset_d
+			mata: st_local("__nwset_nlab", strofreal(rows(__nwset_lv))); st_local("__nwset_nnod", strofreal(rows(`__nwnew')))
+			capture mata: mata drop __nwset_lv
+			if `"`__nwset_dups'"' != "" {
+				di "{err}node labels must be unique; repeated: `__nwset_dups'"
+				capture mata: mata drop `__nwnew'
+				exit 198
+			}
+			if `__nwset_nlab' != `__nwset_nnod' & "`varlist'" == "" {
+				di "{txt}(`__nwset_nlab' labels for `__nwset_nnod' nodes; " _c
+				if `__nwset_nlab' < `__nwset_nnod' di "{txt}the remaining nodes get default names)"
+				else di "{txt}the extra labels are ignored)"
+			}
 			mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', rows(`__nwnew'),"`cDftNodepref'"))'
 		}
 		if "`labsfromvar'" != "" {
@@ -664,6 +683,19 @@ if "`overwrite'" != "" local replace "replace"
 			}
 		}
 		
+		// node labels identify nodes (nwload, nwreplace, the node data
+		// and many commands look nodes up by label), so two nodes with
+		// the same label used to give silently merged or wrong results
+		mata: st_local("__nwset_ndup", strofreal(cols(`__nwnodenames') - rows(uniqrows(vec(`__nwnodenames')))))
+		if `__nwset_ndup' > 0 {
+			mata: __nwset_d = nw_set_duplabels(vec(`__nwnodenames'))
+			mata: st_local("__nwset_dups", rows(__nwset_d) ? invtokens(__nwset_d') : "")
+			capture mata: mata drop __nwset_d
+			di "{err}node labels must be unique; repeated: `__nwset_dups'"
+			capture mata: mata drop `__nwnew' `__nwnodenames'
+			exit 198
+		}
+
 		mata: st_rclear()
 		mata: st_numscalar("r(networks)", `nws'.get_number())
 		mata: st_global("r(names)", `nws'.get_names())
@@ -777,5 +809,19 @@ real matrix check_bipartite(real matrix edge, string scalar bip){
 		if (rows(edge) != m | cols(edge) != m) edge = edge[(1::m),(1::m)]
 	}
 	return(edge)
+}
+end
+
+capture mata: mata drop nw_set_duplabels()
+mata:
+string colvector nw_set_duplabels(string colvector v)
+{
+	string colvector s
+	real colvector d
+	s = sort(v, 1)
+	if (rows(s) < 2) return(J(0, 1, ""))
+	d = (s[|2 \ rows(s)|] :== s[|1 \ rows(s)-1|])
+	if (!any(d)) return(J(0, 1, ""))
+	return(uniqrows(select(s[|2 \ rows(s)|], d)))
 }
 end

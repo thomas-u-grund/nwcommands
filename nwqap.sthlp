@@ -146,19 +146,29 @@ variable's own relationship to it simultaneously, not just the one being tested.
 the "QAP partialling" problem Krackhardt (1987) originally identified.
 
 {pstd}
-{opt qapspp} instead uses double semi-partialling (Dekker, Krackhardt & Snijders 2007, "Sensitivity
-of MRQAP Tests to Collinearity and Autocorrelation Conditions", {it:Psychometrika} 72(4)): for each
-independent variable {it:k} in turn, both the dependent network AND {it:x_k} itself are first
-residualized (via ordinary OLS) against every OTHER independent variable in the model, and the
-permutation test is then run on those two RESIDUALIZED dyad vectors instead of the raw ones. This
-isolates {it:x_k}'s own unique association with the outcome from the other regressors' influence,
-giving a p-value that is much less sensitive to collinearity among the independent networks than
-the plain permutation test - the specific failure mode Dekker, Krackhardt & Snijders' own
-simulation study documents. Applied independently to every independent-variable coefficient
-(the constant's own p-value is left as the plain single-permutation result, since double
-semi-partialling is not defined for an intercept). Semi-partialling itself is always a real OLS
-fit, regardless of which {opt type()} the main model itself used - Dekker, Krackhardt & Snijders'
-own procedure is defined this way for any regression type. The observed statistic compared with the permutation draws is the same partial OLS slope (for a logit or probit model it is therefore not the printed logit coefficient, which is on another scale; the printed coefficients are those of the model).
+{opt qapspp} instead follows the double semi-partialling (DSP) of Dekker, Krackhardt & Snijders
+(2007, "Sensitivity of MRQAP Tests to Collinearity and Autocorrelation Conditions",
+{it:Psychometrika} 72(4)). For each independent variable {it:x_k} in turn, {it:x_k} is regressed by
+OLS on all the other independent variables, and the rows and columns of the matrix of these
+residuals are permuted together, so that the permuted {it:x_k} stays unrelated to the other
+variables. {cmd:nwqap} also residualizes the dependent network on the other independent variables;
+each permutation draw is the OLS slope of the residualized dependent network on the permuted
+residuals of {it:x_k}, and the observed statistic is the same slope on the unpermuted residuals.
+By the Frisch-Waugh-Lovell theorem the observed statistic equals {it:x_k}'s coefficient in an OLS
+regression on all the independent variables, so residualizing the dependent network does not
+change it. Dekker et al. do not residualize the dependent network: they regress it on the permuted
+residuals together with the other variables. For a permuted draw the two slopes share the same
+numerator and differ only in the denominator (the permuted residuals are not exactly uncorrelated
+with the other variables), so the draws are nearly the same, those of {cmd:nwqap} being if anything
+slightly smaller in absolute value. The statistic is the partial OLS coefficient, not its
+t-statistic; Dekker et al. found that all MRQAP methods perform better with a pivotal statistic
+such as t. The p-value is much less sensitive to collinearity among the independent networks than
+the plain permutation test. It is computed for every independent-variable coefficient (the
+constant's own p-value is left as the plain single-permutation result, since double
+semi-partialling is not defined for an intercept). Semi-partialling is always an OLS fit,
+regardless of which {opt type()} the main model used, so for a logit or probit model the tested
+statistic is not the printed coefficient, which is on another scale; the printed coefficients are
+those of the model.
 
 {title:Examples}
 
@@ -263,4 +273,4 @@ message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs 
 	{help nwergm}, {help nwpermute}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.2, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
