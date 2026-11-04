@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 3 November 2026: nwsaom 1.5.0
+
+**nwsaom 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.0)). Works with nwcommands 3.6.0 and later. New option `uncentered(varlist)` keeps the raw values of single covariates (RSiena's `centered = FALSE`). `groups()` can be combined with `netbeh()`, checked against `siena07`. Joint models with many actors and a per-actor behavior covariate such as `behfrom()` now run: the 810-pupil, 15-class Dutch school data of Baerveldt, which Snijders's multi-group script uses, fit in about two minutes and agree with RSiena. `nwsaom meta` leaves out fixed effects. The plugin is rebuilt (build 153); update it with `nwinstall, nwsaom` or `net install nwsaom, replace`.
+
 ## 3 November 2026: nwcommands 3.14.0
 
 **nwcommands 3.14.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.14.0)). Results that change: the permutation and simulation tests report Monte Carlo p-values that are never 0. `nwmixing`, `nwcug`, `nwcorrelate` (now two-sided) and `nwqap` count the observed value as one more draw of the null, so with 500 permutations the smallest p-value is .002 (one-sided) or .004 (two-sided) instead of 0; the tutorials on homophily and on testing show the new values. New: if a Mata library does not load in your Stata (for example error r(3499) because the shipped library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds the libraries of the core and of the installed model packages with your own Stata; it clears the data and the Mata objects in memory, so save first. See [Installing nwcommands](nwcommands/install/#rebuilding-the-mata-libraries-on-your-own-computer). The `db nwplot` dialog is wider.
