@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.15.1] - 2026-11-04
+
+### Fixed
+- **The data set `baerveldt` lists the pupils in the order of their numbers.** In 3.15.0 the nodes of every class network were named `n1`, `n10`, `n11`, ... and therefore stood in text order, so that a network and the pupil attributes merged by the pupil's number did not belong together. The nodes are now named `p01`, `p02`, ... and keep the order of the original files. If you used `baerveldt` from 3.15.0 with `baerveldt_pupils`, fetch the data again with `nwwebuse baerveldt, nwclear`.
+
 ## [3.15.0] - 2026-11-04
 
 ### Added
