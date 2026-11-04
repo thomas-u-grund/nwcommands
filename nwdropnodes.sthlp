@@ -118,4 +118,4 @@ to the data).
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

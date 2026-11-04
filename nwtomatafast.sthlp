@@ -44,4 +44,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns 
 	{help nwtomata}, {help nwload}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

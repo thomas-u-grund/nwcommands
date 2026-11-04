@@ -117,4 +117,4 @@ distance in bipartite graphs. {it:Computational & Mathematical Organization Theo
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

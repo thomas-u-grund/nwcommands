@@ -24,6 +24,12 @@ assert `n_1_w1' == 37
 assert `n_5_w1' == 91
 assert `n_2_w1' == 33
 
+* nodes are in the order of the pupils' numbers (names p01, p02, ...), not in text order (n1, n10, n11, ...):
+* pupil 1 of class 1 names pupil 12 as a friend at wave 1, and pupil 5 names pupil 4
+nwtomata class1_w1, mat(M1)
+mata: st_numscalar("t112", M1[1, 12]); st_numscalar("t54", M1[5, 4])
+assert scalar(t112) == 1 & scalar(t54) == 1
+
 local w1 ""
 local w2 ""
 local et ""
