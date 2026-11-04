@@ -48,4 +48,23 @@ nwload flomarriage
 nwload flomarriage
 confirm variable medici
 
+* (2d) a renamed node variable does not block the next nwload (book chapter 10)
+nwuse data/florentine, nwclear
+drop _all
+nwload flomarriage
+rename bischeri my_bischeri
+nwload flobusiness
+confirm variable bischeri
+confirm variable my_bischeri
+
+* (2e) a network declared from the user's own variables can be loaded again
+clear
+set obs 3
+generate a = (_n != 1)
+generate b = (_n != 2)
+generate c = (_n != 3)
+nwset a b c, name(own) undirected
+nwload own
+confirm variable a
+
 di "PASS test_silent_mistakes"
