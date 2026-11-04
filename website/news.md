@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 4 November 2026: nwsaom 1.5.1
+
+**nwsaom 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.1)). A model that names no variable of the data now leaves the data in memory alone. Fitting a network with other node names than the rows of the data (one class of a stacked data set, say) used to extend the data by its nodes and re-sort them.
+
 ## 4 November 2026: nwcommands 3.15.1
 
 **nwcommands 3.15.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.1)). Fixes the data set `baerveldt`, whose nodes were listed in text order (`n1`, `n10`, ...) instead of the order of the pupils' numbers. The nodes are now named `p01`, `p02`, ... Fetch the data again with `nwwebuse baerveldt, nwclear` if you used 3.15.0.
