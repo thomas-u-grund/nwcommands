@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 4 November 2026: nwcommands 3.15.4
+
+**nwcommands 3.15.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.4)). Corrects the 3.15.2 change to `nwload`: after one of the loaded network's variables had been renamed, loading another network stopped with error 110. `nwload` now marks the variables it creates and replaces only those (and the variables of a network declared from your own variables), so only a variable of your own with a node's name stops it.
+
 ## 4 November 2026: nwcommands 3.15.3
 
 **nwcommands 3.15.3** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.3)). `nwplot` drew some ties not at all when edge widths varied (`edgesize()`): ties were matched to their width class by an exact comparison of decimal numbers. Plots of valued networks may now show ties that were missing before.

@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.15.4] - 2026-11-04
+
+### Fixed
+- **`nwload` (3.15.2 change) stopped where it should not.** After a node variable of the loaded network had been renamed, loading another network stopped with error 110, because the remaining variables of the network were taken for variables of the user. `nwload` now marks the variables it creates (characteristic `[nwload]`) and drops marked variables by exact name; a renamed variable keeps its new name. Only unmarked variables with a node's name stop `nwload` (option `overwrite`), unless they are all the variables of the network loaded before (a network declared from your own variables with `nwset varlist`).
+
 ## [3.15.3] - 2026-11-04
 
 ### Fixed

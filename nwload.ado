@@ -52,12 +52,15 @@ program nwload
 		
 	// drop the variables of the network loaded before (only one network
 	// is loaded at a time). Exact names only: -capture drop- alone would
-	// also delete a user's variable that a name abbreviates. The previous
-	// network counts as loaded only when all of its node variables are
-	// there; a single variable that happens to carry a node's name belongs
-	// to the user. Say so when another network's variables are replaced,
-	// which used to happen silently. (Done in Mata: the list of node
-	// variables of a large network does not fit in a macro.)
+	// also delete a user's variable that a name abbreviates. A variable
+	// counts as the network's when nwload created it (characteristic
+	// [nwload], kept when other variables were renamed) or when all of the
+	// previous network's node variables are there (a network declared
+	// from the user's own variables with nwset varlist). Any other
+	// variable with a node's name belongs to the user. Say so when another
+	// network's variables are replaced, which used to happen silently.
+	// (Done in Mata: the list of node variables of a large network does
+	// not fit in a macro.)
 	local __nwl_target "`netname'"
 	mata: st_local("__nwl_prev", `nws'.get_current_name())
 	local __nwl_dropped 0
@@ -106,6 +109,7 @@ program nwload
 		mata: `nws'.generate_current_nodesvar()
 		_nwsyntax `netname'
 		mata: st_store((1::(`netobj'->get_nodes())),`netobj'->nodesvar,(*`netobj'->get_matrix())) 
+		mata: _nwload_mark(`netobj'->nodesvar, "`netname'")
 
 		order `nw_nodename' 
 		
@@ -134,19 +138,32 @@ end
 
 capture mata: mata drop _nwload_dropall()
 capture mata: mata drop _nwload_clash()
+capture mata: mata drop _nwload_mark()
 mata:
-// drop the variables v when all of them exist (exact names); 1 if dropped
+// Variables that nwload creates carry the characteristic [nwload] (the
+// network's name), so that they can be told from variables of the user
+// that happen to have a node's name, also after some were renamed.
+// Drop the existing variables among v that carry the mark; 1 if any.
 real scalar _nwload_dropall(string rowvector v)
 {
 	real scalar i
-	if (cols(v) == 0) return(0)
+	string rowvector d
+	real scalar all
+	d = J(1, 0, "")
+	all = (cols(v) > 0)
 	for (i = 1; i <= cols(v); i++) {
-		if (_st_varindex(v[i]) == .) return(0)
+		if (_st_varindex(v[i]) == .) all = 0
 	}
-	st_dropvar(v)
+	for (i = 1; i <= cols(v); i++) {
+		if (_st_varindex(v[i]) != .) {
+			if (all | st_global(v[i] + "[nwload]") != "") d = (d, v[i])
+		}
+	}
+	if (cols(d) == 0) return(0)
+	st_dropvar(d)
 	return(1)
 }
-// number of existing variables among v (exact names) and the first one
+// number of existing variables among v without the mark, and the first one
 void _nwload_clash(string rowvector v)
 {
 	real scalar i, n
@@ -155,11 +172,20 @@ void _nwload_clash(string rowvector v)
 	first = ""
 	for (i = 1; i <= cols(v); i++) {
 		if (_st_varindex(v[i]) != .) {
-			n++
-			if (first == "") first = v[i]
+			if (st_global(v[i] + "[nwload]") == "") {
+				n++
+				if (first == "") first = v[i]
+			}
 		}
 	}
 	st_local("__nwl_nclash", strofreal(n))
 	st_local("__nwl_first", first)
+}
+void _nwload_mark(string rowvector v, string scalar name)
+{
+	real scalar i
+	for (i = 1; i <= cols(v); i++) {
+		if (_st_varindex(v[i]) != .) st_global(v[i] + "[nwload]", name)
+	}
 }
 end
