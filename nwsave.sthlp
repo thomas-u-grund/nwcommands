@@ -60,6 +60,8 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 {pstd}
 A network is stored as its list of ties, so the file of a large network is small (a two-mode network of 5,092 + 455 nodes and 5,669 ties takes 1.2 MB).
 {pstd}
+Networks of different sizes can be saved in one file and come back with their own sizes. The node attributes (the Stata variables) are one table for the whole file, one row per node, so they belong to the networks only if the networks have the same nodes; keep attributes of different groups in separate files.
+{pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}

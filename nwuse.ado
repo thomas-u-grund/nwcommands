@@ -110,6 +110,16 @@ program nwuse
 		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
 		if `has_provenance' local prov = _nw_provenance[`i']
 		keep if _nw_match_`n'_nw_ego == 1
+		// Networks of different sizes in one file: the tie list of a network holds its pairs with every node of the file (the other
+		// networks' nodes with a missing value), so a smaller network came back with the nodes of the largest one as isolates.
+		// The file keeps the node list of each network (_nw_modes): rows with a node outside it are dropped, and the list itself is
+		// handed to nwfromedge (isolate list), which also restores the isolates of the network. A file without _nw_modes loads as before.
+		if `has_modes' {
+			capture confirm string variable _nw_ego _nw_alter
+			if _rc == 0 {
+				_nwuse_nodelist
+			}
+		}
 		// BUGFIX: this used to pass `n' (the raw, saved network name)
 		// straight through as an explicit name() to nwfromedge - fine
 		// as long as `n' is guaranteed not to collide, which used to be
@@ -199,4 +209,29 @@ program nwuse
 		capture order _nwnode _nwinclude
 		nwcurrent `current'
 	}
+end
+
+// Restricts the tie list in memory (_nw_ego, _nw_alter: the rows of one network) to the node list the file keeps for that network
+// (Mata string __nwmd, "name=mode,name=mode,..."), and stores the list as the isolate list that nwfromedge adds.
+capture program drop _nwuse_nodelist
+program define _nwuse_nodelist
+	tempvar ok
+	quietly gen byte `ok' = .
+	// the pairs are separated by the comma that follows "=mode"; a comma inside a name ("Smith, J.") is not a separator
+	mata: nwu_s = ustrregexra(__nwmd[1], "(=[0-9.]*),", "$1" + char(1))
+	mata: nwu_t = tokeninit(char(1), "", "", 0, 0)
+	mata: tokenset(nwu_t, nwu_s)
+	mata: nwu_p = tokengetall(nwu_t)
+	// "name=mode": the name is everything before the last "="
+	mata: nwu_nm = substr(nwu_p, 1, strlen(nwu_p) :- strpos(strreverse(nwu_p), "="))
+	mata: nwu_A = asarray_create()
+	mata: for (nwu_i = 1; nwu_i <= cols(nwu_nm); nwu_i++) asarray(nwu_A, nwu_nm[nwu_i], 1)
+	mata: nwu_e = st_sdata(., "_nw_ego")
+	mata: nwu_a = st_sdata(., "_nw_alter")
+	mata: nwu_ok = J(rows(nwu_e), 1, 0)
+	mata: for (nwu_i = 1; nwu_i <= rows(nwu_e); nwu_i++) nwu_ok[nwu_i] = asarray_contains(nwu_A, nwu_e[nwu_i]) & asarray_contains(nwu_A, nwu_a[nwu_i])
+	mata: st_store(., st_varindex(st_local("ok")), nwu_ok)
+	mata: st_global("_dta[nwtoedge_nodes]", invtokens(nwu_nm, ";"))
+	quietly keep if `ok' == 1
+	capture mata: mata drop nwu_s nwu_t nwu_p nwu_nm nwu_i nwu_A nwu_e nwu_a nwu_ok
 end

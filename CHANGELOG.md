@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **`nwuse` gave every network of a file the size of the largest one.** A file made by `nwsave` from networks of different sizes (10 and 25 nodes, say) was read back with all networks at 25 nodes: the smaller ones got the extra nodes as isolates, which changed their density and every statistic that depends on the number of nodes. Each network now comes back with its own nodes, isolates included. Files saved before the node list was stored (no `_nw_modes`) load as before. Node names that contain a comma ("Smith, J.") are handled. New test `cscripts/test_nwuse_sizes.do`.
+
 ## [3.14.0] - 2026-11-03
 
 Minor release: Monte Carlo p-values that are never 0, and the Mata libraries can be rebuilt on the user's computer. The Mata library and the plugins are unchanged.
