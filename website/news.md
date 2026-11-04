@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 4 November 2026: nwcommands 3.14.1
+
+**nwcommands 3.14.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.14.1)). Fix for `nwuse`: a file saved with `nwsave` from networks of different sizes was read back with every network at the size of the largest one, the smaller networks padded with isolates, which changed their density and every statistic that depends on the number of nodes. Each network now comes back with its own nodes. The node attributes of a file stay one table for all its networks, so keep the attributes of different groups in separate files.
+
 ## 3 November 2026: nwsaom 1.5.0
 
 **nwsaom 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.0)). Works with nwcommands 3.6.0 and later. New option `uncentered(varlist)` keeps the raw values of single covariates (RSiena's `centered = FALSE`). `groups()` can be combined with `netbeh()`, checked against `siena07`. Joint models with many actors and a per-actor behavior covariate such as `behfrom()` now run: the 810-pupil, 15-class Dutch school data of Baerveldt, which Snijders's multi-group script uses, fit in about two minutes and agree with RSiena. `nwsaom meta` leaves out fixed effects. The plugin is rebuilt (build 153); update it with `nwinstall, nwsaom` or `net install nwsaom, replace`.
