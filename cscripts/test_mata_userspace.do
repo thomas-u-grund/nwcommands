@@ -239,6 +239,7 @@ runc nwtriads       : nwtriads d
 runc nwmotifs       : nwmotifs d, silent
 runc nwsummarize    : nwsummarize g
 runc nwtranspose    : nwtranspose d, name(dt)
+runc nwstack        : nwstack d dt, name(dstack)
 runc nwmixing       : nwmixing g, attribute(grp) permutations(20)
 runc nwassortativity: nwassortativity g, silent
 runc nwcorrelate_p  : nwcorrelate g g2, permutations(5)

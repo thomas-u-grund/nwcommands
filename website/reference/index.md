@@ -58,6 +58,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwring`](nwring) --- Generate a ring-lattice network
 - [`nwsimilar`](nwsimilar) --- Generate node similarities
 - [`nwsmall`](nwsmall) --- Generate a small-world network
+- [`nwstack`](nwstack) --- Stack several networks into one block-diagonal network
 - [`nwsubset`](nwsubset) --- Subset the nodes of a network
 - [`nwtranspose`](nwtranspose) --- Transpose a network
 
@@ -92,6 +93,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwreplace`](nwreplace) --- Replace network
 - [`nwreplacemat`](nwreplacemat) --- Replace network with Stata or Mata matrix
 - [`nwrestore`](nwrestore) --- Restore network data previously preserved
+- [`nwstack`](nwstack) --- Stack several networks into one block-diagonal network
 - [`nwsubset`](nwsubset) --- Subset the nodes of a network
 - [`nwsym`](nwsym) --- Symmetrize network
 - [`nwsymmetrize`](nwsymmetrize) --- Symmetrize network (alias for [nwsym](nwsym))

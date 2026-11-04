@@ -132,6 +132,21 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
 - **Load:** `nwwebuse gahuku`
 - **Used in:** no tutorial yet; the small example for strong and weak balance.
 
+### baerveldt: Dutch school classes
+- **What:** 15 classes of 33 to 91 pupils (810 in all) of the lower middle level of Dutch secondary schools, observed twice (third and fourth year, about a year apart). The file `baerveldt` holds 45 networks, three for each class *k*: `class*k*_w1` and `class*k*_w2` (directed friendship at the two waves) and `class*k*_ethn` (whether two pupils share an ethnic background). The plain data set `baerveldt_pupils` has, for the 810 pupils, `class`, `pupil` (number within the class), `gender`, `delinq1` and `delinq2` (self-reported delinquency), `school` and `nact` (log of the class size).
+- **Source and licence:** Dutch Social Behavior study (Chris Baerveldt and colleagues): Baerveldt, C., Völker, B. and Van Rossem, R. (2008), *Canadian Journal of Criminology and Criminal Justice* 50, 559-587, [doi:10.3138/cjccj.50.5.559](https://doi.org/10.3138/cjccj.50.5.559); Houtzager and Baerveldt (1999), *Social Behavior and Personality* 27(2), 177-192; Snijders and Baerveldt (2003), *Journal of Mathematical Sociology* 27, 123-151. Distributed on the data pages of the Siena project. The data have no licence statement of their own, so no licence is asserted here: they are facts, not covered by the GPL-3 of this package, and are redistributed with citation of the sources. Converted to the nwcommands format; 15 classes kept; `nact` added.
+- **Load:**
+  ```stata
+  . nwwebuse baerveldt, nwclear
+  . local nets ""
+  . forvalues k = 1/15 {
+  .     local nets `nets' class`k'_w1
+  . }
+  . clear
+  . nwstack `nets', name(w1) group(class)
+  ```
+- **Used in:** the book *Network Analysis with Stata* (joint models of several groups, `nwsaom` with `groups()`); examples for `nwstack`.
+
 ## Event data
 
 ### socialevolution: phone calls in a dormitory

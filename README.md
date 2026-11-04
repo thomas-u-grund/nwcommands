@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.14.1** (4 November 2026)
+**Version 3.15.0** (4 November 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -47,6 +47,9 @@ The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled p
   The US airport networks `usair` (50 busiest airports) and `usair_full` (all 549 airports with a domestic
   route, 5,450 directed routes, three components) are derived from the OpenFlights airport and route
   databases (route data of about 2014) and stay under their Open Database License (ODbL 1.0), not the GPL-3.
+  The 15 Dutch school classes `baerveldt` (45 friendship and ethnicity networks) and `baerveldt_pupils` (gender,
+  delinquency, class size) are from the Dutch Social Behavior study of Baerveldt and colleagues; no licence is stated for
+  the data, and they are redistributed with citation of the sources (see `NOTICE.md`).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu (set up by `nwinstall, all` and `nwinstall, everything`, or later by `nwinstall, gui`; or `db <command>` directly) — for
