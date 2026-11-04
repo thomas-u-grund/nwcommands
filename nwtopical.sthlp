@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.14.1  04nov2026}{...}
+{* *! version 3.15.0  04nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} 
 {hline 2} Topical list of network commands
@@ -83,7 +83,6 @@
 {p2col:    {bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsmall }}}Generate a small-world network{p_end}
-{p2col:    {bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:    {bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:    {bf:{help nwtranspose }}}Transpose a network{p_end}
 {marker information}{...}
@@ -310,4 +309,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.14.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

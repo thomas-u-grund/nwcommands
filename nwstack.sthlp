@@ -64,3 +64,6 @@ Two waves of three school classes are stacked into one network per wave, with a 
 {pstd}
 Thomas U. Grund, University College Dublin, thomas.u.grund@gmail.com
 {p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -32,6 +32,7 @@
         {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "sysdescribe senate114.nwdta":describe}
         {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "sysdescribe senate93.nwdta":describe}
         {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "sysdescribe gahuku.nwdta":describe}
+        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "sysdescribe baerveldt.nwdta":describe}
 
 {hline}
 
@@ -791,4 +792,35 @@ allied and which are enemies, not covered by the GPL-3 of this package, and are 
 citation of the sources. The ties come from the version distributed with the R package signnet.
 
 {hline}
-{pstd}{it:nwcommands version 3.14.1, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+
+{marker baerveldt}
+{title:Dutch school classes (baerveldt)}
+
+{pstd}
+{bf:Networks:} {it:class1_w1}, {it:class1_w2}, {it:class1_ethn}, {it:class2_w1}, ... {it:class15_ethn} (45 networks){p_end}
+
+{pstd}
+Fifteen classes of 33 to 91 pupils (810 in all) of the lower middle level of Dutch secondary schools, observed in
+the third and fourth year, about one year apart. For the first class, {it:class1_w1} and {it:class1_w2} are the
+directed friendship networks at the two waves and {it:class1_ethn} says for each pair of pupils whether they share
+an ethnic background; the other classes follow the same pattern. Each network has the pupils of its own class as nodes; stack them with {helpb nwstack}
+for a joint model of several groups ({help nwsaom}, option {cmd:groups()}). The attributes of all 810 pupils are in the
+plain data set {cmd:baerveldt_pupils} (variables {it:class}, {it:pupil} (number within the class), {it:gender},
+{it:delinq1}, {it:delinq2} (delinquency at the two waves), {it:school} and {it:nact}, the logarithm of the class size).
+It is loaded with {cmd:nwwebuse baerveldt_pupils, nwclear} or merged by {it:class} and {it:pupil}.
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Baerveldt, C., Voelker, B. and Van Rossem, R. (2008). Revisiting selection and influence: an inquiry into the
+friendship networks of high school students and their association with delinquency. Canadian Journal of
+Criminology and Criminal Justice 50, 559-587, doi:10.3138/cjccj.50.5.559; Houtzager, B. and Baerveldt, C. (1999). Social
+Behavior and Personality 27(2), 177-192; Snijders, T. A. B. and Baerveldt, C. (2003). Journal of Mathematical
+Sociology 27, 123-151. The data are those of the Dutch Social Behavior study, distributed on the data pages of the Siena
+project. They have no licence statement of their own, so no licence is asserted here: they are facts about friendships
+and self-reported behavior, not covered by the GPL-3 of this package, and are redistributed with citation of the
+sources. The files were converted to the nwcommands format, 15 classes were kept, and {it:nact} was added.
+
+{hline}
+{pstd}{it:nwcommands version 3.15.0, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
