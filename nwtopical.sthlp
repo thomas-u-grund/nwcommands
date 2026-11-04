@@ -83,6 +83,7 @@
 {p2col:    {bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsmall }}}Generate a small-world network{p_end}
+{p2col:    {bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:    {bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:    {bf:{help nwtranspose }}}Transpose a network{p_end}
 {marker information}{...}
@@ -123,6 +124,7 @@
 {p2col:    {bf:{help nwreplace }}}Replace network{p_end}
 {p2col:    {bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
 {p2col:    {bf:{help nwrestore }}}Restore network data previously preserved{p_end}
+{p2col:    {bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:    {bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:    {bf:{help nwsym }}}Symmetrize network{p_end}
 {p2col:    {bf:{help nwsymmetrize }}}Symmetrize network (alias for {help nwsym}){p_end}

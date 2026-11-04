@@ -4,6 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.15.0] - 2026-11-04
+
+### Added
+- **`nwstack`** stacks several networks into one block-diagonal network, with an optional group variable. It builds the input of `nwsaom, groups()` from separate networks, such as school classes.
+- **The data sets `baerveldt` and `baerveldt_pupils`**, for `nwwebuse`: 15 Dutch school classes from the Dutch Social Behavior study of Baerveldt and colleagues, as 45 separate networks of 33 to 91 pupils (friendship at two waves and an ethnicity matrix per class) and a plain data set with the pupils' gender, delinquency at both waves and class size. They are the example of `nwstack` and of the joint model of `nwsaom` (groups). Source and terms: see `NOTICE.md`.
+
 ## [3.14.1] - 2026-11-04
 
 Patch release: one fix in `nwuse`. The Mata library and the plugins are unchanged.
