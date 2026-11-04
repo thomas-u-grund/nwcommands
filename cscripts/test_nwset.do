@@ -49,9 +49,8 @@ mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
 assert "`lab1'" == "a"
 
 nwclear
-nwset, mat(J(4,4,1)) labs(a,a)
-mata: st_local("lab1", __nw.nws.pdefs[1]->nodes[1])
-rcof `"assert "`lab1'" == "a""' != 0
+* repeated labels are refused (3.15.2; before, they were replaced by n1, n2, ...)
+rcof "nwset, mat(J(4,4,1)) labs(a,a)" == 198
 
 nwclear
 set obs 4

@@ -4,6 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.15.2] - 2026-11-04
+
+### Fixed
+- **`nwset` refuses repeated node labels.** `labs(A,A,B)` used to be accepted with rc = 0 and the labels were silently replaced by `n1`, `n2`, `n3` (and repeated values in `labsfromvar()` were kept, so that commands that look nodes up by label could merge nodes). It now stops with error 198 and names the repeated label. A `labs()` list with fewer or more entries than nodes is still accepted, with a note.
+- **`nwload` no longer overwrites variables silently.** Loading a second network still replaces the variables of the network loaded before (one network is loaded at a time), but a note now says so. A variable of the user's that has the name of one of the node variables stops `nwload` with error 110 unless `overwrite` is given; before, it was overwritten, and a variable abbreviated by a node name could be dropped. Previous network's variables are dropped by exact name, and only when all of them are present.
+
 ## [3.15.1] - 2026-11-04
 
 ### Fixed
