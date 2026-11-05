@@ -89,4 +89,4 @@ this page for an unrelated situation.
 {help nwcommands}, {help nwtopical}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.4, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.16.0, 5 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

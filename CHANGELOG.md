@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.16.0] - 2026-11-05
 
 ### Added
 - **`nwmovie, export(filename)` writes the movie as an MP4 or WebM video or an animated GIF**, chosen by the file's extension, without opening the interactive view, so that a do-file can produce the movie file. The native viewer renders and encodes the movie and closes again; `nwmovie` waits for the file (options `replace` and `timeout()`). Nothing beyond the package needs to be installed on Windows, macOS or Linux: the encoding is done by the web engine of the operating system.

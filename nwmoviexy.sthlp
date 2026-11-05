@@ -57,4 +57,4 @@ Binary: yes. Directed: yes. Weighted: yes (on valued networks the layouts use th
 	{help nwmovie}, {help nwplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.4, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.16.0, 5 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
