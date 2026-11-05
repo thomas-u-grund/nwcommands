@@ -9,6 +9,9 @@ __NWMOVIE_CYTOSCAPE__
 <script>
 __NWMOVIE_GIFJS__
 </script>
+<script>
+__NWMOVIE_MP4MUXER__
+</script>
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, Helvetica, Arial, sans-serif; background: #fff; }
   #toolbar { position: absolute; top: 0; left: 0; right: 0; height: 58px; background: #f4f4f6; border-bottom: 1px solid #d5d5da; display: flex; align-items: center; padding: 0 12px; gap: 10px; box-sizing: border-box; }
@@ -60,6 +63,7 @@ __NWMOVIE_GIFJS__
   <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
   <span id="speedReadout">1.0x</span>
   <button id="btnGif">Export GIF</button>
+  <button id="btnVideo">Export video</button>
   <span id="gifStatus"></span>
 </div>
 <div id="cy"></div>
@@ -70,6 +74,7 @@ __NWMOVIE_GIFJS__
 
 <script>
 const MOVIE_DATA = __NWMOVIE_DATA__;
+const AUTO_EXPORT = __NWMOVIE_AUTOEXPORT__;
 const GIF_WORKER_SRC = __NWMOVIE_GIFWORKER__;
 
 // Same native-save-bridge contract as nwedit_template.html (nwplot's own
@@ -77,11 +82,28 @@ const GIF_WORKER_SRC = __NWMOVIE_GIFWORKER__;
 // download-attribute anchor click, so nwedit_viewer.mm registers a
 // window.webkit.messageHandlers.nwedit script handler that shows a real
 // NSSavePanel instead. Reused verbatim here for GIF export.
-const hasNativeSave = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nwedit);
+// Native save bridge. A bare web view inside nwedit_viewer has no working
+// download for a blob + <a download> click, so each platform's viewer
+// registers a handler that shows a native Save dialog and writes the file:
+// macOS (WKWebView) and Linux (WebKitGTK) as window.webkit.messageHandlers
+// .nwedit, Windows (WebView2) as window.chrome.webview. They receive
+// {filename, dataBase64} (or {error} in an unattended export). In an ordinary browser tab (the `view browse`
+// fallback) neither exists and the anchor download below is used.
+const nativeSaver =
+  (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nwedit)
+    ? (msg => window.webkit.messageHandlers.nwedit.postMessage(msg))
+    : (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function')
+      // WebView2 gets a plain string, "<filename>\n<base64>" or "\u0001error\n<message>",
+      // so the C++ side needs no JSON parser.
+      ? (msg => window.chrome.webview.postMessage(msg.error != null
+          ? '\u0001error\n' + msg.error
+          : msg.filename + '\n' + msg.dataBase64))
+      : null;
+const hasNativeSave = !!nativeSaver;
 
 function downloadBase64(base64, filename, mime) {
   if (hasNativeSave) {
-    window.webkit.messageHandlers.nwedit.postMessage({ filename, dataBase64: base64 });
+    nativeSaver({ filename, dataBase64: base64 });
     return;
   }
   const bin = atob(base64);
@@ -96,6 +118,19 @@ function downloadBase64(base64, filename, mime) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// Waits for the next paint, or 50 ms, whichever comes first. Exports step
+// through the frames with this: a hidden or covered window gets no animation
+// frames (WebKit and Chromium suspend them), and an export waiting on
+// requestAnimationFrame alone would stall there for good.
+function nextPaint() {
+  return new Promise(resolve => {
+    let done = false;
+    const go = () => { if (!done) { done = true; resolve(); } };
+    requestAnimationFrame(go);
+    setTimeout(go, 50);
+  });
 }
 
 const isEvent = MOVIE_DATA.mode === 'event';
@@ -543,7 +578,7 @@ if (!isEvent) {
           }
         });
       });
-      await new Promise(r => requestAnimationFrame(r));
+      await nextPaint();
       frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: frameText });
     }
     applyFrameInstant(curFrame);
@@ -663,7 +698,7 @@ if (isEvent) {
     for (let i = 0; i <= n; i++) {
       const t = tmin + (i / n) * (tmax - tmin);
       seekTo(t, false);
-      await new Promise(r => requestAnimationFrame(r));
+      await nextPaint();
       // seekTo() above already called updateOverlay(), so labelEl/timeEl
       // already hold exactly this frame's own text.
       frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: labelEl.textContent + '   ' + timeEl.textContent });
@@ -674,85 +709,232 @@ if (isEvent) {
 }
 
 // ---------------------------------------------------------------------
-// GIF export (point 1 of the scoping discussion: a downloadable movie
-// file stays available, not just the live interactive view). Frames are
-// computed by direct, instantaneous state application (never by sampling
-// a live/animated playback), so the export is deterministic and cannot
-// race the renderer - the same __nwmovieCaptureFrames() array feeds
-// both branches above and this. gif.js's own worker script is inlined as
-// a JS source string at build time (GIF_WORKER_SRC) and turned into a
-// Blob URL here rather than shipped as a second file, matching this
-// template's own "fully self-contained, no relative-file dependency"
-// convention (the same reason cytoscape.min.js is inlined rather than
-// loaded via <script src>).
+// Export: GIF and video (MP4, or WebM where the engine cannot encode
+// MP4). Frames are computed by direct, instantaneous state application
+// (never by sampling a live/animated playback), so an export is
+// deterministic and cannot race the renderer - the same
+// __nwmovieCaptureFrames() feeds both formats. gif.js's own worker script
+// and the MP4 muxer (mp4-muxer, MIT) are inlined at build time, matching
+// this template's "fully self-contained, no relative-file dependency"
+// convention (the same reason cytoscape.min.js is inlined).
 // ---------------------------------------------------------------------
-document.getElementById('btnGif').addEventListener('click', async () => {
-  playing = false;
-  playBtn.textContent = '▶ Play';
-  const btn = document.getElementById('btnGif');
-  const status = document.getElementById('gifStatus');
-  btn.disabled = true;
+
+// Captures the frames and returns them as canvases with the on-canvas
+// time/wave readout baked in at its on-screen position and size. The
+// pixel scale is derived from the captured image itself, since cy.png()
+// compounds its own scale with window.devicePixelRatio.
+async function composeExportFrames(frameDelayMs, status) {
   status.textContent = 'Rendering frames...';
-  try {
-    const workerUrl = URL.createObjectURL(new Blob([GIF_WORKER_SRC], { type: 'application/javascript' }));
-    const cyRect = document.getElementById('cy').getBoundingClientRect();
-    const labelRect = document.getElementById('movieLabelBox').getBoundingClientRect();
-    // gif.js's own default is repeat:0 (loop forever) regardless of this
-    // page's own Loop checkbox - explicit here so an exported GIF only
-    // loops when Loop is actually checked at export time (repeat:-1 is
-    // gif.js's/the GIF89a NETSCAPE2.0 extension's own convention for
-    // "play once, no loop"; 0 is "loop forever" - there is no "loop
-    // exactly once more" middle option this checkbox could mean instead).
-    const gif = new GIF({ workers: 2, quality: 10, workerScript: workerUrl, repeat: loopChk.checked ? 0 : -1, width: Math.round(cyRect.width), height: Math.round(cyRect.height) });
-    const frames = await window.__nwmovieCaptureFrames(90);
-    // Bakes the on-canvas time/wave readout into every exported frame, at
-    // its own current on-screen position/size - same box-to-canvas-pixel
-    // mapping nwedit_template.html's own exportPng() uses for #plotLegend
-    // against a single static PNG (see its own header comment), applied
-    // here once per GIF frame instead. Capture frames are always taken at
-    // scale:1 (both __nwmovieCaptureFrames() implementations above), so
-    // the mapping is a direct 1:1 pixel offset, no extra scale factor.
-    const lx = labelRect.left - cyRect.left;
-    const ly = labelRect.top - cyRect.top;
-    const lw = labelRect.width;
-    const lh = labelRect.height;
-    const showLabel = !movieLabelRemoved && (lx + lw > 0 && ly + lh > 0 && lx < cyRect.width && ly < cyRect.height);
-    for (let i = 0; i < frames.length; i++) {
-      status.textContent = 'Encoding frame ' + (i + 1) + '/' + frames.length;
-      const img = await new Promise(resolve => {
-        const im = new Image();
-        im.onload = () => resolve(im);
-        im.src = URL.createObjectURL(frames[i].blob);
-      });
-      if (!showLabel) {
-        gif.addFrame(img, { delay: 90 });
-        continue;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      drawMovieLabelOnCanvas(ctx, frames[i].text, lx, ly, lw, lh, 1);
-      gif.addFrame(canvas, { delay: 90 });
-    }
-    status.textContent = 'Encoding GIF...';
-    gif.on('finished', blob => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result.slice(reader.result.indexOf(',') + 1);
-        downloadBase64(base64, 'nwmovie_export.gif', 'image/gif');
-        status.textContent = 'Done.';
-        btn.disabled = false;
-      };
-      reader.readAsDataURL(blob);
+  const cyRect = document.getElementById('cy').getBoundingClientRect();
+  const labelRect = document.getElementById('movieLabelBox').getBoundingClientRect();
+  const frames = await window.__nwmovieCaptureFrames(frameDelayMs);
+  const lx0 = labelRect.left - cyRect.left, ly0 = labelRect.top - cyRect.top;
+  const lw0 = labelRect.width, lh0 = labelRect.height;
+  const showLabel = !movieLabelRemoved && (lx0 + lw0 > 0 && ly0 + lh0 > 0 && lx0 < cyRect.width && ly0 < cyRect.height);
+  const canvases = [];
+  for (let i = 0; i < frames.length; i++) {
+    status.textContent = 'Preparing frame ' + (i + 1) + '/' + frames.length;
+    const img = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('could not read a captured frame'));
+      im.src = URL.createObjectURL(frames[i].blob);
     });
-    gif.render();
-  } catch (err) {
-    status.textContent = 'Failed: ' + err.message;
-    btn.disabled = false;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+    if (showLabel) {
+      const s = canvas.width / cyRect.width;
+      drawMovieLabelOnCanvas(ctx, frames[i].text, lx0 * s, ly0 * s, lw0 * s, lh0 * s, s);
+    }
+    canvases.push(canvas);
   }
-});
+  return canvases;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.slice(reader.result.indexOf(',') + 1));
+    reader.onerror = () => reject(new Error('could not read the exported file'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function makeGifBlob(status) {
+  const GIF_DELAY = 90;
+  const canvases = await composeExportFrames(GIF_DELAY, status);
+  const workerUrl = URL.createObjectURL(new Blob([GIF_WORKER_SRC], { type: 'application/javascript' }));
+  // gif.js's own default is repeat:0 (loop forever) regardless of the
+  // Loop checkbox - explicit here so an exported GIF only loops when Loop
+  // is checked at export time (repeat:-1 = play once, 0 = loop forever).
+  const gif = new GIF({ workers: 2, quality: 10, workerScript: workerUrl,
+    repeat: loopChk.checked ? 0 : -1, width: canvases[0].width, height: canvases[0].height });
+  canvases.forEach(c => gif.addFrame(c, { delay: GIF_DELAY }));
+  status.textContent = 'Encoding GIF...';
+  const blob = await new Promise(resolve => { gif.on('finished', resolve); gif.render(); });
+  return { blob, ext: 'gif', mime: 'image/gif' };
+}
+
+// H.264 needs even dimensions; the frames are cropped by at most one pixel.
+function evenCanvas(src) {
+  const w = src.width - (src.width % 2), h = src.height - (src.height % 2);
+  if (w === src.width && h === src.height) return src;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(src, 0, 0);
+  return c;
+}
+
+// MP4 through WebCodecs: every frame is encoded with its exact timestamp,
+// so the file has the movie's timing regardless of how fast this machine
+// renders. Returns null if the engine has no usable H.264 encoder.
+async function encodeMp4WebCodecs(canvases, fps, status) {
+  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof Mp4Muxer === 'undefined') return null;
+  const width = canvases[0].width, height = canvases[0].height;
+  const bitrate = Math.min(12e6, Math.max(2e6, width * height * fps * 0.15));
+  let config = null;
+  for (const codec of ['avc1.640033', 'avc1.4d0033', 'avc1.42003e', 'avc1.42001f']) {
+    const c = { codec, width, height, bitrate, framerate: fps, avc: { format: 'avc' } };
+    try {
+      const support = await VideoEncoder.isConfigSupported(c);
+      if (support.supported) { config = c; break; }
+    } catch (e) { /* try the next profile */ }
+  }
+  if (!config) return null;
+  const target = new Mp4Muxer.ArrayBufferTarget();
+  const muxer = new Mp4Muxer.Muxer({ target, fastStart: 'in-memory',
+    video: { codec: 'avc', width, height, frameRate: fps } });
+  let encodeError = null;
+  const encoder = new VideoEncoder({
+    // Some encoders (WebKit's on macOS) write limited-range BT.709 video but
+    // report sRGB full range; the muxer copies that report into the file,
+    // and players then show white as light gray. State what was encoded.
+    output: (chunk, meta) => {
+      if (meta && meta.decoderConfig) {
+        meta.decoderConfig.colorSpace = { primaries: 'bt709', transfer: 'bt709', matrix: 'bt709', fullRange: false };
+      }
+      muxer.addVideoChunk(chunk, meta);
+    },
+    error: e => { encodeError = e; }
+  });
+  encoder.configure(config);
+  const usPerFrame = 1e6 / fps;
+  for (let i = 0; i < canvases.length; i++) {
+    if (encodeError) throw encodeError;
+    status.textContent = 'Encoding frame ' + (i + 1) + '/' + canvases.length;
+    const vf = new VideoFrame(canvases[i], { timestamp: Math.round(i * usPerFrame), duration: Math.round(usPerFrame) });
+    encoder.encode(vf, { keyFrame: i % (fps * 2) === 0 });
+    vf.close();
+    while (encoder.encodeQueueSize > 8) await new Promise(r => setTimeout(r, 5));
+  }
+  await encoder.flush();
+  if (encodeError) throw encodeError;
+  encoder.close();
+  muxer.finalize();
+  return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', mime: 'video/mp4' };
+}
+
+// Fallback for engines without WebCodecs: MediaRecorder on a canvas
+// stream, fed frame by frame in real time. MP4 where the engine records
+// it, otherwise WebM.
+async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
+  if (typeof MediaRecorder === 'undefined') throw new Error('this viewer cannot encode video; use Export GIF');
+  const webm = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  const mp4 = ['video/mp4;codecs=avc1', 'video/mp4'];
+  const mime = (wantWebm ? webm : mp4.concat(webm)).find(m => MediaRecorder.isTypeSupported(m));
+  if (!mime) throw new Error(wantWebm ? 'this viewer cannot encode WebM video; export a .mp4 or .gif file instead'
+    : 'this viewer cannot encode video; use Export GIF');
+  const canvas = document.createElement('canvas');
+  canvas.width = canvases[0].width; canvas.height = canvases[0].height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(canvases[0], 0, 0);
+  const stream = canvas.captureStream(0);
+  const track = stream.getVideoTracks()[0];
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6e6 });
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(resolve => { rec.onstop = resolve; });
+  rec.start();
+  for (let i = 0; i < canvases.length; i++) {
+    status.textContent = 'Recording frame ' + (i + 1) + '/' + canvases.length;
+    ctx.drawImage(canvases[i], 0, 0);
+    if (track.requestFrame) track.requestFrame();
+    await new Promise(r => setTimeout(r, 1000 / fps));
+  }
+  rec.stop();
+  await stopped;
+  const type = mime.split(';')[0];
+  return { blob: new Blob(chunks, { type }), ext: type === 'video/mp4' ? 'mp4' : 'webm', mime: type };
+}
+
+// format: 'mp4' (MP4 required), 'webm' (WebM required) or 'any' (the
+// Export video button: MP4 where possible, otherwise WebM).
+async function makeVideoBlob(status, format) {
+  const FPS = 25;
+  const requireMp4 = format === 'mp4';
+  const canvases = (await composeExportFrames(1000 / FPS, status)).map(evenCanvas);
+  if (format === 'webm') return encodeMediaRecorder(canvases, FPS, status, true);
+  let out = await encodeMp4WebCodecs(canvases, FPS, status);
+  if (!out) {
+    if (requireMp4 && (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported('video/mp4')))
+      throw new Error('this viewer cannot encode MP4 video; export a .webm or .gif file instead');
+    out = await encodeMediaRecorder(canvases, FPS, status, false);
+  }
+  return out;
+}
+
+async function saveExport(out) {
+  const base64 = await blobToBase64(out.blob);
+  downloadBase64(base64, 'nwmovie_export.' + out.ext, out.mime);
+}
+
+function exportButton(id, make) {
+  document.getElementById(id).addEventListener('click', async () => {
+    playing = false;
+    playBtn.textContent = '▶ Play';
+    const btn = document.getElementById(id);
+    const status = document.getElementById('gifStatus');
+    btn.disabled = true;
+    try {
+      const out = await make(status);
+      status.textContent = 'Saving...';
+      await saveExport(out);
+      status.textContent = 'Done.';
+    } catch (err) {
+      status.textContent = 'Failed: ' + (err && err.message ? err.message : err);
+    }
+    btn.disabled = false;
+  });
+}
+exportButton('btnGif', makeGifBlob);
+exportButton('btnVideo', status => makeVideoBlob(status, 'any'));
+
+// Unattended export (nwmovie ..., export(file)): the viewer was started
+// with an output path, and nwmovie.ado set AUTO_EXPORT to the format. The
+// page exports once it has drawn, then posts the file (or the error) to
+// the native bridge, which writes it and closes the window.
+if (AUTO_EXPORT && hasNativeSave) {
+  const status = document.getElementById('gifStatus');
+  const run = async () => {
+    try {
+      const out = AUTO_EXPORT === 'gif' ? await makeGifBlob(status)
+        : await makeVideoBlob(status, AUTO_EXPORT);
+      if (AUTO_EXPORT !== 'gif' && out.ext !== AUTO_EXPORT)
+        throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not ' + AUTO_EXPORT.toUpperCase());
+      nativeSaver({ filename: 'nwmovie_export.' + out.ext, dataBase64: await blobToBase64(out.blob) });
+    } catch (err) {
+      nativeSaver({ error: String(err && err.message ? err.message : err) });
+    }
+  };
+  // two animation frames: the first layout pass and paint have happened
+  nextPaint().then(nextPaint).then(() => setTimeout(run, 300));
+}
 </script>
 </body>
 </html>

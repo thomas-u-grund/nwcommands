@@ -66,7 +66,7 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 . nwplot wave1, generate(x1 y1)
 . nwplot wave2, nodexy(x1 y1)
 ```
-`interactive` opens the plot in a browser alongside the usual static plot: drag nodes to reposition them, edit the color/shape legend (an edit applies to every node sharing that color/ shape key, not just one node - the same discrete legend model `color()`/`symbol()` already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back with `importcoords()` (paired with `nodexy()`, same matched-pair idea as `generate()`/ `nodexy()` above) and `edgeimport()`:
+`interactive` opens the plot in a browser alongside the usual static plot: drag nodes to reposition them, edit the color/shape legend (an edit applies to every node sharing that color/ shape key, not just one node - the same discrete legend model `color()`/`symbol()` already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image. The buttons open a save dialog in the native viewer (on Windows, macOS and Linux) and download the file in an ordinary browser tab. Two buttons in the browser save the edits as CSV files; feed them back with `importcoords()` (paired with `nodexy()`, same matched-pair idea as `generate()`/ `nodexy()` above) and `edgeimport()`:
 
 ```stata
 . nwplot flomarriage, generate(x y) color(wealth) interactive
@@ -232,4 +232,4 @@ Binary: yes. Weighted: yes. On a valued network the widths of the edges follow t
 
 ---
 
-*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.15.4, 4 November 2026* ([check your installed version](nwversion))

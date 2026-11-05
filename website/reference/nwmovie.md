@@ -30,6 +30,9 @@ temporal network - there is no separate option to choose between them.
 |---|---|
 | `fname(string)` | base filename for the output; writes *fname***.html** in the current directory; default **movie** |
 | `noopen` | build the .html file but do not open it in a viewer |
+| `export`(*filename*) | write the movie as a video or GIF file without opening the interactive view; the format follows the extension: **.mp4** (H.264 video), **.webm** or **.gif**; see [Remarks](nwmovie) |
+| `replace` | with `export()`: overwrite an existing file |
+| `timeout(int)` | with `export()`: seconds to wait for the file; default 600 |
 | `layout`(*[layout](nwplot)*) | **panel mode**: layout algorithm - see [nwplot](nwplot)'s own `layout()`; any value other than the **kk** default disables the per-wave transitioning below and falls back to `fixedlayout`'s one-shared-layout behavior, since only **kk** has a "warm start" to relax from |
 | `fixedlayout` | **panel mode**: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below) |
 | `binary` | **panel mode**: passed on to [nwplot](nwplot): ignore the tie values (no value widths, and the layouts of valued networks are those of unvalued networks) |
@@ -58,7 +61,7 @@ temporal network - there is no separate option to choose between them.
 
 ## Description
 
-**nwmovie** opens a live, interactive, animated view of a network changing over time, rendered with Cytoscape.js in a chromeless native viewer window (the same one [nwplot](nwplot)'s own `interactive` option uses - falls back to an ordinary browser tab when that native binary isn't available for the current platform). It replaces the previous ImageMagick/`graph export`-based pipeline entirely: there is no external ImageMagick dependency any more, and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF - though a GIF can still be exported from within that view (the **Export GIF** button; written via a save dialog, or a browser download, depending on the viewer).
+**nwmovie** opens a live, interactive, animated view of a network changing over time, rendered with Cytoscape.js in a chromeless native viewer window (the same one [nwplot](nwplot)'s own `interactive` option uses - falls back to an ordinary browser tab when that native binary isn't available for the current platform). It replaces the previous ImageMagick/`graph export`-based pipeline entirely: there is no external ImageMagick dependency any more, and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF - and the movie can be saved from within that view as a GIF or a video file (the **Export GIF** and **Export video** buttons; the file is written through a save dialog in the native viewer on Windows, macOS and Linux, or as an ordinary download in a browser tab), or written directly from Stata with `export()`.
 
 **Panel mode** takes 2 or more already-built networks in sequence, all with the same number of nodes in the same node order (the standard "waves of the same actors" convention this package's other panel-data commands already assume, e.g. `nwsaom`'s own `wave1()`/`wave2()`). By default, each wave gets its own **kk** (Kamada-Kawai) layout, warm-started from the PREVIOUS wave's own final node positions, so consecutive waves relax into nearby layouts - a real, visible transition as ties change - rather than each wave's layout being computed completely independently. Node identity stays visually trackable across the movie (nodes move smoothly, not in unrelated jumps), while still letting the layout itself resettle as the network's structure changes wave to wave. Specify `fixedlayout` to restore the original behavior instead: one node layout, computed once on the first network only and reused unchanged for every wave - the layout itself never moves, at the cost of never reflecting how the network's own structure is changing. An explicit `layout()` other than **kk** also falls back to this one-shared-layout behavior (see `layout()` above), since the per-wave transition relies on **kk**'s own warm-start. On valued networks every wave's layout uses the tie values as strengths (strongly tied nodes close together), exactly as in [nwplot](nwplot); `binary` switches that off.
 
@@ -68,11 +71,23 @@ Both modes reuse [nwplot](nwplot)'s own color/shape/position resolution - `color
 
 **Panel mode** can also vary node/edge styling BY wave, the way the old ImageMagick-era `colors()`/`sizes()`/etc. plural options did: `colors()`/`symbols()`/`sizes()`/`edgecolors()`/`edgesizes()` each take one value PER WAVE (in the same order as the network list) instead of their singular counterparts' single broadcast value. Color and size (node AND edge) genuinely transition continuously as the movie plays - Cytoscape.js tweens node color/size natively as part of the same `duration()`/`easing()` animation that already moves node position, and edges (which are always fully rebuilt at every transition, not kept alive across it) get an equivalent hand-rolled tween for any edge that persists across the transition. Shape stays a hard switch at each wave boundary, not a continuous morph - asking Cytoscape's own animation to interpolate shape (circle into square, say) is not a meaningful blend, and turned out to be a genuine renderer-crash trigger during this feature's own development besides. A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only persisting ties (present in both waves) tween their own width/color change.
 
-The toolbar's speed slider (0.1x-5x) scales playback speed for both modes - a single wave-to-wave `duration()` or the whole event-time range `speed()` would otherwise take, divided by the live slider value, re-read on every transition/frame so changing it mid-playback takes effect immediately - and also scales **Export GIF**'s own frame timing to match. The Loop checkbox restarts playback from the beginning once it reaches the end instead of stopping there (panel mode: back to wave 1; event mode: back to *eventtime()*'s own minimum), for both live playback and **Export GIF**.
+The toolbar's speed slider (0.1x-5x) scales playback speed for both modes - a single wave-to-wave `duration()` or the whole event-time range `speed()` would otherwise take, divided by the live slider value, re-read on every transition/frame so changing it mid-playback takes effect immediately - and also scales the timing of the exported GIF and video to match. The Loop checkbox restarts playback from the beginning once it reaches the end instead of stopping there (panel mode: back to wave 1; event mode: back to *eventtime()*'s own minimum); an exported GIF loops when Loop is checked at the time of export (a video file never loops by itself).
 
-The current wave's title/counter (or, in event mode, the active-tie count/time readout) is ALSO shown as its own small box drawn directly on the canvas, not just in the toolbar - draggable by its own handle and resizable via its own bottom-right resize handle, the same way [nwplot](nwplot)'s own `interactive` view lets you reposition/resize its legend. Unlike the toolbar text, this on-canvas box gets baked into **Export GIF**'s own output, at its own current on-screen position and size, so an exported movie still shows what wave/time each frame is at once it's outside the interactive viewer. Its own "**x**" button removes it for the rest of that viewing session (and stops it being baked into any GIF exported after that); there is no way to bring it back short of reopening the movie. Its own font size only ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title text happens to be.
+The current wave's title/counter (or, in event mode, the active-tie count/time readout) is ALSO shown as its own small box drawn directly on the canvas, not just in the toolbar - draggable by its own handle and resizable via its own bottom-right resize handle, the same way [nwplot](nwplot)'s own `interactive` view lets you reposition/resize its legend. Unlike the toolbar text, this on-canvas box gets baked into exported GIF and video files, at its own current on-screen position and size, so an exported movie still shows what wave/time each frame is at once it's outside the interactive viewer. Its own "**x**" button removes it for the rest of that viewing session (and stops it being baked into any file exported after that); there is no way to bring it back short of reopening the movie. Its own font size only ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title text happens to be.
 
 Dropped entirely, with no replacement (the ImageMagick pipeline's own options, no longer meaningful once the browser does the rendering and animation): `frames()`, `delay()`, `explosion()`, `imagick()`, `keepfiles()`, `width()`, `height()`, `z()`, `nodexys()`, `switchnetwork()`/`switchcolor()`/`switchsymbol()`/`switchedgecolor()`/`switchtitle()`, and `eps` (vector export - [nwplot](nwplot)'s own `interactive` view made the identical PNG-only tradeoff already, for the same reason: Cytoscape.js's built-in export is raster-only).
+
+## Remarks
+
+**Exporting a movie file.** `export(filename)` writes the movie to a file instead of leaving it open for viewing. The format follows the file's extension:
+
+- **.mp4** --- H.264 video, which plays in presentation software, on web pages and in every common video player
+- **.webm** --- VP9 or VP8 video, for web pages
+- **.gif** --- an animated image, which needs no video player at all, at the cost of a larger file and fewer colors
+
+`nwmovie` builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is written (at most `timeout()` seconds). The viewer window appears briefly while it works; do not close it. Nothing beyond `nwcommands` itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows `duration()` (panel mode) or `speed()` (event mode): three waves with the default `duration(800)` give a movie of 1.6 seconds, so give a larger `duration()` for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
+
+`export()` needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), `nwmovie` stops with a message saying so; export a **.gif** file instead, which every engine can write. The **Export video** button in the interactive view writes MP4 where the engine can and WebM otherwise.
 
 ## Examples
 
@@ -93,6 +108,13 @@ Same data again, with a custom display title per wave (default, without `titles(
 ```stata
 . nwwebuse glasgow, nwclear
 . nwmovie glasgow1 glasgow2 glasgow3, duration(600) titles("Year 1 (1995)" "Year 2 (1996)" "Year 3 (1997)")
+```
+The same movie written to a video file and to an animated GIF, two seconds per transition:
+
+```stata
+. nwwebuse glasgow, nwclear
+. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(glasgow.mp4) replace
+. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(glasgow.gif) replace
 ```
 **Event mode**, on the same small inline event log `nwrem`'s own example uses:
 
@@ -126,4 +148,4 @@ Panel mode: binary yes, directed yes, weighted and signed as [nwplot](nwplot) (t
 
 ---
 
-*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.15.4, 4 November 2026* ([check your installed version](nwversion))

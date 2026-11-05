@@ -36,7 +36,7 @@ program nwmovie
 	// edgecolor()/edgesize() options fail outright ("Network <x> not
 	// found") on any real use - confirmed directly, never caught before
 	// because neither had test coverage.
-	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) NOOpen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout binary nosign]
+	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) NOOpen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout binary nosign EXPort(string) replace TIMEout(integer 600)]
 	unw_defs
 
 	mata: st_local("_nwmv_pkgdir", NativeGraphInstallDir())
@@ -44,12 +44,43 @@ program nwmovie
 	local _nwmv_cytoscape = "`_nwmv_pkgdir'/lib/vendor/cytoscape.min.js"
 	local _nwmv_gifjs = "`_nwmv_pkgdir'/lib/vendor/gif.js"
 	local _nwmv_gifworker = "`_nwmv_pkgdir'/lib/vendor/gif.worker.js"
-	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker {
+	local _nwmv_mp4muxer = "`_nwmv_pkgdir'/lib/vendor/mp4-muxer.js"
+	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer {
 		capture confirm file "``_nwmv_f''"
 		if _rc {
 			di as error "required file not found: ``_nwmv_f''; reinstall the package."
 			error 601
 		}
+	}
+
+	// export(): write the movie as a GIF, MP4 or WebM file without
+	// clicking anything. The format follows the file's extension. The page
+	// is opened in the native viewer with an output path; it renders and
+	// encodes the movie itself, the viewer writes the file and closes, and
+	// this command waits for it (at most timeout() seconds).
+	local _nwmv_auto "null"
+	if `"`export'"' != "" {
+		local _nwmv_ext = lower(substr(`"`export'"', strrpos(`"`export'"', ".") + 1, .))
+		if !inlist("`_nwmv_ext'", "gif", "mp4", "webm") | strpos(`"`export'"', ".") == 0 {
+			di as error "export() needs a file name ending in .gif, .mp4 or .webm"
+			exit 198
+		}
+		if "`replace'" == "" {
+			capture confirm new file `"`export'"'
+			if _rc {
+				di as error `"file `export' already exists; specify replace"'
+				exit 602
+			}
+		}
+		if `timeout' < 1 {
+			di as error "timeout() must be a positive number of seconds"
+			exit 198
+		}
+		local _nwmv_auto = char(34) + "`_nwmv_ext'" + char(34)
+	}
+	else if "`replace'" != "" {
+		di as error "replace is only allowed with export()"
+		exit 198
 	}
 
 	// ------------------------------------------------------------------
@@ -355,7 +386,7 @@ program nwmovie
 		}
 		capture mata: mata drop _nwmv_prevpos
 
-		mata: _nwmovie_assemblepanel("`_nwmv_keyframes'", _nwmv_labelvec, `duration', "`easing'", `_nwmv_directed', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`fname'.html")
+		mata: _nwmovie_assemblepanel("`_nwmv_keyframes'", _nwmv_labelvec, `duration', "`easing'", `_nwmv_directed', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`_nwmv_mp4muxer'", `"`_nwmv_auto'"', "`fname'.html")
 		mata: mata drop _nwmv_labelvec
 	}
 	else {
@@ -436,14 +467,59 @@ program nwmovie
 			local _nwmv_windowval "`window'"
 		}
 
-		mata: _nwmovie_assembleevent("`_nwmv_out'", `_nwmv_evlist', `speed', `_nwmv_windowval', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`fname'.html")
+		mata: _nwmovie_assembleevent("`_nwmv_out'", `_nwmv_evlist', `speed', `_nwmv_windowval', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`_nwmv_mp4muxer'", `"`_nwmv_auto'"', "`fname'.html")
 		mata: mata drop `_nwmv_evlist' `_nwmv_cumM'
 	}
 
 	di "{txt}Wrote {bf:`fname'.html}"
-	if "`noopen'" == "" {
+	if `"`export'"' != "" {
+		_nwmovie_export "`c(pwd)'/`fname'.html", export(`"`export'"') ext(`_nwmv_ext') timeout(`timeout')
+	}
+	else if "`noopen'" == "" {
 		_nwopenviewer "`c(pwd)'/`fname'.html"
 	}
+end
+
+// Unattended export: stage an output path in c(tmpdir) (space-free, as
+// winexec needs), start the viewer with it, wait for the file or for the
+// page's error report, then copy the file to its destination. The output
+// file html has AUTO_EXPORT set, so the page exports as soon as it is drawn.
+capture program drop _nwmovie_export
+program _nwmovie_export
+	syntax anything(name=htmlpath), export(string) ext(string) timeout(integer)
+	local htmlpath = subinstr(`"`htmlpath'"', char(34), "", .)
+	local _rngstate = c(rngstate)
+	local _tmpout = "`c(tmpdir)'" + "nwmovie_export_" + strofreal(int(runiform()*1000000)) + ".`ext'"
+	set rngstate `_rngstate'
+	capture erase "`_tmpout'"
+	capture erase "`_tmpout'.error"
+	_nwopenviewer "`htmlpath'", output(`_tmpout')
+	di "{txt}Exporting the movie to {bf:`export'} (the viewer window closes when it is done)..."
+	local _waited = 0
+	local _done = 0
+	while !`_done' & `_waited' < `timeout' * 1000 {
+		sleep 500
+		local _waited = `_waited' + 500
+		capture confirm file "`_tmpout'.error"
+		if _rc == 0 local _done = 2
+		capture confirm file "`_tmpout'"
+		if _rc == 0 & `_done' == 0 local _done = 1
+	}
+	if `_done' == 2 {
+		mata: st_local("_errmsg", _nwmovie_slurpfile(st_local("_tmpout") + ".error"))
+		capture erase "`_tmpout'.error"
+		di as error `"nwmovie: the export failed: `_errmsg'"'
+		exit 498
+	}
+	if `_done' == 0 {
+		di as error "nwmovie: no file after `timeout' seconds; the viewer may still be encoding (raise timeout()) or was closed"
+		exit 498
+	}
+	// the viewer writes the file atomically, but give it a moment to close
+	sleep 200
+	quietly copy "`_tmpout'" `"`export'"', replace
+	capture erase "`_tmpout'"
+	di `"{txt}Wrote {bf:`export'}"'
 end
 
 // -----------------------------------------------------------------------
@@ -495,9 +571,9 @@ string scalar _nwmovie_slurpfile(string scalar path)
 
 void _nwmovie_writehtml(string scalar data, string scalar tplpath,
 		string scalar cytopath, string scalar gifjspath, string scalar gifworkerpath,
-		string scalar outpath)
+		string scalar mp4muxerpath, string scalar autoexport, string scalar outpath)
 {
-	string scalar tpl, vjs, gifjs, gifworkersrc, gifworkerb64
+	string scalar tpl, vjs, gifjs, gifworkersrc, gifworkerb64, mp4muxer
 	transmorphic fh
 
 	tpl = _nwmovie_slurpfile(tplpath)
@@ -505,9 +581,12 @@ void _nwmovie_writehtml(string scalar data, string scalar tplpath,
 	gifjs = _nwmovie_slurpfile(gifjspath)
 	gifworkersrc = _nwmovie_slurpfile(gifworkerpath)
 	gifworkerb64 = base64encode(gifworkersrc)
+	mp4muxer = _nwmovie_slurpfile(mp4muxerpath)
 
 	tpl = subinstr(tpl, "__NWMOVIE_CYTOSCAPE__", vjs)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFJS__", gifjs)
+	tpl = subinstr(tpl, "__NWMOVIE_MP4MUXER__", mp4muxer)
+	tpl = subinstr(tpl, "__NWMOVIE_AUTOEXPORT__", autoexport)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFWORKER__", "atob(" + char(34) + gifworkerb64 + char(34) + ")")
 	tpl = subinstr(tpl, "__NWMOVIE_DATA__", data)
 
@@ -525,7 +604,8 @@ void _nwmovie_writehtml(string scalar data, string scalar tplpath,
 void _nwmovie_assemblepanel(string scalar jsonfiles, string rowvector labels,
 		real scalar duration, string scalar easing, real scalar isdirected,
 		string scalar tplpath, string scalar cytopath, string scalar gifjspath,
-		string scalar gifworkerpath, string scalar outpath)
+		string scalar gifworkerpath, string scalar mp4muxerpath, string scalar autoexport,
+		string scalar outpath)
 {
 	string rowvector files
 	string scalar q, data, blob, one
@@ -547,13 +627,14 @@ void _nwmovie_assemblepanel(string scalar jsonfiles, string rowvector labels,
 	}
 	data = data + "]}"
 
-	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, outpath)
+	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, mp4muxerpath, autoexport, outpath)
 }
 
 void _nwmovie_assembleevent(string scalar nodejsonfile, real matrix evlist,
 		real scalar speed, real scalar window,
 		string scalar tplpath, string scalar cytopath, string scalar gifjspath,
-		string scalar gifworkerpath, string scalar outpath)
+		string scalar gifworkerpath, string scalar mp4muxerpath, string scalar autoexport,
+		string scalar outpath)
 {
 	string scalar q, data, blob, windowstr
 	real scalar i
@@ -589,6 +670,6 @@ void _nwmovie_assembleevent(string scalar nodejsonfile, real matrix evlist,
 	}
 	data = data + "]}"
 
-	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, outpath)
+	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, mp4muxerpath, autoexport, outpath)
 }
 end

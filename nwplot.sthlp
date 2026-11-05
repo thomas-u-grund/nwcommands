@@ -260,7 +260,9 @@ instead of re-deriving a fresh, unrelated layout for each one:
 reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
 shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
 already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
-factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back
+factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image.
+The buttons open a save dialog in the native viewer (on Windows, macOS and Linux) and download the file in an ordinary
+browser tab. Two buttons in the browser save the edits as CSV files; feed them back
 with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
 {opt nodexy()} above) and {opt edgeimport()}:
 
@@ -515,4 +517,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.4, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.16.0, 5 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 5 November 2026: nwcommands 3.16.0
+
+**nwcommands 3.16.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.0)). `nwmovie, export(filename)` writes a network movie as an MP4 or WebM video or an animated GIF straight from a do-file, without opening the interactive view; nothing beyond the package is needed on Windows, macOS or Linux. The movie view has a new *Export video* button. In the viewer on Windows and Linux, *Export PNG*, *Save nodes*, *Save edges* and *Export GIF* now open a save dialog (they did nothing before), and the viewer starts on Windows again.
+
 ## 4 November 2026: nwcommands 3.15.4
 
 **nwcommands 3.15.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.4)). Corrects the 3.15.2 change to `nwload`: after one of the loaded network's variables had been renamed, loading another network stopped with error 110. `nwload` now marks the variables it creates and replaces only those (and the variables of a network declared from your own variables), so only a variable of your own with a node's name stops it.

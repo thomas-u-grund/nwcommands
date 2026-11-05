@@ -36,6 +36,9 @@ temporal network - there is no separate option to choose between them.
 {p2line}
 {synopt:{opth fname(string)}}base filename for the output; writes {it:fname}{bf:.html} in the current directory; default {bf:movie}{p_end}
 {synopt:{opt noopen}}build the .html file but do not open it in a viewer{p_end}
+{synopt:{opt export}({it:filename})}write the movie as a video or GIF file without opening the interactive view; the format follows the extension: {bf:.mp4} (H.264 video), {bf:.webm} or {bf:.gif}; see {help nwmovie##export:Remarks}{p_end}
+{synopt:{opt replace}}with {opt export()}: overwrite an existing file{p_end}
+{synopt:{opth timeout(int)}}with {opt export()}: seconds to wait for the file; default 600{p_end}
 {synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
 {synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below){p_end}
 {synopt:{opt binary}}{bf:panel mode}: passed on to {help nwplot}: ignore the tie values (no value widths, and the layouts of valued networks are those of unvalued networks){p_end}
@@ -71,8 +74,9 @@ temporal network - there is no separate option to choose between them.
 viewer window (the same one {help nwplot}'s own {opt interactive} option uses - falls back to an ordinary browser tab when that native
 binary isn't available for the current platform). It replaces the previous ImageMagick/{cmd:graph export}-based pipeline entirely:
 there is no external ImageMagick dependency any more, and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF -
-though a GIF can still be exported from within that view (the {bf:Export GIF} button; written via a save dialog, or a browser download,
-depending on the viewer).
+and the movie can be saved from within that view as a GIF or a video file (the {bf:Export GIF} and {bf:Export video} buttons; the file is
+written through a save dialog in the native viewer on Windows, macOS and Linux, or as an ordinary download in a browser tab), or written
+directly from Stata with {opt export()}.
 
 {pstd}
 {bf:Panel mode} takes 2 or more already-built networks in sequence, all with the same number of nodes in the same node order (the standard
@@ -114,17 +118,17 @@ persisting ties (present in both waves) tween their own width/color change.
 {pstd}
 The toolbar's speed slider (0.1x-5x) scales playback speed for both modes - a single wave-to-wave {opt duration()} or the whole event-time
 range {opt speed()} would otherwise take, divided by the live slider value, re-read on every transition/frame so changing it mid-playback
-takes effect immediately - and also scales {bf:Export GIF}'s own frame timing to match. The Loop checkbox restarts playback from the
+takes effect immediately - and also scales the timing of the exported GIF and video to match. The Loop checkbox restarts playback from the
 beginning once it reaches the end instead of stopping there (panel mode: back to wave 1; event mode: back to {it:eventtime()}'s own
-minimum), for both live playback and {bf:Export GIF}.
+minimum); an exported GIF loops when Loop is checked at the time of export (a video file never loops by itself).
 
 {pstd}
 The current wave's title/counter (or, in event mode, the active-tie count/time readout) is ALSO shown as its own small box drawn directly
 on the canvas, not just in the toolbar - draggable by its own handle and resizable via its own bottom-right resize handle, the same way
 {help nwplot}'s own {opt interactive} view lets you reposition/resize its legend. Unlike the toolbar text, this on-canvas box gets baked
-into {bf:Export GIF}'s own output, at its own current on-screen position and size, so an exported movie still shows what wave/time each
+into exported GIF and video files, at its own current on-screen position and size, so an exported movie still shows what wave/time each
 frame is at once it's outside the interactive viewer. Its own "{bf:x}" button removes it for the rest of that viewing session (and stops
-it being baked into any GIF exported after that); there is no way to bring it back short of reopening the movie. Its own font size only
+it being baked into any file exported after that); there is no way to bring it back short of reopening the movie. Its own font size only
 ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title
 text happens to be.
 
@@ -134,6 +138,32 @@ rendering and animation): {opt frames()}, {opt delay()}, {opt explosion()}, {opt
 {opt z()}, {opt nodexys()}, {opt switchnetwork()}/{opt switchcolor()}/{opt switchsymbol()}/{opt switchedgecolor()}/{opt switchtitle()}, and
 {opt eps} (vector export - {help nwplot}'s own {opt interactive} view made the identical PNG-only tradeoff already, for the same reason:
 Cytoscape.js's built-in export is raster-only).
+
+{marker export}{...}
+{title:Remarks}
+
+{pstd}
+{bf:Exporting a movie file.} {opt export(filename)} writes the movie to a file instead of leaving it open for viewing. The format follows the file's extension:
+
+{p2colset 9 17 19 2}{...}
+{p2col:.mp4}H.264 video, which plays in presentation software, on web pages and in every common video player{p_end}
+{p2col:.webm}VP9 or VP8 video, for web pages{p_end}
+{p2col:.gif}an animated image, which needs no video player at all, at the cost of a larger file and fewer colors{p_end}
+{p2colreset}{...}
+
+{pstd}
+{cmd:nwmovie} builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is
+written (at most {opt timeout()} seconds). The viewer window appears briefly while it works; do not close it. Nothing beyond {cmd:nwcommands}
+itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit
+on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows {opt duration()} (panel mode)
+or {opt speed()} (event mode): three waves with the default {cmd:duration(800)} give a movie of 1.6 seconds, so give a larger
+{opt duration()} for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
+
+{pstd}
+{opt export()} needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode
+the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), {cmd:nwmovie} stops with a message saying so; export a
+{bf:.gif} file instead, which every engine can write. The {bf:Export video} button in the interactive view writes MP4 where the engine can
+and WebM otherwise.
 
 {title:Examples}
 
@@ -157,6 +187,13 @@ Same data again, with a custom display title per wave (default, without {opt tit
 
 	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwmovie glasgow1 glasgow2 glasgow3, duration(600) titles("Year 1 (1995)" "Year 2 (1996)" "Year 3 (1997)")}
+
+{pstd}
+The same movie written to a video file and to an animated GIF, two seconds per transition:{p_end}
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(glasgow.mp4) replace}
+	{cmd:. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(glasgow.gif) replace}
 
 {pstd}
 {bf:Event mode}, on the same small inline event log {help nwrem}'s own example uses:{p_end}
@@ -192,4 +229,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.15.4, 4 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.16.0, 5 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

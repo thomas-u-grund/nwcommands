@@ -4,6 +4,17 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.16.0] - 2026-11-05
+
+### Added
+- **`nwmovie, export(filename)` writes the movie as an MP4 or WebM video or an animated GIF**, chosen by the file's extension, without opening the interactive view, so that a do-file can produce the movie file. The native viewer renders and encodes the movie and closes again; `nwmovie` waits for the file (options `replace` and `timeout()`). Nothing beyond the package needs to be installed on Windows, macOS or Linux: the encoding is done by the web engine of the operating system.
+- **The movie view has an *Export video* button** next to *Export GIF*: MP4 (H.264) where the web engine can encode it, WebM otherwise. The time readout drawn on the canvas is part of every frame, as in the GIF.
+
+### Fixed
+- **Save and export buttons work in the viewer on Windows and Linux.** In the native viewer of these two platforms, *Export PNG*, *Save nodes*, *Save edges* (`nwplot, interactive`) and *Export GIF* (`nwmovie`) did nothing, because a bare web view ignores downloads; only the macOS viewer had a save dialog. The Windows (WebView2) and Linux (WebKitGTK) viewers now show a save dialog as well.
+- **The native viewer is started under a name Windows can run.** The viewer was copied to a temporary name without the extension `.exe`, and Windows does not run a program file without it; the copy now keeps the extension.
+- **`nwplot, interactive` and `nwmovie` no longer change the random-number stream** when they pick names for their temporary files.
+
 ## [3.15.4] - 2026-11-04
 
 ### Fixed
