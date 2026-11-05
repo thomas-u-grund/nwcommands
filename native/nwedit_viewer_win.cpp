@@ -155,6 +155,12 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmd
 	g_hwnd = hwnd;
 
 	ShowWindow(hwnd, nCmdShow);
+	// Unattended export: keep the window on top; a covered or minimized
+	// WebView2 gets no animation frames and throttled timers.
+	if (!g_autoOut.empty()) {
+		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowTextW(hwnd, L"nwmovie: exporting");
+	}
 	UpdateWindow(hwnd);
 
 	// CreateCoreWebView2EnvironmentWithOptions -> environment completion

@@ -120,6 +120,19 @@ function downloadBase64(base64, filename, mime) {
   URL.revokeObjectURL(url);
 }
 
+// Waits for the next paint, or 50 ms, whichever comes first. Exports step
+// through the frames with this: a hidden or covered window gets no animation
+// frames (WebKit and Chromium suspend them), and an export waiting on
+// requestAnimationFrame alone would stall there for good.
+function nextPaint() {
+  return new Promise(resolve => {
+    let done = false;
+    const go = () => { if (!done) { done = true; resolve(); } };
+    requestAnimationFrame(go);
+    setTimeout(go, 50);
+  });
+}
+
 const isEvent = MOVIE_DATA.mode === 'event';
 
 // nwplot's own per-network resolved JSON (movieexport()) ids each edge
@@ -565,7 +578,7 @@ if (!isEvent) {
           }
         });
       });
-      await new Promise(r => requestAnimationFrame(r));
+      await nextPaint();
       frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: frameText });
     }
     applyFrameInstant(curFrame);
@@ -685,7 +698,7 @@ if (isEvent) {
     for (let i = 0; i <= n; i++) {
       const t = tmin + (i / n) * (tmax - tmin);
       seekTo(t, false);
-      await new Promise(r => requestAnimationFrame(r));
+      await nextPaint();
       // seekTo() above already called updateOverlay(), so labelEl/timeEl
       // already hold exactly this frame's own text.
       frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: labelEl.textContent + '   ' + timeEl.textContent });
@@ -920,7 +933,7 @@ if (AUTO_EXPORT && hasNativeSave) {
     }
   };
   // two animation frames: the first layout pass and paint have happened
-  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(run, 300)));
+  nextPaint().then(nextPaint).then(() => setTimeout(run, 300));
 }
 </script>
 </body>

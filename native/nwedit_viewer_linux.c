@@ -129,6 +129,12 @@ int main(int argc, char *argv[]) {
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webview), uri);
 	g_free(uri);
 
+	// Unattended export: keep the window on top; a covered window gets no
+	// animation frames, which can stall the export.
+	if (g_auto_out) {
+		gtk_window_set_keep_above(GTK_WINDOW(window), TRUE);
+		gtk_window_set_title(GTK_WINDOW(window), "nwmovie: exporting");
+	}
 	gtk_widget_show_all(window);
 	gtk_main();
 

@@ -157,6 +157,17 @@ int main(int argc, const char *argv[]) {
 
 		[window setContentView:webView];
 		[window makeKeyAndOrderFront:nil];
+		id exportActivity = nil;
+		if (gAutoOut) {
+			// Unattended export: keep the window on top and the process out of
+			// App Nap, since a covered window gets no animation frames and its
+			// timers are throttled, which can stall the export.
+			[window setLevel:NSFloatingWindowLevel];
+			[window setTitle:@"nwmovie: exporting"];
+			exportActivity = [[NSProcessInfo processInfo]
+				beginActivityWithOptions:(NSActivityUserInitiated | NSActivityLatencyCritical)
+				reason:@"nwmovie export"];
+		}
 
 		[NSApp activateIgnoringOtherApps:YES];
 		[NSApp run];
