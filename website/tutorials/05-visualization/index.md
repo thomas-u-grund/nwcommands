@@ -161,8 +161,8 @@ advice):
 1. **Build the page and keep the layout.** `generate(x y)` stores the coordinates that `nwplot`
    computed; `set seed` makes the starting layout repeatable.
 2. **Work in the page.** Drag, recolor, move the sliders, then use *Save nodes* and *Save edges*. They
-   write two small CSV files (`nwedit_nodes.csv`, `nwedit_edges.csv`; in most browsers these end up in
-   the Downloads folder).
+   write two small CSV files (`nwedit_nodes.csv`, `nwedit_edges.csv`). The viewer window asks where to
+   save them; in a browser tab they go to the Downloads folder.
 3. **Bring the edits back.** `nodexy(x y)` tells `nwplot` where the nodes were, `importcoords()` and
    `edgeimport()` read the two files.
 4. **Export the static figure** with `export()`.
@@ -234,3 +234,18 @@ Wrote friendship_movie.html
 Drag the timeline slider below to move between the three waves of the Glasgow friendship network.
 
 <iframe src="friendship_movie.html" width="100%" height="600" style="border:1px solid #d0d7de; border-radius:6px;" loading="lazy"></iframe>
+
+### Saving a movie as a video or GIF
+
+The *Export GIF* and *Export video* buttons save the movie as it plays, with the wave readout drawn in.
+To write the file from a do-file instead, give `export()`; the extension sets the format (`.mp4`,
+`.webm` or `.gif`). A viewer window opens briefly, encodes the movie and closes again. Nothing else
+needs to be installed, on Windows, macOS or Linux.
+
+```stata
+. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(friendship.mp4) replace
+. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) export(friendship.gif) replace
+```
+
+`duration()` is the time in milliseconds for each change from one wave to the next, so it sets the
+length of the video: two seconds per change give a four-second movie for three waves.

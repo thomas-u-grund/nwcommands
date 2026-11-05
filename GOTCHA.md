@@ -87,6 +87,26 @@ GitHub Pages cannot redirect, so the short install address serves a copy of the 
 
 Cytoscape draws y downward, Stata upward. `nwedit_template.html` (and `nwmovie_template.html`) negate y when placing nodes (`y: -n.y * 1000`) and `saveNodeEdits()` negates it back, so the JSON written by `nwplot.ado`, `movieexport()` and the saved CSV all stay in Stata orientation. Do not flip in `nwplot.ado`. Also: cytoscape's arrow size is `max((13.37*w)^0.9, 29) * arrow-scale`, so it never gets smaller than for a 3 px line; the template's `arrowFit()` corrects the scale per edge. A page built from degree-scaled `nodexy()` data (usair, `Lon Lat`) is still unusably tiny at default factors (coordinates are not rescaled to 0-1.5 as `layout()` results are).
 
+## The interactive pages save files through a native bridge, one per platform (2026-11-05)
+
+A bare web view (WKWebView, WebView2, WebKitGTK) ignores a blob + `<a download>` click, so the Save/Export
+buttons of `nwedit_template.html` and `nwmovie_template.html` call `nativeSaver()` instead whenever the
+viewer registered a bridge: `window.webkit.messageHandlers.nwedit` on macOS and Linux (payload
+`{filename, dataBase64}`), `window.chrome.webview.postMessage` on Windows (a plain string
+`"<filename>\n<base64>"`, or `"\x01error\n<message>"`, so the C++ side needs no JSON parser). A new
+button must go through `downloadBase64()`/`downloadText()`, never an anchor of its own. With a second
+command-line argument the viewer writes the posted file to that path without a dialog and quits
+(`nwmovie, export()`); a failed export is written to `<path>.error`. Only the macOS viewer can be built
+locally; the Windows and Linux ones are built by `build-plugins.yml`, so test those on a real machine.
+In C++, `L"\x01error"` is wrong: the hex escape swallows the `e`.
+
+## MP4 from WebKit's encoder is labelled full range but is not (2026-11-05)
+
+WebCodecs on macOS (WKWebView) encodes limited-range BT.709 H.264 but reports sRGB full range in
+`decoderConfig.colorSpace`; mp4-muxer copies that into the `colr` box and players show white as 234
+gray. `encodeMp4WebCodecs()` overrides the colour space before the chunk is muxed. Check an export
+with `ffprobe -show_entries stream=color_range` (should be `tv`) and a white pixel of a decoded frame.
+
 ## Package manifests (`nwcommands*.pkg`) are generated — don't hand-edit them
 
 `nwcommands-ado1.pkg`/`-ado2.pkg`/`-ado3.pkg`, `nwcommands-hlp1.pkg`/`-hlp2.pkg`,

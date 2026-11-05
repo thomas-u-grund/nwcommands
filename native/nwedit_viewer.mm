@@ -27,6 +27,13 @@
 // nwplot's side of that gap: nwedit_template.html's own hasNativeSave
 // feature-detect posts {filename, dataBase64} here instead of trying the
 // anchor trick whenever it detects it's running inside this native viewer.
+// Unattended export: when the viewer is started with a second argument
+// (`nwmovie ..., export(file)`), the page exports by itself and posts the
+// result here; the handler then writes it to that path without a dialog
+// and quits. A failed export posts {error} instead, written to
+// <path>.error so that the waiting Stata command can report it.
+static NSString *gAutoOut = nil;
+
 @interface NweditSaveBridge : NSObject <WKScriptMessageHandler>
 - (void)handleSaveRequest:(NSDictionary *)body;
 @end
@@ -62,6 +69,23 @@
 // this testable standalone.
 - (void)handleSaveRequest:(NSDictionary *)body {
 	if (![body isKindOfClass:[NSDictionary class]]) return;
+	if (gAutoOut) {
+		NSString *err = body[@"error"];
+		if ([err isKindOfClass:[NSString class]]) {
+			[err writeToFile:[gAutoOut stringByAppendingString:@".error"] atomically:YES
+				encoding:NSUTF8StringEncoding error:nil];
+		} else {
+			NSString *b64a = body[@"dataBase64"];
+			NSData *d = [b64a isKindOfClass:[NSString class]]
+				? [[NSData alloc] initWithBase64EncodedString:b64a options:NSDataBase64DecodingIgnoreUnknownCharacters]
+				: nil;
+			if (d) [d writeToFile:gAutoOut atomically:YES];
+			else [@"no data received from the page" writeToFile:[gAutoOut stringByAppendingString:@".error"]
+				atomically:YES encoding:NSUTF8StringEncoding error:nil];
+		}
+		[NSApp terminate:nil];
+		return;
+	}
 	NSString *filename = body[@"filename"];
 	NSString *b64 = body[@"dataBase64"];
 	if (![filename isKindOfClass:[NSString class]] || ![b64 isKindOfClass:[NSString class]]) return;
@@ -93,13 +117,14 @@
 
 int main(int argc, const char *argv[]) {
 	if (argc < 2) {
-		fprintf(stderr, "usage: nwedit_viewer <path-to-html-file>\n");
+		fprintf(stderr, "usage: nwedit_viewer <path-to-html-file> [<output-file>]\n");
 		return 1;
 	}
 
 	@autoreleasepool {
 		NSString *path = [NSString stringWithUTF8String:argv[1]];
 		NSURL *fileURL = [NSURL fileURLWithPath:path];
+		if (argc >= 3) gAutoOut = [NSString stringWithUTF8String:argv[2]];
 
 		[NSApplication sharedApplication];
 		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];

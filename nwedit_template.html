@@ -887,12 +887,26 @@ function saveEdgeEdits() {
 // confirmed directly (Save/Export did nothing when clicked there, same
 // buttons worked fine under `view browse`). When nwedit_viewer.mm's own
 // WKScriptMessageHandler bridge is present, route through it instead -- it
-// shows a real native NSSavePanel and writes the file itself. Windows/
-// Linux nwedit_viewer builds (WebView2 / WebKitGTK) don't register this
-// same "nwedit" handler yet, so those still fall through to the anchor
-// path below, which has the identical no-op problem there until each
-// platform's own bridge is added.
-const hasNativeSave = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nwedit);
+// shows a real native NSSavePanel and writes the file itself. The Windows
+// and Linux viewers register the same bridge (see nativeSaver below).
+// Native save bridge. A bare web view inside nwedit_viewer has no working
+// download for a blob + <a download> click, so each platform's viewer
+// registers a handler that shows a native Save dialog and writes the file:
+// macOS (WKWebView) and Linux (WebKitGTK) as window.webkit.messageHandlers
+// .nwedit, Windows (WebView2) as window.chrome.webview. They receive
+// {filename, dataBase64} (or {error} in an unattended export). In an ordinary browser tab (the `view browse`
+// fallback) neither exists and the anchor download below is used.
+const nativeSaver =
+  (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nwedit)
+    ? (msg => window.webkit.messageHandlers.nwedit.postMessage(msg))
+    : (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function')
+      // WebView2 gets a plain string, "<filename>\n<base64>" or "\u0001error\n<message>",
+      // so the C++ side needs no JSON parser.
+      ? (msg => window.chrome.webview.postMessage(msg.error != null
+          ? '\u0001error\n' + msg.error
+          : msg.filename + '\n' + msg.dataBase64))
+      : null;
+const hasNativeSave = !!nativeSaver;
 
 function utf8ToBase64(str) {
   return btoa(unescape(encodeURIComponent(str)));
@@ -900,7 +914,7 @@ function utf8ToBase64(str) {
 
 function downloadText(text, filename, mime) {
   if (hasNativeSave) {
-    window.webkit.messageHandlers.nwedit.postMessage({ filename, dataBase64: utf8ToBase64(text) });
+    nativeSaver({ filename, dataBase64: utf8ToBase64(text) });
     return;
   }
   const blob = new Blob([text], { type: mime });
@@ -972,7 +986,7 @@ function exportPng() {
       // needed -- same native-bridge path as downloadText() above, see its
       // comment for why the plain toBlob()+anchor path below no-ops here.
       const dataUrl = canvas.toDataURL('image/png');
-      window.webkit.messageHandlers.nwedit.postMessage({
+      nativeSaver({
         filename: 'nwedit_export.png',
         dataBase64: dataUrl.slice(dataUrl.indexOf(',') + 1)
       });

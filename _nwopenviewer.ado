@@ -19,7 +19,11 @@
 
 capture program drop _nwopenviewer
 program _nwopenviewer, rclass
-	syntax anything(name=htmlpath)
+	syntax anything(name=htmlpath) [, OUTput(string)]
+	// output(): unattended export (nwmovie's export() option). The path is
+	// passed to the viewer as its second argument; the page then exports by
+	// itself, the viewer writes the file there and closes. It must be
+	// space-free (winexec splits on blanks), so callers pass a c(tmpdir) path.
 
 	// REAL BUG FOUND AND FIXED: `anything' captures the caller's raw
 	// argument text VERBATIM, including any literal double quotes typed
@@ -47,6 +51,10 @@ program _nwopenviewer, rclass
 
 	mata: st_local("_nwov_viewerpath", NweditViewerAvailable() ? NweditViewerPath() : "")
 	local _nwov_usedviewer = 0
+	if "`output'" != "" & "`_nwov_viewerpath'" == "" {
+		di as error "the native viewer for this platform was not found; export() needs it. Reinstall the package."
+		exit 601
+	}
 	if "`_nwov_viewerpath'" != "" {
 		// Stage BOTH the viewer binary AND the html file it is told to
 		// open into c(tmpdir) (guaranteed space-free) before calling
@@ -61,8 +69,15 @@ program _nwopenviewer, rclass
 		// `winexec' call the same way. Staging unconditionally here, for
 		// every caller, is simpler and safer than asking each caller to
 		// separately guarantee its own path is space-free.
+		// Random file names without disturbing the user's random-number
+		// stream (a seed set before nwplot or nwmovie must still hold after).
+		local _nwov_rngstate = c(rngstate)
 		local _nwov_viewercopy = "`c(tmpdir)'" + "nwedit_viewer_" + strofreal(int(runiform()*1000000))
 		local _nwov_htmlcopy = "`c(tmpdir)'" + "nwedit_view_" + strofreal(int(runiform()*1000000)) + ".html"
+		set rngstate `_nwov_rngstate'
+		// Windows: keep the .exe extension. CreateProcess appends ".exe" to a
+		// name without an extension, so a copy without it is never found.
+		if "`c(os)'" == "Windows" local _nwov_viewercopy "`_nwov_viewercopy'.exe"
 		capture erase "`_nwov_viewercopy'"
 		capture erase "`_nwov_htmlcopy'"
 		capture copy "`_nwov_viewerpath'" "`_nwov_viewercopy'", replace
@@ -71,7 +86,7 @@ program _nwopenviewer, rclass
 		local _nwov_copyrc2 = _rc
 		if `_nwov_copyrc1' == 0 & `_nwov_copyrc2' == 0 {
 			capture shell chmod +x "`_nwov_viewercopy'"
-			capture winexec `_nwov_viewercopy' `_nwov_htmlcopy'
+			capture winexec `_nwov_viewercopy' `_nwov_htmlcopy' `output'
 			if _rc == 0 local _nwov_usedviewer = 1
 		}
 	}
