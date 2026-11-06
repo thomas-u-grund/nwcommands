@@ -13,5 +13,7 @@ This section holds material that goes with the book *Network Analysis with Stata
 from Stata Press, expected 2027). Nothing here is needed to use the software, and the tutorials and the
 [command reference](../reference/) stay the place to learn the commands.
 
-- [Interactive demo: the Lazega advice network](interactive/): a live, draggable view of a network, with the
-  commands that produced it.
+- [Interactive pages from the book](interactive/): working copies of the interactive pages and the network movie
+  that the book builds, with the commands that wrote them.
+- [Interactive demo: the Lazega advice network](interactive/lazega/): a live, draggable view of a network, with a
+  guide to what to try and the commands that produced it.

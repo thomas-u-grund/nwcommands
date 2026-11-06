@@ -1,103 +1,120 @@
 ---
-title: "Interactive demo: Lazega advice network"
+title: "Interactive pages from the book"
 parent: "Book companion"
 nav_order: 1
-description: "A live interactive view of the Lazega law-firm advice network made with nwplot, interactive: drag nodes, recolor groups, change sizes, save the layout, and the Stata commands that produced it."
+description: "Working copies of the interactive network pages and the network movie that the book Network Analysis with Stata builds with nwplot, interactive and nwmovie, with the commands that wrote them."
 permalink: /book/interactive/
 ---
 
-# Interactive demo: the Lazega advice network
+# Interactive pages from the book
 {: .no_toc }
 
-A printed page shows one layout, one palette and one size scale. The option `interactive` of `nwplot` writes the
-same network as a web page that you can move around in. This page lets you try it without installing anything:
-the view below is an ordinary file produced by `nwplot`. It works in your browser and does not contact any server.
+A printed book can show only stills of an interactive page. These are working copies of the pages that the book
+*Network Analysis with Stata* (forthcoming, Stata Press) builds, written by the commands printed next to each one.
+Every page is a single file with its plotting library inside it. It runs in your browser, does not contact any
+server and does not need Stata. What you change on a page is not stored on this site; *Save nodes*, *Save edges*
+and *Export PNG* write files to your own computer.
 
-If you are reading the book *Network Analysis with Stata* (forthcoming, Stata Press), this is the live version
-of the kind of view that its section on interactive plots describes. Reading the book is not needed to use the
-page, and the page does not need Stata.
+The side panel of a page needs about 900 pixels of width. On a phone, turn it sideways or use a larger screen.
 
 1. TOC
 {:toc}
 
-## The network
+## Chapter 5: Seeing networks
 
-The data are the advice network of the 71 lawyers of a corporate law firm (Lazega 2001). A tie runs from a
-lawyer to the colleague whom she asks for advice; there are 892 ties. In the view, **color** is the office
-(Boston, Hartford, Providence), **shape** is the practice (corporate or litigation) and **size** is the number of
-colleagues who ask the lawyer for advice (indegree). Labels are the node identifiers (`n1` to `n71`).
+### The Florentine marriage network
 
-<iframe src="lazega_advice_interactive.html" width="100%" height="700" style="border:1px solid #d0d7de; border-radius:6px;" loading="lazy" title="Interactive view of the Lazega advice network"></iframe>
+The page of the worked example on layouts: pick up the Medici family, put it at the edge of the picture and watch
+its six marriage ties stretch across the page. Its betweenness does not change; only the picture does.
 
-The side panel needs about 900 pixels of width. On a phone or in a narrow window, open the
-[view in its own page](lazega_advice_interactive.html).
+[Open the page](florentine_explore.html)
 
-![Still image of the interactive view: toolbar on top, the network in the middle, legends and sliders on the right](lazega_advice_interactive_still.jpg)
+```stata
+. nwwebuse florentine, nwclear
+. set seed 42
+. nwplot flomarriage, label(_nwnode) generate(x y) ///
+>     interactive noopen fname(florentine_explore.html)
+```
 
-*Still image of the view when it opens. If the live view above does not load (it needs JavaScript), this is what it shows.*
+### The advice network of the law firm
 
-## What to try
+The page of the chapter's full workflow: explore in the browser, save the layout, draw the figure in Stata. Color is
+the office, shape the practice and size the number of colleagues who ask the lawyer for advice.
 
-- **Drag a node.** Press on a symbol and move it; its ties follow. Move one of the large symbols away from the
-  center and watch how many ties go with it. Click a node (without moving it) to see its label, group, color,
-  shape, size and position in the inspector at the bottom of the side panel.
-- **Click a color swatch** in the node legend to recolor everybody in that group at once; the drop-down next to it
-  changes the shape of the group. Providence has only three lawyers, so it is a good group to recolor. (The
-  legend box on the canvas is the one to read for shapes: the drop-down in the side panel shows "mixed" for a group
-  whose members have different shapes.)
-- **Move the sliders** for node size and edge width. They correspond to the options `nodefactor()` and
-  `edgefactor()` of `nwplot`, so a value you like can be typed into the next call. Thin lines make the nodes
-  show through; a pattern that disappears when the lines are thin was carried by the number of lines.
-- **Move the legend box** on the canvas out of the way before you export a picture.
-- **Save.** *Save nodes* and *Save edges* write two small CSV files (`nwedit_nodes.csv` and `nwedit_edges.csv`)
-  with positions, colors, shapes and the slider values. In most browsers they end up in your Downloads
-  folder. *Export PNG* writes a picture of what you see, including the legend.
-
-The page is a demonstration of the view. It has no data entry, and what you change is not stored on this site.
-
-## The Stata commands
-
-The page above was written by these commands (`fname()` needs core 3.4.0 or later; the data set
-`lazega` is in the repository and is loaded with `nwwebuse`):
+[Open the page](lazega_advice_interactive.html) · [the page with a guide to what to try and how to bring the
+layout back into Stata](lazega/)
 
 ```stata
 . nwwebuse lazega, nwclear
-. nwdegree lazega_adv, generate(outdeg indeg)
+. nwdegree lazega_adv, generate(outdeg indeg) silent
 . set seed 42
-. nwplot lazega_adv, color(office, colorpalette(navy dkorange gs12))       ///
->     symbol(practice) size(indeg) label(_nwnode) edgefactor(0.4)          ///
->     generate(x y) interactive noopen fname(lazega_advice_interactive)
+. nwplot lazega_adv, color(office, colorpalette(navy dkorange gs12))  ///
+>     symbol(practice) size(indeg) label(_nwnode) edgefactor(0.4)     ///
+>     generate(x y) interactive noopen fname(lazega_advice_interactive.html)
 ```
 
-- `generate(x y)` keeps the coordinates that `nwplot` computed, so that the layout can be recovered.
-- `set seed 42` makes the starting layout repeatable (it starts from random positions).
-- `interactive` builds the page. `noopen` writes it without opening Stata's viewer window; leave `noopen`
-  out to have the viewer open by itself. `fname()` is the file to write; its path is displayed and returned in
-  `r(fname)`.
+### Glasgow friendship, wave 1, by smoking (exercise)
 
-## Bringing your edits back into Stata
+The page for the exercise on the Glasgow friendship network: drag the most conspicuous girl to a new place and ask
+which impression of the first picture survives the move.
 
-The browser is for looking; a figure for print is better made in Stata, where it can be reproduced. Read the two CSV
-files back with `importcoords()` and `edgeimport()`, and tell `nwplot` where the nodes were with `nodexy()`:
+[Open the page](glasgow1_smoke_interactive.html)
 
 ```stata
-. nwplot lazega_adv, nodexy(x y)                                         ///
->     importcoords("nwedit_nodes.csv") edgeimport("nwedit_edges.csv")    ///
->     color(office, colorpalette(navy dkorange gs12))                    ///
->     symbol(practice) size(indeg) label(_nwnode) scheme(s1mono)         ///
->     labelopt(mlabsize(tiny)) export("lazega_advice_final.pdf") replace
+. nwwebuse glasgow, nwclear
+. set seed 42
+. nwplot glasgow1, color(smoke1, colorpalette(gs12 orange cranberry)) ///
+>     label(_nwnode) generate(x y) interactive noopen ///
+>     fname(glasgow1_smoke_interactive.html)
 ```
 
-The edits are matched to the nodes by row number, so run this on the same network, with the same sort order and the
-same `if` and `in` restrictions. The slider for node size is converted so that the static plot has the proportions
-of the view; an explicit `nodefactor()` or `edgefactor()` wins over the saved values. The
-[visualization tutorial](../../tutorials/05-visualization/#the-workflow-explore-in-the-browser-finish-in-stata)
-runs this step on a saved pair of files and shows the result, and [nwplot](../../reference/nwplot) lists all
-options.
+### The Chesapeake Bay food web (exercise)
+
+The page for the exercise on tie values: move the edge-width slider to its smallest and its largest value. The slider
+multiplies every width by the same number, so it cannot do the work of the log transformation.
+
+[Open the page](chesapeake_interactive.html)
+
+```stata
+. nwwebuse chesapeake, nwclear
+. nwgenerate chesapeake_log = ln(chesapeake + 1)
+. set seed 42
+. nwplot chesapeake, arcstyle(straight) edgesize(chesapeake_log, legendoff) ///
+>     edgefactor(0.5) arrowfactor(0.3) layout(mds) label(_nwnode)       ///
+>     generate(x y) interactive noopen fname(chesapeake_interactive.html)
+```
+
+## Chapter 14: Networks over time
+
+### The Glasgow friendship movie
+
+The three waves of the Glasgow friendship network, played one after another. On the page, each wave gets its own
+layout, started from the positions of the wave before, so the girls drift as the network changes.
+
+[Open the movie page](glasgow_movie.html)
+
+```stata
+. nwwebuse glasgow, nwclear
+. nwmovie glasgow1 glasgow2 glasgow3, fname(glasgow_movie) noopen
+```
+
+The video below is the export of the same movie with one layout for all three waves (`fixedlayout`), so every
+visible change is a friendship nomination that was formed or dropped:
+
+<video src="glasgow.mp4" controls width="100%" style="border:1px solid #d0d7de; border-radius:6px;"></video>
+
+```stata
+. nwmovie glasgow1 glasgow2 glasgow3, duration(2000) fixedlayout ///
+>         export(glasgow.mp4) replace
+```
+
+`export()` needs nwcommands 3.16.0 or later.
 
 ## Source and licence
 
-- Data: Lazega, E. (2001), *The Collegial Phenomenon*, Oxford University Press; Lazega, E. and van Duijn, M. (1997),
-  *Social Networks* 19, 375-397. See the [data sets](../../datasets/#lazega-lawyers-in-a-corporate-law-firm) page.
-- The page was produced with nwcommands, which is free software under the GNU General Public License, version 3.
-  The file contains the drawing library Cytoscape.js and other open-source code under the MIT license (the notices are in the file).
+- Data: Padgett (1994) and Breiger and Pattison (1986) for the Florentine families; Lazega (2001) and Lazega and van Duijn (1997) for the
+  law firm; the Teenage Friends and Lifestyle Study (Glasgow) for the friendship waves; Baird and Ulanowicz (1989)
+  for the Chesapeake Bay food web. See the [data sets](../../datasets/) page.
+- The pages were produced with nwcommands, which is free software under the GNU General Public License, version 3.
+  Each file contains the drawing library Cytoscape.js and other open-source code under the MIT license (the
+  notices are in the file).
