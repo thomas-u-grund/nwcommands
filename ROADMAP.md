@@ -26,7 +26,8 @@ times; assortativity (Newman 2002); induced/endogenous/exogenous centrality deco
 minimum cuts, and bipartite matching; a 4-node undirected motif/graphlet census; spectral graph
 analysis (Laplacian eigenstructure, algebraic connectivity, spectral bipartitioning); label
 propagation as a second community-detection algorithm alongside Louvain; tie turnover/stability
-between two waves of a network.
+between two waves of a network; degree-preserving null models for one-mode networks (random networks
+from a degree sequence, tie-swap rewiring, degree-conditioned CUG tests).
 
 **Stata-native integration**: alter/neighbor attribute aggregation directly in `nwgen`
 (`mean(alter.x)`-style, with categorical proportions and multi-hop lagged exposure); dyadic

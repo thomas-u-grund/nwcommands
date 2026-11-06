@@ -116,7 +116,8 @@ The node-level values can be saved with `nwclustering`:
 Monks differ a lot: from a clustering of .17 (their contacts hardly know each other) to 1 (all their contacts
 are tied). As with density, the question is whether this closure is more than chance would give. For that use
 `nwcug` with `stat(nwtriads ##net##)` and `rname(transitivity)`, shown in
-[Tutorial 18](../18-testing/).
+[Tutorial 18](../18-testing/); add `condition(degrees)` to compare with random networks in which every monk
+keeps the number of ties he sends and receives.
 
 ## Motifs: four-node patterns
 

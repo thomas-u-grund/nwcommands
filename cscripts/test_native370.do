@@ -459,13 +459,15 @@ qui timer list 2
 di as txt "tie swapping, 100,000 attempts on 5,669 ties: native " %6.3f r(t2) " s"
 assert r(t2) < 5
 
-* a one-mode network is refused as before; the Mata routine and the native kernel give the same refusal
+* since 3.17.0 a one-mode network is rewired too (kernel 55, cscripts/test_degswap.do); the degrees stay
 nwclear
 qui nwuse data/davis, nwclear
 qui nwpermute davis, generate(sx) swap
 nwclear
 qui nwuse data/gang, nwclear
-capture nwpermute gang, generate(sx) swap
-assert _rc == 198
+nwpermute gang, generate(sx) swap
+qui nwdegree gang, generate(dg1)
+qui nwdegree sx, generate(dg2)
+assert dg1 == dg2
 
 di "native370: all equal"

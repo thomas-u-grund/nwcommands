@@ -35,3 +35,20 @@ nwplot, layout(circle) scheme(s1network) size(deg) export("plot_prefattach.svg")
 nwlattice 4 4, xwrap ywrap
 nwsummarize
 nwplot, layout(grid) label(_nwnode) scheme(s1network) export("plot_lattice.svg") replace
+
+* nwrandom, degree(): a random network in which every node has a given
+* degree (Havel-Hakimi construction, then random tie swaps)
+set seed 2026
+nwrandom 8, degree(3 3 2 2 2 2 1 1) name(randdeg)
+nwdegree randdeg, generate(d_randdeg)
+list _nwnode d_randdeg in 1/8, noobs
+* a list no network can have is refused
+capture noisily nwrandom 3, degree(1 1 1) name(bad)
+
+* the degrees of a real network: random networks with the degrees of the
+* Florentine marriage network, and otherwise random
+nwwebuse florentine, nwclear
+nwdegree flomarriage, generate(d_flo)
+nwrandom 16, degree(d_flo) name(floran) xvars
+nwclustering flomarriage, generate(cc1) replace
+nwclustering floran, generate(cc2) replace

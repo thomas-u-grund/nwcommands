@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 282
+POSITION 10 10 1060 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwrandom - Generate a random network")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  GROUPBOX gb_opt 10 44 1030 244, label("Options")
   TEXT tx_ed_weights 20 54 260 ., label("probabilities p_k for tie weights k")
   EDIT ed_weights 290 54 190 ., nomem option(weights)
   TEXT tx_cx_selfloop 20 82 260 ., label("allow self-loops (a node tied to itself) in the generated network; default = no ")
@@ -30,6 +30,14 @@ BEGIN
   EDIT ed_density 290 166 190 ., nomem option(density)
   TEXT tx_ed_prob 20 194 260 ., label("probability for a tie")
   EDIT ed_prob 290 194 190 ., nomem option(prob)
+  TEXT tx_ed_degree 20 222 260 ., label("degree of every node (numbers or a variable); undirected")
+  EDIT ed_degree 290 222 190 ., nomem option(degree)
+  TEXT tx_ed_outdegree 20 250 260 ., label("out-degree of every node (with in-degree); directed")
+  EDIT ed_outdegree 290 250 190 ., nomem option(outdegree)
+  TEXT tx_ed_indegree 530 222 260 ., label("in-degree of every node (with out-degree); directed")
+  EDIT ed_indegree 800 222 190 ., nomem option(indegree)
+  TEXT tx_sp_swaps 530 250 260 ., label("degree(): number of tie swaps; default = 10 x ties")
+  SPINNER sp_swaps 800 250 70 ., default(-1) max(999999999) min(-1) nomem option(swaps)
   TEXT tx_ed_labs 530 54 260 ., label("overwrite node labels")
   EDIT ed_labs 800 54 190 ., nomem option(labs)
   TEXT tx_cb_name 530 82 260 ., label("Name of the new random network; default = random")
@@ -65,6 +73,10 @@ BEGIN
 		optionarg main.ed_census
 		optionarg main.ed_density
 		optionarg main.ed_prob
+		optionarg main.ed_degree
+		optionarg main.ed_outdegree
+		optionarg main.ed_indegree
+		optionarg main.sp_swaps
 		optionarg main.ed_labs
 		optionarg main.cb_name
 		option main.cx_undirected
