@@ -5,7 +5,7 @@ authors:
   - family-names: Grund
     given-names: Thomas U.
     affiliation: RWTH Aachen University
-version: "3.16.1"
+version: "3.17.0"
 date-released: "2026-11-06"
 repository-code: "https://github.com/thomas-u-grund/nwcommands"
 license: GPL-3.0-only

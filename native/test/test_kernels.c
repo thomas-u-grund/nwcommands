@@ -1052,6 +1052,70 @@ static int check_nullbip(const char *name, int64_t n1, int64_t n2, double p, int
 	return ok;
 }
 
+/*
+	Degree-preserving swaps (55) of a random one-mode network (build 0), and a network built from its degree sequence
+	(build 1): every degree (directed: out- and in-degree) is kept exactly; no loop; no pair twice (undirected: in either
+	direction); the number of ties is kept.  n nodes, density p.
+*/
+static int check_degswap(const char *name, int64_t n, double p, int directed, int build, char *why, size_t whylen) {
+	int64_t i, j, m = 0, cap, k, *oa, *ia, *ob, *ib, *key;
+	int64_t *ei, *ej;
+	double *ew, *nv;
+	kres_t r;
+	char par[120];
+	int ok = 1;
+	cap = (int64_t)(p * (double)n * (double)n) + 1000;
+	ei = (int64_t *)malloc((size_t)cap * sizeof(int64_t)); ej = (int64_t *)malloc((size_t)cap * sizeof(int64_t));
+	ew = (double *)malloc((size_t)cap * sizeof(double)); nv = (double *)malloc((size_t)(2 * n) * sizeof(double));
+	oa = (int64_t *)calloc((size_t)n + 1, sizeof(int64_t)); ia = (int64_t *)calloc((size_t)n + 1, sizeof(int64_t));
+	ob = (int64_t *)calloc((size_t)n + 1, sizeof(int64_t)); ib = (int64_t *)calloc((size_t)n + 1, sizeof(int64_t));
+	for (i = 1; i <= n; i++) for (j = directed ? 1 : i + 1; j <= n; j++) {
+		if (i == j || rndu() >= p || m >= cap) continue;
+		ei[m] = i; ej[m] = j; ew[m] = (double)(1 + m % 5); m++;
+		oa[i]++; ia[j]++;
+		if (!directed) { oa[j]++; ia[i]++; }
+	}
+	for (i = 1; i <= n; i++) { nv[i - 1] = (double)oa[i]; nv[n + i - 1] = (double)ia[i]; }
+	snprintf(par, sizeof par, "%d %d %lld %d %lld", directed, 777 + build, (long long)(10 * m), build, (long long)n);
+	if (build) r = run_comb(55, directed ? 2 * n : n, 0, ei, ej, ew, nv, par);
+	else r = run_comb(55, n, m, ei, ej, ew, NULL, par);
+	why[0] = 0;
+	if (r.rc != 0 || r.status != 0 || r.rows != m || (m > 0 && r.cols != 3)) { ok = 0; snprintf(why, whylen, "%s: status %d rc %d size %lld x %lld, expected %lld x 3", name, r.status, r.rc, (long long)r.rows, (long long)r.cols, (long long)m); }
+	else {
+		key = (int64_t *)malloc(((size_t)m + 1) * sizeof(int64_t));
+		for (k = 0; k < m && ok; k++) {
+			int64_t a = (int64_t)r.res[3 * k], b = (int64_t)r.res[3 * k + 1];
+			if (a < 1 || a > n || b < 1 || b > n || a == b) { ok = 0; snprintf(why, whylen, "%s: tie %lld joins %lld and %lld", name, (long long)k + 1, (long long)a, (long long)b); break; }
+			ob[a]++; ib[b]++;
+			if (!directed) { ob[b]++; ib[a]++; }
+			key[k] = directed ? (a - 1) * n + (b - 1) : ((a < b ? a : b) - 1) * n + ((a < b ? b : a) - 1);
+		}
+		if (ok) {
+			qsort(key, (size_t)m, sizeof(int64_t), cmp_i64);
+			for (k = 1; k < m; k++) if (key[k] == key[k - 1]) { ok = 0; snprintf(why, whylen, "%s: a pair is tied twice", name); break; }
+		}
+		if (ok) for (i = 1; i <= n; i++) if (oa[i] != ob[i] || ia[i] != ib[i]) { ok = 0; snprintf(why, whylen, "%s: degree of node %lld changed", name, (long long)i); break; }
+		if (ok && !build && r.a[1] < 1) { ok = 0; snprintf(why, whylen, "%s: no swap was made", name); }
+		free(key);
+	}
+	kres_free(&r);
+	free(ei); free(ej); free(ew); free(nv); free(oa); free(ia); free(ob); free(ib);
+	return ok;
+}
+
+/* degree sequences without a simple network: status 3 */
+static int check_degswap_refused(const char *name, int64_t n, const double *deg, int directed, char *why, size_t whylen) {
+	kres_t r;
+	char par[120];
+	int ok;
+	snprintf(par, sizeof par, "%d %d %d %d %lld", directed, 5, 10, 1, (long long)n);
+	r = run_comb(55, directed ? 2 * n : n, 0, NULL, NULL, NULL, deg, par);
+	ok = (r.rc == 0 && r.status == 3);
+	if (!ok) snprintf(why, whylen, "%s: status %d rc %d, expected status 3", name, r.status, r.rc);
+	kres_free(&r);
+	return ok;
+}
+
 static void test_native390(void) {
 	int model;
 	double t0;
@@ -1067,6 +1131,23 @@ static void test_native390(void) {
 		}
 		if (ok) result("nullbip_margins", 1, "(3 networks, conditions 1 to 4: counts, degrees, no repeated tie)");
 		else result("nullbip_margins", 0, "%s", why);
+	}
+
+	/* degree-preserving swaps and degree sequences (55) */
+	if (selected("degswap")) {
+		int ok = 1, dir, build;
+		char why[300];
+		static const double d_odd[] = {1, 1, 1}, d_big[] = {3, 3, 1, 1}, d_dir[] = {2, 0, 0, 1, 1, 0};
+		for (dir = 0; dir <= 1 && ok; dir++) for (build = 0; build <= 1 && ok; build++) {
+			ok = check_degswap("60 nodes, p = 0.10", 60, 0.10, dir, build, why, sizeof why);
+			if (ok) ok = check_degswap("200 nodes, p = 0.02", 200, 0.02, dir, build, why, sizeof why);
+			if (ok) ok = check_degswap("8 nodes, p = 0.70", 8, 0.70, dir, build, why, sizeof why);
+		}
+		if (ok) ok = check_degswap_refused("degrees 1 1 1", 3, d_odd, 0, why, sizeof why);
+		if (ok) ok = check_degswap_refused("degrees 3 3 1 1", 4, d_big, 0, why, sizeof why);
+		if (ok) ok = check_degswap_refused("out 2 0 0, in 1 1 0 (node 1 would need a loop)", 3, d_dir, 1, why, sizeof why);
+		if (ok) result("degswap", 1, "(3 networks, undirected and directed, swaps and degree sequences: degrees, no loop, no repeated tie; 3 impossible sequences refused)");
+		else result("degswap", 0, "%s", why);
 	}
 
 	/* similarity of a star (51): a leaf's column and the centre's column have closed forms; the formulas are calibrated on

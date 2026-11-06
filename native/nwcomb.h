@@ -18,6 +18,7 @@
 	Code 40 (nwburtw.h, NWCOMB_VERSION 9): weighted Burt measures of nwburt for valued networks (41, 42 reserved).
 	Code 50 (nwnative380.h, NWCOMB_VERSION 11): node position counts of the bipartite motifs of nw2motifs.
 	Codes 51..60 (nwnative390.h, NWCOMB_VERSION 12): node-by-node similarities, DIRT_LPA+ communities, two-mode null-model draws.
+	Code 55 (NWCOMB_VERSION 13): degree-preserving tie swaps of a one-mode network and networks from a degree sequence.
 	Codes 43..49 (nwnative370.h, NWCOMB_VERSION 10): bipartite Louvain (Barber) of nwcommunity, weighted pagerank of nwpagerank,
 	maximum-weight matching of nwmatching, tie swapping of nwpermute, weighted betweenness of nwbetween, weighted distances of nwcloseness and nwgeodesic.
 
@@ -52,7 +53,7 @@
 #endif
 #include "nwtypes.h"
 
-#define NWCOMB_VERSION 12
+#define NWCOMB_VERSION 13
 
 #define ALG_COHESION   3
 #define ALG_FACTIONS   4

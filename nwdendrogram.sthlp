@@ -49,4 +49,4 @@ Not applicable - visualizes an existing hierarchical-clustering result (from {he
 	{cmd:. nwdendrogram _clus_1}
 
 {hline}
-{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

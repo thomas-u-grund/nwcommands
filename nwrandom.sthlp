@@ -19,6 +19,9 @@
 [{opth prob(float)}
 {opth density(float)}
 {opt census}({help nwdyads:{it:mutual asym} [{it:null}]})
+{opt degree}({it:numlist}|{varname})
+{opt outdegree}({it:numlist}|{varname}) {opt indegree}({it:numlist}|{varname})
+{opth swaps(int)}
 {opt weights(p1, p2,...)}
 {opt undirected}
 {opt directed}
@@ -35,6 +38,9 @@
 {synopt:{opth prob(float)}}probability for a tie{p_end}
 {synopt:{opth density(float)}}exact density of the new network{p_end}
 {synopt:{opt census}({help nwdyads:{it:mutual} [{it:asym null}]})}dyad census of the new network{p_end}
+{synopt:{opt degree}({it:numlist}|{varname})}degree of every node of a new undirected network: a list of {it:nodes} numbers, or a variable (its first {it:nodes} observations){p_end}
+{synopt:{opt outdegree()} {opt indegree()}}out-degree and in-degree of every node of a new directed network; both are needed{p_end}
+{synopt:{opth swaps(int)}}with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt directed}}generate a directed network; this is the default, so the option changes nothing (it cannot be combined with {opt undirected}){p_end}
@@ -63,7 +69,11 @@ Alternatively, the overall density of the network can be specified with
 Lastly, one can also generate a random network that has a specific {help nwdyads:dyad census} using {opt census()} (see {help nwdyads}).  
 
 {pstd}
-Either {bf:prob()}, {bf:density()} or {bf:census()} needs to be specified.
+A random network with given degrees is drawn with {opt degree()} (undirected) or with {opt outdegree()} and {opt indegree()}
+(directed); see {it:Networks with given degrees} below.
+
+{pstd}
+Either {bf:prob()}, {bf:density()}, {bf:census()} or the degrees need to be specified.
 
 {pstd}
 With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
@@ -89,12 +99,41 @@ By default, directed networks are generated, option {bf:undirected} generates un
 {pstd}
 The command can also be used to generate both complete ({bf:prob(1)}) and empty networks ({bf:prob(0)}). 
 
+{marker degrees}{...}
+{title:Networks with given degrees}
+
+{pstd}
+{opt degree()} draws an undirected network in which every node has exactly the degree given, with no self-loop and no
+pair of nodes tied twice; {opt outdegree()} and {opt indegree()} do the same for the out-degrees and in-degrees of a
+directed network. The degrees are a list of whole numbers, one for each node, or a numeric variable whose first {it:nodes}
+observations hold them, for example the degrees of an observed network from {help nwdegree}. Use a variable for long lists.
+All networks with these degrees are about equally likely: a network with the degrees is first built (Havel-Hakimi; directed:
+Kleitman-Wang) and then randomized by {opt swaps()} random tie swaps, which exchange the partners of two ties (a-b and c-d
+become a-d and c-b) whenever that makes no self-loop and no repeated tie, so the degrees never change. This is the method
+{cmd:edge.switching.simple} of R's {cmd:igraph::sample_degseq()}. The network is unweighted. A random network with the degrees
+of an observed one is the usual baseline for asking whether a pattern (clustering, reciprocity, segregation) goes beyond what
+the degrees alone produce; {help nwcug} with {opt condition(degrees)} runs such a test and {help nwpermute} with {opt swap}
+rewires a copy of the observed network itself.
+
+{pstd}
+Not every list of degrees can be the degrees of a network: their sum must be even (directed: the out-degrees and the
+in-degrees must have the same sum), no node can have more than {it:nodes} - 1 ties, and more conditions follow from these
+(Erdos and Gallai 1960). {cmd:nwrandom} stops with error 198 when no network has the degrees. For example, three nodes
+cannot all have degree 1, and in {cmd:degree(3 3 1 1)} the two nodes of degree 3 would give every other node at least
+degree 2. {opt degree()} cannot be combined with {opt prob()}, {opt density()}, {opt census()}, {opt weights()} or
+{opt selfloop}. The draws use the native plugin of nwcommands 3.17.0 or later.
+
+	{cmd:. nwrandom 8, degree(3 3 2 2 2 2 1 1)}
+	{cmd:. nwuse glasgow, nwclear}
+	{cmd:. nwdegree glasgow1, generate(od id)}
+	{cmd:. nwrandom 50, outdegree(od) indegree(id) name(glasgow_null)}
+
 
 
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself ({opt density()}/{opt prob()}/{opt census()}). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed); with degrees, {opt degree()} draws an undirected network and {opt outdegree()} {opt indegree()} a directed one. Weighted: yes, via {opt weights()} - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself ({opt density()}/{opt prob()}/{opt census()}). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
 
 {title:Examples}
 	
@@ -105,6 +144,7 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	{cmd:. nwrandom 10, prob(.2) undirected}
 	{cmd:. nwrandom 200, census(100 2000)}
 	{cmd:. nwrandom 10, density(.2) weights(0.1, 0.3, 0.6)}
+	{cmd:. nwrandom 8, degree(3 3 2 2 2 2 1 1)}
 
 {title:Stored results}
 
@@ -125,9 +165,9 @@ timeout at 20,000 before); {opt prob(.0002)} at 20,000 nodes 2.8 seconds (killed
 
 {title:See also}
 
-	{help nwsmall}, {help nwpref}, {help nwpref}, {help nwlattice}, {help nwring}
+	{help nwsmall}, {help nwpref}, {help nwlattice}, {help nwring}, {help nwcug}, {help nwpermute}
 
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

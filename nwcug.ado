@@ -64,11 +64,25 @@ program nwcug, rclass
 		}
 	}
 	else {
-		if inlist("`condition'", "mode1degree", "mode2degree", "degrees") {
-			di "{err}condition(`condition') is for two-mode networks; use condition(density) or condition(census) for a one-mode network."
+		if inlist("`condition'", "mode1degree", "mode2degree") {
+			di "{err}condition(`condition') is for two-mode networks; use condition(density), condition(degrees) or condition(census) for a one-mode network."
 			error 198
 		}
 		_nw2guard `netname', cmd(nwcug)
+		if "`condition'" == "degrees" {
+			// one-mode: every node keeps its degree (directed: out- and in-degree); the draws are a chain of tie swaps
+			// (native kernel 55, igraph::rewire(g, keeping_degseq()))
+			mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
+			if "`__ok'" != "1" {
+				di "{err}nwcug, condition(degrees) for a one-mode network draws with the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing."
+				di "{err}Update it: {stata nwinstall, all}"
+				error 198
+			}
+			if `trades' == 0 | `trades' < -1 {
+				di "{err}trades() must be at least 1."
+				error 198
+			}
+		}
 	}
 	local origname "`netname'"
 
@@ -197,6 +211,32 @@ program nwcug, rclass
 		}
 		mata: mata drop `__T' `__K' `__M'
 	}
+	else if "`condition'" == "degrees" {
+		// one-mode, degrees kept: one copy of the network is rewired in place, draw after draw (a chain of tie swaps)
+		capture nwdrop `base'
+		qui nwduplicate `origname', name(`base')
+		qui _nwsyntax `base'
+		local __dobj "`netobj'"
+		qui _nwsyntax `origname'
+		tempname __T __K
+		mata: `__T' = J(0, 3, .)
+		mata: `__K' = J(0, 3, .)
+		mata: nw1_cugstart(`netobj', `__T', `__K')
+		mata: st_numscalar("__nwcug_nties", rows(`__T'))
+		local __thin = `trades'
+		if `trades' < 0 local __thin = max(1, 10 * scalar(__nwcug_nties))
+		forvalues i = 1/`reps' {
+			mata: st_local("__okd", strofreal(nw1_cugdraw(`__dobj', `__T', `__K', `__thin')))
+			if "`__okd'" != "1" {
+				di "{err}the native draw of the degree-preserving null model failed (out of memory?)."
+				error 198
+			}
+			qui `drawcmd'
+			local v = r(`rname')
+			mata: __nwcug_nullvals[`i'] = `v'
+		}
+		mata: mata drop `__T' `__K'
+	}
 	else {
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
@@ -316,6 +356,8 @@ end
 
 capture mata: mata drop nw2_cugstart()
 capture mata: mata drop nw2_cugdraw()
+capture mata: mata drop nw1_cugstart()
+capture mata: mata drop nw1_cugdraw()
 mata:
 // the cross-mode ties (mode 1, mode 2, value) of a two-mode network, the other ties, and the mode of every node
 void nw2_cugstart(pointer(class nw_def scalar) scalar p, real matrix T, real matrix K, real colvector md)
@@ -349,6 +391,43 @@ real scalar nw2_cugdraw(pointer(class nw_def scalar) scalar p, real matrix T, re
 	if (st != 0 | rows(R) != rows(T) | cols(R) != 3) return(0)
 	T = R
 	el = K \ R \ (R[., 2], R[., 1], R[., 3])
+	wasvalued = p->isvalued
+	p->set_edge_from_triplets(el[., 1], el[., 2], el[., 3], p->isdirect)
+	p->isvalued = wasvalued
+	return(1)
+}
+// the ties of a one-mode network that are swapped (no loop, a value that is neither 0 nor missing; undirected: once,
+// i < j) and the others, which stay
+void nw1_cugstart(pointer(class nw_def scalar) scalar p, real matrix T, real matrix K)
+{
+	real matrix el
+	real colvector ok
+
+	el = p->edgelist()
+	if (rows(el) == 0) {
+		T = J(0, 3, .)
+		K = J(0, 3, .)
+		return
+	}
+	ok = (el[., 3] :< .) :& (el[., 3] :!= 0) :& (el[., 1] :!= el[., 2])
+	T = select(el, ok :& (p->isdirect :| (el[., 1] :< el[., 2])))
+	K = select(el, !ok)
+}
+
+// One draw of the degree-preserving null model of a one-mode network (kernel 55 of the nwgraph plugin): nswap tie swaps
+// on the ties T of the previous draw, written into the network p.  Returns 1 on success.
+real scalar nw1_cugdraw(pointer(class nw_def scalar) scalar p, real matrix T, real matrix K, real scalar nswap)
+{
+	real matrix R, el
+	real rowvector aux
+	real scalar st, wasvalued
+
+	if (rows(T) < 2) return(1)
+	R = nwg_comb(55, p->get_nodes(), T, J(0, 1, .), (p->isdirect, floor(uniform(1, 1) * 2147483646) + 1, nswap, 0, p->get_nodes()), aux, st)
+	if (st != 0 | rows(R) != rows(T) | cols(R) != 3) return(0)
+	T = R
+	if (p->isdirect) el = K \ R
+	else el = K \ R \ (R[., 2], R[., 1], R[., 3])
 	wasvalued = p->isvalued
 	p->set_edge_from_triplets(el[., 1], el[., 2], el[., 3], p->isdirect)
 	p->isvalued = wasvalued

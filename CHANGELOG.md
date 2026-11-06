@@ -4,6 +4,15 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.0] - 2026-11-06
+
+### Added
+- **Random networks that keep the degrees of a one-mode network.** Until now only two-mode networks had a degree-preserving null model.
+  - `nwcug ..., condition(degrees)` now works for one-mode networks: every draw has exactly the degrees of the network (directed: every out-degree and in-degree), no self-loops and no pair tied twice. It tests whether a statistic goes beyond what the degrees alone produce. The draws are a chain of random tie swaps (two ties a-b and c-d become a-d and c-b), as R's `igraph::rewire(g, keeping_degseq())`; `trades()` sets the number of attempted swaps between two draws (default 10 times the number of ties). The global clustering of the Florentine marriages: 0.165 (sd 0.078) over 2,000 draws, igraph 0.162 (sd 0.077).
+  - `nwpermute ..., swap` now works for one-mode networks too: it rewires the network by the same tie swaps (`swaps()`), so that every node keeps its degree and every tie its value.
+  - **`nwrandom` draws a network from a list of degrees:** `degree()` (undirected) or `outdegree()` and `indegree()` (directed) take a list of numbers or a variable (for example degrees from `nwdegree`). The network has exactly these degrees, no self-loops and no repeated ties; it is built (Havel-Hakimi; directed: Kleitman-Wang) and then randomized by `swaps()` tie swaps, as `igraph::sample_degseq(method = "edge.switching.simple")`. A list that no network can have (an odd sum, a degree above n - 1, ...) stops with error 198.
+- The three use a new kernel of the native plugin (generation 13), built for Windows, macOS and Linux.
+
 ## [3.16.1] - 2026-11-06
 
 ### Fixed

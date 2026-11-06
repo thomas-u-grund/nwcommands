@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 6 November 2026: nwcommands 3.17.0
+
+**nwcommands 3.17.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.0)). Random networks with given degrees for one-mode networks. `nwcug ..., condition(degrees)` tests a statistic against random networks with exactly the degrees of the observed one (directed: out- and in-degrees), `nwpermute ..., swap` rewires a network and keeps every node's degree, and `nwrandom` draws a network from a list of degrees with `degree()` or `outdegree()` and `indegree()`. Results agree with R's igraph.
+
 ## 6 November 2026: nwcommands 3.16.1
 
 **nwcommands 3.16.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.1)). `nwmovie` and `nwplot, interactive` failed after an installation from the internet ("required file not found"), because the installer left their page templates and viewer in the working directory. `nwinstall` now puts them into the installation folder; if you installed before, run `nwinstall, all` once. Also corrects the `nwaltergen` help file: the number of contacts who adopted is `sum(alter.adopted)`; `count()` counts contacts with a non-missing value.

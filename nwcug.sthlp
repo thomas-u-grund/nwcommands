@@ -34,8 +34,8 @@
 {synopt:{opth reps(int)}}Number of conditioned random networks to draw; default = 1000{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before drawing (for reproducibility){p_end}
 {synopt:{opt tail(both|upper|lower)}}Which tail(s) to report a p-value for; default = {it:both}{p_end}
-{synopt:{opt condition(density|census|mode1degree|mode2degree|degrees)}}Null model to condition random draws on; default = {it:density}; {it:census} for directed one-mode networks, {it:mode1degree}, {it:mode2degree} and {it:degrees} for two-mode networks{p_end}
-{synopt:{opt trades(#)}}Two-mode {bf:condition(degrees)}: the number of curveball trades between two draws; default = 5 times the number of nodes of the smaller mode (the first draw follows 6 times that many){p_end}
+{synopt:{opt condition(density|census|mode1degree|mode2degree|degrees)}}Null model to condition random draws on; default = {it:density}; {it:census} for directed one-mode networks, {it:degrees} for one-mode and two-mode networks, {it:mode1degree} and {it:mode2degree} for two-mode networks{p_end}
+{synopt:{opt trades(#)}}{bf:condition(degrees)}: the number of attempted tie swaps (one-mode; default = 10 times the number of ties) or curveball trades (two-mode; default = 5 times the number of nodes of the smaller mode, the first draw follows 6 times that many) between two draws{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt plot}}Draw a histogram of the {bf:reps()} null draws, with a dashed reference line at the observed statistic (the same comparison R's {bf:sna::plot.cug.test()} draws){p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:cug}{p_end}
@@ -80,6 +80,20 @@ mutual/asymmetric/null dyad types have no meaning for undirected ties, where eve
 tied or not.
 
 {pstd}
+{bf:condition(degrees)} keeps the degree of every node (in a directed network its out-degree and its in-degree): the
+draws are random networks with exactly the degrees of {help netname}, no self-loops and no pair tied twice. It asks whether
+a statistic goes beyond what the degrees alone produce: popular nodes are tied to each other more often by chance, so
+clustering or a core can look remarkable against {bf:condition(density)} and ordinary against {bf:condition(degrees)}.
+The draws form a chain of random tie swaps on a copy of {help netname} (two ties a-b and c-d become a-d and c-b, see
+{help nwpermute} with {opt swap}), as R's {cmd:igraph::rewire(g, keeping_degseq())}; {opt trades()} sets the number of
+attempted swaps between two draws. The copy keeps the node names and attributes of {help netname}, and tie values move
+with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. For example, the global clustering
+coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and
+networks with its degrees 0.165 (sd 0.078), which agrees with {cmd:igraph} (0.162, sd 0.077):
+
+	{cmd:. nwcug flomarriage, stat(nwclustering ##net##, generate(cc) replace) rname(cluster_global) condition(degrees) reps(2000) seed(3)}
+
+{pstd}
 Some statistics are fixed by the dyad census (reciprocity, for example). With {bf:condition(census)} their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.
 
 {pstd}
@@ -107,7 +121,7 @@ For a two-mode network the null networks are two-mode networks with the same nod
 {phang2}{bf:condition(degrees)}: both degree sequences stay, the curveball algorithm of Strona et al. (2014) ({cmd:vegan} method {cmd:curveball}; the same null model as {help nwpermute} with {opt swap}, which exchanges the partners of two ties). The draws form a chain; {opt trades()} sets the number of trades between two draws.{p_end}
 
 {pstd}
-The values of a valued two-mode network are shuffled over the ties of every draw (the number of ties and the degrees count ties, not values). {bf:condition(census)} counts the dyads of a directed one-mode network and is refused for a two-mode network (error 198); the two-mode conditions are refused for a one-mode network. For example, to test whether the nestedness of the Southern women is unusual for their degrees:
+The values of a valued two-mode network are shuffled over the ties of every draw (the number of ties and the degrees count ties, not values). {bf:condition(census)} counts the dyads of a directed one-mode network and is refused for a two-mode network (error 198); {bf:condition(mode1degree)} and {bf:condition(mode2degree)} are refused for a one-mode network. For example, to test whether the nestedness of the Southern women is unusual for their degrees:
 
 	{cmd:. nwuse davis, nwclear}
 	{cmd:. nwcug davis, stat(nw2nested ##net##) rname(nodf) condition(degrees) reps(1000) seed(1)}
@@ -118,7 +132,7 @@ The means and standard deviations of the null distributions agree with those of 
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: depends entirely on
+Binary: yes. Directed: yes (required for {opt condition(census)}; {opt condition(degrees)} keeps out-degrees and in-degrees). Weighted: depends entirely on
 {bf:stat()} - {cmd:nwcug} itself only draws random comparison networks and calls whatever command
 {bf:stat()} names, so it inherits that command's own support. Signed: same as weighted, depends on
 {bf:stat()}. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
@@ -159,4 +173,4 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

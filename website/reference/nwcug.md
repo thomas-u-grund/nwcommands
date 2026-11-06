@@ -36,8 +36,8 @@ name(string)]
 | `reps(int)` | Number of conditioned random networks to draw; default = 1000 |
 | `seed(int)` | Set the random-number seed before drawing (for reproducibility) |
 | `tail(both\|upper\|lower)` | Which tail(s) to report a p-value for; default = *both* |
-| `condition(density\|census\|mode1degree\|mode2degree\|degrees)` | Null model to condition random draws on; default = *density*; *census* for directed one-mode networks, *mode1degree*, *mode2degree* and *degrees* for two-mode networks |
-| `trades(#)` | Two-mode **condition(degrees)**: the number of curveball trades between two draws; default = 5 times the number of nodes of the smaller mode (the first draw follows 6 times that many) |
+| `condition(density\|census\|mode1degree\|mode2degree\|degrees)` | Null model to condition random draws on; default = *density*; *census* for directed one-mode networks, *degrees* for one-mode and two-mode networks, *mode1degree* and *mode2degree* for two-mode networks |
+| `trades(#)` | **condition(degrees)**: the number of attempted tie swaps (one-mode; default = 10 times the number of ties) or curveball trades (two-mode; default = 5 times the number of nodes of the smaller mode, the first draw follows 6 times that many) between two draws |
 | `silent` | Suppress display of results |
 | `plot` | Draw a histogram of the **reps()** null draws, with a dashed reference line at the observed statistic (the same comparison R's **sna::plot.cug.test()** draws) |
 | `name(string)` | Name for the graph created by `plot`; default = **cug** |
@@ -54,6 +54,11 @@ name(string)]
 ```
 `condition(density|census)` chooses what property of [netname](netname) the random draws must share, via [nwrandom](nwrandom)'s own **density()** (the default) or **census()** conditioning. **condition(density)** draws uniformly from every network with the same node count and density - the standard baseline used above. **condition(census)** instead draws uniformly from every network with the *same dyad census* (identical mutual/asymmetric/null tie counts, via [nwdyads](nwdyads)) as [netname](netname) - a stricter, reciprocity-aware null model: two directed networks can share the same overall density while differing sharply in how many ties are reciprocated, so a statistic that is unremarkable once density alone is held fixed can still be unusual once reciprocity is held fixed too (or vice versa). **condition(census)** requires a directed network - mutual/asymmetric/null dyad types have no meaning for undirected ties, where every dyad is simply tied or not.
 
+**condition(degrees)** keeps the degree of every node (in a directed network its out-degree and its in-degree): the draws are random networks with exactly the degrees of [netname](netname), no self-loops and no pair tied twice. It asks whether a statistic goes beyond what the degrees alone produce: popular nodes are tied to each other more often by chance, so clustering or a core can look remarkable against **condition(density)** and ordinary against **condition(degrees)**. The draws form a chain of random tie swaps on a copy of [netname](netname) (two ties a-b and c-d become a-d and c-b, see [nwpermute](nwpermute) with `swap`), as R's `igraph::rewire(g, keeping_degseq())`; `trades()` sets the number of attempted swaps between two draws. The copy keeps the node names and attributes of [netname](netname), and tie values move with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. For example, the global clustering coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and networks with its degrees 0.165 (sd 0.078), which agrees with `igraph` (0.162, sd 0.077):
+
+```stata
+. nwcug flomarriage, stat(nwclustering ##net##, generate(cc) replace) rname(cluster_global) condition(degrees) reps(2000) seed(3)
+```
 Some statistics are fixed by the dyad census (reciprocity, for example). With **condition(census)** their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.
 
 **tail()** controls which p-value(s) are reported: **upper** is the proportion of random draws with a statistic at least as large as observed (evidence the observed value is unusually *high*); **lower** is the proportion at least as small (unusually *low*); **both** (the default) reports both, plus a two-sided p-value (**r(p)**, twice the smaller one-sided p-value, capped at 1).
@@ -62,7 +67,7 @@ Some statistics are fixed by the dyad census (reciprocity, for example). With **
 
 ## Supported network types
 
-Binary: yes. Directed: yes (required for `condition(census)`). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
+Binary: yes. Directed: yes (required for `condition(census)`; `condition(degrees)` keeps out-degrees and in-degrees). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
 
 ## Stored results
 
@@ -90,4 +95,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.14.0, 3 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.16.1, 6 November 2026* ([check your installed version](nwversion))

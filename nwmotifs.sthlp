@@ -161,4 +161,4 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
 last certified : 31 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
