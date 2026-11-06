@@ -88,5 +88,21 @@ Multiple Regression Quadratic Assignment Procedure
                  _cons |     -4.125
 -------------------------------------------------
 
+. 
+. * 4. The CUG test again, holding every family's number of marriages fixed
+. nwwebuse florentine, nwclear
+
+. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) condition(degrees) reps(500) seed(12
+> 345)
+----------------------------------------
+  Network: flomarriage
+  Statistic: nwtriads ##net##/r(transitivity)
+  Observed: .191
+  Null mean (sd): .16 (.08)
+  Reps: 500
+  p (upper tail): .481
+  p (lower tail): .798
+  p (two-sided): .962
+----------------------------------------
 
 . 

@@ -129,4 +129,4 @@ Stata/BE; killed at 12 GB before).
    {help nwdropnodes}, {help nwkeep}, {help nwdrop}, {help nwclear}
 
 {hline}
-{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

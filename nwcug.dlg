@@ -30,7 +30,7 @@ BEGIN
   COMBOBOX cb_tail 290 166 190 ., dropdownlist contents(list_tail) nomem option(tail)
   TEXT tx_cb_condition 20 194 260 ., label("Null model to condition random draws on; default = density")
   COMBOBOX cb_condition 290 194 190 ., dropdownlist contents(list_condition) nomem option(condition)
-  TEXT tx_sp_trades 20 222 260 ., label("Two-mode degrees: curveball trades between two draws (default 5 x smaller mode)")
+  TEXT tx_sp_trades 20 222 260 ., label("degrees: trades (two-mode) or tie swaps (one-mode) between two draws")
   SPINNER sp_trades 290 222 70 ., default(-1) max(999999) min(-1) nomem option(trades)
   TEXT tx_cx_silent 20 250 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 250 190 ., label("silent") option(silent)

@@ -2,14 +2,15 @@
 title: "Tutorial 6: Generating Networks"
 parent: "nwcommands (core)"
 nav_order: 6
-description: "Random, small-world, preferential-attachment, and lattice networks."
+description: "Random, small-world, preferential-attachment, and lattice networks, and random networks with given degrees."
 ---
 
 # Tutorial 6: Generating Networks
 
 Sometimes you don't want real data at all — you want a network with known, controllable
 properties, to teach a concept, test a method, or run a simulation against. nwcommands ships
-four generators, each producing a different, well-studied kind of structure.
+four generators, each producing a different, well-studied kind of structure, and `nwrandom` can also
+draw a random network in which every node has a degree you choose.
 
 ## Random networks (Erdős–Rényi)
 
@@ -210,3 +211,95 @@ ones above). `xwrap`/`ywrap` wrap the grid's edges around so every node has exac
 ```
 
 ![4x4 wrapped lattice network on a grid layout](plot_lattice.svg)
+
+## Random networks with given degrees
+
+Real networks rarely have the degrees of an Erdős–Rényi network: a few nodes have many ties and many have
+few. `nwrandom` with `degree()` draws a network in which **every node has exactly the degree you give**
+and the ties are otherwise random (no loops, no pair tied twice). It first builds one network with these
+degrees and then exchanges the partners of two ties at random many times (the
+`sample_degseq(method = "edge.switching.simple")` of `igraph`). `degree()` takes a list of numbers or a
+variable:
+
+```stata
+. set seed 2026
+
+. nwrandom 8, degree(3 3 2 2 2 2 1 1) name(randdeg)
+
+. nwdegree randdeg, generate(d_randdeg)
+----------------------------------------
+  Network name: randdeg
+----------------------------------------
+    Degree distribution
+
+  d_randdeg |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          2       25.00       25.00
+          2 |          4       50.00       75.00
+          3 |          2       25.00      100.00
+------------+-----------------------------------
+      Total |          8      100.00
+
+   Degree centralization: .19
+
+. list _nwnode d_randdeg in 1/8, noobs
+
+  +--------------------+
+  | _nwnode   d_rand~g |
+  |--------------------|
+  |      n1          3 |
+  |      n2          3 |
+  |      n3          2 |
+  |      n4          2 |
+  |      n5          2 |
+  |--------------------|
+  |      n6          2 |
+  |      n7          1 |
+  |      n8          1 |
+  +--------------------+
+```
+
+Not every list of degrees can be the degrees of a network. Three nodes with one tie each would need one
+and a half ties, and `nwrandom` says so:
+
+```stata
+. capture noisily nwrandom 3, degree(1 1 1) name(bad)
+No network without loops and repeated ties has these degrees (their sum must be even, and
+> no degree can exceed 2; see the Erdos-Gallai conditions).
+invalid syntax
+```
+
+The most useful degrees are those of a real network. Random networks with the degrees of the Florentine
+marriage network show what the degrees alone produce. The global clustering coefficient of the families
+is .19; the random network with their degrees has .13:
+
+```stata
+. nwwebuse florentine, nwclear
+
+. nwdegree flomarriage, generate(d_flo)
+
+. nwrandom 16, degree(d_flo) name(floran) xvars
+
+. nwclustering flomarriage, generate(cc1) replace
+----------------------------------------
+  Network name: flomarriage
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .218
+    Global clustering coefficient: .191
+
+. nwclustering floran, generate(cc2) replace
+----------------------------------------
+  Network name: floran
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .118
+    Global clustering coefficient: .128
+```
+
+One random network proves little. Many of them, compared with the observed value, make a test:
+`nwcug` with `condition(degrees)` does exactly that ([Tutorial 18](../18-testing/)). For a directed
+network give `outdegree()` and `indegree()` (for example the variables of `nwdegree`); every node then
+keeps both. To rewire an observed network instead of starting from a list, use `nwpermute` with `swap`
+([`nwpermute`](../../reference/nwpermute)), which also carries tie values along.
+

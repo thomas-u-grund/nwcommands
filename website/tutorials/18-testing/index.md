@@ -65,9 +65,35 @@ it runs once for each random network, so add `replace`:
 ```
 
 Two components (a main one and an isolate) is just what a random network of this density would give.
-`condition()` changes the null model: for directed networks `census` keeps the dyad census, and for
-two-mode networks `degrees` keeps the degree sequences (see the [two-mode tutorial](../15-two-mode-networks/)).
 `plot` draws a histogram of the null draws with the observed value marked.
+
+### Holding the degrees fixed
+
+Random networks of the same density are a weak baseline when the degrees are very unequal: a few
+well-connected nodes alone produce triangles. `condition(degrees)` keeps every node's degree (in a
+directed network its out-degree and in-degree) and randomizes everything else, by exchanging the partners
+of two ties at random (the `rewire(keeping_degseq())` of `igraph`):
+
+```stata
+. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) condition(degrees) reps(500) seed(12345)
+----------------------------------------
+  Network: flomarriage
+  Statistic: nwtriads ##net##/r(transitivity)
+  Observed: .191
+  Null mean (sd): .16 (.08)
+  Reps: 500
+  p (upper tail): .481
+  p (lower tail): .798
+  p (two-sided): .962
+----------------------------------------
+```
+
+Holding every family's number of marriages fixed raises the expected transitivity from .15 to .16:
+part of the clustering is a consequence of the degrees. The observed .19 is still well within chance.
+The other null models of `condition()` are `census` for a directed network (it keeps the dyad census)
+and, for two-mode networks, `degrees`, `mode1degree` and `mode2degree` (see the
+[two-mode tutorial](../15-two-mode-networks/)). To draw such networks yourself, use `nwrandom` with
+`degree()` or `nwpermute` with `swap` ([Tutorial 6](../06-generating-networks/)).
 
 ## Is one network related to another? QAP correlation
 
@@ -128,6 +154,7 @@ shows no clear effect (p = .35). The coefficients are those of an ordinary logit
 | Question | Command |
 |---|---|
 | Is this statistic of one network unusual for its size and density? | `nwcug` |
+| ... and for its degrees? | `nwcug, condition(degrees)` |
 | Are two networks on the same nodes associated? | `nwcorrelate, permutations()` |
 | Which networks and attributes explain the ties? | `nwqap` |
 

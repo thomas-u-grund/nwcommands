@@ -26,9 +26,9 @@ BEGIN
   COMBOBOX cb_generate 290 110 190 ., dropdown contents(netlist) nomem option(generate)
   TEXT tx_cx_nwreplace 20 138 260 ., label("Replace an existing network named in generate()")
   CHECKBOX cx_nwreplace 290 138 190 ., label("nwreplace") option(nwreplace)
-  TEXT tx_cx_swap 20 166 260 ., label("Two-mode network: swap the partners of ties (keeps both degree sequences)")
+  TEXT tx_cx_swap 20 166 260 ., label("Swap the partners of ties at random (keeps every degree)")
   CHECKBOX cx_swap 290 166 190 ., label("swap") option(swap)
-  TEXT tx_ed_swaps 20 194 260 ., label("Two-mode network: number of attempted swaps (default 10 x ties)")
+  TEXT tx_ed_swaps 20 194 260 ., label("swap: number of attempted swaps (default 10 x ties)")
   EDIT ed_swaps 290 194 100 ., numonly nomem option(swaps)
 END
 

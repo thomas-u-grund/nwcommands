@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 6 November 2026: nwcommands 3.17.1
+
+**nwcommands 3.17.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.1)). The dialogs of `nwrandom`, `nwcug` and `nwpermute` offer the degree options of 3.17.0. New on this site: random networks with given degrees in [Tutorial 6](/tutorials/06-generating-networks/) and the CUG test that holds the degrees fixed in [Tutorial 18](/tutorials/18-testing/). Results of the commands do not change.
+
 ## 6 November 2026: nwcommands 3.17.0
 
 **nwcommands 3.17.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.0)). Random networks with given degrees for one-mode networks. `nwcug ..., condition(degrees)` tests a statistic against random networks with exactly the degrees of the observed one (directed: out- and in-degrees), `nwpermute ..., swap` rewires a network and keeps every node's degree, and `nwrandom` draws a network from a list of degrees with `degree()` or `outdegree()` and `indegree()`. Results agree with R's igraph.

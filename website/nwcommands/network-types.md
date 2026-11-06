@@ -95,7 +95,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwreplacemat` | + | K | K | D |  | ● | on a two-mode network a tie inside a mode is refused (error 459) |
 | `nwdichotomize` | + | K | K | D |  | ● | valued to binary by a threshold; the result is binary |
 | `nwcollapse` | + | K | R | D |  | ● | by a grouping variable; collapse functions act on the values |
-| `nwpermute` | + | K | N | D | ● | ○ | two-mode: labels permuted within the modes; swap keeps both degree sequences |
+| `nwpermute` | + | K | N | D | ● | ○ | swap exchanges the partners of two ties and keeps every degree (out- and in-degree when directed; both degree sequences of a two-mode network), tie values move along (one-mode swap: plug-in only); two-mode: labels permuted within the modes |
 | `nwproject` | + | O | Q | U |  | ● | alias of nw2project |
 | `nw2project` | + | O | Q | U |  | ● | stat(): count, binary, jaccard, cosine, min, max, sum, mean, minmax, newman |
 | `nwpreserve` | + | K | K | D |  |  | saves the state of all networks |
@@ -193,7 +193,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwcug` | + | I | N | D | only | ● | conditional uniform graph draws; two-mode: condition(density, mode1degree, mode2degree, degrees) with the native draws (plug-in only for the two-mode form; the one-mode form is Mata) |
+| `nwcug` | + | I | N | D | only | ● | conditional uniform graph draws; condition(degrees) keeps every degree of a one-mode or two-mode network; two-mode also mode1degree, mode2degree (the plug-in only for the degree conditions and the two-mode form; size, density and census are Mata) |
 | `nwqap` | + | O | R | D |  | ● | QAP regression over the dyads |
 | `nwturnover` | + | N | N | D |  | ● | compares two networks of the same nodes; on a two-mode network only the ties between the modes count |
 
@@ -201,7 +201,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwrandom` | + | I | - | D |  | ● | always one-mode; undirected option |
+| `nwrandom` | + | I | - | D | only | ● | always one-mode; undirected option; degree(), or outdegree() and indegree(), give a random network with given degrees (plug-in only for these) |
 | `nwring` | + | I | - | D |  | ● | always one-mode |
 | `nwlattice` | + | I | - | D |  | ● | always one-mode |
 | `nwsmall` | + | I | - | D |  | ● | always one-mode |

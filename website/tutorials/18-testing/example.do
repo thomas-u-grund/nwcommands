@@ -14,3 +14,7 @@ nwcorrelate glasgow1 glasgow2, permutations(500)
 
 * 3. Does a covariate explain ties? (QAP regression)
 nwqap glasgow2 glasgow1 smoke1 sport1
+
+* 4. The CUG test again, holding every family's number of marriages fixed
+nwwebuse florentine, nwclear
+nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) condition(degrees) reps(500) seed(12345)

@@ -4,6 +4,13 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.1] - 2026-11-06
+
+### Changed
+- The dialogs of `nwrandom` (new fields `degree()`, `outdegree()`, `indegree()`, `swaps()`), `nwcug` and `nwpermute` offer the degree-preserving options of 3.17.0 for one-mode networks.
+- Website: Tutorial 6 (Generating Networks) has a new section on random networks with given degrees, Tutorial 18 (Testing) on the CUG test that holds the degrees fixed, Tutorial 12 points to it; the command tables of "Network types" describe the new options.
+- Tests: `test_native370` and `test_twomodesupport` expected `nwpermute, swap` to refuse a one-mode network; they now check that it rewires the network and keeps the degrees.
+
 ## [3.17.0] - 2026-11-06
 
 ### Added

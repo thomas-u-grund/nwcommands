@@ -470,7 +470,7 @@ _chk `=(scalar(__d) == 0)' "nwpermute swap keeps the degree of every node (both 
 nwtoedge ps, compress
 nwtoedge davis, compress
 capture nwpermute o8, generate(x) swap
-_chk `=(_rc == 198)' "swap on a one-mode network is refused (198)"
+_chk `=(_rc == 0)' "swap on a one-mode network rewires it (since 3.17.0)"
 nwpermute o8, generate(po8)
 nwsummarize po8
 _chk `=(r(nodes) == 8)' "nwpermute of a one-mode network is unchanged"

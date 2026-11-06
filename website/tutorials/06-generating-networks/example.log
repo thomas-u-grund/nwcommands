@@ -200,4 +200,93 @@ Exporting graph to plot_lattice.svg...
 file plot_lattice.svg saved as SVG format
 
 . 
+. * nwrandom, degree(): a random network in which every node has a given
+. * degree (Havel-Hakimi construction, then random tie swaps)
+. set seed 2026
+
+. nwrandom 8, degree(3 3 2 2 2 2 1 1) name(randdeg)
+
+. nwdegree randdeg, generate(d_randdeg)
+----------------------------------------
+  Network name: randdeg
+----------------------------------------
+    Degree distribution
+
+  d_randdeg |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          2       25.00       25.00
+          2 |          4       50.00       75.00
+          3 |          2       25.00      100.00
+------------+-----------------------------------
+      Total |          8      100.00
+
+   Degree centralization: .19
+
+. list _nwnode d_randdeg in 1/8, noobs
+
+  +--------------------+
+  | _nwnode   d_rand~g |
+  |--------------------|
+  |      n1          3 |
+  |      n2          3 |
+  |      n3          2 |
+  |      n4          2 |
+  |      n5          2 |
+  |--------------------|
+  |      n6          2 |
+  |      n7          1 |
+  |      n8          1 |
+  +--------------------+
+
+. * a list no network can have is refused
+. capture noisily nwrandom 3, degree(1 1 1) name(bad)
+No network without loops and repeated ties has these degrees (their sum must be even, and 
+> no degree can exceed 2; see the Erdos-Gallai conditions).
+invalid syntax
+
+. 
+. * the degrees of a real network: random networks with the degrees of the
+. * Florentine marriage network, and otherwise random
+. nwwebuse florentine, nwclear
+
+. nwdegree flomarriage, generate(d_flo)
+----------------------------------------
+  Network name: flomarriage
+----------------------------------------
+    Degree distribution
+
+      d_flo |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |          1        6.25        6.25
+          1 |          4       25.00       31.25
+          2 |          2       12.50       43.75
+          3 |          6       37.50       81.25
+          4 |          2       12.50       93.75
+          6 |          1        6.25      100.00
+------------+-----------------------------------
+      Total |         16      100.00
+
+   Degree centralization: .267
+
+. nwrandom 16, degree(d_flo) name(floran) xvars
+
+. nwclustering flomarriage, generate(cc1) replace
+----------------------------------------
+  Network name: flomarriage
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .218
+    Global clustering coefficient: .191
+ 
+
+. nwclustering floran, generate(cc2) replace
+----------------------------------------
+  Network name: floran
+----------------------------------------
+    Measure: binary
+    Average clustering coefficient: .118
+    Global clustering coefficient: .128
+ 
+
+. 
 end of do-file
