@@ -47,8 +47,9 @@
 {pstd}
 {cmd:nwaltergen} generates a new Stata variable that summarizes, for each node ({it:ego}), a
 Stata variable's values among its network neighbors ({it:alters}) - e.g. "the average smoking
-status among a person's contacts" ({cmd:mean(alter.smoking)}) or "the number of contacts who
-already adopted" ({cmd:count(alter.adopted)}). This is the standard "network exposure" /
+status among a person's contacts" ({cmd:mean(alter.smoking)}) or, for a 0/1 variable, "the number
+of contacts who already adopted" ({cmd:sum(alter.adopted)}). ({cmd:count(alter.adopted)} is the number
+of contacts with a non-missing value of {it:adopted}, whatever the value.) This is the standard "network exposure" /
 alter-aggregation primitive used throughout social influence, diffusion, and peer-effects
 research (see e.g. Valente 2005 on exposure models).
 
@@ -174,4 +175,4 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 last certified : 02 Sep 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.16.0, 5 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

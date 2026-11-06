@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 6 November 2026: nwcommands 3.16.1
+
+**nwcommands 3.16.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.1)). `nwmovie` and `nwplot, interactive` failed after an installation from the internet ("required file not found"), because the installer left their page templates and viewer in the working directory. `nwinstall` now puts them into the installation folder; if you installed before, run `nwinstall, all` once. Also corrects the `nwaltergen` help file: the number of contacts who adopted is `sum(alter.adopted)`; `count()` counts contacts with a non-missing value.
+
 ## 5 November 2026: nwcommands 3.16.0
 
 **nwcommands 3.16.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.0)). `nwmovie, export(filename)` writes a network movie as an MP4 or WebM video or an animated GIF straight from a do-file, without opening the interactive view; nothing beyond the package is needed on Windows, macOS or Linux. The movie view has a new *Export video* button. In the viewer on Windows and Linux, *Export PNG*, *Save nodes*, *Save edges* and *Export GIF* now open a save dialog (they did nothing before), and the viewer starts on Windows again.

@@ -1425,12 +1425,12 @@ program nwplot, rclass
 		local _nwedit_vendorjs = "`_nwedit_pkgdir'/lib/vendor/cytoscape.min.js"
 		capture confirm file "`_nwedit_template'"
 		if _rc {
-			di "{err}nwedit_template.html not found at `_nwedit_template'; reinstall the package, or omit {bf:interactive}."
+			di "{err}nwedit_template.html not found at `_nwedit_template'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}."
 			error 601
 		}
 		capture confirm file "`_nwedit_vendorjs'"
 		if _rc {
-			di "{err}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package, or omit {bf:interactive}."
+			di "{err}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}."
 			error 601
 		}
 
