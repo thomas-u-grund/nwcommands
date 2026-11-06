@@ -37,7 +37,7 @@ op is == or !=; value must be numeric.
 
 ## Description
 
-`nwaltergen` generates a new Stata variable that summarizes, for each node (*ego*), a Stata variable's values among its network neighbors (*alters*) - e.g. "the average smoking status among a person's contacts" (`mean(alter.smoking)`) or "the number of contacts who already adopted" (`count(alter.adopted)`). This is the standard "network exposure" / alter-aggregation primitive used throughout social influence, diffusion, and peer-effects research (see e.g. Valente 2005 on exposure models).
+`nwaltergen` generates a new Stata variable that summarizes, for each node (*ego*), a Stata variable's values among its network neighbors (*alters*) - e.g. "the average smoking status among a person's contacts" (`mean(alter.smoking)`) or, for a 0/1 variable, "the number of contacts who already adopted" (`sum(alter.adopted)`). (`count(alter.adopted)` is the number of contacts with a non-missing value of *adopted*, whatever the value.) This is the standard "network exposure" / alter-aggregation primitive used throughout social influence, diffusion, and peer-effects research (see e.g. Valente 2005 on exposure models).
 
 *srcvar* must already exist in the dataset and be indexed the same way as every other per-node result in `nwcommands`: observation *i* holds the value for node *i*.
 

@@ -117,6 +117,7 @@ program nwinstall, rclass
 			nwinstall_copymanifest, manifest("_pkg_ado.txt") from("`from'") dest("`dest'")
 			capture copy "`from'/nwinstall_buildplugin.ado" "`dest'/nwinstall_buildplugin.ado", replace
 			capture copy "`from'/nwinstall_buildmata.ado" "`dest'/nwinstall_buildmata.ado", replace
+			nwinstall_ancillary, from(`"`from'"') dest(`"`dest'"')
 		}
 		if "`help'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_hlp.txt") from("`from'") dest("`dest'")
@@ -149,7 +150,9 @@ program nwinstall, rclass
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
-			capture net install "nwcommands-ado`i'", all replace
+			// no `all': the ancillary files (templates, JavaScript, viewer binaries) are copied by nwinstall_ancillary below,
+			// with their lib/ layout; `all' only dropped them, flattened, into the current working directory
+			capture net install "nwcommands-ado`i'", replace
 			if _rc != 0 {
 				local keepgoing = 0
 			}
@@ -161,6 +164,9 @@ program nwinstall, rclass
 		// real chunk installed successfully (the same `_rc'-staleness
 		// bug class fixed elsewhere this session, e.g. nwsync.ado).
 		capture confirm number 1
+		// net install puts nwset.ado and the other n* files into PLUS/n; nwplot and nwmovie look next to nwset.ado
+		local __nw_instdir : sysdir PLUS
+		nwinstall_ancillary, from(`"`__nw_src'"') dest(`"`__nw_instdir'n"')
 	}
 
 	if "`help'" != "" & "`localcopy'" == "" {
@@ -237,6 +243,8 @@ program nwinstall, rclass
 	if "`remove'" != "" {
 		window menu clear
 		window menu refresh
+		local __nw_instdir : sysdir PLUS
+		nwinstall_ancillary, dest(`"`__nw_instdir'n"') remove
 		// the ado, help and dialog files are installed as numbered packages (nwcommands-ado1, -ado2, ...); the unnumbered names are the older layout
 		foreach __pk in ado hlp dlg {
 			capture ado uninstall "nwcommands-`__pk'"
@@ -832,6 +840,41 @@ program nwinstall_menu
 	window menu refresh
 end
 
+
+capture program drop nwinstall_ancillary
+program nwinstall_ancillary
+	// The files of the package that `net install' does not install because of their extension (Stata treats them as
+	// ancillary): the page templates and JavaScript of nwplot, interactive and nwmovie, and the native viewer.
+	// nwplot and nwmovie look for them in the folder of nwset.ado, under the same relative paths as in the repository
+	// (NativeGraphInstallDir(), NweditViewerPath()), so they are copied there one by one, keeping the lib/ layout.
+	// Keep this list equal to the f lines of _pkg_ado.txt with these extensions (cscripts/test_nwinstall_ancillary.do checks it).
+	syntax , dest(string) [from(string) remove]
+	local files nwmovie_template.html nwedit_template.html lib/vendor/cytoscape.min.js lib/vendor/gif.js ///
+		lib/vendor/gif.worker.js lib/vendor/mp4-muxer.js lib/plugins/macos/nwedit_viewer_macos ///
+		lib/plugins/windows/nwedit_viewer_windows.exe lib/plugins/unix/nwedit_viewer_unix
+	if "`remove'" != "" {
+		foreach f of local files {
+			capture erase `"`dest'/`f'"'
+		}
+		exit
+	}
+	foreach d in lib lib/vendor lib/plugins lib/plugins/macos lib/plugins/windows lib/plugins/unix {
+		capture mkdir `"`dest'/`d'"'
+	}
+	local failed ""
+	foreach f of local files {
+		capture copy `"`from'/`f'"' `"`dest'/`f'"', replace
+		if _rc local failed `"`failed' `f'"'
+	}
+	if `"`failed'"' != "" {
+		di as text `"nwinstall: could not copy`failed' from `from' to `dest'; nwplot, interactive and nwmovie need these files."'
+	}
+	if "`c(os)'" != "Windows" {
+		foreach f in lib/plugins/macos/nwedit_viewer_macos lib/plugins/unix/nwedit_viewer_unix {
+			capture shell chmod +x "`dest'/`f'"
+		}
+	}
+end
 
 capture program drop nwinstall_copymanifest
 program nwinstall_copymanifest

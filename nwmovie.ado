@@ -48,7 +48,7 @@ program nwmovie
 	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer {
 		capture confirm file "``_nwmv_f''"
 		if _rc {
-			di as error "required file not found: ``_nwmv_f''; reinstall the package."
+			di as error "required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all"
 			error 601
 		}
 	}

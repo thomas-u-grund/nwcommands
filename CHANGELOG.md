@@ -4,6 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.16.1] - 2026-11-06
+
+### Fixed
+- **`nwmovie` and `nwplot, interactive` work after an installation from the internet.** Stata's `net install` does not install the page templates, the JavaScript files and the native viewer of these two commands, because of their file types; `nwinstall` copied them into the current working directory instead, where the commands do not look. `nwmovie` therefore stopped with "required file not found: .../nwmovie_template.html", and `nwplot, interactive` with a similar message. `nwinstall` now puts these files into the installation folder, and no longer leaves copies in the working directory; `nwinstall, remove` deletes them again. To repair an existing installation, run `nwinstall, all` once.
+- **The help file of `nwaltergen` gave the wrong statistic for "the number of contacts who already adopted".** That number is `sum(alter.adopted)` for a 0/1 variable; `count(alter.adopted)` is the number of contacts with a non-missing value. The help file now says so.
+
 ## [3.16.0] - 2026-11-05
 
 ### Added
