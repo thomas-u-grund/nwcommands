@@ -1,6 +1,7 @@
 ---
 title: "Interactive demo: Lazega advice network"
-parent: "Book companion"
+grand_parent: "Book companion"
+parent: "Interactive pages from the book"
 nav_order: 2
 description: "A live interactive view of the Lazega law-firm advice network made with nwplot, interactive: drag nodes, recolor groups, change sizes, save the layout, and the Stata commands that produced it."
 permalink: /book/interactive/lazega/

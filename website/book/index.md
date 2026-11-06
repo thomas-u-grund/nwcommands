@@ -14,6 +14,5 @@ from Stata Press, expected 2027). Nothing here is needed to use the software, an
 [command reference](../reference/) stay the place to learn the commands.
 
 - [Interactive pages from the book](interactive/): working copies of the interactive pages and the network movie
-  that the book builds, with the commands that wrote them.
-- [Interactive demo: the Lazega advice network](interactive/lazega/): a live, draggable view of a network, with a
-  guide to what to try and the commands that produced it.
+  that the book builds (Florentine families, the law firm, Glasgow, Chesapeake Bay), with the commands that wrote
+  them.
