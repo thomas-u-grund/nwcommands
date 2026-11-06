@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 6 November 2026: nwergm 1.3.7
+
+**nwergm 1.3.7** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.7)). Bug fix: `nwergm simulate` gave the simulated networks the wrong node names when the starting network does not store its nodes as n1, n2, ... (the lawyers' networks store n1, n10, n11, ...), so per-node results such as each lawyer's degree in the draws were attached to the wrong lawyer; statistics of whole networks were not affected. The draws now carry the node names of the basis or fitted network. Also, `nwergm simulate, basis()` after a fit now starts the chain at the basis network, as R's `simulate()` does. Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 6 November 2026: nwcommands 3.17.1
 
 **nwcommands 3.17.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.1)). The dialogs of `nwrandom`, `nwcug` and `nwpermute` offer the degree options of 3.17.0. New on this site: random networks with given degrees in [Tutorial 6](/tutorials/06-generating-networks/) and the CUG test that holds the degrees fixed in [Tutorial 18](/tutorials/18-testing/). Results of the commands do not change.
