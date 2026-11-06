@@ -7,7 +7,7 @@ program nwrandom
 	// instead of erroring, unlike every sibling generator in this group
 	// (nwpref/nwlattice/nwring/nwsmall), none of which have this
 	// wildcard and all of which correctly reject unknown options.
-	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) NODENAMESmata(string) name(string) undirected directed xvars noreplace]
+	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) NODENAMESmata(string) name(string) undirected directed xvars noreplace DEGree(string) OUTdegree(string) INdegree(string) SWAPS(integer -1)]
 	unw_defs
 	if "`directed'" != "" & "`undirected'" != "" {
 		di "{err}Options {bf:directed} and {bf:undirected} cannot be combined."
@@ -51,7 +51,7 @@ program nwrandom
 			// every ntimes()>1 call silently came back as a plain
 			// unweighted 0/1 network regardless of weights(), no
 			// warning or error.
-			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') weights(`weights') `selfloop' `xvars' `undirected' labs(`labs')
+			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') weights(`weights') `selfloop' `xvars' `undirected' labs(`labs') degree(`degree') outdegree(`outdegree') indegree(`indegree') swaps(`swaps')
 		}
 		qui nwset
 		local newnetlist `r(nets)'
@@ -61,6 +61,83 @@ program nwrandom
 		exit
 	}
 	
+	// degree(), outdegree() indegree(): a random network with exactly these degrees, no loops and no pair twice. A network
+	// with the degrees is built (Havel-Hakimi; directed: Kleitman-Wang) and then rewired by random tie swaps, which keep
+	// the degrees (igraph::sample_degseq(method = "edge.switching.simple")); native kernel 55
+	if `"`degree'`outdegree'`indegree'"' != "" {
+		if `"`prob'`density'`census'`weights'"' != "" {
+			di "{err}Options {bf:degree()}, {bf:outdegree()} and {bf:indegree()} cannot be combined with {bf:prob()}, {bf:density()}, {bf:census()} or {bf:weights()}."
+			error 198
+		}
+		if "`selfloop'" != "" {
+			di "{err}A network drawn from degrees has no self-loops; option {bf:selfloop} is not allowed."
+			error 198
+		}
+		if `"`degree'"' != "" & `"`outdegree'`indegree'"' != "" {
+			di "{err}Give either {bf:degree()} (undirected network) or {bf:outdegree()} and {bf:indegree()} (directed network)."
+			error 198
+		}
+		if `"`degree'"' == "" & (`"`outdegree'"' == "" | `"`indegree'"' == "") {
+			di "{err}A directed network needs both {bf:outdegree()} and {bf:indegree()}."
+			error 198
+		}
+		if `"`degree'"' != "" & "`directed'" != "" {
+			di "{err}{bf:degree()} draws an undirected network; for a directed one give {bf:outdegree()} and {bf:indegree()}."
+			error 198
+		}
+		if `swaps' == 0 | `swaps' < -1 {
+			di "{err}Option {bf:swaps()} must be at least 1."
+			error 198
+		}
+		mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
+		if "`__ok'" != "1" {
+			di "{err}nwrandom with degrees needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing."
+			di "{err}Update it: {stata nwinstall, all}"
+			error 198
+		}
+		tempname __dv __din __trip
+		local __dir = (`"`degree'"' == "")
+		if !`__dir' {
+			_nwrandom_degvec, spec(`"`degree'"') nodes(`nodes') mname(`__dv') opt(degree)
+			local undirected undirected
+		}
+		else {
+			_nwrandom_degvec, spec(`"`outdegree'"') nodes(`nodes') mname(`__dv') opt(outdegree)
+			_nwrandom_degvec, spec(`"`indegree'"') nodes(`nodes') mname(`__din') opt(indegree)
+			mata: `__dv' = `__dv' \ `__din'
+			local undirected ""
+		}
+		mata: `__trip' = J(0, 3, .)
+		mata: st_local("__st", strofreal(nw_random_degseq(`__dv', `nodes', `__dir', `swaps', `__trip')))
+		capture mata: mata drop `__dv'
+		capture mata: mata drop `__din'
+		if "`__st'" == "3" {
+			if `__dir' di "{err}No directed network without loops and repeated ties has these out-degrees and in-degrees (they must have the same sum, and no node can send or receive more than `=`nodes'-1' ties)."
+			else di "{err}No network without loops and repeated ties has these degrees (their sum must be even, and no degree can exceed `=`nodes'-1'; see the Erdos-Gallai conditions)."
+			error 198
+		}
+		if "`__st'" != "0" {
+			di "{err}The native draw of the network failed (out of memory?)."
+			error 198
+		}
+		mata: st_rclear()
+		if "`nodenamesmata'" != "" {
+			_nwsetsparse, triplets(`__trip') nodes(`nodes') name(`name') nodenames(`nodenamesmata') `undirected'
+		}
+		else {
+			_nwsetsparse, triplets(`__trip') nodes(`nodes') name(`name') labs(`labs') `undirected'
+		}
+		capture mata: mata drop `__trip'
+		if "`xvars'" == "" {
+			nwload, xvars
+		}
+		else {
+			nwload
+		}
+		mata: st_global("r(netlist)", "`name'")
+		exit
+	}
+
 	// large networks without weights or a dyad census: the ties are drawn as a list (prob(): the same draws as the
 	// matrix version, so the same seed gives the same network; density(): the positions of the ties are drawn
 	// directly, which is a different stream than the shuffle of all n^2 cells)
@@ -192,6 +269,41 @@ program nwrandom
 end
 
 
+capture program drop _nwrandom_degvec
+program _nwrandom_degvec
+	// the degrees of degree(), outdegree() or indegree() as a Mata column vector: a numeric variable (its first
+	// `nodes' observations) or a list of numbers
+	syntax , spec(string) nodes(integer) mname(string) opt(string)
+	local spec = strtrim(`"`spec'"')
+	capture confirm numeric variable `spec', exact
+	if _rc == 0 & wordcount(`"`spec'"') == 1 {
+		if _N < `nodes' {
+			di "{err}Variable {bf:`spec'} of {bf:`opt'()} has `=_N' observations; `nodes' degrees are needed."
+			error 198
+		}
+		mata: `mname' = st_data((1::`nodes'), "`spec'")
+		mata: st_local("__bad", strofreal(missing(`mname') > 0))
+		if "`__bad'" == "1" {
+			di "{err}Variable {bf:`spec'} of {bf:`opt'()} has missing values among its first `nodes' observations."
+			error 198
+		}
+	}
+	else {
+		capture numlist `"`spec'"', integer range(>=0)
+		if _rc {
+			di "{err}{bf:`opt'()} takes a numeric variable or a list of whole numbers 0 or more."
+			error 198
+		}
+		local L `r(numlist)'
+		if wordcount("`L'") != `nodes' {
+			di "{err}{bf:`opt'()} lists `=wordcount("`L'")' degrees for `nodes' nodes."
+			error 198
+		}
+		mata: `mname' = strtoreal(tokens("`L'"))'
+	}
+end
+
+capture mata: mata drop nw_random_degseq()
 capture mata: mata drop tiesGenerator()
 capture mata: mata drop correctDiagonal()
 capture mata: mata drop dyadcensusGenerator()
@@ -199,6 +311,25 @@ capture mata: mata drop get_random_prob()
 capture mata: mata drop get_random_density()
 
 mata:
+// A network with the degrees dv (undirected: n values; directed: n out-degrees, then n in-degrees), built and rewired
+// by kernel 55 of the nwgraph plugin; the ties (both directions for an undirected network) go to trip.  Returns the
+// kernel status: 0 = done, 3 = no network with these degrees, 2 = failure.
+real scalar nw_random_degseq(real colvector dv, real scalar n, real scalar directed, real scalar nswap, transmorphic trip)
+{
+	real matrix R
+	real rowvector aux
+	real scalar st, m
+
+	m = directed ? sum(dv[1::n]) : sum(dv) / 2
+	if (nswap < 0) nswap = max((1, 10 * floor(m)))
+	R = nwg_comb(55, rows(dv), J(0, 3, .), dv, (directed, floor(uniform(1, 1) * 2147483646) + 1, nswap, 1, n), aux, st)
+	if (st != 0) return(st)
+	if (rows(R) == 0) R = J(0, 3, .)
+	if (directed) trip = R
+	else trip = R \ (R[., 2], R[., 1], R[., 3])
+	return(0)
+}
+
 real matrix get_random_prob(real scalar nodes, real scalar prob, real scalar undirected, real scalar selfloop){
 	real matrix adj 
 	

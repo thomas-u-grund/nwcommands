@@ -28,8 +28,8 @@
 {synopt:{opt replace}}Replace existing network with permutation{p_end}
 {synopt:{opt nwreplace}}Overwrite the network named in {opt generate()} if it already exists; without it the command stops with an error{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt swap}}Two-mode network: exchange the partners of two ties at random (Maslov and Sneppen); keeps both degree sequences and the tie values; without it the labels are permuted within the modes{p_end}
-{synopt:{opt swaps(#)}}Two-mode network: the number of attempted exchanges with {opt swap}; default = ten times the number of ties{p_end}
+{synopt:{opt swap}}exchange the partners of two ties at random (Maslov and Sneppen) instead of permuting the labels; keeps every node's degree (directed: out-degree and in-degree; two-mode: both degree sequences) and the tie values{p_end}
+{synopt:{opt swaps(#)}}the number of attempted exchanges with {opt swap}; default = ten times the number of ties{p_end}
 
 
 {title:Description}
@@ -37,7 +37,21 @@
 {pstd}
 Produces a random permutation of the network {help netname}. In such a permutation, the nodes are randomly
 reshuffled, while the overall structure of the network remains the same. Either option {bf:replace} or {bf:generate} needs to 
-be specfied. 
+be specified. 
+
+{pstd}
+With {opt swap}, the ties are rewired instead: two ties a-b and c-d, picked at random, become a-d and c-b (in an undirected
+network, a-d and c-b or a-c and b-d, at random), unless that would make a self-loop or tie a pair that is tied already.
+Every node keeps its degree (in a directed network its out-degree and its in-degree), a tie keeps its value, and everything
+else about the network is randomized. {opt swaps()} sets the number of attempted exchanges (some are refused). This is the
+rewiring of R's {cmd:igraph::rewire(g, keeping_degseq())}: a random network with the degrees of the observed one, the usual
+baseline for a pattern that may follow from the degrees alone (see {help nwcug} with {opt condition(degrees)}, and
+{help nwrandom} with {opt degree()} for a network drawn from a list of degrees). Self-loops and ties with a missing value stay
+where they are. For a one-mode network, {opt swap} uses the native plugin of nwcommands 3.17.0 or later; the exchanges are
+drawn from the seed ({cmd:set seed}).
+
+	{cmd:. nwuse glasgow, nwclear}
+	{cmd:. nwpermute glasgow1, swap generate(glasgow1_swapped)}
 
 {pstd}
 A simple example illustrates what the command does. First, we generate a regular lattice network. 
@@ -93,7 +107,7 @@ Two-mode: yes - the labels are permuted within the modes, so that no tie ever jo
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
+Binary: yes. Directed: yes ({opt swap} keeps out-degrees and in-degrees). Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix) and under {opt swap}. Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
 
 {title:Example}
 
@@ -118,4 +132,4 @@ in Stata/BE (killed at 12 GB before).
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.16.1, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.0, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

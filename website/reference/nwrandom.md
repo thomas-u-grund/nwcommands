@@ -20,6 +20,9 @@ nodes
 [prob(float)
 density(float)
 census(mutual asym [null])
+degree(numlist|varname)
+outdegree(numlist|varname) indegree(numlist|varname)
+swaps(int)
 weights(p1, p2,...)
 undirected
 directed
@@ -36,6 +39,9 @@ xvars]
 | `prob(float)` | probability for a tie |
 | `density(float)` | exact density of the new network |
 | `census`([*mutual* [*asym null*]](nwdyads)) | dyad census of the new network |
+| `degree`(*numlist*\|varname) | degree of every node of a new undirected network: a list of *nodes* numbers, or a variable (its first *nodes* observations) |
+| `outdegree()` `indegree()` | out-degree and in-degree of every node of a new directed network; both are needed |
+| `swaps(int)` | with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `directed` | generate a directed network; this is the default, so the option changes nothing (it cannot be combined with `undirected`) |
@@ -54,7 +60,9 @@ Alternatively, the overall density of the network can be specified with **densit
 
 Lastly, one can also generate a random network that has a specific [dyad census](nwdyads) using `census()` (see [nwdyads](nwdyads)).
 
-Either **prob()**, **density()** or **census()** needs to be specified.
+A random network with given degrees is drawn with `degree()` (undirected) or with `outdegree()` and `indegree()` (directed); see *Networks with given degrees* below.
+
+Either **prob()**, **density()**, **census()** or the degrees need to be specified.
 
 With option **weights(***p1, p2,...***)** the command generates a weighted network. Here, *p_k* stands for the probability to sample tie weight *k*. The probabilities *p1, p2..., pn* do not necessarily have to sum up to one; they are standardized. For example, the following produces a random network with 10 nodes, where each tie has the probability 0.5 to exist. Furthermore, each one of these randomly sampled ties gets assigned a tie weight because of option **weights()**. In this case, **weights(0.0, 0.3,0.7)** indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with probability 0.3 and tie weight 3 with probability 0.7.
 
@@ -79,11 +87,12 @@ The command can also be used to generate both complete (**prob(1)**) and empty n
 . nwrandom 10, prob(.2) undirected
 . nwrandom 200, census(100 2000)
 . nwrandom 10, density(.2) weights(0.1, 0.3, 0.6)
+. nwrandom 8, degree(3 3 2 2 2 2 1 1)
 ```
 
 ## Supported network types
 
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed). Weighted: yes, via `weights()` - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself (`density()`/`prob()`/`census()`). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed); with degrees, `degree()` draws an undirected network and `outdegree()` `indegree()` a directed one. Weighted: yes, via `weights()` - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself (`density()`/`prob()`/`census()`). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
 
 ## Stored results
 
@@ -95,10 +104,10 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 
 ## See also
 
-- [nwsmall](nwsmall), [nwpref](nwpref), [nwpref](nwpref), [nwlattice](nwlattice), [nwring](nwring)
+- [nwsmall](nwsmall), [nwpref](nwpref), [nwlattice](nwlattice), [nwring](nwring), [nwcug](nwcug), [nwpermute](nwpermute)
 
 - last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.16.1, 6 November 2026* ([check your installed version](nwversion))

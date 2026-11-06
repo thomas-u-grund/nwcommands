@@ -912,11 +912,196 @@ done:
 	return rc;
 }
 
+/* ---------------------------------------------------------------- */
+/* 55: degree-preserving tie swaps of a one-mode network               */
+/* ---------------------------------------------------------------- */
+/*
+	55  degswap  par: directed seed nswap build nnodes.  A one-mode network with the degrees of a given network or of a
+	            given degree sequence, no loops, no pair twice.
+	            build 0: the ties (i, j, value) of a network on nnodes nodes are given (undirected: every pair once; loops are
+	            left out by the caller); nswap exchanges are attempted on them (Maslov and Sneppen 2002; igraph::rewire(g,
+	            keeping_degseq(niter = nswap))): two ties a-b and c-d become a-d and c-b (undirected: or a-c and b-d, at
+	            random), refused when that makes a loop or a pair that is tied already.  Undirected networks keep every node's
+	            degree, directed ones every out-degree and in-degree.  The value of a tie moves with it.
+	            build 1: no ties; variable 4 holds the degrees (undirected: nnodes values; directed: the nnodes out-degrees,
+	            then the nnodes in-degrees).  A network with exactly these degrees is built (Havel-Hakimi; directed:
+	            Kleitman-Wang) and then nswap exchanges are attempted (igraph::sample_degseq(method =
+	            "edge.switching.simple")).  Status 3 (no result) when no such network exists.
+	            Result m x 3 = (i, j, value), nodes 1-based; aux 1 = exchanges made, aux 2 = exchanges attempted.  The random
+	            choices come from the generator seeded with `seed'.
+*/
+#define ALG_DEGSWAP 55
+
+/* remove k from a linear-probing hash set (backward-shift deletion, so no tombstones) */
+static void n390_hs_del(n390_hs_t *h, nwint k) {
+	uint64_t mask = (uint64_t)(h->cap - 1), i = n390_hh(k) & mask, j, home;
+	while (h->key[i] != k) { if (h->key[i] == -1) return; i = (i + 1) & mask; }
+	j = i;
+	for (;;) {
+		j = (j + 1) & mask;
+		if (h->key[j] == -1) break;
+		home = n390_hh(h->key[j]) & mask;
+		if ((i <= j) ? (i < home && home <= j) : (i < home || home <= j)) continue;
+		h->key[i] = h->key[j];
+		i = j;
+	}
+	h->key[i] = -1;
+	h->used--;
+}
+
+static const nwint *n390_ka, *n390_kb;   /* sort keys of n390_cmpdeg (residual in-degree, then out-degree) */
+static int n390_cmpdeg(const void *x, const void *y) {
+	nwint u = *(const nwint *)x, v = *(const nwint *)y;
+	if (n390_ka[u] != n390_ka[v]) return n390_ka[u] > n390_ka[v] ? -1 : 1;
+	if (n390_kb[u] != n390_kb[v]) return n390_kb[u] > n390_kb[v] ? -1 : 1;
+	return u < v ? -1 : (u > v);
+}
+
+/* a simple network with the given degrees: 0 = built (m ties in pa, pb), 3 = no such network, 2 = out of memory */
+static int n390_build(nwint n, int directed, const double *nv, nwint **pa_out, nwint **pb_out, nwint *m_out) {
+	nwint *dout = NULL, *din = NULL, *ord = NULL, *pa = NULL, *pb = NULL, i, k, m = 0, s1 = 0, s2 = 0;
+	int rc = 0;
+	dout = (nwint *)calloc((size_t)n + 1, sizeof(nwint));
+	din = (nwint *)calloc((size_t)n + 1, sizeof(nwint));
+	ord = (nwint *)malloc(((size_t)n + 1) * sizeof(nwint));
+	if (!dout || !din || !ord) { rc = 2; goto done; }
+	for (i = 0; i < n; i++) {
+		double a = nv[i], b = directed ? nv[n + i] : 0;
+		if (!(a >= 0) || !(b >= 0) || a != floor(a) || b != floor(b) || a > (double)(n - 1) || b > (double)(n - 1)) { rc = 3; goto done; }
+		dout[i] = (nwint)a; din[i] = (nwint)b; s1 += dout[i]; s2 += din[i];
+	}
+	if (directed ? (s1 != s2) : (s1 % 2 != 0)) { rc = 3; goto done; }
+	m = directed ? s1 : s1 / 2;
+	pa = (nwint *)malloc(((size_t)m + 1) * sizeof(nwint));
+	pb = (nwint *)malloc(((size_t)m + 1) * sizeof(nwint));
+	if (!pa || !pb) { rc = 2; goto done; }
+	k = 0;
+	if (!directed) {
+		/* Havel-Hakimi: the node with the largest residual degree d is tied to the d nodes with the next largest ones */
+		nwint left = n;
+		for (i = 0; i < n; i++) ord[i] = i;
+		n390_ka = dout; n390_kb = dout;
+		while (left > 0) {
+			nwint v, d, q;
+			qsort(ord, (size_t)left, sizeof(nwint), n390_cmpdeg);
+			while (left > 0 && dout[ord[left - 1]] == 0) left--;
+			if (left == 0) break;
+			v = ord[0]; d = dout[v];
+			if (d > left - 1) { rc = 3; goto done; }
+			for (q = 1; q <= d; q++) {
+				nwint u = ord[q];
+				if (dout[u] == 0) { rc = 3; goto done; }
+				dout[u]--;
+				pa[k] = v < u ? v : u; pb[k] = v < u ? u : v; k++;
+			}
+			dout[v] = 0;
+		}
+	} else {
+		/* Kleitman-Wang: every node in turn sends its out-ties to the other nodes with the largest residual in-degrees
+		   (then out-degrees) */
+		nwint v;
+		n390_ka = din; n390_kb = dout;
+		for (v = 0; v < n; v++) {
+			nwint c = 0, q, d = dout[v];
+			if (d == 0) continue;
+			for (i = 0; i < n; i++) if (i != v) ord[c++] = i;
+			qsort(ord, (size_t)c, sizeof(nwint), n390_cmpdeg);
+			if (d > c) { rc = 3; goto done; }
+			for (q = 0; q < d; q++) {
+				nwint u = ord[q];
+				if (din[u] == 0) { rc = 3; goto done; }
+				din[u]--;
+				pa[k] = v; pb[k] = u; k++;
+			}
+			dout[v] = 0;
+		}
+		for (i = 0; i < n; i++) if (din[i] != 0) { rc = 3; goto done; }
+	}
+	if (k != m) { rc = 3; goto done; }
+done:
+	free(dout); free(din); free(ord);
+	if (rc) { free(pa); free(pb); pa = pb = NULL; m = 0; }
+	*pa_out = pa; *pb_out = pb; *m_out = m;
+	return rc;
+}
+
+static int comb_degswap(nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv,
+		int directed, double seed, nwint nswap, int build, nwint n) {
+	nwint *pa = NULL, *pb = NULL, m = 0, k, t, made = 0, tried = 0;
+	double *wt = NULL;
+	n390_hs_t h;
+	n370_rng_t rng;
+	int rc = 0;
+
+	h.key = NULL;
+	n370_seed(&rng, seed);
+	if (n < 1) { rc = 198; goto done; }
+	if (build) {
+		rc = n390_build(n, directed, nv, &pa, &pb, &m);
+		if (rc == 3) { res_clear(); pub_result(3, 0, 0); rc = 0; goto done; }
+		if (rc) goto done;
+		wt = (double *)malloc(((size_t)m + 1) * sizeof(double));
+		if (!wt) { rc = 2; goto done; }
+		for (k = 0; k < m; k++) wt[k] = 1;
+	} else {
+		pa = (nwint *)malloc(((size_t)nties + 1) * sizeof(nwint));
+		pb = (nwint *)malloc(((size_t)nties + 1) * sizeof(nwint));
+		wt = (double *)malloc(((size_t)nties + 1) * sizeof(double));
+		if (!pa || !pb || !wt) { rc = 2; goto done; }
+		for (k = 0; k < nties; k++) {
+			nwint x = ei[k] - 1, y = ej[k] - 1;
+			if (x < 0 || y < 0 || x >= n || y >= n || x == y) continue;
+			pa[m] = x; pb[m] = y; wt[m] = ew[k]; m++;
+		}
+	}
+	/* the tied pairs, key a * n + b (undirected: a < b) */
+	h.cap = 16; h.used = 0;
+	while (h.cap < 2 * m + 4) h.cap *= 2;
+	h.key = (nwint *)malloc((size_t)h.cap * sizeof(nwint));
+	if (!h.key) { rc = 2; goto done; }
+	for (k = 0; k < h.cap; k++) h.key[k] = -1;
+	#define N390_KEY(x, y) (directed ? (x) * n + (y) : ((x) < (y) ? (x) * n + (y) : (y) * n + (x)))
+	for (k = 0; k < m; k++) {
+		nwint key = N390_KEY(pa[k], pb[k]);
+		if (n390_hs_has(&h, key)) { rc = 198; goto done; }   /* the same pair twice */
+		n390_hs_add(&h, key);
+	}
+	if (m >= 2) {
+		for (t = 0; t < nswap; t++) {
+			nwint x = n390_below(&rng, m), y = n390_below(&rng, m - 1), a, b, c, d, k1, k2;
+			if (y >= x) y++;
+			tried++;
+			a = pa[x]; b = pb[x]; c = pa[y]; d = pb[y];
+			if (!directed && (n370_next(&rng) >> 63)) { nwint u = c; c = d; d = u; }
+			/* a-b, c-d  ->  a-d, c-b */
+			if (a == d || c == b || a == c || b == d) continue;
+			k1 = N390_KEY(a, d); k2 = N390_KEY(c, b);
+			if (k1 == k2 || n390_hs_has(&h, k1) || n390_hs_has(&h, k2)) continue;
+			n390_hs_del(&h, N390_KEY(a, b));
+			n390_hs_del(&h, N390_KEY(c, d));
+			n390_hs_add(&h, k1);
+			n390_hs_add(&h, k2);
+			pa[x] = a; pb[x] = d; pa[y] = c; pb[y] = b;
+			made++;
+		}
+	}
+	#undef N390_KEY
+	if (res_alloc(m, 3)) { rc = 2; goto done; }
+	for (k = 0; k < m; k++) { g_res[3 * k] = (double)(pa[k] + 1); g_res[3 * k + 1] = (double)(pb[k] + 1); g_res[3 * k + 2] = wt[k]; }
+	pub_a(1, (double)made);
+	pub_a(2, (double)tried);
+	pub_result(0, m, 3);
+done:
+	free(pa); free(pb); free(wt); free(h.key);
+	return rc;
+}
+
 /* called by comb_call() for the codes 51..60 */
 static int comb_n390(nwint alg, nwint n, nwint nties, const nwint *ei, const nwint *ej, const double *ew, const double *nv, const double *p) {
 	switch (alg) {
 		case ALG_DIRTLPA:   return comb_dirtlpa((nwint)n, (nwint)nties, ei, ej, ew, nv, (nwint)p[3], (nwint)p[4], p[5]);
 		case ALG_NULLBIP:   return comb_nullbip((nwint)n, (nwint)nties, ei, ej, ew, nv, (int)p[3], p[4], (nwint)p[5]);
+		case ALG_DEGSWAP:   return comb_degswap((nwint)nties, ei, ej, ew, nv, (int)p[3], p[4], (nwint)p[5], (int)p[6], (nwint)p[7]);
 		case ALG_KKW:       return comb_kkw((nwint)n, (nwint)nties, ei, ej, ew, nv, (nwint)p[3]);
 		case ALG_SIMNODES:  return comb_simnodes((nwint)n, (nwint)nties, ei, ej, ew, (int)p[3], (int)p[4], (nwint)p[5], (nwint)p[6], (int)p[7]);
 		default: SF_error("nwgraph: unknown algorithm code\n"); return 198;
