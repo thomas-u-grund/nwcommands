@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1100 480
+POSITION 10 10 1100 610
 
 SCRIPT PREINIT
 BEGIN
@@ -70,7 +70,7 @@ BEGIN
   EDIT ed_edgesizes 830 222 190 ., nomem option(edgesizes)
   TEXT tx_ed_titles 560 250 260 ., label("panel mode: one double-quoted title per wave")
   EDIT ed_titles 830 250 190 ., nomem option(titles)
-  GROUPBOX gb_pal 550 294 530 132, label("Palettes and scheme")
+  GROUPBOX gb_pal 550 294 530 160, label("Palettes and scheme")
   TEXT tx_ed_colorpalette 560 304 260 ., label("node color palette (see nwplot)")
   EDIT ed_colorpalette 830 304 190 ., nomem option(colorpalette)
   TEXT tx_ed_edgecolorpalette 560 332 260 ., label("edge color palette (see nwplot)")
@@ -79,6 +79,16 @@ BEGIN
   EDIT ed_symbolpalette 830 360 190 ., nomem option(symbolpalette)
   TEXT tx_ed_scheme 560 388 260 ., label("graph scheme (see nwplot)")
   EDIT ed_scheme 830 388 190 ., nomem option(scheme)
+  TEXT tx_cx_nosign 560 416 260 ., label("panel mode: no sign colours on signed networks")
+  CHECKBOX cx_nosign 830 416 190 ., label("nosign") option(nosign)
+
+  GROUPBOX gb_exp 550 462 530 104, label("Export a video or GIF instead of opening the movie")
+  TEXT tx_fi_export 560 472 260 ., label("file to write; .mp4, .webm or .gif sets the format")
+  FILE fi_export 830 472 190 ., label("Browse...") filter("MP4 video|*.mp4|WebM video|*.webm|Animated GIF|*.gif|All files|*.*") save nomem option(export)
+  TEXT tx_cx_replace 560 500 260 ., label("overwrite an existing export file")
+  CHECKBOX cx_replace 830 500 190 ., label("replace") option(replace)
+  TEXT tx_sp_timeout 560 528 260 ., label("seconds to wait for the export file; default = 600")
+  SPINNER sp_timeout 830 528 70 ., default(600) max(99999) min(1) nomem option(timeout)
 END
 
 LIST netlist
@@ -131,6 +141,10 @@ BEGIN
 		optionarg main.ed_edgecolorpalette
 		optionarg main.ed_symbolpalette
 		optionarg main.ed_scheme
+		option main.cx_nosign
+		optionarg main.fi_export
+		option main.cx_replace
+		optionarg /hidedefault main.sp_timeout
 	endoptions
 	stata
 END

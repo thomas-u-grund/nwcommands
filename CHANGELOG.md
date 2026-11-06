@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.2] - 2026-11-06
+
+### Changed
+- The `nwmovie` dialog has a new group "Export a video or GIF instead of opening the movie" with `export()` (file chooser for .mp4, .webm and .gif), `replace` and `timeout()`, the options added in 3.16.0, and a `nosign` checkbox. The command itself is unchanged.
+
 ## [3.17.1] - 2026-11-06
 
 ### Changed

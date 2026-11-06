@@ -3,7 +3,7 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 3)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 06nov2026
-d Version: 3.17.1
+d Version: 3.17.2
 f nwedit_template.html
 f lib/vendor/cytoscape.min.js
 f lib/vendor/gif.js
