@@ -183,7 +183,7 @@ Plotting network...
 Export coordinates...
 ```
 
-The page this call writes is on its own page, [Interactive demo: the Lazega advice network](../../book/interactive/).
+The page this call writes is on its own page, [Interactive demo: the Lazega advice network](../../book/interactive/lazega/).
 Two CSV files saved in such a session (one node dragged, the Providence lawyers recolored, the size
 slider at 1.85) are in the folder of this tutorial; they bring the edits back like this:
 
