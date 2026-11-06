@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.17.1] - 2026-11-06
 
 ### Changed
 - The dialogs of `nwrandom` (new fields `degree()`, `outdegree()`, `indegree()`, `swaps()`), `nwcug` and `nwpermute` offer the degree-preserving options of 3.17.0 for one-mode networks.
