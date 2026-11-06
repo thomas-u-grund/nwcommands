@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 6 November 2026: nwcommands 3.17.2
+
+**nwcommands 3.17.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.2)). The `nwmovie` dialog can now export a movie as an MP4 or WebM video or an animated GIF (the `export()` option of 3.16.0), with `replace` and `timeout()`, and has a `nosign` checkbox. Results of the commands do not change.
+
 ## 6 November 2026: nwergm 1.3.7
 
 **nwergm 1.3.7** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.7)). Bug fix: `nwergm simulate` gave the simulated networks the wrong node names when the starting network does not store its nodes as n1, n2, ... (the lawyers' networks store n1, n10, n11, ...), so per-node results such as each lawyer's degree in the draws were attached to the wrong lawyer; statistics of whole networks were not affected. The draws now carry the node names of the basis or fitted network. Also, `nwergm simulate, basis()` after a fit now starts the chain at the basis network, as R's `simulate()` does. Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
