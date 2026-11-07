@@ -14,7 +14,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 ## 8 November 2026: nwsaom 1.5.2
 
-**nwsaom 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.2)). Faster: fits with closure effects (`gwesp()` and its variants, `gwdspff()`, `transrectrip`, `transties`, `balance`, ...) run 2 to 3.5 times as fast (a realistic model on 200 actors: 16 instead of 56 seconds), and `estat gof` takes a quarter to two thirds of the time. Every estimate, standard error and goodness-of-fit result is identical to 1.5.1. Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+**nwsaom 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.2)). Faster: fits with closure effects (`gwesp()` and its variants, `gwdspff()`, `transrectrip`, `transties`, `balance`, ...) run 2 to 3.5 times as fast (a realistic model on 200 actors: 16 instead of 56 seconds), and `estat gof` takes a quarter to two thirds of the time. The results are those of 1.5.1 (up to differences in the last digits from the compiler of the new build machine). Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
 
 ## 6 November 2026: nwcommands 3.17.2
 
