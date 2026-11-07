@@ -133,7 +133,7 @@ libraries are the better choice when they load; a build with your own Stata is t
 
 ## Requirements
 
-- Stata 17 or later; Stata/BE is enough. Tested with Stata 17 and 18 (the Mata libraries are built with Stata 17, the oldest tested
+- Stata 17 or later; Stata/BE is enough. Tested with Stata 17, 18 and 19 (the Mata libraries are built with Stata 17, the oldest tested
   version; Stata 16 and older are untested). The plugin exchanges data with Mata through frames. The examples used Stata/BE 18.
 - The core `nwcommands`, as above.
 - No R and no other software.
