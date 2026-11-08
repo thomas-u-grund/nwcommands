@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwsaom 1.5.2
+
+**nwsaom 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.2)). Faster: fits with closure effects (`gwesp()` and its variants, `gwdspff()`, `transrectrip`, `transties`, `balance`, ...) run 2 to 3.5 times as fast (a realistic model on 200 actors: 16 instead of 56 seconds), and `estat gof` takes a quarter to two thirds of the time. The results are those of 1.5.1 (up to differences in the last digits from the compiler of the new build machine). Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 6 November 2026: nwcommands 3.17.2
 
 **nwcommands 3.17.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.2)). The `nwmovie` dialog can now export a movie as an MP4 or WebM video or an animated GIF (the `export()` option of 3.16.0), with `replace` and `timeout()`, and has a `nosign` checkbox. Results of the commands do not change.
