@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwsaom 1.5.5
+
+**nwsaom 1.5.5** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.5)). In co-evolution models with several behaviors, the standard errors of the behavior rates in the rate table were labelled with the names of the rates; they are now labelled `se`. The manual's output listings were rerun with this version. Estimates are unchanged from 1.5.4.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 8 November 2026: nwergm 1.5.1
 
 **nwergm 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.1)). The effective sample size, the burn-in test and the convergence test of Monte Carlo maximum likelihood are now computed as R `ergm` computes them, from the multivariate autoregressive spectral density of the estimating equations. Up to 1.5.0 a scalar approximation let the convergence test pass earlier than R's, so that fits simulated less; fits now make about as many proposals as R's (Lazega 9.9 million against R's 9.1, Faux Mesa High 8.1 against 7.8) and take correspondingly longer.
