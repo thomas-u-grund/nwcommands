@@ -12,6 +12,15 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwergm 1.4.0
+
+**nwergm 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.4.0)). Large models and faster checks after a fit.
+- **Models with one coefficient per node.** `sender`, `receiver` and factor terms with many levels work with hundreds or thousands of coefficients: up to 8,192 terms in the compiled sampler, a sparse pseudolikelihood (400 nodes, 799 coefficients: 1.2 seconds instead of 504), and postestimation in Stata/BE beyond its matrix limit of 800. The help file has a new section on what to expect from such models.
+- **Faster after a fit.** `estat gof` on a network of 1,000 nodes takes 33 instead of 216 seconds, on the Lazega lawyers 2.2 instead of 7.2 seconds (identical output); `nwergm simulate` and the fit by stochastic approximation are faster too. Ordinary fits take the time of 1.3.7; on the eight benchmark models nwergm is 2.8 to 10.2 times faster than R's `ergm` ([Speed compared with R](../nwcommands/speed/#nwergm-and-ergm)).
+- **Results that change.** Monte Carlo fits of models with more than 64 statistics now get a real step length (every earlier version used 1), so their iterations differ; smaller models give the results of 1.3.7. `estat gof` and `nwergm simulate` after a curved fit (`gwespfree()` and similar) work; they stopped with an error before.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 8 November 2026: nwsaom 1.5.2
 
 **nwsaom 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.2)). Faster: fits with closure effects (`gwesp()` and its variants, `gwdspff()`, `transrectrip`, `transties`, `balance`, ...) run 2 to 3.5 times as fast (a realistic model on 200 actors: 16 instead of 56 seconds), and `estat gof` takes a quarter to two thirds of the time. The results are those of 1.5.1 (up to differences in the last digits from the compiler of the new build machine). Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
