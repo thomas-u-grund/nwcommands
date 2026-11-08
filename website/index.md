@@ -28,7 +28,7 @@ General Public License, version 3.
 |---|---|---|---|
 | [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.17.2 |
 | [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.5.4 |
-| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.5.0 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.5.1 |
 | [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.2.1 |
 | [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.10 |
 

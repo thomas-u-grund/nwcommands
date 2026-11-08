@@ -12,6 +12,13 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwergm 1.5.1
+
+**nwergm 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.1)). The effective sample size, the burn-in test and the convergence test of Monte Carlo maximum likelihood are now computed as R `ergm` computes them, from the multivariate autoregressive spectral density of the estimating equations. Up to 1.5.0 a scalar approximation let the convergence test pass earlier than R's, so that fits simulated less; fits now make about as many proposals as R's (Lazega 9.9 million against R's 9.1, Faux Mesa High 8.1 against 7.8) and take correspondingly longer.
+- **Results that change.** Every seeded MCMC result changes within simulation error.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 8 November 2026: nwsaom 1.5.4
 
 **nwsaom 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.4)). Phase 1 now falls back to finite differences as RSiena does: when the derivative estimate still has a non-positive diagonal element after Phase 1 has been doubled to 200 simulations, Phase 1 is run again with finite differences (common random numbers), and only a parameter whose derivative is still not positive is kept at its starting value. The output says when this happens. Fits that do not need it are unchanged, to the last digit.

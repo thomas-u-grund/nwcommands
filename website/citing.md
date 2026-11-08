@@ -28,7 +28,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.5.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.5.1").
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
