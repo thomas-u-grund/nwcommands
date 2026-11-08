@@ -28,7 +28,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.4.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.5.0").
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
@@ -68,7 +68,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.5.2/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.5.3/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

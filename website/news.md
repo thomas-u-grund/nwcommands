@@ -12,6 +12,22 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwergm 1.5.0
+
+**nwergm 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.0)). The default MCMC proposal is now R `ergm`'s SPDyad (`MCMC.prop = ~sparse + .triadic`), which mixes much better on models with strong triadic effects (Faux Mesa High: effective sample size 74 per 1,000 draws, R 76, against 17 with tie/no-tie steps); `mcmcprop(sparse)` gives the earlier proposal.
+- **Results that change.** Every seeded MCMC result changes within simulation error.
+- Also: `nwergm simulate` after a fit reproduces its seed, and `output(stats)` chains are up to 50 times faster.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+## 8 November 2026: nwsaom 1.5.3
+
+**nwsaom 1.5.3** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.3)). The estimation algorithm now follows RSiena's defaults in every respect that a comparison with the source of RSiena 1.6.14 found to differ.
+- **RSiena's defaults.** Phase 2 corrects each simulated statistic by its regression on its score (RSiena's default `dolby` option), repeats a subphase whose steps oscillate, and keeps rates positive by RSiena's rule; Phase 1 has RSiena's length, max(50, 7 + 3p) simulations for p parameters. `nwsaom multinet` and `nwsaom multiplex` use RSiena's phase lengths by default (1,000 Phase 3 simulations instead of 200).
+- **Results that change.** Estimates and standard errors change within simulation error; the same seed takes a different path to the same estimates. Fits take 10 to 30 percent longer, because Phase 2 does the work RSiena's does.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 8 November 2026: nwergm 1.4.0
 
 **nwergm 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.4.0)). Large models and faster checks after a fit.
