@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 8 November 2026: nwsaom 1.5.4
+
+**nwsaom 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.4)). Phase 1 now falls back to finite differences as RSiena does: when the derivative estimate still has a non-positive diagonal element after Phase 1 has been doubled to 200 simulations, Phase 1 is run again with finite differences (common random numbers), and only a parameter whose derivative is still not positive is kept at its starting value. The output says when this happens. Fits that do not need it are unchanged, to the last digit.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 8 November 2026: nwergm 1.5.0
 
 **nwergm 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.0)). The default MCMC proposal is now R `ergm`'s SPDyad (`MCMC.prop = ~sparse + .triadic`), which mixes much better on models with strong triadic effects (Faux Mesa High: effective sample size 74 per 1,000 draws, R 76, against 17 with tie/no-tie steps); `mcmcprop(sparse)` gives the earlier proposal.
