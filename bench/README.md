@@ -1,12 +1,12 @@
 # Benchmarks: the model packages against R
 
 Scripts, data and raw timings behind the website page
-[Speed compared with R](https://nwcommands.org/nwcommands/speed/). Measured on 26 and 27 October 2026 on an
-Apple M5 Pro, macOS, Stata 18 BE, R 4.6.0. All timings are with Stata 18; Stata 17 was not timed. The nwergm timings are of version 1.3.0 (1.3.1 was not timed again).
+[Speed compared with R](https://nwcommands.org/nwcommands/speed/). Measured on 26 and 27 October 2026 (nwergm: 8 November) on an
+Apple M5 Pro, macOS, Stata 18 BE, R 4.6.0. All timings are with Stata 18; Stata 17 was not timed. The nwergm timings are of versions 1.4.0 and 1.3.7 (8 November 2026, `nwergm/run140/`); the earlier run of 1.3.0 and 1.2.3 (26 October) is in `nwergm/idle/`.
 
 | Comparison | Versions |
 |---|---|
-| nwergm against ergm | nwergm 1.3.0 (and 1.2.3), ergm 4.12.0 |
+| nwergm against ergm | nwergm 1.4.0 and 1.3.7 (8 November; 1.3.0 and 1.2.3 on 26 October), ergm 4.12.0 |
 | nwsaom against RSiena | nwsaom 1.1.1 (27 October; the run of nwsaom 1.1.0 of 26 October is kept), RSiena 1.6.14 |
 | nwrem against relevent | nwrem 1.0.10, relevent 1.2-1 (`hessian = TRUE` and `FALSE`) |
 | nwdynam against goldfish | nwdynam 1.2.0, goldfish 1.6.12 (engines `default`, `default_c`, `gather_compute`) |
@@ -22,7 +22,8 @@ All with nwcommands core 3.10.0.
 | `scripts/` | The drivers (`plan_*.py`, `benchlib.py`), one script per fit (`saom_one.R`, `saom_one.do`, `rem_one.R`, `rem_nw.do`, `dynam_gf.R`, `dynam_nw.do`), the model definitions, the data generators (`gen_rem.R`, `gen_dynam.R`) and the aggregation. |
 | `data/` | The networks and event logs of the nwsaom, nwrem and nwdynam comparisons. |
 | `raw/saom111/` | The nwsaom 1.1.1 run of 27 October (`saom_main.csv`, `saom_extra.csv`, `saom_cores.csv`), the two calibration series, the fits that were discarded after the laptop went to sleep, and the record of foreign R or Stata processes. `summary/saom111_main.csv` and `summary/saom111_extra.csv` hold the medians. `raw/saom_*.csv` without this folder are the 1.1.0 run. |
-| `nwergm/idle/` | The nwergm run (`idle_all.csv`: 168 fits) and its scripts. |
+| `nwergm/run140/` | The nwergm run of 8 November 2026 (`results.csv`: 168 fits of ergm, nwergm 1.3.7 and 1.4.0; `postestimation.csv`) and its scripts. |
+| `nwergm/idle/` | The nwergm run of 26 October (`idle_all.csv`: 168 fits) and its scripts. |
 | `nwergm/scripts/`, `nwergm/networks/` | The earlier nwergm benchmark scripts and the eight benchmark networks (three large ones are gzipped). |
 
 ## How each fit was timed
