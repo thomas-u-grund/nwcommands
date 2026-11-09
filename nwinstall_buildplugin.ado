@@ -1,4 +1,5 @@
-*! version 1.0.0  31oct2026  nwinstall_buildplugin: compile the native plugins of nwcommands, nwsaom, nwergm and nwdynam on this computer
+*! version 1.1.0  09nov2026  nwinstall_buildplugin: compile the native plugins of nwcommands, nwsaom, nwergm and nwdynam on this computer
+*! 1.1.0: builds on Windows too, with Microsoft's free C compiler (Build Tools for Visual Studio), found with vswhere
 capture program drop nwinstall_buildplugin
 program define nwinstall_buildplugin, rclass
 	version 14
@@ -34,10 +35,14 @@ program define nwinstall_buildplugin, rclass
 		local target "unix"
 		local needs "make gcc"
 	}
+	else if "`os'" == "Windows" {
+		local platform "windows"
+		local needs ""
+		nwinstall_buildplugin_msvc
+		local vcvars `"`r(vcvars)'"'
+	}
 	else {
-		di as err "nwinstall, buildplugin builds the plugins on macOS and Linux."
-		di as err "On Windows use the Visual Studio command line (x64 Native Tools prompt) in the folder native/ of the package; the exact"
-		di as err "command is in the file *_native_readme.txt, which {cmd:net get} <package> copies (see {help nwinstall})."
+		di as err "nwinstall, buildplugin builds the plugins on macOS, Linux and Windows; this computer is `os'."
 		exit 198
 	}
 	local base = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund", `"`from'"')
@@ -64,7 +69,7 @@ program define nwinstall_buildplugin, rclass
 			di as err "The tool {bf:`t'} was not found."
 			if "`os'" == "MacOSX" di as err "On macOS install the command line tools of Xcode: type  xcode-select --install  in the Terminal."
 			else di as err "Install a C compiler and make (for example the package build-essential on Debian and Ubuntu)."
-			capture shell rm -rf "`work'"
+			nwinstall_buildplugin_rmdir "`work'"
 			exit 601
 		}
 	}
@@ -86,23 +91,40 @@ program define nwinstall_buildplugin, rclass
 			if _rc {
 				di as err "  the file native/`f' cannot be copied from `src' (error " _rc ")."
 				di as err "  Check the internet connection, or from() and release()."
-				capture shell rm -rf "`work'"
+				nwinstall_buildplugin_rmdir "`work'"
 				exit 601
 			}
 		}
-		// compile with the Makefile of the package
-		capture erase "`bld'/ok.txt"
-		quietly shell cd "`bld'/native" && make `target' > "`bld'/build.log" 2>&1 && echo ok > "`bld'/ok.txt"
-		capture confirm file "`bld'/ok.txt"
+		capture mkdir "`bld'/lib"
+		capture mkdir "`bld'/lib/plugins"
+		capture mkdir "`bld'/lib/plugins/`platform'"
+		if "`platform'" == "windows" {
+			// Visual Studio's compiler, with the command of the package's automatic build (plus /O2 and /nologo)
+			local b = char(92)
+			local bw = subinstr("`bld'", "/", "`b'", .)
+			tempname bh
+			file open `bh' using "`bld'/build.bat", write text replace
+			file write `bh' "@echo off" _n
+			file write `bh' `"call "`vcvars'" > nul"' _n
+			file write `bh' `"cd /d "`bw'`b'native""' _n
+			file write `bh' `"cl 2> "`bw'`b'cc.txt""' _n
+			file write `bh' `"cl /nologo /LD /O2 /DSYSTEM=STWIN32 /I spi `plug'.c spi`b'stplugin.c /Fe:..`b'lib`b'plugins`b'windows`b'`out' > "`bw'`b'build.log" 2>&1"' _n
+			file close `bh'
+			quietly shell "`bw'`b'build.bat"
+		}
+		else {
+			// compile with the Makefile of the package
+			quietly shell cd "`bld'/native" && make `target' > "`bld'/build.log" 2>&1
+		}
 		capture confirm file "`bld'/lib/plugins/`platform'/`out'"
 		if _rc {
 			di as err "  The compiler stopped. The end of the log:"
 			capture noisily type "`bld'/build.log"
-			if "`keep'" == "" capture shell rm -rf "`work'"
+			if "`keep'" == "" nwinstall_buildplugin_rmdir "`work'"
 			else di as err "  Build folder kept: `work'"
 			exit 9
 		}
-		quietly shell cd "`bld'/native" && (cc --version 2>/dev/null || gcc --version) | head -1 > "`bld'/cc.txt"
+		if "`platform'" != "windows" quietly shell cd "`bld'/native" && (cc --version 2>/dev/null || gcc --version) | head -1 > "`bld'/cc.txt"
 		local ccv ""
 		capture {
 			tempname fh2
@@ -118,8 +140,16 @@ program define nwinstall_buildplugin, rclass
 		capture confirm file `"`target_dir'/`out'"'
 		if !_rc {
 			// an old copy is kept as .prev; the file is removed first (a rebuilt plugin must not be copied over a loaded one)
-			capture copy `"`target_dir'/`out'"' `"`target_dir'/`out'.prev"', replace
-			erase `"`target_dir'/`out'"'
+			capture erase `"`target_dir'/`out'.prev"'
+			if "`platform'" == "windows" {
+				// Windows cannot erase a plugin that this Stata has loaded, but it can rename it
+				local tw = subinstr(`"`target_dir'/`out'"', "/", char(92), .)
+				quietly shell move /y "`tw'" "`tw'.prev" > nul
+			}
+			else {
+				capture copy `"`target_dir'/`out'"' `"`target_dir'/`out'.prev"', replace
+				erase `"`target_dir'/`out'"'
+			}
 		}
 		copy `"`bld'/lib/plugins/`platform'/`out'"' `"`target_dir'/`out'"'
 		di as text "  compiler: " as result `"`ccv'"'
@@ -131,7 +161,62 @@ program define nwinstall_buildplugin, rclass
 			di as text "        remove it, or give dest() the folder in which it is."
 		}
 	}
-	if "`keep'" == "" capture shell rm -rf "`work'"
+	if "`keep'" == "" nwinstall_buildplugin_rmdir "`work'"
 	else di as text _n "Build folder kept: `work'"
 	di as text _n "The new plugin is used from the next Stata session. Restart Stata, then check it with {cmd:nwversion}."
+end
+
+// Windows: find Microsoft's C compiler (Build Tools for Visual Studio, or Visual Studio with C++) with vswhere, which every
+// installation has; r(vcvars) is the script that sets up the compiler. Without it, say what to install and stop.
+capture program drop nwinstall_buildplugin_msvc
+program define nwinstall_buildplugin_msvc, rclass
+	local vswhere ""
+	foreach d in "C:/Program Files (x86)" "C:/Program Files" {
+		capture confirm file "`d'/Microsoft Visual Studio/Installer/vswhere.exe"
+		if !_rc & "`vswhere'" == "" local vswhere "`d'/Microsoft Visual Studio/Installer/vswhere.exe"
+	}
+	local vcvars ""
+	if "`vswhere'" != "" {
+		// through a batch file: cmd mangles a command line with more than one quoted path
+		tempfile vs
+		local vw = subinstr("`vswhere'", "/", char(92), .)
+		local bat "`c(tmpdir)'/nwvswhere_`=subinstr("`c(current_time)'", ":", "", .)'.bat"
+		tempname bh
+		file open `bh' using "`bat'", write text replace
+		file write `bh' "@echo off" _n
+		file write `bh' `""`vw'" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath > "`vs'""' _n
+		file close `bh'
+		quietly shell "`=subinstr("`bat'", "/", char(92), .)'"
+		capture erase "`bat'"
+		tempname fh
+		capture file open `fh' using "`vs'", read text
+		if !_rc {
+			file read `fh' line
+			file close `fh'
+			local line = strtrim(`"`line'"')
+			if `"`line'"' != "" {
+				capture confirm file `"`line'/VC/Auxiliary/Build/vcvars64.bat"'
+				if !_rc local vcvars = subinstr(`"`line'/VC/Auxiliary/Build/vcvars64.bat"', "/", char(92), .)
+			}
+		}
+	}
+	if `"`vcvars'"' == "" {
+		di as err "Building the plugin on Windows needs Microsoft's free C compiler, which was not found on this computer."
+		di as err "Install it once (it is free, and needs no Visual Studio licence):"
+		di as err `"  1. Download {browse "https://visualstudio.microsoft.com/visual-cpp-build-tools/":Build Tools for Visual Studio} and run the installer."'
+		di as err `"  2. Tick {bf:Desktop development with C++} and click Install (a download of a few gigabytes)."'
+		di as err `"  3. Then type the same {cmd:nwinstall, buildplugin()} command again; Stata does not need to be restarted."'
+		di as err "If Visual Studio itself is installed, add the workload Desktop development with C++ to it in the Visual Studio Installer."
+		exit 601
+	}
+	di as text "C compiler: Microsoft C/C++ (" as result `"`vcvars'"' as text ")"
+	return local vcvars `"`vcvars'"'
+end
+
+// remove the build folder (rm -rf; rmdir /s /q on Windows)
+capture program drop nwinstall_buildplugin_rmdir
+program define nwinstall_buildplugin_rmdir
+	args dir
+	if "`c(os)'" == "Windows" quietly shell rmdir /s /q "`=subinstr("`dir'", "/", char(92), .)'"
+	else quietly shell rm -rf "`dir'"
 end

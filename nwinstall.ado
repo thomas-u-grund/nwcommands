@@ -12,6 +12,8 @@ program nwinstall, rclass
 	}
 
 	// buildplugin(): compile the native plugins of the core and the model packages on this computer (nwinstall_buildplugin.ado)
+	// buildplugin() with nothing inside means all plugins (Stata cannot tell an empty option from a missing one, so look at the text)
+	if "`buildplugin'" == "" & ustrregexm(`"`__raw'"', "(?i)(^|[ ,])buildp[a-z]*\(\s*\)") local buildplugin "all"
 	if "`buildplugin'" != "" {
 		nwinstall_buildplugin, pkgs(`buildplugin') from(`buildfrom') release(`release') `=cond("`buildkeep'" != "", "keep", "")' dest(`dest')
 		return add

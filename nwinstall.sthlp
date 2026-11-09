@@ -138,9 +138,11 @@ The plugin does not depend on the version or the flavour of Stata (BE, SE, MP; t
 the processor, so a plugin built on your computer works in every Stata of that computer.
 
 {pstd}
-You need a compiler and {cmd:make}: on macOS the command line tools of Xcode (type {cmd:xcode-select --install} in the Terminal), on Linux {cmd:gcc} and {cmd:make}
-(for example the package {cmd:build-essential}). The build was tested on macOS. On Windows the command stops with a message; the
-Visual Studio command line builds the plugin from the same source, and the build note that comes with the source ({cmd:net get} <package>) gives the command.
+You need a C compiler, installed once: on macOS the command line tools of Xcode (type {cmd:xcode-select --install} in the Terminal), on Linux {cmd:gcc}
+and {cmd:make} (for example the package {cmd:build-essential}), on Windows Microsoft's free
+{browse "https://visualstudio.microsoft.com/visual-cpp-build-tools/":Build Tools for Visual Studio} with the workload {bf:Desktop development with C++}
+(or Visual Studio with that workload). If the compiler is missing, the command says what to install and stops; nothing is changed.
+On Windows the compiler is found automatically; nothing has to be set up. {cmd:buildplugin()} with nothing in the parentheses builds all plugins.
 {opt buildfrom()} points to a local copy of the repositories instead of GitHub, and {opt release()} to a tagged release.
 
 {marker buildmata}{...}
