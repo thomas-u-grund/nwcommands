@@ -49,6 +49,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_level.isneq("") & !main.ed_level.isnumlist() {
+		stopbox stop "ed_level: enter a number (or numbers)."
+	}
 	require main.ed_generate
 	put "nwclustering " main.cb_net
 	beginoptions

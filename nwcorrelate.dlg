@@ -53,6 +53,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_permutations.isneq("") & !main.ed_permutations.isnumlist() {
+		stopbox stop "Number of QAP permutations: enter a number (or numbers)."
+	}
 	put "nwcorrelate " main.cb_net
 	beginoptions
 		optionarg main.vr_attribute

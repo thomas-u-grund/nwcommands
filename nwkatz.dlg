@@ -47,6 +47,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
+		stopbox stop "penalization factor for calculation of weights: enter a number (or numbers)."
+	}
 	require main.vr_generate
 	put "nwkatz " main.cb_net
 	beginoptions

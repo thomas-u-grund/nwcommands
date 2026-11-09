@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwcommands 3.17.6
+
+**nwcommands 3.17.6** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.6)). The number fields of the dialogs (such as the number of nodes of `nwrandom`) accept only numbers: text is refused with a message before the command runs.
+
 ## 9 November 2026: nwcommands 3.17.5
 
 **nwcommands 3.17.5** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.5)). The dialogs were checked against the syntax of every command and corrected: among other things, the name of a new network is passed to the command again, `nwrandom` and the other generators ask for the number of nodes, and the dialogs say which fields are required. `nwinstall, buildplugin()` now also builds the plugins on Windows, with Microsoft's free C compiler; if it is missing, the command says what to install.

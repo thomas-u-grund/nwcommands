@@ -55,6 +55,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
+		stopbox stop "Weight-to-distance exponent used with weighted: enter a number (or numbers)."
+	}
 	require main.ed_generate
 	put "nwbetween " main.cb_net
 	beginoptions

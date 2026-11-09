@@ -51,6 +51,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_maxcliques.isneq("") & !main.ed_maxcliques.isnumlist() {
+		stopbox stop "Stop when more than this many maximal n-cliques are examined: enter a number (or numbers)."
+	}
+	if main.ed_maxtime.isneq("") & !main.ed_maxtime.isnumlist() {
+		stopbox stop "Stop after this many seconds: enter a number (or numbers)."
+	}
 	if !main.cx_countonly {
 		require main.ed_generate
 	}

@@ -41,6 +41,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_mode.isneq("") & !main.ed_mode.isnumlist() {
+		stopbox stop "two-mode networks only: mode (1 or 2) each new node belon...: enter a number (or numbers)."
+	}
 	require main.ed_nodenames
 	put "nwaddnodes " main.cb_net
 	beginoptions

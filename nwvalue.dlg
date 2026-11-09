@@ -41,6 +41,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_alter.isneq("") & !main.ed_alter.isnumlist() {
+		stopbox stop "Name of the receiving node: enter a number (or numbers)."
+	}
+	if main.ed_ego.isneq("") & !main.ed_ego.isnumlist() {
+		stopbox stop "Name of the sending node: enter a number (or numbers)."
+	}
 	put "nwvalue " main.cb_net
 	beginoptions
 		optionarg main.sp_egoid

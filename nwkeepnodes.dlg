@@ -39,6 +39,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_nodes.isneq("") & !main.ed_nodes.isnumlist() {
+		stopbox stop "Numlist of nodeid's to be kept: enter a number (or numbers)."
+	}
 	put "nwkeepnodes " main.cb_net
 	beginoptions
 		optionarg main.ed_nodes

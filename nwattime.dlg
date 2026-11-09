@@ -41,6 +41,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_at.isneq("") & !main.ed_at.isnumlist() {
+		stopbox stop "The timepoint to slice at: enter a number (or numbers)."
+	}
 	require main.ed_at
 	put "nwattime " main.cb_net
 	beginoptions

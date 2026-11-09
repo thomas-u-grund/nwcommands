@@ -53,6 +53,19 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.cb_net.isneq("") & !main.cb_net.isNumlistGT(0) {
+		stopbox stop "Number of nodes: enter a whole number greater than 0."
+	}
+	if main.ed_prob.isneq("") & !main.ed_prob.isnumlist() {
+		stopbox stop "probability for a tie to rewire: enter a number (or numbers)."
+	}
+	if main.ed_shortcuts.isneq("") & !main.ed_shortcuts.isnumlist() {
+		stopbox stop "exact number of ties to rewire: enter a number (or numbers)."
+	}
+	if main.ed_weights.isneq("") & !main.ed_weights.isnumlist() {
+		stopbox stop "probabilities p_k for tie weights k: enter a number (or numbers)."
+	}
 	require main.cb_net
 	put "nwsmall " main.cb_net
 	beginoptions

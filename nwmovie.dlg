@@ -113,6 +113,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_duration.isneq("") & !main.ed_duration.isnumlist() {
+		stopbox stop "panel mode: milliseconds per wave-to-wave transition: enter a number (or numbers)."
+	}
+	if main.ed_speed.isneq("") & !main.ed_speed.isnumlist() {
+		stopbox stop "simulated event-time units per real second during playback: enter a number (or numbers)."
+	}
 	require main.cb_net
 	put "nwmovie " main.cb_net
 	beginoptions

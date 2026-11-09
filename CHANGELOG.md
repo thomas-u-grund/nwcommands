@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.6] - 2026-11-09
+
+### Fixed
+- **Number fields in the dialogs accept only numbers.** In 31 dialogs, a field that needs a number (the number of nodes of `nwrandom`, `nwpref`, `nwring`, `nwsmall` and `nwvalidvars`, the dimensions of `nwlattice`, probabilities, densities, tie weights, node ids, iterations, tolerances and the other numeric options) is checked when you click OK; text is refused with a message that names the field, before the command runs. Test `test_dlg_options` checks the number of nodes.
+
 ## [3.17.5] - 2026-11-09
 
 ### Fixed

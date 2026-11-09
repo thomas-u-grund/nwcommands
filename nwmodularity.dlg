@@ -45,6 +45,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_resolution.isneq("") & !main.ed_resolution.isnumlist() {
+		stopbox stop "Resolution parameter (Reichardt-Bornholdt): enter a number (or numbers)."
+	}
 	require main.vr_group
 	put "nwmodularity " main.cb_net
 	beginoptions

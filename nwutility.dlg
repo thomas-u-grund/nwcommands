@@ -43,6 +43,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_benefit.isneq("") & !main.ed_benefit.isnumlist() {
+		stopbox stop "benefit from connected node: enter a number (or numbers)."
+	}
+	if main.ed_cost.isneq("") & !main.ed_cost.isnumlist() {
+		stopbox stop "cost of connection: enter a number (or numbers)."
+	}
 	put "nwutility " main.cb_net
 	beginoptions
 		optionarg main.ed_benefit

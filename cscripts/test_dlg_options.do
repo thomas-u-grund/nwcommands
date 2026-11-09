@@ -31,5 +31,15 @@ foreach c in nwrandom nwpref nwring nwsmall {
 	}
 	file close `fh'
 	assert `found' == 1
+	* the number of nodes must be a number: the dialog checks it before the command runs
+	file open `fh' using "`c'.dlg", read text
+	local found 0
+	file read `fh' line
+	while r(eof) == 0 {
+		if strpos(`"`line'"', "main.cb_net.isNumlistGT(0)") local found 1
+		file read `fh' line
+	}
+	file close `fh'
+	assert `found' == 1
 }
 di as text "PASS test_dlg_options (`nfiles' dialogs)"

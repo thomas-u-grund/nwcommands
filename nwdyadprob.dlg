@@ -47,6 +47,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_density.isneq("") & !main.ed_density.isnumlist() {
+		stopbox stop "density of the new network: enter a number (or numbers)."
+	}
+	if main.ed_weights.isneq("") & !main.ed_weights.isnumlist() {
+		stopbox stop "probabilities p_k for tie weights k: enter a number (or numbers)."
+	}
 	put "nwdyadprob " main.cb_net
 	beginoptions
 		optionarg main.ed_weights

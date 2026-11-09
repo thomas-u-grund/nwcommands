@@ -35,6 +35,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_id.isneq("") & !main.ed_id.isnumlist() {
+		stopbox stop "Original network ID of the network to make the current ne...: enter a number (or numbers)."
+	}
 	put "nwcurrent " main.cb_net
 	beginoptions
 		optionarg main.ed_id

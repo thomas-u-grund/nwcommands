@@ -51,6 +51,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_maxplexes.isneq("") & !main.ed_maxplexes.isnumlist() {
+		stopbox stop "Stop when more than this many sets are found: enter a number (or numbers)."
+	}
+	if main.ed_maxtime.isneq("") & !main.ed_maxtime.isnumlist() {
+		stopbox stop "Stop after this many seconds: enter a number (or numbers)."
+	}
 	put "nwkplex " main.cb_net
 	beginoptions
 		optionarg main.sp_k

@@ -35,6 +35,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.cb_net.isneq("") & !main.cb_net.isNumlistGT(0) {
+		stopbox stop "Number of nodes: enter a whole number greater than 0."
+	}
 	require main.cb_net
 	require main.ed_stub
 	put "nwvalidvars " main.cb_net

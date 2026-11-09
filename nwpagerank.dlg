@@ -47,6 +47,16 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_damping.isneq("") & !main.ed_damping.isnumlist() {
+		stopbox stop "Probability of following a tie, between 0 and 1: enter a number (or numbers)."
+	}
+	if main.ed_maxiter.isneq("") & !main.ed_maxiter.isnumlist() {
+		stopbox stop "Maximum number of power iterations: enter a number (or numbers)."
+	}
+	if main.ed_tol.isneq("") & !main.ed_tol.isnumlist() {
+		stopbox stop "Convergence tolerance: enter a number (or numbers)."
+	}
 	require main.ed_generate
 	put "nwpagerank " main.cb_net
 	beginoptions
