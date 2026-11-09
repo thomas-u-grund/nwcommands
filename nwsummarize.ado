@@ -2,7 +2,7 @@
 capture program drop nwsummarize
 program nwsummarize
 	version 9
-	syntax [anything(name=netname)][, mat matonly detail save(string asis) silent ]
+	syntax [anything(name=netname)][, mat matonly detail save(string) silent ]
 	set more off
 	_nwsyntax `netname', max(100000)
 

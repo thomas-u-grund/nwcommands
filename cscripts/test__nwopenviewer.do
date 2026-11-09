@@ -45,7 +45,10 @@ assert _rc == 0
 if `r(usedviewer)' == 1 {
 	sleep 1000
 	local _nwov_psfile "`c(tmpdir)'nwov_pscheck.txt"
-	shell /bin/ps aux | /usr/bin/grep nwedit_viewer_ | /usr/bin/grep -v grep > "`_nwov_psfile'"
+	* Windows: tasklist shows the running copy (nwedit_viewer_<n>.exe) but not its arguments, so only the launch is
+	* checked there; the arguments are checked on macOS and Linux
+	if "`c(os)'" == "Windows" shell tasklist /fi "imagename eq nwedit_viewer_*" > "`_nwov_psfile'"
+	else shell /bin/ps aux | /usr/bin/grep nwedit_viewer_ | /usr/bin/grep -v grep > "`_nwov_psfile'"
 	tempname pf
 	file open `pf' using "`_nwov_psfile'", read
 	file read `pf' line
@@ -64,7 +67,8 @@ if `r(usedviewer)' == 1 {
 	capture erase "`_nwov_psfile'"
 	assert `_nwov_found' == 1
 	assert `_nwov_foundbad' == 0
-	shell pkill -f nwedit_viewer 2>/dev/null
+	if "`c(os)'" == "Windows" shell taskkill /f /fi "imagename eq nwedit_viewer_*" > nul 2>&1
+	else shell pkill -f nwedit_viewer 2>/dev/null
 	di "=== _nwopenviewer launches the chromeless viewer with a clean (unquoted) argv REGRESSION VERIFIED ==="
 }
 else {

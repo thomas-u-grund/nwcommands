@@ -88,11 +88,26 @@ qui nwbetween cmpnet, generate(_bc_native) silent
 mata: st_local("pluginpath", NativeGraphPluginPath())
 local movedplugin "`pluginpath'.disabled_for_test"
 capture erase "`movedplugin'"
-qui copy "`pluginpath'" "`movedplugin'", replace
-qui erase "`pluginpath'"
+// Windows cannot erase a plugin that is loaded, but it can rename it
+local winmove = ("`c(os)'" == "Windows")
+if `winmove' {
+	local _pw = subinstr("`pluginpath'", "/", char(92), .)
+	shell move /y "`_pw'" "`_pw'.disabled_for_test" > nul
+	confirm file "`movedplugin'"
+}
+else {
+	qui copy "`pluginpath'" "`movedplugin'", replace
+	qui erase "`pluginpath'"
+}
 qui nwbetween cmpnet, generate(_bc_mata) silent
-qui copy "`movedplugin'" "`pluginpath'", replace
-qui erase "`movedplugin'"
+if `winmove' {
+	shell move /y "`_pw'.disabled_for_test" "`_pw'" > nul
+	confirm file "`pluginpath'"
+}
+else {
+	qui copy "`movedplugin'" "`pluginpath'", replace
+	qui erase "`movedplugin'"
+}
 // Stata's own `copy' does not preserve the source file's executable bit -
 // restore it directly (macOS/Linux only; harmless no-op elsewhere, and
 // not load-bearing for Stata's own plugin loading either way - confirmed

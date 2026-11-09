@@ -340,7 +340,10 @@ cs_mknet 40 0.08 1 7002
 capture nwkplex tn, k(2) generate(kq) replace silent maxplexes(2)
 if `native' assert _rc == 484
 capture nwkplex tn, k(2) generate(kq) replace silent maxtime(0.000001)
-if `native' assert _rc == 484
+* the limit is checked with the C library's clock(); on Windows it advances in steps of a millisecond or more, and this
+* search can end within the first step, so there it may also finish (rc 0)
+if `native' & "`c(os)'" != "Windows" assert _rc == 484
+if `native' & "`c(os)'" == "Windows" assert inlist(_rc, 0, 484)
 nwkplex tn, k(2) generate(kq) replace silent maxplexes(1e9) nomatrix
 assert r(kplexes) > 2
 

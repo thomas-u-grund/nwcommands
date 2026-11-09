@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwcommands 3.17.4
+
+**nwcommands 3.17.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.4)). The first run of all test suites on Windows: `nwsaom`, `nwergm` and `nwrem` passed every test; in the core, `nwsummarize, save()` failed on Windows with a quoted file name and is fixed, and eight tests that assumed macOS now also run on Windows.
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
 ## 9 November 2026: nwergm 1.5.4
 
 **nwergm 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.4)). Starting values given in `init()` are now used by Monte Carlo maximum likelihood under constraints such as `degrees` or `bd()`, as in R's `ergm()`. Before, such fits started from zero whatever `init()` said. Coefficients without a given value still start at zero. Fits without `init()` are unchanged.

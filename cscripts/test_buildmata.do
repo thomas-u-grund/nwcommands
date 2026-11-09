@@ -11,7 +11,11 @@ local scratch "`c(tmpdir)'/nwbuildmatatest_`=string(runiformint(100000, 999999))
 mkdir "`scratch'"
 mkdir "`scratch'/from"
 mkdir "`scratch'/dest"
-quietly shell ln -s "`here'" "`scratch'/from/nwcommands"
+if "`c(os)'" == "Windows" {
+	* a directory junction (no administrator rights needed); mklink is a command of cmd, which shell runs
+	quietly shell mklink /J "`=subinstr("`scratch'/from/nwcommands", "/", char(92), .)'" "`=subinstr("`here'", "/", char(92), .)'"
+}
+else quietly shell ln -s "`here'" "`scratch'/from/nwcommands"
 * data in memory: refused, nothing is touched
 sysuse auto, clear
 capture nwinstall, buildmata(nwcommands) buildfrom("`scratch'/from") dest("`scratch'/dest")
@@ -35,5 +39,10 @@ _nwlibcheck
 nwinstall, buildmata(nwcommands) buildfrom("`scratch'/from") dest("`scratch'/dest")
 confirm file "`scratch'/dest/lnwcommands.mlib.prev"
 adopath - "`scratch'/dest"
-quietly shell rm -rf "`scratch'"
+if "`c(os)'" == "Windows" {
+	* remove the junction first (rmdir on a junction removes the link, not the checkout), then the scratch folder
+	quietly shell rmdir "`=subinstr("`scratch'/from/nwcommands", "/", char(92), .)'"
+	quietly shell rmdir /s /q "`=subinstr("`scratch'", "/", char(92), .)'"
+}
+else quietly shell rm -rf "`scratch'"
 di as text "PASS test_buildmata"

@@ -52,8 +52,13 @@ assert _rc != 0
 di "PASS nothing is dropped into the working folder"
 
 * 3. leave only the installed copy on the ado path
-foreach d in "`core'/lib/plugins/macos" "`core'/lib" "`core'" {
-	capture adopath - "`d'"
+* (both spellings of the folder: on Windows c(pwd) has backslashes, a runner may have added it with slashes)
+local plat = cond("`c(os)'" == "Windows", "windows", cond("`c(os)'" == "MacOSX", "macos", "unix"))
+local core2 = subinstr("`core'", char(92), "/", .)
+foreach c in "`core'" "`core2'" {
+	foreach d in "`c'/lib/plugins/`plat'" "`c'/lib" "`c'" {
+		capture adopath - "`d'"
+	}
 }
 discard
 capture mata: mata mlib index
