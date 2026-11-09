@@ -823,4 +823,4 @@ and self-reported behavior, not covered by the GPL-3 of this package, and are re
 sources. The files were converted to the nwcommands format, 15 classes were kept, and {it:nact} was added.
 
 {hline}
-{pstd}{it:nwcommands version 3.17.3, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.4, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

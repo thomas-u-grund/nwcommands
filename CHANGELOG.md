@@ -4,6 +4,17 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.4] - 2026-11-09
+
+### Fixed
+- **`nwsummarize, save()` failed on Windows with a quoted file name** (such as a `tempfile`): the option kept the quotes and the file name came out with a stray quote. Found in the first run of all test suites on Windows.
+
+### Changed
+- The package files and the author lines of the `.ado` and help files give the affiliation as RWTH Aachen University.
+
+### Tests
+- Eight tests assumed macOS and now also run on Windows: `test_buildmata` (a directory junction instead of `ln -s`), `test__nwopenviewer` (`tasklist` instead of `ps`), `test_animate` (Windows' own `convert.exe` is not ImageMagick), `test_nwgraph_native` (a loaded plugin is renamed, not erased), `test_nwinstall_ancillary` and `test_nwinstall_gui` (both spellings of the repository folder are taken off the ado-path), `test_nwinstall_everything` (the parent folder on Windows; the folder of the model packages can also come from the environment variable `NWMODELS`), and `test_combinatorial_scale` (on Windows the C clock advances in steps of a millisecond or more, so a time limit of a microsecond may not be reached).
+
 ## [3.17.3] - 2026-11-09
 
 ### Fixed

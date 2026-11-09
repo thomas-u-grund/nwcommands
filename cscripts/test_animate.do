@@ -16,6 +16,9 @@ set graphics off
 * itself controls.
 capture shell which convert
 local hasimagemagick = (_rc == 0)
+* Windows: shell always returns 0, and "convert" is Windows' own disk tool (C:\Windows\System32\convert.exe), not
+* ImageMagick; animate needs imagickpath() there. The test runs on Windows only with NW_IMAGICKPATH set (not done here).
+if "`c(os)'" == "Windows" local hasimagemagick 0
 
 if `hasimagemagick' {
 	local tmpd `"`c(tmpdir)'"'

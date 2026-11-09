@@ -225,7 +225,9 @@ nwinstall, downloadoff
 
 * ---- 13. dialog duplicates scan finds a planted second copy, and deletes nothing
 * (the repository folder itself is taken off the ado path here; nwinstall is already loaded)
-adopath - "`core'"
+* (both spellings: on Windows c(pwd) has backslashes, a runner may have added the folder with slashes)
+capture adopath - "`core'"
+capture adopath - "`=subinstr("`core'", char(92), "/", .)'"
 capture mkdir "`scratch'/plus/n"
 copy "`core'/nwplot.dlg" "`scratch'/plus/n/nwplot.dlg", replace
 nwinstall, dupcheck

@@ -1,6 +1,6 @@
 * nwinstall, everything: installs the core and the four model packages as one set; nwinstall, all installs the core only and prints a hint.
 * Everything is installed from LOCAL folders into a scratch PLUS (nothing is downloaded, the real PLUS and profile.do are not touched).
-* Run from the core folder, with the global NWMODELS set to a folder with the subfolders nwsaom nwergm nwdynam nwrem
+* Run from the core folder, with the global (or the environment variable) NWMODELS set to a folder with the subfolders nwsaom nwergm nwdynam nwrem
 * (default: the parent folder of the core), e.g.   global NWMODELS "/path/to/models"
 * Logs through the version of Stata that runs it (the test is meant to be run under Stata 17 and Stata 18).
 cscript
@@ -31,8 +31,15 @@ program tcount, rclass
 end
 
 local core "`c(pwd)'"
+* cscript drops the globals, so the folder can also come from the environment variable NWMODELS
 if `"$NWMODELS"' == "" {
-	local models = subinstr("`core'", "/" + substr("`core'", strrpos("`core'", "/") + 1, .), "", 1)
+	local envm : env NWMODELS
+	if `"`envm'"' != "" global NWMODELS `"`envm'"'
+}
+if `"$NWMODELS"' == "" {
+	* the parent folder of the core (on Windows c(pwd) has backslashes)
+	local c2 = subinstr("`core'", char(92), "/", .)
+	local models = substr("`c2'", 1, strrpos("`c2'", "/") - 1)
 }
 else local models `"$NWMODELS"'
 tempfile marker
