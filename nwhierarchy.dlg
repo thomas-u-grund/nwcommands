@@ -33,7 +33,7 @@ BEGIN
   TEXT tx_cx_add 530 54 260 ., label("Add the cluster analysis to the data in memory (default)")
   CHECKBOX cx_add 800 54 190 ., label("add") option(add)
   TEXT tx_sp_groups 530 82 260 ., label("Cut the resulting dendrogram into this many role/position equivalence classes, g")
-  SPINNER sp_groups 800 82 70 ., default(-1) max(999999) min(-999999) nomem option(groups)
+  SPINNER sp_groups 800 82 70 ., default(-1) max(999999) min(-1) nomem option(groups)
   TEXT tx_ed_equivgen 530 110 260 ., label("Name of the variable groups() generates")
   EDIT ed_equivgen 800 110 190 ., nomem option(equivgen)
   TEXT tx_ed_generate 530 138 260 ., label("Name of the variable that stores the equivalence classes (same as equivgen())")

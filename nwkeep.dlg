@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 142
+POSITION 10 10 550 170
 
 SCRIPT PREINIT
 BEGIN
@@ -17,9 +17,11 @@ DIALOG main, title("nwkeep - Keep a network (or only certain nodes)")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_cx_clean 20 54 260 ., label("Drop node observations")
-  CHECKBOX cx_clean 290 54 190 ., label("clean") option(clean)
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_ed_if 20 54 260 ., label("if (node-level condition):")
+  EDIT ed_if 290 54 190 ., nomem
+  TEXT tx_cx_clean 20 82 260 ., label("Drop node observations")
+  CHECKBOX cx_clean 290 82 190 ., label("clean") option(clean)
 END
 
 LIST netlist
@@ -36,6 +38,9 @@ END
 PROGRAM command
 BEGIN
 	put "nwkeep " main.cb_net
+	if main.ed_if {
+		put " if " main.ed_if
+	}
 	beginoptions
 		option main.cx_clean
 	endoptions

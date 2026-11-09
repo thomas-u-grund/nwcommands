@@ -61,6 +61,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.vl_vars
 	put "nwfromedge " main.vl_vars
 	beginoptions
 		option main.cx_overwrite

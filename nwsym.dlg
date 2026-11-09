@@ -37,6 +37,8 @@ LIST list_mode
 BEGIN
 	max
 	min
+	sum
+	mean
 END
 
 PROGRAM initialize

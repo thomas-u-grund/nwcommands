@@ -41,6 +41,8 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_densvar
+	require main.ed_sizevar
 	put "nwego " main.cb_net
 	beginoptions
 		optionarg main.ed_sizevar

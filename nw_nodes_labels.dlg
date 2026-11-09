@@ -20,7 +20,7 @@ BEGIN
 	SPINNER sp_dig1 80 110 50 ., label("dig1") default(1) nomemory
     TEXT    tx_lab6 130 110 10	., label(".") 		
     SPINNER sp_dig2 140 110 50 ., label("dig1") default(0) nomemory
-	TEXT     tx_llab6	20	130	280	., label("Overwrite maker_label_options:")  		
+	TEXT     tx_llab6	20	130	280	., label("Overwrite marker_label_options:")  		
 	EDIT ed_lother	200 130 200	., label("other") tooltip("Overwrite marker_label_options directly")
 END
 
@@ -39,7 +39,9 @@ BEGIN
 		put " mlabcolor(" labels.cb_lcol ")"
 	}
 	
-	put " mlabgap(" labels.sp_dig1 "." labels.sp_dig2 ")"
+	if !labels.sp_dig1.isdefault() | !labels.sp_dig2.isdefault() {
+		put " mlabgap(" labels.sp_dig1 "." labels.sp_dig2 ")"
+	}
 
 	if labels.ed_lother {
 		put " " labels.ed_lother

@@ -41,6 +41,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	require main.vr_group
 	put "nwbrokerage " main.cb_net
 	beginoptions

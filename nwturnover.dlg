@@ -39,6 +39,8 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
+	require main.ed_generate
 	put "nwturnover " main.cb_net
 	beginoptions
 		optionarg main.ed_generate

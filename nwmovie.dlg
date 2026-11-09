@@ -113,6 +113,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nwmovie " main.cb_net
 	beginoptions
 		optionarg main.ed_fname

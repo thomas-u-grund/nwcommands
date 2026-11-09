@@ -43,6 +43,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nw2degree " main.cb_net
 	beginoptions
 		optionarg main.ed_generate

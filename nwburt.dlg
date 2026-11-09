@@ -24,7 +24,7 @@ BEGIN
   CHECKBOX cx_dyadconstrai 290 82 190 ., label("dyadconstraint") option(dyadconstraint)
   TEXT tx_cx_binary 20 110 260 ., label("Ignore tie values (valued networks)")
   CHECKBOX cx_binary 290 110 190 ., label("binary") option(binary)
-  TEXT tx_cx_replace 20 138 260 ., label("Replace existing /// variables")
+  TEXT tx_cx_replace 20 138 260 ., label("Replace existing _effsize/_efficiency/_constraint/_hierarchy variables")
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
   TEXT tx_cx_silent 20 166 260 ., label("Suppress summary output")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
@@ -47,6 +47,7 @@ BEGIN
 	beginoptions
 		option main.cx_dyadredundan
 		option main.cx_dyadconstrai
+		option main.cx_binary
 		option main.cx_replace
 		option main.cx_silent
 	endoptions

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 170
+POSITION 10 10 550 198
 
 SCRIPT PREINIT
 BEGIN
@@ -17,11 +17,13 @@ DIALOG main, title("nwsubset - Subset the nodes of a network")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_cb_name 20 54 260 ., label("name of the new network")
-  COMBOBOX cb_name 290 54 190 ., dropdown contents(netlist) nomem option(name)
-  TEXT tx_cx_replace 20 82 260 ., label("replace existing network")
-  CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
+  GROUPBOX gb_opt 10 44 520 104, label("Options")
+  TEXT tx_ed_if 20 54 260 ., label("if (node-level condition):")
+  EDIT ed_if 290 54 190 ., nomem
+  TEXT tx_cb_name 20 82 260 ., label("name of the new network")
+  COMBOBOX cb_name 290 82 190 ., dropdown contents(netlist) nomem option(name)
+  TEXT tx_cx_replace 20 110 260 ., label("replace existing network")
+  CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
 END
 
 LIST netlist
@@ -38,6 +40,9 @@ END
 PROGRAM command
 BEGIN
 	put "nwsubset " main.cb_net
+	if main.ed_if {
+		put " if " main.ed_if
+	}
 	beginoptions
 		optionarg main.cb_name
 		option main.cx_replace

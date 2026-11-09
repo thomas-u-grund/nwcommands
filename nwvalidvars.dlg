@@ -35,6 +35,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	require main.ed_stub
 	put "nwvalidvars " main.cb_net
 	beginoptions

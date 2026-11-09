@@ -23,7 +23,6 @@ BEGIN
 	COMBOBOX cb_col7	270 70 100	., dropdownlist contents(colors) nomemory
 	TEXT     tx_col8	210	90	280	., label("Color 8:") 		
 	COMBOBOX cb_col8	270 90 100	., dropdownlist contents(colors) nomemory
-	CHECKBOX ck_res 270 110 100 100, label("Rescale off") option(norescale)
 	GROUPBOX gb_lgd 10 160 380 70, label("Edge color legend")
 	TEXT     tx_keys	20	190	280	., label("Force keys (not available)") 	
 	//EDIT ed_keys 110 190 150 .,	nomemory
@@ -65,9 +64,6 @@ BEGIN
 		put ")"
 	}*/	
 	
-	if edges_colopt.ck_res {
-		put " norescale"
-	}
 	
 	if edges_colopt.ck_lgd {
 		put " legendoff"

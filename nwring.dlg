@@ -18,8 +18,8 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Number of nodes:")
   EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 244, label("Options")
-  TEXT tx_sp_k 20 54 260 ., label("number of neighhbors on ring-lattice on each side")
-  SPINNER sp_k 290 54 70 ., default(0) max(999999) min(-999999) nomem option(k)
+  TEXT tx_sp_k 20 54 260 ., label("Required. Number of neighbors on each side of the ring lattice")
+  SPINNER sp_k 290 54 70 ., default(1) max(999999) min(1) nomem option(k)
   TEXT tx_ed_weights 20 82 260 ., label("probabilities p_k for tie weights k")
   EDIT ed_weights 290 82 190 ., nomem option(weights)
   TEXT tx_sp_ntimes 20 110 260 ., label("number of networks to be generated; default = 1")
@@ -49,7 +49,7 @@ END
 
 PROGRAM command
 BEGIN
-	require main.sp_k
+	require main.cb_net
 	put "nwring " main.cb_net
 	beginoptions
 		optionarg main.sp_k

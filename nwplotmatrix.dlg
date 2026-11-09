@@ -64,13 +64,11 @@ BEGIN
   COMBOBOX cb_back	105 130 100 	., dropdownlist contents(colors) 
   COMBOBOX cb_line 105	150	100	., dropdownlist contents(colors) 
   
-  CHECKBOX cx_nodich 10 190 150 ., label("Do not dichotomize")
   CHECKBOX cx_tie 10 210 100 ., label("Tie values") option(tievalue) onclickon(main.bu_tie.show) onclickoff(main.bu_tie.hide)
   BUTTON bu_tie 110 210 100 ., label("Properties") onpush(program ties_getOptions)
 END
 
 
-INCLUDE ifin
 INCLUDE gr_yaxis
 INCLUDE gr_xaxis
 INCLUDE gr_titles
@@ -108,9 +106,6 @@ END
 
 PROGRAM get_tieOptions
 BEGIN
-	if main.cx_nodich.iseq(1) {
-		put " nodichotomize"
-	}
 	if main.cx_tie.iseq(1) {
 		put " tievalue"
 	}
@@ -146,12 +141,11 @@ END
 PROGRAM command
 BEGIN
 	put "nwplotmatrix " main.cb_var
-	put " " /program ifin_output
     beginoptions
-		if main.vr_sort {
+		if main.cx_sort & main.vr_sort {
 			put " sortby(" main.vr_sort ")"
 		}
-		if main.vr_group {
+		if main.cx_group & main.vr_group {
 			put " group(" main.vr_group ")"
 		}
 		if main.rb_nolabel.isneq(1) {

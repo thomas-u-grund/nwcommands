@@ -57,7 +57,8 @@ BEGIN
   TEXT tx_lay 30 70 140 ., label("Layout style:")
   TEXT tx_grid 50 90 100 ., label("Columns:") 
   COMBOBOX cb_layout 110 70 80 ., contents(layoutstyle) dropdownlist onselchangelist(layoutstyle_actions)
-  SPINNER sp_grid 110 90 50 . ,min(1) default(5)
+  SPINNER sp_grid 110 90 50 . ,min(0) max(1000) default(0)
+  TEXT tx_gridauto 165 90 38 ., label("0=auto")
   TEXT tx_nodex 50 90 100 ., label("X-Coord:") 
   TEXT tx_nodey 50 110 100 ., label("Y-Coord:") 
   VARNAME vr_nodex 110 90 80 ., label("X-Coord")
@@ -65,7 +66,7 @@ BEGIN
   CHECKBOX cx_norescalexy 110 130 150 ., label("Rescale off") option("norescale")
   CHECKBOX cx_vertical 110 130 150 ., label("Two columns (vertical)") option("vertical")
   TEXT tx_iter 50 90 100 ., label("Iterations:") 
-  SPINNER sp_iter 110 90 50 . ,min(20) default(200)
+  SPINNER sp_iter 110 90 50 . ,min(1) max(100000) default(1000)
   CHECKBOX cx_exp 30 160 190 ., label("Export coordinates") onclickoff(script exportOff) onclickon(script exportOn)
   TEXT tx_enodex 50 180 100 ., label("X-Coord:") 
   TEXT tx_enodey 50 200 100 ., label("Y-Coord:") 
@@ -278,6 +279,7 @@ SCRIPT layoutsub_off
 BEGIN
 	main.tx_grid.hide
 	main.sp_grid.hide
+	main.tx_gridauto.hide
 	main.tx_nodex.hide
 	main.tx_nodey.hide
 	main.vr_nodex.hide
@@ -316,6 +318,7 @@ BEGIN
 	script layoutsub_off
 	main.tx_grid.show
 	main.sp_grid.show
+	main.tx_gridauto.show
 END
 
 SCRIPT resetOptions
@@ -443,8 +446,12 @@ PROGRAM main_outputLayout
 BEGIN
 	if main.cb_layout.isneq(" ") | main.cx_lgc.iseq(1) {
 		put " layout(" main.cb_layout ","
-		put " iterations(" main.sp_iter ")"
-		put " columns(" main.sp_grid ")"
+		if main.sp_iter.isvisible() & !main.sp_iter.isdefault() {
+			put " iterations(" main.sp_iter ")"
+		}
+		if main.sp_grid.isvisible() & !main.sp_grid.isdefault() {
+			put " columns(" main.sp_grid ")"
+		}
 		if main.cx_lgc {
 			put " lgc"
 		}
@@ -529,7 +536,7 @@ PROGRAM export_output
 BEGIN
 	optionarg export.fi_export
 	if export.fi_export.isneq("") {
-		optionarg export.cx_replace
+		option export.cx_replace
 	}
 END
 
@@ -550,11 +557,14 @@ PROGRAM edges_outputColor
 BEGIN
 	if edges.cb_color.isneq(" ")  & edges.cb_color.isenabled(){
 		put "edgecolor(" edges.cb_color
-		if edges_colorOptions {
-			put ", " edges_colorOptions
-			if  edges_patternOptions.isneq("") {
-				put " " edges_patternOptions
-			}
+		if edges_colorOptions.isneq("") | edges_patternOptions.isneq("") {
+			put ","
+		}
+		if edges_colorOptions.isneq("") {
+			put " " edges_colorOptions
+		}
+		if edges_patternOptions.isneq("") {
+			put " " edges_patternOptions
 		}
 		put ")"
 	}

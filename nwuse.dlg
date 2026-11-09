@@ -39,6 +39,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nwuse " main.cb_net
 	beginoptions
 		option main.cx_nwclear

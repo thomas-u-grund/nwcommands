@@ -32,6 +32,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nworder " main.cb_net
 	stata
 END

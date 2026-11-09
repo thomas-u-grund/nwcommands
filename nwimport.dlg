@@ -59,6 +59,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	require main.cb_type
 	put "nwimport " main.cb_net
 	beginoptions

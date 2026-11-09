@@ -19,8 +19,8 @@ BEGIN
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_sp_k 20 54 260 ., label("Minimum vertex connectivity required; default = 2")
-  SPINNER sp_k 290 54 70 ., default(2) max(999999) min(-999999) nomem option(k)
-  TEXT tx_ed_generate 20 82 260 ., label("Name of the Stata variable that stores each node's largest qualifying k-componen")
+  SPINNER sp_k 290 54 70 ., default(2) max(999999) min(1) nomem option(k)
+  TEXT tx_ed_generate 20 82 260 ., label("Required. Variable for each node's largest qualifying k-component size")
   EDIT ed_generate 290 82 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 110 260 ., label("Replace existing variable")
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
@@ -45,6 +45,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nwkcomponents " main.cb_net
 	beginoptions
 		optionarg main.sp_k

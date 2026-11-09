@@ -23,11 +23,11 @@ BEGIN
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing variable")
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
   TEXT tx_sp_splits 20 110 260 ., label("Number of recursive bisections; final number of blocks is up to 2^; default = 1")
-  SPINNER sp_splits 290 110 70 ., default(1) max(999999) min(-999999) nomem option(splits)
+  SPINNER sp_splits 290 110 70 ., default(1) max(999999) min(1) nomem option(splits)
   TEXT tx_ed_measure 20 138 260 ., label("Whether to use tie values (valued) or only presence/absence of ties (binary)")
   EDIT ed_measure 290 138 190 ., nomem option(measure)
   TEXT tx_sp_maxiter 20 166 260 ., label("Maximum number of correlation iterations per split before giving up on convergen")
-  SPINNER sp_maxiter 290 166 70 ., default(25) max(999999) min(-999999) nomem option(maxiter)
+  SPINNER sp_maxiter 290 166 70 ., default(25) max(999999) min(1) nomem option(maxiter)
   TEXT tx_cx_silent 20 194 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 194 190 ., label("silent") option(silent)
   TEXT tx_cx_force 20 222 260 ., label("Run despite the time or memory guard")
@@ -47,6 +47,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nwconcor " main.cb_net
 	beginoptions
 		optionarg main.ed_generate

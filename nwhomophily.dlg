@@ -24,7 +24,7 @@ BEGIN
   EDIT ed_density 290 82 100 ., numonly nomem option(density)
   TEXT tx_ed_mode 20 110 260 ., label("Mode used to generate probabilities for ties")
   EDIT ed_mode 290 110 190 ., nomem option(mode)
-  TEXT tx_ed_nodes 20 138 260 ., label("number of nodes; if not specified the number of valid cases of {it:} is used")
+  TEXT tx_ed_nodes 20 138 260 ., label("Number of nodes; default = number of valid cases of the variable")
   EDIT ed_nodes 290 138 190 ., nomem option(nodes)
   TEXT tx_ed_name 20 166 260 ., label("name of the new random network")
   EDIT ed_name 290 166 190 ., nomem option(name)
@@ -40,6 +40,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.vl_vars
 	require main.ed_homophily
 	require main.ed_density
 	put "nwhomophily " main.vl_vars

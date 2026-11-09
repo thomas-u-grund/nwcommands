@@ -22,7 +22,7 @@ BEGIN
   CHECKBOX cx_nosym 290 54 190 ., label("nosym") option(nosym)
   TEXT tx_cx_weighted 20 82 260 ., label("calculate on tie values instead of dichotomizing a valued network")
   CHECKBOX cx_weighted 290 82 190 ., label("weighted") option(weighted)
-  TEXT tx_vr_generate 20 110 260 ., label("variable name for eigenvector centrality scores; default:")
+  TEXT tx_vr_generate 20 110 260 ., label("Required. Variable name for eigenvector centrality scores")
   VARNAME vr_generate 290 110 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 138 260 ., label("Replace an existing centrality variable")
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
@@ -43,6 +43,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.vr_generate
 	put "nwevcent " main.cb_net
 	beginoptions
 		option main.cx_nosym
