@@ -87,7 +87,7 @@ macOS, Linux and Windows. It is installed together with the package and found au
 nothing to configure, and it uses all physical cores of the computer by default (`cores(1)` runs it on a single
 thread; the results for a given `seed()` are the same whatever the number of threads). The Windows plugin passes the
 full test suite of `nwsaom` (Stata 19 MP, 9 November 2026), and the examples of the article give the same numbers on
-Windows as on macOS, to the last digit; the Linux plugin is built the same way but has not been tested on a Linux machine.
+Windows as on macOS in every digit that Stata displays; the Linux plugin is built the same way but has not been tested on a Linux machine.
 `nwsaom version` shows the path of the plugin in use.
 
 If no plugin can be found, `nwsaom version` says "missing", and the fit is run by a slower engine written in Mata
