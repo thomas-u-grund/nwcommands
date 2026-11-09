@@ -85,7 +85,7 @@ Updating the core never overwrites `nwergm`, and updating `nwergm` never changes
 
 The Monte Carlo sampler at the heart of a dyad-dependent fit runs in a compiled plugin that `nwergm` ships for
 macOS, Linux and Windows. It is installed together with the package and found automatically; there is
-nothing to configure. The Windows plugin passes the full test suite of `nwergm` (version 1.5.2, Stata 19 MP,
+nothing to configure. The Windows plugin passes the full test suite of `nwergm` (Stata 19 MP,
 9 November 2026); the Linux plugin is built the same way but has not been tested on a Linux machine.
 `nwergm version` shows the path of the plugin in use. The help file
 (`help nwergm`, section on performance) says what happens on a platform without a plugin.
