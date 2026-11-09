@@ -9,7 +9,7 @@ permalink: /nwcommands/install/
 # Install
 {: .no_toc }
 
-Requirements: Stata 17 or later. The packages are tested with Stata 17 and 18; StataBE is enough. The Mata
+Requirements: Stata 17 or later. The packages are tested with Stata 17, 18 and 19; StataBE is enough. The Mata
 libraries are built with Stata 17, and older versions are untested.
 
 ## Everything: the core and the four model packages
