@@ -58,7 +58,7 @@
 {synopt:{opt downloadoff}}rebuild the menu from what is already installed, without downloading anything (used internally by {bf:profile.do} integration; equivalent to {opt usermenu} for this purpose){p_end}
 {synopt:{opth menu(string)}}install in this menu; default = "stUser"{p_end}
 {synopt:{opt all}}download the core commands, help files, and dialog boxes, and set up the menu (as {opt gui}); with {opt nogui} the menu is left out{p_end}
-{synopt:{opth path(string)}}directory where profile.do is installed; default: sysdir_stata{p_end}
+{synopt:{opth path(string)}}directory of the {bf:profile.do} to edit; default: the folder where an existing {bf:profile.do} is found (your home folder, PERSONAL or SITE), otherwise the folder Stata recommends: %USERPROFILE% on Windows, ~/Documents/Stata on macOS, PERSONAL on Unix{p_end}
 {synopt:{opt localcopy}}install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see {help nwinstall##offline:Computers without internet access or admin rights} below{p_end}
 {synopt:{opth from(string)}}with {opt localcopy}: the local folder to copy nwcommands files from; default: the current directory{p_end}
 {synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case){p_end}
@@ -260,4 +260,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.17.2, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.3, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

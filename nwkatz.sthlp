@@ -131,4 +131,4 @@ Without {opt walks} the time grows with the number of nodes times the number of 
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.17.2, 6 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.3, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
