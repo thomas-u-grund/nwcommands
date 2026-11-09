@@ -19,9 +19,11 @@ The example data in `data/` come from published sources; see `help netexample` a
 
 The interactive views of `nwplot` and `nwmovie` include three libraries in `lib/vendor/`, each under the MIT license:
 
-- `cytoscape.min.js`: Cytoscape.js, copyright the Cytoscape Consortium, https://js.cytoscape.org
-- `gif.js`, `gif.worker.js`: gif.js 0.2.0 by Johan Nordberg, https://github.com/jnordberg/gif.js
+- `cytoscape.min.js`: Cytoscape.js 3.30.2, copyright the Cytoscape Consortium, https://js.cytoscape.org
+- `gif.js`, `gif.worker.js`: gif.js 0.2.0, copyright Johan Nordberg, https://github.com/jnordberg/gif.js
 - `mp4-muxer.js`: mp4-muxer 5.2.1, copyright Vanilagy, https://github.com/Vanilagy/mp4-muxer
+
+Each file keeps its copyright and license notice; `lib/vendor/THIRD_PARTY_LICENSES.txt` gives the full text of the MIT License.
 
 ## AI assistance
 
