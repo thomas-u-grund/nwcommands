@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwergm 1.5.4
+
+**nwergm 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.4)). Starting values given in `init()` are now used by Monte Carlo maximum likelihood under constraints such as `degrees` or `bd()`, as in R's `ergm()`. Before, such fits started from zero whatever `init()` said. Coefficients without a given value still start at zero. Fits without `init()` are unchanged.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 9 November 2026: nwergm 1.5.3
 
 **nwergm 1.5.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.3)). Faster Monte Carlo fits for models with many coefficients, and faster statistics for large networks, with the same results.
