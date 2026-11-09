@@ -111,6 +111,4 @@ of each package:
   holds the scripts, the data, one row per fit with the load average, the summaries and a short description of how
   to repeat each comparison.
 
-Times from earlier runs on a loaded machine are not used on this page. The nwsaom numbers are those of version
-1.1.1 (27 October 2026); the numbers of nwsaom 1.1.0 (26 October) are kept in the data folder as an earlier run.
 Last updated 9 November 2026.
