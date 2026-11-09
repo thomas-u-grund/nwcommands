@@ -64,7 +64,7 @@ Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubu
 
 **nwergm 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.4.0)). Large models and faster checks after a fit.
 - **Models with one coefficient per node.** `sender`, `receiver` and factor terms with many levels work with hundreds or thousands of coefficients: up to 8,192 terms in the compiled sampler, a sparse pseudolikelihood (400 nodes, 799 coefficients: 1.2 seconds instead of 504), and postestimation in Stata/BE beyond its matrix limit of 800. The help file has a new section on what to expect from such models.
-- **Faster after a fit.** `estat gof` on a network of 1,000 nodes takes 33 instead of 216 seconds, on the Lazega lawyers 2.2 instead of 7.2 seconds (identical output); `nwergm simulate` and the fit by stochastic approximation are faster too. Ordinary fits take the time of 1.3.7; on the eight benchmark models nwergm is 2.8 to 10.2 times faster than R's `ergm` ([Speed compared with R](../nwcommands/speed/#nwergm-and-ergm)).
+- **Faster after a fit.** `estat gof` on a network of 1,000 nodes takes 33 instead of 216 seconds, on the Lazega lawyers 2.2 instead of 7.2 seconds (identical output); `nwergm simulate` and the fit by stochastic approximation are faster too. Ordinary fits take the time of 1.3.7; on the eight benchmark models nwergm is 2.8 to 10.2 times faster than R's `ergm` ([Speed compared with R](../nwergm/speed/)).
 - **Results that change.** Monte Carlo fits of models with more than 64 statistics now get a real step length (every earlier version used 1), so their iterations differ; smaller models give the results of 1.3.7. `estat gof` and `nwergm simulate` after a curved fit (`gwespfree()` and similar) work; they stopped with an error before.
 
 Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
@@ -244,7 +244,7 @@ Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubu
 **nwsaom 1.1.1: faster estimation** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.1)). Works with nwcommands 3.6.0 and later. Results are unchanged: with a fixed seed every estimate, standard error and statistic is identical to that of 1.1.0.
 
 - **Faster.** Estimation with the compiled plugin is faster, most of all for two-mode networks (the two-mode benchmark model is about three times as fast) and for fits that need many Robbins-Monro steps. On the 28 benchmark models nwsaom is now 1.5 to 9.0 times as fast as RSiena 1.6.14 on one thread (median 2.1), and no model is slower.
-- **Speed against RSiena.** On one thread nwsaom 1.1.1 was faster than RSiena in all 28 models of our benchmark (median 2.1 times, 1.5 to 9.0), but only 1.5 to 1.8 times for large networks; see [Speed compared with R](../nwcommands/speed/#nwsaom-and-rsiena).
+- **Speed against RSiena.** On one thread nwsaom 1.1.1 was faster than RSiena in all 28 models of our benchmark (median 2.1 times, 1.5 to 9.0), but only 1.5 to 1.8 times for large networks; see [Speed compared with R](../nwsaom/speed/).
 - **Older plugin files.** A plugin binary that has not been rebuilt yet works with the new library and gives the same numbers, only more slowly.
 
 ## 26 October 2026: nwergm 1.3.1
