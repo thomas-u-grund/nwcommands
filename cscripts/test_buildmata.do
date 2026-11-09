@@ -7,7 +7,7 @@ capture program drop nwinstall_buildmata
 capture program drop nwinstall_buildmata_run
 capture program drop nwinstall_buildmata_tab
 local here `"`c(pwd)'"'
-local scratch "`c(tmpdir)'/nwbuildmatatest_`=string(runiformint(100000, 999999))'"
+local scratch "`c(tmpdir)'/nwbuildmatatest_`=subinstr("`c(current_time)'", ":", "", .)'_`=string(runiformint(100000, 999999))'"
 mkdir "`scratch'"
 mkdir "`scratch'/from"
 mkdir "`scratch'/dest"
