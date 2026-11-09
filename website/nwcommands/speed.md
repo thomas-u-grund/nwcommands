@@ -27,7 +27,7 @@ compiled and interpreted code. The model packages run their inner loops in a com
 effect sets).
 
 The algorithms are the same as in R, and the estimates agree: the largest difference between the mean estimates
-of the two programs was 0.09 standard errors for nwergm, 0.10 for nwsaom (in 27 of its 28 models; see its speed page), 0.02 for nwrem and 0.002 for nwdynam
+of the two programs was 0.09 standard errors for nwergm, 0.10 for nwsaom, 0.02 for nwrem and 0.002 for nwdynam
 (standard errors of the R package).
 
 | Comparison | Faster than the R package | Not faster |

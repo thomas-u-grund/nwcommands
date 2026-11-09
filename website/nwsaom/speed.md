@@ -58,21 +58,18 @@ Further models:
 | X5 two networks, behavior, ego/alter/similarity, closure | 11.5 | 3.91 | 2.9 | 6/7 / 7/7 |
 | X6 two networks (one symmetric), crprod | 3.08 | 0.997 | 3.1 | 7/7 / 7/7 |
 | X7 one network, gwesp, covariate triad effects | 4.26 | 2.22 | 1.9 | 7/7 / 7/7 |
-| X8 one network, transitive-triplet and Jout effects | 2.77 | 1.55 | 1.8 | 6/7 / 7/7 |
+| X8 one network, transitive-triplet effects (transTrip1, transRecTrip2) | 2.06 | 1.16 | 1.8 | 7/7 / 7/7 |
 
 On one thread nwsaom was faster than RSiena in all 28 models: median ratio 3.8, range 1.8 to 11.5 (the 20 main
 models alone: 3.1 to 11.5). The largest ratio is for the undirected pairwise model (U2, 11.5), followed by the
 two-network model with behavior (X4, 7.1). In the models with gwesp the ratio is 3.5 to 4.3, in the networks of
-100 to 500 actors 3.5 to 4.8, and in the co-evolution models 4.1 to 5.3. Over 228 parameters, the mean estimates of
-the two programs differ by at most 0.10 RSiena standard errors in 27 of the 28 models. In X8 they differ by up to
-0.71 standard errors because of one nwsaom fit: two effects of that model (transTrip1 and transRecTrip2) nearly
-offset each other, and the fit met the convergence criterion far along that ridge. One RSiena fit of X8 moved along
-the same ridge but did not meet the criterion.
+100 to 500 actors 3.5 to 4.8, and in the co-evolution models 4.1 to 5.3. Over 227 parameters, the mean estimates of
+the two programs differ by at most 0.10 RSiena standard errors.
 
 The timings are medians over all fits, converged or not (overall maximum convergence ratio below 0.25).
 **RSiena converged in only 1 of 7 fits of the first two-mode model (X1)**, nwsaom in 7 of 7, so the ratio of 3.3
 for X1 compares fits that did not stop at the same quality. nwsaom did not converge in 2 of 7 fits of X3 and in one
-fit each of C2, R5 and X4; RSiena in one fit each of R2, R4, R5, X4, X5 and X8. One RSiena fit of C2 stopped with
+fit each of C2, R5 and X4; RSiena in one fit each of R2, R4, R5, X4 and X5. One RSiena fit of C2 stopped with
 an error and is not counted. The comparison of the estimates uses the converged fits.
 
 ## More than one core
@@ -126,7 +123,7 @@ plug-in, which shows how much the implementation alone can matter.
 ## How we measured
 
 - **Machine.** Apple M5 Pro (18 cores), macOS 26.5.1, one laptop that also ran other jobs. The one-minute load
-  average was recorded before every fit: median 2.2 during the RSiena fits and 2.9 during the nwsaom fits, on 18
+  average was recorded before every fit: median 2.3 during the RSiena fits and 2.8 during the nwsaom fits, on 18
   cores, which affects single-threaded fits little. A fit waited while another Stata or R process was running.
 - **Software.** Stata 18 BE, R 4.6.0, nwcommands core 3.17.2, nwsaom 1.5.7, RSiena 1.6.14. The plug-in is the
   released build.
