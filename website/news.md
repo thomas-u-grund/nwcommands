@@ -18,6 +18,13 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
 
+## 8 November 2026: nwergm 1.5.2
+
+**nwergm 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.2)). Faster Monte Carlo fits with the default proposal, SPDyad, and the same results. The terms `gwesp`, `gwdsp`, `esp` and `dsp` now read their shared-partner counts from the proposal's cache, as R `ergm` does, and the cache is faster for networks of up to 2,048 nodes. Default fits of the Lazega advice model take 2.0 instead of 5.1 seconds, Faux Mesa High 0.9 instead of 1.5 seconds.
+- **Results.** Every result for a given seed is the same as in 1.5.1.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 8 November 2026: nwergm 1.5.1
 
 **nwergm 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.1)). The effective sample size, the burn-in test and the convergence test of Monte Carlo maximum likelihood are now computed as R `ergm` computes them, from the multivariate autoregressive spectral density of the estimating equations. Up to 1.5.0 a scalar approximation let the convergence test pass earlier than R's, so that fits simulated less; fits now make about as many proposals as R's (Lazega 9.9 million against R's 9.1, Faux Mesa High 8.1 against 7.8) and take correspondingly longer.
