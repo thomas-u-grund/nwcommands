@@ -24,6 +24,12 @@ Update with `nwinstall, modelpkg(nwsaom)`.
 
 Update with `nwinstall, modelpkg(nwsaom)`.
 
+## 9 November 2026: nwergm 1.5.7
+
+**nwergm 1.5.7** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.7)). The notes printed after a fit stay within 80 columns: the Monte Carlo standard error of the log-likelihood has a line of its own, and the notes on pseudolikelihood, curved terms, constraints and missing dyads are shorter and wrap at word boundaries. Results do not change.
+
+Update with `nwinstall, modelpkg(nwergm)`.
+
 ## 9 November 2026: nwergm 1.5.6
 
 **nwergm 1.5.6** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.6)). The headers of `estat mcmcdiag` end where the table ends, and `estat gof` names the number of simulated networks in the title of each table. Results do not change.
