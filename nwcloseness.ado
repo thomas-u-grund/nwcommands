@@ -1,6 +1,6 @@
 *! Date        : 24aug2014
 *! Version     : 1.0.4
-*! Author      : Thomas Grund, Linkoping University
+*! Author      : Thomas Grund, RWTH Aachen University
 *! Email	   : thomas.u.grund@gmail.com
 
 * Calculates actor closeness centrality according to Sabidussi (1966)

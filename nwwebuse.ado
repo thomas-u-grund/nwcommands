@@ -1,6 +1,6 @@
 *! Date        : 23oct2015
 *! Version     : 2.2
-*! Author      : Thomas Grund, University College Dublin
+*! Author      : Thomas Grund, RWTH Aachen University
 *! Email	   : thomas.u.grund@gmail.com
 *
 * GitHub migration (2026-08-23): the default $nwwebpath rerouted from the

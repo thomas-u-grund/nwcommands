@@ -1,6 +1,6 @@
 *! Date        : 4nov2026
 *! Version     : 1.0
-*! Author      : Thomas Grund, University College Dublin
+*! Author      : Thomas Grund, RWTH Aachen University
 *! Email       : thomas.u.grund@gmail.com
 
 capture program drop nwstack
