@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwsaom 1.5.9 and nwdynam 1.2.2
+
+**nwsaom 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.9)) and **nwdynam 1.2.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.2)). The Windows plugins are compiled with optimisation: on Windows a fit takes about half the time, with the same results. Both packages pass their full test suites on Windows. Nothing changes on macOS or Linux.
+
+Update with `nwinstall, everything` (or `nwinstall, modelpkg(nwsaom)` and `nwinstall, modelpkg(nwdynam)`).
+
 ## 9 November 2026: nwcommands 3.17.6
 
 **nwcommands 3.17.6** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.6)). The number fields of the dialogs (such as the number of nodes of `nwrandom`) accept only numbers: text is refused with a message before the command runs.

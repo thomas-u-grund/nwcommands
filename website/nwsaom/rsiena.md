@@ -18,7 +18,7 @@ and the more complete program.
 ## What is the same
 
 - **The model and the effects.** The effect library follows RSiena's table of effects. In the effects table of
-  RSiena 1.6.6 (`getEffects()` over twelve data configurations) 1,201 rows, `nwsaom` implements 1,058 of them, and every implemented effect was compared with `siena07`.
+  RSiena 1.6.6 (`getEffects()` over twelve data configurations) 1,201 rows, `nwsaom` implements 1,058 of them and one more in part, and every implemented effect was compared with `siena07` (three by the observed statistic only).
   The effects that RSiena 1.6.7 to 1.6.14 added or changed (for example WXZX and the two-mode
   toU) are implemented and compared with RSiena 1.6.14 but are not part of these counts; the counts
   change with RSiena releases.
