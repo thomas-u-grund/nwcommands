@@ -37,4 +37,4 @@ The command makes use of the normal `tabulate` command, hence, all *`tabulate1_o
 
 ---
 
-*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

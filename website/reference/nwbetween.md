@@ -98,4 +98,4 @@ Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted 
 
 ---
 
-*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

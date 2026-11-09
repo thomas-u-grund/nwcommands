@@ -35,4 +35,4 @@ A *newnetname* is the name of a network that does not exist yet. A *newnetname* 
 
 ---
 
-*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

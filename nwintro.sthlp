@@ -156,10 +156,10 @@ New releases and workshops are announced on the nwcommands mailing list,
 {title:Citation}
 
 {pstd}
-Please cite the package and the version you used ({help nwversion} prints it), for example:
+Please cite the package and the version you used ({help nwversion} prints it):
 
 {pmore}
-Grund, T. U. (2026). {it:nwcommands: Network Analysis in Stata} (version 3.17.5) [Computer software].
+Grund, T. U. (2026). {it:nwcommands: Network Analysis in Stata} (version {it:x.y.z}) [Computer software].
 {browse "https://github.com/thomas-u-grund/nwcommands"}
 
 {pstd}
