@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwsaom 1.5.11
+
+**nwsaom 1.5.11** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.11)). In the tables of `nwsaom describe`, `nwsaom meta`, `nwsaom bayes` and the `estat` commands, the top and bottom rules now meet the column bar, as in Stata's own tables. Estimates and stored results do not change.
+
+Update with `nwinstall, modelpkg(nwsaom)`.
+
 ## 9 November 2026: nwsaom 1.5.10
 
 **nwsaom 1.5.10** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.10)). The output of `nwsaom describe`, `nwsaom meta`, `estat score`, `estat timetest` and `estat simulate` is laid out as Stata's own tables. Estimates and stored results do not change.
