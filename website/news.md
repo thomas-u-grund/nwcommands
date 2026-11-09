@@ -14,7 +14,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 ## 9 November 2026: nwcommands 3.17.4
 
-**nwcommands 3.17.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.4)). The first run of all test suites on Windows: `nwsaom`, `nwergm` and `nwrem` passed every test; in the core, `nwsummarize, save()` failed on Windows with a quoted file name and is fixed, and eight tests that assumed macOS now also run on Windows.
+**nwcommands 3.17.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.4)). The first run of all test suites on Windows: `nwsaom`, `nwergm` and `nwrem` passed every test; in the core, `nwsummarize, save()` failed on Windows with a quoted file name and is fixed, and eight tests that assumed macOS now also run on Windows. With these changes, all 347 tests of the five packages pass on Windows (Stata 19 MP).
 
 Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
 

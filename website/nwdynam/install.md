@@ -76,7 +76,8 @@ Repeat the `net install` line with `replace`. Updating the core never overwrites
 ## The native plugin
 
 The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and
-found automatically; nothing needs to be configured. The plugin evaluates the likelihood and its gradient, which
+found automatically; nothing needs to be configured. The Windows plugin passes the full test suite of `nwdynam`
+(Stata 19 MP, 9 November 2026); the Linux plugin is built the same way but has not been tested on a Linux machine. The plugin evaluates the likelihood and its gradient, which
 the optimizer in Mata calls many times. It serves the three default structural effects of the choice model;
 other effect sets run in the Mata engine of the package (this is documented in `help nwdynam`) and give the same
 results, only more slowly. `nwdynam version` shows the path of the plugin in use, or "missing" if none is found,

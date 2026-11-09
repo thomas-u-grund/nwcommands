@@ -57,7 +57,8 @@ or pick one on its own page. `nwinstall, everything` does both steps at once.
 
 ## Compiling the plugins on your own computer
 
-The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows. If the plugin of your platform is
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine.
+If the plugin of your platform is
 missing, is older than the `.ado` files or does not work on your system, compile it there:
 
 ```stata
