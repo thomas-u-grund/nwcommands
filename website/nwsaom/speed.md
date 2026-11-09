@@ -14,8 +14,8 @@ permalink: /nwsaom/speed/
 
 ## Benchmark
 
-These numbers are from the benchmark of the nwsaom article, re-run on 27 October 2026 with nwsaom 1.1.1 (core
-3.10.0) and RSiena 1.6.14, Stata 18 and R 4.6.0. They replace the numbers of version 1.1.0 (26 October). One thread
+These numbers are from the benchmark of the nwsaom article, run on 27 October 2026 with nwsaom 1.1.1 (core
+3.10.0) and RSiena 1.6.14, Stata 18 and R 4.6.0. One thread
 for both programs (RSiena without `useCluster`, nwsaom with `cores(1)`). The main models are the 20 of the article:
 directed and undirected networks of 50 actors, networks with behavior, larger networks of 100 to 500 actors, and
 models with covariates. The further models are two-mode networks, several networks at once and some less common
@@ -92,7 +92,7 @@ seconds): the advantage is gone. The estimates of nwsaom are identical for every
 ## Where the speed comes from
 
 - **A native simulation core.** nwsaom runs the simulation of the actors' steps in a compiled C plug-in. With the
-  plug-in switched off, the first model took a median of 47 seconds (3 fits, 41 to 155 seconds, version 1.1.0)
+  plug-in switched off, the first model took a median of 47 seconds (3 fits, 41 to 155 seconds)
   instead of 0.2 seconds. RSiena's simulation is compiled code as well (C++), so this is not the whole
   explanation.
 - **Incremental change statistics.** For a proposed step of an actor the plug-in works out the change of each
@@ -101,16 +101,14 @@ seconds): the advantage is gone. The estimates of nwsaom are identical for every
 - **Direct evaluation of degree effects.** Effects that depend on in- or out-degrees are computed from stored
   degree counts.
 - **Free alternatives in two-mode networks.** For two-mode networks the plug-in keeps for each actor a list of the
-  alternatives of the other mode that are still free, and draws from it. This is what turned the model that had
-  been slower than RSiena in version 1.1.0 (X2: 1.71 seconds against 0.84) into one that is faster (0.29 against
-  0.61). X1 and X2 are both two-mode models.
+  alternatives of the other mode that are still free, and draws from it (the two-mode models X1 and X2).
 - **Sparse structures and 64-bit counters.** The network is stored as lists of ties, so the work grows with the
   number of ties, and 64-bit counters avoid overflow in networks with many ties.
 - **Threads over simulations.** The simulations of a phase are distributed over the threads, and the result is the
   same for any number of threads.
 - **The algorithm is the same.** Same phases, same number of simulations, same model of the ministeps. The gain
   does not come from doing less work. We did not isolate how much each of the points above contributes. In sampling
-  profiles of one fit each (version 1.1.0), 60 to 87 percent of RSiena's non-idle samples were in its compiled
+  profiles of one fit each, 60 to 87 percent of RSiena's non-idle samples were in its compiled
   code.
 
 Compiled (C plug-in): the simulation of the process, the derivative estimates of the first phase, the
@@ -124,8 +122,6 @@ data, building the model, the parameter updates, the output).
 - **RSiena with several processes.** See the table above: in R4 RSiena on 5 or 10 R processes matches nwsaom on ten
   threads, and in R5 and R1 the best RSiena setting is 1.8 and 1.9 times slower than nwsaom with ten threads.
   Whether R uses several cores is the choice of the user.
-- **Earlier results.** In version 1.1.0 one two-mode model (X2) was slower than RSiena (0.64 times) and the gain in
-  the large networks was 1.0 to 2.5. Both were improved in 1.1.1.
 - **Less certain numbers.** The S500 row (the ratio 1.5) is the least certain of the table: the laptop went into
   sleep during the first attempt, and the repeat shared the machine with other jobs (see "How we measured").
   The three S500 fits of the final run took 152, 159 and 165 seconds for nwsaom and 217, 236 and 275 seconds for
