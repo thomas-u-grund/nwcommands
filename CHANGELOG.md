@@ -4,6 +4,17 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.5] - 2026-11-09
+
+### Fixed
+- **Dialogs, checked systematically against the syntax of every command (67 dialogs changed).** In 30 dialogs the field "name of the new network" was not passed to the command (an empty `option()` since 3.4.0). The generators `nwrandom`, `nwpref`, `nwring`, `nwsmall` and `nwlattice` asked for a network where they need the number of nodes (or the dimensions); the file commands now ask for a file. `nwappend` always failed (it asked for a network, not a file); `nwname` passed the new name as text; `nwburt` and `nwpagerank` ignored some fields; `nwring` and `nwsmall` ran `k(0)` when the field was left alone; `nwplot` always set `iterations(200)` and `columns(5)`, overriding the defaults; the edge colour and size dialogs added an option that does not exist; `nwplotmatrix` offered if/in and an option it does not have. Required inputs (`generate()` and the main argument) are now required by the dialogs, which say so; `nwsubset`, `nwkeep` and `nwdrop` have an if field; labels, typos and the limits of the number fields are corrected. New test: `test_dlg_options`.
+
+### Added
+- **`nwinstall, buildplugin()` builds on Windows too**, with Microsoft's free C compiler (Build Tools for Visual Studio), which it finds by itself. If the compiler is missing, it says what to install, with the download address, and changes nothing. `buildplugin()` with nothing in the parentheses builds all plugins (before, it did nothing).
+
+### Tests
+- The scratch folders of `test_buildmata`, `test_buildplugin` and `test_localcopy` carry the time in their names (a folder left by a failed run blocked later runs); `test_buildplugin` also runs on Windows.
+
 ## [3.17.4] - 2026-11-09
 
 ### Fixed

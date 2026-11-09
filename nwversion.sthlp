@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.17.4  09nov2026}{...}
+{* *! version 3.17.5  09nov2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -34,4 +34,4 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 {pstd}Thomas U. Grund, RWTH Aachen University{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.17.4, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.5, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -29,7 +29,7 @@ BEGIN
   TEXT tx_cx_xvars 20 166 260 ., label("generate Stata variables for the network")
   CHECKBOX cx_xvars 290 166 190 ., label("xvars") option(xvars)
   TEXT tx_cb_name 20 194 260 ., label("Name of the new network; default = network")
-  COMBOBOX cb_name 290 194 190 ., dropdown contents(netlist) nomem option()
+  COMBOBOX cb_name 290 194 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_ed_labs 530 54 260 ., label("overwrite node labels")
   EDIT ed_labs 800 54 190 ., nomem option(labs)
   TEXT tx_cx_directed 530 82 260 ., label("Force the network to be directed (alias: forcedirected)")
@@ -61,6 +61,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.vl_vars
 	put "nwfromedge " main.vl_vars
 	beginoptions
 		option main.cx_overwrite

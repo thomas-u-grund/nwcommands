@@ -30,7 +30,7 @@ BEGIN
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
   TEXT tx_cx_weighted 20 194 260 ., label("calculate on weighted (Dijkstra) shortest paths instead of dichotomizing")
   CHECKBOX cx_weighted 290 194 190 ., label("weighted") option(weighted)
-  TEXT tx_ed_alpha 20 222 260 ., label("weight-to-distance exponent used with ; default = 1")
+  TEXT tx_ed_alpha 20 222 260 ., label("Weight-to-distance exponent used with weighted; default = 1")
   EDIT ed_alpha 290 222 100 ., numonly nomem option(alpha)
   TEXT tx_cx_force 20 250 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 250 190 ., label("force") option(force)
@@ -55,6 +55,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nwbetween " main.cb_net
 	beginoptions
 		option main.cx_replace

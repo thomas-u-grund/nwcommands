@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.17.4** (9 November 2026)
+**Version 3.17.5** (9 November 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -15,7 +15,7 @@ data commands.
 
 ## Native plugins
 
-The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows, and the C source. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine. The C source: `net get nwcommands, from(https://nwcommands.org/net/)` (or `net get <package>` for a model package) copies it, and it is in `native/` of each repository. If a shipped plugin is missing for a platform, is older than the `.ado` files or does not load, `nwinstall, buildplugin(all)` compiles the plugins on your computer (macOS and Linux; needs a C compiler and `make`). The Mata libraries are built with Stata 17; if one of them does not load in your Stata (r(3499), for example after a library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds them with your own Stata (fallback and repair; it clears the data and the Mata objects in memory).
+The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows, and the C source. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine. The C source: `net get nwcommands, from(https://nwcommands.org/net/)` (or `net get <package>` for a model package) copies it, and it is in `native/` of each repository. If a shipped plugin is missing for a platform, is older than the `.ado` files or does not load, `nwinstall, buildplugin(all)` compiles the plugins on your computer (macOS, Linux and Windows; needs a C compiler, and on Windows the free Build Tools for Visual Studio, which the command finds by itself). The Mata libraries are built with Stata 17; if one of them does not load in your Stata (r(3499), for example after a library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds them with your own Stata (fallback and repair; it clears the data and the Mata objects in memory).
 
 ## What's here
 

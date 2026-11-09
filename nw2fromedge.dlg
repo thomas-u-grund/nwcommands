@@ -28,6 +28,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.vl_vars
 	put "nw2fromedge " main.vl_vars
 	beginoptions
 		option main.cx_xvars

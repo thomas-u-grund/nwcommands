@@ -24,14 +24,14 @@ BEGIN
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
   TEXT tx_ed_measure 20 110 260 ., label("Whether to use tie values (valued) or only presence/absence of ties (binary)")
   EDIT ed_measure 290 110 190 ., nomem option(measure)
-  TEXT tx_cx_symmetrize 20 138 260 ., label("Symmetrize a directed network before detecting communities (required for directe")
+  TEXT tx_cx_symmetrize 20 138 260 ., label("Symmetrize a directed network first (required for directed networks)")
   CHECKBOX cx_symmetrize 290 138 190 ., label("symmetrize") option(symmetrize)
-  TEXT tx_ed_resolution 20 166 260 ., label("Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects 's own sea")
+  TEXT tx_ed_resolution 20 166 260 ., label("Resolution parameter (> 0); affects the louvain search and r(modularity); default = 1")
   EDIT ed_resolution 290 166 100 ., numonly nomem option(resolution)
   TEXT tx_cb_algorithm 20 194 260 ., label("Community-detection algorithm; default = louvain")
   COMBOBOX cb_algorithm 290 194 190 ., dropdownlist contents(list_algorithm) nomem option(algorithm)
   TEXT tx_sp_seed 20 222 260 ., label("Set the random-number seed before detecting communities (for reproducibility wit")
-  SPINNER sp_seed 290 222 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
+  SPINNER sp_seed 290 222 70 ., default(-1) max(999999) min(-1) nomem option(seed)
   TEXT tx_cx_silent 20 250 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 250 190 ., label("silent") option(silent)
   TEXT tx_cx_listall 20 278 260 ., label("Show the full table of communities (default: first 30)")
@@ -66,6 +66,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nwcommunity " main.cb_net
 	beginoptions
 		optionarg main.ed_generate

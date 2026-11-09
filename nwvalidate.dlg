@@ -35,6 +35,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nwvalidate " main.cb_net
 	beginoptions
 		optionarg main.ed_self

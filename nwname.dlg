@@ -19,7 +19,7 @@ BEGIN
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 480 86, label("Details")
   TEXT tx_ed_new 20 54 260 ., label("New network name:")
-  EDIT ed_new 290 54 190 ., nomem
+  EDIT ed_new 290 54 190 ., nomem option(newname)
   TEXT tx_ed_free 20 82 260 ., label("Additional options (typed as on the command line):")
   EDIT ed_free 290 82 190 ., nomem
 END
@@ -38,11 +38,11 @@ END
 PROGRAM command
 BEGIN
 	put "nwname " main.cb_net
-	if main.ed_new.isneq("") {
-		put ", " main.ed_new
-	}
-	if main.ed_free.isneq("") {
-		put " " main.ed_free
-	}
+	beginoptions
+		optionarg main.ed_new
+		if main.ed_free {
+			put " " main.ed_free
+		}
+	endoptions
 	stata
 END

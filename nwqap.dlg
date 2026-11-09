@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwqap - Multivariate QAP regression")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Formula: dependent network, then predictor networks:")
+  EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 328, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
@@ -27,17 +27,17 @@ BEGIN
   TEXT tx_ed_mode 20 138 260 ., label("modes for expanding variables to networks")
   EDIT ed_mode 290 138 190 ., nomem option(mode)
   TEXT tx_sp_permutations 20 166 260 ., label("number of QAP permutations; default = 500")
-  SPINNER sp_permutations 290 166 70 ., default(500) max(999999) min(-999999) nomem option(permutations)
+  SPINNER sp_permutations 290 166 70 ., default(500) max(999999) min(1) nomem option(permutations)
   TEXT tx_ed_save 20 194 260 ., label("save coefficients from permutations in file")
   EDIT ed_save 290 194 190 ., nomem option(save)
-  TEXT tx_cb_predict 20 222 260 ., label("store the fitted dyad-level values (from 's own default prediction, e.g. Pr(y=1)")
+  TEXT tx_cb_predict 20 222 260 ., label("Store the fitted dyad-level values (default prediction of the regression command)")
   COMBOBOX cb_predict 290 222 190 ., dropdown contents(netlist) nomem option(predict)
   TEXT tx_cx_qapspp 20 250 260 ., label("double semi-partialling (Dekker, Krackhardt & Snijders 2007), a more robust MRQAP variant")
   CHECKBOX cx_qapspp 290 250 190 ., label("qapspp") option(qapspp)
   TEXT tx_cx_plot 20 278 260 ., label("draw a histogram-plus-reference-line panel per coefficient")
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
-  EDIT ed_name 290 306 190 ., nomem option()
+  EDIT ed_name 290 306 190 ., nomem option(name)
   TEXT tx_cx_force 20 334 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 334 190 ., label("force") option(force)
 END
@@ -55,6 +55,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nwqap " main.cb_net
 	beginoptions
 		option main.cx_detail

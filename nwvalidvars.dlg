@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwvalidvars - Validate Stata variables for network")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Number of nodes:")
+  EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
   TEXT tx_ed_stub 20 54 260 ., label("Stem of the new variable names")
   EDIT ed_stub 290 54 190 ., nomem option(stub)
@@ -35,6 +35,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	require main.ed_stub
 	put "nwvalidvars " main.cb_net
 	beginoptions

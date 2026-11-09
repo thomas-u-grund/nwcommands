@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_vr_attribute 20 54 260 ., label("Numeric node attribute to correlate across ties; default = each node's own degre")
+  TEXT tx_vr_attribute 20 54 260 ., label("Numeric node attribute to correlate across ties; default = degree")
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_cx_silent 20 82 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 82 190 ., label("silent") option(silent)

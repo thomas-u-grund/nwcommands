@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwappend - Append network dataset")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_using 20 20 260 ., label("Network dataset to append (.dta):")
+  FILE fi_using 290 20 190 ., label("Browse...") filter("Stata data|*.dta|All files|*.*") defext(dta) nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
   TEXT tx_cx_force 20 54 260 ., label("If a network in using dataset has the same name as one already loaded")
   CHECKBOX cx_force 290 54 190 ., label("force") option(force)
@@ -35,7 +35,8 @@ END
 
 PROGRAM command
 BEGIN
-	put "nwappend " main.cb_net
+	require main.fi_using
+	put "nwappend using " `"""' main.fi_using `"""'
 	beginoptions
 		option main.cx_force
 	endoptions

@@ -93,4 +93,4 @@ The utility is computed from the matrix of shortest paths and holds about 4 matr
 option {opt force} runs it anyway.
 
 {hline}
-{pstd}{it:nwcommands version 3.17.4, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.5, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

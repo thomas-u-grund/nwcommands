@@ -39,6 +39,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.ed_generate
 	put "nwkcore " main.cb_net
 	beginoptions
 		optionarg main.ed_generate

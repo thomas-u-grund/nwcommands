@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwuse - Load Stata network dataset")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("File name:")
+  EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
   TEXT tx_cx_nwclear 20 54 260 ., label("clear memory before loading dataset")
   CHECKBOX cx_nwclear 290 54 190 ., label("nwclear") option(nwclear)
@@ -39,6 +39,7 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_net
 	put "nwuse " main.cb_net
 	beginoptions
 		option main.cx_nwclear

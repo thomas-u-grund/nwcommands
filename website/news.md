@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwcommands 3.17.5
+
+**nwcommands 3.17.5** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.5)). The dialogs were checked against the syntax of every command and corrected: among other things, the name of a new network is passed to the command again, `nwrandom` and the other generators ask for the number of nodes, and the dialogs say which fields are required. `nwinstall, buildplugin()` now also builds the plugins on Windows, with Microsoft's free C compiler; if it is missing, the command says what to install.
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
 ## 9 November 2026: nwcommands 3.17.4
 
 **nwcommands 3.17.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.4)). The first run of all test suites on Windows: `nwsaom`, `nwergm` and `nwrem` passed every test; in the core, `nwsummarize, save()` failed on Windows with a quoted file name and is fixed, and eight tests that assumed macOS now also run on Windows. With these changes, all 347 tests of the five packages pass on Windows (Stata 19 MP).
