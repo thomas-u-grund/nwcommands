@@ -58,12 +58,11 @@ Further models:
 | X5 two networks, behavior, ego/alter/similarity, closure | 11.5 | 3.91 | 2.9 | 6/7 / 7/7 |
 | X6 two networks (one symmetric), crprod | 3.08 | 0.997 | 3.1 | 7/7 / 7/7 |
 | X7 one network, gwesp, covariate triad effects | 4.26 | 2.22 | 1.9 | 7/7 / 7/7 |
-| X8 one network, transitive-triplet effects (transTrip1, transRecTrip2) | 2.06 | 1.16 | 1.8 | 7/7 / 7/7 |
 
-On one thread nwsaom was faster than RSiena in all 28 models: median ratio 3.8, range 1.8 to 11.5 (the 20 main
+On one thread nwsaom was faster than RSiena in all 27 models: median ratio 3.8, range 1.9 to 11.5 (the 20 main
 models alone: 3.1 to 11.5). The largest ratio is for the undirected pairwise model (U2, 11.5), followed by the
 two-network model with behavior (X4, 7.1). In the models with gwesp the ratio is 3.5 to 4.3, in the networks of
-100 to 500 actors 3.5 to 4.8, and in the co-evolution models 4.1 to 5.3. Over 227 parameters, the mean estimates of
+100 to 500 actors 3.5 to 4.8, and in the co-evolution models 4.1 to 5.3. Over 221 parameters, the mean estimates of
 the two programs differ by at most 0.10 RSiena standard errors.
 
 The timings are medians over all fits, converged or not (overall maximum convergence ratio below 0.25).
@@ -117,8 +116,8 @@ plug-in, which shows how much the implementation alone can matter.
 
 - **Large networks and several cores.** On 200 actors, RSiena with 5 or 10 R processes is two to three times as
   fast as on one, and with ten threads nwsaom is then only 2.0 (R4) to 4.2 (R5) times as fast.
-- **The cheapest further models.** For a few of the further models (X7 and X8, with covariate triad and
-  transitive-triplet effects) the ratio is below 2.
+- **The cheapest further models.** For the further model X7, with covariate triad effects, the ratio is
+  below 2 (1.9).
 
 ## How we measured
 
