@@ -12,7 +12,7 @@ permalink: /nwcommands/speed/
 This page compares the run time of the four model packages, nwergm, nwsaom, nwdynam and nwrem, with the R
 packages they follow: ergm, RSiena, goldfish and relevent. It says where the Stata packages were faster, where
 they were not, and what we know about the reason. Times depend on the model, the data and the machine. Treat
-the tables as examples, not as promises. Measured on 26 and 27 October 2026 (nwergm: 9 November) with Stata 18 on one laptop; Stata
+the tables as examples, not as promises. Measured on 26 and 27 October 2026 (nwergm: 9 November; nwsaom: 8 and 9 November) with Stata 18 on one laptop; Stata
 17 was not timed.
 
 1. TOC
@@ -27,13 +27,13 @@ compiled and interpreted code. The model packages run their inner loops in a com
 effect sets).
 
 The algorithms are the same as in R, and the estimates agree: the largest difference between the mean estimates
-of the two programs was 0.09 standard errors for nwergm, 0.08 for nwsaom, 0.02 for nwrem and 0.002 for nwdynam
+of the two programs was 0.09 standard errors for nwergm, 0.10 for nwsaom (in 27 of its 28 models; see its speed page), 0.02 for nwrem and 0.002 for nwdynam
 (standard errors of the R package).
 
 | Comparison | Faster than the R package | Not faster |
 |---|---|---|
 | nwergm 1.5.2 and ergm 4.12.0 | all 8 models, 2.1 to 4.0 times | none of the eight; the fixed overhead matters on very small models |
-| nwsaom 1.1.1 and RSiena 1.6.14 | all 28 models on one thread, median 2.1 times, 1.5 to 9.0 | large networks only 1.5 to 1.8 times; RSiena on 5 or 10 R processes is as fast as nwsaom on 10 threads in one model |
+| nwsaom 1.5.7 and RSiena 1.6.14 | all 28 models on one thread, median 3.8 times, 1.8 to 11.5 | none of the 28; with several cores on 200 actors only 2.0 to 4.2 times RSiena's best setting |
 | nwdynam 1.2.0 and goldfish 1.6.12 | original structural effects: 7.7 to 76 times; one added covariate effect (Mata): 1.2 to 2.4 times | the gain of the Mata engine shrinks to 1.0 for large networks; not measured for larger networks with the added effect |
 | nwrem 1.0.10 and relevent 1.2-1 | degree, inertia and covariate effects: up to 41 times with a Hessian in relevent | recency effects: 0.3 to 1.2 times |
 
@@ -55,9 +55,8 @@ The reasons are in the design of the packages, and they are the same in outline 
 - **Threads.** nwsaom spreads the simulations over threads, and the estimates are identical for any number of
   threads (the `cores()` option).
 
-These are reasons, not measurements: we did not separate how much each one contributes. The advantage is small
-where the work is dominated by something else (large networks in nwsaom, only 1.5 to 1.8 times), where R can use
-several processes (RSiena with 5 or 10 R processes), and in nwrem, which has no plug-in and is slower than
+These are reasons, not measurements: we did not separate how much each one contributes. The advantage is smaller
+where R can use several processes (RSiena with 5 or 10 R processes on large networks), and in nwrem, which has no plug-in and is slower than
 relevent for recency effects (0.3 to 1.2 times). The speed page of each package gives the details.
 
 How the numbers were made is at the end of this page and on each package's page. All raw timings, scripts and data are in the
@@ -85,12 +84,9 @@ of each package:
   other background load. Two fits started above a load of 7.
 - **Machine, nwergm run of 9 November.** The same laptop, with no other Stata or R job running (load average
   1.8 to 3.4 before the fits).
-- **Machine, nwsaom run of 27 October.** The laptop ran on battery power throughout. Two things went wrong. The laptop
-  went to sleep during the first S500 fits, so those fits and the R5 fits of the multi-core table from that period were
-  discarded and repeated. Later, other jobs on the same machine started Stata and R from time to time during 17 of the
-  27 fits; those results are kept, repeats agree, but they are less clean than the rest. The discarded fits and the
-  record of other processes are in the data folder.
-- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm run), nwergm 1.5.2, nwsaom 1.1.1, nwdynam 1.2.0, nwrem 1.0.10; ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
+- **Machine, nwsaom run of 8 and 9 November.** The same laptop; RSiena ran on 8 November and nwsaom on 9 November,
+  with no other Stata or R job running during a fit (median load average 2.2 and 2.9).
+- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm and nwsaom runs), nwergm 1.5.2, nwsaom 1.5.7, nwdynam 1.2.0, nwrem 1.0.10; ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
   goldfish 1.6.12. All timings are with Stata 18; Stata 17 was not timed. The plug-ins are the released builds.
 - **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first
   call (loading libraries) is not in the time. The timer covers the estimation command (for goldfish, the
