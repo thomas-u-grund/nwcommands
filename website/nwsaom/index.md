@@ -45,7 +45,7 @@ errors in `nwsaom` are the author's.
 | | |
 |---|---|
 | Effects | 1,058 of the 1,201 effects in the effects table of RSiena 1.6.6 ( effects added in RSiena 1.6.7 to 1.6.14 are implemented too but not counted, and the counts change with RSiena releases); the remaining rows of that table are accounted for in [nwsaom and RSiena](rsiena/) |
-| Agreement with RSiena | every implemented effect was compared with `siena07`, by the observed statistic and by the estimates |
+| Agreement with RSiena | every implemented effect was compared with `siena07`, by the observed statistic and by the estimates (three by the statistic only) |
 | Estimators | method of moments (conditional and unconditional), maximum likelihood, Bayesian |
 | Networks | directed, undirected, two-mode, several networks at once, network-behavior co-evolution |
 | Data features | covariates, composition change, missing data, structural zeros |
@@ -53,7 +53,7 @@ errors in `nwsaom` are the author's.
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
 | Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
 | Speed | On one thread faster than RSiena in all 27 benchmark models of the article (median 3.8 times); see [Speed compared with RSiena](speed/) |
-| Version | 1.5.8 (9 November 2026) |
+| Version | 1.5.9 (9 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section

@@ -100,7 +100,7 @@ Download the packages as zip files on a computer that has internet access, carry
 | nwdynam | [nwdynam.zip](https://github.com/thomas-u-grund/nwdynam/archive/refs/heads/main.zip) |
 | nwrem | [nwrem.zip](https://github.com/thomas-u-grund/nwrem/archive/refs/heads/main.zip) |
 
-A particular release has its own zip, for example `https://github.com/thomas-u-grund/nwsaom/archive/refs/tags/v1.5.8.zip`. Take the model packages you need; each needs the core. The core zip is about 10 MB.
+A particular release has its own zip, for example `https://github.com/thomas-u-grund/nwsaom/archive/refs/tags/v1.5.9.zip`. Take the model packages you need; each needs the core. The core zip is about 10 MB.
 
 1. Unzip the core zip. GitHub names the folder `nwcommands-main`.
 2. Make a new folder for the model packages, unzip the model zips into it and rename each unzipped folder to the plain package name: `nwsaom-main` becomes `nwsaom`, `nwergm-main` becomes `nwergm`, and so on. The installer looks for these names.
