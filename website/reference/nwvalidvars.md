@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Validate Stata variables for network"
+description: "Validate Stata variables for a network"
 ---
 
 # `nwvalidvars`
 
-Validate Stata variables for network
+Validate Stata variables for a network
 
 ## Syntax
 
@@ -44,4 +44,4 @@ Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collisi
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

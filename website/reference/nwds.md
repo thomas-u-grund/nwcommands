@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "List loaded networks, in the style of Stata's own `ds`"
+description: "List the networks in memory (like ds)"
 ---
 
 # `nwds`
 
-List loaded networks, in the style of Stata's own `ds`
+List the networks in memory (like ds)
 
 ## Syntax
 
@@ -58,4 +58,4 @@ Not applicable - a pure network-listing utility (in the style of Stata's own `ds
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

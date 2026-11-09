@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwmoviexy {hline 2}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
+{p2col :nwmoviexy {hline 2}}Animate a sequence of networks (alias for nwmovie){p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

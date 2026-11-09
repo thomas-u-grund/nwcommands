@@ -39,4 +39,4 @@ The networks must be one-mode and agree in direction. With `group()` the command
 
 ---
 
-*nwcommands version 3.15.1, 4 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

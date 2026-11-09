@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 27 2}{...}
-{p2col :nwsymmetrize {hline 2}}Symmetrize network (alias for {help nwsym}){p_end}
+{p2col :nwsymmetrize {hline 2}}Symmetrize a network (alias for nwsym){p_end}
 {p2colreset}{...}
 
 {title:Syntax}

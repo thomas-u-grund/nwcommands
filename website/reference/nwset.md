@@ -53,7 +53,7 @@ nwset, nwclear
 | `replace` | Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning |
 | `overwrite` | Backward-compatible alias for `replace` |
 | `nodenames(string)` | Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of `labs()` |
-| `labs`(*lab1, lab2,...*) | Node labels; they must be unique (error 198 otherwise) |
+| `labs`(*lab1, lab2,...*) | Node labels |
 | `labsfromvar(varname)` | Use information in varname as node labels |
 | `vars(varlist)` | Save network node identifiers/labels from these existing Stata variables instead of generating new ones (the inverse of `xvars`); must have as many entries as there are nodes |
 | `biprownames(varname)` | `bipartite` only: use this variable's own values as mode-1 row names instead of the default sequential numbering |
@@ -244,7 +244,7 @@ Although not really needed, networks can be represented with Stata variables (se
 
 By default, network generators (including `nwset` itself) only produce a network object - they do NOT load a network as Stata variables (see [nwload](nwload)). Many network generators allow the option **xvars**, which ADDITIONALLY loads the new network as Stata variables right away (equivalent to following the generator with a separate [nwload](nwload) call). Leaving **xvars** unspecified keeps Stata's own variable budget free when one deals with many or large networks - all commands that require a [netname](netname) still work even when no Stata variables for that network exist at all, or after ** drop _all**. This also means that one can still deal with larger networks even when using **Small Stata**.
 
-Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with option **labs()**. As before, there need to be as many entries as there are nodes in the network. When not specified, the program automatically labels nodes according the variables that have been set.
+Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with option **labs()**. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says so). Labels must be unique: **nwset** stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program automatically labels nodes according the variables that have been set.
 
 The rows of the dataset hold the nodes' attributes, in the node order of the networks in memory (variable **_nwnode** holds the node labels). A network declared with **mat()** and without labels is aligned with these rows: if it has *N* nodes and rows 1 to *N* are in the node order of a network in memory, node *i* of the matrix is observation *i* and gets its label. Otherwise its nodes are labelled n1, n2, .... A new network whose labels (**labs()**, **labsfromvar()**, **nodenames()**) list the nodes already in such rows in another order is reordered into the row order of the data (ties unchanged), so declaring it does not re-sort the rows under the other networks. Only a network over a different set of nodes re-sorts (and extends) the data; commands that read node attributes of an earlier network, such as `nwsaom` and `nwergm`, then sort the rows back into that network's node order (see [_nwdatasync](_nwdatasync)).
 
@@ -262,4 +262,4 @@ This command is the primary mechanism by which a network's own binary/directed/w
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

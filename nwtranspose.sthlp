@@ -1,8 +1,6 @@
 {smcl}
 {* *! version 2.0 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
 {helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
 

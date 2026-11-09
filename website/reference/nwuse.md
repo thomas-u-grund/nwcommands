@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Load Stata network dataset"
+description: "Load a Stata network dataset"
 ---
 
 # `nwuse`
 
-Load Stata network dataset
+Load a Stata network dataset
 
 ## Syntax
 
@@ -67,4 +67,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

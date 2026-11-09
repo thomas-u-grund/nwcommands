@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nwtopical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
+{helpb nwtopical##analysis_statmodels:[NW-2.6.7] Statistical tests}
 
 {title:Title}
 

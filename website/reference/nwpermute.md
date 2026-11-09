@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Generate permutation of a network"
+description: "Generate a permutation of a network"
 ---
 
 # `nwpermute`
 
-Generate permutation of a network
+Generate a permutation of a network
 
 ## Syntax
 
@@ -95,4 +95,4 @@ Binary: yes. Directed: yes (`swap` keeps out-degrees and in-degrees). Weighted: 
 
 ---
 
-*nwcommands version 3.16.1, 6 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

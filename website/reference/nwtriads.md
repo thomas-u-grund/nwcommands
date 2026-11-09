@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Triad census of the network"
+description: "Triad census of a network"
 ---
 
 # `nwtriads`
 
-Triad census of the network
+Triad census of a network
 
 ## Syntax
 
@@ -94,4 +94,4 @@ Binary: yes. Directed: yes - this is the command's native case; the full 16-type
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

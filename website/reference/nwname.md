@@ -111,4 +111,4 @@ Not applicable in the usual sense - this command reports and *sets* a network's 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

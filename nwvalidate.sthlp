@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 2.0  23aug2014 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##programming:[NW-2.9] Programming}
 
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwvalidate {hline 2}}Validate network name{p_end}
+{p2col :nwvalidate {hline 2}}Validate a network name{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

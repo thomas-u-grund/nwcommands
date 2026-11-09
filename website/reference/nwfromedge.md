@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Imports network data from edgelist"
+description: "Import network data from an edge list"
 ---
 
 # `nwfromedge`
 
-Imports network data from edgelist
+Import network data from an edge list
 
 ## Syntax
 
@@ -116,4 +116,4 @@ Binary: yes. Directed: yes, via `directed`/`undirected`/`forcedirected`/`forceun
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

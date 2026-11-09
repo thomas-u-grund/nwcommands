@@ -1,15 +1,15 @@
 ---
-title: "nwtoedge"
+title: "nw2toedge"
 parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Convert two-mode network to edgelist"
+description: "Convert a two-mode network to an edge list"
 ---
 
-# `nwtoedge`
+# `nw2toedge`
 
-Convert two-mode network to edgelist
+Convert a two-mode network to an edge list
 
 ## Syntax
 
@@ -74,4 +74,4 @@ Two-mode: yes - one row for every tie between the two modes, with the mode of bo
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

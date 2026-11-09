@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Import network"
+description: "Import a network from a Pajek, UCINET, GML or edge list file"
 ---
 
 # `nwimport`
 
-Import network
+Import a network from a Pajek, UCINET, GML or edge list file
 
 ## Syntax
 
@@ -41,7 +41,7 @@ xvars]
 
 Imports networks from popular network file formats. The command automatically recognizes whether networks are directed or undirected. However, options **forcedirected** and **forceundirected** can be used to override automatic detection.
 
-- The following network formats are supported:
+The following network formats are supported:
 
 - [- Ucinet](nwimport)
 - [- Pajek](nwimport)
@@ -58,8 +58,8 @@ Imports networks from popular network file formats. The command automatically re
 
 ## Supported network types
 
-Binary: yes. Directed: yes - automatically detected from the source file unless overridden with **forcedirected**/**forceundirected**. Weighted: yes, where the source format itself carries tie values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own values are negative. Two-mode: yes - the four formats written by [nwexport](nwexport) come back as a two-mode network (Pajek `*Vertices n n1`, a rectangular UCINET matrix, the five-column edge list, GML with the attribute `nwmode`); the level labels written by [nwexport](nwexport) come back (Pajek comment line, GML graph attributes `nwmodelabel1` and `nwmodelabel2`, edge list columns; not UCINET); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
+Binary: yes. Directed: yes - automatically detected from the source file unless overridden with **forcedirected**/**forceundirected**. Weighted: yes, where the source format itself carries tie values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own values are negative. Two-mode: yes (see [Two-mode networks](nwimport) above).
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

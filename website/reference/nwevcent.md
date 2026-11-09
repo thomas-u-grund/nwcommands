@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Calculate eigenvector centrality"
+description: "Eigenvector centrality"
 ---
 
 # `nwevcent`
 
-Calculate eigenvector centrality
+Eigenvector centrality
 
 ## Syntax
 
@@ -67,4 +67,4 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

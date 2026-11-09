@@ -2,237 +2,130 @@
 {* *! version 3.17.6  09nov2026}{...}
 
 {phang}
-{help nwcommands:NW-4 start}
-{hline 2} Getting started
+{help nwcommands:NW-4 start} {hline 2} Getting started
 
-{title:Contents}	
-			
+{title:Contents}
+
 {col 14}Section{col 31}Description
 {col 14}{hline 46}
-{help nwintro##intro:{col 14}{bf:[NW-1.1]}{...}{col 31}{bf:Introduction}}
-
-{help nwstart##gettingdata:{col 14}{bf:[NW-1.2]}{...}{col 31}{bf:Getting network data into Stata }}
-
-{help nwstart##visualizing:{col 14}{bf:[NW-1.3]}{...}{col 31}{bf:Visualizing and animating networks}}
-
-{help nwstart##simulation:{col 14}{bf:[NW-1.4]}{...}{col 31}{bf:Simulating networks}}
-
-{help nwstart##manipulation:{col 14}{bf:[NW-1.5]}{...}{col 31}{bf:Handling and manipulating networks}}
-
-{help nwstart##analysis:{col 14}{bf:[NW-1.6]}{...}{col 31}{bf:Analyzing networks}}
+{help nwstart##first:{col 14}{bf:[NW-4.1]}{col 31}{bf:A first session}}
+{help nwstart##ideas:{col 14}{bf:[NW-4.2]}{col 31}{bf:Three ideas to know}}
+{help nwstart##data:{col 14}{bf:[NW-4.3]}{col 31}{bf:Getting your own data in}}
+{help nwstart##tutorials:{col 14}{bf:[NW-4.4]}{col 31}{bf:Tutorials}}
+{help nwstart##more:{col 14}{bf:[NW-4.5]}{col 31}{bf:Where to look next}}
 
 
-{marker intro}{...}
-{title:Introduction}
+{marker first}{...}
+{title:A first session}
 
 {pstd}
-A network G = (V,E) is a set of nodes {it:V} and relationships {it:E}. Relationships between nodes
-are pairs (or dyads) of nodes {it:i} and {it:j}.
+Load the marriage and business ties between 16 Florentine families, look at what is in memory, and describe,
+plot and analyze the marriage network. Click a command to run it.
+
+{p 8 8 2}{stata "nwwebuse florentine, nwclear":. nwwebuse florentine, nwclear}{p_end}
+{p 8 8 2}{stata "nwds":. nwds}{p_end}
+{p 8 8 2}{stata "nwsummarize flomarriage":. nwsummarize flomarriage}{p_end}
+{p 8 8 2}{stata "nwplot flomarriage, lab":. nwplot flomarriage, lab}{p_end}
+{p 8 8 2}{stata "nwdegree flomarriage, generate(deg)":. nwdegree flomarriage, generate(deg)}{p_end}
+{p 8 8 2}{stata "nwbetween flomarriage, generate(btw)":. nwbetween flomarriage, generate(btw)}{p_end}
+{p 8 8 2}{stata "list _nwnode deg btw in 1/5":. list _nwnode deg btw in 1/5}{p_end}
 
 {pstd}
-A simple way to think (and store) a network is the adjacency matrix. The adjaceny matrix {it:M} of a network has the dimensions {it:nodes x nodes}. The 
-matrix cell {it:M_ij} = 0 when there is no tie between nodes {it:i} and {it:j}. In binary networks, {it:M_ij} = 1 when there is
-a network relationship between nodes {it:i} and {it:j}. However, networks can also be valued, i.e. {it:M_ij} > 1. 
+{cmd:nwwebuse} loads two networks, {it:flomarriage} and {it:flobusiness}. {cmd:nwdegree} and {cmd:nwbetween} store one
+value per node in ordinary Stata variables, which you can list, summarize or use in a regression.
+
+
+{marker ideas}{...}
+{title:Three ideas to know}
+
+{phang}
+1. {bf:Networks have names.} You refer to a network by its {help netname}, just as you refer to a variable by its
+{help varname}. Network lists can be abbreviated like variable lists: {cmd:nwsummarize flo*}.
+
+{phang}
+2. {bf:Networks are not variables.} nwcommands keeps networks next to the dataset. Stata's {cmd:clear} does not remove
+them; {help nwclear} does. Results for nodes ({cmd:generate()}) are ordinary variables, one observation per node.
+
+{phang}
+3. {bf:There is a current network.} A command without a network name uses the current network, normally the one
+loaded or created last; {help nwcurrent} shows and changes it.
 
 {pstd}
-Networks exist as objects in Stata. Before one can work with a network in Stata it needs to be {help nwset:declared as a network}. This is very 
-similar to how one declares data to be e.g. time-series data.
+More of these parallels with Stata are in {help nwintro##nwconcepts:[NW-1.3]} and {help nwintro##nwprograms:[NW-1.4]}.
+
+
+{marker data}{...}
+{title:Getting your own data in}
+
+{p2colset 8 26 28 2}{...}
+{p2col:{help nwfromedge}}from an edge list (one row per tie) in the dataset{p_end}
+{p2col:{help nwset}}from an adjacency matrix stored as variables, or from an edge list{p_end}
+{p2col:{help nwimport}}from a Pajek, UCINET, GML or edge list file{p_end}
+{p2col:{help nwuse}}from a network file saved with {help nwsave}{p_end}
+{p2col:{help nwwebuse}}the example data sets ({help netexample}){p_end}
+{p2colreset}{...}
 
 {pstd}
-Once networks have been imported, generated or set, one can interact with
-them by referring to their {help netname}, just as if one would interact with variables using their {help varname}. For example:
+Node attributes are ordinary variables in the same dataset, one observation per node. The tutorial
+{browse "https://nwcommands.org/tutorials/04-reproducible-workflow/":A reproducible workflow} shows a complete do-file,
+from CSV files of ties and people to saved results.
 
-	{cmd:. nwwebuse florentine}
 
-{pstd}	
-loads a network dataset on {help netexample##florentine:Florentine families} from the internet that includes two networks ({it:flobusiness, flomarriage}). After loading the data one can refer to these 
-networks by their name (for a list of networks currently in memory see {help nwds} or {help nwset}):
-	
-	{cmd:. nwplot flomarriage}
-	{cmd:. nwrecode flomarriage (1=2)}
-	{cmd:. nwsummarize flomarriage}
-	{cmd:. nwdegree flobusiness}
+{marker tutorials}{...}
+{title:Tutorials}
 
 {pstd}
-Networks have various meta-information, such as node labels (see
-{help nwname}). Each network also has information about a set of Stata variables that should be created to represent the network as Stata
-variables (see {help nwload}). The meta-information of a network can be examined and changed with {help nwname}.
+Nineteen worked tutorials, each with real Stata output, are at {browse "https://nwcommands.org/tutorials/"}. They build
+on each other, but each one also stands alone.
 
-
-{marker gettingdata}{...}
-{title:Getting network data into Stata}
-
-{pstd}
-There are different ways to get network data into Stata.
-
-{pmore}{help nwset:1. Declare data to be network data}
-
-{pmore}{help nwwebuse:2. Load network data from the internet}
-
-{pmore}{help nwuse:3. Load network data one has saved before}
-
-{pmore}{help nwfromedge:4. Import data from simple edgelist}
-
-{pmore}{help nwimport:5. Import network data from other file formats}
-
-{pstd}
-
-{marker visualizing}{...}
-{title:Visualizing and animating networks}
-
-{pstd}
-The nwcommands come with a very powerful {help nwplot:plotting engine for networks}. Once a network has been declared, loaded or imported one
-can plot it directly with {help nwplot} by referring to its {help netname}. When plotting a network, all usual twoway-plot options 
-are available. Furthermore, many aspects like 1) the size, color, shape of nodes, 2) the labels of nodes, 3) the color, width, pattern of network ties,
-4) the look and feel of arrows, 5) the general layout of the network, and many other things can be changed. 
-
-{pmore}
-{cmd:. nwwebuse florentine, nwclear}{p_end}
-{pmore} 
-{cmd:. nwplot flomarriage}
+{p2colset 8 12 14 2}{...}
+{p2col:{bf:Getting started}}{p_end}
+{p2col: 1}{browse "https://nwcommands.org/tutorials/01-installation-setup/":Installation and setup}{p_end}
+{p2col: 2}{browse "https://nwcommands.org/tutorials/02-core-concepts/":Core concepts}{p_end}
+{p2col: 3}{browse "https://nwcommands.org/tutorials/03-importing-exporting/":Importing and exporting}{p_end}
+{p2col: 4}{browse "https://nwcommands.org/tutorials/04-reproducible-workflow/":A reproducible workflow}{p_end}
+{p2col:{bf:Working with networks}}{p_end}
+{p2col: 5}{browse "https://nwcommands.org/tutorials/05-visualization/":Visualization}{p_end}
+{p2col: 6}{browse "https://nwcommands.org/tutorials/06-generating-networks/":Generating networks}{p_end}
+{p2col: 7}{browse "https://nwcommands.org/tutorials/07-manipulating-networks/":Manipulating networks}{p_end}
+{p2col:{bf:Describing networks}}{p_end}
+{p2col: 8}{browse "https://nwcommands.org/tutorials/08-centrality/":Centrality}{p_end}
+{p2col: 9}{browse "https://nwcommands.org/tutorials/09-paths-ego-networks/":Paths and ego networks}{p_end}
+{p2col:10}{browse "https://nwcommands.org/tutorials/10-cohesion-subgroups/":Cohesion and subgroups}{p_end}
+{p2col:11}{browse "https://nwcommands.org/tutorials/11-brokerage/":Brokerage and structural holes}{p_end}
+{p2col:12}{browse "https://nwcommands.org/tutorials/12-triads-motifs/":Triads, dyads and motifs}{p_end}
+{p2col:13}{browse "https://nwcommands.org/tutorials/13-positions-equivalence/":Positions and equivalence}{p_end}
+{p2col:14}{browse "https://nwcommands.org/tutorials/14-homophily-mixing/":Homophily, assortativity and mixing}{p_end}
+{p2col:{bf:Other kinds of networks}}{p_end}
+{p2col:15}{browse "https://nwcommands.org/tutorials/15-two-mode-networks/":Two-mode networks}{p_end}
+{p2col:16}{browse "https://nwcommands.org/tutorials/16-valued-networks/":Valued networks}{p_end}
+{p2col:17}{browse "https://nwcommands.org/tutorials/17-networks-over-time/":Networks over time}{p_end}
+{p2col:{bf:Testing and models}}{p_end}
+{p2col:18}{browse "https://nwcommands.org/tutorials/18-testing/":Testing hypotheses about networks}{p_end}
+{p2col:19}{browse "https://nwcommands.org/tutorials/19-intro-longitudinal-models/":Longitudinal models: an overview}{p_end}
+{p2colreset}{...}
 
 {pstd}
-This plots the Florentine marriage network. The next example, plots the same network, but colors the edges according to 
-the Florentine business network and displays node labels. 
-
-{pmore}
-{cmd:. nwplot flomarriage, edgecolor(flobusiness) lab}
-
-{pstd}
-Furthermore, the software also comes with three dedicated schemes for plotting networks: {it:s1network, s2network, s3network}. 
- 
-{pstd}
-Besides normal network plots, the software can also {help nwmovie:animate networks and produce movies} out of a sequence of networks. The command
-{help nwmovie} makes normal network plots, but also calculates the frames between differnet network panel observations. {cmd:nwmovie} is
-a sophisticated program that requires the third-party software {bf:ImageMagick} to merge differnet network plots together and save the sequence
-of network plots as an animated GIF file. This draws on the {help animate} command, which is a more general program written by the authors to 
-make an animation out of different Stata .gph files.
+The statistical model packages have their own tutorials: {browse "https://nwcommands.org/nwsaom/":nwsaom},
+{browse "https://nwcommands.org/nwergm/":nwergm}, {browse "https://nwcommands.org/nwdynam/":nwdynam} and
+{browse "https://nwcommands.org/nwrem/":nwrem}.
 
 
-{marker simulation}{...}
-{title:Simulating networks}
+{marker more}{...}
+{title:Where to look next}
+
+{p2colset 8 30 32 2}{...}
+{p2col:{help nwtopical}}all commands, by topic{p_end}
+{p2col:{help nwalphabetical}}all commands, alphabetically{p_end}
+{p2col:{help nwintro}}introduction, requirements, network size and speed{p_end}
+{p2col:{help nwnetworktypes}}what each command does with directed, valued, signed and two-mode networks{p_end}
+{p2col:{help nwprogramming}}writing your own network commands{p_end}
+{p2col:{browse "https://nwcommands.org/help/":Getting help}}questions, bug reports and the mailing list{p_end}
+{p2colreset}{...}
 
 {pstd}
-There are several {help nwtopical##generator:network generators} that can be used to simulate networks. These network generators
-create one (or more) new networks with certain attributes. Most network generators
-allow the options {bf:name(), vars(), labs(), ntimes(), xvars}.
-
-{center:{c TLC}{hline 14}{c TT}{hline 35}{c TRC}}
-{center:{c |}   option     {c |}        Description                {c |}}
-{center:{c LT}{hline 14}{c +}{hline 35}{c RT}}
-{center:{c |} {bf:name()}       {c |} Name of the new network           {c |}}
-{center:{c |} {bf:vars()}       {c |} Stata variables for this network  {c |}}
-{center:{c |} {bf:labs()}       {c |} Node labels                       {c |}}
-{center:{c |} {bf:ntimes()}     {c |} Number networks to simulate       {c |}}
-{center:{c |} {bf:xvars}        {c |} Generate Stata variables          {c |}}
-{center:{c BLC}{hline 14}{c BT}{hline 35}{c BRC}}
-
-{pstd}
-Probably, the simplest network generator is {help nwrandom}, which simulates random networks. It can be used either
-with {opt prob()} or with {opt density()}. The first option generates a network where each tie has the same probability
-to exist. The second option generates a random network with a pre-defined network density, where each tie has the same 
-probability to exist as well.
-
-{pmore}
-{cmd:. nwrandom 50, prob(.1) name(mynet)}
-
-{pstd}
-This generates a new network called "mynet" with 50 nodes where each potential tie has the probability 0.1 to exist.
-
-{pstd}
-Other network generators exist to produce {help nwsmall:small-world networks}, {help nwpref:preferential attachment networks}, {help nwlattice:regular lattices},
-or {help nwring:ring lattices}. Two more sophisticated network generators are: {help nwhomophily} and {help nwdyadprob}. The first one
-generates {help nwhomophily:homophilious networks}, where ties are more or less likely to exist between nodes when they 
-are similar/same/different on some other {help varname}. The second one is even more general and produces networks based on
-tie probabilities for each potential tie, saved as a matrix or as another network. 
- 
- 
-{marker manipulation}{...}
-{title:Handling and manipulating networks}
-
-{pstd}
-Once a network has been declared, imported or generated, there are many different ways to
-{help nwtopical##manipulation:manipulate networks}. Many of these features resemble what one is used from
-normal Stata. One can {help nwaddnodes:add nodes to a network},
-{help nwdropnodes:drop nodes from a network}, or {help nwkeepnodes:keep nodes of a network}. For example, this
-load the Florentine data and drop two nodes:
-
-{pmore}
-{cmd:. nwwebuse florentine, nwclear}{p_end}
-{pmore} 
-{cmd:. nwdropnodes flomarriage, nodes(medici pucci)}{p_end}
-
-{pstd}
-Furthermore, one can {help nwdrop:drop} or {help nwkeep:keep entire networks} as well, just like dropping or keeping
-variables. In fact, all abbreviations one is used from Stata can be used as well. This drops all networks whose {help netname}
-begins with "flom".
-
-{pmore}
-{cmd:. nwwebuse florentine, nwclear}{p_end}
-{pmore} 
-{cmd:. nwdrop flom*}{p_end}
-
-{pstd}
-Networks have various meta-information, such as a {help netname}, whether or not they are directed, the labels of the nodes,
-the Stata variables used to represent the adjacency matrix of the network. This
-meta-information can be changed with {help nwrename} and {help nwname}.
-
-{pstd}
-With {help nwrecode} the tie values of a network can be recoded, just like when one recodes the values of a normal variable. The
-command {help nwreplace} is very similar to {help replace}, but extremely powerful. It can be used, for example, to replace an entire
-network with another network, replace certain ties of a network with another network, replace certain ties of a network with specific
-tie values. One can also replace the underlying adjacency matrix of a network directly using {help nwreplacemat}.
-
-{pstd}
-A quick overview of all networks that are currently in memory can be obtained with {help nwds}, {help nwset} or {help nwsummarize:nwsummarize _all}.
-
-
-{marker analysis}{...}
-{title:Analyzing networks}
-
-{pstd}
-One can caluclate all sorts of network statistics with the nwcommands. There is a set of programs that calculate the centrality
-of nodes in a network, e.g. {help nwdegree:degree centrality}, {help nwbetween:betweenness centrality}, {help nwevcent:eigenvector centrality},
-{help nwcloseness:closeness centrality}, {help nwkatz:Katz centrality}, {help nwpagerank:PageRank centrality}.
-
-{pstd}
-Another program calculates the {help nwclustering:clustering coefficient} for each node.
-
-{pmore}
-{cmd:. nwwebuse florentine, nwclear}{p_end}
-{pmore} 
-{cmd:. nwbetween flomarriage, generate(bw)}{p_end}
-
-{pstd}
-This loads the Florentine data and calculates the betweenness centrality of each node in the marriage network and saves
-coefficients in the new Stata variable {it:bw}.
-
-{pstd}
-There are some other commandsm such as {help nwutility}, that calculate node-level statistics. For example, {help nwcomponents}
-calculates the number of components of the network and can also be used to generate a new variable that holds the membership of each node
-to one of the components. 
-
-{pstd}
-{help nwcontext} is a clever program that can be used to get information about the attributes of network neighbors. For example, this loads
-the Gang network and calculates for each node the number of network neighbors who have been to prison before:
-
-{pmore}
-{cmd:. nwwebuse gang, nwclear}{p_end}
-{pmore} 
-{cmd:. nwcontext gang, attribute(Prison) generate(Prison_sum) stat(sum)}{p_end}
-
-{pstd}
-{help nwcorrelate} correlates two networks or, alternatively, one network and one variable with each other. The latter can
-give a very quick overview about the ties that exist in the network between nodes with certain attributes (see also {help nwtabulate}). 
-
-{pstd}
-Some more sophisticated programs exist for the statistical modelling of networks: {help nwqap:MR-QAP regression}, {help nwergm:exponential random graph modeling}, {help nwsaom:stochastic actor-oriented models}, {help nwrem:relational event models} and {help nwdynam:dynamic network actor models} are available as separate packages (see the linked help pages for how to install them).
-
-{pstd}
-Another set of commands calculates {help nwpath:paths between network nodes}, the entire set of {help nwgeodesic:shortest paths between network nodes}, or the expected {help nwrandomwalk:random-walk hitting time} to a target node.
-
-{pstd}
-A further group of commands work on connectivity and flow: {help nwmaxflow:maximum flow and minimum cut}, {help nwmatching:bipartite matching}, {help nwlambda:edge connectivity and lambda sets}, {help nwfactions:UCINET-style faction partitioning}, and {help nwmotifs:the 4-node motif census}.
+Most commands also have a dialog box: after {cmd:nwinstall, all}, the {bf:Network Analysis} menu appears under
+{bf:User}.
 
 {hline}
 {pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

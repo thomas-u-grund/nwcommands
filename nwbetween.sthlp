@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwbetween  {hline 2}}Calculate betweenness centrality{p_end}
+{p2col :nwbetween  {hline 2}}Betweenness centrality{p_end}
 {p2colreset}{...}
 
 

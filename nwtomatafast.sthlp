@@ -1,11 +1,11 @@
 {smcl}
 {marker topic}
-{helpb nwtopical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##programming:[NW-2.9] Programming}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtomatafast {hline 2}}Return link to adjacency matrix of network{p_end}
+{p2col :nwtomatafast {hline 2}}Return a link to the adjacency matrix of a network{p_end}
 {p2colreset}{...}
 
 

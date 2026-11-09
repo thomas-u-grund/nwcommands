@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  25oct2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
+{helpb nwtopical##analysis_clustering:[NW-2.6.5] Clustering, mixing and balance}
 
 {viewerjumpto "Syntax" "nw2nested##syntax"}{...}
 {viewerjumpto "Description" "nw2nested##description"}{...}

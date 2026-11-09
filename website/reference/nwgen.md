@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Network extensions to generate"
+description: "Generate variables or networks with network functions (like egen)"
 ---
 
 # `nwgen`
 
-Network extensions to generate
+Generate variables or networks with network functions (like egen)
 
 ## Syntax
 
@@ -53,4 +53,4 @@ Not applicable to `nwgen` itself - a dispatcher/shortcut layer over [nwgenerate]
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

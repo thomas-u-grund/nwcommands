@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwkatz {hline 2}}Calculate a Katz-inspired distance-decay centrality{p_end}
+{p2col :nwkatz {hline 2}}Katz-style distance-decay centrality{p_end}
 {p2colreset}{...}
 
 

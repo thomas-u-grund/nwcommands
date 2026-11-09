@@ -1,42 +1,59 @@
 {smcl}
 {* *! version 3.17.6  09nov2026}{...}
 
-{pstd}
-New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
-(core commands, help files, dialog boxes) - see {help nwinstall}.
-{p_end}
+{title:nwcommands {hline 2} Network analysis in Stata}
 
 {pstd}
-The statistical network models are separate packages that need this core: {cmd:nwsaom} (stochastic actor-oriented models),
-{cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem}
-(relational event models). Install them with {cmd:nwinstall, models}; see {help nwinstall}. {cmd:nwversion} shows the core
-version and which model packages are installed.
+nwcommands imports, generates, describes, analyzes and plots networks in Stata. It has 134 commands, most of them
+with a dialog box. Tutorials, data sets and manuals are at {browse "https://nwcommands.org"}.
 {p_end}
 
 {col 14}Section{col 31}Description
-{col 14}{hline 46}
-{help nwintro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}
+{col 14}{hline 56}
+{help nwintro:{col 14}{bf:[NW-1]}{col 31}{bf:Introduction}}
+{col 31}{it:what the package does, requirements, network size and speed}
+{help nwtopical:{col 14}{bf:[NW-2]}{col 31}{bf:Commands by topic}}
+{help nwalphabetical:{col 14}{bf:[NW-3]}{col 31}{bf:Commands in alphabetical order}}
+{help nwstart:{col 14}{bf:[NW-4]}{col 31}{bf:Getting started}}
+{col 31}{it:a first session and the tutorials}
+{help nwprogramming:{col 14}{bf:[NW-5]}{col 31}{bf:Programming}}
+{col 31}{it:how networks are stored; writing your own commands}
+{help nwinstall:{col 14}{bf:[NW-6]}{col 31}{bf:Installation and updates}}
+{help nwinternals:{col 14}{bf:[NW-7]}{col 31}{bf:Internal helper programs}}
 
-{help nwtopical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}
 
-{help nwalphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}
-
-{help nwstart:{col 14}{bf:[NW-4]}{...}{col 31}{bf:Getting started}}
-
-{help nwprogramming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}
-
-{help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}
-
-{help nwinternals:{col 14}{bf:[NW-7]}{...}{col 31}{bf:Internal helper files}}
+{title:Installation}
 
 {pstd}
-nwcommands is free software under the GNU General Public License, version 3, as are the model packages.
+If you have installed only the package {cmd:nwcommands} so far, {stata "nwinstall, all":nwinstall, all}
+downloads the commands, help files and dialog boxes; see {help nwinstall}. {help nwversion} shows the installed version.
 {p_end}
 
-               *! Authors     : Thomas U. Grund 
-               *! Contact     : thomas.u.grund@gmail.com
-               *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}
-               *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}
+{title:Statistical network models}
+
+{pstd}
+The statistical models are separate packages that need this core. Install them with {stata "nwinstall, models":nwinstall, models}.
+{p_end}
+
+{p2colset 8 18 20 2}{...}
+{p2col:{bf:{browse "https://nwcommands.org/nwsaom/":nwsaom}}}Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
+{p2colreset}{...}
+
+{title:Author}
+
+{pstd}
+Thomas U. Grund, RWTH Aachen University{break}
+{browse "mailto:thomas.u.grund@gmail.com":thomas.u.grund@gmail.com}{break}
+{browse "https://github.com/thomas-u-grund/nwcommands"}
+{p_end}
+
+{pstd}
+Questions and bug reports: {browse "https://nwcommands.org/help/"}. How to cite: {help nwintro##citation:[NW-1.7]}.
+nwcommands is free software under the GNU General Public License, version 3, as are the model packages.
+{p_end}
 
 {hline}
 {pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

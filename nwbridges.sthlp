@@ -1,14 +1,12 @@
 {smcl}
 {* *! version 2.0.1  5jun2019 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
-{helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
+{helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, components and subgroups}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwbridges {hline 2}}Calculate bridges{p_end}
+{p2col :nwbridges {hline 2}}Find bridges (ties whose removal disconnects the network){p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

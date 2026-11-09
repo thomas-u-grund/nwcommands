@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Drop networks or network nodes"
+description: "Drop networks or nodes"
 ---
 
 # `nwdrop`
 
-Drop networks or network nodes
+Drop networks or nodes
 
 ## Syntax
 
@@ -55,4 +55,4 @@ Drop only certain nodes from a network, using `if`:
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

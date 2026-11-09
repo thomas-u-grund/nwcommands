@@ -94,7 +94,7 @@ Release commit message: `Release X.Y.Z` (optionally followed by a short summary)
   loud WARNING when the Mata library differs from the recorded release hash.
 - Models: `python3 tools/set_version.py X.Y.Z [date]` (also `--check`) updates `VERSION`, first line of every `.ado`, help headers and footers, `<pkg>.pkg`, `stata.toc`, `README.md`, `NOTICE.md`,
   `CITATION.cff`, `e(version)`/`<pkg> version` literals and (nwsaom) the manual's `\pkgversion`. `python3 tools/check_version.py` = `--check` plus, when `NWCORE` is set, the core-library hash check (B.5).
-- Never edit generated files by hand: `nwcommands*.pkg`, `stata.toc`, `nwcommands.sthlp` are regenerated from `_pkg_ado.txt`, `_pkg_hlp.txt`, `_pkg_boot.txt` (GOTCHA.md); `.dlg` files of the models are generated.
+- Never edit generated files by hand: `nwcommands*.pkg` and `stata.toc` are regenerated from `_pkg_ado.txt`, `_pkg_hlp.txt`, `_pkg_boot.txt` (GOTCHA.md); `nwtopical.sthlp` and `nwalphabetical.sthlp` by `tools/make_help_index.py` from the help files; `.dlg` files of the models are generated.
 - CHANGELOG format (Keep a Changelog): `## [X.Y.Z] - YYYY-MM-DD` with Added / Changed / Fixed / Removed. A release that changes results of existing commands starts with
   `### Results that change (read before you re-run old analyses)`. The check fails without the entry. The GitHub release notes are this entry.
 - The core's version is in `VERSION`; do not state a "current release" anywhere else by hand except through the website checklist (C5).
@@ -379,7 +379,7 @@ On the state of 2026-10-25 (`origin/main`): `--post` passes everything except th
 15. **`deploy.sh` is dangerous:** it rebuilds the Mata library with a hard-coded `/Applications/Stata/StataBE.app` (Stata 18), regenerates manifests, `git add -u`, commits and pushes to `develop`. Do not use it for releases (even `--check-only` does the library rebuild). Use `python3 tools/check_help_index.py` and `_pkg_*.txt` + `_nwdeploy` knowledge from GOTCHA.md.
 16a. **Underscore files are dropped by Jekyll:** any file starting with `_` (and `.`) in a Jekyll source tree is not copied to `_site`. The `net/` copy therefore must happen after `jekyll build` (the workflow step), never through `website/net/` or `include:`. Do not list a `_*.ado` in the starter `.pkg` without checking the served directory (`tools/test_net_dir.sh`).
 16. **Test results:** most older tests print no PASS marker; failure is an `r()` error; no log = NOT RUN; `test_external_links.do` needs the internet and is not part of the bar. Do not run every option in the slow Mata engine to build a list; derive it from the code and say so.
-17. **Generated artifacts:** `.pkg`, `stata.toc`, `nwcommands.sthlp` (core manifests); the `.dlg` files of the models; manual tables from the inventory. Edit the sources, not the outputs.
+17. **Generated artifacts:** `.pkg`, `stata.toc` (core manifests); `nwtopical.sthlp`, `nwalphabetical.sthlp` (`tools/make_help_index.py`); the `.dlg` files of the models; manual tables from the inventory. Edit the sources, not the outputs.
 18. **A repo copy for another purpose in the same folder:** many scratch worktrees (`nwergm_fix`, `nwsaom_ver`, ...) sit next to the clones in `/Users/tgrund/FILES_NEW/SOFTWARE/`; `--models-parent` and `tools/smoke_fresh_install.sh` need folders named exactly after the packages, on the release commit.
 19. **`nwversion`/`<pkg> version` before `nwinstall, all`:** "core package: not found" is expected, not a bug.
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 27 2}{...}
-{p2col :nwproject {hline 2}}One-mode projection of a two-mode network (alias for {help nw2project}){p_end}
+{p2col :nwproject {hline 2}}One-mode projection of a two-mode network (alias for nw2project){p_end}
 {p2colreset}{...}
 
 {title:Syntax}

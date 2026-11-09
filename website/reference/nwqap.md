@@ -40,7 +40,7 @@ name(string)
 | `predict(newnetname)` | store the fitted dyad-level values (from **type()**'s own default prediction, e.g. Pr(y=1) for **logit**/**probit**, the fitted mean for **regress**) as a new valued network |
 | `plot` | Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own `permutations()` null draws - the same comparison R's **sna::plot.qaptest()** draws, generalized to every coefficient in the regression |
 | `name(string)` | Name for the combined graph created by `plot`; default = **qap** |
-| `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient: each variable is residualized by OLS on the other independent variables and the rows and columns of its residual matrix are permuted; `nwqap` also residualizes the dependent network and compares the OLS slope of the residualized dependent network on the permuted residuals with the observed slope, which by the Frisch-Waugh-Lovell theorem equals the variable's coefficient in an OLS regression on all independent variables (not the printed logit or probit coefficient). Dekker et al. regress the raw dependent network on the permuted residuals and the other variables, which gives nearly the same draws |
+| `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see [qapspp](nwqap) below |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise) |
 
 ## Description
@@ -133,4 +133,4 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))

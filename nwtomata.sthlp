@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.1  24aug2014 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##programming:[NW-2.9] Programming}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtomata {hline 2}}Return adjacency matrix of network{p_end}
+{p2col :nwtomata {hline 2}}Return the adjacency matrix of a network{p_end}
 {p2colreset}{...}
 
 

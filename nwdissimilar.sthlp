@@ -1,9 +1,7 @@
 {smcl}
 {* *! version 1.0.0  21april2014}{...}
 {marker topic}
-{helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
-{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
+{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
 
 {title:Title}

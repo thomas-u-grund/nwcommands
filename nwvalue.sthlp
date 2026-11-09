@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 15jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
+{helpb nwtopical##analysis_other:[NW-2.6.8] Other analysis tools}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwvalue {hline 2}}Returns a tie value{p_end}
+{p2col :nwvalue {hline 2}}Return a tie value{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

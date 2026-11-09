@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  21aug2026}{...}
 {marker topic}
-{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
+{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
 {title:Title}
 
 {p2colset 9 22 26 2}{...}
-{p2col :nwconstraint  {hline 2}}Calculate Burt's constraint{p_end}
+{p2col :nwconstraint  {hline 2}}Burt's constraint{p_end}
 {p2colreset}{...}
 
 

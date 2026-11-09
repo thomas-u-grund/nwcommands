@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_utility:[NW-2.7] Utility Commands}
+{helpb nwtopical##information:[NW-2.4] Information}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwds {hline 2}}List loaded networks, in the style of Stata's own {help ds}{p_end}
+{p2col :nwds {hline 2}}List the networks in memory (like ds){p_end}
 {p2colreset}{...}
 
 {title:Syntax}

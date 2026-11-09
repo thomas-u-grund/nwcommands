@@ -2,8 +2,6 @@
 {* *! version 2.0  13may2019 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##information:[NW-2.4] Information}
-{marker top2}
-{helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 
