@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwsaom 1.5.8
+
+**nwsaom 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.8)). The output tables are laid out as those of Stata's own commands: plain rules above and below, a capitalised first column, `df` and `Prob > chi2` in the tests, and titles that state the null hypothesis. Only the display changes; estimates, tests and stored results are the same as in 1.5.7.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 9 November 2026: nwsaom 1.5.7
 
 **nwsaom 1.5.7** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.7)). The statistic of the quadratic shape effect of a behavior is now that of the centred values, as in RSiena. Before, nwsaom used the raw values; the estimates were the same, but the noise reduction of Phase 2 worked poorly for this effect, and co-evolution fits with it met the convergence criterion less often than in RSiena. They now converge as often as in RSiena. An audit of all behavior effects found no other such difference. The manual's listings were rerun, and the [speed page](../nwsaom/speed/) shows the benchmark with this version. Network-only models are unchanged.
