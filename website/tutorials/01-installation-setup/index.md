@@ -132,8 +132,10 @@ missing or does not load (Stata then reports a plugin error, or a command warns 
 ```
 
 `buildplugin()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam` or `all`. The command fetches the C source from GitHub, compiles it with the compiler of
-your computer and installs the plugin where `net install` puts it, keeping an existing file as a `.prev` copy. This works on macOS and Linux and needs a C
-compiler and `make`: on a Mac the command line tools of Xcode (`xcode-select --install`), on Linux `gcc` and `make`. Restart Stata afterwards.
+your computer and installs the plugin where `net install` puts it, keeping an existing file as a `.prev` copy. It needs a C compiler,
+installed once: on a Mac the command line tools of Xcode (`xcode-select --install`), on Linux `gcc` and `make`, on Windows Microsoft's free
+[Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with *Desktop development with C++*, which the command finds by
+itself (if it is missing, the command says what to install). Restart Stata afterwards.
 
 A plugin depends on the operating system and the processor, not on the version or the flavour (BE, SE, MP) of Stata, so a plugin built on your computer
 works in every Stata installed there. If you would rather look at the source or build it by hand, `net get nwsaom, from(https://nwcommands.org/net/)` copies
