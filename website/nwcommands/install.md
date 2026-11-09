@@ -66,9 +66,9 @@ missing, is older than the `.ado` files or does not work on your system, compile
 ```
 
 `buildplugin()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam` or `all`. The command fetches the C source from the GitHub repositories, compiles it with
-the compiler of your computer (macOS and Linux; a C compiler and `make` are needed: on a Mac the command line tools of Xcode, `xcode-select --install`; on
-Linux `gcc` and `make`) and installs the plugins where `net install` puts them. Restart Stata afterwards. A plugin depends on the operating system and the
-processor, not on the version or the flavour of Stata, so one built on your computer works in every Stata installed there. The routine was tested on macOS.
+the compiler of your computer (a C compiler is needed, installed once: on a Mac the command line tools of Xcode, `xcode-select --install`; on
+Linux `gcc` and `make`; on Windows Microsoft's free [Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the workload *Desktop development with C++*, which the command finds by itself; if the compiler is missing, the command says what to install) and installs the plugins where `net install` puts them. Restart Stata afterwards. A plugin depends on the operating system and the
+processor, not on the version or the flavour of Stata, so one built on your computer works in every Stata installed there. The build was tested on macOS; on Windows the search for the compiler and the message were tested.
 The source of each package is also available with `net get`, for example `net get nwcommands, from(https://nwcommands.org/net/)`, together with a short build note.
 
 ## Rebuilding the Mata libraries on your own computer
@@ -117,5 +117,5 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.17.4/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.17.5/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.

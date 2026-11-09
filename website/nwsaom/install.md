@@ -105,11 +105,10 @@ automatic process and can lag behind the macOS file for a while), or does not lo
 ```
 
 The command fetches the C source of the package from its GitHub repository, compiles it with the compiler of your computer and
-installs the plugin where `net install` puts it (an existing file is kept with the extension `.prev`). You need a C compiler and
-`make`: on a Mac the command line tools of Xcode (`xcode-select --install` in the Terminal), on Linux `gcc` and `make`. Restart Stata
+installs the plugin where `net install` puts it (an existing file is kept with the extension `.prev`). You need a C compiler, installed once:
+on a Mac the command line tools of Xcode (`xcode-select --install` in the Terminal), on Linux `gcc` and `make`, on Windows Microsoft's free [Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the workload *Desktop development with C++*, which the command finds by itself; if the compiler is missing, the command says what to install. Restart Stata
 afterwards. A plugin depends on the operating system and the processor, not on the version or the flavour of Stata (BE, SE, MP), so a plugin built
-on your computer works in every Stata installed there. The routine was tested on macOS; on Windows it stops with a message and the
-build note that comes with the source gives the command for the Visual Studio command line. The source is free software (GPL-3); `net get nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main)`
+on your computer works in every Stata installed there. The build was tested on macOS; on Windows the search for the compiler and the message were tested. The source is free software (GPL-3); `net get nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main)`
 copies it into the current directory, and it is in the folder `native/` of the [repository](https://github.com/thomas-u-grund/nwsaom).
 
 If you have an old copy of `nwsaom` in Stata's PLUS folder as well as a new one elsewhere on the ado-path, Stata
