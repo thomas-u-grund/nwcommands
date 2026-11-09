@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
+{helpb nwtopical##analysis_clustering:[NW-2.6.5] Clustering, mixing and balance}
 
 {title:Title}
 

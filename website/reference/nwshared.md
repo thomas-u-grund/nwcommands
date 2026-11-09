@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Calculate number of shared neighbors between nodes and saves information in network"
+description: "Number of shared neighbors of all pairs of nodes, as a network"
 ---
 
 # `nwshared`
 
-Calculate number of shared neighbors between nodes and saves information in network
+Number of shared neighbors of all pairs of nodes, as a network
 
 ## Syntax
 
@@ -44,4 +44,4 @@ Binary: yes (only) - shared-tie/exposure counting is a structural property, tie 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

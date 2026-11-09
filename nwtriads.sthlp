@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 5 18 22 2}{...}
-{p2col :nwtriads  {hline 2}}Triad census of the network{p_end}
+{p2col :nwtriads  {hline 2}}Triad census of a network{p_end}
 {p2colreset}{...}
 
 

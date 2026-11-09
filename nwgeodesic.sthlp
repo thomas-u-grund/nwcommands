@@ -1,14 +1,12 @@
 {smcl}
 {* *! 14jul2016: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
-{helpb nwtopical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+{helpb nwtopical##analysis_paths:[NW-2.6.6] Paths, flows and ego networks}
 
 {title:Title}
 
-{p2colset 9 10 10 2}{...}
-{p2col:nwgeodesic {hline 2} Calculate shortest paths between nodes}
+{p2colset 9 22 24 2}{...}
+{p2col :nwgeodesic {hline 2}}Calculate shortest paths between nodes{p_end}
 {p2colreset}{...}
 
 

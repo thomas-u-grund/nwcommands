@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Symmetrize network"
+description: "Symmetrize a network"
 ---
 
 # `nwsym`
 
-Symmetrize network
+Symmetrize a network
 
 ## Syntax
 
@@ -91,4 +91,4 @@ Binary: yes. Directed: yes - this command's entire purpose is converting a direc
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

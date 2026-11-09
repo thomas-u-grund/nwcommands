@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Install Stata menu/dialogs and the model packages"
+description: "Install the dialogs, menus and the model packages"
 ---
 
 # `nwinstall`
 
-Install Stata menu/dialogs and the model packages
+Install the dialogs, menus and the model packages
 
 ## Syntax
 
@@ -67,7 +67,7 @@ buildkeep]
 | `dupcheck` | report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing |
 | `modelpkg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
 | `buildplugin(namelist)` | compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; `all` for all four) and install them; macOS and Linux; used alone |
-| `buildmata(namelist)` | rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; `all` for the core and every installed package); the repair if the shipped library was built by a newer Stata (r(3499)); clears the data and the Mata objects in memory; used alone |
+| `buildmata(namelist)` | rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; `all` for the core and every installed package); the repair if the shipped library was built by a newer Stata; used alone |
 | `buildfrom(string)` | with `buildplugin()` or `buildmata()`: a folder or URL with one subfolder per package that holds the source (`native/` for the plugins, the `unw_*.do` files for the Mata libraries); default: the GitHub repositories |
 | `buildkeep` | with `buildplugin()` or `buildmata()`: keep the build folder (it holds the build log) |
 | `release(string)` | with `models` or `modelpkg()`: the release to install, for example `v1.0.0`; default: the current release |
@@ -83,4 +83,4 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 
 ---
 
-*nwcommands version 3.13.1, 1 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

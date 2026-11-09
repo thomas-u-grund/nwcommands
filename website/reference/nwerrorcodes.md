@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "What this package's own custom return codes mean"
+description: "Return codes of nwcommands"
 ---
 
 # `nwerrorcodes`
 
-What this package's own custom return codes mean
+Return codes of nwcommands
 
 ## Description
 
@@ -36,4 +36,4 @@ Catch a package-specific error code programmatically:
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

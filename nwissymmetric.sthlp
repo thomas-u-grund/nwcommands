@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwissymmetric {hline 2}}Check if network is symmetric{p_end}
+{p2col :nwissymmetric {hline 2}}Check whether a network is symmetric{p_end}
 {p2colreset}{...}
 
 

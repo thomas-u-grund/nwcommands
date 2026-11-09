@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwcloseness {hline 2}}Calculate closeness centrality{p_end}
+{p2col :nwcloseness {hline 2}}Closeness centrality{p_end}
 {p2colreset}{...}
 
 

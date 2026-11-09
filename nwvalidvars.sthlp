@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.4  23aug2014 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##programming:[NW-2.9] Programming}
 
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwvalidvars {hline 2}}Validate Stata variables for network{p_end}
+{p2col :nwvalidvars {hline 2}}Validate Stata variables for a network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

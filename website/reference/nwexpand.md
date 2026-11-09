@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Expand variable to network"
+description: "Expand a variable to a network"
 ---
 
 # `nwexpand`
 
-Expand variable to network
+Expand a variable to a network
 
 ## Syntax
 
@@ -137,4 +137,4 @@ Binary: source attribute values can be binary or continuous - `mode()` selects t
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

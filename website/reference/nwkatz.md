@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Calculate a Katz-inspired distance-decay centrality"
+description: "Katz-style distance-decay centrality"
 ---
 
 # `nwkatz`
 
-Calculate a Katz-inspired distance-decay centrality
+Katz-style distance-decay centrality
 
 ## Syntax
 
@@ -74,4 +74,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

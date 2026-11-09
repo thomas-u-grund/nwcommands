@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  31aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
+{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
 {title:Title}
 

@@ -3,6 +3,12 @@
 {marker topic}
 {helpb nwtopical##concept:[NW-2.1] Concepts}
 
+{title:Title}
+
+{p2colset 9 22 24 2}{...}
+{p2col :netname {hline 2}}Name of an existing network{p_end}
+{p2colreset}{...}
+
 {title:Description}
 
 {pstd}
@@ -61,4 +67,4 @@ to change the current network use {it: {help nwcurrent}}.
 {phang}{cmd:. nwcomponents *marriage}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.17.5, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

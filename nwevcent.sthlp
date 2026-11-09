@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nwevcent {hline 2}}Calculate eigenvector centrality{p_end}
+{p2col :nwevcent {hline 2}}Eigenvector centrality{p_end}
 {p2colreset}{...}
 
 

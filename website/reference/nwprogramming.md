@@ -10,8 +10,8 @@ search_exclude: false
 
 ## See also
 
-- `_nwevalnetexp`, `_nwsyntax`, [nwtomata](nwtomata)
+`_nwsyntax`, [nwtomata](nwtomata), [nwset](nwset), [nwfromedge](nwfromedge), [nwunab](nwunab), [nwerrorcodes](nwerrorcodes), [nwinternals](nwinternals)
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

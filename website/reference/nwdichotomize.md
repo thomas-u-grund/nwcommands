@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Dichotomize a network at a threshold (built on [nwrecode](nwrecode))"
+description: "Dichotomize a network at a threshold"
 ---
 
 # `nwdichotomize`
 
-Dichotomize a network at a threshold (built on [nwrecode](nwrecode))
+Dichotomize a network at a threshold
 
 ## Syntax
 
@@ -62,4 +62,4 @@ Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` l
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 2.0.0  18may2019 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
+{helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwshared {hline 2}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
+{p2col :nwshared {hline 2}}Number of shared neighbors of all pairs of nodes, as a network{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

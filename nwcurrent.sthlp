@@ -1,8 +1,6 @@
 {smcl}
 {* *! version 2.0.0  19aug2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##information:[NW-2.4] Information}
-{marker top2}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 

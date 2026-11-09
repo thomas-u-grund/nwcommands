@@ -7,7 +7,7 @@
  4. the four model packages are listed in both lists as web links, not as {help} links;
  5. every file named in _pkg_hlp.txt exists.
 Help files without .ado and without {marker topic} are landing/companion pages (DOC_ONLY below), never listed.
-If this fails after adding a command: give its help file a {marker topic} line, then regenerate with _nwdeploy (see GOTCHA.md).
+If this fails after adding a command: give its help file a {marker topic} line, then regenerate with tools/make_help_index.py.
 """
 import re, os, glob, sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); os.chdir(root)

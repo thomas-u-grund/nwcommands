@@ -1,6 +1,12 @@
 {smcl}
 {marker topic}
 {helpb nwtopical##concept:[NW-2.1] Concepts}
+
+{title:Title}
+
+{p2colset 9 22 24 2}{...}
+{p2col :nodeid {hline 2}}Identification of nodes{p_end}
+{p2colreset}{...}
 {* *! version 1.0.6  17sept2014 author: Thomas Grund}{...}
 
 {title:Title}

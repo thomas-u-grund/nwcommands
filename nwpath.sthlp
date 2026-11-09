@@ -1,14 +1,12 @@
 {smcl}
 {* *! version 2.0.1  29may2019 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
-{helpb nwtopical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+{helpb nwtopical##analysis_paths:[NW-2.6.6] Paths, flows and ego networks}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwpath {hline 2}}Calculate paths between nodes{p_end}
+{p2col :nwpath {hline 2}}Paths between nodes{p_end}
 {p2colreset}{...}
 
 

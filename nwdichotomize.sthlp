@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 27 2}{...}
-{p2col :nwdichotomize {hline 2}}Dichotomize a network at a threshold (built on {help nwrecode}){p_end}
+{p2col :nwdichotomize {hline 2}}Dichotomize a network at a threshold{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

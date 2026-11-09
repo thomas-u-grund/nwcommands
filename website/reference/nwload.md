@@ -35,7 +35,7 @@ force]
 | `generate(varname)` | Generate flag for nodes of the loaded network; default = *_nwinclude* |
 | `viewoff` | Unconnect view from network to dataset; default |
 | `viewon` | Establish view of network to dataset |
-| `overwrite` | Overwrite existing variables that have the names of the node variables (otherwise error 110); also forwarded to [_nwdatasync](_nwdatasync) |
+| `overwrite` | overwrite existing variables that have the names of the node variables (otherwise error 110); also forwarded to [_nwdatasync](_nwdatasync) |
 | `force` | By default, matrix is not loaded for networks with more than 1000 nodes unless **force** is specified |
 
 ## Description
@@ -97,4 +97,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads th
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

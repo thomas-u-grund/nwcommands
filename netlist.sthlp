@@ -3,6 +3,12 @@
 {marker topic}
 {helpb nwtopical##concept:[NW-2.1] Concepts}
 
+{title:Title}
+
+{p2colset 9 22 24 2}{...}
+{p2col :netlist {hline 2}}List of existing networks{p_end}
+{p2colreset}{...}
+
 {marker description}{...}
 {title:Description}
 

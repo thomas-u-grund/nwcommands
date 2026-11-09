@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Validate network name"
+description: "Validate a network name"
 ---
 
 # `nwvalidate`
 
-Validate network name
+Validate a network name
 
 ## Syntax
 
@@ -44,4 +44,4 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

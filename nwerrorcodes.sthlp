@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwerrorcodes {hline 2}}What this package's own custom return codes mean{p_end}
+{p2col :nwerrorcodes {hline 2}}Return codes of nwcommands{p_end}
 {p2colreset}{...}
 
 {title:Description}

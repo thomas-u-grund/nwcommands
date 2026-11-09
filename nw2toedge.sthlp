@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtoedge {hline 2}}Convert two-mode network to edgelist{p_end}
+{p2col :nw2toedge {hline 2}}Convert a two-mode network to an edge list{p_end}
 {p2colreset}{...}
 
 

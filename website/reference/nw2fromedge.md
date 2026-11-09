@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Import two-mode network data from edgelist"
+description: "Import two-mode network data from an edge list"
 ---
 
 # `nw2fromedge`
 
-Import two-mode network data from edgelist
+Import two-mode network data from an edge list
 
 ## Syntax
 
@@ -83,4 +83,4 @@ Two-mode: yes - builds the two-mode network from two columns of ids; the two col
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

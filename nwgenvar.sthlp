@@ -2,13 +2,11 @@
 {* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##generator:[NW-2.3] Generators}
-{marker top2}
-{helpb nwtopical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwgenvar {hline 2}}Network extensions to generate{p_end}
+{p2col :nwgenvar {hline 2}}Generate variables or networks with network functions (like egen){p_end}
 {p2colreset}{...}
 
 

@@ -15,63 +15,54 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ## Concepts
 
-- [`netexample`](netexample)
+- [`netexample`](netexample) --- Example network data sets
 - [`netexp`](netexp) --- Network expression and function
-- [`netlist`](netlist)
-- [`netname`](netname)
-- [`newnetname`](newnetname)
-- [`nodeid`](nodeid)
+- [`netlist`](netlist) --- List of existing networks
+- [`netname`](netname) --- Name of an existing network
+- [`newnetname`](newnetname) --- Name of a new network
+- [`nodeid`](nodeid) --- Identification of nodes
 
 ## Import/Export
 
-- [`nw2fromedge`](nw2fromedge) --- Import two-mode network data from edgelist
+- [`nw2fromedge`](nw2fromedge) --- Import two-mode network data from an edge list
 - [`nw2set`](nw2set) --- Declare data to be two-mode network data
-- [`nw2toedge`](nw2toedge) --- Convert two-mode network to edgelist
-- [`nwappend`](nwappend) --- Append network dataset
-- [`nwexport`](nwexport) --- Export network as Pajek or Ucinet file
-- [`nwfromedge`](nwfromedge) --- Imports network data from edgelist
-- [`nwimport`](nwimport) --- Import network
-- [`nwsave`](nwsave) --- Save network data in file
+- [`nw2toedge`](nw2toedge) --- Convert a two-mode network to an edge list
+- [`nwappend`](nwappend) --- Append a network dataset
+- [`nwexport`](nwexport) --- Export a network as a Pajek, UCINET, GML or edge list file
+- [`nwfromedge`](nwfromedge) --- Import network data from an edge list
+- [`nwimport`](nwimport) --- Import a network from a Pajek, UCINET, GML or edge list file
+- [`nwsave`](nwsave) --- Save network data in a file
 - [`nwset`](nwset) --- Declare data to be network data
-- [`nwtoedge`](nwtoedge) --- Convert network to edgelist
-- [`nwuse`](nwuse) --- Load Stata network dataset
+- [`nwtoedge`](nwtoedge) --- Convert a network to an edge list
+- [`nwuse`](nwuse) --- Load a Stata network dataset
 - [`nwwebuse`](nwwebuse) --- Load network data over the web
 
 ## Generators
 
-- [`nwbridges`](nwbridges) --- Calculate bridges
-- [`nwdissimilar`](nwdissimilar) --- Generate node dissimilarities
 - [`nwduplicate`](nwduplicate) --- Duplicate a network
 - [`nwdyadprob`](nwdyadprob) --- Generate a network based on tie probabilities
-- [`nwexpand`](nwexpand) --- Expand variable to network
-- [`nwgen`](nwgen) --- Network extensions to generate
-- [`nwgenerate`](nwgenerate) --- Network extensions to generate
-- [`nwgenvar`](nwgenvar) --- Network extensions to generate
-- [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between nodes
+- [`nwexpand`](nwexpand) --- Expand a variable to a network
+- [`nwgen`](nwgen) --- Generate variables or networks with network functions (like egen)
+- [`nwgenerate`](nwgenerate) --- Generate a network from a function or a network expression
+- [`nwgenvar`](nwgenvar) --- Generate variables or networks with network functions (like egen)
 - [`nwhomophily`](nwhomophily) --- Generate a homophily network
 - [`nwlattice`](nwlattice) --- Generate a lattice network
-- [`nwpath`](nwpath) --- Calculate paths between nodes
-- [`nwpermute`](nwpermute) --- Generate permutation of a network
+- [`nwpermute`](nwpermute) --- Generate a permutation of a network
 - [`nwpref`](nwpref) --- Generate a preferential-attachment network
 - [`nwrandom`](nwrandom) --- Generate a random network
-- [`nwreach`](nwreach) --- Calculate reachability network
 - [`nwring`](nwring) --- Generate a ring-lattice network
-- [`nwsimilar`](nwsimilar) --- Generate node similarities
 - [`nwsmall`](nwsmall) --- Generate a small-world network
-- [`nwstack`](nwstack) --- Stack several networks into one block-diagonal network
-- [`nwsubset`](nwsubset) --- Subset the nodes of a network
-- [`nwtranspose`](nwtranspose) --- Transpose a network
 
 ## Information
 
-- [`nwcurrent`](nwcurrent) --- Report and set current network
+- [`nwds`](nwds) --- List the networks in memory (like ds)
 - [`nwdyads`](nwdyads) --- Dyad census
-- [`nwissymmetric`](nwissymmetric) --- Check if network is symmetric
+- [`nwissymmetric`](nwissymmetric) --- Check whether a network is symmetric
 - [`nwmotifs`](nwmotifs) --- 4-node undirected motif/graphlet census
 - [`nwname`](nwname) --- Obtain and change meta-information of a network
 - [`nwsummarize`](nwsummarize) --- Summarize a network
 - [`nwtabulate`](nwtabulate) --- One-way table of dyads
-- [`nwtriads`](nwtriads) --- Triad census of the network
+- [`nwtriads`](nwtriads) --- Triad census of a network
 
 ## Manipulation
 
@@ -79,24 +70,23 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwaddnodes`](nwaddnodes) --- Add nodes to network
 - [`nwattime`](nwattime) --- Static graph view of a temporal network at a given time
 - [`nwcollapse`](nwcollapse) --- Collapse a network
-- [`nwdichotomize`](nwdichotomize) --- Dichotomize a network at a threshold (built on [nwrecode](nwrecode))
-- [`nwdrop`](nwdrop) --- Drop networks or network nodes
+- [`nwdichotomize`](nwdichotomize) --- Dichotomize a network at a threshold
+- [`nwdrop`](nwdrop) --- Drop networks or nodes
 - [`nwdropnodes`](nwdropnodes) --- Drop nodes from a network
-- [`nwkeep`](nwkeep) --- Keep a network (or only certain nodes)
+- [`nwkeep`](nwkeep) --- Keep networks or nodes
 - [`nwkeepnodes`](nwkeepnodes) --- Keep nodes of a network
-- [`nwname`](nwname) --- Obtain and change meta-information of a network
 - [`nwnoderename`](nwnoderename) --- Rename a single node in a network
 - [`nwpreserve`](nwpreserve) --- Preserve and restore network data
-- [`nwproject`](nwproject) --- One-mode projection of a two-mode network (alias for [nw2project](nw2project))
-- [`nwrecode`](nwrecode) --- Recode network
+- [`nwproject`](nwproject) --- One-mode projection of a two-mode network (alias for nw2project)
+- [`nwrecode`](nwrecode) --- Recode a network
 - [`nwrename`](nwrename) --- Rename a network
-- [`nwreplace`](nwreplace) --- Replace network
+- [`nwreplace`](nwreplace) --- Replace a network
 - [`nwreplacemat`](nwreplacemat) --- Replace network with Stata or Mata matrix
 - [`nwrestore`](nwrestore) --- Restore network data previously preserved
 - [`nwstack`](nwstack) --- Stack several networks into one block-diagonal network
 - [`nwsubset`](nwsubset) --- Subset the nodes of a network
-- [`nwsym`](nwsym) --- Symmetrize network
-- [`nwsymmetrize`](nwsymmetrize) --- Symmetrize network (alias for [nwsym](nwsym))
+- [`nwsym`](nwsym) --- Symmetrize a network
+- [`nwsymmetrize`](nwsymmetrize) --- Symmetrize a network (alias for nwsym)
 - [`nwtranspose`](nwtranspose) --- Transpose a network
 
 ## Analysis
@@ -104,88 +94,84 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 ### Centrality
 
 - [`nw2degree`](nw2degree) --- Two-mode (bipartite) degree centrality
-- [`nwbetween`](nwbetween) --- Calculate betweenness centrality
+- [`nwbetween`](nwbetween) --- Betweenness centrality
 - [`nwcentrality`](nwcentrality) --- Node centrality measures
-- [`nwcloseness`](nwcloseness) --- Calculate closeness centrality
+- [`nwcloseness`](nwcloseness) --- Closeness centrality
 - [`nwdegree`](nwdegree) --- Degree centrality and distribution
-- [`nwevcent`](nwevcent) --- Calculate eigenvector centrality
+- [`nwevcent`](nwevcent) --- Eigenvector centrality
 - [`nwinduced`](nwinduced) --- Induced, endogenous and exogenous centrality
-- [`nwkatz`](nwkatz) --- Calculate a Katz-inspired distance-decay centrality
+- [`nwkatz`](nwkatz) --- Katz-style distance-decay centrality
 - [`nwpagerank`](nwpagerank) --- PageRank centrality
 
-### Cohesion, Components & Subgroups
+### Cohesion, components and subgroups
 
-- [`nw2motifs`](nw2motifs) --- Bipartite motifs of a two-mode network
-- [`nw2nested`](nw2nested) --- Nestedness (NODF, C-score) of a two-mode network
-- [`nwbridges`](nwbridges) --- Calculate bridges
+- [`nwbridges`](nwbridges) --- Find bridges (ties whose removal disconnects the network)
 - [`nwclique`](nwclique) --- Maximal clique enumeration
-- [`nwcomponents`](nwcomponents) --- Calculate network components / largest component
+- [`nwcohesion`](nwcohesion) --- Moody-White structural cohesion hierarchy
+- [`nwcomponents`](nwcomponents) --- Network components and the largest component
 - [`nwkcomponents`](nwkcomponents) --- Maximal k-component enumeration
 - [`nwkcore`](nwkcore) --- k-core decomposition
 - [`nwkplex`](nwkplex) --- Maximal k-plex enumeration
 - [`nwnclan`](nwnclan) --- Maximal n-clan enumeration
 - [`nwnclique`](nwnclique) --- Maximal n-clique enumeration
-- [`nwsimmelian`](nwsimmelian) --- Calculate Simmelian ties
+- [`nwsimmelian`](nwsimmelian) --- Simmelian ties
 
-### Community Detection
+### Communities
 
 - [`nwcommunity`](nwcommunity) --- Detect communities via the Louvain method or label propagation
 - [`nwmodularity`](nwmodularity) --- Score an existing node partition using Newman's modularity
 - [`nwspectral`](nwspectral) --- Graph Laplacian spectral analysis
 
-### Positions, Roles & Equivalence
+### Positions, roles and similarity
 
-- [`nw2clustering`](nw2clustering) --- Clustering coefficient (transitivity) of a two-mode network
-- [`nwassortativity`](nwassortativity) --- Newman's assortativity coefficient
-- [`nwbalance`](nwbalance) --- Structural balance of a signed network
 - [`nwbrokerage`](nwbrokerage) --- Gould-Fernandez brokerage roles
-- [`nwburt`](nwburt) --- Calculate Burt structural hole measures
-- [`nwclustering`](nwclustering) --- Clustering coefficient (transitivity) of a network
+- [`nwburt`](nwburt) --- Burt's structural-hole measures
 - [`nwconcor`](nwconcor) --- CONCOR structural-equivalence blockmodel
-- [`nwconstraint`](nwconstraint) --- Calculate Burt's constraint
+- [`nwconstraint`](nwconstraint) --- Burt's constraint
 - [`nwcoreperiphery`](nwcoreperiphery) --- Discrete core-periphery detection
 - [`nwdissimilar`](nwdissimilar) --- Generate node dissimilarities
 - [`nwfactions`](nwfactions) --- Partition nodes into a specified number of cohesive factions
 - [`nwhierarchy`](nwhierarchy) --- Hierarchical clustering of nodes (role/position analysis)
-- [`nwlambda`](nwlambda) --- Edge (line) connectivity matrix between all node pairs
-- [`nwmatching`](nwmatching) --- Maximum-cardinality bipartite matching
-- [`nwmixing`](nwmixing) --- E-I index and mixing table for a categorical node attribute
-- [`nwshared`](nwshared) --- Calculate number of shared neighbors between nodes and saves information in network
+- [`nwshared`](nwshared) --- Number of shared neighbors of all pairs of nodes, as a network
 - [`nwsimilar`](nwsimilar) --- Generate node similarities
 - [`nwsimindex`](nwsimindex) --- Common-neighbor similarity indices between all node pairs
 
-### Paths, Reachability & Ego Networks
+### Clustering, mixing and balance
+
+- [`nw2clustering`](nw2clustering) --- Clustering coefficient (transitivity) of a two-mode network
+- [`nw2motifs`](nw2motifs) --- Bipartite motifs of a two-mode network
+- [`nw2nested`](nw2nested) --- Nestedness of a two-mode network: NODF and C-score
+- [`nwassortativity`](nwassortativity) --- Newman's assortativity coefficient
+- [`nwbalance`](nwbalance) --- Structural balance of a signed network
+- [`nwclustering`](nwclustering) --- Clustering coefficient (transitivity) of a network
+- [`nwmixing`](nwmixing) --- E-I index and mixing table for a categorical node attribute
+
+### Paths, flows and ego networks
 
 - [`nwaltergen`](nwaltergen) --- Generate a variable from alter/neighbor attributes
 - [`nwego`](nwego) --- Ego-network size and density
 - [`nwgeodesic`](nwgeodesic) --- Calculate shortest paths between nodes
+- [`nwlambda`](nwlambda) --- Edge (line) connectivity matrix between all node pairs
+- [`nwmatching`](nwmatching) --- Maximum-cardinality bipartite matching
 - [`nwmaxflow`](nwmaxflow) --- Maximum flow and minimum cut between two nodes
 - [`nwneighbor`](nwneighbor) --- Extract the network neighbors of a node
-- [`nwpath`](nwpath) --- Calculate paths between nodes
+- [`nwpath`](nwpath) --- Paths between nodes
 - [`nwrandomwalk`](nwrandomwalk) --- Mean random-walk hitting time to a target node
-- [`nwreach`](nwreach) --- Calculate reachability network
+- [`nwreach`](nwreach) --- Reachability network
 
-### Statistical Estimation of Networks (core)
+### Statistical tests
 
 - [`nwcorrelate`](nwcorrelate) --- Correlate networks and variables
 - [`nwcug`](nwcug) --- Conditional Uniform Graph (CUG) test
 - [`nwqap`](nwqap) --- Multivariate QAP regression
-- [`nwutility`](nwutility) --- Calculate utility scores according to Jackson and Wollinsky (1996)
+- [`nwutility`](nwutility) --- Utility scores of Jackson and Wolinsky (1996)
 
-### Other Analysis Utilities
+### Other analysis tools
 
 - [`nwcontext`](nwcontext) --- Create a context variable
-- [`nwgen`](nwgen) --- Network extensions to generate
-- [`nwgenerate`](nwgenerate) --- Network extensions to generate
-- [`nwgenvar`](nwgenvar) --- Network extensions to generate
-- [`nwnode`](nwnode) --- Checks if node exists in a network
+- [`nwnode`](nwnode) --- Check whether a node exists in a network
 - [`nwturnover`](nwturnover) --- Tie turnover/stability between two waves of the same network
-- [`nwvalue`](nwvalue) --- Returns a tie value
-
-
-### Utility Commands
-
-- [`nwds`](nwds) --- List loaded networks, in the style of Stata's own `ds`
+- [`nwvalue`](nwvalue) --- Return a tie value
 
 ## Model packages (separate, GPL-3)
 
@@ -198,30 +184,32 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 - [`nwclear`](nwclear) --- Clear all networks and variables from memory
 - [`nwcurrent`](nwcurrent) --- Report and set current network
-- [`nwerrorcodes`](nwerrorcodes) --- What this package's own custom return codes mean
-- [`nwinstall`](nwinstall) --- Install Stata menu/dialogs
+- [`nwerrorcodes`](nwerrorcodes) --- Return codes of nwcommands
+- [`nwinstall`](nwinstall) --- Install the dialogs, menus and the model packages
 - [`nwload`](nwload) --- Load a network as Stata variables
 - [`nwnetworktypes`](nwnetworktypes) --- How commands classify binary/directed/weighted/signed/two-mode networks
-- [`nworder`](nworder) --- Reorder networks in dataset
-- [`nwsync`](nwsync) --- Sync network with Stata variables
-- [`nwtomata`](nwtomata) --- Return adjacency matrix of network
-- [`nwtomatafast`](nwtomatafast) --- Return link to adjacency matrix of network
-- [`nwtostata`](nwtostata) --- Copy a Mata matrix into Stata variables
-- [`nwunab`](nwunab) --- Unabbreviate network list
-- [`nwvalidate`](nwvalidate) --- Validate network name
-- [`nwvalidvars`](nwvalidvars) --- Validate Stata variables for network
+- [`nworder`](nworder) --- Reorder the networks in memory
+- [`nwversion`](nwversion) --- Version of nwcommands and of the installed model packages
 
 ## Visualization
 
+- [`animate`](animate) --- Animate graphs
 - [`nwdendrogram`](nwdendrogram) --- Plot a wheel dendrogram
 - [`nwmovie`](nwmovie) --- Interactive, animated network movie (panel waves or a relational-event timeline)
-- [`nwmoviexy`](nwmoviexy) --- Animate a sequence of networks (alias for **nwmovie**)
+- [`nwmoviexy`](nwmoviexy) --- Animate a sequence of networks (alias for nwmovie)
 - [`nwplot`](nwplot) --- Plot a network
 - [`nwplotmatrix`](nwplotmatrix) --- Plot a network as sociomatrix
 
 ## Programming
 
-- [`nwcompressobs`](nwcompressobs) --- Compresses observations in Stata
+- [`nwcompressobs`](nwcompressobs) --- Drop observations that no network needs
+- [`nwsync`](nwsync) --- Synchronize a network with Stata variables
+- [`nwtomata`](nwtomata) --- Return the adjacency matrix of a network
+- [`nwtomatafast`](nwtomatafast) --- Return a link to the adjacency matrix of a network
+- [`nwtostata`](nwtostata) --- Copy a Mata matrix into Stata variables
+- [`nwunab`](nwunab) --- Unabbreviate network list
+- [`nwvalidate`](nwvalidate) --- Validate a network name
+- [`nwvalidvars`](nwvalidvars) --- Validate Stata variables for a network
 
 ## Uncategorized
 
@@ -229,9 +217,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`_nwnodeid`](_nwnodeid)
 - [`_nwnodelab`](_nwnodelab)
 - [`_nwtomata`](_nwtomata)
-- [`animate`](animate)
 - [`nwalphabetical`](nwalphabetical)
-- [`nwcohesion`](nwcohesion)
 - [`nwcommands`](nwcommands)
 - [`nwinternals`](nwinternals)
 - [`nwintro`](nwintro)

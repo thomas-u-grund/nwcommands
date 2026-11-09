@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 03jun2019 author: Thomas Grund}{...}
 {marker topic}
-{helpb nwtopical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
+{helpb nwtopical##analysis_other:[NW-2.6.8] Other analysis tools}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwnode {hline 2}}Checks if node exists in a network{p_end}
+{p2col :nwnode {hline 2}}Check whether a node exists in a network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

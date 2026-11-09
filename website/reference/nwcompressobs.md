@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Compresses observations in Stata"
+description: "Drop observations that no network needs"
 ---
 
 # `nwcompressobs`
 
-Compresses observations in Stata
+Drop observations that no network needs
 
 ## Syntax
 
@@ -40,4 +40,4 @@ Not applicable - trims trailing empty (all-missing) Stata observations from the 
 
 ---
 
-*nwcommands version 3.9.1, 26 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))

@@ -2,6 +2,12 @@
 {* *! version 1.0.2  17apr2009}
 {marker topic}
 {helpb nwtopical##concept:[NW-2.1] Concepts}
+
+{title:Title}
+
+{p2colset 9 22 24 2}{...}
+{p2col :netexample {hline 2}}Example network data sets{p_end}
+{p2colreset}{...}
 {hline}
 
 {title:Example networks}

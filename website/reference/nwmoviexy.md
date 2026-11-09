@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Animate a sequence of networks (alias for **nwmovie**)"
+description: "Animate a sequence of networks (alias for nwmovie)"
 ---
 
 # `nwmoviexy`
 
-Animate a sequence of networks (alias for **nwmovie**)
+Animate a sequence of networks (alias for nwmovie)
 
 ## Syntax
 
@@ -47,4 +47,4 @@ Binary: yes. Directed: yes. Weighted: yes (on valued networks the layouts use th
 
 ---
 
-*nwcommands version 3.11.1, 27 October 2026* ([check your installed version](nwversion))
+*nwcommands version 3.17.5, 9 November 2026* ([check your installed version](nwversion))
