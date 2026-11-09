@@ -66,6 +66,19 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_minmodules.isneq("") & !main.ed_minmodules.isnumlist() {
+		stopbox stop "dirtlpa: smallest number of starting modules (default 4): enter a number (or numbers)."
+	}
+	if main.ed_reps.isneq("") & !main.ed_reps.isnumlist() {
+		stopbox stop "dirtlpa: repeated runs per number of starting modules (de...: enter a number (or numbers)."
+	}
+	if main.ed_resolution.isneq("") & !main.ed_resolution.isnumlist() {
+		stopbox stop "Resolution parameter (> 0): enter a number (or numbers)."
+	}
+	if main.ed_starts.isneq("") & !main.ed_starts.isnumlist() {
+		stopbox stop "Two-mode network: number of starting orders of the search...: enter a number (or numbers)."
+	}
 	require main.ed_generate
 	put "nwcommunity " main.cb_net
 	beginoptions

@@ -59,6 +59,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
+		stopbox stop "Tuning parameter for valued networks: enter a number (or numbers)."
+	}
 	require main.vl_generate
 	put "nwdegree " main.cb_net
 	beginoptions

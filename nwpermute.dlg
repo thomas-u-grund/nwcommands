@@ -45,6 +45,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_swaps.isneq("") & !main.ed_swaps.isnumlist() {
+		stopbox stop "swap: number of attempted swaps (default 10 x ties): enter a number (or numbers)."
+	}
 	put "nwpermute " main.cb_net
 	beginoptions
 		option main.cx_xvars

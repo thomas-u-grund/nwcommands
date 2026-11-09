@@ -37,6 +37,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_egoid.isneq("") & !main.ed_egoid.isnumlist() {
+		stopbox stop "Look up the node by id: enter a number (or numbers)."
+	}
 	put "nwnode " main.cb_net
 	beginoptions
 		optionarg main.ed_ego

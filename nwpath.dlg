@@ -53,6 +53,10 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
+		stopbox stop "Cost of a step along a tie of value w: 1/w^alpha (valued ...: enter a number (or numbers)."
+	}
 	put "nwpath " main.cb_net
 	beginoptions
 		option main.cx_nwreplace

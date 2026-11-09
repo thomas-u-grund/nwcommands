@@ -49,6 +49,13 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.cb_net.isneq("") & !main.cb_net.isNumlistGT(0) {
+		stopbox stop "Number of nodes: enter a whole number greater than 0."
+	}
+	if main.ed_weights.isneq("") & !main.ed_weights.isnumlist() {
+		stopbox stop "probabilities p_k for tie weights k: enter a number (or numbers)."
+	}
 	require main.cb_net
 	put "nwring " main.cb_net
 	beginoptions

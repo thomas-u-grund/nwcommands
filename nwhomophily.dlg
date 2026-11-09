@@ -40,6 +40,16 @@ END
 
 PROGRAM command
 BEGIN
+	// number fields: refuse text before the command runs
+	if main.ed_density.isneq("") & !main.ed_density.isnumlist() {
+		stopbox stop "density of the new network: enter a number (or numbers)."
+	}
+	if main.ed_homophily.isneq("") & !main.ed_homophily.isnumlist() {
+		stopbox stop "Degree of homophily for each variable in varlist: enter a number (or numbers)."
+	}
+	if main.ed_nodes.isneq("") & !main.ed_nodes.isnumlist() {
+		stopbox stop "Number of nodes: enter a number (or numbers)."
+	}
 	require main.vl_vars
 	require main.ed_homophily
 	require main.ed_density
