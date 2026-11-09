@@ -3,7 +3,7 @@
 cscript
 capture program drop nwinstall
 local here `"`c(pwd)'"'
-local dest "`c(tmpdir)'/nwlocalcopy_`=string(runiformint(100000, 999999))'"
+local dest "`c(tmpdir)'/nwlocalcopy_`=subinstr("`c(current_time)'", ":", "", .)'_`=string(runiformint(100000, 999999))'"
 mkdir "`dest'"
 nwinstall, localcopy all from("`here'") dest("`dest'")
 foreach f in nwinstall.ado nwinstall_buildplugin.ado nwinstall_buildmata.ado nwinstall_models.ado nwset.ado nwset.sthlp lnwcommands.mlib nwgraph_macos.plugin nwgraph_unix.plugin nwgraph_windows.plugin nwedit_viewer_macos nwedit_viewer_unix nwedit_viewer_windows.exe {

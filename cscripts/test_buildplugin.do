@@ -9,7 +9,7 @@ if !inlist("`c(os)'", "MacOSX", "Unix") {
 capture program drop nwinstall
 capture program drop nwinstall_buildplugin
 local here `"`c(pwd)'"'
-local scratch "`c(tmpdir)'/nwbuildtest_`=string(runiformint(100000, 999999))'"
+local scratch "`c(tmpdir)'/nwbuildtest_`=subinstr("`c(current_time)'", ":", "", .)'_`=string(runiformint(100000, 999999))'"
 mkdir "`scratch'"
 mkdir "`scratch'/from"
 mkdir "`scratch'/dest"
