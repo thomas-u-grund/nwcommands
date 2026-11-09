@@ -57,7 +57,7 @@ buildkeep]
 | `downloadoff` | rebuild the menu from what is already installed, without downloading anything (used internally by **profile.do** integration; equivalent to `usermenu` for this purpose) |
 | `menu(string)` | install in this menu; default = "stUser" |
 | `all` | download the core commands, help files, and dialog boxes, and set up the menu (as `gui`); with `nogui` the menu is left out |
-| `path(string)` | directory where profile.do is installed; default: sysdir_stata |
+| `path(string)` | directory of the **profile.do** to edit; default: the folder where an existing **profile.do** is found (your home folder, PERSONAL or SITE), otherwise the folder Stata recommends: %USERPROFILE% on Windows, ~/Documents/Stata on macOS, PERSONAL on Unix |
 | `localcopy` | install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see [Computers without internet access or admin rights](nwinstall) below |
 | `from(string)` | with `localcopy`: the local folder to copy nwcommands files from; default: the current directory |
 | `dest(string)` | with `localcopy`: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case) |

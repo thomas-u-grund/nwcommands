@@ -77,7 +77,10 @@ program nwinstall, rclass
 	
 	local pathgiven = ("`path'" != "")
 	if "`path'" == "" {
-		local path "`c(pwd)'"
+		// BUGFIX (3.17.3): the default was the current folder, so a run from a project folder (or a batch run)
+		// wrote profile.do where Stata reads it only when it starts in that folder. See nwinstall_profiledir.
+		nwinstall_profiledir
+		local path `"`r(dir)'"'
 	}
 	// source of the core package files: GitHub, or from() (a local folder or URL; used by tools/smoke_fresh_install.sh)
 	local __nw_src = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main", `"`from'"')
@@ -410,15 +413,55 @@ program nwinstall_classify, rclass
 end
 
 
+capture program drop nwinstall_profiledir
+program nwinstall_profiledir, rclass
+	// The folder of profile.do when path() is not given. Stata reads profile.do from the folder where Stata is
+	// installed, the current folder, the path, the home folder (Windows: %USERPROFILE%; macOS: ~/Documents/Stata)
+	// and the ado-path ([GSW] B.3, [GSM] B.1, [GSU] B.1). The current folder is not used: Stata reads a profile.do
+	// there only when it starts in that folder. An existing profile.do in the home folder, PERSONAL or SITE is
+	// edited; otherwise one is created in the home folder (Unix: PERSONAL, which is on the ado-path).
+	local home ""
+	if c(os) == "Windows" {
+		local home : environ USERPROFILE
+	}
+	else if c(os) == "MacOSX" {
+		local h : environ HOME
+		if `"`h'"' != "" local home `"`h'/Documents/Stata"'
+	}
+	local cands ""
+	if `"`home'"' != "" local cands `""`home'""'
+	local cands `"`cands' "`c(sysdir_personal)'" "`c(sysdir_site)'""'
+	foreach d of local cands {
+		local f = subinstr(`"`d'/profile.do"', "//", "/", .)
+		capture confirm file `"`f'"'
+		if _rc == 0 {
+			return local dir `"`d'"'
+			exit
+		}
+	}
+	if `"`home'"' == "" {
+		local home `"`c(sysdir_personal)'"'
+		local parent = substr(`"`home'"', 1, length(`"`home'"') - 1)
+		local parent = substr(`"`parent'"', 1, strrpos(`"`parent'"', "/") - 1)
+		if `"`parent'"' != "" capture mkdir `"`parent'"'
+	}
+	else if c(os) == "MacOSX" capture mkdir `"`h'/Documents"'
+	capture mkdir `"`home'"'
+	return local dir `"`home'"'
+end
+
 capture program drop nwinstall_otherprofiles
 program nwinstall_otherprofiles, rclass
 	// The profile.do files Stata may read besides the one nwinstall edits (read-only use): the folders STATA, SITE, PERSONAL and the current folder;
 	// when path() was not given also the user's Stata folder in the home directory. The target file itself is left out.
+	// Each folder is quoted: folder names with blanks (C:/Program Files/...) were split into pieces before 3.17.3.
 	syntax , path(string) [explicit]
-	local dirs `"`c(sysdir_stata)' `c(sysdir_site)' `c(sysdir_personal)' `c(pwd)'"'
+	local dirs `""`c(sysdir_stata)'" "`c(sysdir_site)'" "`c(sysdir_personal)'" "`c(pwd)'""'
 	if "`explicit'" == "" {
 		local home : environ HOME
-		if `"`home'"' != "" local dirs `"`dirs' `home'/Documents/Stata `home'"'
+		if `"`home'"' != "" local dirs `"`dirs' "`home'/Documents/Stata" "`home'""'
+		local up : environ USERPROFILE
+		if `"`up'"' != "" local dirs `"`dirs' "`up'""'
 	}
 	local tgt = subinstr(`"`path'/profile.do"', "//", "/", .)
 	local out ""

@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwcommands 3.17.3
+
+**nwcommands 3.17.3** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.3)). `nwinstall` now puts the line that builds the Network Analysis menu into the `profile.do` that Stata reads at every start: an existing one in your home folder, PERSONAL or SITE, otherwise a new one in `%USERPROFILE%` on Windows, `~/Documents/Stata` on macOS or PERSONAL on Unix. Before, it used the current folder, so after an installation from a project folder the menu did not come back at the next start. If that happened to you, run `nwinstall, gui` once and delete the `profile.do` that the earlier installation left in that folder.
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
 ## 9 November 2026: nwsaom 1.5.8
 
 **nwsaom 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.8)). The output tables are laid out as those of Stata's own commands: plain rules above and below, a capitalised first column, `df` and `Prob > chi2` in the tests, and titles that state the null hypothesis. Only the display changes; estimates, tests and stored results are the same as in 1.5.7.

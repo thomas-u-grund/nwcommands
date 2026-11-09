@@ -4,6 +4,15 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.17.3] - 2026-11-09
+
+### Fixed
+- **`nwinstall` puts the line `nwinstall, usermenu` into the `profile.do` that Stata reads at every start.** Without `path()`, it used the current folder, so a run from a project folder or a batch run created a `profile.do` that Stata reads only when it starts in that folder, and the menu did not appear at the next start (found in a test on Windows). Now an existing `profile.do` in the home folder, in PERSONAL or in SITE is edited; otherwise one is created in the folder Stata's manuals recommend: `%USERPROFILE%` on Windows, `~/Documents/Stata` on macOS, PERSONAL on Unix. `path()` works as before. New test: `test_nwinstall_profiledir`.
+- The check for a menu line in other `profile.do` files split folder names with blanks (such as `C:\Program Files\StataNow19\`) into pieces and could miss a file there.
+
+### Documentation
+- The help file describes the default of `path()` correctly (it said the Stata folder).
+
 ## [3.17.2] - 2026-11-06
 
 ### Changed
