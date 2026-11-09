@@ -12,6 +12,15 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwergm 1.5.3
+
+**nwergm 1.5.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.3)). Faster Monte Carlo fits for models with many coefficients, and faster statistics for large networks, with the same results.
+- **Many coefficients.** The spectral density that gives the effective sample size and the convergence test of Monte Carlo maximum likelihood is computed with less work. Three iterations of `edges mutual sender receiver` (200 coefficients) on a directed network of 100 nodes take less than half the time.
+- **Large networks.** From 500 nodes on, the statistics of the empty network are computed once per model. On a bipartite network of 3,000 nodes with `bdsp1()` the statistics take 0.01 seconds instead of 38, in the fit, `estat gof` and `estat mcmcdiag`.
+- **Results.** Every result for a given seed is the same as in 1.5.2.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
 ## 9 November 2026: nwcommands 3.17.3
 
 **nwcommands 3.17.3** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.3)). `nwinstall` now puts the line that builds the Network Analysis menu into the `profile.do` that Stata reads at every start: an existing one in your home folder, PERSONAL or SITE, otherwise a new one in `%USERPROFILE%` on Windows, `~/Documents/Stata` on macOS or PERSONAL on Unix. Before, it used the current folder, so after an installation from a project folder the menu did not come back at the next start. If that happened to you, run `nwinstall, gui` once and delete the `profile.do` that the earlier installation left in that folder.
