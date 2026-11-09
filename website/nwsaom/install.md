@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.5.9:
+Every release is tagged on GitHub and each tag has its own address. For version 1.5.10:
 
 ```stata
-. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.5.9/) replace
+. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.5.10/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwsaom version
-nwsaom version 1.5.9, 09nov2026
+nwsaom version 1.5.10, 09nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../saom_sim_macos.plugin (plugin build 153)
   compared with           : R RSiena 1.6.14
