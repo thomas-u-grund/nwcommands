@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwrecode - Recode network")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Network(s) and rule, e.g. mynet (2=1):")
+  EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
   TEXT tx_ed_into 20 54 260 ., label("Name of the new network with the recoded ties (same as generate())")
   EDIT ed_into 290 54 190 ., nomem option(into)

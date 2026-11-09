@@ -53,7 +53,7 @@ BEGIN
   TEXT tx_cx_edgelist 530 110 260 ., label("Declare data in edgelist format")
   CHECKBOX cx_edgelist 800 110 190 ., label("edgelist") option(edgelist)
   TEXT tx_cb_name 530 138 260 ., label("Name of the new network; default = network")
-  COMBOBOX cb_name 800 138 190 ., dropdown contents(netlist) nomem option()
+  COMBOBOX cb_name 800 138 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_vr_labsfromvar 530 166 260 ., label("Use information in varname as node labels")
   VARNAME vr_labsfromvar 800 166 190 ., nomem option(labsfromvar)
   TEXT tx_ed_edgelabs 530 194 260 ., label("Edgelist declarations only: labels for the two (or three) id variables themselves, used in messages/output")

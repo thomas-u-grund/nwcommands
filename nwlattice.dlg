@@ -15,15 +15,15 @@ END
 
 DIALOG main, title("nwlattice - Generate a lattice network")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Dimensions (rows columns):")
+  EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 1030 160, label("Options")
   TEXT tx_cx_xwrap 20 54 260 ., label("wrap horizontally")
   CHECKBOX cx_xwrap 290 54 190 ., label("xwrap") option(xwrap)
   TEXT tx_cx_ywrap 20 82 260 ., label("wrap vertically")
   CHECKBOX cx_ywrap 290 82 190 ., label("ywrap") option(ywrap)
   TEXT tx_cb_name 20 110 260 ., label("name of the new network")
-  COMBOBOX cb_name 290 110 190 ., dropdown contents(netlist) nomem option()
+  COMBOBOX cb_name 290 110 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_ed_labs 20 138 260 ., label("Node labels for the new network")
   EDIT ed_labs 290 138 190 ., nomem option(labs)
   TEXT tx_ed_vars 20 166 260 ., label("new variables that are used for the network")
@@ -37,7 +37,7 @@ BEGIN
   TEXT tx_cx_noreplace 530 138 260 ., label("Do not replace an existing network of that name")
   CHECKBOX cx_noreplace 800 138 190 ., label("noreplace") option(noreplace)
   TEXT tx_sp_ntimes 530 166 260 ., label("number of networks to be generated; default = 1")
-  SPINNER sp_ntimes 800 166 70 ., default(1) max(999999) min(-999999) nomem option(ntimes)
+  SPINNER sp_ntimes 800 166 70 ., default(1) max(999999) min(1) nomem option(ntimes)
 END
 
 LIST netlist

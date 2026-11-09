@@ -37,7 +37,7 @@ BEGIN
   TEXT tx_cx_plot 20 278 260 ., label("draw a histogram-plus-reference-line panel per coefficient")
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
-  EDIT ed_name 290 306 190 ., nomem option()
+  EDIT ed_name 290 306 190 ., nomem option(name)
   TEXT tx_cx_force 20 334 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 334 190 ., label("force") option(force)
 END

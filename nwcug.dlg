@@ -37,7 +37,7 @@ BEGIN
   TEXT tx_cx_plot 20 278 260 ., label("draw a histogram of the null draws with a reference line at the observed value")
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot; default = cug")
-  EDIT ed_name 290 306 190 ., nomem option()
+  EDIT ed_name 290 306 190 ., nomem option(name)
 END
 
 LIST netlist

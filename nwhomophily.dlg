@@ -27,7 +27,7 @@ BEGIN
   TEXT tx_ed_nodes 20 138 260 ., label("number of nodes; if not specified the number of valid cases of {it:} is used")
   EDIT ed_nodes 290 138 190 ., nomem option(nodes)
   TEXT tx_ed_name 20 166 260 ., label("name of the new random network")
-  EDIT ed_name 290 166 190 ., nomem option()
+  EDIT ed_name 290 166 190 ., nomem option(name)
   TEXT tx_cx_xvars 20 194 260 ., label("generate Stata variables for the network")
   CHECKBOX cx_xvars 290 194 190 ., label("xvars") option(xvars)
   TEXT tx_cx_undirected 20 222 260 ., label("Generate an undirected network")
