@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwsaom 1.5.6
+
+**nwsaom 1.5.6** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.6)). Co-evolution models now start the outdegree effect at RSiena's value computed from the data, and `nwsaom multinet` starts each network's outdegree effect and the behavior's linear shape effect at RSiena's values. Before, these effects started at 0, so the noise reduction of Phase 2 introduced in 1.5.3 was estimated in the wrong place, and fewer of these fits met the convergence criterion than in RSiena. Network-only models are unchanged.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
 ## 8 November 2026: nwsaom 1.5.5
 
 **nwsaom 1.5.5** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.5)). In co-evolution models with several behaviors, the standard errors of the behavior rates in the rate table were labelled with the names of the rates; they are now labelled `se`. The manual's output listings were rerun with this version. Estimates are unchanged from 1.5.4.
