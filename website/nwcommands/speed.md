@@ -33,7 +33,7 @@ of the two programs was 0.09 standard errors for nwergm, 0.10 for nwsaom, 0.02 f
 | Comparison | Faster than the R package | Not faster |
 |---|---|---|
 | nwergm 1.5.2 and ergm 4.12.0 | all 8 models, 2.1 to 4.0 times | none of the eight; the fixed overhead matters on very small models |
-| nwsaom 1.5.7 and RSiena 1.6.14 | all 28 models on one thread, median 3.8 times, 1.8 to 11.5 | none of the 28; with several cores on 200 actors only 2.0 to 4.2 times RSiena's best setting |
+| nwsaom 1.5.7 and RSiena 1.6.14 | all 27 models on one thread, median 3.8 times, 1.9 to 11.5 | none of the 27; with several cores on 200 actors only 2.0 to 4.2 times RSiena's best setting |
 | nwdynam 1.2.0 and goldfish 1.6.12 | original structural effects: 7.7 to 76 times; one added covariate effect (Mata): 1.2 to 2.4 times | the gain of the Mata engine shrinks to 1.0 for large networks; not measured for larger networks with the added effect |
 | nwrem 1.0.10 and relevent 1.2-1 | degree, inertia and covariate effects: up to 41 times with a Hessian in relevent | recency effects: 0.3 to 1.2 times |
 
