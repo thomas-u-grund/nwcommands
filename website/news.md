@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 9 November 2026: nwergm 1.5.5
+
+**nwergm 1.5.5** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.5)). `estat mcmcdiag` prints a shorter report: the sample size, burn-in, interval and acceptance rate, and one table with the mean, standard deviation, autocorrelation, effective sample size and Geweke test of every statistic. The new options `heidel` and `report` add the Heidelberger-Welch test and the full report of R's `mcmc.diagnostics()`. The tables of `estat gof` are laid out as Stata's own tables. Estimates and stored results do not change.
+
+Update with `nwinstall, modelpkg(nwergm)`.
+
 ## 9 November 2026: nwsaom 1.5.9 and nwdynam 1.2.2
 
 **nwsaom 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.9)) and **nwdynam 1.2.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.2)). The Windows plugins are compiled with optimisation: on Windows a fit takes about half the time, with the same results. Both packages pass their full test suites on Windows. Nothing changes on macOS or Linux.
