@@ -12,7 +12,7 @@ permalink: /nwcommands/speed/
 This page compares the run time of the four model packages, nwergm, nwsaom, nwdynam and nwrem, with the R
 packages they follow: ergm, RSiena, goldfish and relevent. It says where the Stata packages were faster, where
 they were not, and what we know about the reason. Times depend on the model, the data and the machine. Treat
-the tables as examples, not as promises. Measured on 26 and 27 October 2026 with Stata 18 on one laptop; Stata
+the tables as examples, not as promises. Measured on 26 and 27 October 2026 (nwergm: 8 and 9 November) with Stata 18 on one laptop; Stata
 17 was not timed.
 
 1. TOC
@@ -27,12 +27,12 @@ compiled and interpreted code. The model packages run their inner loops in a com
 effect sets).
 
 The algorithms are the same as in R, and the estimates agree: the largest difference between the mean estimates
-of the two programs was 0.06 standard errors for nwergm, 0.08 for nwsaom, 0.02 for nwrem and 0.002 for nwdynam
+of the two programs was 0.09 standard errors for nwergm, 0.08 for nwsaom, 0.02 for nwrem and 0.002 for nwdynam
 (standard errors of the R package).
 
 | Comparison | Faster than the R package | Not faster |
 |---|---|---|
-| nwergm 1.4.0 and ergm 4.12.0 | all 8 models, 2.8 to 10.2 times | none of the eight; the fixed overhead matters on very small models |
+| nwergm 1.5.2 and ergm 4.12.0 | all 8 models, 2.1 to 4.0 times | none of the eight; the fixed overhead matters on very small models |
 | nwsaom 1.1.1 and RSiena 1.6.14 | all 28 models on one thread, median 2.1 times, 1.5 to 9.0 | large networks only 1.5 to 1.8 times; RSiena on 5 or 10 R processes is as fast as nwsaom on 10 threads in one model |
 | nwdynam 1.2.0 and goldfish 1.6.12 | original structural effects: 7.7 to 76 times; one added covariate effect (Mata): 1.2 to 2.4 times | the gain of the Mata engine shrinks to 1.0 for large networks; not measured for larger networks with the added effect |
 | nwrem 1.0.10 and relevent 1.2-1 | degree, inertia and covariate effects: up to 41 times with a Hessian in relevent | recency effects: 0.3 to 1.2 times |
@@ -68,30 +68,42 @@ How the numbers were made is at the end of the page. All raw timings, scripts an
 ## nwergm and ergm
 
 Eight models of the nwergm article: networks of 30 to 1,000 nodes and two real networks (Lazega advice,
-Faux Mesa High). Median of 7 fits per program. The three programs ran in turn for every model and seed, on
-8 November 2026, on a machine that was not idle (load average 3.1 to 6.3 before the fits, median 4.6); compare the
-ratios rather than the seconds. The run of 26 October (nwergm 1.3.0 and 1.2.3, idle machine) is kept in the
-data folder.
+Faux Mesa High). Median of 7 fits per program, default settings. ergm and nwergm ran in turn for every model and
+seed; nwergm 1.5.2 on 9 November 2026 and 1.5.1 on 8 November, on the same laptop with no other Stata or R job
+running (load average 1.8 to 3.4 and 2.4 to 4.6 before the fits). The ergm column is from the 1.5.2 run; in the
+1.5.1 run ergm's medians were within 0.1 seconds of these except B3 (0.41) and B5 (8.1).
 
-| Model | ergm 4.12.0 (s) | nwergm 1.3.7 (s) | nwergm 1.4.0 (s) | ergm / nwergm 1.4.0 |
+| Model | ergm 4.12.0 (s) | nwergm 1.5.1 (s) | nwergm 1.5.2 (s) | ergm / nwergm 1.5.2 |
 |---|---:|---:|---:|---:|
-| B1 30 nodes, directed: edges, mutual | 0.20 | 0.039 | 0.039 | 5.1 |
-| B2 100 nodes, directed: + nodematch | 0.32 | 0.066 | 0.064 | 4.9 |
-| B3 100 nodes, undirected: edges, gwesp | 0.32 | 0.072 | 0.069 | 4.7 |
-| B4 500 nodes, sparse, undirected: + nodematch, gwesp | 2.8 | 0.30 | 0.27 | 10.2 |
-| B5 1,000 nodes, directed: edges, mutual, nodematch | 7.9 | 1.03 | 1.13 | 7.0 |
-| B6 1,000 nodes, sparse, undirected: edges, gwesp, gwnsp | 6.9 | 2.39 | 1.70 | 4.0 |
-| Lazega advice, 71 nodes, 7 terms | 10.0 | 2.91 | 2.98 | 3.3 |
-| Faux Mesa High, 205 nodes, gwesp(0.25) | 3.9 | 1.33 | 1.38 | 2.8 |
+| B1 30 nodes, directed: edges, mutual | 0.19 | 0.099 | 0.066 | 2.9 |
+| B2 100 nodes, directed: + nodematch | 0.30 | 0.19 | 0.14 | 2.1 |
+| B3 100 nodes, undirected: edges, gwesp | 0.30 | 0.16 | 0.087 | 3.5 |
+| B4 500 nodes, sparse, undirected: + nodematch, gwesp | 2.8 | 1.5 | 0.68 | 4.0 |
+| B5 1,000 nodes, directed: edges, mutual, nodematch | 7.8 | 4.5 | 2.3 | 3.4 |
+| B6 1,000 nodes, sparse, undirected: edges, gwesp, gwnsp | 6.6 | 4.0 | 1.7 | 3.8 |
+| Lazega advice, 71 nodes, 7 terms | 9.7 | 6.6 | 2.5 | 3.9 |
+| Faux Mesa High, 205 nodes, gwesp(0.25) | 3.8 | 1.8 | 1.0 | 3.7 |
 
-All 168 fits converged. nwergm 1.4.0 was faster than ergm on all eight models; in no pair of fits with the same
-seed was ergm faster (the lowest pair ratio was 1.4, Faux Mesa High). The number of iterations of the Monte Carlo
-algorithm depends on the seed in both programs and drives most of the spread: ergm needed 5.9 to 16.5 seconds for
-the 1,000-node directed model. Compare medians, not single fits.
+nwergm 1.5.2 was faster than ergm on all eight models, and in every pair of fits with the same
+seed (the lowest pair ratio was 1.4, on the 30-node model, where the fixed overhead of a Stata command weighs most).
+The number of iterations of the Monte Carlo algorithm depends on the seed in both programs and drives most of the
+spread. Compare medians, not single fits. The data and scripts are in
+[bench/nwergm/run152](https://github.com/thomas-u-grund/nwcommands/tree/main/bench/nwergm/run152).
 
-Version 1.4.0 fits these models in the time of 1.3.7 (within the spread between seeds), except the sparse
-1,000-node model (1.4 times faster: the burn-in check of the adaptive sampler now handles all statistics at once).
-Its gains are elsewhere, in the steps after a fit and in large models (single runs, same machine):
+**Earlier figures were too favourable.** Until 9 November 2026 this page reported ratios of 2.8 to 10.2, measured
+with version 1.4.0. Those versions did less sampling than ergm: until 1.4.0 nwergm used only tie/no-tie proposals instead of ergm's default
+SPDyad, and until 1.5.0 its convergence test used a scalar approximation of the Monte Carlo variance that let the
+fits stop after fewer draws. Since 1.5.1 both programs run the same algorithm and make about as many proposals per
+fit (for example 9.9 million for the Lazega model in nwergm and 9.1 million in ergm, means of three seeds). Version
+1.5.2 removed a cost of nwergm's SPDyad that ergm does not have (its shared-partner terms counted the partners again
+at every step instead of reading them from the proposal's cache); its results are identical to those of 1.5.1.
+
+**At the same amount of work.** With a fixed workload (one iteration with 4,000 draws, interval 1,024, burn-in
+16,384, no adaptive sample size) a Metropolis-Hastings proposal of nwergm 1.5.2 cost 0.08 to 0.25 microseconds and
+one of ergm 0.20 to 1.04 microseconds, 2.1 to 4.4 times more, the same range as the ratios of whole fits.
+
+**Steps after a fit.** Version 1.4.0 made the steps after a fit and large models much faster (single runs, 8 November,
+against 1.3.7; not repeated with 1.5.2):
 
 | Step | nwergm 1.3.7 (s) | nwergm 1.4.0 (s) |
 |---|---:|---:|
@@ -105,19 +117,16 @@ Its gains are elsewhere, in the steps after a fit and in large models (single ru
 
 ### Where the speed comes from
 
-- **Less sampling work per fit.** Since version 1.3.0 nwergm follows ergm's adaptive sampling: a base sample of
-  max(256, 32 times the number of parameters) draws, extended until the effective sample size reaches 64, with
-  ergm's convergence test, and the covariance matrix and the log-likelihood taken from the last iteration.
-  Version 1.2.3 drew a fixed 3,000 per iteration, drew another sample for the covariance and ran 16 bridges of
-  3,000 draws for the log-likelihood. On the benchmark models, 1.2.3 ran about 9.5 million Metropolis-Hastings
-  steps per fit (77 million for Mesa) and 1.3.0 ran 0.5 to 13 million.
-- **Compiled code alone was not the reason.** Version 1.2.3 used the same plug-in and was slower than ergm on six
-  of the eight models. Version 1.3.0 is 4 to 25 times faster than 1.2.3.
+- **Not less sampling.** Since version 1.5.1 nwergm runs ergm's default algorithm: the SPDyad proposal, the
+  adaptive sample size with ergm's multivariate effective sample size, ergm's convergence test and 16 bridges for
+  the log-likelihood. Its fits make about as many Metropolis-Hastings proposals as ergm's (the counts are in the
+  replication files of the nwergm article), so the gain is in the cost of each proposal and of the work around the
+  sampler.
 - **Faster kernels.** The plug-in keeps the adjacency as a bit matrix, updates the change statistics of a proposed
   toggle from the neighborhoods of the two nodes instead of recomputing the statistics of the network, tabulates
-  the geometrically weighted kernel once per decay value and draws a random dyad in constant time. The results are
-  identical to those of the older kernels. We did not separate how much of the gain comes from the sampling policy
-  and how much from the kernels.
+  the geometrically weighted kernel once per decay value, draws a random dyad in constant time and, since version
+  1.5.2, reads the shared-partner counts of the gwesp-type terms from the cache that SPDyad keeps, as ergm does. The results are
+  identical to those of the older kernels. We did not separate how much each of these contributes.
 - **Pseudolikelihood on distinct rows.** For large networks the pseudolikelihood is computed on the distinct rows of
   the design matrix with weights. A directed network of 1,000 nodes has 999,000 dyads but only a few distinct rows.
 
@@ -133,10 +142,6 @@ step, the covariance, the convergence test, the diagnostics and the output.
 - **Small models.** Every call has a fixed overhead of about 0.05 to 0.25 seconds (parsing, Mata set-up, returning
   results), and the first fit of a session also loads the Mata library. On a model that ergm fits in 0.2 seconds the
   difference is mostly this overhead.
-- **Smaller effective sample size.** At the default target, the final sample of a nwergm fit of the Lazega model
-  had an effective sample size of about 215 to 315 (503 draws). In a check with one seed, ergm's final sample had
-  about 370 to 500 (774 draws). The adaptive sample is smaller than the older fixed one, which had about 360 to
-  550. If you need a larger effective sample size, raise the target with `mcmleeffectivesize()`; this costs time.
 - **Models with one coefficient per node and a dyad-dependent term.** Every iteration draws at least 32 networks
   per coefficient in both programs: `edges mutual sender receiver` on 100 nodes (200 coefficients) took about 20
   minutes in nwergm, and ergm had not finished its second iteration after an hour.
@@ -373,16 +378,16 @@ converged. The largest difference between the mean estimates was 0.02 relevent s
   other R or Stata process running. The one-minute load average before each fit is in the data files: median 2.4
   over 1,238 fits (3.3 in the nwergm run), which includes the benchmark process itself and one to two cores of
   other background load. Two fits started above a load of 7.
-- **Machine, nwergm run of 8 November.** The same laptop, not idle: other jobs ran at the same time (load average 3.1
-  to 6.3 before the fits, median 4.6). All three programs ran in turn under the same load, so the ratios are fair; the
-  seconds are somewhat longer than on an idle machine.
+- **Machine, nwergm runs of 8 and 9 November.** The same laptop, with no other Stata or R job running (load average
+  2.4 to 4.6 before the fits of the 1.5.1 run, 1.8 to 3.4 in the 1.5.2 run). A run with 1.4.0 and 1.3.7 earlier on
+  8 November (the post-fit table) shared the machine with other jobs (load average 3.1 to 6.3).
 - **Machine, nwsaom run of 27 October.** The laptop ran on battery power throughout. Two things went wrong. The laptop
   went to sleep during the first S500 fits, so those fits and the R5 fits of the multi-core table from that period were
   discarded and repeated. Later, other jobs on the same machine started Stata and R from time to time during 17 of the
   27 fits; those results are kept, repeats agree, but they are less clean than the rest. The discarded fits and the
   record of other processes are in the data folder.
-- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.1 for the nwergm run of 8 November), nwergm 1.4.0 and 1.3.7 (8 November; 1.3.0 and
-  1.2.3 in the run of 26 October), nwsaom 1.1.1, nwdynam 1.2.0, nwrem 1.0.10; ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
+- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm 1.5.x runs, 3.17.1 for the post-fit table), nwergm 1.5.2 and 1.5.1 (8 and 9 November; 1.4.0 and
+  1.3.7 for the post-fit table; 1.3.0 and 1.2.3 in the run of 26 October), nwsaom 1.1.1, nwdynam 1.2.0, nwrem 1.0.10; ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
   goldfish 1.6.12. All timings are with Stata 18; Stata 17 was not timed. The plug-ins are the released builds.
 - **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first
   call (loading libraries) is not in the time. The timer covers the estimation command (for goldfish, the
