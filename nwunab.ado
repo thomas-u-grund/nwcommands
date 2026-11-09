@@ -1,6 +1,6 @@
 *! Date        : 15oct2015
 *! Version     : 2.0
-*! Author      : Thomas Grund, University College Dublin
+*! Author      : Thomas Grund, RWTH Aachen University
 *! Email	   : thomas.u.grund@gmail.com
 
 capture program drop nwunab

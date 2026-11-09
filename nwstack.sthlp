@@ -62,7 +62,7 @@ Two waves of three school classes are stacked into one network per wave, with a 
 {title:Author}
 
 {pstd}
-Thomas U. Grund, University College Dublin, thomas.u.grund@gmail.com
+Thomas U. Grund, RWTH Aachen University, thomas.u.grund@gmail.com
 {p_end}
 
 {hline}

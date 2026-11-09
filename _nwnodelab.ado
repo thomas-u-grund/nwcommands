@@ -1,6 +1,6 @@
 *! Date        : 15sept2014
 *! Version     : 1.0
-*! Author      : Thomas Grund, Linkoping University
+*! Author      : Thomas Grund, RWTH Aachen University
 *! Email	   : thomas.u.grund@gmail.com
 
 capture program drop _nwnodelab

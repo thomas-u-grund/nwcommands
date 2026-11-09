@@ -31,7 +31,7 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 
 {title:Author}
 
-{pstd}Thomas U. Grund, University College Dublin{p_end}
+{pstd}Thomas U. Grund, RWTH Aachen University{p_end}
 
 {hline}
 {pstd}{it:nwcommands version 3.17.3, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
