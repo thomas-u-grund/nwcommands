@@ -203,7 +203,8 @@ program define nwinstall_buildplugin_msvc, rclass
 	if `"`vcvars'"' == "" {
 		di as err "Building the plugin on Windows needs Microsoft's free C compiler, which was not found on this computer."
 		di as err "Install it once (it is free, and needs no Visual Studio licence):"
-		di as err `"  1. Download {browse "https://visualstudio.microsoft.com/visual-cpp-build-tools/":Build Tools for Visual Studio} and run the installer."'
+		di as err `"  1. Download Build Tools for Visual Studio and run the installer:"'
+		di as err `"     {browse "https://visualstudio.microsoft.com/visual-cpp-build-tools/":https://visualstudio.microsoft.com/visual-cpp-build-tools/}"'
 		di as err `"  2. Tick {bf:Desktop development with C++} and click Install (a download of a few gigabytes)."'
 		di as err `"  3. Then type the same {cmd:nwinstall, buildplugin()} command again; Stata does not need to be restarted."'
 		di as err "If Visual Studio itself is installed, add the workload Desktop development with C++ to it in the Visual Studio Installer."
