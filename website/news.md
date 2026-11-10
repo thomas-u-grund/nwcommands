@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 10 November 2026: nwergm 1.5.9 and nwsaom 1.5.14
+
+**nwergm 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.9)). `estat gof` after a two-mode fit counts the degrees and shared partners of each mode correctly when the nodes of the two modes are stored mixed (as in the Davis data, sorted by name). Before, the first n1 nodes were taken as the first mode, which gave wrong degree and shared-partner tables for such networks. Estimates, model statistics and geodesic distances were not affected.
+
+**nwsaom 1.5.14** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.14)). After a fit that has not converged, the hint to type `nwsaom refit` also follows the convergence table printed with `detail`. Results do not change.
+
 ## 10 November 2026: nwergm 1.5.8
 
 **nwergm 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.8)). `estat gof, plot` draws the observed distribution as a red line with circle markers, as in nwsaom's goodness-of-fit plots. Results do not change.
