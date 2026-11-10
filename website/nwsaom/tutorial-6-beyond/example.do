@@ -26,10 +26,5 @@ nwset, mat(A1) directed name(advice1)
 nwset, mat(A2) directed name(advice2)
 nwsaom multinet, net1(glasgow1 glasgow2) net2(advice1 advice2) cross1(crprod) cross2(crprod) seed(1)
 
-* The overall maximum convergence ratio is above 0.25: restart from the estimates
-matrix b = e(b)
-local th
-forvalues j = 1/`=colsof(b)' {
-    local th `th' `=b[1,`j']'
-}
-nwsaom multinet, net1(glasgow1 glasgow2) net2(advice1 advice2) cross1(crprod) cross2(crprod) theta0(`th') seed(2)
+* If the overall maximum convergence ratio is above 0.25: restart from the estimates
+nwsaom refit, seed(2)

@@ -12,6 +12,20 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 10 November 2026: nwergm 1.5.8
+
+**nwergm 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.8)). `estat gof, plot` draws the observed distribution as a red line with circle markers, as in nwsaom's goodness-of-fit plots. Results do not change.
+
+## 10 November 2026: nwsaom 1.5.13
+
+**nwsaom 1.5.13** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.13)). `nwsaom refit` now also works after `nwsaom multinet`, and a `multinet` fit that has not converged says to type `nwsaom refit`.
+
+## 10 November 2026: nwsaom 1.5.12
+
+**nwsaom 1.5.12** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.12)). New command **`nwsaom refit`**: it runs the last fit again, starting from its estimates (RSiena's `prevAns`), without typing them into `theta0()`; `maxruns(#)` repeats it until the fit has converged. A fit that has not converged now says to type `nwsaom refit`. `estat gof` explains what "rejected" means. [Tutorial 2](../nwsaom/tutorial-2-convergence/) shows the new command.
+
+Update with `nwinstall, modelpkg(nwsaom)`.
+
 ## 9 November 2026: nwsaom 1.5.11
 
 **nwsaom 1.5.11** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.11)). In the tables of `nwsaom describe`, `nwsaom meta`, `nwsaom bayes` and the `estat` commands, the top and bottom rules now meet the column bar, as in Stata's own tables. Estimates and stored results do not change.

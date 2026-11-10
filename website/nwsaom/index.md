@@ -53,7 +53,7 @@ errors in `nwsaom` are the author's.
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
 | Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
 | Speed | On one thread faster than RSiena in all 27 benchmark models of the article (median 3.8 times); see [Speed compared with RSiena](speed/) |
-| Version | 1.5.11 (9 November 2026) |
+| Version | 1.5.13 (10 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
