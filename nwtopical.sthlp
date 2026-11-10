@@ -270,3 +270,6 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:    {bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
 {p2colreset}{...}
+
+{hline}
+{pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

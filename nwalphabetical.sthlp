@@ -148,3 +148,6 @@ The statistical network models are separate packages that need the core. Install
 {stata "nwinstall, models":nwinstall, models} (see {help nwinstall}; {help nwversion} shows which are installed).
 Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
