@@ -27,14 +27,13 @@ method of moments (the default):
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.687867   .1214406   -22.13   0.000    -2.925886   -2.449847
- reciprocity |   2.457453   .2035477    12.07   0.000     2.058507      2.8564
-   transtrip |   .6202674   .0789534     7.86   0.000     .4655217    .7750132
+   outdegree |  -2.675306   .1130571   -23.66   0.000    -2.896894   -2.453718
+ reciprocity |   2.453519   .1841138    13.33   0.000     2.092662    2.814375
+   transtrip |   .6151182    .075624     8.13   0.000     .4668978    .7633385
 ------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.142 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for outdegree (-0.139) reciprocity (-0.130)
-Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
+Overall maximum convergence ratio: 0.123 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 ## Maximum likelihood
@@ -46,28 +45,31 @@ to the likelihood of the data augmented by the unobserved ministeps, as in RSien
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1) ml
 ...
-Maximum likelihood: phase 1 50 iterations, phase 2 4 subphases from 100 iterations, phase 3 1000 iterations ...
+Maximum likelihood (iterations: phase 1 50, phase 2 4 x 100, phase 3 1000) ...
 
 Maximum likelihood estimates (Robbins-Monro on the score of the augmented data)
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.646338   .1095288   -24.16   0.000     -2.86101   -2.431665
- reciprocity |   2.265619   .1803705    12.56   0.000     1.912099    2.619139
-   transtrip |   .6837719   .0654852    10.44   0.000     .5554233    .8121205
+   outdegree |  -2.644514   .1034917   -25.55   0.000    -2.847354   -2.441674
+ reciprocity |   2.220063   .1667722    13.31   0.000     1.893195     2.54693
+   transtrip |   .6942384   .0633412    10.96   0.000     .5700919    .8183848
 ------------------------------------------------------------------------------
 Rate parameters (one per inter-wave period):
 
-       period1  period2
- rate   6.4886   5.4048
-   se   0.8839   0.7473
-tconv  -0.0540  -0.0422
-Overall maximum t-ratio of the scores: 0.234 (acceptable)
+-----------------------------------
+             |   period1    period2
+-------------+---------------------
+        rate |    6.3079     5.2549
+          se |    0.8436     0.9311
+       tconv |   -0.0008    -0.0352
+-----------------------------------
+Overall maximum t-ratio of the scores: 0.104 (acceptable)
 ```
 
 (The method-of-moments table and its convergence line, printed first, are omitted.) The two estimators
 are two ways to estimate the same model, so the two sets of coefficients are
-similar: `reciprocity` is 2.46 by the method of moments and 2.22 by maximum likelihood, `transtrip` 0.62 and 0.69,
+similar: `reciprocity` is 2.45 by the method of moments and 2.22 by maximum likelihood, `transtrip` 0.62 and 0.69,
 and the standard errors of the likelihood estimates are somewhat smaller. The last line is the
 analogue of the convergence check for this estimator (t-ratios of the scores); the command
 prints its own verdict, here "acceptable". Details of the options (`mloptions()`) are in
@@ -87,24 +89,27 @@ Sampling: 20 pre-warming + 20 warming + 100 main iterations of 5 batches ...
 
 Bayesian SAOM (data augmentation)                Number of actors  =       50
 Waves: glasgow1 glasgow2 glasgow3                Saved draws       =      100
-Pre-warm 20, warm 20, main 100 x 5               Mean chain length =    570.3
-Acceptance: effects 0.462, rates 0.270; chain steps: diagonal 0.728, permute 0.619, insert-permute 0.370, delete-permute
+Pre-warm 20, warm 20, main 100 x 5               Mean chain length =    547.9
+Acceptance rates: effects 0.448, rates 0.238
+Chain steps accepted: diagonal 0.720, permute 0.737
+                      insert-permute 0.383, delete-permute 0.341
 -----------------------------------------------------------------------------
-      Effect |Post. mean  Post. sd[95% interval]             Median      ESS
+      Effect |       Mean  Std. dev.    [95% cred. interval]     Median   ESS
 -------------+---------------------------------------------------------------
-   outdegree |   -2.6935    0.1232   -2.9096   -2.4620   -2.6920        9
- reciprocity |    2.2710    0.1989    1.9126    2.6400    2.2763        8
-   transtrip |    0.7051    0.0669    0.5824    0.8292    0.6930       27
-rate_period1 |    6.0542    0.6211    5.1038    7.1997    6.0441       13
-rate_period2 |    5.3817    0.7525    4.0248    6.9119    5.2871        6
+   outdegree |    -2.7197     0.1106     -2.9433     -2.4910    -2.7264    25
+ reciprocity |     2.3220     0.1642      1.9523      2.6334     2.3299    20
+   transtrip |     0.7196     0.0594      0.6238      0.8337     0.7109    26
+rate_period1 |     6.2188     0.7302      5.1230      7.9070     6.0991    13
+rate_period2 |     4.8437     0.4542      4.0459      5.8121     4.8109    19
 -----------------------------------------------------------------------------
-Draws (one per main iteration) are in frame nwsaom_bayes_draws (b1..b3 effects, rate1..rate2, nchain, loglik); flat priors unless
-priormean()/priorsd()/priorrate() are given.
+Draws (one per main iteration) are in frame nwsaom_bayes_draws:
+  b1..b3 (effects), rate1..rate2, nchain, loglik.
+Priors are flat unless priormean(), priorsd() or priorrate() are given.
 ```
 
 Posterior means and standard deviations take the place of estimates and standard errors, with a 95%
 interval of the posterior. The column ESS is the effective sample size of the chain: here it is only
-26 to 41 draws, which is what a 100-iteration run can give, and why this run is an illustration and not
+13 to 26 draws, which is what a 100-iteration run can give, and why this run is an illustration and not
 a result. For a real analysis you want a much larger ESS. Even so, the posterior means
 are close to the maximum likelihood estimates above, as they should be with flat priors. The draws are stored in a Stata frame, so
 you can summarise or plot them with ordinary Stata commands, for example
@@ -122,13 +127,21 @@ syntax, not for substance; the second network is artificial):
 
 ```stata
 . nwtomata glasgow1, mat(F1)
+
 . nwtomata glasgow2, mat(F2)
+
 . set seed 20261001
+
 . mata: A1 = (F1 :* (runiform(50, 50) :< 0.7) + (runiform(50, 50) :< 0.005)) :> 0
+
 . mata: _diag(A1, 0)
+
 . mata: A2 = (A1 :* (runiform(50, 50) :< 0.8) + F2 :* (1 :- A1) :* (runiform(50, 50) :< 0.4)) :> 0
+
 . mata: _diag(A2, 0)
+
 . nwset, mat(A1) directed name(advice1)
+
 . nwset, mat(A2) directed name(advice2)
 ```
 
@@ -138,52 +151,64 @@ cross-network product, as in RSiena):
 
 ```stata
 . nwsaom multinet, net1(glasgow1 glasgow2) net2(advice1 advice2) cross1(crprod) cross2(crprod) seed(1)
--------------------------------------------------------------------------------------------------------------------------
+
 Several co-evolving networks (Method of Moments), 2 waves, 50 actors
--------------------------------------------------------------------------------------------------------------------------
+
 ----------------------------------------------------------------------------------
                  | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------+----------------------------------------------------------------
-  net1_outdegree |  -2.297847   .1393271   -16.49   0.000    -2.570923   -2.024771
-net1_reciprocity |   2.299379      .2197    10.47   0.000     1.868775    2.729983
-   net1_x_crprod |   .6369573   .3438109     1.85   0.064    -.0368996    1.310814
-  net2_outdegree |  -2.039054   .3099247    -6.58   0.000    -2.646495   -1.431613
-net2_reciprocity |   2.017523   .4941018     4.08   0.000     1.049101    2.985944
-   net2_x_crprod |     .87247   .9096327     0.96   0.337    -.9103773    2.655317
+  net1_outdegree |  -2.307828   .1315487   -17.54   0.000    -2.565659   -2.049997
+net1_reciprocity |    2.31696   .2444205     9.48   0.000     1.837904    2.796015
+   net1_x_crprod |    .636828   .3649647     1.74   0.081    -.0784896    1.352146
+  net2_outdegree |  -2.050233   .2451438    -8.36   0.000    -2.530707    -1.56976
+net2_reciprocity |   2.033514    .466895     4.36   0.000     1.118416    2.948611
+   net2_x_crprod |   .8708796   .7418836     1.17   0.240    -.5831854    2.324945
 ----------------------------------------------------------------------------------
 Rates (estimated):
 
-           period1
-rate_net1    6.744
-rate_net2    1.590
-  se_net1    1.001
-  se_net2    0.224
-Overall maximum convergence ratio: 0.260 (criterion: below 0.25; not met)
+-----------------------
+             |  period1
+-------------+---------
+   rate_net1 |    6.794
+   rate_net2 |    1.588
+     se_net1 |    1.515
+     se_net2 |    0.268
+-----------------------
+Overall maximum convergence ratio: 0.135 (criterion: below 0.25; met)
 ```
 
-The coefficients carry the prefix `net1_` or `net2_`. The overall ratio is 0.260, just above
-the limit of 0.25, so this run has not converged. As in
-[Tutorial 2](../tutorial-2-convergence/), restart from the estimates:
+The coefficients carry the prefix `net1_` or `net2_`. The overall ratio is 0.135, below 0.25, so
+this run has converged. Had it not, you would restart from the estimates, as in
+[Tutorial 2](../tutorial-2-convergence/). Since nwsaom 1.5.13 `nwsaom refit` works after `multinet`
+too; it reruns the stored command with the estimates in `theta0()`:
 
 ```stata
-. matrix b = e(b)
-. local th
-. forvalues j = 1/`=colsof(b)' {
-.     local th `th' `=b[1,`j']'
-. }
-. nwsaom multinet, net1(glasgow1 glasgow2) net2(advice1 advice2) cross1(crprod) cross2(crprod) theta0(`th') seed(2)
+. nwsaom refit, seed(2)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.135)
+------------------------------------------------------------------------------
+
+Several co-evolving networks (Method of Moments), 2 waves, 50 actors
+
+----------------------------------------------------------------------------------
+                 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+  net1_outdegree |  -2.324234   .1432232   -16.23   0.000    -2.604946   -2.043522
+net1_reciprocity |   2.345437   .2401338     9.77   0.000     1.874783     2.81609
+   net1_x_crprod |   .6290936   .4552866     1.38   0.167    -.2632518    1.521439
+  net2_outdegree |  -2.030494   .2247149    -9.04   0.000    -2.470927   -1.590061
+net2_reciprocity |   2.057765   .4778972     4.31   0.000     1.121103    2.994426
+   net2_x_crprod |   .7900366   .7665403     1.03   0.303    -.7123548    2.292428
+----------------------------------------------------------------------------------
 ...
-  net1_outdegree |  -2.311336   .1234978   -18.72   0.000    -2.553388   -2.069285
-net1_reciprocity |   2.314326   .2774067     8.34   0.000     1.770619    2.858033
-   net1_x_crprod |   .6479287   .3880397     1.67   0.095    -.1126152    1.408473
-  net2_outdegree |  -2.021367    .208823    -9.68   0.000    -2.430652   -1.612081
-net2_reciprocity |   2.032402   .4654263     4.37   0.000     1.120184    2.944621
-   net2_x_crprod |   .8226323   .6930513     1.19   0.235    -.5357232    2.180988
-...
-Overall maximum convergence ratio: 0.179 (criterion: below 0.25; met)
+Overall maximum convergence ratio: 0.182 (criterion: below 0.25; met)
+
+nwsaom refit: 1 run; largest |t| 0.069, overall ratio 0.182 (converged)
 ```
 
-The ratio is now 0.179, below 0.25. Each network is reciprocal (2.3 and 2.0). The two cross-network
+The refit has converged as well (overall ratio 0.182), and the estimates hardly change. Each
+network is reciprocal (2.3 and 2.1). The two cross-network
 effects are positive, but neither is clearly different from zero in
 this small, artificial example. After `multinet`, `estat score` and `estat timetest` are available;
 `estat gof` is not yet.

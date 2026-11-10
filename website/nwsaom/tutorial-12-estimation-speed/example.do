@@ -17,11 +17,10 @@ matrix list e(rates)
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(4)
 display e(conditional)
 
-* Restarting an unconditional fit: coefficients (theta0) and rates (rate0)
+* Restarting an unconditional fit: nwsaom refit passes the coefficients (theta0)
+* and the rates (rate0)
 quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(4)
-matrix b = e(b)
-matrix r = e(rates)
-nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(5)
+nwsaom refit, seed(5)
 
 * ---------------------------------------------------------------
 * Speed. The simulations run in a compiled plugin on several threads.

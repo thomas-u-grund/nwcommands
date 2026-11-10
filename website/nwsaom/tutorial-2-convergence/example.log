@@ -8,31 +8,33 @@
 . * the estimates are noisy and the run does not converge
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) 
 > altx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(1) k3(100) detail
--------------------------------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------
 glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
-      outdegree |  -1.209788   .6076227    -1.99   0.046    -2.400707   -.0188697
-    reciprocity |   2.263883    .529079     4.28   0.000     1.226907    3.300859
-   samex_smoke1 |   .1610482   .2266739     0.71   0.477    -.2832245    .6053209
-  altx_alcohol1 |    .006889   .1107258     0.06   0.950    -.2101297    .2239076
-  egox_alcohol1 |   .1359848   .1114579     1.22   0.222    -.0824685    .3544382
-indegpopularity |  -.6466204   .4983963    -1.30   0.194    -1.623459    .3302184
-    outactivity |  -.1646595   .0717318    -2.30   0.022    -.3052512   -.0240677
-      transtrip |  -1.179726   1.512629    -0.78   0.435    -4.144425    1.784972
-         cycle3 |   1.029549   1.018194     1.01   0.312    -.9660754    3.025173
-      gwesp_.69 |   3.840171   3.118244     1.23   0.218    -2.271475    9.951818
-  simx_alcohol1 |   .5145673   .3656165     1.41   0.159     -.202028    1.231163
--------------------------------------------------------------------------------------------------------------------------
+      outdegree |  -1.206797   .4216402    -2.86   0.004    -2.033197   -.3803978
+    reciprocity |   2.287804   .2790371     8.20   0.000     1.740901    2.834707
+   samex_smoke1 |    .156457   .2465597     0.63   0.526    -.3267912    .6397052
+  altx_alcohol1 |  -.0017842   .0908955    -0.02   0.984    -.1799361    .1763677
+  egox_alcohol1 |   .1369944   .1706092     0.80   0.422    -.1973935    .4713824
+indegpopularity |  -.6523969   .3524032    -1.85   0.064    -1.343094    .0383007
+    outactivity |  -.1662348   .0661913    -2.51   0.012    -.2959673   -.0365023
+      transtrip |  -1.219792   1.010376    -1.21   0.227    -3.200094    .7605094
+         cycle3 |   1.031186   .6487586     1.59   0.112    -.2403572     2.30273
+      gwesp_.69 |   3.937775   2.338965     1.68   0.092    -.6465124    8.522062
+  simx_alcohol1 |   .5069069   .5748419     0.88   0.378    -.6197626    1.633576
+---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------
              |   period1    period2 
 -------------+---------------------
-        rate |    6.7516     4.9774 
-          se |    1.1937     0.9694 
+        rate |    6.3094     5.1464 
+          se |    1.1287     0.9683 
+-----------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
@@ -43,13 +45,13 @@ RSiena effect names:
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   alcohol1                          2.880
 Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
-  outdegree                  0.199      reciprocity                0.165
-  samex_smoke1               0.049      altx_alcohol1              0.300
-  egox_alcohol1              0.241      indegpopularity            0.201
-  outactivity                0.238      transtrip                  0.213
-  cycle3                     0.192      gwesp_.69                  0.215
-  simx_alcohol1              0.201
-Overall maximum convergence ratio:  0.427
+  outdegree                 -0.028      reciprocity               -0.117
+  samex_smoke1               0.051      altx_alcohol1             -0.148
+  egox_alcohol1             -0.087      indegpopularity           -0.059
+  outactivity               -0.006      transtrip                 -0.025
+  cycle3                    -0.046      gwesp_.69                 -0.028
+  simx_alcohol1              0.023
+Overall maximum convergence ratio:  0.431
 
 . 
 . * The convergence t-ratios are stored
@@ -57,52 +59,47 @@ Overall maximum convergence ratio:  0.427
 
 e(tconv)[1,11]
           outdegree   reciprocity  samex_smoke1  altx_alcoh~1  egox_alcoh~1  indegpopul~y   outactivity     transtrip
-tconv     .19864068      .1645989     .04859904     .29953977     .24109886     .20086809     .23756474     .21284053
+tconv    -.02768156    -.11684645     .05073641    -.14776505    -.08693343    -.05875035    -.00639966    -.02512445
 
              cycle3     gwesp_.69  simx_alcoh~1
-tconv     .19159416     .21507889     .20131954
+tconv    -.04559339    -.02820332     .02289189
 
 . 
-. * Restart from the estimates: pass them as starting values
-. matrix b = e(b)
+. * Restart from the estimates: nwsaom refit reruns the last command with the
+. * estimates as starting values; k3(1000) restores the default third phase,
+. * and maxruns(3) repeats it until the fit has converged (at most three runs)
+. nwsaom refit, seed(2) k3(1000) maxruns(3)
 
-. local th
+------------------------------------------------------------------------------
+nwsaom refit, run 1 of at most 3: starting from the last estimates (overall ratio 0.431)
+------------------------------------------------------------------------------
 
-. forvalues j = 1/`=colsof(b)' {
-  2.     local th `th' `=b[1,`j']'
-  3. }
-
-. display "`th'"
--1.209788342910449 2.263883290175197 .1610482008999299 .0068889647862135 .1359848318693541 -.6466204039545523 -.16465947
-> 7141032 -1.179726289641548 1.029548730367219 3.840171283459446 .5145672925764175
-
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) 
-> altx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(2) theta0(`th') detail
--------------------------------------------------------------------------------------------------------------------------
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------
 glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
-      outdegree |   -1.20907   .5609371    -2.16   0.031    -2.308487   -.1096537
-    reciprocity |   2.280546   .2646771     8.62   0.000     1.761789    2.799304
-   samex_smoke1 |   .1680516   .1960388     0.86   0.391    -.2161774    .5522807
-  altx_alcohol1 |  -.0002235   .0776939    -0.00   0.998    -.1525007    .1520538
-  egox_alcohol1 |   .1379253   .1047766     1.32   0.188     -.067433    .3432837
-indegpopularity |  -.6432866   .3120702    -2.06   0.039    -1.254933   -.0316402
-    outactivity |  -.1674719   .0622312    -2.69   0.007    -.2894428    -.045501
-      transtrip |  -1.192036    .806658    -1.48   0.139    -2.773056    .3889849
-         cycle3 |   1.015119   .5305186     1.91   0.056    -.0246787    2.054916
-      gwesp_.69 |   3.876746   1.589124     2.44   0.015     .7621203    6.991372
-  simx_alcohol1 |   .4904613   .3493353     1.40   0.160    -.1942234    1.175146
--------------------------------------------------------------------------------------------------------------------------
+      outdegree |  -1.180788   .4538234    -2.60   0.009    -2.070265   -.2913101
+    reciprocity |   2.250957   .2929491     7.68   0.000     1.676787    2.825127
+   samex_smoke1 |   .1716948   .1978873     0.87   0.386    -.2161573    .5595468
+  altx_alcohol1 |  -.0001984   .0801107    -0.00   0.998    -.1572125    .1568157
+  egox_alcohol1 |   .1346906   .1121388     1.20   0.230    -.0850974    .3544785
+indegpopularity |  -.6794413   .2593244    -2.62   0.009    -1.187708   -.1711749
+    outactivity |  -.1616358   .0553152    -2.92   0.003    -.2700517   -.0532199
+      transtrip |   -1.28117   .7072342    -1.81   0.070    -2.667324    .1049835
+         cycle3 |   1.111588   .4883943     2.28   0.023     .1543522    2.068823
+      gwesp_.69 |   3.993002   1.401198     2.85   0.004     1.246704      6.7393
+  simx_alcohol1 |   .5102274   .3562007     1.43   0.152    -.1879132    1.208368
+---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------
              |   period1    period2 
 -------------+---------------------
-        rate |    6.5281     5.0094 
-          se |    1.1808     0.8427 
+        rate |    6.4325     4.8967 
+          se |    1.1481     0.7901 
+-----------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
@@ -113,13 +110,63 @@ RSiena effect names:
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   alcohol1                          2.880
 Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
-  outdegree                  0.063      reciprocity                0.056
-  samex_smoke1               0.049      altx_alcohol1              0.025
-  egox_alcohol1              0.022      indegpopularity            0.069
-  outactivity                0.062      transtrip                  0.058
-  cycle3                     0.052      gwesp_.69                  0.060
-  simx_alcohol1             -0.005
-Overall maximum convergence ratio:  0.091
+  outdegree                  0.062      reciprocity                0.014
+  samex_smoke1               0.085      altx_alcohol1             -0.019
+  egox_alcohol1              0.000      indegpopularity            0.046
+  outactivity                0.083      transtrip                  0.021
+  cycle3                     0.051      gwesp_.69                  0.038
+  simx_alcohol1              0.034
+Overall maximum convergence ratio:  0.295
+
+------------------------------------------------------------------------------
+nwsaom refit, run 2 of at most 3: starting from the last estimates (overall ratio 0.295)
+------------------------------------------------------------------------------
+
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+
+---------------------------------------------------------------------------------
+glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      outdegree |  -1.201625   .5178923    -2.32   0.020    -2.216675   -.1865751
+    reciprocity |   2.244478   .2636989     8.51   0.000     1.727637    2.761318
+   samex_smoke1 |   .1632869   .1966773     0.83   0.406    -.2221936    .5487674
+  altx_alcohol1 |   -.000592   .0836662    -0.01   0.994    -.1645747    .1633906
+  egox_alcohol1 |   .1309877   .1009262     1.30   0.194    -.0668241    .3287995
+indegpopularity |  -.6507214   .2986804    -2.18   0.029    -1.236124   -.0653186
+    outactivity |  -.1626539   .0546861    -2.97   0.003    -.2698367    -.055471
+      transtrip |  -1.178038   .6513056    -1.81   0.070    -2.454574    .0984971
+         cycle3 |   1.043553   .4070135     2.56   0.010     .2458211    1.841285
+      gwesp_.69 |   3.805257   1.373177     2.77   0.006     1.113881    6.496634
+  simx_alcohol1 |   .5047753   .3170162     1.59   0.111     -.116565    1.126116
+---------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+-----------------------------------
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.5600     5.0281 
+          se |    1.2108     0.8663 
+-----------------------------------
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+RSiena effect names:
+  samex_smoke1                  same smoke1
+  altx_alcohol1                 alcohol1 alter
+  egox_alcohol1                 alcohol1 ego
+  gwesp_.69                     GWESP I -> K -> J (69)
+  simx_alcohol1                 alcohol1 similarity
+Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
+  alcohol1                          2.880
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
+  outdegree                 -0.007      reciprocity               -0.051
+  samex_smoke1              -0.001      altx_alcohol1             -0.042
+  egox_alcohol1             -0.006      indegpopularity           -0.011
+  outactivity                0.007      transtrip                 -0.011
+  cycle3                     0.012      gwesp_.69                 -0.028
+  simx_alcohol1             -0.012
+Overall maximum convergence ratio:  0.216
+
+nwsaom refit: 2 runs; largest |t| 0.051, overall ratio 0.216 (converged)
 
 . 
 . * Wald tests with Stata's own commands
@@ -127,17 +174,17 @@ Overall maximum convergence ratio:  0.091
 
  ( 1)  - altx_alcohol1 + egox_alcohol1 = 0
 
-           chi2(  1) =    0.98
-         Prob > chi2 =    0.3234
+           chi2(  1) =    0.80
+         Prob > chi2 =    0.3702
 
 . lincom egox_alcohol1 - altx_alcohol1
 
  ( 1)  - altx_alcohol1 + egox_alcohol1 = 0
 
--------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-         (1) |   .1381488   .1399055     0.99   0.323     -.136061    .4123586
--------------------------------------------------------------------------------------------------------------------------
+         (1) |   .1315797   .1468356     0.90   0.370    -.1562127    .4193721
+------------------------------------------------------------------------------
 
-. 
+.

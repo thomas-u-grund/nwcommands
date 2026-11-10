@@ -10,14 +10,10 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indeg
 * The convergence t-ratios are stored
 matrix list e(tconv)
 
-* Restart from the estimates: pass them as starting values
-matrix b = e(b)
-local th
-forvalues j = 1/`=colsof(b)' {
-    local th `th' `=b[1,`j']'
-}
-display "`th'"
-nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity egox(alcohol1) altx(alcohol1) simx(alcohol1) samex(smoke1) transtrip cycle3 seed(2) theta0(`th') detail
+* Restart from the estimates: nwsaom refit reruns the last command with the
+* estimates as starting values; k3(1000) restores the default third phase,
+* and maxruns(3) repeats it until the fit has converged (at most three runs)
+nwsaom refit, seed(2) k3(1000) maxruns(3)
 
 * Wald tests with Stata's own commands
 test egox_alcohol1 = altx_alcohol1

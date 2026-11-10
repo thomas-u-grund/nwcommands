@@ -24,24 +24,25 @@ pupil's own drinking (`egox`), the drinking of the pupil who is named (`altx`), 
 similarity (`simx`).
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(1)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1)
+>  seed(1)
 ...
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.704605   .1132713   -23.88   0.000    -2.926613   -2.482598
-  reciprocity |    2.42243   .1930407    12.55   0.000     2.044077    2.800782
-altx_alcohol1 |  -.0519366   .0711545    -0.73   0.465    -.1913969    .0875238
-egox_alcohol1 |   .0463259   .0742919     0.62   0.533    -.0992835    .1919354
-    transtrip |   .6295243   .0734725     8.57   0.000     .4855209    .7735277
-simx_alcohol1 |    .628046   .3094458     2.03   0.042     .0215433    1.234549
+    outdegree |  -2.714049   .1174508   -23.11   0.000    -2.944249    -2.48385
+  reciprocity |   2.439188   .1944542    12.54   0.000     2.058065    2.820311
+altx_alcohol1 |  -.0435285   .0680369    -0.64   0.522    -.1768784    .0898214
+egox_alcohol1 |   .0402063   .0760539     0.53   0.597    -.1088566    .1892692
+    transtrip |   .6276928   .0765488     8.20   0.000     .4776599    .7777256
+simx_alcohol1 |   .6213602   .3148591     1.97   0.048     .0042478    1.238473
 -------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.096 (criterion: below 0.25; met)
+Overall maximum convergence ratio: 0.155 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
-Wald tests (the z and p columns) say that only `simx_alcohol1` stands out, with p = 0.042. The Wald test needs the
+Wald tests (the z and p columns) say that only `simx_alcohol1` stands out, with p = 0.048. The Wald test needs the
 *full* model to be estimated. A score test works the other way round: it needs only the
 *restricted* model, in which the effects to be tested are held at zero, and tells you whether
 freeing them would improve the fit. That is useful when the full model is hard to estimate, or when
@@ -55,11 +56,12 @@ Fix the three alcohol effects at zero with `fix()`, and give starting values wit
 
 ```stata
 . matrix b = e(b)
+
 . matrix list b
 
 b[1,6]
        outdegree   reciprocity  altx_alcoh~1  egox_alcoh~1     transtrip  simx_alcoh~1
-y1    -2.7046054     2.4224296    -.05193656     .04632593     .62952427     .62804597
+y1    -2.7140494     2.4391878    -.04352852     .04020633     .62769275     .62136021
 ```
 
 The names in `fix()` are written the way the effects were requested, `egox(alcohol1)` and so on.
@@ -67,69 +69,78 @@ We take the coefficients of the full model and set the three tested ones to zero
 
 ```stata
 . matrix b0 = b
+
 . foreach c in egox_alcohol1 altx_alcohol1 simx_alcohol1 {
-.     matrix b0[1, colnumb(b0, "`c'")] = 0
-. }
+  2.     matrix b0[1, colnumb(b0, "`c'")] = 0
+  3. }
+
 . local th
+
 . forvalues j = 1/`=colsof(b0)' {
-.     local th `th' `=b0[1,`j']'
-. }
+  2.     local th `th' `=b0[1,`j']'
+  3. }
 ```
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1) theta0(`th') fix(egox(alcohol1) altx(alcohol1) simx(alcohol1)) seed(1)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1)
+>  theta0(`th') fix(egox(alcohol1) altx(alcohol1) simx(alcohol1)) seed(1)
 ...
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.679504   .1231556   -21.76   0.000    -2.920885   -2.438124
-  reciprocity |   2.456962   .1990359    12.34   0.000     2.066859    2.847065
+    outdegree |  -2.671588   .1091836   -24.47   0.000    -2.885584   -2.457592
+  reciprocity |   2.447578   .1964377    12.46   0.000     2.062567    2.832589
 altx_alcohol1 |          0  (omitted)
 egox_alcohol1 |          0  (omitted)
-    transtrip |   .6242752   .0814667     7.66   0.000     .4646033     .783947
+    transtrip |   .6211502    .073698     8.43   0.000     .4767049    .7655956
 simx_alcohol1 |          0  (omitted)
 -------------------------------------------------------------------------------
 ...
-Overall maximum convergence ratio: 0.095 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for altx_alcohol1 (0.462) simx_alcohol1 (-1.9
-> 87)
-Convergence is good only if both criteria are met. Refit starting from these estimates with theta0(); see nwsaom.
+Overall maximum convergence ratio: 0.102 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  altx_alcohol1 (0.443) egox_alcohol1 (-0.101) simx_alcohol1 (-1.970)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 ```
 
 The fixed effects are shown as `0 (omitted)` and have no standard errors. Their "convergence
 t-ratios" are large: they say how far the *observed* statistics are from what the restricted model
-produces, and that is exactly what the score test tests. Now:
+produces, and that is exactly what the score test tests. For the same reason the advice to refit can
+be ignored here: the t-ratio criterion fails only for the three effects that are held at zero on
+purpose. Now:
 
 ```stata
 . estat score
 
-Score-type test of the restricted model (as RSiena score.Test)
-Tests whether the fixed effects below differ from their fixed values.
+Score-type test of fixed effects
+H0: each effect below equals its fixed value
 
-            effect |  Fixed at     chi2  d.f. Prob>chi2 One-sided z
--------------------+-----------------------------------------------
-     altx_alcohol1 |    0.0000    0.207     1    0.6491      -0.455
-     egox_alcohol1 |    0.0000    0.002     1    0.9671       0.041
-     simx_alcohol1 |    0.0000    4.440     1    0.0351       2.107
--------------------+-----------------------------------------------
-        Joint test |              4.990     3    0.1725
--------------------------------------------------------------------
+-----------------------------------------------------------------
+      Effect |  Fixed at      chi2   df  Prob > chi2  One-sided z
+-------------+---------------------------------------------------
+altx_alcoh~1 |    0.0000     0.192    1       0.6612       -0.438
+egox_alcoh~1 |    0.0000     0.012    1       0.9114        0.111
+simx_alcoh~1 |    0.0000     4.180    1       0.0409        2.045
+-------------+---------------------------------------------------
+       Joint |               4.905    3       0.1789
+-----------------------------------------------------------------
 
-One-step estimates (restricted estimate plus the one-step correction)
-            effect |  Estimate
--------------------+----------
-         outdegree |   -2.6811
-       reciprocity |    2.4278
-     altx_alcohol1 |   -0.0427
-     egox_alcohol1 |    0.0264
-         transtrip |    0.6133
-     simx_alcohol1 |    0.5837
-------------------------------
+One-step estimates (restricted estimates plus the one-step correction)
+-----------------------------------------------------------------
+      Effect |    Estimate
+-------------+---------------------------------------------------
+   outdegree |     -2.6828
+ reciprocity |      2.4395
+altx_alcoh~1 |     -0.0508
+egox_alcoh~1 |      0.0443
+   transtrip |      0.6172
+simx_alcoh~1 |      0.5908
+-----------------------------------------------------------------
 ```
 
-How to read it. The joint test of all three effects is not significant (p = 0.17): drinking as a
+How to read it. The joint test of all three effects is not significant (p = 0.18): drinking as a
 whole does not significantly improve the model. The separate tests single out `simx_alcohol1`
-(c = 4.44, p = 0.035; the one-sided value 2.11 is positive, so the improvement would come from
+(chi2 = 4.18, p = 0.041; the one-sided value 2.05 is positive, so the improvement would come from
 a *positive* effect). Own and others' drinking add nothing. This is the same message as the Wald tests of the full model,
 reached without ever estimating it. The one-step estimates at the bottom approximate what you would get by
 freeing the effects, and `r(chi2)`, `r(df)`, `r(p)`, `r(separate)` and `r(onestep)` store the results.
@@ -145,37 +156,41 @@ An SAOM assumes that the coefficients are the same in every period. With three o
 (here again the full model, so we first fit it again) and needs no second estimation:
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(1)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip egox(alcohol1) altx(alcohol1) simx(alcohol1)
+>  seed(1)
+...
 . estat timetest
 
-Test of time heterogeneity (score-type test; as RSiena sienaTimeTest)
-Is the parameter of an effect the same in all periods?
+Test of time heterogeneity (score-type test)
+H0: the parameter of each effect is the same in all periods
 
-            effect |      chi2  d.f.  Prob>chi2
--------------------+---------------------------
-         outdegree |     0.017     1     0.8955
-       reciprocity |     0.755     1     0.3848
-     altx_alcohol1 |     2.449     1     0.1176
-     egox_alcohol1 |     1.631     1     0.2016
-         transtrip |     0.330     1     0.5657
-     simx_alcohol1 |     1.292     1     0.2557
--------------------+---------------------------
-        Joint test |     8.022     6     0.2365
------------------------------------------------
+---------------------------------------------------------
+      Effect |          chi2        df        Prob > chi2
+-------------+-------------------------------------------
+   outdegree |         0.017         1             0.8976
+ reciprocity |         0.706         1             0.4008
+altx_alcoh~1 |         2.140         1             0.1435
+egox_alcoh~1 |         1.551         1             0.2130
+   transtrip |         0.331         1             0.5648
+simx_alcoh~1 |         1.478         1             0.2240
+-------------+-------------------------------------------
+       Joint |         8.244         6             0.2208
+---------------------------------------------------------
 
 Period-specific deviations (one-step estimates) and separate tests
-            effect |  Period   Deviation      chi2  Prob>chi2
--------------------+-----------------------------------------
-         outdegree |       2     -0.3116     0.017     0.8955
-       reciprocity |       2      0.7407     0.755     0.3848
-     altx_alcohol1 |       2      0.1365     2.449     0.1176
-     egox_alcohol1 |       2      0.0821     1.631     0.2016
-         transtrip |       2      0.0519     0.330     0.5657
-     simx_alcohol1 |       2     -0.8234     1.292     0.2557
--------------------------------------------------------------
+---------------------------------------------------------
+      Effect |  Period   Deviation      chi2  Prob > chi2
+-------------+-------------------------------------------
+   outdegree |       2     -0.3346     0.017       0.8976
+ reciprocity |       2      0.7594     0.706       0.4008
+altx_alcoh~1 |       2      0.1366     2.140       0.1435
+egox_alcoh~1 |       2      0.0763     1.551       0.2130
+   transtrip |       2      0.0606     0.331       0.5648
+simx_alcoh~1 |       2     -0.8212     1.478       0.2240
+---------------------------------------------------------
 ```
 
-The joint test (p = 0.24) and every single test are far from significant: the effects can be
+The joint test (p = 0.22) and every single test are far from significant: the effects can be
 assumed to be constant over the two periods. If one effect did differ, the "deviation" table would show by how much
 in which period. (The default treats the rate parameters as estimated; the option `fixrates` holds them fixed
 as `sienaTimeTest` does. The two agree closely except for effects such as the out-degree effect of a
@@ -190,28 +205,30 @@ averages over the actors (`sienaRI`):
 ```stata
 . estat importance
 
-Relative importance of effects (as RSiena sienaRI)
+Relative importance of effects
 Expected over the actors at the start of each period
-            effect | Estimate  Std. err.    Sigma  Semi-std.     RI p1     RI p2
--------------------+------------------------------------------------------------
-         outdegree |  -2.7046     0.1133   0.4384    -1.1857    0.4083    0.4719
-       reciprocity |   2.4224     0.1930   0.2140     0.5184    0.3510    0.2906
-     altx_alcohol1 |  -0.0519     0.0712   1.1027    -0.0573    0.0204    0.0193
-     egox_alcohol1 |   0.0463     0.0743   0.4948     0.0229    0.0137    0.0128
-         transtrip |   0.6295     0.0735   0.6514     0.4101    0.1577    0.1584
-     simx_alcohol1 |   0.6280     0.3094   0.2259     0.1419    0.0489    0.0469
--------------------+------------------------------------------------------------
-     Certainty R_H |                                            0.2765    0.3479
---------------------------------------------------------------------------------
-RI: share of the effect in the actors' choices. Semi-std. = estimate x sigma.
+--------------------------------------------------------------------------
+      Effect | Estimate  Std. err.    Sigma  Semi-std.     RI p1     RI p2
+-------------+------------------------------------------------------------
+   outdegree |  -2.7140     0.1175   0.4384    -1.1898    0.4111    0.4749
+ reciprocity |   2.4392     0.1945   0.2140     0.5220    0.3539    0.2932
+altx_alcoh~1 |  -0.0435     0.0680   1.1027    -0.0480    0.0172    0.0162
+egox_alcoh~1 |   0.0402     0.0761   0.4948     0.0199    0.0120    0.0111
+   transtrip |   0.6277     0.0765   0.6514     0.4089    0.1572    0.1581
+simx_alcoh~1 |   0.6214     0.3149   0.2259     0.1404    0.0486    0.0464
+-------------+------------------------------------------------------------
+   Certainty |                                            0.2785    0.3501
+--------------------------------------------------------------------------
+RI: share of the effect in the actors' choices. Semi-std.: estimate x sigma.
+Certainty: RSiena's R_H, the expected certainty of the choices.
 ```
 
 The columns `RI p1` and `RI p2` are the shares of importance in each period (each column adds up to 1).
-Roughly 40 to 47% goes to the baseline `outdegree`, 29 to 35% to reciprocity and 16% to
+Roughly 41 to 47% goes to the baseline `outdegree`, 29 to 35% to reciprocity and 16% to
 `transtrip`. The significant drinking-similarity effect carries about 5%, and the two other alcohol
-effects about 1 to 2%: statistically detectable, but small. `semi-std.` (estimate times `sigma`)
-makes the coefficients comparable across effects measured in different units. `R_H` is the
-certainty of the actors' choices as RSiena's `sienaRI` defines it (higher means that the actors'
+effects about 1 to 2%: statistically detectable, but small. `Semi-std.` (estimate times `Sigma`)
+makes the coefficients comparable across effects measured in different units. The row `Certainty`
+is `R_H`, the certainty of the actors' choices as RSiena's `sienaRI` defines it (higher means that the actors'
 choices are more predictable from the model): 0.28 and 0.35 in the two periods.
 
 ## Things to try

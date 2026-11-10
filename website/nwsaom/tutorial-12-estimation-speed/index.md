@@ -10,7 +10,7 @@ description: "What conditional and unconditional estimation mean in nwsaom, how 
 **Goal.** Understand the choices in the "engine room": the two ways in which the rate of change can be handled, how to
 restart a fit, how many threads the program uses, and how to lengthen the estimation when you want more precision.
 
-**Data.** The Glasgow friendship data. The commands were run with `nwsaom` 1.1.1 and the core 3.10.0 in Stata 18, and
+**Data.** The Glasgow friendship data. The commands were run with `nwsaom` 1.5.13 and the core 3.17.2 in Stata 18, and
 checked in Stata 17. The timings are those of one computer and only show the order of magnitude. The complete script and log are in [example.do](example.do) and
 [example.log](example.log).
 
@@ -27,24 +27,26 @@ handle it in the estimation.
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.854856   .1400576   -20.38   0.000    -3.129364   -2.580348
- reciprocity |   2.578892   .2021555    12.76   0.000     2.182674    2.975109
-   gwesp_.69 |   1.617413    .164666     9.82   0.000     1.294673    1.940152
+   outdegree |  -2.844922   .1303038   -21.83   0.000    -3.100313   -2.589531
+ reciprocity |   2.559735   .1971215    12.99   0.000     2.173384    2.946086
+   gwesp_.69 |   1.616059   .1531276    10.55   0.000     1.315935    1.916184
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
-             |   period1    period2 
+-----------------------------------
+             |   period1    period2
 -------------+---------------------
-        rate |    6.5511     5.2412 
-          se |    1.0627     0.8944 
-Overall maximum convergence ratio: 0.095 (criterion: below 0.25; met)
+        rate |    6.5485     5.2031
+          se |    1.0853     0.8963
+-----------------------------------
+Overall maximum convergence ratio: 0.108 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
@@ -53,102 +55,120 @@ The header says "conditional". The stored rates are in `e(rates)`, and `e(condit
 ```stata
 . display e(conditional)
 1
+
 . matrix list e(rates)
 
 e(rates)[1,2]
         period1    period2
-rate  6.5511083  5.2412283
+rate  6.5484738  5.2031139
 ```
 
 Now the unconditional version, with the option `unconditional`:
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, unconditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.810665   .1386126   -20.28   0.000     -3.08234   -2.538989
- reciprocity |   2.525851    .190443    13.26   0.000      2.15259    2.899112
-   gwesp_.69 |   1.586733   .1643596     9.65   0.000     1.264594    1.908872
+   outdegree |   -2.82048   .1366677   -20.64   0.000    -3.088344   -2.552617
+ reciprocity |    2.53188    .196902    12.86   0.000     2.145959    2.917801
+   gwesp_.69 |    1.59617   .1603044     9.96   0.000     1.281979    1.910361
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
-             |   period1    period2 
+-----------------------------------
+             |   period1    period2
 -------------+---------------------
-        rate |    6.5512     5.2774 
-          se |    1.1503     0.9639 
-Overall maximum convergence ratio: 0.117 (criterion: below 0.25; met)
+        rate |    6.6348     5.3113
+          se |    1.1334     0.7821
+-----------------------------------
+Overall maximum convergence ratio: 0.088 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
-The coefficients are nearly the same (-2.81, 2.53 and 1.59 against -2.85, 2.58 and 1.62), the rates agree (6.55 and 5.28 against 6.55 and 5.24), and the standard errors of the rates are
-a little larger. The two should agree on the same data, and here they do; the conditional version is RSiena's default for a single network and therefore also the default of `nwsaom`.
+The coefficients are nearly the same (-2.82, 2.53 and 1.60 against -2.84, 2.56 and 1.62), the rates agree (6.63 and 5.31 against 6.55 and 5.20), and so do the standard errors of
+the rates. The two should agree on the same data, and here they do; the conditional version is RSiena's default for a single network and therefore also the default of `nwsaom`.
 Some models **must** be unconditional because the amount of change cannot be fixed beforehand: models with
 a co-evolving behavior, with composition change ([Tutorial 7](../tutorial-7-composition-missing/)), and with more than one dependent network. `nwsaom` switches
 by itself; `e(conditional)` is 0 for them:
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(4)
-----------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behavior(alcohol1 alcohol2 alcohol3) linear
+>  quadratic avalt seed(4)
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 Behavior: alcohol1 alcohol2 alcohol3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.814302   .1305773   -21.55   0.000    -3.070229   -2.558375
-  reciprocity |   2.508239   .1940713    12.92   0.000     2.127866    2.888611
-    gwesp_.69 |   1.598756   .1545302    10.35   0.000     1.295882    1.901629
-   beh_linear |    .433306   .2458313     1.76   0.078    -.0485145    .9151264
-beh_quadratic |  -.5378829   .3190152    -1.69   0.092    -1.163141    .0873755
-    beh_avalt |   1.314275   .9087988     1.45   0.148    -.4669378    3.095488
+    outdegree |  -2.820048   .1279268   -22.04   0.000     -3.07078   -2.569316
+  reciprocity |   2.523647   .1904382    13.25   0.000     2.150395    2.896899
+    gwesp_.69 |   1.604899   .1439355    11.15   0.000      1.32279    1.887007
+   beh_linear |    .433305   .2463416     1.76   0.079    -.0495157    .9161257
+beh_quadratic |  -.5425325   .3410789    -1.59   0.112    -1.211035    .1259698
+    beh_avalt |   1.320896   .9158013     1.44   0.149    -.4740417    3.115834
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
-             |   period1    period2 
+-----------------------------------
+             |   period1    period2
 -------------+---------------------
-network_rate |    6.5594     5.3153 
-          se |    1.0927     0.9757 
-behavior_r~e |    1.2354     1.6715 
-          se |    0.3484     0.4157 
-Overall maximum convergence ratio: 0.138 (criterion: below 0.25; met)
+network_rate |    6.5571     5.2518
+          se |    1.0985     0.8951
+behavior_r~e |    1.2407     1.6903
+          se |    0.3276     0.4687
+-----------------------------------
+Overall maximum convergence ratio: 0.134 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 ## Restarting a fit
 
-If a fit has not converged (see [Tutorial 2](../tutorial-2-convergence/)), you start a new fit from the estimates. For an unconditional fit
-you pass the coefficients with `theta0()` as before and also the rates with `rate0()`, one per period:
+If a fit has not converged (see [Tutorial 2](../tutorial-2-convergence/)), you start a new fit from the estimates with `nwsaom refit`.
+For an unconditional fit it passes the coefficients with `theta0()` and also the rates with `rate0()`, one per period. By hand you
+would give both options yourself. Here we restart the unconditional fit from above:
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(5)
-----------------------------------------------------------------------------------------------------
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(4)
+
+. nwsaom refit, seed(5)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.088)
+------------------------------------------------------------------------------
+
 SAOM (Method of Moments, unconditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.815351   .1309199   -21.50   0.000     -3.07195   -2.558753
- reciprocity |   2.533411   .1892364    13.39   0.000     2.162514    2.904307
-   gwesp_.69 |   1.588418   .1657104     9.59   0.000     1.263631    1.913204
+   outdegree |  -2.811847    .121935   -23.06   0.000    -3.050835   -2.572858
+ reciprocity |   2.509225   .1793096    13.99   0.000     2.157785    2.860666
+   gwesp_.69 |     1.6014   .1455336    11.00   0.000     1.316159    1.886641
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
-             |   period1    period2 
+-----------------------------------
+             |   period1    period2
 -------------+---------------------
-        rate |    6.5886     5.3371 
-          se |    1.0602     0.8057 
-Overall maximum convergence ratio: 0.064 (criterion: below 0.25; met)
+        rate |    6.5959     5.2954
+          se |    1.0474     0.8531
+-----------------------------------
+Overall maximum convergence ratio: 0.143 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.059, overall ratio 0.143 (converged)
 ```
 
-The restarted fit has a smaller overall convergence ratio (0.064 against 0.117).
+The first fit had already converged (overall ratio 0.088), so the restart is only a demonstration: the estimates hardly
+change, and the new overall ratio (0.143) differs only by Monte Carlo noise.
 
 ## Threads and speed
 
@@ -168,11 +188,11 @@ largest difference between the two sets of estimates: 0
 
 ```stata
 . timer list
-   1:      1.33 /        1 =       1.3290
-   2:      0.68 /        1 =       0.6830
+   1:      0.77 /        1 =       0.7690
+   2:      0.49 /        1 =       0.4890
 ```
 
-On the computer that produced this log, one thread needed 1.3 seconds and all cores 0.7 seconds, and the estimates of the two runs are identical
+On the computer that produced this log, one thread needed 0.8 seconds and all cores 0.5 seconds, and the estimates of the two runs are identical
 (the largest relative difference is 0). Larger networks and models with behavior profit more from the extra cores. Use `cores(1)` if you share
 a computer, or want a log that does not depend on the machine.
 
@@ -184,33 +204,35 @@ simulations take longer and reduce the Monte Carlo noise:
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(4) k0(100) k3(3000) detail
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.853009   .1314381   -21.71   0.000    -3.110623   -2.595395
- reciprocity |   2.573407   .1911977    13.46   0.000     2.198666    2.948147
-   gwesp_.69 |   1.611978   .1587291    10.16   0.000     1.300875    1.923082
+   outdegree |  -2.842345   .1305741   -21.77   0.000    -3.098266   -2.586425
+ reciprocity |   2.552154    .194464    13.12   0.000     2.171012    2.933297
+   gwesp_.69 |   1.625141   .1563559    10.39   0.000     1.318689    1.931593
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
-             |   period1    period2 
+-----------------------------------
+             |   period1    period2
 -------------+---------------------
-        rate |    6.5956     5.2375 
-          se |    1.1635     0.8800 
+        rate |    6.5355     5.2215
+          se |    1.1206     0.8820
+-----------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   gwesp_.69                     GWESP I -> K -> J (69)
 Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
-  outdegree                 -0.052      reciprocity               -0.047
-  gwesp_.69                 -0.077
-Overall maximum convergence ratio:  0.090
+  outdegree                  0.067      reciprocity                0.024
+  gwesp_.69                  0.050
+Overall maximum convergence ratio:  0.117
 ```
 
-The overall convergence ratio is 0.09, the t-ratios of the parameters are all below 0.08 in absolute value, and the estimates are close to the shorter runs. Use
+The overall convergence ratio is 0.117, the t-ratios of the parameters are all below 0.07 in absolute value, and the estimates are close to the shorter runs. Use
 longer runs for the model that you report; use the defaults while you are exploring.
 
 ## Things to try

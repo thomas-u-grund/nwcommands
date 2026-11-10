@@ -30,150 +30,158 @@ once or twice a year |         0         11          4          1          0 |  
 
 . nwsaom describe, waves(glasgow1 glasgow2 glasgow3) behavior(alcohol1 alcohol2 alcohol3)
 
-Network data: 3 waves, 50 actors, directed
------------------------------------------------------
-        wave |     ties     density   avg. degree
--------------+---------------------------------------
-           1 |      113      0.0461         2.260
-           2 |      116      0.0473         2.320
-           3 |      122      0.0498         2.440
------------------------------------------------------
+Network data                        Number of actors  =        50
+Directed                            Number of waves   =         3
 
-----------------------------------------------------------------------
-      period |    kept   created  dissolved   Jaccard   Hamming
--------------+--------------------------------------------------------
+------------------------------------------------------------------
+        Wave |       Ties     Density   Avg. degree
+-------------+----------------------------------------------------
+           1 |        113      0.0461         2.260
+           2 |        116      0.0473         2.320
+           3 |        122      0.0498         2.440
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+      Period |    Kept   Created  Dissolved   Jaccard   Hamming
+-------------+----------------------------------------------------
         1->2 |      57        59         56     0.331       115
         2->3 |      66        56         50     0.384       106
-----------------------------------------------------------------------
+------------------------------------------------------------------
 
---------------------------------------------------
-    behavior |        mean          sd     missing
--------------+------------------------------------
-      wave 1 |       2.880       1.118           0
-      wave 2 |       3.100       1.199           0
-      wave 3 |       3.360       0.985           0
---------------------------------------------------
+------------------------------------------------------------------
+    Behavior |        Mean   Std. dev.     Missing
+-------------+----------------------------------------------------
+      Wave 1 |       2.880       1.118           0
+      Wave 2 |       3.100       1.199           0
+      Wave 3 |       3.360       0.985           0
+------------------------------------------------------------------
 
---------------------------------------------------
-      change |          up        down        same
--------------+------------------------------------
+------------------------------------------------------------------
+      Change |          Up        Down        Same
+-------------+----------------------------------------------------
         1->2 |          16           6          28
         2->3 |          18           9          23
---------------------------------------------------
+------------------------------------------------------------------
 
 . 
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol
-> 1 alcohol2 alcohol3) linear quadratic avalt seed(1)
-----------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3)
+>  linear quadratic avalt seed(1)
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 Behavior: alcohol1 alcohol2 alcohol3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.940128    .167233   -17.58   0.000    -3.267899   -2.612357
-  reciprocity |   2.464193   .1974097    12.48   0.000     2.077277    2.851109
-    gwesp_.69 |   1.613435   .1633764     9.88   0.000     1.293224    1.933647
-       behsim |   1.550423   .6206369     2.50   0.012     .3339968    2.766849
-   beh_linear |   .3974465   .1944195     2.04   0.041     .0163913    .7785016
-beh_quadratic |  -.5829936   .3035246    -1.92   0.055    -1.177891    .0119037
-    beh_avalt |   1.280615   .7760478     1.65   0.099    -.2404103    2.801641
+    outdegree |  -2.934307   .1646248   -17.82   0.000    -3.256966   -2.611648
+  reciprocity |   2.458445   .1869355    13.15   0.000     2.092058    2.824832
+    gwesp_.69 |   1.609623   .1580312    10.19   0.000     1.299888    1.919359
+       behsim |   1.541488   .6794717     2.27   0.023     .2097483    2.873228
+   beh_linear |   .3961166   .2205673     1.80   0.073    -.0361874    .8284205
+beh_quadratic |  -.5839079   .3270813    -1.79   0.074    -1.224975    .0571596
+    beh_avalt |    1.28223   .7850593     1.63   0.102    -.2564581    2.820918
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------
              |   period1    period2 
--------------+----------------------
-network_rate |    6.5156     5.1150 
-          se |    1.0511     0.7958 
-behavior_r~e |    1.3450     1.7957 
-          se |    0.3293     0.4649 
-Overall maximum convergence ratio: 0.160 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for rate_beh_period1 (0.1
-> 27)
-Convergence is good only if both criteria are met. Refit starting from these estimates with theta0()
-> ; see nwsaom.
+-------------+---------------------
+network_rate |    6.6073     5.1192 
+          se |    1.5720     0.9132 
+behavior_r~e |    1.3340     1.7957 
+          se |    0.4142     0.4536 
+-----------------------------------
+Overall maximum convergence ratio: 0.149 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . * Selection through ego and alter effects as well
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behegox behaltx 
-> behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(1)
-----------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behegox behaltx behavior(alcohol1 al
+> cohol2 alcohol3) linear quadratic avalt seed(1)
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 Behavior: alcohol1 alcohol2 alcohol3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.951773   .1672361   -17.65   0.000     -3.27955   -2.623996
-  reciprocity |   2.483696   .2020167    12.29   0.000     2.087751    2.879641
-    gwesp_.69 |   1.613455   .1654605     9.75   0.000     1.289158    1.937751
-       behsim |    1.55185   .7147432     2.17   0.030      .150979    2.952721
-      behegox |   .0718023   .1271858     0.56   0.572    -.1774774    .3210819
-      behaltx |  -.0519744   .1046156    -0.50   0.619    -.2570172    .1530685
-   beh_linear |   .4107968   .2175124     1.89   0.059    -.0155196    .8371133
-beh_quadratic |    -.57823   .3209623    -1.80   0.072    -1.207305    .0508446
-    beh_avalt |   1.261538   .7690484     1.64   0.101    -.2457697    2.768845
+    outdegree |  -2.939727   .1581609   -18.59   0.000    -3.249717   -2.629738
+  reciprocity |   2.476391   .1929762    12.83   0.000     2.098164    2.854617
+    gwesp_.69 |   1.606878   .1668353     9.63   0.000     1.279887     1.93387
+       behsim |    1.52533   .6705486     2.27   0.023     .2110787    2.839581
+      behegox |    .063739   .1120308     0.57   0.569    -.1558373    .2833153
+      behaltx |  -.0401824   .1024794    -0.39   0.695    -.2410384    .1606736
+   beh_linear |   .4040563   .2201328     1.84   0.066     -.027396    .8355087
+beh_quadratic |  -.5834187   .3577893    -1.63   0.103    -1.284673    .1178355
+    beh_avalt |   1.276214   .8611574     1.48   0.138    -.4116238    2.964051
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------
              |   period1    period2 
--------------+----------------------
-network_rate |    6.5707     5.0814 
-          se |    1.2586     0.8721 
-behavior_r~e |    1.3368     1.7950 
-          se |    0.3673     0.4231 
-Overall maximum convergence ratio: 0.235 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for rate_period2 (-0.115)
-Convergence is good only if both criteria are met. Refit starting from these estimates with theta0()
-> ; see nwsaom.
+-------------+---------------------
+network_rate |    6.6392     5.0853 
+          se |    1.2379     0.9293 
+behavior_r~e |    1.3394     1.7965 
+          se |    0.3832     0.4348 
+-----------------------------------
+Overall maximum convergence ratio: 0.173 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  rate_period2 (-0.105)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 . 
 . * The alternative influence effect
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol
-> 1 alcohol2 alcohol3) linear quadratic avsim seed(1)
-----------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3)
+>  linear quadratic avsim seed(1)
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 Behavior: alcohol1 alcohol2 alcohol3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.939336   .1532653   -19.18   0.000     -3.23973   -2.638942
-  reciprocity |   2.475865   .1914194    12.93   0.000      2.10069     2.85104
-    gwesp_.69 |   1.617902    .167508     9.66   0.000     1.289593    1.946212
-       behsim |   1.498898   .5391366     2.78   0.005     .4422095    2.555586
-   beh_linear |   .3675215   .1538492     2.39   0.017     .0659827    .6690604
-beh_quadratic |  -.0726351   .1049503    -0.69   0.489    -.2783339    .1330636
-    beh_avsim |   4.005875   1.941244     2.06   0.039     .2011071    7.810643
+    outdegree |  -2.938095   .1545772   -19.01   0.000    -3.241061    -2.63513
+  reciprocity |   2.472483   .1855678    13.32   0.000     2.108777    2.836189
+    gwesp_.69 |   1.618613   .1701019     9.52   0.000     1.285219    1.952006
+       behsim |   1.501996   .6059983     2.48   0.013     .3142607     2.68973
+   beh_linear |   .3608452   .1676806     2.15   0.031     .0321973     .689493
+beh_quadratic |  -.0727403   .0991779    -0.73   0.463    -.2671254    .1216447
+    beh_avsim |   3.995552     1.9381     2.06   0.039     .1969465    7.794158
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------
              |   period1    period2 
--------------+----------------------
-network_rate |    6.5697     5.0713 
-          se |    1.0186     0.7908 
-behavior_r~e |    1.3491     1.8452 
-          se |    0.3418     0.4643 
-Overall maximum convergence ratio: 0.159 (criterion: below 0.25; met)
+-------------+---------------------
+network_rate |    6.5255     5.0919 
+          se |    1.1281     0.8595 
+behavior_r~e |    1.3566     1.8399 
+          se |    0.3473     0.4543 
+-----------------------------------
+Overall maximum convergence ratio: 0.152 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . * Goodness of fit now includes the behavior distribution
 . estat gof, nsim(100) seed(7)
 
-Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
+Goodness of fit: Mahalanobis distance test
+100 simulations at the estimates, 2 periods pooled
 
-           statistic |   Mahalanobis  P-value      Fit
----------------------+--------------------------------
-           Outdegree |        13.530    0.140       ok
-            Indegree |        11.373    0.340       ok
-            Geodesic |        29.953    0.000 rejected
-            Behavior |         0.981    0.910       ok
 ------------------------------------------------------
-Fit is rejected when P < 0.05 (one-tailed test).
+           Statistic |   Mahalanobis  P-value      Fit
+---------------------+--------------------------------
+           Outdegree |        13.376    0.160       ok
+            Indegree |        10.875    0.340       ok
+            Geodesic |        24.287    0.010 rejected
+            Behavior |         1.019    0.870       ok
+------------------------------------------------------
+rejected: P < 0.05 (one-tailed); the model does not reproduce this statistic
 Violin plots: gof_outdegree gof_indegree gof_geodesic gof_behavior
 
 .
