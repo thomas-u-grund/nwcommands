@@ -30,7 +30,7 @@ program nwduplicate
 			local validname "`name'"
 		}
 		else {
-			di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+			di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
 			error 483
 		}
 	}

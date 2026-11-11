@@ -20,7 +20,7 @@ program nwhierarchy, rclass
 	// `generate()' as a working alias, kept `equivgen()' for backward
 	// compatibility.
 	if "`equivgen'" != "" & "`generate'" != "" {
-		di "{err}Specify only one of {bf:equivgen()} or {bf:generate()} (they are the same option) - not both."
+		di "{err}{p 0 0 2}Specify only one of {bf:equivgen()} or {bf:generate()} (they are the same option) - not both.{p_end}"
 		error 198
 	}
 	if "`generate'" != "" {
@@ -40,7 +40,7 @@ program nwhierarchy, rclass
 	// Stata's clustermat is O(n^3) in time and keeps the dissimilarity matrix as a Stata matrix (at most 11,000 rows in
 	// Stata/BE): 3,000 nodes take 45 s, 5,000 nodes 170 s, 10,000 nodes more than 20 minutes
 	if `nodes' > 6000 & "`force'" == "" & "`dismat'" == "" {
-		di "{err}nwhierarchy clusters the dense `nodes' x `nodes' dissimilarity matrix with Stata's clustermat: about `=round(45*(`nodes'/3000)^3/60)' minutes. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+		di "{err}{p 0 0 2}nwhierarchy clusters the dense `nodes' x `nodes' dissimilarity matrix with Stata's clustermat: about `=round(45*(`nodes'/3000)^3/60)' minutes. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
 		error 484
 	}
 
@@ -53,7 +53,7 @@ program nwhierarchy, rclass
 		else {
 			// Stata's clustermat is the slow part: measured in Stata/BE 1,000 nodes 3 s, 5,000 nodes 165 s
 			if `nodes' > 2000 {
-				di "{txt}(note: clustering `nodes' nodes with Stata's clustermat takes minutes)"
+				di "{txt}{p 0 0 2}(note: clustering `nodes' nodes with Stata's clustermat takes minutes){p_end}"
 			}
 			nwdissimilar `netname', type(`type') context(`context') name(_temp_dissimilar)
 			nwtomatafast _temp_dissimilar

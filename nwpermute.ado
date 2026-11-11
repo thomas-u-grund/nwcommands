@@ -22,7 +22,7 @@ program nwpermute
 	if "`swap'" != "" & "`is2mode'" != "true" {
 		mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
 		if "`__ok'" != "1" {
-			di "{err}Option {bf:swap} on a one-mode network needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing."
+			di "{err}{p 0 0 2}Option {bf:swap} on a one-mode network needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 			di "{err}Update it: {stata nwinstall, all}"
 			error 198
 		}
@@ -63,7 +63,7 @@ program nwpermute
 	if "`generate'" != "" {
 		capture _nwsyntax `generate', other(_chk)
 		if _rc == 0 & "`nwreplace'" == "" & "`replace'" == "" {
-			di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}"
+			di "{err}{p 0 0 2}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}{p_end}"
 			error 99
 		}
 		capture nwdrop `generate'

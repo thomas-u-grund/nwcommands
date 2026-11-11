@@ -110,4 +110,4 @@ populate a shared table of this package's own error-code local macros (see
 commonly-needed locals, rather than each command redefining the same table itself.
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

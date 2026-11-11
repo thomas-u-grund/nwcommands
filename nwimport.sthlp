@@ -89,7 +89,7 @@ The following network formats are supported:
 without downloading a local copy first, e.g.:
 
 {phang}
-{cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)}{p_end}
+{cmd:. nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)}{p_end}
 
 {marker twomode}{...}
 {title:Two-mode networks}
@@ -286,4 +286,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 	geoff,john,michael
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

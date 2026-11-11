@@ -14,14 +14,14 @@ program nwclustering
 			local __ign ""
 			if "`silent'" != "" local __ign " silent"
 			if "`symmetrize'" != "" local __ign "`__ign' symmetrize"
-			noi di "{txt}note: two-mode clustering is used; the following option(s) have no two-mode form and were ignored:{bf:`__ign'} ({bf:onemode} gives the one-mode computation)"
+			noi di "{txt}{p 0 0 2}note: two-mode clustering is used; the following option(s) have no two-mode form and were ignored:{bf:`__ign'} ({bf:onemode} gives the one-mode computation){p_end}"
 		}
 		_nwclustering_two `netname', measure(`measure') level(`level') generate(`generate') `replace' `ra'
 		capture confirm number 1
 		exit
 	}
 	if "`ra'" != "" | `level' != 1 {
-		di "{err}Options {bf:ra} and {bf:level()} need a two-mode network (and are not used with {bf:onemode})."
+		di "{err}{p 0 0 2}Options {bf:ra} and {bf:level()} need a two-mode network (and are not used with {bf:onemode}).{p_end}"
 		error 198
 	}
 	_nwdatasync `netname'

@@ -109,8 +109,8 @@ program nwgeodesic
 			mata: mata drop `__nw_gd'
 			capture nwdrop `name'
 			if "`symmetrized'" == "true" capture nwdrop `symnet'
-			di "{err}Distances on a valued network of more than 100 nodes need the native plugin of the current version, which this platform does not have."
-			di "{err}Use option {bf:force} to compute them with the slow Mata routine, or option {bf:binary} to count steps."
+			di "{err}{p 0 0 2}Distances on a valued network of more than 100 nodes need the native plugin of the current version, which this platform does not have.{p_end}"
+			di "{err}{p 0 0 2}Use option {bf:force} to compute them with the slow Mata routine, or option {bf:binary} to count steps.{p_end}"
 			error 198
 		}
 		else {

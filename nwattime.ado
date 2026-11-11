@@ -7,7 +7,7 @@ program nwattime, rclass
 	_nwsyntax `netname'
 
 	if "`istemporal'" != "true" {
-		di "{err}Network {bf:`netname'} is not temporal; nwattime requires a network declared via {help nwset}'s {bf:time()}, {bf:interval()}, or {bf:eventtime()} options."
+		di "{err}{p 0 0 2}Network {bf:`netname'} is not temporal; nwattime requires a network declared via {help nwset}'s {bf:time()}, {bf:interval()}, or {bf:eventtime()} options.{p_end}"
 		error 198
 	}
 
@@ -17,7 +17,7 @@ program nwattime, rclass
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
-			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+			di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
 			local name = r(validname)
 		}
 		else {

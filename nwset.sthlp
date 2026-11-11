@@ -214,6 +214,12 @@ The following command declares such data as network data and gives the new netwo
 
 	{cmd:. nwset fromid toid value, name(mynet) edgelist}
 
+{pstd}
+To keep a node without ties (an isolate), give it a row of its own with the other identifier missing ({cmd:""}
+for string identifiers, {cmd:.} for numeric ones): the node is created, the row adds no tie. A row with both
+identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
+nodes with one tie, {it:Fion} an isolate.
+
 
 {pstd}
 {bf:{ul:3. Declare adjacency matrix from Mata matrix}}
@@ -272,7 +278,7 @@ tie, directly analogous to {bf:edgelist} above. This is generally the more natur
 data already looks like a list of affiliations:
 
 	{cmd:. nwclear}
-	{cmd:. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/institutions.dta", clear}
+	{cmd:. use "https://nwcommands.org/examples/institutions.dta", clear}
 	{cmd:. nwset person institution, twomode name(mynet)}
 
 {pstd}
@@ -427,4 +433,4 @@ Options {opt time()} and {opt interval()} of a one-mode network of more than 2,0
 	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project} ({help nwproject}), {help nwattime}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

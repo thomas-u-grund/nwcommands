@@ -5,7 +5,7 @@ program nw2clustering
 
 	_nwsyntax `netname'
 	if "`is2mode'" != "true" {
-		di "{err}nw2clustering requires a two-mode network; see {help nwclustering} for one-mode networks."
+		di "{err}{p 0 0 2}nw2clustering requires a two-mode network; see {help nwclustering} for one-mode networks.{p_end}"
 		error 198
 	}
 	nwclustering `netname', measure(`measure') level(`level') generate(`generate') `replace' `ra'

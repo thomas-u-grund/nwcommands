@@ -168,7 +168,7 @@ program nwdropnodes
 		mata: st_local("__dnn2", strofreal(`netobj'->get_nodes_mode2()))
 		mata: mata drop `dnmodes' `dnd1' `dnd2'
 		if `__dnn1' == 0 | `__dnn2' == 0 {
-			di "{txt}(note: all nodes of one mode were dropped; {bf:`netname'} is still declared two-mode but one level is empty)"
+			di "{txt}{p 0 0 2}(note: all nodes of one mode were dropped; {bf:`netname'} is still declared two-mode but one level is empty){p_end}"
 		}
 	}
 

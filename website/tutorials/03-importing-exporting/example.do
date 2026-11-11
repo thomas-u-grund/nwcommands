@@ -2,7 +2,7 @@
 * Run from a directory with nwcommands net-installed (not a dev checkout).
 
 * Import a plain edgelist straight from a URL - no local download needed
-nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)
+nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)
 nwsummarize
 
 * Export to Pajek and UCINET formats

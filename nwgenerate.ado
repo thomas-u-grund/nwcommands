@@ -27,7 +27,7 @@ program nwgenerate
 		// Error-code coherence pass: consolidated onto `errNWsExists'
 		// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 		// history of this convention's drift onto an undocumented `6099'.
-		di "{err}Network {bf:`newnetname'} already exists. Change {it:netname} or specify option {bf:replace}.{txt}"
+		di "{err}{p 0 0 2}Network {bf:`newnetname'} already exists. Change {it:netname} or specify option {bf:replace}.{txt}{p_end}"
 		error `errNWsExists'
 	}
 	else {
@@ -194,7 +194,7 @@ program nwgenerate
 		// misrepresent what nwpath actually found, worse than a clear
 		// error pointing at the real command.
 		qui if "`whichjob'" == "path(" {
-			noi di "{err}nwgen's path() shortcut is not currently implemented - nwpath can produce zero, one, or several output networks (one per shortest path found), which does not fit nwgen's own single-network-per-call form; use {help nwpath} directly (its own generate() option names one network per path found)."
+			noi di "{err}{p 0 0 2}nwgen's path() shortcut is not currently implemented - nwpath can produce zero, one, or several output networks (one per shortest path found), which does not fit nwgen's own single-network-per-call form; use {help nwpath} directly (its own generate() option names one network per path found).{p_end}"
 			error 199
 		}
 		// nwpermute shortcut
@@ -408,15 +408,15 @@ program nwgenerate
 			}
 		}
 		qui if "`whichjob'" == "addnodes(" {
-			noi di "{err}nwgen's addnodes() shortcut is not currently implemented (it does not naturally reduce to a single per-node variable - nwaddnodes mutates a network's own node set); use {help nwaddnodes} directly."
+			noi di "{err}{p 0 0 2}nwgen's addnodes() shortcut is not currently implemented (it does not naturally reduce to a single per-node variable - nwaddnodes mutates a network's own node set); use {help nwaddnodes} directly.{p_end}"
 			error 199
 		}
 		qui if "`whichjob'" == "collapse(" {
-			noi di "{err}nwgen's collapse() shortcut is not currently implemented; use {help nwcollapse} directly."
+			noi di "{err}{p 0 0 2}nwgen's collapse() shortcut is not currently implemented; use {help nwcollapse} directly.{p_end}"
 			error 199
 		}
 		qui if "`whichjob'" == "subset(" {
-			noi di "{err}nwgen's subset() shortcut is not currently implemented (it produces a new NETWORK, not a variable, so it does not fit nwgen's VAR = fcn(netname) form); use {help nwsubset} directly."
+			noi di "{err}{p 0 0 2}nwgen's subset() shortcut is not currently implemented (it produces a new NETWORK, not a variable, so it does not fit nwgen's VAR = fcn(netname) form); use {help nwsubset} directly.{p_end}"
 			error 199
 		}
 

@@ -72,7 +72,7 @@ program nwpagerank, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
 		di "{txt}  Damping: {res}`damping'"
-		if `__wtd' di "{txt}  (valued network: ties followed in proportion to their values; {bf:binary} ignores the values)"
+		if `__wtd' di "{txt}{p 2 2 2}(valued network: ties followed in proportion to their values; {bf:binary} ignores the values){p_end}"
 		di "{hline 40}"
 		summarize `generate'
 	}

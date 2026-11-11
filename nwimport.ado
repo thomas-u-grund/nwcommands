@@ -368,7 +368,12 @@ program _nwimport_pajek
 	
 		unw_defs
 		nwload, labelonly
-		qui merge m:n `nw_nodename' using `dict', nogenerate
+		// the vertex dictionary exists only when the file has vertex lines ("*Vertices 3" followed directly by
+		// "*Arcs" is valid Pajek; the nodes are then numbered, labels n1, n2, ... as from nwfromedge)
+		capture confirm file `"`dict'"'
+		if _rc == 0 {
+			qui merge m:n `nw_nodename' using `dict', nogenerate
+		}
 		if "`n1'" != "" {
 			_nwimport_apply2mode `name', n(`size') n1(`n1') labs(`labs') desc1(`"`__lv1'"') desc2(`"`__lv2'"')
 		}
@@ -380,7 +385,7 @@ program _nwimport_apply2mode
 	// declare the network a two-mode network after the import: the mode of every node comes either from the
 	// comma separated list modes() (parallel to labs()) or from n/n1 (the first n1 of n vertices form the first
 	// mode); a tie between two nodes of the same mode makes the file invalid
-	syntax [anything(name=netname)], LABS(string) [MODES(string) N(integer 0) N1(integer 0) DESC1(string) DESC2(string)]
+	syntax [anything(name=netname)] [, LABS(string) MODES(string) N(integer 0) N1(integer 0) DESC1(string) DESC2(string)]
 	unw_defs
 	_nwsyntax `netname', max(1)
 	tempname lab md
@@ -388,7 +393,8 @@ program _nwimport_apply2mode
 		mata: `lab' = tokens(`"`labs'"', ","); `lab' = select(`lab', `lab' :!= ",")
 	}
 	else {
-		mata: `lab' = strofreal(1::`n')'
+		// a Pajek file without vertex lines: the nodes are n1, n2, ... (nwfromedge's labels for numeric ids)
+		mata: `lab' = "n" :+ strofreal(1::`n')'
 	}
 	if "`modes'" != "" {
 		mata: `md' = tokens("`modes'", ","); `md' = select(`md', `md' :!= ",")
@@ -399,7 +405,7 @@ program _nwimport_apply2mode
 	mata: st_local("__ok", strofreal(cols(`lab') == cols(`md')))
 	if !`__ok' {
 		mata: mata drop `lab' `md'
-		di "{txt}(note: the file does not give a mode for every node; {bf:`netname'} is not declared two-mode)"
+		di "{txt}{p 0 0 2}(note: the file does not give a mode for every node; {bf:`netname'} is not declared two-mode){p_end}"
 		exit
 	}
 	mata: `netobj'->set_2mode(1)
@@ -408,7 +414,7 @@ program _nwimport_apply2mode
 	mata: st_local("__bad", strofreal(`netobj'->count_samemode_ties()))
 	if `__bad' > 0 {
 		mata: `netobj'->set_2mode(0)
-		di "{err}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode."
+		di "{err}{p 0 0 2}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode.{p_end}"
 		error 459
 	}
 	mata: `netobj'->clean_matrix_2mode()

@@ -38,17 +38,17 @@ if "`overwrite'" != "" local replace "replace"
 	// and "these variables are a two-column edgelist" - the two shapes
 	// cannot be told apart from the variable list alone.
 	if "`twomode'" != "" & "`bipartite'" != "" {
-		di "{err}options {bf:twomode} and {bf:bipartite} cannot be combined - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix); use whichever one matches your data."
+		di "{err}{p 0 0 2}options {bf:twomode} and {bf:bipartite} cannot be combined - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix); use whichever one matches your data.{p_end}"
 		error 198
 	}
 	if "`twomode'" != "" {
 		if "`varlist'" == "" {
-			di "{err}option {bf:twomode} requires exactly two (or three, for a valued network) variables: the mode-1 id, the mode-2 id, and optionally a tie value."
+			di "{err}{p 0 0 2}option {bf:twomode} requires exactly two (or three, for a valued network) variables: the mode-1 id, the mode-2 id, and optionally a tie value.{p_end}"
 			error 198
 		}
 		local twomode_nvars : word count `varlist'
 		if `twomode_nvars' < 2 | `twomode_nvars' > 3 {
-			di "{err}option {bf:twomode} requires exactly two (or three, for a valued network) variables; got `twomode_nvars'."
+			di "{err}{p 0 0 2}option {bf:twomode} requires exactly two (or three, for a valued network) variables; got `twomode_nvars'.{p_end}"
 			error 198
 		}
 		if "`name'" == "" {
@@ -57,7 +57,7 @@ if "`overwrite'" != "" local replace "replace"
 
 		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
 		if `ntemporal_opts' > 1 {
-			di "{err}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event)."
+			di "{err}{p 0 0 2}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event).{p_end}"
 			error 198
 		}
 
@@ -230,11 +230,11 @@ if "`overwrite'" != "" local replace "replace"
 	if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
 		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
 		if `ntemporal_opts' > 1 {
-			di "{err}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event)."
+			di "{err}{p 0 0 2}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event).{p_end}"
 			error 198
 		}
 		if "`bipartite'" != "" {
-			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:bipartite} is not supported - {bf:bipartite}'s own wide-affiliation-matrix shape has no per-row time value to attach. Use {bf:twomode} instead (an edgelist shape: mode-1 id, mode-2 id, optional value) - two-mode + temporal composability is supported there."
+			di "{err}{p 0 0 2}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:bipartite} is not supported - {bf:bipartite}'s own wide-affiliation-matrix shape has no per-row time value to attach. Use {bf:twomode} instead (an edgelist shape: mode-1 id, mode-2 id, optional value) - two-mode + temporal composability is supported there.{p_end}"
 			error 198
 		}
 		if "`varlist'" == "" {
@@ -243,7 +243,7 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		local temporal_nvars : word count `varlist'
 		if `temporal_nvars' < 2 | `temporal_nvars' > 3 {
-			di "{err}temporal edgelist declaration requires exactly two (or three, for a valued network) variables; got `temporal_nvars'."
+			di "{err}{p 0 0 2}temporal edgelist declaration requires exactly two (or three, for a valued network) variables; got `temporal_nvars'.{p_end}"
 			error 198
 		}
 		if "`name'" == "" {
@@ -518,11 +518,11 @@ if "`overwrite'" != "" local replace "replace"
 				// `errNWsExists' (483, unw_defs.ado) - see
 				// nwsimmelian.ado's own fix for the history of this
 				// convention's drift onto an undocumented `6099'.
-				di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+				di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
 				error `errNWsExists'
 			}
 			else {
-				di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+				di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
 				local name = r(validname)
 			}
 		}
@@ -590,7 +590,7 @@ if "`overwrite'" != "" local replace "replace"
 			mata: st_numscalar("__nwset_mat_cols", cols(`mat'))
 			if "`bipartite'" == "" {
 				if `=__nwset_mat_rows' != `=__nwset_mat_cols' | `=__nwset_mat_rows' == 0 {
-					di "{err}mat() must be a square, non-empty matrix for a one-mode network (got `=__nwset_mat_rows' x `=__nwset_mat_cols'); use the {bf:bipartite} option for a rectangular affiliation matrix."
+					di "{err}{p 0 0 2}mat() must be a square, non-empty matrix for a one-mode network (got `=__nwset_mat_rows' x `=__nwset_mat_cols'); use the {bf:bipartite} option for a rectangular affiliation matrix.{p_end}"
 					error 198
 				}
 			}
@@ -731,7 +731,7 @@ if "`overwrite'" != "" local replace "replace"
 			mata: st_local("nwsetvarsnodes", strofreal(`netobj'->get_nodes()))
 			local varscount : word count `vars'
 			if `varscount' != `nwsetvarsnodes' {
-				di "{err}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`nwsetvarsnodes'})."
+				di "{err}{p 0 0 2}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`nwsetvarsnodes'}).{p_end}"
 				error 6070
 			}
 			mata: `netobj'->set_nodesvar(tokens("`vars'"))

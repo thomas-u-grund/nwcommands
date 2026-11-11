@@ -56,7 +56,7 @@ program nwaltergen
 		}
 	}
 	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|wmean|sum|min|max|sd|count|diversity)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
-		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|wmean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value)"
+		di as err "{p 0 0 2}syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|wmean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value){p_end}"
 		error 198
 	}
 	else {
@@ -70,7 +70,7 @@ program nwaltergen
 			// along the path?) has no single obviously-correct answer,
 			// unlike the unweighted hop-count case calculate_alterstat_
 			// hop() already handles cleanly - not attempted here.
-			di as err "{err}wmean() is only supported at hop(1) (direct alters) - combining it with hop() > 1 would need a choice of which tie weight represents a multi-hop path, which has no single well-defined answer."
+			di as err "{err}{p 0 0 2}wmean() is only supported at hop(1) (direct alters) - combining it with hop() > 1 would need a choice of which tie weight represents a multi-hop path, which has no single well-defined answer.{p_end}"
 			error 198
 		}
 	}
@@ -92,7 +92,7 @@ program nwaltergen
 	if "`stat'" == "wmean" & "`valued'" == "true" {
 		qui nwsummarize `netname'
 		if r(minval) < 0 {
-			di "{txt}(note: {bf:wmean} on a signed network uses the tie values as weights with their signs; the sum of the weights can be close to zero and the result is then not a mean of the alters' values)"
+			di "{txt}{p 0 0 2}(note: {bf:wmean} on a signed network uses the tie values as weights with their signs; the sum of the weights can be close to zero and the result is then not a mean of the alters' values){p_end}"
 		}
 	}
 	if "`net'" == "" {
@@ -100,7 +100,7 @@ program nwaltergen
 	}
 
 	if _N < `nodes' {
-		di as err "dataset has fewer observations (`=_N') than the network has nodes (`nodes')"
+		di as err "{p 0 0 2}dataset has fewer observations (`=_N') than the network has nodes (`nodes'){p_end}"
 		error 4
 	}
 	// align row i of the data set with node i of the network before the positional

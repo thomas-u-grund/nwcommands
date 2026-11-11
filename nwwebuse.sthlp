@@ -47,7 +47,9 @@ Reset URL to default
 {pstd}
 {cmd:nwwebuse} {it:filename} loads the specified network dataset, obtaining it
 over the web and {help nwset:sets all networks} in this dataset. By default, datasets are obtained from
-{it:https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data}.
+{it:https://nwcommands.org/examples}, a copy of the {cmd:data} folder of the nwcommands repository on GitHub. If
+the website cannot be reached, {cmd:nwwebuse} loads the same file from GitHub
+({it:https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data}).
 
 {pstd}
 Several {help netexample:network datasets} are available from this source. If {it:filename} is specified without a suffix, {cmd:.dta} is assumed.
@@ -61,7 +63,7 @@ for network datasets.
 
 {pstd}
 {cmd:nwwebuse} {cmd:set} without arguments resets the source
-to {it:https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data}.
+to {it:https://nwcommands.org/examples}.
 
 
 {marker option}{...}
@@ -91,11 +93,11 @@ though the current network data have not been saved to disk.
 {phang2}{cmd:. nwwebuse set}
 
 {pstd}Load the {help netexample:Florentine network dataset} that is stored at
-https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data{p_end}
+https://nwcommands.org/examples{p_end}
 {phang2}{cmd:. nwwebuse florentine}
 
 {pstd}Equivalent to above command{p_end}
-{phang2}{cmd:. nwwebuse https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/florentine}{p_end}
+{phang2}{cmd:. nwwebuse https://nwcommands.org/examples/florentine}{p_end}
 
 {title:See also}
 
@@ -104,4 +106,4 @@ https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data{p_end}
 last certified : 23 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

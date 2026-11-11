@@ -167,7 +167,7 @@ program nwreplacemat
 			mata: st_local("__bad2", strofreal(sum((`__bm2' :!= 0) :& ((`__md2' * J(1, rows(`__md2'), 1)) :== (J(rows(`__md2'), 1, 1) * `__md2''))) / 2))
 			mata: mata drop `__md2' `__bm2'
 			if `__bad2' > 0 {
-				di "{err}The matrix has `__bad2' ties between nodes of the same mode; network {bf:`netname'} is two-mode (no tie can join two nodes of one mode)."
+				di "{err}{p 0 0 2}The matrix has `__bad2' ties between nodes of the same mode; network {bf:`netname'} is two-mode (no tie can join two nodes of one mode).{p_end}"
 				error 459
 			}
 		}

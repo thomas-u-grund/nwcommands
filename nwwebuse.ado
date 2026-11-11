@@ -42,20 +42,24 @@ program nwwebuse
 	`nwclear'
 	capture drop _running
 
+	// Default source (since 3.18.1): the copy of data/ that the website deploy serves at nwcommands.org/examples
+	// (short addresses in output such as "Contains data from ..."); GitHub main is the fallback.
+	local default "https://nwcommands.org/examples"
+	local github "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data"
 	local subcommand = word("`anything'",1)
 	local path = "\$nwwebpath"
 	local thispath = "`path'"
 
 	if "`subcommand'" != "set" {
 		if "`thispath'" == "" | "`thispath'" == "\" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data"
+			global nwwebpath = "`default'"
 		}
 	}
 
 	if "`subcommand'" == "set" {
 		local subcmd2 = word("`anything'",2)
 		if  "`subcmd2'" == "" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data"
+			global nwwebpath = "`default'"
 		}
 		else {
 			global nwwebpath = word("`anything'",2)
@@ -72,6 +76,19 @@ program nwwebuse
 	local webname = subinstr("`anything'", ".dta","",99)
 	if substr("`webname'",1,4) == "http" {
 		nwuse `webname', `options'
+	}
+	else if "`thispath'" == "`default'" {
+		// the website can be unreachable (no connection to it, a deploy in progress): check with a 29-byte file
+		// and load the same data set from GitHub if the check fails
+		tempfile probe
+		capture copy "`default'/pajek_example.net" "`probe'"
+		if _rc {
+			di as txt "{p 0 0 2}(nwcommands.org could not be reached; loading the data set from GitHub, which stays the source for this session){p_end}"
+			// switch the source for the session, so that files merged with "$nwwebpath/..." come from the same place
+			global nwwebpath "`github'"
+			nwuse `github'/`webname', `options'
+		}
+		else nwuse `thispath'/`webname', `options'
 	}
 	else {
 		nwuse `thispath'/`webname', `options'

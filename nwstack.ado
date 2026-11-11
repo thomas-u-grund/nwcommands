@@ -32,7 +32,7 @@ program nwstack, rclass
 		local net : word `i' of `netlist'
 		_nwsyntax `net', max(1)
 		if "`directed'" != "`dir0'" {
-			di as err "{bf:`net'} and {bf:`first'} differ in direction; stack directed or undirected networks, not a mix"
+			di as err "{p 0 0 2}{bf:`net'} and {bf:`first'} differ in direction; stack directed or undirected networks, not a mix{p_end}"
 			capture mata: mata drop __nwstack_S
 			error 198
 		}
@@ -50,7 +50,7 @@ program nwstack, rclass
 			quietly set obs `total'
 		}
 		else if _N != `total' {
-			di as err "the data in memory have " _N " observations, the stacked network has `total' nodes; use {bf:group()} with an empty data set or one that already lists the nodes of all networks in the order of {it:netlist}"
+			di as err "{p 0 0 2}the data in memory have " _N " observations, the stacked network has `total' nodes; use {bf:group()} with an empty data set or one that already lists the nodes of all networks in the order of {it:netlist}{p_end}"
 			error 198
 		}
 		quietly generate long `group' = .

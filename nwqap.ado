@@ -161,7 +161,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 				local permok = 1
 			}
 			else if `permattempts' >= 20 {
-				noi di "{err}Permutation `j' produced a degenerate dependent network (no variation) on 20 consecutive draws; aborting."
+				noi di "{err}{p 0 0 2}Permutation `j' produced a degenerate dependent network (no variation) on 20 consecutive draws; aborting.{p_end}"
 				error _rc
 			}
 		}
@@ -196,7 +196,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		capture quietly `type' `formula'
 	}
 	if _rc != 0 {
-		di "{err}The observed-data model could not be fit ({bf:`type' `formula'} failed, error `=_rc') - this can happen with perfect prediction/separation, a fully degenerate dependent network, or a misspecified model. Try {bf:detail} to see the underlying regression command's own error text."
+		di "{err}{p 0 0 2}The observed-data model could not be fit ({bf:`type' `formula'} failed, error `=_rc') - this can happen with perfect prediction/separation, a fully degenerate dependent network, or a misspecified model. Try {bf:detail} to see the underlying regression command's own error text.{p_end}"
 		error _rc
 	}
 	mat __nwqap_reg_results = e(b)
@@ -383,7 +383,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 
 	restore
 	if "`plot'" != "" {
-		di as txt "(plot saved as {bf:`name'}; each panel is one coefficient's histogram of `permutations' QAP-permutation draws, dashed line marks the observed coefficient)"
+		di as txt "{p 0 0 2}(plot saved as {bf:`name'}; each panel is one coefficient's histogram of `permutations' QAP-permutation draws, dashed line marks the observed coefficient){p_end}"
 	}
 
 	// predict(): reshape the dyad-level fitted values captured earlier

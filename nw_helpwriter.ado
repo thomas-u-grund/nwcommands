@@ -19,7 +19,7 @@ program nw_helpwriter
 
 	capture confirm file "`cmd'.sthlp"
 	if _rc {
-		di as error "nw_helpwriter: `cmd'.sthlp not found. Help files are maintained directly now, not generated from `cmd'.ado - create `cmd'.sthlp by hand first, then re-run this to certify it."
+		di as error "{p 0 0 2}nw_helpwriter: `cmd'.sthlp not found. Help files are maintained directly now, not generated from `cmd'.ado - create `cmd'.sthlp by hand first, then re-run this to certify it.{p_end}"
 		exit 601
 	}
 

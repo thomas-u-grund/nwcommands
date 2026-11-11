@@ -13,7 +13,7 @@ program define nwinstall_buildmata, rclass
 	if "`pkgs'" == "core" local pkgs "nwcommands"
 	foreach p of local pkgs {
 		if !`: list p in known' & "`p'" != "all" {
-			di as err "`p': the Mata libraries that can be built are those of nwcommands, nwsaom, nwergm, nwdynam and nwrem."
+			di as err "{p 0 0 2}`p': the Mata libraries that can be built are those of nwcommands, nwsaom, nwergm, nwdynam and nwrem.{p_end}"
 			exit 198
 		}
 	}
@@ -47,7 +47,7 @@ program define nwinstall_buildmata, rclass
 	if `: list posof "nwcommands" in todo' {
 		foreach p of local usescore {
 			if `inst_`p'' & !`: list p in todo' {
-				di as text "Note: {bf:`p'} is installed and was compiled against the core library, so it is rebuilt as well."
+				di as text "{p 0 0 2}Note: {bf:`p'} is installed and was compiled against the core library, so it is rebuilt as well.{p_end}"
 				local todo "`todo' `p'"
 			}
 		}
@@ -61,7 +61,7 @@ program define nwinstall_buildmata, rclass
 
 	// the build clears the data and the Mata objects (not -clear all-: that would drop this program)
 	if c(N) > 0 | c(k) > 0 {
-		di as err "The build clears everything in memory (data and Mata objects, including loaded networks). Save what you need, type {cmd:clear all}, and run it again."
+		di as err "{p 0 0 2}The build clears everything in memory (data and Mata objects, including loaded networks). Save what you need, type {cmd:clear all}, and run it again.{p_end}"
 		exit 4
 	}
 	local base = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund", `"`from'"')
@@ -70,7 +70,7 @@ program define nwinstall_buildmata, rclass
 	if substr("`work'", -1, 1) != "/" local work "`work'/"
 	local work "`work'nwbuildmata_`=string(runiformint(100000, 999999))'"
 	capture mkdir "`work'"
-	di as text "Building with Stata {bf:`c(stata_version)'} (`c(os)'). This clears memory and takes a few minutes."
+	di as text "{p 0 0 2}Building with Stata {bf:`c(stata_version)'} (`c(os)'). This clears memory and takes a few minutes.{p_end}"
 
 	clear
 	mata: mata clear
@@ -96,7 +96,7 @@ program define nwinstall_buildmata, rclass
 	else di as text _n "Build folder kept: `work'"
 	if `rc' exit `rc'
 	return local built "`built'"
-	di as text _n "The new libraries are used from the next Stata session. Restart Stata, then check them with {cmd:nwversion}."
+	di as text _n "{p 0 0 2}The new libraries are used from the next Stata session. Restart Stata, then check them with {cmd:nwversion}.{p_end}"
 end
 
 capture program drop nwinstall_buildmata_tab

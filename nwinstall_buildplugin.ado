@@ -10,7 +10,7 @@ program define nwinstall_buildplugin, rclass
 	if "`pkgs'" == "core" local pkgs "nwcommands"
 	foreach p of local pkgs {
 		if !`: list p in known' {
-			di as err "`p': the plugins that can be built are those of nwcommands, nwsaom, nwergm and nwdynam."
+			di as err "{p 0 0 2}`p': the plugins that can be built are those of nwcommands, nwsaom, nwergm and nwdynam.{p_end}"
 			exit 198
 		}
 	}
@@ -42,7 +42,7 @@ program define nwinstall_buildplugin, rclass
 		local vcvars `"`r(vcvars)'"'
 	}
 	else {
-		di as err "nwinstall, buildplugin builds the plugins on macOS, Linux and Windows; this computer is `os'."
+		di as err "{p 0 0 2}nwinstall, buildplugin builds the plugins on macOS, Linux and Windows; this computer is `os'.{p_end}"
 		exit 198
 	}
 	local base = cond(`"`from'"' == "", "https://raw.githubusercontent.com/thomas-u-grund", `"`from'"')
@@ -67,8 +67,8 @@ program define nwinstall_buildplugin, rclass
 		}
 		if !`ok' {
 			di as err "The tool {bf:`t'} was not found."
-			if "`os'" == "MacOSX" di as err "On macOS install the command line tools of Xcode: type  xcode-select --install  in the Terminal."
-			else di as err "Install a C compiler and make (for example the package build-essential on Debian and Ubuntu)."
+			if "`os'" == "MacOSX" di as err "{p 0 0 2}On macOS install the command line tools of Xcode: type{space 2}xcode-select --install{space 2}in the Terminal.{p_end}"
+			else di as err "{p 0 0 2}Install a C compiler and make (for example the package build-essential on Debian and Ubuntu).{p_end}"
 			nwinstall_buildplugin_rmdir "`work'"
 			exit 601
 		}
@@ -89,7 +89,7 @@ program define nwinstall_buildplugin, rclass
 		foreach f of local fetch {
 			capture copy `"`src'/native/`f'"' `"`bld'/native/`f'"', replace
 			if _rc {
-				di as err "  the file native/`f' cannot be copied from `src' (error " _rc ")."
+				di as err "{p 2 2 2}the file native/`f' cannot be copied from `src' (error " _rc ").{p_end}"
 				di as err "  Check the internet connection, or from() and release()."
 				nwinstall_buildplugin_rmdir "`work'"
 				exit 601
@@ -163,7 +163,7 @@ program define nwinstall_buildplugin, rclass
 	}
 	if "`keep'" == "" nwinstall_buildplugin_rmdir "`work'"
 	else di as text _n "Build folder kept: `work'"
-	di as text _n "The new plugin is used from the next Stata session. Restart Stata, then check it with {cmd:nwversion}."
+	di as text _n "{p 0 0 2}The new plugin is used from the next Stata session. Restart Stata, then check it with {cmd:nwversion}.{p_end}"
 end
 
 // Windows: find Microsoft's C compiler (Build Tools for Visual Studio, or Visual Studio with C++) with vswhere, which every
@@ -201,13 +201,13 @@ program define nwinstall_buildplugin_msvc, rclass
 		}
 	}
 	if `"`vcvars'"' == "" {
-		di as err "Building the plugin on Windows needs Microsoft's free C compiler, which was not found on this computer."
+		di as err "{p 0 0 2}Building the plugin on Windows needs Microsoft's free C compiler, which was not found on this computer.{p_end}"
 		di as err "Install it once (it is free, and needs no Visual Studio licence):"
 		di as err `"  1. Download Build Tools for Visual Studio and run the installer:"'
 		di as err `"     {browse "https://visualstudio.microsoft.com/visual-cpp-build-tools/":https://visualstudio.microsoft.com/visual-cpp-build-tools/}"'
-		di as err `"  2. Tick {bf:Desktop development with C++} and click Install (a download of a few gigabytes)."'
-		di as err `"  3. Then type the same {cmd:nwinstall, buildplugin()} command again; Stata does not need to be restarted."'
-		di as err "If Visual Studio itself is installed, add the workload Desktop development with C++ to it in the Visual Studio Installer."
+		di as err `"{p 2 5 2}2. Tick {bf:Desktop development with C++} and click Install (a download of a few gigabytes).{p_end}"'
+		di as err `"{p 2 5 2}3. Then type the same {cmd:nwinstall, buildplugin()} command again; Stata does not need to be restarted.{p_end}"'
+		di as err "{p 0 0 2}If Visual Studio itself is installed, add the workload Desktop development with C++ to it in the Visual Studio Installer.{p_end}"
 		exit 601
 	}
 	di as text "C compiler: Microsoft C/C++ (" as result `"`vcvars'"' as text ")"

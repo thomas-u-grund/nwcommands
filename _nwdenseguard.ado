@@ -9,9 +9,9 @@ program _nwdenseguard
 	if "`force'" != "" exit
 	local gb = `copies' * 8 * `nodes'^2 / 1e9
 	if `gb' > `nw_max_dense_gb' {
-		display as error "{bf:`command'} holds about `copies' dense `nodes' x `nodes' matrices at once (about `=round(`gb', .1)' GB) and is refused above `nw_max_dense_gb' GB."
+		display as error "{p 0 0 2}{bf:`command'} holds about `copies' dense `nodes' x `nodes' matrices at once (about `=round(`gb', .1)' GB) and is refused above `nw_max_dense_gb' GB.{p_end}"
 		if `"`alternative'"' != "" {
-			display as error "`alternative'"
+			display as error "{p 0 0 2}`alternative'{p_end}"
 		}
 		display as error "Option {bf:force} runs it anyway."
 		exit 484

@@ -122,10 +122,10 @@ program nwcomponents, rclass
 			}
 			else if `lcomp' <= 1000 {
 				noi tab `generate'`k' if `generate'`k' <= 30
-				noi di "{txt}  (first 30 of `lcomp' components shown; use {bf:listall} for the full table)"
+				noi di "{txt}{p 2 2 2}(first 30 of `lcomp' components shown; use {bf:listall} for the full table){p_end}"
 			}
 			else {
-				noi di "{txt}  (the table of the `lcomp' components is not shown; sizes are in r(comp_sizeid))"
+				noi di "{txt}{p 2 2 2}(the table of the `lcomp' components is not shown; sizes are in r(comp_sizeid)){p_end}"
 			}
 			noi di " "
 			noi di " "

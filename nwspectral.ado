@@ -54,14 +54,14 @@ program nwspectral, rclass
 	// matrix not allowed" error); nwspectral had no equivalent guard at
 	// all.
 	if `nodes' < 2 {
-		di "{err}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes."
+		di "{err}{p 0 0 2}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes.{p_end}"
 		error 198
 	}
 
 	// the complete eigendecomposition of the dense Laplacian is O(n^3): 5,000 nodes take about 4 minutes, 10,000 nodes
 	// more than 30 minutes and 3 GB (measured 1,000 nodes 1.5 s, 2,000 14 s, 3,000 50 s)
 	if `nodes' > 6000 & "`force'" == "" {
-		di "{err}nwspectral decomposes the complete dense `nodes' x `nodes' Laplacian completely: about `=round(50*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*4/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+		di "{err}{p 0 0 2}nwspectral decomposes the complete dense `nodes' x `nodes' Laplacian completely: about `=round(50*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*4/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
 		error 484
 	}
 
@@ -79,7 +79,7 @@ program nwspectral, rclass
 	// the complete eigendecomposition of the dense Laplacian is O(n^3)
 	// (measured in Stata/BE: 1,000 nodes 1.5 s, 5,000 nodes about 3 minutes)
 	if "`silent'" == "" & `nodes' > 2000 {
-		di "{txt}(note: nwspectral decomposes the dense `nodes' x `nodes' Laplacian completely and takes minutes above about 4,000 nodes)"
+		di "{txt}{p 0 0 2}(note: nwspectral decomposes the dense `nodes' x `nodes' Laplacian completely and takes minutes above about 4,000 nodes){p_end}"
 	}
 	mata: `__nw_L' = `netobj'->calculate_laplacian(`val')
 	mata: symeigensystem(`__nw_L', `__nw_EC' = ., `__nw_EV' = .)

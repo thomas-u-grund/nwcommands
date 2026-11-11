@@ -72,7 +72,7 @@ program nwload
 		local netname "`__nwl_target'"
 	}
 	if `__nwl_dropped' & "`__nwl_prev'" != "`netname'" {
-		di "{txt}(variables of network {res:`__nwl_prev'} dropped; nwload loads one network at a time)"
+		di "{txt}{p 0 0 2}(variables of network {res:`__nwl_prev'} dropped; nwload loads one network at a time){p_end}"
 	}
 
 	// a variable that is not part of a loaded network but has the name of
@@ -80,9 +80,9 @@ program nwload
 	if "`labelonly'" == "" & "`overwrite'" == "" {
 		mata: _nwload_clash(`netobj'->get_nodesvar())
 		if `__nwl_nclash' > 0 {
-			di "{err}variable `__nwl_first' already defined" _c
-			if `__nwl_nclash' > 1 di "{err} (and `=`__nwl_nclash'-1' more)" _c
-			di "{err}; nwload would overwrite it"
+			local __nwl_more ""
+			if `__nwl_nclash' > 1 local __nwl_more " (and `=`__nwl_nclash'-1' more)"
+			di "{err}{p 0 0 2}variable `__nwl_first' already defined`__nwl_more'; nwload would overwrite it{p_end}"
 			di "{err}    rename it, declare the network with other names ({bf:nwset ..., vars()}),"
 			di "{err}    or specify option {bf:overwrite}"
 			exit 110

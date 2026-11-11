@@ -10,7 +10,7 @@ program nw2degree
 	foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 		if "`is2mode'" != "true" {
-			noi di "{err}nw2degree requires a two-mode network; `netname_temp' is one-mode. See {help nwdegree} instead."
+			noi di "{err}{p 0 0 2}nw2degree requires a two-mode network; `netname_temp' is one-mode. See {help nwdegree} instead.{p_end}"
 			error 198
 		}
 	}
