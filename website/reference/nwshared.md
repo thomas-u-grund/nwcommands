@@ -44,4 +44,4 @@ Binary: yes (only) - shared-tie/exposure counting is a structural property, tie 
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))

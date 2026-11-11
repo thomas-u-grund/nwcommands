@@ -62,4 +62,4 @@ Binary: yes. Directed: yes - automatically detected from the source file unless 
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
