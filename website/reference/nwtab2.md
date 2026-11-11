@@ -55,4 +55,4 @@ More intuitively, the E-I-index simply calculates the number of ties off the dia
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))

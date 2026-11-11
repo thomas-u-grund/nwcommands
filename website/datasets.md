@@ -147,6 +147,18 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
   ```
 - **Used in:** the book *Network Analysis with Stata* (joint models of several groups, `nwsaom` with `groups()`); examples for `nwstack`.
 
+### baerveldt19: all 19 Dutch secondary schools
+- **What:** all 19 schools of the Dutch Social Behavior study that the Siena project distributes (`baerveldt` has 15 of them). In each school, all pupils in the year of the intermediate track (MAVO), surveyed in the third year (1994/95) and again in the fourth: 31 to 91 pupils per school, 990 in all. The pupils could name anyone in their year, so a group is a school year, not a classroom. The file `baerveldt19` holds 57 networks, three for each school *k* (numbered in the order of the Siena file numbers): `school*k*_w1` and `school*k*_w2` (directed: a pupil names another in answer to either of two questions, who helps you when you are depressed and whom do you help; the study calls this tie friendship) and `school*k*_ethn` (whether the parents of two pupils were born in the same country). The plain data set `baerveldt19_pupils` has `school`, `pupil`, `gender` (1 girls, 2 boys), `delinq1` and `delinq2` (self-reported number of 23 minor offenses in the last twelve months, as ln(1+x) rounded to 0 to 4), `siena` (the school's number in the Siena files) and `nact` (log of the number of pupils in the school).
+- **Source and licence:** as for `baerveldt`. Schools 1-7, 9, 11, 12 and 14-18 are the 15 classes of `baerveldt`, unchanged. The ethnicity matrix of Siena school 23 (72 rows for 73 pupils) is padded with a zero row and column.
+- **Load:**
+  ```stata
+  . nwwebuse baerveldt19, nwclear
+  . clear
+  . nwstack school*_w1, name(w1) group(school)
+  . nwstack school*_w2, name(w2)
+  ```
+- **Used in:** the book *Network Analysis with Stata* (Chapter 23, joint models of several groups).
+
 ## Event data
 
 ### socialevolution: phone calls in a dormitory

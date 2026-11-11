@@ -78,4 +78,4 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))

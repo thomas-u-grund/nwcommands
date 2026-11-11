@@ -58,4 +58,4 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))

@@ -45,4 +45,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - appends 
 
 ---
 
-*nwcommands version 3.17.6, 9 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
