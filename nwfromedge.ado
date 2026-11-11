@@ -58,7 +58,7 @@ program nwfromedge
 		capture confirm string variable `tovar'
 		if _rc == 0 {
 			tempvar x
-			gen `x' = strofreal(`fromvar')
+			qui gen `x' = cond(missing(`fromvar'), "", strofreal(`fromvar'))
 			local fromvar `x'
 		}
 	}
@@ -66,7 +66,7 @@ program nwfromedge
 		capture confirm numeric variable `tovar'
 		if _rc == 0 {
 			tempvar x
-			gen `x' = strofreal(`tovar')
+			qui gen `x' = cond(missing(`tovar'), "", strofreal(`tovar'))
 			local tovar `x'
 		}
 	}
@@ -127,7 +127,7 @@ program nwfromedge
 		save `dictionaryString', replace
 		
 		sort `_nodeid'
-		keep if `_nodeid' != `_nodeid'[_n-1]
+		keep if `_nodeid' != `_nodeid'[_n-1] & !missing(`_nodeid')
 		
 		// Node labels travel through Mata, never through a macro: a macro
 		// of 100,000 labels overflows Stata/BE's 264,408-character limit
@@ -207,6 +207,18 @@ program nwfromedge
 	keep `_rawid'
 	egen `_id' = group(`_rawid')
 	collapse (mean) `_rawid', by(`_id')
+	// A missing identifier is not a node. A row with one identifier missing ("Fion" and "", or 5 and .) declares
+	// the other one as a node without a tie from that row (the way to keep isolates in an edge list): the node is
+	// in the dictionary through its stacked value, and the row itself is dropped by the merges below (no match).
+	// Up to 3.18.0 the missing value had its own dictionary entry, the row became a tie with a missing end, and
+	// the stored tie count was one too high (r(3200) in nwtomata for numeric identifiers).
+	drop if missing(`_id')
+	local __fe_nnodes = _N
+	// every identifier missing: nothing to build (a clean error instead of a Mata error further down)
+	if `__fe_nnodes' == 0 {
+		noisily di "{err}no valid (non-missing) node identifiers found in `fromvar'/`tovar' - nothing to build a network from."
+		exit 2000
+	}
 	sort `_rawid'
 
 	// `labprefix' (renamed from `prefix' during harmonisation, to avoid
@@ -253,30 +265,9 @@ program nwfromedge
 	drop _merge
 	replace `tovar' = `_id' 
 	
-	// BUGFIX: if every single row's own ego/alter id was missing, `egen
-	// group()' above (which does NOT assign a group to missing values
-	// unless told to) leaves `_id' missing for that dictionary entry
-	// too, so the merge below still matches (missing-to-missing is a
-	// normal equi-join value here, not dropped by `_merge != 3') and
-	// `fromvar'/`tovar' end up missing for every row rather than being
-	// removed. `sum ... if fromvar != .' then succeeds with rc=0 but
-	// r(N)==0/r(max) missing (confirmed directly - it does NOT itself
-	// raise an error), so `maxNodes' silently became the LITERAL STRING
-	// "." and was later passed as a Mata dimension argument to
-	// get_nodenames_from_string()'s own J() call, crashing with a raw
-	// "argument out of range" (r3300) instead of a clean message.
-	sum `fromvar' if `fromvar' != .
-	if r(N) == 0 {
-		noisily di "{err}no valid (non-missing) node identifiers found in `fromvar'/`tovar' - nothing to build a network from."
-		exit 2000
-	}
-	local maxNodes = r(max)
-	sum `tovar' if `tovar' != .
-	if (r(max) != .) {
-		if ( r(max) > `maxNodes') {
-			local maxNodes = r(max)
-		}
-	}
+	// The number of nodes is the size of the dictionary, not the largest id in a tie: a node from an isolate
+	// row (see above) may have no tie at all.
+	local maxNodes = `__fe_nnodes'
 	
 	capture mata: mata drop __nwvalue
 	capture mata: mata drop __nwego
