@@ -48,7 +48,8 @@ The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled p
   route, 5,450 directed routes, three components) are derived from the OpenFlights airport and route
   databases (route data of about 2014) and stay under their Open Database License (ODbL 1.0), not the GPL-3.
   The 15 Dutch school classes `baerveldt` (45 friendship and ethnicity networks) and `baerveldt_pupils` (gender,
-  delinquency, class size) are from the Dutch Social Behavior study of Baerveldt and colleagues; no licence is stated for
+  delinquency, class size), and all 19 schools of the study in `baerveldt19` and `baerveldt19_pupils`, are from the
+  Dutch Social Behavior study of Baerveldt and colleagues; no licence is stated for
   the data, and they are redistributed with citation of the sources (see `NOTICE.md`).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own

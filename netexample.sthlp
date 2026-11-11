@@ -827,6 +827,39 @@ Sociology 27, 123-151. The data are those of the Dutch Social Behavior study, di
 project. They have no licence statement of their own, so no licence is asserted here: they are facts about friendships
 and self-reported behavior, not covered by the GPL-3 of this package, and are redistributed with citation of the
 sources. The files were converted to the nwcommands format, 15 classes were kept, and {it:nact} was added.
+All 19 schools of the study are in {help netexample##baerveldt19:baerveldt19}.
+
+{hline}
+
+{marker baerveldt19}
+{title:Dutch secondary schools, all 19 (baerveldt19)}
+
+{pstd}
+{bf:Networks:} {it:school1_w1}, {it:school1_w2}, {it:school1_ethn}, {it:school2_w1}, ... {it:school19_ethn} (57 networks){p_end}
+
+{pstd}
+All 19 schools of the Dutch Social Behavior study that the Siena project distributes (the data set
+{help netexample##baerveldt:baerveldt} has 15 of them). In each school, all pupils in the year of the intermediate track
+(MAVO) were surveyed in the third year (1994/95) and again in the fourth: 31 to 91 pupils per school, 990 in all. The
+pupils could name anyone in their year, so a group is a school year, not a classroom. For the first school,
+{it:school1_w1} and {it:school1_w2} are the directed networks at the two waves (a pupil names another in answer to either of
+two questions, who helps you when you are depressed and whom do you help, up to 12 names each; the study calls this tie
+friendship) and {it:school1_ethn} says for each pair of pupils whether their parents were born in the same country. The
+schools are numbered 1 to 19 in the order of the Siena file numbers. Stack them with {helpb nwstack}:
+{cmd:nwstack school*_w1, name(w1) group(school)}. The attributes of the 990 pupils are in the plain data set
+{cmd:baerveldt19_pupils}: {it:school} (1 to 19), {it:pupil} (number within the school), {it:gender} (1 girls, 2 boys),
+{it:delinq1}, {it:delinq2} (the self-reported number of 23 minor offenses in the last twelve months, as ln(1+x) rounded
+to 0 to 4), {it:siena} (the school's number in the Siena files) and {it:nact} (the logarithm of the number of pupils in
+the school). Merge them by {it:school} and {it:pupil}.
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+As for {help netexample##baerveldt:baerveldt}. Schools 1-7, 9, 11, 12 and 14-18 are the 15 classes of {cmd:baerveldt},
+unchanged; schools 8, 10, 13 and 19 are Siena schools 10, 13, 16 and 23. Gender is 1 for girls and 2 for boys (the shares
+by school agree with Snijders and Baerveldt 2003; the Siena file page states the opposite). The ethnicity file of Siena
+school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
 {pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
