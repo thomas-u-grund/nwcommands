@@ -368,7 +368,12 @@ program _nwimport_pajek
 	
 		unw_defs
 		nwload, labelonly
-		qui merge m:n `nw_nodename' using `dict', nogenerate
+		// the vertex dictionary exists only when the file has vertex lines ("*Vertices 3" followed directly by
+		// "*Arcs" is valid Pajek; the nodes are then numbered, labels n1, n2, ... as from nwfromedge)
+		capture confirm file `"`dict'"'
+		if _rc == 0 {
+			qui merge m:n `nw_nodename' using `dict', nogenerate
+		}
 		if "`n1'" != "" {
 			_nwimport_apply2mode `name', n(`size') n1(`n1') labs(`labs') desc1(`"`__lv1'"') desc2(`"`__lv2'"')
 		}
@@ -380,7 +385,7 @@ program _nwimport_apply2mode
 	// declare the network a two-mode network after the import: the mode of every node comes either from the
 	// comma separated list modes() (parallel to labs()) or from n/n1 (the first n1 of n vertices form the first
 	// mode); a tie between two nodes of the same mode makes the file invalid
-	syntax [anything(name=netname)], LABS(string) [MODES(string) N(integer 0) N1(integer 0) DESC1(string) DESC2(string)]
+	syntax [anything(name=netname)] [, LABS(string) MODES(string) N(integer 0) N1(integer 0) DESC1(string) DESC2(string)]
 	unw_defs
 	_nwsyntax `netname', max(1)
 	tempname lab md
@@ -388,7 +393,8 @@ program _nwimport_apply2mode
 		mata: `lab' = tokens(`"`labs'"', ","); `lab' = select(`lab', `lab' :!= ",")
 	}
 	else {
-		mata: `lab' = strofreal(1::`n')'
+		// a Pajek file without vertex lines: the nodes are n1, n2, ... (nwfromedge's labels for numeric ids)
+		mata: `lab' = "n" :+ strofreal(1::`n')'
 	}
 	if "`modes'" != "" {
 		mata: `md' = tokens("`modes'", ","); `md' = select(`md', `md' :!= ",")
