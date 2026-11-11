@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 11 November 2026: nwergm 1.5.10, nwsaom 1.5.15, nwrem 1.0.11 and nwdynam 1.2.3
+
+**nwergm 1.5.10** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.10)), **nwsaom 1.5.15** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.15)), **nwrem 1.0.11** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.11)) and **nwdynam 1.2.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.3)). Long notes, warnings and error messages wrap between words instead of being cut in the middle of a word. Results do not change.
+
 ## 11 November 2026: nwcommands 3.19.0
 
 **nwcommands 3.19.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.19.0)). The example data sets now come from [nwcommands.org/examples](https://nwcommands.org/examples/) (GitHub stays the fallback), so their addresses in the output are short. Two fixes: a row with a missing receiver in an edge list now keeps that person as a node without ties (an isolate), with the right number of ties; and `nwimport` reads Pajek files without vertex lines. Long notes and messages wrap between words instead of being cut in the middle of a word. Results do not change.
