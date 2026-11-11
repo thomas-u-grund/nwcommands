@@ -83,7 +83,9 @@ program nwwebuse
 		tempfile probe
 		capture copy "`default'/pajek_example.net" "`probe'"
 		if _rc {
-			di as txt "{p 0 0 2}(nwcommands.org could not be reached; loading the data set from GitHub){p_end}"
+			di as txt "{p 0 0 2}(nwcommands.org could not be reached; loading the data set from GitHub, which stays the source for this session){p_end}"
+			// switch the source for the session, so that files merged with "$nwwebpath/..." come from the same place
+			global nwwebpath "`github'"
 			nwuse `github'/`webname', `options'
 		}
 		else nwuse `thispath'/`webname', `options'
