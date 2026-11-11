@@ -46,10 +46,10 @@ program nwuse
 			if `have_existing' {
 				use `existing'
 			}
-			di "{err}could not load {bf:`basename'} as either a saved network ({bf:.nwdta}) or a plain dataset ({bf:.dta})"
+			di "{err}{p 0 0 2}could not load {bf:`basename'} as either a saved network ({bf:.nwdta}) or a plain dataset ({bf:.dta}){p_end}"
 			error 601
 		}
-		di "{txt}(plain Stata dataset loaded - not a saved {help nwsave:network} file; build a network from it directly, e.g. with {help nwfromedge} or {help nwgenerate})"
+		di "{txt}{p 0 0 2}(plain Stata dataset loaded - not a saved {help nwsave:network} file; build a network from it directly, e.g. with {help nwfromedge} or {help nwgenerate}){p_end}"
 		exit
 	}
 

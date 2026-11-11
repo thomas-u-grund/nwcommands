@@ -8,7 +8,7 @@ program nwmotifs, rclass
 	// bipartite graph read as a one-mode graph (the result of earlier versions).  nw2motifs is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
 		if "`plot'" != "" | "`name'" != "" {
-			di "{err}Options {bf:plot} and {bf:name()} have no two-mode form; {bf:onemode} gives the one-mode census of the bipartite graph."
+			di "{err}{p 0 0 2}Options {bf:plot} and {bf:name()} have no two-mode form; {bf:onemode} gives the one-mode census of the bipartite graph.{p_end}"
 			error 198
 		}
 		_nwmotifs_two `netname', `sixnode' generate(`generate') `replace' matrix(`matrix') `normalise' posnorm(`posnorm') `silent'
@@ -17,7 +17,7 @@ program nwmotifs, rclass
 		exit
 	}
 	if "`sixnode'`generate'`replace'`matrix'`normalise'`posnorm'" != "" {
-		di "{err}Options {bf:sixnode}, {bf:generate()}, {bf:matrix()}, {bf:normalise} and {bf:posnorm()} belong to the two-mode form and need a two-mode network (and are not used with {bf:onemode}); see {help nw2motifs}."
+		di "{err}{p 0 0 2}Options {bf:sixnode}, {bf:generate()}, {bf:matrix()}, {bf:normalise} and {bf:posnorm()} belong to the two-mode form and need a two-mode network (and are not used with {bf:onemode}); see {help nw2motifs}.{p_end}"
 		error 198
 	}
 	local __vnquiet = cond("`silent'" != "", "quiet", "")
@@ -152,13 +152,13 @@ program _nwmotifs_two, rclass
 		error 198
 	}
 	if "`posnorm'" != "none" & "`generate'`matrix'" == "" {
-		di "{err}posnorm() needs generate() or matrix(): it normalises the node position counts."
+		di "{err}{p 0 0 2}posnorm() needs generate() or matrix(): it normalises the node position counts.{p_end}"
 		error 198
 	}
 	if "`generate'" != "" {
 		capture confirm names `generate'1
 		if _rc {
-			di "{err}generate() must be a valid variable name stub (the variables are {it:stub}1, {it:stub}2, ...)."
+			di "{err}{p 0 0 2}generate() must be a valid variable name stub (the variables are {it:stub}1, {it:stub}2, ...).{p_end}"
 			error 198
 		}
 		if length("`generate'") > 28 {
@@ -182,7 +182,7 @@ program _nwmotifs_two, rclass
 			error 198
 		}
 		if `nodes' > c(max_matdim) {
-			di "{err}matrix(): the network has `nodes' nodes and Stata matrices are limited to " c(max_matdim) " rows; use {bf:generate()} for the node position counts."
+			di "{err}{p 0 0 2}matrix(): the network has `nodes' nodes and Stata matrices are limited to " c(max_matdim) " rows; use {bf:generate()} for the node position counts.{p_end}"
 			error 908
 		}
 	}
@@ -199,11 +199,11 @@ program _nwmotifs_two, rclass
 		local rc = scalar(__nw2m_rc)
 		scalar drop __nw2m_rc
 		if `rc' == 1 {
-			di "{err}{bf:nw2motifs} runs in the native plugin of nwcommands and the plugin of this installation is older than the command (or there is no plugin for this platform)."
-			di "{err}Update the installation: {bf:net install nwcommands, from(https://nwcommands.org/net/) replace} (or, if that address is not reachable: {bf:net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/) replace}) and restart Stata."
+			di "{err}{p 0 0 2}{bf:nw2motifs} runs in the native plugin of nwcommands and the plugin of this installation is older than the command (or there is no plugin for this platform).{p_end}"
+			di "{err}{p 0 0 2}Update the installation: {bf:net install nwcommands, from(https://nwcommands.org/net/) replace} (or, if that address is not reachable: {bf:net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/) replace}) and restart Stata.{p_end}"
 			exit 198
 		}
-		di "{err}nw2motifs: the native plugin ran out of memory or returned an unexpected result."
+		di "{err}{p 0 0 2}nw2motifs: the native plugin ran out of memory or returned an unexpected result.{p_end}"
 		exit 198
 	}
 	scalar drop __nw2m_rc
@@ -235,7 +235,7 @@ program _nwmotifs_two, rclass
 	}
 
 	if "`silent'" == "" {
-		di "{txt}Bipartite motifs of {res}`netname'{txt}: `=cond(`six', "2 to 6", "2 to 5")' nodes; rows = mode 1 (`n1' nodes), columns = mode 2 (`n2' nodes)"
+		di "{txt}{p 0 0 2}Bipartite motifs of {res}`netname'{txt}: `=cond(`six', "2 to 6", "2 to 5")' nodes; rows = mode 1 (`n1' nodes), columns = mode 2 (`n2' nodes){p_end}"
 		if "`normalise'" == "" {
 			di "{hline 42}"
 			di "{txt}{ralign 6:motif}{ralign 7:nodes}{ralign 9:r x c}{ralign 20:frequency}"
@@ -266,7 +266,7 @@ program _nwmotifs_two, rclass
 			}
 			di "{hline 88}"
 		}
-		if "`generate'" != "" di "{txt}Node position counts stored in {bf:`generate'1} to {bf:`generate'`P'} (position ids of bmotif), nodes in network order."
+		if "`generate'" != "" di "{txt}{p 0 0 2}Node position counts stored in {bf:`generate'1} to {bf:`generate'`P'} (position ids of bmotif), nodes in network order.{p_end}"
 	}
 
 	return matrix motifs = `mot'

@@ -57,7 +57,7 @@ program nwrandomwalk, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
 		di "{txt}  Target: {res}`target'"
-		if `__wtd' di "{txt}  (valued network: steps in proportion to the tie values; {bf:binary} ignores the values)"
+		if `__wtd' di "{txt}{p 2 2 2}(valued network: steps in proportion to the tie values; {bf:binary} ignores the values){p_end}"
 		di "{hline 40}"
 		summarize `generate'
 	}

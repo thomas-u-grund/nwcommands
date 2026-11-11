@@ -18,7 +18,7 @@ program nw2project, rclass
 	_nwsyntax `netname'
 
 	if "`is2mode'" != "true" {
-		di "{err}Network {bf:`netname'} is not a two-mode network; nw2project requires a two-mode network (see {help nw2set})."
+		di "{err}{p 0 0 2}Network {bf:`netname'} is not a two-mode network; nw2project requires a two-mode network (see {help nw2set}).{p_end}"
 		error 198
 	}
 
@@ -38,7 +38,7 @@ program nw2project, rclass
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
-			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+			di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
 			local name = r(validname)
 		}
 		else {

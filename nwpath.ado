@@ -84,7 +84,7 @@ program nwpath
 	// check if ego or alter does not exit
 	capture qui nwvalue `netname', ego("`ego'") alter("`alter'")
 	if _rc != 0 {
-		di "{err}Node {bf:`ego'} or {bf:`alter'} does not exist in network {it:`netname'}; check spelling"
+		di "{err}{p 0 0 2}Node {bf:`ego'} or {bf:`alter'} does not exist in network {it:`netname'}; check spelling{p_end}"
 		error 99
 	}
 	local egoid `r(ego_id)'

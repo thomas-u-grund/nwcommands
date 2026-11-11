@@ -80,7 +80,7 @@ program nwplot, rclass
 	// variables (see the merge right after the nodexy() block below), so
 	// it has nothing to merge into without nodexy() also being given.
 	if "`importcoords'" != "" & "`nodexy'" == "" {
-		di "{err}Option {bf:importcoords()} requires {bf:nodexy(xvar yvar)} - it merges the imported x/y coordinates into those variables before they are read as the plot's layout."
+		di "{err}{p 0 0 2}Option {bf:importcoords()} requires {bf:nodexy(xvar yvar)} - it merges the imported x/y coordinates into those variables before they are read as the plot's layout.{p_end}"
 		error 198
 	}
 
@@ -164,12 +164,12 @@ program nwplot, rclass
 		preserve
 		import delimited "`importcoords'", clear varnames(1) case(preserve)
 		if _N != `nodes' {
-			di "{err}importcoords() file `importcoords' has `=_N' rows but network `netname' has `nodes' nodes; re-export from the interactive view, or check if/in - importcoords() must be run against a network of the same size as the interactive export it came from."
+			di "{err}{p 0 0 2}importcoords() file `importcoords' has `=_N' rows but network `netname' has `nodes' nodes; re-export from the interactive view, or check if/in - importcoords() must be run against a network of the same size as the interactive export it came from.{p_end}"
 			error 6056
 		}
 		capture assert node_row == _n
 		if _rc {
-			di "{err}importcoords() file `importcoords' is not in row order (node_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
+			di "{err}{p 0 0 2}importcoords() file `importcoords' is not in row order (node_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file.{p_end}"
 			error 6056
 		}
 		// color_group/shape_group columns are exported for possible future
@@ -294,17 +294,17 @@ program nwplot, rclass
 	// Check matsize (because mds requires STATA matrix)
 	if (c(matsize) <`nodes'& "`layout'" == "mds") {
 		if "`c(flavor)'" == "Small" {
-			di "{err}STATA Small can only use {it:layout(mds)} with networks with max. {bf:100} nodes; {it:layout(circle)} selected instead."
+			di "{err}{p 0 0 2}STATA Small can only use {it:layout(mds)} with networks with max. {bf:100} nodes; {it:layout(circle)} selected instead.{p_end}"
 			local layout = "circle"
 		}
 		else {
 			if (c(SE) == 0 & c(MP) == 0 & `nodes' > 800){
-				di "{err}STATA/IC can only use {it:layout(mds)} with networks with max. {bf:800} nodes; {it:layout(circle)} selected instead."
+				di "{err}{p 0 0 2}STATA/IC can only use {it:layout(mds)} with networks with max. {bf:800} nodes; {it:layout(circle)} selected instead.{p_end}"
 				local layout = "circle"
 			}
 			else{ 
 				if (`nodes' > 11000) {
-					di "{err}Unfortunately, STATA can only use {it:layout(mds)} with networks with max. {bf:1100} nodes; {it:layout(circle)} selected instead."
+					di "{err}{p 0 0 2}Unfortunately, STATA can only use {it:layout(mds)} with networks with max. {bf:1100} nodes; {it:layout(circle)} selected instead.{p_end}"
 					local layout = "circle"
 				}
 				else {
@@ -746,7 +746,7 @@ program nwplot, rclass
 		local siznodes `othernodes'
 		
 		if "`labs'" != "`otherlabs'" & "`force'" == ""{
-			di "{err}{it:network} {bf:`edgesize'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}"
+			di "{err}{p 0 0 2}{it:network} {bf:`edgesize'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}{p_end}"
 			error 6056
 		}
 		
@@ -808,7 +808,7 @@ program nwplot, rclass
 		local siznodes = `othernodes'
 		
 		if "`labs'" != "`otherlabs'" & "`force'" == ""{
-			di "{err}{it:network} {bf:`edgecolor'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}"
+			di "{err}{p 0 0 2}{it:network} {bf:`edgecolor'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}{p_end}"
 			error 6056
 		}
 		
@@ -1040,7 +1040,7 @@ program nwplot, rclass
 
 	if ("`layout'"=="bipartite" & `nodes' > 1){
 		if "`is2mode'" != "true" {
-			di "{err}Option {bf:layout(bipartite)} requires a two-mode network; network `netname' is not two-mode."
+			di "{err}{p 0 0 2}Option {bf:layout(bipartite)} requires a two-mode network; network `netname' is not two-mode.{p_end}"
 			error 198
 		}
 		mata: __nwplot_Mdir2 = __nwplot_plotmat
@@ -1328,13 +1328,13 @@ program nwplot, rclass
 			mata: st_local("_nwedit_expect", strofreal(sum(NumElist(__nwplot_plotmat)[.,1] :<= NumElist(__nwplot_plotmat)[.,2])))
 		}
 		if _N != `_nwedit_ties' & _N != `_nwedit_expect' {
-			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
+			di "{err}{p 0 0 2}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from.{p_end}"
 			error 6056
 		}
 		local _nwedit_edgehalf = (_N != `_nwedit_ties')
 		capture assert edge_row == _n
 		if _rc {
-			di "{err}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
+			di "{err}{p 0 0 2}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file.{p_end}"
 			error 6056
 		}
 		mata: _nwedit_edgecolor = st_sdata(., "color")
@@ -1425,12 +1425,12 @@ program nwplot, rclass
 		local _nwedit_vendorjs = "`_nwedit_pkgdir'/lib/vendor/cytoscape.min.js"
 		capture confirm file "`_nwedit_template'"
 		if _rc {
-			di "{err}nwedit_template.html not found at `_nwedit_template'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}."
+			di "{err}{p 0 0 2}nwedit_template.html not found at `_nwedit_template'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}.{p_end}"
 			error 601
 		}
 		capture confirm file "`_nwedit_vendorjs'"
 		if _rc {
-			di "{err}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}."
+			di "{err}{p 0 0 2}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}.{p_end}"
 			error 601
 		}
 
@@ -2079,7 +2079,7 @@ program nwplot, rclass
 		// on an older Stata that silently accepts the option but
 		// produces a broken/incomplete file, worse: fail silently).
 		if substr(lower("`export'"), -4, .) == ".svg" & c(stata_version) < 16 {
-			di "{err}SVG export requires Stata 16 or later (this is Stata `c(stata_version)'). Export to a different format (png/pdf/eps/...), or upgrade Stata."
+			di "{err}{p 0 0 2}SVG export requires Stata 16 or later (this is Stata `c(stata_version)'). Export to a different format (png/pdf/eps/...), or upgrade Stata.{p_end}"
 			error 9
 		}
 		di "{text:Exporting graph to `export'...}"

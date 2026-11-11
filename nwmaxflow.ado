@@ -67,7 +67,7 @@ program nwmaxflow, rclass
 	di "{txt}  Max flow: {res}`=__nwmaxflow_value'{txt}   Min-cut edges: {res}`=__nwmaxflow_cutedges'"
 	di "{hline 40}"
 	if "`generate'" != "" {
-		di "{txt}(`generate' == 1 marks the source side of the minimum cut; every existing tie from a 1 to a 0 is a cut edge)"
+		di "{txt}{p 0 0 2}(`generate' == 1 marks the source side of the minimum cut; every existing tie from a 1 to a 0 is a cut edge){p_end}"
 	}
 	scalar drop __nwmaxflow_value __nwmaxflow_cutedges
 end

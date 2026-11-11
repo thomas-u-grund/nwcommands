@@ -19,8 +19,8 @@ program nwburt, rclass
 	}
 	local __weighted = ("`valued'" == "true" & "`binary'" == "")
 	if `__weighted' & ("`dyadredundancy'" != "" | "`dyadconstraint'" != "") {
-		di "{err}The network is valued: dyadredundancy and dyadconstraint are defined for ties that are present or absent."
-		di "{err}Add the option {bf:binary} (every positive value counts as a tie) or dichotomize the network first."
+		di "{err}{p 0 0 2}The network is valued: dyadredundancy and dyadconstraint are defined for ties that are present or absent.{p_end}"
+		di "{err}{p 0 0 2}Add the option {bf:binary} (every positive value counts as a tie) or dichotomize the network first.{p_end}"
 		err 198
 	}
 
@@ -57,7 +57,7 @@ program nwburt, rclass
 			mata: `__burt' = nw_fastburtw(`netobj')
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
 			if !`__fast' {
-				di "{err}Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the {bf:binary} option for the unweighted measures"
+				di "{err}{p 0 0 2}Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the {bf:binary} option for the unweighted measures{p_end}"
 				err 198
 			}
 		}
@@ -65,7 +65,7 @@ program nwburt, rclass
 			mata: `__burt' = nw_fastburt(`netobj', `__kind')
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
 			if !`__fast' & `__kind' == 1 {
-				di "{err}The {bf:binary} option for a valued network needs the native plugin of nwcommands >= 3.6.0"
+				di "{err}{p 0 0 2}The {bf:binary} option for a valued network needs the native plugin of nwcommands >= 3.6.0{p_end}"
 				err 198
 			}
 			if !`__fast' {
@@ -145,7 +145,7 @@ program nwburt, rclass
 		di "{txt}  Network name: {res}`netname'"
 		di "{hline 40}"
 		di "{txt}    Burt structural hole measures"
-		if `__weighted' di "{txt}    (valued ties: Burt's weighted measures; both directions of a directed tie count)"
+		if `__weighted' di "{txt}{p 4 4 2}(valued ties: Burt's weighted measures; both directions of a directed tie count){p_end}"
 		sum _effsize _efficiency _constraint _hierarchy
 	}
 	// Drive-by fix (found while writing this command's own Examples

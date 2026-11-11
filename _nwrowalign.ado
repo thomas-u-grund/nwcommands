@@ -25,7 +25,7 @@ program _nwrowalign
 		_nwsyntax `net', max(1) other(ra`i')
 		mata: st_local("__same", strofreal(nw_same_nodeorder(`ra0netobj', `ra`i'netobj')))
 		if `__same' != 1 {
-			di "{err}networks {bf:`first'} and {bf:`net'} do not list the same nodes in the same order; declare them with the same node labels in the same order."
+			di "{err}{p 0 0 2}networks {bf:`first'} and {bf:`net'} do not list the same nodes in the same order; declare them with the same node labels in the same order.{p_end}"
 			error 198
 		}
 	}
@@ -34,7 +34,7 @@ program _nwrowalign
 		qui _nwdatasync `first'
 		mata: st_local("__al", strofreal(nw_rows_aligned(`ra0netobj', "`nw_nodename'")))
 		if `__al' != 1 {
-			di "{err}the rows of the data are not in the node order of network {bf:`first'} (variable {bf:`nw_nodename'}), so node attributes cannot be matched to its nodes; see {help _nwdatasync}."
+			di "{err}{p 0 0 2}the rows of the data are not in the node order of network {bf:`first'} (variable {bf:`nw_nodename'}), so node attributes cannot be matched to its nodes; see {help _nwdatasync}.{p_end}"
 			error 459
 		}
 		di "{txt}(data sorted into the node order of network {res}`first'{txt})"

@@ -45,7 +45,7 @@ program def nwhomophily
 	// the dyad weights are drawn for all n*n dyads (nwdyadprob, density()), which nwtoedge refuses above 50,000,000
 	// rows (7,071 nodes): say so now, not after building several n x n matrices
 	if `nodes' * `nodes' > 5e7 {
-		di "{err}nwhomophily weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself."
+		di "{err}{p 0 0 2}nwhomophily weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself.{p_end}"
 		error 484
 	}
 

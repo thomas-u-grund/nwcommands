@@ -48,7 +48,7 @@ program nwmovie
 	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer {
 		capture confirm file "``_nwmv_f''"
 		if _rc {
-			di as error "required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all"
+			di as error "{p 0 0 2}required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all{p_end}"
 			error 601
 		}
 	}
@@ -100,7 +100,7 @@ program nwmovie
 	if "`mode'" == "" {
 		capture _nwsyntax `netname', max(999) min(2)
 		if _rc != 0 {
-			di as error "nwmovie requires either ONE event-type temporal network (built via {help nwset}'s {bf:eventtime()} option) or AT LEAST 2 panel networks of the same size, in sequence."
+			di as error "{p 0 0 2}nwmovie requires either ONE event-type temporal network (built via {help nwset}'s {bf:eventtime()} option) or AT LEAST 2 panel networks of the same size, in sequence.{p_end}"
 			error 198
 		}
 		local mode "panel"
@@ -111,7 +111,7 @@ program nwmovie
 				local sizecheck = `othernodes'
 			}
 			else if `sizecheck' != `othernodes' {
-				di as error "nwmovie's panel networks must all have the same number of nodes; `_nwmv_onenet' has `othernodes', expected `sizecheck'."
+				di as error "{p 0 0 2}nwmovie's panel networks must all have the same number of nodes; `_nwmv_onenet' has `othernodes', expected `sizecheck'.{p_end}"
 				error `errNWsSizeMismatch'
 			}
 		}
@@ -173,12 +173,12 @@ program nwmovie
 				error 198
 			}
 			if "`mode'" != "panel" {
-				di as error "{bf:`_nwmv_po'()} (one variable per wave) is panel-mode only; use {bf:`_nwmv_so'()} in event mode."
+				di as error "{p 0 0 2}{bf:`_nwmv_po'()} (one variable per wave) is panel-mode only; use {bf:`_nwmv_so'()} in event mode.{p_end}"
 				error 198
 			}
 			local _nwmv_pocount : word count ``_nwmv_po''
 			if `_nwmv_pocount' != `nwords' {
-				di as error "{bf:`_nwmv_po'()} must list exactly `nwords' variable(s), one per network, in the same order as `netname'."
+				di as error "{p 0 0 2}{bf:`_nwmv_po'()} must list exactly `nwords' variable(s), one per network, in the same order as `netname'.{p_end}"
 				error 198
 			}
 			local _nwmv_list_`_nwmv_po' "``_nwmv_po''"
@@ -219,7 +219,7 @@ program nwmovie
 			mata: _nwmv_labelvec = tokens(`"`titles'"')
 			mata: st_local("_nwmv_titlecount", strofreal(cols(_nwmv_labelvec)))
 			if `_nwmv_titlecount' != `_nwmv_k' {
-				di as error "titles() must list exactly `_nwmv_k' double-quoted title(s), one per network, in the same order as `netname'."
+				di as error "{p 0 0 2}titles() must list exactly `_nwmv_k' double-quoted title(s), one per network, in the same order as `netname'.{p_end}"
 				error 198
 			}
 		}
@@ -494,7 +494,7 @@ program _nwmovie_export
 	capture erase "`_tmpout'"
 	capture erase "`_tmpout'.error"
 	_nwopenviewer "`htmlpath'", output(`_tmpout')
-	di "{txt}Exporting the movie to {bf:`export'} (the viewer window closes when it is done)..."
+	di "{txt}{p 0 0 2}Exporting the movie to {bf:`export'} (the viewer window closes when it is done)...{p_end}"
 	local _waited = 0
 	local _done = 0
 	while !`_done' & `_waited' < `timeout' * 1000 {
@@ -512,7 +512,7 @@ program _nwmovie_export
 		exit 498
 	}
 	if `_done' == 0 {
-		di as error "nwmovie: no file after `timeout' seconds; the viewer may still be encoding (raise timeout()) or was closed"
+		di as error "{p 0 0 2}nwmovie: no file after `timeout' seconds; the viewer may still be encoding (raise timeout()) or was closed{p_end}"
 		exit 498
 	}
 	// the viewer writes the file atomically, but give it a moment to close

@@ -6,7 +6,7 @@ program nwkcomponents, rclass
 	set more off
 
 	if `k' < 1 {
-		di "{err}k() must be at least 1; k(1) is exactly a connected component - use {help nwcomponents} for that case."
+		di "{err}{p 0 0 2}k() must be at least 1; k(1) is exactly a connected component - use {help nwcomponents} for that case.{p_end}"
 		error 198
 	}
 

@@ -65,7 +65,7 @@ program nwdegree
 			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
 			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
 			if "`ignored_opts'" != "" {
-				noi di "{txt}note: two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'} ({bf:onemode} gives the one-mode computation)"
+				noi di "{txt}{p 0 0 2}note: two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'} ({bf:onemode} gives the one-mode computation){p_end}"
 			}
 			local __fwd ""
 			if "`alpha'" != "" local __fwd "alpha(`alpha')"
@@ -122,7 +122,7 @@ program nwdegree
 			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
 			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
 			if "`ignored_opts'" != "" {
-				noi di "{txt}note: `netname_temp' is a two-mode network: its two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'}"
+				noi di "{txt}{p 0 0 2}note: `netname_temp' is a two-mode network: its two-mode degree is used; the following option(s) have no two-mode form and were ignored:{bf:`ignored_opts'}{p_end}"
 			}
 			local __fwd ""
 			if "`alpha'" != "" local __fwd "alpha(`alpha')"
@@ -222,7 +222,7 @@ program nwdegree
 		if ("`netgenerate'" != "" & "`directed'" == "true") {
 			local __nwdeg_gencount : word count `netgenerate'
 			if (`__nwdeg_gencount' < 2) {
-				noi di "{err}Option {bf:generate()} needs at least 2 names (outdegree, indegree) for a directed network; got `__nwdeg_gencount'."
+				noi di "{err}{p 0 0 2}Option {bf:generate()} needs at least 2 names (outdegree, indegree) for a directed network; got `__nwdeg_gencount'.{p_end}"
 				error 198
 			}
 		}
@@ -329,7 +329,7 @@ program nwdegree
 		if "`ties'" != "" {
 			local __tcount : word count `ties'
 			if "`directed'" == "true" & `__tcount' != 2 {
-				noi di "{err}Option {bf:ties()} needs 2 names (outdegree, indegree) for a directed network; got `__tcount'."
+				noi di "{err}{p 0 0 2}Option {bf:ties()} needs 2 names (outdegree, indegree) for a directed network; got `__tcount'.{p_end}"
 				error 198
 			}
 			if "`directed'" != "true" & `__tcount' != 1 {
@@ -428,10 +428,10 @@ program nwdegree
 					noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"
 				}
 				else if `__alpha' == 1 {
-					noi di "{txt}  (valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties)"
+					noi di "{txt}{p 2 2 2}(valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties){p_end}"
 				}
 				else {
-					noi di "{txt}  (valued network: degree is k (s/k)^alpha, alpha = `__alpha', k = number of ties, s = sum of tie values)"
+					noi di "{txt}{p 2 2 2}(valued network: degree is k (s/k)^alpha, alpha = `__alpha', k = number of ties, s = sum of tie values){p_end}"
 				}
 			}
 			if "`isolates'" == "" {
@@ -603,7 +603,7 @@ program _nwdegree_two, rclass
 			if "`raw'" != "" noi di "{txt}  (raw degree: not divided by the size of the other mode)"
 			if "`valued'" == "true" {
 				if `__alpha' == 0 noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"
-				else if `__alpha' == 1 noi di "{txt}  (valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties)"
+				else if `__alpha' == 1 noi di "{txt}{p 2 2 2}(valued network: degree is the strength, the sum of the tie values; {bf:binary} gives the number of ties){p_end}"
 				else noi di "{txt}  (valued network: degree is k (s/k)^alpha, alpha = `__alpha')"
 			}
 			noi sum `netgenerate'`k'

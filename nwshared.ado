@@ -13,7 +13,7 @@ program nwshared
 	// name, keeping `nwreplace' working as a backward-compatible alias.
 	syntax [anything(name=netname)] [, name(string) nwreplace replace undirected]
 	if "`nwreplace'" != "" & "`replace'" != "" {
-		di "{err}Specify only one of {bf:nwreplace} or {bf:replace} (they are the same option) - not both."
+		di "{err}{p 0 0 2}Specify only one of {bf:nwreplace} or {bf:replace} (they are the same option) - not both.{p_end}"
 		error 198
 	}
 	if "`replace'" != "" {
@@ -25,7 +25,7 @@ program nwshared
 	// ties are a property of the symmetric network. Before 3.7.0 the
 	// command ran on a directed network without it and without a message.
 	if "`directed'" == "true" & "`undirected'" == "" {
-		di "{err}Network {bf:`netname'} is directed: {bf:nwshared} needs the option {bf:undirected} (it symmetrizes the network first)."
+		di "{err}{p 0 0 2}Network {bf:`netname'} is directed: {bf:nwshared} needs the option {bf:undirected} (it symmetrizes the network first).{p_end}"
 		error 198
 	}
 	_nwvaluednote `netname'
@@ -47,7 +47,7 @@ program nwshared
 		// Error-code coherence pass: consolidated onto `errNWsExists'
 		// (483, unw_defs.ado) - see nwsimmelian.ado's own identical fix
 		// for the full history of this convention's drift.
-		noi di "{err}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}."
+		noi di "{err}{p 0 0 2}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}.{p_end}"
 		error `errNWsExists'
 	}
 	// BUGFIX: was an unconditional `capture nwdrop `name'' - when `name'

@@ -6,7 +6,7 @@ program nwkplex, rclass
 	set more off
 
 	if `k' < 2 {
-		di "{err}k() must be at least 2; a 1-plex is exactly a clique - use {help nwclique} for that case."
+		di "{err}{p 0 0 2}k() must be at least 2; a 1-plex is exactly a clique - use {help nwclique} for that case.{p_end}"
 		error 198
 	}
 

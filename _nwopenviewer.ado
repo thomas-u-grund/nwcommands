@@ -52,7 +52,7 @@ program _nwopenviewer, rclass
 	mata: st_local("_nwov_viewerpath", NweditViewerAvailable() ? NweditViewerPath() : "")
 	local _nwov_usedviewer = 0
 	if "`output'" != "" & "`_nwov_viewerpath'" == "" {
-		di as error "the native viewer for this platform was not found; export() needs it. Reinstall the package."
+		di as error "{p 0 0 2}the native viewer for this platform was not found; export() needs it. Reinstall the package.{p_end}"
 		exit 601
 	}
 	if "`_nwov_viewerpath'" != "" {

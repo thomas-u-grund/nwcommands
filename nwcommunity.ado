@@ -58,7 +58,7 @@ program nwcommunity, rclass
 		_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 
 		if "`directed'" == "true" & "`symmetrize'" == "" {
-			noi di "{err}Community detection not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym})."
+			noi di "{err}{p 0 0 2}Community detection not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym}).{p_end}"
 			error 198
 		}
 
@@ -91,11 +91,11 @@ program nwcommunity, rclass
 		local __qlab = cond(`__bip', "{space 1}(Barber, two-mode)", "")
 		if "`algorithm'" == "dirtlpa" {
 			if !`__bip' {
-				noi di "{err}{bf:algorithm(dirtlpa)} is for two-mode networks (without the option {bf:onemode}); a one-mode network is searched with {bf:louvain} or {bf:labelprop}."
+				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} is for two-mode networks (without the option {bf:onemode}); a one-mode network is searched with {bf:louvain} or {bf:labelprop}.{p_end}"
 				error 198
 			}
 			if `resolution' != 1 {
-				noi di "{err}{bf:algorithm(dirtlpa)} maximises Barber's modularity with the resolution 1; {bf:resolution()} is not available for it."
+				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} maximises Barber's modularity with the resolution 1; {bf:resolution()} is not available for it.{p_end}"
 				error 198
 			}
 		}
@@ -124,8 +124,8 @@ program nwcommunity, rclass
 			mata: `__nw_comm' = nw2_fastdirt(`netobj', `val', `minmodules', `reps')
 			mata: st_local("__fast", strofreal(rows(`__nw_comm') == `nodes'))
 			if !`__fast' {
-				noi di "{err}{bf:algorithm(dirtlpa)} needs the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing, or could not run."
-				noi di "{err}Update it: {stata nwinstall, all}  (or reinstall the package with {bf:net install nwcommands, replace}); {bf:algorithm(louvain)} works with any plugin."
+				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} needs the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing, or could not run.{p_end}"
+				noi di "{err}{p 0 0 2}Update it: {stata nwinstall, all}{space 2}(or reinstall the package with {bf:net install nwcommands, replace}); {bf:algorithm(louvain)} works with any plugin.{p_end}"
 				error 198
 			}
 		}
@@ -220,10 +220,10 @@ program nwcommunity, rclass
 			}
 			else if `lcomm' <= 1000 {
 				noi tab `netgenerate'`k' if `netgenerate'`k' <= 30
-				noi di "{txt}  (first 30 of `lcomm' communities shown; use {bf:listall} for the full table)"
+				noi di "{txt}{p 2 2 2}(first 30 of `lcomm' communities shown; use {bf:listall} for the full table){p_end}"
 			}
 			else {
-				noi di "{txt}  (the table of the `lcomm' communities is not shown; sizes are in r(comm_sizeid))"
+				noi di "{txt}{p 2 2 2}(the table of the `lcomm' communities is not shown; sizes are in r(comm_sizeid)){p_end}"
 			}
 			noi di " "
 		}

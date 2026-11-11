@@ -7,7 +7,7 @@ program define nwinstall_models
 	if "`pkgs'" == "" local pkgs "`known'"
 	foreach p of local pkgs {
 		if !`: list p in known' {
-			di as err "`p' is not a model package of nwcommands (nwsaom nwergm nwdynam nwrem)."
+			di as err "{p 0 0 2}`p' is not a model package of nwcommands (nwsaom nwergm nwdynam nwrem).{p_end}"
 			exit 198
 		}
 	}
@@ -23,8 +23,8 @@ program define nwinstall_models
 			tempfile pk
 			capture copy `"`src'`p'.pkg"' `"`pk'"', replace
 			if _rc {
-				di as err "nwinstall, everything: the model package `p' cannot be reached at `src' (error " _rc ")."
-				di as err "Nothing has been installed. Check the internet connection or from()/release(), or install the core alone with: nwinstall, all"
+				di as err "{p 0 0 2}nwinstall, everything: the model package `p' cannot be reached at `src' (error " _rc ").{p_end}"
+				di as err "{p 0 0 2}Nothing has been installed. Check the internet connection or from()/release(), or install the core alone with: nwinstall, all{p_end}"
 				exit 601
 			}
 			nwinstall_reqcore, file(`"`pk'"')
@@ -34,8 +34,8 @@ program define nwinstall_models
 				local rq = r(n)
 				nwinstall_vnum `corever'
 				if `rq' > r(n) {
-					di as err "nwinstall, everything: the model package `p' needs nwcommands (core) version `req' or later, but the core to be installed is version `corever'."
-					di as err "Nothing has been installed. Install a newer core, or choose an older release() of the model packages."
+					di as err "{p 0 0 2}nwinstall, everything: the model package `p' needs nwcommands (core) version `req' or later, but the core to be installed is version `corever'.{p_end}"
+					di as err "{p 0 0 2}Nothing has been installed. Install a newer core, or choose an older release() of the model packages.{p_end}"
 					exit 498
 				}
 			}
@@ -52,10 +52,10 @@ program define nwinstall_models
 		di as text _n "Installing {bf:`p'}" cond("`rel'" == "", "", " (`rel')") " from `src' ..."
 		capture net install `p', from("`src'") replace
 		if _rc {
-			di as err "  could not install `p' (error " _rc "). The repository may be private or the release may not exist."
+			di as err "{p 2 2 2}could not install `p' (error " _rc "). The repository may be private or the release may not exist.{p_end}"
 			local failed "`failed' `p'"
 			if "`stop'" != "" {
-				di as err "nwinstall, everything stopped at the model package `p'; the core and the packages before it are installed."
+				di as err "{p 0 0 2}nwinstall, everything stopped at the model package `p'; the core and the packages before it are installed.{p_end}"
 				exit 601
 			}
 		}
@@ -70,7 +70,7 @@ program define nwinstall_models
 	}
 	if "`remove'" == "" & "`failed'" == "" {
 		di as text _n "Model packages installed. Each has a version command, e.g. {stata nwsaom version}."
-		di as text "They are free software (GPL-3) and are installed separately from the nwcommands core;"
+		di as text "{p 0 0 2}They are free software (GPL-3) and are installed separately from the nwcommands core;{p_end}"
 		di as text "updating nwcommands never overwrites them."
 	}
 	if "`failed'" != "" exit 601

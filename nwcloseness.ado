@@ -58,11 +58,11 @@ program nwcloseness
 	// - there is no default name to silently fall back to.
 	local gencount : word count `generate'
 	if (`gencount' == 0) {
-		di "{err}option {bf:generate()} required - needs exactly 3 names (closeness, farness, nearness)."
+		di "{err}{p 0 0 2}option {bf:generate()} required - needs exactly 3 names (closeness, farness, nearness).{p_end}"
 		error 198
 	}
 	if (`gencount' != 3) {
-		di "{err}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'."
+		di "{err}{p 0 0 2}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'.{p_end}"
 		error 198
 	}
 	local generate_all ""
@@ -160,7 +160,7 @@ program nwcloseness
 			else {
 				local __how "is (nodes - 1) / farness and can exceed 1 (legacy)"
 			}
-			noi di "{txt}Warning: network {bf:`netname_temp'} is not connected; closeness `__how'. Specify {bf:unconnected()} to give missing paths a length."
+			noi di "{txt}{p 0 0 2}Warning: network {bf:`netname_temp'} is not connected; closeness `__how'. Specify {bf:unconnected()} to give missing paths a length.{p_end}"
 		}
 		// a two-mode network gets the normalisation of Borgatti and Everett (1997) by default; onemode gives the one-mode closeness of the
 		// bipartite graph; twomode (the earlier way to ask for it) is accepted as a synonym

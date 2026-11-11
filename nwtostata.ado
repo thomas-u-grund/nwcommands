@@ -39,7 +39,7 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 		local cols = r(cols)
 		// each column becomes a Stata variable: fail early and clearly when the flavour cannot hold them
 		if `cols' + c(k) > c(max_k_theory) {
-			dis as error "nwtostata would create `cols' variables, but `c(flavor)' Stata allows at most `c(max_k_theory)' variables (`c(k)' in use)."
+			dis as error "{p 0 0 2}nwtostata would create `cols' variables, but `c(flavor)' Stata allows at most `c(max_k_theory)' variables (`c(k)' in use).{p_end}"
 			dis as error "Use the Mata matrix directly (nwtomata) or a larger Stata flavour."
 			error 900
 		}

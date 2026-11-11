@@ -35,8 +35,8 @@ program nwcollapse
 	// included, since a group's mean or median depends on them); nwtoedge refuses more than 50,000,000 rows.
 	// Say so here, before the network is copied.
 	if `nodes' * `nodes' > 5e7 {
-		di "{err}nwcollapse applies Stata's collapse to every pair of nodes (`=`nodes'*`nodes'' rows for the `nodes' nodes of {bf:`netname'}, zero cells included) and is refused above 50,000,000 rows (7,071 nodes)."
-		di "{err}Collapse a part of the network (nwsubset, nwkeepnodes) or count the ties between the groups from the edge list ({bf:nwtoedge, compress}) with Stata's {bf:collapse}."
+		di "{err}{p 0 0 2}nwcollapse applies Stata's collapse to every pair of nodes (`=`nodes'*`nodes'' rows for the `nodes' nodes of {bf:`netname'}, zero cells included) and is refused above 50,000,000 rows (7,071 nodes).{p_end}"
+		di "{err}{p 0 0 2}Collapse a part of the network (nwsubset, nwkeepnodes) or count the ties between the groups from the edge list ({bf:nwtoedge, compress}) with Stata's {bf:collapse}.{p_end}"
 		exit 484
 	}
 

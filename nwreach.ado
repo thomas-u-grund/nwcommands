@@ -26,7 +26,7 @@ program nwreach
 	// existing target name - now matches that convention.
 	capture _nwsyntax `name', other(_check)
 	if _rc == 0 & "`nwreplace'" == "" {
-		di "{err}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}."
+		di "{err}{p 0 0 2}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}.{p_end}"
 		error 99
 	}
 	if _rc == 0 {

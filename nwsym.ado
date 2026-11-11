@@ -42,7 +42,7 @@ program nwsym
 	// `replace' and `generate()' are mutually exclusive - they request
 	// opposite outcomes (mutate the original vs. leave it untouched).
 	if "`replace'" != "" & "`generate'" != "" {
-		di "{err}Options {bf:replace} and {bf:generate()} cannot be combined - {bf:replace} symmetrizes {help netname:netname} in place, {bf:generate()} leaves it untouched and saves the result under a new name instead."
+		di "{err}{p 0 0 2}Options {bf:replace} and {bf:generate()} cannot be combined - {bf:replace} symmetrizes {help netname:netname} in place, {bf:generate()} leaves it untouched and saves the result under a new name instead.{p_end}"
 		error 198
 	}
 

@@ -33,7 +33,7 @@ program _nwwlayout, rclass
 		}
 	}
 	else if `why' == 1 & "`quiet'" == "" {
-		di "{txt}Note: the network has tie values that are not positive; the layout does not use the values (as igraph, whose layouts need positive weights). Option {bf:binary} hides this note."
+		di "{txt}{p 0 0 2}Note: the network has tie values that are not positive; the layout does not use the values (as igraph, whose layouts need positive weights). Option {bf:binary} hides this note.{p_end}"
 	}
 	capture mata: mata drop _nww_S
 	return scalar weighted = (`why' == 0)

@@ -20,7 +20,7 @@ program nwfromedge
 	// one-mode-specific state this branch never needs.
 	if "`twomode'" != "" {
 		if "`directed'" != "" | "`undirected'" != "" | "`forcedirected'" != "" | "`forceundirected'" != "" {
-			di "{err}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}."
+			di "{err}{p 0 0 2}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}.{p_end}"
 			error 198
 		}
 		nw2fromedge `varlist' `if', name(`name') `xvars'
@@ -216,7 +216,7 @@ program nwfromedge
 	local __fe_nnodes = _N
 	// every identifier missing: nothing to build (a clean error instead of a Mata error further down)
 	if `__fe_nnodes' == 0 {
-		noisily di "{err}no valid (non-missing) node identifiers found in `fromvar'/`tovar' - nothing to build a network from."
+		noisily di "{err}{p 0 0 2}no valid (non-missing) node identifiers found in `fromvar'/`tovar' - nothing to build a network from.{p_end}"
 		exit 2000
 	}
 	sort `_rawid'
@@ -314,7 +314,7 @@ program nwfromedge
 			// Error-code coherence pass: consolidated onto `errNWsExists'
 			// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 			// history of this convention's drift onto an undocumented `6099'.
-			noi di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+			noi di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
 			error `errNWsExists'
 		}
 	}

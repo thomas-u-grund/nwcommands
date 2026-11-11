@@ -66,9 +66,9 @@ program nwmatching, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
 		di "{txt}  Matched pairs: {res}`=__nwmatching_n'"
-		if `__wtd' di "{txt}  Total tie value of the matching: {res}`__mw'{txt} (largest possible; {bf:binary} maximises the number of pairs instead)"
+		if `__wtd' di "{txt}{p 2 2 2}Total tie value of the matching: {res}`__mw'{txt} (largest possible; {bf:binary} maximises the number of pairs instead){p_end}"
 		di "{hline 40}"
-		di "{txt}(`generate' holds each mode-1 node's own matched mode-2 partner's node id, 0 if unmatched; mode-2 nodes always show 0 - read the match off the mode-1 side)"
+		di "{txt}{p 0 0 2}(`generate' holds each mode-1 node's own matched mode-2 partner's node id, 0 if unmatched; mode-2 nodes always show 0 - read the match off the mode-1 side){p_end}"
 	}
 	scalar drop __nwmatching_n
 end

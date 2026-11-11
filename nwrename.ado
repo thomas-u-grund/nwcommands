@@ -25,7 +25,7 @@ program nwrename
 	if _rc != 0 {
 		local renamerc = _rc
 		restore
-		di "{err}Cannot rename: the target name already exists as a network. Specify a different name."
+		di "{err}{p 0 0 2}Cannot rename: the target name already exists as a network. Specify a different name.{p_end}"
 		error `renamerc'
 	}
 	local oldnames "`r(oldnames)'"

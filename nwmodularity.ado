@@ -34,13 +34,13 @@ program nwmodularity, rclass
 		_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 
 		if "`directed'" == "true" & "`symmetrize'" == "" {
-			noi di "{err}Modularity not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym})."
+			noi di "{err}{p 0 0 2}Modularity not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym}).{p_end}"
 			error 198
 		}
 
 		capture assert `group' < .
 		if _rc != 0 {
-			noi di "{err}Variable {bf:`group'} contains missing values; every node must be assigned to a group."
+			noi di "{err}{p 0 0 2}Variable {bf:`group'} contains missing values; every node must be assigned to a group.{p_end}"
 			error 198
 		}
 

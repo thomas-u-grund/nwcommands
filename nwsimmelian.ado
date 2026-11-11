@@ -25,7 +25,7 @@ program nwsimmelian
 		// independently drifted onto an undocumented ad-hoc `6099'
 		// instead of this already-established constant; all now
 		// consolidated onto `errNWsExists'.
-		noi di "{err}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}."
+		noi di "{err}{p 0 0 2}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}.{p_end}"
 		error `errNWsExists'
 	}
 	capture nwdrop `name'

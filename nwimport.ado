@@ -405,7 +405,7 @@ program _nwimport_apply2mode
 	mata: st_local("__ok", strofreal(cols(`lab') == cols(`md')))
 	if !`__ok' {
 		mata: mata drop `lab' `md'
-		di "{txt}(note: the file does not give a mode for every node; {bf:`netname'} is not declared two-mode)"
+		di "{txt}{p 0 0 2}(note: the file does not give a mode for every node; {bf:`netname'} is not declared two-mode){p_end}"
 		exit
 	}
 	mata: `netobj'->set_2mode(1)
@@ -414,7 +414,7 @@ program _nwimport_apply2mode
 	mata: st_local("__bad", strofreal(`netobj'->count_samemode_ties()))
 	if `__bad' > 0 {
 		mata: `netobj'->set_2mode(0)
-		di "{err}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode."
+		di "{err}{p 0 0 2}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode.{p_end}"
 		error 459
 	}
 	mata: `netobj'->clean_matrix_2mode()

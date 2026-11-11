@@ -83,7 +83,7 @@ program nwconcor, rclass
 		// every iteration correlates the dense n x n matrix with itself (O(n^3)): 3,000 nodes take about a
 		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB
 		if `nodes' > 6000 & "`force'" == "" {
-			noi di "{err}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway."
+			noi di "{err}{p 0 0 2}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
 			error 484
 		}
 
@@ -103,7 +103,7 @@ program nwconcor, rclass
 		// CONCOR correlates the full node-by-node matrix in every iteration: O(n^3) per iteration
 		// (measured in Stata/BE: 1,000 nodes 4 s, 5,000 nodes more than 3 minutes)
 		if "`silent'" == "" & `nodes' > 2000 {
-			di "{txt}(note: nwconcor works on the dense `nodes' x `nodes' matrix and takes minutes above about 3,000 nodes)"
+			di "{txt}{p 0 0 2}(note: nwconcor works on the dense `nodes' x `nodes' matrix and takes minutes above about 3,000 nodes){p_end}"
 		}
 		capture noisily mata: `__nw_concor' = `netobj'->calculate_concor(`splits', `val', `maxiter')
 		if _rc != 0 {
