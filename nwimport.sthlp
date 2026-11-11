@@ -89,7 +89,7 @@ The following network formats are supported:
 without downloading a local copy first, e.g.:
 
 {phang}
-{cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)}{p_end}
+{cmd:. nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)}{p_end}
 
 {marker twomode}{...}
 {title:Two-mode networks}

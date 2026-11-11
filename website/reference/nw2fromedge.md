@@ -41,7 +41,7 @@ A two-mode network consists of two sets of units (e. g. people and events) and r
 An edgelist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, the data
 
 ```stata
-. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/institutions.dta", clear
+. use "https://nwcommands.org/examples/institutions.dta", clear
 . list _all
 
     +------------------------------+
