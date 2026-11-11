@@ -10,7 +10,7 @@ program nwbrokerage, rclass
 	// came out unclassified or as one role: refuse it
 	capture confirm numeric variable `group'
 	if _rc != 0 {
-		di "{err}group() must be a numeric variable; {bf:`group'} is a string variable (use {bf:encode `group', generate(...)} first)."
+		di "{err}{p 0 0 2}group() must be a numeric variable; {bf:`group'} is a string variable (use {bf:encode `group', generate(...)} first).{p_end}"
 		error 109
 	}
 

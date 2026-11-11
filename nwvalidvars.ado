@@ -14,8 +14,8 @@ program nwvalidvars
 	// with r(920) "macro substitution results in line that is too long" after minutes of work (about 20,000 nodes
 	// in Stata/BE)
 	if `nodes' * (length("`stub'") + length("`nodes'") + 2) > c(macrolen) {
-		di "{err}The `nodes' variable names do not fit into a Stata macro (at most `c(macrolen)' characters)."
-		di "{err}A network of this size cannot be held in one variable per node: work with the stored ties (nwtoedge, nwtomatafast) or a part of the network (nwsubset)."
+		di "{err}{p 0 0 2}The `nodes' variable names do not fit into a Stata macro (at most `c(macrolen)' characters).{p_end}"
+		di "{err}{p 0 0 2}A network of this size cannot be held in one variable per node: work with the stored ties (nwtoedge, nwtomatafast) or a part of the network (nwsubset).{p_end}"
 		exit 900
 	}
 	

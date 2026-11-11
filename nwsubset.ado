@@ -49,7 +49,7 @@ program nwsubset
 		capture nwdrop `name' if (`if' == 0)
 		if _rc != 0 {
 			capture nwdrop `name'
-			di "{err}The if condition selects no nodes; network {bf:`name'} would have zero nodes remaining."
+			di "{err}{p 0 0 2}The if condition selects no nodes; network {bf:`name'} would have zero nodes remaining.{p_end}"
 			error 198
 		}
 	}

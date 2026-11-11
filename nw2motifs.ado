@@ -6,7 +6,7 @@ program nw2motifs, rclass
 
 	_nwsyntax `netname', max(1)
 	if "`is2mode'" != "true" {
-		di "{err}nw2motifs requires a two-mode network; {bf:`netname'} is one-mode. See {help nwmotifs} for one-mode networks, or {help nw2set}."
+		di "{err}{p 0 0 2}nw2motifs requires a two-mode network; {bf:`netname'} is one-mode. See {help nwmotifs} for one-mode networks, or {help nw2set}.{p_end}"
 		error 198
 	}
 	nwmotifs `netname', `sixnode' generate(`generate') `replace' matrix(`matrix') `normalise' posnorm(`posnorm') `silent'

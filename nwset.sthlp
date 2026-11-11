@@ -214,6 +214,12 @@ The following command declares such data as network data and gives the new netwo
 
 	{cmd:. nwset fromid toid value, name(mynet) edgelist}
 
+{pstd}
+To keep a node without ties (an isolate), give it a row of its own with the other identifier missing ({cmd:""}
+for string identifiers, {cmd:.} for numeric ones): the node is created, the row adds no tie. A row with both
+identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
+nodes with one tie, {it:Fion} an isolate.
+
 
 {pstd}
 {bf:{ul:3. Declare adjacency matrix from Mata matrix}}

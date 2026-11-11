@@ -51,7 +51,7 @@ program nwinstall, rclass
 		local all "all"
 		local models "models"
 		if "`modelpkg'" != "" {
-			di as err "everything installs all four model packages; it cannot be combined with modelpkg()"
+			di as err "{p 0 0 2}everything installs all four model packages; it cannot be combined with modelpkg(){p_end}"
 			exit 198
 		}
 	}
@@ -132,9 +132,9 @@ program nwinstall, rclass
 		}
 		di as result _n "Copied nwcommands files from `from' into `dest'."
 		if `"`dest'"' != `"`: sysdir PERSONAL'"' {
-			di as result "This is not your PERSONAL ado directory - add it to your ado path in every session, e.g. with:"
+			di as result "{p 0 0 2}This is not your PERSONAL ado directory - add it to your ado path in every session, e.g. with:{p_end}"
 			di as text `"    adopath ++ "`dest'""'
-			di as text "(add that same line to your profile.do to make it permanent - see {help nwinstall##offline:help nwinstall} for the exact steps)."
+			di as text "{p 0 0 2}(add that same line to your profile.do to make it permanent - see {help nwinstall##offline:help nwinstall} for the exact steps).{p_end}"
 		}
 	}
 
@@ -266,7 +266,7 @@ program nwinstall, rclass
 		// a failure here (for example a Stata without window menus) is only a warning and never stops an install or a batch run
 		capture noisily qui nwinstall_menu, menu("`menu'")
 		if _rc {
-			di as text "nwinstall: the menu could not be built in this session (error " _rc "); the installation itself is complete. Try  nwinstall, usermenu  in an interactive Stata."
+			di as text "{p 0 0 2}nwinstall: the menu could not be built in this session (error " _rc "); the installation itself is complete. Try{space 2}nwinstall, usermenu{space 2}in an interactive Stata.{p_end}"
 		}
 	}
 		
@@ -298,7 +298,7 @@ program nwinstall, rclass
 			nwinstall_scanmany, files(`"`otherprof'"')
 			if r(nmenu) > 0 {
 				local __nw_status "elsewhere"
-				di as text `"nwinstall: the menu is already started from `r(first)' (line: `r(line)'); no second line was added, and no new profile.do was created."'
+				di as text `"{p 0 0 2}nwinstall: the menu is already started from `r(first)' (line: `r(line)'); no second line was added, and no new profile.do was created.{p_end}"'
 			}
 			else {
 				capture file open `fh2' using `"`path'/profile.do"', write text
@@ -325,7 +325,7 @@ program nwinstall, rclass
 	}
 
 	if "`__nw_guimsg'" != "" di as text _n `"`__nw_guimsg'"'
-	else if "`nogui'" != "" & "`remove'" == "" di as text _n "Network Analysis menu: not installed (nogui). To add it later type: nwinstall, gui"
+	else if "`nogui'" != "" & "`remove'" == "" di as text _n "{p 0 0 2}Network Analysis menu: not installed (nogui). To add it later type: nwinstall, gui{p_end}"
 
 	if "`everything'" != "" & "`remove'" == "" {
 		// the versions of the whole set, as nwversion shows them (the model packages are indexed by the Mata call above)
@@ -333,7 +333,7 @@ program nwinstall, rclass
 		nwversion
 	}
 	else if "`all'" != "" & !`__nw_models' & "`remove'" == "" {
-		di as text _n "To also install the model packages type: nwinstall, models   (or nwinstall, everything)"
+		di as text _n "{p 0 0 2}To also install the model packages type: nwinstall, models{space 3}(or nwinstall, everything){p_end}"
 	}
 end
 
@@ -530,14 +530,14 @@ program nwinstall_rewriteprofile, rclass
 	capture erase `"`tmp'"'
 	capture file open `fin' using `"`file'"', read text
 	if _rc != 0 {
-		di as error `"nwinstall: cannot read `file' (rc = `=_rc'); profile.do left unchanged"'
+		di as error `"{p 0 0 2}nwinstall: cannot read `file' (rc = `=_rc'); profile.do left unchanged{p_end}"'
 		exit
 	}
 	capture file open `fout' using `"`tmp'"', write text replace
 	if _rc != 0 {
 		local rc = _rc
 		capture file close `fin'
-		di as error `"nwinstall: cannot write the temporary file `tmp' (rc = `rc'); profile.do left unchanged"'
+		di as error `"{p 0 0 2}nwinstall: cannot write the temporary file `tmp' (rc = `rc'); profile.do left unchanged{p_end}"'
 		exit
 	}
 	capture findfile nwinstall_dlg.do
@@ -598,24 +598,24 @@ program nwinstall_rewriteprofile, rclass
 	capture file close `fout'
 	if `rc' != 0 {
 		capture erase `"`tmp'"'
-		di as error `"nwinstall: editing profile.do failed (rc = `rc'); profile.do left unchanged"'
+		di as error `"{p 0 0 2}nwinstall: editing profile.do failed (rc = `rc'); profile.do left unchanged{p_end}"'
 		exit
 	}
 	// messages about lines we leave alone
 	if "`action'" == "add" {
 		if `nforeign' > 0 & `nours' == 0 {
-			di as text `"nwinstall: `file' already contains a menu line of another origin: `foreignline'"'
-			di as text "  No second menu was added. If that line starts the nwcommands menu, you can delete it and run  nwinstall, gui  again."
+			di as text `"{p 0 0 2}nwinstall: `file' already contains a menu line of another origin: `foreignline'{p_end}"'
+			di as text "{p 2 2 2}No second menu was added. If that line starts the nwcommands menu, you can delete it and run{space 2}nwinstall, gui{space 2}again.{p_end}"
 		}
 		if `nlegacy' > 0 & !`legacyalive' {
-			di as text `"nwinstall: `file' contains the line  run nwinstall_dlg.do  (from nwcommands 1.1.x). That file no longer exists; the line does nothing and can be deleted."'
+			di as text `"{p 0 0 2}nwinstall: `file' contains the line{space 2}run nwinstall_dlg.do{space 2}(from nwcommands 1.1.x). That file no longer exists; the line does nothing and can be deleted.{p_end}"'
 		}
 		if `"`elsewhere'"' != "" {
-			di as text `"nwinstall: the menu is already started from `elsewhere' (line: `elseline'); no second line was added to `file'."'
+			di as text `"{p 0 0 2}nwinstall: the menu is already started from `elsewhere' (line: `elseline'); no second line was added to `file'.{p_end}"'
 		}
 	}
 	else if `nforeign' > 0 {
-		di as text `"nwinstall: `file' contains a menu line of another origin that was left alone: `foreignline'"'
+		di as text `"{p 0 0 2}nwinstall: `file' contains a menu line of another origin that was left alone: `foreignline'{p_end}"'
 	}
 	if "`action'" == "add" {
 		local status = cond(`nours' > 0 | `nforeign' > 0 | (`nlegacy' > 0 & `legacyalive'), "present", cond(`"`elsewhere'"' != "", "elsewhere", "added"))
@@ -632,7 +632,7 @@ program nwinstall_rewriteprofile, rclass
 	nwinstall_countlines, file(`"`tmp'"')
 	if r(rc) != 0 | r(n) != `nout' {
 		capture erase `"`tmp'"'
-		di as error "nwinstall: the edited copy of profile.do could not be verified; profile.do left unchanged"
+		di as error "{p 0 0 2}nwinstall: the edited copy of profile.do could not be verified; profile.do left unchanged{p_end}"
 		exit
 	}
 	local bak `"`file'.nwinstall_bak"'
@@ -648,7 +648,7 @@ program nwinstall_rewriteprofile, rclass
 	if `rc' != 0 | r(rc) != 0 | r(n) != `nout' {
 		capture copy `"`bak'"' `"`file'"', replace
 		if _rc != 0 {
-			di as error `"nwinstall: writing profile.do failed and it could not be restored automatically; your original is saved as `bak'"'
+			di as error `"{p 0 0 2}nwinstall: writing profile.do failed and it could not be restored automatically; your original is saved as `bak'{p_end}"'
 		}
 		else {
 			capture erase `"`bak'"'
@@ -698,13 +698,13 @@ program nwinstall_dlgscan, rclass
 		if `nh' > 1 {
 			local ++ndup
 			gettoken win rest : hits
-			di as text `"nwinstall: the dialog file `f' exists in `nh' places; Stata uses the first one, `win'. The others are ignored:"'
+			di as text `"{p 0 0 2}nwinstall: the dialog file `f' exists in `nh' places; Stata uses the first one, `win'. The others are ignored:{p_end}"'
 			foreach h of local rest {
 				di as text `"    `h'"'
 			}
 		}
 	}
-	if `ndup' > 0 di as text "  Nothing was deleted. Remove the older copies by hand (or reinstall with  nwinstall, dialog) so that only one remains."
+	if `ndup' > 0 di as text "{p 2 2 2}Nothing was deleted. Remove the older copies by hand (or reinstall with{space 2}nwinstall, dialog) so that only one remains.{p_end}"
 	return scalar ndup = `ndup'
 end
 
@@ -912,7 +912,7 @@ program nwinstall_ancillary
 		if _rc local failed `"`failed' `f'"'
 	}
 	if `"`failed'"' != "" {
-		di as text `"nwinstall: could not copy`failed' from `from' to `dest'; nwplot, interactive and nwmovie need these files."'
+		di as text `"{p 0 0 2}nwinstall: could not copy`failed' from `from' to `dest'; nwplot, interactive and nwmovie need these files.{p_end}"'
 	}
 	if "`c(os)'" != "Windows" {
 		foreach f in lib/plugins/macos/nwedit_viewer_macos lib/plugins/unix/nwedit_viewer_unix {
@@ -935,7 +935,7 @@ program nwinstall_copymanifest
 	syntax , manifest(string) from(string) dest(string)
 	capture confirm file "`from'/`manifest'"
 	if _rc != 0 {
-		di as error "manifest not found: `from'/`manifest' - is `from' a full nwcommands source checkout?"
+		di as error "{p 0 0 2}manifest not found: `from'/`manifest' - is `from' a full nwcommands source checkout?{p_end}"
 		exit 601
 	}
 	tempname fh

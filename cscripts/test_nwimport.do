@@ -390,3 +390,76 @@ foreach opt in "" "directed" "forcedirected" "directed forcedirected" {
 	assert r(nodes) == 3
 }
 nwclear
+
+* --- Pajek files without vertex lines ("*Vertices 3" followed directly by "*Arcs", as data/pajek_example.net):
+* valid Pajek, the nodes are numbered. Up to 3.18.0 the import failed with r(601) (the vertex dictionary it merges
+* was never written); a two-mode file ("*Vertices 4 2") without vertex lines failed with "option labs() required".
+capture program drop _pjcheck
+program _pjcheck
+	args fname nodes ties directed labs mat
+	nwimport `"`fname'"', type(pajek) nwclear name(pj)
+	nwsummarize pj
+	assert r(nodes) == `nodes'
+	assert "`r(directed)'" == "`directed'"
+	if "`directed'" == "true" assert r(arcs) == `ties'
+	else assert r(edges) == `ties'
+	assert `"`r(labs)'"' == `"`labs'"'
+	nwtomata pj, mat(__pjM)
+	mata: __pjE = `mat'
+	mata: _diag(__pjE, .)
+	mata: assert(__pjM == __pjE)
+	mata: mata drop __pjM __pjE
+end
+tempname pjh
+local pjdir "`c(tmpdir)'"
+* with and without a newline at the end of the file
+file open `pjh' using "`pjdir'/nwimport_pj1.net", write replace text
+file write `pjh' "*Vertices 3" _n "*Arcs" _n "1 2" _n "2 3" _n "3 1" _n
+file close `pjh'
+file open `pjh' using "`pjdir'/nwimport_pj2.net", write replace text
+file write `pjh' "*Vertices 3" _n "*Arcs" _n "1 2" _n "2 3" _n "3 1"
+file close `pjh'
+foreach f in "`pjdir'/nwimport_pj1.net" "`pjdir'/nwimport_pj2.net" "data/pajek_example.net" {
+	_pjcheck "`f'" 3 3 true "n1,n2,n3" "(0,1,0 \ 0,0,1 \ 1,0,0)"
+}
+* with vertex lines: unchanged
+file open `pjh' using "`pjdir'/nwimport_pj3.net", write replace text
+file write `pjh' "*Vertices 3" _n `"1 "a""' _n `"2 "b""' _n `"3 "c""' _n "*Arcs" _n "1 2" _n "2 3" _n "3 1" _n
+file close `pjh'
+_pjcheck "`pjdir'/nwimport_pj3.net" 3 3 true "a,b,c" "(0,1,0 \ 0,0,1 \ 1,0,0)"
+* *Edges; node 4 is an isolate
+file open `pjh' using "`pjdir'/nwimport_pj4.net", write replace text
+file write `pjh' "*Vertices 4" _n "*Edges" _n "1 2" _n "2 3" _n
+file close `pjh'
+_pjcheck "`pjdir'/nwimport_pj4.net" 4 2 false "n1,n2,n3,n4" "(0,1,0,0 \ 1,0,1,0 \ 0,1,0,0 \ 0,0,0,0)"
+* *Arcslist and *Edgeslist
+file open `pjh' using "`pjdir'/nwimport_pj5.net", write replace text
+file write `pjh' "*Vertices 4" _n "*Arcslist" _n "1 2 3" _n "3 1" _n
+file close `pjh'
+_pjcheck "`pjdir'/nwimport_pj5.net" 4 3 true "n1,n2,n3,n4" "(0,1,1,0 \ 0,0,0,0 \ 1,0,0,0 \ 0,0,0,0)"
+file open `pjh' using "`pjdir'/nwimport_pj6.net", write replace text
+file write `pjh' "*Vertices 4" _n "*Edgeslist" _n "1 2 3" _n
+file close `pjh'
+_pjcheck "`pjdir'/nwimport_pj6.net" 4 2 false "n1,n2,n3,n4" "(0,1,1,0 \ 1,0,0,0 \ 1,0,0,0 \ 0,0,0,0)"
+* tie values
+file open `pjh' using "`pjdir'/nwimport_pj7.net", write replace text
+file write `pjh' "*Vertices 4" _n "*Arcs" _n "1 2 5" _n "2 3 2" _n
+file close `pjh'
+_pjcheck "`pjdir'/nwimport_pj7.net" 4 2 true "n1,n2,n3,n4" "(0,5,0,0 \ 0,0,2,0 \ 0,0,0,0 \ 0,0,0,0)"
+qui nwsummarize pj
+assert "`r(valued)'" == "true"
+* two-mode ("*Vertices 4 2": nodes 1-2 are mode 1)
+file open `pjh' using "`pjdir'/nwimport_pj8.net", write replace text
+file write `pjh' "*Vertices 4 2" _n "*Edges" _n "1 3" _n "2 4" _n "1 4" _n
+file close `pjh'
+nwimport "`pjdir'/nwimport_pj8.net", type(pajek) nwclear name(pj)
+nwsummarize pj
+assert "`r(mode2)'" == "true"
+assert r(nodes) == 4 & r(nodes1) == 2 & r(nodes2) == 2
+assert r(edges) == 3
+assert "`r(modes)'" == "n1=1,n2=1,n3=2,n4=2"
+forvalues i = 1/8 {
+	capture erase "`pjdir'/nwimport_pj`i'.net"
+}
+nwclear
+di "=== type(pajek) without vertex lines REGRESSION VERIFIED ==="

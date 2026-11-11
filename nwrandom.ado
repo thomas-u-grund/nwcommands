@@ -66,15 +66,15 @@ program nwrandom
 	// the degrees (igraph::sample_degseq(method = "edge.switching.simple")); native kernel 55
 	if `"`degree'`outdegree'`indegree'"' != "" {
 		if `"`prob'`density'`census'`weights'"' != "" {
-			di "{err}Options {bf:degree()}, {bf:outdegree()} and {bf:indegree()} cannot be combined with {bf:prob()}, {bf:density()}, {bf:census()} or {bf:weights()}."
+			di "{err}{p 0 0 2}Options {bf:degree()}, {bf:outdegree()} and {bf:indegree()} cannot be combined with {bf:prob()}, {bf:density()}, {bf:census()} or {bf:weights()}.{p_end}"
 			error 198
 		}
 		if "`selfloop'" != "" {
-			di "{err}A network drawn from degrees has no self-loops; option {bf:selfloop} is not allowed."
+			di "{err}{p 0 0 2}A network drawn from degrees has no self-loops; option {bf:selfloop} is not allowed.{p_end}"
 			error 198
 		}
 		if `"`degree'"' != "" & `"`outdegree'`indegree'"' != "" {
-			di "{err}Give either {bf:degree()} (undirected network) or {bf:outdegree()} and {bf:indegree()} (directed network)."
+			di "{err}{p 0 0 2}Give either {bf:degree()} (undirected network) or {bf:outdegree()} and {bf:indegree()} (directed network).{p_end}"
 			error 198
 		}
 		if `"`degree'"' == "" & (`"`outdegree'"' == "" | `"`indegree'"' == "") {
@@ -82,7 +82,7 @@ program nwrandom
 			error 198
 		}
 		if `"`degree'"' != "" & "`directed'" != "" {
-			di "{err}{bf:degree()} draws an undirected network; for a directed one give {bf:outdegree()} and {bf:indegree()}."
+			di "{err}{p 0 0 2}{bf:degree()} draws an undirected network; for a directed one give {bf:outdegree()} and {bf:indegree()}.{p_end}"
 			error 198
 		}
 		if `swaps' == 0 | `swaps' < -1 {
@@ -91,7 +91,7 @@ program nwrandom
 		}
 		mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
 		if "`__ok'" != "1" {
-			di "{err}nwrandom with degrees needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing."
+			di "{err}{p 0 0 2}nwrandom with degrees needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 			di "{err}Update it: {stata nwinstall, all}"
 			error 198
 		}
@@ -112,8 +112,8 @@ program nwrandom
 		capture mata: mata drop `__dv'
 		capture mata: mata drop `__din'
 		if "`__st'" == "3" {
-			if `__dir' di "{err}No directed network without loops and repeated ties has these out-degrees and in-degrees (they must have the same sum, and no node can send or receive more than `=`nodes'-1' ties)."
-			else di "{err}No network without loops and repeated ties has these degrees (their sum must be even, and no degree can exceed `=`nodes'-1'; see the Erdos-Gallai conditions)."
+			if `__dir' di "{err}{p 0 0 2}No directed network without loops and repeated ties has these out-degrees and in-degrees (they must have the same sum, and no node can send or receive more than `=`nodes'-1' ties).{p_end}"
+			else di "{err}{p 0 0 2}No network without loops and repeated ties has these degrees (their sum must be even, and no degree can exceed `=`nodes'-1'; see the Erdos-Gallai conditions).{p_end}"
 			error 198
 		}
 		if "`__st'" != "0" {
@@ -278,20 +278,20 @@ program _nwrandom_degvec
 	capture confirm numeric variable `spec', exact
 	if _rc == 0 & wordcount(`"`spec'"') == 1 {
 		if _N < `nodes' {
-			di "{err}Variable {bf:`spec'} of {bf:`opt'()} has `=_N' observations; `nodes' degrees are needed."
+			di "{err}{p 0 0 2}Variable {bf:`spec'} of {bf:`opt'()} has `=_N' observations; `nodes' degrees are needed.{p_end}"
 			error 198
 		}
 		mata: `mname' = st_data((1::`nodes'), "`spec'")
 		mata: st_local("__bad", strofreal(missing(`mname') > 0))
 		if "`__bad'" == "1" {
-			di "{err}Variable {bf:`spec'} of {bf:`opt'()} has missing values among its first `nodes' observations."
+			di "{err}{p 0 0 2}Variable {bf:`spec'} of {bf:`opt'()} has missing values among its first `nodes' observations.{p_end}"
 			error 198
 		}
 	}
 	else {
 		capture numlist `"`spec'"', integer range(>=0)
 		if _rc {
-			di "{err}{bf:`opt'()} takes a numeric variable or a list of whole numbers 0 or more."
+			di "{err}{p 0 0 2}{bf:`opt'()} takes a numeric variable or a list of whole numbers 0 or more.{p_end}"
 			error 198
 		}
 		local L `r(numlist)'

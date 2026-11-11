@@ -21,7 +21,7 @@ program animate
 	// valid across version bumps.
 	local download = "https://imagemagick.org/script/download.php"
 
-	di `"{err}command requires {net "https://imagemagick.org/":ImageMagick} to be installed on your computer; {net "`download'":download it here}"'
+	di `"{err}{p 0 0 2}command requires {net "https://imagemagick.org/":ImageMagick} to be installed on your computer; {net "`download'":download it here}{p_end}"'
 	
 	if "`delay'" == "" {
 		local delay "50"

@@ -28,7 +28,7 @@ program define _nwtabplot, sortpreserve
 
 	foreach o in by separate seperate frame recast barall bar1 bar2 bar3 bar4 {
 		if `"``o''"' != "" {
-			di as err "option {bf:`o'()} is not available in the built-in table plot of nwcommands"
+			di as err "{p 0 0 2}option {bf:`o'()} is not available in the built-in table plot of nwcommands{p_end}"
 			exit 198
 		}
 	}

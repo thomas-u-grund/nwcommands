@@ -119,8 +119,8 @@ program nw2fromedge
 	local mode2 = r(N)
 	restore
 	if `mode1' + `mode2' > `nw_max_dense_nodes' {
-		di "{err}nw2fromedge: the two modes have `mode1' + `mode2' = `=`mode1'+`mode2'' nodes. A two-mode network is stored as one matrix over the nodes of both modes (`=round((`mode1'+`mode2')^2*8/1e9, .1)' GB here) and is refused above `nw_max_dense_nodes' nodes."
-		di "{err}Keep the affiliation as an edge list and work on it directly, or take a sample of the larger mode first."
+		di "{err}{p 0 0 2}nw2fromedge: the two modes have `mode1' + `mode2' = `=`mode1'+`mode2'' nodes. A two-mode network is stored as one matrix over the nodes of both modes (`=round((`mode1'+`mode2')^2*8/1e9, .1)' GB here) and is refused above `nw_max_dense_nodes' nodes.{p_end}"
+		di "{err}{p 0 0 2}Keep the affiliation as an edge list and work on it directly, or take a sample of the larger mode first.{p_end}"
 		exit 484
 	}
 

@@ -22,9 +22,9 @@ program _nwtimeguard
 	if `sec' > `nw_max_seconds' {
 		if `sec' < 5400 local est "`=round(`sec'/60)' minutes"
 		else local est "`=round(`sec'/360)/10' hours"
-		display as error "{bf:`command'} on `nodes' nodes would take about `est' (estimated from measured run times) and is refused above `=round(`nw_max_seconds'/60, .1)' minutes."
+		display as error "{p 0 0 2}{bf:`command'} on `nodes' nodes would take about `est' (estimated from measured run times) and is refused above `=round(`nw_max_seconds'/60, .1)' minutes.{p_end}"
 		if `"`alternative'"' != "" {
-			display as error "`alternative'"
+			display as error "{p 0 0 2}`alternative'{p_end}"
 		}
 		display as error "Option {bf:force} runs it anyway."
 		exit 484

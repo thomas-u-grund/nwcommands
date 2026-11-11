@@ -163,10 +163,10 @@ program nwbetween
 		noi di "{hline 40}"
 		noi di "{txt}    Betweenness centrality"
 		if `__wtd' {
-			noi di "{txt}    (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha')"
+			noi di "{txt}{p 4 4 2}(shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha'){p_end}"
 		}
 		if `__tm' {
-			noi di "{txt}    (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)"
+			noi di "{txt}{p 4 4 2}(standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997){p_end}"
 		}
 		else if "`standardize'" != "" {
 			noi di "{txt}    (standardized)"

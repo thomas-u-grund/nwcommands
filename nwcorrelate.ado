@@ -41,7 +41,7 @@ program nwcorrelate_nodes
 	// the node-by-node correlations are computed with about 25 dense n x n matrices at once (5,000 nodes: 10 s and
 	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
 	if `nodes' > 7000 {
-		di "{err}nwcorrelate of the nodes of network {bf:`netname'} needs about 25 dense `nodes' x `nodes' matrices (about `=round(`nodes'^2*205/1e9, .1)' GB) and is refused above 7,000 nodes."
+		di "{err}{p 0 0 2}nwcorrelate of the nodes of network {bf:`netname'} needs about 25 dense `nodes' x `nodes' matrices (about `=round(`nodes'^2*205/1e9, .1)' GB) and is refused above 7,000 nodes.{p_end}"
 		error 484
 	}
 	if "`context'" == "" {
@@ -166,7 +166,7 @@ unw_defs
 	// (not even a "." missing token), so `if `corr' > 0' expands to an
 	// operand-less comparison. Caught here with a clear message instead.
 	if "`corr'" == "" | "`corr'" == "." {
-		di "{err}Correlation is undefined (one of the two networks has zero variance); cannot run a QAP permutation test."
+		di "{err}{p 0 0 2}Correlation is undefined (one of the two networks has zero variance); cannot run a QAP permutation test.{p_end}"
 		error 198
 	}
 	

@@ -14,7 +14,7 @@ program nwcug, rclass
 	// distribution needs at least 2 draws (1 alone gives sd_null
 	// undefined too), so that is the floor enforced here.
 	if `reps' < 2 {
-		di "{err}reps() must be at least 2 (a null distribution needs more than one draw); got `reps'."
+		di "{err}{p 0 0 2}reps() must be at least 2 (a null distribution needs more than one draw); got `reps'.{p_end}"
 		error 198
 	}
 
@@ -49,13 +49,13 @@ program nwcug, rclass
 	local __two = ("`is2mode'" == "true")
 	if `__two' {
 		if "`condition'" == "census" {
-			di "{err}condition(census) counts the dyads of a one-mode directed network; for a two-mode network use condition(density), condition(mode1degree), condition(mode2degree) or condition(degrees)."
+			di "{err}{p 0 0 2}condition(census) counts the dyads of a one-mode directed network; for a two-mode network use condition(density), condition(mode1degree), condition(mode2degree) or condition(degrees).{p_end}"
 			error 198
 		}
 		mata: st_local("__ok", strofreal(nwg_comb_version() >= 12))
 		if "`__ok'" != "1" {
-			di "{err}nwcug for a two-mode network draws with the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing."
-			di "{err}Update it: {stata nwinstall, all}  (or reinstall the package with {bf:net install nwcommands, replace})."
+			di "{err}{p 0 0 2}nwcug for a two-mode network draws with the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing.{p_end}"
+			di "{err}{p 0 0 2}Update it: {stata nwinstall, all}{space 2}(or reinstall the package with {bf:net install nwcommands, replace}).{p_end}"
 			error 198
 		}
 		if `trades' == 0 | `trades' < -1 {
@@ -65,7 +65,7 @@ program nwcug, rclass
 	}
 	else {
 		if inlist("`condition'", "mode1degree", "mode2degree") {
-			di "{err}condition(`condition') is for two-mode networks; use condition(density), condition(degrees) or condition(census) for a one-mode network."
+			di "{err}{p 0 0 2}condition(`condition') is for two-mode networks; use condition(density), condition(degrees) or condition(census) for a one-mode network.{p_end}"
 			error 198
 		}
 		_nw2guard `netname', cmd(nwcug)
@@ -74,7 +74,7 @@ program nwcug, rclass
 			// (native kernel 55, igraph::rewire(g, keeping_degseq()))
 			mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
 			if "`__ok'" != "1" {
-				di "{err}nwcug, condition(degrees) for a one-mode network draws with the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing."
+				di "{err}{p 0 0 2}nwcug, condition(degrees) for a one-mode network draws with the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 				di "{err}Update it: {stata nwinstall, all}"
 				error 198
 			}
@@ -87,7 +87,7 @@ program nwcug, rclass
 	local origname "`netname'"
 
 	if "`condition'" == "census" & "`directed'" != "true" & !`__two' {
-		di "{err}condition(census) requires a directed network - mutual/asymmetric/null dyad types only exist for directed ties; use condition(density) (the default) for an undirected network."
+		di "{err}{p 0 0 2}condition(census) requires a directed network - mutual/asymmetric/null dyad types only exist for directed ties; use condition(density) (the default) for an undirected network.{p_end}"
 		error 198
 	}
 
@@ -103,7 +103,7 @@ program nwcug, rclass
 	// the default condition(density) path - condition(census) doesn't
 	// use obsdensity at all.
 	if "`condition'" != "census" & `nodes' < 2 {
-		di "{err}nwcug needs at least 2 nodes for a condition(density) draw (network `origname' has `nodes')."
+		di "{err}{p 0 0 2}nwcug needs at least 2 nodes for a condition(density) draw (network `origname' has `nodes').{p_end}"
 		error 198
 	}
 
@@ -265,7 +265,7 @@ program nwcug, rclass
 	// observed" and never "less than").
 	mata: st_numscalar("nmiss", missing(__nwcug_nullvals))
 	if nmiss > 0 {
-		di "{err}stat() returned a missing r(`rname') on `=nmiss' of `reps' draws - results below are unreliable; check that stat()'s own statistic is defined for every network `condition'-conditioned random draws can produce."
+		di "{err}{p 0 0 2}stat() returned a missing r(`rname') on `=nmiss' of `reps' draws - results below are unreliable; check that stat()'s own statistic is defined for every network `condition'-conditioned random draws can produce.{p_end}"
 	}
 
 	mata: st_numscalar("meannull", mean(__nwcug_nullvals))
@@ -308,7 +308,7 @@ program nwcug, rclass
 			xtitle("`rname' (`reps' condition(`condition') draws)") ytitle("Density") ///
 			legend(off) name(`name', replace)
 		restore
-		di as txt "(plot saved as {bf:`name'}; histogram of the `reps' null draws under condition(`condition'), dashed line marks the observed value)"
+		di as txt "{p 0 0 2}(plot saved as {bf:`name'}; histogram of the `reps' null draws under condition(`condition'), dashed line marks the observed value){p_end}"
 	}
 
 	mata: mata drop __nwcug_nullvals
@@ -329,12 +329,12 @@ program nwcug, rclass
 	// session: r(x) reads as missing from inside the same program body
 	// that just called "return scalar x = ...".
 	if "`condition'" == "census" & sdnull == 0 {
-		di "{txt}Note: the null standard deviation is 0 under condition(census); this statistic is fixed by the dyad census, so the test is uninformative."
+		di "{txt}{p 0 0 2}Note: the null standard deviation is 0 under condition(census); this statistic is fixed by the dyad census, so the test is uninformative.{p_end}"
 	}
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network: {res}`origname'"
-		di "{txt}  Statistic: {res}`stat'/r(`rname')"
+		di "{txt}{p 2 13 2}Statistic: {res}`stat'/r(`rname'){p_end}"
 		di "{txt}  Observed: {res}`=strtrim(string(round((`obsval')*1000)/1000,"%9.0g"))'"
 		di "{txt}  Null mean (sd): {res}`=strtrim(string(round((meannull)*1000)/1000,"%9.0g"))' (`=strtrim(string(round((sdnull)*1000)/1000,"%9.0g"))')"
 		di "{txt}  Reps: {res}`reps'"

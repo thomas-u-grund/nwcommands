@@ -83,6 +83,12 @@ Here, there are also three relationships: (Peter => Thomas), (Tim => Peter) and 
 The following command declares such data as network data:
 
 	{cmd:. nwfromedge fromid toid value, name(mynet)}
+
+{pstd}
+To keep a node without ties (an isolate), give it a row of its own with the other identifier missing ({cmd:""}
+for string identifiers, {cmd:.} for numeric ones): the node is created, the row adds no tie. A row with both
+identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
+nodes with one tie, {it:Fion} an isolate.
 					
 {pstd}
 This automatically generates the relevant meta-information for the network and makes it available for other programs under the {help netname} {it:mynet}. In case no {bf:name()}
@@ -119,7 +125,7 @@ Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. In any other edgelist, keep an isolate with a row that has the other identifier missing (see {bf:Description} above), or add it afterwards with {help nwaddnodes}.
 
 {title:Examples}
 
@@ -142,8 +148,8 @@ into a network:
 {it:glasgow1} has 50 nodes but only 47 with at least one tie; {it:mynet} still comes out with all
 50 - the 3 isolates {help nwtoedge} could not write as edgelist rows are added back automatically,
 with no extra step needed (see this file's own {bf:Supported network types} section above). This
-only works because {cmd:nwtoedge} itself produced this particular edgelist; it would not apply to
-an edgelist typed in by hand or imported from an external source.
+only works because {cmd:nwtoedge} itself produced this particular edgelist; in an edgelist typed in by
+hand or imported from an external source, give each isolate a row with a missing other identifier.
 
 	
 	

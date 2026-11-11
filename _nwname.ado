@@ -126,12 +126,12 @@ program _nwname
 		mata: st_local("__bad", strofreal(__nw.nws.pdefs[`id']->count_samemode_ties()))
 		if `__n1' == 0 | `__n2' == 0 {
 			mata: __nw.nws.pdefs[`id']->set_2mode(0)
-			di "{err}Network {bf:`netname'} cannot be declared two-mode: only `=cond(`__n2' == 0, "mode 1", "mode 2")' has nodes. Give the mode of every node with {bf:newmodes()} in the same call, or build the network with {bf:nwset, twomode} or {bf:nw2fromedge}."
+			di "{err}{p 0 0 2}Network {bf:`netname'} cannot be declared two-mode: only `=cond(`__n2' == 0, "mode 1", "mode 2")' has nodes. Give the mode of every node with {bf:newmodes()} in the same call, or build the network with {bf:nwset, twomode} or {bf:nw2fromedge}.{p_end}"
 			error 459
 		}
 		if `__bad' > 0 {
 			mata: __nw.nws.pdefs[`id']->set_2mode(0)
-			di "{err}Network {bf:`netname'} cannot be declared two-mode: `__bad' ties join two nodes of the same mode."
+			di "{err}{p 0 0 2}Network {bf:`netname'} cannot be declared two-mode: `__bad' ties join two nodes of the same mode.{p_end}"
 			error 459
 		}
 	}

@@ -10,7 +10,7 @@ program nwtranspose
 	// for backward compatibility.
 	syntax [anything(name=netname)], [ generate(string) name(string) replace]
 	if "`generate'" != "" & "`name'" != "" {
-		di "{err}Specify only one of {bf:generate()} or {bf:name()} (they are the same option) - not both."
+		di "{err}{p 0 0 2}Specify only one of {bf:generate()} or {bf:name()} (they are the same option) - not both.{p_end}"
 		error 198
 	}
 	if "`name'" != "" {
@@ -42,7 +42,7 @@ program nwtranspose
 				// `errNWsExists' (483, unw_defs.ado) - see
 				// nwsimmelian.ado's own fix for the history of this
 				// convention's drift onto an undocumented `6099'.
-				di "{err}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}."
+				di "{err}{p 0 0 2}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}.{p_end}"
 				error `errNWsExists'
 			}
 			nwdrop `generate'

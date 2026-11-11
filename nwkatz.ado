@@ -108,7 +108,7 @@ program nwkatz
 		}
 		if abs(`alpha') * `rho' >= 1 {
 			local __nwkatz_bound = 1 / `rho'
-			di as error "alpha(`alpha') is not valid with walks: |alpha| * rho must be < 1 (rho = `rho', this network's own spectral radius) or the implied infinite walk sum diverges. Try alpha() strictly between -`__nwkatz_bound' and `__nwkatz_bound'."
+			di as error "{p 0 0 2}alpha(`alpha') is not valid with walks: |alpha| * rho must be < 1 (rho = `rho', this network's own spectral radius) or the implied infinite walk sum diverges. Try alpha() strictly between -`__nwkatz_bound' and `__nwkatz_bound'.{p_end}"
 			mata: mata drop `__nwkatz_M'
 			error 198
 		}

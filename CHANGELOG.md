@@ -4,6 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Fixed
+- **Isolates in an edge list.** A row with one identifier missing (`Fion ""`, `5 .`, or the receiver-only `"" Fion`, `. 5`) in `nwset ..., edgelist` and `nwfromedge` declares the other identifier as a node without a tie from that row, the usual way to keep isolates in an edge list. Up to 3.18.0 the node was kept, but the row was also stored as a tie with a missing end: `nwsummarize` reported one arc too many (5 instead of 4, density .25 instead of .2, correct only after another command rebuilt the network), and with numeric identifiers `nwtomata` failed with r(3200). A missing numeric identifier next to a string one no longer becomes a node called `.`. Rows with both identifiers missing are ignored, as before. The help files of `nwset` and `nwfromedge` say how to keep isolates. New test `test_edgelist_isolates`.
+- **`nwimport, type(pajek)` of a file without vertex lines.** A Pajek file whose `*Vertices n` line is followed directly by `*Arcs`, `*Edges`, `*Arcslist` or `*Edgeslist` (valid Pajek, for example `data/pajek_example.net`) failed with r(601), file not found: the import merged a vertex dictionary that only vertex lines create. Such a file now gives n nodes labelled `n1`, `n2`, ... (as `nwfromedge` labels numeric ids), vertices without ties included; a two-mode file (`*Vertices n n1`) without vertex lines no longer fails with "option labs() required". Files with vertex lines are unchanged. Assertions added to `test_nwimport`.
+
 ## [3.18.0] - 2026-11-11
 
 ### Added

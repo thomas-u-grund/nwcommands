@@ -27,19 +27,19 @@ program define _nwlibcheck
 			global NW_LIBCHECK_OK 1
 			exit
 		}
-		di as error "An OLD copy of the nwcommands Mata library (lnwcommands.mlib) is being used: it lacks functions of this version of nwcommands."
+		di as error "{p 0 0 2}An OLD copy of the nwcommands Mata library (lnwcommands.mlib) is being used: it lacks functions of this version of nwcommands.{p_end}"
 		di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
-		di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
+		di as error `"{p 0 0 2}(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace){p_end}"'
 		di as error "and then: nwinstall, all"
-		di as error "If that does not help, build the library with your own Stata: nwinstall, buildmata(all)"
-		di as error "Remove the old copy first (it is probably in your PLUS folder): ado uninstall nwcommands"
+		di as error "{p 0 0 2}If that does not help, build the library with your own Stata: nwinstall, buildmata(all){p_end}"
+		di as error "{p 0 0 2}Remove the old copy first (it is probably in your PLUS folder): ado uninstall nwcommands{p_end}"
 		exit 3499
 	}
-	di as error "The nwcommands Mata library is missing or was built by a newer Stata (your Stata: `c(stata_version)')."
+	di as error "{p 0 0 2}The nwcommands Mata library is missing or was built by a newer Stata (your Stata: `c(stata_version)').{p_end}"
 	di as error "Reinstall: net install nwcommands, from(https://nwcommands.org/net/) replace"
-	di as error `"(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace)"'
+	di as error `"{p 0 0 2}(or: net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/") replace){p_end}"'
 	di as error "and then: nwinstall, all"
-	di as error "If a newer Stata built the shipped library, build it with your own Stata: nwinstall, buildmata(all)"
-	di as error "If you have an old copy in your PLUS folder, remove it first: ado uninstall nwcommands"
+	di as error "{p 0 0 2}If a newer Stata built the shipped library, build it with your own Stata: nwinstall, buildmata(all){p_end}"
+	di as error "{p 0 0 2}If you have an old copy in your PLUS folder, remove it first: ado uninstall nwcommands{p_end}"
 	exit 3499
 end

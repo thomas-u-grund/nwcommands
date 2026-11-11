@@ -13,14 +13,14 @@ program nwconstraint
 	mata: st_local("__sparse", strofreal(`nodes' > 2000 & !`netobj'->is_dense_built() & `netobj'->is_2mode_boolean() != 1))
 	if `__sparse' {
 		if `"`options'"' != "" {
-			di "{err}Option(s) {bf:`options'} are not available for a network of more than 2,000 nodes; only {bf:name()} and {bf:replace}."
+			di "{err}{p 0 0 2}Option(s) {bf:`options'} are not available for a network of more than 2,000 nodes; only {bf:name()} and {bf:replace}.{p_end}"
 			error 198
 		}
 		if "`name'" == "" local name "network"
 		nwvalidate `name'
 		if "`r(exists)'" == "true" {
 			if "`replace'" == "" {
-				di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+				di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
 				error 483
 			}
 			nwdrop `name'

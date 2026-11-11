@@ -26,6 +26,6 @@ program _nw2guard, rclass
 	unw_defs
 	local tail ""
 	if "`allowone'" != "" local tail " The option {bf:onemode} reads the two-mode network as a one-mode graph."
-	di "{err}{bf:`cmd'} does not support two-mode networks ({bf:`netname'}): it reads the blocks between nodes of the same mode, which hold no ties. Make a one-mode network of one mode first ({help nwproject}).`tail'"
+	di "{err}{p 0 0 2}{bf:`cmd'} does not support two-mode networks ({bf:`netname'}): it reads the blocks between nodes of the same mode, which hold no ties. Make a one-mode network of one mode first ({help nwproject}).`tail'{p_end}"
 	error `errTwoModeUnsupported'
 end
