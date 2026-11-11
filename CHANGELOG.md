@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.18.0] - 2026-11-11
 
 ### Added
 - **Data set `baerveldt19`** (with `baerveldt19_pupils`): all 19 schools of the Dutch Social Behavior study that the Siena project distributes, 990 pupils, as 57 networks `school1_w1`, `school1_w2`, `school1_ethn`, ... `school19_ethn` and a plain data set with `school`, `pupil`, `gender` (1 girls, 2 boys), `delinq1`, `delinq2`, `siena` (the Siena file number) and `nact`. Each group is the whole MAVO year of one school, not a classroom, hence the name school. The data set `baerveldt` (15 of the schools, called classes) is unchanged; its classes are schools 1-7, 9, 11, 12 and 14-18 of `baerveldt19`. Stack all schools with `nwstack school*_w1, name(w1) group(school)`. New test `test_baerveldt19_data`.

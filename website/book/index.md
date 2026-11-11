@@ -16,3 +16,4 @@ from Stata Press, expected 2027). Nothing here is needed to use the software, an
 - [Interactive pages from the book](interactive/): working copies of the interactive pages and the network movie
   that the book builds (Florentine families, the law firm, Glasgow, Chesapeake Bay), with the commands that wrote
   them.
+- [Do-files of the book](dofiles/): one do-file per chapter with every command the book prints, in order.

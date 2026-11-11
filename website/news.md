@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 11 November 2026: nwcommands 3.18.0 and the book's do-files
+
+**nwcommands 3.18.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.18.0)). New example data set `baerveldt19`: all 19 schools of the Dutch Social Behavior study that the Siena project distributes, 990 pupils, with friendship at two waves, shared ethnicity, gender and delinquency ([data sets](datasets/#baerveldt19-all-19-dutch-secondary-schools)). The data set `baerveldt` (15 of the schools) is unchanged. No command changes.
+
+**Book companion.** The do-files of *Network Analysis with Stata*, one per chapter, are on the [book's do-file page](book/dofiles/).
+
 ## 10 November 2026: nwergm 1.5.9 and nwsaom 1.5.14
 
 **nwergm 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.9)). `estat gof` after a two-mode fit counts the degrees and shared partners of each mode correctly when the nodes of the two modes are stored mixed (as in the Davis data, sorted by name). Before, the first n1 nodes were taken as the first mode, which gave wrong degree and shared-partner tables for such networks. Estimates, model statistics and geodesic distances were not affected.

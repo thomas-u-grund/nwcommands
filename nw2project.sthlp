@@ -139,4 +139,4 @@ discarded or reinterpreted as a distance. Signed: not checked. Two-mode: yes - t
 last certified : 28 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.17.6, 9 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
