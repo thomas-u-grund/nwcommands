@@ -20,12 +20,12 @@ How to cite each package is on the [citing page](../citing/).
 
 ## Papers about the software
 
-Current versions, as PDF files. The first two are under review, the other two are in preparation; the text may change before publication.
+Current versions, as PDF files. All four are under review; the text may change before publication.
 
 - Grund, T. U. *nwcommands: Scalable and extensible network analysis in Stata.* Under review. [PDF](../papers/grund_nwcommands_paper.pdf)
 - Grund, T. U. *nwplot: Flexible, publication-quality network visualization in Stata.* Under review. [PDF](../papers/grund_nwplot_paper.pdf)
-- Grund, T. U. *nwergm: Exponential-family random graph models in Stata.* In preparation. [PDF](../papers/grund_nwergm_paper.pdf)
-- Grund, T. U. *nwsaom: Stochastic actor-oriented models in Stata.* In preparation. [PDF](../papers/grund_nwsaom_paper.pdf)
+- Grund, T. U. *nwergm: Exponential-family random graph models in Stata.* Under review. [PDF](../papers/grund_nwergm_paper.pdf)
+- Grund, T. U. *nwsaom: Stochastic actor-oriented models in Stata.* Under review. [PDF](../papers/grund_nwsaom_paper.pdf)
 
 ## Methods papers behind the packages
 

@@ -15,7 +15,7 @@ description: "How to cite nwsaom, and the original papers and software it builds
 
 The DOI is the one of all versions of the manual (there is one Zenodo record, with a new version for each minor release of the package), so it always leads to the latest manual. Always report the exact package version as well.
 
-The manual (PDF) is archived at Zenodo ([doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)); a copy is in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf). A paper on nwsaom is in preparation (see the [literature page](../literature/)).
+The manual (PDF) is archived at Zenodo ([doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)); a copy is in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf). A paper on nwsaom is under review (see the [literature page](../literature/)).
 
 **The model and RSiena.** `nwsaom` implements the model of Snijders and follows RSiena, so please also cite them:
 
