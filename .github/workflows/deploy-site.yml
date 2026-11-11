@@ -21,6 +21,8 @@ on:
       - "nwintro.sthlp"
       - "nwstart.sthlp"
       - "tools/make_net_dir.sh"
+      # the example data sets, served at https://nwcommands.org/examples/ (nwwebuse's default source since 3.18.1)
+      - "data/**"
   workflow_dispatch:
 
 permissions:
@@ -65,6 +67,11 @@ jobs:
       # serve the same starter package there, so that those commands reach the current installer
       - name: Copy the starter package to main/ (old address)
         run: bash tools/make_net_dir.sh website/_site/main
+
+      # The example data sets for nwwebuse and the import examples: short addresses such as
+      # https://nwcommands.org/examples/lazega.nwdta (GitHub main stays the fallback)
+      - name: Copy the example data to examples/
+        run: mkdir -p website/_site/examples && cp -p data/* website/_site/examples/
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

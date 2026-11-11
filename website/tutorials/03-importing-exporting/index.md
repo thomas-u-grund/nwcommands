@@ -17,7 +17,7 @@ boundary in both directions.
 step needed:
 
 ```stata
-. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)
+. nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)
 ------------------------------
 Importing successful
 

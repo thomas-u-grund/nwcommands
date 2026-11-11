@@ -58,9 +58,9 @@ printed output with other versions.
 | Chapter 25: The Dynamic Network Actor Model | [`ch25_dynamic_network_actor_models.do`](ch25_dynamic_network_actor_models.do) |
 | Chapter 26: A complete network analysis | [`ch26_complete_network_analysis.do`](ch26_complete_network_analysis.do) |
 | Chapter 27: Reproducible and responsible network research | [`ch27_reproducible_responsible_research.do`](ch27_reproducible_responsible_research.do) |
-| Appendix C: When things go wrong | [`appendixG_troubleshooting.do`](appendixG_troubleshooting.do) |
-| Appendix D: Performance and network size | [`appendixH_performance.do`](appendixH_performance.do) |
-| Appendix E: Programming with network objects | [`appendixE_programming.do`](appendixE_programming.do) |
+| Appendix A: Performance and network size | [`appendixH_performance.do`](appendixH_performance.do) |
+| Appendix B: When things go wrong | [`appendixG_troubleshooting.do`](appendixG_troubleshooting.do) |
+| Appendix F: Programming with network objects | [`appendixE_programming.do`](appendixE_programming.do) |
 
 Chapter 1 has no code. `nwedit_nodes.csv` and `nwedit_edges.csv` are the node and edge files that the
 interactive page of Chapter 5 saves; the Chapter 5 do-file reads them, so that it also runs without the browser

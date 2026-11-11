@@ -53,7 +53,7 @@ The following network formats are supported:
 *`filename`* can also be a URL, so networks can be imported directly from the internet without downloading a local copy first, e.g.:
 
 ```stata
-. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/edgelist_example.txt", type(edgelist)
+. nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)
 ```
 
 ## Supported network types
