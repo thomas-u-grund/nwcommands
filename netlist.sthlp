@@ -82,4 +82,4 @@ The networks in the dataset can be reordered with {help nworder}.
    {help netname}, {help nwsummarize}, {help nworder}
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

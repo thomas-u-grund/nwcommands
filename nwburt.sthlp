@@ -172,4 +172,4 @@ University Press.
 last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.18.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
