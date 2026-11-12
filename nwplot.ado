@@ -113,6 +113,19 @@ program nwplot, rclass
 	local edgecolor `edgecolor_original'
 	local edgesize `edgesize_original'
 	
+	// 3.20.1: mlabvposition(varname) in labelopt() places each node's label by a variable of the node data
+	// (clock positions, e.g. 9 for left, 3 for right); the plot is drawn from nwplot's own data, so the values
+	// are carried over as for label()
+	local labposvar ""
+	if regexm(`"`labelopt'"', "mlabvp[a-z]*\(([^)]*)\)") {
+		local labposvar = trim(regexs(1))
+		capture confirm numeric variable `labposvar'
+		if _rc {
+			di "{err}labelopt(mlabvposition()): {bf:`labposvar'} is not a numeric variable"
+			exit 198
+		}
+		local labelopt = regexr(`"`labelopt'"', "mlabvp[a-z]*\(([^)]*)\)", "mlabvposition(nlabpos)")
+	}
 	if "`labelopt'" != "" {
 		local scatteropt "`scatteropt' `labelopt'"
 	}
@@ -693,6 +706,9 @@ program nwplot, rclass
 	}
 	else {
 		mata: __nwplot_nlabel = J(`nodes',1,"")
+	}
+	if "`labposvar'" != "" {
+		mata: __nwplot_nlabpos = st_data((1,`nodes'),st_varindex("`labposvar'"))
 	}
 
 	////////////////////
@@ -1367,6 +1383,7 @@ program nwplot, rclass
 	qui gen ncolor = .
 	qui gen nsymbol = .
 	qui mata: st_addvar("str20", "nlabel")
+	if "`labposvar'" != "" qui gen nlabpos = .
 	qui gen sx = .
 	qui gen sy = .
 	qui gen ex = .
@@ -1406,6 +1423,10 @@ program nwplot, rclass
 	mata: st_store((1::rows(__nwplot_ncolor)),("ncolor"), __nwplot_ncolor[.,.])
 	mata: st_store((1::rows(__nwplot_ncolor)),("nsymbol"), __nwplot_nsymbol[.,.])
 	mata: st_sstore((1::rows(__nwplot_nlabel)),("nlabel"), __nwplot_nlabel[.,.])
+	if "`labposvar'" != "" {
+		mata: st_store((1::rows(__nwplot_nlabpos)),("nlabpos"), __nwplot_nlabpos[.,.])
+		mata: mata drop __nwplot_nlabpos
+	}
 	
 	local binfactor = 1/`sizebin'
 	qui replace nsize = (ceil(nsize * `binfactor'))* `sizebin'

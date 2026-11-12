@@ -433,6 +433,16 @@ but shows how one could use node labels stored elsewhere:
 The look and feel of node labels is changed with labelopt():
 
 	{cmd:. nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))}
+
+{pstd}
+{cmd:mlabvposition(}{it:varname}{cmd:)} in {cmd:labelopt()} places the label of each node at the clock position
+stored in a numeric variable of the node data (9 left, 3 right, 12 above, 6 below, 0 on the node). In a
+two-mode network drawn with {cmd:layout(bipartite, vertical)}, for example, the labels of the first mode can
+stand to the left of their column and those of the second mode to the right:
+
+	{cmd:. nwwebuse davis, nwclear}
+	{cmd:. generate byte lpos = cond(_nwmode == "1", 9, 3)}
+	{cmd:. nwplot davis, label(_nwnode) layout(bipartite, vertical) labelopt(mlabvposition(lpos))}
 	
 {pstd}
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these

@@ -11,6 +11,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwegoplot`** draws the ego network of one node: ego in the center, the alters on a circle in an order that keeps their ties short (connected groups together, spectral order inside a group), `sortby()` to group the alters by an attribute, `hop(2)` for the nodes at distance two on an outer ring. The ties of ego are drawn light and the ties among the others dark, and ego is drawn larger, unless `edgecolor()` or `size()` are given; all other options go to `nwplot`. New test `test_nwegoplot`.
 - **`nwbalance ..., reps() seed()`** compares the share of balanced triads with random signs on the same ties (each tie positive with the observed share of positive ties as probability): mean and standard deviation over the draws, the closed-form expectation, and the number of draws at least as balanced (`r(null_mean)`, `r(null_sd)`, `r(null_ge)`, `r(null_expected)`, `r(p_positive)`, `r(reps)`). Counts and output without `reps()` are unchanged. New test `test_nwbalance_reps`.
 
+- **`nwplot ..., labelopt(mlabvposition(varname))`** places the label of each node at the clock position held in a variable of the node data, for example the first mode of a two-mode network to the left of its column and the second mode to the right. Before, the variable was not found, because the plot is drawn from nwplot's own data. New test `test_nwplot_labpos`.
+
 ### Fixed
 - **`nwplot` after a failed `if`/`in` call.** The temporary networks of such a call were dropped under names with one underscore too few, so they were left behind and the next call stopped with "already exists". They are now dropped.
 
