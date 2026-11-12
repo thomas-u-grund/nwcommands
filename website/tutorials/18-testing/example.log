@@ -1,3 +1,4 @@
+
 . do example.do
 
 . * nwcommands tutorial 13: testing hypotheses about networks
@@ -19,51 +20,61 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean degree:  2.50
    Temporal: false
 
-. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) reps(500) seed(12345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwtriads ##net##/r(transitivity)
-  Observed: .191
-  Null mean (sd): .149 (.082)
-  Reps: 500
-  p (upper tail): .317
-  p (lower tail): .697
-  p (two-sided): .635
-----------------------------------------
+. nwcug flomarriage, stat(nwtriads) rname(transitivity) reps(500) seed(12345)
 
-. nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(
-> 500) seed(12345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwcomponents ##net##, generate(cc) replace silent/r(components)
-  Observed: 2
-  Null mean (sd): 1.986 (.812)
-  Reps: 500
-  p (upper tail): .707
-  p (lower tail): .762
-  p (two-sided): 1
-----------------------------------------
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    density
+Statistic: r(transitivity) after nwtriads flomarriage
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+transitivity |  .1914894  .1487523  .0819702    0.3174    0.6966    0.6347
+---------------------------------------------------------------------------
+
+. nwcug flomarriage, stat(nwcomponents, generate(cc) replace silent) rname(components) reps(500) see
+> d(12345)
+
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    density
+Statistic: r(components) after nwcomponents flomarriage, generate(cc) replace silent
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+  components |         2     1.986  .8118634    0.7066    0.7625    1.0000
+---------------------------------------------------------------------------
 
 . 
 . * 2. Is one network related to another? (QAP correlation)
 . nwwebuse glasgow, nwclear
 
 . nwcorrelate glasgow1 glasgow2
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 
 . nwcorrelate glasgow1 glasgow2, permutations(500)
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
-    P-value: .004
+
+Network correlation                              Permutations    =        500
+Network 1: glasgow1
+Network 2: glasgow2
+
+----------------------------------------------------------
+ Correlation     P-value   [95% permutation interval]
+----------------------------------------------------------
+   .47324572      0.0040      -.03985912   .04260416
+----------------------------------------------------------
 
 . 
 . * 3. Does a covariate explain ties? (QAP regression)
@@ -88,21 +99,23 @@ Multiple Regression Quadratic Assignment Procedure
                  _cons |     -4.125
 -------------------------------------------------
 
+
 . 
 . * 4. The CUG test again, holding every family's number of marriages fixed
 . nwwebuse florentine, nwclear
 
-. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) condition(degrees) reps(500) seed(12
-> 345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwtriads ##net##/r(transitivity)
-  Observed: .191
-  Null mean (sd): .16 (.08)
-  Reps: 500
-  p (upper tail): .481
-  p (lower tail): .798
-  p (two-sided): .962
-----------------------------------------
+. nwcug flomarriage, stat(nwtriads) rname(transitivity) condition(degrees) reps(500) seed(12345)
+
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    degrees
+Statistic: r(transitivity) after nwtriads flomarriage
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+transitivity |  .1914894  .1604681  .0796446    0.4810    0.7984    0.9621
+---------------------------------------------------------------------------
 
 . 
+
+.

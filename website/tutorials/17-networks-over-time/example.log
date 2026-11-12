@@ -1,3 +1,4 @@
+
 . do example.do
 
 . * nwcommands tutorial 17: networks over time
@@ -19,6 +20,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . nwsummarize glasgow2
@@ -34,6 +36,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 
 . nwsummarize glasgow3
@@ -49,6 +52,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . 
@@ -88,18 +92,28 @@ scalars:
 . 
 . * 3. Is the change in the same direction as the correlation?
 . nwcorrelate glasgow1 glasgow2
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 
 . nwcorrelate glasgow2 glasgow3
-----------------------------------------
-  Network1 name: glasgow2
-  Network2 name: glasgow3
-----------------------------------------
-    Correlation: .532
+
+Network correlation
+Network 1: glasgow2
+Network 2: glasgow3
+
+-------------
+ Correlation
+-------------
+   .53208682
+-------------
 
 . 
 . * 4. A temporal edge list: one network, tie times as data
@@ -144,6 +158,7 @@ scalars:
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean outdegree:  0.50
    Temporal: false
    Provenance:  static graph view of mynet at t=2 (snapshot)
 
@@ -163,3 +178,5 @@ scalars:
  
 
 . 
+
+.

@@ -23,23 +23,26 @@ components almost automatically. A **conditional uniform graph (CUG) test** (And
 1999) asks whether a statistic is unusual *given only the number of nodes and the density*. `nwcug` draws
 random networks with the same size and density, computes your statistic on each, and compares.
 
-You give `nwcug` the command that computes the statistic, with the token `##net##` where the network name
-goes, and the name of the `r()` result to use:
+You give `nwcug` the command that computes the statistic and the name of the `r()` result to use. `nwcug`
+runs the command on the observed network and on every random network, each time with that network's name
+after the command name. Any command, or a program of your own, that leaves a number in `r()` will do. If the
+network is not the first argument, mark its place with the token `##net##`, for example
+`stat(nwcorrelate other ##net##) rname(corr)`:
 
 ```stata
 . nwwebuse florentine, nwclear
 
-. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) reps(500) seed(12345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwtriads ##net##/r(transitivity)
-  Observed: .191
-  Null mean (sd): .149 (.082)
-  Reps: 500
-  p (upper tail): .317
-  p (lower tail): .697
-  p (two-sided): .635
-----------------------------------------
+. nwcug flomarriage, stat(nwtriads) rname(transitivity) reps(500) seed(12345)
+
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    density
+Statistic: r(transitivity) after nwtriads flomarriage
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+transitivity |  .1914894  .1487523  .0819702    0.3174    0.6966    0.6347
+---------------------------------------------------------------------------
 ```
 
 The Florentine marriage network has transitivity .19; random networks with its 16 nodes and 20 ties
@@ -51,17 +54,17 @@ A command that needs further options gets them inside `stat()`. `nwcomponents` r
 it runs once for each random network, so add `replace`:
 
 ```stata
-. nwcug flomarriage, stat(nwcomponents ##net##, generate(cc) replace silent) rname(components) reps(500) seed(12345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwcomponents ##net##, generate(cc) replace silent/r(components)
-  Observed: 2
-  Null mean (sd): 1.986 (.812)
-  Reps: 500
-  p (upper tail): .707
-  p (lower tail): .762
-  p (two-sided): 1
-----------------------------------------
+. nwcug flomarriage, stat(nwcomponents, generate(cc) replace silent) rname(components) reps(500) seed(12345)
+
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    density
+Statistic: r(components) after nwcomponents flomarriage, generate(cc) replace silent
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+  components |         2     1.986  .8118634    0.7066    0.7625    1.0000
+---------------------------------------------------------------------------
 ```
 
 Two components (a main one and an isolate) is just what a random network of this density would give.
@@ -75,17 +78,17 @@ directed network its out-degree and in-degree) and randomizes everything else, b
 of two ties at random (the `rewire(keeping_degseq())` of `igraph`):
 
 ```stata
-. nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) condition(degrees) reps(500) seed(12345)
-----------------------------------------
-  Network: flomarriage
-  Statistic: nwtriads ##net##/r(transitivity)
-  Observed: .191
-  Null mean (sd): .16 (.08)
-  Reps: 500
-  p (upper tail): .481
-  p (lower tail): .798
-  p (two-sided): .962
-----------------------------------------
+. nwcug flomarriage, stat(nwtriads) rname(transitivity) condition(degrees) reps(500) seed(12345)
+
+Conditional uniform graph test                   Number of draws =        500
+Network: flomarriage                             Condition       =    degrees
+Statistic: r(transitivity) after nwtriads flomarriage
+
+---------------------------------------------------------------------------
+             |  Observed Null mean   Null sd  P >= obs  P <= obs Two-sided
+-------------+-------------------------------------------------------------
+transitivity |  .1914894  .1604681  .0796446    0.4810    0.7984    0.9621
+---------------------------------------------------------------------------
 ```
 
 Holding every family's number of marriages fixed raises the expected transitivity from .15 to .16:
@@ -106,15 +109,19 @@ destroys its link to the other, and the correlation is recomputed `permutations(
 . nwwebuse glasgow, nwclear
 
 . nwcorrelate glasgow1 glasgow2, permutations(500)
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
-    P-value: .004
+
+Network correlation                              Permutations    =        500
+Network 1: glasgow1
+Network 2: glasgow2
+
+----------------------------------------------------------
+ Correlation     P-value   [95% permutation interval]
+----------------------------------------------------------
+   .47324572      0.0040      -.03985912   .04260416
+----------------------------------------------------------
 ```
 
-The p-value counts the observed correlation as one more draw of the null, so it is never 0: with 500 permutations the smallest two-sided value is 2/501 = .004, and .004 here means that no permuted network reached .473. Report it as p < .004.
+The p-value counts the observed correlation as one more draw of the null, so it is never 0: with 500 permutations the smallest two-sided value is 2/501 = .004, and .004 here means that no permuted network reached .473. Report it as p < .004. The permutation interval holds the middle 95% of the permuted correlations, from -.040 to .043.
 
 ## What explains the ties? QAP regression
 

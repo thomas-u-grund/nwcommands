@@ -1,3 +1,4 @@
+
 . do example.do
 
 . * nwcommands tutorial 12: homophily, assortativity and mixing
@@ -17,6 +18,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . summarize sport1 smoke1 alcohol1
@@ -117,11 +119,16 @@ occassional |         5          2          4 |        11
 . 
 . * 3. Is the network the same later? Correlate two waves
 . nwcorrelate glasgow1 glasgow2
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 
 . 
 . * 4. Plot
@@ -131,7 +138,8 @@ Calculating node coordinates...
 Generating splines...
 Plotting network...
 Exporting graph to plot_glasgow_smoke.svg...
-(file plot_glasgow_smoke.svg not found)
 file plot_glasgow_smoke.svg saved as SVG format
 
 . 
+
+.
