@@ -64,7 +64,7 @@ program animate
 		di "`shellcmd'"
 	}
 	if "`keepeps'" == "" {
-		if c(os) == "MacOSX" {
+		if c(os) != "Windows" {
 			shell rm `epslist'
 		}
 		else {

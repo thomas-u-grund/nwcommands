@@ -10304,22 +10304,34 @@ string scalar NativeGraphInstallDir(){
 	return(dir)
 }
 
-string scalar NativeGraphPluginSubdir(){
+/*
+	The platform the native binaries are built for: "windows", "macos" or "unix".
+	Console Stata on macOS (stata-mp in a terminal) reports c(os) = "Unix",
+	but c(machine_type) still starts with "Mac" (3.20.1: the console looked
+	for the Linux plugin and viewer and found none).
+*/
+string scalar NwNativePlatform(){
 	string scalar os
 
 	os = st_global("c(os)")
 	if (os == "Windows") return("windows")
-	if (os == "Unix") return("unix")
-	return("macos")
+	if (os == "MacOSX") return("macos")
+	if (substr(st_global("c(machine_type)"), 1, 3) == "Mac") return("macos")
+	return("unix")
+}
+
+string scalar NativeGraphPluginSubdir(){
+	string scalar os
+
+	os = NwNativePlatform()
+	return(os)
 }
 
 string scalar NativeGraphPluginFilename(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("nwgraph_windows.plugin")
-	if (os == "Unix") return("nwgraph_unix.plugin")
-	return("nwgraph_macos.plugin")
+	os = NwNativePlatform()
+	return("nwgraph_" + os + ".plugin")
 }
 
 string scalar NativeGraphPluginPath(){
@@ -10360,10 +10372,8 @@ real scalar NativeGraphAvailable(){
 string scalar NweditViewerSubdir(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("windows")
-	if (os == "Unix") return("unix")
-	return("macos")
+	os = NwNativePlatform()
+	return(os)
 }
 
 /*
@@ -10379,10 +10389,9 @@ string scalar NweditViewerSubdir(){
 string scalar NweditViewerFilename(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("nwedit_viewer_windows.exe")
-	if (os == "Unix") return("nwedit_viewer_unix")
-	return("nwedit_viewer_macos")
+	os = NwNativePlatform()
+	if (os == "windows") return("nwedit_viewer_windows.exe")
+	return("nwedit_viewer_" + os)
 }
 
 string scalar NweditViewerPath(){
