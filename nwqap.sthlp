@@ -273,4 +273,4 @@ message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs 
 	{help nwergm}, {help nwpermute}
 
 {hline}
-{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

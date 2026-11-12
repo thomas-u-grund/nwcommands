@@ -8,6 +8,9 @@ program nwgeodesic
 	_nwsyntax `netname'
 	local origname "`netname'"
 	
+	// the default output network is overwritten without nwreplace;
+	// a name given with name() is protected
+	local name_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "`nwgen_geodesic'"
 	}
@@ -57,7 +60,7 @@ program nwgeodesic
 	}
 	capture _nwsyntax `name', other(_check)
 	local name_exists = (_rc == 0)
-	if `name_exists' & "`nwreplace'" == "" {
+	if `name_exists' & "`nwreplace'" == "" & `name_given' {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
 		error 99
 	}
@@ -191,8 +194,17 @@ program nwgeodesic
 	}
 	mata: mata drop `__nw_ecc'
 
-	// Adjust for unconnected networks
+	// Adjust for unconnected networks: the averages over all pairs are
+	// not defined; report them over the connected pairs instead
 	if `r(unconnected)' != 0 & "`unconnected'" == "" {
+		tempname __nw_D
+		mata: `__nw_D' = *`netobj'->get_matrix()
+		mata: _diag(`__nw_D', .)
+		mata: st_numscalar("r(avgpath_connected)", sum(`__nw_D') / sum(`__nw_D' :< .))
+		mata: st_numscalar("r(diameter_connected)", max(`__nw_D'))
+		mata: st_numscalar("r(connected)", sum(`__nw_D' :< .) / (rows(`__nw_D') * (rows(`__nw_D') - 1)))
+		mata: mata drop `__nw_D'
+
 		mata: st_numscalar("r(avgpath)", -1)
 		mata: st_numscalar("r(diameter)",-1)
 		mata: st_numscalar("r(radius)",-1)
@@ -230,6 +242,9 @@ program nwgeodesic
 		di "{txt}    Average shortest path length: {res} (not defined)"
 		di "{txt}    Diameter: {res} (not defined)"
 		di "{txt}    Radius: {res} (not defined)"
+		di "{txt}    Share of pairs connected: {res} `=strtrim(string(round((`r(connected)')*1000)/1000,"%9.0g"))'"
+		di "{txt}    Average over connected pairs: {res} `=strtrim(string(round((`r(avgpath_connected)')*1000)/1000,"%9.0g"))'"
+		di "{txt}    Longest over connected pairs: {res} `=strtrim(string(round((`r(diameter_connected)')*1000)/1000,"%9.0g"))'"
 	}
 
 	capture _return drop _geo

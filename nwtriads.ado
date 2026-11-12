@@ -141,41 +141,20 @@ program nwtriads
 	// stay legible in black and white), same discipline as nwcug's own
 	// plot()/nwergm_estat's mcmcdiag/gof plots.
 	if "`plot'" != "" {
-		if "`name'" == "" {
-			local name "triads"
+		if "`onedirected'" == "true" {
+			local cl "003 012 102 021D 021U 021C 111D 111U 030T 030C 201 120D 120U 120C 210 300"
 		}
-		preserve
-		qui drop _all
-		qui set obs 16
-		qui gen long catcode = _n
-		label define __nwtriads_catlbl 1 "003" 2 "012" 3 "021D" 4 "021U" ///
-			5 "021C" 6 "030T" 7 "030C" 8 "102" 9 "111D" 10 "111U" ///
-			11 "120D" 12 "120U" 13 "120C" 14 "201" 15 "210" 16 "300", replace
-		label values catcode __nwtriads_catlbl
-		qui gen double count = .
-		qui replace count = `r(_003)' if catcode==1
-		qui replace count = `r(_012)' if catcode==2
-		qui replace count = `r(_021D)' if catcode==3
-		qui replace count = `r(_021U)' if catcode==4
-		qui replace count = `r(_021C)' if catcode==5
-		qui replace count = `r(_030T)' if catcode==6
-		qui replace count = `r(_030C)' if catcode==7
-		qui replace count = `r(_102)' if catcode==8
-		qui replace count = `r(_111D)' if catcode==9
-		qui replace count = `r(_111U)' if catcode==10
-		qui replace count = `r(_120D)' if catcode==11
-		qui replace count = `r(_120U)' if catcode==12
-		qui replace count = `r(_120C)' if catcode==13
-		qui replace count = `r(_201)' if catcode==14
-		qui replace count = `r(_210)' if catcode==15
-		qui replace count = `r(_300)' if catcode==16
-		graph bar (asis) count, over(catcode, label(angle(45))) ///
-			ytitle("Count") ///
-			title("Triad census: `netname'", size(medium)) ///
-			bar(1, fcolor(gs12) lcolor(gs6)) ///
-			legend(off) name(`name', replace)
-		restore
-		di as txt "(plot saved as {bf:`name'}; triad-category counts for `netname')"
+		else {
+			local cl "003 102 201 300"
+		}
+		local cnts ""
+		foreach c of local cl {
+			local cnts "`cnts' `=r(_`c')'"
+		}
+		tempname rr
+		_return hold `rr'
+		_nwcensusplot, kind(triad) directed(`onedirected') counts(`cnts') netname(`netname') name(`name')
+		_return restore `rr'
 	}
 	capture mata: mata drop `triadcensus'
 	capture confirm number 0

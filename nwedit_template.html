@@ -111,6 +111,12 @@ __NWEDIT_CYTOSCAPE__
     </svg>
     <span>Save edges</span>
   </button>
+  <button id="saveDoBtn" class="toolbtn" title="Save a do-file that redraws this picture in Stata (.do)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12l-2 2 2 2"/><path d="M14 12l2 2-2 2"/>
+    </svg>
+    <span>Save do-file</span>
+  </button>
   <div class="sep"></div>
   <button id="exportBtn" class="toolbtn" title="Export PNG">
     <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
@@ -175,6 +181,9 @@ __NWEDIT_CYTOSCAPE__
 <script>
 let cy = null;
 const NODE_DATA = __NWEDIT_DATA__;
+// The nwplot call that wrote this page, without the options of the page itself (interactive, fname(), ...);
+// saveDoFile() completes it with the options that read back what was done on the page.
+const STATA_CMD = __NWEDIT_STATACMD__;
 
 let legendState = {};       // node group key -> { color, shape } -- current legend, editable
 let edgeLegendState = {};   // edge group key -> { color, style } -- same pattern, for edges
@@ -842,42 +851,124 @@ function csvEscape(v) {
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 
-function saveNodeEdits() {
-  if (!cy) return;
+// The records of Save nodes and Save edges: a header and one array of values per node or tie.
+function nodeEditRecords() {
   const nodefactor = parseFloat(document.getElementById('sizeFactor').value);
   const edgefactor = parseFloat(document.getElementById('edgeFactor').value);
-  const header = ['node_row','x','y','color','shape','color_group','shape_group','nodefactor','edgefactor'];
-  const rows = [header.join(',')];
+  const recs = [['node_row','x','y','color','shape','color_group','shape_group','nodefactor','edgefactor']];
   // .not('.nwedit-pacman'): the Easter egg's synthetic node (see
   // setupPacmanEasterEgg) is not part of NODE_DATA and must never leak into
   // the row-order-keyed CSV that importcoords() reads back into Stata.
   cy.nodes().not('.nwedit-pacman').forEach((n, i) => {
     const p = n.position();
     const d = n.data();
-    rows.push([
+    recs.push([
       i + 1,
       (p.x / 1000).toFixed(5),
       (-p.y / 1000).toFixed(5),   // flip back to Stata's y-up
-      csvEscape(hexToRgbString(d.color)),
-      csvEscape(d.shape),
+      hexToRgbString(d.color),
+      d.shape,
       d.color_group,
       d.shape_group,
       nodefactor,
       edgefactor
-    ].join(','));
+    ]);
   });
-  downloadText(rows.join('\n'), 'nwedit_nodes.csv', 'text/csv');
+  return recs;
+}
+const NODE_STRING_COLS = [3, 4];
+
+function edgeEditRecords() {
+  const recs = [['edge_row','color','style','edgecolor_group']];
+  cy.edges().forEach((e, i) => {
+    const d = e.data();
+    recs.push([i + 1, hexToRgbString(d.color), d.style, d.edgecolor_group]);
+  });
+  return recs;
+}
+const EDGE_STRING_COLS = [1, 2];
+
+function recordsToCsv(recs, stringCols) {
+  return recs.map((r, k) => r.map((v, j) => (k > 0 && stringCols.includes(j)) ? csvEscape(v) : v).join(',')).join('\n');
+}
+
+function saveNodeEdits() {
+  if (!cy) return;
+  downloadText(recordsToCsv(nodeEditRecords(), NODE_STRING_COLS), 'nwedit_nodes.csv', 'text/csv');
 }
 
 function saveEdgeEdits() {
   if (!cy) return;
-  const header = ['edge_row','color','style','edgecolor_group'];
-  const rows = [header.join(',')];
-  cy.edges().forEach((e, i) => {
-    const d = e.data();
-    rows.push([i + 1, csvEscape(hexToRgbString(d.color)), csvEscape(d.style), d.edgecolor_group].join(','));
-  });
-  downloadText(rows.join('\n'), 'nwedit_edges.csv', 'text/csv');
+  downloadText(recordsToCsv(edgeEditRecords(), EDGE_STRING_COLS), 'nwedit_edges.csv', 'text/csv');
+}
+
+// One do-file that redraws the picture in Stata as it is on the page: it writes the two files of
+// Save nodes and Save edges (nwedit_nodes.csv, nwedit_edges.csv) into the working directory with
+// input/export delimited, and then calls nwplot with nodexy(), importcoords() and edgeimport().
+// Values are written for Stata's input: strings in double quotes, missing as a dot.
+function stataInputValue(v, isString) {
+  if (isString) return '"' + String(v == null ? '' : v).replace(/"/g, "'") + '"';
+  const x = Number(v);
+  return (v === '' || v == null || !isFinite(x)) ? '.' : String(v);
+}
+function recordsToInput(recs, stringCols) {
+  return recs.slice(1).map(r => r.map((v, j) => stataInputValue(v, stringCols.includes(j))).join(' '));
+}
+function saveDoFile() {
+  if (!cy) return;
+  const nodeRecs = nodeEditRecords();
+  const edgeRecs = edgeEditRecords();
+  const today = new Date().toISOString().slice(0, 10);
+  const c = STATA_CMD;
+  const ifin = (c.ifin ? ' ' + c.ifin : '');
+  const opts = (c.options ? ' ' + c.options : '');
+  const lines = [
+    '* nwedit_plot.do, saved from the interactive page of nwplot on ' + today + '.',
+    '* It redraws the picture as it was on the page: the positions, colors and shapes of the',
+    '* nodes and the colors and patterns of the ties. Run it with the same data in memory as',
+    '* when the page was written (run shows only the graph, do shows every line).',
+    '* It writes nwedit_nodes.csv and nwedit_edges.csv into the working directory.',
+    '',
+    'preserve',
+    'quietly clear',
+    'quietly input double(node_row x y) str40 color str20 shape double(color_group shape_group nodefactor edgefactor)',
+    ...recordsToInput(nodeRecs, NODE_STRING_COLS),
+    'end',
+    'quietly export delimited using "nwedit_nodes.csv", replace',
+    'quietly clear',
+    'quietly input double edge_row str40 color str20 style double edgecolor_group',
+    ...recordsToInput(edgeRecs, EDGE_STRING_COLS),
+    'end',
+    'quietly export delimited using "nwedit_edges.csv", replace',
+    'restore',
+    '',
+    'capture drop _nwedit_x _nwedit_y',
+    'quietly generate double _nwedit_x = .',
+    'quietly generate double _nwedit_y = .',
+    'nwplot ' + c.netname + ifin + ', nodexy(_nwedit_x _nwedit_y) ///',
+    '    importcoords("nwedit_nodes.csv") edgeimport("nwedit_edges.csv")' + (opts ? ' ///' : ''),
+  ];
+  if (opts) {
+    // one option list over several lines of at most about 72 characters, broken between options
+    const toks = [];
+    let cur = '', depth = 0, inq = false;
+    for (const ch of opts.trim()) {
+      if (ch === '"') inq = !inq;
+      if (!inq && ch === '(') depth++;
+      if (!inq && ch === ')') depth--;
+      if (ch === ' ' && depth === 0 && !inq) { if (cur) toks.push(cur); cur = ''; } else cur += ch;
+    }
+    if (cur) toks.push(cur);
+    const out = [];
+    let line = '';
+    for (const t of toks) {
+      if (line && (line + ' ' + t).length > 68) { out.push(line); line = t; } else line = line ? line + ' ' + t : t;
+    }
+    if (line) out.push(line);
+    out.forEach((l, k) => lines.push('    ' + l + (k < out.length - 1 ? ' ///' : '')));
+  }
+  lines.push('drop _nwedit_x _nwedit_y', '');
+  downloadText(lines.join('\n'), 'nwedit_plot.do', 'text/plain');
 }
 
 // A `download`-attribute anchor click works for free in an ordinary browser
@@ -1533,6 +1624,7 @@ const EasterEggControl = {};
 
 document.getElementById('saveNodesBtn').onclick = saveNodeEdits;
 document.getElementById('saveEdgesBtn').onclick = saveEdgeEdits;
+document.getElementById('saveDoBtn').onclick = saveDoFile;
 document.getElementById('exportBtn').onclick = exportPng;
 document.getElementById('sizeFactor').oninput = e => applySizeFactor(parseFloat(e.target.value));
 document.getElementById('edgeFactor').oninput = e => applyEdgeFactor(parseFloat(e.target.value));

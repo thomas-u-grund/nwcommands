@@ -52,7 +52,7 @@ The core package ships with example networks, so every tutorial and help example
 ## One-time networks
 
 ### lazega: lawyers in a corporate law firm
-- **What:** 71 lawyers, three directed networks: advice (`lazega_adv`, 892 ties), co-work (`lazega_cow`) and friendship (`lazega_fr`, 575 ties). Attributes: age, gender, office, practice, school, seniority, status, years with the firm.
+- **What:** 71 lawyers, three directed networks: advice (`lazega_adv`, 892 ties), co-work (`lazega_cow`) and friendship (`lazega_fr`, 575 ties). Attributes: age, gender, office, practice, school, seniority, status, years with the firm; office, practice and status also as numbers with value labels (`officenum`, `practicenum`, `partner`).
 - **Source:** Lazega, E. (2001), *The Collegial Phenomenon*, Oxford University Press; Lazega, E. and van Duijn, M. (1997), *Social Networks* 19, 375-397.
 - **Load:** `nwwebuse lazega`
 - **Used in:** [nwergm tutorials 2](../nwergm/tutorial-2-terms/), [3](../nwergm/tutorial-3-diagnostics/) and [5](../nwergm/tutorial-5-constraints-twomode-operators/).
@@ -189,6 +189,11 @@ These show that the commands work on any network.
 - **What:** the 50 busiest US airports, directed, direct routes between them. Attributes: name, city, latitude, longitude, degree in the full US network.
 - **Source and licence:** OpenFlights airport and route databases, [openflights.org/data](https://openflights.org/data), made available under the [Open Database License (ODbL 1.0)](https://opendatacommons.org/licenses/odbl/1-0/). This is a derived database, adapted by Thomas U. Grund (see `usair_full` below for the changes); it is offered under the ODbL, not under the GPL-3 of the code.
 - **Load:** `nwwebuse usair`
+
+### usmap: outlines of the US states (a map, not a network)
+- **What:** the borders of the 50 US states and the District of Columbia as lines, for drawing a network with longitude and latitude under `nwplot ..., nodexy(Lon Lat) basemap(usmap)`. A plain Stata file in the format of `spshape2dta` (`_ID`, `_X` longitude, `_Y` latitude, `shape_order`, `state`); rows with a missing `_X` separate the lines. The Aleutian islands west of 180 degrees are shifted by 360 degrees (to longitudes below -180) so that Alaska stays in one piece.
+- **Source and licence:** US Census Bureau, cartographic boundary file `cb_2018_us_state_20m` (2018, scale 1:20,000,000), [census.gov/geographies/mapping-files](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html); a work of the US federal government and so in the public domain. Converted with `spshape2dta`; Puerto Rico left out.
+- **Load:** not loaded with `nwwebuse`; give the name to `basemap()`.
 
 ### usair_full: the full US airport network
 - **What:** every US airport with at least one scheduled non-stop domestic route in OpenFlights' route database: 549 airports and 5,450 directed routes (density 0.018). Network `usair_full`, node names are the IATA codes (ATL, DEN, ...). Attributes: `iata`, `name`, `city`, `lat`, `lon` and the out-, in- and total degree (`_outdegree`, `_indegree`, `_degree`). The network falls into three connected components: 541 airports, an Alaska/Aleutian seaplane cluster of 4 and a San Juan Islands seaplane cluster of 4. A real example of a larger, messier network: Anchorage has by far the largest betweenness, and closeness needs `unconnected(max)`.

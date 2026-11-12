@@ -134,6 +134,7 @@
 {p2line}
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...) are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
+{p2col:{opt basemap}({it:filename} [{cmd:if} {it:exp}] [{cmd:,} {it:{help line_options}}])}with {opt nodexy()}: draw outlines, such as the borders of a map, under the network; {it:filename} is a Stata file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} file that {help spshape2dta} makes from a shapefile), a web address, or the name of a map among the example data ({cmd:usmap}); {cmd:if} {it:exp} keeps part of the map, with a condition on the variables of the map file{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
 	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
@@ -256,11 +257,33 @@ instead of re-deriving a fresh, unrelated layout for each one:
 	{cmd:. nwplot wave2, nodexy(x1 y1)}
 
 {pstd}
+When the coordinates are longitude and latitude, {opt basemap()} draws a map under the network. The
+example data include the outlines of the US states ({cmd:usmap}); a shapefile of your own becomes such a
+file with {help spshape2dta}. The picture takes the proportions of the map unless {opt aspectratio()} is given; for
+longitude and latitude a degree of longitude is drawn at its width at the middle latitude of the map, so that
+the map keeps its familiar shape. Many ties are best drawn thin and transparent, for example
+{cmd:lineopt(lcolor(gs6%15)) edgefactor(0.1) arrowfactor(0)}.
+
+	{cmd:. nwwebuse usair, nwclear}
+	{cmd:. nwplot usair, nodexy(Lon Lat) basemap(usmap) arcstyle(straight)}
+	{cmd:. nwplot usair, nodexy(Lon Lat) basemap(usmap, lcolor(gs13) lwidth(thin))}
+
+{pstd}
+The lower 48 states only (the variable {bf:state} of {cmd:usmap} holds the postal code; the {cmd:if} of {cmd:nwplot} drops the airports of Alaska and Hawaii):
+
+	{cmd:. nwplot usair if Lat < 50 & Lon > -125, nodexy(Lon Lat) basemap(usmap if !inlist(state, "AK", "HI"))}
+
+{pstd}
+{opt nodexy()} draws any coordinates, so it also draws a layout computed elsewhere: by a program of your own,
+in Mata or in another software. Store the two coordinates in variables, in the order of the nodes.
+
+{pstd}
 {opt interactive} opens the plot in a browser alongside the usual static plot: drag nodes to
 reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
 shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
 already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
-factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image.
+factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image
+(a raster image; for a vector file, draw the figure in Stata, as below).
 The buttons open a save dialog in the native viewer (on Windows, macOS and Linux) and download the file in an ordinary
 browser tab. Two buttons in the browser save the edits as CSV files; feed them back
 with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
@@ -269,6 +292,15 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
 	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
 	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+The button {bf:Save do-file} does all of this in one step. It saves {bf:nwedit_plot.do}, which writes the two
+files ({bf:nwedit_nodes.csv} and {bf:nwedit_edges.csv}) into the working directory and then calls {cmd:nwplot}
+with the network, {help if}/{help in} and options of the call that wrote the page, completed with
+{opt nodexy()}, {opt importcoords()} and {opt edgeimport()} (the options of the page itself, of exporting and
+of saving coordinates are left out). Run it with the same data in memory as when the page was written:
+
+	{cmd:. run nwedit_plot.do}
 
 {pstd}
 How the bring-back works: node positions come from the CSV through {opt nodexy()}; node colors and
@@ -517,4 +549,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
