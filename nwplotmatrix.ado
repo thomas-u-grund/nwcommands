@@ -1,6 +1,6 @@
 capture program drop nwplotmatrix
 program nwplotmatrix
-	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) ]
+	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) NOGROUPLabels ]
 	unw_defs
 	_nwsyntax `netname'
 
@@ -102,8 +102,31 @@ program nwplotmatrix
 				local ylines "`ylines' `=2 - `i' - 0.5'"
 			}
 		}
-		local xlinecmd `"xline(`xlines', `groupopt' lcolor(`lcolor'))"'
-		local ylinecmd `"yline(`ylines', `groupopt' lcolor(`lcolor'))"'
+		// heavier lines than the cell borders, unless the group() sub-options set a width
+		local __nwpm_lw "lwidth(medthick)"
+		if strpos(`"`groupopt'"', "lw") local __nwpm_lw ""
+		local xlinecmd `"xline(`xlines', `__nwpm_lw' `groupopt' lcolor(`lcolor'))"'
+		local ylinecmd `"yline(`ylines', `__nwpm_lw' `groupopt' lcolor(`lcolor'))"'
+		// the name of each group beside its block (at the top and at the left), unless node labels are shown
+		if "`lab'" == "" & "`label'" == "" & "`nogrouplabels'" == "" {
+			capture confirm string variable `groupvar'
+			local __nwpm_isstr = (_rc == 0)
+			local __nwpm_start = 1
+			forvalues i = 1/`nodes' {
+				if `i' == `nodes' | `_group'[`=`i'+1'] != `_group'[`i'] {
+					local __nwpm_mid = (`__nwpm_start' + `i') / 2
+					if `__nwpm_isstr' local __nwpm_nm = `groupvar'[`__nwpm_start']
+					else {
+						local __nwpm_v = `groupvar'[`__nwpm_start']
+						local __nwpm_nm : label (`groupvar') `__nwpm_v'
+					}
+					local __nwpm_gx `"`__nwpm_gx' `__nwpm_mid' `"`__nwpm_nm'"'"'
+					local __nwpm_gy `"`__nwpm_gy' `=1 - `__nwpm_mid'' `"`__nwpm_nm'"'"'
+					local __nwpm_start = `i' + 1
+				}
+			}
+			local __nwpm_glab `"gxlab(`__nwpm_gx') gylab(`__nwpm_gy')"'
+		}
 	}
 	local options "`oldoptions'"
 	local lcolor `"`oldlcolor'"'
@@ -136,7 +159,11 @@ program nwplotmatrix
 		local l label(`label')
 	}
 	//nwsociomatrix_noif `netname', `xlinecmd' `ylinecmd' `lab' label(`label') `nodichotomize' background(`background') ylabel(`labelopt' `ylabel') xlabel(`labelopt' `xlabel') legendopt(`legendopt') color(`colorpalette') lcolor(`lcolor') legend(`legend') `tievalue' tievalueopt(`tievalueopt') `options'
-	qui plotmatrix, `xlinecmd' `ylinecmd' `l' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, angle(0) `ylabel') xlabel(, angle(90) `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
+	local __nwpm_xang "angle(90)"
+	if `"`__nwpm_glab'"' != "" local __nwpm_xang "angle(45) noticks labsize(small)"
+	local __nwpm_yang "angle(0)"
+	if `"`__nwpm_glab'"' != "" local __nwpm_yang "angle(0) noticks labsize(small)"
+	qui plotmatrix, `xlinecmd' `ylinecmd' `l' `__nwpm_glab' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, `__nwpm_yang' `ylabel') xlabel(, `__nwpm_xang' `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
 	restore
 end
 
@@ -162,7 +189,7 @@ v 1.20 24Apr2014  Bug? -- skipping allcolors if the graph is null is now removed
 capture program drop plotmatrix
 prog def  plotmatrix
 version 10.1
-syntax , Mat(name) [,ifvar(varname) gap(real 0.05) originalnodes(integer 0) legend(string asis) Split(numlist) lab label(varname) tievalueopt(string) background(string) Color(string) LColor(string) Upper Lower MAXTicks(integer 8) FREQ FORMATCELLS(string) *]
+syntax , Mat(name) [,ifvar(varname) gap(real 0.05) originalnodes(integer 0) legend(string asis) Split(numlist) lab label(varname) tievalueopt(string) background(string) Color(string) LColor(string) Upper Lower MAXTicks(integer 8) FREQ FORMATCELLS(string) gxlab(string asis) gylab(string asis) *]
 local twoway_opt "`options'"
 set more off
 
@@ -367,6 +394,12 @@ forvalues i = 1 / `nodes'{
 
 if "`lab'" == "" & "`label'" == "" {
 	local scaleOff = "yscale(off) xscale(off)"
+}
+// group names (nwplotmatrix, group()): one label at the middle of each block, the column names at the top
+if `"`gxlab'"' != "" {
+	local xlab `"`gxlab'"'
+	local ylab `"`gylab'"'
+	local scaleOff "xscale(alt noline) yscale(noline)"
 }
 
 

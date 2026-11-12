@@ -4,6 +4,16 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.20.0] - 2026-11-12
+
+### Added
+- **`nwplot ..., basemap()`** draws outlines, such as the borders of a map, under a network whose nodes are placed with `nodexy()`, for example by longitude and latitude. The argument is a Stata file with the coordinates in `_X` and `_Y` (the `*_shp.dta` file that `spshape2dta` makes from a shapefile), a web address, or the name of a map among the example data; line options follow after a comma. The picture then takes the proportions of the map unless `aspectratio()` is given. New example file `usmap` (outlines of the US states, US Census Bureau, public domain): `nwplot usair, nodexy(Lon Lat) basemap(usmap)`.
+- **Save do-file on the interactive page of `nwplot`.** A new button saves `nwedit_plot.do`, which redraws the picture in Stata as it is on the page: it writes the two files of Save nodes and Save edges into the working directory and calls `nwplot` with the network, `if`/`in` and options of the call that wrote the page, completed with `nodexy()`, `importcoords()` and `edgeimport()`. Run it with `run nwedit_plot.do`.
+- **Group names in `nwplotmatrix, group()`.** The name of each group (its value label, or the string) is written beside its block, at the top and at the left, and the lines between the groups are drawn medium thick, so that one can see where a group starts and ends. `nogrouplabels` leaves the names out; with node labels (`lab`, `label()`) the names are not written.
+
+### Changed
+- The help of `nwplot` says that the PNG export of the interactive page is a raster image, and that `nodexy()` also draws layouts computed elsewhere.
+
 ## [3.19.0] - 2026-11-11
 
 ### Changed

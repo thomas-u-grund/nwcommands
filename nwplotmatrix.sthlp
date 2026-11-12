@@ -29,7 +29,8 @@
 {p2col:{it:options}}Description{p_end}
 {p2line}
 {p2col:{opth sortby(varname)}}sort network nodes before plotting{p_end}
-{p2col:{opt group}({it:{help varname}}, [{it:{help connect_options}}])}group nodes by categorical variable{p_end}
+{p2col:{opt group}({it:{help varname}}, [{it:{help connect_options}}])}group nodes by categorical variable; the names of the groups are written beside the blocks{p_end}
+{p2col:{opt nogroupl:abels}}with {opt group()}: no group names{p_end}
 {p2col:{it:{help nwplotmatrix##label_options:label_options}}}display and change look of
        axis labels{p_end}
 {p2col:{it:{help nwplotmatrix##patch_options:patch_options}}}change look of patches (e.g. color, tievalue){p_end}
@@ -114,6 +115,11 @@ which is one when a family had some seats in the council.
 	{cmd:. nwplotmatrix flomarriage, group(seat)}	
 
 {pstd}
+The name of each group (its value label, or the string) is written beside its block, at the top and at the
+left, unless node labels are shown ({opt lab} or {opt label()}); {opt nogrouplabels} leaves the names out.
+The lines between the groups are drawn medium thick.
+
+{pstd}
 All normal {help connect_options:options for lines} can be applied as well.
 
 	{cmd:. nwplotmatrix flomarriage, group(seat, lcolor(green))}	
@@ -141,4 +147,4 @@ are refused; plot a part of the network or use {help nwplot}.
 last certified : 25 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

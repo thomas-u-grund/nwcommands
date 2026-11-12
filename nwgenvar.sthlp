@@ -212,4 +212,4 @@ The command can also be used to generate networks. There are two ways to do this
 {pmore2}Transpose a network (see {help nwtranspose}).
 
 {hline}
-{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

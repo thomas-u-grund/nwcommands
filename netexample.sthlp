@@ -387,7 +387,8 @@ at a size comparable to this package's other example networks - {it:degree} itse
 airport's own direct-route degree in the {it:full}, unrestricted US network, not just within this
 50-airport subset, so it will not generally match {help nwdegree:nwdegree}'s own count computed
 on {it:usair} as loaded. Not a social network: included as a worked example of a real,
-non-social, directed transportation network.
+non-social, directed transportation network. The outlines of the US states, for drawing the airports on a
+map, are in {bf:usmap} (not a network): {cmd:nwplot usair, nodexy(Lon Lat) basemap(usmap)} (see {help nwplot}).
 
 {pmore}
 {bf:Reference}
@@ -862,4 +863,4 @@ by school agree with Snijders and Baerveldt 2003; the Siena file page states the
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
-{pstd}{it:nwcommands version 3.19.0, 11 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
