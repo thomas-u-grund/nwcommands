@@ -16,6 +16,8 @@
 {it:{help netname:netname2}}
 [{cmd:,}
 {opth permutations(integer)}
+{opt unvalued}
+{opth save(filename)}
 {opt plot}
 {opt plotoptions}({it:{help tabplot:tabplot_options}})
 {opt eiplot}
@@ -29,6 +31,8 @@
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
+{synopt:{opt unvalued}}count every tie as 1, whatever its value, in the table and in the E-I index{p_end}
+{synopt:{opth save(filename)}}save the E-I indices of the permutations (variables {bf:EI_simulated}, {bf:EI_observed}) as a Stata data set{p_end}
 
 
 {title:Description}

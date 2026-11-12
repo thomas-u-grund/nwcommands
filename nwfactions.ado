@@ -1,6 +1,8 @@
 
 capture program drop nwfactions
 program nwfactions, rclass
+	// temporary names: no scalar or matrix is left behind
+	tempname __faction_fitness
 	version 12
 	syntax [anything(name=netname)][, GROUPS(int 2) GENerate(string) replace measure(string) maxiter(int 100) silent]
 	set more off
@@ -66,13 +68,13 @@ program nwfactions, rclass
 		exit _rc
 	}
 	mata: st_store((1::`nodes'),"`netgenerate'", `__nw_fac'[1::`nodes',1])
-	mata: st_numscalar("faction_fitness", `__nw_fac'[`nodes'+1,1])
+	mata: st_numscalar("`__faction_fitness'", `__nw_fac'[`nodes'+1,1])
 	mata: mata drop `__nw_fac'
 
-	return scalar fitness = faction_fitness
+	return scalar fitness = `__faction_fitness'
 	return scalar groups = `groups'
 	return local netgenerate "`netgenerate'"
-	local lfit = faction_fitness
+	local lfit = `__faction_fitness'
 
 	if "`silent'" == "" {
 		di "{hline 40}"

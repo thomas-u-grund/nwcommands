@@ -1,6 +1,8 @@
 
 capture program drop nwkplex
 program nwkplex, rclass
+	// temporary names: no scalar or matrix is left behind
+	tempname __nw_kplexmatrix __nw_maxnwkplex __nw_nkplex __nw_nnwkplex __nw_tabnwkplex
 	version 12
 	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace minsize(int -1) MAXPlexes(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
@@ -72,16 +74,16 @@ program nwkplex, rclass
 		mata: `__nw_kplex' = `netobj'->calculate_kplex_filtered(`k', `minsize')
 		mata: nwg_enum_summary(`__nw_kplex')
 		if "`countonly'" != "" {
-			mata: st_numscalar("nw_nnwkplex", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwkplex", nwg_enum_max)
-			mata: st_matrix("nw_tabnwkplex", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwkplex'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwkplex'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwkplex'", nwg_enum_hist)
 			mata: mata drop `__nw_kplex'
 			mata: nwg_enum_reset(., .)
-			return scalar kplexes = nw_nnwkplex
-			return scalar maxsize = nw_maxnwkplex
-			matrix colnames nw_tabnwkplex = size count
-			return matrix size_table = nw_tabnwkplex
-			local lcount = nw_nnwkplex
+			return scalar kplexes = `__nw_nnwkplex'
+			return scalar maxsize = `__nw_maxnwkplex'
+			matrix colnames `__nw_tabnwkplex' = size count
+			return matrix size_table = `__nw_tabnwkplex'
+			local lcount = `__nw_nnwkplex'
 			if "`silent'" == "" {
 				noi di "{hline 40}"
 				noi di "{txt}  Network name: {res}`netname_temp'"
@@ -94,20 +96,20 @@ program nwkplex, rclass
 		if "`nomatrix'" != "" {
 			// no sets-by-nodes matrix (it needs memory for sets x nodes numbers): the per-node
 			// variable and the counts only
-			mata: st_numscalar("nw_nnwkplex", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwkplex", nwg_enum_max)
-			mata: st_matrix("nw_tabnwkplex", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwkplex'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwkplex'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwkplex'", nwg_enum_hist)
 			capture confirm new variable `netgenerate'`i'
 			if _rc capture drop `netgenerate'`i'
 			gen `netgenerate'`i' = .
 			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
 			mata: mata drop `__nw_kplex'
 			mata: nwg_enum_reset(., .)
-			return scalar kplexes = nw_nnwkplex
-			return scalar maxsize = nw_maxnwkplex
-			matrix colnames nw_tabnwkplex = size count
-			return matrix size_table = nw_tabnwkplex
-			local lcount = nw_nnwkplex
+			return scalar kplexes = `__nw_nnwkplex'
+			return scalar maxsize = `__nw_maxnwkplex'
+			matrix colnames `__nw_tabnwkplex' = size count
+			return matrix size_table = `__nw_tabnwkplex'
+			local lcount = `__nw_nnwkplex'
 			capture confirm variable `netgenerate'`i', exact
 			if "`silent'" == "" {
 				noi di "{hline 40}"
@@ -121,8 +123,8 @@ program nwkplex, rclass
 		}
 		mata: nwg_enum_reset(., .)
 		mata: `__nw_sizes' = rowsum(`__nw_kplex')
-		mata: st_numscalar("nw_nkplex", rows(`__nw_kplex'))
-		mata: st_matrix("nw_kplexmatrix", (rows(`__nw_kplex') > 0 ? `__nw_kplex' : J(1, `nodes', 0)))
+		mata: st_numscalar("`__nw_nkplex'", rows(`__nw_kplex'))
+		mata: st_matrix("`__nw_kplexmatrix'", (rows(`__nw_kplex') > 0 ? `__nw_kplex' : J(1, `nodes', 0)))
 		mata: `__nw_kplexnum' = (rows(`__nw_kplex') > 0 ? editvalue(colmax(`__nw_kplex' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
 		capture confirm new variable `netgenerate'`i'
@@ -131,9 +133,9 @@ program nwkplex, rclass
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_kplexnum')
 		mata: mata drop `__nw_kplex' `__nw_sizes' `__nw_kplexnum'
 
-		return scalar kplexes = nw_nkplex
-		return matrix kplex_matrix = nw_kplexmatrix
-		local lkplex = nw_nkplex
+		return scalar kplexes = `__nw_nkplex'
+		return matrix kplex_matrix = `__nw_kplexmatrix'
+		local lkplex = `__nw_nkplex'
 
 		// see nwbrokerage.ado's own header comment: the "already
 		// exists" probe above leaves _rc stale even after a fully

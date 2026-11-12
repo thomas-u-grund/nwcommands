@@ -27,12 +27,13 @@ program animate
 		local delay "50"
 	}
 	local epslist ""
-	local numgraphs : word count `graphs'
 	local i = 1
 	qui if "`graphs'" == "_all" {
 		graph dir
 		local graphs `r(list)'
 	}
+	// counted after _all is expanded: the last frame is the last graph
+	local numgraphs : word count `graphs'
 	foreach g in `graphs' {
 		local gl = length("`g'") - 4
 		
@@ -45,8 +46,7 @@ program animate
 			local geps `g'
 		}
 		
-		graph export `geps'.eps, replace 
-		//mag(`mag')
+		graph export `geps'.eps, replace mag(`mag')
 		local epslist "`epslist' `geps'.eps"
 	
 		if `i' == `numgraphs' {
@@ -64,11 +64,8 @@ program animate
 		di "`shellcmd'"
 	}
 	if "`keepeps'" == "" {
-		if c(os) == "MacOSX" {
-			shell rm `epslist'
-		}
-		else {
-			shell del `epslist'
+		foreach f of local epslist {
+			capture erase `"`f'"'
 		}
 	}
 end

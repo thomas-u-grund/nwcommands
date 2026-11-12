@@ -20,7 +20,7 @@
 [{opt weights(p1, p2,...)}
 {opt undirected}
 {opth name(newnetname)}
-{opt labs}({it:lab1 lab2 ...})
+{opt labs}({it:lab1,lab2,...})
 {opt xvars}
 {opth ntimes(int)}]
 
@@ -32,7 +32,7 @@
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opth name(newnetname)}}name of the new network; default = {it:ring}{p_end}
-{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt labs}({it:lab1,lab2,...})}overwrite node labels (separated by commas){p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated (named {it:name}_1, {it:name}_2, ...); default = 1{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}

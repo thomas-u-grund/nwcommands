@@ -20,7 +20,7 @@
 
 {pstd}
 {bf:Directed:} yes. {bf:Valued:} the one-way table and the table of two networks show the tie values; the table by
-{opt attribute()} counts ties only. On a valued network the command prints a note.
+{opt attribute()} counts ties only; for it, a valued network gets a note.
 {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not applicable. See
 {help nwnetworktypes}.{p_end}
 
@@ -118,6 +118,8 @@ Frequency weights of Stata stop at 2,147,483,647: a directed network of more tha
 {it:{help netname:netname2}}
 [{cmd:,}
 {opth permutations(integer)}
+{opt unvalued}
+{opth save(filename)}
 {opt plot}
 {opt plotoptions}({it:{help tabplot:tabplot_options}})
 {opt eiplot}
@@ -131,6 +133,8 @@ Frequency weights of Stata stop at 2,147,483,647: a directed network of more tha
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
+{synopt:{opt unvalued}}count every tie as 1, whatever its value, in the table and in the E-I index{p_end}
+{synopt:{opth save(filename)}}save the E-I indices of the permutations (variables {bf:EI_simulated}, {bf:EI_observed}) as a Stata data set{p_end}
 
 {title:Description}
 
@@ -245,6 +249,8 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {cmd:,}
 {opth attribute(varname)}
 [{opth permutations(integer)}
+{opt unvalued}
+{opth save(filename)}
 {opt plot}
 {opt plotoptions}({it:{help tabplot:tabplot_options}})
 {opt eiplot}
@@ -259,6 +265,8 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
+{synopt:{opt unvalued}}accepted; the table counts ties already, whatever their values{p_end}
+{synopt:{opth save(filename)}}save the E-I indices of the permutations (variables {bf:EI_simulated}, {bf:EI_observed}) as a Stata data set{p_end}
 
 {title:Description}
 

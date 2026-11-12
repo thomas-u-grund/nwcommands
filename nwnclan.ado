@@ -1,6 +1,8 @@
 
 capture program drop nwnclan
 program nwnclan, rclass
+	// temporary names: no scalar or matrix is left behind
+	tempname __nw_maxnwnclan __nw_nclanmatrix __nw_nnclan __nw_nnwnclan __nw_tabnwnclan
 	version 12
 	syntax [anything(name=netname)][, n(int 2) GENerate(string) replace minsize(int 3) MAXcliques(real 1000000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
@@ -72,16 +74,16 @@ program nwnclan, rclass
 		mata: `__nw_nclan' = `netobj'->calculate_nclan_filtered(`n', `minsize')
 		mata: nwg_enum_summary(`__nw_nclan')
 		if "`countonly'" != "" {
-			mata: st_numscalar("nw_nnwnclan", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwnclan", nwg_enum_max)
-			mata: st_matrix("nw_tabnwnclan", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwnclan'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwnclan'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwnclan'", nwg_enum_hist)
 			mata: mata drop `__nw_nclan'
 			mata: nwg_enum_reset(., .)
-			return scalar nclans = nw_nnwnclan
-			return scalar maxsize = nw_maxnwnclan
-			matrix colnames nw_tabnwnclan = size count
-			return matrix size_table = nw_tabnwnclan
-			local lcount = nw_nnwnclan
+			return scalar nclans = `__nw_nnwnclan'
+			return scalar maxsize = `__nw_maxnwnclan'
+			matrix colnames `__nw_tabnwnclan' = size count
+			return matrix size_table = `__nw_tabnwnclan'
+			local lcount = `__nw_nnwnclan'
 			if "`silent'" == "" {
 				noi di "{hline 40}"
 				noi di "{txt}  Network name: {res}`netname_temp'"
@@ -94,20 +96,20 @@ program nwnclan, rclass
 		if "`nomatrix'" != "" {
 			// no sets-by-nodes matrix (it needs memory for sets x nodes numbers): the per-node
 			// variable and the counts only
-			mata: st_numscalar("nw_nnwnclan", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwnclan", nwg_enum_max)
-			mata: st_matrix("nw_tabnwnclan", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwnclan'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwnclan'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwnclan'", nwg_enum_hist)
 			capture confirm new variable `netgenerate'`i'
 			if _rc capture drop `netgenerate'`i'
 			gen `netgenerate'`i' = .
 			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
 			mata: mata drop `__nw_nclan'
 			mata: nwg_enum_reset(., .)
-			return scalar nclans = nw_nnwnclan
-			return scalar maxsize = nw_maxnwnclan
-			matrix colnames nw_tabnwnclan = size count
-			return matrix size_table = nw_tabnwnclan
-			local lcount = nw_nnwnclan
+			return scalar nclans = `__nw_nnwnclan'
+			return scalar maxsize = `__nw_maxnwnclan'
+			matrix colnames `__nw_tabnwnclan' = size count
+			return matrix size_table = `__nw_tabnwnclan'
+			local lcount = `__nw_nnwnclan'
 			capture confirm variable `netgenerate'`i', exact
 			if "`silent'" == "" {
 				noi di "{hline 40}"
@@ -121,8 +123,8 @@ program nwnclan, rclass
 		}
 		mata: nwg_enum_reset(., .)
 		mata: `__nw_sizes' = rowsum(`__nw_nclan')
-		mata: st_numscalar("nw_nnclan", rows(`__nw_nclan'))
-		mata: st_matrix("nw_nclanmatrix", (rows(`__nw_nclan') > 0 ? `__nw_nclan' : J(1, `nodes', 0)))
+		mata: st_numscalar("`__nw_nnclan'", rows(`__nw_nclan'))
+		mata: st_matrix("`__nw_nclanmatrix'", (rows(`__nw_nclan') > 0 ? `__nw_nclan' : J(1, `nodes', 0)))
 		mata: `__nw_nclannum' = (rows(`__nw_nclan') > 0 ? editvalue(colmax(`__nw_nclan' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
 		capture confirm new variable `netgenerate'`i'
@@ -131,9 +133,9 @@ program nwnclan, rclass
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_nclannum')
 		mata: mata drop `__nw_nclan' `__nw_sizes' `__nw_nclannum'
 
-		return scalar nclans = nw_nnclan
-		return matrix nclan_matrix = nw_nclanmatrix
-		local lnclan = nw_nnclan
+		return scalar nclans = `__nw_nnclan'
+		return matrix nclan_matrix = `__nw_nclanmatrix'
+		local lnclan = `__nw_nnclan'
 
 		// see nwbrokerage.ado's own header comment: the "already
 		// exists" probe above leaves _rc stale even after a fully

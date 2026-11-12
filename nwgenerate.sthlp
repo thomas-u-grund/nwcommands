@@ -88,6 +88,10 @@ network per path found.
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
+{phang2}{opth sym(netname)} [, {opt mode(max|min|sum|mean)}]
+{p_end}
+{pmore2}Symmetrize a network; the original is not changed (see {help nwsym}).
+
 {phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).

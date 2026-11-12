@@ -45,8 +45,8 @@ program _nwdatasync
 	tempname nodeindex
 
 	mata: `nodename' = (`netobj'->get_nodenames())'
-	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())
-	local __nwds_nodes = r(nodes)
+	// a local, not r(nodes): the r() results of the caller are not changed
+	mata: st_local("__nwds_nodes", strofreal(`netobj'->get_nodes()))
 
 	if "`overwrite'" != "" {
 		capture drop `nw_nodename'

@@ -1,5 +1,5 @@
 capture program drop nwimport
-program nwimport
+program nwimport, rclass
 	syntax anything, type(string) [ name(string) clear nwclear nwappend xvars forcedirected forceundirected *]
 	unw_defs
 	local fname `"`anything'"'

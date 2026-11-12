@@ -47,7 +47,7 @@ program nwring
 			// silent bug: ntimes()>1 always came back unweighted
 			// regardless of weights() - see nwrandom.ado's/nwpref.ado's
 			// own identical fix).
-			nwring `nodes', k(`k') name(`name'_`i') weights(`weights') `xvars' `undirected'
+			nwring `nodes', k(`k') name(`name'_`i') weights(`weights') labs(`labs') `xvars' `undirected'
 		}
 		// Feature parity (moderate-severity pass, generators_structural
 		// group): only nwrandom exposed r(netlist) for its own ntimes()>1

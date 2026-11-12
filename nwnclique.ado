@@ -1,6 +1,8 @@
 
 capture program drop nwnclique
 program nwnclique, rclass
+	// temporary names: no scalar or matrix is left behind
+	tempname __nw_maxnwnclique __nw_ncliquematrix __nw_nncliq __nw_nnwnclique __nw_tabnwnclique
 	version 12
 	syntax [anything(name=netname)][, n(int 2) GENerate(string) replace minsize(int 3) MAXcliques(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
@@ -72,16 +74,16 @@ program nwnclique, rclass
 		mata: `__nw_nclq' = `netobj'->calculate_nclique_filtered(`n', `minsize')
 		mata: nwg_enum_summary(`__nw_nclq')
 		if "`countonly'" != "" {
-			mata: st_numscalar("nw_nnwnclique", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwnclique", nwg_enum_max)
-			mata: st_matrix("nw_tabnwnclique", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwnclique'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwnclique'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwnclique'", nwg_enum_hist)
 			mata: mata drop `__nw_nclq'
 			mata: nwg_enum_reset(., .)
-			return scalar ncliques = nw_nnwnclique
-			return scalar maxsize = nw_maxnwnclique
-			matrix colnames nw_tabnwnclique = size count
-			return matrix size_table = nw_tabnwnclique
-			local lcount = nw_nnwnclique
+			return scalar ncliques = `__nw_nnwnclique'
+			return scalar maxsize = `__nw_maxnwnclique'
+			matrix colnames `__nw_tabnwnclique' = size count
+			return matrix size_table = `__nw_tabnwnclique'
+			local lcount = `__nw_nnwnclique'
 			if "`silent'" == "" {
 				noi di "{hline 40}"
 				noi di "{txt}  Network name: {res}`netname_temp'"
@@ -94,20 +96,20 @@ program nwnclique, rclass
 		if "`nomatrix'" != "" {
 			// no sets-by-nodes matrix (it needs memory for sets x nodes numbers): the per-node
 			// variable and the counts only
-			mata: st_numscalar("nw_nnwnclique", nwg_enum_count)
-			mata: st_numscalar("nw_maxnwnclique", nwg_enum_max)
-			mata: st_matrix("nw_tabnwnclique", nwg_enum_hist)
+			mata: st_numscalar("`__nw_nnwnclique'", nwg_enum_count)
+			mata: st_numscalar("`__nw_maxnwnclique'", nwg_enum_max)
+			mata: st_matrix("`__nw_tabnwnclique'", nwg_enum_hist)
 			capture confirm new variable `netgenerate'`i'
 			if _rc capture drop `netgenerate'`i'
 			gen `netgenerate'`i' = .
 			mata: st_store((1::`nodes'), "`netgenerate'`i'", nwg_enum_nodevar)
 			mata: mata drop `__nw_nclq'
 			mata: nwg_enum_reset(., .)
-			return scalar ncliques = nw_nnwnclique
-			return scalar maxsize = nw_maxnwnclique
-			matrix colnames nw_tabnwnclique = size count
-			return matrix size_table = nw_tabnwnclique
-			local lcount = nw_nnwnclique
+			return scalar ncliques = `__nw_nnwnclique'
+			return scalar maxsize = `__nw_maxnwnclique'
+			matrix colnames `__nw_tabnwnclique' = size count
+			return matrix size_table = `__nw_tabnwnclique'
+			local lcount = `__nw_nnwnclique'
 			capture confirm variable `netgenerate'`i', exact
 			if "`silent'" == "" {
 				noi di "{hline 40}"
@@ -121,8 +123,8 @@ program nwnclique, rclass
 		}
 		mata: nwg_enum_reset(., .)
 		mata: `__nw_sizes' = rowsum(`__nw_nclq')
-		mata: st_numscalar("nw_nncliq", rows(`__nw_nclq'))
-		mata: st_matrix("nw_ncliquematrix", (rows(`__nw_nclq') > 0 ? `__nw_nclq' : J(1, `nodes', 0)))
+		mata: st_numscalar("`__nw_nncliq'", rows(`__nw_nclq'))
+		mata: st_matrix("`__nw_ncliquematrix'", (rows(`__nw_nclq') > 0 ? `__nw_nclq' : J(1, `nodes', 0)))
 		mata: `__nw_nclqnum' = (rows(`__nw_nclq') > 0 ? editvalue(colmax(`__nw_nclq' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
 		capture confirm new variable `netgenerate'`i'
@@ -131,9 +133,9 @@ program nwnclique, rclass
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_nclqnum')
 		mata: mata drop `__nw_nclq' `__nw_sizes' `__nw_nclqnum'
 
-		return scalar ncliques = nw_nncliq
-		return matrix nclique_matrix = nw_ncliquematrix
-		local lncliq = nw_nncliq
+		return scalar ncliques = `__nw_nncliq'
+		return matrix nclique_matrix = `__nw_ncliquematrix'
+		local lncliq = `__nw_nncliq'
 
 		// see nwbrokerage.ado's own header comment: the "already
 		// exists" probe above leaves _rc stale even after a fully

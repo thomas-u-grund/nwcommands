@@ -26,7 +26,8 @@
 {pstd}
 {cmd:nwnoderename} changes the name of a single node in a network. When a
 node with name {it:old_nwnode} is found in {it:netname}, it is replaced with
-{it:new_nwnode}.
+{it:new_nwnode}. If {it:old_nwnode} is not found or {it:new_nwnode} is not a
+valid name, the command stops with an error (r(198)) and the network is not changed.
 
 
 {marker examples}{...}

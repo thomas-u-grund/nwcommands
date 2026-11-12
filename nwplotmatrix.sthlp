@@ -41,6 +41,8 @@
 {p2line}
 {p2col:{opt lab}}display node labels{p_end}
 {p2col:{opth label(varname)}}display axis labels from variable{p_end}
+{p2col:{opt labelopt}({it:{help axis_label_options:suboptions}})}suboptions of both axis labels, for example {cmd:labelopt(labsize(tiny))}; {opt ylabel()} and {opt xlabel()} change one axis{p_end}
+{p2col:{opt legendopt}({it:{help legend_options:legend_options}})}options added to the legend, for example {cmd:legendopt(rows(2))}; they replace the default rows(1), position(6) and size(small) of the automatic legend{p_end}
 
 
 {synoptset 35 tabbed}{...}

@@ -1,6 +1,8 @@
 
 capture program drop nwkcomponents
 program nwkcomponents, rclass
+	// temporary names: no scalar or matrix is left behind
+	tempname __nw_kcompmatrix __nw_nkcomp
 	version 12
 	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace NOMatrix silent force]
 	set more off
@@ -56,11 +58,11 @@ program nwkcomponents, rclass
 		tempname __nw_kcomp __nw_sizes __nw_kcompnum
 		mata: `__nw_kcomp' = `netobj'->calculate_kcomponents(`k')
 		mata: `__nw_sizes' = rowsum(`__nw_kcomp')
-		mata: st_numscalar("nw_nkcomp", rows(`__nw_kcomp'))
+		mata: st_numscalar("`__nw_nkcomp'", rows(`__nw_kcomp'))
 		// (Stata stores the matrix in time growing with the square of the number of nodes: about a minute at
 		// 100,000 nodes; nomatrix leaves it out)
 		if "`nomatrix'" == "" {
-			mata: st_matrix("nw_kcompmatrix", (rows(`__nw_kcomp') > 0 ? `__nw_kcomp' : J(1, `nodes', 0)))
+			mata: st_matrix("`__nw_kcompmatrix'", (rows(`__nw_kcomp') > 0 ? `__nw_kcomp' : J(1, `nodes', 0)))
 		}
 		mata: `__nw_kcompnum' = (rows(`__nw_kcomp') > 0 ? editvalue(colmax(`__nw_kcomp' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 
@@ -70,11 +72,11 @@ program nwkcomponents, rclass
 		mata: st_store((1::`nodes'), "`netgenerate'`i'", `__nw_kcompnum')
 		mata: mata drop `__nw_kcomp' `__nw_sizes' `__nw_kcompnum'
 
-		return scalar kcomponents = nw_nkcomp
+		return scalar kcomponents = `__nw_nkcomp'
 		if "`nomatrix'" == "" {
-			return matrix kcomp_matrix = nw_kcompmatrix
+			return matrix kcomp_matrix = `__nw_kcompmatrix'
 		}
-		local lkcomp = nw_nkcomp
+		local lkcomp = `__nw_nkcomp'
 
 		// see nwbrokerage.ado's own header comment: the "already
 		// exists" probe above leaves _rc stale even after a fully

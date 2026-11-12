@@ -113,7 +113,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 
 {p2col 5 20 24 2: Macros}{p_end}
 {synopt:{bf:r(measure)}}the {opt measure()} actually used{p_end}
-{synopt:{bf:r(symmetrized)}}{it:false}, only returned when {opt symmetrize} was specified{p_end}
+{synopt:{bf:r(symmetrized)}}{it:true}, only returned when {opt symmetrize} was specified (one-mode network){p_end}
 
 
 {title:References}

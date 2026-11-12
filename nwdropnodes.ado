@@ -71,11 +71,15 @@ program nwdropnodes
 		}
 	}
 	else {
-		mata: __nwdropnodes_keepmatSize = rows(`keepmat')
-		mata: st_numscalar("r(keepmatsize)", __nwdropnodes_keepmatSize)
+		// a keepmat() of the wrong size is an error; the matrix of the user is not changed
+		capture mata: st_numscalar("r(keepmatsize)", rows(`keepmat') * (cols(`keepmat') == 1))
+		if _rc {
+			di "{err}Mata matrix {bf:`keepmat'} not found"
+			error 111
+		}
 		if `r(keepmatsize)' != `nodes' {
-			mata: `keepmat' = J(`nodes',1,1)
-			di "{txt}Warning: Mata matrix {bf:keepmat} has the wrong size; no nodes dropped."
+			di "{err}{p 0 0 2}Mata matrix {bf:`keepmat'} must be a column vector with one row per node (`nodes' rows).{p_end}"
+			error 503
 		}
 	}
 

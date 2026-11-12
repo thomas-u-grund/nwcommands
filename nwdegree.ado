@@ -128,7 +128,10 @@ program nwdegree
 			if "`alpha'" != "" local __fwd "alpha(`alpha')"
 			if "`binary'" != "" local __fwd "`__fwd' binary"
 			if "`raw'" != "" local __fwd "`__fwd' raw"
-			noi _nwdegree_two `netname_temp', generate(`generate') `replace' `silent' `__fwd'
+			// the name of this network is appended as for the one-mode networks of the list (deg_net2)
+			local __gen2 "`generate'"
+			if `totalnetworks' > 1 & "`generate'" != "" local __gen2 = word("`generate'", 1) + "_`netname_temp'"
+			noi _nwdegree_two `netname_temp', generate(`__gen2') `replace' `silent' `__fwd'
 			continue
 		}
 

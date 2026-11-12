@@ -27,7 +27,7 @@
 {synoptline}
 {synopt:{opt nodes}({it:{help numlist:nodeid1...}})}{help numlist} of {help nodeid:nodeid's} to be dropped{p_end}
 {synopt:{opt nodes}({it:{help nodeid:nodelab1...}})}List of {help nodeid:nodelab's} to be dropped{p_end}
-{synopt:{opt keepmat}({it:matamatrix})}Mata {it:nodes} x 1 matrix; 0 = drop, 1 = keep{p_end}
+{synopt:{opt keepmat}({it:matamatrix})}Mata {it:nodes} x 1 matrix; 0 = drop, 1 = keep; a matrix of another size is an error{p_end}
 {synopt:{opth attributes(varlist)}}Attribute variables that are included in the drop{p_end}
 {synopt:{opth generate(newnetname)}}Generates a new network and does not overwrite the original network{p_end}
 {synopt:{opt netonly}}Only drops the network, but keeps all Stata variables{p_end}

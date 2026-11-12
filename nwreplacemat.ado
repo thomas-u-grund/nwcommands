@@ -193,17 +193,13 @@ program nwreplacemat
 	}
 
 	// check for directed/undirected of new network and adjust if necessary
-	mata: st_numscalar("r(directed)", (issymmetric(`__matname') == 1))
+	// r(directed) = 1 when the new matrix is not symmetric (the network is then directed)
+	mata: st_numscalar("r(directed)", (issymmetric(`__matname') == 0))
 
 	// was "global nwdirected_`id' = ..." - same legacy-global issue as
 	// above; set_directed() is the modern equivalent (matches
 	// _nwname.ado's own newdirected() implementation).
-	if (`r(directed)' == 1) {
-		mata: `netobj'->set_directed(0)
-	}
-	else {
-		mata: `netobj'->set_directed(1)
-	}
+	mata: `netobj'->set_directed(`r(directed)')
 
 	// the valued flag follows the new values (a network created empty is unvalued until now)
 	mata: `netobj'->set_valued(("`__wasv'" == "true") | `netobj'->check_valued())

@@ -219,7 +219,7 @@ put loops and conditions in a Mata function.
 {title:See also}
 
 {pstd}
-{help _nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
+{help nwprogramming##syntax:_nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
 
 {hline}
 {pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

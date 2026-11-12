@@ -165,7 +165,7 @@ program nwplotmatrix
 	if `"`__nwpm_glab'"' != "" local __nwpm_xang "angle(45) noticks labsize(small)"
 	local __nwpm_yang "angle(0)"
 	if `"`__nwpm_glab'"' != "" local __nwpm_yang "angle(0) noticks labsize(small)"
-	qui plotmatrix, `xlinecmd' `ylinecmd' `l' `__nwpm_glab' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, `__nwpm_yang' `ylabel') xlabel(, `__nwpm_xang' `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
+	qui plotmatrix, `xlinecmd' `ylinecmd' `l' `__nwpm_glab' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, `__nwpm_yang' `labelopt' `ylabel') xlabel(, `__nwpm_xang' `labelopt' `xlabel') legendopt(`legendopt') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
 	restore
 end
 
@@ -191,7 +191,7 @@ v 1.20 24Apr2014  Bug? -- skipping allcolors if the graph is null is now removed
 capture program drop plotmatrix
 prog def  plotmatrix
 version 10.1
-syntax , Mat(name) [,ifvar(varname) gap(real 0.05) originalnodes(integer 0) legend(string asis) Split(numlist) lab label(varname) tievalueopt(string) background(string) Color(string) LColor(string) Upper Lower MAXTicks(integer 8) FREQ FORMATCELLS(string) gxlab(string asis) gylab(string asis) *]
+syntax , Mat(name) [,ifvar(varname) gap(real 0.05) originalnodes(integer 0) legend(string asis) Split(numlist) lab label(varname) tievalueopt(string) background(string) Color(string) LColor(string) Upper Lower MAXTicks(integer 8) FREQ FORMATCELLS(string) gxlab(string asis) gylab(string asis) legendopt(string asis) *]
 local twoway_opt "`options'"
 set more off
 
@@ -426,8 +426,19 @@ replace xx = xx + `gap' if temp == 2 | temp == 3
 replace yy = yy + `gap' if (temp == 1 | temp == 2) 
 replace yy = yy - `gap' if (temp == 3 | temp == 4) 
 
+// legendopt(): options added to the legend; for the automatic legend they replace the defaults rows(1),
+// position(6) and size(small) when given
+local __lgdr "rows(1)"
+local __lgdp "position(6)"
+local __lgds "size(small)"
+if regexm(`" `legendopt'"', "[ ,](r|ro|row|rows|c|co|col|cols)\(") local __lgdr ""
+if regexm(`" `legendopt'"', "[ ,](pos|posi|posit|positi|positio|position|ring)\(") local __lgdp ""
+if regexm(`" `legendopt'"', "[ ,](si|siz|size)\(") local __lgds ""
 if `"`legend'"' == "auto" {
-	local legend `"order(`clegord') `cleg' rows(1) position(6) size(small)"'
+	local legend `"order(`clegord') `cleg' `__lgdr' `__lgdp' `__lgds' `legendopt'"'
+}
+else if `"`legendopt'"' != "" & `"`legend'"' != "off" {
+	local legend `"`legend' `legendopt'"'
 }
 twoway `txt', `scaleOff' legend(`legend') xlabel(`xlab', nogrid) ylabel(`ylab', nogrid) xtitle("") ytitle("") graphregion( c(white) lp(blank)) `twoway_opt' 
 end

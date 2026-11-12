@@ -4,6 +4,32 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- `nwgenerate newnet = sym(netname)` makes a symmetrized copy of a network (as `nwsym ..., generate()`); before, the keyword was accepted and did nothing.
+- `nwplotmatrix, labelopt()` sets suboptions of both axis labels and `legendopt()` adds options to the legend; both were accepted and ignored.
+- `nwtabulate netname1 netname2, unvalued` counts every tie as 1 in the table and in the E-I index; `save()` of `nwtabulate` (two networks, or `attribute()`) saves the E-I indices of the permutations as a data set.
+- `nwgeodesic, noreplace` does not overwrite the default network `_geodesic` either.
+- `animate, mag()` sets the magnification of the .eps files.
+
+### Fixed
+- `nwgenerate newnet = large(netname)` kept the largest component of the right network only by chance.
+- `nwring` and `nwsmall` with `ntimes()` gave `labs()` only to the first network; every network now gets the labels. Their help files show that the labels are separated by commas.
+- `nwdropnodes, keepmat()` with a matrix of the wrong size overwrote the user's Mata matrix with ones and dropped nothing; it is now an error (r(503)) and the matrix is not changed.
+- `nwdegree` on a list of two-mode and one-mode networks stopped with an error (two-mode networks got the plain variable name); a two-mode network of a list now gets its name appended, as the one-mode networks do (`deg_net`).
+- `nwplot, iterations()` was ignored (the default of `layout()` replaced it); it is used now, and `layout(..., iterations())` takes precedence.
+- `nwnoderename` with a name that was not found or not valid printed an error but did not stop; it now exits with r(198).
+- `animate, graphs(_all)` repeated the first graph as the last frame instead of the last graph; the .eps files are erased with Stata's `erase` on every platform (Windows `del` was used on Linux).
+- `nwreplacemat` stored `r(directed)` = 1 for a symmetric matrix; `r(directed)` is now 1 when the network is directed.
+- `nwclustering, symmetrize` stored `r(symmetrized)` = "false"; it is "true".
+- `nwtabulate` printed "tie values are ignored" for the one-way table and the table of two networks, which show the tie values; the note is now printed only for the table by `attribute()`. With `permutations(1)` the tables of two networks or by attribute stopped with an error after the table; they now print no p-value.
+- `nwexport` and `nwimport` left r() results of their helper commands behind, and an internal synchronisation step added `r(nodes)` to the results of the calling command; no stray r() results now.
+- `nwfactions`, `nwkcomponents`, `nwkplex`, `nwnclan` and `nwnclique` left scalars and matrices (`faction_fitness`, `nw_nkcomp`, `nw_tabnwkplex` and others) in memory and overwrote the user's objects with these names; they use temporary names now.
+- `nwsummarize` without `detail` no longer stores empty detail results (`r(dg_central)`, `r(transitivity)` and others); they are stored with `detail`, as documented.
+- `nwreplacemat, vars()`, `nwtabulate ..., attribute() unvalued` and the `ifcond()` option of `nwcorrelate` are accepted for compatibility and have no effect; their help files say so.
+- Help files: the links to `_nwsyntax` in `nwprogramming` and `nwunab` lead to the section of `nwprogramming` that describes it; the "describe" links of `netexample` describe the data sets on the website (`sysdescribe` looked for them on the local computer).
+
 ## [3.20.1] - 2026-11-12
 
 ### Fixed

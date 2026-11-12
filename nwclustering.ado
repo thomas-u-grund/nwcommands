@@ -171,7 +171,7 @@ program nwclustering
 		noi di " "
 	}
 	if "`symmetrize'" != "" {
-		mata: st_global("r(symmetrized)", "false")
+		mata: st_global("r(symmetrized)", "true")
 	}
 	_return hold rcluster
 	// BUGFIX: `symnet' is only ever actually created (tempname just
