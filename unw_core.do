@@ -6033,9 +6033,9 @@ void nw_modes_first(pointer(class nw_def scalar) scalar p){
 */
 void nw_reorder_to_labels(pointer(class nw_def scalar) scalar p, string rowvector lab){
 	string rowvector nm, nv, m
-	real colvector perm
-	real matrix E
-	real scalar n
+	real colvector perm, inv
+	real matrix el
+	real scalar n, wasvalued
 
 	nm = p->get_nodenames()
 	n = cols(nm)
@@ -6044,10 +6044,16 @@ void nw_reorder_to_labels(pointer(class nw_def scalar) scalar p, string rowvecto
 	perm = nw_label_positions(nm, lab)
 	if (any(perm :== 0)) return
 	if (rows(uniqrows(perm)) != n) return
-	E = (*p->get_matrix())[perm, perm]
 	nv = p->get_nodesvar()
 	m = p->get_modes()
-	p->set_edge(E)
+	// tie by tie (no n x n matrix: a saved two-mode network can be larger than the dense limit); the old node
+	// perm[k] becomes node k
+	inv = J(n, 1, .)
+	inv[perm] = (1::n)
+	el = p->edgelist()
+	wasvalued = p->is_valued_boolean()
+	p->set_edge_from_triplets(inv[el[., 1]], inv[el[., 2]], el[., 3], p->is_directed_boolean())
+	p->set_valued(wasvalued)
 	p->set_nodenames(nm[perm'])
 	if (cols(nv) == n) p->set_nodesvar(nv[perm'])
 	if (cols(m) == n) p->set_modes(m[perm'])
