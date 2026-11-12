@@ -9,7 +9,9 @@ program nwgenerate
 	
 	gettoken newnetname netexp: arg, parse("=")
 	local netexp: subinstr local netexp "_if" "$$ff"
-	local netexp: subinstr local netexp "if" "#"
+	// only the word "if" starts the condition (not the letters if in a name such as diff)
+	local netexp: subinstr local netexp " if " " # "
+	local netexp: subinstr local netexp " if(" " #("
 	
 	gettoken dump opts: arg, parse(",") bind
 	if "`opts'" != "" {
@@ -22,6 +24,9 @@ program nwgenerate
 	unw_defs
 		
 	capture _nwsyntax `newnetname'
+	// a network to be replaced is dropped only after the new one exists:
+	// the expression may refer to it, and the new one may fail
+	local __ng_exists = (_rc == 0)
 
 	if _rc == 0 & (strpos("`options'", "replace")==0){
 		// Error-code coherence pass: consolidated onto `errNWsExists'
@@ -29,9 +34,6 @@ program nwgenerate
 		// history of this convention's drift onto an undocumented `6099'.
 		di "{err}{p 0 0 2}Network {bf:`newnetname'} already exists. Change {it:netname} or specify option {bf:replace}.{txt}{p_end}"
 		error `errNWsExists'
-	}
-	else {
-		capture nwdrop `newnetname'
 	}
 	
 	// if condition
@@ -65,9 +67,12 @@ program nwgenerate
 	
 		// replace the network if it exists already
 		if (strpos("`options'", "replace")!=0){
-			capture nwdrop `newnetname'
 			local options ""
 		}
+		// built under a temporary name, renamed at the end
+		tempname __ngnew
+		local __ng_xvars = (strpos(" `options' ", " xvars ") != 0)
+		if `__ng_xvars' local options : subinstr local options "xvars" "", word
 
 		// evaluate network expression
 		_nwexpnetexp `netexp'
@@ -81,8 +86,8 @@ program nwgenerate
 		// caller's own `xvars' through when given, no separate token is
 		// needed - matching how `undirected'/`replace' etc. already
 		// flow through the same way.
-		nwset, mat(`netexp') name(`newnetname') `undirected' `options' nodenames(`last_netobj'->get_nodenames())
-		qui nwsym `newnetname', check
+		nwset, mat(`netexp') name(`__ngnew') `undirected' `options' nodenames(`last_netobj'->get_nodenames())
+		qui nwsym `__ngnew', check
 
 		// nwsym's own help documents r(is_symmetric) as the string
 		// "true"/"false" (a numeric-scalar bug meant it was actually
@@ -93,12 +98,20 @@ program nwgenerate
 		// instead been relying on the bug, so needs updating to match
 		// now that nwsym stores what it always documented).
 		if "`r(is_symmetric)'" == "true" {
-			_nwname `newnetname', newdirected(false)
+			_nwname `__ngnew', newdirected(false)
 		}
 		
 		if "`ifcond'" != "" {
-			qui nwkeep `newnetname' `ifcond'
+			capture noisily qui nwkeep `__ngnew' `ifcond'
+			if _rc {
+				local __ngrc = _rc
+				capture nwdrop `__ngnew'
+				exit `__ngrc'
+			}
 		}
+		if `__ng_exists' nwdrop `newnetname'
+		mata: `nws'.rename("`__ngnew'", "`newnetname'")
+		if `__ng_xvars' qui nwload `newnetname'
 	}
 	
 	// generate network based on function
@@ -116,6 +129,17 @@ program nwgenerate
 		local 0 `subopt'
 		syntax [anything(name=sub1)] [, *]
 		local sub2 `options'
+
+		// replace: the network of that name is set aside under a temporary
+		// name and dropped only when the new one exists (put back on error);
+		// a function of the network itself reads the set-aside copy
+		local __ngpark ""
+		if `__ng_exists' {
+			tempname __ngpark
+			mata: `nws'.rename("`newnetname'", "`__ngpark'")
+			if "`sub1'" == "`newnetname'" local sub1 `__ngpark'
+		}
+		capture noisily {
 		
 		/* DEBUG
 		di "newnetname: `newnetname'"
@@ -425,6 +449,14 @@ program nwgenerate
 			noi di "{err}{p 0 0 2}nwgen's subset() shortcut is not currently implemented (it produces a new NETWORK, not a variable, so it does not fit nwgen's VAR = fcn(netname) form); use {help nwsubset} directly.{p_end}"
 			error 199
 		}
+		}
+		local __ngrc = _rc
+		if "`__ngpark'" != "" {
+			capture _nwsyntax `newnetname', other(_ngchk)
+			if `__ngrc' & _rc mata: `nws'.rename("`__ngpark'", "`newnetname'")
+			else nwdrop `__ngpark'
+		}
+		if `__ngrc' exit `__ngrc'
 
 	}
 	/*
