@@ -22,33 +22,24 @@ program nwtranspose
 	local netobj1 `netobj'
 
 	if ("`generate'" != ""){
-		// BUGFIX: nwduplicate's own collision guard silently
-		// auto-renames the DUPLICATE to `generate'_1 on a name
-		// collision (leaving it as an orphaned, never-used stray
-		// network), but this line still operated on the literal
-		// string `generate' regardless - so `_nwsyntax `generate''
-		// below resolved to the ORIGINAL, pre-existing network of
-		// that name (not the fresh duplicate), and the transpose then
-		// silently overwrote ITS edge matrix in place. Fixed with the
-		// same explicit "error unless replace" collision guard
-		// nwsubset.ado's own generate()/name() option already uses,
-		// rather than relying on nwduplicate's own silent auto-rename
-		// (which nwduplicate itself doesn't even report back to the
-		// caller - there is no way to recover the actual name used).
 		capture _nwsyntax `generate', other(_check)
-		if _rc == 0 {
-			if "`replace'" == "" {
-				// Error-code coherence pass: consolidated onto
-				// `errNWsExists' (483, unw_defs.ado) - see
-				// nwsimmelian.ado's own fix for the history of this
-				// convention's drift onto an undocumented `6099'.
-				di "{err}{p 0 0 2}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}.{p_end}"
-				error `errNWsExists'
-			}
-			nwdrop `generate'
+		local __tr_exists = (_rc == 0)
+		if `__tr_exists' & "`replace'" == "" {
+			di "{err}{p 0 0 2}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}.{p_end}"
+			error `errNWsExists'
 		}
-		nwduplicate `netname', name(`generate')
-		local netname `generate'
+		// transpose into a temporary copy; the network replaced by
+		// generate() is dropped only then (it may be the source itself,
+		// and dropping shifts the registry positions of the others)
+		tempname __trnet
+		nwduplicate `netname', name(`__trnet')
+		_nwsyntax `netname', max(1)
+		local netobj1 `netobj'
+		_nwsyntax `__trnet', max(1)
+		mata: nw_transpose_net(`netobj1', `netobj')
+		if `__tr_exists' nwdrop `generate'
+		mata: `nws'.rename("`__trnet'", "`generate'")
+		exit
 	}
 	_nwsyntax `netname', max(1)
 	local netobj2 `netobj'
