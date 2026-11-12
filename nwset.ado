@@ -636,6 +636,7 @@ if "`overwrite'" != "" local replace "replace"
 				else di "{txt}the extra labels are ignored)"
 			}
 			mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', rows(`__nwnew'),"`cDftNodepref'"))'
+			mata: `__nwnodenames' = nwset_padlabs(`__nwnodenames', `__nwset_nlab', "`cDftNodepref'")
 		}
 		if "`labsfromvar'" != "" {
 			// read the labels from a string copy; the user's variable keeps its type
@@ -864,5 +865,33 @@ string colvector nw_set_duplabels(string colvector v)
 	d = (s[|2 \ rows(s)|] :== s[|1 \ rows(s)-1|])
 	if (!any(d)) return(J(0, 1, ""))
 	return(uniqrows(select(s[|2 \ rows(s)|], d)))
+}
+end
+
+capture mata: mata drop nwset_padlabs()
+mata:
+// fewer labels than nodes: the nodes without a label get default names
+// (def + position) that are not already used; a name that is used is
+// replaced by the next unused def + number above the number of nodes
+string rowvector nwset_padlabs(string rowvector l, real scalar k, string scalar def)
+{
+	transmorphic A
+	real scalar i, j, z
+
+	z = cols(l)
+	if (k >= z | k < 1) return(l)
+	A = asarray_create()
+	for (i = 1; i <= k; i++) asarray(A, l[i], 1)
+	j = z
+	for (i = k + 1; i <= z; i++) {
+		if (asarray_contains(A, l[i])) {
+			do {
+				j++
+			} while (asarray_contains(A, def + strofreal(j)))
+			l[i] = def + strofreal(j)
+		}
+		asarray(A, l[i], 1)
+	}
+	return(l)
 }
 end

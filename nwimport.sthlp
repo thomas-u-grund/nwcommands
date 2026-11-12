@@ -64,7 +64,7 @@
 		{p_end}
 {p2col:{cmd: colnames}}matrix: {it:not needed} when the file's first {it:row} already holds node names as text - that shape is recognized automatically without any {it:type_sub} at all
 		{p_end}
-{p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
+{p2col:{opth delimiter(string)}}matrix, edgelist: specify the delimiter explicitly (for an edge list in a text file; {cmd:tab} for a tab)
 		{p_end}		
 {p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
 		{p_end}			

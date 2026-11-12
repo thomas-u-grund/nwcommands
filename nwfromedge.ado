@@ -40,7 +40,11 @@ program nwfromedge
 	// labs() may list the labels separated by blanks (lab1 lab2 ...) or by
 	// commas; with commas a label may contain blanks
 	if `"`labs'"' != "" & strpos(`"`labs'"', ",") == 0 {
-		local labs = subinstr(itrim(strtrim(`"`labs'"')), " ", ",", .)
+		local __nwfe_l ""
+		foreach __nwfe_w of local labs {
+			local __nwfe_l `"`__nwfe_l',`__nwfe_w'"'
+		}
+		local labs = substr(`"`__nwfe_l'"', 2, .)
 	}
 	if "`keeporiginal'" != "" & "`clear'" != "" {
 		capture confirm new variable _nodeoriginal
@@ -408,6 +412,7 @@ program nwfromedge
 	}
 	else {
 		mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', `maxNodes', "`cDftNodepref'"))'
+		mata: `__nwnodenames' = nwfromedge_padlabs(`__nwnodenames', sum(tokens(`"`labs'"', ",") :!= ","), "`cDftNodepref'")
 	}
 	mata: `nws'.add("`edgename'")
 	// other(other) namespaces _nwsyntax's exported locals as
@@ -610,5 +615,33 @@ void nw_fromedge_mirror(real colvector e, real colvector a, real colvector v)
 	e = e \ ne
 	a = a \ na
 	v = v \ nv
+}
+end
+
+capture mata: mata drop nwfromedge_padlabs()
+mata:
+// fewer labels than nodes: the nodes without a label get default names
+// (def + position) that are not already used; a name that is used is
+// replaced by the next unused def + number above the number of nodes
+string rowvector nwfromedge_padlabs(string rowvector l, real scalar k, string scalar def)
+{
+	transmorphic A
+	real scalar i, j, z
+
+	z = cols(l)
+	if (k >= z | k < 1) return(l)
+	A = asarray_create()
+	for (i = 1; i <= k; i++) asarray(A, l[i], 1)
+	j = z
+	for (i = k + 1; i <= z; i++) {
+		if (asarray_contains(A, l[i])) {
+			do {
+				j++
+			} while (asarray_contains(A, def + strofreal(j)))
+			l[i] = def + strofreal(j)
+		}
+		asarray(A, l[i], 1)
+	}
+	return(l)
 }
 end

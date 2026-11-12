@@ -385,7 +385,7 @@ larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
-option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says
+option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names ({it:n}{it:i} for node {it:i}; a default name that is already one of the given labels is replaced by the next unused {it:n}{it:k} above the number of nodes), and extra entries are ignored (a note says
 so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
 automatically labels nodes according the variables that have been set.
 

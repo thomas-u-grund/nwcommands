@@ -12,23 +12,33 @@ program nwexport, rclass
 	}
 
 	di `"{txt}Exporting network: {it:`netname'}"'
+	// the data synchronisation of the writers may move a variable: keep the order
+	local __nwx_order ""
+	if c(k) > 0 unab __nwx_order : _all
 	local ending ""
+	local __nwx_rc 0
 	if "`type'" == "pajek" {
-		 qui _nwexport_pajek `netname', fname(`fname') `replace'
+		 capture noisily qui _nwexport_pajek `netname', fname(`fname') `replace'
+		 local __nwx_rc = _rc
 		 local ending ".net"
 	}
 	if "`type'" == "ucinet" {
-		 qui _nwexport_ucinet `netname', fname(`fname') `replace'
+		 capture noisily qui _nwexport_ucinet `netname', fname(`fname') `replace'
+		 local __nwx_rc = _rc
 		 local ending ".dl"
 	}
 	if "`type'" == "gml" {
-		 qui _nwexport_gml `netname', fname(`fname') `replace'
+		 capture noisily qui _nwexport_gml `netname', fname(`fname') `replace'
+		 local __nwx_rc = _rc
 		 local ending ".gml"
 	}
 	if "`type'" == "edgelist" {
-		 qui _nwexport_edgelist `netname', fname(`fname') `replace'
+		 capture noisily qui _nwexport_edgelist `netname', fname(`fname') `replace'
+		 local __nwx_rc = _rc
 		 local ending ".txt"
 	}
+	if "`__nwx_order'" != "" capture order `__nwx_order'
+	if `__nwx_rc' exit `__nwx_rc'
 	di `"{txt}Saved as file: {it:`fname'`ending'}"'
 end
 
@@ -105,7 +115,13 @@ program _nwexport_pajek
 	sort `_rk'
 	local __head "*Edges"
 	if "`directed'" == "true" local __head "*Arcs"
-	mata: nw_exp_ties(st_local("fname") + ".net", "`nw_ego'", "`nw_alter'", "`netname'", 0, "`__head'", char(10))
+	// a binary one-mode network is written without tie values, so that it is read back as binary
+	if "`valued'" == "false" & "`is2mode'" != "true" {
+		mata: nwx_exp_pairs(st_local("fname") + ".net", "`nw_ego'", "`nw_alter'", 0, "`__head'", char(10))
+	}
+	else {
+		mata: nw_exp_ties(st_local("fname") + ".net", "`nw_ego'", "`nw_alter'", "`netname'", 0, "`__head'", char(10))
+	}
 	restore
 	// the level labels of a two-mode network: Pajek's format has no place for mode names, but a comment line
 	// (starting with %) is ignored by Pajek and by the other readers; nwimport reads the labels back from it
@@ -151,7 +167,8 @@ program _nwexport_ucinet
 	
 	file open `expfile' using "`fname'.dl", write `replace'
 	file close `expfile'
-	mata: nw_exp_ucinet_head(st_local("fname") + ".dl", `netobj'->get_nodenames())
+	// labels with a blank are written in double quotes
+	mata: nwx_exp_ucinet_head(st_local("fname") + ".dl", `netobj'->get_nodenames())
 
 	qui nwtoedge `netname', compress
 	qui keep if `netname' != 0
@@ -177,7 +194,12 @@ program _nwexport_ucinet
 	local ties = _N
 	drop if `netname' == .
 	sort `_rk'
-	mata: nw_exp_ties(st_local("fname") + ".dl", "`nw_ego'", "`nw_alter'", "`netname'", ("`directed'" == "false"), "", char(10))
+	if "`valued'" == "false" {
+		mata: nwx_exp_pairs(st_local("fname") + ".dl", "`nw_ego'", "`nw_alter'", ("`directed'" == "false"), "", char(10))
+	}
+	else {
+		mata: nw_exp_ties(st_local("fname") + ".dl", "`nw_ego'", "`nw_alter'", "`netname'", ("`directed'" == "false"), "", char(10))
+	}
 	restore
 end
 
@@ -250,7 +272,12 @@ program _nwexport_gml
 	rename `_running' `nw_alter'
 
 	sort `_rk'
-	mata: nw_exp_gml_edges(st_local("fname") + ".gml", "`nw_ego'", "`nw_alter'", "`netname'")
+	if "`valued'" == "false" & "`is2mode'" != "true" {
+		mata: nwx_exp_gml_pairs(st_local("fname") + ".gml", "`nw_ego'", "`nw_alter'")
+	}
+	else {
+		mata: nw_exp_gml_edges(st_local("fname") + ".gml", "`nw_ego'", "`nw_alter'", "`netname'")
+	}
 	restore
 	// the level labels of a two-mode network are graph attributes (nwmodelabel1, nwmodelabel2), written after the
 	// line "directed"
@@ -322,6 +349,8 @@ program _nwexport_edgelist
 		exit
 	}
 	keep `nw_ego' `nw_alter' value
+	// a binary network: ego and alter only, read back as binary
+	if "`valued'" == "false" drop value
 	rename `nw_ego' ego
 	rename `nw_alter' alter
 	export delimited using "`fname'.txt", delimiter(tab) novarnames `replace'
@@ -360,7 +389,72 @@ program _nwexport_levels, rclass
 end
 
 capture mata: mata drop nwx_insert_lines()
+capture mata: mata drop nwx_exp_pairs()
+capture mata: mata drop nwx_exp_ucinet_head()
+capture mata: mata drop nwx_exp_gml_pairs()
 mata:
+void nwx_exp_ucinet_head(string scalar fname, string rowvector names)
+{
+	real scalar fh
+	string scalar nl
+	string rowvector q
+	real scalar i
+
+	nl = char(10)
+	q = names
+	for (i = 1; i <= cols(q); i++) {
+		if (strpos(q[i], " ") | strpos(q[i], ",")) q[i] = char(34) + q[i] + char(34)
+	}
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(q, ",") + nl + "data:")
+	fclose(fh)
+}
+
+// ties of a binary network: "ego alter" per line (both directions with both = 1)
+void nwx_exp_pairs(string scalar fname, string scalar vk, string scalar vl, real scalar both, string scalar head, string scalar tail)
+{
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector ks, ls, s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	fwrite(fh, head)
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk) {
+		b = min((a + chunk - 1, n))
+		ks = strofreal(st_data((a::b), vk), "%18.0g")
+		ls = strofreal(st_data((a::b), vl), "%18.0g")
+		s = nl :+ ks :+ " " :+ ls
+		if (both) s = s :+ (nl :+ ls :+ " " :+ ks)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, tail)
+	fclose(fh)
+}
+
+// GML edges of a binary network: source and target, no value
+void nwx_exp_gml_pairs(string scalar fname, string scalar vk, string scalar vl)
+{
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk) {
+		b = min((a + chunk - 1, n))
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk), "%18.0g") :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl), "%18.0g") :+ (nl + "  ]" + nl)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, "]" + nl)
+	fclose(fh)
+}
+
 // copies file fname to tmp with the level label lines of a two-mode network (kind pajek: one comment line at the
 // top; gml: two graph attributes after the first two lines)
 void nwx_insert_lines(string scalar fname, string scalar tmp, string scalar kind, string scalar d1, string scalar d2)
