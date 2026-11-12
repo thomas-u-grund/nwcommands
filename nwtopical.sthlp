@@ -168,6 +168,7 @@
 {p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:    {bf:{help nwfactions }}}Partition nodes into a specified number of cohesive factions{p_end}
 {p2col:    {bf:{help nwhierarchy }}}Hierarchical clustering of nodes (role/position analysis){p_end}
+{p2col:    {bf:{help nwregular }}}Classes of regularly equivalent nodes{p_end}
 {p2col:    {bf:{help nwshared }}}Number of shared neighbors of all pairs of nodes, as a network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsimindex }}}Common-neighbor similarity indices between all node pairs{p_end}

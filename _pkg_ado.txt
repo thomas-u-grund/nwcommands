@@ -58,6 +58,7 @@ f nwcommunity.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
+f nwregular.ado
 f nwconstraint.ado
 f nwcontext.ado
 f nwcoreperiphery.ado

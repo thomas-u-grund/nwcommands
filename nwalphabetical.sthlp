@@ -104,6 +104,7 @@
 {p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:{bf:{help nwreach }}}Reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode a network{p_end}
+{p2col:{bf:{help nwregular }}}Classes of regularly equivalent nodes{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events (separate package){p_end}
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace a network{p_end}
