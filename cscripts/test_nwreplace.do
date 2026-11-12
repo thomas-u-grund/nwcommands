@@ -72,11 +72,11 @@ di "=== _nwname-clobbers-r() REGRESSION VERIFIED ==="
 * --- failure paths: a name that isn't a loaded network is rejected via
 * _nwsyntax's own "Network X not found" check (error 482); an
 * out-of-range bracket subscript is rejected with this command's own
-* "nwsubset ... invalid" error (6400).
+* "nwsubset ... invalid" error (198).
 nwclear
 nwset, mat((0,1\1,0)) name(replnet)
 capture noisily nwreplace nonexistent = 5
 assert _rc == 482
 
 capture noisily nwreplace replnet[99,1] = 5
-assert _rc == 6400
+assert _rc == 198

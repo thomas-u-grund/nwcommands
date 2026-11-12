@@ -17,7 +17,7 @@ program nwstack, rclass
 		capture _nwsyntax `name', max(1)
 		if _rc == 0 {
 			di as err "network {bf:`name'} already exists; use {bf:replace}"
-			error 110
+			error 483
 		}
 	}
 

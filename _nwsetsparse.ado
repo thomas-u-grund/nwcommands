@@ -7,6 +7,7 @@ program _nwsetsparse
 	syntax , TRIplets(string) NODes(integer) NAME(string) [NODENAMES(string) labs(string) undirected selfloop]
 
 	unw_defs
+	mata: nw_assert_netname(st_local("name"))
 	capture mata: `nw'
 	if (_rc != 0) {
 		mata: `nw' = nws_create()

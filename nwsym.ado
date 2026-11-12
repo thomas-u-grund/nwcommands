@@ -55,7 +55,7 @@ program nwsym
 	// (23 other files, including this command's own sibling
 	// nw2project.ado, already use `_opts_oneof'; nwsym.ado was the last
 	// real caller of the old one).
-	_opts_oneof "max min sum mean" "mode" "`mode'" 6555
+	_opts_oneof "max min sum mean" "mode" "`mode'" 6556
 
 	if ("`generate'" != ""){
 		nwduplicate `netname', name(`generate')

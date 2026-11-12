@@ -50,7 +50,7 @@ quietly nwname n2
 xt_chk `=(r(nodes) == 2)' "nodes(2): 2 nodes"
 xt_snap a1
 capture noisily nwexpand x, mode(same) nodes(9) name(n9)
-xt_chk `=(_rc == 6200)' "nodes(9) with 4 observations: r(6200) (got `=_rc')"
+xt_chk `=(_rc == 2001)' "nodes(9) with 4 observations: r(2001) (got `=_rc')"
 xt_same a1 "nodes() larger than the data"
 capture noisily nwexpand x, mode(ratio) name(bad)
 xt_chk `=(_rc == 6556)' "mode(ratio): r(6556) (got `=_rc')"

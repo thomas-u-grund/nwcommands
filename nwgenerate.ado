@@ -20,6 +20,8 @@ program nwgenerate
 	}
 	local fcn_opt = "`options'"
 	local newnetname = trim("`newnetname'")
+	// the new network's name must be a valid Stata name of at most 32 characters
+	if wordcount(`"`newnetname'"') == 1 mata: nw_assert_netname(st_local("newnetname"))
 	
 	unw_defs
 		

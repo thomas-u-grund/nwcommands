@@ -61,11 +61,12 @@ program nwpermute
 		}
 	}
 	if "`generate'" != "" {
+		mata: nw_assert_netname(st_local("generate"))
 		capture _nwsyntax `generate', other(_chk)
 		local __pm_exists = (_rc == 0)
 		if `__pm_exists' & "`nwreplace'" == "" & "`replace'" == "" {
 			di "{err}{p 0 0 2}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}{p_end}"
-			error 99
+			error 483
 		}
 		// permute a temporary copy; the network replaced by generate() is
 		// dropped only afterwards (it may be the source itself)

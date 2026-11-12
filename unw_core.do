@@ -490,6 +490,18 @@ real matrix build_eventlist(string rowvector nodenames, string colvector lab1, s
 	ev[., 1] = nw_label_positions(nodenames, lab1)
 	ev[., 2] = nw_label_positions(nodenames, lab2)
 	ev[., 3] = tval
+	// every event needs a sender, a receiver and a time (nwset checks the data first; this keeps index 0, which
+	// the event models cannot use, out of every event list)
+	k = sum((ev[., 1] :== 0) :| (ev[., 2] :== 0))
+	if (k > 0) {
+		errprintf("%s event(s) have a sender or receiver that is not a node of the network\n", strofreal(k))
+		exit(416)
+	}
+	k = missing(ev[., 3])
+	if (k > 0) {
+		errprintf("%s event(s) have a missing event time\n", strofreal(k))
+		exit(416)
+	}
 	return(ev)
 }
 
@@ -5822,8 +5834,11 @@ string colvector nw_realstr(real colvector x)
 	string colvector s, s17
 	real colvector bad
 
+	if (rows(x) == 0) return(J(0, 1, ""))
 	s = strtrim(strofreal(x, "%21.15g"))
-	bad = selectindex((strtoreal(s) :!= x) :& (x :< .))
+	// select() rather than selectindex(): on a single value selectindex() returns a 1 x 0 row vector when nothing is
+	// selected, and the assignment below then failed (r(3200)) for a network with exactly one tie
+	bad = select((1::rows(x)), (strtoreal(s) :!= x) :& (x :< .))
 	if (rows(bad) > 0){
 		s17 = strtrim(strofreal(x[bad], "%21.17g"))
 		s[bad] = s17
@@ -5985,6 +6000,31 @@ void nw_align_to_rows(pointer(class nw_def scalar) scalar p, string scalar v, po
 	p->set_edge(E)
 	p->set_nodenames(nm[perm'])
 	if (cols(nv) == n) p->set_nodesvar(nv[perm'])
+}
+
+/*
+	Two-mode network built from an edge list: puts the mode-1 nodes first (in their order) and the mode-2 nodes after
+	them, the layout every two-mode command assumes (mode 1 = nodes 1..n1). nwfromedge numbers the nodes by sorting
+	the labels of both modes together, so string identifiers (or a mix of numeric and string ones) whose mode-2
+	labels sort first (e.g. persons "P1" and organisations "O1") gave a network whose node order did not follow the
+	modes.
+*/
+void nw_modes_first(pointer(class nw_def scalar) scalar p){
+	string rowvector m, nv
+	real colvector md, perm
+	real matrix E
+
+	m = p->get_modes()
+	md = strtoreal(m)'
+	if (rows(md) < 2) return
+	perm = order((md, (1::rows(md))), (1, 2))
+	if (perm == (1::rows(md))) return
+	E = (*p->get_matrix())[perm, perm]
+	nv = p->get_nodesvar()
+	p->set_edge(E)
+	p->set_nodenames(p->get_nodenames()[perm'])
+	if (cols(nv) == rows(perm)) p->set_nodesvar(nv[perm'])
+	p->set_modes(m[perm'])
 }
 
 string matrix get_nodenames_from_var(string scalar v, real scalar z, string scalar def){
@@ -12930,14 +12970,30 @@ string scalar `NWsdef'::get_valid_name(string scalar s){
 	suffix = 1
 	i = first_index_match(names, s)
 	
+	// the suggestion stays a valid name of at most 32 characters: the base is shortened to make room for the suffix
 	if (i != 0) {
-		snew = s + "_" + strofreal(suffix)
+		snew = nw_suffixed_name(s, suffix)
 		while (first_index_match(names, snew)!= 0) {
 			suffix = suffix + 1
-			snew = s + "_" + strofreal(suffix)
+			snew = nw_suffixed_name(s, suffix)
 		}
 	}
 	return(snew)
+}
+
+string scalar nw_suffixed_name(string scalar s, real scalar suffix){
+	string scalar suf
+
+	suf = "_" + strofreal(suffix)
+	return(usubstr(s, 1, max((1, 32 - strlen(suf)))) + suf)
+}
+
+/* stops with error 198 unless s can be a network name (a valid Stata name: 1 to 32 characters, letters, digits and _) */
+void nw_assert_netname(string scalar s){
+	if (!st_isname(s)) {
+		errprintf("network name %s is invalid: a network name must be a valid Stata name (1 to 32 characters; letters, digits and _; not starting with a digit; not a reserved word such as _all)\n", s)
+		exit(198)
+	}
 }
 
 /*
@@ -13016,6 +13072,7 @@ void `NWsdef'::rename(string scalar oldname, string scalar newname){
 	if(i==0) {
 		error_handle("Network name " + oldname + " does not exist. " , `errNWsNotFound')
 	}
+	nw_assert_netname(newname)
 	names[i] = newname
 	pdefs[i]->set_name(newname)
 }
@@ -13149,6 +13206,9 @@ void `NWsdef'::add_existing(pointer(class `NWdef' scalar) scalar nw){
 void `NWsdef'::add(string scalar s) {
 
 	real scalar i, size
+	// a network name is used as a Stata name (nwunab resolves network lists as variable names); a longer or
+	// otherwise invalid name made every network unreachable ("Network _all not found")
+	nw_assert_netname(s)
 	if (rows(names) > 0){
 		i = first_index_match(names, s)
 	}

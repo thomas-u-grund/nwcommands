@@ -44,6 +44,10 @@ untouched{p_end}
 is specified without an extension, {bf:.nwdta} is assumed. If your {it:filename} contains embedded spaces, remember to enclose
 it in double quotes.
 
+{pstd}
+Every network comes back as it was saved: a network saved as directed stays directed even when its ties
+happen to be symmetric.
+
 
 {title:Network types}
 

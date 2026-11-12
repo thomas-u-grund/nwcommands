@@ -6,7 +6,7 @@
 * permutations() results (p-value, bounds), attribute() and the user's own network called same_<attr>;
 * nwqap: the observed coefficients equal logit / regress on the dyads built by hand (cross-route), e()
 * results (N = n(n-1), cmd, depvar, permutations, pvalues), predict(), an attribute term, error codes
-* (482, 6056, 6057), and the user's own network called _tempexpand.
+* (482, 6056, 198), and the user's own network called _tempexpand.
 * Run from the repository root.
 
 clear all
@@ -139,7 +139,7 @@ xa _rc == 482
 capture nwqap y x5, permutations(2)
 xa _rc == 6056
 capture nwqap, permutations(2)
-xa _rc == 6057
+xa _rc == 198
 * the data in memory are restored after nwqap (a first call may sync the data with the network)
 set obs 8
 gen g = mod(_n, 2)

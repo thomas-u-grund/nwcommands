@@ -66,7 +66,7 @@ capture noisily nwset, mat(J(3,3,0)) name(keepme)
 xt_chk `=(_rc == 483)' "name() in use without replace: r(483) (got `=_rc')"
 xt_same s1 "name() in use without replace"
 capture noisily nwset, mat(J(3,3,0)) name(newnet) vars(a b)
-xt_chk `=(_rc == 6070)' "vars() with the wrong number of names: r(6070) (got `=_rc')"
+xt_chk `=(_rc == 198)' "vars() with the wrong number of names: r(198) (got `=_rc')"
 xt_same s1 "vars() of the wrong length: no half-made network left" // was bug S2 (fixed)
 xt_01_reset
 mata: __xt_nn = ("a", "b")

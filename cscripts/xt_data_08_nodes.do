@@ -76,7 +76,7 @@ xt_hasnet tri3
 if `has' nwdrop tri3
 xt_snap c1
 capture noisily nwdropnodes tri, nodes(nosuchnode)
-xt_chk `=(_rc == 6012)' "unknown label: r(6012) (got `=_rc')"
+xt_chk `=(_rc == 485)' "unknown label: r(485) (got `=_rc')"
 xt_same c1 "unknown label"
 capture noisily nwdropnodes tri, nodes(0)
 xt_chk `=(_rc == 485)' "[policy] node id 0: r(485) errNodeNotFound (got `=_rc')"

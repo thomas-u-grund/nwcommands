@@ -55,7 +55,7 @@ assert r(nodeid) == 3
 * a genuinely nonexistent label must still error cleanly (not every
 * label being falsely reported as missing, as it was before the fix)
 capture _nwnodeid net1, nodelab(Z)
-assert _rc == 6012
+assert _rc == 485
 
 * numeric nodelab: direct pass-through as a node id (separate code
 * path, was not affected by either bug - regression-guarded here)

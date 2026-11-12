@@ -150,7 +150,7 @@ program nwimport, rclass
 	else {
 		di 
 		noi di `"{err}{it:Loading networks from file {bf:`fname'} failed}"'
-		error 6750
+		error 480
 	}
 	capture mata: mata drop __nwimport_*
 	capture confirm number 0
@@ -523,7 +523,7 @@ program _nwimpdl_rect
 	if _N == 0 {
 		di "{err}The matrix has no ties."
 		restore
-		error 6704
+		error 2000
 	}
 	qui sum _value
 	if r(min) == 1 & r(max) == 1 {
@@ -1089,7 +1089,7 @@ program _nwimport_edgelist
 	if `success' == 0 {
 		noi di "{err}{it:edgelist} could not be loaded"
 		restore
-		error 6704
+		error 6705
 	}
 
 	if `c(k)' == 5 {
@@ -1133,7 +1133,7 @@ program _nwimport_edgelist
 	if `c(k)' > 3 | `c(k)' < 2 {
 		noi di "{err}Something went wrong; data has more than three columns."
 		restore
-		error 6704
+		error 6705
 	}
 	nwfromedge _all, name(`name') `keeporiginal' `directed' `undirected' `xvars'
 	//restore

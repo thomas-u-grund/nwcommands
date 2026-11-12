@@ -27,7 +27,8 @@ A {it:netname} is one network name, such as
 Network names may be 1 to 32 characters long and must start with 
 {cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, or {cmd:_}, and the remaining 
 characters may be 
-{cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, {cmd:_}, or {cmd:0}-{cmd:9}.
+{cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, {cmd:_}, or {cmd:0}-{cmd:9}. A name that breaks these rules (for example one
+of 33 characters) is refused with error 198 by every command that creates or renames a network.
 
 {pstd}
 When we use the term netname, we usually mean an existing netname -- a

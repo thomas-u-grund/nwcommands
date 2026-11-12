@@ -253,7 +253,7 @@ program _nwevalnetexp
 		forvalues i = 1/`nwgenNum' {
 			nwdrop _tempgen`i'
 		}
-		error 6001	
+		error 482	
 	}
 	local netexp_mata = "`exp'"
 
@@ -302,7 +302,7 @@ program _nwevalnetexp
 		forvalues i = 1/`nwgenNum' {
 			nwdrop _tempgen`i'
 		}
-		error 6500
+		error 6082
 	}
 	
 	local netexp_mata = " J(`subnodes',`subnodes',1) :* `netexp_mata'"

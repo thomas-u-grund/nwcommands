@@ -4,6 +4,8 @@ program nwset
 syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite REPLACE bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
 	// _nwsyntax (called below) redefines the locals valued/directed: keep the options
 	local __optvalued "`valued'"
+	// a network name must be a valid Stata name of at most 32 characters (refused before anything is changed)
+	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	local __optunvalued "`unvalued'"
 // `overwrite' was declared here but never actually connected to any
 // check anywhere in this file (confirmed directly: it was the ONLY
@@ -103,6 +105,7 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			confirm numeric variable `eventtime'
+			_nwset_eventcheck `mode1id' `mode2id' `eventtime'
 		}
 		if "`interval'" != "" {
 			local ivstart : word 1 of `interval'
@@ -121,7 +124,7 @@ if "`overwrite'" != "" local replace "replace"
 			// range, shift mode-2 up by mode-1's own max so the two id
 			// spaces cannot collide.
 			tempvar mode2adj
-			qui gen `mode2adj' = `mode2id'
+			qui gen double `mode2adj' = `mode2id'
 			qui sum `mode1id'
 			local __g1max = r(max)
 			qui sum `mode2id'
@@ -129,16 +132,16 @@ if "`overwrite'" != "" local replace "replace"
 			if (`__g1max' >= `__g2min') {
 				qui replace `mode2adj' = `mode2adj' + `__g1max'
 			}
-			qui gen `tm_lab1' = "n" + strofreal(`mode1id')
-			qui gen `tm_lab2' = "n" + strofreal(`mode2adj')
+			qui gen `tm_lab1' = "n" + strofreal(`mode1id', "%18.0g")
+			qui gen `tm_lab2' = "n" + strofreal(`mode2adj', "%18.0g")
 		}
 		else if `mode1numeric' & !`mode2numeric' {
-			qui gen `tm_lab1' = strofreal(`mode1id')
+			qui gen `tm_lab1' = strofreal(`mode1id', "%18.0g")
 			qui gen `tm_lab2' = trim(`mode2id')
 		}
 		else if !`mode1numeric' & `mode2numeric' {
 			qui gen `tm_lab1' = trim(`mode1id')
-			qui gen `tm_lab2' = strofreal(`mode2id')
+			qui gen `tm_lab2' = strofreal(`mode2id', "%18.0g")
 		}
 		else {
 			// mirrors nw2fromedge.ado's own string-overlap check exactly:
@@ -259,6 +262,7 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			confirm numeric variable `eventtime'
+			_nwset_eventcheck `ego' `alter' `eventtime'
 		}
 		if "`interval'" != "" {
 			local ivstart : word 1 of `interval'
@@ -282,16 +286,16 @@ if "`overwrite'" != "" local replace "replace"
 		local alternumeric = (_rc == 0)
 		tempvar egolab alterlab
 		if `egonumeric' & `alternumeric' {
-			qui gen `egolab' = "n" + strofreal(`ego')
-			qui gen `alterlab' = "n" + strofreal(`alter')
+			qui gen `egolab' = "n" + strofreal(`ego', "%18.0g")
+			qui gen `alterlab' = "n" + strofreal(`alter', "%18.0g")
 		}
 		else if `egonumeric' & !`alternumeric' {
-			qui gen `egolab' = strofreal(`ego')
+			qui gen `egolab' = strofreal(`ego', "%18.0g")
 			qui gen `alterlab' = trim(`alter')
 		}
 		else if !`egonumeric' & `alternumeric' {
 			qui gen `egolab' = trim(`ego')
-			qui gen `alterlab' = strofreal(`alter')
+			qui gen `alterlab' = strofreal(`alter', "%18.0g")
 		}
 		else {
 			qui gen `egolab' = trim(`ego')
@@ -707,7 +711,7 @@ if "`overwrite'" != "" local replace "replace"
 			if `varscount' != `__nwset_nnew' {
 				di "{err}{p 0 0 2}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`__nwset_nnew'}).{p_end}"
 				capture mata: mata drop `__nwnew' `__nwnodenames'
-				error 6070
+				error 198
 			}
 		}
 		if "`nodenames'" != "" {
@@ -894,4 +898,26 @@ string rowvector nwset_padlabs(string rowvector l, real scalar k, string scalar 
 	}
 	return(l)
 }
+end
+
+// Event data: every row is one event and needs a sender, a receiver and an event time. A row without one is refused
+// (r(416)) before anything is changed: an event without a time cannot be ordered, and one without a sender or receiver
+// is not an event between two nodes (unlike a static edge list, where such a row declares an isolate).
+capture program drop _nwset_eventcheck
+program _nwset_eventcheck
+	args snd rcv t
+	quietly count if missing(`t')
+	if r(N) > 0 {
+		di "{err}{p 0 0 2}eventtime(): `r(N)' event(s) have a missing event time in {bf:`t'}; every event needs a time. Drop these rows (or give them a time) first.{p_end}"
+		exit 416
+	}
+	foreach v in `snd' `rcv' {
+		capture confirm string variable `v'
+		if _rc == 0 quietly count if trim(`v') == ""
+		else quietly count if missing(`v')
+		if r(N) > 0 {
+			di "{err}{p 0 0 2}eventtime(): `r(N)' event(s) have a missing id in {bf:`v'}; every event needs a sender and a receiver. Drop these rows first.{p_end}"
+			exit 416
+		}
+	}
 end

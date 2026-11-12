@@ -35,6 +35,13 @@ program nwdropnodes
 		}
 	}
 	local nodelist "`newnodelist'"
+	// a node number outside 1..nodes is refused (it used to be ignored, or failed with a Mata error for 0)
+	foreach onenode of local nodelist {
+		if `onenode' < 1 | `onenode' > `nodes' {
+			di "{err}node {bf:`onenode'} does not exist: network {bf:`netname'} has nodes 1 to `nodes'"
+			error 485
+		}
+	}
 
 	// was reading the legacy pre-2016 $nw_<id>/$nwlabs_<id> globals,
 	// which the modern netobj/NWdef architecture never populates (empty

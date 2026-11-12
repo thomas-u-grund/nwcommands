@@ -17,7 +17,7 @@ program def nwhomophily
 	
 	if (`vc' != `hc') {
 		di "{err}option {bf:homophily()} needs to have one entry for each variable in {it:varlist}."
-		error 6300
+		error 198
 	}
 	
 	if "`nodes'" == "" {
@@ -31,7 +31,7 @@ program def nwhomophily
 	else {
 		if `nodes' > `=_N' {
 			di "{err}Not enough observations of variables: {bf:`varlist'}{txt}"
-			error 6044
+			error 2001
 		}
 	}
 	

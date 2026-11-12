@@ -33,7 +33,7 @@ program nwutility
 		// below, kept as its own distinct code rather than folded into
 		// `errNWsSizeMismatch'.
 		di "{err}{bf:benefit} needs to be in the range between 0 and 1."
-		error 60044
+		error 125
 	}
 
 	if "`intrvalue'" != "" {

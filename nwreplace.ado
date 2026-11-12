@@ -31,12 +31,12 @@ program nwreplace, rclass
 	capture mata: `newcmd'
 	if _rc != 0 {
 		di "{err}{it:nwsubset} {bf:`subset'} invalid"
-		error 6400
+		error 198
 	}
 	
 	if "`netname'" == "=" {
 		di "{err}{it:networkname} required before ="
-		error 6001
+		error 198
 	}
 	
 	// get rid of first equal sign

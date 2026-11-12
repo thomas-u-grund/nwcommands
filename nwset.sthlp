@@ -78,7 +78,7 @@
 {synopt:{opt valued}}Force network to be treated as valued (tie strength, not just presence/absence){p_end}
 {synopt:{opt unvalued}}Force network to be treated as unvalued (binary){p_end}
 {synopt:{opt selfloop}}Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked{p_end}
-{synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new network, a valid Stata name of at most 32 characters (see {help netname}); default = {it:network}{p_end}
 {synopt:{opt replace}}Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning{p_end}
 {synopt:{opt overwrite}}Alias for {opt replace}{p_end}
 {synopt:{opth nodenames(string)}}Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of {opt labs()}{p_end}
@@ -217,6 +217,10 @@ for string identifiers, {cmd:.} for numeric ones): the node is created, the row 
 identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
 nodes with one tie, {it:Fion} an isolate.
 
+{pstd}
+Numeric identifiers become node labels {it:n} followed by the full number (identifier 10000001 gives
+{it:n10000001}); a string identifier is its own label.
+
 
 {pstd}
 {bf:{ul:3. Declare adjacency matrix from Mata matrix}}
@@ -284,6 +288,8 @@ used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)
 {help nwname}, {help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
 holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
 full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
+The nodes of mode 1 (the first id variable) come first, in the sort order of their identifiers,
+followed by the nodes of mode 2, whatever the type of the identifiers (string ones included).
 {bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
 edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare
 {help varlist} alone, so combining them is rejected as an explicit error rather than guessed at.
@@ -336,7 +342,9 @@ missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
 {p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
 {p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
 tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
-ordinary graph{p_end}
+ordinary graph. Every event needs a sender, a receiver and a time: a row with a missing
+{it:eventtimevar}, sender or receiver is refused (error 416) and nothing is changed; drop such rows
+first{p_end}
 
 {pstd}
 For example, this declares a snapshot network from three waves of ties:

@@ -59,7 +59,7 @@ program nwexpand
 	}
 	if (`nodes' > `nsel' | `nsel' == 0) {
 		di "{err}Not enough observations for variable {bf:`varlist'}."
-		error 6200
+		error 2001
 	}
 	_nwdenseguard, command(nwexpand) nodes(`nodes') copies(2) alternative(The result is a network with a tie for every pair of nodes. Expand a part of the nodes (option nodes() or if).) `force'
 	

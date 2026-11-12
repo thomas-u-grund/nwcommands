@@ -132,48 +132,51 @@ program nwplot, rclass
 		local scatteropt "`scatteropt' `labelopt'"
 	}
 
+	// the helper networks of this call carry a prefix of their own (a tempname), so that cleaning them up
+	// cannot remove a network of the user's (it used to drop every network whose name began with __temp)
+	tempname __nwptmp
     if "`in'" != "" {
-		capture nwdrop _temp_in
-		nwduplicate `netname', name(__temp_in)
-		nwkeep __temp_in in `in'
+		capture nwdrop `__nwptmp'_in
+		nwduplicate `netname', name(`__nwptmp'_in)
+		nwkeep `__nwptmp'_in in `in'
 		if "`edgecolor'" != "" {
-			capture nwdrop __temp_edgecolor_in
-			nwgen __temp_edgecolor_in = `edgecolor'
-			local edgecolor "__temp_edgecolor_in"
+			capture nwdrop `__nwptmp'_edgecolor_in
+			nwgen `__nwptmp'_edgecolor_in = `edgecolor'
+			local edgecolor "`__nwptmp'_edgecolor_in"
 			if "`edgecolor'" != "`netname'" {
-				nwkeep __temp_edgecolor_in in `in'
+				nwkeep `__nwptmp'_edgecolor_in in `in'
 			}
 		}
 		if "`edgesize'" != "" {
-			nwgen __temp_edgesize_in = `edgesize'
-			local edgesize "__temp_edgesize_in"
+			nwgen `__nwptmp'_edgesize_in = `edgesize'
+			local edgesize "`__nwptmp'_edgesize_in"
 			if "`edgesize'" != "`netname'" & "`edgesize'" != "`edgecolor'"{
-				nwkeep __temp_edgesize_in in `in'
+				nwkeep `__nwptmp'_edgesize_in in `in'
 			}
 		}
-		local netname "__temp_in"
+		local netname "`__nwptmp'_in"
 		_nwsyntax `netname', max(1)
 	}
 
      if "`if'"!="" {
 		local ifmaster "if `if'"
-		capture nwdrop __temp_if
-		nwduplicate `netname', name(__temp_if)
-		nwdrop __temp_if if (!(`if'))
+		capture nwdrop `__nwptmp'_if
+		nwduplicate `netname', name(`__nwptmp'_if)
+		nwdrop `__nwptmp'_if if (!(`if'))
 		if "`edgecolor'" != "" {
-			capture nwdrop _temp_edgecolor_if
-			nwduplicate `edgecolor', name(__temp_edgecolor_if)
-			local edgecolor "__temp_edgecolor_if"
-			nwdrop __temp_edgecolor_if if (!(`if'))
+			capture nwdrop `__nwptmp'_edgecolor_if
+			nwduplicate `edgecolor', name(`__nwptmp'_edgecolor_if)
+			local edgecolor "`__nwptmp'_edgecolor_if"
+			nwdrop `__nwptmp'_edgecolor_if if (!(`if'))
 		}
 		if "`edgesize'" != "" {
-			capture nwdrop _temp_edgesize_if
-			nwduplicate `edgesize', name(__temp_edgesize_if)
-			local edgesize "__temp_edgesize_if"
-			nwdrop __temp_edgesize_if if (!(`if'))
+			capture nwdrop `__nwptmp'_edgesize_if
+			nwduplicate `edgesize', name(`__nwptmp'_edgesize_if)
+			local edgesize "`__nwptmp'_edgesize_if"
+			nwdrop `__nwptmp'_edgesize_if if (!(`if'))
 		}
 		
-		local netname "__temp_if"
+		local netname "`__nwptmp'_if"
 	}
 	_nwsyntax `netname', max(1)
 
@@ -740,13 +743,13 @@ program nwplot, rclass
 	}
 	if "`valued'" == "true" & "`nosign'" == "" & "`edgecolor'" == "" & `__nwp_minval' < 0 {
 		local __nwp_autosign 1
-		capture nwdrop __temp_sign
-		qui nwduplicate `netname', name(__temp_sign)
-		qui nwtomata __temp_sign, mat(__nwp_S)
+		capture nwdrop `__nwptmp'_sign
+		qui nwduplicate `netname', name(`__nwptmp'_sign)
+		qui nwtomata `__nwptmp'_sign, mat(__nwp_S)
 		mata: __nwp_S = (editmissing(__nwp_S, 0) :< 0)
-		qui nwreplacemat __temp_sign, newmat(__nwp_S)
+		qui nwreplacemat `__nwptmp'_sign, newmat(__nwp_S)
 		capture mata: mata drop __nwp_S
-		local edgecolor "__temp_sign"
+		local edgecolor "`__nwptmp'_sign"
 		local edgecolor_original "sign"
 		local edgecolor_options ", edgecolorpalette(navy cranberry) edgepatternpalette(solid dash)"
 		if "`legendopt'" == "" local legendopt "position(6) rows(1)"
@@ -755,8 +758,8 @@ program nwplot, rclass
 	// Get edgesize network data
 	if "`edgesize'" != "" {
 		if "`edgesize'" == "," {
-			nwrandom `nodes', prob(1) name(__temp_edgesize_dummy)
-			local edgesize "__temp_edgesize_dummy,"
+			nwrandom `nodes', prob(1) name(`__nwptmp'_edgesize_dummy)
+			local edgesize "`__nwptmp'_edgesize_dummy,"
 			if strpos("`edgesize_options'", "legendoff") == 0 {
 				local edgesize_options `"`edgesize_options' legendoff"'
 			}
@@ -764,8 +767,8 @@ program nwplot, rclass
 		local 0 "`edgesize'`edgesize_options'"
 		capture noi syntax [anything] [, forcekeys(string) legendoff ]
 		if _rc != 0 {
-			nwdrop __temp_edgesize_dummy
-			error 6088
+			capture nwdrop `__nwptmp'_edgesize_dummy
+			error 198
 		}
 		
 		// check and clean networks as edgecolor and edgesize
@@ -815,10 +818,10 @@ program nwplot, rclass
 	// Get edgecolor network data
 	if "`edgecolor'" != ""  {
 		if "`edgecolor'" == "," {
-			capture nwdrop __temp_edgecol_dummy
-			nwrandom `nodes', prob(0) name(__temp_edgecol_dummy)
-			//nwreplace __temp_egdecol_dummy = .
-			local edgecolor "__temp_edgecol_dummy,"
+			capture nwdrop `__nwptmp'_edgecol_dummy
+			nwrandom `nodes', prob(0) name(`__nwptmp'_edgecol_dummy)
+			//nwreplace `__nwptmp'_egdecol_dummy = .
+			local edgecolor "`__nwptmp'_edgecol_dummy,"
 			if strpos("`edgecolor_options'", "legendoff") == 0 {
 				local edgecolor_options `"`edgecolor_options' legendoff"'
 			}
@@ -827,8 +830,8 @@ program nwplot, rclass
 		capture noi syntax [anything] [, foreground(string) forcekeys(string) legendoff edgecolorpalette(string) edgepatternpalette(string)]
 		local edgeforeground = "`foreground'"
 		if _rc != 0 {
-			nwdrop __temp_edgecolor_dummy
-			error 6088
+			capture nwdrop `__nwptmp'_edgecol_dummy
+			error 198
 		}
 		// check and clean network 
 		local edgecolorkeys_legendoff "`legendoff'"
@@ -2253,7 +2256,7 @@ program nwplot, rclass
 	mata: mata drop __nwplot_plotmat __nwplot_nsize __nwplot_ncolor __nwplot_nlabel __nwplot_Coord __nwplot_edgesizemat __nwplot_edgecolormat
 	capture mata: mata drop __nwplot_Coord_comp __nwplot_compM __nwplot_comp_freq __nwplot_comp_id __nwplot_comp_freqid __nwplot_compmat __nwplot_compfull __nwplot_comp_nonisol
 	capture mata: mata drop __nwplot_TC __nwplot_M __nwplot_nsymbol
-	capture nwdrop __temp* 
+	capture nwdrop `__nwptmp'* 
 	
 	capture mat drop __nwp_edgecolorrow
 	capture mat drop __nwp_valuerow

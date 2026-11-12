@@ -18,6 +18,7 @@ program nwfromedge
 	// two-mode network and are rejected explicitly rather than silently
 	// ignored. Must run before `unw_defs' below, which sets up
 	// one-mode-specific state this branch never needs.
+	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	if "`twomode'" != "" {
 		if "`directed'" != "" | "`undirected'" != "" | "`forcedirected'" != "" | "`forceundirected'" != "" {
 			di "{err}{p 0 0 2}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}.{p_end}"
@@ -90,7 +91,7 @@ program nwfromedge
 		capture confirm string variable `tovar'
 		if _rc == 0 {
 			tempvar x
-			qui gen `x' = cond(missing(`fromvar'), "", strofreal(`fromvar'))
+			qui gen `x' = cond(missing(`fromvar'), "", strofreal(`fromvar', "%18.0g"))
 			local fromvar `x'
 		}
 	}
@@ -98,7 +99,7 @@ program nwfromedge
 		capture confirm numeric variable `tovar'
 		if _rc == 0 {
 			tempvar x
-			qui gen `x' = cond(missing(`tovar'), "", strofreal(`tovar'))
+			qui gen `x' = cond(missing(`tovar'), "", strofreal(`tovar', "%18.0g"))
 			local tovar `x'
 		}
 	}

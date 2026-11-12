@@ -24,7 +24,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwdropnodes` and `nwkeepnodes` keep the direction of the network; a directed network whose remaining matrix was symmetric became undirected.
 - `nwdropnodes, nodes(Bob)` on a network with a label containing a blank (e.g. "Anna Maria") dropped another node; labels are looked up exactly now.
 - `nwstack` of undirected networks gives an undirected network (before: directed).
-- `nwuse` restores the diagonal of a network with self-loops, and a saved directed network of one node stays directed.
+- `nwuse` restores the diagonal of a network with self-loops, and every network comes back exactly as saved: a directed network with a symmetric matrix stays directed (before, it was read as undirected). The data set `baerveldt` saved its ethnicity networks (`class<k>_ethn`) as directed; it now saves them as undirected, so they load as before.
 - `nwattime` returns the right `r(ties)` when a variable named `ties` exists.
 - `nwimport, type(ucinet)` of an edgelist1 file numbers the nodes by their number, not by their text order (node 10 was node 2 before), and reads a file without tie values as binary.
 
@@ -54,12 +54,20 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwexport, type(ucinet)` / `nwimport, type(ucinet)`: the labels were read back as one label; labels with a blank are written in double quotes and read back.
 - `nwimport, type(edgelist) nwappend` replaced the data in memory (and cleared them when the file was missing); the data are kept. `delimiter()` works for edge lists in text files (it stopped with r(6750)).
 - `nwrandom, ntimes() nodenamesmata()` gave none of the networks the labels; `nodenamesmata()`, `directed` and `noreplace` are passed on to every network.
-- `nwdropnodes` and `nwkeepnodes`: a label in a network of 2,000 nodes with long labels stopped with r(1) and no message; node id 0 stopped with a Mata error (now out of bounds, r(600021)); `generate()` left the copy behind when the request was refused.
+- A network name longer than 32 characters (or otherwise not a valid Stata name) was accepted by `nwset`, `nwfromedge`, `nwrename`, `nwgenerate`, `nwtranspose, generate()` and `nwpermute, generate()`, after which no network could be found ("Network _all not found"). Such names are refused with r(198); the name suggested for a taken name of 31 or 32 characters is shortened to stay within 32.
+- `nwset ..., eventtime()` stored events with a missing time (sorted last by the event models) and events with a missing sender or receiver (index 0, raw Mata errors later). Such rows are refused with r(416) and a message; nothing is changed.
+- A command that takes one network, given two (`nwtomata g h`, and the event and model commands), said "Network g h not found" (r(482)); it says that only one network is allowed (r(198)).
+- `nwexport, type(gml)` (and `nwtoedge`) of a network with exactly one tie stopped with a Mata conformability error.
+- Error codes follow `help nwerrorcodes`: a node label or number that does not exist (`nwdropnodes`, `nwkeepnodes`, and the helpers behind them) gives r(485) (was r(6012), r(600021), r(600022), or for `nodes(0)` a Mata error; a number above the number of nodes was ignored); `nwsym, mode()` with an invalid value r(6556) (was 6555); `nwpermute, generate()` and `nwstack, name()` onto an existing network r(483) (were 99 and 110); other one-off codes became the standard Stata codes for their meaning (198 invalid syntax, 2001 too few observations, 125 out of range, 480 creation failed, 6082/6705 from the list).
+- `nwplot ... if` / `in` deleted every user network whose name began with `__temp` (and one called `_temp_in`); its helper networks have temporary names now. A wrong `edgecolor()`/`edgesize()` sub-option stopped with r(6088) (two-mode unsupported) and could leave a helper network; it stops with r(198).
+- `nwdropnodes` and `nwkeepnodes`: a label in a network of 2,000 nodes with long labels stopped with r(1) and no message; node id 0 stopped with a Mata error; `generate()` left the copy behind when the request was refused.
 - `nwsubset x if ..., name(x) replace`, `nwduplicate x, name(x) replace`, `nwtranspose x, generate(x) replace`, `nwpermute x, generate(x) nwreplace` and `nwgenerate x = <expression with x>, replace` (also when the expression fails) lost the network `x`; the old network is now replaced only when the new one exists.
 - `nwgenerate y = diff` stopped with r(482): the letters "if" inside a network name were taken for an `if` condition.
 - `nwnoderename` added a row with the old label and renamed a user variable that had the old label as its name; it renames only the network's own node variable (when the node variables are in the data).
 - `nwcollapse` left a network `_temp_<name>` behind.
 - `nwstack` stopped with "observation number out of range" when the data had more rows than the stacked network has nodes.
+- `nwset ..., twomode` (and `nw2fromedge`) with string identifiers, or a string mode with a numeric one, numbered the nodes in the sort order of both modes together (persons "P1".."P3" and organisations "O1", "O2" gave O1 O2 P1 P2 P3), while the network said that the first three nodes are mode 1: matrices, event lists and the commands built on them mixed the modes up. The mode-1 nodes now come first. A string mode with a numeric one stopped with r(106).
+- Numeric node identifiers of 10,000,000 or more were turned into labels such as "n1.00e+07" by `nwset ..., eventtime()`/`time()`/`interval()` and in the mode split of `nwset ..., twomode`, while the network's nodes had the full number: events pointed at no node (index 0), two-mode networks put every node in mode 2. Labels are the full number now (also for a numeric identifier paired with a string one in `nwfromedge`). The offset of mode-2 identifiers in a numeric two-mode list is added in double precision.
 
 ## [3.21.0] - 2026-11-12
 

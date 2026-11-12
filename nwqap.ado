@@ -14,7 +14,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	local vars = wordcount("`formula'")
 	if (`vars' < 1) {
 		di "{err}Formula wrongly specified."
-		error 6057
+		error 198
 	}
 	
 	local net = word("`formula'", 1)
