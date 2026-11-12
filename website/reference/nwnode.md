@@ -36,15 +36,10 @@ The command checks if node *nodename* exists in network *netname* and returns it
 . nwnode flobusiness, ego(medici)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - a pure node-existence/lookup check; does not read tie values or depend on directed/valued/two-mode status.
-
 ## See also
 
 - [nwvalue](nwvalue)
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

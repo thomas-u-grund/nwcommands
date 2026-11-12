@@ -23,10 +23,6 @@ nwdendrogram
 
 Displays results from hierarchical clustering (see [nwhierarchy](nwhierarchy) or `cluster`) as wheel dendrogram.
 
-## Supported network types
-
-Not applicable - visualizes an existing hierarchical-clustering result (from [nwhierarchy](nwhierarchy)), not a network directly; whatever directed/valued/two-mode support [nwhierarchy](nwhierarchy) itself has already determined the clustering this command displays.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

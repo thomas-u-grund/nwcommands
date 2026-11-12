@@ -25,12 +25,12 @@
 {opt replace}
 {opt force}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}mode used to expand variable; default = {it:same}{p_end}
 {synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
-{synopt:{opth nodes(int)}}size of new network; default = {help _N} - an explicit {opt nodes(1)} for a genuine 1-node network is honored, distinct from leaving {opt nodes()} unspecified{p_end}
+{synopt:{opth nodes(int)}}size of the new network: the first {it:#} observations (of those selected by {it:if}); default: all of them{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
@@ -54,7 +54,8 @@
 
 {pstd}
 This command generates a new network by expanding an existing variable. When option {bf:nodes()} is unspecified, the 
-command generates a network with {help _N} nodes. 
+command generates a network with one node per observation ({help _N} nodes); with {it:if}, one node per observation that
+satisfies the condition, in the order of the data. The data in memory are not changed.
  
 {pstd}
 The value {it:M_ij} of the adjacency matrix {it:M} of the new network is calculated from the values {help varname}{bf:[i]}, {help varname}{bf:[j]}
@@ -160,25 +161,27 @@ of a friendship tie did sport at wave1.
 	
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: source attribute values can be binary or continuous - {opt mode()} selects the transform. Directed: not applicable - produces a new derived network from a node attribute, not from an existing network's own directed status. Weighted: yes, natively - every {opt mode()} choice (same/dist/absdist/distinv/absdistinv/sender/receiver) produces continuous-valued ties by construction. Signed: yes, {opt mode(dist)} in particular can produce negative values. Two-mode: not applicable - produces a one-mode network from node-level attribute comparisons.
+Builds a new one-mode network from a node attribute. {bf:Directed:} undirected for
+{opt mode(same|absdist|absdistinv)}, directed otherwise. {bf:Valued:} {opt mode(same)} gives 0/1 ties; the other modes give valued ties.
+{bf:Two-mode:} not applicable. {bf:Signed:} {opt mode(dist)} and {opt mode(distinv)} can give negative values. See
+{help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
 {pstd}
-The expanded network is built row by row (one {it:n}-by-{it:n} matrix; the earlier code multiplied two such matrices, which is
-cubic): 10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix; killed at 12 GB before).
+The expanded network is built row by row (one {it:n}-by-{it:n} matrix):
+10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix).
 
 {pstd}
-The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes ({opt nodes()} or {opt if}), or use {opt force}.
+The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes ({opt nodes()} or {opt if}), or use
+{opt force}.
 
 {title:See also}
 
 	{help nwcorrelate}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

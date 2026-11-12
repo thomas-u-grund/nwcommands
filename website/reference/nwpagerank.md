@@ -17,24 +17,24 @@ PageRank centrality
 nwpagerank
 [netname]
 [,
-generate(newvarname)
+gen:erate(newvarname)
 replace
-damping(real)
+damp:ing(real)
 maxiter(int)
 tol(real)
 silent
-binary]
+bin:ary]
 ```
 
 | | |
 |---|---|
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's PageRank score |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's PageRank score |
 | `replace` | Replace existing variable |
-| `damping(real)` | Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value) |
+| `damp:ing(real)` | Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value) |
 | `maxiter(int)` | Maximum power-iteration sweeps; default 1000 |
 | `tol(real)` | Convergence tolerance; default 1e-10 |
 | `silent` | Suppress display of results |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
@@ -53,15 +53,10 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 . list _name _pagerank in 1/5
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes - the natural case (a random surfer follows ties in their own real direction); an undirected network is handled identically, since its own symmetric tie matrix already represents "can move either way" directly. Weighted: not checked - tie values are ignored (a random surfer moves to each out-neighbor with EQUAL probability, matching the classical definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Macros**
-
-- **r(generate)** name of the generated PageRank variable
+- **Macros**
+- **r(generate)** --- name of the generated PageRank variable
 
 ## References
 
@@ -71,8 +66,6 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 
 - [nwevcent](nwevcent), [nwrandomwalk](nwrandomwalk), [nwbetween](nwbetween), [nwcloseness](nwcloseness)
 
-- last certified : 31 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

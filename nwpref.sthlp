@@ -22,11 +22,12 @@
 {opt weights(p1, p2,...)}
 {opt undirected}
 {opt name}({it:{help newnetname}})
+{opt labs}({it:lab1, lab2, ...})
 {opt xvars}
 {opth ntimes(int)}]
 
 
-{synoptset 20 tabbed}{...}
+{synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{it:nodes}}number of nodes{p_end}
@@ -36,9 +37,11 @@
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
-{synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
+{synopt:{opth ntimes(int)}}number of preferential-attachment networks to be generated (named {it:name}_1, {it:name}_2, ...); default = 1{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
+
 
 {title:Description}
 
@@ -67,17 +70,21 @@ probability 0.3 and tie weight 3 with probability 0.7.
 {txt}
 
 
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only structural attachment - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} - a Stata expression assigning each new tie's value, independent of the preferential-attachment mechanism itself (which is always driven by degree, not tie value). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
-{title:References}
+{title:Network types}
 
 {pstd}
-Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:Science} 286(54439),
-509-512.
+Generates a one-mode network. {bf:Directed:} directed by default, {opt undirected} for undirected. {bf:Valued:}
+{opt weights()} sets the tie values; attachment always follows degree. {bf:Two-mode:} not applicable. {bf:Signed:} not
+checked. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives
+the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so
+far (a different stream; {cmd:rdiscrete()} takes at most 10,000 probabilities).
+20,000 nodes: 0.2 seconds. {opt weights()} uses the matrix.
 
 
 {title:Examples}
@@ -89,26 +96,26 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 	{cmd:. nwpref 20, prob(1) undirected}
 	{cmd:. nwplot, layout(circle)}
 
+
 {title:Stored results}
 
 	{bf:nwpref} stores the following in {bf:r()}:
 
-	Macros
-	  {bf:r(netlist)}	list of new networks
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}list of new networks{p_end}
 
-{title:Limits}
+
+{title:References}
 
 {pstd}
-Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives
-the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so
-far (a different stream; {cmd:rdiscrete()} takes at most 10,000 probabilities, which stopped the earlier version at 10,001 nodes).
-20,000 nodes: 0.2 seconds. {opt weights()} still uses the matrix.
+Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:Science} 286(54439),
+509-512.
+
 
 {title:See also}
 
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

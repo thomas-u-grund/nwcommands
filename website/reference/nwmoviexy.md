@@ -22,7 +22,7 @@ nwmovie_options]
 
 ## Description
 
-`nwmoviexy` is a thin alias for [nwmovie](nwmovie): it forwards its entire argument string to `nwmovie` unchanged and behaves identically to it in every way. Historically `nwmoviexy` was a separate, coordinate-specific implementation (accepting an explicit `nodexys(varlist)` option to place nodes at fixed x/y coordinates supplied by the caller). [nwmovie](nwmovie) itself was rebuilt on a Cytoscape.js-based rendering pipeline (see that command's own help file) and no longer has an equivalent option - fixed node positions across waves are now produced automatically via its own `fixedlayout` option (one shared layout computed once and reused every frame) instead of requiring the caller to supply coordinates. `nwmoviexy` is kept only as a thin, backward-compatible alias so existing scripts that call it by name continue to work; it accepts exactly [nwmovie](nwmovie)'s own current option set, nothing more.
+`nwmoviexy` is a thin alias for [nwmovie](nwmovie): it forwards its entire argument string to `nwmovie` unchanged and behaves identically to it in every way; it accepts exactly [nwmovie](nwmovie)'s option set, nothing more. Fixed node positions across waves are produced by `nwmovie`'s `fixedlayout` option (one shared layout computed once and reused every frame).
 
 New code should call [nwmovie](nwmovie) directly - see its own help file for the complete option reference and worked examples.
 
@@ -37,14 +37,10 @@ Animate two waves of a network (accepts exactly the same arguments as [nwmovie](
 . nwmoviexy wave1 wave2, duration(400)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes (on valued networks the layouts use the tie values; `binary` switches that off, see [nwplot](nwplot)). Signed: not checked. Two-mode: not checked - a direct alias for [nwmovie](nwmovie); see that command's own identical classification.
-
 ## See also
 
 - [nwmovie](nwmovie), [nwplot](nwplot)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -19,6 +19,7 @@
 {opt old}({it:old_nwnode})
 {opt new}({it:new_nwnode})
 
+
 {marker description}{...}
 {title:Description}
 
@@ -30,10 +31,18 @@ node with name {it:old_nwnode} is found in {it:netname}, it is replaced with
 
 {marker examples}{...}
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames a single node's own label only; ties, tie values, and mode assignment are completely unchanged.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
+
+{title:Limits}
+
+{pstd}
+20,000 nodes: 0.13 seconds in Stata/BE.
+
 
 {title:Examples}
 
@@ -64,16 +73,16 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames a single node's
 		 {c BLC}{hline 9}{c -}{hline 10}{c BRC}
 
 
-{title:Limits}
+{title:Stored results}
 
-{pstd}
-20,000 nodes: 0.13 seconds in Stata/BE (40 seconds before: the test whether two nodes get the same variable name compared all pairs).
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(success)}}1 if the node was renamed, 0 if {it:old_nwnode} was not found or {it:new_nwnode} is not a valid name{p_end}
+
 
 {title:See also}
 
 	{help nwrename}, {help nwname}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

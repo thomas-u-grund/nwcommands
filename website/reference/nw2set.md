@@ -47,7 +47,7 @@ This command declares data to be two-mode network data. A two-mode network consi
 
 A corresponding graph is called bipartite graph – lines connect only vertices from one to vertices from another set – inside sets there are no connections.
 
-Setting two-mode networks is very similar to setting normal networks with [nwset](nwset). With M nodes on level 1 and N nodes on level 2, the command internally generates a (M+N) x (M+N) matrix, which stores the network data. Furthermore, it generates a variable *_mode*, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim, Thomas, Michael, Mathilde) and value 2 for nodes on level 2 (e.g institutions: LiU, UCD, Oxford, ETH).
+Setting two-mode networks is very similar to setting normal networks with [nwset](nwset). With M nodes on level 1 and N nodes on level 2, the command internally generates a (M+N) x (M+N) matrix, which stores the network data. Furthermore, it generates a variable *_nwmode*, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim, Thomas, Michael, Mathilde) and value 2 for nodes on level 2 (e.g institutions: LiU, UCD, Oxford, ETH).
 
 When a network is set as two-mode, this meta-information is stored with the network. Other nwcommands automatically recognize that the network is two-mode and deal with it accordingly (e.g. [nwplot](nwplot)).
 
@@ -57,21 +57,21 @@ There are three ways to explicitly declare data to be two-mode network data:
 
 Declare the variables in `varlist` to represent the adjacency matrix of the two-mode network. In this case a `varlist` (var_1, var_2,..., var_z) needs to be given. Each variable stands for a node on level 1 (e.g. organisations). Each row in the dataset stands for a node on level 2 (e.g. persons).
 
-In this dummy example we create 5 observations and 3 new variables v1-v3. After that we set a two-mode network from this data. This creates an empty network with 5 nodes on level 1 and 3 nodes on level 2.
+In this dummy example we create 5 observations and 3 new variables v1-v3. After that we set a two-mode network from this data. This creates an empty network with 3 nodes on level 1 and 5 nodes on level 2.
 
 ```stata
 . nwclear
 . set obs 5
 . forvalues i = 1/3 {
-     gen v = 0
+   gen v`i' = 0
 }
 . nw2set v*
 ```
-By default, the nodes on level 1 are named after the variables v1, v2 and v3. If option **rownames(varname)** is specified, the nodes on level 2 are named afther the values found in variable **varname**.
+By default, the nodes on level 1 are named after the variables v1, v2 and v3. If option **rownames(varname)** is specified, the nodes on level 2 are named after the values found in variable **varname**. The variables in *varlist* and the variable in `rownames()` are dropped from the dataset after the network has been set.
 
 **ul:2. Declare edgelist from variables**
 
-In this case, the command interprets the variables `varlist` as egdelist (see [nw2fromedge](nw2fromedge)).
+In this case, the command interprets the variables `varlist` as edgelist (see [nw2fromedge](nw2fromedge)).
 
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, imagine the following kind of data:
 
@@ -87,15 +87,15 @@ An edgelist or arclist is a set of two (or three in the case of a valued network
 We can declare this data as a two-mode network like this:
 
 ```stata
-. nw2set fromid toid, egdelist
+. nw2set fromid toid, edgelist
 ```
 This commands generates a network with 5 nodes in total; 3 nodes on level 1 (Peter, Andreas, Thomas) and 2 nodes on level 2 (LiU, UCD).
 
-**ul:2. Declare adjacency matrix from Mata matrix**
+**ul:3. Declare adjacency matrix from Mata matrix**
 
 Set a network from a *M x N* Mata matrix that holds the adjacency matrix of the new network with N nodes on level 1 and M nodes on level 2. The option **mat()** is specified with the name of an existing Mata matrix.
 
-For example, this generates a Mata matrix and sets a two-mode network with 6 nodes (4 nodes in level 1 and 2 nodes on level 2):
+For example, this generates a Mata matrix and sets a two-mode network with 6 nodes (2 nodes on level 1 and 4 nodes on level 2):
 
 ```stata
 . nwclear
@@ -117,16 +117,10 @@ Programmers can use **nw2set** to write their own import routines  (see also [nw
 
 From a two-mode network one can also produce a one-mode projection (see [nw2project](nw2project)). This basically, collapses the network to use only nodes from either level 1 or level 2.
 
-## Supported network types
-
-Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
-
 ## See also
 
 - [nwset](nwset) (whose own `twomode`/`bipartite` options can also declare a two-mode network directly), [nw2fromedge](nw2fromedge), [nwload](nwload), [nw2project](nw2project) ([nwproject](nwproject))
 
-- last certified : 28 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

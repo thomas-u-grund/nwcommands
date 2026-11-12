@@ -125,16 +125,10 @@ The next example loads the *glasgow* dataset and colors ties differently dependi
 . nwplot glasgow1, edgecolor(sender_sport1)
 ```
 
-## Supported network types
-
-Binary: source attribute values can be binary or continuous - `mode()` selects the transform. Directed: not applicable - produces a new derived network from a node attribute, not from an existing network's own directed status. Weighted: yes, natively - every `mode()` choice (same/dist/absdist/distinv/absdistinv/sender/receiver) produces continuous-valued ties by construction. Signed: yes, `mode(dist)` in particular can produce negative values. Two-mode: not applicable - produces a one-mode network from node-level attribute comparisons.
-
 ## See also
 
 - [nwcorrelate](nwcorrelate)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

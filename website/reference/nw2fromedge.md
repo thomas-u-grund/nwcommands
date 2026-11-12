@@ -28,6 +28,8 @@ nwfromedge_options
 
 `nw2fromedge` imports a two-mode network from a dataset in edgelist format. It is very similar to [nwfromedge](nwfromedge).
 
+The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in *level2* are shifted by the largest id in *level1*; when both are string variables and share a value, the prefixes **m1_** and **m2_** are added to the ids of *level1* and *level2*. Both changes are made to the variables in the data in memory.
+
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation of people in social events. Some examples are:
 
 - Membership in institutions - people, institutions, is a member, e.g. directors and commissioners on the boards of corporations.
@@ -77,10 +79,6 @@ Besides setting the network, this also creates a new variable *_nwmode*, which h
 . nwplot mynet, color(_nwmode)
 ```
 
-## Supported network types
-
-Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use [nwaddnodes](nwaddnodes)'s own **mode()** option afterward to add any isolates the source data could not represent.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

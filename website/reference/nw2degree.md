@@ -21,7 +21,8 @@ generate(newvarname)
 replace
 silent
 alpha(#)
-binary]
+binary
+raw]
 ```
 
 | | |
@@ -29,7 +30,7 @@ binary]
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores two-mode degree centrality |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
-| `alpha(#)` | Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = *0* (plain unweighted degree, identical to omitting the option) |
+| `alpha(#)` | Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = *1* (strength) for a valued network and *0* (number of ties) otherwise |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
 | `raw` | The degree itself, not divided by the size of the other mode (`tnet::degree_tm`, `igraph::degree`) |
 
@@ -43,13 +44,13 @@ binary]
 
 so that a mode-1 node tied to every mode-2 node (or vice versa) scores exactly 1, matching ordinary degree centrality's own [0,1] range and interpretation.
 
-`generate()` is required and names the new variable that holds this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set)'s own mode-id variable, not duplicated here).
+`generate()` is required and names the new variable that holds this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set)'s own mode-id variable, not duplicated here). With more than one network in the *netlist*, the variables are named *newvarname***1**, *newvarname***2**, and so on.
 
 `alpha(#)` generalizes the plain tie-count formula above to a weighted (tie-strength-aware) variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend [nwdegree](nwdegree)'s own `alpha()` already uses for one-mode degree:
 
 *degree_alpha(i) = k_i * (s_i/k_i)^alpha*, then normalized by *n_other* exactly as above
 
-where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its "strength"). `alpha(0)` (the default) reduces this exactly to plain tie-count degree - the two formulas agree bit-for-bit, so leaving `alpha()` unspecified never changes existing results. `alpha(1)` gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count entirely. Values between 0 and 1 blend the two; values above 1 emphasize a few strong ties over many weak ones, and negative values do the reverse. On a binary (unweighted) network every tie already has value 1, so *s_i = k_i*, `alpha()` has no effect at any value, and the plain formula always applies.
+where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its "strength"). `alpha(0)` (the default for a binary network) reduces this exactly to plain tie-count degree - the two formulas agree bit-for-bit. `alpha(1)` (the default for a valued network) gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count entirely. Values between 0 and 1 blend the two; values above 1 emphasize a few strong ties over many weak ones, and negative values do the reverse. On a binary (unweighted) network every tie already has value 1, so *s_i = k_i*, `alpha()` has no effect at any value, and the plain formula always applies.
 
 ## Examples
 
@@ -73,10 +74,6 @@ where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its 
 . nw2degree affil, generate(strength) alpha(1)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: **W1**, native - `alpha()` generalizes the plain tie-count formula to a tie-strength-aware blend (Opsahl et al. 2010), the same convention [nwdegree](nwdegree)'s own `alpha()` uses for one-mode degree; `alpha(0)`, the default, is bit-for-bit identical to the original unweighted formula. Signed: not checked - a negative tie value would distort the strength sum `alpha()` relies on, not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); `raw` gives the count itself (`tnet::degree_tm`).
-
 ## References
 
 Borgatti, S.P., Everett, M.G. (1997). Network analysis of 2-mode data. *Social Networks* 19(3), 243-269.
@@ -87,8 +84,6 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 
 - [nwdegree](nwdegree), [nw2set](nw2set), [nw2project](nw2project), [nw2clustering](nw2clustering)
 
-- last certified : 02 Sep 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

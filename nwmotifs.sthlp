@@ -9,6 +9,7 @@
 {p2col :nwmotifs {hline 2}}4-node undirected motif/graphlet census{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -41,10 +42,12 @@
 {synopt:{opt posn:orm(type)}}Two-mode network: normalise the node position counts as {cmd:bmotif::node_positions}{p_end}
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
-On a two-mode network {cmd:nwmotifs} counts the 17 bipartite motifs of two to five nodes (44 with {opt sixnode}) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them; the options for that form are described in {help nw2motifs}, which is the same command under its older name. {opt onemode} gives the 4-node census of the bipartite graph read as a one-mode graph (the result of earlier releases).
+On a two-mode network {cmd:nwmotifs} counts the 17 bipartite motifs of two to five nodes (44 with {opt sixnode}) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them;
+the options for that form are described in {help nw2motifs}, which is the same command under another name. {opt onemode} gives the 4-node census of the bipartite graph read as a one-mode graph.
 
 {pstd}
 {cmd:nwmotifs} classifies every induced 4-node subgraph of the network into one of 6
@@ -97,23 +100,14 @@ preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcu
 {opt plot} option and {help nwtriads}'s own {opt plot} option (its 3-node analogue) use.
 Grayscale by design, matching every other plot this package produces.
 
-{title:Valued networks}
+
+{title:Network types}
 
 {pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+{bf:Directed:} every tie is treated as undirected and a note is printed. {bf:Valued:} tie values are ignored and a
+note is printed. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode computation) - the
+bipartite motifs of {cmd:bmotif}. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: two-mode form by default - the bipartite motifs of Simmons et al. (2019; {cmd:bmotif}) and the positions of the nodes in them; {opt onemode} forces the 4-node census of the bipartite graph read as a one-mode graph ({cmd:igraph::motifs}); {help nw2motifs} is an alias.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a
-directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note
-is printed to this effect. Weighted: not applicable (a motif census is inherently a binary
-count). Signed: not checked. Two-mode: two-mode form by default - the bipartite motifs of Simmons et al. (2019; {cmd:bmotif}) and the positions of the nodes in them; {opt onemode} forces the 4-node census of the bipartite graph read as a one-mode graph ({cmd:igraph::motifs}); {help nw2motifs} is an alias. Requires at least 4 nodes.
 
 {title:Limits}
 
@@ -124,9 +118,17 @@ degrees, the triangles on each tie and the common neighbours of node pairs (time
 times the largest degree), and turned into counts of {it:induced} subgraphs with the exact inclusion relations between
 the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the
 enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take
-0.007 / 0.015 / 0.06 seconds (the enumeration did not finish in 3 minutes at 300 nodes). Counts are exact up to the
+0.007 / 0.015 / 0.06 seconds. Counts are exact up to the
 size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of
 four-node sets).
+
+
+{title:Examples}
+
+    {cmd:. nwwebuse florentine, nwclear}
+    {cmd:. nwmotifs flomarriage}
+    {cmd:. nwcug flomarriage, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)}
+
 
 {title:Stored results}
 
@@ -142,11 +144,22 @@ four-node sets).
     Macros
       {bf:r(netname)}       name of the network
 
-{title:Examples}
+{pstd}
+For a two-mode network (without {opt onemode}) the results are instead:
 
-    {cmd:. nwwebuse florentine, nwclear}
-    {cmd:. nwmotifs flomarriage}
-    {cmd:. nwcug flomarriage, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)}
+    Scalars
+      {bf:r(sixnode)}       1 if motifs of six nodes were counted, 0 otherwise
+      {bf:r(n_mode1)}       number of nodes in mode 1
+      {bf:r(n_mode2)}       number of nodes in mode 2
+
+    Macros
+      {bf:r(netname)}       name of the network
+      {bf:r(posnorm)}       normalisation of the node position counts ({opt posnorm()}; {bf:none} by default)
+
+    Matrices
+      {bf:r(motifs)}        one row per motif: columns {bf:motif}, {bf:nodes} and {bf:frequency}
+                        (with {opt normalise} also the four normalised frequencies)
+
 
 {title:References}
 
@@ -154,11 +167,10 @@ four-node sets).
 Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (2002). Network
 Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-827.
 
+
 {title:See also}
 
     {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
-last certified : 31 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

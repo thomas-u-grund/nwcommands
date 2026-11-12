@@ -93,12 +93,21 @@ when doing so because you might corrupt your network data. This displays the act
        5 {c |}  {res}1   1   1   1   .{txt}  {c |}
          {c BLC}{hline 21}{c BRC}
 
-	  
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the network{p_end}
+{synopt:{bf:r(netobj)}}name of the Mata network object{p_end}
+{synopt:{bf:r(adj)}}Mata expression that points to the adjacency matrix of the network{p_end}
+{synopt:{bf:r(adj_copy)}}name of the new Mata matrix (only with {opt mat()}){p_end}
+{p2colreset}{...}
+
+
 {title:See also}
 
 	{help nwprogramming:Programming own network commands}
-	
-last certified : 21 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

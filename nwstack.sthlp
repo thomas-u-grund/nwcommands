@@ -15,7 +15,7 @@
 {p 8 17 2}
 {cmdab: nwstack}
 {it:{help netlist}}{cmd:,}
-{opt name}({it:{help newnetname}})
+{opt n:ame}({it:{help newnetname}})
 [{opt gr:oup}({it:newvar})
 {opt replace}]
 
@@ -23,7 +23,7 @@
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt name}({it:newnetname})}name of the stacked network (required){p_end}
+{synopt:{opt n:ame}({it:newnetname})}name of the stacked network (required){p_end}
 {synopt:{opt gr:oup}({it:newvar})}variable that numbers the networks of {it:netlist} 1, 2, ... for the nodes of each{p_end}
 {synopt:{opt replace}}replace an existing network of that name{p_end}
 {synoptline}
@@ -66,4 +66,4 @@ Thomas U. Grund, RWTH Aachen University, thomas.u.grund@gmail.com
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

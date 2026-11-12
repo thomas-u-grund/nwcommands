@@ -28,21 +28,25 @@
 {opt valued}
 {opt unvalued}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth name(newnetname)}}name of the new network; default = {it:network}{p_end}
+{synopt:{opth name(newnetname)}}name of the new network; default = the name of {it:tievalue} if given, otherwise {it:network}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
 {synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
-{synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge}, forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. See {help nw2fromedge} for the full two-mode-specific behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
+{synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge},
+forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. See {help nw2fromedge} for the full two-mode-specific
+behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
 {synopt:{opt valued}}mark the network as valued (default if a value variable is given, also when every value is 1){p_end}
 {synopt:{opt unvalued}}mark the network as binary even if a value variable is given{p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
-{synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
-{synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is about the {it:network}, not Stata variables{p_end}
+{synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid} / {help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named
+{opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
+{synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is
+about the {it:network}, not Stata variables{p_end}
 
 {p2colreset}{...}
 
@@ -92,7 +96,8 @@ nodes with one tie, {it:Fion} an isolate.
 					
 {pstd}
 This automatically generates the relevant meta-information for the network and makes it available for other programs under the {help netname} {it:mynet}. In case no {bf:name()}
-is specified, the command tries to come up with a suitable name for the new network. By default, it tries {it:network}, however, if a network with this name already exists, it comes
+is specified, the command tries to come up with a suitable name for the new network. It tries the name of the variable
+{it:tievalue} when one is given and {it:network} otherwise; however, if a network with this name already exists, it comes
 up with an alternative name {it:network_1} and so on (see {help nwvalidate}).
 
 {pstd}
@@ -117,15 +122,12 @@ One can also transfrom any network that exists in memory into such an edgelist w
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with {opt undirected} a tie listed once keeps its sign. Two-mode: yes - with {opt twomode}, an exact alias for {help nw2fromedge}, which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. In any other edgelist, keep an isolate with a row that has the other identifier missing (see {bf:Description} above), or add it afterwards with {help nwaddnodes}.
+{bf:Directed:} options {opt directed}, {opt undirected}, {opt forcedirected} and {opt forceundirected}. {bf:Valued:} a
+third column supplies the tie values. {bf:Two-mode:} yes - with {opt twomode}, an alias for {help nw2fromedge}.
+{bf:Signed:} with {opt undirected} a tie listed once keeps its sign. See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -147,7 +149,7 @@ into a network:
 {pstd}
 {it:glasgow1} has 50 nodes but only 47 with at least one tie; {it:mynet} still comes out with all
 50 - the 3 isolates {help nwtoedge} could not write as edgelist rows are added back automatically,
-with no extra step needed (see this file's own {bf:Supported network types} section above). This
+with no extra step needed. This
 only works because {cmd:nwtoedge} itself produced this particular edgelist; in an edgelist typed in by
 hand or imported from an external source, give each isolate a row with a missing other identifier.
 
@@ -158,4 +160,4 @@ hand or imported from an external source, give each isolate a row with a missing
 	{help nwtoedge}, {help nwuse}, {help nwsave}, {help nwwebuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

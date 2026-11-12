@@ -56,15 +56,12 @@
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - {opt new2mode(true)} declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); {opt newmodes()} gives the mode of every node.
-
-{title:Supported network types}
-
-{pstd}
-Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them. Two-mode: yes - {opt new2mode(true)} declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); {opt newmodes()} gives the mode of every node.
+{bf:Two-mode:} {opt new2mode(true)} declares a two-mode network only if both modes hold nodes and no tie joins two
+nodes of the same mode (error 459); {opt newmodes()} gives the mode of every node. The command otherwise works the
+same for every network type. See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -85,36 +82,37 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
 
 	{bf:nwname} stores the following in {bf:r()}:
 
-	Scalars
-	  {bf:r(id)}		internal ID of the network
-	  {bf:r(nodes)}		number of nodes in the network
-	  {bf:r(nodes1)}	number of mode-1 nodes (two-mode networks only)
-	  {bf:r(nodes2)}	number of mode-2 nodes (two-mode networks only)
-	  {bf:r(selfloops)}	number of self-loops
-	  {bf:r(missing_edges)}	number of missing (undefined) dyads
+{synoptset 30 tabbed}{...}
+{p2col 5 30 34 2: Scalars}{p_end}
+{synopt:{bf:r(id)}}internal ID of the network{p_end}
+{synopt:{bf:r(nodes)}}number of nodes in the network{p_end}
+{synopt:{bf:r(nodes1)}}number of mode-1 nodes (two-mode networks only){p_end}
+{synopt:{bf:r(nodes2)}}number of mode-2 nodes (two-mode networks only){p_end}
+{synopt:{bf:r(selfloops)}}number of self-loops{p_end}
+{synopt:{bf:r(missing_edges)}}number of missing (undefined) dyads{p_end}
 
-	Macros
-	  {bf:r(netname)}	name of the network
-	  {bf:r(title)}		title/label of the network
-	  {bf:r(caption)}	caption/description text, if set
-	  {bf:r(provenance)}	provenance/source note, if set
-	  {bf:r(directed)}	{bf:true}/{bf:false}
-	  {bf:r(valued)}	{bf:true}/{bf:false}
-	  {bf:r(mode2)}		{bf:true}/{bf:false} - whether the network is two-mode
-	  {bf:r(selfloop)}	{bf:true}/{bf:false} - whether the network permits self-loops
-	  {bf:r(temporal)}	{bf:true}/{bf:false} - whether the network is temporal
-	  {bf:r(temporaltype)}	temporal storage type, if {bf:r(temporal)} is {bf:true}
-	  {bf:r(timevar)}/{bf:r(startvar)}/{bf:r(endvar)}/{bf:r(eventtimevar)}	the underlying temporal variable name(s) actually used, depending on {bf:r(temporaltype)}
-	  {bf:r(labs)}		comma-separated node labels
-	  {bf:r(vars)}		Stata variable names used to represent the network
-	  {bf:r(modes)}		mode assignment string for a two-mode network's own nodes
-	  {bf:r(mode1desc)}	description of mode 1 (two-mode networks only)
-	  {bf:r(mode2desc)}	description of mode 2 (two-mode networks only)
+{p2col 5 30 34 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the network{p_end}
+{synopt:{bf:r(name)}}name of the network (same as {bf:r(netname)}){p_end}
+{synopt:{bf:r(title)}}title/label of the network{p_end}
+{synopt:{bf:r(caption)}}caption/description text, if set{p_end}
+{synopt:{bf:r(provenance)}}provenance/source note, if set{p_end}
+{synopt:{bf:r(directed)}}{bf:true}/{bf:false}{p_end}
+{synopt:{bf:r(valued)}}{bf:true}/{bf:false}{p_end}
+{synopt:{bf:r(mode2)}}{bf:true}/{bf:false} - whether the network is two-mode{p_end}
+{synopt:{bf:r(selfloop)}}{bf:true}/{bf:false} - whether the network permits self-loops{p_end}
+{synopt:{bf:r(temporal)}}{bf:true}/{bf:false} - whether the network is temporal{p_end}
+{synopt:{bf:r(temporaltype)}}temporal storage type, if {bf:r(temporal)} is {bf:true}{p_end}
+{synopt:{bf:r(timevar)}/{bf:r(startvar)}/{bf:r(endvar)}/{bf:r(eventtimevar)}}the underlying temporal variable name(s) actually used, depending on {bf:r(temporaltype)}{p_end}
+{synopt:{bf:r(labs)}}comma-separated node labels{p_end}
+{synopt:{bf:r(vars)}}Stata variable names used to represent the network{p_end}
+{synopt:{bf:r(modes)}}mode assignment string for a two-mode network's own nodes{p_end}
+{synopt:{bf:r(mode1desc)}}description of mode 1 (two-mode networks only){p_end}
+{synopt:{bf:r(mode2desc)}}description of mode 2 (two-mode networks only){p_end}
 
  {title:See also}
  
 	{help nwsummarize}, {help nwset}, {help nwload}
-last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

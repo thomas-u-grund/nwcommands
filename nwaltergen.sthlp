@@ -89,8 +89,7 @@ alters' {it:srcvar} values - {bf:1 - sum(p_k^2)}, where {it:p_k} is the proporti
 falling in category {it:k} of {it:srcvar} (treated as a categorical/discrete-coded variable, e.g.
 sector or ethnicity) - the standard "ego-network composition" measure: 0 when every alter shares
 the same category (no diversity), approaching 1 as alters spread evenly across many categories.
-This is the composition/diversity capability {help nwego}'s own "Supported network types" note
-originally left open - unlike ego-network size/density, it needs per-alter attribute {it:values},
+Unlike ego-network size/density ({help nwego}), it needs per-alter attribute {it:values},
 not just structural connectivity, so it belongs here alongside {help nwaltergen}'s other alter-
 attribute aggregations rather than in {help nwego} itself. Missing {it:srcvar} values are dropped
 before computing the index, exactly as for every other {it:stat}; an ego with zero alters (after
@@ -99,8 +98,8 @@ dropping missing values) returns missing, not spuriously 0 (mirroring {bf:mean}/
 data to summarize, not naturally zero).
 
 {pstd}
-{bf:wmean(alter.}{it:srcvar}{bf:)} is a tie-strength-{it:weighted} exposure mean - {bf:sum(w*x) /
-sum(w)} over ego's alters, where {it:w} is the tie weight to each alter and {it:x} is that alter's
+{bf:wmean(alter.}{it:srcvar}{bf:)} is a tie-strength-{it:weighted} exposure mean - {bf:sum(w*x) /}
+{bf:sum(w)} over ego's alters, where {it:w} is the tie weight to each alter and {it:x} is that alter's
 {it:srcvar} value - instead of {bf:mean()}'s own plain, equally-weighted average. This is the
 standard weighted-exposure/peer-effect formulation used when tie strength itself should matter -
 e.g. a strong tie's contact matters more to exposure than a weak one (see e.g. Marsden and Friedkin
@@ -132,16 +131,13 @@ one-hop convention above; {opth hop(int)} works with {bf:proportion()} too.
 dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes - {it:alter} means out-neighbors only, since exposure/influence follows
-tie direction (see above). Weighted: {bf:W2} - {bf:mean}/{bf:sum}/{bf:min}/{bf:max}/{bf:sd}/
-{bf:count}/{bf:diversity} use only structural adjacency (tie strength does not enter); {bf:wmean}
-(added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight,
-an explicit opt-in via a separate {it:stat} name rather than an automatic switch. Signed: not
-checked - {bf:wmean()} would divide by a possibly near-zero or sign-cancelling weight sum for a
-node with negative-weighted ties, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} alters are the out-neighbors. {bf:Valued:} tie values enter only through {bf:wmean}, which weights by
+them; all other statistics use the ties only. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} {bf:wmean} uses the values with their signs and prints a note (the weights can sum to near
+zero). See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -161,8 +157,8 @@ Valente, T.W. (2005). Network models and methods for studying the diffusion of i
 {it:Models and Methods in Social Network Analysis}, Cambridge University Press.
 
 {pstd}
-Marsden, P.V., Friedkin, N.E. (1993). Network studies of social influence. {it:Sociological Methods
-& Research} 22(1), 127-151. ({bf:wmean()}'s own tie-strength-weighted exposure formulation)
+Marsden, P.V., Friedkin, N.E. (1993). Network studies of social influence. {it:Sociological Methods}
+{it:& Research} 22(1), 127-151. ({bf:wmean()}'s own tie-strength-weighted exposure formulation)
 
 {pstd}
 Blau, P.M. (1977). {it:Inequality and Heterogeneity: A Primitive Theory of Social Structure}. Free
@@ -172,7 +168,5 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 
 	{help nwgen}, {help nwneighbor}, {help nwdegree}
 
-last certified : 02 Sep 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

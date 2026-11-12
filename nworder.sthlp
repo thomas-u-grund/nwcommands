@@ -49,10 +49,6 @@ the network order matters (e.g. when making a movie out of _all networks, see {h
 
 {marker options}{...}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders which networks occupy which position in the dataset only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
 
 {title:Options}
 
@@ -81,6 +77,12 @@ by the other option.
 ordered letters but with differing appended numbers in sequential order. 
 {it:netlist} is moved to the beginning of the dataset.  For example, here
 is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
+
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 
 {marker examples}{...}
@@ -116,4 +118,4 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 	{help nwds}, {help order}, {help netlist}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

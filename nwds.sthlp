@@ -9,6 +9,7 @@
 {p2col :nwds {hline 2}}List the networks in memory (like ds){p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -30,6 +31,7 @@ which controls the display's own column width){p_end}
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -37,15 +39,12 @@ which controls the display's own column width){p_end}
 the display (network names are shown the way {cmd:ds} shows variable names). With no {it:netlist}, every
 loaded network is listed. {bf:r(netlist)} always returns the exact list of network names shown.
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Not applicable - a pure network-listing utility (in the style of Stata's own {help ds}); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
-{title:Stored results}
-
-	Macros
-	  {bf:r(netlist)}		the exact list of network names shown
 
 {title:Examples}
 
@@ -53,11 +52,17 @@ Not applicable - a pure network-listing utility (in the style of Stata's own {he
 	{cmd:. nwds}
 	{cmd:. nwds, alpha}
 
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}the exact list of network names shown{p_end}
+
+
 {title:See also}
 
 	{help ds}, {help nwcurrent}, {help nwclear}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

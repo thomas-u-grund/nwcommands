@@ -15,7 +15,6 @@
 {p 8 17 2}
 {cmdab: nwplotmatrix}
 [{it:{help netname}}] 
-[{it:{help if}}]
 [{cmd:,}
 {opth sortby(varname)}
 {opt group}({it:{help varname}}, [{it:{help connect_options}}])
@@ -42,16 +41,15 @@
 {p2line}
 {p2col:{opt lab}}display node labels{p_end}
 {p2col:{opth label(varname)}}display axis labels from variable{p_end}
-{synopt:{opt labelopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look of axis labels (e.g. size, color){p_end}
 
 
 {synoptset 35 tabbed}{...}
 {p2col:{it:patch_options}}Description{p_end}
 {marker patch_options}{...}
 {p2line}
-{p2col:{opt col:orpalette}({it:{help colstyle:colstyle...}})}list of colors for patches (representing tie values){p_end}
-{p2col:{opth lcolor(colorstyle)}}overwrite color of lines between patches{p_end}
-{p2col:{opth background(colorstyle)}}overwrite background color{p_end}
+{p2col:{opt co:lorpalette}({it:{help colstyle:colstyle...}})}list of colors for patches (representing tie values){p_end}
+{p2col:{opth lc:olor(colorstyle)}}overwrite color of lines between patches{p_end}
+{p2col:{opth ba:ckground(colorstyle)}}overwrite background color{p_end}
 {synopt:{opt tievalue}}show tie values as text inside patches{p_end}
 {p2col:{opt tievalueopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look and feel of tie value text{p_end}
 
@@ -60,7 +58,8 @@
 {title:Description}
 
 {pstd}
-This command plots a network as a sociomatrix. It supports subnetworks specified by the {help if} condition. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it 
+This command plots a network as a sociomatrix. To plot a part of a network, make it first with {help nwsubset}.
+It gives a lot of flexibility to control all elements in a network plot. Furthermore, it 
 is compatible with {bf:schemes()} and accepts all {help twoway_options}.
 
 {pstd}
@@ -70,8 +69,9 @@ This loads the {help netexample:Florentine data} and makes a simple matrix plot.
 	{cmd:. nwplotmatrix flomarriage, lab}
 
 {pstd}
-The look and feel of the axis labels ca be overwritten with {opt labelopt()}. 
-	{cmd:. nwplotmatrix flomarriage, lab labelopt(labsize(tiny))}
+The look and feel of the axis labels can be changed with the {help twoway_options} {opt ylabel()} and {opt xlabel()}:
+
+	{cmd:. nwplotmatrix flomarriage, lab ylabel(,labsize(tiny)) xlabel(,labsize(tiny))}
 	
 {pstd}
 The following uses the values stored in variable {bf:wealth} as labels.
@@ -79,10 +79,9 @@ The following uses the values stored in variable {bf:wealth} as labels.
 
 
 {pstd}
-Notice that one can also use normal {help twoway_options} to control the y-axis and the x-axis independently from each other. For example, the
-following command produces the same output as the previous command:
+The y-axis and the x-axis can be controlled independently from each other, for example:
 
- 	{cmd:. nwplotmatrix flomarriage, ylabel(,labsize(tiny)) xlabel(,labsize(tiny))}
+ 	{cmd:. nwplotmatrix flomarriage, lab ylabel(,labsize(tiny)) xlabel(,labsize(vsmall))}
 
 {pstd}
 It can be useful to sort the nodes of the network before plotting a sociomatrix. This example sorts the nodes according
@@ -126,26 +125,24 @@ All normal {help connect_options:options for lines} can be applied as well.
 	{cmd:. nwplotmatrix flomarriage, group(seat, lcolor(green))}	
 	
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-The colour legend names the value classes of the cells ('no tie' and 'tie' on a binary network; a {opt legend()} of your own replaces it, {cmd:legend(off)} removes it). On a two-mode network the nodes of one mode are placed next to each other (unless {opt sortby()} or {opt group()} is given) and a line separates the modes.
-
-{pstd}
-Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike {help nwplot}'s node-link layout, which needs {opt arrows} to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} the matrix shows asymmetry directly. {bf:Valued:} the legend names the value classes of the cells ('no
+tie' and 'tie' on a binary network); {opt tievalue} prints the values. {bf:Two-mode:} yes - the nodes of one mode are
+placed together (unless {opt sortby()} or {opt group()}) and a line separates the modes. {bf:Signed:} negative values
+are not treated specially. See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
 {pstd}
 One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes:
-1,000 nodes 5 seconds and 0.8 GB (before: 16 seconds), 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
+1,000 nodes 5 seconds and 0.8 GB, 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
 are refused; plot a part of the network or use {help nwplot}.
 
 {title:See also}
 
 	{help nwplot}
 
-last certified : 25 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

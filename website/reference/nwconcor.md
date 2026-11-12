@@ -22,7 +22,8 @@ replace
 splits(int)
 measure(string)
 maxiter(int)
-silent]
+silent
+force]
 ```
 
 | | |
@@ -41,7 +42,7 @@ silent]
 
 With `splits(1)` (the default) `nwconcor` performs a single bisection, producing 2 blocks. With `splits(k)`, each resulting block from the previous level is independently re-split using only the ties among its own members, producing up to 2^*k* blocks in total - this is the classical recursive CONCOR procedure, not merely applying a single bisection *k* times to the whole network. A block that cannot be split further (all of its members end up on the same side of its own bisection, or all of its members only tie to nodes *outside* the block, leaving no internal structure to split on) simply stays as one block rather than being forced apart - `nwconcor` may therefore return fewer than 2^*splits* blocks; **r(blocks)** always reports the actual number found.
 
-`generate()` is required and names the new variable that stores, for each node, the id of the block it was assigned to.
+`generate()` is required and names the new variable that stores, for each node, the id of the block it was assigned to. With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
 A node with no ties at all (in any direction) has no tie profile to compare against anyone else's, so `nwconcor` requires every node to have at least one tie; remove isolates first (see [nwdropnodes](nwdropnodes)) if your network has any.
 
@@ -56,19 +57,13 @@ A node with no ties at all (in any direction) has no tie profile to compare agai
 . nwconcor flomarriage2, splits(2) generate(_concor) replace
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes - CONCOR is defined directly for directed data (a node's profile stacks its outgoing and incoming ties separately), unlike [nwcommunity](nwcommunity), which requires **symmetrize** for a directed network. Weighted: `measure(valued)` uses tie weights directly in the profile; `measure(binary)` uses presence/absence only; default follows the network's own weighted-ness, matching [nwcommunity](nwcommunity)'s convention. Signed: not checked - a negative tie weight participates in the profile and correlation arithmetic like any other value, but no dedicated signed-network semantics exist. Two-mode: not supported - error 6088; CONCOR of the bipartite graph would put nodes of both modes in the same block; make a one-mode network of one mode first with [nwproject](nwproject). Isolates (nodes with no tie in any direction) are rejected explicitly with a clear error, not silently mishandled - see Description.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(blocks)** --- number of blocks actually found (up to 2^*splits*)
 
-- **r(blocks)** number of blocks actually found (up to 2^*splits*)
-
-**Matrices**
-
-- **r(block_sizeid)** distribution over blocks
+- **Matrices**
+- **r(block_sizeid)** --- distribution over blocks: one row per block with the columns size, blockid and share
 
 ## References
 
@@ -80,4 +75,4 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

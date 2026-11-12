@@ -25,7 +25,7 @@ silent]
 
 | | |
 |---|---|
-| `group(varname)` | Existing Stata variable holding each node's group membership (required) |
+| `group(varname)` | Existing numeric Stata variable holding each node's group membership (required; encode a string variable first) |
 | `generate(newvarname)` | **Required.** Stem for the 5 new Stata variables that store role counts |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
@@ -40,7 +40,7 @@ silent]
 - **consultant***a* and *c* in the same group, different from *b*'s
 - **liaison***a*, *b* and *c* all in different groups
 
-`generate()` is required and gives the stem for five new Stata variables, one per role, each holding node *b*'s count of that role (e.g. `generate(_broker)` produces *_broker_coordinator*, *_broker_gatekeeper*, *_broker_representative*, *_broker_consultant* and *_broker_liaison*).
+`generate()` is required and gives the stem for five new Stata variables, one per role, each holding node *b*'s count of that role (e.g. `generate(_broker)` produces *_broker_coordinator*, *_broker_gatekeeper*, *_broker_representative*, *_broker_consultant* and *_broker_liaison*). With more than one network in the *netlist*, a number is appended to each name (*_broker_coordinator1*, *_broker_coordinator2*, ...).
 
 For a directed network, *a* ranges over *b*'s incoming ties and *c* over its outgoing ties - brokerage is fundamentally about *a* reaching *c* *through* *b*. For an undirected network, incoming and outgoing ties are identical, so *a* and *c* both range over *b*'s (undirected) neighbors - the same five-role classification still applies, just without the directional distinction a directed network provides.
 
@@ -52,15 +52,10 @@ For a directed network, *a* ranges over *b*'s incoming ties and *c* over its out
 . nwbrokerage flomarriage, group(faction) generate(_broker)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, and directionality is used directly (see Description) - this is the network type the model was originally defined for. Undirected networks are supported too, with the directional distinction collapsing away as described above. Weighted: not used - only the presence/absence of a tie determines whether a two-path exists; tie strength does not affect role counts. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). `group()` must be an existing *numeric* Stata variable (a string variable is refused; use `encode` first) already aligned with the network's nodes (the same convention [nwmodularity](nwmodularity)'s own `group()` option uses) - `nwbrokerage` does not detect groups itself; pair it with [nwconcor](nwconcor), [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), or a substantive attribute for the grouping.
-
 ## Stored results
 
-**Scalars**
-
-- **r(pairs)** total number of a-b-c two-paths counted, summed across all nodes and all five roles
+- **Scalars**
+- **r(pairs)** --- total number of a-b-c two-paths counted, summed across all nodes and all five roles (of the last network in a *netlist*)
 
 ## References
 
@@ -70,8 +65,6 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 
 - [nwconcor](nwconcor), [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwmodularity](nwmodularity)
 
-- last certified : 21 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

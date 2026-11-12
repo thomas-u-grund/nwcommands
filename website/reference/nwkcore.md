@@ -17,14 +17,14 @@ k-core decomposition
 nwkcore
 [netlist]
 [,
-generate(newvarname)
+gen:erate(newvarname)
 replace
 silent]
 ```
 
 | | |
 |---|---|
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's coreness |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's coreness |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -34,7 +34,7 @@ silent]
 
 All calculations are performed on the undirected version of the network: for directed networks, a node's neighbor set is the union of its out- and in-neighbors, matching how [nwcomponents](nwcomponents) treats directed networks for the same kind of undirected-sense structural question.
 
-`generate()` is required and names the new variable which stores each node's coreness.
+`generate()` is required and names the new variable which stores each node's coreness. With a list of several networks the variables are numbered by network (*newvarname***1**, *newvarname***2**, ...), and the stored results are those of the last network.
 
 ## Examples
 
@@ -44,19 +44,13 @@ All calculations are performed on the undirected version of the network: for dir
 . tab _kcore
 ```
 
-## Supported network types
-
-Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching [nwcomponents](nwcomponents)'s own weak-connectivity convention and [nwsimindex](nwsimindex)'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(maxcore)** --- maximum coreness found (the network's degeneracy)
 
-- **r(maxcore)** maximum coreness found (the network's degeneracy)
-
-**Matrices**
-
-- **r(core_sizeid)** distribution over coreness levels
+- **Matrices**
+- **r(core_sizeid)** --- distribution over coreness levels: one row per level, columns **size** (number of nodes), **coreid** (coreness) and **share** (share of nodes), sorted by size
 
 ## References
 
@@ -68,8 +62,6 @@ Batagelj, V., Zaversnik, M. (2003). An O(m) Algorithm for Cores Decomposition of
 
 - [nwcomponents](nwcomponents), [nwcommunity](nwcommunity), [nwdegree](nwdegree)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

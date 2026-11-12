@@ -26,7 +26,7 @@ nwwebuse set
 
 ## Description
 
-`nwwebuse` *filename* loads the specified network dataset, obtaining it over the web and [sets all networks](nwset) in this dataset. By default, datasets are obtained from *https://nwcommands.org/examples*.
+`nwwebuse` *filename* loads the specified network dataset, obtaining it over the web and [sets all networks](nwset) in this dataset. By default, datasets are obtained from *https://nwcommands.org/examples*, a copy of the `data` folder of the nwcommands repository on GitHub. If the website cannot be reached, `nwwebuse` loads the same file from GitHub (*https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data*).
 
 Several [network datasets](netexample) are available from this source. If *filename* is specified without a suffix, `.dta` is assumed.
 
@@ -54,16 +54,10 @@ Several [network datasets](netexample) are available from this source. If *filen
 - Equivalent to above command
 - `. nwwebuse https://nwcommands.org/examples/florentine`
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - fetches and loads an example dataset exactly as published; the specific dataset fetched determines which of these properties the resulting network actually has, not this command itself.
-
 ## See also
 
 - [nwuse](nwuse), [nwimport](nwimport), `webuse`
 
-- last certified : 23 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

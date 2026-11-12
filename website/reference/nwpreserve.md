@@ -22,7 +22,7 @@ nwrestore
 
 ## Description
 
-`nwpreserve` preserves network data by temporarily saving the current network dataset (including all normal Stata variables) in the working directory.
+`nwpreserve` preserves network data by temporarily saving the current network dataset (including all normal Stata variables) in the working directory. Calling `nwpreserve` again before `nwrestore` exits with an error ("Already preserved"), as Stata's own `preserve` does.
 
 `nwrestore` restores network data previously preserved (including all Stata variables).
 
@@ -40,10 +40,6 @@ Preserve a network, drop it, then restore it:
 . nwset
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves/restores the full working state (every loaded network and its own directed/valued/two-mode status, plus the Stata dataset), independent of any of these properties.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

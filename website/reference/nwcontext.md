@@ -33,7 +33,7 @@ force]
 | `stat`(*[statistic](nwcontext)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
 | `mode`(*[context](nwcontext)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
 | `generate(newvarname)` | **Required.** Name of the context variable to be generated |
-| `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable |
+| `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable (`generate()` must still be given; no variable is created) |
 | `noweight` | Ignore valued ties and treats all as binary |
 | `replace` | Replace `generate()`'s target variable if it already exists |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
@@ -62,7 +62,7 @@ By default, nodes with missing attributes are excluded from the calculation.
 
 ## Examples
 
-This example loads the Florentine marriage data. The variable *wealth* indicates how rich each family is. ** nwcontext** generates different variables: *w_avg* = average wealth of network neighbors,  *w_min* = wealth of poorest network neighbor, *w_min* = wealth of richest network neighbor, *w_sd* = standard deviation of wealth over network neighbors.
+This example loads the Florentine marriage data. The variable *wealth* indicates how rich each family is. ** nwcontext** generates different variables: *w_avg* = average wealth of network neighbors,  *w_min* = wealth of poorest network neighbor, *w_max* = wealth of richest network neighbor, *w_sd* = standard deviation of wealth over network neighbors.
 
 ```stata
 . nwwebuse florentine
@@ -103,16 +103,10 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 . nwplot flomarriage, label(wealth)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, via `mode(outgoing|incoming|both|either)`. Weighted: yes by default (neighbor attribute values weighted by tie strength); `noweight` treats all ties as binary. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## See also
 
 - [nwneighbor](nwneighbor)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

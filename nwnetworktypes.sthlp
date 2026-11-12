@@ -21,8 +21,8 @@ automatically on a two-mode network (e.g. {help nwdegree}; the option {opt onemo
 combination yet.
 
 {pstd}
-Rather than guess, every {cmd:nw*} command's own help file has a {bf:Supported network types}
-section (immediately after its {bf:Description}) stating explicitly what it does with a directed,
+Rather than guess, every {cmd:nw*} command's own help file has a short {bf:Network types}
+section stating explicitly what it does with a directed,
 weighted, signed, or two-mode network - whether that is full native support, an explicit
 binary-only/one-mode-only restriction with a clear error, silent-but-documented dichotomization, or
 simply "not applicable" for a command with no network-type-dependent behavior at all. That
@@ -37,8 +37,8 @@ Every network carries a {it:Valued} flag (shown by {help nwsummarize}). It is se
 way it is created, and it is not worked out from the values again later: a network created with tie values
 ({help nwfromedge} with a value variable, an import of a file with tie values, {cmd:nwset, valued}, a matrix with a
 value other than 0 and 1) is valued, also if every value is 1; a network created without values is binary. Commands
-that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network that was saved by an
-earlier release keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
+that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network loaded from a
+file keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
 
 {pstd}
 Measures that have a weighted form in R use the tie values of a valued network by default
@@ -59,11 +59,12 @@ that of a one-mode network. The declaration is checked: both modes must hold nod
 the same mode ({cmd:nwname, new2mode(true)} on a one-mode network is an error). Every command that derives a network
 from a two-mode network ({help nwdropnodes}, {help nwkeepnodes}, {help nwsubset}, {help nwduplicate}, {help nwsym},
 {help nwtranspose}, {help nwrecode}, {help nwdichotomize}, {help nwaddnodes}, {help nwpermute}) keeps the flag, the
-modes and the level labels. {help nwexport} and {help nwimport} keep the flag and the modes in all four formats and the level labels in Pajek, GML and edge list files (UCINET DL has no place for them); an edge list written
+modes and the level labels. {help nwexport} and {help nwimport} keep the flag and the modes in all four formats and the level labels in Pajek, GML and edge list files (UCINET DL has no place for
+them); an edge list written
 by {help nwtoedge} or {help nw2toedge} holds the ties between the modes and reads back as the same network.
 
 {pstd}
-Every command's help file says in its {bf:Supported network types} section, in one of four fixed wordings, what the
+Every command's help file says in its {bf:Network types} section, in one of four fixed wordings, what the
 command does with a two-mode network:
 
 {phang2}
@@ -96,7 +97,7 @@ Robins and Alexander 2004), {help nwmotifs} (the bipartite motifs of Simmons et 
 {help nwbetween} (the normalisations of Borgatti and Everett 1997; {opt twomode} is accepted as a synonym of the default),
 {help nwcommunity} and {help nwmodularity} (the bipartite modularity of Barber) and {help nwsimilar} and
 {help nwdissimilar} (nodes are compared with nodes of their own mode) follow it. The names {help nw2degree},
-{help nw2clustering} and {help nw2motifs} remain as aliases of the main commands with the options they always had.
+{help nw2clustering} and {help nw2motifs} are aliases of the main commands; their help files list their options.
 {help nw2project} and {help nw2nested} have no one-mode counterpart and keep their own names. The website page on
 two-mode networks and the table of network types list all commands.
 
@@ -105,9 +106,9 @@ two-mode networks and the table of network types list all commands.
 {pstd}
 A network is {it:valued} (weighted) when its ties carry a real number, not just presence/absence -
 set automatically whenever {help nwset}, {help nwfromedge}, or an import command is given tie
-values other than a plain 0/1 indicator (at least one tie value other than 0 and 1; a network whose ties are all 1 is binary), and readable via {help nwsummarize}/{help nwname}'s own
+values other than a plain 0/1 indicator (at least one tie value other than 0 and 1; a network whose ties are all 1 is binary), and readable via {help nwsummarize} / {help nwname}'s own
 {cmd:valued} field. As with two-mode status, ordinary commands do not need a special flag to tell
-them a network is valued; each command's own {bf:Supported network types} section states what it
+them a network is valued; each command's own {bf:Network types} section states what it
 actually does with the tie values.
 
 {pstd}
@@ -119,18 +120,18 @@ formula for the whole [0,1] weighted-to-binary spectrum. Most centrality/cohesio
 weighted variant follow Opsahl, Agneessens and Skvoretz (2010)'s own generalized-degree convention:
 {it:k_i * (s_i/k_i)^alpha}, where {it:k_i} is the plain tie count and {it:s_i} is the tie-value sum
 ("strength"). {opt alpha(0)} always reduces this back to plain unweighted degree exactly - not
-approximately - so a command gaining this option never changes an existing unweighted result;
+approximately;
 {opt alpha(1)} gives pure strength; values in between blend the two. {help nwdegree} and
 {help nw2degree} (one-mode and two-mode degree respectively) both use this exact formula;
 {help nwbetween}'s {opt weighted} option uses the same {opt alpha()} convention to turn tie
-strength into a Dijkstra path cost instead ({help nwgeodesic}/{help nwkatz} do too, for distance);
-{help nwconstraint}/{help nwburt} use tie weight directly as Burt's own investment-proportion
+strength into a Dijkstra path cost instead ({help nwgeodesic} / {help nwkatz} do too, for distance);
+{help nwconstraint} / {help nwburt} use tie weight directly as Burt's own investment-proportion
 formula, with no separate binary mode at all.
 
 {phang2}
 {bf:2. Optional, explicit toggle (W2)} - a command supports both a binary and a weighted
 formulation, selected by an option rather than assumed from the network's own valued/unvalued
-status. {help nwclustering}/{help nwcommunity}/{help nwconcor}/{help nw2clustering}'s own
+status. {help nwclustering} / {help nwcommunity} / {help nwconcor} / {help nw2clustering}'s own
 {opt measure(binary|valued)} is the recurring convention here (usually defaulting to whichever
 matches the loaded network, documented explicitly in each command's own help file, never silently
 picked).
@@ -147,7 +148,7 @@ A tie value of exactly 0 and "no tie at all" are treated identically almost ever
 package (both mean "not connected") - a network with meaningful zero-valued ties distinct from
 missing ones needs a workaround (e.g. a small constant offset) rather than being handled natively.
 {bf:Negative (signed) tie values} are a separate, much less consistently supported dimension - most
-commands' own "Signed" field in their {bf:Supported network types} section reads "not checked" or
+commands' own "Signed" part of their {bf:Network types} section reads "not checked" or
 "not supported", meaning a negative weight is not distinguished from an unusually low positive one
 in most formulas (an explicit exception: {help nwbalance}, which exists specifically to classify
 triads by tie sign). Checking a specific command's own {bf:Signed} field before relying on negative
@@ -160,17 +161,15 @@ ties is worth doing explicitly - do not assume support carries over from a comma
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwsummarize flomarriage}
 
-{title:Reading a "Supported network types" section}
+{title:Reading the "Network types" section of a command}
 
 {pstd}
-Each section answers five questions for that command, in this fixed order: {bf:Binary} (does an
-unweighted 0/1 network work), {bf:Directed} (does an asymmetric network work, and if so is
-symmetrization required or automatic), {bf:Weighted} (does tie strength enter the calculation, or
-is it ignored/dichotomized), {bf:Signed} (are negative tie values handled distinctly from "no tie",
-or silently treated the same), and {bf:Two-mode} (does the command work on bipartite data directly,
-use its two-mode form by default, or not apply). "Not applicable" is used, not silently omitted,
-for commands with no network-type-dependent behavior at all (e.g. purely structural commands like
-{help nwrename}).
+The help file of each command has a short section {bf:Network types} that says only what that command does with
+{bf:directed} networks (used as directed, or symmetrized; the option that changes it), {bf:valued} networks (whether
+the tie values are used by default, and the option {opt binary} or {opt weighted}), {bf:two-mode} networks (what the
+result means, or that the command does not apply) and {bf:signed} networks (how negative ties are treated). Every
+command works on binary (0/1) networks unless the section says otherwise. A command whose behaviour does not depend
+on the network type says so in one sentence.{p_end}
 
 {title:Examples}
 
@@ -185,8 +184,8 @@ for commands with no network-type-dependent behavior at all (e.g. purely structu
 {pstd}
 A small set of commands - the ones most central to network analysis, where getting the weighted/
 directed/signed handling exactly right matters most - have been independently re-derived from
-source code (not just summarized from their own help text), each backed by a quoted line of code
-and, where relevant, a documented bug found and fixed along the way, using a classification key
+source code (not just summarized from their own help text), each backed by a quoted line of code,
+using a classification key
 of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support.
 
 {title:See also}
@@ -194,4 +193,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 {help nwintro}, {help nwtopical}, {help nw2set:introduction to two-mode networks}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

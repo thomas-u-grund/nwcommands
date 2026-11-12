@@ -29,7 +29,7 @@ This is the network version of `unab`. `nwunab` expands and unabbreviates a [net
 - allowed. The default is hi:min(1).
 
 - `max(`*#*`)` specifies the maximum number of networks
-- allowed. The system maximum is 9999.
+- allowed. By default the limit of `unab` applies.
 
 ## Examples
 
@@ -40,9 +40,11 @@ This is the network version of `unab`. `nwunab` expands and unabbreviates a [net
 glasgow1 glasgow2 glasgow3
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves/expands a network name list only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+- **Macros**
+- **r(netlist)** --- the expanded list of networks
+- **r(networks)** --- number of networks in the list
 
 ## See also
 
@@ -50,4 +52,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

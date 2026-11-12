@@ -35,7 +35,7 @@ listall]
 
 Calculate the components of a network or a list of networks. A component is a set of nodes that are only connected among each other. All calculations are performed on the undirected network. Nodes can only belong to one component.
 
-`generate()` is required and names the new variable that stores the component membership. When option **lgc** is specified, the command instead stores in that variable information about membership to the largest component.
+`generate()` is required and names the new variable that stores the component membership. When option **lgc** is specified, the command instead stores in that variable information about membership to the largest component (1 for its nodes, 0 for all others). With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
 ## Examples
 
@@ -57,25 +57,19 @@ Calculate the components of a network or a list of networks. A component is a se
 This shows that there are two components in the Florentine marriage network. All except one node belong to the first component. Some alternative ways how the commands can be used.
 
 ```stata
-. nwwebuse glasgow
+. nwwebuse glasgow, nwclear
 . nwcomponents glasgow1, generate(mycomponent)
 . nwcomponents _all, lgc generate(_lgc)
 . nwcomponents _all, lgc generate(mylgc)
 ```
 
-## Supported network types
-
-Binary: yes (only) - component membership is a structural (weak-connectivity) property, tie values are ignored. Directed: yes - uses weak connectivity (ignores tie direction), matching the standard convention for "components" on a directed graph. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(components)** --- number of components
 
-- **r(components)** number of components
-
-**Matrices**
-
-- **r(comp_sizeid)** distribution over components
+- **Matrices**
+- **r(comp_sizeid)** --- distribution over components: one row per component with the columns size, compid (component id) and share
 
 ## See also
 
@@ -83,4 +77,4 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

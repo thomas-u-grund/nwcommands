@@ -30,31 +30,41 @@
 Which mode applies is detected automatically from how many network names are given and whether the single name (if only one is given) is an event-type
 temporal network - there is no separate option to choose between them.
 
-{synoptset 22 tabbed}{...}
+{synoptset 26 tabbed}{...}
 {marker options}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
 {synopt:{opth fname(string)}}base filename for the output; writes {it:fname}{bf:.html} in the current directory; default {bf:movie}{p_end}
-{synopt:{opt noopen}}build the .html file but do not open it in a viewer{p_end}
-{synopt:{opt export}({it:filename})}write the movie as a video or GIF file without opening the interactive view; the format follows the extension: {bf:.mp4} (H.264 video), {bf:.webm} or {bf:.gif}; see {help nwmovie##export:Remarks}{p_end}
+{synopt:{opt noo:pen}}build the .html file but do not open it in a viewer{p_end}
+{synopt:{opt exp:ort}({it:filename})}write the movie as a video or GIF
+file without opening the interactive view; the format follows the extension: {bf:.mp4} (H.264 video), {bf:.webm} or {bf:.gif}; see
+{help nwmovie##export:Remarks}{p_end}
 {synopt:{opt replace}}with {opt export()}: overwrite an existing file{p_end}
-{synopt:{opth timeout(int)}}with {opt export()}: seconds to wait for the file; default 600{p_end}
-{synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
-{synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below){p_end}
+{synopt:{opth time:out(int)}}with {opt export()}: seconds to wait for the file; default 600{p_end}
+{synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave
+transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
+{synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see
+Description below){p_end}
 {synopt:{opt binary}}{bf:panel mode}: passed on to {help nwplot}: ignore the tie values (no value widths, and the layouts of valued networks are those of unvalued networks){p_end}
 {synopt:{opt nosign}}{bf:panel mode}: passed on to {help nwplot}: no sign colours on signed networks{p_end}
 {synopt:{opth iterations(int)}}iterations for the layout algorithm; default 500{p_end}
 {synopt:{opt color}({it:{help varname}})}color nodes by this variable (broadcast to every network/the cumulative event-mode layout network){p_end}
 {synopt:{opt symbol}({it:{help varname}})}shape nodes by this variable (broadcast to every network){p_end}
 {synopt:{opt size}({it:{help varname}})}size nodes by this variable (broadcast to every network){p_end}
-{synopt:{opt edgecolor}({it:{help netname}})}color edges by this other network's own tie values, matching {help nwplot}'s identical {opt edgecolor()} (broadcast to every network; panel mode only){p_end}
+{synopt:{opt edgecolor}({it:{help netname}})}color edges by this other network's own tie values, matching {help nwplot}'s identical {opt edgecolor()} (broadcast to every network; panel mode
+only){p_end}
 {synopt:{opt edgesize}({it:{help netname}})}width edges by this other network's own tie values (broadcast to every network; panel mode only){p_end}
-{synopt:{opt colors}({it:{help varlist}})}{bf:panel mode}: one variable PER WAVE (same order as the network list, one per network) instead of {opt color()}'s single broadcast variable - color genuinely tweens wave to wave, not just position{p_end}
-{synopt:{opt symbols}({it:{help varlist}})}{bf:panel mode}: one variable per wave instead of {opt symbol()}'s single broadcast variable - shape switches instantly at each wave boundary (not tweened - see Description below){p_end}
+{synopt:{opt colors}({it:{help varlist}})}{bf:panel mode}: one variable PER WAVE (same order as the network list, one per network) instead of {opt color()}'s single broadcast variable - color
+genuinely tweens wave to wave, not just position{p_end}
+{synopt:{opt symbols}({it:{help varlist}})}{bf:panel mode}: one variable per wave instead of {opt symbol()}'s single broadcast variable - shape switches instantly at each wave boundary (not tweened -
+see Description below){p_end}
 {synopt:{opt sizes}({it:{help varlist}})}{bf:panel mode}: one variable per wave instead of {opt size()}'s single broadcast variable - size genuinely tweens wave to wave{p_end}
-{synopt:{opt edgecolors}({it:{help netname}} {it:{help netname}} ...)}{bf:panel mode}: one network per wave instead of {opt edgecolor()}'s single broadcast network - edge color tweens wave to wave for any edge that persists across the transition{p_end}
-{synopt:{opt edgesizes}({it:{help netname}} {it:{help netname}} ...)}{bf:panel mode}: one network per wave instead of {opt edgesize()}'s single broadcast network - edge width tweens wave to wave for any edge that persists across the transition{p_end}
-{synopt:{opt titles}("{it:title1}" "{it:title2}" ...)}{bf:panel mode}: one double-quoted display title per wave, overriding the movie's own displayed wave title/counter (toolbar text and the on-canvas readout box - see Description below); default is each wave's own {help nwname:{opt newtitle()}}, if one was ever set, else its bare network name{p_end}
+{synopt:{opt edgecolors}({it:{help netname}} {it:{help netname}} ...)}{bf:panel mode}: one network per wave instead of {opt edgecolor()}'s single broadcast network - edge color tweens wave to wave for
+any edge that persists across the transition{p_end}
+{synopt:{opt edgesizes}({it:{help netname}} {it:{help netname}} ...)}{bf:panel mode}: one network per wave instead of {opt edgesize()}'s single broadcast network - edge width tweens wave to wave for
+any edge that persists across the transition{p_end}
+{synopt:{opt titles}("{it:title1}" "{it:title2}" ...)}{bf:panel mode}: one double-quoted display title per wave, overriding the movie's own displayed wave title/counter (toolbar text and the on-canvas
+readout box - see Description below); default is each wave's own {help nwname:{opt newtitle()}}, if one was ever set, else its bare network name{p_end}
 {synopt:{opt label}({it:{help varname}})}node labels{p_end}
 {synopt:{opt colorpalette}({it:string})}see {help nwplot}{p_end}
 {synopt:{opt edgecolorpalette}({it:string})}see {help nwplot}{p_end}
@@ -62,7 +72,8 @@ temporal network - there is no separate option to choose between them.
 {synopt:{opt scheme}({it:string})}see {help nwplot}{p_end}
 {synopt:{opth duration(int)}}{bf:panel mode}: milliseconds per wave-to-wave transition; default 800{p_end}
 {synopt:{opt easing}({it:string})}{bf:panel mode}: a Cytoscape.js easing name (e.g. {bf:ease-in-out-cubic}, {bf:linear}, {bf:ease-in-out-bounce}); default {bf:ease-in-out-cubic}{p_end}
-{synopt:{opth window(real)}}{bf:event mode}: a tie fades out {it:window} time units (same units as {opt eventtime()}'s own variable) after its most recent event, and is removed once fully faded; omitted means ties accumulate permanently (a "growth" movie) rather than decaying{p_end}
+{synopt:{opth window(real)}}{bf:event mode}: a tie fades out {it:window} time units (same units as {opt eventtime()}'s own variable) after its most recent event, and is removed once fully faded;
+omitted means ties accumulate permanently (a "growth" movie) rather than decaying{p_end}
 {synopt:{opth speed(real)}}{bf:event mode}: simulated event-time units per real second during playback; default 1{p_end}
 {p2colreset}{...}
 
@@ -72,8 +83,8 @@ temporal network - there is no separate option to choose between them.
 {pstd}
 {bf:nwmovie} opens a live, interactive, animated view of a network changing over time, rendered with Cytoscape.js in a chromeless native
 viewer window (the same one {help nwplot}'s own {opt interactive} option uses - falls back to an ordinary browser tab when that native
-binary isn't available for the current platform). It replaces the previous ImageMagick/{cmd:graph export}-based pipeline entirely:
-there is no external ImageMagick dependency any more, and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF -
+binary isn't available for the current platform). No external program is needed,
+and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF -
 and the movie can be saved from within that view as a GIF or a video file (the {bf:Export GIF} and {bf:Export video} buttons; the file is
 written through a save dialog in the native viewer on Windows, macOS and Linux, or as an ordinary download in a browser tab), or written
 directly from Stata with {opt export()}.
@@ -84,8 +95,8 @@ directly from Stata with {opt export()}.
 By default, each wave gets its own {bf:kk} (Kamada-Kawai) layout, warm-started from the PREVIOUS wave's own final node positions, so
 consecutive waves relax into nearby layouts - a real, visible transition as ties change - rather than each wave's layout being computed
 completely independently. Node identity stays visually trackable across the movie (nodes move smoothly, not in unrelated jumps), while
-still letting the layout itself resettle as the network's structure changes wave to wave. Specify {opt fixedlayout} to restore the
-original behavior instead: one node layout, computed once on the first network only and reused unchanged for every wave - the layout
+still letting the layout itself resettle as the network's structure changes wave to wave. Specify {opt fixedlayout} for
+one node layout instead, computed once on the first network only and reused unchanged for every wave - the layout
 itself never moves, at the cost of never reflecting how the network's own structure is changing. An explicit {opt layout()} other than
 {bf:kk} also falls back to this one-shared-layout behavior (see {opt layout()} above), since the per-wave transition relies on {bf:kk}'s
 own warm-start. On valued networks every wave's layout uses the tie values as strengths (strongly tied nodes close together), exactly as in
@@ -105,14 +116,15 @@ Both modes reuse {help nwplot}'s own color/shape/position resolution - {opt colo
 event-mode cumulative layout network).
 
 {pstd}
-{bf:Panel mode} can also vary node/edge styling BY wave, the way the old ImageMagick-era {opt colors()}/{opt sizes()}/etc. plural options
-did: {opt colors()}/{opt symbols()}/{opt sizes()}/{opt edgecolors()}/{opt edgesizes()} each take one value PER WAVE (in the same order as
+{bf:Panel mode} can also vary node/edge styling BY wave:
+{opt colors()}/{opt symbols()}/{opt sizes()}/{opt edgecolors()}/{opt edgesizes()} each take one value PER WAVE (in the same order as
 the network list) instead of their singular counterparts' single broadcast value. Color and size (node AND edge) genuinely transition
 continuously as the movie plays - Cytoscape.js tweens node color/size natively as part of the same {opt duration()}/{opt easing()}
-animation that already moves node position, and edges (which are always fully rebuilt at every transition, not kept alive across it) get an equivalent hand-rolled tween for any edge that persists across
+animation that already moves node position, and edges (which are always fully rebuilt at every transition, not kept alive across it) get an equivalent hand-rolled tween for any edge that persists
+across
 the transition. Shape stays a hard switch at each wave boundary, not a continuous morph - asking Cytoscape's own animation to interpolate
-shape (circle into square, say) is not a meaningful blend, and turned out to be a genuine renderer-crash trigger during this feature's own
-development besides. A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only
+shape (circle into square, say) is not a meaningful blend.
+A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only
 persisting ties (present in both waves) tween their own width/color change.
 
 {pstd}
@@ -132,12 +144,6 @@ it being baked into any file exported after that); there is no way to bring it b
 ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title
 text happens to be.
 
-{pstd}
-Dropped entirely, with no replacement (the ImageMagick pipeline's own options, no longer meaningful once the browser does the
-rendering and animation): {opt frames()}, {opt delay()}, {opt explosion()}, {opt imagick()}, {opt keepfiles()}, {opt width()}, {opt height()},
-{opt z()}, {opt nodexys()}, {opt switchnetwork()}/{opt switchcolor()}/{opt switchsymbol()}/{opt switchedgecolor()}/{opt switchtitle()}, and
-{opt eps} (vector export - {help nwplot}'s own {opt interactive} view made the identical PNG-only tradeoff already, for the same reason:
-Cytoscape.js's built-in export is raster-only).
 
 {marker export}{...}
 {title:Remarks}
@@ -164,6 +170,16 @@ or {opt speed()} (event mode): three waves with the default {cmd:duration(800)} 
 the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), {cmd:nwmovie} stops with a message saying so; export a
 {bf:.gif} file instead, which every engine can write. The {bf:Export video} button in the interactive view writes MP4 where the engine can
 and WebM otherwise.
+
+
+{title:Network types}
+
+{pstd}
+Panel mode: {bf:Directed:}, {bf:Valued:}, {bf:Signed:} as {help nwplot} (tie values set the line widths, negative ties
+dashed in a second colour; {opt binary} and {opt nosign} are passed on). {bf:Two-mode:} yes - a symbol and a colour
+per mode; the layout is the one of {opt layout()}. Event mode needs a one-mode network with {opt eventtime()}, as
+{help nwrem}. See {help nwnetworktypes}.{p_end}
+
 
 {title:Examples}
 
@@ -215,13 +231,6 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 	{cmd:. nwmovie chatlog, window(5) speed(2)}
 
 
-{title:Supported network types}
-
-{pstd}
-Panel mode: binary yes, directed yes, weighted and signed as {help nwplot} (tie values set the line widths, negative ties are drawn dashed in a second colour; the options {opt binary} and {opt nosign} are passed on), two-mode: each network is drawn as {help nwplot} would (a symbol and a colour per mode; the layout is the one of {opt layout()}, not bipartite unless you give it). Event mode: exactly the input {help nwrem} already accepts - a one-mode,
-event-type temporal network built via {help nwset}'s {opt eventtime()} option; two-mode is not currently combinable with {opt eventtime()}
-at the {help nwset} level (a separate, already-tracked composability gap).
-
 {title:See also}
 
 	{help nwplot}
@@ -229,4 +238,4 @@ at the {help nwset} level (a separate, already-tracked composability gap).
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -56,10 +56,6 @@ The following network formats are supported:
 . nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes - automatically detected from the source file unless overridden with **forcedirected**/**forceundirected**. Weighted: yes, where the source format itself carries tie values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own values are negative. Two-mode: yes (see [Two-mode networks](nwimport) above).
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

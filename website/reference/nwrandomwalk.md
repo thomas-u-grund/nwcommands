@@ -18,20 +18,21 @@ nwrandomwalk
 [netname]
 ,
 target(nodename)
-[generate(newvarname)
-replace
+gen:erate(newvarname)
+[replace
 silent
-binary]
+bin:ary
+one:mode]
 ```
 
 | | |
 |---|---|
 | `target(nodename)` | The node every hitting time is measured TO |
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own mean hitting time to `target()` |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own mean hitting time to `target()` |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
-| `onemode` | Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088) |
+| `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
+| `one:mode` | Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088) |
 
 ## Description
 
@@ -50,16 +51,11 @@ Solved EXACTLY via the standard linear system this quantity satisfies (not simul
 . list _name _hitting in 1/5
 ```
 
-## Supported network types
-
-Binary: yes. Directed: not supported (a directed random walk's own hitting time is a well-defined but materially different quantity - not attempted here; networks are treated as undirected). Weighted: not checked - tie values are ignored (a random walker moves to each neighbor with EQUAL probability). Signed: not checked. Two-mode: not supported - error 6088; `onemode` reads the two-mode network as a one-mode graph and gives the hitting times of the random walk on the bipartite graph. Requires every node to have at least one tie - an isolate has no well-defined hitting time (there is no walk to take at all), and a disconnected network component containing `target()` would give some nodes an undefined (infinite) hitting time; both are rejected with a clear error rather than a silently wrong number.
-
 ## Stored results
 
-**Macros**
-
-- **r(target)** the target node requested
-- **r(generate)** name of the generated hitting-time variable
+- **Macros**
+- **r(target)** --- the target node requested
+- **r(generate)** --- name of the generated hitting-time variable
 
 ## References
 
@@ -69,8 +65,6 @@ Lovasz, L. (1993). Random walks on graphs: A survey. *Combinatorics, Paul Erdos 
 
 - [nwpagerank](nwpagerank), [nwgeodesic](nwgeodesic), [nwkatz](nwkatz), [nwmaxflow](nwmaxflow)
 
-- last certified : 31 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

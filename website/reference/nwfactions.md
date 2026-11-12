@@ -18,7 +18,7 @@ nwfactions
 [netname]
 [,
 groups(int)
-generate(newvarname)
+gen:erate(newvarname)
 replace
 measure(binary|valued)
 maxiter(int)
@@ -28,7 +28,7 @@ silent]
 | | |
 |---|---|
 | `groups(int)` | Number of factions to partition nodes into; must be between 2 and the number of nodes; default = 2 |
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's faction membership (1..`groups()`) |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's faction membership (1..`groups()`) |
 | `replace` | Replace existing variable |
 | `measure(binary\|valued)` | Whether tie VALUES enter the fitness calculation, or only tie presence/absence; default follows whether the network itself is valued |
 | `maxiter(int)` | Maximum number of full local-search sweeps; default 100 |
@@ -40,7 +40,7 @@ silent]
 
 Optimized via greedy local search, the same general shape [nwcommunity](nwcommunity)'s own Louvain algorithm and [nwcoreperiphery](nwcoreperiphery) both already use: seed by sorting nodes by degree (descending) and assigning them to groups round-robin (spreading high- and low-degree nodes evenly across every group, rather than an arbitrary block split), then repeatedly try moving each node (fixed 1..n order, for reproducibility) to every OTHER group, keeping whichever single move most improves the fitness correlation, until a full sweep produces no further improvement or `maxiter()` sweeps are reached. This is a greedy local optimum, not a guaranteed global one - the discrete factions problem is combinatorial, the same character of problem Louvain's own greedy search already accepts for modularity.
 
-**Starting partition.** Nodes with the same degree are taken in the order of their node number, so the same call always gives the same partition. (Earlier versions sorted with ties broken at random, which made the result differ from run to run on any network with equal degrees.) The fitness of a candidate move is computed from the total tie weight inside the groups and the number of same-group pairs, which takes time proportional to the node's degree plus the number of groups, not to the square of the number of nodes; `r(fitness)` agrees with a direct computation of the correlation to rounding error (about 1e-15).
+**Starting partition.** Nodes with the same degree are taken in the order of their node number, so the same call always gives the same partition. The fitness of a candidate move is computed from the total tie weight inside the groups and the number of same-group pairs, which takes time proportional to the node's degree plus the number of groups, not to the square of the number of nodes; `r(fitness)` agrees with a direct computation of the correlation to rounding error (about 1e-15).
 
 ## Examples
 
@@ -50,20 +50,14 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 . tab _faction
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, automatically symmetrized (the classical factions definition does not distinguish in-ties from out-ties, the same choice [nwcoreperiphery](nwcoreperiphery) already makes). Weighted: yes, via `measure(valued)` - tie VALUES then enter the fitness correlation directly rather than just their presence/absence. Signed: not checked. Two-mode: not supported - error 6088; the factions of the square matrix would mix the two modes; make a one-mode network of one mode first with [nwproject](nwproject).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(fitness)** --- correlation between the observed network and the ideal factions block pattern (1 = perfect fit)
+- **r(groups)** --- number of groups requested
 
-- **r(fitness)** correlation between the observed network and the ideal factions block pattern (1 = perfect fit)
-- **r(groups)** number of groups requested
-
-**Macros**
-
-- **r(netgenerate)** name of the generated faction-membership variable
+- **Macros**
+- **r(netgenerate)** --- name of the generated faction-membership variable
 
 ## References
 
@@ -73,8 +67,6 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 
 - [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwconcor](nwconcor), [nwlambda](nwlambda)
 
-- last certified : 31 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -2,7 +2,6 @@
 {* *! version 2.0.0  4jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
-version 2.0.0
 
 {title:Title}
 
@@ -21,6 +20,7 @@ version 2.0.0
 {opt off}
 {opt on}
 {opt overwrite}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -29,6 +29,7 @@ version 2.0.0
 {synopt:{opt off}}Switch datasync off{p_end}
 {synopt:{opt on}}Switch datasync on; default{p_end}
 {synopt:{opt overwrite}}Only used for advanced programming {p_end}
+{synopt:{opt force}}Always match by merging on {bf:_nwnode}, even when the dataset already holds the node names in network order{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -36,7 +37,7 @@ version 2.0.0
 {title:Description}
 
 {pstd}
-Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Beginning with version 2.0.0 both are automatically matched by the 
+Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Both are automatically matched by the 
 name of the nodes. In the dataset this match is performed on the variable {bf:_nwnode}. In case this variable does not exist, it is automatically created. 
 
 {pstd}
@@ -58,7 +59,5 @@ Generate a variable indicating which dataset observations correspond to nodes in
 	{cmd:. _nwdatasync mynet, generate(innet)}
 	{cmd:. list innet}
 
-last certified : 22 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

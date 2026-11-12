@@ -20,7 +20,13 @@ nw2toedge
 egovars(varlist)
 altervars(varlist)
 ego(newvarname)
-alter(newvarname)]
+alter(newvarname)
+compress
+full
+upper
+ignore2mode
+isolates0
+allpairs]
 ```
 
 | | |
@@ -38,9 +44,9 @@ alter(newvarname)]
 
 ## Description
 
-`nwtoedge` makes an edgelist from a two-mode network or a list of networks.
+`nw2toedge` makes an edgelist from a two-mode network or a list of networks.
 
-An edgelist of a single network [netname](netname) produced by `nwtoedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [nodeid](nodeid) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [nodeid](nodeid) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
+An edgelist of a single network [netname](netname) produced by `nw2toedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [node label](nodeid) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [node label](nodeid) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
 
 When a network is undirected only one entry for the dyad pair (*i*,*j*) is generated, unless option `full` is specified.
 
@@ -48,7 +54,7 @@ When the command is used with a [netlist](netlist), it generates one new variabl
 
 One can also include node attributes (saved as normal Stata variables) in the edgelist. Option `egovars()` generates new variables that match the attributes of the sender of a tie (ego); option `altervars()` generates new variables that match the attributes of the receiver of a tie (alter).
 
-For two-mode networks (see [introduction to two-mode networks](nw2set)) the command automatically generates the two variables *_nwmode_ego* and *_nwmode_alter*. They indicate in the edgelist format the mode to which a node belongs. Unlike [nwtoedge](nwtoedge) on a two-mode network, `nw2toedge` also filters the edgelist down to cross-mode pairs only (dropping any same-mode/self entry the underlying dense representation may otherwise still enumerate) - this is the one behavioral difference between the two commands; see [nwtoedge](nwtoedge)'s own help file if you specifically need the unfiltered enumeration.
+For two-mode networks (see [introduction to two-mode networks](nw2set)) the command automatically generates the two variables *_nwmode_ego* and *_nwmode_alter*. They indicate in the edgelist format the mode to which a node belongs. By default only the ties are listed (as with `compress`). With `allpairs`, `nw2toedge` lists every pair of nodes of different modes, while [nwtoedge](nwtoedge) with `allpairs` also lists the pairs of nodes of the same mode.
 
 ## Examples
 
@@ -62,16 +68,10 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 . list
 ```
 
-## Supported network types
-
-Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; `allpairs` also writes the pairs without a tie. The list read back with [nw2fromedge](nw2fromedge) or [nwfromedge](nwfromedge), `twomode` gives the same network. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
-
 ## See also
 
 - [nw2fromedge](nw2fromedge), [nwtoedge](nwtoedge), [nwsave](nwsave)
 
-- last certified : 28 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

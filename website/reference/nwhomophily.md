@@ -30,10 +30,11 @@ undirected]
 |---|---|
 | `homophily`(*`h1 h2 ...`*) | degree of homophily for each variable in `varlist` |
 | `density(float)` | density of the new network |
-| `mode`(*[expand_mode](nwexpand)*) | mode used to generate probabilities for ties |
+| `mode`(*[expand_mode](nwexpand)*) | mode used to generate probabilities for ties, one entry per variable; default = *same* |
 | `nodes(integer)` | number of nodes; if not specified the number of valid cases of *`varname`* is used |
-| `name(newnetname)` | name of the new random network |
+| `name(newnetname)` | name of the new random network; default = *homophily* |
 | `xvars` | generate Stata variables for the network |
+| `undirected` | generate an undirected network |
 
 ## Description
 
@@ -102,14 +103,10 @@ Notice that when *nwhomophily* is used together with *z* variables in `varlist`,
 
 The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
-## Supported network types
-
-Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weighted: not applicable - no `weights()` option; `density()` controls overall tie placement rate, not individual tie values. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## See also
 
 - [nwdyadprob](nwdyadprob)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

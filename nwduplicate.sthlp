@@ -43,21 +43,14 @@ For example:
 	
 	
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the copy keeps the flag, the modes and the level labels.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties. Two-mode: yes - the copy keeps the flag, the modes and the level labels.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:See also}
 
 	{help nwgenerate}, {help nwsubset}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

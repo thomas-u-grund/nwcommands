@@ -39,15 +39,14 @@ with networks. For more information see {help nwdrop}.
 	
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Not applicable - clears all networks and Stata variables from memory unconditionally, independent of any network's own properties.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:See also}
 
   {help nwdrop}, {help clear}
-last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

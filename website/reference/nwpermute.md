@@ -20,23 +20,25 @@ nwpermute
 generate(newnetname)
 replace
 nwreplace
-xvars]
+xvars
+swap
+swaps(#)]
 ```
 
 | | |
 |---|---|
-| `generate(newnetname)` | Save permutation as new network |
-| `replace` | Replace existing network with permutation |
+| `generate(newnetname)` | Save permutation as new network; one of `generate()` or `replace` is required |
+| `replace` | Replace existing network with permutation; with `generate()`: overwrite the network named there if it already exists |
 | `nwreplace` | Overwrite the network named in `generate()` if it already exists; without it the command stops with an error |
 | `xvars` | Generate Stata variables for the network |
 | `swap` | exchange the partners of two ties at random (Maslov and Sneppen) instead of permuting the labels; keeps every node's degree (directed: out-degree and in-degree; two-mode: both degree sequences) and the tie values |
-| `swaps(#)` | the number of attempted exchanges with `swap`; default = ten times the number of ties |
+| `swaps(#)` | the number of attempted exchanges; implies `swap`; default = ten times the number of ties |
 
 ## Description
 
 Produces a random permutation of the network [netname](netname). In such a permutation, the nodes are randomly reshuffled, while the overall structure of the network remains the same. Either option **replace** or **generate** needs to be specified.
 
-With `swap`, the ties are rewired instead: two ties a-b and c-d, picked at random, become a-d and c-b (in an undirected network, a-d and c-b or a-c and b-d, at random), unless that would make a self-loop or tie a pair that is tied already. Every node keeps its degree (in a directed network its out-degree and its in-degree), a tie keeps its value, and everything else about the network is randomized. `swaps()` sets the number of attempted exchanges (some are refused). This is the rewiring of R's `igraph::rewire(g, keeping_degseq())`: a random network with the degrees of the observed one, the usual baseline for a pattern that may follow from the degrees alone (see [nwcug](nwcug) with `condition(degrees)`, and [nwrandom](nwrandom) with `degree()` for a network drawn from a list of degrees). Self-loops and ties with a missing value stay where they are. For a one-mode network, `swap` uses the native plugin of nwcommands 3.17.0 or later; the exchanges are drawn from the seed (`set seed`).
+With `swap`, the ties are rewired instead: two ties a-b and c-d, picked at random, become a-d and c-b (in an undirected network, a-d and c-b or a-c and b-d, at random), unless that would make a self-loop or tie a pair that is tied already. Every node keeps its degree (in a directed network its out-degree and its in-degree), a tie keeps its value, and everything else about the network is randomized. `swaps()` sets the number of attempted exchanges (some are refused). This is the rewiring of R's `igraph::rewire(g, keeping_degseq())`: a random network with the degrees of the observed one, the usual baseline for a pattern that may follow from the degrees alone (see [nwcug](nwcug) with `condition(degrees)`, and [nwrandom](nwrandom) with `degree()` for a network drawn from a list of degrees). Self-loops and ties with a missing value stay where they are. For a one-mode network, `swap` uses the native plugin; the exchanges are drawn from the seed (`set seed`).
 
 ```stata
 . nwuse glasgow, nwclear
@@ -83,16 +85,10 @@ Now, let us permute the network *lattice*.
 ```
 The structure of the network remains exactly the same, however, the nodes have a different order. Often, such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for these statistics) while keeping the overall structure of the network constant (see more [nwqap](nwqap), [nwcorrelate](nwcorrelate)).
 
-## Supported network types
-
-Binary: yes. Directed: yes (`swap` keeps out-degrees and in-degrees). Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix) and under `swap`. Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode (`tnet::rg_reshuffling_tm`); `swap` exchanges the partners of two ties at random and keeps both degree sequences (`bipartite::swap.web`).
-
 ## See also
 
 - [nwqap](nwqap), [nwcorrelate](nwcorrelate)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

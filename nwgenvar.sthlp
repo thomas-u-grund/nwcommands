@@ -35,25 +35,6 @@ this commands: 1) produce Stata variables with some function {bf:{it:netfcn1}}, 
 networks with some function {bf:{it:netfnc2}}, 3) produce networks with an expression {bf:{it:netexp}}. 
 A network expression is very similar to normal expressions in Stata.
 
-{title:Examples}
-
-{pstd}
-Generate a per-node variable with a network function:
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwgenvar mydeg = degree(flomarriage)}
-	{cmd:. list mydeg in 1/5}
-
-{pstd}
-Generate a new network with a network function:
-
-	{cmd:. nwgenvar newnet = random(10), prob(.3)}
-	{cmd:. nwsummarize newnet}
-
-{title:Supported network types}
-
-{pstd}
-Not applicable to {cmd:nwgenvar} itself - a dispatcher/shortcut layer over {help nwgenerate}; the actual directed/valued/two-mode support depends entirely on whichever underlying {it:netfcn1}/{it:netfcn2} shortcut or network expression is invoked - see that function's own help topic.
 
 {title:Generating variables from networks}
 
@@ -84,11 +65,10 @@ each node in a network.
 {p_end}
 {pmore2}Return the component membership of nodes (see {help nwcomponents}).
 
-{phang2}{opth context(netname)} [,
+{phang2}{opth context(netname)}{cmd:,}
 {opt attribute}({help varname})
-{opt stat}({help nwcontext##statistic:statistic})
+[{opt stat}({help nwcontext##statistic:statistic})
 {opt mode}({help nwcontext##context:context})
-{opt generate}({help newvar})
 {opt mat}(string)
 {opt noweight}]
 {p_end}
@@ -96,7 +76,7 @@ each node in a network.
 				 
 {phang2}{opth degree(netname)}
 {p_end}
-{pmore2}Calculate the degree centrality of network nodes. When the network is directed, the outdegree is returned (see {help nwdegree}).
+{pmore2}Calculate the degree centrality of network nodes. When the network is directed, the total degree (outdegree plus indegree) is returned (see {help nwdegree}).
 
 {phang2}{opth evcent(netname)}
 {p_end}
@@ -152,7 +132,7 @@ The command can also be used to generate networks. There are two ways to do this
 {pstd}
 {it:netfcn2} is one of:
 
-{phang2}{opth duplicate(netname)} [, {opt xvars}]
+{phang2}{opth duplicate(netname)}
 {p_end}
 {pmore2}Duplicate a network (see {help nwduplicate}).
  
@@ -162,7 +142,7 @@ The command can also be used to generate networks. There are two ways to do this
 
 {phang2}{opth geodesic(netname)} [{cmd:,}
 {opth unconnected(integer)}
-{opt nosym}
+{opt sym}
 {opt xvars}]
 {p_end}
 {pmore2}Generate a network of shortest paths between nodes (see {help nwgeodesic}).
@@ -181,7 +161,10 @@ The command can also be used to generate networks. There are two ways to do this
 
 {phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}] 
 {p_end}
-{pmore2}Generate a network of paths between nodes (see {help nwpath}).
+{pmore2}Not currently implemented as a shortcut - {help nwpath} can produce zero, one, or several
+output networks (one per shortest path found), which does not fit this command's own "exactly one
+network per call" form. Use {help nwpath} directly - its own {opt generate()} option names one
+network per path found.
 
 {phang2}{opth permute(netname)} [, {opt xvars}] 
 {p_end}
@@ -195,7 +178,7 @@ The command can also be used to generate networks. There are two ways to do this
 {p_end}
 {pmore2}Generate a random network (see {help nwrandom}).
 
-{phang2}{opth reach(netname)} [, {opt nosym} {opt xvars}] 
+{phang2}{opth reach(netname)} [, {opt sym} {opt xvars}] 
 {p_end}
 {pmore2}Generate a reachability network (see {help nwreach}).
 
@@ -211,5 +194,28 @@ The command can also be used to generate networks. There are two ways to do this
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
 
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type; what a function does with directed, valued, two-mode and signed
+networks is in the help of that function (see {help nwnetworktypes}).{p_end}
+
+
+{title:Examples}
+
+{pstd}
+Generate a per-node variable with a network function:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwgenvar mydeg = degree(flomarriage)}
+	{cmd:. list mydeg in 1/5}
+
+{pstd}
+Generate a new network with a network function:
+
+	{cmd:. nwgenvar newnet = random(10), prob(.3)}
+	{cmd:. nwsummarize newnet}
+
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

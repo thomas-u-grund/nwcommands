@@ -27,71 +27,64 @@
 {opt menu(string)}
 {opt all}
 {opth path(string)}
-{opt localcopy}
+{opt local:copy}
 {opth from(string)}
 {opth dest(string)}
-{opt models}
-{opt everything}
+{opt model:s}
+{opt every:thing}
 {opt nogui}
-{opt dupcheck}
-{opth modelpkg(namelist)}
-{opth release(string)}
-{opth modelsfrom(string)}
-{opth buildplugin(namelist)}
-{opth buildmata(namelist)}
-{opth buildfrom(string)}
-{opt buildkeep}]
+{opt dup:check}
+{opth modelp:kg(namelist)}
+{opth rel:ease(string)}
+{opth modelsf:rom(string)}
+{opth buildp:lugin(namelist)}
+{opth buildm:ata(namelist)}
+{opth buildf:rom(string)}
+{opt buildk:eep}]
 
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt gui}}install the "Network Analysis" menu permanently on your Stata (the older name {opt permanently} still works); it is set up once, however often you type it - see {help nwinstall##menu:The menu is installed once}{p_end}
+{synopt:{opt gui}}install the "Network Analysis" menu permanently on your Stata ({opt permanently} is a synonym); it is set up once, however often you type it - see
+{help nwinstall##menu:The menu is installed once}{p_end}
 {synopt:{opt remove}}remove the "Network Analysis" menu from your Stata, the line {cmd:nwinstall, usermenu} from {bf:profile.do}, and the nwcommands files{p_end}
 {synopt:{opt help}}download the help files{p_end}
 {synopt:{opt ado}}download the core command (.ado) files{p_end}
-{synopt:{opt ext}}accepted for backward compatibility, does nothing (the "extension" commands it used to download separately - {help nwdissimilar}, {help nwhierarchy}, {help nwdendrogram} - are ordinary commands shipped with every other {opt ado}/{opt help} install, and were never genuinely distinct from the rest of the package){p_end}
+{synopt:{opt ext}}accepted, does nothing ({help nwdissimilar}, {help nwhierarchy} and {help nwdendrogram} are ordinary commands installed with every other {opt ado}/{opt help} install){p_end}
 {synopt:{opt dialog}}download the dialog boxes{p_end}
 {synopt:{opt usermenu}}update menu items for dialog-boxes{p_end}
 {synopt:{opt update}}refresh the installed menu (an internal, self-recursive flag: re-invokes {cmd:nwinstall, help usermenu}){p_end}
-{synopt:{opt downloadoff}}rebuild the menu from what is already installed, without downloading anything (used internally by {bf:profile.do} integration; equivalent to {opt usermenu} for this purpose){p_end}
+{synopt:{opt downloadoff}}rebuild the menu from what is already installed, without downloading anything (used internally by {bf:profile.do} integration; equivalent to {opt usermenu} for this
+purpose){p_end}
 {synopt:{opth menu(string)}}install in this menu; default = "stUser"{p_end}
 {synopt:{opt all}}download the core commands, help files, and dialog boxes, and set up the menu (as {opt gui}); with {opt nogui} the menu is left out{p_end}
-{synopt:{opth path(string)}}directory of the {bf:profile.do} to edit; default: the folder where an existing {bf:profile.do} is found (your home folder, PERSONAL or SITE), otherwise the folder Stata recommends: %USERPROFILE% on Windows, ~/Documents/Stata on macOS, PERSONAL on Unix{p_end}
-{synopt:{opt localcopy}}install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see {help nwinstall##offline:Computers without internet access or admin rights} below{p_end}
+{synopt:{opth path(string)}}directory of the {bf:profile.do} to edit; default: the folder where an existing {bf:profile.do} is found (your home folder, PERSONAL or SITE), otherwise the folder Stata
+recommends: %USERPROFILE% on Windows, ~/Documents/Stata on macOS, PERSONAL on Unix{p_end}
+{synopt:{opt local:copy}}install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see
+{help nwinstall##offline:Computers without internet access or admin rights} below{p_end}
 {synopt:{opth from(string)}}with {opt localcopy}: the local folder to copy nwcommands files from; default: the current directory{p_end}
-{synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case){p_end}
+{synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be
+configured for the default case){p_end}
 
-{synopt:{opt models}}also install the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem} (see below); with {opt remove} they are uninstalled{p_end}
-{synopt:{opt everything}}install the core (everything {opt all} installs) and the four model packages (what {opt models} installs) as one set, set up the menu (as {opt gui}), and show all five versions at the end{p_end}
+{synopt:{opt model:s}}also install the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem} (see below); with {opt remove} they are uninstalled{p_end}
+{synopt:{opt every:thing}}install the core (everything {opt all} installs) and the four model packages (what {opt models} installs) as one set, set up the menu (as {opt gui}), and show all five
+versions at the end{p_end}
 {synopt:{opt nogui}}with {opt all} or {opt everything}: do not set up the menu and do not touch {bf:profile.do}{p_end}
-{synopt:{opt dupcheck}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
-{synopt:{opth modelpkg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
-{synopt:{opth buildplugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; {cmd:all} for all four) and install them; macOS and Linux; used alone{p_end}
-{synopt:{opth buildmata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; {cmd:all} for the core and every installed package); the repair if the shipped library was built by a newer Stata; used alone{p_end}
-{synopt:{opth buildfrom(string)}}with {opt buildplugin()} or {opt buildmata()}: a folder or URL with one subfolder per package that holds the source ({cmd:native/} for the plugins, the {cmd:unw_*.do} files for the Mata libraries); default: the GitHub repositories{p_end}
-{synopt:{opt buildkeep}}with {opt buildplugin()} or {opt buildmata()}: keep the build folder (it holds the build log){p_end}
-{synopt:{opth release(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
-{synopt:{opth modelsfrom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
+{synopt:{opt dup:check}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
+{synopt:{opth modelp:kg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
+{synopt:{opth buildp:lugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; {cmd:all} for all four) and install them; macOS and
+Linux; used alone{p_end}
+{synopt:{opth buildm:ata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; {cmd:all} for the core and every
+installed package); the repair if the shipped library was built by a newer Stata; used alone{p_end}
+{synopt:{opth buildf:rom(string)}}with {opt buildplugin()} or {opt buildmata()}: a folder or URL with one subfolder per package that holds the source ({cmd:native/} for the plugins, the {cmd:unw_*.do}
+files for the Mata libraries); default: the GitHub repositories{p_end}
+{synopt:{opt buildk:eep}}with {opt buildplugin()} or {opt buildmata()}: keep the build folder (it holds the build log){p_end}
+{synopt:{opth rel:ease(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
+{synopt:{opth modelsf:rom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
 {synoptline}
 
-
-{marker models}{...}
-{title:The model packages}
-
-{pstd}
-The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem} (relational event models) are packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
-They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
-{cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular release.
-{cmd:nwinstall, all} installs the core only (and sets up the menu, unless {opt nogui}) and ends with a hint about the model packages.
-{cmd:nwinstall, models} and {cmd:nwinstall, modelpkg()} install packages only; they do not touch the menu or {bf:profile.do}.
-{cmd:nwinstall, everything} installs the core and the four model packages in one step, sets up the {it:Network Analysis} menu with the dialog boxes (the same as adding {opt gui}; add {opt nogui} to skip that), and prints the version of each package at the end (as {help nwversion} does).
-Before anything is installed, {opt everything} checks that every model repository can be reached and that no model needs a newer core than the one being installed; if not, it stops with a message that names the package and installs nothing.
-{cmd:nwinstall, all models} is the same as {cmd:nwinstall, everything}.
-With {opt everything} (and with {opt models}), {opt from()} is the source of the core package, {opt modelsfrom()} the folder with one subfolder per model package, and {opt release()} the release of the model packages; for an offline install point both at local folders.
-Each package has a {cmd:version} subcommand, for example {cmd:nwsaom version}.
-Updating {cmd:nwcommands} never replaces an installed model package.
 
 {title:Description}
 
@@ -101,24 +94,53 @@ all nwcommands (and their functions) can be executed via dialog boxes. Notice, h
 advanced functions are only available through Stata syntax (see {help nwcommands}).
 
 
+{marker models}{...}
+{title:The model packages}
+
+{pstd}
+The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem} (relational event models) are
+packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
+They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
+{cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular
+release.
+{cmd:nwinstall, all} installs the core only (and sets up the menu, unless {opt nogui}) and ends with a hint about the model packages.
+{cmd:nwinstall, models} and {cmd:nwinstall, modelpkg()} install packages only; they do not touch the menu or {bf:profile.do}.
+{cmd:nwinstall, everything} installs the core and the four model packages in one step, sets up the {it:Network Analysis} menu with the dialog boxes (the same as adding {opt gui}; add {opt nogui} to
+skip that), and prints the version of each package at the end (as {help nwversion} does).
+Before anything is installed, {opt everything} checks that every model repository can be reached and that no model needs a newer core than the one being installed; if not, it stops with a message that
+names the package and installs nothing.
+{cmd:nwinstall, all models} installs the same packages as {cmd:nwinstall, everything}, without the check before the install and the list of versions at the end.
+With {opt everything} (and with {opt models}), {opt from()} is the source of the core package, {opt modelsfrom()} the folder with one subfolder per model package, and {opt release()} the release of
+the model packages; for an offline install point both at local folders.
+Each package has a {cmd:version} subcommand, for example {cmd:nwsaom version}.
+Updating {cmd:nwcommands} never replaces an installed model package.
+
 
 {marker menu}{...}
 {title:The menu is installed once}
 
 {pstd}
-{opt gui} (and therefore {opt all} and {opt everything}, unless you add {opt nogui}) puts the single line {cmd:nwinstall, usermenu} into your {bf:profile.do}, so that Stata builds the {it:Network Analysis} menu in the {it:User} menu each time it starts.
+{opt gui} (and therefore {opt all} and {opt everything}, unless you add {opt nogui}) puts the single line {cmd:nwinstall, usermenu} into your {bf:profile.do}, so that Stata builds the
+{it:Network Analysis} menu in the {it:User} menu each time it starts.
 The line is never written twice, however often you run {cmd:nwinstall}:
 
-{phang2}o  The older spellings of the line ({cmd:nwinstall, downloadoff}, extra spaces, a {cmd:quietly} in front) count as the same line; extra copies are dropped, and the rest of your {bf:profile.do} is kept as it was.{p_end}
-{phang2}o  If {bf:profile.do} (or another {bf:profile.do} Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a {it:Network Analysis} menu in some other way, for example with a {cmd:window menu} line of your own, no second menu is added; {cmd:nwinstall} names the line and the file in a message. Lines it cannot identify with certainty are never deleted.{p_end}
-{phang2}o  Within one session the menu is rebuilt from an empty {it:User} menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the {it:User} menu in that session.{p_end}
-{phang2}o  The menu entries of the model packages {cmd:nwsaom} and {cmd:nwergm} appear only when the package's dialog boxes are installed. There is one entry for each package under {it:Statistical Models}, {it:Stochastic actor-oriented model (nwsaom)} and {it:Exponential random graph model (nwergm)}. The other dialogs of a package (Bayesian estimation, several networks, postestimation, simulation and so on) open from buttons inside its main dialog.{p_end}
+{phang2}o  Other spellings of the line ({cmd:nwinstall, downloadoff}, extra spaces, a {cmd:quietly} in front) count as the same line; extra copies are dropped, and the rest of your {bf:profile.do} is
+kept as it was.{p_end}
+{phang2}o  If {bf:profile.do} (or another {bf:profile.do} Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a {it:Network Analysis} menu in some other way, for
+example with a {cmd:window menu} line of your own, no second menu is added; {cmd:nwinstall} names the line and the file in a message. Lines it cannot identify with certainty are never deleted.{p_end}
+{phang2}o  Within one session the menu is rebuilt from an empty {it:User} menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the
+{it:User} menu in that session.{p_end}
+{phang2}o  The menu entries of the model packages {cmd:nwsaom} and {cmd:nwergm} appear only when the package's dialog boxes are installed. There is one entry for each package under
+{it:Statistical Models}, {it:Stochastic actor-oriented model (nwsaom)} and {it:Exponential random graph model (nwergm)}. The other dialogs of a package (Bayesian estimation, several networks,
+postestimation, simulation and so on) open from buttons inside its main dialog.{p_end}
 {phang2}o  If the menu cannot be built (a Stata without menus, a batch run), you get a note and the installation goes on; nothing fails.{p_end}
 {phang2}o  {cmd:nwinstall, remove} takes the menu, the {cmd:nwinstall, usermenu} line and the nwcommands files away again.{p_end}
 
 {pstd}
-{opt dupcheck} lists dialog files that exist in more than one folder of the ado path (for example an old copy in your PERSONAL folder next to the installed one). Stata uses the first copy it finds; {cmd:nwinstall} tells you which one that is and deletes nothing.
+{opt dupcheck} lists dialog files that exist in more than one folder of the ado path (for example an old copy in your PERSONAL folder next to the installed one). Stata uses the first copy it finds;
+{cmd:nwinstall} tells you which one that is and deletes nothing.
 {cmd:nwinstall, all} runs this check at the end.
+
 
 {marker buildplugin}{...}
 {title:Building the plugins on this computer}
@@ -144,6 +166,7 @@ and {cmd:make} (for example the package {cmd:build-essential}), on Windows Micro
 (or Visual Studio with that workload). If the compiler is missing, the command says what to install and stops; nothing is changed.
 On Windows the compiler is found automatically; nothing has to be set up. {cmd:buildplugin()} with nothing in the parentheses builds all plugins.
 {opt buildfrom()} points to a local copy of the repositories instead of GitHub, and {opt release()} to a tagged release.
+
 
 {marker buildmata}{...}
 {title:Rebuilding the Mata libraries on this computer}
@@ -172,10 +195,12 @@ of the current release: update the packages first ({cmd:nwinstall, all}, {cmd:nw
 {opt buildfrom()} points to a local copy of the repositories, {opt release()} to a tagged release, and {opt dest()} puts the libraries into another folder.
 The shipped libraries are the better choice when they load: a build with your own Stata is the fallback and the repair.
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Not applicable - installs/manages this package's own Stata menu, dialogs, and update mechanism; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
 
 {title:Example}
 
@@ -186,7 +211,8 @@ New to nwcommands? The full install is two commands:
 	{cmd:. nwinstall, everything}
 
 {pstd}
-The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); if {cmd:nwcommands.org} cannot be reached, {cmd:from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")} works as well. The second downloads
+The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); if {cmd:nwcommands.org} cannot be reached,
+{cmd:from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")} works as well. The second downloads
 everything else - the core commands, all help files, and the dialog boxes with the {it:Network Analysis} menu (set up once, in {bf:profile.do}) - and the four model packages
 {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}. To install the core only, type {cmd:nwinstall, all}; to leave the menu out, add {opt nogui}.
 nwcommands needs Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
@@ -196,6 +222,20 @@ nwcommands needs Stata 17 or later (tested with Stata 17 and 18; StataBE is enou
 This installs a menu for the nwcommands:
 
 	{cmd:. nwinstall, gui}
+
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwinstall} stores results only with {opt dupcheck}, {opt buildmata()} or {opt buildplugin()}:
+
+{synoptset 22 tabbed}{...}
+{p2col 5 22 26 2: Scalars}{p_end}
+{synopt:{bf:r(ndup)}}with {opt dupcheck}: number of dialog files found in more than one folder{p_end}
+
+{p2col 5 22 26 2: Macros}{p_end}
+{synopt:{bf:r(built)}}with {opt buildmata()}: names of the Mata libraries that were built{p_end}
+{synopt:{bf:r(plugin_}{it:pkg}{bf:)}}with {opt buildplugin()}: file name of the plugin installed for package {it:pkg}{p_end}
 
 
 {marker offline}{title:Computers without internet access or admin rights}
@@ -262,4 +302,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

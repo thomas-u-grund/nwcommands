@@ -34,12 +34,18 @@ Keep in mind that when you make alterations to **r(adj)** in Mata you change a n
 
 When the option `mat()` is specified, the command obtains a copy of the adjacency matrix and saves it as a new Mata matrix *matamatrix*. When you make alterations to this *matamtrix* you do not change the network.
 
+## Stored results
+
+- **Macros**
+- **r(netname)** --- name of the network
+- **r(netobj)** --- name of the Mata network object
+- **r(adj)** --- Mata expression that points to the adjacency matrix of the network
+- **r(adj_copy)** --- name of the new Mata matrix (only with `mat()`)
+
 ## See also
 
 - [Programming own network commands](nwprogramming)
 
-- last certified : 21 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -19,7 +19,13 @@
 {opth egovars(varlist)}
 {opth altervars(varlist)}
 {opth ego(newvarname)}
-{opth alter(newvarname)}]
+{opth alter(newvarname)}
+{opt compress}
+{opt full}
+{opt upper}
+{opt ignore2mode}
+{opt isolates0}
+{opt allpairs}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -29,7 +35,8 @@
 {synopt:{opth ego(newvarname)}}Sender of ties; default = {it:_ego}{p_end}
 {synopt:{opth alter(newvarname)}}Receiver of ties; default = {it:_alter}{p_end}
 {synopt:{opt compress}}Drop rows with no tie in any listed network, keeping only actual ties{p_end}
-{synopt:{opt full}}List both {it:(i,j)} and {it:(j,i)} for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a {help netlist} is directed{p_end}
+{synopt:{opt full}}List both {it:(i,j)} and {it:(j,i)} for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a {help netlist} is
+directed{p_end}
 {synopt:{opt upper}}List only one entry per undirected dyad (the default; see {opt full} above) - has no effect and is suppressed with a warning on a directed network{p_end}
 {synopt:{opt ignore2mode}}Treat the two-mode network like a one-mode one - suppress the auto-generated {it:_nwmode_ego}/{it:_nwmode_alter} mode-indicator variables{p_end}
 {synopt:{opt isolates0}}reserved; not currently implemented{p_end}
@@ -41,12 +48,12 @@
 {title:Description}
 
 {pstd}
-{cmd:nwtoedge} makes an edgelist from a two-mode network or a list of networks.
+{cmd:nw2toedge} makes an edgelist from a two-mode network or a list of networks.
 
 {pstd}
-An edgelist of a single network {help netname} produced by {cmd:nwtoedge} is a set of three variables representing
-the relations in the network. The first variable ({it:_ego}) gives the {help nodeid}
-of the sending node {it:i} of a relationship; the second variable ({it:_alter}) gives the {help nodeid} of the
+An edgelist of a single network {help netname} produced by {cmd:nw2toedge} is a set of three variables representing
+the relations in the network. The first variable ({it:_ego}) gives the {help nodeid:node label}
+of the sending node {it:i} of a relationship; the second variable ({it:_alter}) gives the {help nodeid:node label} of the
 receiving node {it:j}. Lastly, the variable {it:netname} saves information about the
 dyad pair ({it:i},{it:j}) in the network {it:netname}.
 
@@ -66,10 +73,26 @@ generates new variables that match the attributes of the receiver of a tie (alte
 {pstd}
 For two-mode networks (see {help nw2set:introduction to two-mode networks}) the command automatically
 generates the two variables {it:_nwmode_ego} and {it:_nwmode_alter}. They indicate in the edgelist format
-the mode to which a node belongs. Unlike {help nwtoedge} on a two-mode network, {cmd:nw2toedge} also
-filters the edgelist down to cross-mode pairs only (dropping any same-mode/self entry the underlying
-dense representation may otherwise still enumerate) - this is the one behavioral difference between the
-two commands; see {help nwtoedge}'s own help file if you specifically need the unfiltered enumeration.
+the mode to which a node belongs. By default only the ties are listed (as with {opt compress}). With
+{opt allpairs}, {cmd:nw2toedge} lists every pair of nodes of different modes, while {help nwtoedge} with
+{opt allpairs} also lists the pairs of nodes of the same mode.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not applicable. {bf:Valued:} the tie values are carried into the edge list. {bf:Two-mode:} yes - one
+row per tie between the two modes, with the mode of both nodes; {opt allpairs} also writes the pairs without a tie.
+{bf:Signed:} negative values are written like any other value. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in
+Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds,
+5,000 nodes 24 seconds with {opt allpairs}; by default (ties only) 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
+
 
 {title:Examples}
 
@@ -82,28 +105,10 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 	{cmd:. nw2toedge attendance}
 	{cmd:. list}
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; {opt allpairs} also writes the pairs without a tie. The list read back with {help nw2fromedge} or {help nwfromedge}, {opt twomode} gives the same network.
-
-{title:Supported network types}
-
-{pstd}
-Two-mode: yes - one row for every tie between the two modes, with the mode of both nodes; {opt allpairs} also writes the pairs without a tie. The list read back with {help nw2fromedge} or {help nwfromedge}, {opt twomode} gives the same network. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
-
-{title:Limits}
-
-{pstd}
-Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in
-Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds (before: 8 seconds
-and 1.3 GB), 5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
 
 {title:See also}
 
 	{help nw2fromedge}, {help nwtoedge}, {help nwsave}
 
-last certified : 28 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

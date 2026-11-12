@@ -37,16 +37,10 @@ For example:
 - **. nwname flomarriage_copy**
 - **. return list**
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of the network object (adjacency matrix, node labels, directed/valued/two-mode status, and mode assignments), independent of any of these properties. Two-mode: yes - the copy keeps the flag, the modes and the level labels.
-
 ## See also
 
 - [nwgenerate](nwgenerate), [nwsubset](nwsubset)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

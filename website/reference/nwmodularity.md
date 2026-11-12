@@ -19,19 +19,20 @@ nwmodularity
 ,
 group(varname)
 [measure(string)
-SYMmetrize
+sym:metrize
 resolution(real)
-silent]
+silent
+one:mode]
 ```
 
 | | |
 |---|---|
 | `group(varname)` | Stata variable holding each node's community/group assignment |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
-| `symmetrize` | Symmetrize a directed network before scoring (required for directed networks) |
+| `sym:metrize` | Symmetrize a directed network before scoring (required for directed networks) |
 | `resolution(real)` | Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1 |
 | `silent` | Suppress display of results |
-| `onemode` | Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network) |
+| `one:mode` | Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network) |
 
 ## Description
 
@@ -47,20 +48,17 @@ Modularity compares the fraction of ties that fall within the given groups to th
 . nwmodularity flomarriage, group(comp)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: requires `symmetrize` - modularity as computed here is not defined for a directed network. Weighted: yes, via `measure(binary|valued)`; default = *valued* for a valued network, *binary* otherwise. Signed: not checked. Two-mode: yes - the modularity of a grouping is Barber's bipartite modularity (only pairs of nodes from different modes enter the null model); `onemode` gives Newman's modularity of the bipartite graph read as a one-mode graph (`igraph::modularity`).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(communities)** --- number of distinct groups in **group()**
+- **r(modularity)** --- modularity Q of the given partition
 
-- **r(communities)** number of distinct groups in **group()**
-- **r(modularity)** modularity Q of the given partition
+- **Macros**
+- **r(modularity_type)** --- **barber** (bipartite modularity of a two-mode network) or **newman**
 
-**Matrices**
-
-- **r(comm_sizeid)** distribution over groups
+- **Matrices**
+- **r(comm_sizeid)** --- distribution over groups: one row per group, columns **size**, **compid** (group value) and **share**, sorted by size
 
 ## References
 
@@ -72,4 +70,4 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 10
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

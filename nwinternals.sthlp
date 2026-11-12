@@ -62,7 +62,7 @@ network's node count.
 
 {pstd}
 {cmd:_nwevalnetexp}/{cmd:_nwexpnetexp} parse and evaluate the {help netexp} mini-language
-(matrix-style expressions over networks, e.g. inside {help nwgenerate}/{help nwreplace}).
+(matrix-style expressions over networks, e.g. inside {help nwgenerate} / {help nwreplace}).
 {cmd:_nwevalnetexp} is also documented on its own (see {help netexp}) as the one file in
 this group a programmer may call directly, when writing a command that needs to accept a
 {help netexp} argument itself.
@@ -103,11 +103,11 @@ currently-incomplete helper intended to return edge labels for {help nwtabulate}
 {title:Shared error-code definitions}
 
 {pstd}
-{cmd:unw_defs} does not follow the leading-underscore convention above (it predates it), but
+{cmd:unw_defs} does not follow the leading-underscore convention above, but
 belongs on this page for the same reason: it is called by nearly every documented command to
 populate a shared table of this package's own error-code local macros (see
 {help nwerrorcodes} for the user-facing meaning of each code) and a handful of other
 commonly-needed locals, rather than each command redefining the same table itself.
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

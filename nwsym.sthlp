@@ -17,7 +17,7 @@
 [{cmd:,}
 {opt mode}({it:{help nwsym##mode:mode}})
 {opt check}
-{opth generate(newntename)}
+{opth generate(newnetname)}
 {opt replace}]
 
 {synoptset 25 tabbed}{...}
@@ -26,7 +26,8 @@
 {synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
 {synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
-{synopt:{opt replace}}Symmetrize in place (the default when neither {opt replace} nor {opt generate()} is given - this option exists to state that choice explicitly rather than to change behavior). Cannot be combined with {opt generate()}{p_end}
+{synopt:{opt replace}}Symmetrize in place (the default when neither {opt replace} nor {opt generate()} is given - this option exists to state that choice explicitly rather than to change
+behavior). Cannot be combined with {opt generate()}{p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}
@@ -38,6 +39,10 @@
 		To build an undirected signed network from a list of ties use {help nwfromedge:nwfromedge, undirected}.
 		{p_end}
 {p2col:{cmd: min}}Minimum of tie values (i,j) and (j,i)
+		{p_end}
+{p2col:{cmd: sum}}Sum of tie values (i,j) and (j,i)
+		{p_end}
+{p2col:{cmd: mean}}Mean of tie values (i,j) and (j,i)
 		{p_end}
 
 {synoptline}
@@ -65,7 +70,8 @@ node {it:j} and a tie from node {it:j} to node {it:i}.
 
 {pstd}
 When not specified otherwise, the network {help netname} is replaced with the symmetrized network (equivalently, {opt replace} can be given explicitly to state this).
-In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname} instead, and the original network is left untouched. {opt replace} and {opt generate()} are mutually exclusive.
+In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname} instead, and the original network is left untouched. {opt replace} and {opt generate()} are
+mutually exclusive.
 
 {pstd}
 Option {bf:check} tests if the underlying adjacency matrix of the network is symmetric (but does not 
@@ -78,15 +84,12 @@ The logic for valued networks works in exactly the same way.
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the flag, the modes and the level labels are kept (a two-mode network is undirected already).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - this command's entire purpose is converting a directed network to an undirected one (or checking whether it already is). Weighted: yes - {opt mode()} controls how the two directions' tie values are combined (e.g. max/min/sum) when they differ. Signed: not checked. Two-mode: yes - the flag, the modes and the level labels are kept (a two-mode network is undirected already).
+{bf:Directed:} the command makes a directed network undirected ({opt check} only checks). {bf:Valued:} {opt mode()} sets
+how two different values of a pair are combined. {bf:Two-mode:} yes - the flag, the modes and the level labels are kept
+(a two-mode network is undirected already). {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -117,16 +120,18 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 	
 {title:Stored results}
 
-	Macros:
-	  {bf:r(is_symmetric)}	"true" or "false"
-	  {bf:r(name)}		name of the network
+{pstd}
+With option {opt check}, {cmd:nwsym} stores the following in {bf:r()}:
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(is_symmetric)}}"true" or "false"{p_end}
+{synopt:{bf:r(name)}}name of the network{p_end}
 
 
 {title:See also}
 
 	{help nwsymmetrize} (an exact alias for this command)
 
-last certified : 28 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

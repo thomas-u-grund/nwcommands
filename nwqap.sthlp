@@ -16,8 +16,8 @@
 {cmdab: nwqap} 
 {it:{help netname:depnet}}
 [{it:{help nwqap##independentvariables:indepvars}}]
-, 
-{opth permutations(int)}
+[{cmd:,}
+{opt perm:utations(#)}
 {opt mode}({it:{help nwexpand##expand_mode:mode}})
 {opt type(regcmd)}
 {opt typeoptions(regoptions)}
@@ -26,22 +26,27 @@
 {opth predict(newnetname)}
 {opt plot}
 {opt name(string)}
+{opt qapspp}
+{opt force}]
 
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth permutations(int)}}number of QAP permutations; default = 500{p_end}
+{synopt:{opt perm:utations(#)}}number of QAP permutations; default = 500{p_end}
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}modes for expanding variables to networks{p_end}
 {synopt:{opt type}({it:{help nwqap##regcmd:regcmd}})}regression command to be used for dyad dataset; default = {it:logit}{p_end}
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
 {synopt:{opt detail}}display details of regression results and the permutation progress lines{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
-{synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
-{synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
+{synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new
+valued network{p_end}
+{synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws -
+the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
 {synopt:{opt name(string)}}Name for the combined graph created by {opt plot}; default = {bf:qap}{p_end}
-{synopt:{opt qapspp}}Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see {help nwqap##qapspp:qapspp} below{p_end}
+{synopt:{opt qapspp}}Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see
+{help nwqap##qapspp:qapspp} below{p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise){p_end}
 
 
@@ -101,7 +106,8 @@ exists - which occurs, for instance, when interpersonal relations determine indi
 
 {pstd}
 Since this method is employed to test hypotheses that suggest interpersonal relations 
-matter, a different significance test is needed. The second step of QAP regression, therefore, is to repeatedly permute rows and columns of the matrix representing the dependent variable and after each permutation to re-compute
+matter, a different significance test is needed. The second step of QAP regression, therefore, is to repeatedly permute rows and columns of the matrix representing the dependent variable and after
+each permutation to re-compute
 regression coefficients. Indicators of statistical significance report the proportion of results from randomly altered matrices with 
 regression coefficients as high as those from the unaltered dependent variable matrix (Krackhardt 1987).
 
@@ -170,6 +176,29 @@ regardless of which {opt type()} the main model used, so for a logit or probit m
 statistic is not the printed coefficient, which is on another scale; the printed coefficients are
 those of the model.
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} (i,j) and (j,i) both enter, also when undirected. {bf:Valued:} with {opt type(logit)} (default),
+{opt probit}, {opt cloglog}, {opt scobit} a nonzero value of the dependent network is a tie (a note says so);
+{opt type(regress)} uses the values; independent networks enter with values. {bf:Two-mode:} not supported (error 6088;
+use {help nwproject} first). {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10
+ties per node, {cmd:type(regress)}, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB.
+Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
+
+{pstd}
+QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of {it:n}-by-{it:n}
+(10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a
+message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs it anyway.
+
+
 {title:Examples}
 
 	{cmd:. nwwebuse glasgow}
@@ -201,31 +230,6 @@ when they already were friends at time1 (glasgow1). Furthermore two individuals 
 time1 (smoke1). There is no effect for both having scored the same on sport1. 
 
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with {help nwproject}.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, and undirected networks are not collapsed to unique dyads - both
-{it:(i,j)} and {it:(j,i)} appear as separate observations in the dyad-level dataset (for an
-undirected network they carry the same value, so this does not bias point estimates, but it does
-mean the reported "Number of obs" and any raw regression standard errors reflect double-counted
-dyads; QAP's own permutation-based p-values, not these raw standard errors, are what {cmd:nwqap}
-actually reports). Weighted: {bf:W3}, explicit binary-only for the dependent network under the
-default (and any other binary-outcome) {opt type()} - {help logit}, {help probit}, {help cloglog},
-and {help scobit} all treat any nonzero value as a positive outcome (this is those commands' own
-documented behavior, not something {cmd:nwqap} does intentionally) - so a valued/weighted
-dependent network's tie strength is silently discarded by the chosen regression command unless a
-continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} now warns
-explicitly when this combination is detected, rather than leaving it silent. Independent networks
-and variables are not affected - their values enter the regression directly, weighted or not.
-Signed: not checked. Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with {help nwproject}. A full weighted-QAP alternative (rather than a warning)
-remains on the roadmap as a larger follow-on.
-
-
 {title:Stored results}
 
 {pstd}
@@ -241,36 +245,29 @@ stores the dyad-level fitted values of the last model as a new valued network (t
 {opth predict(newnetname)} at estimation time; the values are kept in memory until the next
 {cmd:nwqap}, and {cmd:predict} takes no variable name, {cmd:if}, {cmd:in} or options).
 
-	Scalars
-	  {bf:e(N)}		number of dyad-level observations
-	  {bf:e(permutations)}	number of QAP permutations
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:e(N)}}number of dyad-level observations{p_end}
+{synopt:{bf:e(permutations)}}number of QAP permutations{p_end}
 
-	Macros
-	  {bf:e(cmd)}		{bf:nwqap}
-	  {bf:e(title)}		title of estimation
-	  {bf:e(depvar)}	name of dependent network
-	  {bf:e(qap_regcmd)}	regression command used ({bf:type()})
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:e(cmd)}}{bf:nwqap}{p_end}
+{synopt:{bf:e(title)}}title of estimation{p_end}
+{synopt:{bf:e(depvar)}}name of dependent network{p_end}
+{synopt:{bf:e(qap_regcmd)}}regression command used ({bf:type()}){p_end}
+{synopt:{bf:e(predict)}}{bf:nwqap_p}, program used by {cmd:predict} (only when {bf:type()} has a default prediction){p_end}
+{synopt:{bf:e(fit_directed)}}{bf:true} or {bf:false}, direction of the network {cmd:predict} creates (as {bf:e(predict)}){p_end}
+{synopt:{bf:e(fit_labs)}}node labels of the network {cmd:predict} creates (as {bf:e(predict)}){p_end}
 
-	Matrices
-	  {bf:e(b)}		coefficient vector
-	  {bf:e(V)}		diagonal matrix of QAP-permutation coefficient variances
-	  {bf:e(pvalues)}	matrix with QAP p-values, in the same column order as {bf:e(b)}
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:e(b)}}coefficient vector{p_end}
+{synopt:{bf:e(V)}}diagonal matrix of QAP-permutation coefficient variances{p_end}
+{synopt:{bf:e(pvalues)}}matrix with QAP p-values, in the same column order as {bf:e(b)}{p_end}
 
-{title:Limits}
-
-{pstd}
-The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10
-ties per node, {cmd:type(regress)}, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB.
-Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
-
-{pstd}
-QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of {it:n}-by-{it:n}
-(10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a
-message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs it anyway.
 
 {title:See also}
 
 	{help nwergm}, {help nwpermute}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -9,6 +9,7 @@
 {p2col :nwlambda {hline 2}}Edge (line) connectivity matrix between all node pairs{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -30,6 +31,7 @@
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -49,6 +51,7 @@ symmetrized, binarized adjacency matrix - always undirected and binary, matching
 classical cohesive-subgroup command in this package ({help nwclique}, {help nwkplex}, {help nwnclique}, {help nwkcomponents} all make the identical choice, since none of these concepts
 has a standard directed/valued generalization in the literature). {it:lambda_ii} (self-comparison)
 is undefined and stored as missing.
+
 
 {marker lambdasets}{...}
 {title:Extracting lambda sets}
@@ -79,16 +82,15 @@ diagonal - {opt set_selfloop(1)} is needed before writing a real 0 there):
 		{cmd:. nwhierarchy, disnet(lam) linkage(singlelinkage) groups(2) generate(lamgroup)}
 
 {pstd}
-recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}} - confirmed directly
-in {cmd:cscripts/test_nwlambda.do}, not merely asserted.
+recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}}.
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Binary: yes (only) - similarity is computed from binary edge-connectivity; tie values are ignored.
-Directed: yes - automatically symmetrized first (edge connectivity has no standard directed
-generalization in the classical cohesive-subgroup literature, the same choice {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwkcomponents} already make). Weighted: not
-applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored. {bf:Two-mode:} same as for the bipartite graph read
+as a one-mode network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
+
 
 {title:Limits}
 
@@ -96,23 +98,26 @@ applicable. Signed: not applicable. Two-mode: same as for the bipartite graph re
 The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): {it:n}-1 maximum flows on the
 sparse network instead of {it:n}({it:n}-1)/2, each stopped as soon as it reaches the smaller degree of the two ends.
 The result is a dense {it:n}-by-{it:n} valued network, which is what takes the memory: it is held twice while the network is
-registered (20,000 nodes: 30 seconds and 6.5 GB; killed at 12 GB before, when it was held four times).
-Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds
-(the previous version did not finish in 3 minutes at 300 nodes).
+registered (20,000 nodes: 30 seconds and 6.5 GB).
+Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds.
 
-{title:Stored results}
-
-	Scalars
-	  {bf:r(nodes)}		number of nodes
-
-	Macros
-	  {bf:r(netname)}	name of the new connectivity network
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwlambda flomarriage}
 	{cmd:. nwsummarize lambda, matonly}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(nodes)}}number of nodes{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the new connectivity network{p_end}
+
 
 {title:References}
 
@@ -126,11 +131,10 @@ Menger, K. (1927). Zur allgemeinen Kurventheorie. {it:Fundamenta Mathematicae} 1
 {pstd}
 The result is an {it:n}-by-{it:n} network and two matrices are held at once: above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it anyway.
 
+
 {title:See also}
 
 	{help nwkcomponents}, {help nwcohesion}, {help nwhierarchy}, {help nwclique}, {help nwkplex}
 
-last certified : 31 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

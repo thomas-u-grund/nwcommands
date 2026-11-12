@@ -29,7 +29,7 @@
 {title:Description}
 
 {pstd}
-Returns the triad census of the network (or a list of networks). This is a way to characertize a network based on its triads.
+Returns the triad census of the network. This is a way to characterize a network based on its triads.
 
 {pstd}
 Each unique triad (triple of nodes {it:i}, {it:j}, and {it:k})
@@ -37,7 +37,7 @@ in a directed network can be one of the following:
 
 	003  = i,j,k, empty triad.
 	012  = i->j, k, triad with a single directed edge.
-	102  = i<->j, k, triad with a reciprocated connection between two vertices.
+	102  = i<->j, k, triad with a reciprocated tie between two vertices.
 	021D = i<-j->k, triadic out-star.
 	021U = i->j<-k triadic in-star.
 	021C = i->j->k, directed line.
@@ -64,26 +64,13 @@ network it draws the four types an undirected network can have (003, 102, 201, 3
 {help nwdyads} has the same option for the dyad census.
 
 
-{title:Valued networks}
+{title:Network types}
 
 {pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nwclustering} (its default on a two-mode network).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN
-classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command
-still runs, but 12 of the 16 categories (everything except {bf:_003}/{bf:_102}/{bf:_201}/{bf:_300})
-are not meaningful for undirected data and reliably return 0, since an undirected network
-has no asymmetric ties by construction - {cmd:nwtriads} prints a note to this effect when called on
-an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous
-count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph ({cmd:igraph::triad_census}); it has no triangle, so the transitivity is 0; closure in a two-mode network is {help nwclustering} (its default on a two-mode network).
+{bf:Directed:} the census is defined for directed networks; on an undirected one only {bf:_003}, {bf:_102}, {bf:_201}
+and {bf:_300} can be non-zero (with a note). {bf:Valued:} tie values are ignored (with a note). {bf:Two-mode:} same as
+for the bipartite graph read as a one-mode network (no triangles; transitivity 0; use {help nwclustering}).
+{bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
@@ -93,7 +80,7 @@ The census is counted in the compiled graph plugin (the native kernel of {cmd:nw
 and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, {it:Social Networks} 23: 237-243): triads with at least two ties are
 enumerated from the neighbours of each node, the empty triads {bf:_003} are obtained by subtraction. Measured in Stata/BE,
 random directed network with 10 ties per node: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 1 second
-(the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads {bf:r(_003)} is an exact integer.
+(the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads {bf:r(_003)} is an exact integer.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
@@ -127,25 +114,23 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 {txt}This example shows, e.g. that in the {it:glasgow3} network, there are 12 triads where all nodes {it:i}, {it:j} and {it:k} are directely connected with each other.
 
 
-{title:Stores results}
+{title:Stored results}
 
-	Scalars:
-		{bf:r(_003)}	empty triad
-		{bf:r(_012)}	triad with one asymmetric dyad and two null dyads.
-		...
-		{bf:r(_300)}	complete triad
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(_003)}}number of empty triads{p_end}
+{synopt:{bf:r(_012)}, {bf:r(_102)}, ...}number of triads of each of the other MAN types listed above ({bf:r(_021D)}, {bf:r(_021U)}, {bf:r(_021C)},
+{bf:r(_111D)}, {bf:r(_111U)}, {bf:r(_030T)}, {bf:r(_030C)}, {bf:r(_201)}, {bf:r(_120D)}, {bf:r(_120U)}, {bf:r(_120C)}, {bf:r(_210)}){p_end}
+{synopt:{bf:r(_300)}}number of complete triads{p_end}
+{synopt:{bf:r(transitivity)}}transitivity (global clustering coefficient, see {help nwclustering}); 0 for a two-mode network{p_end}
 		
-	Macros:
-		{bf:r(name)}	name of the network
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(name)}}name of the network (alias: {bf:r(netname)}){p_end}
 		
 		
 {title:See also}
 
 	{help nwdyads}
 
-
-
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

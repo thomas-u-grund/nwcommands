@@ -40,22 +40,15 @@ ds_options]
 . nwds, alpha
 ```
 
-## Supported network types
-
-Not applicable - a pure network-listing utility (in the style of Stata's own `ds`); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
-
 ## Stored results
 
-**Macros**
-
-- **r(netlist)** the exact list of network names shown
+- **Macros**
+- **r(netlist)** --- the exact list of network names shown
 
 ## See also
 
 - `ds`, [nwcurrent](nwcurrent), [nwclear](nwclear)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

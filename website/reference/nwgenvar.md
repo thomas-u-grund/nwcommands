@@ -41,10 +41,6 @@ Generate a new network with a network function:
 . nwsummarize newnet
 ```
 
-## Supported network types
-
-Not applicable to `nwgenvar` itself - a dispatcher/shortcut layer over [nwgenerate](nwgenerate); the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn1*/*netfcn2* shortcut or network expression is invoked - see that function's own help topic.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

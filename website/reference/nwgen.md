@@ -47,10 +47,6 @@ Generate a new network with a network expression:
 . nwsummarize bus_marr, matonly
 ```
 
-## Supported network types
-
-Not applicable to `nwgen` itself - a dispatcher/shortcut layer over [nwgenerate](nwgenerate) (and, for `mean(alter.`*srcvar*`)`-style expressions, [nwaltergen](nwaltergen)); the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn1*/*netfcn2* shortcut or network expression is invoked - see that function's own help topic.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

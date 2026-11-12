@@ -26,22 +26,16 @@ replace]
 |---|---|
 | `name(newnetname)` | Save as new network; default *_shared* |
 | `undirected` | Treat all ties as undirected for calculation |
-| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (alias: `nwreplace`, kept for backward compatibility - most sibling generators in this package instead spell this `replace`) |
+| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (alias: `nwreplace`) |
 
 ## Description
 
 This command calculates for each connected pair of nodes (i,j) the number of nodes k that both i and j have as shared neighbors.
 
-## Supported network types
-
-Binary: yes (only) - shared-tie/exposure counting is a structural property, tie values are ignored (via [nwsym](nwsym)'s own binarizing `generate()` path). Directed: requires `undirected` to symmetrize first; on a directed network without it the command stops with error 198. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## See also
 
 - [nwsimmelian](nwsimmelian)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

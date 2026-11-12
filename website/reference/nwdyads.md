@@ -16,8 +16,15 @@ Dyad census
 ```stata
 nwdyads 
 [netname]
-netname may be a list of networks or a wildcard such as lazega_*, as in nwsummarize; the census is shown for each network and the r() results are those of the last one.
+[,
+plot
+name(string)]
 ```
+
+| | |
+|---|---|
+| `plot` | Draw the dyad types as small pictures with their counts |
+| `name(string)` | Name for the graph created by `plot`; default = **dyads** |
 
 ## Description
 
@@ -29,7 +36,7 @@ In directed networks, each dyad (pair of nodes *i* and *j*) can be one of the fo
 
 2) A: asymmetrically connected: *M_ij = 1*, but *M_ji = 0*
 
-3) N: not connected at all: *M_ij = M_ji = 1*
+3) N: not connected at all: *M_ij = M_ji = 0*
 
 In undirected network, each dyad (pair of nodes *i* and *j*) can be one of the following:
 
@@ -53,6 +60,8 @@ The command also returns the reciprocity of the network.
 -----------+-----------
         20 |       100
 
+. nwdyads flomarriage, plot
+
 . nwwebuse glasgow
 . nwdyads glasgow3
 
@@ -63,27 +72,22 @@ The command also returns the reciprocity of the network.
         45 |        32 |      1148
 ```
 
-## Supported network types
-
-Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
-
 ## Stored results
 
-- Scalars:
-- **r(_100)** mutual dyads
-- **r(_010)** asymmetric dyads
-- **r(_001)** null dyads
-- **r(reciprocity)** M / (M + A)
+- **Scalars**
+- **r(_100)** --- mutual dyads
+- **r(_010)** --- asymmetric dyads
+- **r(_001)** --- null dyads
+- **r(reciprocity)** --- M / (M + A)
 
-- Macros:
-- **r(name)** name of network
+- **Macros**
+- **r(name)** --- name of network
+- **r(netname)** --- name of network (same as **r(name)**)
 
 ## See also
 
 - [nwtriads](nwtriads)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

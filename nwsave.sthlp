@@ -9,6 +9,7 @@
 {p2col :nwsave  {hline 2}}Save network data in a file{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -29,16 +30,30 @@
 {title:Description}
 
 {pstd}
-{bf:nwsave} saves all networks (and Stata variables) currently in memory on disk. Since version 2.1 the
+{bf:nwsave} saves all networks (and Stata variables) currently in memory on disk. The
 command saves data in its own file format {bf:.nwdta}. Network data saved in this way
 can be loaded with {help nwuse}. Notice that the command {help save} does not save
 network data.
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - the file holds the ties between the two modes only (the pairs of nodes inside one mode are not stored), the mode of every node and the node attributes, so a network with 5,000 + 500 nodes takes about a megabyte; {help nwuse} restores the same network. Files written by earlier versions (which listed every pair of nodes) are still read by {cmd:nwuse}, and files written now can be read by earlier versions.
+{bf:Directed:}, {bf:Valued:}, {bf:Signed:} stored as they are. {bf:Two-mode:} yes - the file holds the ties between
+the modes only, the mode of every node and the node attributes (5,000 + 500 nodes take about a megabyte). See
+{help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+A network is stored as its list of ties, so the file of a large network is small (a two-mode network of 5,092 + 455 nodes and 5,669 ties takes 1.2 MB).{p_end}
+{pstd}
+Networks of different sizes can be saved in one file and come back with their own sizes. The node attributes (the Stata variables) are one table for the whole file, one row per node, so they belong to
+the networks only if the networks have the same nodes; keep attributes of different groups in separate files.{p_end}
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 
 {title:Examples}
         
@@ -53,21 +68,11 @@ This example creates 5 new random networks and {help nwsave:saves} them as {it:m
 After this, one can easily load these 5 networks in a new Stata session just as if one would load a normal Stata dataset. 
 
         {cmd:. nwuse mynets}
-        
 
-{title:Limits}
-
-{pstd}
-A network is stored as its list of ties, so the file of a large network is small (a two-mode network of 5,092 + 455 nodes and 5,669 ties takes 1.2 MB).
-{pstd}
-Networks of different sizes can be saved in one file and come back with their own sizes. The node attributes (the Stata variables) are one table for the whole file, one row per node, so they belong to the networks only if the networks have the same nodes; keep attributes of different groups in separate files.
-{pstd}
-For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
 
         {help nwuse}, {help nwwebuse}, {help save}
-last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

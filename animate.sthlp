@@ -21,7 +21,7 @@
 {opt graphs(_all | g1 g2 g3...)}
 [{opt imagickpath(path)} {opt delay(#)} {opt noloop} {opt showcommand} {opt keepeps}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 28 tabbed}{...}
 {synopthdr}
 {synoptline}
 {syntab:Required}
@@ -29,7 +29,7 @@
 {synoptline}
 {syntab:Optional}
 {synopt:{opt imagickpath(path)}}path of ImageMagick{p_end}
-{synopt:{opt delay(#)}}milliseconds between frames{p_end}
+{synopt:{opt delay(#)}}delay between frames in hundredths of a second; default is {cmd:delay(50)}{p_end}
 {synopt:{opt noloop}}no loop of movie{p_end}
 {synopt:{opt showcommand}}display ImageMagick command{p_end}
 {synopt:{opt keepeps}}keep .eps files{p_end}
@@ -40,7 +40,8 @@
 {title:Description}
 
 {pstd}
-{cmd:animate} produces .eps files for each graph and adds them together to an animated-gif {help filename}. Command requires {net "http://www.imagemagick.org/":ImageMagick} to be installed on the computer.
+{cmd:animate} produces .eps files for each graph and adds them together to an animated-gif {help filename}. Command requires {net "http://www.imagemagick.org/":ImageMagick} to be installed on the
+computer.
 
 
 {title:Examples}
@@ -53,4 +54,4 @@
 {cmd:. animate lifemovie, graphs(_all)}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

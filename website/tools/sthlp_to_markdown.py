@@ -392,10 +392,10 @@ def paragraphs_to_md(raw: str) -> str:
         if label_i in ("", "o"):
             if desc_i:
                 list_buf.append(f"- {desc_i}")
-        elif desc_i:
-            list_buf.append(f"- **{label_i}** --- {desc_i}")
         else:
-            list_buf.append(f"- **{label_i}**")
+            # a label that is already bold ({bf:...}) would otherwise become ****label****
+            lab = label_i if (label_i.startswith("**") and label_i.endswith("**")) else f"**{label_i}**"
+            list_buf.append(f"- {lab} --- {desc_i}" if desc_i else f"- {lab}")
 
     for line in lines:
         stripped = line.strip()

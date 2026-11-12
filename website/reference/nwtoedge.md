@@ -22,7 +22,13 @@ altervars(varlist)
 ego(newvarname)
 alter(newvarname)
 comparevars(varlist)
-comparemode(mode)]
+comparemode(mode)
+compress
+full
+upper
+numeric
+ignore2mode
+all:pairs]
 ```
 
 | | |
@@ -36,10 +42,10 @@ comparemode(mode)]
 | `compress` | Compress edgelist |
 | `full` | List both *(i,j)* and *(j,i)* for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a [netlist](netlist) is directed |
 | `upper` | List only one entry per undirected dyad (the default; see `full` above) - has no effect and is suppressed with a warning on a directed network |
-| `numeric` | Return every possible node pair (a full node x node grid), not just actual ties; only allowed with a single network |
+| `numeric` | Programming option: replace the node names in *ego* and *alter* with the node numbers of a full node x node grid (for the list of all dyads); only allowed with a single network |
 | `ignore2mode` | Treat a two-mode network like a one-mode one - suppress the mode indicator that would otherwise be added to `egovars()`/`altervars()` automatically |
 | `isolates0` | reserved; not currently implemented |
-| `allpairs` | Two-mode network: also write the pairs of nodes of different modes without a tie (by default a two-mode network is written as its ties, as with `compress`) |
+| `all:pairs` | Two-mode network: also write the pairs of nodes of different modes without a tie (by default a two-mode network is written as its ties, as with `compress`) |
 
 ## Description
 
@@ -124,18 +130,10 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 . nwtoedge glasgow1, comparevars(sport1) comparemode(dist)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - one row for every tie between the two modes (the pairs without a tie only with `allpairs`) and the mode of both nodes; read back with [nwfromedge](nwfromedge), `twomode` or [nw2fromedge](nw2fromedge) the list gives the same network.
-
-When converting a single network, this command also attaches that network's own full node list to the resulting dataset as a hidden characteristic (no visible extra rows/variables) - purely so a later [nwfromedge](nwfromedge) call on this same edgelist can restore any isolate (zero-tie node) that an edgelist, by construction, cannot represent as a row of its own. See [nwfromedge](nwfromedge)'s own **Supported network types** section for the other half of this.
-
 ## See also
 
 - [nwfromedge](nwfromedge), [nw2toedge](nw2toedge), [nwsave](nwsave), [nwexpand](nwexpand)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

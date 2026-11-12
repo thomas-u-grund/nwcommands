@@ -9,6 +9,7 @@
 {p2col :nwimport  {hline 2}}Import a network from a Pajek, UCINET, GML or edge list file{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -67,7 +68,8 @@
 		{p_end}		
 {p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
 		{p_end}			
-		
+
+
 {title:Description}
 
 {pstd}
@@ -91,27 +93,15 @@ without downloading a local copy first, e.g.:
 {phang}
 {cmd:. nwimport "https://nwcommands.org/examples/edgelist_example.txt", type(edgelist)}{p_end}
 
-{marker twomode}{...}
-{title:Two-mode networks}
-
-{pstd}
-The four formats written by {help nwexport} come back as a two-mode network (Pajek {cmd:*Vertices n n1}, a rectangular UCINET matrix, the five-column edge list, GML with the attribute {cmd:nwmode}); the level labels written by {help nwexport} come back (Pajek comment line, GML graph attributes {cmd:nwmodelabel1} and {cmd:nwmodelabel2}, edge list columns; not UCINET); a file that declares a two-mode network but has a tie inside a mode is refused (error 459).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
-{bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
-values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
-values are negative. Two-mode: yes (see {help nwimport##twomode:Two-mode networks} above).
 
 {marker ucinet}{...}
 {title:Import Ucinet DL format}
 
 {pstd}
-{cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
+{cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, lowerhalf, edgelist1, nodelist1}. It also supports
 multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. A rectangular matrix (nr
-rows, nc columns, format fullmatrix, with row labels and col labels) is read as a two-mode network, the rows being the first mode. For a detailed description of the Ucinet .dl file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/UCINET_DL_Format/":here}
+rows, nc columns, format fullmatrix, with row labels and col labels) is read as a two-mode network, the rows being the first mode. For a detailed description of the Ucinet .dl file format see
+{browse "https://docs.gephi.org/desktop/User_Manual/Import/UCINET_DL_Format/":here}
 or the {browse "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf":Ucinet manual}.
 
 {phang}
@@ -179,7 +169,7 @@ or the {browse "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf":Ucinet
 	billy george
 	jane jim
 
-	
+
 {marker pajek}{...}
 {title:Import Pajek .net format}
 
@@ -187,7 +177,6 @@ or the {browse "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf":Ucinet
 {cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}, with vertex
 labels read from the file's own {it:*Vertices} block. Two-mode networks are not supported. For a detailed description of the
 Pajek .net file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/Pajek_NET_Format/":here}.
-
 
 
 {marker matrix}{...}
@@ -242,7 +231,8 @@ variables are treated as attributes.
 	1,0,0,0, male
 	0,0,0,1, female
 	0,1,0,0, male
-	
+
+
 {marker edgelist}{...}
 {title:Import raw edgelist}
 
@@ -265,6 +255,7 @@ in Stata, {help nwfromedge} generates a network. Node labels can be embedded in 
 	susan,thomas3
 	geoff,john,2
 
+
 {marker compressed}{...}
 {title:Import compressed edgelist}
 
@@ -285,5 +276,15 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 	susan
 	geoff,john,michael
 
+
+{marker twomode}{...}
+{title:Network types}
+
+{pstd}
+{bf:Directed:} detected from the file; {opt forcedirected} / {opt forceundirected} override it. {bf:Valued:} tie
+values are read where the format has them. {bf:Two-mode:} yes - the formats written by {help nwexport} come back as
+two-mode networks with level labels (not UCINET); a tie inside a mode is refused (error 459). {bf:Signed:} yes. See
+{help nwnetworktypes}.{p_end}
+
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

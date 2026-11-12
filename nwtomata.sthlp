@@ -30,7 +30,7 @@
 {title:Description}
 
 {pstd}
-This creates a Mata matrix with name {it:matatamatrix} holding a copy of the adjacency matrix of a network.
+This creates a Mata matrix with name {it:matamatrix} holding a copy of the adjacency matrix of a network.
 
 {pstd}
 You do not need to know Mata to use any of the nwcommands, but sometimes you might want to obtain the 
@@ -52,10 +52,10 @@ and not with a copy of it, see {help nwprogramming##modernprogramming:advanced n
 
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a plain copy of the raw adjacency matrix exactly as stored, independent of any of these properties.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:Example}
 
@@ -73,9 +73,18 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns 
 	  {c BLC}{hline 21}{c BRC}
 
 	  
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the network{p_end}
+{synopt:{bf:r(adj_copy)}}name of the new Mata matrix{p_end}
+{synopt:{bf:r(adj)}}Mata expression for the network's own matrix (see {help nwtomatafast}){p_end}
+{synopt:{bf:r(netobj)}}name of the Mata network object{p_end}
+
 {title:See also}
 
 	{help nwtomatafast}, {help nwload}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

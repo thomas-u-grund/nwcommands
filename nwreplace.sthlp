@@ -37,15 +37,6 @@ One can also replace tie values in networks by 1) loading a network as Stata var
 One can also change the entire adjaceny matrix of a network with an existing Mata matrix using {help nwreplacemat}.
 
 
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - a replaced value is written to the exact (ego,alter) cell addressed, respecting direction. Weighted: yes, natively - this command's entire purpose is writing arbitrary tie values via an expression. Signed: yes, any value including negative can be assigned. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{pstd}
-{bf:Undirected networks - important}: a bracket write such as {bf:nwreplace mynet[2,1] = 55} addresses EXACTLY the (2,1) cell - it does NOT also write the mirror (1,2) cell, even though {it:mynet} is declared undirected. Writing only one side of a pair can leave the network's own stored matrix genuinely asymmetric while it still reports {bf:directed: false} (this is deliberate - {help nwreplace} never forces symmetry on your behalf, the same way {help nwreplacemat}'s own underlying {bf:set_edge()} never does either). If you want a symmetric edit, write both cells explicitly ({bf:nwreplace mynet[2,1] = 55} then {bf:nwreplace mynet[1,2] = 55}), or use {help nwreplacemat}/{help nwsym} to replace or symmetrize the whole matrix at once. Most analysis commands read an undirected network through an accessor that symmetrizes on the fly (taking the max of both directions) and so never notice a one-sided asymmetry left this way - but any command working directly off the network's own stored ties (rather than through that accessor) will see the asymmetry exactly as written.
-
 {title:Assign values}
 
 {pstd}
@@ -131,7 +122,8 @@ one can use a network expression which performs element-by-element calculations:
 	5 {c |}  {res}5   5   5   5   .    {txt}  {c |}
 	6 {c |}  {res}5   5   5   5   5   .{txt}  {c |}
 	  {c BLC}{hline 25}{c BRC}
-	  
+
+
 {marker conditions}	  
 {title: Network conditions}
 
@@ -146,7 +138,7 @@ For networks different conditions can be used:
 
 {pstd}
 The first one evaluates the following expression as a network expression (which generates a new temporary network).
-For example, this code replaces the {it:first} network with the values of the {it:}second network, but only for the ties where
+For example, this code replaces the {it:first} network with the values of the {it:second} network, but only for the ties where
 the {it:third} network is 1. When instead of a network expression a normal expression is given, the if condition 
 acts in the same way as the ifego condition.
 
@@ -160,7 +152,7 @@ acts in the same way as the ifego condition.
  {pstd}
  The {bf:ifego} {help exp} condition only replaces those dyads x_ij where the expression is true
  for x_i (the {it:sender} of a tie). For example, this code only multiplies the tie values of a network where the sender of a tie
- has a _nodeid < 5.
+ is node 4 or higher ({bf:_n > 3}).
 
 	{bf:. nwclear}
 	{bf:. nwrandom 6, prob(1) name(mynet)}
@@ -218,20 +210,34 @@ All network expressions, network subsetting and network conditions can be combin
 	{bf:. gen attr= _n * 2}
 	{bf:. nwreplace first[(1::3),(1::3)]  = exp(second) * attr ifego _n >= 5 ifalter attr < 4 if third == 1}
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(symmetric)}	1 if the network's updated adjacency matrix is symmetric, 0 otherwise
-	  {bf:r(valued)}	1 if the network is valued, 0 otherwise
+{title:Network types}
+
+{pstd}
+{bf:Directed:} a bracket write sets exactly the cell addressed, also on an undirected network
+({bf:nwreplace mynet[2,1] = 55} does not write cell (1,2); write both cells or use {help nwsym}). {bf:Valued:},
+{bf:Signed:} any value can be assigned. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. See
+{help nwnetworktypes}.{p_end}
+
 
 {title:Limits}
 
 {pstd}
-{cmd:nwreplace} evaluates an expression over the whole {it:n}-by-{it:n} network and holds three such matrices; above about 22,000 nodes (12 GB) it stops at once with r(484). Use {help nwrecode} or {help nwdichotomize} to change tie values, {help nwfromedge} or {help nwset} to add or remove ties, {help nwsubset} to work on a part of the network.
+{cmd:nwreplace} evaluates an expression over the whole {it:n}-by-{it:n} network and holds three such matrices; above about 22,000 nodes (12 GB) it stops at once with r(484). Use {help nwrecode} or
+{help nwdichotomize} to change tie values, {help nwfromedge} or {help nwset} to add or remove ties, {help nwsubset} to work on a part of the network.
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(symmetric)}}1 if the network's updated adjacency matrix is symmetric, 0 otherwise{p_end}
+{synopt:{bf:r(valued)}}1 if the network is valued, 0 otherwise{p_end}
+
 
 {title:See also}
 
 	{help nwreplacemat}, {help nwsync}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

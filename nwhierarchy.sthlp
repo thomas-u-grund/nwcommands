@@ -9,6 +9,7 @@
 {p2col :nwhierarchy {hline 2}}Hierarchical clustering of nodes (role/position analysis){p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -19,20 +20,20 @@
 {opt type}({it:{help nwdissimilar##type:type}})
 {opt linkage}({it:{help cluster linkage:linkage}})
 {opth groups(int)}
-{opth equivgen(newvarname)}
+{opth equiv:gen(newvarname)}
 {opt replace}]
 
 {p 8 17 2}
 {cmdab: nwhierarchy}
 {cmd:,}
 {opt dismat(matname)}
-[{opt linkage}({it:{help cluster linkage:linkage}}) {opth groups(int)} {opth equivgen(newvarname)} {opt replace}]
+[{opt linkage}({it:{help cluster linkage:linkage}}) {opth groups(int)} {opth equiv:gen(newvarname)} {opt replace}]
 
 {p 8 17 2}
 {cmdab: nwhierarchy}
 {cmd:,}
 {opth disnet(netname)}
-[{opt linkage}({it:{help cluster linkage:linkage}}) {opth groups(int)} {opth equivgen(newvarname)} {opt replace}]
+[{opt linkage}({it:{help cluster linkage:linkage}}) {opth groups(int)} {opth equiv:gen(newvarname)} {opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -41,9 +42,13 @@
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt linkage}({it:{help cluster linkage:linkage}})}Clustering linkage method (e.g. {cmd:singlelinkage}, {cmd:averagelinkage}, {cmd:completelinkage}); default = {cmd:singlelinkage}{p_end}
 {synopt:{opth groups(int)}}Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable{p_end}
-{synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates. {bf:Required whenever {opth groups(int)} is specified} - give exactly one of {opt generate()} or {opt equivgen()} (they are the same option; alias {opt generate()} matches {help nwcommunity}/{help nwspectral}'s own naming in this same group), not both. Has no effect, and is not required, without {opth groups(int)}{p_end}
-{synopt:{opt replace}}Replace an existing {opth equivgen(newvarname)} variable{p_end}
+{synopt:{opth equiv:gen(newvarname)}}Name of the variable {opth groups(int)}
+generates. {bf:Required whenever {opth groups(int)} is specified} - give exactly one of {opt generate()} or {opt equivgen()}
+(they are the same option; alias {opt generate()} matches {help nwcommunity} / {help nwspectral}'s own naming in this same group), not both. Has no effect, and is not required, without
+{opth groups(int)}{p_end}
+{synopt:{opt replace}}Replace an existing {opth equiv:gen(newvarname)} variable{p_end}
 {synopt:{opt force}}Cluster a network with more than 6,000 nodes (without {opt dismat()}){p_end}
+{synopt:{it:clustermat_options}}Any other option (e.g. {opt add} or {opt clear}) is passed on to {help clustermat}; {opt add} is used when neither {opt add} nor {opt clear} is given{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -63,13 +68,15 @@
 {p2col:{cmd: incoming}}Calculate dissimilarity between nodes based on incoming ties only{p_end}
 {p2col:{cmd: outgoing}}Calculate dissimilarity between nodes based on outgoing ties only{p_end}
 
+
 {title:Description}
 
 {pstd}
 {cmd:nwhierarchy} performs hierarchical clustering of a network's nodes based on their pairwise
 structural dissimilarity (by default, computed the same way {help nwdissimilar} computes it - see
 that command's own {opt type()}/{opt context()} options, which {cmd:nwhierarchy} passes straight
-through) and returns a Stata {help cluster:cluster analysis} object built via {help clustermat}. The default linkage is {bf:single} ({cmd:singlelinkage}); single linkage tends to chain nodes into one large cluster, so consider {opt linkage(averagelinkage)} or {opt linkage(completelinkage)}.
+through) and returns a Stata {help cluster:cluster analysis} object built via {help clustermat}. The default linkage is {bf:single} ({cmd:singlelinkage}); single linkage tends to chain nodes into one
+large cluster, so consider {opt linkage(averagelinkage)} or {opt linkage(completelinkage)}.
 
 {pstd}
 {opt dismat()}, {opt disnet()}, and {opt type()}/{opt context()} are three alternative ways to supply
@@ -89,24 +96,32 @@ partition here is by structural role rather than by connectivity.
 
 {pstd}
 {opth groups(int)}, when specified, additionally cuts the dendrogram into exactly that many groups
-(via Stata's own {cmd:cluster generate ..., groups()}) and stores the result in {opth equivgen(newvarname)}
+(via Stata's own {cmd:cluster generate ..., groups()}) and stores the result in {opth equiv:gen(newvarname)}
 (or its {opt generate()} alias - one of the two is then required) - one call in place of first working out {cmd:clustermat}'s own auto-generated
 cluster-object name (never itself returned in {cmd:r()}, so it cannot otherwise be recovered
 programmatically) and then calling {cmd:cluster generate} by hand. Without {opth groups(int)}, {cmd:nwhierarchy}
-behaves exactly as before - only the cluster object itself is created (usable with {help cluster} and
+creates only the cluster object itself (usable with {help cluster} and
 {help clustermat}'s own full postestimation suite, e.g. {help nwdendrogram} or {cmd:cluster dendrogram}
 directly), and no {it:_role}-style variable is generated.
 
-{title:Stored results}
+
+{title:Network types}
 
 {pstd}
-{cmd:nwhierarchy} is {cmd:rclass}. The following are only set when {opth groups(int)} is specified:
+As for {help nwdissimilar} with {opt context()} / {opt type()}; a matrix from {opt dismat()} or {opt disnet()} is used
+as given (not checked to be a dissimilarity matrix). {bf:Two-mode:} not supported (error 6088; use {help nwproject}
+first). See {help nwnetworktypes}.{p_end}
 
-	Scalars
-	  {bf:r(groups)}		number of role/position groups requested
 
-	Macros
-	  {bf:r(rolevar)}		name of the generated role/position variable
+{title:Limits}
+
+{pstd}
+The hierarchical clustering is Stata's {cmd:clustermat} on the dense dissimilarity matrix. Measured in Stata/BE, random
+directed network with 10 ties per node: 1,000 nodes 3 seconds, 2,000 nodes 16 seconds, 3,000 nodes 45 seconds, 5,000 nodes 170
+seconds (the dissimilarities themselves take 1 second). 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484)
+unless {opt force} is given (Stata keeps the dissimilarity matrix as a Stata matrix, at most 11,000 rows in Stata/BE).
+{help nwdendrogram} of such a clustering adds the time of the plot.
+
 
 {title:Examples}
 
@@ -127,37 +142,24 @@ Using a specific dissimilarity type/context, and a custom variable name:
 
 	{cmd:. nwhierarchy flomarriage, type(hamming) context(outgoing) groups(3) equivgen(role3)}
 
-{title:Two-mode networks}
+
+{title:Stored results}
 
 {pstd}
-Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}, or cluster the same-mode profiles of {help nwdissimilar}.
+{cmd:nwhierarchy} is {cmd:rclass}. The following are only set when {opth groups(int)} is specified:
 
-{title:Supported network types}
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(groups)}}number of role/position groups requested{p_end}
 
-{pstd}
-Same network-type support as the underlying dissimilarity computation - see
-{help nwdissimilar:nwdissimilar}'s own "Supported network types" section when using the
-default {opt context()}/{opt type()} form. The {opt dismat()} and {opt disnet()}
-forms bypass {cmd:nwdissimilar} entirely and use whatever matrix/network you supply directly -
-{cmd:nwhierarchy} does not itself validate that it is a genuine dissimilarity matrix (symmetric,
-zero diagonal, nonnegative). Stata's own {help clustermat} (which does the actual clustering)
-requires a matrix with no missing values, including on the diagonal. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}, or cluster the same-mode profiles of {help nwdissimilar}.
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(rolevar)}}name of the generated role/position variable{p_end}
 
-{title:Limits}
-
-{pstd}
-The hierarchical clustering is Stata's {cmd:clustermat} on the dense dissimilarity matrix. Measured in Stata/BE, random
-directed network with 10 ties per node: 1,000 nodes 3 seconds, 2,000 nodes 16 seconds, 3,000 nodes 45 seconds, 5,000 nodes 170
-seconds (the dissimilarities themselves take 1 second). 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484)
-unless {opt force} is given (Stata keeps the dissimilarity matrix as a Stata matrix, at most 11,000 rows in Stata/BE).
-{help nwdendrogram} of such a clustering adds the time of the plot.
 
 {title:See also}
 
 	{help nwdissimilar}, {help nwsimilar}, {help nwcomponents}, {help cluster}, {help clustermat},
 	{help nwdendrogram}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -38,17 +38,17 @@
 {opt labs}({it:lab1 lab2 ...})
 {opt xvars}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{it:{help int:nodes}}}number of nodes{p_end}
-{synopt:{opth k(int)}}number of neighhbors on ring-lattice on each side{p_end}
+{synopt:{opth k(int)}}number of neighbors on ring-lattice on each side{p_end}
 {synopt:{opth prob(float)}}probability for a tie to rewire{p_end}
 {synopt:{opth shortcuts(int)}}exact number of ties to rewire{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
-{synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:small}{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
@@ -85,16 +85,19 @@ probability 0.3 and tie weight 3 with probability 0.7.
 {txt}
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()}, independent of the small-world rewiring mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+{bf:Directed:} directed by default; {opt undirected} gives an undirected network. {bf:Valued:} {opt weights()} draws tie
+values. {bf:Two-mode:} not applicable - the command always creates a one-mode network. {bf:Signed:} not checked. See
+{help nwnetworktypes}.{p_end}
 
-{title:References}
+
+{title:Limits}
 
 {pstd}
-Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' networks. {it:Nature}
-393(6684), 440-442.
+Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives
+the same network). 20,000 nodes with {opt k(5)}: 1 second. {opt weights()} uses the matrix.
 
 
 {title:Examples}
@@ -112,22 +115,26 @@ In the second example, there are exactly three shortcuts.
 	{cmd:. nwsmall 30, k(2) shortcuts(3) undirected}
 	{cmd:. nwplot, layout(circle)}
 
+
 {title:Stored results}
 
 	{bf:nwsmall} stores the following in {bf:r()}:
 
-	Macros
-	  {bf:r(netlist)}	list of new networks
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}list of new networks{p_end}
 
-{title:Limits}
+
+{title:References}
 
 {pstd}
-Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives
-the same network). 20,000 nodes with {opt k(5)}: 1 second (killed at 12 GB before). {opt weights()} still uses the matrix.
+Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' networks. {it:Nature}
+393(6684), 440-442.
+
 
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

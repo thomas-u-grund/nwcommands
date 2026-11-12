@@ -9,6 +9,7 @@
 {p2col :nwconcor {hline 2}}CONCOR structural-equivalence blockmodel{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -20,7 +21,8 @@
 {opth splits(int)}
 {opt measure(string)}
 {opth maxiter(int)}
-{opt silent}]
+{opt silent}
+{opt force}]
 
 
 {synoptset 25 tabbed}{...}
@@ -35,6 +37,7 @@
 {synopt:{opt force}}Run a network with more than 6,000 nodes{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -62,20 +65,33 @@ the actual number found.
 
 {pstd}
 {opt generate()} is required and names the new variable that stores, for each node, the id
-of the block it was assigned to.
+of the block it was assigned to. With more than one network in the {it:netlist}, a number is appended to the
+name ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...) and the stored results are those of the last network.
 
 {pstd}
 A node with no ties at all (in any direction) has no tie profile to compare against anyone else's,
 so {cmd:nwconcor} requires every node to have at least one tie; remove isolates first (see
 {help nwdropnodes}) if your network has any.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(blocks)}		number of blocks actually found (up to 2^{it:splits})
+{title:Network types}
 
-	Matrices
-	  {bf:r(block_sizeid)}		distribution over blocks
+{pstd}
+{bf:Directed:} directions are used (a node's profile stacks its outgoing and incoming ties). {bf:Valued:} the tie
+values are used by default ({opt measure(valued)}); {opt measure(binary)} uses only the presence of ties.
+{bf:Two-mode:} not supported (error 6088; use {help nwproject} first). {bf:Signed:} negative values are not treated
+specially. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each
+iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds,
+2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000
+nodes it stops with r(484) unless {opt force} is given. The correlation matrix is dense after the first iteration, so there
+is no sparse form of the method.
+
 
 {title:Examples}
 
@@ -87,6 +103,16 @@ so {cmd:nwconcor} requires every node to have at least one tie; remove isolates 
 	{cmd:. nwconcor flomarriage2, splits(2) generate(_concor) replace}
 
 
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(blocks)}}number of blocks actually found (up to 2^{it:splits}){p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(block_sizeid)}}distribution over blocks: one row per block with the columns size, blockid and share{p_end}
+
+
 {title:References}
 
 {pstd}
@@ -94,35 +120,9 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 applications to social network analysis and comparison with multidimensional scaling. {it:Journal of Mathematical Psychology} 12(3), 328-383.
 
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: not supported - error 6088; CONCOR of the bipartite graph would put nodes of both modes in the same block; make a one-mode network of one mode first with {help nwproject}.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - CONCOR is defined directly for directed data (a node's profile stacks
-its outgoing and incoming ties separately), unlike {help nwcommunity}, which requires
-{bf:symmetrize} for a directed network. Weighted: {opt measure(valued)} uses tie weights directly in
-the profile; {opt measure(binary)} uses presence/absence only; default follows the network's own
-weighted-ness, matching {help nwcommunity}'s convention. Signed: not checked - a negative tie
-weight participates in the profile and correlation arithmetic like any other value, but no dedicated
-signed-network semantics exist. Two-mode: not supported - error 6088; CONCOR of the bipartite graph would put nodes of both modes in the same block; make a one-mode network of one mode first with {help nwproject}. Isolates (nodes with no tie in any direction) are rejected explicitly with a clear
-error, not silently mishandled - see Description.
-
-{title:Limits}
-
-{pstd}
-Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each
-iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds,
-2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000
-nodes it stops with r(484) unless {opt force} is given. The correlation matrix is dense after the first iteration, so there
-is no sparse form of the method.
-
 {title:See also}
 
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

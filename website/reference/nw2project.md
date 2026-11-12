@@ -27,7 +27,7 @@ replace]
 | | |
 |---|---|
 | `project(1\|2)` | Mode/level to collapse to |
-| `name(newnetname)` | Name of the new one-mode network; default = *project* |
+| `name(newnetname)` | Name of the new one-mode network; default = *project*; when the name is in use and `replace` is not given, a new valid name is chosen (with a warning) |
 | `stat(min\|max\|minmax\|sum\|mean\|count\|binary\|jaccard\|cosine\|newman)` | How to combine tie values (or, for the last 5, how to score shared-neighbor structure directly; *newman* is the collaboration weight of Newman 2001, the sum over the shared nodes of the other mode of 1/(k - 1) with k the number of ties of the shared node, the weight of `tnet::projecting_tm`; for tie values the mean of tnet's two directions); default = *minmax* |
 | `xvars` | Generate Stata variables for the new network |
 | `replace` | Replace an existing network of the same name |
@@ -60,11 +60,11 @@ When the source network is **valued**, option **stat()** controls how the tie va
 - neighbor, then take the maximum of those minima across all shared neighbors -
 - substantively, the strongest shared bond
 
-The remaining four options score the **shared-neighbor structure itself** rather than combining tie values - they are defined the same way regardless of whether the source network is valued, and are available for a valued source network too (unlike the five above, which require one):
+The remaining five options score the **shared-neighbor structure itself** rather than combining tie values - they are defined the same way regardless of whether the source network is valued, and are available for a valued source network too (unlike the five above, which require one):
 
 - **stat(count)**
-- the number of shared neighbors - identical to the default behaviour on an
-- unvalued source network, but now requestable explicitly on a valued one too, ignoring
+- the number of shared neighbors - identical to the default on an
+- unvalued source network; on a valued one it ignores
 - tie strength entirely
 - **stat(binary)**
 - 1 whenever at least one shared neighbor exists, 0 (no tie) otherwise - a
@@ -75,6 +75,9 @@ The remaining four options score the **shared-neighbor structure itself** rather
 - **stat(cosine)**
 - the cosine similarity of the two nodes' neighbor sets: shared neighbors
 - divided by the geometric mean of their two degrees
+- **stat(newman)**
+- the collaboration weight of Newman (2001): the sum over the shared neighbors of
+- 1/(k - 1), with k the number of ties of the shared neighbor
 
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5 years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 
@@ -89,25 +92,18 @@ For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 
 | minmax    |   5    |
 +---------------------+
 ```
-The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](netname), and [nwsummarize](nwsummarize), which displays it.
-
-## Supported network types
-
-Binary: yes. Directed: not checked - the source two-mode network's ties are treated as undirected affiliations. Weighted: **W1**, native - an unvalued source network projects to a shared-neighbor *count* (the standard bipartite-projection tie weight); a valued source network projects using `stat()`'s explicit choice of combination rule (see above) - tie strength is never silently discarded or reinterpreted as a distance. Signed: not checked. Two-mode: yes - the projection onto one mode; `stat()` chooses the tie weight (`count` is the number of shared nodes of the other mode as in `igraph::bipartite_projection`, `newman` the weight 1/(k - 1) per shared node of `tnet::projecting_tm`).
+The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](nwname), and [nwsummarize](nwsummarize), which displays it.
 
 ## Stored results
 
-**Scalars**
-
-- **r(nodes)** number of nodes in the projected network
-- **r(ties)** number of edges in the projected (undirected) network, each pair counted once
+- **Scalars**
+- **r(nodes)** --- number of nodes in the projected network
+- **r(ties)** --- number of edges in the projected (undirected) network, each pair counted once
 
 ## See also
 
 - [nwproject](nwproject) (an exact alias for this command), [nw2set](nw2set), [nw2fromedge](nw2fromedge), [nw2toedge](nw2toedge), [nw2clustering](nw2clustering)
 
-- last certified : 28 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -18,26 +18,26 @@ nwkplex
 [netlist]
 [,
 k(int)
-generate(newvarname)
+gen:erate(newvarname)
 replace
 minsize(int)
-maxplexes(#)
-maxtime(#)
-countonly
-nomatrix
+maxp:lexes(#)
+maxt:ime(#)
+count:only
+nom:atrix
 silent]
 ```
 
 | | |
 |---|---|
 | `k(int)` | How many ties each member may miss; default = 2 |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = *_kplexnum* |
+| `gen:erate(newvarname)` | Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = *_kplexnum*; with several networks the variables are numbered (*newvarname***1**, *newvarname***2**, ...) |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest k-plex size to report; default = *k*+1 |
-| `maxplexes(#)` | Stop with an error when more than this many maximal k-plexes of at least `minsize()` members are found (the result matrix needs sets x nodes numbers); default = 100,000 |
-| `maxtime(#)` | Stop with an error when the search has run for this many seconds without finishing; default = 60 |
-| `countonly` | Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; `generate(newvarname)` is then not needed |
-| `nomatrix` | Do not build the sets-by-nodes matrix; the `generate(newvarname)` variable and the count are still returned |
+| `maxp:lexes(#)` | Stop with an error when more than this many maximal k-plexes of at least `minsize()` members are found (the result matrix needs sets x nodes numbers); default = 100,000 |
+| `maxt:ime(#)` | Stop with an error when the search has run for this many seconds without finishing; default = 60 |
+| `count:only` | Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; `gen:erate(newvarname)` is then not needed |
+| `nom:atrix` | Do not build the sets-by-nodes matrix; the `gen:erate(newvarname)` variable and the count are still returned |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -56,21 +56,15 @@ Like cliques, k-plexes genuinely overlap - a node can belong to several at once 
 . nwkplex flomarriage, k(3) replace
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each member's own missing-tie count - has no natural directed generalization, the same reasoning [nwclique](nwclique) already applies). Weighted: not used - only presence/absence of a tie matters. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem itself, true of any correct algorithm) and, for a fixed network, generally slower than [nwclique](nwclique)'s own clique enumeration for the same reason its own "Supported network types" section already notes for cliques, compounded further here since checking whether a candidate can still be added requires examining the whole candidate set's own induced structure, not just a simple neighbor lookup. The number of maximal k-plexes is what limits this command, not the size of the network; see **Limits** below.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(kplexes)** --- number of maximal k-plexes found meeting `minsize(int)`
+- **r(maxsize)** --- size of the largest set (with `countonly` or `nomatrix`)
 
-- **r(kplexes)** number of maximal k-plexes found meeting `minsize(int)`
-- **r(maxsize)** size of the largest set (with `countonly` or `nomatrix`)
-
-**Matrices**
-
-- **r(size_table)** (with `countonly` or `nomatrix`) sizes and the number of sets of each size
-- **r(kplex_matrix)** k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex (not with `countonly` or `nomatrix`)
+- **Matrices**
+- **r(size_table)** --- (with `countonly` or `nomatrix`) sizes and the number of sets of each size
+- **r(kplex_matrix)** --- k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex (not with `countonly` or `nomatrix`)
 
 ## References
 
@@ -84,8 +78,6 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 - [nwclique](nwclique), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcomponents](nwkcomponents), [nwkcore](nwkcore), [nwcomponents](nwcomponents), [nwcommunity](nwcommunity), [nwconcor](nwconcor)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

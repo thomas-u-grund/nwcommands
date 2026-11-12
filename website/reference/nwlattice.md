@@ -22,6 +22,8 @@ xwrap
 ywrap
 name(newnetname)
 vars(newvarlist)
+stub(string)
+labs(lab1 lab2 ...)
 xvars
 ntimes(int)]
 ```
@@ -33,8 +35,10 @@ ntimes(int)]
 | `xwrap` | wrap horizontally |
 | `ywrap` | wrap vertically |
 | `undirected` | generate an undirected network; default = directed |
-| `name`(*[newnetname](newnetname)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network; default = *lattice* |
 | `vars`(*`newvarlist`*) | new variables that are used for the network |
+| `stub`(*string*) | stub of the variable names when `vars()` does not give one name per node; default = *lattice* |
+| `labs`(*lab1 lab2 ...*) | node labels |
 | `xvars` | generate Stata variables for the network |
 | `ntimes(int)` | number of networks to be generated; default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
@@ -55,17 +59,12 @@ ntimes(int)]
 . nwplot, layout(grid) label(_nodeid)
 ```
 
-## Supported network types
-
-Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weighted: not applicable - no `weights()` option; generates a purely structural lattice. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## Stored results
 
 - **nwlattice** stores the following in **r()**:
 
-**Macros**
-
-- **r(netlist)** list of new networks
+- **Macros**
+- **r(netlist)** --- list of new networks
 
 ## See also
 
@@ -73,4 +72,4 @@ Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weigh
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

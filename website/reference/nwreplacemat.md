@@ -21,7 +21,6 @@ newmat(matname)
 [nosync
 netonly
 xvars
-vars(newvarlist)
 labs(lab1 lab2 ...)]
 ```
 
@@ -31,7 +30,6 @@ labs(lab1 lab2 ...)]
 | `nosync` | do not sync Stata variables; by default Stata variables are synced (see [nwsync](nwsync)) |
 | `netonly` | only update the network, do not touch the Stata dataset at all |
 | `xvars` | also load the updated network as Stata variables (see [nwload](nwload)) |
-| `vars`(*`newvarlist`*) | Stata variable names to use when *matname* requires resizing the network; default = auto-generated |
 | `labs`(*lab1 lab2 ...*) | new node labels to use when *matname* requires resizing the network; default = **1**, **2**, ... |
 
 ## Description
@@ -51,7 +49,7 @@ to overwrite the automatic setting afterwards.
 This example generates a ring lattice first (*mynet*), but then replaces the adjacency matrix of this network with a new Mata matrix **J(5,5,99)**.
 
 ```stata
-. nwring 5, k(1), name(mynet)
+. nwring 5, k(1) name(mynet)
 . mata: net = J(5,5,99)
 . nwreplacemat mynet, newmat(net)
 . nwsummarize mynet, matonly
@@ -66,9 +64,10 @@ This example generates a ring lattice first (*mynet*), but then replaces the adj
   +-------------------------+
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: yes - the matrix must not hold a tie between two nodes of the same mode (error 459).
+- **Scalars**
+- **r(directed)** --- 1 if the new matrix is symmetric (the network is then set to undirected), 0 otherwise
 
 ## See also
 
@@ -76,4 +75,4 @@ Binary: yes. Directed: yes - this command's entire purpose is writing an arbitra
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

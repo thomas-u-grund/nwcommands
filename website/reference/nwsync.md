@@ -34,7 +34,7 @@ Networks ultimately exist as Mata objects. However, one can also load them as St
 
 `fromstata` Change the direction of the sync, i.e. the network is updated based on the Stata variables that represent the network.
 
-`label` Run an additional [_nwdatasync](_nwdatasync) alignment pass (matching node identity against **_nwnode**) before the normal variable sync below. There is no separate node-label concept or **_nodelab** variable in this package - a node's name (see [nwnoderename](nwnoderename)) is its only label, and this option does not sync it; the name once documented here was inaccurate and has been corrected.
+`label` Run an additional [_nwdatasync](_nwdatasync) alignment pass (matching node identity against **_nwnode**) before the normal variable sync below. There is no separate node-label concept or **_nodelab** variable in this package - a node's name (see [nwnoderename](nwnoderename)) is its only label, and this option does not sync it.
 
 ## Remarks
 
@@ -53,14 +53,10 @@ However, the preferred method to change the same tie value would be using [nwrep
 . nwreplace flomarriage[2,1] = 99
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - syncs node labels/dataset state only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
-
 ## See also
 
 - [nwload](nwload), [nwreplace](nwreplace), [nwname](nwname)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

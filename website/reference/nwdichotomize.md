@@ -29,14 +29,12 @@ threshold(#)
 
 ## Description
 
-`nwdichotomize` converts a valued (weighted) network into a binary one: any dyad whose value is greater than or equal to `threshold()` becomes 1, every other dyad (including missing ties) becomes 0. It is a thin convenience wrapper around [nwrecode](nwrecode) - internally it is exactly equivalent to
+`nwdichotomize` converts a valued (weighted) network into a binary one: any dyad whose value is greater than or equal to `threshold()` becomes 1, every other dyad becomes 0 (a missing tie value stays missing, as with Stata's `recode` rule *min/max*). It is a thin convenience wrapper around [nwrecode](nwrecode) - internally it is exactly equivalent to
 
 ```stata
 . nwrecode netname (threshold/max=1) (min/max=0)
 ```
-- - given its own name specifically so the common "binarize at a cutoff" operation does not require
-- knowing [nwrecode](nwrecode)'s own general recode-rule syntax. For anything beyond a single cutoff
-- (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode) directly.
+It has its own name so that the common "binarize at a cutoff" operation does not require knowing [nwrecode](nwrecode)'s own general recode-rule syntax. For anything beyond a single cutoff (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode) directly.
 
 As with [nwrecode](nwrecode) (and following the package's general convention for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
 
@@ -50,16 +48,12 @@ Build a small valued trade network (export values between three countries), then
 . nwset, mat(M) name(trade) directed labs(A,B,C)
 . nwdichotomize trade, threshold(100)
 ```
-Same, but keep the original valued network and save the binary version under a new name:
+Instead of the in-place call, keep the original valued network and save the binary version under a new name:
 
 ```stata
 . nwdichotomize trade, threshold(100) generate(trade_binary)
 ```
 
-## Supported network types
-
-Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` leaves it unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked - a negative value below `threshold()` is treated the same as any other sub-threshold value. Two-mode: yes - the flag, the modes and the level labels are kept.
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

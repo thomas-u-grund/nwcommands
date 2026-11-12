@@ -28,7 +28,7 @@ nwreplace]
 
 ## Description
 
-Simmelian ties are concerned with more than just the strength of the relationship (see Krackhardt 1998). The original concept looks at the number of strong, reciprocated ties within a group: for a simmelian tie to exist, there must be three (a triad) or more of reciprocal strong ties in a group, viewed as even stronger than a regular strong tie. **This command implements the reciprocated-triad structure only - it does not apply any tie-strength/value threshold** (see **Supported network types** below); a weak reciprocated tie in a closed triad is flagged identically to a strong one.
+Simmelian ties are concerned with more than just the strength of the relationship (see Krackhardt 1999). The original concept looks at the number of strong, reciprocated ties within a group: for a simmelian tie to exist, there must be three (a triad) or more of reciprocal strong ties in a group, viewed as even stronger than a regular strong tie. **This command implements the reciprocated-triad structure only - it does not apply any tie-strength/value threshold** (see **Network types** below); a weak reciprocated tie in a closed triad is flagged identically to a strong one.
 
 For example, if Adam has a (reciprocated) tie to Betty, and both Adam and Betty share a (reciprocated) tie to Charles, this three-way tie would be a simmelian one.
 
@@ -42,10 +42,6 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 . nwplot flomarriage, edgecolor(_simmelian)
 ```
 
-## Supported network types
-
-Binary: yes (only) - uses `get_matrix_unvalued()` throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (the concept is often described in terms of strong ties; this command does not apply a strength threshold). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## References
 
 Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. *Research in the Sociology of Organizations* (16), 183-210.
@@ -54,8 +50,6 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 
 - [nwshared](nwshared)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

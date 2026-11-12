@@ -16,16 +16,16 @@ Tie turnover/stability between two waves of the same network
 ```stata
 nwturnover
 net1 net2
-[,
-generate(newvarname)
-replace
+,
+gen:erate(newvarname)
+[rep:lace
 silent]
 ```
 
 | | |
 |---|---|
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own local stability |
-| `replace` | Replace existing variable |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own local stability |
+| `rep:lace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
 ## Description
@@ -48,19 +48,14 @@ For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(di
 . nwturnover wave1 wave2, generate(_turnover)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not checked. Two-mode: yes - only the ties between the two modes are counted (the cells inside a mode cannot hold ties and are left out); both networks should have the same modes.
-
 ## Stored results
 
-**Scalars**
-
-- **r(stable)** number of ties present in both networks
-- **r(formed)** number of ties present only in *net2*
-- **r(dissolved)** number of ties present only in *net1*
-- **r(jaccard)** stable / (stable + formed + dissolved)
-- **r(persistence)** stable / (stable + dissolved); missing if *net1* has no ties
+- **Scalars**
+- **r(stable)** --- number of ties present in both networks
+- **r(formed)** --- number of ties present only in *net2*
+- **r(dissolved)** --- number of ties present only in *net1*
+- **r(jaccard)** --- stable / (stable + formed + dissolved)
+- **r(persistence)** --- stable / (stable + dissolved); missing if *net1* has no ties
 
 ## References
 
@@ -70,8 +65,6 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 
 - [nwcorrelate](nwcorrelate), [nwcomponents](nwcomponents), [nwqap](nwqap)
 
-- last certified : 22 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

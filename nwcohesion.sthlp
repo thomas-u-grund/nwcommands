@@ -9,6 +9,7 @@
 {p2col :nwcohesion {hline 2}}Moody-White structural cohesion hierarchy{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -30,6 +31,7 @@
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -64,19 +66,50 @@ always well-defined for every node (even an isolate gets its own top-block level
 unlike {help nwkcomponents}' own {it:_kcompnum}, which is missing for nodes that don't qualify for
 the one requested {opth k(int)}.
 
-{title:Stored results}
+{pstd}
+With more than one network in the {it:netlist}, a number is appended to the variable name ({it:newvarname}{bf:1},
+{it:newvarname}{bf:2}, ...) and the stored results are those of the last network.
 
-	Scalars
-	  {bf:r(blocks)}	number of cohesive blocks found across the whole hierarchy
 
-	Matrices
-	  {bf:r(cohesion_matrix)}	blocks-by-nodes 0/1 membership matrix, one row per block at any level
-	  {bf:r(cohesion_levels)}	blocks-by-1 column vector of each row's own connectivity level
+{title:Network types}
+
+{pstd}
+{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored (the command prints a note on a valued network).
+{bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} negative values are not
+treated specially. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single
+{help nwkcomponents} call, since every block found is searched again at the next connectivity level; the time grows
+with the number of nodes squared times the connectivity level of the deepest block. Measured in Stata/BE on a random
+network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 /
+1.4 seconds.
+{cmd:r(cohesion_matrix)} has one row per block and one column per node. On a platform whose plugin file has not been
+built yet, a Mata routine runs instead (same results, about 20 seconds at 300 nodes).
+
+{pstd}
+Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 27 seconds and 2.9 GB. When the estimated time is more than 2 minutes (about
+40,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
+
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcohesion flomarriage, generate(_cohesion)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(blocks)}}number of cohesive blocks found across the whole hierarchy{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(cohesion_matrix)}}blocks-by-nodes 0/1 membership matrix, one row per block at any level{p_end}
+{synopt:{bf:r(cohesion_levels)}}blocks-by-1 column vector of each row's own connectivity level{p_end}
 
 
 {title:References}
@@ -94,37 +127,9 @@ Even, S. (1979). {it:Graph Algorithms}. Computer Science Press. (the vertex-spli
 reduction for vertex connectivity)
 
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed
-generalization here, matching {help nwkcomponents}). Weighted: not used. Signed: not checked.
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{title:Limits}
-
-{pstd}
-The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single
-{help nwkcomponents} call, since every block found is searched again at the next connectivity level; the time grows
-with the number of nodes squared times the connectivity level of the deepest block. Measured in Stata/BE on a random
-network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 /
-1.4 seconds. The previous Mata routine took 22 seconds at 300 nodes and did not finish in 60 seconds at 1,000.
-{cmd:r(cohesion_matrix)} has one row per block and one column per node. On a platform whose plugin file has not been
-built yet, the older Mata routine runs instead (same results, about 20 seconds at 300 nodes).
-
-{pstd}
-Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 27 seconds and 2.9 GB. When the estimated time is more than 2 minutes (about 40,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
-
 {title:See also}
 
 	{help nwkcomponents}, {help nwcomponents}, {help nwclique}, {help nwkplex}
 
-last certified : 22 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

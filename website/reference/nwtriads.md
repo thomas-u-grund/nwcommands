@@ -23,18 +23,18 @@ name(string)]
 
 | | |
 |---|---|
-| `plot` | Draw a bar chart of the 16 MAN-category counts |
+| `plot` | Draw the 16 triad types as small pictures with their counts |
 | `name(string)` | Name for the graph created by `plot`; default = **triads** |
 
 ## Description
 
-Returns the triad census of the network (or a list of networks). This is a way to characertize a network based on its triads.
+Returns the triad census of the network. This is a way to characterize a network based on its triads.
 
 Each unique triad (triple of nodes *i*, *j*, and *k*) in a directed network can be one of the following:
 
 - 003 = i,j,k, empty triad.
 - 012 = i->j, k, triad with a single directed edge.
-- 102 = i<->j, k, triad with a reciprocated connection between two vertices.
+- 102 = i<->j, k, triad with a reciprocated tie between two vertices.
 - 021D = i<-j->k, triadic out-star.
 - 021U = i->j<-k triadic in-star.
 - 021C = i->j->k, directed line.
@@ -51,7 +51,7 @@ Each unique triad (triple of nodes *i*, *j*, and *k*) in a directed network can 
 
 This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a triad by the number of 1) mutual dyads, 2) asymmetric dyads and 3) null dyads. For example, MAN = 102 means that there is one mutual dyad and two null dyads.
 
-`plot` draws a bar chart of the 16 category counts, in the same fixed MAN order the text table above already uses (not sorted by count), via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug)'s own `plot` option uses for its null-distribution histogram. Grayscale by design, matching every other plot this package produces.
+`plot` draws each of the 16 triad types as a small picture of three nodes and their ties, with the MAN code and the number of triads of that type underneath. On an undirected network it draws the four types an undirected network can have (003, 102, 201, 300). [nwdyads](nwdyads) has the same option for the dyad census.
 
 ## Examples
 
@@ -82,16 +82,21 @@ This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a 
 ```
 This example shows, e.g. that in the *glasgow3* network, there are 12 triads where all nodes *i*, *j* and *k* are directely connected with each other.
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command still runs, but 12 of the 16 categories (everything except **_003**/**_102**/**_201**/**_300**) are not meaningful for undirected data and reliably return 0, since an undirected network has no asymmetric ties by construction - `nwtriads` prints a note to this effect when called on an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous count). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the census counts the triples of the bipartite graph (`igraph::triad_census`); it has no triangle, so the transitivity is 0; closure in a two-mode network is [nwclustering](nwclustering) (its default on a two-mode network).
+- **Scalars**
+- **r(_003)** --- number of empty triads
+- ****r(_012)**, **r(_102)**, ...** --- number of triads of each of the other MAN types listed above (**r(_021D)**, **r(_021U)**, **r(_021C)**, **r(_111D)**, **r(_111U)**, **r(_030T)**, **r(_030C)**, **r(_201)**, **r(_120D)**, **r(_120U)**, **r(_120C)**, **r(_210)**)
+- **r(_300)** --- number of complete triads
+- **r(transitivity)** --- transitivity (global clustering coefficient, see [nwclustering](nwclustering)); 0 for a two-mode network
+
+- **Macros**
+- **r(name)** --- name of the network (alias: **r(netname)**)
 
 ## See also
 
 - [nwdyads](nwdyads)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

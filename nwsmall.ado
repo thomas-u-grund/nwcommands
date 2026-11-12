@@ -122,7 +122,9 @@ program nwsmall
 	
 		if "`weights'" != "" {
 			tempname w
-			capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
+			// weights() are probabilities of the tie values 1, 2, ...; they are normalised to sum to one first (as nwrandom)
+			capture mata: `w' = (`weights') :/ sum((`weights'))
+			capture mata: `w' = rdiscrete(`nodes', `nodes', `w')
 			if _rc != 0 {
 				// BUGFIX: see nwrandom.ado's own header comment on this
 				// identical block for the full explanation - this used to
@@ -131,7 +133,6 @@ program nwsmall
 				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
 				error 198
 			}
-			capture mata: `w' = `w' :/ sum((`weights'))
 			if "`undirected'" != "" {
 				mata: `w' = lowertriangle(`w',0)
 				mata: `w' = `w' + `w''

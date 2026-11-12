@@ -17,20 +17,20 @@
 [{it:{help netname}}]
 {cmd:,}
 {opt measure(string)}
-[{opth generate(stub)}
+[{opth gen:erate(stub)}
 {opt replace}
 {opt silent}
-{opt binary}]
+{opt bin:ary}]
 
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt measure(string)}}Underlying centrality measure: one of {bf:degree}, {bf:betweenness}, {bf:closeness}, {bf:evcent}{p_end}
-{synopt:{opth generate(stub)}}{bf:Required.} Prefix for the three output variables ({it:stub}{bf:_endog}, {it:stub}{bf:_induced}, {it:stub}{bf:_exog}){p_end}
+{synopt:{opth gen:erate(stub)}}{bf:Required.} Prefix for the three output variables ({it:stub}{bf:_endog}, {it:stub}{bf:_induced}, {it:stub}{bf:_exog}){p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
-{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt bin:ary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
 
@@ -45,7 +45,7 @@ single new formula of its own. Given a chosen measure {it:C} (e.g. degree, betwe
 
 {phang2}
 {bf:Endogenous centrality} of node {it:v}: {it:C_G(v)} itself - the node's ordinary centrality
-score, exactly as {help nwdegree}/{help nwbetween}/{help nwcloseness}/{help nwevcent} would already
+score, exactly as {help nwdegree} / {help nwbetween} / {help nwcloseness} / {help nwevcent} would already
 report it. Not a new computation; the existing measure, relabeled under this framework.{p_end}
 
 {phang2}
@@ -73,6 +73,29 @@ node. For a cheap measure ({bf:degree}) this is trivial; for an expensive one ({
 a large network) this means {it:n} full recomputations of an already-expensive measure - worth
 being aware of before running this against a large network with {opt measure(betweenness)}.
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} {opt betweenness}, {opt closeness} and {opt evcent} use directions; {cmd:measure(degree)} stops with an
+error. {bf:Valued:} {opt betweenness}, {opt closeness} and {opt evcent} use the tie values, as the commands do;
+{opt degree} counts ties; {opt binary} ignores the values. {bf:Two-mode:} not supported (error 6088; use
+{help nwproject} first). {bf:Signed:} as in the chosen measure. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+{bf:measure(degree)} has a closed form - removing a node takes away its own degree and one tie from each neighbour -
+so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes:
+0.02 / 0.03 / 0.09 seconds). The other measures have
+no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number
+of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node:
+{bf:betweenness} 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, {bf:closeness} 2.8 / 20 / 8 seconds (the time of
+{help nwcloseness} depends on the network), {bf:evcent} 6 seconds at 50 and 26 seconds at 100 nodes; plan for
+minutes at a few hundred nodes.
+
+
 {marker example}{...}
 {title:Examples}
 
@@ -95,55 +118,20 @@ plain betweenness score).{p_end}
 
 {title:Stored results}
 
-	Macros:
-	  {bf:r(measure)}      the underlying measure used
-	  {bf:r(name)}         name of the network
-	  {bf:r(endogenous)}   name of the endogenous-centrality variable
-	  {bf:r(induced)}      name of the induced-centrality variable
-	  {bf:r(exogenous)}    name of the exogenous-centrality variable
-
-
-{title:Valued networks}
-
-{pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. The centrality measures {opt betweenness}, {opt closeness} and {opt evcent} use the tie values of a valued network, as {help nwbetween}, {help nwcloseness} and {help nwevcent} do; {opt degree} counts ties. {opt binary} ignores the values.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: {bf:measure(betweenness/closeness/evcent)} support directed networks
-directly (each already produces exactly one clean per-node output variable regardless of
-directedness); {bf:measure(degree)} does not - {help nwdegree} itself splits into separate
-{bf:_outdegree}/{bf:_indegree} variables on a directed network, so induced degree would need a
-choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear
-error) rather than guessed at. Weighted/Signed: entirely
-inherited from whichever {opt measure()} is chosen - {cmd:nwinduced} itself does not read tie
-values directly. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
-
-{title:Limits}
-
-{pstd}
-{bf:measure(degree)} has a closed form - removing a node takes away its own degree and one tie from each neighbour -
-so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes:
-0.02 / 0.03 / 0.09 seconds; the loop took 11 seconds at 300 nodes and about 50 at 1,000). The other measures have
-no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number
-of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node:
-{bf:betweenness} 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, {bf:closeness} 2.8 / 20 / 8 seconds (the time of
-{help nwcloseness} depends on the network), {bf:evcent} 6 seconds at 50 and 26 seconds at 100 nodes; plan for
-minutes at a few hundred nodes.
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(measure)}}the underlying measure used{p_end}
+{synopt:{bf:r(name)}}name of the network{p_end}
+{synopt:{bf:r(endogenous)}}name of the endogenous-centrality variable{p_end}
+{synopt:{bf:r(induced)}}name of the induced-centrality variable{p_end}
+{synopt:{bf:r(exogenous)}}name of the exogenous-centrality variable{p_end}
 
 
 {title:References}
 
 {pstd}
-Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrality. {it:Social
-Networks} 32(4), 339-344.
+Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrality. {it:Social}
+{it:Networks} 32(4), 339-344.
 
 
 {title:See also}
@@ -151,4 +139,4 @@ Networks} 32(4), 339-344.
 	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwneighbor}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

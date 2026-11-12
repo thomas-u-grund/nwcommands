@@ -58,9 +58,9 @@ Following Opsahl et al. (2010) the degree centrality C_i of node i is defined as
 
 *C_i = k_i * ( s_i / k_i ) ^ alpha*
 
-where *k_i* is the number of ties that node *i* is involved in (regardless of tie values) and *s_i* is the sum of the tie values of these ties. When *alpha = 0* (default), this generalized degree centrality gives the number of ties that a node has. When *alpha = 1*, it gives the node strength, i.e. the sum of the tie values that a node is involved in. For unvalued networks the value of *alpha* does not matter.
+where *k_i* is the number of ties that node *i* is involved in (regardless of tie values) and *s_i* is the sum of the tie values of these ties. When *alpha = 0* (the default for an unvalued network), this generalized degree centrality gives the number of ties that a node has. When *alpha = 1* (the default for a valued network), it gives the node strength, i.e. the sum of the tie values that a node is involved in. For unvalued networks the value of *alpha* does not matter.
 
-Option **isolates** adds one more name to `generate()` (after the degree name(s)) for a variable indicating whether a node is an isolate (not connected to any other node) - e.g. `generate(mydeg myisolate) isolates` on an undirected network, or `generate(myout myin myisolate) isolates` on a directed one.
+Option **isolates** adds one more name to `generate()` (after the degree name(s)) for a variable indicating whether a node is an isolate (not connected to any other node) - e.g. `generate(mydeg myisolate) isolates` on an undirected network, or `generate(myout myin myisolate) isolates` on a directed one. When that extra name is not given, the variable is called *_isolates*.
 
 Option **standardize** divides the degree (undirected network) or the outdegree and the indegree (directed network) by N - 1, where N = number of nodes in a network. Each variable is divided once.
 
@@ -113,9 +113,17 @@ The next example saves the out- and indegree centrality in the variables *myout*
 . nwdegree glasgow1, generate(myout myin mysiolate) isolates
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes - generates separate *_indegree*/*_outdegree* (or *_instrength*/ *_outstrength* for a valued network) automatically. Weighted: **W1**, native - the Opsahl et al. (2010) generalized degree formula above is the command's default and only formulation, controlled by `alpha()`; weight meaning is tie strength, used directly (not a distance). Signed: not checked. Two-mode: two-mode form by default (the number of ties divided by the size of the other mode, `raw`: the count); `onemode` forces the one-mode computation on the bipartite graph ([nw2degree](nw2degree) is an alias).
+- **Scalars**
+- **r(alpha)** --- value of *alpha* used
+- **r(mean_ties)** --- valued network: mean number of (out-)ties
+- **r(mean_strength)** --- valued network: mean (out-)strength
+- **r(dg_central)** --- undirected network: degree centralization (not with `isolates`)
+- **r(indg_central)** --- directed network: indegree centralization (not with `isolates`)
+- **r(outdg_central)** --- directed network: outdegree centralization (not with `isolates`)
+
+These results are those of a one-mode network; for a two-mode network see [nw2degree](nw2degree).
 
 ## References
 
@@ -124,8 +132,7 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 ## See also
 
 - [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwclustering](nwclustering), [nwevcent](nwevcent), [nwkatz](nwkatz)
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

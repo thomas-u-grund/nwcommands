@@ -19,7 +19,6 @@
 
 {p 8 17 2}
 {cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{help if}] [{cmd:,} {it:options}]
-		
 
 
 {title:Description}
@@ -31,7 +30,7 @@ The command generates a network. It can be used either with a) some function {bf
 {pstd}
 {it:netfcn} is one of:
 
-{phang2}{opth duplicate(netname)} [, {opt xvars}]
+{phang2}{opth duplicate(netname)}
 {p_end}
 {pmore2}Duplicate a network (see {help nwduplicate}).
  
@@ -41,7 +40,7 @@ The command generates a network. It can be used either with a) some function {bf
 
 {phang2}{opth geodesic(netname)} [{cmd:,}
 {opth unconnected(integer)}
-{opt nosym}
+{opt sym}
 {opt xvars}]
 {p_end}
 {pmore2}Generate a network of shortest paths between nodes (see {help nwgeodesic}).
@@ -77,7 +76,7 @@ network per path found.
 {p_end}
 {pmore2}Generate a random network (see {help nwrandom}).
 
-{phang2}{opth reach(netname)} [, {opt nosym} {opt xvars}] 
+{phang2}{opth reach(netname)} [, {opt sym} {opt xvars}] 
 {p_end}
 {pmore2}Generate a reachability network (see {help nwreach}).
 
@@ -139,6 +138,14 @@ naturally reduce to one value per node: {bf:addnodes(} (mutates a network's own 
 {bf:collapse(} (see {help nwcollapse}). Each raises a clear, immediate error rather than silently
 doing nothing.
 
+
+{title:Network types}
+
+{pstd}
+What happens with directed, valued, two-mode and signed networks depends on the function that is called (see
+{help nwgen} / {help nwgenvar} and the help of the function). See {help nwnetworktypes}.{p_end}
+
+
 {title:Examples}
 
 {pstd}
@@ -155,14 +162,5 @@ Generate a per-node variable, one value per node, from an existing network:
 	{cmd:. nwgenerate mydeg = degree(flomarriage)}
 	{cmd:. list mydeg in 1/5}
 
-{title:Supported network types}
-
-{pstd}
-Not applicable to {cmd:nwgenerate} itself - the underlying dispatcher {help nwgen}/{help nwgenvar}
-both delegate to; the actual directed/valued/two-mode support depends entirely on whichever
-underlying {it:netfcn}/network expression is invoked - see that function's own help topic.
-
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

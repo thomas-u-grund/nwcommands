@@ -149,6 +149,8 @@ the next line onto it, which is why the old lists needed a blank line between en
 
 ## Stata's interactive help Viewer has an undocumented size limit `type` doesn't share
 
+**Superseded (2026-11-12):** the real causes are listed under "Help files that render as one block" below; splitting the file only removed one of them by chance.
+
 `help <cmd>` (the real interactive Viewer window) and `type <file>.sthlp, smcl` (a batch/console
 SMCL dump) use different rendering code paths. A `.sthlp` file large enough (`nwsaom.sthlp` hit
 this at ~79KB / 1,016 lines — `nwergm.sthlp` at ~49KB did not) can render perfectly via `type` while
@@ -827,3 +829,34 @@ The weighted layouts (`kk`, `frucht` with tie values) are Mata functions in `_nw
 
 ## `net install` skips .html, .js and extensionless files: nwinstall copies them itself (2026-11-06)
 `net install` installs a file of a `.pkg` only when Stata knows its type (`.ado`, `.sthlp`, `.dlg`, `.mlib`, `.plugin`, `.scheme`, ...). The page templates (`nwmovie_template.html`, `nwedit_template.html`), `lib/vendor/*.js` and the viewer binaries (`nwedit_viewer_*`) are ancillary to Stata: with the option `all` they were dropped, flattened, into the current working directory, while `nwmovie`/`nwplot` look for them under the folder of `nwset.ado` (`PLUS/n`) with their `lib/` paths (`NativeGraphInstallDir()`, `NweditViewerPath()`). So `nwmovie` failed on every installation from GitHub up to 3.16.0; tests run from the repository never saw it. Since 3.16.1 `nwinstall_ancillary` (in `nwinstall.ado`) copies them one by one from the source into `PLUS/n/<path>` and `nwinstall, remove` erases them; the ado packages are installed without `all`. A new file of such a type in `_pkg_ado.txt` must be added to the list in `nwinstall_ancillary` (`cscripts/test_nwinstall_ancillary.do` checks the two lists and runs `nwmovie`/`nwplot, interactive` from an installed copy). Test fresh installs with the ado path cleared of the repository: `findfile` otherwise finds the repository's files first.
+
+## Help file option text "wraps strangely": a new `{synopt:}` inserted inside another entry (2026-11-12)
+
+Looks like the Viewer size bug (see the help Viewer size-limit entry), but it is a content error and shows in `type ..., smcl` too. A multi-line `{synopt:}` entry runs until its `{p_end}`; a new option added "after the line of the previous option" lands in the middle of that entry when the entry spans several lines, and the Viewer then mixes the two texts. Found in `nwsaom.sthlp` (`uncentered()` inside `nocenter`) and the core's `nwkatz.sthlp` (`force` inside the `geodesic_options` entry). Insert a new option after the `{p_end}` of the previous entry, never after its first line. Check all help files with:
+
+```
+python3 - *.sthlp <<'PY'
+import sys
+for f in sys.argv[1:]:
+    o=None
+    for i,l in enumerate(open(f,encoding='utf-8',errors='replace'),1):
+        if l.startswith(('{synopt:','{p2col:')):
+            if o: print(f"{f}:{o}: entry not closed before line {i}")
+            o=i
+        elif l.startswith('{') and not l.startswith(('{opt','{cmd','{it','{bf','{help','{c ')): o=None
+        if o and ('{p_end}' in l or not l.strip()): o=None
+PY
+```
+
+## Help files that render as one block, print markup literally or lose text (2026-11-12)
+
+Symptoms: from some point on a help file runs together, `{p_end}`, `{pstd}` or `{synopt:` appear as text, titles and examples merge into one paragraph, or words are missing from long option texts (Viewer only). The causes found, each confirmed by rendering variants in Stata 17:
+- **A paragraph directive right after an open paragraph.** `{pstd}` (or `{phang}`, `{p ...}`) on the line directly after a paragraph without `{p_end}` or a blank line: from there on Stata no longer ends paragraphs at blank lines, so the rest of the file is one block. End the paragraph with `{p_end}` (only when it is a paragraph: after raw text a `{p_end}` is printed literally). 11 core files and nwergm were affected.
+- **A directive argument over a line break** (`{it:Sociological Methods` / `& Research}`, a long `{bf:...}` sentence): printed literally. Close it at the end of the line and reopen it on the next.
+- **`{help a}/{help b}`**: the second link is printed literally (also with `{c 47}`); write `{help a} / {help b}`.
+- **`{opt name(}`** with an unbalanced parenthesis and `{opt:x}` are printed literally; use `{cmd:name(}` and `{opt x}`.
+- **Source lines over 255 characters**: the interactive Viewer drops text in them (characters missing near column 250), `type` and `translate` do not. Keep help source lines below 256 characters; SMCL joins the lines of a paragraph, so breaking at a space outside braces changes nothing (do not break right after `.`, `:`, `?`, where SMCL then puts two spaces).
+- **Tab-indented lines** (old-style stored-results tables, "See also" lines) and text after a blank line without `{pstd}` are raw lines: they do not wrap. Use `{synoptset W tabbed}`, `{p2col 5 W W+4 2: Scalars}{p_end}` and `{synopt:{cmd:e(x)}}...{p_end}` as Stata's own help files do.
+- An option name wider than its `{synoptset}` column moves the text to the next line (normal for very long names; widen the column up to about 28).
+
+`python3 tools/check_help_smcl.py <dir>` checks all of these statically (it found nothing in 171 files after the 3.20.1 cleanup); run it before every release, for the model packages too. To see the console rendering: `set linesize 80` and `type file.sthlp, smcl` in a batch run; a line starting with `> ` is a line that did not wrap. The earlier explanation "the Viewer has a size limit" (entry above) was not the cause: nwsaom.sthlp renders at 92 KB.

@@ -4,6 +4,23 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.20.1] - 2026-11-12
+
+### Fixed
+- **Help files checked against the code.** Options, abbreviations, defaults and stored results of every help file were compared with the commands. Corrected, among others: required options shown as optional (`generate()` of `nwspectral`, `nwrandomwalk`, `nwturnover`); missing options (`nwtoedge`, `nwqap`, `nwsym` modes `sum` and `mean`); wrong defaults (`nw2degree`, `nwassortativity` and `nwbetween` use tie values on a valued network; `animate, delay()` is in hundredths of a second; `nwplot, arcbend()`); examples that failed (`nwrecode`, `nwaddnodes`, `nw2set`, `nwcug`, `nwreplacemat`); options that do not exist (`nwplotmatrix, labelopt()`, `nwset, detail`); stored results that were missing (`nwdegree`, `nwtabulate`, `nwtomata`, `nwvalue`, `nwset` and others).
+- **Help files have one layout.** The sections "Supported network types", "Valued networks" and "Two-mode networks" are one short section "Network types" (help `nwnetworktypes` explains it), and the sections follow one order: Syntax, Description, Options, remarks, Network types, Limits, Examples, Stored results, References, See also.
+- **Help file layout.** In 11 help files (for example `nwburt`, `nwclique`, `nwclustering`, `nwtriads`) the text after one section ran together with the following sections, with markup such as `{pstd}` shown as text; links written as `a/b` showed the second one as markup; stored results, "See also" lines and a few paragraphs did not wrap at the window width; very long source lines lost words in the help Viewer. All help files now pass the new check `tools/check_help_smcl.py`.
+- **Help files describe the current behaviour only.** References to earlier versions, old timings and the history of fixes are removed from the help files; options kept for compatibility (`legacy`, `onemode`, aliases) are described by what they do.
+- The help files of `nwevcent` and `nwbetween` said that a valued network is made 0/1 by default; both use the tie values unless `binary` is given, as the option lists already said. The help file of `nwgeodesic` said that weighted distances stop at 100 nodes; that limit applies only on a platform without the native plugin.
+- The help file of `nwkatz` showed the option `force` inside the text of `geodesic_options`.
+- `nwbridges` on an undirected network: the result is symmetrized again (`type(local)` and `type(distance)` could give a tie in one direction only).
+- `nwexpand ... if` deleted the observations that do not satisfy the condition from the data in memory; it now only selects the observations that become nodes. `nwhomophily`, which calls it, no longer drops observations either.
+- `weights()` of `nwring`, `nwsmall`, `nwpref` and `nwdyadprob` failed when the probabilities did not sum to one; they are normalised, as in `nwrandom`. Tie values are 1, 2, ... as documented.
+- `nwcontext, stat(sum)` printed two Mata matrices.
+- `nwkeep, clean` without `if` or `in` stopped with an error.
+
+Other results do not change.
+
 ## [3.20.0] - 2026-11-12
 
 ### Added

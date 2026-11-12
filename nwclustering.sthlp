@@ -9,6 +9,7 @@
 {p2col :nwclustering {hline 2}}Clustering coefficient (transitivity) of a network{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -33,7 +34,7 @@ presence/absence; {it:arithmetic}/{it:geometric}/{it:maximum}/{it:minimum} combi
 values via that function; default = {it:arithmetic} for a valued undirected network, {it:binary}
 otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before calculating (required for any
-weighted {opt measure()} on a directed network - see Supported network types below){p_end}
+weighted {opt measure()} on a directed network - see {bf:Network types} below){p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own
 clustering coefficient{p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
@@ -43,6 +44,7 @@ clustering coefficient{p_end}
 {synopt:{opt onemode}}Two-mode network: the one-mode coefficient of the bipartite graph (always 0, the graph has no triangles) instead of the two-mode coefficient of Opsahl (2013), the default{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -66,33 +68,17 @@ If the network is a two-mode (bipartite) network, {cmd:nwclustering} uses the tw
 coefficient of Opsahl (2013) (the share of four-paths that a fifth tie closes, {cmd:tnet::clustering_tm}), and with
 {opt ra} the global coefficient of Robins and Alexander (2004). An ordinary clustering coefficient is not meaningful on a
 bipartite network's own inherently triangle-free structure; {opt onemode} computes it anyway. {help nw2clustering} is the
-same command under its older name and takes the same options.
+same command under another name and takes the same options.
 
-{title:Two-mode networks}
 
-{pstd}
-Two-mode: two-mode form by default (Opsahl 2013; {opt ra}: Robins and Alexander 2004); {opt onemode} forces the one-mode computation on the bipartite graph ({help nw2clustering} is an alias).
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (the default {opt measure(binary)} case). Directed: yes for {opt measure(binary)}
-(each node's own potential triples are formed from one in-neighbor paired with one out-neighbor,
-matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted
-{opt measure()} is not defined for a directed network - either choose {opt measure(binary)} or
-{opt symmetrize} the network first. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the two tie values of a potential triple's own pair of ties before testing
-closure; undirected networks only (see above). Signed: not checked; negative tie values are not
-validated or rejected. Two-mode: two-mode form by default (Opsahl 2013; {opt ra}: Robins and Alexander 2004); {opt onemode} forces the one-mode computation on the bipartite graph ({help nw2clustering} is an alias).
+{bf:Directed:} {opt measure(binary)} only; use {opt symmetrize} for a weighted measure. {bf:Valued:}
+{opt measure(arithmetic)} by default on an undirected valued network ({opt measure(binary)} ignores the values).
+{bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode computation) - Opsahl (2013), {opt ra}:
+Robins and Alexander (2004). {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Stored results}
-
-	Scalars
-	  {bf:r(cluster_avg)}		mean of the per-node clustering coefficients
-	  {bf:r(cluster_global)}	network-level global clustering coefficient
-
-	Macros
-	  {bf:r(measure)}		the {opt measure()} actually used
-	  {bf:r(symmetrized)}		{it:false}, only returned when {opt symmetrize} was specified
 
 {title:Limits}
 
@@ -101,9 +87,10 @@ For {opt measure(binary)} the closed and potential triples are counted in the co
 {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients.
 The work grows with the sum of the squared degrees. Measured in Stata/BE, random undirected network with 10 ties per node:
 5,000 nodes 0.06 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.7 seconds (the Mata route needs 1.1, 4.9 and 26 seconds).
-The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.
+The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
 
 {title:Examples}
 
@@ -111,17 +98,34 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 	{cmd:. nwclustering flomarriage, generate(_clustering)}
 	{cmd:. sum _clustering}
 
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(cluster_avg)}}mean of the per-node clustering coefficients{p_end}
+{synopt:{bf:r(cluster_global)}}network-level global clustering coefficient{p_end}
+{synopt:{bf:r(C_avg)}}two-mode network: mean of the per-node coefficients of the {opt level()} mode (instead of {bf:r(cluster_avg)}){p_end}
+{synopt:{bf:r(C_global)}}two-mode network: global coefficient of Opsahl (2013) (instead of {bf:r(cluster_global)}){p_end}
+{synopt:{bf:r(ra)}}two-mode network with {opt ra}: Robins-Alexander coefficient 4 C4 / L3{p_end}
+{synopt:{bf:r(C4)}}two-mode network with {opt ra}: number of four-cycles{p_end}
+{synopt:{bf:r(L3)}}two-mode network with {opt ra}: number of paths of length three{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(measure)}}the {opt measure()} actually used{p_end}
+{synopt:{bf:r(symmetrized)}}{it:false}, only returned when {opt symmetrize} was specified{p_end}
+
+
 {title:References}
 
 {pstd}
 Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' networks. {it:Nature}
 393, 440-442.
 
+
 {title:See also}
 
 	{help nw2clustering}, {help nwtriads}, {help nwbrokerage}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

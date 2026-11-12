@@ -17,12 +17,12 @@ Generate a random network
 nwrandom 
 nodes
 ,
-[prob(float)
-density(float)
-census(mutual asym [null])
-degree(numlist|varname)
-outdegree(numlist|varname) indegree(numlist|varname)
-swaps(int)
+[p:rob(#)
+d:ensity(#)
+c:ensus(mutual [asym [null]])
+deg:ree(numlist|varname)
+out:degree(numlist|varname) in:degree(numlist|varname)
+swaps(#)
 weights(p1, p2,...)
 undirected
 directed
@@ -36,12 +36,12 @@ xvars]
 | | |
 |---|---|
 | *`nodes`* | number of nodes |
-| `prob(float)` | probability for a tie |
-| `density(float)` | exact density of the new network |
-| `census`([*mutual* [*asym null*]](nwdyads)) | dyad census of the new network |
-| `degree`(*numlist*\|varname) | degree of every node of a new undirected network: a list of *nodes* numbers, or a variable (its first *nodes* observations) |
-| `outdegree()` `indegree()` | out-degree and in-degree of every node of a new directed network; both are needed |
-| `swaps(int)` | with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties |
+| `p:rob(#)` | probability for a tie |
+| `d:ensity(#)` | exact density of the new network |
+| `c:ensus`([*mutual*](nwdyads) [*asym* [*null*]]) | dyad census of the new network: numbers of mutual and asymmetric dyads (default 0); a third number is ignored |
+| `deg:ree`(*numlist*\|varname) | degree of every node of a new undirected network: a list of *nodes* numbers, or a variable (its first *nodes* observations) |
+| `out:degree()` `in:degree()` | out-degree and in-degree of every node of a new directed network; both are needed |
+| `swaps(#)` | with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `directed` | generate a directed network; this is the default, so the option changes nothing (it cannot be combined with `undirected`) |
@@ -56,7 +56,7 @@ xvars]
 
 `nwrandom` generates a (un-)directed, (un-)weighted Erdos-Renyi network. Each potential tie in the network has the same probability to exist, which is defined by **prob()**. Option **prob()** generates ties based on probabilities, which means that the exact number of ties can vary.
 
-Alternatively, the overall density of the network can be specified with **density()**. This option always generates the same number of ties ( = *density * nodes*), where each tie has the same probability to exist.
+Alternatively, the overall density of the network can be specified with **density()**. This option always generates the same number of ties (*density* times the number of possible ties, rounded down), where each tie has the same probability to exist.
 
 Lastly, one can also generate a random network that has a specific [dyad census](nwdyads) using `census()` (see [nwdyads](nwdyads)).
 
@@ -90,24 +90,17 @@ The command can also be used to generate both complete (**prob(1)**) and empty n
 . nwrandom 8, degree(3 3 2 2 2 2 1 1)
 ```
 
-## Supported network types
-
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed); with degrees, `degree()` draws an undirected network and `outdegree()` `indegree()` a directed one. Weighted: yes, via `weights()` - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself (`density()`/`prob()`/`census()`). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## Stored results
 
 - **nwrandom** stores the following in **r()**:
 
-**Macros**
-
-- **r(netlist)** list of new networks
+- **Macros**
+- **r(netlist)** --- list of new networks
 
 ## See also
 
 - [nwsmall](nwsmall), [nwpref](nwpref), [nwlattice](nwlattice), [nwring](nwring), [nwcug](nwcug), [nwpermute](nwpermute)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

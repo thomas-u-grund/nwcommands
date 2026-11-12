@@ -17,6 +17,7 @@ Plot a network
 nwplot
 [netname] 
 [if]
+[in]
 [, node_options
 label_options
 edge_options
@@ -66,18 +67,37 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 . nwplot wave1, generate(x1 y1)
 . nwplot wave2, nodexy(x1 y1)
 ```
-`interactive` opens the plot in a browser alongside the usual static plot: drag nodes to reposition them, edit the color/shape legend (an edit applies to every node sharing that color/ shape key, not just one node - the same discrete legend model `color()`/`symbol()` already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image. The buttons open a save dialog in the native viewer (on Windows, macOS and Linux) and download the file in an ordinary browser tab. Two buttons in the browser save the edits as CSV files; feed them back with `importcoords()` (paired with `nodexy()`, same matched-pair idea as `generate()`/ `nodexy()` above) and `edgeimport()`:
+When the coordinates are longitude and latitude, `basemap()` draws a map under the network. The example data include the outlines of the US states (`usmap`); a shapefile of your own becomes such a file with `spshape2dta`. The picture takes the proportions of the map unless `aspectratio()` is given; for longitude and latitude a degree of longitude is drawn at its width at the middle latitude of the map, so that the map keeps its familiar shape. Many ties are best drawn thin and transparent, for example `lineopt(lcolor(gs6%15)) edgefactor(0.1) arrowfactor(0)`.
+
+```stata
+. nwwebuse usair, nwclear
+. nwplot usair, nodexy(Lon Lat) basemap(usmap) arcstyle(straight)
+. nwplot usair, nodexy(Lon Lat) basemap(usmap, lcolor(gs13) lwidth(thin))
+```
+The lower 48 states only (the variable **state** of `usmap` holds the postal code; the `if` of `nwplot` drops the airports of Alaska and Hawaii):
+
+```stata
+. nwplot usair if Lat < 50 & Lon > -125, nodexy(Lon Lat) basemap(usmap if !inlist(state, "AK", "HI"))
+```
+`nodexy()` draws any coordinates, so it also draws a layout computed elsewhere: by a program of your own, in Mata or in another software. Store the two coordinates in variables, in the order of the nodes.
+
+`interactive` opens the plot in a browser alongside the usual static plot: drag nodes to reposition them, edit the color/shape legend (an edit applies to every node sharing that color/ shape key, not just one node - the same discrete legend model `color()`/`symbol()` already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width factors with two sliders. A button exports the picture as it stands, legend included, as a PNG image (a raster image; for a vector file, draw the figure in Stata, as below). The buttons open a save dialog in the native viewer (on Windows, macOS and Linux) and download the file in an ordinary browser tab. Two buttons in the browser save the edits as CSV files; feed them back with `importcoords()` (paired with `nodexy()`, same matched-pair idea as `generate()`/ `nodexy()` above) and `edgeimport()`:
 
 ```stata
 . nwplot flomarriage, generate(x y) color(wealth) interactive
 . * drag nodes / edit the legend in the browser, then save both CSVs, then:
 . nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)
 ```
-How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds to about `nodefactor(0.2)` in the static graph. Without `nodefactor()`, `nwplot` therefore uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of 1.85 gives `nodefactor(0.37)`); an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group. The CSV format is unchanged.
+The button **Save do-file** does all of this in one step. It saves **nwedit_plot.do**, which writes the two files (**nwedit_nodes.csv** and **nwedit_edges.csv**) into the working directory and then calls `nwplot` with the network, `if` / `in` and options of the call that wrote the page, completed with `nodexy()`, `importcoords()` and `edgeimport()` (the options of the page itself, of exporting and of saving coordinates are left out). Run it with the same data in memory as when the page was written:
+
+```stata
+. run nwedit_plot.do
+```
+How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds to about `nodefactor(0.2)` in the static graph. Without `nodefactor()`, `nwplot` therefore uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of 1.85 gives `nodefactor(0.37)`); an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group.
 
 The view draws *y* upward, as the static plot does, for every layout and for `nodexy()` (with `nodexy(Lon Lat)` the map is upright), and the saved CSV holds the same *y*, so a saved layout comes back in the same orientation. With `edgesize()` the view maps the tie values linearly onto line widths of 1 to 8 pixels (all ties 3 pixels without `edgesize()`; the static plot uses the same 1 to 8 mapping); the edge-width slider is a multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider multiplies on top. `edgeimport()` accepts the edge file of a directed or an undirected network (the view lists an undirected tie once).
 
-`importcoords()`/`edgeimport()` must be run against the same network, same size, as the `interactive` view they came from (row order is how nwplot matches an edit back to a node/tie, the same way `nodexy()`/`label()` already do) - re-export from `interactive` rather than reusing an old CSV after the network or an `if`/`in` restriction changes. Node size is not yet individually editable in the interactive view; the size-factor slider maps onto `nodefactor()` instead.
+`importcoords()`/`edgeimport()` must be run against the same network, same size, as the `interactive` view they came from (row order is how nwplot matches an edit back to a node/tie, the same way `nodexy()`/`label()` already do) - re-export from `interactive` rather than reusing an old CSV after the network or an `if` / `in` restriction changes. Node size is not yet individually editable in the interactive view; the size-factor slider maps onto `nodefactor()` instead.
 
 Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or asymmetrically connected (see [nwdyads](nwdyads)). By default, asymmetrically connected dyads are represented as a straight line, whereas mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as curved lines.
 
@@ -125,9 +145,6 @@ nwcommands ships three schemes purpose-built for network plots - s1network, s2ne
 ```
 ```stata
 . nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(economist)
-```
-```stata
-. set scheme s2network
 ```
 This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path to color the edges of the original network and change the size of the edges on this path.
 
@@ -208,23 +225,21 @@ Raster formats (PNG, TIF, ...) are also supported the same way; `exportopt()` pa
 ```
 The graph itself is unaffected by `export()` - it remains the normal, currently active Stata graph afterward, so the Graph Editor, stata graph save, and a second `graph export` in a different format all continue to work exactly as they would without `export()`.
 
-## Supported network types
-
-Binary: yes. Weighted: yes. On a valued network the widths of the edges follow the tie values by default (as `edgesize(`*network*`)` with 1 to 4 units; `binary` switches it off; `edgesize()` sets the 1 to 8 range and any other network). The values never change the colour of an edge unless you ask for it with `edgecolor()`. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and the width follows the absolute value (`nosign` switches the colours off; `binary` keeps the colours and drops the widths). The layouts `kk` (the default) and `frucht` use the tie values as strengths on a valued network (see [Valued networks and layouts](nwplot); `binary` switches it off), the other layouts use the ties only. Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual) dyads are curved apart from their asymmetric counterparts by default (`arcstyle(automatic)`) so both directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless `color()` or `symbol()` is given; `layout(bipartite)` puts the two modes in two rows (`igraph::layout_as_bipartite`). Self-loops: not rendered - a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded in the package's own visualization roadmap rather than fixed here.
-
 ## Stored results
 
 `nwplot` is `rclass`.
 
-- Macros:
-- **r(export)** filename actually passed to `export()`, if specified
-- **r(fname)** path of the interactive HTML page written by `interactive`
-- **r(interactive)** same as **r(fname)**
-- **r(edgewidth)** `values`, `edgesize` or `binary`: how the edge widths were set
+- **Macros**
+- **r(export)** --- filename actually passed to `export()`, if specified
+- **r(fname)** --- path of the interactive HTML page written by `interactive`
+- **r(interactive)** --- same as **r(fname)**
+- **r(edgewidth)** --- `values`, `edgesize` or `binary`: how the edge widths were set
+- **r(scheme)** --- the scheme used for the plot (**s1network** unless `scheme()` is given)
+- **r(importcoords)** --- the file given in `importcoords()`, if specified
 
-- Scalars:
-- **r(signcolor)** 1 if the sign colours (solid navy, dashed cranberry) were used
-- **r(modesymbols)** 1 if the two modes of a two-mode network got their own symbols
+- **Scalars**
+- **r(signcolor)** --- 1 if the sign colours (solid navy, dashed cranberry) were used
+- **r(modesymbols)** --- 1 if the two modes of a two-mode network got their own symbols
 
 ## See also
 
@@ -232,4 +247,4 @@ Binary: yes. Weighted: yes. On a valued network the widths of the edges follow t
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

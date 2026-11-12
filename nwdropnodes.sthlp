@@ -95,27 +95,23 @@ default unless {bf:netonly} is specified.
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
+{bf:Directed:}, {bf:Valued:}, {bf:Signed:} the ties and their values among the remaining nodes are kept.
+{bf:Two-mode:} yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one
+mode are dropped the network stays two-mode with an empty level. See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
 {pstd}
 A network held as stored ties stays so: the ties between the remaining nodes are the new network. Measured in Stata/BE, random
-directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB (killed at 12 GB before).
-The node labels of the remaining network are passed on in Mata; they used to be damaged above about 900 nodes (and rows were added
-to the data).
+directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB.
+The node labels of the remaining network are passed on in Mata.
 
 {title:See also}
    
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

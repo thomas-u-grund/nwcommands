@@ -51,7 +51,7 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 | Postestimation | goodness of fit (`estat gof`), MCMC diagnostics (`estat mcmcdiag`), simulation from a fit (`nwergm simulate`) |
 | Engine | a compiled plugin for the Monte Carlo sampler (macOS, Linux, Windows) |
 | Speed | Faster than R's `ergm` on all eight of our benchmark models (2.1 to 4.0 times, medians of seven fits, version 1.5.2), with the same algorithm and about the same number of proposals per fit; see [Speed compared with ergm](speed/) |
-| Version | 1.5.10 (11 November 2026) |
+| Version | 1.5.11 (12 November 2026) |
 | License | GNU General Public License, version 3 |
 
 The operator terms (`operators()`), the term `balance`, the curved two-mode terms and `altkstar` with an estimated decay were added in version 1.1.0; earlier releases do not have them.

@@ -34,7 +34,8 @@ nw2motifs [netname] [, six:node gen:erate(stub) replace mat:rix(name) norm:alise
 `nw2motifs` counts the bipartite motifs of a two-mode network: the small connected patterns of ties between two sets of nodes that make up the building blocks of species-by-site, plant-pollinator and membership networks (Baker et al. 2015; Simmons et al. 2019, *Methods in Ecology and Evolution*). There are 17 motifs of two to five nodes and 27 more of six nodes (44 in all), and each motif has one or more *positions* (46 for the five-node set, 148 with six nodes): the nodes of a motif that are not equivalent, such as the end and the middle of a path. The command gives two things.
 
 - 1. The **motif table**, the number of times each motif occurs in the network (what `bmotif::mcount` returns), shown on screen and returned in `r(motifs)`.
-- 2. The **node position counts**, for every node the number of times it holds each position (what `bmotif::node_positions` returns), stored in variables with `generate()` or in a matrix with `matrix()`. They quantify the structural role of a node, for example in a plant-pollinator network.
+- 2. The **node position counts**, for every node the number of times it holds each position (what `bmotif::node_positions` returns), stored in variables with `generate()` or in a
+- matrix with `matrix()`. They quantify the structural role of a node, for example in a plant-pollinator network.
 
 A motif occurrence is a set of nodes whose subgraph, with *all* the ties between them, is connected and has the shape of the motif; an occurrence is counted once however many ways it can be read (the motifs are induced subgraphs, so a path of two rows and two columns and a four-cycle are two different motifs, and a set of four nodes is exactly one of them). The first mode of the network (mode 1) forms the *rows* of the biadjacency matrix of `bmotif` and the second mode the *columns*; the numbering of the motifs and of the positions is the one of `bmotif` (Simmons et al.), listed in the table below. The motif table equals `bmotif::mcount` and the position counts `bmotif::node_positions` (bmotif 2.0.2) exactly, on a toy network, the Southern women, the Swedish directors, a subsample of them and 34 random networks.
 
@@ -89,10 +90,6 @@ The node position counts of a node that is in no motif (an isolate) are zero. In
 - `. nw2motifs toy, sixnode matrix(P) silent`
 - `. matrix list r(motifs)`
 
-## Supported network types
-
-Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued: a tie counts when its value is above zero; the values are ignored and the command prints the usual one-line note on a valued network (bmotif's mean weight of the motifs is not offered). Two-mode: yes - native, the command needs a two-mode network and counts the motifs of the two modes as `bmotif` does (mode 1 = rows). For one-mode networks the 4-node census is [nwmotifs](nwmotifs).
-
 ## Stored results
 
 `nw2motifs` stores in `r()`:
@@ -119,4 +116,4 @@ Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutiona
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

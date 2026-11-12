@@ -9,6 +9,7 @@
 {p2col :nwtostata {hline 2}}Copy a Mata matrix into Stata variables{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -27,6 +28,7 @@ them individually{p_end}
 {synoptline}
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -39,15 +41,23 @@ them individually{p_end}
 
 {pstd}
 This is a low-level utility for programmers moving data between Mata and Stata directly; ordinary
-use of the package does not need it - see {help nwtomata}/{help nwload} for the normal way to bring
+use of the package does not need it - see {help nwtomata} / {help nwload} for the normal way to bring
 a network's own data into Stata.
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Not applicable - {cmd:nwtostata} copies an arbitrary, already-existing Mata matrix into Stata
-variables and has no notion of a network or its properties; any directed/weighted/signed/two-mode
-handling happened whenever {it:matamatrix} was itself produced.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
+
+{title:Limits}
+
+{pstd}
+Every column of the matrix becomes a Stata variable, so the number of columns is limited by what the flavour of Stata
+allows (2,048 variables in Stata/BE, 32,767 in Stata/SE). The command checks this first and stops with r(900) and
+a message instead of failing half way; use the Mata matrix ({help nwtomata}) for larger networks.
+
 
 {title:Examples}
 
@@ -59,18 +69,18 @@ handling happened whenever {it:matamatrix} was itself produced.
 	{cmd:. nwtostata, mat(m) stub(col)}
 	{cmd:. list}
 
-{title:Limits}
 
-{pstd}
-Every column of the matrix becomes a Stata variable, so the number of columns is limited by what the flavour of Stata
-allows (2,048 variables in Stata/BE, 32,767 in Stata/SE). The command checks this first and stops with r(900) and
-a message instead of failing half way; use the Mata matrix ({help nwtomata}) for larger networks.
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(rows)}}number of rows of {it:matamatrix}{p_end}
+{synopt:{bf:r(cols)}}number of columns of {it:matamatrix} (with {opt stub()}){p_end}
+
 
 {title:See also}
 
 	{help nwtomata}, {help nwload}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

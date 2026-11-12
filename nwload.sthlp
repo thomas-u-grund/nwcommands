@@ -79,14 +79,17 @@ For example, if one were to import/use a network with 16 nodes and drop all Stat
 	{cmd:. nwload flomarriage}
 
 {pstd}
-All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option {bf:viewon}; see above). With {bf:nwload} a network can always be brought back 
-as Stata variables. Only one network is loaded at a time: loading another network drops the variables of the network loaded before, and a note says so. A variable of your own that has the name of one of the node variables is not overwritten; {bf:nwload} stops with error 110 unless option {opt overwrite} is given (or declare the network with other variable names, {cmd:nwset ..., vars()}). If one wants to permanently drop a network one needs to
+All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option {bf:viewon}; see above). With {bf:nwload} a
+network can always be brought back 
+as Stata variables. Only one network is loaded at a time: loading another network drops the variables of the network loaded before, and a note says so. A variable of your own that has the name of one
+of the node variables is not overwritten; {bf:nwload} stops with error 110 unless option {opt overwrite} is given (or declare the network with other variable names, {cmd:nwset ..., vars()}). If one
+wants to permanently drop a network one needs to
 use {help nwdrop} or {help nwclear} (very similar to how one would drop or clear normal variables). 
 
 {pstd}
 {bf:nwload} not only loads the adjacency matrix as variables, but also generates (or overwrites) the variable {it:_nwnode}. This variable identifies nodes. When
 the network is two-mode (see {help nw2set:introduction to two-mode networks}), the command also creates the variable {it:_nwmode}. Lastly, the command
-generates (or overwrites) the variable {it:_nwinclude} (unless option {opt:generate()} specifies another variable name. This variable indicates which nodes
+generates (or overwrites) the variable {it:_nwinclude} (unless option {opt generate()} specifies another variable name. This variable indicates which nodes
 are part of the network that has been loaded. 
 
 {pstd}
@@ -94,7 +97,7 @@ Nodes and node attributes are represented as observations in the dataset and are
 node-level attributes it matches the nodes with the observations.
 
 {pstd}
-One can only load the node labels of a network as a Stata variable with the option {bf:labelsonly} (this does neither load the adjacency matrix
+One can only load the node labels of a network as a Stata variable with the option {bf:labelonly} (this does neither load the adjacency matrix
 of a network as Stata variables nor other information, but just creates the variable {it:_nwnode}).
 
 {pstd}
@@ -131,16 +134,14 @@ same variable names; loading the second replaces the first, with a note.
 
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads the network's own stored data into Stata variables exactly as stored, independent of any of these properties.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:See also}
    
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nwintro##limits:feasible network sizes}
 
-last certified : 25 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

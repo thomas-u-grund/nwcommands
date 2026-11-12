@@ -130,8 +130,6 @@ program nwcontext
 	}
 	
 	if ("`stat'" == "sum"){
-		mata: __contextNet
-		mata: __attr
 		mata: __context = (__contextNet * __attr) 
 	}
 	

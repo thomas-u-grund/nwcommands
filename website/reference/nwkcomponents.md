@@ -18,9 +18,9 @@ nwkcomponents
 [netlist]
 [,
 k(int)
-generate(newvarname)
+gen:erate(newvarname)
 replace
-nomatrix
+nom:atrix
 silent
 force]
 ```
@@ -28,9 +28,9 @@ force]
 | | |
 |---|---|
 | `k(int)` | Minimum vertex connectivity required; default = 2 |
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest qualifying k-component size |
+| `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest qualifying k-component size |
 | `replace` | Replace existing variable |
-| `nomatrix` | Do not store **r(kcomp_matrix)**; the `generate(newvarname)` variable and **r(kcomponents)** are still returned |
+| `nom:atrix` | Do not store **r(kcomp_matrix)**; the `gen:erate(newvarname)` variable and **r(kcomponents)** are still returned |
 | `silent` | Suppress display of results |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 
@@ -40,7 +40,9 @@ force]
 
 `k(int)` defaults to 2 - the smallest level that is a genuine refinement of [nwcomponents](nwcomponents)' own plain connectivity - and must be at least 1 ([nwcomponents](nwcomponents) already covers that trivial case directly). Vertex connectivity is computed via the standard node-splitting reduction to max-flow (Even 1979) combined with Menger's theorem (the minimum vertex set separating any two non-adjacent nodes equals the maximum flow between them in the split graph); the network's own overall k-components are then found by the standard recursive decomposition also underlying Moody and White's (2003) cohesive blocking - see [Algorithm](nwkcomponents) below for the one respect in which this command deliberately does less than the full Moody-White procedure.
 
-Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - the nodes whose removal disconnects a graph (a cutset) remain shared members of every resulting sub-block their removal reveals, not assigned to just one side - so `nwkcomponents` follows the same output shape as [nwclique](nwclique)/[nwkplex](nwkplex)/[nwnclique](nwnclique): a single per-node "largest qualifying k-component size" summary variable (`generate(newvarname)`, required), plus the complete overlapping structure in **r(kcomp_matrix)** (a k-components-by-nodes 0/1 membership matrix) and **r(kcomponents)** (count). Unlike those commands there is no `minsize()` - a k-component's own minimum possible size is already `k(int)`+1 (a smaller set cannot reach connectivity `k(int)` at all, since the maximum possible connectivity of an s-node graph is s-1), so there is no equivalent "trivial small case" to filter out separately.
+Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - the nodes whose removal disconnects a graph (a cutset) remain shared members of every resulting sub-block their removal reveals, not assigned to just one side - so `nwkcomponents` follows the same output shape as [nwclique](nwclique) / [nwkplex](nwkplex) / [nwnclique](nwnclique): a single per-node "largest qualifying k-component size" summary variable (`gen:erate(newvarname)`, required), plus the complete overlapping structure in **r(kcomp_matrix)** (a k-components-by-nodes 0/1 membership matrix) and **r(kcomponents)** (count). Unlike those commands there is no `minsize()` - a k-component's own minimum possible size is already `k(int)`+1 (a smaller set cannot reach connectivity `k(int)` at all, since the maximum possible connectivity of an s-node graph is s-1), so there is no equivalent "trivial small case" to filter out separately.
+
+With a list of several networks the variables are numbered by network (*newvarname***1**, *newvarname***2**, ...), and the stored results are those of the last network.
 
 ## Examples
 
@@ -50,19 +52,13 @@ Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - th
 . nwkcomponents flomarriage, k(3) generate(_kcompnum) replace
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity in the classical Moody-White sense has no directed generalization here, the same reasoning [nwclique](nwclique)/ [nwkplex](nwkplex)/[nwnclique](nwnclique) already apply). Weighted: not used - only tie presence/absence affects connectivity. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Vertex-connectivity computation via max-flow is polynomial per pair, but `nwkcomponents` computes it between *every* non-adjacent pair (a deliberately simple and definitely correct method rather than the smaller reference-vertex subset a more optimized algorithm would use), and the overall recursive decomposition can call this repeatedly. For k = 2 the plugin answers the connectivity queries in blocks (see **Limits**); for k of 3 and higher, very large or very dense networks are not recommended.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(kcomponents)** --- number of maximal k-components found
 
-- **r(kcomponents)** number of maximal k-components found
-
-**Matrices**
-
-- **r(kcomp_matrix)** k-components-by-nodes 0/1 membership matrix, one row per maximal k-component (not with `nomatrix`)
+- **Matrices**
+- **r(kcomp_matrix)** --- k-components-by-nodes 0/1 membership matrix, one row per maximal k-component (not with `nomatrix`)
 
 ## References
 
@@ -78,8 +74,6 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 - [nwcomponents](nwcomponents), [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcore](nwkcore)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

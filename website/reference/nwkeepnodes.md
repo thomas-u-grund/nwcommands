@@ -87,14 +87,10 @@ Everything this command does can also be achieved with [nwkeep](nwkeep) using th
 ```
 Note the opposite default polarity between the two interfaces: [nwkeep](nwkeep) leaves Stata dataset rows alone unless **clean** is specified, while `nwkeepnodes` rebuilds the Stata dataset by default unless **netonly** is specified.
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
-
 ## See also
 
 - [nwdropnodes](nwdropnodes), [nwkeep](nwkeep), [nwdrop](nwdrop), [nwclear](nwclear)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -54,7 +54,7 @@ name(string)]
 ```
 `condition(density|census)` chooses what property of [netname](netname) the random draws must share, via [nwrandom](nwrandom)'s own **density()** (the default) or **census()** conditioning. **condition(density)** draws uniformly from every network with the same node count and density - the standard baseline used above. **condition(census)** instead draws uniformly from every network with the *same dyad census* (identical mutual/asymmetric/null tie counts, via [nwdyads](nwdyads)) as [netname](netname) - a stricter, reciprocity-aware null model: two directed networks can share the same overall density while differing sharply in how many ties are reciprocated, so a statistic that is unremarkable once density alone is held fixed can still be unusual once reciprocity is held fixed too (or vice versa). **condition(census)** requires a directed network - mutual/asymmetric/null dyad types have no meaning for undirected ties, where every dyad is simply tied or not.
 
-**condition(degrees)** keeps the degree of every node (in a directed network its out-degree and its in-degree): the draws are random networks with exactly the degrees of [netname](netname), no self-loops and no pair tied twice. It asks whether a statistic goes beyond what the degrees alone produce: popular nodes are tied to each other more often by chance, so clustering or a core can look remarkable against **condition(density)** and ordinary against **condition(degrees)**. The draws form a chain of random tie swaps on a copy of [netname](netname) (two ties a-b and c-d become a-d and c-b, see [nwpermute](nwpermute) with `swap`), as R's `igraph::rewire(g, keeping_degseq())`; `trades()` sets the number of attempted swaps between two draws. The copy keeps the node names and attributes of [netname](netname), and tie values move with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. For example, the global clustering coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and networks with its degrees 0.165 (sd 0.078), which agrees with `igraph` (0.162, sd 0.077):
+**condition(degrees)** keeps the degree of every node (in a directed network its out-degree and its in-degree): the draws are random networks with exactly the degrees of [netname](netname), no self-loops and no pair tied twice. It asks whether a statistic goes beyond what the degrees alone produce: popular nodes are tied to each other more often by chance, so clustering or a core can look remarkable against **condition(density)** and ordinary against **condition(degrees)**. The draws form a chain of random tie swaps on a copy of [netname](netname) (two ties a-b and c-d become a-d and c-b, see [nwpermute](nwpermute) with `swap`), as R's `igraph::rewire(g, keeping_degseq())`; `trades()` sets the number of attempted swaps between two draws. The copy keeps the node names and attributes of [netname](netname), and tie values move with their ties. The draws use the native plugin. For example, the global clustering coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and networks with its degrees 0.165 (sd 0.078), which agrees with `igraph` (0.162, sd 0.077):
 
 ```stata
 . nwcug flomarriage, stat(nwclustering ##net##, generate(cc) replace) rname(cluster_global) condition(degrees) reps(2000) seed(3)
@@ -65,21 +65,33 @@ Some statistics are fixed by the dyad census (reciprocity, for example). With **
 
 `plot` draws a histogram of the **reps()** null draws with a dashed vertical line at the observed statistic - the standard visual check for a CUG test (is the observed value out in the tail of the null distribution, or comfortably inside it?), the same comparison R's **sna** package's **plot.cug.test()** draws for its own **cug.test()**. Grayscale by design, matching every other plot this package produces.
 
-## Supported network types
+For a two-mode network the null networks are two-mode networks with the same nodes (and the same node names and attributes) as [netname](netname); the draws are made by a kernel of the native plugin, so the time of a test is that of the statistic. The conditions are
 
-Binary: yes. Directed: yes (required for `condition(census)`; `condition(degrees)` keeps out-degrees and in-degrees). Weighted: depends entirely on **stat()** - `nwcug` itself only draws random comparison networks and calls whatever command **stat()** names, so it inherits that command's own support. Signed: same as weighted, depends on **stat()**. Two-mode: yes - the null networks are two-mode networks with the number of ties or the degrees of the network (see Two-mode networks above).
+- **condition(density)** (the default): the same number of ties between a random mode-1 node and a random mode-2 node, no pair twice (`igraph::sample_bipartite(type = "gnm")`,
+- `vegan::nullmodel(method = "r00")`).
+- **condition(mode1degree)**: every mode-1 node keeps its degree and takes its partners at random among all mode-2 nodes (`vegan` method `r0`).
+- **condition(mode2degree)**: the same for the mode-2 nodes (`vegan` method `c0`).
+- **condition(degrees)**: both degree sequences stay, the curveball algorithm of Strona et al. (2014) (`vegan` method `curveball`; the same null model as [nwpermute](nwpermute) with
+- `swap`, which exchanges the partners of two ties). The draws form a chain; `trades()` sets the number of trades between two draws.
+
+The values of a valued two-mode network are shuffled over the ties of every draw (the number of ties and the degrees count ties, not values). **condition(census)** counts the dyads of a directed one-mode network and is refused for a two-mode network (error 198); **condition(mode1degree)** and **condition(mode2degree)** are refused for a one-mode network. For example, to test whether the nestedness of the Southern women is unusual for their degrees:
+
+```stata
+. nwwebuse davis, nwclear
+. nwcug davis, stat(nw2nested ##net##) rname(nodf) condition(degrees) reps(1000) seed(1)
+```
+The means and standard deviations of the null distributions agree with those of `vegan::nullmodel` in R (1,000 draws of the nestedness NODF of the Southern women: 36.98 against 36.78 for *density*, 38.81 against 38.81 for *mode1degree*, 44.53 against 44.53 for *mode2degree*, 48.36 against 48.43 for *degrees*).
 
 ## Stored results
 
-**Scalars**
-
-- **r(obs)** observed statistic
-- **r(reps)** number of random draws
-- **r(mean_null)** mean of the statistic across random draws
-- **r(sd_null)** standard deviation of the statistic across random draws
-- **r(p_greater)** (1 + number of random draws >= observed)/(draws + 1) (upper-tail p-value, never 0)
-- **r(p_less)** (1 + number of random draws <= observed)/(draws + 1) (lower-tail p-value, never 0)
-- **r(p)** two-sided p-value (2 * min(p_greater, p_less), capped at 1)
+- **Scalars**
+- **r(obs)** --- observed statistic
+- **r(reps)** --- number of random draws
+- **r(mean_null)** --- mean of the statistic across random draws
+- **r(sd_null)** --- standard deviation of the statistic across random draws
+- **r(p_greater)** --- (1 + number of random draws >= observed)/(draws + 1) (upper-tail p-value, never 0)
+- **r(p_less)** --- (1 + number of random draws <= observed)/(draws + 1) (lower-tail p-value, never 0)
+- **r(p)** --- two-sided p-value (2 * min(p_greater, p_less), capped at 1)
 
 ## References
 
@@ -91,8 +103,6 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 - [nwrandom](nwrandom), [nwdyads](nwdyads), [nwpermute](nwpermute), [nwqap](nwqap)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -34,10 +34,12 @@ imports the network as undirected.
  
  
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} the command checks whether the matrix of a directed network is symmetric. {bf:Valued:} the tie values are
+compared, not only the presence of ties. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network.
+{bf:Signed:} negative values are compared like any value. See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -46,7 +48,8 @@ Binary: yes. Directed: yes - this command's entire purpose is checking whether a
 	{cmd:. return list}
 
 	{txt}scalars:
-		r(issymmetric) = {res}1{txt}
+{synoptset 20 tabbed}{...}
+{synopt:r(issymmetric) = {res}1{txt}}{p_end}
 
 {pstd}
 Note: {bf:r(issymmetric)} is a plain numeric 0/1 scalar - unlike the {bf:true}/{bf:false} string
@@ -59,4 +62,4 @@ since it is a computed test result rather than a stored network property.
 	{help nwsym}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

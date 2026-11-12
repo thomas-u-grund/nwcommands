@@ -19,7 +19,7 @@
 [{opt mode}({it:{help nwneighbor##context:context}})
 {opth generate(newvarname)}
 {opt replace}
-{opth subnet(newnetname)}
+{opth sub:net(newnetname)}
 {opt subreplace}]
 
 
@@ -29,7 +29,7 @@
 {synopt:{opt mode}({it:{help nwneighbor##context:context}})}Defines the network neighborhood of node {it:ego}; default = {it:outgoing}{p_end}
 {synopt:{opth generate(newvarname)}}Save information about network neighbors in variable.{p_end}
 {synopt:{opt replace}}Overwrite variable {it:newvarname}.{p_end}
-{synopt:{opth subnet(newnetname)}}Save the induced subgraph on {it:ego} plus its own neighbors (and every tie among them) as a new network{p_end}
+{synopt:{opth sub:net(newnetname)}}Save the induced subgraph on {it:ego} plus its own neighbors (and every tie among them) as a new network{p_end}
 {synopt:{opt subreplace}}Overwrite network {it:newnetname} if it already exists{p_end}
 		
 {synoptset 15 tabbed}{...}
@@ -43,7 +43,7 @@
 {p2col:{cmd: either}}network neighbors of node {it:ego} are all nodes {it:j} who either send a tie to {it:ego} or receive a tie from {it:ego}
 		{p_end}
 
-		
+
 {title:Description}
 
 {pstd}
@@ -51,32 +51,18 @@
 the neighborhood of a node {it:ego} consists of all nodes {it:j}, who receive a tie from node {it:ego}. Tie values are ignored.
 
 {pstd}
-{opth subnet(newnetname)} additionally saves the INDUCED SUBGRAPH on {it:ego} plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among them (not just ego's own ties) - as {it:newnetname}. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute aggregate, which {help nwaltergen}/{help nwego} already compute directly without needing one). The original network is left untouched; {it:newnetname} inherits its directedness/valued/self-loop/two-mode status.
+{opth subnet(newnetname)} additionally saves the INDUCED SUBGRAPH on {it:ego} plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among
+them (not just ego's own ties) - as {it:newnetname}. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute
+aggregate, which {help nwaltergen} / {help nwego} already compute directly without needing one). The original network is left untouched; {it:newnetname} inherits its
+directedness/valued/self-loop/two-mode status.
 
 
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: not applicable - returns which nodes are neighbors, not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{title:Stored results}
-
-	Macros
-	  {bf:r(ego)}		name of ego (a string, not a nodeid)
-	  {bf:r(oneneighbor)}	one randomly selected neighbor's name; empty if ego has no neighbors
-
-	Scalars
-	  {bf:r(egoid)}		nodeid of ego
-	  {bf:r(num_neighbors)}	number of neighbors ego has
-
-	Matrices
-	  {bf:r(neighbors)} 	reshuffled list of all neighbors
+{bf:Directed:} {opt mode(incoming|outgoing|either)} chooses the neighbours. {bf:Valued:} tie values are ignored (every
+tie counts as present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
 
 {title:Examples}
@@ -93,13 +79,26 @@ Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: 
 
 {pstd}
 This shows that the "ginori" family has business relationships with the "barbadori" and the "medici". 
-	   
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(ego)}}name of ego (a string, not a nodeid){p_end}
+{synopt:{bf:r(oneneighbor)}}one randomly selected neighbor's name; empty if ego has no neighbors{p_end}
+
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(egoid)}}nodeid of ego{p_end}
+{synopt:{bf:r(num_neighbors)}}number of neighbors ego has{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(neighbors)}}column vector with the nodeids of all neighbors, in nodeid order{p_end}
+
 
 {title:Also see}
 
    {help nwcontext}, {help nwgeodesic}, {help nwpath}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -28,9 +28,18 @@
 
 {pstd}
 {cmd:nwpreserve} preserves network data by temporarily saving the current network dataset (including all normal Stata variables) in the working directory.
+Calling {cmd:nwpreserve} again before {cmd:nwrestore}
+exits with an error ("Already preserved"), as Stata's own {help preserve} does.
 
 {pstd}
 {cmd:nwrestore} restores network data previously preserved (including all Stata variables).
+
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
 
 {title:Examples}
 
@@ -45,16 +54,10 @@ Preserve a network, drop it, then restore it:
 	{cmd:. nwrestore}
 	{cmd:. nwset}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves/restores the full working state (every loaded network and its own directed/valued/two-mode status, plus the Stata dataset), independent of any of these properties.
 
 {title:Also see}
    
    {help restore}, {help preserve}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
