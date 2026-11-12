@@ -47,12 +47,18 @@
 
 {pstd}
 {cmd: nwpath} calculates the shortest paths between node {it:ego} and node {it:alter}, i.e. ways how the nodes
-are connected with each other.
+are connected with each other. When {it:ego} and {it:alter} are the same node, the path is the node itself, of
+length 0 (as in igraph).
 
 {pstd}
 With option {opth generate(newnetname)} the command produces one new network for each valid path that is found.
 For example, if three paths are found between nodes {it:ego} and {it:alter}, the networks {it:newnetnamestub_1, newnetnamestub_2, newnetnamestub_3}
-are produced.
+are produced. On an undirected network each tie of a path network is undirected (stored in both directions).
+
+{pstd}
+Errors: a node that does not exist, or an id out of range, stops the command with {bf:r(485)}; a path network that
+already exists without {opt nwreplace} with {bf:r(483)}; a missing or invalid option with {bf:r(198)}
+(see {help nwerrorcodes}).
 
 
 {title:Options}

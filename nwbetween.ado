@@ -42,9 +42,17 @@ program nwbetween
 		di "{err}option {bf:generate()} required."
 		error 198
 	}
+	if "`twomode'" != "" & "`onemode'" != "" {
+		di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
+		error 198
+	}
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		if "`twomode'" != "" & "`is2mode'" != "true" {
+			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
+			error 198
+		}
 		// tie values: shortest paths with step cost 1/value^alpha on a valued network (weighted is redundant there);
 		// binary ignores the values
 		local __wtd = ("`weighted'" != "" | ("`valued'" == "true" & "`binary'" == ""))
@@ -78,7 +86,7 @@ program nwbetween
 		}
 		capture confirm new variable `netgenerate'
 		if _rc capture drop `netgenerate'
-		generate `netgenerate' = .
+		generate double `netgenerate' = .
 
 		// Per Stata's own [P] syntax convention for a "no"-prefixed
 		// toggle: declaring `nosym' in the option list makes Stata
@@ -92,7 +100,8 @@ program nwbetween
 		// nwevcent.ado, which had the identical bug). Fixed to check
 		// `sym' instead.
 		if "`sym'" == "" {
-			nwsym `netname_temp', generate(`netname_temp'_symmetrized)
+			tempname __symnet
+			nwsym `netname_temp', generate(`__symnet')
 			_nwsyntax
 		}
 
@@ -123,10 +132,6 @@ program nwbetween
 
 		// a two-mode network gets the standardisation of Borgatti and Everett (1997) by default; onemode gives the one-mode betweenness
 		// (with standardize as for any graph); twomode (the earlier way to ask for it) is accepted as a synonym
-		if "`twomode'" != "" & "`onemode'" != "" {
-			noi di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
-			error 198
-		}
 		local __tm = ("`twomode'" != "" | ("`is2mode'" == "true" & "`onemode'" == ""))
 		// Freeman's centralisation is computed from the raw scores
 		tempvar __rawbtw
@@ -135,10 +140,6 @@ program nwbetween
 			// Borgatti and Everett (1997): the largest possible betweenness of a node of a mode with n nodes, the other
 			// mode having m nodes (a node that lies on every path between the other nodes of its mode): with
 			// s = floor((n - 1) / m) and t = n - 1 - s m, (m^2 (s+1)^2 + m (s+1) (2t - s - 1) - t (2s - t + 3)) / 2
-			if "`is2mode'" != "true" {
-				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
-				error 198
-			}
 			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); st_store((1::`nodes'), "`netgenerate'", st_data((1::`nodes'), "`netgenerate'") :/ ((__md :== 1) :* nw_be_maxbetween(__n1, __n2) :+ (__md :== 2) :* nw_be_maxbetween(__n2, __n1)))
 			mata: mata drop __md __n1 __n2
 		}
@@ -152,7 +153,7 @@ program nwbetween
 		}
 
 		if "`sym'" == "" {
-			nwdrop `oldnetname'_symmetrized
+			nwdrop `__symnet'
 			nwcurrent `oldnetname'
 		}
 

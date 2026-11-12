@@ -35,8 +35,9 @@ program nwevcent
 		local getvalued = 1
 	}
 
-	capture confirm variable `generate'
-	if _rc == 0 & "`replace'" == "" {
+	capture confirm variable `generate', exact
+	local __exists = (_rc == 0)
+	if `__exists' & "`replace'" == "" {
 		di "{err}Variable {it:`generate'} already exists. Use option {bf:replace}.{txt}"
 		// BUGFIX: was a bare `exit' (no return code) - the message
 		// printed but the command returned rc=0 to its caller, so any
@@ -49,9 +50,8 @@ program nwevcent
 		// situation in this same group.
 		err 99
 	}
-	else {
-		capture generate `generate' = .
-	}
+	if `__exists' drop `generate'
+	qui generate double `generate' = .
 
 	mata: st_store((1::`nodes'),"`generate'", nw_evcentrality(`netobj',`nosym',`getvalued'))
 

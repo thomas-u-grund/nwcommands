@@ -31,7 +31,7 @@ program nwcontext
 		error 198
 	}
 	if "`generate'" != "" {
-		capture confirm variable `generate'
+		capture confirm variable `generate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
 			err 99
@@ -54,101 +54,102 @@ program nwcontext
 		local net_matrix (*`netobj'->get_matrix())
 	}
 	
-	mata: __attr = J(`nodes', 1, 0)
+	mata: __nwcontext_attr = J(`nodes', 1, 0)
 	if `nodes' >= _N {
 		local validCase = _N
-		mata: __attr[(1::`validCase')] = st_data((1,`validCase'), "`attribute'")
+		mata: __nwcontext_attr[(1::`validCase')] = st_data((1,`validCase'), "`attribute'")
 	}
 	else {
-		mata: __attr[(1::`nodes')] = st_data((1,`nodes'), "`attribute'")
+		mata: __nwcontext_attr[(1::`nodes')] = st_data((1,`nodes'), "`attribute'")
 	}
 	
 	if ("`mode'" == "incoming") {
 		local net_matrix (`net_matrix')'
 	}
 	if ("`mode'" == "both") {
-		local net_matrix ((`net_matrix')' + `net_matrix')
+		// a neighbour in either direction counts once, with the larger of the two tie values
+		local net_matrix (((`net_matrix')' + `net_matrix' + abs((`net_matrix')' - `net_matrix')) / 2)
 	}
-	local net_matrix ((`net_matrix') :* (__attr :!= .)')
-	mata: __contextNet = (`net_matrix')
-	mata: _editmissing(__attr,0)
-	mata: _editmissing(__contextNet, 0)
+	local net_matrix ((`net_matrix') :* (__nwcontext_attr :!= .)')
+	mata: __nwcontext_contextNet = (`net_matrix')
+	mata: _editmissing(__nwcontext_attr,0)
+	mata: _editmissing(__nwcontext_contextNet, 0)
 
 	if ("`stat'" == "mean"){
-		mata: __context = (__contextNet * __attr) :/ (rowsum(__contextNet))
+		mata: __nwcontext_context = (__nwcontext_contextNet * __nwcontext_attr) :/ (rowsum(__nwcontext_contextNet))
 	}
 	
 	if ("`stat'" == "meanego"){
-		mata: _diag(__contextNet, 1)
+		mata: _diag(__nwcontext_contextNet, 1)
 		// BUGFIX: referenced the undeclared Mata variables `contextNet'/
-		// `attr' instead of `__contextNet'/`__attr' (the names actually
+		// `attr' instead of `__nwcontext_contextNet'/`__nwcontext_attr' (the names actually
 		// populated earlier in this program, used by every other stat
 		// branch) - always failed with "variable not found", r(3499).
-		mata: __context = (__contextNet * __attr) :/ (rowsum(__contextNet))
+		mata: __nwcontext_context = (__nwcontext_contextNet * __nwcontext_attr) :/ (rowsum(__nwcontext_contextNet))
 	}
 	
 	if ("`stat'" == "sd"){
-		mata: __netVal = rowsum(__contextNet)
-		mata: __avgContext = (__contextNet * __attr) :/ __netVal
-		mata: _editvalue(__contextNet,0,.)
-		mata: __diffContext = (__contextNet :* __attr') :- __avgContext
-		mata: __context = sqrt(rowsum(__diffContext :* __diffContext):/rowsum(__contextNet))
-		mata: mata drop __netVal __diffContext __avgContext 
+		mata: __nwcontext_netVal = rowsum(__nwcontext_contextNet)
+		mata: __nwcontext_avgContext = (__nwcontext_contextNet * __nwcontext_attr) :/ __nwcontext_netVal
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_diffContext = (__nwcontext_contextNet :* __nwcontext_attr') :- __nwcontext_avgContext
+		mata: __nwcontext_context = sqrt(rowsum(__nwcontext_diffContext :* __nwcontext_diffContext):/rowsum(__nwcontext_contextNet))
+		mata: mata drop __nwcontext_netVal __nwcontext_diffContext __nwcontext_avgContext 
 	}
 	
 	if ("`stat'" == "sdego"){
-		mata: _diag(__contextNet, 1)
-		mata: __netVal = rowsum(__contextNet)
-		mata: __avgContext = (__contextNet * __attr) :/ __netVal
-		mata: _editvalue(__contextNet,0,.)
-		mata: __diffContext = (__contextNet :* __attr') :- __avgContext
-		mata: __context = sqrt(rowsum(__diffContext :* __diffContext):/rowsum(__contextNet))
-		mata: mata drop __netVal __diffContext __avgContext 
+		mata: _diag(__nwcontext_contextNet, 1)
+		mata: __nwcontext_netVal = rowsum(__nwcontext_contextNet)
+		mata: __nwcontext_avgContext = (__nwcontext_contextNet * __nwcontext_attr) :/ __nwcontext_netVal
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_diffContext = (__nwcontext_contextNet :* __nwcontext_attr') :- __nwcontext_avgContext
+		mata: __nwcontext_context = sqrt(rowsum(__nwcontext_diffContext :* __nwcontext_diffContext):/rowsum(__nwcontext_contextNet))
+		mata: mata drop __nwcontext_netVal __nwcontext_diffContext __nwcontext_avgContext 
 	}
 	
 	if ("`stat'" == "max"){
-		mata: _editvalue(__contextNet,0,.)
-		mata: __context = rowmax(__contextNet :* __attr')
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_context = rowmax(__nwcontext_contextNet :* __nwcontext_attr')
 	}
 	
 	if ("`stat'" == "maxego"){
 		// BUGFIX: a stray trailing "4" after the closing paren made this
 		// a Mata syntax error ("invalid syntax", r(3000)) on every call,
-		// unlike the four other identical `_diag(__contextNet, 1)' calls
+		// unlike the four other identical `_diag(__nwcontext_contextNet, 1)' calls
 		// elsewhere in this file.
-		mata: _diag(__contextNet, 1)
-		mata: _editvalue(__contextNet,0,.)
-		mata: __context = rowmax(__contextNet :* __attr')
+		mata: _diag(__nwcontext_contextNet, 1)
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_context = rowmax(__nwcontext_contextNet :* __nwcontext_attr')
 	}
 	
 	if ("`stat'" == "min"){	
-		mata: _editvalue(__contextNet,0,.)
-		mata: __context = rowmin(__contextNet :* __attr')
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_context = rowmin(__nwcontext_contextNet :* __nwcontext_attr')
 	}
 	
 	if ("`stat'" == "minego"){	
-		mata: _diag(__contextNet, 1)
-		mata: _editvalue(__contextNet,0,.)
-		mata: __context = rowmin(__contextNet :* __attr')
+		mata: _diag(__nwcontext_contextNet, 1)
+		mata: _editvalue(__nwcontext_contextNet,0,.)
+		mata: __nwcontext_context = rowmin(__nwcontext_contextNet :* __nwcontext_attr')
 	}
 	
 	if ("`stat'" == "sum"){
-		mata: __context = (__contextNet * __attr) 
+		mata: __nwcontext_context = (__nwcontext_contextNet * __nwcontext_attr) 
 	}
 	
 	if ("`stat'" == "sumego"){
-		mata: _diag(__contextNet, 1)
-		mata: __context = (__contextNet * __attr) 
+		mata: _diag(__nwcontext_contextNet, 1)
+		mata: __nwcontext_context = (__nwcontext_contextNet * __nwcontext_attr) 
 	}
 	
-	//mata: _editvalue(__context,0,.)
+	//mata: _editvalue(__nwcontext_context,0,.)
 	if "`mat'" != "" {
-		mata: `mat' = __context
+		mata: `mat' = __nwcontext_context
 	}
 	if "`generate'" != "" {
-		capture generate `generate' = .
-		mata: st_store((1, `nodes'), "`generate'",__context)
+		qui generate double `generate' = .
+		mata: st_store((1, `nodes'), "`generate'",__nwcontext_context)
 	}
-	mata: mata drop __context __attr __contextNet   
+	capture mata: mata drop __nwcontext_*
 end
 

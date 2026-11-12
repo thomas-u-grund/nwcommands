@@ -4,6 +4,32 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- `nwcontext, mode(either)` (or `mode(both)`) counted a neighbour tied in both directions twice (every neighbour of an undirected network): the sum and the maximum were doubled and the mean was weighted towards the reciprocated neighbours. Each neighbour now counts once, on a valued network with the larger of the two tie values.
+- `nwqap` with an attribute term (`nwqap y x g`) read the attribute by row position, so after the data had been synchronised with a network of another size the attribute could be attached to the wrong nodes (a second identical call gave other coefficients). The data are now synchronised with the dependent network first.
+- `nwpath` with `ego()` equal to `alter()` reports the trivial path of length 0 (`r(paths)` 1, `r(path_length)` 0), as igraph; it reported "not connected".
+- `nwpath, generate()` on an undirected network stored each tie of the path network in one direction only (an asymmetric matrix flagged undirected); the ties are now stored in both directions.
+- `nwbetween` and `nwcloseness` store their results as double (float rounded large betweenness scores: 16,834,504 instead of 16,834,503); `nwgeodesic, generate()`, `nwevcent`, `nwcontext` and the coordinates of `nwplot, generate()` are double as well.
+- `nwplot, layout(grid, columns(1))` gave missing x coordinates, and more columns than nodes stopped with a conformability error; both now give a grid.
+
+### Fixed
+- `nwdegree` on an undirected network with two names in `generate()` (and no `isolates`) dropped the variable named second.
+- `nwdegree`, `nwcloseness`, `nwgeodesic, generate()`, `nwevcent`, `nwkatz`, `nwneighbor` and `nwcontext` treated a variable that merely starts with the requested name as that variable (`generate(d)` with a variable `dlong`): the command stopped with r(99), or dropped the other variable.
+- `nwevcent, replace` into an existing byte or integer variable stored truncated values; the variable is now replaced.
+- `nwkatz, walks` without `alpha()` stopped with an error on a network without cycles (spectral radius 0); the default alpha is then 1.
+- `nwcloseness` and `nwbetween` with `twomode` on a one-mode network left a helper network (and `nwbetween` the result variable) behind; the check now comes first. Their helper networks (`_tempgeodesic`, `<net>_symmetrized`) have temporary names, so a user network of that name no longer stops the command (`nwcloseness` stopped with r(99) without a message).
+- `nwgeodesic, binary alpha()` left the result network behind when it stopped with r(198).
+- `nwclustering, symmetrize` without `generate()` (or with an invalid `measure()`) left the symmetrized helper network behind, and the next correct call stopped with r(483).
+- `nwclustering`, `nwclique` and `nwbrokerage` overwrote or deleted the user's scalars `clust_global`, `nw_ncliques`, `brk_pairs` and matrix `nw_cliquematrix`; `nwneighbor` and `nwcontext` deleted the user's Mata objects `__nb`, `__attr`, `__context` and others; `nwcorrelate, attribute()` deleted a user network called `same_<attribute>` (it is replaced only with `keepexpand`); `nwqap` stopped with r(483) when a user network `_tempexpand` existed. All use temporary names now.
+- `nwneighbor` no longer moves the random-number stream (`r(oneneighbor)` is drawn with the state restored afterwards).
+- `nwpath` stops with the error codes of `help nwerrorcodes`: 485 for a node that does not exist or an id out of range, 483 for a path network that exists, 198 for missing or wrong options (all were r(99)). The message for a missing `alter()` named `ego()`.
+- `nwplot, generate()` with one name wrote `_x_coord` and `_y_coord`, and overwrote existing variables without `replace` (and changed their type); it now needs two names and `replace` to overwrite. A network without ties is plotted (its nodes) and `generate()` exports the coordinates; before, nothing was plotted or exported.
+- `nwsummarize, detail` did not store the documented `r(missing_edges)`; it is stored in every case, and the help says what it counts (cells without a value, including the diagonal of a network without self-loops).
+- `nwtabulate` with more than two networks said "Network ... not found" (r(482)); it says "Maximum two networks allowed" and stops with r(198).
+- The help of `nwcontext` says how `max`, `min` and `sd` use the tie values of a valued network (they are taken over tie value times attribute).
+
 ## [3.21.0] - 2026-11-12
 
 ### Results that change (read before you re-run old analyses)

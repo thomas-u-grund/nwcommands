@@ -9,16 +9,17 @@ nwload mynet2
 nwload mynet1
 
 // Test two context for two different networks in memory
+// (the reference values were recorded from a float variable; nwcontext stores double, hence 1E-6)
 gen attr = _n
 nwcontext mynet1, attribute(attr) generate(_context_attr)
 sum _context_attr
 
-assert reldif( r(sum)    , 7.133333206176758 ) <  1E-8
-assert reldif( r(max)    , 3.333333253860474 ) <  1E-8
-assert reldif( r(min)    , 1.799999952316284 ) <  1E-8
-assert reldif( r(sd)     , .8335554969074795 ) <  1E-8
-assert reldif( r(Var)    , .6948147664246752 ) <  1E-8
-assert reldif( r(mean)   , 2.377777735392252 ) <  1E-8
+assert reldif( r(sum)    , 7.133333206176758 ) <  1E-6
+assert reldif( r(max)    , 3.333333253860474 ) <  1E-6
+assert reldif( r(min)    , 1.799999952316284 ) <  1E-6
+assert reldif( r(sd)     , .8335554969074795 ) <  1E-6
+assert reldif( r(Var)    , .6948147664246752 ) <  1E-6
+assert reldif( r(mean)   , 2.377777735392252 ) <  1E-6
 assert         r(sum_w) == 3
 assert         r(N)     == 3
 
@@ -31,9 +32,9 @@ sum _context_attr
 assert         r(sum)   == 26
 assert         r(max)   == 7
 assert         r(min)   == 6
-assert reldif( r(sd)     , .4303314418723446 ) <  1E-8
-assert reldif( r(Var)    , .1851851498639311 ) <  1E-8
-assert reldif( r(mean)   , 6.5               ) <  1E-8
+assert reldif( r(sd)     , .4303314418723446 ) <  1E-6
+assert reldif( r(Var)    , .1851851498639311 ) <  1E-6
+assert reldif( r(mean)   , 6.5               ) <  1E-6
 assert         r(sum_w) == 4
 assert         r(N)     == 4
 

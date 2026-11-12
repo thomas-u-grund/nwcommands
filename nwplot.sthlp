@@ -228,7 +228,7 @@ two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode
 {p2col:{opt export}({it:filename})}export the plot directly to {it:filename}; the format
 	(SVG/PDF/EPS/PNG/TIF/...) is inferred from the file extension, exactly as it would be by a
 	manual {help graph export} call afterward{p_end}
-{p2col:{opt replace}}overwrite {it:filename} if it already exists{p_end}
+{p2col:{opt replace}}overwrite {it:filename} if it already exists, and the variables of {opt generate()}{p_end}
 {p2col:{opt exportopt}({it:{help graph export:export_options}})}pass additional options
 	straight through to the underlying {help graph export} call (e.g. {cmd:width()}/{cmd:height()}
 	for raster-format resolution){p_end}

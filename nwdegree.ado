@@ -273,7 +273,8 @@ program nwdegree
 		}
 
 		local _degree : word 1 of `netgenerate'
-		local _indegree : word 2 of `netgenerate'
+		local _indegree ""
+		if "`directed'" == "true" local _indegree : word 2 of `netgenerate'
 		local _outdegree : word 1 of `netgenerate'
 		// BUGFIX: `_isolate' always read word 1 (the degree/outdegree
 		// name itself), regardless of how many degree-name words
@@ -297,10 +298,11 @@ program nwdegree
 		// actually precede it (2 for directed - out then in - 1 for
 		// undirected), matching how netgenerate is now actually built
 		// above.
-		if ("`directed'" == "true") {
+		local _isolate ""
+		if "`isolates'" != "" & "`directed'" == "true" {
 			local _isolate : word 3 of `netgenerate'
 		}
-		else {
+		else if "`isolates'" != "" {
 			local _isolate : word 2 of `netgenerate'
 		}
 
@@ -351,7 +353,7 @@ program nwdegree
 					noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:ties()}"
 					err 99
 				}
-				capture drop `c'
+				if _rc == 0 drop `c'
 			}
 		}
 		else if "`isolates'" != "" & `__alpha' != 0 {
@@ -364,7 +366,7 @@ program nwdegree
 				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:generate()}"
 				err 99
 			}
-			capture drop `c'
+			if _rc == 0 drop `c'
 		}
 
 		if ("`directed'" == "false"){

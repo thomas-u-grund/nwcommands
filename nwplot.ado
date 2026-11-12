@@ -96,12 +96,25 @@ program nwplot, rclass
 	}
 
 	_nwsyntax `netname', max(1)
+	// generate(newxvar newyvar): two names; existing variables are overwritten only with replace
+	if "`generate'" != "" {
+		if wordcount("`generate'") != 2 {
+			di "{err}Option {bf:generate()} needs two names (x and y coordinates)."
+			error 198
+		}
+		foreach __gv in `generate' {
+			capture confirm variable `__gv', exact
+			if _rc == 0 & "`replace'" == "" {
+				di "{err}Variable {bf:`__gv'} already exists; use {bf:replace}"
+				error 99
+			}
+		}
+	}
 	_nwdenseguard, command(nwplot) nodes(`nodes') copies(10) alternative(A picture of that many nodes is unreadable and slow: plot a part of the network (nwsubset, nwego, nwkcore) or export it with nwexport for a dedicated program.) `force'
 	qui nwsummarize `netname'
 	local __nwp_minval = r(minval)
 	if `r(density)' == 0 {
-		di "{txt}Network empty. Plotting does not make sense.{txt}"
-		exit
+		di "{txt}Network has no ties; only the nodes are plotted.{txt}"
 	}
 	
 	local masternetname "`netname'"
@@ -2222,24 +2235,17 @@ program nwplot, rclass
 
 	if "`generate'" != "" {
 		di "{text:Export coordinates...}"
-		if (wordcount("`generate'") >= 2){
-			local generate_x = word("`generate'", 1)
-			local generate_y = word("`generate'", 2)
-		}
-		else {
-			local generate_x = "_x_coord"
-			local generate_y = "_y_coord"
-		}
-		
-		capture confirm new variable `generate_x'
-		if _rc capture drop `generate_x'
-		capture confirm new variable `generate_y'
-		if _rc capture drop `generate_y'
+		local generate_x = word("`generate'", 1)
+		local generate_y = word("`generate'", 2)
+		capture confirm variable `generate_x', exact
+		if _rc == 0 drop `generate_x'
+		capture confirm variable `generate_y', exact
+		if _rc == 0 drop `generate_y'
 		if _N < `nodes' {
 			set obs `nodes'
 		}
-		qui gen `generate_x' = .
-		qui gen `generate_y' = .
+		qui gen double `generate_x' = .
+		qui gen double `generate_y' = .
 		mata: st_store((1::rows(__nwplot_Coord)),("`generate_x'","`generate_y'"), (__nwplot_Coord[.,.]:/100))
 		qui replace `generate_x' = (`generate_x' - 0.05) / 0.9
 		qui replace `generate_y' = (`generate_y' - 0.05) / 0.9
@@ -3347,17 +3353,22 @@ end
 
 capture mata: mata drop gridlayout()
 mata:
-real matrix function gridlayout(real scalar N,  real scalar cols)
+real matrix function gridlayout(real scalar N,  real scalar cols0)
 {
+	real scalar cols
+
 	real colvector 	V, C
 	real matrix 	Coord
 	real scalar CoordMax1, CoordMax2, rows
 
 	V= (1::N)
+	// more columns than nodes: one row of N columns
+	cols = (cols0 > N ? N : cols0)
 	rows = ceil(N / cols)
 	
 	Coord=J(N,2,.)
-	Coord[.,1] = J(N,1,100) :- floor((V:-1) :/rows) :* (100 / (cols - 1))
+	if (cols > 1) Coord[.,1] = J(N,1,100) :- floor((V:-1) :/rows) :* (100 / (cols - 1))
+	else Coord[.,1] = J(N,1,100)
 	
 	Coord[.,2] = mod(V, rows)
 	
@@ -3365,7 +3376,7 @@ real matrix function gridlayout(real scalar N,  real scalar cols)
     Coord[.,2] = J(N,1,100) :- ((Coord[.,2] :- 1) :* (100 / (rows - 1)))
 	
 	if (rows == 1) {
-		Coord[.,2] = J(cols, 1, 0.5)
+		Coord[.,2] = J(N, 1, 0.5)
 	}
 	CoordMax1 = max(Coord[.,1])
 	CoordMax2 = max(Coord[.,2])

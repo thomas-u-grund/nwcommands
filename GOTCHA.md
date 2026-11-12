@@ -26,6 +26,15 @@ if _rc capture drop `generate'
 ```
 `confirm new variable` fails only when a variable of exactly that name exists, so the following `drop` then hits exactly that variable (an exact name always wins over abbreviation). Applies to every `generate()`-style option and every `capture drop `x'`k''`. Test: `test_dropabbrev.do` (add new generating commands to it).
 
+## Measure-suite fixes (fixes-xt, 2026-11-12): five traps worth knowing
+
+Found with the extended tests `cscripts/xt_meas_*.do` (every check passes since):
+- **`confirm variable x` without `exact` also matches abbreviations**: with a variable `dlong`, `confirm variable d` succeeds, so "already exists" guards stopped with a false r(99), and a following `capture drop d` dropped `dlong`. Always `confirm variable `v', exact` and drop only `if _rc == 0` after that check. And **`capture confirm variable , exact` with an EMPTY name returns 0** (without `exact` it fails): guard optional names with `"`generate'" != ""` (nwneighbor stopped every call without `generate()`).
+- **Helper networks need temporary names** (`tempname`): fixed names (`_tempgeodesic`, `<net>_symmetrized`, `_tempexpand`, `same_<attr>`) collided with user networks, and every error exit between creating a helper and dropping it left it behind; do the option checks before the helper is made. Same for scalars (`clust_global`, `brk_pairs`, `nw_ncliques`) and `return matrix x = <plain name>`, which moves (deletes) a user matrix of that name.
+- **A positional read of an attribute needs `_nwdatasync <net>` first.** `nwexpand` reads `st_data()` by row; after another network's sync the rows are not in node order (`nwqap y x g` gave other coefficients on a second identical call).
+- **r() of an ado program that runs other commands afterwards** (`nwpath, generate()` runs `nwduplicate`): hold the results first (`_return hold`, `_return restore name, hold`) or they are gone. Mata `1..0` is `(1, 0)`, not an empty range: guard `k > 1` before `x[(1..k-1)]`.
+- **A measure command must not move the random-number stream**: save `c(rngstate)` before a draw and `set rngstate` after it (`nwneighbor`'s `r(oneneighbor)`).
+
 ## No plain-named globals in Mata from ado code: tempname or `__nw` prefix, enforced by `test_mata_userspace.do`
 
 Every `mata: x = ...` typed by an ado file at the top level creates a GLOBAL Mata variable, in the same name space as the user's own Mata session. Plain names (`Coord`, `M`, `temp`, `reach`, `far`, `comm_id`, `onenet`, `plotmat` ...) overwrote the user's variables of the same name, and the usual `mata: mata drop x` at the end then deleted the user's variable. Found 2026-10 (56 assignment sites in 23 commands, `nwplot` the largest). The rule:

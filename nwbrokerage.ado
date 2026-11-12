@@ -58,7 +58,7 @@ program nwbrokerage, rclass
 		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
-		tempname __nw_grp __nw_brk
+		tempname __nw_grp __nw_brk __nw_bpairs
 		mata: `__nw_grp' = st_data((1::`nodes'), "`group'")
 		capture noisily mata: `__nw_brk' = `netobj'->calculate_brokerage(`__nw_grp')
 		if _rc != 0 {
@@ -73,7 +73,7 @@ program nwbrokerage, rclass
 			mata: st_store((1::`nodes'), "`netgenerate'_`role'`k'", `__nw_brk'[.,`ri'])
 			local ri = `ri' + 1
 		}
-		mata: st_numscalar("brk_pairs", sum(`__nw_brk'))
+		mata: st_numscalar("`__nw_bpairs'", sum(`__nw_brk'))
 		mata: mata drop `__nw_grp' `__nw_brk'
 
 		// _rc is left stale (still 111, "variable not found") from the
@@ -90,8 +90,10 @@ program nwbrokerage, rclass
 		// command's own actual outcome, not a leftover probe result.
 		capture confirm variable `netgenerate'_liaison`k', exact
 
-		return scalar pairs = brk_pairs
-		local lpairs = brk_pairs
+		return scalar pairs = `__nw_bpairs'
+		local lpairs = `__nw_bpairs'
+		capture scalar drop `__nw_bpairs'
+		capture confirm variable `netgenerate'_liaison`k', exact
 
 		if "`silent'" == "" {
 			noi di "{hline 40}"

@@ -115,6 +115,9 @@ program nwinf
 		mata: st_numscalar("r(reciprocity)", `reciprocity')
 	}
 	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())	
+	// cells of the adjacency matrix without a value (as nwname): the diagonal when self-loops are off, and the
+	// pairs within a mode of a two-mode network, count as missing
+	mata: st_numscalar("r(missing_edges)", `netobj'->get_missing_edges())
 	// mean degree: ties per node (directed: arcs per node, the mean outdegree, which equals the mean
 	// indegree; undirected: twice the edges per node). Not for two-mode networks, where the two modes
 	// have different means.
