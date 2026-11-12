@@ -17,7 +17,8 @@
 [{cmd:,}
 {opth generate(newvarname)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt formation}]
 
 
 {synoptset 25 tabbed}{...}
@@ -26,6 +27,7 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own local stability{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt formation}}Compare the formed ties with all pairs without a tie in {it:net1}: the shares that return a tie and that close a two-path{p_end}
 
 {p2colreset}{...}
 
@@ -66,6 +68,16 @@ number of actual undirected ties involved (the same convention {help nwmixing} u
 mixing table). {bf:r(jaccard)} and {bf:r(persistence)} are unaffected, since the doubling cancels
 in both ratios.
 
+{pstd}
+{opt formation} asks which of the ties formed between the two waves continue a pattern of {it:net1}.
+A formed tie from {it:i} to {it:j} {bf:returns a tie} if {it:j} named {it:i} in {it:net1}, and it {bf:closes a two-path} if
+{it:i} named some {it:k} who named {it:j} in {it:net1}. The command shows both shares among the formed ties and
+among all pairs without a tie in {it:net1} (the pairs from which every formed tie comes; the diagonal is
+not a pair, and a missing value counts as no tie). These are the descriptive precursors of the reciprocity and
+transitivity effects of an actor-oriented model. For an undirected pair of networks only the two-path share is
+shown, and the pairs are counted once. Two-mode networks are not allowed with {opt formation}. The option
+builds the adjacency matrices of both networks, so its memory use grows with the square of the number of nodes.
+
 {title:Stored results}
 
 	Scalars
@@ -75,11 +87,21 @@ in both ratios.
 	  {bf:r(jaccard)}		stable / (stable + formed + dissolved)
 	  {bf:r(persistence)}		stable / (stable + dissolved); missing if {it:net1} has no ties
 
+	With {opt formation}:
+	  {bf:r(absent)}		number of pairs without a tie in {it:net1}
+	  {bf:r(formed_recip)}		share of formed ties that return a tie (directed networks)
+	  {bf:r(absent_recip)}		the same share among the pairs without a tie (directed networks)
+	  {bf:r(formed_closure)}	share of formed ties that close a two-path
+	  {bf:r(absent_closure)}	the same share among the pairs without a tie
+
 {title:Examples}
 
 	{cmd:. nwset, mat((0,1,1\1,0,0\1,0,0)) name(wave1)}
 	{cmd:. nwset, mat((0,1,0\1,0,1\0,1,0)) name(wave2)}
 	{cmd:. nwturnover wave1 wave2, generate(_turnover)}
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwturnover glasgow1 glasgow2, generate(_turnover) formation}
 
 {title:References}
 
