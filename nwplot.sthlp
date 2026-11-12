@@ -305,10 +305,10 @@ of saving coordinates are left out). Run it with the same data in memory as when
 {pstd}
 How the bring-back works: node positions come from the CSV through {opt nodexy()}; node colors and
 shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier
-on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds
-to about {cmd:nodefactor(0.2)} in the static graph. Without {opt nodefactor()}, {cmd:nwplot} therefore
-uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of
-1.85 gives {cmd:nodefactor(0.37)}); an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
+on the node sizes of the call that wrote the page. Without {opt nodefactor()}, {cmd:nwplot} uses the saved
+slider value as {opt nodefactor()} (a slider value of 1, the start, gives the default sizes; 1.85 gives
+{cmd:nodefactor(1.85)}). The view draws in screen pixels and the graph relative to its size, so symbols can
+look a little larger or smaller in the graph than on the screen; an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
 the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when
 the nodes of that group have different shapes (for example when {opt symbol()} is a second variable);
 choosing a shape there sets all nodes of the group. The CSV format is unchanged.

@@ -233,15 +233,14 @@ program nwplot, rclass
 	// own value wins, else fall back to the top-level default" precedence
 	// this file already uses for sizebin() (see the __sizebin_toplevel
 	// comment above).
-	// The slider in the interactive view is a multiplier on the view's own
-	// baseline size, and the view draws on screen pixels (about 7 px per
-	// unit of Stata's msize), whereas the static graph's symbols are
-	// relative to the graph. A slider value of 1 in the view therefore
-	// corresponds to roughly 0.2 as nodefactor() in the static graph;
-	// scale the imported slider value accordingly so the bring-back looks
-	// like the view without a manual nodefactor().
+	// The slider in the interactive view is a multiplier on the size that
+	// the nwplot call which wrote the page drew (3.20.1: was 0.2 times the
+	// slider, which made a page saved at slider 1 come back with tiny
+	// nodes). Slider value s therefore gives nodefactor(s), so a page whose
+	// slider was not touched comes back with nwplot's default sizes, as
+	// the edge-width slider already does for edgefactor().
 	if "`nodefactor'" == "" & "`_nwedit_nodefactor'" != "" {
-		local nodefactor = `_nwedit_nodefactor' * 0.2
+		local nodefactor = `_nwedit_nodefactor'
 	}
 	if "`nodefactor'" == "" {
 		local nodefactor = 1

@@ -46,7 +46,11 @@ program nwsubset
 		// (r3300) rather than a clean message. Caught and converted;
 		// the half-built `name' network nwduplicate already created is
 		// dropped too, rather than left behind in a broken state.
-		capture nwdrop `name' if (`if' == 0)
+		// BUGFIX (3.20.1): the condition was written as (`if' == 0), so
+		// in a compound condition "a & b == 0" only the last term was
+		// negated (b == 0 binds before &): usair if Lat < 50 & Lon > -125
+		// kept 49 nodes instead of 48. The whole condition is negated now.
+		capture nwdrop `name' if !((`if'))
 		if _rc != 0 {
 			capture nwdrop `name'
 			di "{err}{p 0 0 2}The if condition selects no nodes; network {bf:`name'} would have zero nodes remaining.{p_end}"

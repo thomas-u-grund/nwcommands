@@ -508,7 +508,7 @@ program _nwmovie_export
 	if `_done' == 2 {
 		mata: st_local("_errmsg", _nwmovie_slurpfile(st_local("_tmpout") + ".error"))
 		capture erase "`_tmpout'.error"
-		di as error `"nwmovie: the export failed: `_errmsg'"'
+		di as error `"{p 0 0 2}nwmovie: the export failed: `_errmsg'.{p_end}"'
 		exit 498
 	}
 	if `_done' == 0 {
