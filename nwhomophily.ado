@@ -22,8 +22,10 @@ program def nwhomophily
 	
 	if "`nodes'" == "" {
 		local nodes = _N
+		// count nonmissing values with -count- (3.20.1): -summarize- counted
+		// 0 observations for a string variable, which nwexpand encodes itself
 		foreach var of varlist `varlist' {
-			qui sum `varlist'
+			qui count if !missing(`var')
 			local temp = r(N)
 			local nodes = min(`temp',`nodes')
 		}

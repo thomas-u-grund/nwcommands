@@ -25,7 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth group(varname)}}Stata variable holding each node's community/group assignment{p_end}
+{synopt:{opth group(varname)}}Stata variable holding each node's community/group assignment, numeric or string{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before scoring (required for directed networks){p_end}
 {synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1{p_end}

@@ -241,7 +241,7 @@ The {opt plot} option draws the table with a built-in bar plot (the same plot th
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth attribute(varname)}}Node-level attribute{p_end}
+{synopt:{opth attribute(varname)}}Node-level attribute, numeric or string{p_end}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index{p_end}
