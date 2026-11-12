@@ -2137,7 +2137,17 @@ program nwplot, rclass
 		// the picture takes the proportions of the map (degrees as they are), unless aspectratio() was given;
 		// the fixed canvas ranges of the layouts would add empty space beside a map
 		mata: st_numscalar("r(bmasp)", (max(__nwplot_BM[.,2]) - min(__nwplot_BM[.,2])) / (max(__nwplot_BM[.,1]) - min(__nwplot_BM[.,1])))
-		if !`_nwp_aspectgiven' & r(bmasp) < . & r(bmasp) > 0 local aspectratio = r(bmasp)
+		// longitude and latitude (all x within -180..180, all y within -90..90): a degree of longitude is
+		// cos(latitude) as wide as a degree of latitude, so the picture is narrowed by the cosine of the
+		// middle latitude (the equirectangular projection), and the map keeps its familiar shape
+		mata: st_numscalar("r(bmgeo)", max(abs(__nwplot_BM[.,1])) <= 180 & max(abs(__nwplot_BM[.,2])) <= 90)
+		if r(bmgeo) == 1 {
+			mata: st_numscalar("r(bmcos)", cos((max(__nwplot_BM[.,2]) + min(__nwplot_BM[.,2])) / 2 * pi() / 180))
+			if r(bmcos) > 0.05 & r(bmasp) < . local _nwp_bmaspv = r(bmasp) / r(bmcos)
+			else local _nwp_bmaspv = r(bmasp)
+		}
+		else local _nwp_bmaspv = r(bmasp)
+		if !`_nwp_aspectgiven' & `_nwp_bmaspv' < . & `_nwp_bmaspv' > 0 local aspectratio = `_nwp_bmaspv'
 		local _nwp_xyscale "yscale(off) xscale(off)"
 		mata: mata drop __nwplot_BM
 		local _nwp_bmcmd `"(line __nwp_bmy __nwp_bmx, cmissing(n) lcolor(gs11) lwidth(vthin) `_nwp_bmopt') ||"'

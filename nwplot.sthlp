@@ -259,7 +259,10 @@ instead of re-deriving a fresh, unrelated layout for each one:
 {pstd}
 When the coordinates are longitude and latitude, {opt basemap()} draws a map under the network. The
 example data include the outlines of the US states ({cmd:usmap}); a shapefile of your own becomes such a
-file with {help spshape2dta}. The picture takes the proportions of the map unless {opt aspectratio()} is given.
+file with {help spshape2dta}. The picture takes the proportions of the map unless {opt aspectratio()} is given; for
+longitude and latitude a degree of longitude is drawn at its width at the middle latitude of the map, so that
+the map keeps its familiar shape. Many ties are best drawn thin and transparent, for example
+{cmd:lineopt(lcolor(gs6%15)) edgefactor(0.1) arrowfactor(0)}.
 
 	{cmd:. nwwebuse usair, nwclear}
 	{cmd:. nwplot usair, nodexy(Lon Lat) basemap(usmap) arcstyle(straight)}
