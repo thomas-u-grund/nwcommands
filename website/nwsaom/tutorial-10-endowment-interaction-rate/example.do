@@ -14,10 +14,13 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties seed(4
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity endow(transties) creation(transties) seed(6)
 
 * Reciprocity: are reciprocated ties harder to give up than they are attractive to make?
-nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(reciprocity) seed(6)
+* (the first fit narrowly misses the t-ratio criterion: restart it from its estimates)
+quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(reciprocity) seed(6)
+nwsaom refit, seed(8)
 
 * A covariate effect split in the same way
-nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) creation(altx:alcohol1) seed(4)
+quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) creation(altx:alcohol1) seed(4)
+nwsaom refit, seed(6)
 
 * On a behavior
 nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(4)

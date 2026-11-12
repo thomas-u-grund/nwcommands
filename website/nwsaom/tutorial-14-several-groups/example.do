@@ -79,7 +79,9 @@ matrix list cmp, format(%7.3f)
 
 * a joint model in which reciprocity may differ for class 2
 generate byte c2 = (class == 2)
-nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#reciprocity) seed(5)
+* (the first fit narrowly misses the t-ratio criterion: restart it from its estimates)
+quietly nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#reciprocity) seed(5)
+nwsaom refit, seed(6)
 
 * ---- Part 4: a behavior in several groups, and unequal waves ---------------
 * 50 pupils (RSiena's s50 data) cut into three groups of 15, 20 and 15; the
@@ -98,8 +100,9 @@ summarize alc1 alc2 alc3
 nwsaom describe, waves(g1 g2 g3)
 
 * network and behavior together
-nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
+quietly nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
     behavior(alc1 alc2 alc3) linear quadratic avalt behegox behaltx seed(1)
+nwsaom refit, seed(3)
 matrix list e(rates)
 matrix list e(rates_beh)
 

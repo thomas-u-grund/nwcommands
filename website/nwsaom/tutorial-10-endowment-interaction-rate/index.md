@@ -83,10 +83,17 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 Closure matters for *making* friends (`transtiescreation` 2.44, z = 4.5); there is no evidence that it matters for *keeping*
 them (`transtiesendow` -0.36, z = -0.5). Note that the effect now has two coefficients, so it is no longer comparable with the single
-`transties` coefficient (1.17). The same can be done for the reciprocity effect, replacing it:
+`transties` coefficient (1.17). The same can be done for the reciprocity effect, replacing it. The first fit of this model (seed 6) narrowly misses the
+t-ratio criterion, so we run it quietly and restart it from its estimates with `nwsaom refit` (see [Tutorial 12](../tutorial-12-estimation-speed/)):
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(reciprocity) seed(6)
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(reciprocity) seed(6)
+
+. nwsaom refit, seed(8)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.146)
+------------------------------------------------------------------------------
 
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
@@ -94,36 +101,40 @@ Actors: 50                             Periods: 2
 -------------------------------------------------------------------------------------
 glasgow1_to_glasg~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------------+----------------------------------------------------------------
-          outdegree |  -2.181486   .1306205   -16.70   0.000    -2.437497   -1.925474
-   reciprocityendow |   1.158672   .5966933     1.94   0.052    -.0108256    2.328169
-reciprocitycreation |   4.037055   .4844782     8.33   0.000     3.087495    4.986614
+          outdegree |   -2.18387   .1243562   -17.56   0.000    -2.427604   -1.940136
+   reciprocityendow |   1.180834   .5501995     2.15   0.032     .1024628    2.259205
+reciprocitycreation |   4.041258   .4374459     9.24   0.000      3.18388    4.898636
 -------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
 ------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    4.5078     3.7471
-          se |    0.6443     0.5141
+        rate |    4.5465     3.7735
+          se |    0.6196     0.5317
 ------------------------------------
-Overall maximum convergence ratio: 0.146 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
-  reciprocitycreation (-0.109)
-Convergence is good only if both criteria are met.
-To refit starting from these estimates, type nwsaom refit.
+Overall maximum convergence ratio: 0.077 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.047, overall ratio 0.077 (converged)
 ```
 
-Reciprocity is 4.04 (z = 8.3) in its creation role, and the endowment role adds 1.16 (z = 1.9, just short of the 5% level): mutual
-ties are made because they are mutual, and there is a hint that they are also valued once they exist. The t-ratio of
-`reciprocitycreation` is slightly above 0.1 in this run; refit before reporting (see [Tutorial 2](../tutorial-2-convergence/)). (The rate estimates change with the specification, as they do whenever
+The restarted fit meets both convergence criteria (largest |t| 0.047). Reciprocity is 4.04 (z = 9.2) in its creation role, and the endowment role adds 1.18 (z = 2.2, p = 0.03): mutual
+ties are made because they are mutual, and they also seem to be valued once they exist. (The rate estimates change with the specification, as they do whenever
 the model changes; do not compare them across models.)
 
 ### Covariates and behavior
 
-A covariate effect is split per variable, written `effect:variable`:
+A covariate effect is split per variable, written `effect:variable`. This first fit, too, narrowly misses the t-ratio criterion, so again we restart it:
 
 ```stata
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) creation(altx:alcohol1) seed(4)
+. quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) creation(altx:alcohol1) seed(4)
+
+. nwsaom refit, seed(6)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.136)
+------------------------------------------------------------------------------
 
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
@@ -131,30 +142,29 @@ Actors: 50                             Periods: 2
 ---------------------------------------------------------------------------------------
  glasgow1_to_glasgow3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------------+----------------------------------------------------------------
-            outdegree |  -2.871062   .1341339   -21.40   0.000    -3.133959   -2.608164
-          reciprocity |   2.451707   .1958068    12.52   0.000     2.067933    2.835482
-   altxendow_alcohol1 |   -.384926   .1904742    -2.02   0.043    -.7582486   -.0116034
-altxcreation_alcohol1 |   .2671729   .1258425     2.12   0.034     .0205261    .5138196
-            transties |   1.176466   .1234759     9.53   0.000      .934458    1.418475
+            outdegree |  -2.877431   .1311782   -21.94   0.000    -3.134536   -2.620327
+          reciprocity |   2.458253   .1990711    12.35   0.000     2.068081    2.848426
+   altxendow_alcohol1 |  -.3869229   .1763595    -2.19   0.028    -.7325812   -.0412646
+altxcreation_alcohol1 |   .2688568   .1206798     2.23   0.026     .0323288    .5053848
+            transties |   1.176411   .1346011     8.74   0.000     .9125978    1.440224
 ---------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
 ------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.5713     5.8555
-          se |    1.4718     1.1221
+        rate |    7.6239     5.9103
+          se |    1.4489     1.0756
 ------------------------------------
-Overall maximum convergence ratio: 0.136 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
-  altxendow_alcohol1 (-0.125)
-Convergence is good only if both criteria are met.
-To refit starting from these estimates, type nwsaom refit.
+Overall maximum convergence ratio: 0.070 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.016, overall ratio 0.070 (converged)
 ```
 
-The two parts of the alcohol-alter effect have opposite signs (`altxcreation_alcohol1` 0.27, `altxendow_alcohol1` -0.38). A single `altx` effect
+The two parts of the alcohol-alter effect have opposite signs (`altxcreation_alcohol1` 0.27, `altxendow_alcohol1` -0.39). A single `altx` effect
 would have averaged these and found next to nothing. Both are, however, only about two standard errors from zero, in a single data set,
-so this is a hint for further analysis, not a finding (and one t-ratio is slightly above 0.1 here, so refit first).
+so this is a hint for further analysis, not a finding.
 
 The behavior side has the same options (`linearendow`/`linearcreation`, `quadraticendow`/`quadraticcreation`, `avalt`, `avsim`):
 

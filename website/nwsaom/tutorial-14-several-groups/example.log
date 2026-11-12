@@ -238,8 +238,15 @@ avg_classes       -2.490        2.001        0.785
 . * a joint model in which reciprocity may differ for class 2
 . generate byte c2 = (class == 2)
 
-. nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#recip
-> rocity) seed(5)
+. * (the first fit narrowly misses the t-ratio criterion: restart it from its estimates)
+. quietly nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_
+> c2#reciprocity) seed(5)
+
+. nwsaom refit, seed(6)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.193)
+------------------------------------------------------------------------------
 
 SAOM (Method of Moments, conditional), waves: w1 w2
 Actors: 151                            Periods: 4
@@ -248,25 +255,24 @@ Groups: 4 (variable class), actors per group: 45, 37, 33, 36; waves per group: 2
 ----------------------------------------------------------------------------------------------
                     w1_to_w2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------------------+----------------------------------------------------------------
-                   outdegree |  -2.235427   .0821592   -27.21   0.000    -2.396456   -2.074398
-                 reciprocity |   1.864939   .1691134    11.03   0.000     1.533482    2.196395
-                     egox_c2 |   .1400424   .1937284     0.72   0.470    -.2396584    .5197431
-                   transtrip |   .4968187    .057962     8.57   0.000     .3832153    .6104222
-interact_egox_c2_reciprocity |   1.100587   .4208535     2.62   0.009     .2757298    1.925445
+                   outdegree |  -2.241351   .0796204   -28.15   0.000    -2.397405   -2.085298
+                 reciprocity |   1.886244   .1650781    11.43   0.000     1.562696    2.209791
+                     egox_c2 |   .1452663   .1816843     0.80   0.424    -.2108284    .5013611
+                   transtrip |   .4962169   .0593797     8.36   0.000     .3798348    .6125991
+interact_egox_c2_reciprocity |   1.090653   .3927705     2.78   0.005     .3208368    1.860469
 ----------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
 ----------------------------------------------------------
              |   period1    period3    period5    period7 
 -------------+--------------------------------------------
-        rate |    6.6966     3.8551     2.2665     8.9157
-          se |    1.0520     0.7526     0.5252     2.4250
+        rate |    6.7110     3.9092     2.2991     9.0592
+          se |    1.1341     0.7416     0.5387     2.5223
 ----------------------------------------------------------
-Overall maximum convergence ratio: 0.193 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
-  reciprocity (-0.115)
-Convergence is good only if both criteria are met.
-To refit starting from these estimates, type nwsaom refit.
+Overall maximum convergence ratio: 0.037 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.018, overall ratio 0.037 (converged)
 
 . 
 . * ---- Part 4: a behavior in several groups, and unequal waves ---------------
@@ -324,8 +330,14 @@ Directed                            Number of waves   =         3
 
 . 
 . * network and behavior together
-. nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
+. quietly nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
 >     behavior(alc1 alc2 alc3) linear quadratic avalt behegox behaltx seed(1)
+
+. nwsaom refit, seed(3)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.211)
+------------------------------------------------------------------------------
 
 SAOM co-evolution (Method of Moments), waves: g1 g2 g3
 Actors: 50                             Periods: 6
@@ -335,42 +347,41 @@ Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 3,
 -------------------------------------------------------------------------------
      g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |   -2.97652   .2708628   -10.99   0.000    -3.507401   -2.445639
-  reciprocity |   2.932225   .4010968     7.31   0.000      2.14609     3.71836
-    transtrip |   .6524343   .1433909     4.55   0.000     .3713933    .9334754
-      behegox |   .0226293   .1657629     0.14   0.891      -.30226    .3475187
-      behaltx |   .0072251   .1742447     0.04   0.967    -.3342883    .3487385
-   beh_linear |   .3868227    .177321     2.18   0.029     .0392798    .7343655
-beh_quadratic |  -.2763856   .1344151    -2.06   0.040    -.5398343   -.0129369
-    beh_avalt |   .5175959   .3764368     1.37   0.169    -.2202067    1.255399
+    outdegree |    -2.9822   .2696216   -11.06   0.000    -3.510648   -2.453751
+  reciprocity |   2.944426   .3817924     7.71   0.000     2.196127    3.692725
+    transtrip |   .6515202   .1514665     4.30   0.000     .3546514    .9483891
+      behegox |   .0324336   .1896462     0.17   0.864    -.3392661    .4041334
+      behaltx |   .0024598   .1851116     0.01   0.989    -.3603522    .3652718
+   beh_linear |   .3888647   .1610635     2.41   0.016     .0731861    .7045434
+beh_quadratic |  -.2768536   .1237379    -2.24   0.025    -.5193755   -.0343318
+    beh_avalt |   .5332747   .3854061     1.38   0.166    -.2221074    1.288657
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
 --------------------------------------------------------------------------------
              |   period1    period2    period4    period5    period7    period8 
 -------------+------------------------------------------------------------------
-network_rate |    3.6424     1.9581     5.6745     2.3518     1.1541     2.3119
-          se |    1.2967     0.9412     1.6757     0.6873     0.4610     1.0138
-behavior_r~e |    1.2842     1.4431     1.8853     2.0285     0.6628     1.4247
-          se |    0.7216     0.6579     0.6827     0.8332     0.3364     0.6035
+network_rate |    3.5563     1.8662     5.6934     2.3435     1.1238     2.3844
+          se |    1.1494     0.8203     1.7903     0.6715     0.4892     1.0067
+behavior_r~e |    1.2947     1.4269     1.8353     1.9919     0.6596     1.4494
+          se |    0.7357     0.5799     0.7541     0.8815     0.3271     0.7152
 --------------------------------------------------------------------------------
-Overall maximum convergence ratio: 0.211 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
-  rate_period2 (0.101)
-Convergence is good only if both criteria are met.
-To refit starting from these estimates, type nwsaom refit.
+Overall maximum convergence ratio: 0.160 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.067, overall ratio 0.160 (converged)
 
 . matrix list e(rates)
 
 e(rates)[1,6]
         period1    period2    period4    period5    period7    period8
-rate  3.6423802  1.9581329  5.6745334  2.3518167  1.1540722  2.3118986
+rate  3.5562509  1.8661565  5.6933875  2.3435263  1.1237583  2.3843638
 
 . matrix list e(rates_beh)
 
 e(rates_beh)[1,6]
             period1    period2    period4    period5    period7    period8
-rate_beh  1.2842129  1.4430509  1.8852501  2.0285044  .66279047    1.42468
+rate_beh  1.2946989  1.4269402   1.835264  1.9919062  .65957233  1.4493767
 
 . 
 . * groups with different waves: group 2 observed at waves 1 and 2, group 3 at waves 2 and 3
