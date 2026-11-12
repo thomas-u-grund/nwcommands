@@ -344,7 +344,10 @@ missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
 tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
 ordinary graph. Every event needs a sender, a receiver and a time: a row with a missing
 {it:eventtimevar}, sender or receiver is refused (error 416) and nothing is changed; drop such rows
-first{p_end}
+first. A third variable gives each event a value ({cmd:nwset sender receiver value, eventtime(t)}); it
+must be numeric and not missing. Without it every event has the value 1. The event models
+({help nwdynam}) add the value of an event to the tie between its sender and receiver, as the R
+package goldfish does with the {it:increment} of an event{p_end}
 
 {pstd}
 For example, this declares a snapshot network from three waves of ties:

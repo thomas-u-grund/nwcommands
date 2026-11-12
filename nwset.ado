@@ -105,7 +105,8 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			confirm numeric variable `eventtime'
-			_nwset_eventcheck `mode1id' `mode2id' `eventtime'
+			local tm_value : word 3 of `varlist'
+			_nwset_eventcheck `mode1id' `mode2id' `eventtime' `tm_value'
 		}
 		if "`interval'" != "" {
 			local ivstart : word 1 of `interval'
@@ -180,6 +181,13 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			mata: `tm_tval' = st_data(., "`eventtime'")
+			// the value of each event (third variable; 1 without one): the event models add it to the tie
+			if "`tm_value'" != "" {
+				mata: `tm_tval2' = st_data(., "`tm_value'")
+			}
+			else {
+				mata: `tm_tval2' = J(rows(`tm_tval'), 1, 1)
+			}
 		}
 		if "`interval'" != "" {
 			mata: `tm_tval' = st_data(., "`ivstart'")
@@ -200,7 +208,7 @@ if "`overwrite'" != "" local replace "replace"
 			mata: `netobj'->set_timevar("`time'")
 		}
 		else if "`eventtime'" != "" {
-			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval'))
+			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval', `tm_tval2'))
 			mata: `netobj'->set_temporal_type("event")
 			mata: `netobj'->set_eventtimevar("`eventtime'")
 		}
@@ -262,7 +270,8 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			confirm numeric variable `eventtime'
-			_nwset_eventcheck `ego' `alter' `eventtime'
+			local evvalue : word 3 of `varlist'
+			_nwset_eventcheck `ego' `alter' `eventtime' `evvalue'
 		}
 		if "`interval'" != "" {
 			local ivstart : word 1 of `interval'
@@ -325,6 +334,13 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		if "`eventtime'" != "" {
 			mata: `__tval' = st_data(., "`eventtime'")
+			// the value of each event (third variable; 1 without one): the event models add it to the tie
+			if "`evvalue'" != "" {
+				mata: `__tval2' = st_data(., "`evvalue'")
+			}
+			else {
+				mata: `__tval2' = J(rows(`__tval'), 1, 1)
+			}
 		}
 		if "`interval'" != "" {
 			mata: `__tval' = st_data(., "`ivstart'")
@@ -353,7 +369,7 @@ if "`overwrite'" != "" local replace "replace"
 			// mode-assignment fix) that Stata's one-line interactive
 			// `mata:' command form does not reliably parse a for-loop
 			// with a braced multi-statement body.
-			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval'))
+			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval', `__tval2'))
 			mata: `netobj'->set_temporal_type("event")
 			mata: `netobj'->set_eventtimevar("`eventtime'")
 		}
@@ -905,7 +921,19 @@ end
 // is not an event between two nodes (unlike a static edge list, where such a row declares an isolate).
 capture program drop _nwset_eventcheck
 program _nwset_eventcheck
-	args snd rcv t
+	args snd rcv t val
+	if "`val'" != "" {
+		capture confirm numeric variable `val'
+		if _rc {
+			di "{err}{p 0 0 2}eventtime(): the event value {bf:`val'} must be a numeric variable.{p_end}"
+			exit 109
+		}
+		quietly count if missing(`val')
+		if r(N) > 0 {
+			di "{err}{p 0 0 2}eventtime(): `r(N)' event(s) have a missing value in {bf:`val'}; every event of a valued event network needs a value. Drop these rows (or give them a value) first.{p_end}"
+			exit 416
+		}
+	}
 	quietly count if missing(`t')
 	if r(N) > 0 {
 		di "{err}{p 0 0 2}eventtime(): `r(N)' event(s) have a missing event time in {bf:`t'}; every event needs a time. Drop these rows (or give them a time) first.{p_end}"

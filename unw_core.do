@@ -474,22 +474,28 @@ real colvector nw_label_positions(string vector names, string vector lab)
 }
 
 /*
-	Build an nevents x 3 (sender_id, receiver_id, eventtime) matrix by
+	Build an nevents x 4 (sender_id, receiver_id, eventtime, value) matrix by
 	resolving each row's node LABELS to indices - the eventtime
 	temporal-type counterpart to build_edge_value_matrix() above, kept
 	separate rather than reusing it since events are never folded into
 	an n x n edge-shaped matrix at all (see NWdef's own `eventlist'
-	field comment).
+	field comment). Column 4 is the value of the event (the third
+	variable of `nwset ego alter value, eventtime()'); 1 when the event
+	data have no value variable (vval not given or empty). The event
+	models use it as the increment of the tie, as goldfish does.
 */
-real matrix build_eventlist(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval)
+real matrix build_eventlist(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval, | real colvector vval)
 {
 	real scalar nevents, k
 	real matrix ev
 	nevents = rows(lab1)
-	ev = J(nevents, 3, .)
+	ev = J(nevents, 4, 1)
 	ev[., 1] = nw_label_positions(nodenames, lab1)
 	ev[., 2] = nw_label_positions(nodenames, lab2)
 	ev[., 3] = tval
+	if (args() >= 5) {
+		if (rows(vval) == nevents & nevents > 0) ev[., 4] = vval
+	}
 	// every event needs a sender, a receiver and a time (nwset checks the data first; this keeps index 0, which
 	// the event models cannot use, out of every event list)
 	k = sum((ev[., 1] :== 0) :| (ev[., 2] :== 0))
@@ -500,6 +506,11 @@ real matrix build_eventlist(string rowvector nodenames, string colvector lab1, s
 	k = missing(ev[., 3])
 	if (k > 0) {
 		errprintf("%s event(s) have a missing event time\n", strofreal(k))
+		exit(416)
+	}
+	k = missing(ev[., 4])
+	if (k > 0) {
+		errprintf("%s event(s) have a missing value\n", strofreal(k))
 		exit(416)
 	}
 	return(ev)
@@ -4330,7 +4341,8 @@ class `NWdef' {
 	// tie, `edgetime' parallels `edge'), "interval" (start<=t<end per
 	// tie, `edgestart'/`edgeend' parallel `edge'), "event" (timestamped
 	// relational events, NOT persistent ties - stored separately in
-	// `eventlist' as sender/receiver/eventtime triplets, never folded
+	// `eventlist' as sender/receiver/eventtime/value rows (value 1 when
+	// the event data have no value variable), never folded
 	// into `edge' at all, so no static command can accidentally treat
 	// an event stream as an ordinary graph without an explicit,
 	// separate aggregation step). `timevar'/`startvar'/`endvar'/

@@ -67,7 +67,7 @@ foreach base in 10000000 1000000000 4000000000 {
     assert "`lab1'" == "n" + strofreal(`base' + 1, "%18.0g")
     assert "`lab3'" == "n" + strofreal(`base' + 3, "%18.0g")
     mata: E = *(`netobj'->get_eventlist())
-    mata: assert(E == (1,2,1 \ 2,3,2 \ 3,1,3 \ 1,3,4))
+    mata: assert(E == (1,2,1,1 \ 2,3,2,1 \ 3,1,3,1 \ 1,3,4,1))
     * static edge list: the same labels
     clear
     set obs 2
@@ -158,7 +158,7 @@ _nwsyntax tms
 mata: assert(`netobj'->get_nodenames() == ("P1","P2","P3","O1","O2"))
 mata: assert(`netobj'->get_modes() == ("1","1","1","2","2"))
 mata: E = *(`netobj'->get_eventlist())
-mata: assert(E == (1,5,1 \ 2,4,2 \ 3,4,3 \ 1,4,4))
+mata: assert(E == (1,5,1,1 \ 2,4,2,1 \ 3,4,3,1 \ 1,4,4,1))
 nwsummarize tms
 assert r(nodes1) == 3
 * static: the matrix follows the same order (ties P->O in rows 1-3, columns 4-5)

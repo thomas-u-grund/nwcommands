@@ -27,6 +27,10 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwuse` restores the diagonal of a network with self-loops, and every network comes back exactly as saved: a directed network with a symmetric matrix stays directed (before, it was read as undirected). The data set `baerveldt` saved its ethnicity networks (`class<k>_ethn`) as directed; it now saves them as undirected, so they load as before. A two-mode network comes back in the node order it was saved in (before: the labels of both modes sorted together). A one-mode network also keeps its saved node order (before: its labels sorted as text, `n1 n10 n100 ... n2`; for example `nwwebuse mesa`). The ties and the node attributes are the same, but everything that depends on the order of the nodes can change: MCMC chains and estimates of `nwergm` and `nwsaom` for a given seed, random layouts, listings.
 - `nwattime` returns the right `r(ties)` when a variable named `ties` exists.
 - `nwimport, type(ucinet)` of an edgelist1 file numbers the nodes by their number, not by their text order (node 10 was node 2 before), and reads a file without tie values as binary.
+- `nwset sender receiver value, eventtime(time)` with a missing or non-numeric value is refused (r(416), r(109)); before, the value was not used for events.
+
+### Added
+- Event networks keep the value of each event: `nwset sender receiver value, eventtime(time)` stores the third variable per event in the event list (column 4 next to sender, receiver and time); without a value variable every event has the value 1. `nwdynam` adds the value of an event to the tie, as goldfish does with the `increment` of an event. The Mata library is rebuilt (`build_eventlist()` takes the values as an optional fifth argument).
 
 ### Fixed
 - `nwdegree` on an undirected network with two names in `generate()` (and no `isolates`) dropped the variable named second.
