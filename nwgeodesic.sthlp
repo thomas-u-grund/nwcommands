@@ -36,7 +36,7 @@
 {synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
 {synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
-{synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
+{synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}; the default {it:_geodesic} is overwritten without it{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt force}}with a plugin of the current generation the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; without it a valued network of more than 100 nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
@@ -69,8 +69,9 @@ variable is overwritten when {bf:nwreplace} is specified (there is no separate {
 just the variable).
 
 {pstd}
-By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. Non-existent paths are excluded from 
-the calculation of the average shortest path length (unless option {bf:unconnected()} is specified). 
+By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. The average shortest path length, the diameter and the radius over all pairs are then not defined;
+the output says so and gives instead the share of pairs that are connected and the average and longest
+distance over the connected pairs (unless option {bf:unconnected()} is specified). 
 
 {pstd}
 The option {bf:unconnected(max)} sets the distance of non-connected nodes to the maximum distance 
@@ -181,7 +182,11 @@ additional line here, and, if {opt generate()} is specified, stores each node's 
 	  {bf:r(numpaths)}	number of shortest paths
 	  {bf:r(diameter)}	network diameter
 	  {bf:r(radius)}	network radius (minimum node eccentricity)
-	  {bf:r(avgpath)}	average shortest path length
+	  {bf:r(avgpath)}	average shortest path length (-1 if some pairs are unconnected)
+	  {bf:r(unconnected)}	number of unconnected pairs
+	  {bf:r(connected)}	share of pairs connected (only if some are not)
+	  {bf:r(avgpath_connected)}	average distance over connected pairs (only if some are not)
+	  {bf:r(diameter_connected)}	longest distance over connected pairs (only if some are not)
 		  
 	Macros
 	  {bf:r(symmetrized)}	calculated on symmetrized network

@@ -16,6 +16,16 @@ version 2.0.0
 {p 8 17 2}
 {cmdab: nwdyads} 
 [{it:{help netname}}]
+[{cmd:,}
+{opt plot}
+{opt name(string)}]
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt plot}}Draw the dyad types as small pictures with their counts{p_end}
+{synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:dyads}{p_end}
+{p2colreset}{...}
 
 {pstd}
 {it:netname} may be a list of networks or a wildcard such as {cmd:lazega_*}, as in {help nwsummarize}; the census is shown for each network and the {cmd:r()} results are those of the last one.
@@ -79,6 +89,8 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 	{txt}{ralign 10:Mutual}{col 20}{c |}{ralign 10:Null}
 	{hline 11}{c +}{hline 11}
 	{res}{ralign 10:20}{col 20}{c |}{ralign 10:100}
+
+	{com}. nwdyads flomarriage, plot
 
 	{com}. nwwebuse glasgow
 	{com}. nwdyads glasgow3

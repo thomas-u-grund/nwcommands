@@ -68,7 +68,8 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 	{txt}   Edges: {res}20
 	{txt}   Minimum value: {res} 0
 	{txt}   Maximum value: {res} 1
-	{txt}   Density: {res} .1666666666666667
+	{txt}   Density: {res} .167
+	{txt}   Mean degree: {res} 2.50
 
 
 	{com}. nwclear
@@ -86,6 +87,7 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 	{txt}   Minimum value: {res} 0
 	{txt}   Maximum value: {res} 1
 	{txt}   Density: {res} .25
+	{txt}   Mean outdegree: {res} 1.00
 
              {txt}1   2   3   4   5
           {c TLC}{hline 21}{c TRC}
@@ -111,6 +113,7 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 	  {bf:r(edges_sum)}	sum of edge values (undirected network)
 	  {bf:r(arcs_value)}	sum of arc values (directed network)
 	  {bf:r(density)}	network density (two-mode network: ties over the pairs between the two modes)
+	  {bf:r(meandegree)}	mean degree: twice the edges per node (undirected network) or arcs per node, the mean outdegree, which equals the mean indegree (directed network); not for two-mode networks
 	  {bf:r(reciprocity)}	network reciprocity
 	  {bf:r(transitivity)}	network transitivity
 	  {bf:r(missing_edges)}	number of missing (undefined) dyads

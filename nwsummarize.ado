@@ -110,6 +110,13 @@ program nwinf
 	mata: st_numscalar("r(transitivity)", `transitivity')
 	mata: st_numscalar("r(reciprocity)", `reciprocity')
 	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())	
+	// mean degree: ties per node (directed: arcs per node, the mean outdegree, which equals the mean
+	// indegree; undirected: twice the edges per node). Not for two-mode networks, where the two modes
+	// have different means.
+	if "`r(mode2)'" != "true" & r(nodes) > 0 {
+		if (r(directed) == "false") mata: st_numscalar("r(meandegree)", 2 * `netobj'->get_edges_count() / `netobj'->get_nodes())
+		else mata: st_numscalar("r(meandegree)", `netobj'->get_arcs_count() / `netobj'->get_nodes())
+	}
 		
 	if "`r(mode2)'" == "true" {
 		mata: st_numscalar("r(nodes1)", `netobj'->get_nodes_mode1())
@@ -154,6 +161,10 @@ program nwinf
 		di "{txt}   Minimum value: {res} `=strtrim(string(round((`r(minval)')*1000)/1000,"%9.0g"))'"
 		di "{txt}   Maximum value: {res} `=strtrim(string(round((`r(maxval)')*1000)/1000,"%9.0g"))'"
 		di "{txt}   Density: {res} `=strtrim(string(r(density),"%9.3g"))'"
+		if r(meandegree) < . {
+			if (r(directed) == "true") di "{txt}   Mean outdegree: {res} `=strtrim(string(r(meandegree),"%9.2f"))'"
+			else di "{txt}   Mean degree: {res} `=strtrim(string(r(meandegree),"%9.2f"))'"
+		}
 		di "{txt}   Temporal: {res}`r(temporal)'"
 		if "`r(temporal)'" == "true" {
 			di "{txt}      Temporal type: {res}`r(temporaltype)'"

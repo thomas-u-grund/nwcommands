@@ -22,7 +22,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt plot}}Draw a bar chart of the 16 MAN-category counts{p_end}
+{synopt:{opt plot}}Draw the 16 triad types as small pictures with their counts{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:triads}{p_end}
 {p2colreset}{...}
 
@@ -58,11 +58,10 @@ in a directed network can be one of the following:
  MAN = 102 means that there is one mutual dyad and two null dyads.
 
 {pstd}
-{opt plot} draws a bar chart of the 16 category counts, in the same fixed MAN order the
-text table above already uses (not sorted by count), via this package's own established
-preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcug}'s own
-{opt plot} option uses for its null-distribution histogram. Grayscale by design, matching
-every other plot this package produces.
+{opt plot} draws each of the 16 triad types as a small picture of three nodes and their
+ties, with the MAN code and the number of triads of that type underneath. On an undirected
+network it draws the four types an undirected network can have (003, 102, 201, 300).
+{help nwdyads} has the same option for the dyad census.
 
 
 {title:Valued networks}

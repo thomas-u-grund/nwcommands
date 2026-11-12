@@ -2099,12 +2099,12 @@ program nwplot, rclass
 		// frames need version 16 (the package needs Stata 17 or later anyway)
 		tempname _nwp_bmframe
 		version 16: frame create `_nwp_bmframe'
-		capture noisily version 16: frame `_nwp_bmframe': use _X _Y using `"`_nwp_bmfile'"', clear
+		capture version 16: frame `_nwp_bmframe': quietly use _X _Y using `"`_nwp_bmfile'"', clear
 		local _nwp_bmrc = _rc
 		if !`_nwp_bmrc' version 16: frame `_nwp_bmframe': mata: __nwplot_BM = st_data(., ("_X", "_Y"))
 		version 16: frame drop `_nwp_bmframe'
 		if `_nwp_bmrc' {
-			di "{err}{p 0 0 2}The basemap() file must hold the outline coordinates in the variables {bf:_X} and {bf:_Y}, as the *_shp.dta file of {help spshape2dta} does.{p_end}"
+			di `"{err}{p 0 0 2}basemap(): could not read the variables {bf:_X} and {bf:_Y} from `_nwp_bmfile'. The file must hold the outline coordinates in them, as the *_shp.dta file of {help spshape2dta} does.{p_end}"'
 			error `_nwp_bmrc'
 		}
 		mata: st_numscalar("r(bmN)", rows(__nwplot_BM))

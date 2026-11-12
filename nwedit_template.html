@@ -948,7 +948,25 @@ function saveDoFile() {
     'nwplot ' + c.netname + ifin + ', nodexy(_nwedit_x _nwedit_y) ///',
     '    importcoords("nwedit_nodes.csv") edgeimport("nwedit_edges.csv")' + (opts ? ' ///' : ''),
   ];
-  if (opts) lines.push('   ' + opts);
+  if (opts) {
+    // one option list over several lines of at most about 72 characters, broken between options
+    const toks = [];
+    let cur = '', depth = 0, inq = false;
+    for (const ch of opts.trim()) {
+      if (ch === '"') inq = !inq;
+      if (!inq && ch === '(') depth++;
+      if (!inq && ch === ')') depth--;
+      if (ch === ' ' && depth === 0 && !inq) { if (cur) toks.push(cur); cur = ''; } else cur += ch;
+    }
+    if (cur) toks.push(cur);
+    const out = [];
+    let line = '';
+    for (const t of toks) {
+      if (line && (line + ' ' + t).length > 68) { out.push(line); line = t; } else line = line ? line + ' ' + t : t;
+    }
+    if (line) out.push(line);
+    out.forEach((l, k) => lines.push('    ' + l + (k < out.length - 1 ? ' ///' : '')));
+  }
   lines.push('drop _nwedit_x _nwedit_y', '');
   downloadText(lines.join('\n'), 'nwedit_plot.do', 'text/plain');
 }
