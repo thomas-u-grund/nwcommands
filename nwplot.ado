@@ -2073,7 +2073,14 @@ program nwplot, rclass
 	local _nwp_xyscale "yscale(off range(0 100)) xscale(off range(0 150))"
 	if `"`basemap'"' != "" {
 		local 0 `"`basemap'"'
-		syntax anything(name=_nwp_bmfile id="file name") [, *]
+		// the condition refers to variables of the map file, so syntax cannot check it here
+		syntax anything(name=_nwp_bmfile id="file name" everything) [, *]
+		local _nwp_bmif ""
+		local _nwp_bmpos = strpos(`"`_nwp_bmfile'"', " if ")
+		if `_nwp_bmpos' {
+			local _nwp_bmif = substr(`"`_nwp_bmfile'"', `_nwp_bmpos' + 1, .)
+			local _nwp_bmfile = strtrim(substr(`"`_nwp_bmfile'"', 1, `_nwp_bmpos' - 1))
+		}
 		local _nwp_bmopt `"`options'"'
 		local _nwp_bmfile `_nwp_bmfile'
 		if "`nodexy'" == "" {
@@ -2099,7 +2106,20 @@ program nwplot, rclass
 		// frames need version 16 (the package needs Stata 17 or later anyway)
 		tempname _nwp_bmframe
 		version 16: frame create `_nwp_bmframe'
-		capture version 16: frame `_nwp_bmframe': quietly use _X _Y using `"`_nwp_bmfile'"', clear
+		if `"`_nwp_bmif'"' == "" {
+			capture version 16: frame `_nwp_bmframe': quietly use _X _Y using `"`_nwp_bmfile'"', clear
+		}
+		else {
+			// basemap(file if exp): keep the outlines that satisfy exp, e.g. state != "Alaska"
+			capture version 16: frame `_nwp_bmframe': quietly use `"`_nwp_bmfile'"', clear
+			if !_rc capture version 16: frame `_nwp_bmframe': quietly keep `_nwp_bmif'
+			if _rc {
+				di `"{err}basemap(): the condition `_nwp_bmif' could not be applied to `_nwp_bmfile'{txt}"'
+				version 16: frame drop `_nwp_bmframe'
+				exit 198
+			}
+			capture version 16: frame `_nwp_bmframe': keep _X _Y
+		}
 		local _nwp_bmrc = _rc
 		if !`_nwp_bmrc' version 16: frame `_nwp_bmframe': mata: __nwplot_BM = st_data(., ("_X", "_Y"))
 		version 16: frame drop `_nwp_bmframe'

@@ -36,6 +36,11 @@ nwwebuse usair, nwclear
 nwplot usair, nodexy(Lon Lat) basemap(usmap) arcstyle(straight) name(bm1, replace)
 // line options after the comma, the file given with its extension
 nwplot usair, nodexy(Lon Lat) basemap("$nwwebpath/usmap.dta", lcolor(gs13) lwidth(thin)) name(bm2, replace)
+// part of the map with if (a condition on the map file), with the if of nwplot and line options
+nwplot usair if Lat < 50 & Lon > -125, nodexy(Lon Lat) basemap(usmap if !inlist(state, "AK", "HI"), lcolor(gs13)) name(bm3, replace)
+// a condition that the map file cannot evaluate is refused
+capture nwplot usair, nodexy(Lon Lat) basemap(usmap if nosuchvar == 1)
+assert _rc == 198
 // without nodexy() it is refused
 capture nwplot usair, basemap(usmap)
 assert _rc == 198

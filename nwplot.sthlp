@@ -134,7 +134,7 @@
 {p2line}
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...) are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
-{p2col:{opt basemap}({it:filename} [{cmd:,} {it:{help line_options}}])}with {opt nodexy()}: draw outlines, such as the borders of a map, under the network; {it:filename} is a Stata file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} file that {help spshape2dta} makes from a shapefile), a web address, or the name of a map among the example data ({cmd:usmap}){p_end}
+{p2col:{opt basemap}({it:filename} [{cmd:if} {it:exp}] [{cmd:,} {it:{help line_options}}])}with {opt nodexy()}: draw outlines, such as the borders of a map, under the network; {it:filename} is a Stata file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} file that {help spshape2dta} makes from a shapefile), a web address, or the name of a map among the example data ({cmd:usmap}); {cmd:if} {it:exp} keeps part of the map, with a condition on the variables of the map file{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
 	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
@@ -264,6 +264,11 @@ file with {help spshape2dta}. The picture takes the proportions of the map unles
 	{cmd:. nwwebuse usair, nwclear}
 	{cmd:. nwplot usair, nodexy(Lon Lat) basemap(usmap) arcstyle(straight)}
 	{cmd:. nwplot usair, nodexy(Lon Lat) basemap(usmap, lcolor(gs13) lwidth(thin))}
+
+{pstd}
+The lower 48 states only (the variable {bf:state} of {cmd:usmap} holds the postal code; the {cmd:if} of {cmd:nwplot} drops the airports of Alaska and Hawaii):
+
+	{cmd:. nwplot usair if Lat < 50 & Lon > -125, nodexy(Lon Lat) basemap(usmap if !inlist(state, "AK", "HI"))}
 
 {pstd}
 {opt nodexy()} draws any coordinates, so it also draws a layout computed elsewhere: by a program of your own,
