@@ -521,7 +521,7 @@ foreach c in ///
 	"nwsimindex @, measure(jaccard) name(zi_@) replace" ///
 	"nwego @, sizevar(ze_@) densvar(zd_@) replace" ///
 	"nwneighbor @, ego(n1)" ///
-	"nwtabulate @" ///
+	"nwtabulate @, attribute(grp)" ///
 	"nwmixing @, attribute(grp)" ///
 	"nwbrokerage @, group(grp) generate(zb_@) replace" ///
 	"nwreach @" ///
@@ -537,6 +537,9 @@ foreach c in ///
 	local f0 = r(found)
 	_chk `=(`f1' == 1 & `f0' == 0)' "note on a valued network only: `cmd1' (rc `rc1')"
 }
+* plain nwtabulate lists the tie values, so it prints no note
+_countnote "nwtabulate n1"
+_chk `=(r(found) == 0)' "no note for nwtabulate without attribute()"
 nwset, mat(R_N1_mat) name(n1x) undirected
 _countnote "nwturnover n1 n1x, generate(zt) replace"
 _chk `=(r(found) == 1)' "note for nwturnover on valued networks"

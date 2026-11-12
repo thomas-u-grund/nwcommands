@@ -25,7 +25,8 @@ nwrandom 12, prob(.25) name(u12) undirected
 set seed 11
 nwplot u12, generate(kx ky) noopen
 set seed 11
-nwplot u12, layout(frucht) iterations(30) generate(fx fy) noopen
+* 1000 iterations: the values were made when nwplot ignored iterations() outside layout() and always ran 1000
+nwplot u12, layout(frucht, iterations(1000)) generate(fx fy) noopen
 assert reldif(kx[1], 0.303127527237) < 1e-9 & reldif(ky[1], 0.730015695095) < 1e-9
 assert reldif(kx[2], 1.001404523849) < 1e-9 & reldif(ky[2], 0.398880392313) < 1e-9
 assert reldif(kx[4], 1.25) < 1e-9 & reldif(ky[4], 0.855154991150) < 1e-9
