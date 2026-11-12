@@ -83,8 +83,17 @@ program nwegoplot, rclass
 		local ecol "edgecolor(`edgecolor')"
 		mata: mata drop `names'
 	}
-	capture noisily nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(1) `ecol' `options'
+	// quietly: nwplot reports the nodes it leaves out and its progress, which say nothing here; on an
+	// error the call is repeated noisily, so that its message is shown
+	capture quietly nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(1) `ecol' `options'
 	local rc = _rc
+	if `rc' {
+		// a failed nwplot can leave its temporary network for the if condition behind
+		foreach t in __temp_if __temp_edgecolor_if __temp_edgesize_if {
+			capture nwdrop `t'
+		}
+		capture noisily nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(1) `ecol' `options'
+	}
 	if "`tienet'" != "" capture nwdrop `tienet'
 	if `rc' exit `rc'
 
