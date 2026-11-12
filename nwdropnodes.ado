@@ -22,10 +22,6 @@ program nwdropnodes
 	// before this call would overwrite it with the node count.
 	_nwsyntax `netname', max(1)
 
-	if "`generate'" != "" {
-		nwduplicate `netname', name(`generate')
-		_nwsyntax `generate', max(1)
-	}
 	
 	local newnodelist ""
 	foreach onenode in `nodelist' {
@@ -101,6 +97,15 @@ program nwdropnodes
 
 	// the node names of the remaining network go to nwreplacemat in a Mata variable: a long Stata option
 	// string gets blanks inserted by Stata (every 5,292 characters), which corrupted node names above ~900 nodes
+	// every check has passed: only now make the copy of generate()
+	if "`generate'" != "" {
+		nwduplicate `netname', name(`generate')
+		_nwsyntax `generate', max(1)
+	}
+	// nwreplacemat derives the direction from the symmetry of the new
+	// matrix: the network keeps its own
+	mata: st_local("__dndir", strofreal(`netobj'->is_directed_boolean()))
+
 	tempname newnames
 	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
 	// a two-mode network stays two-mode: the mode of every surviving node and the level labels are put back
@@ -162,6 +167,8 @@ program nwdropnodes
 		nwreplacemat `netname', newmat(`keepnet') `netonly' labsmata(`newnames') `xvars'
 	}
 	mata: mata drop `newnames'
+	_nwsyntax `netname'
+	mata: `netobj'->set_directed(`__dndir')
 	if `__dn2' {
 		_nwsyntax `netname'
 		mata: `netobj'->set_2mode(1)

@@ -51,7 +51,7 @@ program nwrandom
 			// every ntimes()>1 call silently came back as a plain
 			// unweighted 0/1 network regardless of weights(), no
 			// warning or error.
-			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') weights(`weights') `selfloop' `xvars' `undirected' labs(`labs') degree(`degree') outdegree(`outdegree') indegree(`indegree') swaps(`swaps')
+			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') weights(`weights') `selfloop' `xvars' `undirected' `directed' `replace' labs(`labs') nodenamesmata(`nodenamesmata') degree(`degree') outdegree(`outdegree') indegree(`indegree') swaps(`swaps')
 		}
 		qui nwset
 		local newnetlist `r(nets)'
