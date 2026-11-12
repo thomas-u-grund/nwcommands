@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -16,6 +16,15 @@ program nwplot, rclass
 	// into `twowayopt' and crash the final plot with "option interactive
 	// not allowed" straight from `graph twoway' itself.
 	local twowayopt `"`options'"'
+
+	// the nwplot call for the interactive page's Save do-file button, without the options of the page
+	// itself; split here, while the data in memory are the user's (the if condition refers to them)
+	if "`interactive'" != "" {
+		_nwedit_cmdline `0_original'
+		local _nwedit_cmd_net `"`r(net)'"'
+		local _nwedit_cmd_ifin `"`r(ifin)'"'
+		local _nwedit_cmd_opt `"`r(opt)'"'
+	}
 
 	_nwdatasync `netname'
 	
@@ -51,7 +60,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
 
 	// syntax names the macro of an option noXXX XXX
 	local nosign "`nosign'`sign'"
@@ -192,6 +201,7 @@ program nwplot, rclass
 	}
 	
 		
+	local _nwp_aspectgiven = ("`aspectratio'" != "")
 	if "`aspectratio'" == "" {
 		local aspectratio = 1
 	}
@@ -1666,6 +1676,7 @@ program nwplot, rclass
 			}
 		}
 
+		if `"`_nwedit_cmd_net'"' == "" local _nwedit_cmd_net "`netname'"
 		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor_html', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
 
 		// movieexport(): nwmovie's own hook into this same resolved-color/
@@ -2053,7 +2064,95 @@ program nwplot, rclass
 		local twowayopt `"`twowayopt' name(_nwplot_interactive, replace)"'
 		local _nwedit_autoname = 1
 	}
-	local graphcmd `"twoway `ghostcmd' `pccmd' `scattercmd' `pccmdforeground' `scattercmdforeground' , ylabel(, nogrid) yscale(off range(0 100)) xscale(off range(0 150)) graphregion(color("scheme plotregion")) plotregion(color("scheme plotregion") margin(`pmargin' `pmargin' `pmargin' `pmargin')) aspectratio(`aspectratio') `legendcmd' `schemetwoway' `twowayopt'"'
+	// basemap(): outlines drawn under the network, read from a Stata file with the variables _X and _Y
+	// (the *_shp.dta file that spshape2dta makes from a shapefile; rows with missing _X break the lines).
+	// The outlines are on the scale of nodexy(): longitude and latitude for nodes placed by them. The
+	// coordinates get the same transformation as the node coordinates (getTieCoordinates(): 90 x + 5), and
+	// the outlines are drawn after the legend's invisible key plots, so the legend numbering stays the same.
+	local _nwp_bmcmd ""
+	local _nwp_xyscale "yscale(off range(0 100)) xscale(off range(0 150))"
+	if `"`basemap'"' != "" {
+		local 0 `"`basemap'"'
+		// the condition refers to variables of the map file, so syntax cannot check it here
+		syntax anything(name=_nwp_bmfile id="file name" everything) [, *]
+		local _nwp_bmif ""
+		local _nwp_bmpos = strpos(`"`_nwp_bmfile'"', " if ")
+		if `_nwp_bmpos' {
+			local _nwp_bmif = substr(`"`_nwp_bmfile'"', `_nwp_bmpos' + 1, .)
+			local _nwp_bmfile = strtrim(substr(`"`_nwp_bmfile'"', 1, `_nwp_bmpos' - 1))
+		}
+		local _nwp_bmopt `"`options'"'
+		local _nwp_bmfile `_nwp_bmfile'
+		if "`nodexy'" == "" {
+			di "{err}{p 0 0 2}Option {bf:basemap()} requires {bf:nodexy(xvar yvar)}: the outlines are drawn on the scale of the node coordinates, such as longitude and latitude.{p_end}"
+			error 198
+		}
+		// a local file, a web address, or the name of a map among the example data ($nwwebpath, as nwwebuse)
+		local _nwp_bmweb = regexm(`"`_nwp_bmfile'"', "^https?://")
+		if !`_nwp_bmweb' {
+			capture confirm file `"`_nwp_bmfile'"'
+			if _rc {
+				capture confirm file `"`_nwp_bmfile'.dta"'
+				if !_rc local _nwp_bmfile `"`_nwp_bmfile'.dta"'
+				else if !strpos(`"`_nwp_bmfile'"', "/") & !strpos(`"`_nwp_bmfile'"', "\\") & `"$nwwebpath"' != "" {
+					local _nwp_bmfile = subinstr(`"$nwwebpath/`_nwp_bmfile'"', ".dta", "", .) + ".dta"
+				}
+				else {
+					di `"{err}basemap() file `_nwp_bmfile' not found{txt}"'
+					error 601
+				}
+			}
+		}
+		// frames need version 16 (the package needs Stata 17 or later anyway)
+		tempname _nwp_bmframe
+		version 16: frame create `_nwp_bmframe'
+		if `"`_nwp_bmif'"' == "" {
+			capture version 16: frame `_nwp_bmframe': quietly use _X _Y using `"`_nwp_bmfile'"', clear
+		}
+		else {
+			// basemap(file if exp): keep the outlines that satisfy exp, e.g. state != "Alaska"
+			capture version 16: frame `_nwp_bmframe': quietly use `"`_nwp_bmfile'"', clear
+			if !_rc capture version 16: frame `_nwp_bmframe': quietly keep `_nwp_bmif'
+			if _rc {
+				di `"{err}basemap(): the condition `_nwp_bmif' could not be applied to `_nwp_bmfile'{txt}"'
+				version 16: frame drop `_nwp_bmframe'
+				exit 198
+			}
+			capture version 16: frame `_nwp_bmframe': keep _X _Y
+		}
+		local _nwp_bmrc = _rc
+		if !`_nwp_bmrc' version 16: frame `_nwp_bmframe': mata: __nwplot_BM = st_data(., ("_X", "_Y"))
+		version 16: frame drop `_nwp_bmframe'
+		if `_nwp_bmrc' {
+			di `"{err}{p 0 0 2}basemap(): could not read the variables {bf:_X} and {bf:_Y} from `_nwp_bmfile'. The file must hold the outline coordinates in them, as the *_shp.dta file of {help spshape2dta} does.{p_end}"'
+			error `_nwp_bmrc'
+		}
+		mata: st_numscalar("r(bmN)", rows(__nwplot_BM))
+		local _nwp_bmN = r(bmN)
+		if _N < `_nwp_bmN' qui set obs `_nwp_bmN'
+		capture drop __nwp_bmx __nwp_bmy
+		qui gen double __nwp_bmx = .
+		qui gen double __nwp_bmy = .
+		mata: st_store((1::rows(__nwplot_BM)), ("__nwp_bmx", "__nwp_bmy"), __nwplot_BM :* 90 :+ 5)
+		// the picture takes the proportions of the map (degrees as they are), unless aspectratio() was given;
+		// the fixed canvas ranges of the layouts would add empty space beside a map
+		mata: st_numscalar("r(bmasp)", (max(__nwplot_BM[.,2]) - min(__nwplot_BM[.,2])) / (max(__nwplot_BM[.,1]) - min(__nwplot_BM[.,1])))
+		// longitude and latitude (all x within -180..180, all y within -90..90): a degree of longitude is
+		// cos(latitude) as wide as a degree of latitude, so the picture is narrowed by the cosine of the
+		// middle latitude (the equirectangular projection), and the map keeps its familiar shape
+		mata: st_numscalar("r(bmgeo)", max(abs(__nwplot_BM[.,1])) <= 180 & max(abs(__nwplot_BM[.,2])) <= 90)
+		if r(bmgeo) == 1 {
+			mata: st_numscalar("r(bmcos)", cos((max(__nwplot_BM[.,2]) + min(__nwplot_BM[.,2])) / 2 * pi() / 180))
+			if r(bmcos) > 0.05 & r(bmasp) < . local _nwp_bmaspv = r(bmasp) / r(bmcos)
+			else local _nwp_bmaspv = r(bmasp)
+		}
+		else local _nwp_bmaspv = r(bmasp)
+		if !`_nwp_aspectgiven' & `_nwp_bmaspv' < . & `_nwp_bmaspv' > 0 local aspectratio = `_nwp_bmaspv'
+		local _nwp_xyscale "yscale(off) xscale(off)"
+		mata: mata drop __nwplot_BM
+		local _nwp_bmcmd `"(line __nwp_bmy __nwp_bmx, cmissing(n) lcolor(gs11) lwidth(vthin) `_nwp_bmopt') ||"'
+	}
+	local graphcmd `"twoway `ghostcmd' `_nwp_bmcmd' `pccmd' `scattercmd' `pccmdforeground' `scattercmdforeground' , ylabel(, nogrid) `_nwp_xyscale' graphregion(color("scheme plotregion")) plotregion(color("scheme plotregion") margin(`pmargin' `pmargin' `pmargin' `pmargin')) aspectratio(`aspectratio') `legendcmd' `schemetwoway' `twowayopt'"'
 
 	di "{text:Plotting network...}"
 	//di `"`graphcmd'"'
@@ -2375,6 +2474,19 @@ end
 // every node/edge sharing a group at once (buildLegend/applyLegendEdit in
 // nwedit_template.html), so every row sharing a group already carries an
 // identical override value.
+// _nwedit_cmdline: splits an nwplot call into the network, if/in and the options other than those of the
+// interactive page (interactive, noopen, fname()), of exporting (export(), exportopt(), replace), of
+// saving or reading coordinates (generate(), nodexy(), importcoords(), edgeimport()) and of nwmovie
+// (movieexport()). The page's Save do-file button completes the call with nodexy(), importcoords() and
+// edgeimport().
+capture program drop _nwedit_cmdline
+program def _nwedit_cmdline, rclass
+	syntax [anything(name=netname)] [if] [in] [, interactive NOOpen fname(string) GENerate(string) IMPORTCOORDS(string) EDGEIMPORT(string) nodexy(string) movieexport(string) EXPORT(string) EXPORTOPT(string) replace *]
+	return local net `"`netname'"'
+	return local ifin `"`if' `in'"'
+	return local opt `"`options'"'
+end
+
 capture program drop _nwedit_buildgroupmap
 program def _nwedit_buildgroupmap
 	syntax, groupvec(string) valuevec(string) prefix(string)
@@ -2568,6 +2680,7 @@ capture mata: mata drop _nwedit_viewmap()
 capture mata: mata drop _nwedit_buildjson()
 capture mata: mata drop _nwedit_slurpfile()
 capture mata: mata drop _nwedit_buildinteractivehtml()
+capture mata: mata drop _nwedit_jsstr()
 capture mata: mata drop _nwedit_writejson()
 mata:
 // Viewer canvas mapping of the node coordinates (nx, ny of the plotting dataset). The page places a node at
@@ -2795,6 +2908,18 @@ string scalar _nwedit_slurpfile(string scalar path)
 	return(s)
 }
 
+// a JavaScript string literal (for the page's STATA_CMD): backslashes, double quotes and line ends escaped,
+// and "</" broken up so that the text cannot close the page's script element
+string scalar _nwedit_jsstr(string scalar t)
+{
+	t = subinstr(t, char(92), char(92) + char(92))
+	t = subinstr(t, char(34), char(92) + char(34))
+	t = subinstr(t, char(10), " ")
+	t = subinstr(t, char(13), " ")
+	t = subinstr(t, "</", "<" + char(92) + "/")
+	return(char(34) + t + char(34))
+}
+
 void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
 		string scalar outpath, real scalar nn, real scalar nties,
 		real scalar doarrows, real scalar htmlnodefactor, real scalar isdirected,
@@ -2811,6 +2936,7 @@ void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
 
 	tpl = subinstr(tpl, "__NWEDIT_CYTOSCAPE__", vjs)
 	tpl = subinstr(tpl, "__NWEDIT_DATA__", json)
+	tpl = subinstr(tpl, "__NWEDIT_STATACMD__", "{" + _nwedit_jsstr("netname") + ": " + _nwedit_jsstr(st_local("_nwedit_cmd_net")) + ", " + _nwedit_jsstr("ifin") + ": " + _nwedit_jsstr(strtrim(st_local("_nwedit_cmd_ifin"))) + ", " + _nwedit_jsstr("options") + ": " + _nwedit_jsstr(strtrim(st_local("_nwedit_cmd_opt"))) + "}")
 
 	fh = fopen(outpath, "w")
 	fwrite(fh, tpl)

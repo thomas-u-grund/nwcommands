@@ -2,13 +2,13 @@
 capture program drop nwdyads
 program nwdyads
 	version 9
-	syntax [anything(name=netname)],
+	syntax [anything(name=netname)] [, PLOT NAME(string)]
 	
 	// netlist and wildcards (nwdyads lazega_*) as in nwsummarize; the
 	// r() results are those of the last network
 	_nwsyntax `netname', max(100000)
 	foreach onenet in `netname' {
-		_nwdyads1 `onenet'
+		_nwdyads1 `onenet', `plot' name(`name')
 	}
 	capture mata: mata drop __nwdyads_*
 	capture confirm number 0
@@ -17,7 +17,7 @@ end
 capture program drop _nwdyads1
 program _nwdyads1
 	version 9
-	syntax anything(name=netname)
+	syntax anything(name=netname) [, PLOT NAME(string)]
 	_nwsyntax `netname', max(1)
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
@@ -69,4 +69,13 @@ program _nwdyads1
 	// only. Added as an alias rather than renaming, so existing callers
 	// of either name keep working.
 	mata: st_global("r(netname)", "`netname'")
+	if "`plot'" != "" {
+		if "`name'" == "" local name "dyads"
+		if "`directed'" == "true" local cnts "`=r(_100)' `=r(_010)' `=r(_001)'"
+		else local cnts "`=r(_100)' `=r(_001)'"
+		tempname rr
+		_return hold `rr'
+		_nwcensusplot, kind(dyad) directed(`directed') counts(`cnts') netname(`netname') name(`name')
+		_return restore `rr'
+	}
 end
