@@ -405,7 +405,7 @@ OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. D
 {bf:Networks:} {it:lazega_adv, lazega_cow, lazega_fr} (directed - advice, co-work, and friendship
 ties among the same 71 lawyers){p_end}
 {pstd}
-{bf:Vertex attributes:} {it:age, gender, office, practice, school, seniority, status, yrs_frm}
+{bf:Vertex attributes:} {it:age, gender, office, officenum, practice, practicenum, school, seniority, status, partner, yrs_frm}
 
 {pstd}
 This is Emmanuel Lazega's corporate law partnership network: three ties among 71 lawyers at a
@@ -416,7 +416,9 @@ same-office/same-practice/same-status homophily. {it:status} is {it:partner} or 
 {it:practice} is {it:litigation} or {it:corporate}; {it:office} is the lawyer's own Boston/Hartford/
 Providence location; {it:school} is {it:Harvard/Yale}, {it:UConnecticut}, or {it:other};
 {it:seniority} is each lawyer's own rank by years since joining the firm; {it:yrs_frm} is years
-with the firm. Node labels are plain sequential ids (1-71) - the original data anonymizes the
+with the firm. {it:officenum} (1 Boston, 2 Hartford, 3 Providence), {it:practicenum} (1 corporate,
+2 litigation) and {it:partner} (1 partner, 0 associate) hold office, practice and status as numbers
+with value labels, for commands that need numeric groups. Node labels are plain sequential ids (1-71) - the original data anonymizes the
 lawyers themselves.
 
 {pmore}

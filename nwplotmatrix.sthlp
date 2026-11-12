@@ -115,8 +115,9 @@ which is one when a family had some seats in the council.
 	{cmd:. nwplotmatrix flomarriage, group(seat)}	
 
 {pstd}
-The name of each group (its value label, or the string) is written beside its block, at the top and at the
-left, unless node labels are shown ({opt lab} or {opt label()}); {opt nogrouplabels} leaves the names out.
+If the group variable has names (a string variable, or a value label), the name of each group is written beside
+its block, at the top and at the left, unless node labels are shown ({opt lab} or {opt label()}); {opt nogrouplabels}
+leaves the names out. A numeric group variable without a value label gets no names.
 The lines between the groups are drawn medium thick.
 
 {pstd}

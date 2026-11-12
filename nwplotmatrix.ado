@@ -108,9 +108,11 @@ program nwplotmatrix
 		local xlinecmd `"xline(`xlines', `__nwpm_lw' `groupopt' lcolor(`lcolor'))"'
 		local ylinecmd `"yline(`ylines', `__nwpm_lw' `groupopt' lcolor(`lcolor'))"'
 		// the name of each group beside its block (at the top and at the left), unless node labels are shown
-		if "`lab'" == "" & "`label'" == "" & "`nogrouplabels'" == "" {
-			capture confirm string variable `groupvar'
-			local __nwpm_isstr = (_rc == 0)
+		// a numeric group variable without a value label has no names to show (the picture stays as before)
+		capture confirm string variable `groupvar'
+		local __nwpm_isstr = (_rc == 0)
+		local __nwpm_haslab = `__nwpm_isstr' | ("`: value label `groupvar''" != "")
+		if "`lab'" == "" & "`label'" == "" & "`nogrouplabels'" == "" & `__nwpm_haslab' {
 			local __nwpm_start = 1
 			forvalues i = 1/`nodes' {
 				if `i' == `nodes' | `_group'[`=`i'+1'] != `_group'[`i'] {

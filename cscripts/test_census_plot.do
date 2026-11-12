@@ -102,3 +102,17 @@ nwgeodesic two, name(g2)
 capture nwgeodesic two, name(g2)
 assert _rc == 99
 nwgeodesic two, name(g2) nwreplace
+
+// lazega has office, practice and status also as labeled numbers (3.20.0); the data of this checkout
+capture confirm file "data/lazega.nwdta"
+if !_rc global nwwebpath "`c(pwd)'/data"
+nwwebuse lazega, nwclear
+confirm numeric variable officenum practicenum partner
+assert officenum == 1 if office == "Boston"
+assert officenum == 3 if office == "Providence"
+assert practicenum == 2 if practice == "litigation"
+assert partner == (status == "partner")
+assert "`: label (officenum) 2'" == "Hartford"
+// the encode of the string variables still works (names not taken)
+encode office, generate(officen)
+assert officen == officenum

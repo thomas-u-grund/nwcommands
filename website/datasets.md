@@ -52,7 +52,7 @@ The core package ships with example networks, so every tutorial and help example
 ## One-time networks
 
 ### lazega: lawyers in a corporate law firm
-- **What:** 71 lawyers, three directed networks: advice (`lazega_adv`, 892 ties), co-work (`lazega_cow`) and friendship (`lazega_fr`, 575 ties). Attributes: age, gender, office, practice, school, seniority, status, years with the firm.
+- **What:** 71 lawyers, three directed networks: advice (`lazega_adv`, 892 ties), co-work (`lazega_cow`) and friendship (`lazega_fr`, 575 ties). Attributes: age, gender, office, practice, school, seniority, status, years with the firm; office, practice and status also as numbers with value labels (`officenum`, `practicenum`, `partner`).
 - **Source:** Lazega, E. (2001), *The Collegial Phenomenon*, Oxford University Press; Lazega, E. and van Duijn, M. (1997), *Social Networks* 19, 375-397.
 - **Load:** `nwwebuse lazega`
 - **Used in:** [nwergm tutorials 2](../nwergm/tutorial-2-terms/), [3](../nwergm/tutorial-3-diagnostics/) and [5](../nwergm/tutorial-5-constraints-twomode-operators/).
