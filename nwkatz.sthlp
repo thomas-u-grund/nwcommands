@@ -33,8 +33,8 @@
 {synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
-{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
+{synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
