@@ -128,14 +128,14 @@ network; see {bf:Limits} below.
 {title:Limits}
 
 {pstd}
-{bf:Feasible sizes.} The search runs in compiled code on bitset adjacency and takes the sets in the order the Mata
-version did. It is limited by the number of maximal k-plexes, which can be enormous (any set of {opt k} or fewer
+{bf:Feasible sizes.} The search runs in compiled code on bitset adjacency.
+It is limited by the number of maximal k-plexes, which can be enormous (any set of {opt k} or fewer
 nodes is a k-plex, and large sparse networks have very many bigger ones), and by the sets-by-nodes matrix
 {bf:r(kplex_matrix)}, which needs sets x nodes numbers. Measured in Stata/BE on a random network with 10 ties drawn
 per node, {opt k(2)}, {opt minsize(3)}: 100 nodes have 10,141 maximal 2-plexes (0.2 s), 300 nodes 31,081 (2.1 s, nearly
 all of it building the 31,081 x 300 matrix; 0.04 s with {opt nomatrix}), 1,000 nodes 148,070 (0.2 s with
 {opt nomatrix}), 5,000 nodes (2.9 s with {opt nomatrix}; 1.9 s with {opt countonly}). For {opt k(3)}, 300 nodes have
-3,968,148 maximal 3-plexes, counted in 0.5 s. The previous Mata version needed 17 s and 6.6 GB at 300 nodes.
+3,968,148 maximal 3-plexes, counted in 0.5 s.
 
 {pstd}
 {bf:Guards.} The command stops with r(484) and a message that names the option to raise when it has found more than

@@ -60,7 +60,7 @@ Katz centrality already established for an analogous exact random-walk quantity.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the walk steps from i to j with probability w_ij / s_i (as {it:igraph::random_walk}), and the hitting times solve (D_s - W) h = s off the target, D_s the strengths; {opt binary} is the simple random walk.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 

@@ -78,8 +78,8 @@ network is valued, and are available for a valued source network too (unlike the
 above, which require one):
 
 {p 8 12 2}{bf:stat(count)}{p_end}
-{p 12 12 2}the number of shared neighbors - identical to the default behaviour on an
-unvalued source network, but now requestable explicitly on a valued one too, ignoring
+{p 12 12 2}the number of shared neighbors - identical to the default on an
+unvalued source network; on a valued one it ignores
 tie strength entirely{p_end}
 {p 8 12 2}{bf:stat(binary)}{p_end}
 {p 12 12 2}1 whenever at least one shared neighbor exists, 0 (no tie) otherwise - a

@@ -75,7 +75,7 @@
 		{p_end}
 {p2col:{cmd: incoming}}network neighbors of node i are all nodes j who send a tie to i
 		{p_end}
-{p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s {opt mode()} - {cmd:both} is accepted for backwards compatibility)
+{p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s {opt mode()} - {cmd:both} is accepted as a synonym)
 		{p_end}
 
 

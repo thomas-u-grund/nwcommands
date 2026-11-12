@@ -86,16 +86,14 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 {pstd}
 The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties,
 not on the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 /
-5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds (before: 4.7 seconds at 1,000 nodes, 90 seconds and 11 GB at 5,000).
-The tabulation of a network by an attribute lists the ties only (before: every dyad, refused above 7,071 nodes, 58 seconds
-and 4.2 GB at 5,000 nodes); the permutation test ({opt permutations()}, default 100) permutes the attribute on the dense
+5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds.
+The tabulation of a network by an attribute lists the ties only; the permutation test ({opt permutations()}, default 100) permutes the attribute on the dense
 matrix and takes most of the time: 10,000 nodes with 100 permutations 47 seconds and 4.8 GB. The tabulation of two
-networks still uses the dyad list and the full matrix.
+networks uses the dyad list and the full matrix.
 
 {pstd}
 With {opt attribute()} the permutation test acts on the stored ties of a network that is held that way (20,000 nodes with the default 100
-permutations: 1.6 seconds; killed at 12 GB before). The permutation p-value of earlier versions counted the missing diagonal as ties
-(a Mata comparison without a colon) and was biased; it is not reproduced. The test of two networks still works on the matrices.
+permutations: 1.6 seconds). The test of two networks works on the matrices.
 
 {pstd}
 Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by {cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored). A network of 100,000 nodes takes 0.1 seconds.

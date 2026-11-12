@@ -39,7 +39,7 @@
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}; the default {it:_geodesic} is overwritten without it{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt force}}with a plugin of the current generation the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; without it a valued network of more than 100 nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
+{synopt:{opt force}}the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; on a platform without the plugin a valued network of more than 100 nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
@@ -103,8 +103,8 @@ the formula above ignores tie weights.
 {title:Valued networks}
 
 {pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network a step along a tie of value w costs 1/w^alpha, with {cmd:alpha(1)} by default, so that a stronger tie is a shorter step (Opsahl et al. 2010; {it:igraph::distances} with weights 1/w, {it:tnet::distance_w}); {cmd:alpha(-1)} reads the values as lengths, as {it:igraph} does. {opt binary} (or {cmd:alpha(0)}) counts steps. Weighted distances are computed for networks of up to 100 nodes, larger networks count steps unless {opt force} is given.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network a step along a tie of value w costs 1/w^alpha, with {cmd:alpha(1)} by default, so that a stronger tie is a shorter step (Opsahl et al. 2010; {it:igraph::distances} with weights 1/w, {it:tnet::distance_w}); {cmd:alpha(-1)} reads the values as lengths, as {it:igraph} does. {opt binary} (or {cmd:alpha(0)}) counts steps. Weighted distances are computed at any size by the native plugin; on a platform without it a valued network of more than 100 nodes stops with an error unless {opt force} (slow Mata routine) or {opt binary} is given.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
@@ -197,9 +197,8 @@ additional line here, and, if {opt generate()} is specified, stores each node's 
 {title:Limits}
 
 {pstd}
-The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call; with an older plugin one source
-per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and
-6.4 GB (13 and 49 seconds one source per call); the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and
+6.4 GB; the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
 not build the matrix.
 
 {pstd}

@@ -84,7 +84,7 @@
 {synopt:{opt selfloop}}Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
 {synopt:{opt replace}}Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning{p_end}
-{synopt:{opt overwrite}}Backward-compatible alias for {opt replace}{p_end}
+{synopt:{opt overwrite}}Alias for {opt replace}{p_end}
 {synopt:{opth nodenames(string)}}Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of {opt labs()}{p_end}
 {synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
@@ -426,7 +426,7 @@ an adjacency list or an edgelist represented by Stata variables.
 {title:Limits}
 
 {pstd}
-Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000 nodes; before, such a network could not be declared temporal). Two-mode temporal networks keep the matrices.
+Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000 nodes). Two-mode temporal networks keep the matrices.
 
 {title:See also}
 

@@ -75,7 +75,7 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 {title:Limits}
 
 {pstd}
-Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt k(5)}: 0.2 seconds; killed at 12 GB before).
+Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt k(5)}: 0.2 seconds).
 {opt weights()} still uses the matrix.
 
 {title:See also}

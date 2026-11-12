@@ -32,7 +32,7 @@ sibling), a one-mode {cmd:nwproject} could never exist - projecting only makes s
 a two-mode source - so there is no ambiguity for the {cmd:nw2} prefix to resolve here, only an
 unnecessary naming inconsistency with the rest of the "transformation grammar" family
 ({help nwcollapse}, {help nwexpand}, {help nwfromedge}, {help nwtoedge}), none of which carry a
-{cmd:nw2} prefix. {help nw2project} itself is unaffected and remains fully supported - see its own
+{cmd:nw2} prefix. {help nw2project} itself is fully supported - see its own
 help file for the complete option reference, the {opt stat()} formulas, and worked examples.
 
 {title:Examples}

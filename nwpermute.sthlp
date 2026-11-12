@@ -47,7 +47,7 @@ else about the network is randomized. {opt swaps()} sets the number of attempted
 rewiring of R's {cmd:igraph::rewire(g, keeping_degseq())}: a random network with the degrees of the observed one, the usual
 baseline for a pattern that may follow from the degrees alone (see {help nwcug} with {opt condition(degrees)}, and
 {help nwrandom} with {opt degree()} for a network drawn from a list of degrees). Self-loops and ties with a missing value stay
-where they are. For a one-mode network, {opt swap} uses the native plugin of nwcommands 3.17.0 or later; the exchanges are
+where they are. For a one-mode network, {opt swap} uses the native plugin; the exchanges are
 drawn from the seed ({cmd:set seed}).
 
 	{cmd:. nwuse glasgow, nwclear}
@@ -123,7 +123,7 @@ Binary: yes. Directed: yes ({opt swap} keeps out-degrees and in-degrees). Weight
 
 {pstd}
 A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds
-in Stata/BE (killed at 12 GB before).
+in Stata/BE.
 
 {title:See also}
 

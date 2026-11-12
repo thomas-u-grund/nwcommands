@@ -88,7 +88,7 @@ network with a new Mata matrix {bf:J(5,5,99)}.
 
 {pstd}
 The new matrix is yours; the network takes it over without a further copy, and a network of a new size is created without ties
-before the matrix is put in (earlier: a complete graph, so five matrices at once).
+before the matrix is put in.
 
 {title:See also}
 

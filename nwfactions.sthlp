@@ -58,8 +58,7 @@ for modularity.
 
 {pstd}
 {bf:Starting partition.} Nodes with the same degree are taken in the order of their node number, so the same call
-always gives the same partition. (Earlier versions sorted with ties broken at random, which made the result differ
-from run to run on any network with equal degrees.) The fitness of a candidate move is computed from the total tie
+always gives the same partition. The fitness of a candidate move is computed from the total tie
 weight inside the groups and the number of same-group pairs, which takes time proportional to the node's degree plus
 the number of groups, not to the square of the number of nodes; {cmd:r(fitness)} agrees with a direct computation of
 the correlation to rounding error (about 1e-15).
@@ -81,8 +80,7 @@ just their presence/absence. Signed: not checked. Two-mode: not supported - erro
 
 {pstd}
 Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes with
-{opt groups(3)} take 0.014 / 0.019 / 0.05 seconds (the previous version: 38 seconds at 300 nodes, more than 60
-seconds at 1,000). The memory needed is proportional to the number of ties; no N-by-N matrix is built.
+{opt groups(3)} take 0.014 / 0.019 / 0.05 seconds. The memory needed is proportional to the number of ties; no N-by-N matrix is built.
 
 {title:Stored results}
 

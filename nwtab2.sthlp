@@ -109,8 +109,6 @@ The {opt plot} option draws the table with a built-in bar plot (the same plot th
 
 
 
-version: 2.0.0
-certified: 12 Jul 2016, 18:18:51
 
 {hline}
 {pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

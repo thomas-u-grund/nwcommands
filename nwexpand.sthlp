@@ -168,8 +168,8 @@ Binary: source attribute values can be binary or continuous - {opt mode()} selec
 {title:Limits}
 
 {pstd}
-The expanded network is built row by row (one {it:n}-by-{it:n} matrix; the earlier code multiplied two such matrices, which is
-cubic): 10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix; killed at 12 GB before).
+The expanded network is built row by row (one {it:n}-by-{it:n} matrix):
+10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix).
 
 {pstd}
 The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes ({opt nodes()} or {opt if}), or use {opt force}.

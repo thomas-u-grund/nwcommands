@@ -27,7 +27,7 @@
 unchanged and returns the identical stored results. It exists only so the verb {cmd:symmetrize}
 is directly discoverable by name, matching the package's spelled-out-verb naming convention used
 elsewhere (e.g. {help nwcollapse}, {help nwexpand}, {help nwrecode}). {help nwsym} itself is
-unaffected and remains fully supported - see its own help file for the complete option
+fully supported - see its own help file for the complete option
 reference, mode() details, and worked examples.
 
 {title:Supported network types}

@@ -827,3 +827,21 @@ The weighted layouts (`kk`, `frucht` with tie values) are Mata functions in `_nw
 
 ## `net install` skips .html, .js and extensionless files: nwinstall copies them itself (2026-11-06)
 `net install` installs a file of a `.pkg` only when Stata knows its type (`.ado`, `.sthlp`, `.dlg`, `.mlib`, `.plugin`, `.scheme`, ...). The page templates (`nwmovie_template.html`, `nwedit_template.html`), `lib/vendor/*.js` and the viewer binaries (`nwedit_viewer_*`) are ancillary to Stata: with the option `all` they were dropped, flattened, into the current working directory, while `nwmovie`/`nwplot` look for them under the folder of `nwset.ado` (`PLUS/n`) with their `lib/` paths (`NativeGraphInstallDir()`, `NweditViewerPath()`). So `nwmovie` failed on every installation from GitHub up to 3.16.0; tests run from the repository never saw it. Since 3.16.1 `nwinstall_ancillary` (in `nwinstall.ado`) copies them one by one from the source into `PLUS/n/<path>` and `nwinstall, remove` erases them; the ado packages are installed without `all`. A new file of such a type in `_pkg_ado.txt` must be added to the list in `nwinstall_ancillary` (`cscripts/test_nwinstall_ancillary.do` checks the two lists and runs `nwmovie`/`nwplot, interactive` from an installed copy). Test fresh installs with the ado path cleared of the repository: `findfile` otherwise finds the repository's files first.
+
+## Help file option text "wraps strangely": a new `{synopt:}` inserted inside another entry (2026-11-12)
+
+Looks like the Viewer size bug (see the help Viewer size-limit entry), but it is a content error and shows in `type ..., smcl` too. A multi-line `{synopt:}` entry runs until its `{p_end}`; a new option added "after the line of the previous option" lands in the middle of that entry when the entry spans several lines, and the Viewer then mixes the two texts. Found in `nwsaom.sthlp` (`uncentered()` inside `nocenter`) and the core's `nwkatz.sthlp` (`force` inside the `geodesic_options` entry). Insert a new option after the `{p_end}` of the previous entry, never after its first line. Check all help files with:
+
+```
+python3 - *.sthlp <<'PY'
+import sys
+for f in sys.argv[1:]:
+    o=None
+    for i,l in enumerate(open(f,encoding='utf-8',errors='replace'),1):
+        if l.startswith(('{synopt:','{p2col:')):
+            if o: print(f"{f}:{o}: entry not closed before line {i}")
+            o=i
+        elif l.startswith('{') and not l.startswith(('{opt','{cmd','{it','{bf','{help','{c ')): o=None
+        if o and ('{p_end}' in l or not l.strip()): o=None
+PY
+```

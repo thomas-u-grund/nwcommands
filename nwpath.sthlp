@@ -61,7 +61,7 @@ are produced.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the shortest path is the path of least cost, a step along a tie of value w costing 1/w^alpha ({cmd:alpha(1)} by default, {it:igraph::shortest_paths} with weights 1/w; {cmd:alpha(-1)} reads the values as lengths); {cmd:r(path_cost)} is the cost, {cmd:r(path_length)} the number of steps. {opt binary} finds the paths with the fewest steps. Equally cheap paths are all reported.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Supported network types}
 
@@ -140,7 +140,7 @@ One can now use this new network to represent the edgecolor when plotting the or
 
 {pstd}
 The paths are enumerated from the stored ties and {opt generate()} writes each path as a network of its ties; neither builds a matrix.
-20,000 nodes 0.25 seconds in Stata/BE for two nodes at 4 steps (killed at 12 GB before). The number of walks examined grows with the
+20,000 nodes 0.25 seconds in Stata/BE for two nodes at 4 steps. The number of walks examined grows with the
 degree to the power of the path length.
 
 {title:Also see}

@@ -38,8 +38,7 @@ For a {bf:valued} network (a network that was created with tie values, see {help
 {cmd:effective_size(weight=)} and {cmd:constraint(weight=)} of NetworkX: the strength of the relation between {it:i} and {it:j}
 is the sum of both directions, {it:a_ij} = {it:z_ij} + {it:z_ji} (for an undirected network this only doubles every
 value and changes no result), and the formulas below are applied to these strengths. With the option {opt binary} the
-tie values are ignored: every positive value counts as a tie of value 1. A network that is not valued is computed as before
-(the option has no effect).
+tie values are ignored: every positive value counts as a tie of value 1. On a network that is not valued the option has no effect.
 
 {pstd}
 The dyadic redundancy measure calculates, for each actor in ego's neighborhood, how many of the other actors in the neighborhood are also tied to the other.  The larger the proportion of others in the neighborhood who are tied to a given "alter," the more "redundant" is ego's direct tie.
@@ -98,7 +97,7 @@ Hierarchy is another quite complex measure that describes the nature of the cons
 
 {pstd}
 The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the
-work), so the command also runs on large networks (see {bf:Limits}). The weighted measures of a valued network are computed in the compiled plugin only (plugin generation 9, {cmd:nwcommands} 3.6.0 or later); without it the command stops with an error and the option {opt binary}
+work), so the command also runs on large networks (see {bf:Limits}). The weighted measures of a valued network are computed in the compiled plugin only; without it the command stops with an error and the option {opt binary}
 needs the plugin for a valued network too. The options {opt dyadredundancy} and
 {opt dyadconstraint} (defined for ties that are present or absent: they need the option {opt binary} for a valued network) build the full {it:n}-by-{it:n} dyadic networks from the adjacency matrix (via {help nwtomata}), as
 {help nwsimilar}, {help nwdissimilar} and {help nwqap} do, and are practical only for moderate network sizes.
@@ -118,11 +117,6 @@ symmetrized as in Burt, igraph and NetworkX (the strength of a relation is {it:z
 {it:not} symmetrized: {it:p_ij} (the proportion of {it:i}'s outgoing investment in {it:j}) is computed from the outgoing ties exactly as given, the
 convention of {help nwconstraint} (igraph and NetworkX use both directions, so their values differ for such networks; symmetrize first with
 {help nwsym} to compare, or use {opt binary} on a valued network). Signed (negative values) and missing values: not supported, the command stops with an error. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{pstd}
-Before version 3.6.0 the values of a valued network were inserted into the formulas of a binary network without
-the normalisations above; effective size could be negative and efficiency below 0. Results for valued networks differ from
-those of earlier versions; use {opt binary} for the unvalued measures.
 
 
 {title:Limits}

@@ -51,7 +51,7 @@ Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collisi
 {title:Limits}
 
 {pstd}
-One name per node goes into a Stata macro. When the {it:nodes} names do not fit into a macro (about 20,000 names in Stata/BE) the command stops at once with r(900) and a message instead of failing after minutes with r(920).
+One name per node goes into a Stata macro. When the {it:nodes} names do not fit into a macro (about 20,000 names in Stata/BE) the command stops at once with r(900) and a message.
 
 {title:Also see}
 

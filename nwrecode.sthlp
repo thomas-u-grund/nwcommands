@@ -156,7 +156,7 @@ to 2, and store the results in {cmd:nx2}{p_end}
 {pstd}
 The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties.
 Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3
-seconds (before: 16 seconds at 1,000 nodes, over 5 minutes and 11 GB at 5,000). A rule that gives the empty dyads a
+seconds. A rule that gives the empty dyads a
 value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
 
 {title:See also}

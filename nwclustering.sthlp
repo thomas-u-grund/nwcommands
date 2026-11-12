@@ -66,7 +66,7 @@ If the network is a two-mode (bipartite) network, {cmd:nwclustering} uses the tw
 coefficient of Opsahl (2013) (the share of four-paths that a fifth tie closes, {cmd:tnet::clustering_tm}), and with
 {opt ra} the global coefficient of Robins and Alexander (2004). An ordinary clustering coefficient is not meaningful on a
 bipartite network's own inherently triangle-free structure; {opt onemode} computes it anyway. {help nw2clustering} is the
-same command under its older name and takes the same options.
+same command under another name and takes the same options.
 
 {title:Two-mode networks}
 

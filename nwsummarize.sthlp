@@ -144,7 +144,7 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 
 {pstd}
 Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes 0.02 seconds and 0.2 GB
-in Stata/BE (4.9 seconds and 9.4 GB before).
+in Stata/BE.
 
 {title:See also}
 

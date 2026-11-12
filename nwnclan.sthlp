@@ -124,8 +124,8 @@ candidates (distances only grow in the subsets a clan below the branch can be), 
 their order, unchanged. Measured in Stata/BE on a random network with 10 ties drawn per node and {opt n(2)}: 100 /
 300 / 1,000 nodes take 0.006 / 2.0 / 1.8 seconds (no / 114 / 5,777 clans); at 5,000 nodes there are 165,097
 clans, found in 2.5 seconds with {opt nomatrix}, but the clans-by-nodes matrix (165,097 x 5,000) is too large to build, which the
-default says. The previous Mata version did not finish in 60 seconds at 100 nodes (6.6 GB) and was stopped at 20 GB at 1,000
-nodes. Larger {opt n()} makes the "distance at most {it:n}" graph denser and the search much longer: at 1,000 nodes
+default says.
+Larger {opt n()} makes the "distance at most {it:n}" graph denser and the search much longer: at 1,000 nodes
 and {opt n(3)} the search took 197 seconds (and found no clan), so the default limit of 60 seconds stops it.
 
 {pstd}

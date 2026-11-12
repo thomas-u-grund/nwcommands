@@ -219,8 +219,8 @@ default (and any other binary-outcome) {opt type()} - {help logit}, {help probit
 and {help scobit} all treat any nonzero value as a positive outcome (this is those commands' own
 documented behavior, not something {cmd:nwqap} does intentionally) - so a valued/weighted
 dependent network's tie strength is silently discarded by the chosen regression command unless a
-continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} now warns
-explicitly when this combination is detected, rather than leaving it silent. Independent networks
+continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} warns
+explicitly when this combination is detected. Independent networks
 and variables are not affected - their values enter the regression directly, weighted or not.
 Signed: not checked. Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with {help nwproject}. A full weighted-QAP alternative (rather than a warning)
 remains on the roadmap as a larger follow-on.

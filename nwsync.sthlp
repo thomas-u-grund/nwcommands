@@ -59,8 +59,7 @@ Stata variables that represent the network.
 {opt label} Run an additional {help _nwdatasync} alignment pass (matching node identity against
 {bf:_nwnode}) before the normal variable sync below. There is no separate node-label concept or
 {bf:_nodelab} variable in this package - a node's name (see {help nwnoderename}) is its only label,
-and this option does not sync it; the name once documented here was inaccurate and has been
-corrected.
+and this option does not sync it.
 {p_end}
 
 

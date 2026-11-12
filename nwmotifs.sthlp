@@ -44,7 +44,7 @@
 {title:Description}
 
 {pstd}
-On a two-mode network {cmd:nwmotifs} counts the 17 bipartite motifs of two to five nodes (44 with {opt sixnode}) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them; the options for that form are described in {help nw2motifs}, which is the same command under its older name. {opt onemode} gives the 4-node census of the bipartite graph read as a one-mode graph (the result of earlier releases).
+On a two-mode network {cmd:nwmotifs} counts the 17 bipartite motifs of two to five nodes (44 with {opt sixnode}) of Simmons et al. (2019), as {cmd:bmotif} does, and the positions of the nodes in them; the options for that form are described in {help nw2motifs}, which is the same command under another name. {opt onemode} gives the 4-node census of the bipartite graph read as a one-mode graph.
 
 {pstd}
 {cmd:nwmotifs} classifies every induced 4-node subgraph of the network into one of 6
@@ -124,7 +124,7 @@ degrees, the triangles on each tie and the common neighbours of node pairs (time
 times the largest degree), and turned into counts of {it:induced} subgraphs with the exact inclusion relations between
 the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the
 enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take
-0.007 / 0.015 / 0.06 seconds (the enumeration did not finish in 3 minutes at 300 nodes). Counts are exact up to the
+0.007 / 0.015 / 0.06 seconds. Counts are exact up to the
 size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of
 four-node sets).
 

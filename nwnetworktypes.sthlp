@@ -37,8 +37,8 @@ Every network carries a {it:Valued} flag (shown by {help nwsummarize}). It is se
 way it is created, and it is not worked out from the values again later: a network created with tie values
 ({help nwfromedge} with a value variable, an import of a file with tie values, {cmd:nwset, valued}, a matrix with a
 value other than 0 and 1) is valued, also if every value is 1; a network created without values is binary. Commands
-that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network that was saved by an
-earlier release keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
+that transform a network keep its flag; {help nwdichotomize} gives a binary network. A network loaded from a
+file keeps the flag it was saved with ({cmd:nwname} {it:net}{cmd:, newvalued(true)} changes it).
 
 {pstd}
 Measures that have a weighted form in R use the tie values of a valued network by default
@@ -96,7 +96,7 @@ Robins and Alexander 2004), {help nwmotifs} (the bipartite motifs of Simmons et 
 {help nwbetween} (the normalisations of Borgatti and Everett 1997; {opt twomode} is accepted as a synonym of the default),
 {help nwcommunity} and {help nwmodularity} (the bipartite modularity of Barber) and {help nwsimilar} and
 {help nwdissimilar} (nodes are compared with nodes of their own mode) follow it. The names {help nw2degree},
-{help nw2clustering} and {help nw2motifs} remain as aliases of the main commands with the options they always had.
+{help nw2clustering} and {help nw2motifs} are aliases of the main commands; their help files list their options.
 {help nw2project} and {help nw2nested} have no one-mode counterpart and keep their own names. The website page on
 two-mode networks and the table of network types list all commands.
 
@@ -119,7 +119,7 @@ formula for the whole [0,1] weighted-to-binary spectrum. Most centrality/cohesio
 weighted variant follow Opsahl, Agneessens and Skvoretz (2010)'s own generalized-degree convention:
 {it:k_i * (s_i/k_i)^alpha}, where {it:k_i} is the plain tie count and {it:s_i} is the tie-value sum
 ("strength"). {opt alpha(0)} always reduces this back to plain unweighted degree exactly - not
-approximately - so a command gaining this option never changes an existing unweighted result;
+approximately;
 {opt alpha(1)} gives pure strength; values in between blend the two. {help nwdegree} and
 {help nw2degree} (one-mode and two-mode degree respectively) both use this exact formula;
 {help nwbetween}'s {opt weighted} option uses the same {opt alpha()} convention to turn tie
@@ -185,8 +185,8 @@ for commands with no network-type-dependent behavior at all (e.g. purely structu
 {pstd}
 A small set of commands - the ones most central to network analysis, where getting the weighted/
 directed/signed handling exactly right matters most - have been independently re-derived from
-source code (not just summarized from their own help text), each backed by a quoted line of code
-and, where relevant, a documented bug found and fixed along the way, using a classification key
+source code (not just summarized from their own help text), each backed by a quoted line of code,
+using a classification key
 of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support.
 
 {title:See also}

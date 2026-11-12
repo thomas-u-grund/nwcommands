@@ -103,7 +103,7 @@ currently-incomplete helper intended to return edge labels for {help nwtabulate}
 {title:Shared error-code definitions}
 
 {pstd}
-{cmd:unw_defs} does not follow the leading-underscore convention above (it predates it), but
+{cmd:unw_defs} does not follow the leading-underscore convention above, but
 belongs on this page for the same reason: it is called by nearly every documented command to
 populate a shared table of this package's own error-code local macros (see
 {help nwerrorcodes} for the user-facing meaning of each code) and a handful of other

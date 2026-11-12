@@ -109,7 +109,7 @@ network could take a long time. {help nwnclique}, {help nwnclan} and {help nwkpl
 
 {pstd}
 Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
-are as many as its ties and were the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
+are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
 (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
 same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
 20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,

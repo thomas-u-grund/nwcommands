@@ -79,7 +79,7 @@ Binary: yes. Directed: yes - this command's entire purpose is transposing a netw
 
 {pstd}
 A network held as stored ties is transposed tie by tie. Measured in Stata/BE on a random directed network with 10 ties per node:
-20,000 nodes 0.2 seconds (killed at 12 GB before).
+20,000 nodes 0.2 seconds.
 
 last certified : 24 Aug 2026
 

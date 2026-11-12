@@ -79,8 +79,7 @@ diagonal - {opt set_selfloop(1)} is needed before writing a real 0 there):
 		{cmd:. nwhierarchy, disnet(lam) linkage(singlelinkage) groups(2) generate(lamgroup)}
 
 {pstd}
-recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}} - confirmed directly
-in {cmd:cscripts/test_nwlambda.do}, not merely asserted.
+recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}}.
 
 {title:Supported network types}
 
@@ -96,9 +95,8 @@ applicable. Signed: not applicable. Two-mode: same as for the bipartite graph re
 The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): {it:n}-1 maximum flows on the
 sparse network instead of {it:n}({it:n}-1)/2, each stopped as soon as it reaches the smaller degree of the two ends.
 The result is a dense {it:n}-by-{it:n} valued network, which is what takes the memory: it is held twice while the network is
-registered (20,000 nodes: 30 seconds and 6.5 GB; killed at 12 GB before, when it was held four times).
-Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds
-(the previous version did not finish in 3 minutes at 300 nodes).
+registered (20,000 nodes: 30 seconds and 6.5 GB).
+Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds.
 
 {title:Stored results}
 

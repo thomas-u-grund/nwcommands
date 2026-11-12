@@ -119,13 +119,13 @@ exponential behaviour (a mathematical property of maximal-clique-family problems
 
 {pstd}
 {bf:Feasible sizes.} The graph "distance at most {it:n}" is built as bitsets by a breadth-first search from every
-node and searched with the same pivoting Bron-Kerbosch rule, in compiled code, in the same order as the Mata version.
+node and searched with the same pivoting Bron-Kerbosch rule, in compiled code.
 What limits the command is the number of maximal n-cliques, not the size of the network: with {opt n(2)} almost every
 node reaches almost every other within two steps, the "distance at most 2" graph is dense, and its maximal cliques
 are very many. Measured in Stata/BE on a random network with 10 ties drawn per node and {opt n(2)}: 100 nodes already
 have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; counting them with {opt countonly} takes
 33 seconds, and the result matrix would need 37 GB), so the output of the command, not its running time, is out of
-reach from about 100 nodes on. The previous Mata version used 5.3 GB and did not finish in 60 seconds at 100 nodes.
+reach from about 100 nodes on.
 Sparser or smaller networks, a larger {opt minsize()} and path-like networks (long distances, few short cycles) are
 fine.
 

@@ -75,14 +75,9 @@ options) was not satisfied.
 {title:Background}
 
 {pstd}
-Before this registry existed, several of these situations had drifted onto multiple different
-ad-hoc numbers across different commands (e.g. "network already exists" independently used both
-{bf:483} in one command and an undocumented {bf:6099} in several others; "two networks must be the
-same size" appeared as {bf:100}, {bf:6055}, {bf:6056}, and {bf:60033} depending which command you
-called) - purely accidental drift, not a deliberate design. Commands have since been consolidated
-onto the single codes above; a command-specific validation that genuinely does not fit any of
-these may still raise its own distinct code, but should not silently reuse one of the numbers on
-this page for an unrelated situation.
+Each of these situations raises the single code above in every command. A command-specific
+validation that does not fit any of these may raise its own distinct code; the numbers on this
+page are not reused for unrelated situations.
 
 {title:See also}
 

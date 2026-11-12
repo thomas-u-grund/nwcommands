@@ -94,12 +94,12 @@ matching this package's convention for other {help netlist} commands.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the degree is the {it:strength}, the sum of the tie values ({cmd:alpha(1)}), as {it:igraph::strength} and {it:tnet::degree_w} give it in R; {opt alpha(a)} gives k (s/k)^a with k the number of ties and s the strength, {cmd:alpha(0)} or {opt binary} the number of ties ({it:igraph::degree}). The output names the weighting used and shows the mean number of ties next to the mean strength ({cmd:r(mean_ties)}, {cmd:r(mean_strength)}); {opt ties()} stores the tie counts in variables next to the strength. Isolates are nodes without ties, whatever the tie values add up to.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
 {pstd}
-Two-mode: two-mode form by default - the degree of a node of a two-mode network is its number of ties divided by the size of the other mode (Borgatti and Everett 1997; {opt raw} gives the count itself, {cmd:tnet::degree_tm}); {opt onemode} forces the one-mode computation on the bipartite graph. {help nw2degree} is the same command under its older name and takes the same options.
+Two-mode: two-mode form by default - the degree of a node of a two-mode network is its number of ties divided by the size of the other mode (Borgatti and Everett 1997; {opt raw} gives the count itself, {cmd:tnet::degree_tm}); {opt onemode} forces the one-mode computation on the bipartite graph. {help nw2degree} is the same command under another name and takes the same options.
 
 {title:Supported network types}
 

@@ -162,7 +162,7 @@ The program needs no additional packages: the weighted sampling of ties is built
 
 {pstd}
 With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command: 20,000 nodes
-3.1 seconds (killed at 12 GB before). {opt density()} weights all dyads and is refused above 7,071 nodes.
+3.1 seconds. {opt density()} weights all dyads and is refused above 7,071 nodes.
 
 {title:See also}
 

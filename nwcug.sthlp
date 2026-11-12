@@ -87,7 +87,7 @@ clustering or a core can look remarkable against {bf:condition(density)} and ord
 The draws form a chain of random tie swaps on a copy of {help netname} (two ties a-b and c-d become a-d and c-b, see
 {help nwpermute} with {opt swap}), as R's {cmd:igraph::rewire(g, keeping_degseq())}; {opt trades()} sets the number of
 attempted swaps between two draws. The copy keeps the node names and attributes of {help netname}, and tie values move
-with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. For example, the global clustering
+with their ties. The draws use the native plugin. For example, the global clustering
 coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and
 networks with its degrees 0.165 (sd 0.078), which agrees with {cmd:igraph} (0.162, sd 0.077):
 
@@ -112,7 +112,7 @@ every other plot this package produces.
 {title:Two-mode networks}
 
 {pstd}
-For a two-mode network the null networks are two-mode networks with the same nodes (and the same node names and attributes) as {help netname}; the draws are made by a kernel of the native plugin of nwcommands 3.10.0 or later (a clear message asks for the update otherwise), so the time of a test is that of the statistic. The conditions are
+For a two-mode network the null networks are two-mode networks with the same nodes (and the same node names and attributes) as {help netname}; the draws are made by a kernel of the native plugin, so the time of a test is that of the statistic. The conditions are
 {p_end}
 
 {phang2}{bf:condition(density)} (the default): the same number of ties between a random mode-1 node and a random mode-2 node, no pair twice ({cmd:igraph::sample_bipartite(type = "gnm")}, {cmd:vegan::nullmodel(method = "r00")}).{p_end}
@@ -162,9 +162,8 @@ indices. {it:Social Networks} 21(3), 239-267.
 {pstd}
 Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it. With
 {cmd:condition(density)} above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn
-directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents} as the statistic take 2 seconds at 20,000 nodes
-(more than 5 minutes at 10,000 nodes before, each draw shuffling the 100 million cells). The draws of networks of more than
-5,000 nodes are not those of earlier versions for the same seed. {cmd:condition(census)} still works on the matrix.
+directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents} as the statistic take 2 seconds at 20,000 nodes.
+{cmd:condition(census)} works on the matrix.
 
 {title:See also}
 

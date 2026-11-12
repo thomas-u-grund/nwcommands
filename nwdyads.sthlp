@@ -2,7 +2,6 @@
 {* *! version 2.0.0  7jul2016}{...}
 {marker topic}
 {helpb nwtopical##information:[NW-2.4] Information}
-version 2.0.0
 
 {title:Title}
 
@@ -118,7 +117,7 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 
 {pstd}
 A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB
-in Stata/BE (7 seconds and 6.3 GB before).
+in Stata/BE.
 
 {title:See also}
 

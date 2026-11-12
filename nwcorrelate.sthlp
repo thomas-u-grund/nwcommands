@@ -294,7 +294,7 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 {title:Limits}
 
 {pstd}
-With the native plugin of nwcommands 3.10.0 or later (plugin generation 12) the correlations between the nodes of one network are formed from the stored ties and take 0.45 seconds at 5,000 nodes (the Mata code: 3.2 seconds; 10 seconds in earlier versions, which formed the matrix four times); the results agree to 1e-13. A network with missing tie values and a platform with an older plugin use the Mata code described next.
+When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties and take 0.45 seconds at 5,000 nodes (the Mata code: 3.2 seconds); the results agree to 1e-13. A network with missing tie values and a platform whose plugin lacks this kernel use the Mata code described next.
 
 {pstd}
 The Mata code computes the correlations between the nodes of one network ({cmd:nwcorrelate} {it:netname}) with about 25 dense

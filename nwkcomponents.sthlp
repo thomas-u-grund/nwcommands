@@ -141,8 +141,8 @@ recursive decomposition can call this repeatedly. For k = 2 the plugin answers t
 {pstd}
 The search for vertex cuts runs in compiled code and the network is not turned into a matrix. For k(2), the default, the search needs a
 single pass over the ties (the blocks of the network, one depth-first search) instead of one max-flow computation per node; for k(3) and
-higher it is still one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn
-per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds (before: 0.04 / 1.8 / 67 seconds). Both routes give the same
+higher it is one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn
+per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds. Both routes give the same
 components in the same order. Without the compiled plugin for the platform the Mata code is used and is much slower. For large k or many
 cuts the time is longer.
 

@@ -72,8 +72,8 @@ temporal network - there is no separate option to choose between them.
 {pstd}
 {bf:nwmovie} opens a live, interactive, animated view of a network changing over time, rendered with Cytoscape.js in a chromeless native
 viewer window (the same one {help nwplot}'s own {opt interactive} option uses - falls back to an ordinary browser tab when that native
-binary isn't available for the current platform). It replaces the previous ImageMagick/{cmd:graph export}-based pipeline entirely:
-there is no external ImageMagick dependency any more, and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF -
+binary isn't available for the current platform). No external program is needed,
+and the result is a real, scrubbable, playable view - not just a fixed-frame-rate GIF -
 and the movie can be saved from within that view as a GIF or a video file (the {bf:Export GIF} and {bf:Export video} buttons; the file is
 written through a save dialog in the native viewer on Windows, macOS and Linux, or as an ordinary download in a browser tab), or written
 directly from Stata with {opt export()}.
@@ -84,8 +84,8 @@ directly from Stata with {opt export()}.
 By default, each wave gets its own {bf:kk} (Kamada-Kawai) layout, warm-started from the PREVIOUS wave's own final node positions, so
 consecutive waves relax into nearby layouts - a real, visible transition as ties change - rather than each wave's layout being computed
 completely independently. Node identity stays visually trackable across the movie (nodes move smoothly, not in unrelated jumps), while
-still letting the layout itself resettle as the network's structure changes wave to wave. Specify {opt fixedlayout} to restore the
-original behavior instead: one node layout, computed once on the first network only and reused unchanged for every wave - the layout
+still letting the layout itself resettle as the network's structure changes wave to wave. Specify {opt fixedlayout} for
+one node layout instead, computed once on the first network only and reused unchanged for every wave - the layout
 itself never moves, at the cost of never reflecting how the network's own structure is changing. An explicit {opt layout()} other than
 {bf:kk} also falls back to this one-shared-layout behavior (see {opt layout()} above), since the per-wave transition relies on {bf:kk}'s
 own warm-start. On valued networks every wave's layout uses the tie values as strengths (strongly tied nodes close together), exactly as in
@@ -105,14 +105,14 @@ Both modes reuse {help nwplot}'s own color/shape/position resolution - {opt colo
 event-mode cumulative layout network).
 
 {pstd}
-{bf:Panel mode} can also vary node/edge styling BY wave, the way the old ImageMagick-era {opt colors()}/{opt sizes()}/etc. plural options
-did: {opt colors()}/{opt symbols()}/{opt sizes()}/{opt edgecolors()}/{opt edgesizes()} each take one value PER WAVE (in the same order as
+{bf:Panel mode} can also vary node/edge styling BY wave:
+{opt colors()}/{opt symbols()}/{opt sizes()}/{opt edgecolors()}/{opt edgesizes()} each take one value PER WAVE (in the same order as
 the network list) instead of their singular counterparts' single broadcast value. Color and size (node AND edge) genuinely transition
 continuously as the movie plays - Cytoscape.js tweens node color/size natively as part of the same {opt duration()}/{opt easing()}
 animation that already moves node position, and edges (which are always fully rebuilt at every transition, not kept alive across it) get an equivalent hand-rolled tween for any edge that persists across
 the transition. Shape stays a hard switch at each wave boundary, not a continuous morph - asking Cytoscape's own animation to interpolate
-shape (circle into square, say) is not a meaningful blend, and turned out to be a genuine renderer-crash trigger during this feature's own
-development besides. A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only
+shape (circle into square, say) is not a meaningful blend.
+A brand-new tie that did not exist in the previous wave pops in at its final style directly, with no fade-in - only
 persisting ties (present in both waves) tween their own width/color change.
 
 {pstd}
@@ -131,13 +131,6 @@ frame is at once it's outside the interactive viewer. Its own "{bf:x}" button re
 it being baked into any file exported after that); there is no way to bring it back short of reopening the movie. Its own font size only
 ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title
 text happens to be.
-
-{pstd}
-Dropped entirely, with no replacement (the ImageMagick pipeline's own options, no longer meaningful once the browser does the
-rendering and animation): {opt frames()}, {opt delay()}, {opt explosion()}, {opt imagick()}, {opt keepfiles()}, {opt width()}, {opt height()},
-{opt z()}, {opt nodexys()}, {opt switchnetwork()}/{opt switchcolor()}/{opt switchsymbol()}/{opt switchedgecolor()}/{opt switchtitle()}, and
-{opt eps} (vector export - {help nwplot}'s own {opt interactive} view made the identical PNG-only tradeoff already, for the same reason:
-Cytoscape.js's built-in export is raster-only).
 
 {marker export}{...}
 {title:Remarks}
@@ -220,7 +213,7 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 {pstd}
 Panel mode: binary yes, directed yes, weighted and signed as {help nwplot} (tie values set the line widths, negative ties are drawn dashed in a second colour; the options {opt binary} and {opt nosign} are passed on), two-mode: each network is drawn as {help nwplot} would (a symbol and a colour per mode; the layout is the one of {opt layout()}, not bipartite unless you give it). Event mode: exactly the input {help nwrem} already accepts - a one-mode,
 event-type temporal network built via {help nwset}'s {opt eventtime()} option; two-mode is not currently combinable with {opt eventtime()}
-at the {help nwset} level (a separate, already-tracked composability gap).
+at the {help nwset} level.
 
 {title:See also}
 

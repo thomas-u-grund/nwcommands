@@ -65,7 +65,7 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 
 {pstd}
 The mutual ties and the mutual neighbours they share are found from the tie lists. Measured in Stata/BE, random undirected
-network with 10 ties drawn per node: 20,000 nodes need 1.2 GB (12.5 GB before).
+network with 10 ties drawn per node: 20,000 nodes need 1.2 GB.
 
 {pstd}
 The mutual ties that have a mutual neighbour in common are found in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your

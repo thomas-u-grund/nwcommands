@@ -72,7 +72,7 @@ with no memberships, and a mode-2 "institution" with no members):
 {title:Limits}
 
 {pstd}
-The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds (killed at 12 GB before).
+The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds.
 
 last certified : 29 Aug 2026
 

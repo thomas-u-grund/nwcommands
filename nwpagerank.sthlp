@@ -66,7 +66,7 @@ scalability discipline this package's own sparse-backend commands ({help nwkcore
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the random surfer follows the tie from i to j with probability w_ij / s_i, s_i the out-strength ({it:igraph::page_rank} with its weight attribute); {opt binary} follows a uniformly chosen tie. Both walks run in the native kernel when your platform's plugin has it.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Supported network types}
 

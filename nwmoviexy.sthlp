@@ -23,15 +23,9 @@
 
 {pstd}
 {cmd:nwmoviexy} is a thin alias for {help nwmovie}: it forwards its entire argument string to
-{cmd:nwmovie} unchanged and behaves identically to it in every way. Historically {cmd:nwmoviexy} was
-a separate, coordinate-specific implementation (accepting an explicit {cmd:nodexys(varlist)} option
-to place nodes at fixed x/y coordinates supplied by the caller). {help nwmovie:nwmovie} itself was
-rebuilt on a Cytoscape.js-based rendering pipeline (see that command's own help file) and no longer
-has an equivalent option - fixed node positions across waves are now produced automatically via its
-own {opt fixedlayout} option (one shared layout computed once and reused every frame) instead of
-requiring the caller to supply coordinates. {cmd:nwmoviexy} is kept only as a thin, backward-compatible
-alias so existing scripts that call it by name continue to work; it accepts exactly {help nwmovie:nwmovie}'s
-own current option set, nothing more.
+{cmd:nwmovie} unchanged and behaves identically to it in every way; it accepts exactly {help nwmovie:nwmovie}'s
+option set, nothing more. Fixed node positions across waves are produced by {cmd:nwmovie}'s
+{opt fixedlayout} option (one shared layout computed once and reused every frame).
 
 {pstd}
 New code should call {help nwmovie:nwmovie} directly - see its own help file for the complete option

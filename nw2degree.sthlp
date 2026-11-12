@@ -69,7 +69,7 @@ variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend {help nwdeg
 {pstd}
 where {it:k_i} is node {it:i}'s plain tie count and {it:s_i} is its tie-{it:value} sum (its
 "strength"). {opt alpha(0)} (the default) reduces this exactly to plain tie-count degree - the two
-formulas agree bit-for-bit, so leaving {opt alpha()} unspecified never changes existing results.
+formulas agree bit-for-bit.
 {opt alpha(1)} gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count
 entirely. Values between 0 and 1 blend the two; values above 1 emphasize a few strong ties over many
 weak ones, and negative values do the reverse. On a binary (unweighted) network every tie already
@@ -111,7 +111,7 @@ degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued two-mode network the degree is the strength divided by the size of the other mode ({it:tnet::degree_tm} gives the unnormalized strength); {opt binary} or {cmd:alpha(0)} gives the number of ties divided by the size of the other mode.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
@@ -125,7 +125,7 @@ Binary: yes. Directed: not applicable - two-mode ties in this package's storage 
 undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: {bf:W1},
 native - {opt alpha()} generalizes the plain tie-count formula to a tie-strength-aware blend
 (Opsahl et al. 2010), the same convention {help nwdegree}'s own {opt alpha()} uses for one-mode
-degree; {opt alpha(0)}, the default, is bit-for-bit identical to the original unweighted formula.
+degree; {opt alpha(0)}, the default, is bit-for-bit identical to the plain unweighted formula.
 Signed: not checked - a negative tie value would distort the strength sum {opt alpha()} relies on,
 not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw} gives the count itself ({cmd:tnet::degree_tm}).
 

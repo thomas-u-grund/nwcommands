@@ -200,7 +200,7 @@ Peter - Thomas  - 5 years
 {title:Limits}
 
 {pstd}
-Above 20,000 nodes in both modes together the command stops at once with r(484) (it used to build the network for 22 seconds first).
+Above 20,000 nodes in both modes together the command stops at once with r(484).
 A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw2degree}, {help nw2clustering}, {help nwmatching},
 {help nwproject} and {help nw2project} then take 1.7 to 12 seconds at that size.
 

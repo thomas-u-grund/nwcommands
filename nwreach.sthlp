@@ -82,7 +82,7 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 
 {pstd}
 The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with
-10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB (16 and 52 seconds with one plugin call per source; killed at 12 GB before).
+10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB.
 
 {pstd}
 Reachability of all pairs of nodes is an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it anyway. For connectedness use {help nwcomponents}, for one pair {help nwpath}.

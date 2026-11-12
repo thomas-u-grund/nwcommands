@@ -104,7 +104,7 @@ checked. Two-mode: yes - only the ties between the two modes are counted (the ce
 
 {pstd}
 The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as
-stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds (killed at 12 GB before).
+stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
 
 {title:See also}
 

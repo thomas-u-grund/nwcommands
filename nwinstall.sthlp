@@ -47,11 +47,11 @@
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt gui}}install the "Network Analysis" menu permanently on your Stata (the older name {opt permanently} still works); it is set up once, however often you type it - see {help nwinstall##menu:The menu is installed once}{p_end}
+{synopt:{opt gui}}install the "Network Analysis" menu permanently on your Stata ({opt permanently} is a synonym); it is set up once, however often you type it - see {help nwinstall##menu:The menu is installed once}{p_end}
 {synopt:{opt remove}}remove the "Network Analysis" menu from your Stata, the line {cmd:nwinstall, usermenu} from {bf:profile.do}, and the nwcommands files{p_end}
 {synopt:{opt help}}download the help files{p_end}
 {synopt:{opt ado}}download the core command (.ado) files{p_end}
-{synopt:{opt ext}}accepted for backward compatibility, does nothing (the "extension" commands it used to download separately - {help nwdissimilar}, {help nwhierarchy}, {help nwdendrogram} - are ordinary commands shipped with every other {opt ado}/{opt help} install, and were never genuinely distinct from the rest of the package){p_end}
+{synopt:{opt ext}}accepted, does nothing ({help nwdissimilar}, {help nwhierarchy} and {help nwdendrogram} are ordinary commands installed with every other {opt ado}/{opt help} install){p_end}
 {synopt:{opt dialog}}download the dialog boxes{p_end}
 {synopt:{opt usermenu}}update menu items for dialog-boxes{p_end}
 {synopt:{opt update}}refresh the installed menu (an internal, self-recursive flag: re-invokes {cmd:nwinstall, help usermenu}){p_end}
@@ -109,7 +109,7 @@ advanced functions are only available through Stata syntax (see {help nwcommands
 {opt gui} (and therefore {opt all} and {opt everything}, unless you add {opt nogui}) puts the single line {cmd:nwinstall, usermenu} into your {bf:profile.do}, so that Stata builds the {it:Network Analysis} menu in the {it:User} menu each time it starts.
 The line is never written twice, however often you run {cmd:nwinstall}:
 
-{phang2}o  The older spellings of the line ({cmd:nwinstall, downloadoff}, extra spaces, a {cmd:quietly} in front) count as the same line; extra copies are dropped, and the rest of your {bf:profile.do} is kept as it was.{p_end}
+{phang2}o  Other spellings of the line ({cmd:nwinstall, downloadoff}, extra spaces, a {cmd:quietly} in front) count as the same line; extra copies are dropped, and the rest of your {bf:profile.do} is kept as it was.{p_end}
 {phang2}o  If {bf:profile.do} (or another {bf:profile.do} Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a {it:Network Analysis} menu in some other way, for example with a {cmd:window menu} line of your own, no second menu is added; {cmd:nwinstall} names the line and the file in a message. Lines it cannot identify with certainty are never deleted.{p_end}
 {phang2}o  Within one session the menu is rebuilt from an empty {it:User} menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the {it:User} menu in that session.{p_end}
 {phang2}o  The menu entries of the model packages {cmd:nwsaom} and {cmd:nwergm} appear only when the package's dialog boxes are installed. There is one entry for each package under {it:Statistical Models}, {it:Stochastic actor-oriented model (nwsaom)} and {it:Exponential random graph model (nwergm)}. The other dialogs of a package (Bayesian estimation, several networks, postestimation, simulation and so on) open from buttons inside its main dialog.{p_end}

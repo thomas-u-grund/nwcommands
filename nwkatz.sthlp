@@ -65,11 +65,9 @@ Bonacich power centrality) - not as a sum over {it:shortest-path distances} the 
 own default formula does. The two measures are related in spirit (both attenuate a node's reach by
 distance/length) but are mathematically different and will generally give different node rankings,
 especially on networks with many alternate paths between the same pair of nodes, since true Katz
-centrality credits every walk, not just the shortest one. The default formula's own results are
-unchanged from prior versions (preserving backwards compatibility for anyone already relying on
-this specific distance-decay measure) - this note exists so the choice of default formula, and its
-relationship to the cited reference, is explicit rather than implied by the command name and
-citation alone.
+centrality credits every walk, not just the shortest one. This note makes the choice of default
+formula, and its relationship to the cited reference, explicit rather than implied by the command
+name and citation alone.
 
 {pstd}
 {opt walks} switches to the genuine, literature-standard walk-counting Katz/Bonacich formula
@@ -85,7 +83,7 @@ the same convention the default distance-decay formula already uses.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. With {opt walks} on a valued network the walks are weighted ({it:igraph::alpha_centrality} with weights; the {it:_in} variable is igraph's); {opt binary} counts a tie once. The distance-decay form counts steps and does not use tie values.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Supported network types}
 
@@ -117,8 +115,7 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 
 {pstd}
 The distance-decay score (without {opt walks}) is summed over breadth-first searches from every node in the plugin, without a
-matrix of distances, unless {it:geodesic_options} are given or the plugin is older (then the matrix of {help nwgeodesic} is used,
-as before). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB
+matrix of distances, unless {it:geodesic_options} are given or the platform has no plugin (then the matrix of {help nwgeodesic} is used). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB
 (99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
 
 {pstd}

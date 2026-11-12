@@ -138,7 +138,7 @@ Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible d
 
 {pstd}
 One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes:
-1,000 nodes 5 seconds and 0.8 GB (before: 16 seconds), 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
+1,000 nodes 5 seconds and 0.8 GB, 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
 are refused; plot a part of the network or use {help nwplot}.
 
 {title:See also}

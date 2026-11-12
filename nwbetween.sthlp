@@ -41,7 +41,7 @@
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 {synopt:{opt twomode}}Two-mode network: the default; accepted as a synonym of the default (betweenness divided by the largest value a node of its mode can reach, Borgatti and Everett 1997; {opt standardize} is this standardisation on a two-mode network){p_end}
-{synopt:{opt onemode}}Two-mode network: the betweenness of the bipartite graph read as a one-mode graph, not divided by the largest possible value (the result of earlier releases; {opt standardize} then divides as for any graph){p_end}
+{synopt:{opt onemode}}Two-mode network: the betweenness of the bipartite graph read as a one-mode graph, not divided by the largest possible value ({opt standardize} then divides as for any graph){p_end}
 
 
 {title:Description}
@@ -87,7 +87,7 @@ Directed network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))}
 Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
 
 {pstd}
-The stored result {bf:r(bw_central)} is Freeman's betweenness centralization, computed from the raw scores whether or not {opt standardize} is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). Without {opt nosym} the network is symmetrized first, so the undirected formula applies. Before the correction of this formula the value stored for an undirected network was half of Freeman's.
+The stored result {bf:r(bw_central)} is Freeman's betweenness centralization, computed from the raw scores whether or not {opt standardize} is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). Without {opt nosym} the network is symmetrized first, so the undirected formula applies.
 
 {pstd}
 {opt generate()} is required and names the Stata variable to hold the result (pass {opt replace}
@@ -121,7 +121,7 @@ needs a dense work space of n x n cells for every node and is not usable above a
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the shortest paths are those of least cost 1/w^alpha ({cmd:alpha(1)} by default; {it:igraph::betweenness} with weights 1/w, {it:tnet::betweenness_w}); paths of equal cost are recognised with a relative tolerance of 1e-10. {opt binary} counts steps. The option {opt weighted} is accepted for compatibility; it is redundant on a valued network.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
@@ -136,11 +136,10 @@ by default the network is symmetrized before computing betweenness at all - pass
 compute genuinely directed betweenness on the network as given; without {opt nosym} the reported
 scores reflect the symmetrized structure, not the original directed one (this applies identically
 whether or not {opt weighted} is used - symmetrization, via {help nwsym}'s default {cmd:max} mode,
-correctly combines rather than discards tie weights). Weighted: {bf:W2} - the default remains
-{bf:W3} (explicit binary-only: any tie with weight strictly greater than zero is dichotomized to an
-edge, tie strength otherwise ignored), but {opt weighted} now computes genuine Dijkstra-based
-betweenness using tie strength directly as distance/cost via {opt alpha()} - never silently
-implied, always an explicit opt-in. Signed: ties with weight less than or equal to zero, including
+correctly combines rather than discards tie weights). Weighted: yes - on a valued network the default
+computes Dijkstra-based betweenness with step cost 1/value^{opt alpha()} ({opt weighted} is redundant there);
+{opt binary} dichotomizes instead (any tie with weight strictly greater than zero is an
+edge, tie strength otherwise ignored). Signed: ties with weight less than or equal to zero, including
 negative ties, are treated as no tie at all in both the default and {opt weighted} cases - a
 negative (e.g. antagonistic) tie is not distinguished from an absent one, and {opt weighted}'s
 {it:weight^alpha} cost is undefined for a negative base in general, so signed networks are not

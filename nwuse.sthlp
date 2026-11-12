@@ -46,7 +46,7 @@ it in double quotes.
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved (ties, modes, labels and attributes), independent of any of these properties. Files of two-mode networks written by earlier versions, which listed every pair of nodes, still load.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved (ties, modes, labels and attributes), independent of any of these properties. Files of two-mode networks that list every pair of nodes also load.
 
 {title:Examples}
         

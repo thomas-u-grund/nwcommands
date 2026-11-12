@@ -107,7 +107,7 @@ plain betweenness score).{p_end}
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. The centrality measures {opt betweenness}, {opt closeness} and {opt evcent} use the tie values of a valued network, as {help nwbetween}, {help nwcloseness} and {help nwevcent} do; {opt degree} counts ties. {opt binary} ignores the values.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
@@ -121,8 +121,8 @@ Binary: yes. Directed: {bf:measure(betweenness/closeness/evcent)} support direct
 directly (each already produces exactly one clean per-node output variable regardless of
 directedness); {bf:measure(degree)} does not - {help nwdegree} itself splits into separate
 {bf:_outdegree}/{bf:_indegree} variables on a directed network, so induced degree would need a
-choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear
-error) rather than guessed at. Weighted/Signed: entirely
+choice between them with no single obviously-right answer, so it stops with a clear
+error rather than guessing. Weighted/Signed: entirely
 inherited from whichever {opt measure()} is chosen - {cmd:nwinduced} itself does not read tie
 values directly. Two-mode: not supported - error 6088; make a one-mode network of one mode first with {help nwproject}.
 
@@ -131,7 +131,7 @@ values directly. Two-mode: not supported - error 6088; make a one-mode network o
 {pstd}
 {bf:measure(degree)} has a closed form - removing a node takes away its own degree and one tie from each neighbour -
 so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes:
-0.02 / 0.03 / 0.09 seconds; the loop took 11 seconds at 300 nodes and about 50 at 1,000). The other measures have
+0.02 / 0.03 / 0.09 seconds). The other measures have
 no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number
 of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node:
 {bf:betweenness} 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, {bf:closeness} 2.8 / 20 / 8 seconds (the time of

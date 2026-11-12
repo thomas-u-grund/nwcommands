@@ -96,8 +96,8 @@ Two-mode: yes - one row for every tie between the two modes, with the mode of bo
 
 {pstd}
 Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in
-Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds (before: 8 seconds
-and 1.3 GB), 5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
+Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds,
+5,000 nodes 24 seconds; with {opt compress} 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
 
 {title:See also}
 

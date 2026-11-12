@@ -93,7 +93,7 @@ partition here is by structural role rather than by connectivity.
 (or its {opt generate()} alias - one of the two is then required) - one call in place of first working out {cmd:clustermat}'s own auto-generated
 cluster-object name (never itself returned in {cmd:r()}, so it cannot otherwise be recovered
 programmatically) and then calling {cmd:cluster generate} by hand. Without {opth groups(int)}, {cmd:nwhierarchy}
-behaves exactly as before - only the cluster object itself is created (usable with {help cluster} and
+creates only the cluster object itself (usable with {help cluster} and
 {help clustermat}'s own full postestimation suite, e.g. {help nwdendrogram} or {cmd:cluster dendrogram}
 directly), and no {it:_role}-style variable is generated.
 

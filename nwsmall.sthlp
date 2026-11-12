@@ -123,7 +123,7 @@ In the second example, there are exactly three shortcuts.
 
 {pstd}
 Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives
-the same network). 20,000 nodes with {opt k(5)}: 1 second (killed at 12 GB before). {opt weights()} still uses the matrix.
+the same network). 20,000 nodes with {opt k(5)}: 1 second. {opt weights()} uses the matrix.
 
 {title:See also}
 

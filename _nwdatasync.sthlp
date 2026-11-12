@@ -2,7 +2,6 @@
 {* *! version 2.0.0  4jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
-version 2.0.0
 
 {title:Title}
 
@@ -36,7 +35,7 @@ version 2.0.0
 {title:Description}
 
 {pstd}
-Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Beginning with version 2.0.0 both are automatically matched by the 
+Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Both are automatically matched by the 
 name of the nodes. In the dataset this match is performed on the variable {bf:_nwnode}. In case this variable does not exist, it is automatically created. 
 
 {pstd}

@@ -60,7 +60,7 @@ result.
 
 {pstd}
 A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the matching is the one of largest total tie value ({it:igraph::max_bipartite_match} with its weight attribute), which can have fewer pairs than the largest matching; {cmd:r(weight)} is the total value. {opt binary} finds the matching with the most pairs.
-On a network that is not valued the result is the same as in earlier releases and {opt binary} has no effect.
+On a network that is not valued, {opt binary} has no effect.
 
 {title:Two-mode networks}
 
@@ -100,10 +100,10 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 {title:Limits}
 
 {pstd}
-The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as before, so
-the same matching comes out) by a kernel of the native plugin; a platform whose plugin has not been rebuilt yet keeps
-the older Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000
-mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the older code did not
+The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as the Mata code, so
+the same matching comes out) by a kernel of the native plugin; a platform without the plugin uses
+the Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000
+mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the Mata code did not
 finish in 180 seconds and used 4 GB).
 
 {pstd}

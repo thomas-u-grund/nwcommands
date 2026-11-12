@@ -89,8 +89,7 @@ alters' {it:srcvar} values - {bf:1 - sum(p_k^2)}, where {it:p_k} is the proporti
 falling in category {it:k} of {it:srcvar} (treated as a categorical/discrete-coded variable, e.g.
 sector or ethnicity) - the standard "ego-network composition" measure: 0 when every alter shares
 the same category (no diversity), approaching 1 as alters spread evenly across many categories.
-This is the composition/diversity capability {help nwego}'s own "Supported network types" note
-originally left open - unlike ego-network size/density, it needs per-alter attribute {it:values},
+Unlike ego-network size/density ({help nwego}), it needs per-alter attribute {it:values},
 not just structural connectivity, so it belongs here alongside {help nwaltergen}'s other alter-
 attribute aggregations rather than in {help nwego} itself. Missing {it:srcvar} values are dropped
 before computing the index, exactly as for every other {it:stat}; an ego with zero alters (after
@@ -138,7 +137,7 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 Binary: yes. Directed: yes - {it:alter} means out-neighbors only, since exposure/influence follows
 tie direction (see above). Weighted: {bf:W2} - {bf:mean}/{bf:sum}/{bf:min}/{bf:max}/{bf:sd}/
 {bf:count}/{bf:diversity} use only structural adjacency (tie strength does not enter); {bf:wmean}
-(added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight,
+uses tie strength directly as the aggregation weight,
 an explicit opt-in via a separate {it:stat} name rather than an automatic switch. Signed: not
 checked - {bf:wmean()} would divide by a possibly near-zero or sign-cancelling weight sum for a
 node with negative-weighted ties, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
