@@ -31,7 +31,7 @@ name(string)]
 
 | | |
 |---|---|
-| `stat(command)` | Command template used to compute the test statistic; must contain the literal token **##net##** where the network name belongs |
+| `stat(command)` | Command template used to compute the test statistic; the token **##net##** marks where the network name belongs (without it, the name follows the command name) |
 | `rname(string)` | Name of the *stat*'s **r()** scalar to use as the test statistic |
 | `reps(int)` | Number of conditioned random networks to draw; default = 1000 |
 | `seed(int)` | Set the random-number seed before drawing (for reproducibility) |
@@ -46,7 +46,7 @@ name(string)]
 
 `nwcug` performs a Conditional Uniform Graph (CUG) test (Anderson, Butts and Carley 1999): it compares an observed network statistic against the distribution of that same statistic computed on **reps** random networks drawn uniformly from the set of all networks with the same number of nodes and the same density as [netname](netname) (using [nwrandom](nwrandom)'s **density()** conditioning). This answers "is my observed statistic unusual, given only the size and density of the network?" - a standard baseline null model in network analysis, since many statistics (e.g. transitivity, number of components) are mechanically related to density alone, and a CUG test controls for that before attributing a finding to genuine structure.
 
-**stat()** is a full command template (any `nw*` command plus whatever options it needs) that returns a scalar in **r()**; use the literal token **##net##** wherever the network name belongs - `nwcug` substitutes it with the observed network's name once, and with a freshly-drawn random network's name **reps()** times. **rname()** names the returned scalar (without the surrounding `r(...)`). Passing whatever **replace**-style option the command needs (as part of the template) is the caller's responsibility, since the same command runs once per random draw. For example, to test whether the Florentine marriage network's component count is unusual for its size and density:
+**stat()** is a full command template (any `nw*` command plus whatever options it needs) that returns a scalar in **r()**; use the literal token **##net##** wherever the network name belongs - `nwcug` substitutes it with the observed network's name once, and with a freshly-drawn random network's name **reps()** times. **rname()** names the returned scalar (without the surrounding `r(...)`). Passing whatever **replace**-style option the command needs (as part of the template) is the caller's responsibility, since the same command runs once per random draw. When **stat()** has no **##net##**, the network name is put right after the command name, so `stat(nwclustering)` is `stat(nwclustering ##net##)` and `stat(nwdyads)` is `stat(nwdyads ##net##)`; the token is needed only for a command or a program of your own that takes the network elsewhere. For example, to test whether the Florentine marriage network's component count is unusual for its size and density:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -57,7 +57,7 @@ name(string)]
 **condition(degrees)** keeps the degree of every node (in a directed network its out-degree and its in-degree): the draws are random networks with exactly the degrees of [netname](netname), no self-loops and no pair tied twice. It asks whether a statistic goes beyond what the degrees alone produce: popular nodes are tied to each other more often by chance, so clustering or a core can look remarkable against **condition(density)** and ordinary against **condition(degrees)**. The draws form a chain of random tie swaps on a copy of [netname](netname) (two ties a-b and c-d become a-d and c-b, see [nwpermute](nwpermute) with `swap`), as R's `igraph::rewire(g, keeping_degseq())`; `trades()` sets the number of attempted swaps between two draws. The copy keeps the node names and attributes of [netname](netname), and tie values move with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. For example, the global clustering coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and networks with its degrees 0.165 (sd 0.078), which agrees with `igraph` (0.162, sd 0.077):
 
 ```stata
-. nwcug flomarriage, stat(nwclustering ##net##, generate(cc) replace) rname(cluster_global) condition(degrees) reps(2000) seed(3)
+. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(2000) seed(3)
 ```
 Some statistics are fixed by the dyad census (reciprocity, for example). With **condition(census)** their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.
 
@@ -95,4 +95,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.0, 12 November 2026* ([check your installed version](nwversion))

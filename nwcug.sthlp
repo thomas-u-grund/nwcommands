@@ -29,7 +29,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt stat(command)}}Command template used to compute the test statistic; must contain the literal token {bf:##net##} where the network name belongs{p_end}
+{synopt:{opt stat(command)}}Command template used to compute the test statistic; the token {bf:##net##} marks where the network name belongs (without it, the name follows the command name){p_end}
 {synopt:{opt rname(string)}}Name of the {it:stat}'s {bf:r()} scalar to use as the test statistic{p_end}
 {synopt:{opth reps(int)}}Number of conditioned random networks to draw; default = 1000{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before drawing (for reproducibility){p_end}
@@ -60,7 +60,10 @@ returns a scalar in {bf:r()}; use the literal token {bf:##net##} wherever the ne
 {cmd:nwcug} substitutes it with the observed network's name once, and with a freshly-drawn random
 network's name {bf:reps()} times. {bf:rname()} names the returned scalar (without the surrounding
 {cmd:r(...)}). Passing whatever {bf:replace}-style option the command needs (as part of the template)
-is the caller's responsibility, since the same command runs once per random draw. For example, to
+is the caller's responsibility, since the same command runs once per random draw. When {bf:stat()} has no
+{bf:##net##}, the network name is put right after the command name, so {cmd:stat(nwclustering)} is
+{cmd:stat(nwclustering ##net##)} and {cmd:stat(nwdyads)} is {cmd:stat(nwdyads ##net##)}; the token is
+needed only for a command or a program of your own that takes the network elsewhere. For example, to
 test whether the Florentine marriage network's component count is unusual for its size and density:
 
 	{cmd:. nwwebuse florentine, nwclear}
@@ -91,7 +94,7 @@ with their ties. The draws use the native plugin of nwcommands 3.17.0 or later. 
 coefficient of the Florentine marriage network is 0.191; random networks with its density have 0.147 on average and
 networks with its degrees 0.165 (sd 0.078), which agrees with {cmd:igraph} (0.162, sd 0.077):
 
-	{cmd:. nwcug flomarriage, stat(nwclustering ##net##, generate(cc) replace) rname(cluster_global) condition(degrees) reps(2000) seed(3)}
+	{cmd:. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(2000) seed(3)}
 
 {pstd}
 Some statistics are fixed by the dyad census (reciprocity, for example). With {bf:condition(census)} their null distribution has standard deviation 0 and the test carries no information; the command prints a one-line note in that case.

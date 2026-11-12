@@ -12,6 +12,12 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwbalance ..., reps() seed()`** compares the share of balanced triads with random signs on the same ties (each tie positive with the observed share of positive ties as probability): mean and standard deviation over the draws, the closed-form expectation, and the number of draws at least as balanced (`r(null_mean)`, `r(null_sd)`, `r(null_ge)`, `r(null_expected)`, `r(p_positive)`, `r(reps)`). Counts and output without `reps()` are unchanged. New test `test_nwbalance_reps`.
 - **`nwturnover ..., formation`** compares the ties formed between the two waves with all pairs without a tie in the first wave: the shares that return a tie of the first wave and that close a two-path of the first wave, in both groups (`r(absent)`, `r(formed_recip)`, `r(absent_recip)`, `r(formed_closure)`, `r(absent_closure)`; for undirected networks only the two-path shares). Counts and output without `formation` are unchanged. New test `test_nwturnover_formation`.
 
+- **`nwcug ..., stat()` short form.** A `stat()` without the `##net##` placeholder is taken as a command that expects the network as its first argument: `stat(nwclustering) rname(cluster_global)` is `stat(nwclustering ##net##) rname(cluster_global)`. The placeholder is still needed for a command or program that takes the network elsewhere; calls with it are unchanged.
+- **`nwclustering` without `generate()`.** The node coefficients then go to a temporary variable, and only the returned results (`r(cluster_global)`, `r(cluster_avg)`) are kept.
+
+### Changed
+- **`nwcug` and `nwcorrelate` print their results the way Stata's own tests do**: a header with the network(s), the number of draws (or permutations) and the condition, then a table (`nwcug`: observed value, mean and standard deviation of the null draws, and the p-values; `nwcorrelate`: the correlation, and with `permutations()` the p-value and the middle 95% of the permuted correlations). The returned results are unchanged.
+
 - **`nwplot ..., labelopt(mlabvposition(varname))`** places the label of each node at the clock position held in a variable of the node data, for example the first mode of a two-mode network to the left of its column and the second mode to the right. Before, the variable was not found, because the plot is drawn from nwplot's own data. New test `test_nwplot_labpos`.
 
 ### Fixed

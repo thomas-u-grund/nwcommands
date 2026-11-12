@@ -236,14 +236,30 @@ unw_defs
 		capture mata: mata drop __nwcorrelate_lb __nwcorrelate_ub __nwcorrelate_pvalue
 	}
 	
-	di "{hline 40}"
-	di "{txt}  Network1 name: {res}`r(name_1)'"
-	di "{txt}  Network2 name: {res}`r(name_2)'"
-	
-	di "{hline 40}"
-	di "{txt}    Correlation: {res}`=strtrim(string(round((`r(corr)')*1000)/1000,"%9.0g"))'"
+	// Stata-style display (3.20.1)
+	di
 	if "`r(pvalue)'" != "" {
-		di "{txt}    P-value: {res}`=strtrim(string(round((`r(pvalue)')*1000)/1000,"%9.0g"))'"
+		di as txt "Network correlation" _col(50) "Permutations" _col(66) "=" as res %11.0fc `permutations'
+	}
+	else {
+		di as txt "Network correlation"
+	}
+	di as txt "Network 1: " as res "`r(name_1)'"
+	di as txt "Network 2: " as res "`r(name_2)'"
+	di
+	if "`r(pvalue)'" != "" {
+		di as txt "{hline 58}"
+		di as txt " Correlation     P-value   [95% permutation interval]"
+		di as txt "{hline 58}"
+		di as res "  " %10.0g r(corr) "  " %10.4f r(pvalue) "      " %10.0g r(lb) "  " %10.0g r(ub)
+		di as txt "{hline 58}"
+	}
+	else {
+		di as txt "{hline 13}"
+		di as txt " Correlation"
+		di as txt "{hline 13}"
+		di as res "  " %10.0g r(corr)
+		di as txt "{hline 13}"
 	}
 	_return hold r1
 	if "`attribute'" != "" {
