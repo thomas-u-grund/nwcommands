@@ -65,7 +65,8 @@ nwreplace rtest2[1,2] = 0
 assert r(symmetric) == 0
 assert r(valued) == 0
 nwsummarize rtest2
-assert r(directed) == "false"
+* the matrix is no longer symmetric: the network is directed now
+assert r(directed) == "true"
 di "=== _nwname-clobbers-r() REGRESSION VERIFIED ==="
 
 * --- failure paths: a name that isn't a loaded network is rejected via

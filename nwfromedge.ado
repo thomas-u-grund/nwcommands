@@ -506,8 +506,8 @@ program nwfromedge
 	// keeporiginal: the original id of each node, on the node's row
 	if "`keeporiginal'" != "" {
 		mata: nw_fromedge_orig("`nw_nodename'", `othernetobj'->get_nodenames(), `__nwfe_orig')
+		mata: mata drop `__nwfe_orig'
 	}
-	capture mata: mata drop `__nwfe_orig'
 	
 	}
 end

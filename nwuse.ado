@@ -159,7 +159,9 @@ program nwuse
 		// value (the nwsym below alone would keep 0 instead of a negative value)
 		local fedir ""
 		if "`d'" == "false" local fedir "undirected"
-		if "`d'" == "true" local fedir "directed"
+		// a saved directed network with a symmetric matrix is read as undirected (as before; data files rely
+		// on it), except a network of one node, whose direction cannot be told from its ties
+		if "`d'" == "true" & `s' < 2 local fedir "directed"
 		// a network with self-loops keeps its diagonal
 		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'") `fedir' `=cond("`sl'" == "true", "selfloop", "")'
 		// BUGFIX: `_nw_netname' is a LOCAL-macro reference to a local

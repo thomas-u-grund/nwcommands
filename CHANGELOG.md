@@ -18,7 +18,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwdropnodes` and `nwkeepnodes` keep the direction of the network; a directed network whose remaining matrix was symmetric became undirected.
 - `nwdropnodes, nodes(Bob)` on a network with a label containing a blank (e.g. "Anna Maria") dropped another node; labels are looked up exactly now.
 - `nwstack` of undirected networks gives an undirected network (before: directed).
-- `nwuse` restores the diagonal of a network with self-loops and keeps a directed network directed when its matrix is symmetric.
+- `nwuse` restores the diagonal of a network with self-loops, and a saved directed network of one node stays directed.
 - `nwattime` returns the right `r(ties)` when a variable named `ties` exists.
 - `nwimport, type(ucinet)` of an edgelist1 file numbers the nodes by their number, not by their text order (node 10 was node 2 before), and reads a file without tie values as binary.
 

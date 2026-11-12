@@ -108,7 +108,7 @@ real colvector t_cells(real matrix M, real scalar undirected)
 // the ties in an exported file, as sorted lines "ego|alter|value"
 string colvector t_readexport(string scalar fname, string scalar type, string rowvector labs, real scalar undirected)
 {
-    real scalar fh, state, k, l, src, tgt
+    real scalar fh, state, k, l, src, tgt, hasv
     string scalar line
     string rowvector tk
     string colvector out
@@ -120,7 +120,7 @@ string colvector t_readexport(string scalar fname, string scalar type, string ro
         while ((line = fget(fh)) != J(0, 0, "")) {
             tk = tokens(line, char(9))
             tk = tk[selectindex(tk :!= char(9))]
-            out = out \ (tk[1] + "|" + tk[2] + "|" + strofreal(strtoreal(tk[3])))
+            out = out \ (tk[1] + "|" + tk[2] + "|" + (cols(tk) >= 3 ? strofreal(strtoreal(tk[3])) : "1"))
         }
         fclose(fh)
     }
@@ -133,7 +133,7 @@ string colvector t_readexport(string scalar fname, string scalar type, string ro
             }
             else if (strtrim(line) != "") {
                 tk = tokens(line)
-                out = out \ (labs[strtoreal(tk[1])] + "|" + labs[strtoreal(tk[2])] + "|" + strofreal(strtoreal(tk[3])))
+                out = out \ (labs[strtoreal(tk[1])] + "|" + labs[strtoreal(tk[2])] + "|" + (cols(tk) >= 3 ? strofreal(strtoreal(tk[3])) : "1"))
             }
         }
         fclose(fh)
@@ -141,12 +141,24 @@ string colvector t_readexport(string scalar fname, string scalar type, string ro
     else if (type == "gml") {
         fh = fopen(fname, "r")
         src = tgt = .
+        hasv = 0
         while ((line = fget(fh)) != J(0, 0, "")) {
             tk = tokens(line)
             if (cols(tk) == 2) {
-                if (tk[1] == "source") src = strtoreal(tk[2])
+                if (tk[1] == "source") {
+                    src = strtoreal(tk[2])
+                    hasv = 0
+                }
                 if (tk[1] == "target") tgt = strtoreal(tk[2])
-                if (tk[1] == "value") out = out \ (labs[src] + "|" + labs[tgt] + "|" + strofreal(strtoreal(tk[2])))
+                if (tk[1] == "value") {
+                    out = out \ (labs[src] + "|" + labs[tgt] + "|" + strofreal(strtoreal(tk[2])))
+                    hasv = 1
+                }
+            }
+            // a binary network is written without value: the tie counts 1
+            if (cols(tk) == 1 & src < . & tgt < .) {
+                if (tk[1] == "]" & !hasv) out = out \ (labs[src] + "|" + labs[tgt] + "|1")
+                if (tk[1] == "]") src = tgt = .
             }
         }
         fclose(fh)
