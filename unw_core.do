@@ -4172,7 +4172,10 @@ real colvector nwg_enum_nodemax(real matrix res, real scalar n)
 	m = rows(res)
 	if (m == 0) return(nv)
 	info = panelsetup(res[., 1], 1)
-	sz = (info[., 2] - info[., 1] :+ 1)[res[., 1]]
+	// [., 1]: with a single set the sizes are 1 x 1, and a vector subscript of a 1 x 1 matrix gives a ROW vector
+	// (conformability error r(3200) below); a matrix subscript keeps the column
+	sz = info[., 2] - info[., 1] :+ 1
+	sz = sz[res[., 1], 1]
 	ord = order((res[., 2], -sz), (1, 2))
 	first = J(m, 1, 1)
 	if (m > 1) first[2::m] = (res[ord[2::m], 2] :!= res[ord[1::(m-1)], 2])

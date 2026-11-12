@@ -249,6 +249,19 @@ nwrandom 5, prob(.4) name(ds)
 qui count
 _nwdatasync ds
 assert "`r(nodes)'" == ""
+* the slow path (data sorted, so not known to be in sync) leaves the caller's r() as it was
+gen double x = 10 - _n
+sort x
+qui summarize x
+local m0 = r(mean)
+local n0 = r(N)
+_nwdatasync ds
+assert r(N) == `n0' & r(mean) == `m0' & "`r(nodes)'" == ""
+_nwdatasync ds, force
+assert r(N) == `n0' & r(mean) == `m0'
+* an error inside still stops with its code
+capture _nwdatasync nosuchnet_zz
+assert _rc != 0
 di "PASS no stray r()"
 
 * 14 no scalars or matrices left behind
@@ -268,6 +281,20 @@ nwnclique kk, n(2) generate(ncq)
 nwnclique kk, n(2) countonly
 nwfactions kk, generate(fa)
 assert r(fitness) < .
+* nomatrix gives the same per-node variable as the matrix path (a single set was an error in Mata, r(3200))
+nwnclique kk, n(2) nomatrix generate(ncq2)
+assert ncq2 == ncq
+nwkplex kk, k(2) nomatrix generate(kp2)
+assert kp2 == kp
+nwnclan kk, n(2) nomatrix generate(ncl2)
+assert ncl2 == ncl
+nwclear
+nwset, mat(J(5, 5, 1) - I(5)) name(full) undirected
+nwnclique full, n(2) generate(fm)
+nwnclique full, n(2) nomatrix generate(fn)
+assert fn == fm & fn == 5 in 1/5
+nwkplex full, k(2) nomatrix generate(fk)
+assert fk == 5 in 1/5
 mata: assert(rows(st_dir("global", "numscalar", "nw_*")) == 0)
 mata: assert(rows(st_dir("global", "numscalar", "faction_*")) == 0)
 mata: assert(rows(st_dir("global", "matrix", "nw_*")) == 0)
