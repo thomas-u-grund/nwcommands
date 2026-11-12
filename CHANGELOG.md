@@ -4,6 +4,16 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased] (3.20.1)
+
+### Added
+- **`nwregular`** finds the classes of regularly equivalent nodes (maximal regular equivalence, the CATREGE refinement of Borgatti and Everett 1993 for binary data): nodes are in one class when they send ties to, and receive ties from, the same classes. It stores the class of each node in a variable and returns the number of classes and the image matrix (`r(classes)`, `r(image)`). New test `test_nwregular`.
+- **`nwegoplot`** draws the ego network of one node: ego in the center, the alters on a circle in an order that keeps their ties short (connected groups together, spectral order inside a group), `sortby()` to group the alters by an attribute, `hop(2)` for the nodes at distance two on an outer ring. The ties of ego are drawn light and the ties among the others dark, and ego is drawn larger, unless `edgecolor()` or `size()` are given; all other options go to `nwplot`. New test `test_nwegoplot`.
+- **`nwbalance ..., reps() seed()`** compares the share of balanced triads with random signs on the same ties (each tie positive with the observed share of positive ties as probability): mean and standard deviation over the draws, the closed-form expectation, and the number of draws at least as balanced (`r(null_mean)`, `r(null_sd)`, `r(null_ge)`, `r(null_expected)`, `r(p_positive)`, `r(reps)`). Counts and output without `reps()` are unchanged. New test `test_nwbalance_reps`.
+
+### Fixed
+- **`nwplot` after a failed `if`/`in` call.** The temporary networks of such a call were dropped under names with one underscore too few, so they were left behind and the next call stopped with "already exists". They are now dropped.
+
 ## [3.20.0] - 2026-11-12
 
 ### Added

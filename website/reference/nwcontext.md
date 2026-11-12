@@ -109,10 +109,10 @@ Binary: yes. Directed: yes, via `mode(outgoing|incoming|both|either)`. Weighted:
 
 ## See also
 
-- [nwneighbor](nwneighbor)
+- [nwneighbor](nwneighbor), [nwegoplot](nwegoplot)
 
 - last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.0, 12 November 2026* ([check your installed version](nwversion))

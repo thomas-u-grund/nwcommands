@@ -177,7 +177,7 @@ The statistics are computed on the dense network and three {it:n}-by-{it:n} matr
 
 {title:See also}
 
-   {help nwneighbor}
+   {help nwneighbor}, {help nwegoplot}
 
 last certified : 24 Aug 2026
 

@@ -170,7 +170,7 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 
 {title:See also}
 
-	{help nwgen}, {help nwneighbor}, {help nwdegree}
+	{help nwgen}, {help nwneighbor}, {help nwdegree}, {help nwegoplot}
 
 last certified : 02 Sep 2026
 

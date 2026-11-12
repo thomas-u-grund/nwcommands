@@ -86,7 +86,7 @@ checked. Two-mode: same as for the bipartite graph read as a one-mode network (v
 
 {title:See also}
 
-	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}
+	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}, {help nwegoplot}
 
 last certified : 21 Aug 2026
 

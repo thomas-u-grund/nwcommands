@@ -122,7 +122,7 @@ is no sparse form of the method.
 
 {title:See also}
 
-	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
+	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}, {help nwregular}
 
 {hline}
 {pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -17,12 +17,16 @@ Structural balance of a signed network
 nwbalance
 [netname]
 [,
-generate(namelist)]
+generate(namelist)
+reps(#)
+seed(#)]
 ```
 
 | | |
 |---|---|
 | `generate(namelist)` | Up to 3 names, for the per-node balance ratio, count of balanced triads, and count of closed triads a node belongs to; default = *_balance _baltriad _clotriad* |
+| `reps(#)` | compare the share of balanced triads with # draws of random signs on the same ties; default 0 (no comparison) |
+| `seed(#)` | random-number seed for `reps()` |
 
 ## Description
 
@@ -44,6 +48,9 @@ For each node, `nwbalance` generates the number of closed triads it belongs to, 
     Closed triad: 4
     Balanced triad: 2
     Unbalanced triad: 2
+
+. nwwebuse gahuku, nwclear
+. nwbalance gahuku, reps(500) seed(1)
 ```
 Of the 4 triads in this network, *A-B-C* (all positive) and *A-B-D* (two negative ties) are balanced; *A-C-D* and *B-C-D* (one negative tie each) are not.
 
@@ -60,6 +67,14 @@ Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of 
 - **r(unbalanced_triad)** number of unbalanced closed triads
 - **r(balance)** *balanced_triad* / *closed_triad*
 
+- With `reps()`, also
+- **r(reps)** number of draws
+- **r(p_positive)** share of the ties that are positive
+- **r(null_mean)** mean share of balanced triads over the draws
+- **r(null_sd)** standard deviation of that share over the draws
+- **r(null_ge)** number of draws with a share at least the observed **r(balance)**
+- **r(null_expected)** (1 + (2*p* - 1)^3) / 2 with *p* = **r(p_positive)**
+
 ## References
 
 Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heider's theory. *Psychological Review* 63(5), 277-293.
@@ -72,4 +87,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.0, 12 November 2026* ([check your installed version](nwversion))

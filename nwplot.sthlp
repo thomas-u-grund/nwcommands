@@ -546,7 +546,7 @@ the network ({help nwsubset}, {help nwego}, {help nwkcore}).
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {title:See also}
-		{help nwplotmatrix}, {help nwmovie}, {help netexample}
+		{help nwplotmatrix}, {help nwegoplot}, {help nwmovie}, {help netexample}
 
 {hline}
 {pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
