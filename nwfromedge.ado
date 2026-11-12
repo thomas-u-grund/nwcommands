@@ -23,7 +23,7 @@ program nwfromedge
 			di "{err}{p 0 0 2}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}.{p_end}"
 			error 198
 		}
-		nw2fromedge `varlist' `if', name(`name') `xvars'
+		nw2fromedge `varlist' `if', name(`name') `xvars' `replace'
 		exit
 	}
 
@@ -37,6 +37,15 @@ program nwfromedge
 	// of a DIFFERENT dataset would. Applied near the end of this program,
 	// once the new network actually exists.
 	local __iso_srclabels : char _dta[nwtoedge_nodes]
+	// a name() already in use is refused before the data are changed (the string-id route below stacks and drops
+	// the data first; the user's edge list must survive the error)
+	if "`name'" != "" & "`replace'" == "" {
+		qui nwvalidate `name'
+		if "`r(exists)'" == "true" {
+			noi di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
+			error `errNWsExists'
+		}
+	}
 	// NOTE: this file's own `overwrite' predates this option and controls
 	// nwload's own overwrite behavior further below (`qui nwload,
 	// `overwrite''), unrelated to network-name-collision - kept exactly

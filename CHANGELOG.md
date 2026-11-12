@@ -35,6 +35,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwreplacemat, vars()`, `nwtabulate ..., attribute() unvalued` and the `ifcond()` option of `nwcorrelate` are accepted for compatibility and have no effect; their help files say so.
 - Help files: the links to `_nwsyntax` in `nwprogramming` and `nwunab` lead to the section of `nwprogramming` that describes it; the "describe" links of `netexample` describe the data sets on the website (`sysdescribe` looked for them on the local computer).
 - `nw2fromedge` no longer changes the id variables in the data: the shift of numeric mode-2 ids and the prefixes `m1_`/`m2_` of string ids are applied to the node names only. When the command stopped with an error, the changed variables used to stay in the data; an `if` condition on the mode-2 id was evaluated on the shifted values.
+- `nwfromedge ..., name()` with a name already in use stopped with error 483 only after it had dropped the edge list from memory (string ids); it now stops before the data are changed. `replace` is passed on with `twomode`.
 - `nwattime` on a temporal two-mode network gives a two-mode slice with the same modes and level labels (it gave a one-mode network).
 - `nwdendrogram` reports errors of the graph (for example an unknown `twoway` option) instead of ending silently, and stops with error 459 and a message when the cluster levels are not nested.
 - `nwcontext`: `generate()` is no longer required when `mat()` is given; with both options the variable and the Mata matrix are created.
