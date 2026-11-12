@@ -87,4 +87,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 	{help nwtomatafast}, {help nwload}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

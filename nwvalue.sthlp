@@ -75,4 +75,4 @@ The value of one cell of a network held as stored ties is read from the sparse i
    {help nwreplace}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -109,4 +109,4 @@ The program needs no additional packages: the weighted sampling of ties is built
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

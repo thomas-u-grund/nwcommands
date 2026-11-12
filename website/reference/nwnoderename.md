@@ -23,7 +23,7 @@ new(new_nwnode)
 
 ## Description
 
-`nwnoderename` changes the name of a single node in a network. When a node with name *old_nwnode* is found in *netname*, it is replaced with *new_nwnode*.
+`nwnoderename` changes the name of a single node in a network. When a node with name *old_nwnode* is found in *netname*, it is replaced with *new_nwnode*. If *old_nwnode* is not found or *new_nwnode* is not a valid name, the command stops with an error (r(198)) and the network is not changed.
 
 ## Examples
 
@@ -66,4 +66,4 @@ new(new_nwnode)
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

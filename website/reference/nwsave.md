@@ -51,4 +51,4 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

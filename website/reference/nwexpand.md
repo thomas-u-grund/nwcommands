@@ -31,7 +31,7 @@ force]
 |---|---|
 | `mode`(*[mode](nwexpand)*) | mode used to expand variable; default = *same* |
 | `network`(*[netname](netname)*) | apply node labels of *netname* |
-| `nodes(int)` | size of new network; default = `_N` - an explicit `nodes(1)` for a genuine 1-node network is honored, distinct from leaving `nodes()` unspecified |
+| `nodes(int)` | size of the new network: the first *#* observations (of those selected by *if*); default: all of them |
 | `name`(*[newnetname](newnetname)*) | name of the new random network; default = *[mode](nwexpand)_varname* |
 | `xvars` | generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
@@ -40,7 +40,7 @@ force]
 
 ## Description
 
-This command generates a new network by expanding an existing variable. When option **nodes()** is unspecified, the command generates a network with `_N` nodes.
+This command generates a new network by expanding an existing variable. When option **nodes()** is unspecified, the command generates a network with one node per observation (`_N` nodes); with *if*, one node per observation that satisfies the condition, in the order of the data. The data in memory are not changed.
 
 The value *M_ij* of the adjacency matrix *M* of the new network is calculated from the values `varname`**[i]**, `varname`**[j]** and some function *expfcn* defined by *[mode](nwexpand)*. By default, *mode = same*.
 
@@ -131,4 +131,4 @@ The next example loads the *glasgow* dataset and colors ties differently dependi
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

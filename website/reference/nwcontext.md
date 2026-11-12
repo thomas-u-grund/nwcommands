@@ -32,8 +32,8 @@ force]
 | `attribute(varname)` | Attribute variable |
 | `stat`(*[statistic](nwcontext)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
 | `mode`(*[context](nwcontext)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
-| `generate(newvarname)` | **Required.** Name of the context variable to be generated |
-| `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable (`generate()` must still be given; no variable is created) |
+| `generate(newvarname)` | Name of the context variable to be generated; `generate()` or `mat()` is required |
+| `mat(string)` | Store the result in a Mata matrix (a column vector) of this name; with `generate()` as well, both are created |
 | `noweight` | Ignore valued ties and treats all as binary |
 | `replace` | Replace `generate()`'s target variable if it already exists |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
@@ -109,4 +109,4 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

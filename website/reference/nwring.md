@@ -21,7 +21,7 @@ k(int)
 [weights(p1, p2,...)
 undirected
 name(newnetname)
-labs(lab1 lab2 ...)
+labs(lab1,lab2,...)
 xvars
 ntimes(int)]
 ```
@@ -33,7 +33,7 @@ ntimes(int)]
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `name(newnetname)` | name of the new network; default = *ring* |
-| `labs`(*lab1 lab2 ...*) | overwrite node labels |
+| `labs`(*lab1,lab2,...*) | overwrite node labels (separated by commas) |
 | `xvars` | generate Stata variables for the network |
 | `ntimes(int)` | number of networks to be generated (named *name*_1, *name*_2, ...); default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
@@ -68,4 +68,4 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

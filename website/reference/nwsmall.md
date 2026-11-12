@@ -23,7 +23,7 @@ prob(float)
 undirected
 ntimes(int)
 name(newnetname)
-labs(lab1 lab2 ...)
+labs(lab1,lab2,...)
 xvars]
 nwsmall 
 nodes
@@ -34,7 +34,7 @@ shortcuts(integer)
 undirected
 ntimes(int)
 name(newnetname)
-labs(lab1 lab2 ...)
+labs(lab1,lab2,...)
 xvars]
 ```
 
@@ -48,7 +48,7 @@ xvars]
 | `undirected` | generate an undirected network; default = directed |
 | `ntimes(int)` | number of small-world networks to be generated; default = 1 |
 | `name`(*[newnetname](newnetname)*) | name of the new network; default = *small* |
-| `labs`(*lab1 lab2 ...*) | overwrite node labels |
+| `labs`(*lab1,lab2,...*) | overwrite node labels (separated by commas) |
 | `xvars` | generate Stata variables for the network |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
 
@@ -101,4 +101,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

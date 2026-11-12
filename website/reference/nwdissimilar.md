@@ -78,4 +78,4 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes *i* and *j* hav
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

@@ -31,6 +31,7 @@ labs(lab1 lab2 ...)]
 | `netonly` | only update the network, do not touch the Stata dataset at all |
 | `xvars` | also load the updated network as Stata variables (see [nwload](nwload)) |
 | `labs`(*lab1 lab2 ...*) | new node labels to use when *matname* requires resizing the network; default = **1**, **2**, ... |
+| `vars`(*string*) | accepted for compatibility; has no effect (use `labs()` for the node labels) |
 
 ## Description
 
@@ -67,7 +68,7 @@ This example generates a ring lattice first (*mynet*), but then replaces the adj
 ## Stored results
 
 - **Scalars**
-- **r(directed)** --- 1 if the new matrix is symmetric (the network is then set to undirected), 0 otherwise
+- **r(directed)** --- 1 if the new matrix is not symmetric (the network is then directed), 0 if it is symmetric (the network is then set to undirected)
 
 ## See also
 
@@ -75,4 +76,4 @@ This example generates a ring lattice first (*mynet*), but then replaces the adj
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

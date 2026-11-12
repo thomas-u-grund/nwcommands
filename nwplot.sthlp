@@ -565,4 +565,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

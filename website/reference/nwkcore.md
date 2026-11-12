@@ -64,4 +64,4 @@ Batagelj, V., Zaversnik, M. (2003). An O(m) Algorithm for Cores Decomposition of
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

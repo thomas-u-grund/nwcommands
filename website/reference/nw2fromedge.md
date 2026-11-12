@@ -28,7 +28,7 @@ nwfromedge_options
 
 `nw2fromedge` imports a two-mode network from a dataset in edgelist format. It is very similar to [nwfromedge](nwfromedge).
 
-The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in *level2* are shifted by the largest id in *level1*; when both are string variables and share a value, the prefixes **m1_** and **m2_** are added to the ids of *level1* and *level2*. Both changes are made to the variables in the data in memory.
+The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in *level2* are shifted by the largest id in *level1*; when both are string variables and share a value, the prefixes **m1_** and **m2_** are added to the ids of *level1* and *level2*. Both changes apply to the node names of the network only; the id variables themselves are not changed.
 
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation of people in social events. Some examples are:
 
@@ -81,4 +81,4 @@ Besides setting the network, this also creates a new variable *_nwmode*, which h
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

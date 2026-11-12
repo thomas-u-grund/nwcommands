@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.21.0] - 2026-11-12
 
 ### Results that change (read before you re-run old analyses)
 - `nwdyadprob weightnet, density()` draws the ties with probabilities proportional to the tie values of the weight network, as documented. Tie values above 1 were first passed through invlogit, which flattened them (weights of 148, 1 and 0.007 became almost 1, 0.73 and 0.5), so the network of the help example showed hardly any of the intended homophily. Negative weights are refused with `density()`. Without `density()` nothing changes: values outside 0 to 1 are still turned into probabilities with invlogit.

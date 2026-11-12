@@ -62,4 +62,4 @@ One name per node goes into a Stata macro. When the {it:nodes} names do not fit 
    {help nwvalidate}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -24,7 +24,7 @@ xvars]
 
 | | |
 |---|---|
-| `nodenames`(*n1, n2, ...*) | Node identifiers separated by commas or spaces; a node identifier cannot contain a space |
+| `nodenames`(*n1, n2, ...*) | Node identifiers separated by commas; an identifier may contain spaces (`nodenames(Thomas Grund, Peter)` adds two nodes) |
 | `mode(numlist)` | Two-mode (bipartite) networks only: the mode (1 or 2) each new node belongs to. Either a SINGLE value (applied to every new node) or one value per node listed in `nodenames()`, in the same order. Required when [netname](netname) is two-mode and omitted only for a one-mode network, where it would be meaningless |
 | `generate`(*[newnetname](newnetname)*) | Save as new network |
 | `xvars` | Generate Stata variables for the network |
@@ -53,4 +53,4 @@ This example adds two isolate nodes to a two-mode network - one to each mode (a 
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

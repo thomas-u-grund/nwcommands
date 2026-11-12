@@ -18,7 +18,7 @@ animate
 filename
 ,
 graphs(_all | g1 g2 g3...)
-[imagickpath(path) delay(#) noloop showcommand keepeps]
+[imagickpath(path) delay(#) noloop showcommand keepeps mag(#)]
 ```
 
 **Required**
@@ -36,6 +36,7 @@ graphs(_all | g1 g2 g3...)
 | `noloop` | no loop of movie |
 | `showcommand` | display ImageMagick command |
 | `keepeps` | keep .eps files |
+| `mag(#)` | magnification of the .eps files, in percent (`graph export`'s `mag()`); default is `mag(100)` |
 
 ## Description
 
@@ -54,4 +55,4 @@ graphs(_all | g1 g2 g3...)
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
