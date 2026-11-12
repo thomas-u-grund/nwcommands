@@ -108,6 +108,7 @@ f nwpagerank.sthlp
 f nwpath.sthlp
 f nwpermute.sthlp
 f nwplot.sthlp
+f nwegoplot.sthlp
 f nwplotmatrix.sthlp
 f nwpref.sthlp
 f nwpreserve.sthlp

@@ -52,6 +52,7 @@
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences (separate package){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
+{p2col:{bf:{help nwegoplot }}}Draw the ego network of one node, ego in the center{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks (separate package){p_end}
 {p2col:{bf:{help nwevcent }}}Eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand a variable to a network{p_end}

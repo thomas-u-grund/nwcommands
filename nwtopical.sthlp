@@ -235,6 +235,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help animate }}}Animate graphs{p_end}
 {p2col:    {bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
+{p2col:    {bf:{help nwegoplot }}}Draw the ego network of one node, ego in the center{p_end}
 {p2col:    {bf:{help nwmovie }}}Interactive, animated network movie (panel waves or a relational-event timeline){p_end}
 {p2col:    {bf:{help nwmoviexy }}}Animate a sequence of networks (alias for nwmovie){p_end}
 {p2col:    {bf:{help nwplot }}}Plot a network{p_end}
