@@ -81,8 +81,8 @@ existed in wave 2:
 {pstd}
 {bf:Directed:} kept from the source network. {bf:Valued:} the tie values of the source network are kept (the slice
 selects ties, it does not change their values). {bf:Two-mode:} a temporal two-mode network ({help nwset} with
-{opt twomode} and {opt time()}, {opt interval()} or {opt eventtime()}) is sliced to a one-mode network over the nodes of
-both modes; the modes are not kept. {bf:Signed:} negative values are not treated
+{opt twomode} and {opt time()}, {opt interval()} or {opt eventtime()}) gives a two-mode slice with the same modes and
+level labels. {bf:Signed:} negative values are not treated
 specially. See {help nwnetworktypes}.{p_end}
 
 

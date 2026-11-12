@@ -25,17 +25,20 @@ program nwcontext
 		local mode "both"
 	}
 	
-	capture confirm variable `generate'
-	if _rc == 0 & "`replace'" == "" {
-		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-		err 99
-	}
-	if "`generate'" == "" {
-		di "{err}option {bf:generate()} required."
+	// the result goes to a variable (generate()), to a Mata matrix (mat()), or to both
+	if "`generate'" == "" & "`mat'" == "" {
+		di "{err}option {bf:generate()} or {bf:mat()} required."
 		error 198
 	}
-	capture confirm new variable `generate'
-	if _rc capture drop `generate'
+	if "`generate'" != "" {
+		capture confirm variable `generate'
+		if _rc == 0 & "`replace'" == "" {
+			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
+			err 99
+		}
+		capture confirm new variable `generate'
+		if _rc capture drop `generate'
+	}
 	
 	_nwdatasync `netname'
 	_nwsyntax `netname', max(1)
@@ -142,7 +145,7 @@ program nwcontext
 	if "`mat'" != "" {
 		mata: `mat' = __context
 	}
-	else {
+	if "`generate'" != "" {
 		capture generate `generate' = .
 		mata: st_store((1, `nodes'), "`generate'",__context)
 	}

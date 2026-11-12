@@ -32,7 +32,7 @@
 
 {pstd}
 Returns the {help nodeid:nodelab} of a node given its {help nodeid}. Results are also stored
-in the return vector. When {it:nodeid} is larger than the number of nodes in network {it:netname} an error is thrown.
+in the return vector. When {it:nodeid} is smaller than 1 or larger than the number of nodes in network {it:netname} an error is thrown.
 This command is mostly used for programming with networks.
 
 

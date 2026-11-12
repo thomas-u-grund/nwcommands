@@ -4,6 +4,20 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- `nwdyadprob weightnet, density()` draws the ties with probabilities proportional to the tie values of the weight network, as documented. Tie values above 1 were first passed through invlogit, which flattened them (weights of 148, 1 and 0.007 became almost 1, 0.73 and 0.5), so the network of the help example showed hardly any of the intended homophily. Negative weights are refused with `density()`. Without `density()` nothing changes: values outside 0 to 1 are still turned into probabilities with invlogit.
+
+### Fixed
+- `nw2fromedge` no longer changes the id variables in the data: the shift of numeric mode-2 ids and the prefixes `m1_`/`m2_` of string ids are applied to the node names only. When the command stopped with an error, the changed variables used to stay in the data; an `if` condition on the mode-2 id was evaluated on the shifted values.
+- `nwattime` on a temporal two-mode network gives a two-mode slice with the same modes and level labels (it gave a one-mode network).
+- `nwdendrogram` reports errors of the graph (for example an unknown `twoway` option) instead of ending silently, and stops with error 459 and a message when the cluster levels are not nested.
+- `nwcontext`: `generate()` is no longer required when `mat()` is given; with both options the variable and the Mata matrix are created.
+- `nwstack` refuses two-mode networks with error 6088 and a message (it stacked them as one-mode networks).
+- `_nwnodelab, nodeid()` with a node id below 1 stops with the message "out of bounds" instead of a Mata error.
+- The help file of `nwaddnodes` said that node names are separated by commas or spaces and cannot contain a space; they are separated by commas and may contain spaces.
+
 ## [3.20.1] - 2026-11-12
 
 ### Fixed

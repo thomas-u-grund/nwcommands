@@ -1,7 +1,19 @@
 
 capture program drop nw2fromedge
 program nw2fromedge
-	syntax varlist(min=2 max=3) [if] [, xvars * ]
+	syntax varlist(min=2 max=3) [if] [, xvars name(string) REPLACE * ]
+
+	// a name in use is refused before anything else (nwfromedge would find it only after it has replaced the data)
+	if "`name'" != "" & "`replace'" == "" {
+		qui nwvalidate `name'
+		if "`r(exists)'" == "true" {
+			unw_defs
+			di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
+			error `errNWsExists'
+		}
+	}
+	if "`name'" != "" local options `"`options' name(`name')"'
+	if "`replace'" != "" local options `"`options' replace"'
 	
 	// level labels and the modes of isolated nodes, if the list was written by nw2toedge/nwtoedge
 	local __im : char _dta[nwtoedge_modes]
@@ -10,6 +22,15 @@ program nw2fromedge
 	local group1 : word 1 of `varlist'
 	local group2 : word 2 of `varlist'
 	local value : word 3 of `varlist'
+
+	// The shift and the prefixes below are made on copies: the user's id variables stay unchanged (also when the command stops with an error).
+	local __gname1 "`group1'"
+	local __gname2 "`group2'"
+	tempvar __g1 __g2
+	qui clonevar `__g1' = `group1'
+	qui clonevar `__g2' = `group2'
+	local group1 `__g1'
+	local group2 `__g2'
 	
 	// Check if the same numbers are used for the two modes
 	capture confirm numeric variable `group1'
@@ -130,8 +151,8 @@ program nw2fromedge
 	mata: `modes' = modes_from_labels(`netobj'->get_nodenames(), `group1labels')'
 	mata: `netobj'->set_2mode(1)
 	mata: `netobj'->set_modes(`modes')
-	local __dd1 = cond(`"`__id1'"' != "", `"`__id1'"', "`group1'")
-	local __dd2 = cond(`"`__id2'"' != "", `"`__id2'"', "`group2'")
+	local __dd1 = cond(`"`__id1'"' != "", `"`__id1'"', "`__gname1'")
+	local __dd2 = cond(`"`__id2'"' != "", `"`__id2'"', "`__gname2'")
 	mata: `netobj'->set_description_mode1(`"`__dd1'"')
 	mata: `netobj'->set_description_mode2(`"`__dd2'"')
 	if `"`__im'"' != "" {
