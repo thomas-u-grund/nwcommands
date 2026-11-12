@@ -6,6 +6,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Results that change (read before you re-run old analyses)
+- `nwdyadprob weightnet, density()` draws the ties with probabilities proportional to the tie values of the weight network, as documented. Tie values above 1 were first passed through invlogit, which flattened them (weights of 148, 1 and 0.007 became almost 1, 0.73 and 0.5), so the network of the help example showed hardly any of the intended homophily. Negative weights are refused with `density()`. Without `density()` nothing changes: values outside 0 to 1 are still turned into probabilities with invlogit.
+
 ### Added
 - `nwgenerate newnet = sym(netname)` makes a symmetrized copy of a network (as `nwsym ..., generate()`); before, the keyword was accepted and did nothing.
 - `nwplotmatrix, labelopt()` sets suboptions of both axis labels and `legendopt()` adds options to the legend; both were accepted and ignored.
@@ -26,11 +29,18 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwtabulate` printed "tie values are ignored" for the one-way table and the table of two networks, which show the tie values; the note is now printed only for the table by `attribute()`. With `permutations(1)` the tables of two networks or by attribute stopped with an error after the table; they now print no p-value.
 - `nwexport` and `nwimport` left r() results of their helper commands behind, and an internal synchronisation step added `r(nodes)` to the results of the calling command; no stray r() results now.
 - `nwfactions`, `nwkcomponents`, `nwkplex`, `nwnclan` and `nwnclique` left scalars and matrices (`faction_fitness`, `nw_nkcomp`, `nw_tabnwkplex` and others) in memory and overwrote the user's objects with these names; they use temporary names now.
-- `nwnclique`, `nwnclan` and `nwkplex` with `nomatrix` stopped with a conformability error (r(3200)) when exactly one set was found; the per-node variable is now the same as without `nomatrix`. The core Mata library is rebuilt (the model packages nwsaom, nwergm, nwdynam and nwrem are rebuilt against it).
+- `nwnclique`, `nwnclan` and `nwkplex` with `nomatrix` stopped with a conformability error (r(3200)) when exactly one set was found; the per-node variable is now the same as without `nomatrix`. The core Mata library is rebuilt (nwsaom and nwergm are rebuilt against it).
 - Commands that synchronise the data with a network no longer change the r() results of the command run before them (for example `r(N)` of `summarize`).
 - `nwsummarize` without `detail` no longer stores empty detail results (`r(dg_central)`, `r(transitivity)` and others); they are stored with `detail`, as documented.
 - `nwreplacemat, vars()`, `nwtabulate ..., attribute() unvalued` and the `ifcond()` option of `nwcorrelate` are accepted for compatibility and have no effect; their help files say so.
 - Help files: the links to `_nwsyntax` in `nwprogramming` and `nwunab` lead to the section of `nwprogramming` that describes it; the "describe" links of `netexample` describe the data sets on the website (`sysdescribe` looked for them on the local computer).
+- `nw2fromedge` no longer changes the id variables in the data: the shift of numeric mode-2 ids and the prefixes `m1_`/`m2_` of string ids are applied to the node names only. When the command stopped with an error, the changed variables used to stay in the data; an `if` condition on the mode-2 id was evaluated on the shifted values.
+- `nwattime` on a temporal two-mode network gives a two-mode slice with the same modes and level labels (it gave a one-mode network).
+- `nwdendrogram` reports errors of the graph (for example an unknown `twoway` option) instead of ending silently, and stops with error 459 and a message when the cluster levels are not nested.
+- `nwcontext`: `generate()` is no longer required when `mat()` is given; with both options the variable and the Mata matrix are created.
+- `nwstack` refuses two-mode networks with error 6088 and a message (it stacked them as one-mode networks).
+- `_nwnodelab, nodeid()` with a node id below 1 stops with the message "out of bounds" instead of a Mata error.
+- The help file of `nwaddnodes` said that node names are separated by commas or spaces and cannot contain a space; they are separated by commas and may contain spaces.
 
 ## [3.20.1] - 2026-11-12
 

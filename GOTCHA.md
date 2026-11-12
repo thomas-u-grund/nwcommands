@@ -860,3 +860,7 @@ Symptoms: from some point on a help file runs together, `{p_end}`, `{pstd}` or `
 - An option name wider than its `{synoptset}` column moves the text to the next line (normal for very long names; widen the column up to about 28).
 
 `python3 tools/check_help_smcl.py <dir>` checks all of these statically (it found nothing in 171 files after the 3.20.1 cleanup); run it before every release, for the model packages too. To see the console rendering: `set linesize 80` and `type file.sthlp, smcl` in a batch run; a line starting with `> ` is a line that did not wrap. The earlier explanation "the Viewer has a size limit" (entry above) was not the cause: nwsaom.sthlp renders at 92 KB.
+
+## `nwfromedge` checks the network name only after it has replaced the data (found 2026-11-12)
+
+With string ids (the non-fast path) `nwfromedge` stacks the id variables and drops the data before it finds that `name()` is already in use and stops with r(483); the user's edge list is then gone. A wrapper that should leave the data alone on error has to check the name itself before calling it, as `nw2fromedge` does now (`nwvalidate`, error 483 unless `replace`). `nw2fromedge` also works on copies (`clonevar` tempvars) of the id variables for the mode-2 shift and the `m1_`/`m2_` prefixes; the `if` condition is evaluated on the original variables. `nwfromedge` itself still has the late check (open).

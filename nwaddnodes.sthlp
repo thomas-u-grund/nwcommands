@@ -26,7 +26,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nodenames}({it:n1, n2, ...})}Node identifiers separated by commas or spaces; a node identifier cannot contain a space{p_end}
+{synopt:{opt nodenames}({it:n1, n2, ...})}Node identifiers separated by commas; an identifier may contain spaces ({cmd:nodenames(Thomas Grund, Peter)} adds two nodes){p_end}
 {synopt:{opt mode(numlist)}}Two-mode (bipartite) networks only: the mode (1 or 2) each new node belongs to. Either a SINGLE value (applied to every new node) or one value per node listed in
 {opt nodenames()}, in the same order. Required when {help netname} is two-mode and omitted only for a one-mode network, where it would be meaningless{p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save as new network{p_end}

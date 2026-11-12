@@ -33,7 +33,8 @@
 {pstd}
 The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in {it:level2} are
 shifted by the largest id in {it:level1}; when both are string variables and share a value, the prefixes {bf:m1_} and
-{bf:m2_} are added to the ids of {it:level1} and {it:level2}. Both changes are made to the variables in the data in memory.
+{bf:m2_} are added to the ids of {it:level1} and {it:level2}. Both changes apply to the node names of the network only;
+the id variables themselves are not changed.
 
 {pstd} 
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation

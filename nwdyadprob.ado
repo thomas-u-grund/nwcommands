@@ -52,7 +52,22 @@ program nwdyadprob
 
 	if "`weightnet'" != "" {
 		_nwsyntax `weightnet', other(_wn)
-		mata: `mat' = transformIntoProbs((*`_wnnetobj'->get_matrix()))
+		if "`density'" != "" {
+			// density(): the tie values are relative weights of the dyads, used as they are (an invlogit would flatten weights above 1)
+			mata: `mat' = (*`_wnnetobj'->get_matrix())
+		}
+		else {
+			mata: `mat' = transformIntoProbs((*`_wnnetobj'->get_matrix()))
+		}
+	}
+	if "`density'" != "" {
+		capture mata: st_local("__dp_neg", strofreal(min(`mat') < 0))
+		if "`__dp_neg'" == "1" {
+			di "{err}{p 0 0 2}with {bf:density()} the tie values (or the values in {bf:mat()}) are relative weights of the dyads and cannot be negative.{p_end}"
+			capture mata: mata drop `m'
+			capture mata: mata drop `__matcopy'
+			error 198
+		}
 	}
 	
 	tempname __nwnew

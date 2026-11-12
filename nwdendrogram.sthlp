@@ -35,6 +35,8 @@ given{p_end}
 {title:Description}
 {pstd}
 Displays results from hierarchical clustering (see {help nwhierarchy} or {help cluster}) as wheel dendrogram.
+The cluster levels must be nested in each other; when they are not, the command stops with error 459.
+An error of the graph itself (for example an option that {cmd:twoway} does not know) is shown and returned.{p_end}
 	
 		
 
