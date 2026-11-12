@@ -194,6 +194,9 @@ program nwuse
 		if `has_modes' {
 			_nwsyntax `ncreate', other(other)
 			mata: `othernetobj'->set_modes_from_labeled_string(__nwmd)
+			// the node order of the file (nwfromedge numbers the nodes in label order; nwset ..., twomode puts
+			// the mode-1 nodes first)
+			mata: nw_reorder_to_labels(`othernetobj', nw_labels_from_modestring(__nwmd))
 			mata: mata drop __nwmd
 		}
 		if "`d'"  == "false" {

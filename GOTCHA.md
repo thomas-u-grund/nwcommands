@@ -883,7 +883,7 @@ With string ids (the non-fast path) `nwfromedge` stacks the id variables and dro
 - **One-line `mata:` cannot hold `for (...) if (...) stmt`** ("unexpected end of line"); use `selectindex()` or a function. Mata does not allow `f(x)[1]`: write `(f(x))[1]`.
 - **`selectindex()` of a 1x1 argument returns a row vector**; `nw_realstr()` in unw_core.do then fails for a single value (`rows(bad)` is 1 for J(1,0)). nwtoedge avoids the sparse listing for 1-node networks. Fixed in the library (fixes-xt): `nw_realstr()` uses `select((1::rows(x)), ...)`; GML export of a network with exactly one tie went through it too.
 - **nwfromedge self-loops:** `set_edge_from_triplets()` drops the diagonal unless `set_selfloop(1)` was called before it.
-- **Two-mode node order:** since fixes-xt, `nw2fromedge` (so `nwset ..., twomode`) puts the mode-1 nodes first (`nw_modes_first()` in unw_core.do) also for string ids. Networks from older files or other routes may still be alphabetical: use `get_modes()` per node, not `get_nodes_mode1()` as an index cut, in new code.
+- **Two-mode node order:** since fixes-xt, `nw2fromedge` (so `nwset ..., twomode`) puts the mode-1 nodes first (`nw_modes_first()` in unw_core.do) also for string ids. `nwuse` restores a two-mode network in the node order of its saved `label=mode` list (`nw_reorder_to_labels()`), so old files stay alphabetical and new ones are mode-1 first. Networks from older files or other routes may still be alphabetical: use `get_modes()` per node, not `get_nodes_mode1()` as an index cut, in new code.
 - **`version 9` programs** cannot use group `rename (a b) (c d)`.
 
 ## Core traps found while testing the model packages (fixed 2026-11-12, branch fixes-xt)

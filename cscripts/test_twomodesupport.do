@@ -113,6 +113,10 @@ program _load
 		nwclear
 		use "$TOYF", clear
 		nw2fromedge p g, name(tm)
+		* the R vectors below are in name order (g1..g4, p1..p6); nw2fromedge puts the mode-1 nodes (persons) first
+		_nwsyntax tm
+		mata: nw_reorder_to_labels(`netobj', sort(`netobj'->get_nodenames()', 1)')
+		_nwdatasync tm
 	}
 	else {
 		nwuse data/`which', nwclear

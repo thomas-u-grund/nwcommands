@@ -38,11 +38,8 @@ assert `"`r(nodelab)'"' == `"C"'
 * out-of-bounds nodeid must still error cleanly (the branch that was
 * never reachable before the `nodes' crash fix)
 capture _nwnodelab net1, nodeid(4)
-* the literal "error 600022" call is pre-existing, untouched code;
-* Stata's error-code handling truncates/maps it to 100000 - not
-* something this fix changes, just confirming the guard still fires
-* now that the crash blocking it is gone
-assert _rc == 100000
+* an id out of range is r(485) (errNodeNotFound, help nwerrorcodes)
+assert _rc == 485
 
 * label -> nodeid, round trip for every node
 _nwnodeid net1, nodelab(A)

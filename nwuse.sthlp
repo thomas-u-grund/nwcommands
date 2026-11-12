@@ -46,7 +46,7 @@ it in double quotes.
 
 {pstd}
 Every network comes back as it was saved: a network saved as directed stays directed even when its ties
-happen to be symmetric.
+happen to be symmetric, and a two-mode network keeps the node order it was saved in.
 
 
 {title:Network types}

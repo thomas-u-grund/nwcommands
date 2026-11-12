@@ -33,7 +33,7 @@ assert scalar(outside) == 0
 
 * an existing name needs replace
 capture nwstack a b c, name(abc)
-assert _rc == 110
+assert _rc == 483
 nwstack a b c, name(abc) replace
 
 * a mix of directed and undirected networks is refused

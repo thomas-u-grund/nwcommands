@@ -6027,6 +6027,44 @@ void nw_modes_first(pointer(class nw_def scalar) scalar p){
 	p->set_modes(m[perm'])
 }
 
+/*
+	Puts the nodes of a network into the order of the labels lab (the same set of labels); nothing happens when the
+	labels are not exactly the node names. nwuse uses it to give a two-mode network the node order it was saved in.
+*/
+void nw_reorder_to_labels(pointer(class nw_def scalar) scalar p, string rowvector lab){
+	string rowvector nm, nv, m
+	real colvector perm
+	real matrix E
+	real scalar n
+
+	nm = p->get_nodenames()
+	n = cols(nm)
+	if (n < 2 | cols(lab) != n) return
+	if (lab == nm) return
+	perm = nw_label_positions(nm, lab)
+	if (any(perm :== 0)) return
+	if (rows(uniqrows(perm)) != n) return
+	E = (*p->get_matrix())[perm, perm]
+	nv = p->get_nodesvar()
+	m = p->get_modes()
+	p->set_edge(E)
+	p->set_nodenames(nm[perm'])
+	if (cols(nv) == n) p->set_nodesvar(nv[perm'])
+	if (cols(m) == n) p->set_modes(m[perm'])
+}
+
+/* the labels of a "label=mode,label=mode,..." string (a comma inside a label is kept: pairs end after "=mode,") */
+string rowvector nw_labels_from_modestring(string scalar s){
+	string rowvector pr
+	transmorphic t
+
+	if (s == "") return(J(1, 0, ""))
+	t = tokeninit(char(1), "", "", 0, 0)
+	tokenset(t, ustrregexra(s, "(=[0-9.]*),", "$1" + char(1)))
+	pr = tokengetall(t)
+	return(substr(pr, 1, strlen(pr) :- strpos(strreverse(pr), "=")))
+}
+
 string matrix get_nodenames_from_var(string scalar v, real scalar z, string scalar def){
 	string scalar s
 

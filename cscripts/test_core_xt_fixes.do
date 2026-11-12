@@ -229,6 +229,23 @@ assert "`r(directed)'" == "true"
 assert r(arcs) == 4
 nwsummarize symund
 assert "`r(directed)'" == "false"
+* a two-mode network comes back in its saved node order (mode-1 nodes first here)
+nwclear
+clear
+input str3 sender str3 receiver
+"P1" "O2"
+"P2" "O1"
+"P1" "O1"
+end
+nwset sender receiver, twomode name(tsv)
+local f2 `"`tmpd'/nwcore_xt_tm"'
+nwsave `"`f2'"', replace
+nwuse `"`f2'"', nwclear
+_nwsyntax tsv
+mata: assert(`netobj'->get_nodenames() == ("P1","P2","O1","O2"))
+mata: assert(`netobj'->get_modes() == ("1","1","2","2"))
+nwtomata tsv, mat(M)
+mata: assert(M[1,3] == 1 & M[1,4] == 1 & M[2,3] == 1 & M[2,4] == 0)
 
 * ---------------------------------------------------------------------------------------------------------------
 * 9. error codes of help nwerrorcodes
