@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 12 November 2026: nwsaom 1.5.19
+
+**nwsaom 1.5.19** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.19)). `rates()` of `estat simulate` and `nwsaom simulate` after a non-directed fit of the joint, force or agree type is now on the scale of `e(rates)` (the rates printed by the fit, RSiena's scale); before, the values were taken as rates per actor. `nwsaom simulate` with a single effect (for example a two-mode network with `outdegree theta(-1)`) and fits that fix the only parameter no longer stop with an error.
+
 ## 12 November 2026: nwsaom 1.5.18
 
 **nwsaom 1.5.18** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.18)). `estat gof`, `estat simulate` and `estat mems` after a non-directed fit with `waves()` or with a behavior now simulate the fitted non-directed model (symmetric networks); before, they used directed ministeps, so these goodness-of-fit results and simulations change. The estimates do not change. `estat simulate` and `nwsaom simulate` now work after two-mode fits of any size (larger networks stopped with "options too long").
