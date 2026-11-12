@@ -118,7 +118,7 @@ program nwplot, rclass
 	}
 
     if "`in'" != "" {
-		capture nwdrop _temp_in
+		capture nwdrop __temp_in
 		nwduplicate `netname', name(__temp_in)
 		nwkeep __temp_in in `in'
 		if "`edgecolor'" != "" {
@@ -130,6 +130,7 @@ program nwplot, rclass
 			}
 		}
 		if "`edgesize'" != "" {
+			capture nwdrop __temp_edgesize_in
 			nwgen __temp_edgesize_in = `edgesize'
 			local edgesize "__temp_edgesize_in"
 			if "`edgesize'" != "`netname'" & "`edgesize'" != "`edgecolor'"{
@@ -146,13 +147,13 @@ program nwplot, rclass
 		nwduplicate `netname', name(__temp_if)
 		nwdrop __temp_if if (!(`if'))
 		if "`edgecolor'" != "" {
-			capture nwdrop _temp_edgecolor_if
+			capture nwdrop __temp_edgecolor_if
 			nwduplicate `edgecolor', name(__temp_edgecolor_if)
 			local edgecolor "__temp_edgecolor_if"
 			nwdrop __temp_edgecolor_if if (!(`if'))
 		}
 		if "`edgesize'" != "" {
-			capture nwdrop _temp_edgesize_if
+			capture nwdrop __temp_edgesize_if
 			nwduplicate `edgesize', name(__temp_edgesize_if)
 			local edgesize "__temp_edgesize_if"
 			nwdrop __temp_edgesize_if if (!(`if'))

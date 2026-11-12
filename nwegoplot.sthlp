@@ -24,6 +24,8 @@
 {synopt:{opt gen:erate(xvar yvar)}}keep the coordinates in two new variables (missing outside the ego network){p_end}
 {synopt:{opt replace}}overwrite the variables of {opt generate()}{p_end}
 {synopt:{opt edgec:olor(...)}}color the ties by another network, as in {help nwplot}; replaces the default coloring of the ties{p_end}
+{synopt:{opt size(...)}}node size, as in {help nwplot}; replaces the default, ego drawn twice as large as the alters{p_end}
+{synopt:{opt aspect:ratio(#)}}as in {help nwplot}; by default the proportions of the coordinates, so that the circles stay round{p_end}
 {synopt:{it:nwplot_options}}any other option of {help nwplot}, such as {opt label()}, {opt color()}, {opt symbol()}, {opt size()}, {opt scheme()}, {opt lineopt()}, {opt arrowfactor()}{p_end}
 {synoptline}
 
@@ -33,7 +35,7 @@
 {cmd:nwegoplot} draws the ego network of one node: ego in the center, its alters (the nodes it sends ties to
 or receives ties from) evenly on a circle around it, and all ties among these nodes. Ego's own ties (the
 spokes) are drawn in light gray and the ties among the alters in dark gray, so that the density of the ego
-network, the ties among the alters, is what stands out.
+network, the ties among the alters, is what stands out. Ego is drawn twice as large as the other nodes.
 
 {pstd}
 The alters are ordered around the circle so that ties among them stay short: alters who are connected

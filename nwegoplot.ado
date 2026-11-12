@@ -2,7 +2,7 @@
 capture program drop nwegoplot
 program nwegoplot, rclass
 	version 12
-	syntax [anything(name=netname)] , ego(string) [hop(integer 1) SORTby(varname) GENerate(string) replace EDGEColor(string) *]
+	syntax [anything(name=netname)] , ego(string) [hop(integer 1) SORTby(varname) GENerate(string) replace EDGEColor(string) SIZE(string) ASPECTratio(string) *]
 
 	_nwsyntax `netname'
 	_nw2guard `netname', cmd(nwegoplot)
@@ -83,16 +83,27 @@ program nwegoplot, rclass
 		local ecol "edgecolor(`edgecolor')"
 		mata: mata drop `names'
 	}
+	// ego drawn larger than the alters, unless size() is given
+	if "`size'" == "" {
+		tempvar egosz
+		qui gen byte `egosz' = 1 + (_n == `egoid')
+		local size "`egosz', legendoff"
+	}
+	// nwplot fits x and y to the plot region separately, so the circles stay round only when the
+	// region has the proportions of the coordinates (aspectratio() = height/width of the coordinates)
+	if "`aspectratio'" == "" {
+		qui summarize `x' if `inego'
+		local xr = r(max) - r(min)
+		qui summarize `y' if `inego'
+		local yr = r(max) - r(min)
+		local aspectratio = cond(`xr' > 0 & `yr' > 0, `yr' / `xr', 1)
+	}
 	// quietly: nwplot reports the nodes it leaves out and its progress, which say nothing here; on an
 	// error the call is repeated noisily, so that its message is shown
-	capture quietly nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(1) `ecol' `options'
+	capture quietly nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(`aspectratio') size(`size') `ecol' `options'
 	local rc = _rc
 	if `rc' {
-		// a failed nwplot can leave its temporary network for the if condition behind
-		foreach t in __temp_if __temp_edgecolor_if __temp_edgesize_if {
-			capture nwdrop `t'
-		}
-		capture noisily nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(1) `ecol' `options'
+		capture noisily nwplot `netname' if `inego', nodexy(`x' `y') layout(nodexy, norescale) aspectratio(`aspectratio') size(`size') `ecol' `options'
 	}
 	if "`tienet'" != "" capture nwdrop `tienet'
 	if `rc' exit `rc'
