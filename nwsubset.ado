@@ -32,26 +32,20 @@ program nwsubset
 		local name = r(validname)
 	}
 
-	nwduplicate `netname', name(`name') `replace'
-	// BUGFIX: was unconditional - when no `if' condition is given (the
-	// documented "simply generates a duplicate" behavior), `if' is
-	// empty, so this became the literal, invalid `nwdrop `name' if ( ==
-	// 0)' and crashed (r198) on every no-if call. Only apply the filter
-	// when an `if' condition was actually given.
+	// the condition is checked before anything is copied or replaced
+	// (a copy onto the network itself would otherwise lose it)
 	if "`if'" != "" {
-		// BUGFIX: an `if' condition matching zero nodes (a perfectly
-		// ordinary user mistake, or a legitimate "this subset is
-		// empty" request) crashed with an uncontrolled, uninformative
-		// Mata error deep inside the network-registration machinery
-		// (r3300) rather than a clean message. Caught and converted;
-		// the half-built `name' network nwduplicate already created is
-		// dropped too, rather than left behind in a broken state.
-		capture nwdrop `name' if (`if' == 0)
-		if _rc != 0 {
-			capture nwdrop `name'
+		_nwdatasync `netname'
+		qui count if ((`if') != 0) in 1/`nodes'
+		if r(N) == 0 {
 			di "{err}{p 0 0 2}The if condition selects no nodes; network {bf:`name'} would have zero nodes remaining.{p_end}"
 			error 198
 		}
+	}
+	nwduplicate `netname', name(`name') `replace'
+	// the condition in parentheses: "a == 1 & b == 2" must not become "a == 1 & (b == 2 == 0)"
+	if "`if'" != "" {
+		nwdrop `name' if ((`if') == 0)
 	}
 
 end

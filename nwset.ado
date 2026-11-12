@@ -489,22 +489,12 @@ if "`overwrite'" != "" local replace "replace"
 		nwvalidate `name'
 		if "`r(exists)'"=="true" {
 			if "`replace'" != "" {
-				// keep the caller's own requested name and drop the
-				// existing network under it first, rather than
-				// switching to an auto-generated alternative name -
-				// this is the only place that name collision is
-				// actually decided, so this is the one place `replace'
-				// needs to hook in. nwdrop itself drops the whole `nw'
-				// Mata registry object once the last network is gone
-				// (confirmed directly in nwdrop.ado) - if the network
-				// being replaced was the only one registered, the
-				// creation path below would otherwise find no `nw' to
-				// register the replacement into, so it is rebuilt here
-				// exactly the same way the top of this program already
-				// does when `nw' does not yet exist at all.
-				nwdrop `name'
-				capture mata: `nw'
-				if (_rc != 0) mata: `nw' = nws_create()
+				// keep the caller's own requested name; the existing
+				// network under it is dropped only after every check of
+				// the new one has passed (shape, labels, vars(),
+				// nodenames()), right before the new one is registered,
+				// so that a refused replace leaves it in place.
+				local __nwset_dorep 1
 			}
 			else if `name_given' {
 				// An explicit name(foo) collision must not silently
@@ -646,14 +636,26 @@ if "`overwrite'" != "" local replace "replace"
 				else di "{txt}the extra labels are ignored)"
 			}
 			mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', rows(`__nwnew'),"`cDftNodepref'"))'
+			mata: `__nwnodenames' = nwset_padlabs(`__nwnodenames', `__nwset_nlab', "`cDftNodepref'")
 		}
 		if "`labsfromvar'" != "" {
-			capture tostring `labsfromvar', replace
+			// read the labels from a string copy; the user's variable keeps its type
+			confirm variable `labsfromvar', exact
+			tempvar __nwset_lfv
+			capture confirm string variable `labsfromvar', exact
+			if _rc == 0 qui gen strL `__nwset_lfv' = `labsfromvar'
+			else qui gen strL `__nwset_lfv' = strtrim(string(`labsfromvar', "%18.0g"))
+			mata: st_local("__nwset_nlfv", strofreal(rows(`__nwnew')))
 			if "`bipartite'" == "" {
-				mata: `__nwnodenames' = (st_sdata((1::rows(`__nwnew')),"`labsfromvar'"))'
+				if _N < `__nwset_nlfv' {
+					di "{err}labsfromvar(): `labsfromvar' has `=_N' observations for `__nwset_nlfv' nodes"
+					capture mata: mata drop `__nwnew'
+					exit 198
+				}
+				mata: `__nwnodenames' = (st_sdata((1::rows(`__nwnew')),"`__nwset_lfv'"))'
 			}
 			else {
-				mata: `__nwnodenames' = (st_sdata(.,"`labsfromvar'"))'
+				mata: `__nwnodenames' = (st_sdata(.,"`__nwset_lfv'"))'
 			}
 			
 			if("`varlist'" != "" & "`bipartite'" != ""){
@@ -662,10 +664,6 @@ if "`overwrite'" != "" local replace "replace"
 			if("`varlist'" != "" & "`bipartite'" == ""){
 				mata: `__nwnodenames' = `__nwnodenames'[(1::rows(`__nwnew'))] 
 			}
-			if("`mat'" != "") {
-				mata: `__nwnodenames' = (J(rows(`__nwnew'),1,"`cDftNodepref'") + get_node_suffix(rows(`__nwnew')))'
-			}
-			
 			mata: st_local("notvalid", strofreal(cols(`__nwnodenames') != cols(`__nwnew')))
 		}
 
@@ -679,7 +677,12 @@ if "`overwrite'" != "" local replace "replace"
 			// (e.g. glasgow's n1, n10, n11, ...), silently misaligning
 			// node attributes; see nw_rowlabels() in unw_core.do.
 			if "`bipartite'" == "" & "`nodenames'" == "" {
-				mata: `__nwnodenames' = nw_rowlabels_or(`__nwnodenames', "`nw_nodename'", `nws'.pdefs)
+				// with replace, the network about to be replaced does not count
+				tempname __nwset_oth
+				if "`__nwset_dorep'" == "" mata: `__nwset_oth' = `nws'.pdefs
+				else mata: `__nwset_oth' = `nws'.pdefs[selectindex(tokens(`nws'.get_names()) :!= "`name'")]
+				mata: `__nwnodenames' = nw_rowlabels_or(`__nwnodenames', "`nw_nodename'", `__nwset_oth')
+				capture mata: mata drop `__nwset_oth'
 			}
 		}
 		
@@ -694,6 +697,51 @@ if "`overwrite'" != "" local replace "replace"
 			di "{err}node labels must be unique; repeated: `__nwset_dups'"
 			capture mata: mata drop `__nwnew' `__nwnodenames'
 			exit 198
+		}
+
+		// vars() and nodenames() must fit the number of nodes; checked
+		// before anything is registered or replaced
+		mata: st_local("__nwset_nnew", strofreal(rows(`__nwnew')))
+		if "`vars'" != "" {
+			local varscount : word count `vars'
+			if `varscount' != `__nwset_nnew' {
+				di "{err}{p 0 0 2}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`__nwset_nnew'}).{p_end}"
+				capture mata: mata drop `__nwnew' `__nwnodenames'
+				error 6070
+			}
+		}
+		if "`nodenames'" != "" {
+			capture mata: st_local("__nwset_nnn", strofreal(length(`nodenames')))
+			if _rc {
+				di "{err}nodenames(): `nodenames' is not a Mata string vector"
+				capture mata: mata drop `__nwnew' `__nwnodenames'
+				exit 198
+			}
+			capture mata: st_local("__nwset_nnu", strofreal(eltype(`nodenames') == "string" ? rows(uniqrows(vec(`nodenames'))) : -1))
+			if "`__nwset_nnu'" == "-1" {
+				di "{err}nodenames(): `nodenames' is not a Mata string vector"
+				capture mata: mata drop `__nwnew' `__nwnodenames'
+				exit 198
+			}
+			if `__nwset_nnn' != `__nwset_nnew' {
+				di "{err}nodenames() has `__nwset_nnn' names for `__nwset_nnew' nodes"
+				capture mata: mata drop `__nwnew' `__nwnodenames'
+				exit 198
+			}
+			if `__nwset_nnu' != `__nwset_nnn' {
+				di "{err}node labels must be unique; nodenames() repeats a name"
+				capture mata: mata drop `__nwnew' `__nwnodenames'
+				exit 198
+			}
+		}
+
+		// every check has passed: now replace the existing network
+		if "`__nwset_dorep'" != "" {
+			// nwdrop drops the registry object with the last network:
+			// rebuild it as the top of this program does
+			nwdrop `name'
+			capture mata: `nw'
+			if (_rc != 0) mata: `nw' = nws_create()
 		}
 
 		mata: st_rclear()
@@ -728,12 +776,6 @@ if "`overwrite'" != "" local replace "replace"
 		// nwvalidvars.ado, which turned out to be a red herring - see
 		// docs/CERTIFICATION.md).
 		if "`vars'" != "" {
-			mata: st_local("nwsetvarsnodes", strofreal(`netobj'->get_nodes()))
-			local varscount : word count `vars'
-			if `varscount' != `nwsetvarsnodes' {
-				di "{err}{p 0 0 2}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`nwsetvarsnodes'}).{p_end}"
-				error 6070
-			}
 			mata: `netobj'->set_nodesvar(tokens("`vars'"))
 		}
 
@@ -823,5 +865,33 @@ string colvector nw_set_duplabels(string colvector v)
 	d = (s[|2 \ rows(s)|] :== s[|1 \ rows(s)-1|])
 	if (!any(d)) return(J(0, 1, ""))
 	return(uniqrows(select(s[|2 \ rows(s)|], d)))
+}
+end
+
+capture mata: mata drop nwset_padlabs()
+mata:
+// fewer labels than nodes: the nodes without a label get default names
+// (def + position) that are not already used; a name that is used is
+// replaced by the next unused def + number above the number of nodes
+string rowvector nwset_padlabs(string rowvector l, real scalar k, string scalar def)
+{
+	transmorphic A
+	real scalar i, j, z
+
+	z = cols(l)
+	if (k >= z | k < 1) return(l)
+	A = asarray_create()
+	for (i = 1; i <= k; i++) asarray(A, l[i], 1)
+	j = z
+	for (i = k + 1; i <= z; i++) {
+		if (asarray_contains(A, l[i])) {
+			do {
+				j++
+			} while (asarray_contains(A, def + strofreal(j)))
+			l[i] = def + strofreal(j)
+		}
+		asarray(A, l[i], 1)
+	}
+	return(l)
 }
 end

@@ -26,14 +26,16 @@
 {opt directed}
 {opt twomode}
 {opt valued}
-{opt unvalued}]
+{opt unvalued}
+{opt keeporiginal}
+{opt selfloop}]
 
 {synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}name of the new network; default = the name of {it:tievalue} if given, otherwise {it:network}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
-{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels; separate the labels by blanks or by commas ({it:lab1},{it:lab2},...); use commas when a label contains a blank{p_end}
 {synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
 {synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
 {synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge},
@@ -41,7 +43,9 @@ forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}
 behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
 {synopt:{opt valued}}mark the network as valued (default if a value variable is given, also when every value is 1){p_end}
 {synopt:{opt unvalued}}mark the network as binary even if a value variable is given{p_end}
-{synopt:{opt noclear}}do not clear existing dataset{p_end}
+{synopt:{opt noclear}}do not clear existing dataset: the data are kept as they were, and the rows of the new network's nodes are added{p_end}
+{synopt:{opt selfloop}}keep the ties of a node with itself (rows with {it:fromid} = {it:toid}); by default they are dropped{p_end}
+{synopt:{opt keeporiginal}}generate variable {it:_nodeoriginal} with the original identifier of each node (from {it:fromid}/{it:toid}) on the node's row{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 {synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid} / {help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named
 {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
@@ -82,6 +86,10 @@ variables defining the edges can also be {help string} variables.
 
 {pstd}
 Here, there are also three relationships: (Peter => Thomas), (Tim => Peter) and (Mathilde => Thomas).
+
+{pstd}
+If a pair (fromid, toid) is listed in more than one row, the last of these rows gives the tie value, for numeric and
+string identifiers alike.
 
 {pstd}
 The following command declares such data as network data:

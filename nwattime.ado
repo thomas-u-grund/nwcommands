@@ -57,7 +57,7 @@ program nwattime, rclass
 		mata: `__edges' = nwattime_slice_event(`netobj', `at')
 	}
 
-	mata: st_numscalar("ties", rows(`__edges'))
+	mata: st_local("__at_ties", strofreal(rows(`__edges'), "%18.0g"))
 
 	mata: __nw.nws.add("`name'")
 	_nwsyntax `name'
@@ -85,7 +85,7 @@ program nwattime, rclass
 	mata: st_local("tiesshown", strofreal(`srcdirected' ? rows(`__edges') : sum(`__edges'[.,1] :<= `__edges'[.,2])))
 	mata: mata drop `__srcnames' `__edges'
 
-	return scalar ties = ties
+	return scalar ties = `__at_ties'
 	return scalar at = `at'
 
 	di "{hline 40}"

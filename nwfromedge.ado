@@ -1,7 +1,7 @@
 
 capture program drop nwfromedge
 program nwfromedge
-	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode valued unvalued]
+	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode valued unvalued keeporiginal selfloop]
 
 	// HARMONISATION: `twomode' makes the existing, separate `nw2fromedge'
 	// command reachable directly from `nwfromedge' too - mirroring
@@ -37,6 +37,23 @@ program nwfromedge
 	// of a DIFFERENT dataset would. Applied near the end of this program,
 	// once the new network actually exists.
 	local __iso_srclabels : char _dta[nwtoedge_nodes]
+	// labs() may list the labels separated by blanks (lab1 lab2 ...) or by
+	// commas; with commas a label may contain blanks
+	if `"`labs'"' != "" & strpos(`"`labs'"', ",") == 0 {
+		local __nwfe_l ""
+		foreach __nwfe_w of local labs {
+			local __nwfe_l `"`__nwfe_l',`__nwfe_w'"'
+		}
+		local labs = substr(`"`__nwfe_l'"', 2, .)
+	}
+	if "`keeporiginal'" != "" & "`clear'" != "" {
+		capture confirm new variable _nodeoriginal
+		if _rc {
+			di "{err}variable {bf:_nodeoriginal} already defined; option {bf:keeporiginal} creates it"
+			exit 110
+		}
+	}
+	tempname __nwfe_orig
 	// a name() already in use is refused before the data are changed (the string-id route below stacks and drops
 	// the data first; the user's edge list must survive the error)
 	if "`name'" != "" & "`replace'" == "" {
@@ -45,6 +62,12 @@ program nwfromedge
 			noi di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
 			error `errNWsExists'
 		}
+	}
+	// noclear: the edge list is worked on in place below (ids replaced,
+	// rows dropped); keep the user's data and bring them back afterwards
+	if "`clear'" != "" {
+		tempfile __nwfe_userdata
+		qui save `"`__nwfe_userdata'"'
 	}
 	// NOTE: this file's own `overwrite' predates this option and controls
 	// nwload's own overwrite behavior further below (`qui nwload,
@@ -145,6 +168,9 @@ program nwfromedge
 			capture mata: mata drop __nwlabvec
 			putmata __nwlabvec = `fromvar'
 		}
+		if "`keeporiginal'" != "" {
+			putmata `__nwfe_orig' = `fromvar', replace
+		}
 		restore
 
 		merge m:n `fromvar' using `dictionaryString'
@@ -160,7 +186,8 @@ program nwfromedge
 		destring `tovar', force replace
 		replace `fromvar' = `_fromvarid'
 		replace `tovar' = `_tovarid'
-		collapse (max) `_value', by(`fromvar' `tovar')
+		// a pair listed more than once: the last row counts, as with numeric ids
+		bysort `fromvar' `tovar' (`_roworder'): keep if _n == _N
 	}
 
 	// `labprefix' (renamed from `prefix' during harmonisation, to avoid
@@ -195,6 +222,9 @@ program nwfromedge
 			if "`rawtype'" == "numeric" & "`labs'" == "" {
 				capture mata: mata drop __nwlabvec
 				mata: __nwlabvec = "`labprefix'" :+ strofreal(*__nwP[5], "%18.0g")
+			}
+			if "`rawtype'" == "numeric" & "`keeporiginal'" != "" {
+				mata: `__nwfe_orig' = *__nwP[5]
 			}
 		}
 		capture mata: mata drop __nwP
@@ -240,6 +270,9 @@ program nwfromedge
 		local labprefix "n"
 	}
 	if "`rawtype'" == "numeric" {
+		if "`keeporiginal'" != "" {
+			putmata `__nwfe_orig' = `_rawid', replace
+		}
 		if "`labs'" == "" {
 			capture mata: mata drop __nwlabvec
 			putmata __nwlabvec = `_rawid'
@@ -379,6 +412,7 @@ program nwfromedge
 	}
 	else {
 		mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', `maxNodes', "`cDftNodepref'"))'
+		mata: `__nwnodenames' = nwfromedge_padlabs(`__nwnodenames', sum(tokens(`"`labs'"', ",") :!= ","), "`cDftNodepref'")
 	}
 	mata: `nws'.add("`edgename'")
 	// other(other) namespaces _nwsyntax's exported locals as
@@ -400,6 +434,8 @@ program nwfromedge
 	if "`forceundirected'" != "" | "`undirected'" != "" {
 		mata: nw_fromedge_mirror(__nwego, __nwalter, __nwvalue)
 	}
+	// selfloop: the flag must be set before the ties are stored, or the diagonal is dropped
+	if "`selfloop'" != "" mata: `othernetobj'->set_selfloop(1)
 	mata: `othernetobj'->set_edge_from_triplets(__nwego, __nwalter, __nwvalue, 1)
 	// The valued flag is set here, when the network is created: a value variable (third variable) makes
 	// the network valued, even if every value is 1; without one it is binary.  valued / unvalued override.
@@ -424,7 +460,7 @@ program nwfromedge
 	// (and any other diagonal-excluding stat) silently include the
 	// diagonal, since it was never previously exercised on a bare, not
 	// yet ensure_dense_built()'d, network.
-	mata: `othernetobj'->set_selfloop(0)
+	mata: `othernetobj'->set_selfloop("`selfloop'" != "")
 
 	// Isolate preservation (#5) - see the note near the top of this file.
 	// A no-op whenever the edgelist did not come from nwtoedge on a
@@ -445,6 +481,9 @@ program nwfromedge
 	if "`clear'" == "" {
 		qui drop _all
 	}
+	else {
+		qui use `"`__nwfe_userdata'"', clear
+	}
 	
 	if "`forcedirected'" == "" & "`directed'" == ""{
 		nwsym, check 
@@ -463,11 +502,18 @@ program nwfromedge
 	else {
 		nwload, labelonly `overwrite'
 	}
+
+	// keeporiginal: the original id of each node, on the node's row
+	if "`keeporiginal'" != "" {
+		mata: nw_fromedge_orig("`nw_nodename'", `othernetobj'->get_nodenames(), `__nwfe_orig')
+		mata: mata drop `__nwfe_orig'
+	}
 	
 	}
 end
 
 capture mata: mata drop nw_fromedge_mirror()
+capture mata: mata drop nw_fromedge_orig()
 capture mata: mata drop nw_fromedge_prep()
 mata:
 // The node dictionary of nwfromedge done in Mata: the identifiers are mapped to 1, 2, ... in ascending order of their
@@ -508,6 +554,33 @@ pointer(real colvector) rowvector nw_fromedge_prep(string scalar fromvar, string
 // For an undirected network: every tie (i,j) whose reverse (j,i) is not in the list gets the reverse added with the same
 // value, so that the later symmetrisation compares two listed values (when both directions are listed with different
 // values the larger one is kept, as always) and never a listed value against the "no tie" 0.
+void nw_fromedge_orig(string scalar labvar, string rowvector nm, transmorphic colvector orig)
+{
+	transmorphic A
+	string colvector lab
+	real colvector pos
+	real scalar i, vi, w
+
+	A = asarray_create()
+	for (i = 1; i <= min((cols(nm), rows(orig))); i++) asarray(A, nm[i], i)
+	lab = st_sdata(., labvar)
+	pos = J(rows(lab), 1, 0)
+	for (i = 1; i <= rows(lab); i++) {
+		if (lab[i] != "") {
+			if (asarray_contains(A, lab[i])) pos[i] = asarray(A, lab[i])
+		}
+	}
+	if (isstring(orig)) {
+		w = max((1, max(strlen(orig))))
+		vi = st_addvar(w > 2045 ? "strL" : "str" + strofreal(w), "_nodeoriginal")
+		for (i = 1; i <= rows(lab); i++) if (pos[i]) st_sstore(i, vi, orig[pos[i]])
+	}
+	else {
+		vi = st_addvar("double", "_nodeoriginal")
+		for (i = 1; i <= rows(lab); i++) if (pos[i]) st_store(i, vi, orig[pos[i]])
+	}
+}
+
 void nw_fromedge_mirror(real colvector e, real colvector a, real colvector v)
 {
 	real colvector off, k1, k2, x, tag, ord, xs, ts, first, pidx, ps, cnt, cntorig, miss, ne, na, nv
@@ -542,5 +615,33 @@ void nw_fromedge_mirror(real colvector e, real colvector a, real colvector v)
 	e = e \ ne
 	a = a \ na
 	v = v \ nv
+}
+end
+
+capture mata: mata drop nwfromedge_padlabs()
+mata:
+// fewer labels than nodes: the nodes without a label get default names
+// (def + position) that are not already used; a name that is used is
+// replaced by the next unused def + number above the number of nodes
+string rowvector nwfromedge_padlabs(string rowvector l, real scalar k, string scalar def)
+{
+	transmorphic A
+	real scalar i, j, z
+
+	z = cols(l)
+	if (k >= z | k < 1) return(l)
+	A = asarray_create()
+	for (i = 1; i <= k; i++) asarray(A, l[i], 1)
+	j = z
+	for (i = k + 1; i <= z; i++) {
+		if (asarray_contains(A, l[i])) {
+			do {
+				j++
+			} while (asarray_contains(A, def + strofreal(j)))
+			l[i] = def + strofreal(j)
+		}
+		asarray(A, l[i], 1)
+	}
+	return(l)
 }
 end

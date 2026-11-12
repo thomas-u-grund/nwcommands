@@ -13,6 +13,20 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwpath, generate()` on an undirected network stored each tie of the path network in one direction only (an asymmetric matrix flagged undirected); the ties are now stored in both directions.
 - `nwbetween` and `nwcloseness` store their results as double (float rounded large betweenness scores: 16,834,504 instead of 16,834,503); `nwgeodesic, generate()`, `nwevcent`, `nwcontext` and the coordinates of `nwplot, generate()` are double as well.
 - `nwplot, layout(grid, columns(1))` gave missing x coordinates, and more columns than nodes stopped with a conformability error; both now give a grid.
+- `nwexport` writes a binary (unvalued) one-mode network without tie values (Pajek, UCINET DL, GML, edge list: ego and alter only), so that `nwimport` reads it back as binary; valued networks are written with their values as before. Before, every exported binary network came back valued.
+- `nwtoedge` (and `nw2toedge`) list each tie of a two-mode network with the mode-1 node in `_ego` and the mode-2 node in `_alter`, so that `nw2fromedge _ego _alter` rebuilds the same network. Before, the node with the higher index was `_ego`, often the mode-2 node.
+- `nwset, labs()` and `nwfromedge, labs()` with fewer labels than nodes give the remaining nodes only default names that are not already used: `labs(n2)` for 3 nodes gives n2,n4,n3 (before: refused because n2 was repeated). A label repeated in `labs()` itself is still refused.
+- `nwfromedge` with string identifiers keeps the value of the last row when a pair is listed more than once, as with numeric identifiers (before: the largest value).
+- `nwtoedge, numeric` numbers ego and alter by the position of the node; before, the numbers were transposed (the row with the value of cell (1,2) had ego 2, alter 1) and did not match the listing of an undirected network.
+- `nwsubset netname if a == 1 & b == 2` keeps the nodes that meet the whole condition; the condition lost its parentheses, so `&` and `|` conditions kept the wrong nodes.
+- `nwtranspose b, generate(a) replace` transposed another network when `a` stood before `b` in memory; it transposes `b` now.
+- `nwreplace` of one cell of an undirected network that leaves the matrix asymmetric marks the network directed (a note says so); before, it stayed undirected with an asymmetric matrix.
+- `nwdropnodes` and `nwkeepnodes` keep the direction of the network; a directed network whose remaining matrix was symmetric became undirected.
+- `nwdropnodes, nodes(Bob)` on a network with a label containing a blank (e.g. "Anna Maria") dropped another node; labels are looked up exactly now.
+- `nwstack` of undirected networks gives an undirected network (before: directed).
+- `nwuse` restores the diagonal of a network with self-loops, and a saved directed network of one node stays directed.
+- `nwattime` returns the right `r(ties)` when a variable named `ties` exists.
+- `nwimport, type(ucinet)` of an edgelist1 file numbers the nodes by their number, not by their text order (node 10 was node 2 before), and reads a file without tie values as binary.
 
 ### Fixed
 - `nwdegree` on an undirected network with two names in `generate()` (and no `isolates`) dropped the variable named second.
@@ -29,6 +43,23 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwsummarize, detail` did not store the documented `r(missing_edges)`; it is stored in every case, and the help says what it counts (cells without a value, including the diagonal of a network without self-loops).
 - `nwtabulate` with more than two networks said "Network ... not found" (r(482)); it says "Maximum two networks allowed" and stops with r(198).
 - The help of `nwcontext` says how `max`, `min` and `sd` use the tie values of a valued network (they are taken over tie value times attribute).
+- `nwset, mat() ... replace` dropped the existing network before checking the new one: a refused request (wrong shape, repeated labels, wrong `vars()`, wrong `nodenames()`) lost it. All checks now come first. `vars()` of the wrong length no longer leaves a half-made network, and `nodenames()` of the wrong length or with repeated names is refused (r(198)).
+- `nwset, mat() labsfromvar()` ignored the variable and used n1, n2, ...; it uses the variable now. A numeric variable is no longer turned into a string.
+- `nwset ..., edgelist keeporiginal` (and `nwimport ..., keeporiginal`) stopped with "option keeporiginal not allowed"; `nwfromedge` has the option `keeporiginal` (variable `_nodeoriginal` with the original identifier of each node) and the new option `selfloop` (keep the ties of a node with itself).
+- `nwfromedge, noclear` overwrote the id variables and dropped rows with a missing identifier; the data are kept as they were.
+- `nwfromedge, labs(x y z)` (blank-separated, as the help shows) gave one label "x y z"; blanks and commas both separate labels now.
+- `nwtoedge` of a network with one node (with `compress`, and so `nwsave` of such a network or of a two-mode network together with it) stopped with a Mata conformability error and left helper variables in the data. `nwtoedge, numeric` with several networks is refused before the data are changed.
+- `nwsave` and `nwuse` failed with `set varabbrev off` ("variable _nw_selfloop not found").
+- `nwexport` moved `_nwinclude` behind the user's variables; the variable order is kept, also when the export fails.
+- `nwexport, type(ucinet)` / `nwimport, type(ucinet)`: the labels were read back as one label; labels with a blank are written in double quotes and read back.
+- `nwimport, type(edgelist) nwappend` replaced the data in memory (and cleared them when the file was missing); the data are kept. `delimiter()` works for edge lists in text files (it stopped with r(6750)).
+- `nwrandom, ntimes() nodenamesmata()` gave none of the networks the labels; `nodenamesmata()`, `directed` and `noreplace` are passed on to every network.
+- `nwdropnodes` and `nwkeepnodes`: a label in a network of 2,000 nodes with long labels stopped with r(1) and no message; node id 0 stopped with a Mata error (now out of bounds, r(600021)); `generate()` left the copy behind when the request was refused.
+- `nwsubset x if ..., name(x) replace`, `nwduplicate x, name(x) replace`, `nwtranspose x, generate(x) replace`, `nwpermute x, generate(x) nwreplace` and `nwgenerate x = <expression with x>, replace` (also when the expression fails) lost the network `x`; the old network is now replaced only when the new one exists.
+- `nwgenerate y = diff` stopped with r(482): the letters "if" inside a network name were taken for an `if` condition.
+- `nwnoderename` added a row with the old label and renamed a user variable that had the old label as its name; it renames only the network's own node variable (when the node variables are in the data).
+- `nwcollapse` left a network `_temp_<name>` behind.
+- `nwstack` stopped with "observation number out of range" when the data had more rows than the stacked network has nodes.
 
 ## [3.21.0] - 2026-11-12
 

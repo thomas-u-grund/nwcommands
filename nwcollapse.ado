@@ -44,11 +44,11 @@ program nwcollapse
 		local name "`netname'_collapsed"
 	}
 	
-	// a run that stopped half way (e.g. nwtoedge refusing a huge network) leaves its temporary copy behind
-	capture nwdrop _temp_`original'
-	nwduplicate `original', name(_temp_`original')
-	_nwdatasync _temp_`original'
-	_nwsyntax _temp_`original'
+	// the working copy has a temporary name (it cannot clash with a network of the user) and is dropped at the end
+	tempname __nwcolcopy
+	nwduplicate `original', name(`__nwcolcopy')
+	_nwdatasync `__nwcolcopy'
+	_nwsyntax `__nwcolcopy'
 	local __srcvalued "`valued'"
 	// the collapsed network keeps the directedness of the original (nwfromedge
 	// would otherwise guess it from whether the collapsed list is symmetric)
@@ -62,9 +62,9 @@ program nwcollapse
 	bys `by': egen `by_group' = total(`by_dummy')
 	sort `running'
 	qui replace _nwnode = "new_" + _nwnode if `by_group' > 1
-	nwname _temp_`original', newlabsfromvar(_nwnode)
+	nwname `__nwcolcopy', newlabsfromvar(_nwnode)
 	
-	nwtoedge _temp_`original', egovars(`by') altervars(`by') ego(_fromid) alter(_toid)
+	nwtoedge `__nwcolcopy', egovars(`by') altervars(`by') ego(_fromid) alter(_toid)
 	// Isolate preservation (#5) is for a genuine round trip back to the
 	// SAME node set nwtoedge started from - wrong here, where the whole
 	// point is collapsing several original nodes into fewer new ones.
@@ -76,15 +76,15 @@ program nwcollapse
 
 	tempvar _newfrom _newto
 
-	keep _fromid _toid _temp_`original' `by'_fromid `by'_toid
-	collapse (`stat') _temp_`original' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
+	keep _fromid _toid `__nwcolcopy' `by'_fromid `by'_toid
+	collapse (`stat') `__nwcolcopy' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
 	
 	if "`generate'" != "" {
-		qui nwfromedge _fromid _toid _temp_`original', name(`generate') `__dirflag'
+		qui nwfromedge _fromid _toid `__nwcolcopy', name(`generate') `__dirflag'
 	}
 	else {
 		nwdrop `original'
-		qui nwfromedge _fromid _toid _temp_`original', name(`original') `__dirflag'
+		qui nwfromedge _fromid _toid `__nwcolcopy', name(`original') `__dirflag'
 	}
 	// the collapsed network keeps the Valued flag of the original; it becomes valued if the collapse creates values
 	// other than 0 and 1 (for example (sum) of a binary network)
@@ -92,6 +92,7 @@ program nwcollapse
 	if "`generate'" != "" local __tgt "`generate'"
 	_nwsyntax `__tgt', max(1)
 	mata: `netobj'->set_valued(("`__srcvalued'" == "true") | `netobj'->check_valued())
+	nwdrop `__nwcolcopy'
 	restore
 end
 

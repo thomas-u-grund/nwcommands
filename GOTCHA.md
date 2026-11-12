@@ -873,3 +873,15 @@ Symptoms: from some point on a help file runs together, `{p_end}`, `{pstd}` or `
 ## `nwfromedge` checks the network name only after it has replaced the data (found 2026-11-12)
 
 With string ids (the non-fast path) `nwfromedge` stacks the id variables and drops the data before it finds that `name()` is already in use and stops with r(483); the user's edge list is then gone. A wrapper that should leave the data alone on error has to check the name itself before calling it, as `nw2fromedge` does now (`nwvalidate`, error 483 unless `replace`). `nw2fromedge` also works on copies (`clonevar` tempvars) of the id variables for the mode-2 shift and the `m1_`/`m2_` prefixes; the `if` condition is evaluated on the original variables. `nwfromedge` itself now checks an explicit `name()` (without `replace`) before it touches the data, and passes `replace` on to `nw2fromedge`; `cscripts/test_nwfromedge_namecheck.do`.
+
+## Data-handling traps found by the xt_data suite (fixed 2026-11-12)
+
+- **Check, then replace.** Commands with `replace`/`generate()` (nwset, nwduplicate, nwsubset, nwtranspose, nwpermute, nwgenerate, nwdropnodes) dropped the target first. When the target is the source, or the request is refused later, the network is lost. Pattern now: every check first; build under a `tempname` network; drop the old one; `mata: <nws>.rename(tmp, name)`. nwgenerate's function branch "parks" an existing target under a temporary name and puts it back on error.
+- **Registry pointers are positions.** `netobj` from `_nwsyntax` is `__nw.nws.pdefs[i]`; after `nwdrop` of an earlier network it points at another network (nwtranspose transposed the wrong one). Re-run `_nwsyntax` after any drop.
+- **No nested `preserve`.** nwfromedge preserves internally, so callers (nwimport edgelist, nwfromedge `noclear`) cannot `preserve`; they `save` a tempfile and `use` it afterwards.
+- **`syntax ... labs(string)` strips quotes** inside the value; pass label lists with quoted labels as `labs(string asis)`. Labels go to nwset/nwfromedge comma-separated; `_nwimpdl_comma` converts a blank list (quotes respected).
+- **One-line `mata:` cannot hold `for (...) if (...) stmt`** ("unexpected end of line"); use `selectindex()` or a function. Mata does not allow `f(x)[1]`: write `(f(x))[1]`.
+- **`selectindex()` of a 1x1 argument returns a row vector**; `nw_realstr()` in unw_core.do then fails for a single value (`rows(bad)` is 1 for J(1,0)). nwtoedge avoids the sparse listing for 1-node networks; the Mata function itself is unchanged (fix it with the next library rebuild: `cols(bad)`/`length(bad)`; GML export of a network with exactly one tie goes through it too).
+- **nwfromedge self-loops:** `set_edge_from_triplets()` drops the diagonal unless `set_selfloop(1)` was called before it.
+- **Two-mode node order is alphabetical, not mode-1 first:** use `get_modes()` per node, not `get_nodes_mode1()` as an index cut.
+- **`version 9` programs** cannot use group `rename (a b) (c d)`.
