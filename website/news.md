@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 12 November 2026: nwcommands 3.20.0
+
+**nwcommands 3.20.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.20.0)). `nwplot` can draw a map under a network placed by longitude and latitude (`basemap()`, with the new example data `usmap`), and the interactive page saves a do-file (`nwedit_plot.do`) that redraws the edited picture in Stata, so that hand-made changes can be repeated. `nwdyads, plot` and `nwtriads, plot` draw the dyad and triad census as small pictures with counts. `nwsummarize` reports the mean degree, `nwgeodesic` reports distances over the connected pairs when some pairs are unconnected, and `nwplotmatrix, group()` writes the group names. The data set `lazega` has numeric, labeled versions of office, practice and status (`officenum`, `practicenum`, `partner`).
+
 ## 11 November 2026: nwergm 1.5.10, nwsaom 1.5.15, nwrem 1.0.11 and nwdynam 1.2.3
 
 **nwergm 1.5.10** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.10)), **nwsaom 1.5.15** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.15)), **nwrem 1.0.11** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.11)) and **nwdynam 1.2.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.3)). Long notes, warnings and error messages wrap between words instead of being cut in the middle of a word. Results do not change.
