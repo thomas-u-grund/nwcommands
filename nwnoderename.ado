@@ -19,7 +19,7 @@ program nwnoderename
 	else{
 		di "{err}Old name not found or new name invalid."
 		mata: st_numscalar("r(success)", 0)
-		exit
+		error 198
 	}
 end
 

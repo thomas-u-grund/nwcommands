@@ -70,7 +70,7 @@ program nwsmall
 			// this recursive call never did (ntimes()>1 always came
 			// back unweighted regardless of weights() - see
 			// nwrandom.ado's/nwpref.ado's own identical fix).
-			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') weights(`weights') `xvars' `undirected'
+			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') weights(`weights') labs(`labs') `xvars' `undirected'
 		}
 		// Feature parity (moderate-severity pass, generators_structural
 		// group): only nwrandom exposed r(netlist) for its own ntimes()>1

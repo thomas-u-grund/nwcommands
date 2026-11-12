@@ -13,7 +13,7 @@ program _nwnodelab
 	_nwsyntax `netname'
 	nwname `netname'
 
-	if `nodeid' > `r(nodes)' {
+	if `nodeid' < 1 | `nodeid' > `r(nodes)' {
 		mata: st_rclear()
 		di "{err}{it:nodeid} {bf:`nodeid'} out of bounds"
 		error 600022

@@ -27,7 +27,7 @@ nodeid(int)
 
 ## Description
 
-Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are also stored in the return vector. When *nodeid* is larger than the number of nodes in network *netname* an error is thrown. This command is mostly used for programming with networks.
+Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are also stored in the return vector. When *nodeid* is smaller than 1 or larger than the number of nodes in network *netname* an error is thrown. This command is mostly used for programming with networks.
 
 ## Examples
 
@@ -68,4 +68,4 @@ macros:
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

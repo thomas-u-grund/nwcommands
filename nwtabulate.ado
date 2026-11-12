@@ -4,7 +4,8 @@ program nwtabulate
 	syntax [anything(name=netname)] [, attribute(varname) *]
 	_nwsyntax `netname', max(2)
 	local __vndone 0
-	forvalues __vi = 1/2 {
+	// the note is for the table by attribute(), which counts ties; the other tables show the tie values
+	if "`attribute'" != "" forvalues __vi = 1/2 {
 		local __vn : word `__vi' of `netname'
 		if `__vndone' == 0 & (`__vi' == 1 | "`__vn'" != "") {
 			_nwvaluednote `__vn'
@@ -92,7 +93,7 @@ end
 
 capture program drop nwtab2
 program nwtab2
-	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
+	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) *]
 		
 	
 	local netname0 `netname'
@@ -109,14 +110,21 @@ program nwtab2
 	nwtoedge `netname0', `upper'
 	
 	local net1: word 1 of `netname0'
-	_nwedgelabs `net1'
-	capture label def elab1 `r(edgelabs)'
-	capture label val `net1' elab1
-	
 	local net2: word 2 of `netname0'
-	_nwedgelabs `net2'
-	capture label def elab2 `r(edgelabs)'
-	capture label val `net2' elab2
+	if "`unvalued'" != "" {
+		// unvalued: every tie counts as 1, whatever its value
+		qui replace `net1' = (`net1' != 0) if !missing(`net1')
+		qui replace `net2' = (`net2' != 0) if !missing(`net2')
+	}
+	else {
+		_nwedgelabs `net1'
+		capture label def elab1 `r(edgelabs)'
+		capture label val `net1' elab1
+	
+		_nwedgelabs `net2'
+		capture label def elab2 `r(edgelabs)'
+		capture label val `net2' elab2
+	}
 
 	local ident = length("`netname'") + 20
 	di
@@ -166,7 +174,12 @@ program nwtab2
 	
 	qui if `permutations' > 1  {
 
-		mata: `EI_qap' = rep_EInet(`permutations', `netobj1'->get_matrix_copy(), `netobj2'->get_matrix_copy())
+		if "`unvalued'" != "" {
+			mata: `EI_qap' = rep_EInet(`permutations', (editmissing(`netobj1'->get_matrix_copy(), 0) :!= 0), (editmissing(`netobj2'->get_matrix_copy(), 0) :!= 0))
+		}
+		else {
+			mata: `EI_qap' = rep_EInet(`permutations', `netobj1'->get_matrix_copy(), `netobj2'->get_matrix_copy())
+		}
 		if `EI_index' > 0 {
 			mata: `out' = sum(`EI_qap' :>= `EI_index')
 		}
@@ -198,8 +211,12 @@ program nwtab2
     capture mata: mata drop `EI_out' `pvalue'  `EI_qap'
 	di "{txt}   E-I Index: {res}" _continue
 	di round(float(`r(EI_index)'),0.001) _continue
-	di "{txt}   p-value: {res}" _continue
-	di round(float(`r(EI_pvalue)'),0.001)
+	// without permutations (permutations(1)) there is no p-value
+	if "`r(EI_pvalue)'" != "" {
+		di "{txt}   p-value: {res}" _continue
+		di round(float(`r(EI_pvalue)'),0.001)
+	}
+	else di ""
 
 	restore
 
@@ -209,7 +226,8 @@ end
 
 capture program drop nwtab3
 program nwtab3
-	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
+	// unvalued is accepted: this table counts ties, whatever their values
+	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) *]
 		
 	
 	_nwsyntax `netname', max(1) min(1)
@@ -329,8 +347,12 @@ program nwtab3
 	
 	di "{txt}   E-I Index: {res}" _continue
 	di round(float(`r(EI_index)'),0.001) _continue
-	di "{txt}   p-value: {res}" _continue
-	di round(float(`r(EI_pvalue)'),0.001)
+	// without permutations (permutations(1)) there is no p-value
+	if "`r(EI_pvalue)'" != "" {
+		di "{txt}   p-value: {res}" _continue
+		di round(float(`r(EI_pvalue)'),0.001)
+	}
+	else di ""
 	di ""
 
 

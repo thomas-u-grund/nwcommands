@@ -29,7 +29,7 @@ xvars]
 |---|---|
 | `nodes`(*`nodeid1...`*) | `numlist` of [nodeid's](nodeid) to be dropped |
 | `nodes`(*[nodelab1...](nodeid)*) | List of [nodelab's](nodeid) to be dropped |
-| `keepmat`(*matamatrix*) | Mata *nodes* x 1 matrix; 0 = drop, 1 = keep |
+| `keepmat`(*matamatrix*) | Mata *nodes* x 1 matrix; 0 = drop, 1 = keep; a matrix of another size is an error |
 | `attributes(varlist)` | Attribute variables that are included in the drop |
 | `generate(newnetname)` | Generates a new network and does not overwrite the original network |
 | `netonly` | Only drops the network, but keeps all Stata variables |
@@ -84,4 +84,4 @@ Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) 
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

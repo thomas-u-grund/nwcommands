@@ -12,33 +12,33 @@
 
 {title:Example networks}
 
-{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on this package's own GitHub repository.
+{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); {cmd:describe} shows the variables of a data set without loading it.
 {p_end}
 {hline}
 
-        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "sysdescribe gang.dta":describe}
-        {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "sysdescribe glasgow.dta":describe}
-        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "sysdescribe florentine.dta":describe}
-        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "sysdescribe usstates.nwdta":describe}
-        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "sysdescribe klas12b.nwdta":describe}
-        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "sysdescribe hpotter.nwdta":describe}
-        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "sysdescribe macaque.nwdta":describe}
-        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "sysdescribe chesapeake.nwdta":describe}
-        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "sysdescribe usair.nwdta":describe}
-        {help netexample##usair:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "sysdescribe usair_full.nwdta":describe}
-        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "sysdescribe lazega.nwdta":describe}
-        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "sysdescribe s50.nwdta":describe}
-        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "sysdescribe sampson.nwdta":describe}
-        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "sysdescribe mesa.nwdta":describe}
-        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "sysdescribe zachary.nwdta":describe}
-        {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "sysdescribe kapferer.nwdta":describe}
-        {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "sysdescribe socialevolution.dta":describe}
-        {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "sysdescribe davis.nwdta":describe}
-        {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "sysdescribe ftdirectors_se.nwdta":describe}
-        {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "sysdescribe senate114.nwdta":describe}
-        {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "sysdescribe senate93.nwdta":describe}
-        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "sysdescribe gahuku.nwdta":describe}
-        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "sysdescribe baerveldt.nwdta":describe}
+        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "describe using https://nwcommands.org/examples/gang.dta":describe}
+        {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "describe using https://nwcommands.org/examples/glasgow.dta":describe}
+        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "describe using https://nwcommands.org/examples/florentine.dta":describe}
+        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "describe using https://nwcommands.org/examples/usstates.nwdta":describe}
+        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "describe using https://nwcommands.org/examples/klas12b.nwdta":describe}
+        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "describe using https://nwcommands.org/examples/hpotter.nwdta":describe}
+        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "describe using https://nwcommands.org/examples/macaque.nwdta":describe}
+        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "describe using https://nwcommands.org/examples/chesapeake.nwdta":describe}
+        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "describe using https://nwcommands.org/examples/usair.nwdta":describe}
+        {help netexample##usair:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "describe using https://nwcommands.org/examples/usair_full.nwdta":describe}
+        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "describe using https://nwcommands.org/examples/lazega.nwdta":describe}
+        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "describe using https://nwcommands.org/examples/s50.nwdta":describe}
+        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "describe using https://nwcommands.org/examples/sampson.nwdta":describe}
+        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
+        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
+        {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
+        {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "describe using https://nwcommands.org/examples/socialevolution.dta":describe}
+        {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
+        {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
+        {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "describe using https://nwcommands.org/examples/senate114.nwdta":describe}
+        {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "describe using https://nwcommands.org/examples/senate93.nwdta":describe}
+        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
+        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
 
 {hline}
 
@@ -868,4 +868,4 @@ by school agree with Snijders and Baerveldt 2003; the Siena file page states the
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

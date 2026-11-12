@@ -38,7 +38,7 @@ matrix of the networks. This is the data structure that {helpb nwsaom} uses for 
 group is a separate set of actors, such as a school class, observed with the same instrument.
 
 {pstd}
-The networks must be one-mode and agree in direction. With {opt group()} the command creates a variable that holds the position of the
+The networks must be one-mode (a two-mode network stops with error 6088) and agree in direction. With {opt group()} the command creates a variable that holds the position of the
 network in {it:netlist}, for every node of the stacked network. If there are no data in memory, the command creates the observations; if there are
 data, they must already have one observation per node, in the order of the stacked network.
 
@@ -66,4 +66,4 @@ Thomas U. Grund, RWTH Aachen University, thomas.u.grund@gmail.com
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

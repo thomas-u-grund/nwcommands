@@ -21,7 +21,7 @@ nwunab lmacname : netlist [,
 
 ## Description
 
-This is the network version of `unab`. `nwunab` expands and unabbreviates a [netlist](netlist) of existing networks, placing the results in the local macro *lmacname*.  `nwunab` is a low-level parsing command and works in exactly the same way as `unab`.  One can also use [nwds](nwds) to unabbreviate network lists. The `_nwsyntax` command is a high-level parsing command that, among other things, also unabbreviates network lists; see `_nwsyntax`.
+This is the network version of `unab`. `nwunab` expands and unabbreviates a [netlist](netlist) of existing networks, placing the results in the local macro *lmacname*.  `nwunab` is a low-level parsing command and works in exactly the same way as `unab`.  One can also use [nwds](nwds) to unabbreviate network lists. The [_nwsyntax](nwprogramming) command is a high-level parsing command that, among other things, also unabbreviates network lists; see [_nwsyntax](nwprogramming).
 
 ## Options
 
@@ -48,8 +48,8 @@ glasgow1 glasgow2 glasgow3
 
 ## See also
 
-- `unab`, [nwds](nwds), `_nwsyntax`
+- `unab`, [nwds](nwds), [_nwsyntax](nwprogramming)
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

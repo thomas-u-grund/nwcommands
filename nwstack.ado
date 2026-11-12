@@ -36,6 +36,12 @@ program nwstack, rclass
 			capture mata: mata drop __nwstack_S
 			error 198
 		}
+		capture noisily _nw2guard `net', cmd(nwstack)
+		if _rc {
+			local __st_rc = _rc
+			capture mata: mata drop __nwstack_S
+			exit `__st_rc'
+		}
 		quietly nwtomata `net', mat(__nwstack_M)
 		mata: __nwstack_S = blockdiag(__nwstack_S, __nwstack_M); st_local("n_`i'", strofreal(rows(__nwstack_M)))
 		local total = `total' + `n_`i''

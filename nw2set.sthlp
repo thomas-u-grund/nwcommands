@@ -199,4 +199,4 @@ are missing), so the memory grows with the square of the total number of nodes. 
 {p 4 4 2}{help nwset} (whose own {opt twomode}/{opt bipartite} options can also declare a two-mode network directly), {help nw2fromedge}, {help nwload}, {help nw2project} ({help nwproject}){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

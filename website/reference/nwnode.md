@@ -42,4 +42,4 @@ The command checks if node *nodename* exists in network *netname* and returns it
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

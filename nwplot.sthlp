@@ -172,7 +172,8 @@ file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} fil
 {p2col:{opt lgc}}only plot largest component{p_end}
 {p2col:{opth components(int)}}control the number of components rendered (an option of {cmd:nwplot} itself, not of {opt layout()}){p_end}
 {p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
-{p2col:{opth iterations(int)}}only relevant for layout = mds/frucht/kk; maximum number of iterations in the underlying iterative procedure, default = 1000{p_end}
+{p2col:{opth iterations(int)}}only relevant for layout = mds/frucht/kk; maximum number of iterations in the underlying iterative procedure, default = 1000;
+	can also be given as an option of {cmd:nwplot} itself, where {cmd:layout(..., iterations())} takes precedence{p_end}
 {p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
 {p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
 {p2col:{opth nodeclash(real)}}only relevant for layout = mdsclassical; separate overlapping nodes{p_end}
@@ -564,4 +565,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

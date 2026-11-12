@@ -1,6 +1,6 @@
 
 capture program drop nwexport
-program nwexport
+program nwexport, rclass
 	version 9
 	syntax [anything(name=netname)], type(string) [FName(string asis) replace]	
 	

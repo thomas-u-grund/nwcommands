@@ -64,4 +64,4 @@ When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

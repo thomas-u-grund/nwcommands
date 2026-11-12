@@ -35,6 +35,8 @@ given{p_end}
 {title:Description}
 {pstd}
 Displays results from hierarchical clustering (see {help nwhierarchy} or {help cluster}) as wheel dendrogram.
+The cluster levels must be nested in each other; when they are not, the command stops with error 459.
+An error of the graph itself (for example an option that {cmd:twoway} does not know) is shown and returned.{p_end}
 	
 		
 
@@ -50,4 +52,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 	{cmd:. nwdendrogram _clus_1}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -22,7 +22,7 @@
 {opt undirected}
 {opth ntimes(int)}
 {opt name}({it:{help newnetname}})
-{opt labs}({it:lab1 lab2 ...})
+{opt labs}({it:lab1,lab2,...})
 {opt xvars}]
 
 {p 8 17 2}
@@ -35,7 +35,7 @@
 {opt undirected}
 {opth ntimes(int)}
 {opt name}({it:{help newnetname}})
-{opt labs}({it:lab1 lab2 ...})
+{opt labs}({it:lab1,lab2,...})
 {opt xvars}]
 
 {synoptset 21 tabbed}{...}
@@ -49,7 +49,7 @@
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:small}{p_end}
-{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt labs}({it:lab1,lab2,...})}overwrite node labels (separated by commas){p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
@@ -137,4 +137,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

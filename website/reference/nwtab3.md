@@ -19,6 +19,8 @@ netname
 ,
 attribute(varname)
 [permutations(integer)
+unvalued
+save(filename)
 plot
 plotoptions(tabplot_options)
 eiplot
@@ -32,6 +34,8 @@ tabulate2_options]
 | `plot` | Make a tabplot |
 | `eiplot` | Make a plot for significance of E-I-index |
 | `permutations(integer)` | QAP permutations for significance of E-I-index; default = 100 |
+| `unvalued` | accepted; the table counts ties already, whatever their values |
+| `save(filename)` | save the E-I indices of the permutations (variables **EI_simulated**, **EI_observed**) as a Stata data set |
 
 ## Description
 
@@ -66,4 +70,4 @@ More intuitively, the E-I-index simply calculates the number of ties off the dia
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

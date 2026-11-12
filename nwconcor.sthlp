@@ -125,4 +125,4 @@ applications to social network analysis and comparison with multidimensional sca
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

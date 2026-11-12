@@ -63,6 +63,7 @@
 permutation) and {it:observed} (the observed correlation, repeated in every row); needs {opt permutations()} of more than 1{p_end}
 {synopt:{opt undirected}, {opt directed}}Node-correlation mode: store the correlation network as undirected or directed (options of {help nwset}){p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 12,900 nodes otherwise){p_end}
+{synopt:{opt ifcond}({it:string})}Accepted with two networks or {opt attribute()} for compatibility; it has no effect (all pairs of nodes are used){p_end}
 
 
 {title:Description}
@@ -321,4 +322,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 	{help nwtabulate}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -20,7 +20,7 @@ program _nwevalnetexp
 		if ("`charAt'" == "(") local parenthesisBalance = `parenthesisBalance' + 1
 		if ("`charAt'" == ")") local parenthesisBalance = `parenthesisBalance' - 1
 	}
-	if ("`netexp'" == "" | `parenthesisBalance' != 0){a
+	if ("`netexp'" == "" | `parenthesisBalance' != 0){
 		di "{err}{it:netexp} empty or contains unmatched parentheses"
 		error 6077
 	}

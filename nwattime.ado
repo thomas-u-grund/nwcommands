@@ -38,6 +38,14 @@ program nwattime, rclass
 	mata: `__srcnames' = `netobj'->get_nodenames()
 	mata: st_local("srcdirected", strofreal(`netobj'->is_directed_boolean()))
 	mata: st_local("srcvalued", strofreal(`netobj'->is_valued_boolean()))
+	// a two-mode source keeps its modes and level labels in the slice
+	local __at2 = ("`is2mode'" == "true")
+	tempname __atmodes __atd1 __atd2
+	if `__at2' {
+		mata: `__atmodes' = `netobj'->get_modes()
+		mata: `__atd1' = `netobj'->get_description_mode1()
+		mata: `__atd2' = `netobj'->get_description_mode2()
+	}
 
 	if "`temporaltype'" == "snapshot" {
 		mata: `__edges' = nwattime_slice_snapshot(`netobj', `at')
@@ -62,6 +70,13 @@ program nwattime, rclass
 	mata: `netobj'->set_directed(`srcdirected')
 	mata: `netobj'->set_edge_from_triplets(`__edges'[.,1], `__edges'[.,2], `__edges'[.,3], `srcdirected')
 	mata: `netobj'->set_valued(`srcvalued')
+	if `__at2' {
+		mata: `netobj'->set_2mode(1)
+		mata: `netobj'->set_modes(`__atmodes')
+		mata: `netobj'->set_description_mode1(`__atd1')
+		mata: `netobj'->set_description_mode2(`__atd2')
+		mata: mata drop `__atmodes' `__atd1' `__atd2'
+	}
 	mata: `netobj'->set_provenance("static graph view of `srcnetname' at t=`at' (`srctemporaltype')")
 
 	// displayed count: an undirected tie is stored as two triplet rows

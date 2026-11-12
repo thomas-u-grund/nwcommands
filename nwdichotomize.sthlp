@@ -82,4 +82,4 @@ Instead of the in-place call, keep the original valued network and save the bina
 	{cmd:. nwdichotomize trade, threshold(100) generate(trade_binary)}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

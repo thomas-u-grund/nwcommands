@@ -26,7 +26,8 @@
 {pstd}
 {cmd:nwnoderename} changes the name of a single node in a network. When a
 node with name {it:old_nwnode} is found in {it:netname}, it is replaced with
-{it:new_nwnode}.
+{it:new_nwnode}. If {it:old_nwnode} is not found or {it:new_nwnode} is not a
+valid name, the command stops with an error (r(198)) and the network is not changed.
 
 
 {marker examples}{...}
@@ -85,4 +86,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 	{help nwrename}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

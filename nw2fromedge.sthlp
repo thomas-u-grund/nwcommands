@@ -33,7 +33,8 @@
 {pstd}
 The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in {it:level2} are
 shifted by the largest id in {it:level1}; when both are string variables and share a value, the prefixes {bf:m1_} and
-{bf:m2_} are added to the ids of {it:level1} and {it:level2}. Both changes are made to the variables in the data in memory.
+{bf:m2_} are added to the ids of {it:level1} and {it:level2}. Both changes apply to the node names of the network only;
+the id variables themselves are not changed.
 
 {pstd} 
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation
@@ -215,4 +216,4 @@ A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw
 {p 4 4 2}{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

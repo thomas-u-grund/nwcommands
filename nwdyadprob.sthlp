@@ -46,17 +46,15 @@ of network {help netname} or 2) from a Mata matrix (or Mata expression) specifie
 {it:netname} is used. The command can be used to create all sorts of networks.
 
 {pstd}
-Let {it:e_ij} be the tie values of network {help netname}. When all of them lie between 0 and 1, {it:p_ij = e_ij}.
-Otherwise they are transformed to probabilities first: {it:p_ij} = invlogit({it:e_ij}). The values in {bf:mat()} are
-used as they are.
-
-{pstd}
-When no {bf:density()} is given, each tie {it:x_ij} is drawn independently with probability {it:p_ij}.
+When no {bf:density()} is given, each tie {it:x_ij} is drawn independently with probability {it:p_ij}. Let {it:e_ij} be
+the tie values of network {help netname}. When all of them lie between 0 and 1, {it:p_ij = e_ij}. Otherwise they are
+transformed to probabilities first: {it:p_ij} = invlogit({it:e_ij}). The values in {bf:mat()} are used as they are.
 
 {pstd}
 With {bf:density(}{it:d}{bf:)}, exactly {it:n}({it:n}-1){it:d} ties (half as many with {opt undirected}) are drawn
-without replacement, with inclusion probabilities proportional to {it:p_ij}. The command stops with an error when fewer
-dyads have a non-zero {it:p_ij} than ties are requested.
+without replacement, with inclusion probabilities proportional to the tie values {it:e_ij} of {help netname} (or to the
+values in {bf:mat()}). The values are relative weights and are used as they are, also when they are larger than 1; they
+cannot be negative. The command stops with an error when fewer dyads have a non-zero weight than ties are requested.
 
 {pstd}
 With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
@@ -172,4 +170,4 @@ The result can be nicely plotted in the following way:
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -98,17 +98,22 @@ program nwinf
 	if (r(directed)=="false"){
 		mata: st_numscalar("r(edges)", `netobj'->get_edges_count())
 		mata: st_numscalar("r(edges_sum)", `netobj'->get_edges_sum())
-		mata: st_numscalar("r(dg_central)", `central')
+		if "`detail'" != "" mata: st_numscalar("r(dg_central)", `central')
 	}
 	else {
 		mata: st_numscalar("r(arcs)", `netobj'->get_arcs_count())
 		mata: st_numscalar("r(arcs_value)", `netobj'->get_arcs_sum())
-		mata: st_numscalar("r(indg_central)", `incentral')
-		mata: st_numscalar("r(outdg_central)", `outcentral')
+		if "`detail'" != "" {
+			mata: st_numscalar("r(indg_central)", `incentral')
+			mata: st_numscalar("r(outdg_central)", `outcentral')
+		}
 	}
 	mata: st_numscalar("r(density)", `netobj'->get_density())
-	mata: st_numscalar("r(transitivity)", `transitivity')
-	mata: st_numscalar("r(reciprocity)", `reciprocity')
+	// the measures of detail are stored only with detail
+	if "`detail'" != "" {
+		mata: st_numscalar("r(transitivity)", `transitivity')
+		mata: st_numscalar("r(reciprocity)", `reciprocity')
+	}
 	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())	
 	// mean degree: ties per node (directed: arcs per node, the mean outdegree, which equals the mean
 	// indegree; undirected: twice the edges per node). Not for two-mode networks, where the two modes

@@ -69,6 +69,9 @@ The command generates a network. It can be used either with a) some function ***
 - `small`(`nodes`) , `k(int)` [`prob(float)` `shortcuts(int)` `undirected` `xvars`]
 - Generate a small-world network (see [nwsmall](nwsmall)).
 
+- `sym(netname)` [, `mode(max|min|sum|mean)`]
+- Symmetrize a network; the original is not changed (see [nwsym](nwsym)).
+
 - `transpose(netname)`
 - Transpose a network (see [nwtranspose](nwtranspose)).
 
@@ -121,4 +124,4 @@ Generate a per-node variable, one value per node, from an existing network:
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

@@ -88,6 +88,10 @@ network per path found.
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
+{phang2}{opth sym(netname)} [, {opt mode(max|min|sum|mean)}]
+{p_end}
+{pmore2}Symmetrize a network; the original is not changed (see {help nwsym}).
+
 {phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
@@ -163,4 +167,4 @@ Generate a per-node variable, one value per node, from an existing network:
 	{cmd:. list mydeg in 1/5}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

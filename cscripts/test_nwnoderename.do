@@ -27,18 +27,17 @@ assert `"`r(labs)'"' == `"x1,n2,n3,n4"'
 assert r(nodes) == 4
 
 * --- renaming to a label that already exists in the network must fail
-* cleanly (r(success)==0, _rc==0 - a soft-fail flag, not a hard Stata
-* error, confirmed via direct testing of the command's own design).
+* with an error (r(198)) and r(success)==0.
 nwclear
 nwrandom 4, prob(1) name(mynet2)
 capture nwnoderename mynet2, old(n2) new(n3)
-assert _rc == 0
+assert _rc == 198
 assert r(success) == 0
 
 * --- renaming a node that does not exist in the network must also fail
-* cleanly the same way.
+* the same way.
 capture nwnoderename mynet2, old(zzz) new(y1)
-assert _rc == 0
+assert _rc == 198
 assert r(success) == 0
 
 * --- directed, weighted network: the rename must only touch the label,

@@ -4,6 +4,45 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.21.0] - 2026-11-12
+
+### Results that change (read before you re-run old analyses)
+- `nwdyadprob weightnet, density()` draws the ties with probabilities proportional to the tie values of the weight network, as documented. Tie values above 1 were first passed through invlogit, which flattened them (weights of 148, 1 and 0.007 became almost 1, 0.73 and 0.5), so the network of the help example showed hardly any of the intended homophily. Negative weights are refused with `density()`. Without `density()` nothing changes: values outside 0 to 1 are still turned into probabilities with invlogit.
+
+### Added
+- `nwgenerate newnet = sym(netname)` makes a symmetrized copy of a network (as `nwsym ..., generate()`); before, the keyword was accepted and did nothing.
+- `nwplotmatrix, labelopt()` sets suboptions of both axis labels and `legendopt()` adds options to the legend; both were accepted and ignored.
+- `nwtabulate netname1 netname2, unvalued` counts every tie as 1 in the table and in the E-I index; `save()` of `nwtabulate` (two networks, or `attribute()`) saves the E-I indices of the permutations as a data set.
+- `nwgeodesic, noreplace` does not overwrite the default network `_geodesic` either.
+- `animate, mag()` sets the magnification of the .eps files.
+
+### Fixed
+- `nwgenerate newnet = large(netname)` kept the largest component of the right network only by chance.
+- `nwring` and `nwsmall` with `ntimes()` gave `labs()` only to the first network; every network now gets the labels. Their help files show that the labels are separated by commas.
+- `nwdropnodes, keepmat()` with a matrix of the wrong size overwrote the user's Mata matrix with ones and dropped nothing; it is now an error (r(503)) and the matrix is not changed.
+- `nwdegree` on a list of two-mode and one-mode networks stopped with an error (two-mode networks got the plain variable name); a two-mode network of a list now gets its name appended, as the one-mode networks do (`deg_net`).
+- `nwplot, iterations()` was ignored (the default of `layout()` replaced it); it is used now, and `layout(..., iterations())` takes precedence.
+- `nwnoderename` with a name that was not found or not valid printed an error but did not stop; it now exits with r(198).
+- `animate, graphs(_all)` repeated the first graph as the last frame instead of the last graph; the .eps files are erased with Stata's `erase` on every platform (Windows `del` was used on Linux).
+- `nwreplacemat` stored `r(directed)` = 1 for a symmetric matrix; `r(directed)` is now 1 when the network is directed.
+- `nwclustering, symmetrize` stored `r(symmetrized)` = "false"; it is "true".
+- `nwtabulate` printed "tie values are ignored" for the one-way table and the table of two networks, which show the tie values; the note is now printed only for the table by `attribute()`. With `permutations(1)` the tables of two networks or by attribute stopped with an error after the table; they now print no p-value.
+- `nwexport` and `nwimport` left r() results of their helper commands behind, and an internal synchronisation step added `r(nodes)` to the results of the calling command; no stray r() results now.
+- `nwfactions`, `nwkcomponents`, `nwkplex`, `nwnclan` and `nwnclique` left scalars and matrices (`faction_fitness`, `nw_nkcomp`, `nw_tabnwkplex` and others) in memory and overwrote the user's objects with these names; they use temporary names now.
+- `nwnclique`, `nwnclan` and `nwkplex` with `nomatrix` stopped with a conformability error (r(3200)) when exactly one set was found; the per-node variable is now the same as without `nomatrix`. The core Mata library is rebuilt (nwsaom and nwergm are rebuilt against it).
+- Commands that synchronise the data with a network no longer change the r() results of the command run before them (for example `r(N)` of `summarize`).
+- `nwsummarize` without `detail` no longer stores empty detail results (`r(dg_central)`, `r(transitivity)` and others); they are stored with `detail`, as documented.
+- `nwreplacemat, vars()`, `nwtabulate ..., attribute() unvalued` and the `ifcond()` option of `nwcorrelate` are accepted for compatibility and have no effect; their help files say so.
+- Help files: the links to `_nwsyntax` in `nwprogramming` and `nwunab` lead to the section of `nwprogramming` that describes it; the "describe" links of `netexample` describe the data sets on the website (`sysdescribe` looked for them on the local computer).
+- `nw2fromedge` no longer changes the id variables in the data: the shift of numeric mode-2 ids and the prefixes `m1_`/`m2_` of string ids are applied to the node names only. When the command stopped with an error, the changed variables used to stay in the data; an `if` condition on the mode-2 id was evaluated on the shifted values.
+- `nwfromedge ..., name()` with a name already in use stopped with error 483 only after it had dropped the edge list from memory (string ids); it now stops before the data are changed. `replace` is passed on with `twomode`.
+- `nwattime` on a temporal two-mode network gives a two-mode slice with the same modes and level labels (it gave a one-mode network).
+- `nwdendrogram` reports errors of the graph (for example an unknown `twoway` option) instead of ending silently, and stops with error 459 and a message when the cluster levels are not nested.
+- `nwcontext`: `generate()` is no longer required when `mat()` is given; with both options the variable and the Mata matrix are created.
+- `nwstack` refuses two-mode networks with error 6088 and a message (it stacked them as one-mode networks).
+- `_nwnodelab, nodeid()` with a node id below 1 stops with the message "out of bounds" instead of a Mata error.
+- The help file of `nwaddnodes` said that node names are separated by commas or spaces and cannot contain a space; they are separated by commas and may contain spaces.
+
 ## [3.20.1] - 2026-11-12
 
 ### Fixed

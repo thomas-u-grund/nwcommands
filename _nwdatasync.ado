@@ -2,6 +2,18 @@
 
 capture program drop _nwdatasync
 program _nwdatasync
+	// the r() results of the caller are left as they were on every path: the work below runs commands that set
+	// r() (count, merge, nwname, ...), so the caller's results are held and restored around it
+	tempname __nwds_r
+	_return hold `__nwds_r'
+	capture noisily _nwdatasync_work `0'
+	local __nwds_rc = _rc
+	_return restore `__nwds_r'
+	if `__nwds_rc' exit `__nwds_rc'
+end
+
+capture program drop _nwdatasync_work
+program _nwdatasync_work
 	syntax [anything(name=netname)] [, force overwrite generate(string) on off]
 	unw_defs
 	if "`on'" != "" {
@@ -45,8 +57,8 @@ program _nwdatasync
 	tempname nodeindex
 
 	mata: `nodename' = (`netobj'->get_nodenames())'
-	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())
-	local __nwds_nodes = r(nodes)
+	// a local, not r(nodes): the r() results of the caller are not changed
+	mata: st_local("__nwds_nodes", strofreal(`netobj'->get_nodes()))
 
 	if "`overwrite'" != "" {
 		capture drop `nw_nodename'

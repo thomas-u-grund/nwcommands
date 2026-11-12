@@ -59,13 +59,13 @@ program nwgenerate
 			// several sibling commands) - consolidated onto
 			// `errNWsExists' (483, unw_defs.ado) instead of its own
 			// separate, undocumented `6004'.
-			di "{err}network {it:`netname'} already defined"
+			di "{err}network {it:`newnetname'} already defined"
 			error `errNWsExists'
 		}
 	
 		// replace the network if it exists already
 		if (strpos("`options'", "replace")!=0){
-			capture nwdrop `netname'
+			capture nwdrop `newnetname'
 			local options ""
 		}
 
@@ -130,7 +130,7 @@ program nwgenerate
 			tempvar _lgc
 			nwcomponents `sub1', lgc generate(`_lgc')
 			nwduplicate `sub1',  name(`newnetname')
-			nwkeep `netname' if `_lgc' == 1
+			nwkeep `newnetname' if `_lgc' == 1
 		}	
 		
 		// nwduplicate shortcut
@@ -212,6 +212,12 @@ program nwgenerate
 			nwrandom `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwreach shortcut
+		// nwsym shortcut: the symmetrized copy of a network (nwsym ..., generate()); sub-options such as mode()
+		// are passed on
+		qui if "`whichjob'" == "sym(" {
+			noi _nwsyntax `sub1', max(1)
+			nwsym `sub1', `sub2' generate(`newnetname')
+		}
 		qui if "`whichjob'" == "reach(" {
 			noi _nwsyntax `sub1', max(1)
 			nwreach `sub1', `sub2' name(`newnetname') `fcn_opt'

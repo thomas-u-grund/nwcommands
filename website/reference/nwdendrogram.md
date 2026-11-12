@@ -21,8 +21,8 @@ nwdendrogram
 
 ## Description
 
-Displays results from hierarchical clustering (see [nwhierarchy](nwhierarchy) or `cluster`) as wheel dendrogram.
+Displays results from hierarchical clustering (see [nwhierarchy](nwhierarchy) or `cluster`) as wheel dendrogram. The cluster levels must be nested in each other; when they are not, the command stops with error 459. An error of the graph itself (for example an option that `twoway` does not know) is shown and returned.
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

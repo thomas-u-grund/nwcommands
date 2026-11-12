@@ -19,7 +19,7 @@
 {help filename}
 {cmd:,}
 {opt graphs(_all | g1 g2 g3...)}
-[{opt imagickpath(path)} {opt delay(#)} {opt noloop} {opt showcommand} {opt keepeps}]
+[{opt imagickpath(path)} {opt delay(#)} {opt noloop} {opt showcommand} {opt keepeps} {opt mag(#)}]
 
 {synoptset 28 tabbed}{...}
 {synopthdr}
@@ -33,6 +33,7 @@
 {synopt:{opt noloop}}no loop of movie{p_end}
 {synopt:{opt showcommand}}display ImageMagick command{p_end}
 {synopt:{opt keepeps}}keep .eps files{p_end}
+{synopt:{opt mag(#)}}magnification of the .eps files, in percent ({cmd:graph export}'s {cmd:mag()}); default is {cmd:mag(100)}{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -54,4 +55,4 @@ computer.
 {cmd:. animate lifemovie, graphs(_all)}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

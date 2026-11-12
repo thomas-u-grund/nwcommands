@@ -22,6 +22,7 @@
 {opt symopt(options)}
 {opth name(string)}
 {opt nwreplace}
+{opt noreplace}
 {opth generate(newvarname)}
 {opt xvars}
 {opt force}
@@ -37,6 +38,7 @@
 {synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}; the default {it:_geodesic} is overwritten without it{p_end}
+{synopt:{opt noreplace}}Do not overwrite the default network {it:_geodesic} either: stop with an error if it exists{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via
 {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
@@ -214,4 +216,4 @@ networks, and centrality. {it:Physical Review E} 64, 016132.
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

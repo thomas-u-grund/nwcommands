@@ -74,4 +74,4 @@ Closeness as defined above ((nodes - 1) / farness) is only defined for a connect
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

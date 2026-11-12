@@ -30,6 +30,7 @@
 {synopt:{opt netonly}}only update the network, do not touch the Stata dataset at all{p_end}
 {synopt:{opt xvars}}also load the updated network as Stata variables (see {help nwload}){p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}new node labels to use when {it:matname} requires resizing the network; default = {bf:1}, {bf:2}, ... {p_end}
+{synopt:{opt vars}({it:string})}accepted for compatibility; has no effect (use {opt labs()} for the node labels){p_end}
 
 
 {title:Description}
@@ -92,7 +93,7 @@ network with a new Mata matrix {bf:J(5,5,99)}.
 
 {synoptset 20 tabbed}{...}
 {p2col 5 20 24 2: Scalars}{p_end}
-{synopt:{bf:r(directed)}}1 if the new matrix is symmetric (the network is then set to undirected), 0 otherwise{p_end}
+{synopt:{bf:r(directed)}}1 if the new matrix is not symmetric (the network is then directed), 0 if it is symmetric (the network is then set to undirected){p_end}
 
 
 {title:See also}
@@ -100,4 +101,4 @@ network with a new Mata matrix {bf:J(5,5,99)}.
 	{help nwreplace}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

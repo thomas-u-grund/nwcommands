@@ -60,7 +60,8 @@ program nwgeodesic
 	}
 	capture _nwsyntax `name', other(_check)
 	local name_exists = (_rc == 0)
-	if `name_exists' & "`nwreplace'" == "" & `name_given' {
+	// noreplace: also the default network _geodesic is not overwritten
+	if `name_exists' & "`nwreplace'" == "" & (`name_given' | "`replace'" == "noreplace") {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
 		error 99
 	}

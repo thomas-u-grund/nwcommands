@@ -88,7 +88,8 @@ program nwdendrogram
 		local label = "__`label'"
 	}
 	
-	capture {
+	// errors of the drawing (a wrong option, a cluster structure that is not a hierarchy) are passed on after the clean-up
+	capture noisily {
 	if "`label'" == "" {
 		local label = "`ord'"
 	}
@@ -109,10 +110,12 @@ program nwdendrogram
 	set more off
 	qui dendrogram_classes `mylevels', `factor' cutpoints(`cutpts') `options' label(`label') 
 	}
+	local __dg_rc = _rc
 	capture drop __lev*
 	restore
 	
 	capture mata: mata drop __nwdendrogram_*
+	if `__dg_rc' exit `__dg_rc'
 	capture confirm number 0
 end
 
@@ -149,7 +152,8 @@ program dendrogram_classes
 	checkhierarchy `hierarchies'
 	
 	if r(hierarchical) == 0 {
-		exit
+		noi di "{err}{p 0 0 2}the cluster levels are not nested in each other, so they do not form a hierarchy; nwdendrogram draws only hierarchical (nested) clusterings, such as the result of {help nwhierarchy}.{p_end}"
+		exit 459
 	}
 	
 	preserve 
@@ -474,9 +478,10 @@ program checkhierarchy, rclass
 		local j = `i' - 1
 		local level1 : word `j' of `varlist'
 		local level0 : word `i' of `varlist'
+		// nested: level0 is constant within every group of level1 (the sd is 0, or missing for a group of one)
 		bys `level1': egen `variance`i'' = sd(`level0')
 		qui sum `variance`i''
-		if r(sd) != 0 {
+		if r(max) > 0 & r(max) < . {
 			local hierarchical = 0
 			noi di "{err}Variable {bf:`level1'} is not nested in variable {bf:`level0'}{txt}"
 		}

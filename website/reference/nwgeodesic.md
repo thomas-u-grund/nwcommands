@@ -23,6 +23,7 @@ sym
 symopt(options)
 name(string)
 nwreplace
+noreplace
 generate(newvarname)
 xvars
 force
@@ -37,6 +38,7 @@ bin:ary]
 | `symopt(options)` | Options controlling the symmetrization when `sym` is specified (see [nwsym](nwsym)) |
 | `name`(*[newnetname](newnetname)*) | Name of the new distance network; default = *_geodesic* |
 | `nwreplace` | Overwrite existing network *newnetname*; the default *_geodesic* is overwritten without it |
+| `noreplace` | Do not overwrite the default network *_geodesic* either: stop with an error if it exists |
 | `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
 | `force` | the least-cost distances of a valued network are computed natively at any size and `force` is not needed; on a platform without the plugin a valued network of more than 100 nodes stops with r(198) unless `force` (slow Mata routine) or `binary` (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
@@ -97,4 +99,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

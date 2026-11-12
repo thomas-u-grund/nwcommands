@@ -67,7 +67,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mo
 
 - **Macros**
 - **r(measure)** --- the `measure()` actually used
-- **r(symmetrized)** --- *false*, only returned when `symmetrize` was specified
+- **r(symmetrized)** --- *true*, only returned when `symmetrize` was specified (one-mode network)
 
 ## References
 
@@ -79,4 +79,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

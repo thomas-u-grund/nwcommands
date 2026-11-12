@@ -55,6 +55,7 @@ kdensity_options]
 | `save(filename)` | Save (the name may be quoted and contain spaces; the full path is printed) the QAP permutation results in a Stata dataset with the variables *correlation* (one row per permutation) and *observed* (the observed correlation, repeated in every row); needs `permutations()` of more than 1 |
 | `undirected`, `directed` | Node-correlation mode: store the correlation network as undirected or directed (options of [nwset](nwset)) |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 12,900 nodes otherwise) |
+| `ifcond`(*string*) | Accepted with two networks or `attribute()` for compatibility; it has no effect (all pairs of nodes are used) |
 
 ## Description
 
@@ -106,4 +107,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 
 ---
 
-*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))

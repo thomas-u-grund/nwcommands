@@ -60,7 +60,9 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer -1) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
+	// iterations() given to nwplot itself; layout(..., iterations()) takes precedence, the default is 1000
+	local __nwp_top_iter = `iterations'
 
 	// syntax names the macro of an option noXXX XXX
 	local nosign "`nosign'`sign'"
@@ -280,7 +282,13 @@ program nwplot, rclass
 	
 	local gridcols = ceil(sqrt(`nodes'))
 	local 0 = "`layout'"
-	syntax [anything][, nodeclash(string) lgc norescale iterations(integer 1000) columns(integer `gridcols') vertical ]
+	syntax [anything][, nodeclash(string) lgc norescale iterations(integer -1) columns(integer `gridcols') vertical ]
+	if `iterations' == -1 local iterations = `__nwp_top_iter'
+	if `iterations' == -1 local iterations = 1000
+	if `iterations' < 1 {
+		di "{err}option {bf:iterations()} must be a positive integer"
+		error 198
+	}
 	
 	if("`anything'"=="") {
 		// kk (Kamada-Kawai) is the default layout - previously mds
