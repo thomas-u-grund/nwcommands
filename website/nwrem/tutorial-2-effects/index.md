@@ -11,7 +11,7 @@ description: "Add actor covariates, a pair covariate and recency effects to a re
 whether two students share a floor (an attribute of a pair), and with recency instead of frequency.
 
 **Data.** The same 439 phone calls among 84 students, plus the attribute `floor` (1 to 9) of each student; both data files are available: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv). You need the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem`
-1.0.1 and the core 3.0.0. Script and log: [example.do](example.do), [example.log](example.log).
+1.1.0 and the core 3.22.0. Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Where the covariates come from
 
@@ -112,6 +112,7 @@ partners (most recent partner = rank 1, never contacted = 0). Only the order cou
 
 ```stata
 . estimates table hist floors samefloor recent both, b(%9.3f) stats(ll N)
+
 --------------------------------------------------------------------------
     Variable |   hist       floors     samefloor    recent       both     
 -------------+------------------------------------------------------------
@@ -123,7 +124,7 @@ covevent_s~r |                            -0.531
      rsndsnd |                                         6.417       5.475  
      rrecsnd |                                         1.600       0.931  
 -------------+------------------------------------------------------------
-          ll |  -2274.048   -2197.731   -2263.785   -2122.016   -2094.776  
+          ll | -2274.048   -2197.731   -2263.785   -2122.016   -2094.776
            N |       439         439         439         439         439  
 --------------------------------------------------------------------------
 

@@ -13,7 +13,7 @@ say.
 **Data.** The phone calls among 84 university students that the R package goldfish ships as the `calls` data of its Social
 Evolution example (data from a study of MIT students, distributed with goldfish): 439 calls over about six weeks in 2008, each with the caller, the person called and the time (in seconds)
 of the call. The two data files ([events](../data/calls_events.csv), [actors](../data/calls_actors.csv)) are part of this section. You need the core `nwcommands` and the `nwrem`
-package (see [Install](../install/)); the commands were run with `nwrem` 1.0.1 and the core 3.0.0. The complete script and log are in
+package (see [Install](../install/)); the commands were run with `nwrem` 1.1.0 and the core 3.22.0. The complete script and log are in
 [example.do](example.do) and [example.log](example.log). For a general introduction to event models, see
 [Intro to Longitudinal Network Models](../../tutorials/19-intro-longitudinal-models/).
 

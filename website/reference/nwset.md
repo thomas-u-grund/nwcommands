@@ -47,7 +47,7 @@ nwset, nwclear
 | `valued` | Force network to be treated as valued (tie strength, not just presence/absence) |
 | `unvalued` | Force network to be treated as unvalued (binary) |
 | `selfloop` | Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked |
-| `name`(*[newnetname](newnetname)*) | Name of the new network; default = *network* |
+| `name`(*[newnetname](newnetname)*) | Name of the new network, a valid Stata name of at most 32 characters (see [netname](netname)); default = *network* |
 | `replace` | Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning |
 | `overwrite` | Alias for `replace` |
 | `nodenames(string)` | Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of `labs()` |
@@ -146,6 +146,8 @@ The following command declares such data as network data and gives the new netwo
 ```
 To keep a node without ties (an isolate), give it a row of its own with the other identifier missing (`""` for string identifiers, `.` for numeric ones): the node is created, the row adds no tie. A row with both identifiers missing is ignored. For example, the rows `Anna Sophie` and `Fion ""` make a network of three nodes with one tie, *Fion* an isolate.
 
+Numeric identifiers become node labels *n* followed by the full number (identifier 10000001 gives *n10000001*); a string identifier is its own label.
+
 **ul:3. Declare adjacency matrix from Mata matrix**
 
 Set a network from a *nodes x nodes* Mata matrix that holds the adjacency matrix of the new network. The option **mat()** is specified with the name of an existing Mata matrix.
@@ -191,7 +193,7 @@ A two-mode (bipartite) network has two distinct sets of nodes ("modes"), with ti
 . use "https://nwcommands.org/examples/institutions.dta", clear
 . nwset person institution, twomode name(mynet)
 ```
-This also automatically sets each mode's own human-readable description from the variable names used (*person*/*institution* here - see **r(mode1desc)**/**r(mode2desc)** in [nwname](nwname), [nwsummarize](nwsummarize)), and (if **xvars** is given) generates a *_mode* variable holding each node's own mode ("1" for persons, "2" for institutions - see [nw2fromedge](nw2fromedge) for the full option set this delegates to internally, including **name()**/**xvars**/**keeporiginal**). **twomode** cannot be combined with **bipartite** - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare `varlist` alone, so combining them is rejected as an explicit error rather than guessed at.
+This also automatically sets each mode's own human-readable description from the variable names used (*person*/*institution* here - see **r(mode1desc)**/**r(mode2desc)** in [nwname](nwname), [nwsummarize](nwsummarize)), and (if **xvars** is given) generates a *_mode* variable holding each node's own mode ("1" for persons, "2" for institutions - see [nw2fromedge](nw2fromedge) for the full option set this delegates to internally, including **name()**/**xvars**/**keeporiginal**). The nodes of mode 1 (the first id variable) come first, in the sort order of their identifiers, followed by the nodes of mode 2, whatever the type of the identifiers (string ones included). **twomode** cannot be combined with **bipartite** - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare `varlist` alone, so combining them is rejected as an explicit error rather than guessed at.
 
 Like any edgelist-based declaration (**edgelist** above included), **twomode** can only ever create nodes that actually appear in the edgelist - a node with zero ties (an isolate) is never created, silently, since an edgelist has no way to record it in the first place. Use [nwaddnodes](nwaddnodes)'s own **mode()** option afterward to add any isolates the source data itself could not represent (required, not optional, on a two-mode network - it never silently assumes which of the two modes an added isolate belongs to).
 
@@ -220,7 +222,12 @@ Time belongs to edges/ties, not to a separate network copy per timepoint. An edg
 - **eventtime(*eventtimevar*)**
 - **event** semantics: each row is a timestamped relational *event*, not a persistent
 - tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
-- ordinary graph
+- ordinary graph. Every event needs a sender, a receiver and a time: a row with a missing
+- *eventtimevar*, sender or receiver is refused (error 416) and nothing is changed; drop such rows
+- first. A third variable gives each event a value (`nwset sender receiver value, eventtime(t)`); it
+- must be numeric and not missing. Without it every event has the value 1. The event models
+- (`nwdynam`) add the value of an event to the tie between its sender and receiver, as the R
+- package goldfish does with the *increment* of an event
 
 For example, this declares a snapshot network from three waves of ties:
 
@@ -244,7 +251,7 @@ Although not really needed, networks can be represented with Stata variables (se
 
 By default, network generators (including `nwset` itself) only produce a network object - they do NOT load a network as Stata variables (see [nwload](nwload)). Many network generators allow the option **xvars**, which ADDITIONALLY loads the new network as Stata variables right away (equivalent to following the generator with a separate [nwload](nwload) call). Leaving **xvars** unspecified keeps Stata's own variable budget free when one deals with many or large networks - all commands that require a [netname](netname) still work even when no Stata variables for that network exist at all, or after ** drop _all**. This also means that one can still deal with larger networks even when using **Small Stata**.
 
-Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with option **labs()**. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says so). Labels must be unique: **nwset** stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program automatically labels nodes according the variables that have been set.
+Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with option **labs()**. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names (*n**i* for node *i*; a default name that is already one of the given labels is replaced by the next unused *n**k* above the number of nodes), and extra entries are ignored (a note says so). Labels must be unique: **nwset** stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program automatically labels nodes according the variables that have been set.
 
 The rows of the dataset hold the nodes' attributes, in the node order of the networks in memory (variable **_nwnode** holds the node labels). A network declared with **mat()** and without labels is aligned with these rows: if it has *N* nodes and rows 1 to *N* are in the node order of a network in memory, node *i* of the matrix is observation *i* and gets its label. Otherwise its nodes are labelled n1, n2, .... A new network whose labels (**labs()**, **labsfromvar()**, **nodenames()**) list the nodes already in such rows in another order is reordered into the row order of the data (ties unchanged), so declaring it does not re-sort the rows under the other networks. Only a network over a different set of nodes re-sorts (and extends) the data; commands that read node attributes of an earlier network, such as `nwsaom` and `nwergm`, then sort the rows back into that network's node order (see [_nwdatasync](_nwdatasync)).
 

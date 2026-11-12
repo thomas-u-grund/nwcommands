@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 11: brokerage and structural holes
 . * Requires the core nwcommands.
 . nwwebuse florentine, nwclear
@@ -17,11 +15,12 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean degree:  2.50
    Temporal: false
 
 . describe, short
 
-Contains data from /Users/tgrund/FILES_NEW/SOFTWARE/nwcommands_main/data/florentine.nwdta
+Contains data from https://nwcommands.org/examples/florentine.nwdta
  Observations:            16                  
     Variables:             5                  16 May 2019 17:02
 Sorted by: 
@@ -68,6 +67,7 @@ Sorted by:
    Minimum value:  0
    Maximum value:  1
    Density:  .458
+   Mean outdegree:  6.88
    Temporal: false
 
 . nwdegree flomarriage, generate(deg)
@@ -101,20 +101,20 @@ Sorted by:
 
 . list _nwnode deg btw clu _effsize _constraint if deg>=3, noobs
 
-  +--------------------------------------------------------------+
-  |    _nwnode   deg        btw        clu   _effsize   _const~t |
-  |--------------------------------------------------------------|
-  |    albizzi     3   19.33333          0          3   .3333333 |
-  |   bischeri     3        9.5   .3333333   2.333333   .4822531 |
-  | castellani     3          5   .3333333   2.333333   .4822531 |
-  |   guadagni     4   23.16667          0          4        .25 |
-  |     medici     6       47.5   .0666667   5.666667   .2098765 |
-  |--------------------------------------------------------------|
-  |    peruzzi     3          2   .6666667   1.666667   .6558642 |
-  |    ridolfi     3   10.33333   .3333333   2.333333   .4598765 |
-  |    strozzi     4   9.333333   .3333333          3   .4583333 |
-  | tornabuoni     3   8.333333   .3333333   2.333333   .4598765 |
-  +--------------------------------------------------------------+
+  +---------------------------------------------------------------+
+  |    _nwnode   deg         btw        clu   _effsize   _const~t |
+  |---------------------------------------------------------------|
+  |    albizzi     3   19.333333          0          3   .3333333 |
+  |   bischeri     3         9.5   .3333333   2.333333   .4822531 |
+  | castellani     3           5   .3333333   2.333333   .4822531 |
+  |   guadagni     4   23.166667          0          4        .25 |
+  |     medici     6        47.5   .0666667   5.666667   .2098765 |
+  |---------------------------------------------------------------|
+  |    peruzzi     3           2   .6666667   1.666667   .6558642 |
+  |    ridolfi     3   10.333333   .3333333   2.333333   .4598765 |
+  |    strozzi     4   9.3333333   .3333333          3   .4583333 |
+  | tornabuoni     3   8.3333333   .3333333   2.333333   .4598765 |
+  +---------------------------------------------------------------+
 
 . 
 . * 2. Bridges
@@ -140,6 +140,7 @@ Sorted by:
    Minimum value:  0
    Maximum value:  1
    Density:  .0417
+   Mean degree:  0.62
    Temporal: false
 
 . 
@@ -196,6 +197,7 @@ Sorted by:
    Minimum value:  0
    Maximum value:  1
    Density:  .373
+   Mean degree:  6.33
    Temporal: false
 
 . nwsimmelian samplike, name(strongdir)
@@ -214,6 +216,5 @@ Sorted by:
    Minimum value:  0
    Maximum value:  1
    Density:  .105
+   Mean outdegree:  1.78
    Temporal: false
-
-. 

@@ -92,7 +92,7 @@ Only `nwbalance` is built for signed networks. The other commands do not agree o
 * Dichotomize: `nwdichotomize net, threshold(k) generate(new)` gives 1 to every dyad with a value of at least k and 0 to everything else; the result is binary. For `gang_valued`, `threshold(2)` reproduces the 133 ties of the binary `gang` network.
 * Recode into a few levels: `nwrecode net (1 2 = 1) (3/4 = 2), generate(new)` (the result keeps the flag of the source).
 * Combine the two directions when symmetrizing: `nwsym net, mode(max)` (or `min`, `sum`, `mean`).
-* Save and load: values and flag come back unchanged in `nwsave`/`nwuse`, with full precision, and in Pajek and UCINET files; `nwimport, type(gml)` reads `value` or `weight` and the direction.
+* Save and load: values and flag come back unchanged in `nwsave`/`nwuse`, with full precision, and in Pajek and UCINET files; `nwimport, type(gml)` reads `value` or `weight` and the direction. `nwexport` writes a binary network without tie values, so that it is read back as binary.
 
 ## Running a command on a cutoff version
 

@@ -16,7 +16,7 @@ reproduce the network?* (`estat gof`). The page also shows a model that cannot b
   `estat mcmcdiag`; `estat gof` works for every fit.
 
 **Data.** The Lazega lawyers' friendship network (directed, 71 lawyers) and the Kapferer tailor shop
-network (undirected, 43 workers), both shipped with `nwcommands`. Run with `nwergm` 1.3.1 and core 3.10.0;
+network (undirected, 43 workers), both shipped with `nwcommands`. Run with `nwergm` 1.6.0 and core 3.22.0;
 the script and log are in [example.do](example.do) and [example.log](example.log). The output of
 `estat mcmcdiag` and `estat gof` is long, so only the first tables are shown here.
 
@@ -29,7 +29,7 @@ effective sample size reaches 64 (`mcmleeffectivesize()`, default 64). `mcmleeff
 fixed-size samples of earlier versions; `mcmcsamplesize()` is then the number of draws, otherwise it is the base size.
 
 The first fit below asks for the old behaviour explicitly (a short interval and a fixed sample of 3,000 draws), because it is
-a good example of a chain that mixes badly. The second fit uses the 1.3.0 defaults. Both are 1.3.1 output.
+a good example of a chain that mixes badly. The second fit uses the 1.3.0 defaults. Both are 1.6.0 output.
 
 ```stata
 . nwwebuse lazega, nwclear
@@ -42,16 +42,17 @@ a good example of a chain that mixes badly. The second fit uses the 1.3.0 defaul
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |  -3.322119   .1437037   -23.12   0.000    -3.603773   -3.040465
-            mutual |    .810562   .1634309     4.96   0.000     .4902434    1.130881
-    nodematch_prac |   .6795895    .090628     7.50   0.000     .5019619    .8572172
-nodeicov_seniority |  -.0043864   .0020888    -2.10   0.036    -.0084803   -.0002924
-         gwesp_0.5 |   .5023746   .0653666     7.69   0.000     .3742584    .6304907
+             edges |  -3.299282    .161064   -20.48   0.000    -3.614962   -2.983602
+            mutual |   .8312222   .1500579     5.54   0.000     .5371141     1.12533
+    nodematch_prac |   .7169036   .0846234     8.47   0.000     .5510448    .8827624
+nodeicov_seniority |  -.0052748   .0020911    -2.52   0.012    -.0093732   -.0011764
+         gwesp_0.5 |   .4898494   .0651695     7.52   0.000     .3621196    .6175792
 ------------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood: -1669.6228 (df = 5)   AIC:    3349.2   BIC:    3381.8   (MC std. err. =  .31714)
+Log-likelihood: -1667.5558 (df = 5)   AIC:    3345.1   BIC:    3377.7
+Monte Carlo standard error of the log-likelihood:  .03905
 ```
 
 The table looks reasonable, and `nwergm` says that the fit converged after one iteration. That sentence
@@ -60,48 +61,40 @@ only says that its own stopping rule was met. To look at the simulation itself, 
 ```stata
 . estat mcmcdiag
 
-MCMC diagnostics for the final simulation (nwergm, method(mcmle))
-Sample size:         =    3000
-Burn-in:             =    3000
-Thinning interval:   =      50
-Acceptance rate:     =  0.6694
+MCMC diagnostics, final sample             Sample size      =      3,000
+                                           Burn-in          =      3,000
+                                           Interval         =         50
+                                           Acceptance rate  =     0.5716
 
-------------------------------------------------------------
-Statistic       |      Mean         SD    Autocorr      ESS
-----------------+-------------------------------------------
-edges           |  578.0303    45.5309      0.9921     13.7
-mutual          |   74.7633    11.5793      0.9850     18.8
-nodematch_prac  |  407.8230    34.4362      0.9920     13.7
-nodeicov_seniority|19478.4000  1781.8600      0.9913     15.1
-gwesp_0.5       |  561.3006    86.7234      0.9913     14.6
-------------------------------------------------------------
+------------------------------------------------------------------------
+         Statistic |      Mean        SD  Autocorr       ESS   Geweke z
+-------------------+----------------------------------------------------
+             edges |    579.88     37.80     0.990      16.0      1.16
+            mutual |     75.96     11.21     0.984      22.7      1.30
+    nodematch_prac |    416.38     32.76     0.991      13.0      1.36
+nodeicov_seniority |  19186.31   1434.38     0.989      17.5      1.77
+         gwesp_0.5 |    568.80     73.55     0.988      20.0      1.36
+------------------------------------------------------------------------
 
-Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
-Statistic       |         z   p-value
-----------------+----------------------
-edges           |     4.066    0.0000  *
-mutual          |     3.279    0.0010  *
-nodematch_prac  |     3.428    0.0006  *
-nodeicov_seniority|     5.118    0.0000  *
-gwesp_0.5       |     3.957    0.0001  *
----------------------------------------
-...
+The convergence test of MCMLE was satisfied after 1 iteration. This is necessary but not sufficient for convergence;
+option plot draws the trace plots.
+If the ESS is low, raise mcmleeffectivesize(); after mcmleeffectivesize(0), raise mcmcsamplesize() or mcmcinterval().
 ```
 
-(The report continues with the Heidelberger-Welch tests and the output of R's `mcmc.diagnostics()`.)
+(Options `heidel` and `report` add the Heidelberger-Welch tests and the output of R's `mcmc.diagnostics()`.)
 How to read it:
 
 - **Acceptance rate** is the share of proposed changes that the sampler accepted; very low values mean
   that the sampler hardly moves.
-- **Autocorr** is the correlation between draws that are `Thinning interval` steps apart. Values near 1
+- **Autocorr** is the correlation between draws that are `Interval` steps apart. Values near 1
   mean that consecutive draws are nearly copies of each other. The interval shown is that of the final sample; when
-  the adaptive sampler had to space the draws further apart than requested, a line `Requested interval` says so.
+  the adaptive sampler had to space the draws further apart than requested, a note below the table says so.
 - **ESS**, the effective sample size, is the number of independent draws that the 3,000 draws of this fit are worth.
-  Here it is 14 to 19 for every statistic: the estimates rest on very little information, although the
+  Here it is 13 to 23 for every statistic: the estimates rest on very little information, although the
   sample looks large.
-- **Geweke** compares the start and the end of the chain. A star marks a statistic whose chain is
-  not stable; here all five are flagged.
+- **Geweke z** compares the mean of the start and of the end of the chain; an absolute value above about 2
+  suggests that the chain is not stable. Here the values are 1.2 to 1.8: not alarming on their own, but with so few
+  effective draws the test has little power.
 
 ## Fixing it: the defaults of 1.3.0
 
@@ -116,58 +109,50 @@ R's interval and burn-in, and a sample that is extended until its effective samp
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |   -3.32184    .131386   -25.28   0.000    -3.579352   -3.064328
-            mutual |   .7969492   .1553399     5.13   0.000     .4924887     1.10141
-    nodematch_prac |   .7214706    .080024     9.02   0.000     .5646264    .8783149
-nodeicov_seniority |  -.0046162   .0018014    -2.56   0.010    -.0081468   -.0010856
-         gwesp_0.5 |   .4935235    .061269     8.06   0.000     .3734384    .6136085
+             edges |  -3.318445   .1335225   -24.85   0.000    -3.580144   -3.056746
+            mutual |   .8058073   .1547052     5.21   0.000     .5025907    1.109024
+    nodematch_prac |   .7113241   .0808705     8.80   0.000     .5528208    .8698274
+nodeicov_seniority |  -.0044112   .0017983    -2.45   0.014    -.0079358   -.0008866
+         gwesp_0.5 |   .4896686   .0639934     7.65   0.000     .3642438    .6150933
 ------------------------------------------------------------------------------------
 
-MCMLE converged after 2 iteration(s).
+MCMLE converged after 6 iteration(s).
 ...
-Log-likelihood: -1667.4731 (df = 5)   AIC:    3344.9   BIC:    3377.5   (MC std. err. =  .15171)
+Log-likelihood: -1667.5431 (df = 5)   AIC:    3345.1   BIC:    3377.6
+Monte Carlo standard error of the log-likelihood:  .16479
 ```
 
 ```stata
 . estat mcmcdiag
 
-MCMC diagnostics for the final simulation (nwergm, method(mcmle))
-Sample size:         =     486
-Burn-in:             =   16384
-Thinning interval:   =    2048
-Requested interval:  =    1024  (raised by the adaptive sampler)
-Acceptance rate:     =  0.6692
+MCMC diagnostics, final sample             Sample size      =        593
+                                           Burn-in          =     16,384
+                                           Interval         =      4,096
+                                           Acceptance rate  =     0.5765
 
-------------------------------------------------------------
-Statistic       |      Mean         SD    Autocorr      ESS
-----------------+-------------------------------------------
-edges           |  571.1543    39.0767      0.6726     95.6
-mutual          |   73.6770    10.4820      0.5538    120.0
-nodematch_prac  |  406.3889    30.0663      0.6635     98.8
-nodeicov_seniority|19282.2500  1453.6430      0.6317     73.9
-gwesp_0.5       |  546.8287    74.5329      0.6491    103.9
-------------------------------------------------------------
+------------------------------------------------------------------------
+         Statistic |      Mean        SD  Autocorr       ESS   Geweke z
+-------------------+----------------------------------------------------
+             edges |    579.02     39.63     0.496     201.1      0.17
+            mutual |     73.96     10.62     0.367     185.4      0.23
+    nodematch_prac |    414.53     30.84     0.491     203.8      0.13
+nodeicov_seniority |  19563.64   1467.93     0.439     232.1      0.14
+         gwesp_0.5 |    562.29     75.43     0.484     207.4      0.33
+------------------------------------------------------------------------
+The adaptive sampler raised the interval from 1,024 to 4,096.
 
-Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
-Statistic       |         z   p-value
-----------------+----------------------
-edges           |    -1.610    0.1073
-mutual          |    -1.972    0.0486  *
-nodematch_prac  |    -1.128    0.2594
-nodeicov_seniority|    -1.297    0.1947
-gwesp_0.5       |    -1.501    0.1335
----------------------------------------
-...
+The convergence test of MCMLE was satisfied after 6 iterations. This is necessary but not sufficient for convergence;
+option plot draws the trace plots.
+If the ESS is low, raise mcmleeffectivesize(); after mcmleeffectivesize(0), raise mcmcsamplesize() or mcmcinterval().
 ```
 
-The coefficients barely moved (for example `gwesp_0.5` 0.502 and 0.494, `mutual` 0.811 and 0.797), but
-the autocorrelation fell from 0.99 to 0.55-0.67 and the ESS rose from 14-19 to 74-120. This fit needed 486 draws
-(the table of the fit prints "MCMC sample size"), a sixth of the 3,000 of the first fit, and is worth far more. Its draws are
-2,048 steps apart, not the 1,024 that were requested: the adaptive sampler doubles the spacing whenever the sample has doubled in
-size, and the header of `estat mcmcdiag` shows the spacing of the final sample, with the requested interval on the line below. One Geweke statistic is still flagged
-(`mutual`, z = -1.97, p = 0.049), only just: with five statistics, one borderline flag is not alarming, but it is a reason to look at the
-trace (`estat mcmcdiag, plot`) and to raise the target (`mcmleeffectivesize(200)`) for a final analysis. Note that
+The coefficients barely moved (for example `gwesp_0.5` 0.490 and 0.490, `mutual` 0.831 and 0.806), but
+the autocorrelation fell from about 0.99 to 0.37-0.50 and the ESS rose from 13-23 to 185-232. This fit needed 593 draws
+(the table of the fit prints "MCMC sample size"), a fifth of the 3,000 of the first fit, and is worth far more. Its draws are
+4,096 steps apart, not the 1,024 that were requested: the adaptive sampler doubles the spacing whenever the sample has doubled in
+size, and the note below the table of `estat mcmcdiag` says so. The Geweke statistics are all small (below 0.4).
+For a final analysis it is still worth looking at the
+trace (`estat mcmcdiag, plot`) and raising the target (`mcmleeffectivesize(200)`). Note that
 even then the autocorrelation is far from zero: independence is not needed, only enough effective draws.
 
 The default fit with `seed(1)` is the same fit as in [Tutorial 2](../tutorial-2-terms/) and prints the same numbers there. The
@@ -184,32 +169,36 @@ degrees and edgewise shared partners. A small Monte Carlo p-value flags a featur
 ```stata
 . estat gof, nsim(50) seed(2)
 
-Goodness-of-fit for model statistics
+Goodness of fit: model statistics (50 simulated networks)
+------------------------------------------------------------------------
+         Statistic |  Observed       Min      Mean       Max  MC p-value
+-------------------+----------------------------------------------------
+             edges |       575       520    583.70       646        0.80
+            mutual |        74        58     77.32       101        0.80
+    nodematch_prac |       412       369    416.98       477        0.88
+nodeicov_seniority |     19379     17207  19613.96     22532        0.88
+         gwesp_0.5 |    555.62    446.94    572.61    687.94        0.76
+------------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-edges                  575       503    586.20       685        0.80
-mutual                  74        58     74.20        96        1.00
-nodematch_prac         412       366    421.06       493        0.84
-nodeicov_senio~y     19379     15657  19581.72     22829        0.80
-gwesp_0.5        555.61913 431.86804    580.31   786.826        0.76
-
-Goodness-of-fit for minimum geodesic distance
-
-                       obs       min      mean       max  MC p-value
-1                      575       503    586.20       685        0.80
-2                     2316      2086   2553.72      2968        0.16
-3                     1782      1201   1684.34      1968        0.56
-4                      154        18    115.78       335        0.48
-5                        3         0      1.98        10        0.44
-Inf                    140         0     27.98       140        0.04
+Goodness of fit: minimum geodesic distance (50 simulated networks)
+------------------------------------------------------------------
+    Distance |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           1 |       575       520    583.70       646        0.80
+           2 |      2316      2248   2556.40      2865        0.12
+           3 |      1782      1409   1697.08      1969        0.56
+           4 |       154        11    106.16       240        0.40
+           5 |         3         0      1.48        14        0.40
+         Inf |       140         0     25.18       139        0.00
+------------------------------------------------------------------
 ...
 ```
 
 (The out-degree, in-degree and shared-partner tables follow in the log.) The model statistics are all
-reproduced (p between 0.76 and 1.00), and so are the geodesic distances 1 to 5; the pairs at
-infinite distance (not connected) are less well reproduced (observed 140, simulated 28 on average, p = 0.04). Over the whole output only a
-handful of rows are flagged: out-degree 0 (two lawyers send no nominations; the model simulates 0.24 on
-average, p = 0.00), out-degree 9 and 22 (both p = 0.04). With about 60 rows, a few
+reproduced (p between 0.76 and 0.88), and so are the geodesic distances 1 to 5; the pairs at
+infinite distance (not connected) are not (observed 140, simulated 25 on average, p = 0.00). Over the whole output only a
+handful of rows are flagged: out-degree 0 (two lawyers send no nominations; the model simulates 0.16 on
+average, p = 0.00), out-degree 3 and 20 (both p = 0.04). With about 60 rows, a few
 small p-values are expected by chance; look for patterns, not single rows. A systematic gap, for
 example too few high-degree nodes, would suggest adding a degree term (see [Tutorial 2](../tutorial-2-terms/)).
 
@@ -220,8 +209,8 @@ fall into a degenerate region where the simulated networks are almost empty or a
 
 ```stata
 . capture noisily nwergm kapferer_t2, edges triangle seed(1) mcmcsamplesize(1000)
-Warning: MCMLE iter 2 - statistic(s) at column(s) 1 2 not varying this iteration - this may indicate an extreme point or 
-> dead-end configuration.
+Warning: MCMLE iter 2 - statistic(s) at column(s) 1 2
+not varying this iteration - this may indicate an extreme point or dead-end configuration.
 Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.
 ```
 
@@ -235,43 +224,44 @@ signal: do not make the settings longer, change the specification. The geometric
 ------------------------------------------------------------------------------
  kapferer_t2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -4.270901   .4311131    -9.91   0.000    -5.115867   -3.425935
-   gwesp_0.5 |   1.505898   .2434484     6.19   0.000     1.028747    1.983048
+       edges |  -4.246618   .4222083   -10.06   0.000    -5.074131   -3.419105
+   gwesp_0.5 |   1.498293   .2426614     6.17   0.000     1.022685    1.973901
 ------------------------------------------------------------------------------
 
-MCMLE converged after 4 iteration(s).
+MCMLE converged after 6 iteration(s).
 ...
-Log-likelihood:  -428.6868 (df = 2)   AIC:     861.4   BIC:     871.0   (MC std. err. =  .22782)
+Log-likelihood:  -429.0194 (df = 2)   AIC:     862.0   BIC:     871.7
+Monte Carlo standard error of the log-likelihood:  .11996
 ```
 
 ```stata
 . estat gof, nsim(50) seed(2)
 
-Goodness-of-fit for model statistics
+Goodness of fit: model statistics (50 simulated networks)
+------------------------------------------------------------------
+   Statistic |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+       edges |       190       143    190.48       229        0.84
+   gwesp_0.5 |    275.77    202.20    276.47    348.81        0.80
+------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-edges                  190       146    186.54       227        0.88
-gwesp_0.5        275.77262 195.37931    269.97 342.59428        0.84
-
-Goodness-of-fit for minimum geodesic distance
-
-                       obs       min      mean       max  MC p-value
-1                      190       146    186.54       227        0.88
-2                      535       397    526.12       614        0.84
-3                      163        62    139.84       233        0.60
-4                       15         0      7.38        48        0.28
-5                        0         0      0.22         6        1.00
-Inf                      0         0     42.90       200        0.88
-
-Goodness-of-fit for degree
-
-                       obs       min      mean       max  MC p-value
+Goodness of fit: minimum geodesic distance (50 simulated networks)
+------------------------------------------------------------------
+    Distance |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           1 |       190       143    190.48       229        0.84
+           2 |       535       377    535.10       613        0.88
+           3 |       163        69    130.50       209        0.44
+           4 |        15         0      4.02        23        0.12
+           5 |         0         0      0.06         2        1.00
+         Inf |         0         0     42.84       200        0.84
+------------------------------------------------------------------
 ...
 ```
 
-The fit converges and the closure effect is strongly positive (1.51). The goodness of fit shows one point
+The fit converges and the closure effect is strongly positive (1.50). The goodness of fit shows one point
 worth a note: the observed network has no pair at infinite distance, while the model simulates about 43
-unconnected pairs on average (range 0 to 200, p = 0.88). The model gets density and clustering right but
+unconnected pairs on average (range 0 to 200, p = 0.84). The model gets density and clustering right but
 is loose about connectedness; adding a degree term such as `gwdegree()` would be the next step.
 
 ## A checklist for a Monte Carlo fit

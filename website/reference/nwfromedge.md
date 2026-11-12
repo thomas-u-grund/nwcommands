@@ -27,20 +27,24 @@ undirected
 directed
 twomode
 valued
-unvalued]
+unvalued
+keeporiginal
+selfloop]
 ```
 
 | | |
 |---|---|
 | `name(newnetname)` | name of the new network; default = the name of *tievalue* if given, otherwise *network* |
 | `xvars` | generate Stata variables for the network |
-| `labs`(*lab1 lab2 ...*) | overwrite node labels |
+| `labs`(*lab1 lab2 ...*) | overwrite node labels; separate the labels by blanks or by commas (*lab1*,*lab2*,...); use commas when a label contains a blank |
 | `undirected` | force the network to be undirected (alias: `forceundirected`) |
 | `directed` | force the network to be directed (alias: `forcedirected`) |
 | `twomode` | declare a two-mode (bipartite) network instead - *fromid*/*toid* are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for [nw2fromedge](nw2fromedge), forwarding `name()`/`xvars` only; cannot be combined with `directed`/`undirected`/`forcedirected`/`forceundirected`. See [nw2fromedge](nw2fromedge) for the full two-mode-specific behavior (same-label disambiguation, mode assignment, `project()`) |
 | `valued` | mark the network as valued (default if a value variable is given, also when every value is 1) |
 | `unvalued` | mark the network as binary even if a value variable is given |
-| `noclear` | do not clear existing dataset |
+| `noclear` | do not clear existing dataset: the data are kept as they were, and the rows of the new network's nodes are added |
+| `selfloop` | keep the ties of a node with itself (rows with *fromid* = *toid*); by default they are dropped |
+| `keeporiginal` | generate variable *_nodeoriginal* with the original identifier of each node (from *fromid*/*toid*) on the node's row |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
 | `labprefix`(*string*) | prefix used for auto-generated node labels when `fromid` / `toid` are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
 | `overwrite` | forwarded to [nwload](nwload) governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to `replace` above, which is about the *network*, not Stata variables |
@@ -72,6 +76,8 @@ stores information about three *ties* (1=>2), (2=>3) and (4=>2) among four uniqu
    +--------------------------+
 ```
 Here, there are also three relationships: (Peter => Thomas), (Tim => Peter) and (Mathilde => Thomas).
+
+If a pair (fromid, toid) is listed in more than one row, the last of these rows gives the tie value, for numeric and string identifiers alike.
 
 The following command declares such data as network data:
 

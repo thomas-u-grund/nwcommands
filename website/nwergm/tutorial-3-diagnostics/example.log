@@ -22,138 +22,42 @@ MCMC sample size:      =  3000
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |  -3.322119   .1437037   -23.12   0.000    -3.603773   -3.040465
-            mutual |    .810562   .1634309     4.96   0.000     .4902434    1.130881
-    nodematch_prac |   .6795895    .090628     7.50   0.000     .5019619    .8572172
-nodeicov_seniority |  -.0043864   .0020888    -2.10   0.036    -.0084803   -.0002924
-         gwesp_0.5 |   .5023746   .0653666     7.69   0.000     .3742584    .6304907
+             edges |  -3.299282    .161064   -20.48   0.000    -3.614962   -2.983602
+            mutual |   .8312222   .1500579     5.54   0.000     .5371141     1.12533
+    nodematch_prac |   .7169036   .0846234     8.47   0.000     .5510448    .8827624
+nodeicov_seniority |  -.0052748   .0020911    -2.52   0.012    -.0093732   -.0011764
+         gwesp_0.5 |   .4898494   .0651695     7.52   0.000     .3621196    .6175792
 ------------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    6889.9  on 4970 degrees of freedom
-         Residual Deviance:    3339.2  on 4965 degrees of freedom
+         Residual Deviance:    3335.1  on 4965 degrees of freedom
 
-Log-likelihood: -1669.6228 (df = 5)   AIC:    3349.2   BIC:    3381.8   (MC std. err. =  .31714)
+Log-likelihood: -1667.5558 (df = 5)   AIC:    3345.1   BIC:    3377.7
+Monte Carlo standard error of the log-likelihood:  .03905
 
 . estat mcmcdiag
 
-MCMC diagnostics for the final simulation (nwergm, method(mcmle))
-Sample size:         =    3000
-Burn-in:             =    3000
-Thinning interval:   =      50
-Acceptance rate:     =  0.6694
+MCMC diagnostics, final sample             Sample size      =      3,000
+                                           Burn-in          =      3,000
+                                           Interval         =         50
+                                           Acceptance rate  =     0.5716
 
-------------------------------------------------------------
-Statistic       |      Mean         SD    Autocorr      ESS
-----------------+-------------------------------------------
-edges           |  578.0303    45.5309      0.9921     13.7
-mutual          |   74.7633    11.5793      0.9850     18.8
-nodematch_prac  |  407.8230    34.4362      0.9920     13.7
-nodeicov_seniority|19478.4000  1781.8600      0.9913     15.1
-gwesp_0.5       |  561.3006    86.7234      0.9913     14.6
-------------------------------------------------------------
+------------------------------------------------------------------------
+         Statistic |      Mean        SD  Autocorr       ESS   Geweke z
+-------------------+----------------------------------------------------
+             edges |    579.88     37.80     0.990      16.0      1.16
+            mutual |     75.96     11.21     0.984      22.7      1.30
+    nodematch_prac |    416.38     32.76     0.991      13.0      1.36
+nodeicov_seniority |  19186.31   1434.38     0.989      17.5      1.77
+         gwesp_0.5 |    568.80     73.55     0.988      20.0      1.36
+------------------------------------------------------------------------
 
-Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
-Statistic       |         z   p-value
-----------------+----------------------
-edges           |     4.066    0.0000  *
-mutual          |     3.279    0.0010  *
-nodematch_prac  |     3.428    0.0006  *
-nodeicov_seniority|     5.118    0.0000  *
-gwesp_0.5       |     3.957    0.0001  *
----------------------------------------
-Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large sy
-> stematic difference between the retained sample's own early and late portions, not proof either way for a borderline z.
-
-Heidelberger-Welch stationarity + halfwidth test (pvalue=.05, eps=.1):
---------------------------------------------------------------
-Statistic       | Stationary    Start  Halfwidth   HW test
-----------------+---------------------------------------------
-edges           |     passed        1    24.1402    passed
-mutual          |     passed        1     5.2340    passed
-nodematch_prac  |     passed        1    18.2623    passed
-nodeicov_seniority|     passed      301   658.1714    passed
-gwesp_0.5       |     passed        1    44.4853    passed
---------------------------------------------------------------
-Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), dis
-> carding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it passes
-> , FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 95% 
-> CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningful o
-> nce stationarity itself has passed.
-
-MCMLE's own convergence test was satisfied after   1 iteration(s).
-Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider raising mcmleeffectivesize() (the target effective sample size of the adaptive sample; mcmleiteratio
-> ns() if the iterations ran out) if acceptance rate or ESS looks poor. For a fit with a fixed-size sample (mcmleeffectiv
-> esize(0)) raise mcmcsamplesize() or mcmcinterval() instead.
-
-Sample statistics summary (centered at the observed statistics):
-
-1. Empirical mean and standard deviation for each variable,
-   plus standard error of the mean:
-
-                        Mean          SD    Naive SE  Time-series SE
-edges                 3.0303      45.531      .83128          12.321
-mutual                .76333      11.579      .21141          2.6727
-nodematch_prac        -4.177      34.436      .62872          9.3206
-nodeicov_senio~y      99.402      1781.9      32.532          458.57
-gwesp_0.5             5.6815      86.723      1.5833          22.704
-
-2. Quantiles for each variable:
-
-                        2.5%         25%         50%         75%       97.5%
-edges                    -90      -23.25           4          30         101
-mutual                   -22          -7           0           9          24
-nodematch_prac           -76         -24          -2          16          68
-nodeicov_senio~y     -3245.3     -1050.5          75        1189        4136
-gwesp_0.5               -172     -43.098      6.4661       57.39      190.71
-
-Are sample statistics significantly different from observed?
-
-                         edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5          (Omni)
-diff.                   3.0303          .76333          -4.177          99.402          5.6815              NA
-test stat.              .24596          .28561         -.44815          .21677          .25024          17.149
-P-val.                  .80571          .77518          .65405          .82839           .8024         .017808
-
-Sample statistics cross-correlations:
-
-                           edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-edges                  1.0000000       0.8271945       0.9363273       0.9605527       0.9815277
-mutual                 0.8271945       1.0000000       0.8181614       0.7958244       0.8318259
-nodematch_prac         0.9363273       0.8181614       1.0000000       0.9043872       0.9372578
-nodeicov_senio~y       0.9605527       0.7958244       0.9043872       1.0000000       0.9443242
-gwesp_0.5              0.9815277       0.8318259       0.9372578       0.9443242       1.0000000
-
-Sample statistics auto-correlation:
-Chain 1
-                           edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-Lag 0                  1.0000000       1.0000000       1.0000000       1.0000000       1.0000000
-Lag 50                 0.9909336       0.9847219       0.9909380       0.9899812       0.9903170
-Lag 100                0.9820540       0.9706894       0.9822828       0.9801249       0.9812110
-Lag 150                0.9732507       0.9573892       0.9734945       0.9705890       0.9724443
-Lag 200                0.9647549       0.9457720       0.9647575       0.9612061       0.9642691
-Lag 250                0.9561144       0.9346162       0.9559702       0.9513154       0.9559531
-
-Sample statistics burn-in diagnostic (Geweke):
-Chain 1
-
-Fraction in 1st window = 0.1
-Fraction in 2nd window = 0.5
-
-                         z-score    Individual P-value
-edges                  3.5560406             0.0003765
-mutual                 3.2698161             0.0010762
-nodematch_prac         3.1562684             0.0015980
-nodeicov_senio~y       4.6906069             0.0000027
-gwesp_0.5              3.6125794             0.0003032
-Joint P-value (lower = worse):  0.0180385
-
-Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimate
-> s. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate 
-> model performance. To directly assess the performance of the final model on in-model statistics, please use estat gof.
+The convergence test of MCMLE was satisfied after 1 iteration. This is necessary but not sufficient for convergence;
+option plot draws the trace plots.
+If the ESS is low, raise mcmleeffectivesize(); after mcmleeffectivesize(0), raise mcmcsamplesize() or mcmcinterval().
 
 . 
 . * the defaults of nwergm 1.3 (R's interval and burn-in, adaptive sample size)
@@ -166,244 +70,160 @@ Nodes:                 =  71
 Ties:                  =  575
 Directed:              =  Yes
 Estimation:            =  MCMLE
-MCMC sample size:      =  486
+MCMC sample size:      =  593
 
 ------------------------------------------------------------------------------------
          lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------------+----------------------------------------------------------------
-             edges |   -3.32184    .131386   -25.28   0.000    -3.579352   -3.064328
-            mutual |   .7969492   .1553399     5.13   0.000     .4924887     1.10141
-    nodematch_prac |   .7214706    .080024     9.02   0.000     .5646264    .8783149
-nodeicov_seniority |  -.0046162   .0018014    -2.56   0.010    -.0081468   -.0010856
-         gwesp_0.5 |   .4935235    .061269     8.06   0.000     .3734384    .6136085
+             edges |  -3.318445   .1335225   -24.85   0.000    -3.580144   -3.056746
+            mutual |   .8058073   .1547052     5.21   0.000     .5025907    1.109024
+    nodematch_prac |   .7113241   .0808705     8.80   0.000     .5528208    .8698274
+nodeicov_seniority |  -.0044112   .0017983    -2.45   0.014    -.0079358   -.0008866
+         gwesp_0.5 |   .4896686   .0639934     7.65   0.000     .3642438    .6150933
 ------------------------------------------------------------------------------------
 
-MCMLE converged after 2 iteration(s).
+MCMLE converged after 6 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    6889.9  on 4970 degrees of freedom
-         Residual Deviance:    3334.9  on 4965 degrees of freedom
+         Residual Deviance:    3335.1  on 4965 degrees of freedom
 
-Log-likelihood: -1667.4731 (df = 5)   AIC:    3344.9   BIC:    3377.5   (MC std. err. =  .15171)
+Log-likelihood: -1667.5431 (df = 5)   AIC:    3345.1   BIC:    3377.6
+Monte Carlo standard error of the log-likelihood:  .16479
 
 . estat mcmcdiag
 
-MCMC diagnostics for the final simulation (nwergm, method(mcmle))
-Sample size:         =     486
-Burn-in:             =   16384
-Thinning interval:   =    2048
-Requested interval:  =    1024  (raised by the adaptive sampler)
-Acceptance rate:     =  0.6692
+MCMC diagnostics, final sample             Sample size      =        593
+                                           Burn-in          =     16,384
+                                           Interval         =      4,096
+                                           Acceptance rate  =     0.5765
 
-------------------------------------------------------------
-Statistic       |      Mean         SD    Autocorr      ESS
-----------------+-------------------------------------------
-edges           |  571.1543    39.0767      0.6726     95.6
-mutual          |   73.6770    10.4820      0.5538    120.0
-nodematch_prac  |  406.3889    30.0663      0.6635     98.8
-nodeicov_seniority|19282.2500  1453.6430      0.6317     73.9
-gwesp_0.5       |  546.8287    74.5329      0.6491    103.9
-------------------------------------------------------------
+------------------------------------------------------------------------
+         Statistic |      Mean        SD  Autocorr       ESS   Geweke z
+-------------------+----------------------------------------------------
+             edges |    579.02     39.63     0.496     201.1      0.17
+            mutual |     73.96     10.62     0.367     185.4      0.23
+    nodematch_prac |    414.53     30.84     0.491     203.8      0.13
+nodeicov_seniority |  19563.64   1467.93     0.439     232.1      0.14
+         gwesp_0.5 |    562.29     75.43     0.484     207.4      0.33
+------------------------------------------------------------------------
+The adaptive sampler raised the interval from 1,024 to 4,096.
 
-Geweke diagnostic (first 10% vs. last 50% of the retained sample):
----------------------------------------
-Statistic       |         z   p-value
-----------------+----------------------
-edges           |    -1.610    0.1073
-mutual          |    -1.972    0.0486  *
-nodematch_prac  |    -1.128    0.2594
-nodeicov_seniority|    -1.297    0.1947
-gwesp_0.5       |    -1.501    0.1335
----------------------------------------
-Note: |z| > 1.96 (flagged *) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large sy
-> stematic difference between the retained sample's own early and late portions, not proof either way for a borderline z.
-
-Heidelberger-Welch stationarity + halfwidth test (pvalue=.05, eps=.1):
---------------------------------------------------------------
-Statistic       | Stationary    Start  Halfwidth   HW test
-----------------+---------------------------------------------
-edges           |     passed        1     7.8316    passed
-mutual          |     passed        1     1.8753    passed
-nodematch_prac  |     passed        1     5.9273    passed
-nodeicov_seniority|     passed        1   331.4554    passed
-gwesp_0.5       |     passed        1    14.3329    passed
---------------------------------------------------------------
-Note: Stationary = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), dis
-> carding an increasing initial fraction (up to 50%) until it does - Start is the first retained iteration once it passes
-> , FAILED means no discard fraction achieved stationarity. HW test additionally requires the retained portion's own 95% 
-> CI halfwidth to be within eps() (default 10%) of its own mean - a separate, stricter precision check, only meaningful o
-> nce stationarity itself has passed.
-
-MCMLE's own convergence test was satisfied after   2 iteration(s).
-Note: a satisfied convergence test is a necessary check, not proof of a converged fit - inspect the autocorrelation/ESS a
-> bove, and consider raising mcmleeffectivesize() (the target effective sample size of the adaptive sample; mcmleiteratio
-> ns() if the iterations ran out) if acceptance rate or ESS looks poor. For a fit with a fixed-size sample (mcmleeffectiv
-> esize(0)) raise mcmcsamplesize() or mcmcinterval() instead.
-
-Sample statistics summary (centered at the observed statistics):
-
-1. Empirical mean and standard deviation for each variable,
-   plus standard error of the mean:
-
-                        Mean          SD    Naive SE  Time-series SE
-edges                -3.8457      39.077      1.7726           4.004
-mutual               -.32305      10.482      .47547          .95976
-nodematch_prac       -5.6111      30.066      1.3638          3.0304
-nodeicov_senio~y     -96.751      1453.6      65.939          169.99
-gwesp_0.5            -8.7904      74.533      3.3809          7.3278
-
-2. Quantiles for each variable:
-
-                        2.5%         25%         50%         75%       97.5%
-edges                 -74.75         -31        -4.5          23          73
-mutual               -19.875          -8          -1           7          22
-nodematch_prac           -63         -27        -6.5          15          51
-nodeicov_senio~y     -2849.9       -1102       -83.5       961.5      2683.9
-gwesp_0.5            -144.69     -61.393     -9.6405       40.06      147.53
-
-Are sample statistics significantly different from observed?
-
-                         edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5          (Omni)
-diff.                  -3.8457         -.32305         -5.6111         -96.751         -8.7904              NA
-test stat.             -.96047         -.33659         -1.8516         -.56917         -1.1996          20.115
-P-val.                  .33682          .73643         .064078          .56924          .23029        .0019311
-
-Sample statistics cross-correlations:
-
-                           edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-edges                  1.0000000       0.7530858       0.8939733       0.9175342       0.9702475
-mutual                 0.7530858       1.0000000       0.7393374       0.6798716       0.7810688
-nodematch_prac         0.8939733       0.7393374       1.0000000       0.8465985       0.8966733
-nodeicov_senio~y       0.9175342       0.6798716       0.8465985       1.0000000       0.8750858
-gwesp_0.5              0.9702475       0.7810688       0.8966733       0.8750858       1.0000000
-
-Sample statistics auto-correlation:
-Chain 1
-                           edges          mutual  nodematch_prac  nodeicov_sen~y       gwesp_0.5
-Lag 0                  1.0000000       1.0000000       1.0000000       1.0000000       1.0000000
-Lag 2048               0.6716965       0.5535584       0.6625514       0.6307216       0.6483841
-Lag 4096               0.4637820       0.3595955       0.4536637       0.4201381       0.4494919
-Lag 6144               0.3403473       0.2263601       0.3195065       0.3090722       0.3114812
-Lag 8192               0.2762225       0.1376349       0.1992015       0.2888740       0.2483208
-Lag 10240              0.1956788       0.0805804       0.1292762       0.2237654       0.1643815
-
-Sample statistics burn-in diagnostic (Geweke):
-Chain 1
-
-Fraction in 1st window = 0.1
-Fraction in 2nd window = 0.5
-
-                         z-score    Individual P-value
-edges                 -1.2303640             0.2185608
-mutual                -1.9098929             0.0561470
-nodematch_prac        -1.1016837             0.2705992
-nodeicov_senio~y      -1.1809769             0.2376119
-gwesp_0.5             -1.4362798             0.1509227
-Joint P-value (lower = worse):  0.7788128
-
-Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimate
-> s. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate 
-> model performance. To directly assess the performance of the final model on in-model statistics, please use estat gof.
+The convergence test of MCMLE was satisfied after 6 iterations. This is necessary but not sufficient for convergence;
+option plot draws the trace plots.
+If the ESS is low, raise mcmleeffectivesize(); after mcmleeffectivesize(0), raise mcmcsamplesize() or mcmcinterval().
 
 . 
 . * goodness of fit
 . estat gof, nsim(50) seed(2)
 
-Goodness-of-fit for model statistics
+Goodness of fit: model statistics (50 simulated networks)
+------------------------------------------------------------------------
+         Statistic |  Observed       Min      Mean       Max  MC p-value
+-------------------+----------------------------------------------------
+             edges |       575       520    583.70       646        0.80
+            mutual |        74        58     77.32       101        0.80
+    nodematch_prac |       412       369    416.98       477        0.88
+nodeicov_seniority |     19379     17207  19613.96     22532        0.88
+         gwesp_0.5 |    555.62    446.94    572.61    687.94        0.76
+------------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-edges                  575       503    586.20       685        0.80
-mutual                  74        58     74.20        96        1.00
-nodematch_prac         412       366    421.06       493        0.84
-nodeicov_senio~y     19379     15657  19581.72     22829        0.80
-gwesp_0.5        555.61913 431.86804    580.31   786.826        0.76
+Goodness of fit: minimum geodesic distance (50 simulated networks)
+------------------------------------------------------------------
+    Distance |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           1 |       575       520    583.70       646        0.80
+           2 |      2316      2248   2556.40      2865        0.12
+           3 |      1782      1409   1697.08      1969        0.56
+           4 |       154        11    106.16       240        0.40
+           5 |         3         0      1.48        14        0.40
+         Inf |       140         0     25.18       139        0.00
+------------------------------------------------------------------
 
-Goodness-of-fit for minimum geodesic distance
+Goodness of fit: out-degree (50 simulated networks)
+------------------------------------------------------------------
+  Out-degree |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |         2         0      0.16         1        0.00
+           1 |         1         0      0.72         3        1.00
+           2 |         2         0      1.76         5        1.00
+           3 |         7         0      2.94         7        0.04
+           4 |         5         1      4.30        10        0.76
+           5 |         5         2      6.62        12        0.68
+           6 |         6         3      7.32        12        0.68
+           7 |         6         2      7.54        13        0.68
+           8 |         9         1      8.00        13        0.88
+           9 |         3         3      7.16        13        0.08
+          10 |         7         2      7.26        12        1.00
+          11 |         4         0      4.82        10        0.96
+          12 |         3         0      3.96         9        0.92
+          13 |         3         0      3.12         8        1.00
+          14 |         1         0      2.08         5        0.80
+          15 |         1         0      1.38         4        1.00
+          16 |         2         0      0.86         4        0.40
+          17 |         1         0      0.58         4        0.76
+          18 |         1         0      0.22         2        0.36
+          19 |         0         0      0.08         1        1.00
+          20 |         1         0      0.02         1        0.04
+          21 |         0         0      0.04         1        1.00
+          22 |         1         0      0.04         1        0.08
+          23 |         0         0      0.02         1        1.00
+------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-1                      575       503    586.20       685        0.80
-2                     2316      2086   2553.72      2968        0.16
-3                     1782      1201   1684.34      1968        0.56
-4                      154        18    115.78       335        0.48
-5                        3         0      1.98        10        0.44
-Inf                    140         0     27.98       140        0.04
+Goodness of fit: in-degree (50 simulated networks)
+------------------------------------------------------------------
+   In-degree |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |         0         0      0.20         1        1.00
+           1 |         0         0      0.74         3        1.00
+           2 |         3         0      1.82         5        0.56
+           3 |         2         0      2.96         7        0.92
+           4 |         8         1      4.90        11        0.32
+           5 |         6         2      6.60        12        0.96
+           6 |         5         2      7.12        13        0.56
+           7 |         8         0      7.60        12        1.00
+           8 |         9         3      7.88        14        0.92
+           9 |         5         3      6.88        15        0.76
+          10 |         7         0      6.12        11        0.84
+          11 |         6         2      5.32        11        0.88
+          12 |         4         0      4.00         8        1.00
+          13 |         2         0      3.22         7        0.64
+          14 |         4         0      2.28         8        0.48
+          15 |         1         0      1.22         4        1.00
+          16 |         0         0      0.84         3        0.76
+          17 |         1         0      0.56         3        0.84
+          18 |         0         0      0.28         2        1.00
+          19 |         0         0      0.26         2        1.00
+          20 |         0         0      0.14         1        1.00
+          22 |         0         0      0.02         1        1.00
+          24 |         0         0      0.02         1        1.00
+          25 |         0         0      0.02         1        1.00
+------------------------------------------------------------------
 
-Goodness-of-fit for out-degree
-
-                       obs       min      mean       max  MC p-value
-0                        2         0      0.24         1        0.00
-1                        1         0      0.88         3        1.00
-2                        2         0      1.70         5        1.00
-3                        7         0      3.26         7        0.08
-4                        5         0      4.18         9        0.76
-5                        5         1      5.76        13        1.00
-6                        6         2      6.90        13        0.96
-7                        6         1      7.24        14        0.92
-8                        9         4      8.22        13        0.84
-9                        3         2      7.36        12        0.04
-10                       7         3      7.24        12        1.00
-11                       4         2      5.72        10        0.68
-12                       3         1      4.60        12        0.68
-13                       3         0      2.82         7        1.00
-14                       1         0      1.88         7        0.84
-15                       1         0      1.08         3        1.00
-16                       2         0      0.86         3        0.48
-17                       1         0      0.40         3        0.56
-18                       1         0      0.42         2        0.76
-19                       0         0      0.14         1        1.00
-20                       1         0      0.06         1        0.12
-21                       0         0      0.02         1        1.00
-22                       1         0      0.02         1        0.04
-
-Goodness-of-fit for in-degree
-
-                       obs       min      mean       max  MC p-value
-0                        0         0      0.16         1        1.00
-1                        0         0      0.84         4        0.80
-2                        3         0      1.86         7        0.52
-3                        2         0      3.24         9        0.64
-4                        8         0      4.48         9        0.12
-5                        6         1      5.72        12        1.00
-6                        5         3      6.76        13        0.68
-7                        8         3      8.54        15        1.00
-8                        9         2      8.16        14        1.00
-9                        5         2      6.88        12        0.48
-10                       7         3      5.96        12        0.72
-11                       6         1      5.22        10        1.00
-12                       4         0      4.64         9        0.88
-13                       2         0      2.86         9        0.80
-14                       4         0      2.18         5        0.36
-15                       1         0      1.34         5        1.00
-16                       0         0      1.02         3        0.60
-17                       1         0      0.44         3        0.72
-18                       0         0      0.26         1        1.00
-19                       0         0      0.20         1        1.00
-20                       0         0      0.08         1        1.00
-21                       0         0      0.08         1        1.00
-22                       0         0      0.04         1        1.00
-23                       0         0      0.04         1        1.00
-
-Goodness-of-fit for edgewise shared partner
-
-                       obs       min      mean       max  MC p-value
-0                      138        87    125.60       160        0.56
-1                      190       163    204.92       241        0.24
-2                      131       110    148.82       199        0.48
-3                       69        42     69.54       114        0.88
-4                       26        10     26.56        53        1.00
-5                       11         0      7.62        23        0.44
-6                        7         0      2.42        11        0.08
-7                        2         0      0.56         3        0.28
-8                        1         0      0.14         2        0.20
-9                        0         0      0.02         1        1.00
+Goodness of fit: edgewise shared partner (50 simulated networks)
+------------------------------------------------------------------
+         ESP |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |       138       104    128.46       160        0.48
+           1 |       190       163    204.34       238        0.44
+           2 |       131        90    146.24       182        0.28
+           3 |        69        42     69.22        98        1.00
+           4 |        26        12     24.68        43        0.84
+           5 |        11         0      7.82        16        0.60
+           6 |         7         0      2.14         9        0.12
+           7 |         2         0      0.64         4        0.32
+           8 |         1         0      0.08         1        0.16
+           9 |         0         0      0.06         2        1.00
+          10 |         0         0      0.02         1        1.00
+------------------------------------------------------------------
 
 . 
 . * a model that cannot be fitted: triangles in the Kapferer tailor shop network
 . nwwebuse kapferer, nwclear
 
 . capture noisily nwergm kapferer_t2, edges triangle seed(1) mcmcsamplesize(1000)
-Warning: MCMLE iter 2 - statistic(s) at column(s) 1 2 not varying this iteration - this may indicate an extreme point or 
-> dead-end configuration.
+Warning: MCMLE iter 2 - statistic(s) at column(s) 1 2
+not varying this iteration - this may indicate an extreme point or dead-end configuration.
 Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.
 
 . display "return code: " _rc
@@ -420,86 +240,92 @@ Nodes:                 =  43
 Ties:                  =  190
 Directed:              =  No
 Estimation:            =  MCMLE
-MCMC sample size:      =  463
+MCMC sample size:      =  441
 
 ------------------------------------------------------------------------------
  kapferer_t2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       edges |  -4.270901   .4311131    -9.91   0.000    -5.115867   -3.425935
-   gwesp_0.5 |   1.505898   .2434484     6.19   0.000     1.028747    1.983048
+       edges |  -4.246618   .4222083   -10.06   0.000    -5.074131   -3.419105
+   gwesp_0.5 |   1.498293   .2426614     6.17   0.000     1.022685    1.973901
 ------------------------------------------------------------------------------
 
-MCMLE converged after 4 iteration(s).
+MCMLE converged after 6 iteration(s).
 Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
 
              Null Deviance:    1251.8  on 903 degrees of freedom
-         Residual Deviance:     857.4  on 901 degrees of freedom
+         Residual Deviance:     858.0  on 901 degrees of freedom
 
-Log-likelihood:  -428.6868 (df = 2)   AIC:     861.4   BIC:     871.0   (MC std. err. =  .22782)
+Log-likelihood:  -429.0194 (df = 2)   AIC:     862.0   BIC:     871.7
+Monte Carlo standard error of the log-likelihood:  .11996
 
 . estat gof, nsim(50) seed(2)
 
-Goodness-of-fit for model statistics
+Goodness of fit: model statistics (50 simulated networks)
+------------------------------------------------------------------
+   Statistic |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+       edges |       190       143    190.48       229        0.84
+   gwesp_0.5 |    275.77    202.20    276.47    348.81        0.80
+------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-edges                  190       146    186.54       227        0.88
-gwesp_0.5        275.77262 195.37931    269.97 342.59428        0.84
+Goodness of fit: minimum geodesic distance (50 simulated networks)
+------------------------------------------------------------------
+    Distance |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           1 |       190       143    190.48       229        0.84
+           2 |       535       377    535.10       613        0.88
+           3 |       163        69    130.50       209        0.44
+           4 |        15         0      4.02        23        0.12
+           5 |         0         0      0.06         2        1.00
+         Inf |         0         0     42.84       200        0.84
+------------------------------------------------------------------
 
-Goodness-of-fit for minimum geodesic distance
+Goodness of fit: degree (50 simulated networks)
+------------------------------------------------------------------
+      Degree |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |         0         0      1.04         5        0.84
+           1 |         2         0      0.54         3        0.20
+           2 |         3         0      0.88         7        0.12
+           3 |         2         0      1.54         5        0.92
+           4 |         0         0      2.06         6        0.40
+           5 |         6         0      2.90         8        0.04
+           6 |         1         0      3.08         9        0.52
+           7 |         4         1      3.96         9        1.00
+           8 |         2         1      4.40         9        0.28
+           9 |         3         1      4.22         9        0.76
+          10 |         8         0      3.76        10        0.08
+          11 |         4         0      3.86         9        0.92
+          12 |         1         0      2.94         7        0.28
+          13 |         0         0      2.08         6        0.24
+          14 |         0         0      1.84         6        0.24
+          15 |         3         0      1.50         5        0.28
+          16 |         1         0      1.08         4        1.00
+          17 |         0         0      0.48         2        1.00
+          18 |         1         0      0.42         2        0.72
+          19 |         1         0      0.24         3        0.40
+          20 |         0         0      0.10         1        1.00
+          21 |         0         0      0.06         1        1.00
+          23 |         0         0      0.02         1        1.00
+          25 |         1         0      0.00         0        0.00
+------------------------------------------------------------------
 
-                       obs       min      mean       max  MC p-value
-1                      190       146    186.54       227        0.88
-2                      535       397    526.12       614        0.84
-3                      163        62    139.84       233        0.60
-4                       15         0      7.38        48        0.28
-5                        0         0      0.22         6        1.00
-Inf                      0         0     42.90       200        0.88
-
-Goodness-of-fit for degree
-
-                       obs       min      mean       max  MC p-value
-0                        0         0      1.00         5        0.88
-1                        2         0      0.54         3        0.24
-2                        3         0      1.28         6        0.32
-3                        2         0      1.70         6        1.00
-4                        0         0      2.36         6        0.20
-5                        6         0      3.08         6        0.08
-6                        1         0      3.34         6        0.20
-7                        4         1      3.54         8        0.92
-8                        2         2      4.08         8        0.32
-9                        3         0      4.26         9        0.60
-10                       8         0      3.78         9        0.08
-11                       4         1      3.42         7        0.84
-12                       1         0      3.14         8        0.32
-13                       0         0      2.22         8        0.20
-14                       0         0      1.80         6        0.32
-15                       3         0      1.16         4        0.20
-16                       1         0      0.96         3        1.00
-17                       0         0      0.60         3        1.00
-18                       1         0      0.30         2        0.48
-19                       1         0      0.22         2        0.36
-20                       0         0      0.16         2        1.00
-21                       0         0      0.02         1        1.00
-22                       0         0      0.02         1        1.00
-24                       0         0      0.02         1        1.00
-25                       1         0      0.00         0        0.00
-
-Goodness-of-fit for edgewise shared partner
-
-                       obs       min      mean       max  MC p-value
-0                        6         0      2.56         7        0.08
-1                       23         7     22.78        36        1.00
-2                       33        31     46.90        66        0.08
-3                       24        30     49.12        69        0.00
-4                       32        21     33.60        54        0.96
-5                       27         0     18.52        38        0.28
-6                       19         1      8.24        21        0.04
-7                       13         0      3.22        12        0.00
-8                        5         0      1.04         9        0.04
-9                        2         0      0.38         3        0.16
-10                       2         0      0.16         2        0.04
-11                       0         0      0.02         1        1.00
-12                       3         0      0.00         0        0.00
-13                       1         0      0.00         0        0.00
-
-. 
+Goodness of fit: edgewise shared partner (50 simulated networks)
+------------------------------------------------------------------
+         ESP |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |         6         0      2.54         7        0.16
+           1 |        23        13     22.26        40        0.76
+           2 |        33        35     47.84        69        0.00
+           3 |        24        27     49.78        63        0.00
+           4 |        32        14     34.64        53        0.80
+           5 |        27         6     19.82        35        0.32
+           6 |        19         0      8.04        20        0.04
+           7 |        13         0      3.72        11        0.00
+           8 |         5         0      1.36         7        0.04
+           9 |         2         0      0.38         3        0.16
+          10 |         2         0      0.08         1        0.00
+          11 |         0         0      0.02         1        1.00
+          12 |         3         0      0.00         0        0.00
+          13 |         1         0      0.00         0        0.00
+------------------------------------------------------------------

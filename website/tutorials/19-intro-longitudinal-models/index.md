@@ -30,21 +30,21 @@ for all four model packages at once (`nwinstall, everything` installs the core a
 
 ```stata
 . nwsaom version
-nwsaom version 1.1.0, 26oct2026
+nwsaom version 1.6.0, 13nov2026
 ```
 
 ```stata
 . nwrem version
-nwrem version 1.0.8, 26oct2026
+nwrem version 1.1.0, 13nov2026
 ```
 
 ```stata
 . nwdynam version
-nwdynam version 1.1.3, 26oct2026
+nwdynam version 1.3.0, 13nov2026
 ```
 
 
-The examples below were run with release 1.0.1 of each package and the core `nwcommands` 3.0.0.
+The examples below were run with nwsaom 1.6.0, nwrem 1.1.0, nwdynam 1.3.0 and the core `nwcommands` 3.22.0.
 
 ## Stochastic actor-oriented models (SAOM)
 
@@ -86,25 +86,27 @@ smoking:
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
--------------------------------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |    -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
- reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
-samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
-   transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
+   outdegree |  -2.759213   .1516059   -18.20   0.000    -3.056355   -2.462071
+ reciprocity |   2.441024    .198022    12.33   0.000     2.052908     2.82914
+samex_smoke1 |   .1325353   .1474368     0.90   0.369    -.1564356    .4215062
+   transtrip |   .6147119   .0773888     7.94   0.000     .4630327    .7663911
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    6.4783     5.2605 
-          se |    1.1113     0.8674 
-Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
+-------------+----------------------
+        rate |    6.5200     5.2401
+          se |    1.1516     0.9196
+------------------------------------
+Overall maximum convergence ratio: 0.103 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
@@ -125,14 +127,19 @@ With three waves, `estat timetest` asks whether an effect had the same size in b
 ```stata
 . estat timetest
 
-Test of time heterogeneity (score-type test; RSiena's sienaTimeTest)
-----------------------------------------------------------------------
-Joint test of all period-specific deviations:  c =    5.3581   d.f. = 4   p-value = 0.2525
+Test of time heterogeneity (score-type test)
+H0: the parameter of each effect is the same in all periods
 
-Test of each effect (is its parameter the same in all periods?)
-effect                           c  d.f.   p-value
-outdegree                    0.063     1    0.8013
-reciprocity                  0.931     1    0.3346
+---------------------------------------------------------
+      Effect |          chi2        df        Prob > chi2
+-------------+-------------------------------------------
+   outdegree |         0.069         1             0.7928
+ reciprocity |         0.975         1             0.3234
+samex_smoke1 |         0.147         1             0.7017
+   transtrip |         0.460         1             0.4975
+-------------+-------------------------------------------
+       Joint |         5.428         4             0.2461
+---------------------------------------------------------
 ```
 
 
@@ -143,16 +150,20 @@ choices, as RSiena's `sienaRI` does:
 ```stata
 . estat importance
 
-Relative importance of effects (RSiena's sienaRI); expected over the actors at the start of each period
-------------------------------------------------------------------------------
-effect                  estimate     s.e.     sigma   semi-std.    RI p1    RI p2
-outdegree                -2.7657   0.1526    0.4384     -1.2124   0.4253   0.4967
-reciprocity               2.4557   0.1984    0.2140      0.5255   0.3749   0.3074
-samex_smoke1              0.1333   0.1457    0.5043      0.0672   0.0376   0.0358
-transtrip                 0.6195   0.0767    0.6514      0.4036   0.1622   0.1601
-------------------------------------------------------------------------------
-Certainty R_H of the actors' choices:   0.2677   0.3493
-RI: expected relative importance of the effect (shares sum to 1 within a period); semi-std. = estimate x sigma.
+Relative importance of effects
+Expected over the actors at the start of each period
+--------------------------------------------------------------------------
+      Effect | Estimate  Std. err.    Sigma  Semi-std.     RI p1     RI p2
+-------------+------------------------------------------------------------
+   outdegree |  -2.7592     0.1516   0.4384    -1.2096    0.4268    0.4980
+ reciprocity |   2.4410     0.1980   0.2140     0.5224    0.3744    0.3069
+samex_smoke1 |   0.1325     0.1474   0.5043     0.0668    0.0375    0.0357
+   transtrip |   0.6147     0.0774   0.6514     0.4004    0.1613    0.1594
+-------------+------------------------------------------------------------
+   Certainty |                                            0.2667    0.3478
+--------------------------------------------------------------------------
+RI: share of the effect in the actors' choices. Semi-std.: estimate x sigma.
+Certainty: RSiena's R_H, the expected certainty of the choices.
 ```
 
 
@@ -204,8 +215,8 @@ Events: 10                             Log likelihood:  -15.9033
 ------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      nodsnd |   1.268517   1.354189     0.94   0.349    -1.385644    3.922677
-      nidrec |  -5.567583   3.511088    -1.59   0.113    -12.44919    1.314023
+      nodsnd |   1.268585   1.354195     0.94   0.349    -1.385589    3.922758
+      nidrec |  -5.567767    3.51114    -1.59   0.113    -12.44948    1.313941
 ------------------------------------------------------------------------------
 ```
 

@@ -29,12 +29,12 @@ indegpopularity |  -.6523969   .3524032    -1.85   0.064    -1.343094    .038300
 ---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.3094     5.1464 
           se |    1.1287     0.9683 
------------------------------------
+------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
@@ -52,6 +52,8 @@ Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio 
   cycle3                    -0.046      gwesp_.69                 -0.028
   simx_alcohol1              0.023
 Overall maximum convergence ratio:  0.431
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 . 
 . * The convergence t-ratios are stored
@@ -94,12 +96,12 @@ indegpopularity |  -.6794413   .2593244    -2.62   0.009    -1.187708   -.171174
 ---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.4325     4.8967 
           se |    1.1481     0.7901 
------------------------------------
+------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
@@ -117,6 +119,8 @@ Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio 
   cycle3                     0.051      gwesp_.69                  0.038
   simx_alcohol1              0.034
 Overall maximum convergence ratio:  0.295
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 ------------------------------------------------------------------------------
 nwsaom refit, run 2 of at most 3: starting from the last estimates (overall ratio 0.295)
@@ -142,12 +146,12 @@ indegpopularity |  -.6507214   .2986804    -2.18   0.029    -1.236124   -.065318
 ---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.5600     5.0281 
           se |    1.2108     0.8663 
------------------------------------
+------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   samex_smoke1                  same smoke1
@@ -186,5 +190,3 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
          (1) |   .1315797   .1468356     0.90   0.370    -.1562127    .4193721
 ------------------------------------------------------------------------------
-
-.

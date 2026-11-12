@@ -16,25 +16,25 @@ example `nwsaom version`.
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.21.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.22.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 
 > Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.3.4").
+The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.6.0").
 
 **nwergm.** Cite the manual. It has a DOI:
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.5.12").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.6.0").
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.2.5) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.0.13) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
+> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.1.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
@@ -68,7 +68,7 @@ Each package has its own releases on GitHub:
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.5.19/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.6.0/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

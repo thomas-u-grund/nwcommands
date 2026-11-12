@@ -84,14 +84,14 @@ beh_quadratic |  -.5839079   .3270813    -1.79   0.074    -1.224975    .0571596
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
 network_rate |    6.6073     5.1192 
           se |    1.5720     0.9132 
 behavior_r~e |    1.3340     1.7957 
           se |    0.4142     0.4536 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.149 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -119,14 +119,14 @@ beh_quadratic |  -.5834187   .3577893    -1.63   0.103    -1.284673    .1178355
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
 network_rate |    6.6392     5.0853 
           se |    1.2379     0.9293 
 behavior_r~e |    1.3394     1.7965 
           se |    0.3832     0.4348 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.173 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
   rate_period2 (-0.105)
@@ -155,14 +155,14 @@ beh_quadratic |  -.0727403   .0991779    -0.73   0.463    -.2671254    .1216447
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
 network_rate |    6.5255     5.0919 
           se |    1.1281     0.8595 
 behavior_r~e |    1.3566     1.8399 
           se |    0.3473     0.4543 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.152 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -183,5 +183,3 @@ Goodness of fit: Mahalanobis distance test
 ------------------------------------------------------
 rejected: P < 0.05 (one-tailed); the model does not reproduce this statistic
 Violin plots: gof_outdegree gof_indegree gof_geodesic gof_behavior
-
-.

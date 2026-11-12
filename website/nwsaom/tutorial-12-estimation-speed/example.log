@@ -19,12 +19,12 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.5485     5.2031 
           se |    1.0853     0.8963 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.108 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -53,12 +53,12 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.6348     5.3113 
           se |    1.1334     0.7821 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.088 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -92,14 +92,14 @@ beh_quadratic |  -.5425325   .3410789    -1.59   0.112    -1.211035    .1259698
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
 network_rate |    6.5571     5.2518 
           se |    1.0985     0.8951 
 behavior_r~e |    1.2407     1.6903 
           se |    0.3276     0.4687 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.134 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -129,12 +129,12 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.5959     5.2954 
           se |    1.0474     0.8531 
------------------------------------
+------------------------------------
 Overall maximum convergence ratio: 0.143 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
@@ -195,12 +195,12 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2 
--------------+---------------------
+-------------+----------------------
         rate |    6.5355     5.2215 
           se |    1.1206     0.8820 
------------------------------------
+------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   gwesp_.69                     GWESP I -> K -> J (69)
@@ -208,5 +208,3 @@ Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio 
   outdegree                  0.067      reciprocity                0.024
   gwesp_.69                  0.050
 Overall maximum convergence ratio:  0.117
-
-.

@@ -13,8 +13,8 @@ part of the output, and know when you can trust it.
 **Data.** Three yearly waves of friendship among 50 pupils in a Scottish school, with the pupils'
 smoking, drinking and sport at each wave. These are the data that RSiena ships as `s50`. They are
 available from the nwcommands website, so no file is needed. You need the core `nwcommands` and the
-`nwsaom` package (see [Install](../install/)); the commands below were run with `nwsaom` 1.1.1
-and the core 3.10.0. The complete script and log are in
+`nwsaom` package (see [Install](../install/)); the commands below were run with `nwsaom` 1.6.0
+and the core 3.22.0. The complete script and log are in
 [example.do](example.do) and [example.log](example.log).
 
 ## What a SAOM does, in three sentences
@@ -29,9 +29,9 @@ attractive"), and `nwsaom` finds the coefficients that reproduce the observed ch
 
 ```stata
 . nwsaom version
-nwsaom version 1.1.1, 27oct2026
+nwsaom version 1.6.0, 13nov2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : .../saom_sim_macos.plugin (plugin build 140)
+  native plugin           : .../saom_sim_macos.plugin (plugin build 156)
   compared with           : R RSiena 1.6.14
   license                 : GNU GPL-3
 ```
@@ -48,21 +48,23 @@ before an estimation:
 ```stata
 . nwsaom describe, waves(glasgow1 glasgow2 glasgow3)
 
-Network data: 3 waves, 50 actors, directed
------------------------------------------------------
-        wave |     ties     density   avg. degree
--------------+---------------------------------------
-           1 |      113      0.0461         2.260
-           2 |      116      0.0473         2.320
-           3 |      122      0.0498         2.440
------------------------------------------------------
+Network data                        Number of actors  =        50
+Directed                            Number of waves   =         3
 
-----------------------------------------------------------------------
-      period |    kept   created  dissolved   Jaccard   Hamming
--------------+--------------------------------------------------------
+------------------------------------------------------------------
+        Wave |       Ties     Density   Avg. degree
+-------------+----------------------------------------------------
+           1 |        113      0.0461         2.260
+           2 |        116      0.0473         2.320
+           3 |        122      0.0498         2.440
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+      Period |    Kept   Created  Dissolved   Jaccard   Hamming
+-------------+----------------------------------------------------
         1->2 |      57        59         56     0.331       115
         2->3 |      66        56         50     0.384       106
-----------------------------------------------------------------------
+------------------------------------------------------------------
 ```
 
 The density barely moves, but the network is far from static: between the first two waves 57 ties
@@ -84,25 +86,27 @@ We start with the effects that almost every SAOM contains:
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
--------------------------------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
--------------------------------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.7657   .1525954   -18.12   0.000    -3.064781   -2.466618
- reciprocity |   2.455705   .1983861    12.38   0.000     2.066875    2.844534
-samex_smoke1 |   .1333049   .1456629     0.92   0.360    -.1521891     .418799
-   transtrip |   .6194921   .0767219     8.07   0.000       .46912    .7698642
+   outdegree |  -2.759213   .1516059   -18.20   0.000    -3.056355   -2.462071
+ reciprocity |   2.441024    .198022    12.33   0.000     2.052908     2.82914
+samex_smoke1 |   .1325353   .1474368     0.90   0.369    -.1564356    .4215062
+   transtrip |   .6147119   .0773888     7.94   0.000     .4630327    .7663911
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    6.4783     5.2605 
-          se |    1.1113     0.8674 
-Overall maximum convergence ratio: 0.097 (criterion: below 0.25; met)
+-------------+----------------------
+        rate |    6.5200     5.2401
+          se |    1.1516     0.9196
+------------------------------------
+Overall maximum convergence ratio: 0.103 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
@@ -117,12 +121,12 @@ corresponding change more attractive and a negative number less attractive, **ho
 constant**. The rest of the table (standard errors, z, p-value, interval) is read as in any other Stata
 estimation command.
 
-- `outdegree` is -2.77: with nothing else going on, creating a tie is unattractive. This is typical.
+- `outdegree` is -2.76: with nothing else going on, creating a tie is unattractive. This is typical.
   Friendship networks are sparse, and the coefficient mostly tells you the density of the network.
   It is not interpreted substantively.
-- `reciprocity` is 2.46 (z = 12.4): pupils strongly prefer to return a friendship. Choosing someone
+- `reciprocity` is 2.44 (z = 12.3): pupils strongly prefer to return a friendship. Choosing someone
   who already named you is worth about 2.5 on the log scale, on top of the baseline.
-- `transtrip` is 0.62 (z = 8.1): the more friends in common via a path, the more attractive a tie
+- `transtrip` is 0.61 (z = 7.9): the more friends in common via a path, the more attractive a tie
   is. Friendship clusters.
 - `samex_smoke1` is 0.13 (z = 0.9): no evidence that pupils choose friends by smoking status, once
   reciprocity and clustering are in the model.
@@ -130,8 +134,8 @@ estimation command.
 ### The rate parameters
 
 The rate says how many opportunities for change an actor had on average during a period. Between the
-first two waves each pupil had about 6.5 opportunities to reconsider a friendship, and 5.3 between the
-second and third. The standard errors are 1.1 and 0.9. Rates are nuisance parameters: they are needed, but they are rarely the point of an analysis.
+first two waves each pupil had about 6.5 opportunities to reconsider a friendship, and 5.2 between the
+second and third. The standard errors are 1.2 and 0.9. Rates are nuisance parameters: they are needed, but they are rarely the point of an analysis.
 
 ### The convergence check
 
@@ -146,7 +150,7 @@ units). RSiena's rule, which `nwsaom` follows, is:
 - overall maximum above 0.25: not converged; do not interpret the estimates, see
   [Tutorial 2](../tutorial-2-convergence/).
 
-Here the overall ratio is 0.097, so the model converged. The option `detail` lists every t-ratio and
+Here the overall ratio is 0.103, so the model converged. The option `detail` lists every t-ratio and
 the effect names RSiena would use for the same effects:
 
 ```stata
@@ -154,10 +158,11 @@ the effect names RSiena would use for the same effects:
 ...
 RSiena effect names:
   samex_smoke1                  same smoke1
-Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
-  outdegree                  0.072      reciprocity                0.072
-  samex_smoke1               0.094      transtrip                  0.061
-Overall maximum convergence ratio:  0.097
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a
+separate criterion):
+  outdegree                 -0.095      reciprocity               -0.095
+  samex_smoke1              -0.072      transtrip                 -0.093
+Overall maximum convergence ratio:  0.103
 ```
 
 (The table and rates are repeated and are left out here.)

@@ -6,24 +6,26 @@
 . 
 . * A fitted model over one period
 . nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2
 Actors: 50                             Periods: 1
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.530242   .1427265   -17.73   0.000    -2.809981   -2.250503
- reciprocity |   2.157208   .2343807     9.20   0.000      1.69783    2.616586
-   transtrip |   .5941483    .105325     5.64   0.000     .3877151    .8005816
+   outdegree |  -2.528005    .135743   -18.62   0.000    -2.794057   -2.261954
+ reciprocity |   2.126118   .2558338     8.31   0.000     1.624693    2.627543
+   transtrip |   .5977949   .1096539     5.45   0.000     .3828772    .8127125
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-------------------------
              |   period1 
 -------------+-----------
-        rate |    6.2065 
-          se |    1.0294 
-Overall maximum convergence ratio: 0.045 (criterion: below 0.25; met)
+        rate |    6.1337
+          se |    1.0059
+-------------------------
+Overall maximum convergence ratio: 0.117 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . matrix b = e(b)
@@ -32,19 +34,22 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 b[1,3]
       outdegree  reciprocity    transtrip
-y1   -2.5302421     2.157208    .59414831
+y1   -2.5280053    2.1261183    .59779486
 
 . 
 . * Simulate the fitted model 100 times, starting from the observed first wave
 . estat simulate, nsim(100) seed(5)
 Simulation from the fitted model: 100 replication(s) of 1 period(s)
-Sim is the mean over the replications, Obs the observed end wave.
 
-             |          Ties        Mutual    Transitive
-      period |     Sim   Obs     Sim   Obs     Sim   Obs
--------------+-------------------------------------------
-           1 |   115.4   116    35.6    35    90.3    88
----------------------------------------------------------
+------------------------------------
+   Statistic |       Sim       Obs
+-------------+----------------------
+Period 1     |
+        Ties |     115.9       116
+      Mutual |      35.5        35
+  Transitive |      92.7        88
+------------------------------------
+Sim is the mean over the replications; Obs is the observed end wave.
 
 . matrix list r(obs)
 
@@ -59,13 +64,13 @@ r1           .           1         116          35          88           .
 : S = st_matrix("S")
 
 : printf("ties:       mean %5.1f, sd %5.1f\n", mean(S[., 3]), sqrt(variance(S[., 3])))
-ties:       mean 115.4, sd  17.1
+ties:       mean 115.9, sd  18.1
 
 : printf("mutual:     mean %5.1f, sd %5.1f\n", mean(S[., 4]), sqrt(variance(S[., 4])))
-mutual:     mean  35.6, sd   7.9
+mutual:     mean  35.5, sd   8.2
 
 : printf("transitive: mean %5.1f, sd %5.1f\n", mean(S[., 5]), sqrt(variance(S[., 5])))
-transitive: mean  90.3, sd  50.1
+transitive: mean  92.7, sd  54.3
 
 : end
 ----------------------------------------------------------------------------------------------------
@@ -75,29 +80,34 @@ transitive: mean  90.3, sd  50.1
 . * second wave
 . estat simulate, nsim(3) seed(5) generate(sim)
 Simulation from the fitted model: 3 replication(s) of 1 period(s)
-Sim is the mean over the replications, Obs the observed end wave.
 
-             |          Ties        Mutual    Transitive
-      period |     Sim   Obs     Sim   Obs     Sim   Obs
--------------+-------------------------------------------
-           1 |   121.0   116    35.3    35   108.3    88
----------------------------------------------------------
+------------------------------------
+   Statistic |       Sim       Obs
+-------------+----------------------
+Period 1     |
+        Ties |     109.3       116
+      Mutual |      31.7        35
+  Transitive |      84.0        88
+------------------------------------
+Sim is the mean over the replications; Obs is the observed end wave.
 
 . nwsaom describe, waves(glasgow2 sim_1_p1)
 
-Network data: 2 waves, 50 actors, directed
------------------------------------------------------
-        wave |     ties     density   avg. degree
--------------+---------------------------------------
-           1 |      116      0.0473         2.320
-           2 |       97      0.0396         1.940
------------------------------------------------------
+Network data                        Number of actors  =        50
+Directed                            Number of waves   =         2
 
-----------------------------------------------------------------------
-      period |    kept   created  dissolved   Jaccard   Hamming
--------------+--------------------------------------------------------
-        1->2 |      31        66         85     0.170       151
-----------------------------------------------------------------------
+------------------------------------------------------------------
+        Wave |       Ties     Density   Avg. degree
+-------------+----------------------------------------------------
+           1 |        116      0.0473         2.320
+           2 |         96      0.0392         1.920
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+      Period |    Kept   Created  Dissolved   Jaccard   Hamming
+-------------+----------------------------------------------------
+        1->2 |      31        65         85     0.171       150
+------------------------------------------------------------------
 Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about change.
 
 . 
@@ -107,26 +117,34 @@ Note: Jaccard < 0.3 in period 1->2; few ties stay, the data say little about cha
 . * reciprocity, transtrip; rates() has one rate per period.
 . * ---------------------------------------------------------------
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 2.4 0.6) rate
+> s(6) nsim(100) seed(5)
 Simulation from the fitted model: 100 replication(s) of 1 period(s)
-Sim is the mean over the replications, Obs the observed end wave.
 
-             |          Ties        Mutual    Transitive
-      period |     Sim   Obs     Sim   Obs     Sim   Obs
--------------+-------------------------------------------
-           1 |   105.4   116    33.9    35    72.6    88
----------------------------------------------------------
+------------------------------------
+   Statistic |       Sim       Obs
+-------------+----------------------
+Period 1     |
+        Ties |     105.4       116
+      Mutual |      33.9        35
+  Transitive |      72.6        88
+------------------------------------
+Sim is the mean over the replications; Obs is the observed end wave.
 
 . 
 . * The same world without any tendency to reciprocate
 . nwsaom simulate, waves(glasgow1 glasgow2) outdegree reciprocity transtrip theta(-2.7 0 0.6) rates(
+> 6) nsim(100) seed(5)
 Simulation from the fitted model: 100 replication(s) of 1 period(s)
-Sim is the mean over the replications, Obs the observed end wave.
 
-             |          Ties        Mutual    Transitive
-      period |     Sim   Obs     Sim   Obs     Sim   Obs
--------------+-------------------------------------------
-           1 |    39.8   116     0.6    35     1.2    88
----------------------------------------------------------
+------------------------------------
+   Statistic |       Sim       Obs
+-------------+----------------------
+Period 1     |
+        Ties |      39.8       116
+      Mutual |       0.6        35
+  Transitive |       1.2        88
+------------------------------------
+Sim is the mean over the replications; Obs is the observed end wave.
 
 . 
 . * ---------------------------------------------------------------
@@ -147,18 +165,16 @@ Sim is the mean over the replications, Obs the observed end wave.
 . estat mems, effect(reciprocity) macro(mutualties) nsim(100) seed(1)
 interval 0: ..
 interval 1: ..
-----------------------------------------------------------------------------------------------------
-MEMs (Micro Effects on Macro Structure) - Duxbury, via mutualties
+
+MEMS: micro effects on macro structure (Duxbury), macro statistic mutualties
 Micro process: reciprocity  Interval: 0 1  nsim: 100
-----------------------------------------------------------------------------------------------------
-|             Estimate    Std. Dev.    [95% CI]              MC p-val
-----------------------------------------------------------------------------------------------------
-MEMS           37.1800     11.4216      14.4250 ,  59.0000   0.0000
-Prop. Change in M                        0.9742
-----------------------------------------------------------------------------------------------------
-(MEMS = mean difference in mutualties between interval=1 and interval=0; Prop. Change in M = that di
-> fference as a proportion of the interval=1 value; MC p-val = proportion of draws with the opposite
->  sign - a real, disclosed simplification vs real netmediate/RSiena: independent simulation randomn
-> ess per draw, no common-random-numbers pairing, and the VanderWeele E-value sensitivity bound is n
-> ot yet implemented)
-.
+-----------------------------------------------------------------------
+             |  Estimate  Std. dev.    [95% conf. interval]  MC p-value
+-------------+---------------------------------------------------------
+        MEMS |   37.1000    11.8973     17.0000     62.6250      0.0000
+Prop. change |    0.9716
+-----------------------------------------------------------------------
+MEMS: mean difference in mutualties between interval=1 and interval=0.
+Prop. change: that difference as a share of the value at interval=1.
+MC p-value: share of draws with the opposite sign. Each draw is simulated
+independently (no common random numbers); no E-value sensitivity bound.

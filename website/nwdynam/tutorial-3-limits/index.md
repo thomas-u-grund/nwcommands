@@ -12,7 +12,7 @@ command refuses and what it does not do.
 
 **Data.** First the ten-event toy log from the `nwdynam` help file, then the first 60 and all 439 phone calls of
 [Tutorial 1](../tutorial-1-first-dynam/) (the data files: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv)). You need the core `nwcommands` and
-`nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.0.1 and the core 3.0.0.
+`nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.3.0 and the core 3.22.0.
 Script and log: [example.do](example.do), [example.log](example.log).
 
 ## A toy log gives degenerate estimates
@@ -28,19 +28,16 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: chat                          Actors: 3
 Events: 10                             Log likelihood:   -3.9890
 ------------------------------------------------------------
-------------------------------------------------------------
-Note: no usable standard error for trans.
-      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
-      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
+------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |  -16.95435   4803.848    -0.00   0.997    -9432.324    9398.415
        recip |  -.6931435   1.224744    -0.57   0.571    -3.093598    1.707311
        indeg |  -19.78143   13962.73    -0.00   0.999    -27386.22    27346.66
+------------------------------------------------------------------------------
 Note: no usable standard error for inertia indeg.
-      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
-      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
-------------------------------------------------------------
+      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects that are
+      linear functions of each other). Do not interpret their estimates; drop or recode the effect.
 ```
 
 Three things in this output say "do not use": the message *flat region encountered* from the optimizer, coefficients of
@@ -109,8 +106,8 @@ well (the standard error of `inertia` is now 1.05, against 0.41 without the two 
 
 ```stata
 . capture noisily nwdynam first439, submodel(rate) recip
-inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice su
-> b-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
+inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice
+sub-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
 invalid syntax
 . display "return code: " _rc
 return code: 198

@@ -13,8 +13,8 @@ a variable of the *pupils* that changes from wave to wave (here: delinquency), a
 
 **Data.** A school class of 26 pupils in their first year of Dutch secondary school, observed four times, three
 months apart (the data of Andrea Knecht, 2003-2004; see [Data sets](../../datasets/) for the source). They
-come with the core package: `nwwebuse klas12b`. The commands were run with `nwsaom` 1.1.1 and the core
-3.10.0 in Stata 18, and checked in Stata 17. The complete script and log are in [example.do](example.do) and
+come with the core package: `nwwebuse klas12b`. The commands were run with `nwsaom` 1.6.0 and the core
+3.22.0 in Stata 17. The complete script and log are in [example.do](example.do) and
 [example.log](example.log).
 
 ## Look at the data
@@ -22,23 +22,25 @@ come with the core package: `nwwebuse klas12b`. The commands were run with `nwsa
 ```stata
 . nwsaom describe, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4)
 
-Network data: 4 waves, 26 actors, directed
------------------------------------------------------
-        wave |     ties     density   avg. degree
--------------+---------------------------------------
-           1 |       91      0.1400         3.500
-           2 |      117      0.1800         4.500
-           3 |      133      0.2046         5.115
-           4 |      119      0.1831         4.577
------------------------------------------------------
+Network data                        Number of actors  =        26
+Directed                            Number of waves   =         4
 
-----------------------------------------------------------------------
-      period |    kept   created  dissolved   Jaccard   Hamming
--------------+--------------------------------------------------------
+------------------------------------------------------------------
+        Wave |       Ties     Density   Avg. degree
+-------------+----------------------------------------------------
+           1 |         91      0.1400         3.500
+           2 |        117      0.1800         4.500
+           3 |        133      0.2046         5.115
+           4 |        119      0.1831         4.577
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+      Period |    Kept   Created  Dissolved   Jaccard   Hamming
+-------------+----------------------------------------------------
         1->2 |      60        57         31     0.405        88
         2->3 |      70        63         47     0.389       110
         3->4 |      75        44         58     0.424       102
-----------------------------------------------------------------------
+------------------------------------------------------------------
 ```
 
 Four waves give three periods. The class gets denser (from 0.14 to 0.20 at wave 3) and the Jaccard index is around
@@ -71,30 +73,33 @@ First a model with the constant covariate only:
 
 ```stata
 . nwsaom, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4) outdegree reciprocity transtrip samex(sex)  seed(4)
-----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4
+
+SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3
+klas12b_wave4
 Actors: 26                             Periods: 3
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 klas12b_wa~4 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -1.903829   .1079266   -17.64   0.000    -2.115361   -1.692296
- reciprocity |   .8776045   .1267133     6.93   0.000      .629251    1.125958
-   samex_sex |   .5659666   .1088162     5.20   0.000     .3526907    .7792425
-   transtrip |   .1888613    .022552     8.37   0.000     .1446601    .2330624
+   outdegree |  -1.908709   .1120223   -17.04   0.000    -2.128268   -1.689149
+ reciprocity |   .8676614   .1249379     6.94   0.000     .6227875    1.112535
+   samex_sex |   .5715298   .1149133     4.97   0.000     .3463039    .7967558
+   transtrip |   .1901893    .021152     8.99   0.000     .1487321    .2316464
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------------------
              |   period1    period2    period3 
--------------+--------------------------------
-        rate |    7.3926     9.4096     7.8039 
-          se |    1.2521     1.5709     1.1306 
-Overall maximum convergence ratio: 0.081 (criterion: below 0.25; met)
+-------------+---------------------------------
+        rate |    7.4376     9.3813     7.8094
+          se |    1.2613     1.5370     1.2074
+-----------------------------------------------
+Overall maximum convergence ratio: 0.075 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
-Girls and boys prefer same-sex friends (`samex_sex` 0.57, z = 5.2); reciprocity and transitive closure are positive,
-and smaller than in the Glasgow data (reciprocity 0.88, against about 2.5 in Tutorial 1).
+Girls and boys prefer same-sex friends (`samex_sex` 0.57, z = 5.0); reciprocity and transitive closure are positive,
+and smaller than in the Glasgow data (reciprocity 0.87, against about 2.4 in Tutorial 1).
 
 ### tvcov(): one variable per period
 
@@ -105,27 +110,30 @@ because it describes the end, not the beginning, of the last period. In the effe
 
 ```stata
 . nwsaom, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4) outdegree reciprocity transtrip samex(sex) tvcov(delinq1 delinq2 delinq3) egox(delinq) altx(delinq) simx(delinq) seed(4) detail
-----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4
+
+SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3
+klas12b_wave4
 Actors: 26                             Periods: 3
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 klas12b_wa~4 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -1.910138   .1117195   -17.10   0.000    -2.129104   -1.691172
- reciprocity |   .8535759   .1337072     6.38   0.000     .5915146    1.115637
- altx_delinq |   .0214465   .0681657     0.31   0.753    -.1121558    .1550489
- egox_delinq |  -.0715577   .0677006    -1.06   0.291    -.2042484    .0611331
- simx_delinq |   .6681287   .2780009     2.40   0.016      .123257       1.213
-   samex_sex |   .5573662    .111187     5.01   0.000     .3394436    .7752887
-   transtrip |   .1925975   .0229775     8.38   0.000     .1475623    .2376327
+   outdegree |  -1.909047   .1098346   -17.38   0.000    -2.124319   -1.693775
+ reciprocity |   .8595679   .1277293     6.73   0.000     .6092231    1.109913
+ altx_delinq |   .0196642   .0645367     0.30   0.761    -.1068255    .1461538
+ egox_delinq |  -.0727893   .0619222    -1.18   0.240    -.1941546     .048576
+ simx_delinq |   .6756142   .2796635     2.42   0.016     .1274838    1.223745
+   samex_sex |   .5527127   .1096979     5.04   0.000     .3377089    .7677166
+   transtrip |   .1910667   .0239181     7.99   0.000     .1441881    .2379452
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------------------
              |   period1    period2    period3 
--------------+--------------------------------
-        rate |    7.0775     9.2410     8.1198 
-          se |    1.1714     1.5460     1.2751 
+-------------+---------------------------------
+        rate |    7.1865     9.2301     8.1531
+          se |    1.2214     1.4621     1.1953
+-----------------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   altx_delinq                   delinq alter
@@ -134,15 +142,16 @@ RSiena effect names:
   samex_sex                     same sex
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   delinq                            1.538
-Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a separate criterion):
-  outdegree                  0.007      reciprocity               -0.011
-  altx_delinq               -0.002      egox_delinq                0.071
-  simx_delinq                0.027      samex_sex                 -0.013
-  transtrip                  0.024
-Overall maximum convergence ratio:  0.120
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a
+separate criterion):
+  outdegree                 -0.034      reciprocity               -0.058
+  altx_delinq               -0.019      egox_delinq                0.007
+  simx_delinq               -0.012      samex_sex                 -0.039
+  transtrip                 -0.049
+Overall maximum convergence ratio:  0.082
 ```
 
-- `simx_delinq` is 0.67 (z = 2.4): pupils prefer friends whose delinquency is *similar* to their own at the time.
+- `simx_delinq` is 0.68 (z = 2.4): pupils prefer friends whose delinquency is *similar* to their own at the time.
   This is a selection effect, and with a changing covariate it is evaluated with each period's own values.
 - `egox_delinq` (do pupils who are more delinquent name more friends?) and `altx_delinq` (are they named more?) are
   both close to zero.
@@ -176,33 +185,36 @@ The matrix is symmetric (a pair either shares a primary school or not): 43 pairs
 
 ```stata
 . nwsaom, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4) outdegree reciprocity transtrip samex(sex) tvcov(delinq1 delinq2 delinq3) egox(delinq) altx(delinq) simx(delinq) dyadcov(primary) seed(4)
-----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4
+
+SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3
+klas12b_wave4
 Actors: 26                             Periods: 3
-----------------------------------------------------------------------------------------------------
+
 ---------------------------------------------------------------------------------
 klas12b_wave1~4 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------+----------------------------------------------------------------
-      outdegree |   -1.94283   .1093013   -17.77   0.000    -2.157056   -1.728603
-    reciprocity |   .7683781    .127647     6.02   0.000     .5181945    1.018562
-    altx_delinq |   .0191458   .0632189     0.30   0.762    -.1047609    .1430525
-    egox_delinq |  -.0718817   .0651537    -1.10   0.270    -.1995807    .0558172
-    simx_delinq |   .7131749    .271064     2.63   0.009     .1818992    1.244451
-      samex_sex |   .5930596   .1130971     5.24   0.000     .3713933    .8147259
-dyadcov_primary |   .4756035   .1284435     3.70   0.000      .223859     .727348
-      transtrip |   .1907559   .0230929     8.26   0.000     .1454947     .236017
+      outdegree |   -1.94886   .1162493   -16.76   0.000    -2.176704   -1.721015
+    reciprocity |   .7786656    .135146     5.76   0.000     .5137844    1.043547
+    altx_delinq |   .0160516   .0640705     0.25   0.802    -.1095242    .1416274
+    egox_delinq |  -.0728846   .0641616    -1.14   0.256    -.1986391    .0528699
+    simx_delinq |   .7101842   .2668065     2.66   0.008     .1872531    1.233115
+      samex_sex |   .5938003   .1101646     5.39   0.000     .3778816    .8097189
+dyadcov_primary |   .4702319   .1246676     3.77   0.000     .2258878     .714576
+      transtrip |   .1901288   .0228653     8.32   0.000     .1453136     .234944
 ---------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------------------
              |   period1    period2    period3 
--------------+--------------------------------
-        rate |    7.7320     9.8524     8.5058 
-          se |    1.3395     1.6763     1.3248 
-Overall maximum convergence ratio: 0.112 (criterion: below 0.25; met)
+-------------+---------------------------------
+        rate |    7.7629     9.8091     8.4350
+          se |    1.3783     1.6700     1.3559
+-----------------------------------------------
+Overall maximum convergence ratio: 0.154 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
-`dyadcov_primary` is 0.48 (z = 3.7): a tie to a former primary-school classmate is more attractive, net of the other effects in the model.
+`dyadcov_primary` is 0.47 (z = 3.8): a tie to a former primary-school classmate is more attractive, net of the other effects in the model.
 Like all covariates, the matrix is centered by its mean.
 
 ### Counting only reciprocated ties: dyadcovrecip()
@@ -212,32 +224,40 @@ shared background matter more for mutual friendships?
 
 ```stata
 . nwsaom, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4) outdegree reciprocity transtrip samex(sex) dyadcov(primary) dyadcovrecip(primary) seed(4)
-----------------------------------------------------------------------------------------------------
-SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4
+
+SAOM (Method of Moments, conditional), waves: klas12b_wave1 klas12b_wave2 klas12b_wave3
+klas12b_wave4
 Actors: 26                             Periods: 3
-----------------------------------------------------------------------------------------------------
+
 --------------------------------------------------------------------------------------
 klas12b_wave1_to_k~4 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------------+----------------------------------------------------------------
-           outdegree |  -1.946985    .114067   -17.07   0.000    -2.170552   -1.723418
-         reciprocity |   .7909601   .1360846     5.81   0.000     .5242391    1.057681
-           samex_sex |   .6087187   .1157367     5.26   0.000     .3818789    .8355584
-     dyadcov_primary |   .4258563    .179244     2.38   0.018     .0745446     .777168
-dyadcovrecip_primary |   .0582198   .2974511     0.20   0.845    -.5247737    .6412134
-           transtrip |   .1883312   .0218229     8.63   0.000     .1455592    .2311032
+           outdegree |  -1.948317   .1114505   -17.48   0.000    -2.166756   -1.729878
+         reciprocity |   .7923934   .1361533     5.82   0.000     .5255379    1.059249
+           samex_sex |    .612627    .113804     5.38   0.000     .3895754    .8356787
+     dyadcov_primary |   .4284681   .1813008     2.36   0.018      .073125    .7838111
+dyadcovrecip_primary |    .052875   .2971519     0.18   0.859     -.529532    .6352819
+           transtrip |   .1882054   .0221048     8.51   0.000     .1448808      .23153
 --------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-----------------------------------------------
              |   period1    period2    period3 
--------------+--------------------------------
-        rate |    8.1016    10.1252     8.1203 
-          se |    1.4618     1.7495     1.3012 
-Overall maximum convergence ratio: 0.101 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+-------------+---------------------------------
+        rate |    8.1304     9.9944     8.0419
+          se |    1.4786     1.6545     1.2134
+-----------------------------------------------
+Overall maximum convergence ratio: 0.187 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  outdegree (-0.158) reciprocity (-0.131) samex_sex (-0.163)
+  transtrip (-0.167)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 ```
 
-The effect is 0.06 with a standard error of 0.30, so there is no sign that shared primary schooling matters *more* for
-mutual friends: it makes any tie more likely (0.43 in this model, z = 2.4), not particularly the reciprocated ones.
+The effect is 0.05 with a standard error of 0.30, so there is no sign that shared primary schooling matters *more* for
+mutual friends: it makes any tie more likely (0.43 in this model, z = 2.4), not particularly the reciprocated ones. (In this run some t-ratios are above 0.1;
+before reporting such a model, run `nwsaom refit` as in [Tutorial 2](../tutorial-2-convergence/).)
 
 ## Things to try
 

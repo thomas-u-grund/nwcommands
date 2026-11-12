@@ -1,28 +1,3 @@
-
-  ___  ____  ____  ____  ____ ®
- /__    /   ____/   /   ____/      Stata 18.0
-___/   /   /___/   /   /___/       BE—Basic Edition
-
- Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
-                                   StataCorp
-                                   4905 Lakeway Drive
-                                   College Station, Texas 77845 USA
-                                   800-782-8272        https://www.stata.com
-                                   979-696-4600        service@stata.com
-
-Stata license: Single-user  perpetual
-Serial number: 301806005943
-  Licensed to: Thomas Grund
-               RWTH Aachen
-
-Notes:
-      1. Stata is running in batch mode.
-      2. Unicode is supported; see help unicode_advice.
-
-
-
-. do example.do 
-
 . * Tutorial 9: Two-mode networks
 . * The two data sets are loaded from the data folder of the repository here;
 . * once the release is installed, nwwebuse davis and nwwebuse ftdirectors_se do the same.
@@ -129,6 +104,7 @@ Notes:
    Minimum value:  0
    Maximum value:  7
    Density:  .908
+   Mean degree:  15.44
    Temporal: false
    Provenance:  projected from network davis, mode 1 (woman), stat=minmax
 
@@ -158,15 +134,6 @@ file plot_davis.svg saved as SVG format
 . 
 . * Part of the network: the flag, the two modes and the level labels are kept
 . nwkeepnodes davis, nodes(Brenda Charlotte Dorothy Eleanor E1 E2 E3 E4 E5) generate(small)
-
-
-
-
-
-
-
-
-
 
 . nwsummarize small
 --------------------------------------------------
@@ -309,8 +276,8 @@ Node position counts stored in np1 to np46 (position ids of bmotif), nodes in ne
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-         cl_ |         32    .6591892    .0993221   .5238096   .8461539
-        clo1 |         32    .4413106    .0612054   .3690476   .5961539
+         cl_ |         32    .6591892    .0993221   .5238095   .8461538
+        clo1 |         32    .4413106    .0612054   .3690476   .5961538
 
 . nwbetween davis, generate(bw) silent
 ----------------------------------------
@@ -330,7 +297,7 @@ Node position counts stored in np1 to np46 (position ids of bmotif), nodes in ne
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
           bw |         32    .0451195    .0606926   .0019535   .2438195
-         bw1 |         32       20.25    27.37569   .8693194   110.2064
+         bw1 |         32       20.25    27.37568   .8693195   110.2064
 
 . 
 . * A null model that keeps both degree sequences
@@ -376,9 +343,9 @@ Importing successful
 . 
 . * Commands that cannot say anything about a two-mode network stop
 . capture noisily nwspectral davis, generate(sp)
-nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold no 
-> ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a one-mod
-> e graph.
+nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold
+no ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a
+one-mode graph.
 
 . display _rc
 6088
@@ -473,6 +440,7 @@ Female |  1.190244      1025
    Minimum value:  0
    Maximum value:  5
    Density:  .00735
+   Mean degree:  3.34
    Temporal: false
    Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
 
@@ -488,6 +456,3 @@ Female |  1.190244      1025
 
 . display r(max)
 304
-
-. 
-end of do-file

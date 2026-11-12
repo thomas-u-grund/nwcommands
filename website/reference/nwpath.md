@@ -43,9 +43,11 @@ alpha(real)]
 
 ## Description
 
-` nwpath` calculates the shortest paths between node *ego* and node *alter*, i.e. ways how the nodes are connected with each other.
+` nwpath` calculates the shortest paths between node *ego* and node *alter*, i.e. ways how the nodes are connected with each other. When *ego* and *alter* are the same node, the path is the node itself, of length 0 (as in igraph).
 
-With option `generate(newnetname)` the command produces one new network for each valid path that is found. For example, if three paths are found between nodes *ego* and *alter*, the networks *newnetnamestub_1, newnetnamestub_2, newnetnamestub_3* are produced.
+With option `generate(newnetname)` the command produces one new network for each valid path that is found. For example, if three paths are found between nodes *ego* and *alter*, the networks *newnetnamestub_1, newnetnamestub_2, newnetnamestub_3* are produced. On an undirected network each tie of a path network is undirected (stored in both directions).
+
+Errors: a node that does not exist, or an id out of range, stops the command with **r(485)**; a path network that already exists without `nwreplace` with **r(483)**; a missing or invalid option with **r(198)** (see [nwerrorcodes](nwerrorcodes)).
 
 ## Options
 

@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 17: networks over time
 . * Requires the core nwcommands.
 . nwwebuse glasgow, nwclear
@@ -19,6 +17,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . nwsummarize glasgow2
@@ -34,6 +33,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 
 . nwsummarize glasgow3
@@ -49,6 +49,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . 
@@ -144,6 +145,7 @@ scalars:
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean outdegree:  0.50
    Temporal: false
    Provenance:  static graph view of mynet at t=2 (snapshot)
 
@@ -161,5 +163,3 @@ scalars:
   Jaccard index: 0
   Persistence: 0
  
-
-. 

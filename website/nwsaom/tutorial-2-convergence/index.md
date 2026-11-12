@@ -63,6 +63,8 @@ Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio 
   cycle3                    -0.046      gwesp_.69                 -0.028
   simx_alcohol1              0.023
 Overall maximum convergence ratio:  0.431
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 ```
 
 The overall ratio is 0.431, far above 0.25. Yet the individual t-ratios are small: only
@@ -106,6 +108,8 @@ nwsaom refit, run 1 of at most 3: starting from the last estimates (overall rati
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 ...
 Overall maximum convergence ratio:  0.295
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 ------------------------------------------------------------------------------
 nwsaom refit, run 2 of at most 3: starting from the last estimates (overall ratio 0.295)

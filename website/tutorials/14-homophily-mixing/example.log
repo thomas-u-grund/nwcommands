@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 12: homophily, assortativity and mixing
 . * Requires the core nwcommands.
 . nwwebuse glasgow, nwclear
@@ -17,6 +15,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . summarize sport1 smoke1 alcohol1
@@ -131,7 +130,4 @@ Calculating node coordinates...
 Generating splines...
 Plotting network...
 Exporting graph to plot_glasgow_smoke.svg...
-(file plot_glasgow_smoke.svg not found)
 file plot_glasgow_smoke.svg saved as SVG format
-
-. 

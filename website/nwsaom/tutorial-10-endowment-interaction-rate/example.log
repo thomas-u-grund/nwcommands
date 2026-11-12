@@ -6,24 +6,26 @@
 . 
 . * A model to compare with
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.867764   .1349245   -21.25   0.000    -3.132211   -2.603317
- reciprocity |   2.435639   .1836997    13.26   0.000     2.075595    2.795684
-   transties |   1.173796   .1325602     8.85   0.000     .9139823    1.433609
+   outdegree |  -2.871859   .1349753   -21.28   0.000    -3.136405   -2.607312
+ reciprocity |   2.439997    .187479    13.01   0.000     2.072545    2.807449
+   transties |   1.173467   .1388159     8.45   0.000     .9013933    1.445542
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.4252     5.5577 
-          se |    1.4258     0.9936 
-Overall maximum convergence ratio: 0.082 (criterion: below 0.25; met)
+        rate |    7.5013     5.5891
+          se |    1.5015     1.0131
+------------------------------------
+Overall maximum convergence ratio: 0.041 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
@@ -34,104 +36,118 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . * ---------------------------------------------------------------
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity endow(transties) creation(transtie
 > s) seed(6)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 -----------------------------------------------------------------------------------
 glasgow1_to_gla~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------+----------------------------------------------------------------
-        outdegree |  -2.937801   .2219279   -13.24   0.000    -3.372771    -2.50283
-      reciprocity |   2.662705   .3052802     8.72   0.000     2.064367    3.261043
-   transtiesendow |  -.3730114    .681025    -0.55   0.584    -1.707796     .961773
-transtiescreation |   2.396332   .5770431     4.15   0.000     1.265348    3.527316
+        outdegree |  -2.969916   .1941109   -15.30   0.000    -3.350366   -2.589466
+      reciprocity |   2.666589   .3040934     8.77   0.000     2.070577    3.262601
+   transtiesendow |  -.3560853   .7169222    -0.50   0.619    -1.761227    1.049056
+transtiescreation |   2.436963   .5467809     4.46   0.000     1.365293    3.508634
 -----------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    6.3342     5.0200 
-          se |    1.1150     0.8223 
-Overall maximum convergence ratio: 0.126 (criterion: below 0.25; met)
+        rate |    6.3402     4.9594
+          se |    1.0790     0.8277
+------------------------------------
+Overall maximum convergence ratio: 0.053 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
 . * Reciprocity: are reciprocated ties harder to give up than they are attractive to make?
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree endow(reciprocity) creation(reciprocity) seed(
 > 6)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------------
 glasgow1_to_glasg~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------------+----------------------------------------------------------------
-          outdegree |  -2.184284   .1293756   -16.88   0.000    -2.437856   -1.930713
-   reciprocityendow |   1.159558   .5655688     2.05   0.040     .0510638    2.268053
-reciprocitycreation |   4.080603   .4319001     9.45   0.000     3.234095    4.927112
+          outdegree |  -2.181486   .1306205   -16.70   0.000    -2.437497   -1.925474
+   reciprocityendow |   1.158672   .5966933     1.94   0.052    -.0108256    2.328169
+reciprocitycreation |   4.037055   .4844782     8.33   0.000     3.087495    4.986614
 -------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    4.5166     3.7584 
-          se |    0.6481     0.5292 
-Overall maximum convergence ratio: 0.125 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+        rate |    4.5078     3.7471
+          se |    0.6443     0.5141
+------------------------------------
+Overall maximum convergence ratio: 0.146 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  reciprocitycreation (-0.109)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 . 
 . * A covariate effect split in the same way
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties endow(altx:alcohol1) cre
 > ation(altx:alcohol1) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ---------------------------------------------------------------------------------------
  glasgow1_to_glasgow3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------------+----------------------------------------------------------------
-            outdegree |  -2.868272   .1250885   -22.93   0.000    -3.113441   -2.623103
-          reciprocity |   2.448188    .193526    12.65   0.000     2.068884    2.827492
-   altxendow_alcohol1 |  -.3811653   .1916677    -1.99   0.047    -.7568271   -.0055035
-altxcreation_alcohol1 |   .2663148   .1141502     2.33   0.020     .0425845    .4900451
-            transties |   1.176264   .1279014     9.20   0.000     .9255822    1.426947
+            outdegree |  -2.871062   .1341339   -21.40   0.000    -3.133959   -2.608164
+          reciprocity |   2.451707   .1958068    12.52   0.000     2.067933    2.835482
+   altxendow_alcohol1 |   -.384926   .1904742    -2.02   0.043    -.7582486   -.0116034
+altxcreation_alcohol1 |   .2671729   .1258425     2.12   0.034     .0205261    .5138196
+            transties |   1.176466   .1234759     9.53   0.000      .934458    1.418475
 ---------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.5216     5.8361 
-          se |    1.4005     1.1486 
-Overall maximum convergence ratio: 0.090 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+        rate |    7.5713     5.8555
+          se |    1.4718     1.1221
+------------------------------------
+Overall maximum convergence ratio: 0.136 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  altxendow_alcohol1 (-0.125)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 
 . 
 . * On a behavior
 . nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadrati
 > cendow quadraticcreation seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2
 Actors: 50                             Periods: 1
 Behavior: alcohol1 alcohol2
-----------------------------------------------------------------------------------------------------
+
 ----------------------------------------------------------------------------------------
   glasgow1_to_glasgow2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------------+----------------------------------------------------------------
-             outdegree |  -2.225501   .1288093   -17.28   0.000    -2.477962   -1.973039
-           reciprocity |   2.420582   .2492538     9.71   0.000     1.932053     2.90911
-            beh_linear |    .424995   .3422905     1.24   0.214    -.2458821    1.095872
-   beh_quadratic_endow |   .1106879   .4323379     0.26   0.798    -.7366789    .9580547
-beh_quadratic_creation |   -.217134   .4636833    -0.47   0.640    -1.125937    .6916686
+             outdegree |  -2.228531   .1378878   -16.16   0.000    -2.498786   -1.958276
+           reciprocity |   2.434498   .2623425     9.28   0.000     1.920316     2.94868
+            beh_linear |   .4141268   .3970118     1.04   0.297    -.3640021    1.192256
+   beh_quadratic_endow |   .0988066   .4379107     0.23   0.821    -.7594827    .9570959
+beh_quadratic_creation |  -.2232361   .5486043    -0.41   0.684    -1.298481    .8520086
 ----------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+-------------------------
              |   period1 
 -------------+-----------
-network_rate |    5.5303 
-          se |    0.8496 
-behavior_r~e |    1.2417 
-          se |    0.3115 
-Overall maximum convergence ratio: 0.133 (criterion: below 0.25; met)
+network_rate |    5.5062
+          se |    0.8440
+behavior_r~e |    1.2515
+          se |    0.3523
+-------------------------
+Overall maximum convergence ratio: 0.122 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
@@ -141,63 +157,67 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . * ---------------------------------------------------------------
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties egox(alcohol1) interact(
 > egox#reciprocity) seed(4) detail
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 -----------------------------------------------------------------------------------------------
          glasgow1_to_glasgow3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------+----------------------------------------------------------------
-                    outdegree |  -2.890084   .1388058   -20.82   0.000    -3.162138    -2.61803
-                  reciprocity |   2.468652    .182564    13.52   0.000     2.110833     2.82647
-                egox_alcohol1 |   .0909282   .1032645     0.88   0.379    -.1114666    .2933229
-                    transties |   1.171759   .1430727     8.19   0.000     .8913419    1.452177
-interact_nodeocov_reciprocity |  -.1488986   .2342888    -0.64   0.525    -.6080962    .3102991
+                    outdegree |  -2.886535   .1370334   -21.06   0.000    -3.155115   -2.617954
+                  reciprocity |   2.459194   .1969747    12.48   0.000     2.073131    2.845258
+                egox_alcohol1 |   .0965064   .0967151     1.00   0.318    -.0930517    .2860644
+                    transties |   1.176884   .1383444     8.51   0.000     .9057343    1.448034
+interact_nodeocov_reciprocity |  -.1492179   .2164106    -0.69   0.491    -.5733749    .2749391
 -----------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.5984     5.6681 
-          se |    1.4431     1.0199 
+        rate |    7.4886     5.6157
+          se |    1.4634     1.0277
+------------------------------------
 (conditional: rate = mean time to reach the observed distance, se = its SD)
 RSiena effect names:
   egox_alcohol1                 alcohol1 ego
   interact_nodeocov_reciprocity alcohol1 ego x reciprocity
 Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
   alcohol1                          2.880
-Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a sepa
-> rate criterion):
-  outdegree                 -0.060      reciprocity               -0.032
-  egox_alcohol1             -0.091      transties                 -0.045
-  interact_nodeocov_recip~  -0.104
-Overall maximum convergence ratio:  0.134
+Convergence t-ratios (criterion: every |t| below 0.1; the overall maximum ratio below 0.25 is a
+separate criterion):
+  outdegree                  0.044      reciprocity                0.058
+  egox_alcohol1             -0.011      transties                  0.040
+  interact_nodeocov_recip~  -0.056
+Overall maximum convergence ratio:  0.104
 
 . 
 . * Two covariate effects interacting: do pupils who drink prefer friends who smoke like themselves?
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties samex(smoke1) egox(alcoh
 > ol1) interact(samex#egox) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ---------------------------------------------------------------------------------------------
        glasgow1_to_glasgow3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ----------------------------+----------------------------------------------------------------
-                  outdegree |  -3.220108   .2206385   -14.59   0.000    -3.652551   -2.787664
-                reciprocity |   2.469673   .1932599    12.78   0.000      2.09089    2.848455
-               samex_smoke1 |   .3569517   .1852166     1.93   0.054    -.0060662    .7199696
-              egox_alcohol1 |   .3827144   .1439699     2.66   0.008     .1005385    .6648903
-                  transties |   1.148795    .123673     9.29   0.000     .9064005     1.39119
-interact_nodematch_nodeocov |  -.4448597   .1660293    -2.68   0.007    -.7702712   -.1194483
+                  outdegree |  -3.228923   .2161502   -14.94   0.000     -3.65257   -2.805276
+                reciprocity |   2.474205   .2044445    12.10   0.000     2.073501    2.874909
+               samex_smoke1 |   .3557494   .1891709     1.88   0.060    -.0150187    .7265174
+              egox_alcohol1 |   .3858571   .1383916     2.79   0.005     .1146145    .6570997
+                  transties |   1.161768   .1332806     8.72   0.000     .9005431    1.422993
+interact_nodematch_nodeocov |  -.4453379    .166993    -2.67   0.008    -.7726382   -.1180376
 ---------------------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.5054     5.6764 
-          se |    1.4264     1.0365 
-Overall maximum convergence ratio: 0.081 (criterion: below 0.25; met)
+        rate |    7.5730     5.6752
+          se |    1.4274     1.0405
+------------------------------------
+Overall maximum convergence ratio: 0.102 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . 
@@ -207,54 +227,57 @@ Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 . * Do heavier drinkers change their friendships more often?
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties ratecov(alcohol1) seed(4
 > )
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.871685   .1312082   -21.89   0.000    -3.128849   -2.614522
- reciprocity |   2.428765   .1855593    13.09   0.000     2.065076    2.792455
-   transties |   1.180279   .1278749     9.23   0.000     .9296485    1.430909
+   outdegree |  -2.876421   .1312406   -21.92   0.000    -3.133648   -2.619194
+ reciprocity |   2.425393   .1888139    12.85   0.000     2.055324    2.795461
+   transties |   1.187353     .13654     8.70   0.000     .9197395    1.454966
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    7.1977     5.7059 
-          se |    1.4212     1.0823 
-Covariate-rate coefficient (alcohol1):    0.4191 (se 0.1443)
-Overall maximum convergence ratio: 0.150 (criterion: below 0.25; met)
+        rate |    7.2761     5.6371
+          se |    1.3636     1.0490
+------------------------------------
+Covariate-rate coefficient (alcohol1):    0.4260 (se 0.1198)
+Overall maximum convergence ratio: 0.065 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 
 . matrix list e(ratecoefs)
 
 symmetric e(ratecoefs)[1,1]
      alcohol1
-r1  .41912671
+r1  .42596707
 
 . 
 . * Does the rate depend on how many friends a pupil has?
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transties outrate seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.700628   .1371836   -19.69   0.000    -2.969503   -2.431753
- reciprocity |   2.357928   .2132406    11.06   0.000     1.939984    2.775872
-   transties |   1.128274   .1423971     7.92   0.000     .8491806    1.407367
+   outdegree |  -2.695975   .1974299   -13.66   0.000     -3.08293   -2.309019
+ reciprocity |    2.35989   .2069168    11.41   0.000      1.95434    2.765439
+   transties |   1.133056   .1541168     7.35   0.000     .8309929     1.43512
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    3.9495     2.9879 
-          se |    0.8066     0.5726 
-Covariate-rate coefficient (outrate):    0.2462 (se 0.2564)
-Overall maximum convergence ratio: 0.103 (criterion: below 0.25; met)
+        rate |    3.7292     2.8171
+          se |    0.7903     0.5459
+------------------------------------
+Covariate-rate coefficient (outrate):    0.2677 (se 0.1347)
+Overall maximum convergence ratio: 0.115 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
-.

@@ -103,7 +103,7 @@ silent
 - **r(dg_central)** --- degree centralization (undirected network, with `detail`)
 - **r(indg_central)** --- indegree centralization (directed network, with `detail`)
 - **r(outdg_central)** --- outdegree centralization (directed network, with `detail`)
-- **r(missing_edges)** --- number of missing (undefined) dyads
+- **r(missing_edges)** --- number of cells of the adjacency matrix without a value (missing); the diagonal of a network without self-loops and the pairs within a mode of a two-mode network count as missing
 - **r(selfloops)** --- number of self-loops
 - **r(nodes1)** --- number of mode-1 nodes (two-mode networks only)
 - **r(nodes2)** --- number of mode-2 nodes (two-mode networks only)

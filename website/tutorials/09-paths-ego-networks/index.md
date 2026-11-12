@@ -32,6 +32,9 @@ the result as a new network:
     Average shortest path length:  (not defined)
     Diameter:  (not defined)
     Radius:  (not defined)
+    Share of pairs connected:  .875
+    Average over connected pairs:  2.486
+    Longest over connected pairs:  5
 ```
 
 Average shortest path length, diameter, and radius all come back undefined here because
@@ -53,6 +56,7 @@ new distance network shows every pairwise distance directly:
    Minimum value:  1
    Maximum value:  5
    Density:  2.49
+   Mean degree:  13.12
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
@@ -122,6 +126,7 @@ collapses the geodesic calculation down to a plain 0/1 network:
    Minimum value:  0
    Maximum value:  1
    Density:  .875
+   Mean degree:  13.12
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16

@@ -49,7 +49,8 @@ Things that goldfish does and `nwdynam` does not (yet) do, as documented in `hel
 
 The help file documents no goodness-of-fit, simulation or Bayesian command. The estimates and the log likelihood are
 the output. Data preparation is also different: instead of goldfish's objects (`defineNodes`, `defineNetwork`,
-`linkEvents`, `defineDependentEvents`) you declare an event list with `nwset ..., eventtime()` and read attributes
+`linkEvents`, `defineDependentEvents`) you declare an event list with `nwset ..., eventtime()` (with an optional third
+variable for the value of each event) and read attributes
 from the dataset of the actors (`nwload ..., xvars`). Before using `nwdynam` for an important result, run the same model in goldfish.
 
 ## Translation table
@@ -71,6 +72,8 @@ from the dataset of the actors (`nwload ..., xvars`). Before using `nwdynam` for
 | `tie(network)` | `tie(netname)` |
 | `window = w` on an effect | `inertiawindow(#)`, `recipwindow(#)`, `indegwindow(#)`, `outdegwindow(#)` |
 | `weighted = TRUE` on an effect | `weightedinertia`, `weightedrecip`, `weightedindeg`, `weightedoutdeg` |
+| `weighted = TRUE, window = w` on an effect | a weighted effect with its own window, for example `weightedinertia inertiawindow(#)` |
+| `increment` of an event (`linkEvents()`) | a value variable: `nwset sender receiver value, directed eventtime(t)`; without it every event has the value 1 |
 | a leading `1 +` in the formula (intercept, rate model) | `intercept` with `submodel(rate)` |
 | `opportunitiesList` in `estimationInit` | `opportunities(evvar actvar)` |
 | `summary()` of the estimate | the table printed by `nwdynam`; `e(b)`, `e(V)`, `e(ll)`, `e(N)`, `e(nodes)` |

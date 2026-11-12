@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- This is a Stata 18.0 generated SVG file (http://www.stata.com) -->
+<!-- This is a Stata 17.0 generated SVG file (http://www.stata.com) -->
 
 <svg version="1.1" width="5.500in" height="4.000in" viewBox="0 0 3960 2880" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<desc>Stata Graph - Graph</desc>
@@ -198,10 +198,10 @@
 	<circle cx="2929.16" cy="955.50" r="57.54" style="fill:none;stroke:#FF0000;stroke-width:4.32"/>
 	<rect x="1348.38" y="2503.05" width="1263.12" height="241.57" style="fill:#FFFFFF"/>
 	<rect x="1351.26" y="2505.93" width="1257.36" height="235.81" style="fill:none;stroke:#000000;stroke-width:5.76"/>
-	<circle cx="1413.84" cy="2603.78" r="26.59" style="fill:#606060"/>
-	<circle cx="1413.84" cy="2603.78" r="22.28" style="fill:none;stroke:#606060;stroke-width:8.64"/>
-	<circle cx="2046.83" cy="2603.78" r="61.86" style="fill:#606060"/>
-	<circle cx="2046.83" cy="2603.78" r="57.54" style="fill:none;stroke:#606060;stroke-width:8.64"/>
+	<circle cx="1413.84" cy="2603.78" r="24.43" style="fill:#606060"/>
+	<circle cx="1413.84" cy="2603.78" r="22.28" style="fill:none;stroke:#606060;stroke-width:4.32"/>
+	<circle cx="2046.83" cy="2603.78" r="59.70" style="fill:#606060"/>
+	<circle cx="2046.83" cy="2603.78" r="57.54" style="fill:none;stroke:#606060;stroke-width:4.32"/>
 	<text x="1496.01" y="2638.81" style="font-family:'Helvetica';font-size:99.99px;fill:#000000">deg = 2</text>
 	<text x="2164.51" y="2638.81" style="font-family:'Helvetica';font-size:99.99px;fill:#000000">deg = 11</text>
 </svg>
