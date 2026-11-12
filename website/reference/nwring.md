@@ -29,13 +29,13 @@ ntimes(int)]
 | | |
 |---|---|
 | *`nodes`* | number of nodes |
-| `k(int)` | number of neighhbors on ring-lattice on each side |
+| `k(int)` | number of neighbors on ring-lattice on each side |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
-| `name(newnetname)` | name of the new network |
+| `name(newnetname)` | name of the new network; default = *ring* |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
 | `xvars` | generate Stata variables for the network |
-| `ntimes(int)` | number of networks to be generated; default = 1 |
+| `ntimes(int)` | number of networks to be generated (named *name*_1, *name*_2, ...); default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
 
 ## Description
@@ -55,24 +55,17 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwring 20, k(2) undirected
 ```
 
-## Supported network types
-
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed). Weighted: yes, via `weights()`, independent of the ring/shortcut placement mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## Stored results
 
 - **nwring** stores the following in **r()**:
 
-**Macros**
-
-- **r(netlist)** list of new networks
+- **Macros**
+- **r(netlist)** --- list of new networks
 
 ## See also
 
 - [nwpref](nwpref), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwsmall](nwsmall)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

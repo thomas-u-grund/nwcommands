@@ -52,11 +52,11 @@ minmodules(#)]
 
 `nwcommunity` detects communities in the network(s) in [netlist](netlist) using one of two algorithms (`algorithm()`): the Louvain method (Blondel et al 2008, the default), a greedy algorithm that repeatedly moves nodes between communities and aggregates communities into a coarser network, in order to maximize Newman's modularity *Q*; or label propagation (Raghavan, Albert & Kumar 2007), a much cheaper algorithm with no modularity optimization at all - each node simply, repeatedly adopts whichever community its neighbors' total edge weight favors most, until no node wants to move. Label propagation does not optimize any global objective the way Louvain does, so its partitions are typically lower-modularity and less consistent run to run, but it scales far better to very large networks. All calculations are performed on the undirected network; directed networks require **symmetrize**.
 
-**algorithm(labelprop)** uses genuinely randomized sweep order and tie-breaking (unlike Louvain's own fixed, reproducible sweep order) - this is a deliberate, load-bearing part of the algorithm, not an incidental implementation detail: a fixed visiting order with deterministic tie-breaking was tried first and found to be not merely non-standard but actively wrong, systematically collapsing even simple, cleanly-separated community structure into one giant community (see [Algorithm](nwcommunity) below). Use `seed()` for reproducible results.
+**algorithm(labelprop)** uses genuinely randomized sweep order and tie-breaking (unlike Louvain's own fixed, reproducible sweep order) - this is a deliberate, load-bearing part of the algorithm, not an incidental implementation detail: a fixed visiting order with deterministic tie-breaking systematically collapses even simple, cleanly-separated community structure into one giant community (see [Algorithm](nwcommunity) below). Use `seed()` for reproducible results.
 
-On dense networks **algorithm(labelprop)** can collapse to a single community; compare the reported modularity with that of **algorithm(louvain)** before relying on it. Louvain is deterministic and ignores `seed()`. The two-mode search draws its random starting orders from the seed: the same `seed()` (or `set seed`) gives the same communities, whatever the platform; with a plugin of the current generation the search is about 25 times faster than the older Mata search (the Mata code is used when the plugin is older), and the two reach the same modularity up to the luck of the random starts (Southern women: identical, 0.3455).
+On dense networks **algorithm(labelprop)** can collapse to a single community; compare the reported modularity with that of **algorithm(louvain)** before relying on it. Louvain is deterministic and ignores `seed()`. The two-mode search draws its random starting orders from the seed: the same `seed()` (or `set seed`) gives the same communities, whatever the platform; the search runs in the native plugin, about 25 times faster than the Mata code that is used on a platform without it, and the two reach the same modularity up to the luck of the random starts (Southern women: identical, 0.3455).
 
-`generate()` is required and names the new variable that stores, for each node, the id of the community it was assigned to.
+`generate()` is required and names the new variable that stores, for each node, the id of the community it was assigned to. With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
 ## Examples
 
@@ -66,20 +66,17 @@ On dense networks **algorithm(labelprop)** can collapse to a single community; c
 . nwcommunity flomarriage, algorithm(labelprop) seed(12345) generate(_community) replace
 ```
 
-## Supported network types
-
-Binary: yes. Directed: requires `symmetrize` - community detection as implemented here is not defined for a directed network. Weighted: yes, via `measure(binary|valued)`; default = *valued* for a valued network, *binary* otherwise (affects both which partition is searched for and the reported **r(modularity)**). Signed: not checked. Two-mode: yes - Louvain-type search for the partition with the largest bipartite modularity of Barber (2007), the null model of `bipartite::computeModules`; `onemode` gives the modularity of Newman for the bipartite graph read as a one-mode graph (`igraph::cluster_louvain`); `starts()` sets the number of starting orders.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(communities)** --- number of communities
+- **r(modularity)** --- modularity Q of the detected partition
 
-- **r(communities)** number of communities
-- **r(modularity)** modularity Q of the detected partition
+- **Macros**
+- **r(modularity_type)** --- **newman**, or **barber** for the bipartite modularity of a two-mode network
 
-**Matrices**
-
-- **r(comm_sizeid)** distribution over communities
+- **Matrices**
+- **r(comm_sizeid)** --- distribution over communities: one row per community with the columns size, compid (community id) and share
 
 ## References
 
@@ -97,4 +94,4 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

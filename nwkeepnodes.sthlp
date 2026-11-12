@@ -43,7 +43,7 @@
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 {pstd}
-Exactly one of {opt nodes()} or {opt keepmat()} must be specified - omitting both errors clearly
+One of {opt nodes()} or {opt keepmat()} must be specified (if both are given, {opt keepmat()} is used) - omitting both errors clearly
 (unlike {help nwdropnodes}, where omitting both is a silent no-op, since "keep nothing" has no safe
 default the way "drop nothing" does).
 
@@ -108,15 +108,12 @@ default unless {bf:netonly} is specified.
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept.
+{bf:Directed:} yes. {bf:Valued:} yes, the ties of the remaining nodes and their values are untouched. {bf:Two-mode:} yes
+- the flag, the modes of the remaining nodes and the level labels are kept. {bf:Signed:} yes, as valued. See
+{help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
@@ -129,4 +126,4 @@ Stata/BE).
    {help nwdropnodes}, {help nwkeep}, {help nwdrop}, {help nwclear}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

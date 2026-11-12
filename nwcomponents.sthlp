@@ -9,6 +9,7 @@
 {p2col :nwcomponents {hline 2}}Network components and the largest component{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -24,14 +25,16 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores information about components (component membership, or largest-component membership if {opt lgc} is given){p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores information about components (component membership, or largest-component membership if {opt lgc} is
+given){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt listall}}Print the full table of components; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
 
 {p2colreset}{...}
-	
+
+
 {title:Description}
 
 {pstd}
@@ -41,28 +44,18 @@ only connected among each other. All calculations are performed on the undirecte
 {pstd}
 {opt generate()} is required and names the new variable that stores the component membership. When
 option {bf:lgc} is specified, the command instead stores in that variable
-information about membership to the largest component.
+information about membership to the largest component (1 for its nodes, 0 for all others). With more than one network
+in the {it:netlist}, a number is appended to the name ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...) and the stored
+results are those of the last network.
 
 
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only) - component membership is a structural (weak-connectivity) property, tie values are ignored. Directed: yes - uses weak connectivity (ignores tie direction), matching the standard convention for "components" on a directed graph. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} weak components (the direction is ignored). {bf:Valued:} tie values are ignored (every tie counts as
+present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode network.
+{bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
-{title:Stored results}
-
-	Scalars
-	  {bf:r(components)}		number of components
-	  
-	Matrices
-	  {bf:r(comp_sizeid)}		distribution over components
-	  
 
 {title:Examples}
 
@@ -84,7 +77,7 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
  This shows that there are two components in the Florentine marriage network. All except one node belong to the first
  component. Some alternative ways how the commands can be used.
  
-	{cmd:. nwwebuse glasgow}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwcomponents glasgow1, generate(mycomponent)}
 	{cmd:. nwcomponents _all, lgc generate(_lgc)}
 	{cmd:. nwcomponents _all, lgc generate(mylgc)}
@@ -101,5 +94,15 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
  
 	{help nwgen}, {help nwkcomponents}
 
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(components)}}number of components{p_end}
+	  
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(comp_sizeid)}}distribution over components: one row per component with the columns size, compid (component id) and share{p_end}
+
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

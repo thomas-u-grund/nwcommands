@@ -13,7 +13,7 @@ program nwbridges
 		noi di `"`r(msg)'"'
 	}
 	local oldname `netname'
-	local olddirected `netname'
+	local olddirected `directed'
 	local generate "`name'"
 	if "`type'" == "" {
 		local type "global"

@@ -53,7 +53,8 @@ silent
    Edges: 20
    Minimum value:  0
    Maximum value:  1
-   Density:  .1666666666666667
+   Density:  .167
+   Mean degree:  2.50
 
 . nwclear
 . nwrandom 5, prob(.2) name(mynet)
@@ -70,6 +71,7 @@ silent
    Minimum value:  0
    Maximum value:  1
    Density:  .25
+   Mean outdegree:  1.00
 
      1   2   3   4   5
   +---------------------+
@@ -81,54 +83,51 @@ silent
   +---------------------+
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: yes - shows the two levels with their sizes and labels; the density is the ties over the pairs of nodes from different modes (the connectance of `bipartite`).
-
 ## Stored results
 
 - **nwsummarize** stores the following in **r()**:
 
-**Scalars**
+- **Scalars**
+- **r(id)** --- internal ID of the network
+- **r(nodes)** --- number of nodes in the network
+- **r(minval)** --- minimum of tie values
+- **r(maxval)** --- maximum of tie values
+- **r(edges)** --- number of edges (undirected network)
+- **r(arcs)** --- number of arcs (directed network)
+- **r(edges_sum)** --- sum of edge values (undirected network)
+- **r(arcs_value)** --- sum of arc values (directed network)
+- **r(density)** --- network density (two-mode network: ties over the pairs between the two modes)
+- **r(meandegree)** --- mean degree: twice the edges per node (undirected network) or arcs per node, the mean outdegree, which equals the mean indegree (directed network); not for two-mode networks
+- **r(reciprocity)** --- network reciprocity
+- **r(transitivity)** --- network transitivity
+- **r(dg_central)** --- degree centralization (undirected network, with `detail`)
+- **r(indg_central)** --- indegree centralization (directed network, with `detail`)
+- **r(outdg_central)** --- outdegree centralization (directed network, with `detail`)
+- **r(missing_edges)** --- number of missing (undefined) dyads
+- **r(selfloops)** --- number of self-loops
+- **r(nodes1)** --- number of mode-1 nodes (two-mode networks only)
+- **r(nodes2)** --- number of mode-2 nodes (two-mode networks only)
 
-- **r(id)** internal ID of the network
-- **r(nodes)** number of nodes in the network
-- **r(minval)** minimum of tie values
-- **r(maxval)** maximum of tie values
-- **r(edges)** number of edges (undirected network)
-- **r(arcs)** number of arcs (directed network)
-- **r(edges_sum)** sum of edge values (undirected network)
-- **r(arcs_value)** sum of arc values (directed network)
-- **r(density)** network density (two-mode network: ties over the pairs between the two modes)
-- **r(reciprocity)** network reciprocity
-- **r(transitivity)** network transitivity
-- **r(missing_edges)** number of missing (undefined) dyads
-- **r(selfloops)** number of self-loops
-- **r(nodes1)** number of mode-1 nodes (two-mode networks only)
-- **r(nodes2)** number of mode-2 nodes (two-mode networks only)
+- **Macros**
+- **r(directed)** --- if network is directed or not (undirected)
+- **r(valued)** --- if network is declared as valued or not
+- **r(mode2)** --- if network two-mode or not
+- **r(name)** --- name of the network (alias: **r(netname)**)
+- **r(labs)** --- comma-separated node labels
+- **r(vars)** --- Stata variable names used to represent the network
+- **r(selfloop)** --- if the network permits self-loops
+- **r(provenance)** --- provenance/source note, if set (see [nwname](nwname))
+- **r(temporal)** --- if the network is temporal
+- **r(temporaltype)** --- temporal storage type, if **r(temporal)** is true
+- **r(mode1_desc)** --- description of mode 1 (two-mode networks only)
+- **r(mode2_desc)** --- description of mode 2 (two-mode networks only)
 
-**Macros**
-
-- **r(directed)** if network is directed or not (undirected)
-- **r(valued)** if network is declared as valued or not
-- **r(mode2)** if network two-mode or not
-- **r(name)** name of the network (alias: **r(netname)**)
-- **r(labs)** comma-separated node labels
-- **r(vars)** Stata variable names used to represent the network
-- **r(selfloop)** if the network permits self-loops
-- **r(provenance)** provenance/source note, if set (see [nwname](nwname))
-- **r(temporal)** if the network is temporal
-- **r(temporaltype)** temporal storage type, if **r(temporal)** is true
-- **r(mode1_desc)** description of mode 1 (two-mode networks only)
-- **r(mode2_desc)** description of mode 2 (two-mode networks only)
-
-The full set above is inherited unchanged from the internal [nwname](nwname) call this command makes on your behalf - see [nwname](nwname)'s own **Stored results** section for the authoritative, complete list (this command does not add or remove any of it).
+With a *netlist*, the results are those of the last network. The other results of [nwname](nwname) (for example **r(title)**, **r(modes)**, **r(mode1desc)**) are also left in **r()**; see its **Stored results**.
 
 ## See also
 
 - [nwname](nwname), [nwdyads](nwdyads), [nwtriads](nwtriads)
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

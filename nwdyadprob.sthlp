@@ -25,10 +25,10 @@
 {opt labs}({it:lab1 lab2 ...})]
 
 
-{synoptset 20 tabbed}{...}
+{synoptset 21 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt mat}({it:matrix})}Stata or Mata matrix with tie probabilities{p_end}
+{synopt:{opt mat}({it:matrix})}Mata matrix (or Mata expression) with tie probabilities{p_end}
 {synopt:{opth density(float)}}density of the new network{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opth name(netname)}}name of the new random network{p_end}
@@ -41,24 +41,22 @@
 
 {pstd}
 {cmd:nwdyadprob} generates a (un-)directed random network where each tie {it:x_ij} has the 
-probability {it:p_ij} to exist. The values for {it:p_ij} are derived either 1) from the edge values
-in network {help netname} and the {it:density} (if given) or 2) from a Stata/Mata matrix specified in {bf:mat()}. The command can be used to create
-all sorts of networks.
+probability {it:p_ij} to exist. The values for {it:p_ij} are derived either 1) from the tie values
+of network {help netname} or 2) from a Mata matrix (or Mata expression) specified in {bf:mat()}. When both are given,
+{it:netname} is used. The command can be used to create all sorts of networks.
 
 {pstd}
-Let {it:e_ij} be the edge values of network {help netname}. 
+Let {it:e_ij} be the tie values of network {help netname}. When all of them lie between 0 and 1, {it:p_ij = e_ij}.
+Otherwise they are transformed to probabilities first: {it:p_ij} = invlogit({it:e_ij}). The values in {bf:mat()} are
+used as they are.
 
 {pstd}
-Then, the probability for a tie {it:x_ij} to exist in the newly created network is {it:p_ij}:
-
-{pmore}
-{it:p_ij = ((e_ij) / sum(e_kl)) * density * 100}
+When no {bf:density()} is given, each tie {it:x_ij} is drawn independently with probability {it:p_ij}.
 
 {pstd}
-When no {bf:density()} is given, the probability is simply:
-
-{pmore}
-{it:p_ij = e_ij}
+With {bf:density(}{it:d}{bf:)}, exactly {it:n}({it:n}-1){it:d} ties (half as many with {opt undirected}) are drawn
+without replacement, with inclusion probabilities proportional to {it:p_ij}. The command stops with an error when fewer
+dyads have a non-zero {it:p_ij} than ties are requested.
 
 {pstd}
 With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
@@ -66,10 +64,27 @@ With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted 
 do not necessarily have to sum up to one; they are standardized.
 
 
-{title:Supported network types}
+{title:Remarks}
 
 {pstd}
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} (a per-dyad tie-value expression, independent of {opt density()}'s own probability-of-placement role) - though {opt weights()} is currently only implemented for the {opt mat()}-based path, not the {opt density()}-based path (an explicit, honest error is raised if both are combined; see the command's own Description). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded
+or installed.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} directed by default; {opt undirected} gives an undirected network. {bf:Valued:} {opt weights()} draws tie
+values, only without {opt density()} (with {opt density()} it stops with an error). {bf:Two-mode:} not applicable - the command
+always creates a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command: 20,000 nodes
+3.1 seconds. {opt density()} weights all dyads and is refused above 7,071 nodes.
+
 
 {title:Example}
 
@@ -152,23 +167,9 @@ The result can be nicely plotted in the following way:
 	{cmd:. graph combine g4.gph g5.gph }
 
 
-{title:Remarks}
-
-{pstd}
-The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded or installed.
-
-
-{title:Limits}
-
-{pstd}
-With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command: 20,000 nodes
-3.1 seconds. {opt density()} weights all dyads and is refused above 7,071 nodes.
-
 {title:See also}
 
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

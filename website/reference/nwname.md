@@ -68,47 +68,41 @@ This changes the name of the network *flobusiness* into *flob*. This could also 
 . return list
 ```
 
-## Supported network types
-
-Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them. Two-mode: yes - `new2mode(true)` declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); `newmodes()` gives the mode of every node.
-
 ## Stored results
 
 - **nwname** stores the following in **r()**:
 
-**Scalars**
+- **Scalars**
+- **r(id)** --- internal ID of the network
+- **r(nodes)** --- number of nodes in the network
+- **r(nodes1)** --- number of mode-1 nodes (two-mode networks only)
+- **r(nodes2)** --- number of mode-2 nodes (two-mode networks only)
+- **r(selfloops)** --- number of self-loops
+- **r(missing_edges)** --- number of missing (undefined) dyads
 
-- **r(id)** internal ID of the network
-- **r(nodes)** number of nodes in the network
-- **r(nodes1)** number of mode-1 nodes (two-mode networks only)
-- **r(nodes2)** number of mode-2 nodes (two-mode networks only)
-- **r(selfloops)** number of self-loops
-- **r(missing_edges)** number of missing (undefined) dyads
-
-**Macros**
-
-- **r(netname)** name of the network
-- **r(title)** title/label of the network
-- **r(caption)** caption/description text, if set
-- **r(provenance)** provenance/source note, if set
-- **r(directed)** **true**/**false**
-- **r(valued)** **true**/**false**
-- **r(mode2)** **true**/**false** - whether the network is two-mode
-- **r(selfloop)** **true**/**false** - whether the network permits self-loops
-- **r(temporal)** **true**/**false** - whether the network is temporal
-- **r(temporaltype)** temporal storage type, if **r(temporal)** is **true**
-- **r(timevar)**/**r(startvar)**/**r(endvar)**/**r(eventtimevar)** the underlying temporal variable name(s) actually used, depending on **r(temporaltype)**
-- **r(labs)** comma-separated node labels
-- **r(vars)** Stata variable names used to represent the network
-- **r(modes)** mode assignment string for a two-mode network's own nodes
-- **r(mode1desc)** description of mode 1 (two-mode networks only)
-- **r(mode2desc)** description of mode 2 (two-mode networks only)
+- **Macros**
+- **r(netname)** --- name of the network
+- **r(name)** --- name of the network (same as **r(netname)**)
+- **r(title)** --- title/label of the network
+- **r(caption)** --- caption/description text, if set
+- **r(provenance)** --- provenance/source note, if set
+- **r(directed)** --- **true**/**false**
+- **r(valued)** --- **true**/**false**
+- **r(mode2)** --- **true**/**false** - whether the network is two-mode
+- **r(selfloop)** --- **true**/**false** - whether the network permits self-loops
+- **r(temporal)** --- **true**/**false** - whether the network is temporal
+- **r(temporaltype)** --- temporal storage type, if **r(temporal)** is **true**
+- **r(timevar)**/**r(startvar)**/**r(endvar)**/**r(eventtimevar)** --- the underlying temporal variable name(s) actually used, depending on **r(temporaltype)**
+- **r(labs)** --- comma-separated node labels
+- **r(vars)** --- Stata variable names used to represent the network
+- **r(modes)** --- mode assignment string for a two-mode network's own nodes
+- **r(mode1desc)** --- description of mode 1 (two-mode networks only)
+- **r(mode2desc)** --- description of mode 2 (two-mode networks only)
 
 ## See also
 
 - [nwsummarize](nwsummarize), [nwset](nwset), [nwload](nwload)
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

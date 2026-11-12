@@ -48,29 +48,27 @@ By default, this generates a new network called {it:flomarriage_sub}. Notice tha
 	{bf:. nwgen flo_sub = flomarriage if wealth > 50}	
 
 {pstd}
-However, the last command does not copy the node labels of network {it:flomarriage}. This is because the {help if} condition in {help nwgen} applies to a whole {help netexp:network expression}. Because
+However, the last command does not copy the node labels of network {it:flomarriage}. This is because the {help if} condition in {help nwgen} applies to a whole
+{help netexp:network expression}. Because
 network expressions can be very complicated, no labels are copied. 
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
+{bf:Directed:}, {bf:Valued:}, {bf:Signed:} the ties and their values are kept. {bf:Two-mode:} yes - the flag, the
+modes and the level labels are kept for the remaining nodes. See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
 {pstd}
-A network held as stored ties keeps the ties between the remaining nodes without an {it:n}-by-{it:n} matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for {help nwdrop}, {help nwkeep}, {help nwdropnodes} and {help nwkeepnodes}.
+A network held as stored ties keeps the ties between the remaining nodes without an {it:n}-by-{it:n} matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for {help nwdrop}, {help nwkeep},
+{help nwdropnodes} and {help nwkeepnodes}.
 
 {title:See also}
 
 	{help nwgenerate}, {help nwduplicate}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

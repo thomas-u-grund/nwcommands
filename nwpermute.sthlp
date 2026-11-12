@@ -19,17 +19,20 @@
 {opth generate(newnetname)}
 {opt replace}
 {opt nwreplace}
-{opt xvars}]
+{opt xvars}
+{opt swap}
+{opt swaps(#)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newnetname)}}Save permutation as new network{p_end}
-{synopt:{opt replace}}Replace existing network with permutation{p_end}
+{synopt:{opth generate(newnetname)}}Save permutation as new network; one of {opt generate()} or {opt replace} is required{p_end}
+{synopt:{opt replace}}Replace existing network with permutation; with {opt generate()}: overwrite the network named there if it already exists{p_end}
 {synopt:{opt nwreplace}}Overwrite the network named in {opt generate()} if it already exists; without it the command stops with an error{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt swap}}exchange the partners of two ties at random (Maslov and Sneppen) instead of permuting the labels; keeps every node's degree (directed: out-degree and in-degree; two-mode: both degree sequences) and the tie values{p_end}
-{synopt:{opt swaps(#)}}the number of attempted exchanges with {opt swap}; default = ten times the number of ties{p_end}
+{synopt:{opt swap}}exchange the partners of two ties at random (Maslov and Sneppen) instead of permuting the labels; keeps every node's degree (directed: out-degree and in-degree; two-mode: both
+degree sequences) and the tie values{p_end}
+{synopt:{opt swaps(#)}}the number of attempted exchanges; implies {opt swap}; default = ten times the number of ties{p_end}
 
 
 {title:Description}
@@ -96,18 +99,22 @@ Now, let us permute the network {it:lattice}.
 The structure of the network remains exactly the same, however, the nodes have a different order. Often,
 such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for 
 these statistics) while keeping the overall structure of the network constant (see more {help nwqap}, {help nwcorrelate}).	
-	
-	
 
-{title:Two-mode networks}
 
-{pstd}
-Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}). {opt swap} works on the list of ties (no n x n matrix) in a kernel of the native plugin when your platform's plugin has it: 100,000 attempts on 5,669 ties take 0.02 seconds; the random exchanges are drawn from the seed ({cmd:set seed}) and are the same on every platform with that kernel, but are not the draws of the Mata routine.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes ({opt swap} keeps out-degrees and in-degrees). Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix) and under {opt swap}. Signed: yes, values including negative are preserved. Two-mode: yes - the labels are permuted within the modes, so that no tie ever joins two nodes of the same mode ({cmd:tnet::rg_reshuffling_tm}); {opt swap} exchanges the partners of two ties at random and keeps both degree sequences ({cmd:bipartite::swap.web}).
+{bf:Directed:} yes ({opt swap} keeps out-degrees and in-degrees). {bf:Valued:}, {bf:Signed:} the tie values move with
+their ties. {bf:Two-mode:} yes - the labels are permuted within the modes ({cmd:tnet::rg_reshuffling_tm}); {opt swap}
+keeps both degree sequences ({cmd:bipartite::swap.web}). See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds
+in Stata/BE.
+
 
 {title:Example}
 
@@ -119,17 +126,10 @@ Binary: yes. Directed: yes ({opt swap} keeps out-degrees and in-degrees). Weight
 	{cmd:. nwpermute mynet, replace}
 	{cmd:. nwplot mynet, lab layout(circle)}
 
-{title:Limits}
-
-{pstd}
-A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds
-in Stata/BE.
 
 {title:See also}
 
 	{help nwqap}, {help nwcorrelate}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -24,7 +24,7 @@ The command generates a network. It can be used either with a) some function ***
 
 *netfcn* is one of:
 
-- `duplicate(netname)` [, `xvars`]
+- `duplicate(netname)`
 - Duplicate a network (see [nwduplicate](nwduplicate)).
 
 - `dyadprob(netname)` , `density(float)` [`undirected` `xvars`]
@@ -32,7 +32,7 @@ The command generates a network. It can be used either with a) some function ***
 
 - `geodesic(netname)` [`,`
 - `unconnected(integer)`
-- `nosym`
+- `sym`
 - `xvars`]
 - Generate a network of shortest paths between nodes (see [nwgeodesic](nwgeodesic)).
 
@@ -60,7 +60,7 @@ The command generates a network. It can be used either with a) some function ***
 - `random`(`nodes`) [, `prob(float)` `density(float)` `undirected` `xvars`]
 - Generate a random network (see [nwrandom](nwrandom)).
 
-- `reach(netname)` [, `nosym` `xvars`]
+- `reach(netname)` [, `sym` `xvars`]
 - Generate a reachability network (see [nwreach](nwreach)).
 
 - `ring`(`nodes`) , `k(int)` [`undirected` `xvars`]
@@ -119,12 +119,6 @@ Generate a per-node variable, one value per node, from an existing network:
 . list mydeg in 1/5
 ```
 
-## Supported network types
-
-Not applicable to `nwgenerate` itself - the underlying dispatcher [nwgen](nwgen)/[nwgenvar](nwgenvar) both delegate to; the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn*/network expression is invoked - see that function's own help topic.
-
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

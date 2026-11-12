@@ -17,7 +17,7 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opt sym}
-{opth name(string)}
+{opth name(newnetname)}
 {opt xvars}
 {opt nwreplace}
 {opt force}]
@@ -27,7 +27,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
-{synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
+{synopt:{opth name(newnetname)}}Name of the new network; default = {it:_reach}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt nwreplace}}if a network named {it:newnetname} already exists, drop it and use this name anyway - required, not silent (see {help nwgeodesic} for the same convention){p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
@@ -41,16 +41,23 @@ value 1 when there is at least one path between {it:nodes i} and {it:j} in the o
 0 if there is no such path. 
 
 
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - reachability follows the direction of the ties and the network is not symmetrized unless {opt sym} is given (same convention as {help nwgeodesic}). Weighted: not applicable. Signed: not applicable. same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} reachability follows the direction of the ties; {opt sym} symmetrizes. {bf:Valued:} tie values are
+ignored and a note is printed. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:}
+not applicable. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with
+10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB.
+
+{pstd}
+Reachability of all pairs of nodes is an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it
+anyway. For connectedness use {help nwcomponents}, for one pair {help nwpath}.
 
 
 {title:Examples}
@@ -76,22 +83,11 @@ Binary: yes (only) - reachability is a structural yes/no property; {help nwgeode
 	 
 {pstd}
 In this example, there is basically one isolate node (node 8) who is unconnected from everybody else.
-	
-	
-{title:Limits}
 
-{pstd}
-The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with
-10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB.
-
-{pstd}
-Reachability of all pairs of nodes is an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it anyway. For connectedness use {help nwcomponents}, for one pair {help nwpath}.
 
 {title:See also}
 
 	{help nwgeodesic}, {help nwpath}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

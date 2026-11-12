@@ -29,6 +29,7 @@
 {pstd}
 {it:netname} may be a list of networks or a wildcard such as {cmd:lazega_*}, as in {help nwsummarize}; the census is shown for each network and the {cmd:r()} results are those of the last one.
 
+
 {title:Description}
 
 {pstd}
@@ -44,7 +45,7 @@ In directed networks, each dyad (pair of nodes {it:i} and {it:j}) can be one of 
 2) A: asymmetrically connected: {it:M_ij = 1}, but {it:M_ji = 0} 
 
 {pmore}
-3) N: not connected at all: {it:M_ij = M_ji = 1}
+3) N: not connected at all: {it:M_ij = M_ji = 0}
 
 
 {pstd}
@@ -63,20 +64,21 @@ The command also returns the reciprocity of the network.
 {it:reciprocity = M / (M + A)}
 
 
-{title:Valued networks}
+{title:Network types}
 
 {pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+{bf:Directed:} mutual, asymmetric and null dyads; an undirected network has mutual and null dyads only. {bf:Valued:} tie
+values are ignored (every tie counts as present; the command prints a note). {bf:Two-mode:} yes - the null dyads are
+counted over the pairs of nodes from different modes; reciprocity is shown as n/a. {bf:Signed:} not applicable. See
+{help nwnetworktypes}.{p_end}
 
-{title:Two-mode networks}
+
+{title:Limits}
 
 {pstd}
-Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
+A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB
+in Stata/BE.
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity of an undirected two-mode network has no meaning and is shown as n/a.
 
 {title:Examples}
 	
@@ -103,27 +105,21 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 
 {title:Stored results}
 
-	Scalars:
-	  {bf:r(_100)}	mutual dyads
-	  {bf:r(_010)}	asymmetric dyads
-	  {bf:r(_001)}	null dyads
-	  {bf:r(reciprocity)}	M / (M + A)
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(_100)}}mutual dyads{p_end}
+{synopt:{bf:r(_010)}}asymmetric dyads{p_end}
+{synopt:{bf:r(_001)}}null dyads{p_end}
+{synopt:{bf:r(reciprocity)}}M / (M + A){p_end}
 	  
-	Macros:
-	  {bf:r(name)}	name of network
-	  
-	  
-{title:Limits}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(name)}}name of network{p_end}
+{synopt:{bf:r(netname)}}name of network (same as {bf:r(name)}){p_end}
 
-{pstd}
-A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB
-in Stata/BE.
 
 {title:See also}
 
 	{help nwtriads}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

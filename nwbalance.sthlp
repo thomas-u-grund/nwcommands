@@ -9,6 +9,7 @@
 {p2col :nwbalance {hline 2}}Structural balance of a signed network{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -22,7 +23,10 @@
 {synoptline}
 {synopt:{opt generate(namelist)}}Up to 3 names, for the per-node balance ratio, count of balanced
 triads, and count of closed triads a node belongs to; default =
-{it:_balance _baltriad _clotriad}{p_end}
+{it:_balance _baltriad _clotriad}; existing variables of these names are replaced{p_end}
+{synoptline}
+{p2colreset}{...}
+
 
 {title:Description}
 
@@ -43,28 +47,23 @@ For each node, {cmd:nwbalance} generates the number of closed triads it belongs 
 those that are balanced, and the ratio of the two. Network-level counts and the overall balance
 ratio are returned in {help return:r()}.
 
-{title:Two-mode networks}
+
+{title:Network types}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
+{bf:Directed:} a pair counts as tied when either direction has a tie; for a mutual dyad the sign of i->j is used.
+{bf:Valued:} only the sign of each value is used. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network (no triangles: counts 0, balance missing). {bf:Signed:} the purpose of the command. See
+{help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
+
+{title:Limits}
 
 {pstd}
-Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when
-{bf:either} direction has a tie; if both directions are tied (a mutual dyad), the value used for the
-balance product is whichever direction is checked first ({it:i->j} before {it:j->i}), which matters
-only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is
-used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is
-the command's whole purpose - see Description. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(closed_triad)}		number of closed triads
-	  {bf:r(balanced_triad)}	number of balanced closed triads
-	  {bf:r(unbalanced_triad)}	number of unbalanced closed triads
-	  {bf:r(balance)}		{it:balanced_triad} / {it:closed_triad}
+Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of
+nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses
+Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per
+node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
 
 
 {title:Examples}
@@ -84,25 +83,26 @@ Of the 4 triads in this network, {it:A-B-C} (all positive) and {it:A-B-D} (two n
 balanced; {it:A-C-D} and {it:B-C-D} (one negative tie each) are not.
 
 
+{title:Stored results}
+
+{synoptset 21 tabbed}{...}
+{p2col 5 21 25 2: Scalars}{p_end}
+{synopt:{bf:r(closed_triad)}}number of closed triads{p_end}
+{synopt:{bf:r(balanced_triad)}}number of balanced closed triads{p_end}
+{synopt:{bf:r(unbalanced_triad)}}number of unbalanced closed triads{p_end}
+{synopt:{bf:r(balance)}}{it:balanced_triad} / {it:closed_triad}{p_end}
+
+
 {title:References}
 
 {pstd}
 Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heider's theory.
 {it:Psychological Review} 63(5), 277-293.
 
-{title:Limits}
-
-{pstd}
-Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of
-nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses
-Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per
-node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
 
 {title:See also}
 
 	{help nwtriads}, {help nwvalue}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

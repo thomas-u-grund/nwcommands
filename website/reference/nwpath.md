@@ -16,15 +16,13 @@ Paths between nodes
 ```stata
 nwpath 
 [netname],
-[ego(nodename)
-alter(nodename) | 
-egoid(nodeid)
-alterid(nodeid)]
-generate(newnetnamestub)
+ego(nodename) | egoid(nodeid)
+alter(nodename) | alterid(nodeid)
+[generate(newnetnamestub)
 sym
 nwreplace
 nopaths
-binary
+bin:ary
 alpha(real)]
 ```
 
@@ -37,10 +35,10 @@ alpha(real)]
 | `egoid(nodeid)` | Nodeid of start node |
 | `alterid(nodeid)` | Nodeid of destination node |
 | `generate(newnetnamestub)` | Save paths as networks beginning with *newnetnamestub* |
-| `sym` | Symmetrize network for calculation |
+| `sym` | Symmetrize network for calculation; cannot be combined with `generate()` |
 | `nwreplace` | Overwrite networks with *newnetnamestub* |
 | `nopaths` | Do not print the list of paths; the results in `r()` are still returned |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
 | `alpha(real)` | Cost of a step along a tie of value w: 1/w^alpha (default 1 on a valued network; accepted on any network) |
 
 ## Description
@@ -91,10 +89,19 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
   Path 2:  medici => ridolfi => strozzi => peruzzi
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic) for weighted distances). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+- **Scalars**
+- **r(paths)** --- number of shortest paths found (0 if *ego* and *alter* are not connected)
+- **r(path_length)** --- length of the shortest path (-1 if not connected)
+- **r(path_shortest)** --- same as **r(path_length)**; this command currently only ever finds shortest paths, there is no **length()** option to select a longer one
+- **r(path_cost)** --- cost of the path on a valued network (sum of 1/value^alpha)
+- **r(ego)** --- nodeid of ego
+- **r(alter)** --- nodeid of alter
+
+- **Matrices**
+- **r(paths_matrix)** --- one row per path found, node ids along the path; only set when **r(paths)** > 0
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

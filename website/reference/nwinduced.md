@@ -18,25 +18,25 @@ nwinduced
 [netname]
 ,
 measure(string)
-[generate(stub)
+[gen:erate(stub)
 replace
 silent
-binary]
+bin:ary]
 ```
 
 | | |
 |---|---|
 | `measure(string)` | Underlying centrality measure: one of **degree**, **betweenness**, **closeness**, **evcent** |
-| `generate(stub)` | **Required.** Prefix for the three output variables (*stub***_endog**, *stub***_induced**, *stub***_exog**) |
+| `gen:erate(stub)` | **Required.** Prefix for the three output variables (*stub***_endog**, *stub***_induced**, *stub***_exog**) |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
 `nwinduced` computes Everett and Borgatti's (2010) three-part decomposition of node centrality, built on top of any of this package's own existing per-node centrality measures rather than being a single new formula of its own. Given a chosen measure *C* (e.g. degree, betweenness) and network *G*:
 
-**Endogenous centrality** of node *v*: *C_G(v)* itself - the node's ordinary centrality score, exactly as [nwdegree](nwdegree)/[nwbetween](nwbetween)/[nwcloseness](nwcloseness)/[nwevcent](nwevcent) would already report it. Not a new computation; the existing measure, relabeled under this framework.
+**Endogenous centrality** of node *v*: *C_G(v)* itself - the node's ordinary centrality score, exactly as [nwdegree](nwdegree) / [nwbetween](nwbetween) / [nwcloseness](nwcloseness) / [nwevcent](nwevcent) would already report it. Not a new computation; the existing measure, relabeled under this framework.
 
 **Induced centrality** of node *v*: *sum_i C_G(i) - sum_i C_(G-v)(i)* - the total drop in EVERYONE's summed *C*-score when *v* is removed from the network (*G-v*: the network with *v* and its own ties deleted). Combines both *v*'s own direct contribution (its score, which vanishes on removal) and every indirect ripple effect on everyone else's score.
 
@@ -66,22 +66,18 @@ The real computational cost is the leave-one-out reconstruction: computing induc
 - standing? - the **bw_exog** column answers that, distinct from **bw_endog** (the family's own
 - plain betweenness score).
 
-## Supported network types
-
-Binary: yes. Directed: **measure(betweenness/closeness/evcent)** support directed networks directly (each already produces exactly one clean per-node output variable regardless of directedness); **measure(degree)** does not - [nwdegree](nwdegree) itself splits into separate **_outdegree**/**_indegree** variables on a directed network, so induced degree would need a choice between them with no single obviously-right answer, disclosed as a v1 scope limit (a clear error) rather than guessed at. Weighted/Signed: entirely inherited from whichever `measure()` is chosen - `nwinduced` itself does not read tie values directly. Two-mode: not supported - error 6088; make a one-mode network of one mode first with [nwproject](nwproject).
-
 ## Stored results
 
-- Macros:
-- **r(measure)** the underlying measure used
-- **r(name)** name of the network
-- **r(endogenous)** name of the endogenous-centrality variable
-- **r(induced)** name of the induced-centrality variable
-- **r(exogenous)** name of the exogenous-centrality variable
+- **Macros**
+- **r(measure)** --- the underlying measure used
+- **r(name)** --- name of the network
+- **r(endogenous)** --- name of the endogenous-centrality variable
+- **r(induced)** --- name of the induced-centrality variable
+- **r(exogenous)** --- name of the exogenous-centrality variable
 
 ## References
 
-Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrality. *Social Networks* 32(4), 339-344.
+Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrality. *Social* *Networks* 32(4), 339-344.
 
 ## See also
 
@@ -89,4 +85,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

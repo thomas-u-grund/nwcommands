@@ -26,10 +26,10 @@ the command returns {it:netname_1}. If that also exists, the commands returns {i
 
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Not applicable - a pure Stata-variable/network-name-collision check; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:Examples}
 
@@ -41,10 +41,10 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 	
 {title:Stored results}
 
-	{bf:r(exists)}		"true" when network name already exists, "false" otherwise
-	{bf:r(tryname)}		network name that is validated
-	{bf:r(validname)}	valid name in case the tryname already exists
-last certified : 25 Aug 2026
+{synoptset 20 tabbed}{...}
+{synopt:{bf:r(exists)}}"true" when network name already exists, "false" otherwise{p_end}
+{synopt:{bf:r(tryname)}}network name that is validated{p_end}
+{synopt:{bf:r(validname)}}valid name in case the tryname already exists (otherwise the tryname){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

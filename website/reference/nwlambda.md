@@ -44,19 +44,13 @@ Computed via a direct max-flow (Edmonds-Karp) between every pair of nodes on the
 . nwsummarize lambda, matonly
 ```
 
-## Supported network types
-
-Binary: yes (only) - similarity is computed from binary edge-connectivity; tie values are ignored. Directed: yes - automatically symmetrized first (edge connectivity has no standard directed generalization in the classical cohesive-subgroup literature, the same choice [nwclique](nwclique), [nwkplex](nwkplex), [nwnclique](nwnclique), [nwkcomponents](nwkcomponents) already make). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(nodes)** --- number of nodes
 
-- **r(nodes)** number of nodes
-
-**Macros**
-
-- **r(netname)** name of the new connectivity network
+- **Macros**
+- **r(netname)** --- name of the new connectivity network
 
 ## References
 
@@ -70,8 +64,6 @@ The result is an *n*-by-*n* network and two matrices are held at once: above abo
 
 - [nwkcomponents](nwkcomponents), [nwcohesion](nwcohesion), [nwhierarchy](nwhierarchy), [nwclique](nwclique), [nwkplex](nwkplex)
 
-- last certified : 31 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

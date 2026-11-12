@@ -3,12 +3,12 @@
 {marker topic}
 {helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
-
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
 {p2col :nwtranspose {hline 2}}Transpose a network{p_end}
 {p2colreset}{...}
+
 
 {title:Syntax}
 
@@ -28,7 +28,8 @@
 
 {synoptline}
 {p2colreset}{...}
-	
+
+
 {title:Description}
 
 {pstd}
@@ -37,16 +38,20 @@ directed tie from node {it:j} to node {it:i}. By default, {cmd:nwtranspose} repl
 can specify that it should create a new network instead with {bf:generate()}. 
 
 
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - the flag, the modes and the level labels are kept (the matrix of a two-mode network is symmetric).
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: yes - the flag, the modes and the level labels are kept (the matrix of a two-mode network is symmetric).
+{bf:Directed:} the command transposes the matrix (no change for an undirected network). {bf:Valued:} the tie values are
+transposed with the ties. {bf:Two-mode:} yes - the flag, the modes and the level labels are kept (the matrix of a
+two-mode network is symmetric). {bf:Signed:} values are kept as they are. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+A network held as stored ties is transposed tie by tie. Measured in Stata/BE on a random directed network with 10 ties per node:
+20,000 nodes 0.2 seconds.
+
 
 {title:Examples}
 
@@ -75,13 +80,5 @@ Binary: yes. Directed: yes - this command's entire purpose is transposing a netw
 	5 {c |}  {res}0   0   0   1   0{txt}  {c |}
           {c BLC}{hline 21}{c BRC}
 
-{title:Limits}
-
-{pstd}
-A network held as stored ties is transposed tie by tie. Measured in Stata/BE on a random directed network with 10 ties per node:
-20,000 nodes 0.2 seconds.
-
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

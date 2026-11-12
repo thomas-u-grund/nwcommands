@@ -21,6 +21,8 @@
 {opt ywrap}
 {opt name}({it:{help newnetname}})
 {opt vars}({it:{help newvarlist}})
+{opt stub}({it:string})
+{opt labs}({it:lab1 lab2 ...})
 {opt xvars}
 {opth ntimes(int)}]
 
@@ -32,8 +34,10 @@
 {synopt:{opt xwrap}}wrap horizontally{p_end}
 {synopt:{opt ywrap}}wrap vertically{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
-{synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:lattice}{p_end}
 {synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
+{synopt:{opt stub}({it:string})}stub of the variable names when {opt vars()} does not give one name per node; default = {it:lattice}{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
@@ -46,10 +50,12 @@ each node is connected to exactly four other nodes.
 
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). Weighted: not applicable - no {opt weights()} option; generates a purely structural lattice. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
+{bf:Directed:} the default; {opt undirected} makes an undirected lattice. {bf:Valued:} not applicable (the lattice is
+binary). {bf:Two-mode:} not applicable (the network is one-mode). {bf:Signed:} not applicable. See
+{help nwnetworktypes}.{p_end}
 
 {title:Examples}
 	
@@ -65,12 +71,13 @@ Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). W
 
 	{bf:nwlattice} stores the following in {bf:r()}:
 
-	Macros
-	  {bf:r(netlist)}	list of new networks
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}list of new networks{p_end}
 
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwring}, {help nwsmall}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

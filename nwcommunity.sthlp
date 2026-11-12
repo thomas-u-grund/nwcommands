@@ -9,6 +9,7 @@
 {p2col :nwcommunity {hline 2}}Detect communities via the Louvain method or label propagation{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -37,17 +38,23 @@
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before detecting communities (required for directed networks){p_end}
-{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)} regardless of algorithm; default = 1{p_end}
-{synopt:{opt algorithm(louvain|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:dirtlpa} (two-mode networks only) is the label propagation of Beckett (2016) for the bipartite modularity of Barber{p_end}
+{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)}
+regardless of algorithm; default = 1{p_end}
+{synopt:{opt algorithm(louvain|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:dirtlpa} (two-mode networks only) is the label propagation of Beckett (2016) for the
+bipartite modularity of Barber{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt listall}}Print the full table of communities; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
-{synopt:{opt onemode}}Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode network){p_end}
-{synopt:{opt starts(#)}}Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = {it:30}; the first starts in the order of the nodes, the others in random order ({opt seed()}){p_end}
-{synopt:{opt reps(#)}}{bf:algorithm(dirtlpa)}: the number of repeated runs of the label propagation for every number of starting modules (the {bf:reps} of {cmd:bipartite::DIRT_LPA_wb_plus}); default = {it:10}{p_end}
+{synopt:{opt onemode}}Two-mode network: the modularity of Newman for the bipartite graph read as a one-mode graph, instead of the bipartite modularity of Barber (the default for a two-mode
+network){p_end}
+{synopt:{opt starts(#)}}Two-mode network: the number of starting orders of the search for the partition with the largest bipartite modularity; default = {it:30}; the first starts in the order of the
+nodes, the others in random order ({opt seed()}){p_end}
+{synopt:{opt reps(#)}}{bf:algorithm(dirtlpa)}: the number of repeated runs of the label propagation for every number of starting modules (the {bf:reps} of {cmd:bipartite::DIRT_LPA_wb_plus}); default =
+{it:10}{p_end}
 {synopt:{opt minmodules(#)}}{bf:algorithm(dirtlpa)}: the smallest number of starting modules of the repeated runs (the {bf:mini} of {cmd:bipartite::DIRT_LPA_wb_plus}); default = {it:4}{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -71,11 +78,16 @@ systematically collapses even simple, cleanly-separated community structure into
 {help nwcommunity##algorithm:Algorithm} below). Use {opt seed()} for reproducible results.
 
 {pstd}
-On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and ignores {opt seed()}. The two-mode search draws its random starting orders from the seed: the same {opt seed()} (or {cmd:set seed}) gives the same communities, whatever the platform; the search runs in the native plugin, about 25 times faster than the Mata code that is used on a platform without it, and the two reach the same modularity up to the luck of the random starts (Southern women: identical, 0.3455).
+On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and
+ignores {opt seed()}. The two-mode search draws its random starting orders from the seed: the same {opt seed()} (or {cmd:set seed}) gives the same communities, whatever the platform; the search runs
+in the native plugin, about 25 times faster than the Mata code that is used on a platform without it, and the two reach the same modularity up to the luck of the random starts (Southern
+women: identical, 0.3455).
 
 {pstd}
 {opt generate()} is required and names the new variable that stores, for each node, the
-id of the community it was assigned to.
+id of the community it was assigned to. With more than one network in the {it:netlist}, a number is appended to the
+name ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...) and the stored results are those of the last network.
+
 
 {marker algorithm}{...}
 {title:Algorithm}
@@ -93,24 +105,38 @@ prevent. {bf:algorithm(louvain)}'s own fixed sweep order has no comparable bias,
 is driven by an actual modularity-gain comparison, not a plain vote count.
 
 
-{title:Two-mode networks}
+{pstd}
+{bf:algorithm(dirtlpa)} searches the same modularity with
+the label propagation {bf:LPAwb+} of Beckett (2016) in its repeated form {bf:DIRT_LPA+} (R: {cmd:bipartite::DIRT_LPA_wb_plus}, {cmd:bipartite::computeModules(method = "Beckett")}): it needs the native
+plugin (a clear message asks for an update otherwise), is reproducible with {opt seed()}, takes the weights of a valued network, does not use {opt resolution()} or {opt starts()} (it uses {opt reps()}
+and {opt minmodules()}), and is much slower than the Louvain search because of the repeated runs (the Southern women find the best known modularity 0.3455 with both; on the 5,092 directors and 455
+boards of {cmd:ftdirectors_se} {bf:dirtlpa} reaches 0.95110 in 12 seconds with the default {opt reps()}, 30 starts of the Louvain search 0.95101 in 0.2 seconds). The merge step evaluates Barber's
+modularity of the labels exactly; the R function evaluates it with a trace in which the modules of the two sides are matched by position, which agrees with the exact value whenever the two sets of
+labels appear in the same order.
+
+
+{title:Network types}
 
 {pstd}
-Two-mode: yes - Louvain-type search for the partition with the largest bipartite modularity of Barber (2007), the null model of {cmd:bipartite::computeModules}; {opt onemode} gives the modularity of Newman for the bipartite graph read as a one-mode graph ({cmd:igraph::cluster_louvain}); {opt starts()} sets the number of starting orders. {bf:algorithm(dirtlpa)} searches the same modularity with the label propagation {bf:LPAwb+} of Beckett (2016) in its repeated form {bf:DIRT_LPA+} (R: {cmd:bipartite::DIRT_LPA_wb_plus}, {cmd:bipartite::computeModules(method = "Beckett")}): it needs the native plugin (a clear message asks for an update otherwise), is reproducible with {opt seed()}, takes the weights of a valued network, does not use {opt resolution()} or {opt starts()} (it uses {opt reps()} and {opt minmodules()}), and is much slower than the Louvain search because of the repeated runs (the Southern women find the best known modularity 0.3455 with both; on the 5,092 directors and 455 boards of {cmd:ftdirectors_se} {bf:dirtlpa} reaches 0.95110 in 12 seconds with the default {opt reps()}, 30 starts of the Louvain search 0.95101 in 0.2 seconds). The merge step evaluates Barber's modularity of the labels exactly; the R function evaluates it with a trace in which the modules of the two sides are matched by position, which agrees with the exact value whenever the two sets of labels appear in the same order.
+{bf:Directed:} refused unless {opt symmetrize} is given. {bf:Valued:} tie values are used by default
+({opt measure(valued)}); {opt measure(binary)} ignores them. {bf:Two-mode:} yes - the bipartite modularity of Barber
+(2007) is maximised; {opt onemode} gives the modularity of Newman of the graph read as one-mode; {bf:algorithm(dirtlpa)}
+is for two-mode networks only. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
+
+{title:Limits}
 
 {pstd}
-Binary: yes. Directed: requires {opt symmetrize} - community detection as implemented here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise (affects both which partition is searched for and the reported {bf:r(modularity)}). Signed: not checked. Two-mode: yes - Louvain-type search for the partition with the largest bipartite modularity of Barber (2007), the null model of {cmd:bipartite::computeModules}; {opt onemode} gives the modularity of Newman for the bipartite graph read as a one-mode graph ({cmd:igraph::cluster_louvain}); {opt starts()} sets the number of starting orders.
+Louvain runs in a kernel of the native plugin on the stored ties (a platform without the plugin uses
+the Mata code, which gives the same communities, on the dense matrix). Measured in Stata/BE, random undirected network with
+10 ties drawn per node: 1,000 nodes 0.08 seconds, 3,000 nodes 0.08 seconds (14 communities, modularity 0.18), 10,000
+nodes 0.24 seconds (0.2 GB). Above 1,000 communities (a sparse network of a few thousand nodes) the table of community sizes is not
+printed; the sizes are in {bf:r(comm_sizeid)}, ordered by size and then by community number.
 
-{title:Stored results}
-
-	Scalars
-	  {bf:r(communities)}		number of communities
-	  {bf:r(modularity)}		modularity Q of the detected partition
-
-	Matrices
-	  {bf:r(comm_sizeid)}		distribution over communities
+{pstd}
+Label propagation runs on the stored ties too (the same partitions for the same {opt seed()}).
+Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,000 nodes
+1.9 seconds and 0.3 GB.
 
 
 {title:Examples}
@@ -118,6 +144,20 @@ Binary: yes. Directed: requires {opt symmetrize} - community detection as implem
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcommunity flomarriage, generate(_community)}
 	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345) generate(_community) replace}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(communities)}}number of communities{p_end}
+{synopt:{bf:r(modularity)}}modularity Q of the detected partition{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(modularity_type)}}{bf:newman}, or {bf:barber} for the bipartite modularity of a two-mode network{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(comm_sizeid)}}distribution over communities: one row per community with the columns size, compid (community id) and share{p_end}
 
 
 {title:References}
@@ -137,23 +177,9 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 
 
-{title:Limits}
-
-{pstd}
-Louvain runs in a kernel of the native plugin on the stored ties (a platform without the plugin uses
-the Mata code, which gives the same communities, on the dense matrix). Measured in Stata/BE, random undirected network with
-10 ties drawn per node: 1,000 nodes 0.08 seconds, 3,000 nodes 0.08 seconds (14 communities, modularity 0.18), 10,000
-nodes 0.24 seconds (0.2 GB). Above 1,000 communities (a sparse network of a few thousand nodes) the table of community sizes is not
-printed; the sizes are in {bf:r(comm_sizeid)}, ordered by size and then by community number.
-
-{pstd}
-Label propagation runs on the stored ties too (the same partitions for the same {opt seed()}).
-Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,000 nodes
-1.9 seconds and 0.3 GB.
-
 {title:See also}
 
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -9,6 +9,7 @@
 {p2col :nw2degree {hline 2}}Two-mode (bipartite) degree centrality{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -19,7 +20,8 @@
 {opt replace}
 {opt silent}
 {opt alpha(#)}
-{opt binary}]
+{opt binary}
+{opt raw}]
 
 
 {synoptset 25 tabbed}{...}
@@ -28,16 +30,18 @@
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores two-mode degree centrality{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
-{synopt:{opt alpha(#)}}Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = {it:0} (plain unweighted degree, identical to omitting the option){p_end}
+{synopt:{opt alpha(#)}}Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = {it:1} (strength) for a valued network and {it:0} (number of ties) otherwise{p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 {synopt:{opt raw}}The degree itself, not divided by the size of the other mode ({cmd:tnet::degree_tm}, {cmd:igraph::degree}){p_end}
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
-{cmd:nw2degree} is the form of {help nwdegree} for a two-mode network: {cmd:nwdegree} uses it by default on a two-mode network (and {opt onemode} forces the one-mode degree). The two names give the same result with the same options.
+{cmd:nw2degree} is the form of {help nwdegree} for a two-mode network: {cmd:nwdegree} uses it by default on a two-mode network (and {opt onemode} forces the one-mode degree). The two names give the
+same result with the same options.
 
 {pstd}
 {cmd:nw2degree} calculates degree centrality for a two-mode (bipartite) network, using the
@@ -56,7 +60,8 @@ degree centrality's own [0,1] range and interpretation.
 {pstd}
 {opt generate()} is required and names the new variable that holds this value for every
 node, regardless of which mode it belongs to (mode membership itself is available via
-{help nw2set}'s own mode-id variable, not duplicated here).
+{help nw2set}'s own mode-id variable, not duplicated here). With more than one network in the
+{it:netlist}, the variables are named {it:newvarname}{bf:1}, {it:newvarname}{bf:2}, and so on.
 
 {pstd}
 {opt alpha(#)} generalizes the plain tie-count formula above to a weighted (tie-strength-aware)
@@ -68,13 +73,23 @@ variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend {help nwdeg
 
 {pstd}
 where {it:k_i} is node {it:i}'s plain tie count and {it:s_i} is its tie-{it:value} sum (its
-"strength"). {opt alpha(0)} (the default) reduces this exactly to plain tie-count degree - the two
+"strength"). {opt alpha(0)} (the default for a binary network) reduces this exactly to plain tie-count degree - the two
 formulas agree bit-for-bit.
-{opt alpha(1)} gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count
+{opt alpha(1)} (the default for a valued network) gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count
 entirely. Values between 0 and 1 blend the two; values above 1 emphasize a few strong ties over many
 weak ones, and negative values do the reverse. On a binary (unweighted) network every tie already
 has value 1, so {it:s_i = k_i}, {opt alpha()} has no effect at any value, and the plain formula
 always applies.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not applicable. {bf:Valued:} the default is the strength divided by the size of the other mode;
+{opt binary} or {cmd:alpha(0)} counts the ties, {opt alpha()} blends ties and values (Opsahl et al. 2010).
+{bf:Two-mode:} yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw}
+gives the count or strength itself. {bf:Signed:} negative values are not handled. See {help nwnetworktypes}.{p_end}
+
 
 {title:Examples}
 
@@ -107,33 +122,9 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 
 
-{title:Valued networks}
-
-{pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued two-mode network the degree is the strength divided by the size of the other mode ({it:tnet::degree_tm} gives the unnormalized strength); {opt binary} or {cmd:alpha(0)} gives the number of ties divided by the size of the other mode.
-On a network that is not valued, {opt binary} has no effect.
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw} gives the count itself ({cmd:tnet::degree_tm}).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently
-undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: {bf:W1},
-native - {opt alpha()} generalizes the plain tie-count formula to a tie-strength-aware blend
-(Opsahl et al. 2010), the same convention {help nwdegree}'s own {opt alpha()} uses for one-mode
-degree; {opt alpha(0)}, the default, is bit-for-bit identical to the plain unweighted formula.
-Signed: not checked - a negative tie value would distort the strength sum {opt alpha()} relies on,
-not handled distinctly from "no tie". Two-mode: yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); {opt raw} gives the count itself ({cmd:tnet::degree_tm}).
-
 {title:See also}
 
 	{help nwdegree}, {help nw2set}, {help nw2project}, {help nw2clustering}
 
-last certified : 02 Sep 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

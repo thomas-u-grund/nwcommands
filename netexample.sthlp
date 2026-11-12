@@ -293,7 +293,8 @@ Snijders, T.A.B., Steglich, C.E.G., and van de Bunt, G.G. (2010). Introduction t
 http://dx.doi.org/10.1016/j.socnet.2009.02.004.
 
 {pmore}
-Steglich, Christian, and Knecht, Andrea (2009), Die statistische Analyse dynamischer Netzwerkdaten. In: Christian Stegbauer and Roger Häußling (Eds.), Handbuch der Netzwerkforschung, Wiesbaden (Verlag für Sozialwissenschaften).
+Steglich, Christian, and Knecht, Andrea (2009), Die statistische Analyse dynamischer Netzwerkdaten. In: Christian Stegbauer and Roger Häußling (Eds.), Handbuch der Netzwerkforschung, Wiesbaden (Verlag
+für Sozialwissenschaften).
 
 
 
@@ -315,7 +316,8 @@ Goele Bossaert and Nadine Meidert have coded the support ties between 64 charact
 {bf:Reference}
 
 {pmore}
-Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal of Applied Sciences, Vol. 3 No. 2, pp. 174-185.
+Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal
+of Applied Sciences, Vol. 3 No. 2, pp. 174-185.
 http://dx.doi.org/10.4236/ojapps.2013.32024
 
 
@@ -338,7 +340,8 @@ directed network of comparable size to this package's other bundled examples.
 {bf:Reference}
 
 {pmore}
-Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European Journal of Neuroscience, 23(7), 1919-1930.
+Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European
+Journal of Neuroscience, 23(7), 1919-1930.
 
 
 
@@ -590,7 +593,7 @@ time points around a labor dispute (an unsuccessful attempt to unionize) - {it:k
 "before" network, {it:kapferer_t2} the "after" one. The two networks do NOT share a common node
 set (workers left and joined the shop between observations, a real and deliberate feature of the
 original study, not a data-quality issue) - they are two independent networks, not a two-wave panel
-on the same actors the way {help netexample##s50:s50}/{help netexample##klas12b:klas12b} are.
+on the same actors the way {help netexample##s50:s50} / {help netexample##klas12b:klas12b} are.
 
 {pmore}
 {bf:Reference}
@@ -616,8 +619,8 @@ Distributed with R's own {cmd:ergm} package as {cmd:data(kapferer)} (part of the
 {phang2}{cmd:. nwset sender receiver, eventtime(t) name(calls)}{p_end}
 
 {pstd}
-{bf:Vertex attributes:} a companion dataset, {cmd:socialevolution_nodes.dta} ({cmd:nwwebuse
-socialevolution_nodes}), holds {it:label, floor, gradeType} for the 84 students who appear
+{bf:Vertex attributes:} a companion dataset, {cmd:socialevolution_nodes.dta} ({cmd:nwwebuse}
+{cmd:socialevolution_nodes}), holds {it:label, floor, gradeType} for the 84 students who appear
 anywhere in the study (not only the 54 who placed or received a call). After {cmd:nwset} declares
 the event network, its node-level dataset carries each actor's own label in {cmd:_nwnode} - rename
 it to {cmd:label}, merge, then rename back:{p_end}
@@ -865,4 +868,4 @@ by school agree with Snijders and Baerveldt 2003; the Siena file page states the
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

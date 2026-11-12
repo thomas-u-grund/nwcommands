@@ -9,6 +9,7 @@
 {p2col :nw2project {hline 2}}One-mode projection of a two-mode network{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -26,12 +27,15 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt project(1|2)}}Mode/level to collapse to{p_end}
-{synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}{p_end}
-{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine|newman)}}How to combine tie values (or, for the last 5, how to score shared-neighbor structure directly; {it:newman} is the collaboration weight of Newman 2001, the sum over the shared nodes of the other mode of 1/(k - 1) with k the number of ties of the shared node, the weight of {cmd:tnet::projecting_tm}; for tie values the mean of tnet's two directions); default = {it:minmax}{p_end}
+{synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}; when the name is in use and {opt replace} is not given, a new valid name is chosen (with a warning){p_end}
+{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine|newman)}}How to combine tie values (or, for the last 5, how to score shared-neighbor structure directly; {it:newman} is the
+collaboration weight of Newman 2001, the sum over the shared nodes of the other mode of 1/(k - 1) with k the number of ties of the shared node, the weight of {cmd:tnet::projecting_tm}; for tie values
+the mean of tnet's two directions); default = {it:minmax}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -72,7 +76,7 @@ neighbor, then take the maximum of those minima across all shared neighbors -
 substantively, the strongest shared bond{p_end}
 
 {pstd}
-The remaining four options score the {bf:shared-neighbor structure itself} rather than
+The remaining five options score the {bf:shared-neighbor structure itself} rather than
 combining tie values - they are defined the same way regardless of whether the source
 network is valued, and are available for a valued source network too (unlike the five
 above, which require one):
@@ -90,6 +94,9 @@ divided by the size of the union of their neighbor sets{p_end}
 {p 8 12 2}{bf:stat(cosine)}{p_end}
 {p 12 12 2}the cosine similarity of the two nodes' neighbor sets: shared neighbors
 divided by the geometric mean of their two degrees{p_end}
+{p 8 12 2}{bf:stat(newman)}{p_end}
+{p 12 12 2}the collaboration weight of Newman (2001): the sum over the shared neighbors of
+1/(k - 1), with k the number of ties of the shared neighbor{p_end}
 
 {pstd}
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5
@@ -108,35 +115,29 @@ years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 {pstd}
 The projected network's provenance (which network and mode it was projected from, and with
 which {opt stat()}) is recorded on the new network itself, not just printed - see
-{bf:r(provenance)} via {help netname:nwname}, and {help nwsummarize}, which displays it.
+{bf:r(provenance)} via {help nwname}, and {help nwsummarize}, which displays it.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} the projection is undirected. {bf:Valued:} on a valued network {opt stat()} combines the tie values
+(default {opt minmax}); on an unvalued network the weight is the number of shared nodes; {opt count}, {opt binary},
+{opt jaccard}, {opt cosine} and {opt newman} ignore the values. {bf:Two-mode:} yes - the projection onto one mode.
+{bf:Signed:} not treated specially. See {help nwnetworktypes}.{p_end}
+
 
 {title:Stored results}
 
-	Scalars
-	  {bf:r(nodes)}		number of nodes in the projected network
-	  {bf:r(ties)}		number of edges in the projected (undirected) network, each pair counted once
-
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - the projection onto one mode; {opt stat()} chooses the tie weight ({opt count} is the number of shared nodes of the other mode as in {cmd:igraph::bipartite_projection}, {opt newman} the weight 1/(k - 1) per shared node of {cmd:tnet::projecting_tm}).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: not checked - the source two-mode network's ties are treated as undirected
-affiliations. Weighted: {bf:W1}, native - an unvalued source network projects to a shared-neighbor
-{it:count} (the standard bipartite-projection tie weight); a valued source network projects using
-{opt stat()}'s explicit choice of combination rule (see above) - tie strength is never silently
-discarded or reinterpreted as a distance. Signed: not checked. Two-mode: yes - the projection onto one mode; {opt stat()} chooses the tie weight ({opt count} is the number of shared nodes of the other mode as in {cmd:igraph::bipartite_projection}, {opt newman} the weight 1/(k - 1) per shared node of {cmd:tnet::projecting_tm}).
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(nodes)}}number of nodes in the projected network{p_end}
+{synopt:{bf:r(ties)}}number of edges in the projected (undirected) network, each pair counted once{p_end}
 
 
 {title:See also}
 
-	{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}
-
-last certified : 28 Aug 2026
+{p 4 4 2}{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

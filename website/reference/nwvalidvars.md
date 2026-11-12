@@ -32,16 +32,12 @@ Validates names of Stata variables that can be used to represent a network of si
 . return list
 ```
 
-## Supported network types
-
-Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collision-free `stub`*N* variable-name pattern for a given node count); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values at all.
-
 ## Stored results
 
-- **r(stub)** stub used to generate Stata variable names
-- **r(valid)** "true" when Stata variables do not already exist, "false" otherwise
-- **r(validvars)** list of valid Stata variables
+- **r(stub)** --- stub used to generate Stata variable names
+- **r(valid)** --- "true" when Stata variables do not already exist, "false" otherwise
+- **r(validvars)** --- list of valid Stata variables
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

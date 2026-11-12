@@ -32,9 +32,6 @@ The command makes use of the normal `tabulate` command, hence, all *`tabulate1_o
 
 - [two-way nwtabulate](nwtab2), `tabulate`
 
-- version: 2.0.0
-- certified: 12 Jul 2016, 18:18:50
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

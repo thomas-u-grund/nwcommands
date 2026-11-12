@@ -32,10 +32,10 @@ tab_options]
 | `attribute(varname)` | Categorical (string or numeric) node attribute to cross-tabulate ties by |
 | `eiplot` | Plot the null (QAP-permutation) distribution of the E-I index, with the observed value marked |
 | `eiplotoptions(string)` | Additional options forwarded to the `eiplot`'s own `kdensity` |
-| `plot` | Plot the ego/alter mixing table via `tabplot` |
-| `plotoptions(string)` | Additional options forwarded to `plot`'s own `tabplot` |
+| `plot` | Plot the ego/alter mixing table as a bar plot in the style of `tabplot` (built in; see Remarks on plot) |
+| `plotoptions(string)` | Additional options forwarded to `twoway` for `plot` |
 | `permutations(int)` | Number of QAP permutations for the E-I index's own null distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the observed table/index are reported) |
-| `save(filename)` | Save the QAP permutation draws (variable *EI_simulated*) and the observed value (variable *EI_observed*) to a new dataset |
+| `save(filename)` | Save the QAP permutation draws (variable *EI_simulated*) and the observed value (variable *EI_observed*) to a dataset (an existing file is replaced); only when `permutations()` > 1 |
 | *tab_options* | Any other option is forwarded to the underlying `tab` call that builds the mixing table (e.g. `row`, `column`, `cell`) |
 
 ## Description
@@ -53,27 +53,20 @@ With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a 
 . nwmixing flomarriage, attribute(priorates)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes - ego/alter mixing is directional for a directed network (an *attribute*`_ego`/*attribute*`_alter` pair is not symmetric); an undirected network's own mixing table instead shows each edge counted from both endpoints, noted explicitly in the output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(EI_index)** --- the observed E-I index
+- **r(EI_pvalue)** --- two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0 (only when `permutations()` > 1)
 
-- **r(EI_index)** the observed E-I index
-- **r(EI_pvalue)** two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0 (only when `permutations()` > 1)
+- **Macros**
+- **r(netname)** --- the network name
+- **r(attribute)** --- the `attribute()` variable name
 
-**Macros**
-
-- **r(netname)** the network name
-- **r(attribute)** the `attribute()` variable name
-
-**Matrices**
-
-- **r(table)** the mixing table's own tie counts
-- **r(col)** the mixing table's column category values
-- **r(row)** the mixing table's row category values
+- **Matrices**
+- **r(table)** --- the mixing table's own tie counts
+- **r(col)** --- the mixing table's column category values
+- **r(row)** --- the mixing table's row category values
 
 ## References
 
@@ -85,4 +78,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

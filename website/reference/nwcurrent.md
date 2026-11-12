@@ -22,7 +22,7 @@ id(int)]
 
 | | |
 |---|---|
-| `id(int)` | Originl network ID of the the network that should be made the current network |
+| `id(int)` | Original network ID of the network that should be made the current network |
 
 ## Description
 
@@ -49,20 +49,15 @@ The *current network* is simply the last network that has been [set](nwset), [im
 ----------------------------------------
 ```
 
-## Supported network types
-
-Not applicable - reports or sets which network is the "current" one; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
-
 ## Stored results
 
-```stata
-Scalars:
-  r(networks)	number of networks
+- **Scalars**
+- **r(networks)** --- number of networks
+- **r(nodes)** --- number of nodes of the current network
 
-Macros:
-  r(current)	name of current network
-```
+- **Macros**
+- **r(current)** --- name of current network
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

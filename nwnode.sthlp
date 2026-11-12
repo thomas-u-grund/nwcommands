@@ -9,6 +9,7 @@
 {p2col :nwnode {hline 2}}Check whether a node exists in a network{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -25,6 +26,7 @@
 {synoptline}
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -33,11 +35,18 @@ case it does not exist, it returns -1. Either {opt ego()} or {opt egoid()} needs
 both are given, {opt egoid()} takes precedence and {opt ego()} is silently ignored.
 
 
+{title:Stored values}
 
-{title:Supported network types}
+{synoptset 20 tabbed}{...}
+{synopt:{cmd:r(nodeid)}}nodeid of the node; -1 if it does not exist{p_end}
+{synopt:{cmd:r(nodename)}}name of the node{p_end}
+
+
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - a pure node-existence/lookup check; does not read tie values or depend on directed/valued/two-mode status.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
 
 {title:Examples}
 
@@ -45,15 +54,9 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - a pure n
 	{cmd:. nwnode flobusiness, ego(medici)}
 
 
-{title:Stored values}
-
-	{cmd:r(nodeid)}
-	{cmd:r(nodename)}
-	
 {title:See also}
    
    {help nwvalue}
-last certified : 24 Aug 2026
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

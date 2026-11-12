@@ -16,14 +16,14 @@ Stack several networks into one block-diagonal network
 ```stata
 nwstack
 netlist,
-name(newnetname)
+n:ame(newnetname)
 [gr:oup(newvar)
 replace]
 ```
 
 | | |
 |---|---|
-| `name`(*newnetname*) | name of the stacked network (required) |
+| `n:ame`(*newnetname*) | name of the stacked network (required) |
 | `gr:oup`(*newvar*) | variable that numbers the networks of *netlist* 1, 2, ... for the nodes of each |
 | `replace` | replace an existing network of that name |
 
@@ -39,4 +39,4 @@ The networks must be one-mode and agree in direction. With `group()` the command
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

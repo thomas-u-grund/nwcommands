@@ -9,31 +9,35 @@
 {p2col :nwspectral {hline 2}}Graph Laplacian spectral analysis{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
 {cmdab: nwspectral}
 [{it:{help netname}}]
-[{cmd:,}
-{opth generate(newvarname)}
-{opt bipartition}
+{cmd:,}
+{opth gen:erate(newvarname)}
+[{opt bipartition}
 {opt measure(string)}
 {opt replace}
-{opt silent}]
+{opt silent}
+{opt force}
+{opt one:mode}]
 
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own Fiedler-vector entry{p_end}
-{synopt:{opt bipartition}}Also generate a two-way spectral partition ({it:_fiedlersign}, or {it:generate()}{bf:sign}) from the sign of the Fiedler vector{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own Fiedler-vector entry{p_end}
+{synopt:{opt bipartition}}Also generate a two-way spectral partition (variable {it:generate()}{bf:sign}) from the sign of the Fiedler vector{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt replace}}Replace existing variable(s){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt force}}Run the complete decomposition of a network with more than 6,000 nodes{p_end}
-{synopt:{opt onemode}}Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088){p_end}
+{synopt:{opt one:mode}}Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088){p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -42,7 +46,7 @@
 matrix, W the adjacency/weight matrix) of a single network and its eigendecomposition - the
 standard starting point for spectral graph analysis. Always computed on the undirected,
 symmetrized network (no {bf:symmetrize} option needed - a directed network is symmetrized
-automatically, the same convention {help nwcommunity}/{help nwkcomponents} already use, since the
+automatically, the same convention {help nwcommunity} / {help nwkcomponents} already use, since the
 classical Laplacian spectrum results below assume a symmetric matrix).
 
 {pstd}
@@ -61,8 +65,8 @@ edges.{p_end}
 vector") - stored per node via {opth generate(newvarname)} (required) - is a classical
 continuous relaxation of graph bisection: nodes with similar Fiedler-vector values tend to be
 well-connected to each other. {opt bipartition} additionally generates a discrete two-way split
-from its sign ({it:_fiedlersign}, or {it:generate()}{bf:sign} when {opt generate()} is
-given).{p_end}
+from its sign (variable {it:generate()}{bf:sign}, e.g. {it:_fiedlersign} for
+{cmd:generate(_fiedler)}).{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -73,49 +77,15 @@ underlying decomposition happens to return in that case, but {opt bipartition}'s
 should not be interpreted as meaningful when {bf:r(algebraic_connectivity)} is (near) 0; use
 {help nwcomponents} directly instead for a disconnected network's own true partition.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(algebraic_connectivity)}	second-smallest Laplacian eigenvalue (the Fiedler value)
-	  {bf:r(components)}			number of Laplacian eigenvalues within 1e-8 of 0
-
-	Matrices
-	  {bf:r(eigenvalues)}			all Laplacian eigenvalues, sorted ascending
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwspectral flomarriage, generate(_fiedler)}
-	{cmd:. nwspectral flomarriage, bipartition generate(_fiedler) replace}
-
-{title:References}
+{title:Network types}
 
 {pstd}
-Fiedler, M. (1973). Algebraic connectivity of graphs. {it:Czechoslovak Mathematical Journal} 23(2),
-298-305.
+{bf:Directed:} symmetrized. {bf:Valued:} the tie values are used by default ({opt measure(valued)});
+{opt measure(binary)} uses only the presence of ties. {bf:Two-mode:} not supported (error 6088; use {help nwproject}
+first); {opt onemode} gives the spectrum of the bipartite graph. {bf:Signed:} with negative values the Laplacian is
+not positive semi-definite and the results are not meaningful. See {help nwnetworktypes}.{p_end}
 
-{pstd}
-von Luxburg, U. (2007). A tutorial on spectral clustering. {it:Statistics and Computing} 17(4),
-395-416.
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the Laplacian spectrum of the bipartite graph ({cmd:igraph::laplacian_matrix}).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (the classical Laplacian spectrum results
-this command reports assume a symmetric matrix, the same reasoning {help nwcommunity}/
-{help nwkcomponents} already apply). Weighted: yes, via {opt measure(valued)} (default for a
-valued network) - the Laplacian is built from tie weights directly rather than dichotomized
-presence/absence. Signed: not checked - a Laplacian built from mixed-sign weights is not
-guaranteed positive semi-definite, so results are not meaningful for a signed network. Two-mode: not supported - error 6088; {opt onemode} reads the two-mode network as a one-mode graph and gives the Laplacian spectrum of the bipartite graph ({cmd:igraph::laplacian_matrix}). Only a single network is
-accepted (unlike most other commands in this package, which accept a full {help netlist}) - each
-network's own Fiedler vector is a full per-node eigenvector, not a simple per-network scalar or
-per-node aggregate that stacks cleanly across multiple networks the way {help nwcomponents}'s
-component id does.
 
 {title:Limits}
 
@@ -127,11 +97,42 @@ random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 
 above 6,000 nodes it stops with r(484) unless {opt force} is given. There is no exact shortcut for the returned
 spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
 
+{pstd}
+Only a single network is accepted: the Fiedler vector of each network is a full per-node eigenvector.
+
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwspectral flomarriage, generate(_fiedler)}
+	{cmd:. nwspectral flomarriage, bipartition generate(_fiedler) replace}
+
+
+{title:Stored results}
+
+{synoptset 27 tabbed}{...}
+{p2col 5 27 31 2: Scalars}{p_end}
+{synopt:{bf:r(algebraic_connectivity)}}second-smallest Laplacian eigenvalue (the Fiedler value){p_end}
+{synopt:{bf:r(components)}}number of Laplacian eigenvalues within 1e-8 of 0{p_end}
+
+{p2col 5 27 31 2: Matrices}{p_end}
+{synopt:{bf:r(eigenvalues)}}all Laplacian eigenvalues, sorted ascending{p_end}
+
+
+{title:References}
+
+{pstd}
+Fiedler, M. (1973). Algebraic connectivity of graphs. {it:Czechoslovak Mathematical Journal} 23(2),
+298-305.
+
+{pstd}
+von Luxburg, U. (2007). A tutorial on spectral clustering. {it:Statistics and Computing} 17(4),
+395-416.
+
+
 {title:See also}
 
 	{help nwevcent}, {help nwcommunity}, {help nwcomponents}, {help nwkcomponents}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

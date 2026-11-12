@@ -44,10 +44,7 @@ nonmissing.
 ```stata
 . nwrecode trade (100/max=1) (min/max=0)
 ```
-- For exactly this case, [nwdichotomize](nwdichotomize) is a thin, more directly discoverable wrapper around
-- the same rule shown above: `nwdichotomize trade, threshold(100)`. Reach for `nwrecode`
-- directly whenever you need something [nwdichotomize](nwdichotomize) does not offer - multiple bands, an
-- *otherwise* rule, or `missing`/`nonmissing` handling.
+For exactly this case, [nwdichotomize](nwdichotomize) is a thin, more directly discoverable wrapper around the same rule shown above: `nwdichotomize trade, threshold(100)`. Reach for `nwrecode` directly whenever you need something [nwdichotomize](nwdichotomize) does not offer - multiple bands, an *otherwise* rule, or `missing`/`nonmissing` handling.
 
 ## Options
 
@@ -55,7 +52,7 @@ nonmissing.
 
 `generate`(*[newnetlist](newnetname)*) specifies the names of the network(s) that will contain the transformed dyads.  `into()` is a synonym for `generate()`.
 
-If generate() is not specified, the input networks are overwritten; Overwriting networks is dangerous (you cannot undo changes, so we strongly recommend specifying nwgenerate().
+If generate() is not specified, the input networks are overwritten; Overwriting networks is dangerous (you cannot undo changes), so we strongly recommend specifying `generate()`.
 
 `prefix(str)` specifies that the recoded networks be returned in new networks formed by prefixing the names of the original networks with *str*.
 
@@ -96,14 +93,10 @@ If generate() is not specified, the input networks are overwritten; Overwriting 
 - `. nwrecode glasgow1-glasgow3 (1=99) ,`
 
 ```stata
-pre(new) test
+prefix(new) test
 ```
 - List the network adjacency matrices
 - `. nwsummarize glasgow1-3 new_glasgow1-3, mat`
-
-## Supported network types
-
-Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid case. Directed: yes. Weighted: yes, natively - this command's entire purpose is recoding tie values via a rule. Signed: yes, a recode rule can map negative values like any other. Two-mode: yes - the flag, the modes and the level labels are kept.
 
 ## See also
 
@@ -111,4 +104,4 @@ Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid c
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

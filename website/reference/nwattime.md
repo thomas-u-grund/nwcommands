@@ -64,23 +64,16 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 . nwattime mynet, at(2) name(wave2)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: preserved from the source network. Weighted: preserved from the source network's own tie values (the slice selects which ties are active, it does not change their values). Signed: not checked. Two-mode: not yet supported as a source (see [nwset](nwset)'s own note that **time()**/ **interval()**/**eventtime()** cannot currently be combined with **twomode**/**bipartite** - a composability item for a later pass).
-
 ## Stored results
 
-**Scalars**
-
-- **r(ties)** number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed *Ties* line)
-- **r(at)** the timepoint sliced at
+- **Scalars**
+- **r(ties)** --- number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed *Ties* line)
+- **r(at)** --- the timepoint sliced at
 
 ## See also
 
 - [nwset](nwset), [nwsummarize](nwsummarize)
 
-- last certified : 21 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

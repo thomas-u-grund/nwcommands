@@ -29,7 +29,7 @@ Examples include
 {p 8 34 2}{cmd:my~net} {space 16} one network starting with {cmd:my} &
                 ending with {cmd:net} with any number of other characters
                 between{p_end}
-{p 8 34 2}{cmd:my?var} {space 16} networks starting with {cmd:my} & ending
+{p 8 34 2}{cmd:my?net} {space 16} networks starting with {cmd:my} & ending
                 with {cmd:net} with one other character between{p_end}
 {p 8 34 2}{cmd:mynet1-mynet6} {space 9} {cmd:mynet1}, {cmd:mynet2}, ...,
                 {cmd:net6} (probably){p_end}
@@ -82,4 +82,4 @@ The networks in the dataset can be reordered with {help nworder}.
    {help netname}, {help nwsummarize}, {help nworder}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

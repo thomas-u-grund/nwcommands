@@ -19,7 +19,7 @@ nwcompressobs
 
 ## Description
 
-Comresses the observations in Stata. Deletes all unnecessary cases that are not needed to represent the largest network. When the dataset also contains an attribute variable with non-missing data, these cases are not deleted.
+Compresses the observations in Stata. Deletes every observation in which all variables are missing (an empty string or the system missing value), such as the extra observations that are not needed to represent the largest network. An observation that holds a node name or any other non-missing value is kept.
 
 ## Examples
 
@@ -30,14 +30,10 @@ Comresses the observations in Stata. Deletes all unnecessary cases that are not 
 . nwcompressobs
 ```
 
-## Supported network types
-
-Not applicable - trims trailing empty (all-missing) Stata observations from the dataset; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
-
 ## See also
 
 - [nwdrop](nwdrop), `clear`
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

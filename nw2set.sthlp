@@ -9,6 +9,7 @@
 {p2col :nw2set {hline 2}}Declare data to be two-mode network data{p_end}
 {p2colreset}{...}
 
+
 {marker syntax}{...}
 {title:Syntax}
 
@@ -65,7 +66,7 @@ inside sets there are no connections.
 {pstd}
 Setting two-mode networks is very similar to setting normal networks with {help nwset}. With M nodes
 on level 1 and N nodes on level 2, the command internally generates a (M+N) x (M+N) matrix, which stores
-the network data. Furthermore, it generates a variable {it:_mode}, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim,
+the network data. Furthermore, it generates a variable {it:_nwmode}, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim,
 Thomas, Michael, Mathilde) and value 2 for nodes on level 2 (e.g institutions: LiU, UCD, Oxford, ETH).
 
 {pstd} 
@@ -85,24 +86,25 @@ node on level 1 (e.g. organisations). Each row in the dataset stands for a node 
 
 {pstd}
 In this dummy example we create 5 observations and 3 new variables v1-v3. After that we set a two-mode network from this data. This
-creates an empty network with 5 nodes on level 1 and 3 nodes on level 2.
+creates an empty network with 3 nodes on level 1 and 5 nodes on level 2.
 
 	{cmd:. nwclear}
 	{cmd:. set obs 5}
-	{cmd:. forvalues i = 1/3} {
-	{cmd:     gen v = 0}
-	{cmd:  }}
+	{cmd:. forvalues i = 1/3 {c -(}}
+	{cmd:     gen v`i' = 0}
+	{cmd:  {c )-}}
 	{cmd:. nw2set v*}
 
 {pstd}
 By default, the nodes on level 1 are named after the variables v1, v2 and v3. If option {bf:rownames(varname)} is
-specified, the nodes on level 2 are named afther the values found in variable {bf:varname}. 
+specified, the nodes on level 2 are named after the values found in variable {bf:varname}. The variables in {it:varlist}
+and the variable in {opt rownames()} are dropped from the dataset after the network has been set.
 	
 {pstd}
 {bf:{ul:2. Declare edgelist from variables}}
 
 {pstd}
-In this case, the command interprets the variables {help varlist} as egdelist (see {help nw2fromedge}). 
+In this case, the command interprets the variables {help varlist} as edgelist (see {help nw2fromedge}). 
 
 {pstd}
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing
@@ -119,37 +121,26 @@ relations. Nodes are identified by entries in the cells.  For example, imagine t
 {pstd}			
 We can declare this data as a two-mode network like this:
 	
-	{cmd:. nw2set fromid toid, egdelist}
+	{cmd:. nw2set fromid toid, edgelist}
 	
 {pstd}	
 This commands generates a network with 5 nodes in total; 3 nodes on level 1 (Peter, Andreas, Thomas) and 2 nodes
 on level 2 (LiU, UCD). 
 	
 {pstd}
-{bf:{ul:2. Declare adjacency matrix from Mata matrix}}
+{bf:{ul:3. Declare adjacency matrix from Mata matrix}}
 
 {pstd}
 Set a network from a {it:M x N} Mata matrix that holds the adjacency matrix of the new network with N nodes on level 1 and M nodes on level
 2. The option {bf:mat()} is specified with the name of an existing Mata matrix.
 
 {pstd}
-For example, this generates a Mata matrix and sets a two-mode network with 6 nodes (4 nodes in level 1 and 2 nodes on level 2):
+For example, this generates a Mata matrix and sets a two-mode network with 6 nodes (2 nodes on level 1 and 4 nodes on level 2):
 
 	{cmd:. nwclear}
 	{cmd:. mata: net = (0,1\1,0\1,1\1,1)}
 	{cmd:. nw2set, mat(net) name(network)}
 
-
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes.
-
-{title:Supported network types}
-
-{pstd}
-Two-mode: yes - declares a two-mode network from a rectangular incidence matrix or a variable list; the two modes keep their sizes. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
 
 {title:Remarks}
  
@@ -183,6 +174,15 @@ an adjacency list or an edgelist represented by Stata variables.
 From a two-mode network one can also produce a one-mode projection (see {help nw2project}). This basically,
 collapses the network to use only nodes from either level 1 or level 2.
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not applicable (two-mode ties are undirected). {bf:Valued:} tie values are stored as given.
+{bf:Two-mode:} yes - declares a two-mode network from a rectangular matrix or a variable list. {bf:Signed:} not
+checked. See {help nwnetworktypes}.{p_end}
+
+
 {title:Limits}
 
 {pstd}
@@ -193,11 +193,10 @@ are missing), so the memory grows with the square of the total number of nodes. 
 ({help nw2project}, {help nwmatching}, {help nw2degree}, {help nw2clustering}) take 1 to 10 seconds at 15,000 nodes.
 {help nw2toedge} without {opt compress} lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
 
+
 {title:See also}
 
-	{help nwset} (whose own {opt twomode}/{opt bipartite} options can also declare a two-mode network directly), {help nw2fromedge}, {help nwload}, {help nw2project} ({help nwproject})
-
-last certified : 28 Aug 2026
+{p 4 4 2}{help nwset} (whose own {opt twomode}/{opt bipartite} options can also declare a two-mode network directly), {help nw2fromedge}, {help nwload}, {help nw2project} ({help nwproject}){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

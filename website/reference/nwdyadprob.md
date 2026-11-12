@@ -28,7 +28,7 @@ labs(lab1 lab2 ...)]
 
 | | |
 |---|---|
-| `mat`(*matrix*) | Stata or Mata matrix with tie probabilities |
+| `mat`(*matrix*) | Mata matrix (or Mata expression) with tie probabilities |
 | `density(float)` | density of the new network |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `name(netname)` | name of the new random network |
@@ -38,17 +38,13 @@ labs(lab1 lab2 ...)]
 
 ## Description
 
-`nwdyadprob` generates a (un-)directed random network where each tie *x_ij* has the probability *p_ij* to exist. The values for *p_ij* are derived either 1) from the edge values in network [netname](netname) and the *density* (if given) or 2) from a Stata/Mata matrix specified in **mat()**. The command can be used to create all sorts of networks.
+`nwdyadprob` generates a (un-)directed random network where each tie *x_ij* has the probability *p_ij* to exist. The values for *p_ij* are derived either 1) from the tie values of network [netname](netname) or 2) from a Mata matrix (or Mata expression) specified in **mat()**. When both are given, *netname* is used. The command can be used to create all sorts of networks.
 
-Let *e_ij* be the edge values of network [netname](netname).
+Let *e_ij* be the tie values of network [netname](netname). When all of them lie between 0 and 1, *p_ij = e_ij*. Otherwise they are transformed to probabilities first: *p_ij* = invlogit(*e_ij*). The values in **mat()** are used as they are.
 
-Then, the probability for a tie *x_ij* to exist in the newly created network is *p_ij*:
+When no **density()** is given, each tie *x_ij* is drawn independently with probability *p_ij*.
 
-*p_ij = ((e_ij) / sum(e_kl)) * density * 100*
-
-When no **density()** is given, the probability is simply:
-
-*p_ij = e_ij*
+With **density(***d***)**, exactly *n*(*n*-1)*d* ties (half as many with `undirected`) are drawn without replacement, with inclusion probabilities proportional to *p_ij*. The command stops with an error when fewer dyads have a non-zero *p_ij* than ties are requested.
 
 With option **weights(***p1, p2,...***)** the command generates a weighted network. Here, *p_k* stands for the probability to sample tie weight *k*. The probabilities *p1, p2..., pn* do not necessarily have to sum up to one; they are standardized.
 
@@ -56,16 +52,10 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
-## Supported network types
-
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed). Weighted: yes, via `weights()` (a per-dyad tie-value expression, independent of `density()`'s own probability-of-placement role) - though `weights()` is currently only implemented for the `mat()`-based path, not the `density()`-based path (an explicit, honest error is raised if both are combined; see the command's own Description). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## See also
 
 - [nwhomophily](nwhomophily), [nwgen](nwgen), [nwexpand](nwexpand)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

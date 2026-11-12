@@ -9,6 +9,7 @@
 {p2col :nwclique {hline 2}}Maximal clique enumeration{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -33,6 +34,7 @@
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -42,7 +44,7 @@ could be added to it without breaking that property. Enumeration uses the classi
 Kerbosch (1973) recursive algorithm.
 
 {pstd}
-Cliques are fundamentally different from the partitions {help nwcomponents}/{help nwcommunity}/
+Cliques are fundamentally different from the partitions {help nwcomponents} / {help nwcommunity} /
 {help nwconcor} generate: a node can belong to {it:several} overlapping maximal cliques at once (as
 in the classic example of two triangles sharing an edge), so there is no single clique-membership
 variable to generate the way there is a single component or community id. Instead, {cmd:nwclique}
@@ -59,18 +61,53 @@ default of 3 excludes both, matching the common convention that a "clique" worth
 least three members). A node that belongs to no clique meeting {opth minsize(int)} gets a missing
 value in the generated variable, not a spurious 0.
 
-{title:Stored results}
+{pstd}
+With more than one network in the {it:netlist}, a number is appended to the variable name ({it:newvarname}{bf:1},
+{it:newvarname}{bf:2}, ...) and the stored results are those of the last network.
 
-	Scalars
-	  {bf:r(cliques)}		number of maximal cliques found meeting {opth minsize(int)}
 
-	Matrices
-	  {bf:r(clique_matrix)}	cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with {opt nomatrix})
+{title:Network types}
+
+{pstd}
+{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored (the command prints a note on a valued network).
+{bf:Two-mode:} same as for the bipartite graph read as a one-mode network (it has no cliques of three or more nodes).
+{bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
+are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
+(the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
+same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
+20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
+which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
+one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
+of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
+100,000 nodes take about a quarter of a second.{p_end}
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
+{pstd}
+The number of maximal cliques can grow exponentially with the size of a network (true of any algorithm), so a very dense,
+large network can take a long time; {cmd:nwclique} has no {opt maxcliques()} or {opt maxtime()} guard as {help nwnclique} has.
+
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwclique flomarriage, generate(_cliquenum)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(cliques)}}number of maximal cliques found meeting {opth minsize(int)}{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(clique_matrix)}}cliques-by-nodes 0/1 membership matrix, one row per maximal clique (not with {opt nomatrix}){p_end}
 
 
 {title:References}
@@ -84,47 +121,9 @@ Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applic
 University Press. (cliques and cohesive subgroups)
 
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); cliques of three or more nodes cannot exist in a bipartite graph.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (a clique's own definition - every pair
-mutually tied - has no directed generalization, the same reasoning {help nwcoreperiphery} already
-applies). Weighted: not used - only presence/absence of a tie matters; tie strength does not affect
-clique membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); cliques of three or more nodes cannot exist in a bipartite graph. Maximal clique enumeration is worst-case exponential in the number of
-maximal cliques a graph can have (a mathematical property of the problem itself, true of any correct
-algorithm) - fine for the moderate network sizes typical of SNA datasets, but a very dense, large
-network could take a long time. {help nwnclique}, {help nwnclan} and {help nwkplex} have the options {opt maxcliques()} / {opt maxplexes()}, {opt maxtime()}, {opt countonly} and {opt nomatrix} for such searches; {cmd:nwclique} has none.
-
-{title:Limits}
-
-{pstd}
-Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
-are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
-(the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
-same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
-20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
-which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
-one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
-of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
-100,000 nodes take about a quarter of a second.
-{pstd}
-For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
-
 {title:See also}
 
-	{help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
-
-last certified : 21 Aug 2026
+{p 4 4 2}{help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

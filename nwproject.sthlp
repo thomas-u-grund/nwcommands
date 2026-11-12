@@ -9,6 +9,7 @@
 {p2col :nwproject {hline 2}}One-mode projection of a two-mode network (alias for nw2project){p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -21,12 +22,13 @@
 {opt xvars}
 {opt replace}]
 
+
 {title:Description}
 
 {pstd}
 {cmd:nwproject} is an exact alias for {help nw2project} - it forwards every argument and option
 unchanged and returns the identical stored results. It exists purely for discoverability: unlike
-{help nw2set}/{help nw2fromedge}/{help nw2toedge}/{help nw2degree}/{help nw2clustering} (whose
+{help nw2set} / {help nw2fromedge} / {help nw2toedge} / {help nw2degree} / {help nw2clustering} (whose
 {cmd:nw2} prefix genuinely disambiguates a one-mode command from a same-purpose two-mode-specific
 sibling), a one-mode {cmd:nwproject} could never exist - projecting only makes sense starting from
 a two-mode source - so there is no ambiguity for the {cmd:nw2} prefix to resolve here, only an
@@ -34,6 +36,13 @@ unnecessary naming inconsistency with the rest of the "transformation grammar" f
 ({help nwcollapse}, {help nwexpand}, {help nwfromedge}, {help nwtoedge}), none of which carry a
 {cmd:nw2} prefix. {help nw2project} itself is fully supported - see its own
 help file for the complete option reference, the {opt stat()} formulas, and worked examples.
+
+
+{title:Network types}
+
+{pstd}
+As for {help nw2project}, of which this command is an alias. See {help nwnetworktypes}.{p_end}
+
 
 {title:Examples}
 
@@ -46,22 +55,11 @@ Build a small two-mode network (3 people x 2 events) and project it onto mode 1 
 	{cmd:. nwproject attendance, project(1) name(people_net)}
 	{cmd:. nwsummarize people_net, matonly}
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - alias of {help nw2project}.
-
-{title:Supported network types}
-
-{pstd}
-Identical to {help nw2project} - see that command's help file. Two-mode: yes - alias of {help nw2project}.
 
 {title:Stored results}
 
 {pstd}
 See {help nw2project}.
 
-last certified : 28 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

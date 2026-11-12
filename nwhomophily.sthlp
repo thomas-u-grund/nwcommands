@@ -30,10 +30,11 @@
 {synoptline}
 {synopt:{opt homophily}({it:{help float:h1 h2 ...}})}degree of homophily for each variable in {help varlist}{p_end}
 {synopt:{opth density(float)}}density of the new network{p_end}
-{synopt:{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})}mode used to generate probabilities for ties{p_end}
+{synopt:{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})}mode used to generate probabilities for ties, one entry per variable; default = {it:same}{p_end}
 {synopt:{opth nodes(integer)}}number of nodes; if not specified the number of valid cases of {it:{help varname}} is used{p_end}
-{synopt:{opth name(newnetname)}}name of the new random network{p_end}
+{synopt:{opth name(newnetname)}}name of the new random network; default = {it:homophily}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt undirected}}generate an undirected network{p_end}
 
 
 {title:Description}
@@ -128,19 +129,21 @@ large-magnitude variable (e.g. income in the thousands) can produce weights skew
 underlying sampler fails; scale the variable (e.g. to a 0-10 range) or use a smaller {it:homophily()}
 coefficient for {bf:absdistinv}/{bf:distinv} in that case.
 
-	
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). Weighted: not applicable - no {opt weights()} option; {opt density()} controls overall tie placement rate, not individual tie values. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
 
 {title:Remarks}
 
 {pstd}
-The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded or installed.
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded
+or installed.
 
-	
+
+{title:Network types}
+
+{pstd}
+Generates a one-mode network. {bf:Directed:} directed by default, {opt undirected} for undirected. {bf:Valued:} no,
+ties are 0/1. {bf:Two-mode:} not applicable. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
+
+
 {title:Limits}
 
 {pstd}
@@ -149,9 +152,10 @@ The tie probabilities are an {it:n}-by-{it:n} matrix and the ties are drawn with
 0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more
 than 50,000,000 dyads), before any matrix is built.
 
+
 {title:See also}
 
 	{help nwdyadprob}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

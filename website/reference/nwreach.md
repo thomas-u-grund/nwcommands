@@ -18,7 +18,7 @@ nwreach
 [netname]
 [,
 sym
-name(string)
+name(newnetname)
 xvars
 nwreplace
 force]
@@ -27,7 +27,7 @@ force]
 | | |
 |---|---|
 | `sym` | Symmetrize network before calculation of reachability |
-| `name(newnetname)` | Name of the new network; default = *reach* |
+| `name(newnetname)` | Name of the new network; default = *_reach* |
 | `xvars` | Generate Stata variables for the network |
 | `nwreplace` | if a network named *newnetname* already exists, drop it and use this name anyway - required, not silent (see [nwgeodesic](nwgeodesic) for the same convention) |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise) |
@@ -60,16 +60,10 @@ force]
 ```
 In this example, there is basically one isolate node (node 8) who is unconnected from everybody else.
 
-## Supported network types
-
-Binary: yes (only) - reachability is a structural yes/no property; [nwgeodesic](nwgeodesic)'s own weighted distance semantics do not carry through here. Directed: yes - reachability follows the direction of the ties and the network is not symmetrized unless `sym` is given (same convention as [nwgeodesic](nwgeodesic)). Weighted: not applicable. Signed: not applicable. same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## See also
 
 - [nwgeodesic](nwgeodesic), [nwpath](nwpath)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

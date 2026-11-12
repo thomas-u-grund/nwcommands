@@ -9,6 +9,7 @@
 {p2col :nwsimindex {hline 2}}Common-neighbor similarity indices between all node pairs{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -18,7 +19,8 @@
 {opt measure(string)}
 {opth name(newnetname)}
 {opt xvars}
-{opt replace}]
+{opt replace}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -26,10 +28,11 @@
 {synopt:{opt measure(common|jaccard|dice|cosine|adamicadar)}}Which similarity index to compute; default = {it:jaccard}{p_end}
 {synopt:{opth name(newnetname)}}Name of the new similarity network; default = {it:simindex}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
-{synopt:{opt replace}}Replace an existing network of the same name{p_end}
+{synopt:{opt replace}}Replace an existing network of the same name; without it a free name is used and a warning is shown{p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 17,300 nodes otherwise){p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -64,38 +67,13 @@ mirrors how {help nwgeodesic} reports an undefined diameter/radius rather than s
 undefined value to 0.
 
 
-{title:Valued networks}
+{title:Network types}
 
 {pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
+{bf:Directed:} the neighbours of a node are its out- and in-neighbours. {bf:Valued:} tie values are ignored (every tie
+counts as present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention {help nwkcore} uses). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(nodes)}		number of nodes
-
-	Macros
-	  {bf:r(measure)}	the measure used
-	  {bf:r(netname)}	name of the new similarity network
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwsimindex flomarriage, measure(jaccard)}
-	{cmd:. nwsummarize simindex, matonly}
-
-{title:References}
-
-{pstd}
-Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social networks. {it:Journal of the American Society for Information Science and Technology} 58(7), 1019-1031.
-
-{pstd}
-Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Networks} 25(3), 211-230.
 
 {title:Limits}
 
@@ -108,11 +86,37 @@ The result is a dense {it:n}-by-{it:n} valued network. About 5 matrices of that 
 4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes);
 option {opt force} runs it anyway.
 
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwsimindex flomarriage, measure(jaccard)}
+	{cmd:. nwsummarize simindex, matonly}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(nodes)}}number of nodes{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(measure)}}the measure used{p_end}
+{synopt:{bf:r(netname)}}name of the new similarity network{p_end}
+
+
+{title:References}
+
+{pstd}
+Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social networks. {it:Journal of the American Society for Information Science and Technology} 58(7), 1019-1031.
+
+{pstd}
+Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Networks} 25(3), 211-230.
+
+
 {title:See also}
 
 	{help nwsimilar}, {help nw2project}, {help nwkcore}, {help nwburt}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

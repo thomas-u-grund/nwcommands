@@ -9,24 +9,26 @@
 {p2col :nwkcore {hline 2}}k-core decomposition{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
 {cmdab: nwkcore}
 [{it:{help netlist}}]
 [{cmd:,}
-{opth generate(newvarname)}
+{opth gen:erate(newvarname)}
 {opt replace}
 {opt silent}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's coreness{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's coreness{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -45,26 +47,17 @@ node's neighbor set is the union of its out- and in-neighbors, matching how {hel
 treats directed networks for the same kind of undirected-sense structural question.
 
 {pstd}
-{opt generate()} is required and names the new variable which stores each node's coreness.
+{opt generate()} is required and names the new variable which stores each node's coreness. With a list of
+several networks the variables are numbered by network ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...), and the
+stored results are those of the last network.
 
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching {help nwcomponents}'s own weak-connectivity convention and {help nwsimindex}'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(maxcore)}		maximum coreness found (the network's degeneracy)
-
-	Matrices
-	  {bf:r(core_sizeid)}		distribution over coreness levels
+{bf:Directed:} a node's neighbours are its out- and in-neighbours together. {bf:Valued:} tie values are ignored (the
+command prints a note on a valued network). {bf:Two-mode:} same as for the bipartite graph read as a one-mode network.
+{bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
 
 {title:Examples}
@@ -72,6 +65,16 @@ Binary: yes (only) - coreness is a structural property, tie values are ignored. 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwkcore flomarriage, generate(_kcore)}
 	{cmd:. tab _kcore}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(maxcore)}}maximum coreness found (the network's degeneracy){p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(core_sizeid)}}distribution over coreness levels: one row per level, columns {bf:size} (number of nodes), {bf:coreid} (coreness) and {bf:share} (share of nodes), sorted by size{p_end}
 
 
 {title:References}
@@ -83,11 +86,10 @@ Seidman, S.B. (1983). Network structure and minimum degree. {it:Social Networks}
 Batagelj, V., Zaversnik, M. (2003). An O(m) Algorithm for Cores Decomposition of Networks.
 arXiv:cs/0310049.
 
+
 {title:See also}
 
 	{help nwcomponents}, {help nwcommunity}, {help nwdegree}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

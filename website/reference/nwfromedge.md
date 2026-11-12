@@ -32,7 +32,7 @@ unvalued]
 
 | | |
 |---|---|
-| `name(newnetname)` | name of the new network; default = *network* |
+| `name(newnetname)` | name of the new network; default = the name of *tievalue* if given, otherwise *network* |
 | `xvars` | generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
 | `undirected` | force the network to be undirected (alias: `forceundirected`) |
@@ -42,7 +42,7 @@ unvalued]
 | `unvalued` | mark the network as binary even if a value variable is given |
 | `noclear` | do not clear existing dataset |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
-| `labprefix`(*string*) | prefix used for auto-generated node labels when `fromid`/`toid` are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
+| `labprefix`(*string*) | prefix used for auto-generated node labels when `fromid` / `toid` are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
 | `overwrite` | forwarded to [nwload](nwload) governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to `replace` above, which is about the *network*, not Stata variables |
 
 ## Description
@@ -78,7 +78,9 @@ The following command declares such data as network data:
 ```stata
 . nwfromedge fromid toid value, name(mynet)
 ```
-This automatically generates the relevant meta-information for the network and makes it available for other programs under the [netname](netname) *mynet*. In case no **name()** is specified, the command tries to come up with a suitable name for the new network. By default, it tries *network*, however, if a network with this name already exists, it comes up with an alternative name *network_1* and so on (see [nwvalidate](nwvalidate)).
+To keep a node without ties (an isolate), give it a row of its own with the other identifier missing (`""` for string identifiers, `.` for numeric ones): the node is created, the row adds no tie. A row with both identifiers missing is ignored. For example, the rows `Anna Sophie` and `Fion ""` make a network of three nodes with one tie, *Fion* an isolate.
+
+This automatically generates the relevant meta-information for the network and makes it available for other programs under the [netname](netname) *mynet*. In case no **name()** is specified, the command tries to come up with a suitable name for the new network. It tries the name of the variable *tievalue* when one is given and *network* otherwise; however, if a network with this name already exists, it comes up with an alternative name *network_1* and so on (see [nwvalidate](nwvalidate)).
 
 After a network has been declared, one can refer to it by its [netname](netname), just as if one would refer to a `varname`. For example, this [makes a network plot](nwplot) of *mynet*.
 
@@ -108,12 +110,8 @@ This loads a network dataset from the internet and transforms the network *glasg
 . keep if glasgow1 == 1
 . nwfromedge _ego _alter, name(mynet)
 ```
-*glasgow1* has 50 nodes but only 47 with at least one tie; *mynet* still comes out with all 50 - the 3 isolates [nwtoedge](nwtoedge) could not write as edgelist rows are added back automatically, with no extra step needed (see this file's own **Supported network types** section above). This only works because `nwtoedge` itself produced this particular edgelist; it would not apply to an edgelist typed in by hand or imported from an external source.
-
-## Supported network types
-
-Binary: yes. Directed: yes, via `directed`/`undirected`/`forcedirected`/`forceundirected`. Weighted: yes - a third edge-list column supplies tie values. Signed: yes - with `undirected` a tie listed once keeps its sign. Two-mode: yes - with `twomode`, an exact alias for [nw2fromedge](nw2fromedge), which builds the network from the two id columns. A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through [nwtoedge](nwtoedge) specifically is not affected: `nwtoedge` attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and `nwfromedge` automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with [nwaddnodes](nwaddnodes) same as always.
+*glasgow1* has 50 nodes but only 47 with at least one tie; *mynet* still comes out with all 50 - the 3 isolates [nwtoedge](nwtoedge) could not write as edgelist rows are added back automatically, with no extra step needed. This only works because `nwtoedge` itself produced this particular edgelist; in an edgelist typed in by hand or imported from an external source, give each isolate a row with a missing other identifier.
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -70,6 +70,33 @@ which entries of the raw network matrix are direct ties, which is exactly the ex
 takes care of.
 
 
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not symmetrized - p_ij uses outgoing ties only, so a node without outgoing ties has zero constraint.
+{bf:Valued:} tie values are used as Burt's investment proportions. {bf:Two-mode:} same as for the bipartite graph read
+as a one-mode network. {bf:Signed:} not supported - negative values distort p_ij (values outside [0,1]). See
+{help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE.
+
+{pstd}
+Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees),
+without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7
+seconds for a directed network and 2.2 seconds for an undirected one (11 million cells).{p_end}
+{pstd}
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
+
+{pstd}
+The cells are computed in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise;
+both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network
+(1 second in Stata/BE for an undirected network) goes into storing the result as a network.
+
+
 {title:Examples}
 
 	{cmd:. nwwebuse gang, nwclear}
@@ -79,22 +106,6 @@ takes care of.
 	{cmd:. mata: rowsum(C :* (A :!= 0 :& A :< .))}
 
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, but not symmetrized - {it:p_ij} is computed from the raw adjacency matrix
-exactly as given, so a directed network's constraint reflects outgoing ties only (a node with no
-outgoing ties at all has {it:p} entirely zero, and therefore zero constraint toward everyone,
-regardless of its incoming ties). This is a real, asymmetric treatment of directed data - not a
-symmetrized "Burt" constraint in the traditional (undirected) sense - and is the command's actual
-behavior, not silently assumed. Weighted: {bf:W1}, native - tie weight is used directly as {it:p_ij}'s
-investment proportion (exactly Burt's own interpretation of tie strength), not as a distance. Signed:
-not supported - {it:p_ij} is a ratio to a sum of outgoing tie weights, which is only mathematically
-meaningful when all of a node's tie weights are non-negative; a negative tie included in the same
-network as positive ties will distort every {it:p_ij} for that node (values can fall outside [0,1],
-and {it:c_ij} can exceed 1) rather than being handled as a distinct signed relation. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-
 {title:References}
 
 {pstd}
@@ -102,26 +113,9 @@ Ronald S. Burt (1992). {it:Structural Holes: The Social Structure of Competition
 Press.
 
 
-{title:Limits}
-
-{pstd}
-The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE.
-
-{pstd}
-Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7 seconds for a directed network and 2.2 seconds for an undirected one (11 million cells).
-{pstd}
-For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
-
-{pstd}
-The cells are computed in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise;
-both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network
-(1 second in Stata/BE for an undirected network) goes into storing the result as a network.
-
 {title:See also}
 
 	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
 
-last certified : 21 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

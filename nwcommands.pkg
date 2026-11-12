@@ -3,7 +3,7 @@ d nwcommands. Start here - installs nwinstall and the landing help topics; run n
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 12nov2026
-d Version: 3.20.0
+d Version: 3.20.1
 f nwinstall.ado
 f nwinstall_models.ado
 f nwinstall_buildplugin.ado

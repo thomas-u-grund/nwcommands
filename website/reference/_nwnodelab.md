@@ -27,38 +27,40 @@ nodeid(int)
 
 ## Description
 
-Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are also stored in the return vector. When no node with the specified id is found in network *netname* and error is thrown. This command is mostly used for programming with networks.
+Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are also stored in the return vector. When *nodeid* is larger than the number of nodes in network *netname* an error is thrown. This command is mostly used for programming with networks.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine
-. _nwnodelab flomarriage, nodeid(9)
+. _nwnodelab flomarriage, nodeid(9) detail
 
-        Network: flomarriage
-        ---------------
-          Nodeid: 9
-          Nodelab: medici
+        ----------------------------------------
+          Network: flomarriage
+        ----------------------------------------
+            Nodeid: 9
+            Nodelab: medici
 
 . return list
 
 scalars:
-                r(nodeid) =  9
-
-macros:
-                r(netname) : "flomarriage"
-                r(nodelab) : "medici"
 ```
+- **r(nodeid) =** --- 9
+
+```stata
+macros:
+```
+- **r(netname) : "flomarriage"**
+- **r(nodelab) : "medici"**
 
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(nodeid)** --- nodeid of node
 
-- **r(nodeid)** nodeid of node
-
-- Macros:
-- **r(netname)** name of the networks
-- **r(nodelab)** node label of the node
+- **Macros**
+- **r(netname)** --- name of the networks
+- **r(nodelab)** --- node label of the node
 
 ## See also
 
@@ -66,4 +68,4 @@ macros:
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

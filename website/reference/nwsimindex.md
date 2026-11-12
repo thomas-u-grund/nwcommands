@@ -20,7 +20,8 @@ nwsimindex
 measure(string)
 name(newnetname)
 xvars
-replace]
+replace
+force]
 ```
 
 | | |
@@ -28,7 +29,7 @@ replace]
 | `measure(common\|jaccard\|dice\|cosine\|adamicadar)` | Which similarity index to compute; default = *jaccard* |
 | `name(newnetname)` | Name of the new similarity network; default = *simindex* |
 | `xvars` | Generate Stata variables for the new network |
-| `replace` | Replace an existing network of the same name |
+| `replace` | Replace an existing network of the same name; without it a free name is used and a warning is shown |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 17,300 nodes otherwise) |
 
 ## Description
@@ -59,20 +60,14 @@ The similarity of a node with itself is not defined and is set to missing, as ar
 . nwsummarize simindex, matonly
 ```
 
-## Supported network types
-
-Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore) uses). Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(nodes)** --- number of nodes
 
-- **r(nodes)** number of nodes
-
-**Macros**
-
-- **r(measure)** the measure used
-- **r(netname)** name of the new similarity network
+- **Macros**
+- **r(measure)** --- the measure used
+- **r(netname)** --- name of the new similarity network
 
 ## References
 
@@ -84,8 +79,6 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 - [nwsimilar](nwsimilar), [nw2project](nw2project), [nwkcore](nwkcore), [nwburt](nwburt)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

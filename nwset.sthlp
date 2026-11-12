@@ -9,6 +9,7 @@
 {p2col :nwset {hline 2}}Declare data to be network data{p_end}
 {p2colreset}{...}
 
+
 {marker syntax}{...}
 {title:Syntax}
 
@@ -51,11 +52,6 @@
 {cmd:nwset}
 
 
-{pstd}Display more details about existing networks
-
-{p 8 15 2}
-{cmd:nwset, detail}
-
 
 {pstd}Clear all networks (but keep Stata variables)
 
@@ -69,13 +65,13 @@
 {cmd:nwset, nwclear}
 
 
-{synoptset 25 tabbed}{...}
+{synoptset 27 tabbed}{...}
 {synopthdr}
 {synoptline}
 
 {synopt:{opt edgelist}}Declare data in edgelist format{p_end}
 {synopt:{opt bipartite}}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:Declare a two-mode network} below){p_end}
-{synopt:{opt twomode}}Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see {help nwset##twomode:Declare a two-mode network} below){p_end}
+{synopt:{opt two:mode}}Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see {help nwset##twomode:Declare a two-mode network} below){p_end}
 {synopt:{opth mat(matamatrix)}}Declare a network directly from an existing Mata matrix (or a literal matrix expression) instead of {help varlist}/an edgelist{p_end}
 {synopt:{opt directed}}Force network to be directed{p_end}
 {synopt:{opt undirected}}Force network to be undirected{p_end}
@@ -88,15 +84,16 @@
 {synopt:{opth nodenames(string)}}Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of {opt labs()}{p_end}
 {synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
-{synopt:{opth vars(varlist)}}Save network node identifiers/labels from these existing Stata variables instead of generating new ones (the inverse of {opt xvars}); must have as many entries as there are nodes{p_end}
+{synopt:{opth vars(varlist)}}Save network node identifiers/labels from these existing Stata variables instead of generating new ones (the inverse of {opt xvars}); must have as many entries as there
+are nodes{p_end}
 {synopt:{opth biprownames(varname)}}{opt bipartite} only: use this variable's own values as mode-1 row names instead of the default sequential numbering{p_end}
 {synopt:{opth edgelabs(string)}}Edgelist declarations only: labels for the two (or three) id variables themselves, used in messages/output{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
-{synopt:{opt detail}}Display more detail (node/edge counts, directedness, etc.) about existing networks when {cmd:nwset} is called with no arguments{p_end}
+{synopt:{opt detail}}Accepted, but the list of networks is the same as without it (use {help nwds} or {help nwsummarize} for details){p_end}
 {synopt:{opt nooutput}}Suppress the summary display normally printed after declaring a network{p_end}
 {synopt:{opt clear}}Clear all networks (but keep Stata variables){p_end}
-{synopt:{opt nwclear}}Synonym for {opt clear}{p_end}
+{synopt:{opt nwclear}}Clear all networks and the Stata dataset (as {help nwclear}){p_end}
 {synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
@@ -366,21 +363,10 @@ the package's own stated scope: no full temporal-network modelling subsystem (dy
 relational-event models, temporal ERGMs) is implemented or attempted here.
 
 
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
-
-{title:Supported network types}
-
-{pstd}
-This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected. Two-mode: yes - {opt twomode} (edge list of ties between the two modes) and {opt bipartite} (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in {help nw2fromedge}, {help nwfromedge}, {help nwimport} and {help nwuse} only.
-
 {title:Remarks}
 
 {pstd}
-The command {bf:nwset} or {bf:nwset, detail} without a {help varlist} or {bf:mat()} option, give a list of all
+The command {bf:nwset} without a {help varlist} or {bf:mat()} option gives a list of all
 networks that do currently exist in memory. A similar overview is provided by {help nwds} (which is very similar to {help ds}).
 
 {pstd}
@@ -399,7 +385,8 @@ larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
-option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
+option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says
+so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
 automatically labels nodes according the variables that have been set.
 
 {pstd}
@@ -423,14 +410,39 @@ Programmers can use {bf:nwset} to write their own import routines  (see also {he
 file formats that are not natively supported by the {bf:nwcommands}.All you need to do is transform your data either in
 an adjacency list or an edgelist represented by Stata variables. 
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} {opt directed} / {opt undirected}. {bf:Valued:} {opt valued} / {opt unvalued}. {bf:Two-mode:} yes -
+{opt twomode} (edge list) and {opt bipartite} (rectangular matrix) declare the network and the sizes of the modes.
+{bf:Signed:} negative values are stored as they are. See {help nwnetworktypes}.{p_end}
+
+
 {title:Limits}
 
 {pstd}
-Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000 nodes). Two-mode temporal networks keep the matrices.
+Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000
+nodes). Two-mode temporal networks keep the matrices.
+
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwset} without a {help varlist} or {bf:mat()} (the list of networks) stores the following in {bf:r()}:
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(networks)}}number of networks in memory{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(nets)}}names of the networks in memory{p_end}
+
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project} ({help nwproject}), {help nwattime}, {help nwintro##limits:feasible network sizes}
+{p 4 4 2}{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project} ({help nwproject}),
+{help nwattime}, {help nwintro##limits:feasible network sizes}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

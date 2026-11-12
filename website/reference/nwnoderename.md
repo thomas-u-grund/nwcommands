@@ -55,16 +55,15 @@ new(new_nwnode)
    +--------------------+
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames a single node's own label only; ties, tie values, and mode assignment are completely unchanged.
+- **Scalars**
+- **r(success)** --- 1 if the node was renamed, 0 if *old_nwnode* was not found or *new_nwnode* is not a valid name
 
 ## See also
 
 - [nwrename](nwrename), [nwname](nwname)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

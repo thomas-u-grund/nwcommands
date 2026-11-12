@@ -22,12 +22,12 @@ nwtomatafast
 
 Internally, networks are saved as adjacency matrices in Mata. This command returns the name of the Mata matrix where a network is stored in the return vector. It differs from [nwtomata](nwtomata) in the following way. It only returns a link to the adjacency matrix and does not produce a copy of the adjacency matrix.
 
-- This can be useful, when you want to directly interact with the underlying adjacency matrix. But I only recommend this for advanced programmers.
-- Caution is advised because the relevant meta-information is not updated when changing the adjacency matrix of a network.
+This can be useful, when you want to directly interact with the underlying adjacency matrix. But I only recommend this for advanced programmers. Caution is advised because the relevant meta-information is not updated when changing the adjacency matrix of a network.
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a live pointer to the network's own internal matrix (not a copy), independent of any of these properties; changes made through it directly alter the network.
+- **Macros**
+- **r(mata)** --- Mata expression that refers to the network's own adjacency matrix
 
 ## See also
 
@@ -35,4 +35,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns 
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

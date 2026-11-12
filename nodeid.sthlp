@@ -27,14 +27,14 @@ when nodes are deleted.
 
 {pstd}
 A {help _nwnodelab:nodelab} is more flexibile than a {it:nodeid} and attaches a unique {help word} to each node for 
-identification. Node labels can be changed. There are basically two ways: 1) using {help nwname:nwname, newlab(lab1 lab2...)} or  2) using {help nwname:nwname, newlabfromvar(varname)}. Node
+identification. Node labels can be changed with {help nwname:nwname, newlabsfromvar(varname)}. Node
 labels uniquely identify nodes in a network.
 
 {title:Finding the nodeid and nodelab}
 
 {pstd}
 Both nodeid and nodelab of nodes can be found out easily. The most simple way is probably to 
-use {help nwload}. This generates the variables _nodeid, _nodelab, and _nodevar.
+use {help nwload}. This generates the variable {it:_nwnode}, which holds the node labels in the order of the nodeids.
 {p_end}
 
 {pstd}
@@ -54,4 +54,4 @@ use {help _nwnodeid}.
      {txt}    Nodelab: {res}medici
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

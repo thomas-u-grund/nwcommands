@@ -9,6 +9,7 @@
 {p2col :nwnclan {hline 2}}Maximal n-clan enumeration{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -16,13 +17,13 @@
 [{it:{help netlist}}]
 [{cmd:,}
 {opth n(int)}
-{opth generate(newvarname)}
+{opth gen:erate(newvarname)}
 {opt replace}
 {opth minsize(int)}
-{opt maxcliques(#)}
-{opt maxtime(#)}
-{opt countonly}
-{opt nomatrix}
+{opt max:cliques(#)}
+{opt maxt:ime(#)}
+{opt count:only}
+{opt nom:atrix}
 {opt silent}]
 
 
@@ -30,23 +31,26 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth n(int)}}Maximum geodesic distance allowed between any two members; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clan membership size{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clan membership size; with several networks the variables are
+numbered ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest n-clan size to report; default = 3{p_end}
-{synopt:{opt maxcliques(#)}}Stop with an error when more than this many maximal n-cliques have to be examined while looking for n-clans; default = 1,000,000{p_end}
-{synopt:{opt maxtime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
-{synopt:{opt countonly}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth generate(newvarname)} is then not needed{p_end}
-{synopt:{opt nomatrix}}Do not build the sets-by-nodes matrix; the {opth generate(newvarname)} variable and the count are still returned{p_end}
+{synopt:{opt max:cliques(#)}}Stop with an error when more than this many maximal n-cliques have to be examined while looking for n-clans; default = 1,000,000{p_end}
+{synopt:{opt maxt:ime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
+{synopt:{opt count:only}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth gen:erate(newvarname)} is then not needed{p_end}
+{synopt:{opt nom:atrix}}Do not build the sets-by-nodes matrix; the {opth gen:erate(newvarname)} variable and the count are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
 {pstd}
 {cmd:nwnclan} enumerates every maximal n-clan (Mokken 1979) in the network(s) in {help netlist} - an
 {help nwnclique:n-clique} (see that command for the base concept and {opth n(int)}) that additionally
-requires every pair of its own members to be reachable from one another {it:while staying inside the group}, within {opth n(int)} steps. An ordinary n-clique only guarantees each pair's shortest path in
+requires every pair of its own members to be reachable from one another {it:while staying inside the group}, within {opth n(int)} steps. An ordinary n-clique only guarantees each pair's shortest path
+in
 the {it:whole} network is within {opth n(int)} - that path may run through a node that is not itself
 one of the n-clique's own members, a known limitation of the plain n-clique concept (Alba 1973).
 n-clans fix exactly that: every member must be able to reach every other member using only paths that
@@ -67,52 +71,18 @@ within whatever locally-dense region it belongs to) the two coincide exactly.
 {pstd}
 Like n-cliques, n-clans genuinely overlap, so {cmd:nwnclan} follows {help nwnclique}'s own output
 shape: a single per-node "largest maximal n-clan membership size" summary variable
-({opth generate(newvarname)}, required), plus the complete overlapping structure in
+({opth gen:erate(newvarname)}, required), plus the complete overlapping structure in
 {bf:r(nclan_matrix)} and {bf:r(nclans)}. {opth minsize(int)} defaults to 3, matching
-{help nwclique}/{help nwnclique}.
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(nclans)}		number of maximal n-clans found meeting {opth minsize(int)}
-	  {bf:r(maxsize)}	size of the largest set (with {opt countonly} or {opt nomatrix})
-
-	Matrices
-	  {bf:r(size_table)}	(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size
-	  {bf:r(nclan_matrix)}	n-clans-by-nodes 0/1 membership matrix, one row per maximal n-clan (not with {opt countonly} or {opt nomatrix})
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwnclan flomarriage, generate(_nclannum)}
-	{cmd:. nwnclan flomarriage, n(3) generate(_nclannum) replace}
+{help nwclique} / {help nwnclique}.
 
 
-{title:References}
+{title:Network types}
 
 {pstd}
-Mokken, R.J. (1979). Cliques, clubs and clans. {it:Quality and Quantity} 13(2), 161-173.
+{bf:Directed:} symmetrized automatically. {bf:Valued:} tie values are ignored (every tie counts as present; the command
+prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See
+{help nwnetworktypes}.{p_end}
 
-{pstd}
-Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
-
-{pstd}
-Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
-University Press. (cliques and cohesive subgroups)
-
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (same reasoning {help nwnclique} already
-applies). Weighted: not used for membership. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Inherits
-{help nwnclique}'s own worst-case exponential enumeration cost, plus an additional per-candidate
-induced-subgraph diameter check.
 
 {title:Limits}
 
@@ -137,11 +107,42 @@ seconds (default 60). {opt countonly} counts and tabulates the clans by size wit
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwnclan flomarriage, generate(_nclannum)}
+	{cmd:. nwnclan flomarriage, n(3) generate(_nclannum) replace}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(nclans)}}number of maximal n-clans found meeting {opth minsize(int)}{p_end}
+{synopt:{bf:r(maxsize)}}size of the largest set (with {opt countonly} or {opt nomatrix}){p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(size_table)}}(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size{p_end}
+{synopt:{bf:r(nclan_matrix)}}n-clans-by-nodes 0/1 membership matrix, one row per maximal n-clan (not with {opt countonly} or {opt nomatrix}){p_end}
+
+
+{title:References}
+
+{pstd}
+Mokken, R.J. (1979). Cliques, clubs and clans. {it:Quality and Quantity} 13(2), 161-173.
+
+{pstd}
+Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
+
+{pstd}
+Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
+University Press. (cliques and cohesive subgroups)
+
+
 {title:See also}
 
 	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -16,11 +16,12 @@ Generate node similarities
 ```stata
 nwsimilar 
 [netname]
-,
-[type(type)
+[,
+type(type)
 context(context)
 name(newnetname)
-xvars]
+xvars
+force]
 ```
 
 | | |
@@ -57,17 +58,15 @@ The Jaccard similarity (or Jaccard index) of two tie vectors A and B is the the 
 
 Simply gives the percentage of dyads (tie or non-tie) that nodes *i* and *j* have in common with the same alters. Notice that *i* and *j* are excluded from from these alters.
 
-*D_ij = (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)*
+*D_ij = (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / (2 * (n - 2))*, the sums over the alters other than *i* and *j*
 
 **Cross-product similarity:**
 
-Calculates the cross-product of the tie vectors of nodes ** and *j*
+Calculates the cross-product of the tie vectors of nodes *i* and *j*
 
 *D_ij = (sum(i_outvec :* j_outvec) + sum(i_invec :* j_invec))*
 
-## Supported network types
-
-Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incoming or outgoing ties only). Weighted: **pearson** (via [nwcorrelate](nwcorrelate)) and **crossproduct** use tie weights directly; **hamming**/**jaccard**/**matches** binarize each tie before comparing, so tie strength does not affect these three. Signed: not checked. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing (`sna::sedist`, `stats::cor` on the incidence matrix). The similarity network itself always carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits its source network's own node labels, so it can be compared directly against the source network node-for-node.
+The similarity network has a non-missing diagonal (a node is maximally similar to itself) and the node labels of its source network, so it can be compared with the source network node for node.
 
 ## See also
 
@@ -75,4 +74,4 @@ Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incom
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

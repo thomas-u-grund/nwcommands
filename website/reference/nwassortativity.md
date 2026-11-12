@@ -25,7 +25,7 @@ binary]
 
 | | |
 |---|---|
-| `attribute(varname)` | Numeric node attribute to correlate across ties; default = each node's own degree |
+| `attribute(varname)` | Numeric node attribute to correlate across ties; default = each node's own degree (its strength on a valued network unless `binary` is given) |
 | `weighted` | Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally |
 | `silent` | Suppress display of results |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
@@ -42,6 +42,8 @@ Social networks are frequently found to be assortative by degree (popular people
 
 `weighted` computes Leung and Chau's (2007) weighted extension instead: the same *(x,y)* pairs above, but correlated with each pair *weighted by its own tie's strength*, so a strong tie contributes more to the coefficient than a weak one - not a different pair construction, only a different (weighted Pearson) correlation of the identical pairs the unweighted case already builds. On a binary (unweighted) network every present tie has weight 1, so `weighted` gives exactly the same coefficient as omitting it - not an approximation.
 
+A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value.
+
 ## Examples
 
 ```stata
@@ -53,28 +55,22 @@ Social networks are frequently found to be assortative by degree (popular people
 . nwassortativity glasgow1, weighted
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same reasoning as [nwclustering](nwclustering)/[nwclique](nwclique)). Weighted: **W2** (added 2026-09-02, closing a self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's own original definition; `weighted` (Leung and Chau 2007) is an explicit opt-in that weights the same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the weighted correlation's own denominators, not handled distinctly. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); the degree assortativity of a bipartite graph is negative by construction and rarely of interest.
-
-A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value - the same convention this package uses elsewhere for degree-undefined cases (e.g. [nwclustering](nwclustering)).
-
 ## Stored results
 
-- Scalars:
-- **r(assortativity)** the coefficient itself, in *[-1,1]*
-- **r(ties)** number of ties the coefficient was computed over (undirected count)
+- **Scalars**
+- **r(assortativity)** --- the coefficient itself, in *[-1,1]*
+- **r(ties)** --- number of ties the coefficient was computed over (undirected count)
 
-- Macros:
-- **r(name)** name of the network
-- **r(attribute)** attribute used (or "degree" for the default)
-- **r(weighted)** **"true"** if `weighted` was specified, **"false"** otherwise
+- **Macros**
+- **r(name)** --- name of the network
+- **r(attribute)** --- attribute used (or "degree" or "strength" for the default)
+- **r(weighted)** --- **"true"** if `weighted` was specified, **"false"** otherwise
 
 ## References
 
 Newman, M. E. J. (2002). Assortative mixing in networks. *Physical Review Letters*, 89(20), 208701.
 
-Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks model. *Physica A* 378(2), 591-602. (`weighted`'s own extension)
+Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks model. *Physica* *A* 378(2), 591-602. (`weighted`'s own extension)
 
 ## See also
 
@@ -82,4 +78,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

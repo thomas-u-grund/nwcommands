@@ -68,16 +68,18 @@ to {it:https://nwcommands.org/examples}.
 
 {marker option}{...}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - fetches and loads an example dataset exactly as published; the specific dataset fetched determines which of these properties the resulting network actually has, not this command itself.
 
 {title:Option}
 
 {phang}
 {cmd:nwclear} specifies that it is okay to replace all network data in memory, even
 though the current network data have not been saved to disk.
+
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 
 {marker examples}{...}
@@ -99,11 +101,10 @@ https://nwcommands.org/examples{p_end}
 {pstd}Equivalent to above command{p_end}
 {phang2}{cmd:. nwwebuse https://nwcommands.org/examples/florentine}{p_end}
 
+
 {title:See also}
 
 	{help nwuse}, {help nwimport}, {help webuse}
 
-last certified : 23 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

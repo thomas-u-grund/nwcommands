@@ -9,6 +9,7 @@
 {p2col :nwerrorcodes {hline 2}}Return codes of nwcommands{p_end}
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -25,17 +26,6 @@ These codes are also available as named local macros from {cmd:unw_defs.ado} (us
 this package's own commands) - e.g. {cmd:`}{cmd:errNWsNotFound}{cmd:'} instead of the bare number
 {bf:482}.
 
-{title:Examples}
-
-{pstd}
-Catch a package-specific error code programmatically:
-
-	{cmd:. nwclear}
-	{cmd:. capture nwname doesnotexist}
-	{cmd:. display _rc}
-	{cmd:. if _rc == 482 {c -(}}
-	{cmd:.     display "network not found"}
-	{cmd:. {c )-}}
 
 {title:Package-specific codes}
 
@@ -47,6 +37,7 @@ Catch a package-specific error code programmatically:
 {synopt:{bf:482}}Network not found ({cmd:errNWsNotFound}){p_end}
 {synopt:{bf:483}}Network already exists; specify {bf:replace} (or an equivalent override option) ({cmd:errNWsExists}){p_end}
 {synopt:{bf:484}}Network too large for dense-matrix materialization ({cmd:errDenseTooLarge}){p_end}
+{synopt:{bf:485}}A node (by name or id) does not exist in the network, or a node id is out of range ({cmd:errNodeNotFound}){p_end}
 {synopt:{bf:6056}}Two networks required to be the same size are not ({cmd:errNWsSizeMismatch}){p_end}
 {synopt:{bf:6077}}A {help netexp} expression is empty or has unmatched parentheses ({cmd:errNetexpMalformed}){p_end}
 {synopt:{bf:6082}}A user-supplied Mata/Stata matrix has the wrong shape (not square, wrong dimensions, etc.) ({cmd:errMatrixShape}){p_end}
@@ -56,6 +47,7 @@ Catch a package-specific error code programmatically:
 {synopt:{bf:999}}Loading would discard unsaved data in memory; specify {bf:nwclear} or {bf:nwappend} ({cmd:errNWsDataLoss}){p_end}
 {synoptline}
 {p2colreset}{...}
+
 
 {title:Standard Stata codes used package-wide}
 
@@ -72,6 +64,7 @@ not a Stata variable.
 {bf:198} - invalid syntax, or a required option (or a required combination of mutually exclusive
 options) was not satisfied.
 
+
 {title:Background}
 
 {pstd}
@@ -79,9 +72,23 @@ Each of these situations raises the single code above in every command. A comman
 validation that does not fit any of these may raise its own distinct code; the numbers on this
 page are not reused for unrelated situations.
 
+
+{title:Examples}
+
+{pstd}
+Catch a package-specific error code programmatically:
+
+	{cmd:. nwclear}
+	{cmd:. capture nwname doesnotexist}
+	{cmd:. display _rc}
+	{cmd:. if _rc == 482 {c -(}}
+	{cmd:.     display "network not found"}
+	{cmd:. {c )-}}
+
+
 {title:See also}
 
 {help nwcommands}, {help nwtopical}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -95,15 +95,12 @@ default unless {bf:netonly} is specified.
 
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
+{bf:Directed:}, {bf:Valued:}, {bf:Signed:} the ties and their values among the remaining nodes are kept.
+{bf:Two-mode:} yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one
+mode are dropped the network stays two-mode with an empty level. See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
@@ -117,4 +114,4 @@ The node labels of the remaining network are passed on in Mata.
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

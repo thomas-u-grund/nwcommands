@@ -67,14 +67,10 @@ The command is useful when one wants to do bulk-operations with networks and whe
 - Describe the networks
 - `. nwds`
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders which networks occupy which position in the dataset only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
-
 ## See also
 
 - [nwds](nwds), `order`, [netlist](netlist)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

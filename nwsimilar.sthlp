@@ -3,7 +3,6 @@
 {marker topic}
 {helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
-
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
@@ -16,17 +15,19 @@
 {p 8 17 2}
 {cmdab: nwsimilar} 
 [{it:{help netname}}]
-{cmd:,}
-[{opt type}({it:{help nwsimilar##type:type}})
+[{cmd:,}
+{opt type}({it:{help nwsimilar##type:type}})
 {opt context}({it:{help nwsimilar##context:context}})
 {opt name}({it:{help newnetname}})
-{opt xvars}]
+{opt xvars}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt type}({it:{help nwsimilar##type:type}})}Type of similarity between two nodes; default = pearson{p_end}
-{synopt:{opt context}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both (alias: {opt mode()}, kept for backward compatibility - {help nwdissimilar}, this command's own sibling, uses {opt context()} for the identical concept){p_end}
+{synopt:{opt context}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both (alias: {opt mode()}, kept for backward compatibility - {help nwdissimilar},
+this command's own sibling, uses {opt context()} for the identical concept){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new similarity network; default = {it:_similar}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 12,900 nodes otherwise){p_end}
@@ -36,19 +37,19 @@
 {p2col:{it:type}}{p_end}
 {p2line}
 {p2col:{cmd: pearson}}Calculate Pearson correlation for tie vectors of two nodes{p_end}
-{p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: jaccard}}Calculate the Jaccard coefficient of the tie vectors of two nodes (shared neighbours divided by the neighbours of either node; with {cmd:context(both)} the out- and in-neighbours are pooled){p_end}
+{p2col:{cmd: hamming}}Calculate the Hamming similarity (number of identical entries) of the tie vectors of two nodes{p_end}
+{p2col:{cmd: jaccard}}Calculate the Jaccard coefficient of the tie vectors of two nodes (shared neighbours divided by the neighbours of either node; with {cmd:context(both)} the out- and in-neighbours
+are pooled){p_end}
 {p2col:{cmd: matches}}Calculate percentage of matches in tie vectors of two nodes{p_end}
 {p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes, the sum over all other nodes k of w_ik*w_jk (the number of common contacts in a binary network){p_end}
 
 {synoptset 15 tabbed}{...}
 {marker context}{...}
-{p2col:{it:mode}}{p_end}
+{p2col:{it:context}}{p_end}
 {p2line}
-{p2col:{cmd: both}}Calculate dissimilarity between nodes based on both in- and outgoing ties{p_end}
-{p2col:{cmd: incoming}}Calculate dissimilarity between nodes based on incoming ties only{p_end}
-{p2col:{cmd: outgoing}}Calculate dissimilarity between nodes based on outgoing ties only{p_end}
-
+{p2col:{cmd: both}}Calculate similarity between nodes based on both in- and outgoing ties{p_end}
+{p2col:{cmd: incoming}}Calculate similarity between nodes based on incoming ties only{p_end}
+{p2col:{cmd: outgoing}}Calculate similarity between nodes based on outgoing ties only{p_end}
 
 
 {title:Description}
@@ -67,7 +68,8 @@ between nodes. Practially, option {bf:mode(both)} stacks the vector of outgoing 
 {bf:Pearson similarity:}
 
 {pstd}
-This measure calculates the Pearson correlation coefficient for two tie vectors of nodes {it:i} and {it:j}. See {help nwcorrelate##nodes:here for more information} on this (see also {help nwcorrelate}. 
+This measure calculates the Pearson correlation coefficient for two tie vectors of nodes {it:i} and {it:j}. See {help nwcorrelate##nodes:here for more information} on this (see also
+{help nwcorrelate}. 
 
 
 {pstd}
@@ -101,42 +103,31 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes {it:i} and {it:
 from these alters.
 
 {pmore}
-{it:D_ij = (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)}
+{it:D_ij = (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / (2 * (n - 2))}, the sums over the alters other than {it:i} and {it:j}
 
 
 {pstd}
 {bf:Cross-product similarity:}
 
 {pstd}
-Calculates the cross-product of the tie vectors of nodes {it:} and {it:j}
+Calculates the cross-product of the tie vectors of nodes {it:i} and {it:j}
 
 {pmore}
 {it:D_ij = (sum(i_outvec :* j_outvec) + sum(i_invec :* j_invec))}
 
-
-{title:Example}
-
-{cmd:. nwwebuse florentine}
-{cmd:. nwsimilar flomarriage}
-
-{cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
+{pstd}
+The similarity network has a non-missing diagonal (a node is maximally similar to itself) and the node labels of
+its source network, so it can be compared with the source network node for node.
 
 
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::cor} on the incidence matrix).
+{bf:Directed:} {opt mode()} restricts the comparison to incoming or outgoing ties. {bf:Valued:} {opt pearson} and
+{opt crossproduct} use the tie values; {opt hamming}, {opt jaccard} and {opt matches} use only the presence of ties.
+{bf:Two-mode:} yes - a node is compared with the nodes of its own mode over the other mode; pairs from different modes
+are missing. {bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes ({bf:mode()} lets you restrict the comparison to incoming or
-outgoing ties only). Weighted: {bf:pearson} (via {help nwcorrelate}) and {bf:crossproduct} use
-tie weights directly; {bf:hamming}/{bf:jaccard}/{bf:matches} binarize each tie before comparing,
-so tie strength does not affect these three. Signed: not checked. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::cor} on the incidence matrix). The similarity network itself always
-carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits
-its source network's own node labels, so it can be compared directly against the source network
-node-for-node.
 
 {title:Limits}
 
@@ -152,9 +143,18 @@ node: 5,000 nodes 1.1 seconds and 1.9 GB, 10,000 nodes 4 seconds and 7 GB. About
 about 12,900 nodes the command stops at once with r(484) and a message with the memory needed (28.8 GB at 20,000 nodes); option
 {opt force} runs it anyway. The node labels of the new network are the labels of the source network at any size.
 
+
+{title:Example}
+
+{cmd:. nwwebuse florentine}
+{cmd:. nwsimilar flomarriage}
+
+{cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
+
+
 {title:See also}
 
 	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

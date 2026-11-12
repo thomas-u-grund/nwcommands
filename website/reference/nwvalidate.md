@@ -31,17 +31,12 @@ Checks if a network *[netname](netname)* already exists. In case it does, the co
 . return list
 ```
 
-## Supported network types
-
-Not applicable - a pure Stata-variable/network-name-collision check; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
-
 ## Stored results
 
-- **r(exists)** "true" when network name already exists, "false" otherwise
-- **r(tryname)** network name that is validated
-- **r(validname)** valid name in case the tryname already exists
-- last certified : 25 Aug 2026
+- **r(exists)** --- "true" when network name already exists, "false" otherwise
+- **r(tryname)** --- network name that is validated
+- **r(validname)** --- valid name in case the tryname already exists (otherwise the tryname)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -42,7 +42,7 @@ last rules specified.  {cmd:else} may not be combined with {cmd:missing} or
 {synopthdr}
 {synoptline}
 {syntab :Options}
-{synopt :{opth generate(newnetlist)}}nwgenerate {it:{help newnetname:newnetlist}} containing transformed
+{synopt :{opth generate(newnetlist)}}generate {it:{help newnetname:newnetlist}} containing transformed
 networks; default is to replace existing networks{p_end}
 {synopt :{opt prefix(str)}}generate new networks with {it:str} prefix{p_end}
 {synopt :{opt t:est}}test that rules are invoked and do not overlap{p_end}
@@ -71,6 +71,7 @@ else becomes 0:
 
 	{cmd:. nwrecode trade (100/max=1) (min/max=0)}
 
+{pstd}
 For exactly this case, {help nwdichotomize} is a thin, more directly discoverable wrapper around
 the same rule shown above: {cmd:nwdichotomize trade, threshold(100)}. Reach for {cmd:nwrecode}
 directly whenever you need something {help nwdichotomize} does not offer - multiple bands, an
@@ -79,15 +80,6 @@ directly whenever you need something {help nwdichotomize} does not offer - multi
 
 {marker options}{...}
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - the flag, the modes and the level labels are kept.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid case. Directed: yes. Weighted: yes, natively - this command's entire purpose is recoding tie values via a rule. Signed: yes, a recode rule can map negative values like any other. Two-mode: yes - the flag, the modes and the level labels are kept.
 
 {title:Options}
 
@@ -99,7 +91,7 @@ the transformed dyads.  {opt into()} is a synonym for {opt generate()}.
 
 {pmore}
 If generate() is not specified, the input networks are overwritten;
-Overwriting networks is dangerous (you cannot undo changes, so we strongly recommend specifying nwgenerate().
+Overwriting networks is dangerous (you cannot undo changes), so we strongly recommend specifying {opt generate()}.
 
 {phang}
 {opt prefix(str)} specifies that the recoded networks be returned in new
@@ -109,6 +101,23 @@ networks formed by prefixing the names of the original networks with
 {phang}
 {opt test} specifies that Stata test whether rules are ever invoked or that
 rules overlap; for example, {cmd:(1/5=1) (3=2)}.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} yes. {bf:Valued:} the command recodes the tie values by a rule. {bf:Two-mode:} yes - the flag, the modes
+and the level labels are kept. {bf:Signed:} negative values are recoded like any value. See
+{help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties.
+Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3
+seconds. A rule that gives the empty dyads a
+value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
 
 
 {marker examples}{...}
@@ -145,23 +154,15 @@ to 2, and store the results in {cmd:nx2}{p_end}
     transformed networks in {it:new_glasgow1}, {it:new_glasgow2}, and {it:new_glasgow3}.
 {p_end}
 {phang2}{cmd:. nwrecode glasgow1-glasgow3 (1=99) ,}
-           {cmd:pre(new) test}{p_end}
+           {cmd:prefix(new) test}{p_end}
 
 {pstd}List the network adjacency matrices{p_end}
 {phang2}{cmd:. nwsummarize glasgow1-3 new_glasgow1-3, mat}
 
 
-{title:Limits}
-
-{pstd}
-The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties.
-Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3
-seconds. A rule that gives the empty dyads a
-value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
-
 {title:See also}
 
-	{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case)
+{p 4 4 2}{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

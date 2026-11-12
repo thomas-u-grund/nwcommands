@@ -20,8 +20,8 @@ nwburt [netname] [, binary dyadredundancy dyadconstraint replace silent]
 | | |
 |---|---|
 | `binary` | Valued network: ignore the tie values; every positive value is a tie |
-| `dyadredundancy` | Save dyadic redundancy as new network |
-| `dyadconstraint` | Save dyadic constraint as new network |
+| `dyadredundancy` | Save dyadic redundancy as new network *dyadredundancy* (an existing network of that name is replaced) |
+| `dyadconstraint` | Save dyadic constraint as new network *dyadconstraint* (an existing network of that name is replaced) |
 | `replace` | Replace existing *_effsize*/*_efficiency*/*_constraint*/*_hierarchy* variables |
 | `silent` | Suppress summary output |
 
@@ -29,7 +29,7 @@ nwburt [netname] [, binary dyadredundancy dyadconstraint replace silent]
 
 This command calculates Burt's (1992) effective size, efficiency, constraint and hierarchy. All these measures are used to identify structural holes. They all build on the idea of redundancy. A network tie between ego and j is redundant, when ego is also connected to q and q is connected to j, i.e. that means ego can reach j via q instead of directly connecting to j. The level of redundancy of the tie between ego and j is based on the total number of ties ego has.
 
-For a **valued** network (a network that was created with tie values, see [nwnetworktypes](nwnetworktypes)) the measures are Burt's (1992) weighted measures, as in `igraph::constraint(weights=)` of R (igraph) and `effective_size(weight=)` and `constraint(weight=)` of NetworkX: the strength of the relation between *i* and *j* is the sum of both directions, *a_ij* = *z_ij* + *z_ji* (for an undirected network this only doubles every value and changes no result), and the formulas below are applied to these strengths. With the option `binary` the tie values are ignored: every positive value counts as a tie of value 1. A network that is not valued is computed as before (the option has no effect).
+For a **valued** network (a network that was created with tie values, see [nwnetworktypes](nwnetworktypes)) the measures are Burt's (1992) weighted measures, as in `igraph::constraint(weights=)` of R (igraph) and `effective_size(weight=)` and `constraint(weight=)` of NetworkX: the strength of the relation between *i* and *j* is the sum of both directions, *a_ij* = *z_ij* + *z_ji* (for an undirected network this only doubles every value and changes no result), and the formulas below are applied to these strengths. With the option `binary` the tie values are ignored: every positive value counts as a tie of value 1. On a network that is not valued the option has no effect.
 
 The dyadic redundancy measure calculates, for each actor in ego's neighborhood, how many of the other actors in the neighborhood are also tied to the other.  The larger the proportion of others in the neighborhood who are tied to a given "alter," the more "redundant" is ego's direct tie.
 
@@ -63,7 +63,7 @@ C_i = sum_over_j[ ( p_ij + sum_over_q( p_iq * p_qj ) )^2 ], with j over the cont
 
 Hierarchy is another quite complex measure that describes the nature of the constraint on ego.  If the total constraint on ego is concentrated in a single other actor, the hierarchy measure will have a higher value.  If the constraint results more equally from multiple actors in ego's neighborhood, hierarchy will be less.  With c_ij the term of contact j in C_i and k_i the number of contacts, H_i = sum_over_j[ (c_ij / (C_i/k_i)) * ln(c_ij / (C_i/k_i)) ] / (k_i * ln k_i). The command returns 1 for a node with one contact (where the formula is 0/0) and missing for a node without contacts. The hierarchy measure, in itself, does not assess the degree of constraint.  But, among whatever constraint there is on ego, it measures the important property of dependency -- inequality in the distribution of constraints on ego across the alters in its neighborhood.
 
-The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the work), so the command also runs on large networks (see **Limits**). The weighted measures of a valued network are computed in the compiled plugin only (plugin generation 9, `nwcommands` 3.6.0 or later); without it the command stops with an error and the option `binary` needs the plugin for a valued network too. The options `dyadredundancy` and `dyadconstraint` (defined for ties that are present or absent: they need the option `binary` for a valued network) build the full *n*-by-*n* dyadic networks from the adjacency matrix (via [nwtomata](nwtomata)), as [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar) and [nwqap](nwqap) do, and are practical only for moderate network sizes.
+The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the work), so the command also runs on large networks (see **Limits**). The weighted measures of a valued network are computed in the compiled plugin only; without it the command stops with an error and the option `binary` needs the plugin for a valued network too. The options `dyadredundancy` and `dyadconstraint` (defined for ties that are present or absent: they need the option `binary` for a valued network) build the full *n*-by-*n* dyadic networks from the adjacency matrix (via [nwtomata](nwtomata)), as [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar) and [nwqap](nwqap) do, and are practical only for moderate network sizes.
 
 ## Examples
 
@@ -79,18 +79,11 @@ A valued network (weighted measures), and the same network with the values ignor
 . nwburt gang_valued, binary replace
 ```
 
-## Supported network types
-
-Binary: yes. Valued: yes, weighted (Burt 1992, see above); the option `binary` ignores the values. Directed: a directed *valued* network is symmetrized as in Burt, igraph and NetworkX (the strength of a relation is *z_ij* + *z_ji*). A directed network that is not valued is *not* symmetrized: *p_ij* (the proportion of *i*'s outgoing investment in *j*) is computed from the outgoing ties exactly as given, the convention of [nwconstraint](nwconstraint) (igraph and NetworkX use both directions, so their values differ for such networks; symmetrize first with [nwsym](nwsym) to compare, or use `binary` on a valued network). Signed (negative values) and missing values: not supported, the command stops with an error. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-Before version 3.6.0 the values of a valued network were inserted into the formulas of a binary network without the normalisations above; effective size could be negative and efficiency below 0. Results for valued networks differ from those of earlier versions; use `binary` for the unvalued measures.
-
 ## Stored results
 
-**Scalars**
-
-- **r(nodes)** number of nodes
-- **r(weighted)** 1 if the weighted measures of a valued network were computed, 0 otherwise
+- **Scalars**
+- **r(nodes)** --- number of nodes
+- **r(weighted)** --- 1 if the weighted measures of a valued network were computed, 0 otherwise
 
 ## References
 
@@ -104,8 +97,6 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 - [nwconstraint](nwconstraint), [nwbridges](nwbridges)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

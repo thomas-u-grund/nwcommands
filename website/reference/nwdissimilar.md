@@ -16,20 +16,21 @@ Generate node dissimilarities
 ```stata
 nwdissimilar 
 [netname]
-,
-[type(type)
+[,
+type(type)
 context(context)
 name(newnetname)
 xvars
 labs(lab1 lab2 ...)
-vars(newvarlist)]
+vars(newvarlist)
+force]
 ```
 
 | | |
 |---|---|
 | `type`(*[type](nwdissimilar)*) | Type of dissimilarity between two nodes; default = euclidean |
 | `context`(*[context](nwdissimilar)*) | Context definition for dissimilarity calculation; default = both |
-| `name`(*[newnetname](newnetname)*) | Name of the new dissimilarity network; default = *_dissimilar* |
+| `name`(*[newnetname](newnetname)*) | Name of the new dissimilarity network; default = *_dissimilar*; when the name is in use, a new valid name is chosen |
 | `xvars` | Generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels; default = the source network's own labels |
 | `vars`(*`newvarlist`*) | new variables that are used for the network |
@@ -71,14 +72,10 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes *i* and *j* hav
 
 *D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)*
 
-## Supported network types
-
-Binary: yes. Directed: yes (**context()** lets you restrict the comparison to incoming or outgoing ties only, which only matters for a directed network - an undirected network's in-ties and out-ties are identical, so all three **context()** values agree). Weighted: **euclidean**/**manhatten** use tie weights directly in their distance formula (a genuinely weighted-aware comparison); **hamming**/**jaccard**/**nonmatches** binarize each tie (*present vs. absent*) before comparing, so tie strength does not affect these three - not checked for automatic behavior beyond this, choose **type()** to match whether tie strength should matter. Signed: not checked - a negative tie weight participates in **euclidean**/ **manhatten**'s arithmetic like any other value, and in the binarizing types' ` != 0` test like any nonzero value, but no dedicated signed-network semantics exist. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing (`sna::sedist`, `stats::dist` on the incidence matrix). The dissimilarity network itself always carries a genuine (non-missing) diagonal of 0 (a node is never dissimilar from itself) and inherits its source network's own node labels by default, so it can be compared directly against the source network node-for-node.
-
 ## See also
 
 - [nwsimilar](nwsimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

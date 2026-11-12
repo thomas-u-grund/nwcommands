@@ -30,8 +30,6 @@ nwset fromid toid [tievalue] , interval(startvar endvar) [ options ]
 nwset fromid toid , eventtime(varname) [ options ]
 Display currently existing networks
 nwset
-Display more details about existing networks
-nwset, detail
 Clear all networks (but keep Stata variables)
 nwset, clear
 Clear all networks and Stata variables
@@ -42,7 +40,7 @@ nwset, nwclear
 |---|---|
 | `edgelist` | Declare data in edgelist format |
 | `bipartite` | Declare a two-mode network from a Mata matrix or a wide affiliation-matrix `varlist` (see [Declare a two-mode network](nwset) below) |
-| `twomode` | Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see [Declare a two-mode network](nwset) below) |
+| `two:mode` | Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see [Declare a two-mode network](nwset) below) |
 | `mat(matamatrix)` | Declare a network directly from an existing Mata matrix (or a literal matrix expression) instead of `varlist`/an edgelist |
 | `directed` | Force network to be directed |
 | `undirected` | Force network to be undirected |
@@ -51,7 +49,7 @@ nwset, nwclear
 | `selfloop` | Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked |
 | `name`(*[newnetname](newnetname)*) | Name of the new network; default = *network* |
 | `replace` | Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning |
-| `overwrite` | Backward-compatible alias for `replace` |
+| `overwrite` | Alias for `replace` |
 | `nodenames(string)` | Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of `labs()` |
 | `labs`(*lab1, lab2,...*) | Node labels |
 | `labsfromvar(varname)` | Use information in varname as node labels |
@@ -60,10 +58,10 @@ nwset, nwclear
 | `edgelabs(string)` | Edgelist declarations only: labels for the two (or three) id variables themselves, used in messages/output |
 | `xvars` | Generate Stata variables for the network |
 | `keeporiginal` | Generate variable *_nodeoriginal* with original node id's (when setting from an edgelist) |
-| `detail` | Display more detail (node/edge counts, directedness, etc.) about existing networks when `nwset` is called with no arguments |
+| `detail` | Accepted, but the list of networks is the same as without it (use [nwds](nwds) or [nwsummarize](nwsummarize) for details) |
 | `nooutput` | Suppress the summary display normally printed after declaring a network |
 | `clear` | Clear all networks (but keep Stata variables) |
-| `nwclear` | Synonym for `clear` |
+| `nwclear` | Clear all networks and the Stata dataset (as [nwclear](nwclear)) |
 | `time(varname)` | Declare a snapshot temporal network - each row's own time value (see [Declare a temporal network](nwset) below) |
 | `interval(startvar endvar)` | Declare an interval temporal network - each row active for start<=t<end (see [Declare a temporal network](nwset) below) |
 | `eventtime(varname)` | Declare an event temporal network - each row a timestamped event, not a persistent tie (see [Declare a temporal network](nwset) below) |
@@ -146,6 +144,8 @@ The following command declares such data as network data and gives the new netwo
 ```stata
 . nwset fromid toid value, name(mynet) edgelist
 ```
+To keep a node without ties (an isolate), give it a row of its own with the other identifier missing (`""` for string identifiers, `.` for numeric ones): the node is created, the row adds no tie. A row with both identifiers missing is ignored. For example, the rows `Anna Sophie` and `Fion ""` make a network of three nodes with one tie, *Fion* an isolate.
+
 **ul:3. Declare adjacency matrix from Mata matrix**
 
 Set a network from a *nodes x nodes* Mata matrix that holds the adjacency matrix of the new network. The option **mat()** is specified with the name of an existing Mata matrix.
@@ -238,7 +238,7 @@ A temporal network is otherwise a completely ordinary **nwset**-declared network
 
 ## Remarks
 
-The command **nwset** or **nwset, detail** without a `varlist` or **mat()** option, give a list of all networks that do currently exist in memory. A similar overview is provided by [nwds](nwds) (which is very similar to `ds`).
+The command **nwset** without a `varlist` or **mat()** option gives a list of all networks that do currently exist in memory. A similar overview is provided by [nwds](nwds) (which is very similar to `ds`).
 
 Although not really needed, networks can be represented with Stata variables (see [nwload](nwload)). For this purpose, each network holds some meta-information about which Stata variables should be created when a network is loaded in such a way. This meta-information can be set wit option **vars()**. When specified, it needs to have as many entries as there are nodes in the network. When not specified, the program automatically makes a suggestion for variable names.
 
@@ -252,14 +252,21 @@ Whenever a network is set with **nwset**, it is also made the [current network](
 
 Programmers can use **nwset** to write their own import routines  (see also [nwimport](nwimport)) for different network file formats that are not natively supported by the **nwcommands**.All you need to do is transform your data either in an adjacency list or an edgelist represented by Stata variables.
 
-## Supported network types
+## Stored results
 
-This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place (`directed`/`undirected`, `valued`/`unvalued`, `bipartite`/`twomode`), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected. Two-mode: yes - `twomode` (edge list of ties between the two modes) and `bipartite` (a rectangular matrix) declare the network; the flag and the sizes of the modes are set here and in [nw2fromedge](nw2fromedge), [nwfromedge](nwfromedge), [nwimport](nwimport) and [nwuse](nwuse) only.
+`nwset` without a `varlist` or **mat()** (the list of networks) stores the following in **r()**:
+
+- **Scalars**
+- **r(networks)** --- number of networks in memory
+
+- **Macros**
+- **r(nets)** --- names of the networks in memory
 
 ## See also
 
-- [nodeid](nodeid), [nwname](nwname), [nwds](nwds), [nwload](nwload), [nwvalidate](nwvalidate), [nwsummarize](nwsummarize), [nw2fromedge](nw2fromedge), [nw2project](nw2project) ([nwproject](nwproject)), [nwattime](nwattime), [feasible network sizes](nwintro)
+- [nodeid](nodeid), [nwname](nwname), [nwds](nwds), [nwload](nwload), [nwvalidate](nwvalidate), [nwsummarize](nwsummarize), [nw2fromedge](nw2fromedge), [nw2project](nw2project) ([nwproject](nwproject)),
+- [nwattime](nwattime), [feasible network sizes](nwintro)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

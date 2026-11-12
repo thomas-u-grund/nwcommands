@@ -149,6 +149,8 @@ the next line onto it, which is why the old lists needed a blank line between en
 
 ## Stata's interactive help Viewer has an undocumented size limit `type` doesn't share
 
+**Superseded (2026-11-12):** the real causes are listed under "Help files that render as one block" below; splitting the file only removed one of them by chance.
+
 `help <cmd>` (the real interactive Viewer window) and `type <file>.sthlp, smcl` (a batch/console
 SMCL dump) use different rendering code paths. A `.sthlp` file large enough (`nwsaom.sthlp` hit
 this at ~79KB / 1,016 lines — `nwergm.sthlp` at ~49KB did not) can render perfectly via `type` while
@@ -845,3 +847,16 @@ for f in sys.argv[1:]:
         if o and ('{p_end}' in l or not l.strip()): o=None
 PY
 ```
+
+## Help files that render as one block, print markup literally or lose text (2026-11-12)
+
+Symptoms: from some point on a help file runs together, `{p_end}`, `{pstd}` or `{synopt:` appear as text, titles and examples merge into one paragraph, or words are missing from long option texts (Viewer only). The causes found, each confirmed by rendering variants in Stata 17:
+- **A paragraph directive right after an open paragraph.** `{pstd}` (or `{phang}`, `{p ...}`) on the line directly after a paragraph without `{p_end}` or a blank line: from there on Stata no longer ends paragraphs at blank lines, so the rest of the file is one block. End the paragraph with `{p_end}` (only when it is a paragraph: after raw text a `{p_end}` is printed literally). 11 core files and nwergm were affected.
+- **A directive argument over a line break** (`{it:Sociological Methods` / `& Research}`, a long `{bf:...}` sentence): printed literally. Close it at the end of the line and reopen it on the next.
+- **`{help a}/{help b}`**: the second link is printed literally (also with `{c 47}`); write `{help a} / {help b}`.
+- **`{opt name(}`** with an unbalanced parenthesis and `{opt:x}` are printed literally; use `{cmd:name(}` and `{opt x}`.
+- **Source lines over 255 characters**: the interactive Viewer drops text in them (characters missing near column 250), `type` and `translate` do not. Keep help source lines below 256 characters; SMCL joins the lines of a paragraph, so breaking at a space outside braces changes nothing (do not break right after `.`, `:`, `?`, where SMCL then puts two spaces).
+- **Tab-indented lines** (old-style stored-results tables, "See also" lines) and text after a blank line without `{pstd}` are raw lines: they do not wrap. Use `{synoptset W tabbed}`, `{p2col 5 W W+4 2: Scalars}{p_end}` and `{synopt:{cmd:e(x)}}...{p_end}` as Stata's own help files do.
+- An option name wider than its `{synoptset}` column moves the text to the next line (normal for very long names; widen the column up to about 28).
+
+`python3 tools/check_help_smcl.py <dir>` checks all of these statically (it found nothing in 171 files after the 3.20.1 cleanup); run it before every release, for the model packages too. To see the console rendering: `set linesize 80` and `type file.sthlp, smcl` in a batch run; a line starting with `> ` is a line that did not wrap. The earlier explanation "the Viewer has a size limit" (entry above) was not the cause: nwsaom.sthlp renders at 92 KB.

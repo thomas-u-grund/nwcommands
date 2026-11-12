@@ -9,6 +9,7 @@
 {p2col :nwkeep {hline 2}}Keep networks or nodes{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -31,8 +32,8 @@
 
 {synoptline}
 {p2colreset}{...}
-	
-	
+
+
 {title:Description}
 
 {pstd}
@@ -41,6 +42,13 @@ Keeps a network or a list of networks. The command is the network version of {he
 {pstd}
 It can also be used together with {help if} or {help in}. In this case, the command operates on the node-level
 and keeps only certain nodes of a network.
+
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+
 
 {title:Examples}
 
@@ -61,10 +69,5 @@ Keep only certain nodes of a network, using {help if}:
 	{cmd:. nwkeep net3 if _n <= 3}
 	{cmd:. nwsummarize net3}
 
-
-{title:Supported network types}
-
-{pstd}
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

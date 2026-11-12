@@ -33,10 +33,6 @@ command that, among other things, also unabbreviates network lists; see
 
 {marker options}{...}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves/expands a network name list only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
 
 {title:Options}
 
@@ -44,7 +40,13 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves
 allowed. The default is {hi:min(1)}.
 
 {phang}{cmd:max(}{it:#}{cmd:)} specifies the maximum number of networks
-allowed. The system maximum is 9999.
+allowed. By default the limit of {help unab} applies.
+
+
+{title:Network types}
+
+{pstd}
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 
 {marker examples}{...}
@@ -54,11 +56,19 @@ allowed. The system maximum is 9999.
 	{cmd:. nwunab nets : glasg*}
 	{cmd:. di `nets'}
 	     {txt}glasgow1 glasgow2 glasgow3
-		
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}the expanded list of networks{p_end}
+{synopt:{bf:r(networks)}}number of networks in the list{p_end}
+
 
 {title:See also}
 
 	{help unab}, {help nwds}, {help _nwsyntax}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

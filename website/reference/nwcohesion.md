@@ -38,6 +38,8 @@ Each block's own connectivity level is its network's ACTUAL vertex connectivity 
 
 Like [nwkcomponents](nwkcomponents), blocks can genuinely overlap (a cutset remains a shared member of every sub-block its removal reveals) and nest (a child block's own node set is always a strict subset of its parent's), so the complete structure is returned via **r(cohesion_matrix)** (a blocks-by-nodes 0/1 membership matrix, one row per block found at ANY level of the hierarchy) and **r(cohesion_levels)** (a parallel column vector giving each row's own connectivity level). `generate(newvarname)` (required) stores, per node, the HIGHEST level of any block that node belongs to - the standard node-level structural-cohesion summary statistic - and is always well-defined for every node (even an isolate gets its own top-block level, typically 0), unlike [nwkcomponents](nwkcomponents)' own *_kcompnum*, which is missing for nodes that don't qualify for the one requested `k(int)`.
 
+With more than one network in the *netlist*, a number is appended to the variable name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
+
 ## Examples
 
 ```stata
@@ -45,20 +47,14 @@ Like [nwkcomponents](nwkcomponents), blocks can genuinely overlap (a cutset rema
 . nwcohesion flomarriage, generate(_cohesion)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes, automatically symmetrized (vertex connectivity has no directed generalization here, matching [nwkcomponents](nwkcomponents)). Weighted: not used. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(blocks)** --- number of cohesive blocks found across the whole hierarchy
 
-- **r(blocks)** number of cohesive blocks found across the whole hierarchy
-
-**Matrices**
-
-- **r(cohesion_matrix)** blocks-by-nodes 0/1 membership matrix, one row per block at any level
-- **r(cohesion_levels)** blocks-by-1 column vector of each row's own connectivity level
+- **Matrices**
+- **r(cohesion_matrix)** --- blocks-by-nodes 0/1 membership matrix, one row per block at any level
+- **r(cohesion_levels)** --- blocks-by-1 column vector of each row's own connectivity level
 
 ## References
 
@@ -72,8 +68,6 @@ Even, S. (1979). *Graph Algorithms*. Computer Science Press. (the vertex-splitti
 
 - [nwkcomponents](nwkcomponents), [nwcomponents](nwcomponents), [nwclique](nwclique), [nwkplex](nwkplex)
 
-- last certified : 22 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -19,22 +19,24 @@ nwkatz
 [,
 alpha(real)
 walks
-generate(varname)
+gen:erate(varname)
 replace
+nosym
 geodesic_options
 force
-binary]
+bin:ary]
 ```
 
 | | |
 |---|---|
 | `alpha(real)` | penalization factor for calculation of weights; default = 1 (distance-decay mode) or **0.9/rho** (walk-counting mode, `walks`) |
 | `walks` | switch to the literature's own genuine walk-counting Katz/Bonacich centrality, *(I - alpha*A)^-1 * 1*, instead of this command's own default distance-decay formula (see Description) |
-| `generate`(*`varname`*) | **Required.** Variable name for Katz centrality scores |
+| `gen:erate`(*`varname`*) | **Required.** Variable name for Katz centrality scores; for a directed network the variables *varname***_out** and *varname***_in** are generated |
 | `replace` | Replace existing variable |
-| *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to |
+| `nosym` | Distance-decay form: keep the direction of the ties of a directed network (by default the network is symmetrized); not used with `walks` |
+| *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to the internal [nwgeodesic](nwgeodesic) call); not used when `walks` is specified |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `bin:ary` | With `walks`: ignore the tie values of a valued network (by default the walks are weighted by them); the distance-decay form always counts steps |
 
 ## Description
 
@@ -46,7 +48,7 @@ Formally, this command computes:
 
 where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between nodes *i* and *j*, and unreachable pairs contribute 0.
 
-**The DEFAULT formula (without `walks`) is not the same as the Katz centrality defined in the literature.** Katz's (1953) original measure counts the total number of *walks* of every length between two nodes, attenuated by *alpha* raised to the walk length, and is computed as *(I - alpha*A)^-1 * 1* (a matrix-inverse, eigenvector-family measure closely related to Bonacich power centrality) - not as a sum over *shortest-path distances* the way this command's own default formula does. The two measures are related in spirit (both attenuate a node's reach by distance/length) but are mathematically different and will generally give different node rankings, especially on networks with many alternate paths between the same pair of nodes, since true Katz centrality credits every walk, not just the shortest one. The default formula's own results are unchanged from prior versions (preserving backwards compatibility for anyone already relying on this specific distance-decay measure) - this note exists so the choice of default formula, and its relationship to the cited reference, is explicit rather than implied by the command name and citation alone.
+**The DEFAULT formula (without `walks`) is not the same as the Katz centrality defined in** **the literature.** Katz's (1953) original measure counts the total number of *walks* of every length between two nodes, attenuated by *alpha* raised to the walk length, and is computed as *(I - alpha*A)^-1 * 1* (a matrix-inverse, eigenvector-family measure closely related to Bonacich power centrality) - not as a sum over *shortest-path distances* the way this command's own default formula does. The two measures are related in spirit (both attenuate a node's reach by distance/length) but are mathematically different and will generally give different node rankings, especially on networks with many alternate paths between the same pair of nodes, since true Katz centrality credits every walk, not just the shortest one. This note makes the choice of default formula, and its relationship to the cited reference, explicit rather than implied by the command name and citation alone.
 
 `walks` switches to the genuine, literature-standard walk-counting Katz/Bonacich formula instead: *x = (I - alpha*A)^-1 * 1*, solved via a linear solve (not an explicit matrix inverse). `alpha()` must then satisfy *|alpha| * rho < 1* (rho = the network's own spectral radius) or the implied infinite walk sum diverges - `nwkatz` checks this and errors with the valid range if violated. Default `alpha()` in this mode is **0.9/rho**, a conventional "safely inside the convergent range" choice. Directed networks get separate in/out-walk variants, the same convention the default distance-decay formula already uses.
 
@@ -58,10 +60,6 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between
 . sum _katz
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes - generates separate *_in*/*_out* variables automatically when the network is directed (the network is otherwise symmetrized for the underlying distance calculation unless [geodesic_options](nwgeodesic) specifies `nosym`). Weighted: distances come from [nwgeodesic](nwgeodesic), which supports valued networks via its own `alpha()`/weighting options, forwarded through this command's *geodesic_options*; weight meaning follows whatever [nwgeodesic](nwgeodesic) uses (tie strength inverted into a path cost via the Opsahl et al. formulation - see [nwgeodesic](nwgeodesic) for detail), not tie strength directly. Signed: not checked; negative tie values are not validated or rejected. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## References
 
 Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometrika*, 39-43.
@@ -70,8 +68,6 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 
 - [nwcloseness](nwcloseness), [nwbetween](nwbetween), [nwdegree](nwdegree), [nwcloseness](nwcloseness), [nwevcent](nwevcent)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

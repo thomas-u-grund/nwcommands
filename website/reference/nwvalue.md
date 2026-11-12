@@ -20,6 +20,8 @@ ego(nodename)
 alter(nodename)
 egoid(integer)
 alterid(integer)]
+nwvalue
+netname[egoid,alterid]
 ```
 
 ## Description
@@ -32,18 +34,27 @@ The command returns the scalar *r(value)* with the value of the tie between the 
 . nwwebuse florentine
 . nwvalue flobusiness, ego("medici") alter("pazzi")
 . nwvalue flobusiness, egoid(2) alterid(9)
+. nwvalue flobusiness[2,9]
 . return list
 ```
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is returned exactly as stored, respecting direction, never symmetrized. Weighted: yes, natively - returns the tie's own raw stored value. Signed: not checked; a negative value is returned as-is with no special handling. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+- **Scalars**
+- **r(value)** --- value of the tie from ego to alter
+- **r(ego_id)** --- position of ego in the network
+- **r(alter_id)** --- position of alter in the network
+- **r(ego_valid)** --- 1 if ego exists (with `ego()` and `alter()`)
+- **r(alter_valid)** --- 1 if alter exists (with `ego()` and `alter()`)
+
+- **Macros**
+- **r(ego)** --- name of ego
+- **r(alter)** --- name of alter
 
 ## See also
 
 - [nwreplace](nwreplace)
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

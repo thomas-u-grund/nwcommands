@@ -9,6 +9,7 @@
 {p2col :nwnclique {hline 2}}Maximal n-clique enumeration{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -16,13 +17,13 @@
 [{it:{help netlist}}]
 [{cmd:,}
 {opth n(int)}
-{opth generate(newvarname)}
+{opth gen:erate(newvarname)}
 {opt replace}
 {opth minsize(int)}
-{opt maxcliques(#)}
-{opt maxtime(#)}
-{opt countonly}
-{opt nomatrix}
+{opt max:cliques(#)}
+{opt maxt:ime(#)}
+{opt count:only}
+{opt nom:atrix}
 {opt silent}]
 
 
@@ -30,16 +31,19 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth n(int)}}Maximum geodesic distance allowed between any two members; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clique membership size{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clique membership size; with several networks the variables are
+numbered ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest n-clique size to report; default = 3{p_end}
-{synopt:{opt maxcliques(#)}}Stop with an error when more than this many maximal n-cliques of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default = 100,000{p_end}
-{synopt:{opt maxtime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
-{synopt:{opt countonly}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth generate(newvarname)} is then not needed{p_end}
-{synopt:{opt nomatrix}}Do not build the sets-by-nodes matrix; the {opth generate(newvarname)} variable and the count are still returned{p_end}
+{synopt:{opt max:cliques(#)}}Stop with an error when more than this many maximal n-cliques of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default =
+100,000{p_end}
+{synopt:{opt maxt:ime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
+{synopt:{opt count:only}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth gen:erate(newvarname)} is then not needed{p_end}
+{synopt:{opt nom:atrix}}Do not build the sets-by-nodes matrix; the {opth gen:erate(newvarname)} variable and the count are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -61,7 +65,7 @@ extra requirement.
 {pstd}
 Like cliques, n-cliques genuinely overlap - a node can belong to several at once - so {cmd:nwnclique}
 follows {help nwclique}'s own output shape: a single per-node "largest maximal n-clique membership
-size" summary variable ({opth generate(newvarname)}, required), plus the complete
+size" summary variable ({opth gen:erate(newvarname)}, required), plus the complete
 overlapping structure in {bf:r(nclique_matrix)} (an n-cliques-by-nodes 0/1 membership matrix) and
 {bf:r(ncliques)} (count). {opth minsize(int)} filters out n-cliques smaller than the given size
 before generating and returning results, matching {help nwclique}'s own default of 3 (a dyad or an
@@ -69,51 +73,14 @@ isolated node is technically a maximal n-clique too, but rarely what "n-clique" 
 A node that belongs to no n-clique meeting {opth minsize(int)} gets a missing value in the generated
 variable, not a spurious 0.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(ncliques)}		number of maximal n-cliques found meeting {opth minsize(int)}
-	  {bf:r(maxsize)}	size of the largest set (with {opt countonly} or {opt nomatrix})
-
-	Matrices
-	  {bf:r(size_table)}	(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size
-	  {bf:r(nclique_matrix)}	n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique (not with {opt countonly} or {opt nomatrix})
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwnclique flomarriage, generate(_ncliquenum)}
-	{cmd:. nwnclique flomarriage, n(3) generate(_ncliquenum) replace}
-
-
-{title:References}
+{title:Network types}
 
 {pstd}
-Luce, R.D. (1950). Connectivity and generalized cliques in sociometric group structure.
-{it:Psychometrika} 15(2), 169-190.
+{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored (the command prints a note on a valued network);
+{opt n()} counts steps. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:}
+negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 
-{pstd}
-Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
-
-{pstd}
-Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
-University Press. (cliques and cohesive subgroups)
-
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed
-generalization, the same reasoning {help nwclique}/{help nwkplex} already apply). Weighted: not
-used for membership - {opth n(int)} counts hops, not tie strength, though the underlying distance
-calculation ({help nwgeodesic}'s own unweighted, {cmd:alpha(0)}-equivalent convention) is unaffected
-by weight either way. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). Maximal n-clique enumeration inherits {help nwclique}'s own worst-case
-exponential behaviour (a mathematical property of maximal-clique-family problems in general).
 
 {title:Limits}
 
@@ -138,11 +105,43 @@ more than {opt maxcliques()} maximal n-cliques (default 100,000), when the resul
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwnclique flomarriage, generate(_ncliquenum)}
+	{cmd:. nwnclique flomarriage, n(3) generate(_ncliquenum) replace}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(ncliques)}}number of maximal n-cliques found meeting {opth minsize(int)}{p_end}
+{synopt:{bf:r(maxsize)}}size of the largest set (with {opt countonly} or {opt nomatrix}){p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(size_table)}}(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size{p_end}
+{synopt:{bf:r(nclique_matrix)}}n-cliques-by-nodes 0/1 membership matrix, one row per maximal n-clique (not with {opt countonly} or {opt nomatrix}){p_end}
+
+
+{title:References}
+
+{pstd}
+Luce, R.D. (1950). Connectivity and generalized cliques in sociometric group structure.
+{it:Psychometrika} 15(2), 169-190.
+
+{pstd}
+Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
+
+{pstd}
+Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
+University Press. (cliques and cohesive subgroups)
+
+
 {title:See also}
 
 	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -20,6 +20,7 @@
 {opt off}
 {opt on}
 {opt overwrite}
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -28,6 +29,7 @@
 {synopt:{opt off}}Switch datasync off{p_end}
 {synopt:{opt on}}Switch datasync on; default{p_end}
 {synopt:{opt overwrite}}Only used for advanced programming {p_end}
+{synopt:{opt force}}Always match by merging on {bf:_nwnode}, even when the dataset already holds the node names in network order{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -57,7 +59,5 @@ Generate a variable indicating which dataset observations correspond to nodes in
 	{cmd:. _nwdatasync mynet, generate(innet)}
 	{cmd:. list innet}
 
-last certified : 22 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -28,12 +28,13 @@
 {synoptline}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
-{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index{p_end}
+{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
+
 
 {title:Description}
 
 {pstd}
-Teh command produces the network version of {help tabulate twoway} for two networks. It
+The command produces the network version of {help tabulate twoway} for two networks. It
 shows the overlap of ties for two networks that share the same nodes (see {help nodeid}) on the dyadic level. The
 command essentially transforms {it:netname1} and {it:netname2} in edgelist format (see {help nwtoedge})
 and runs a normal {help tabulate twoway}, hence,
@@ -64,6 +65,13 @@ permutations of the network (see {help nwqap}) to obtain a p-value
 for the E-I-index. Basically, the network is randomly permuted and the
 E-I-index is calculated again to obtain a distribution for the E-I-index
 under the condition that the network and the attribute are unrelated.
+
+
+{title:Remarks on plot}
+
+{pstd}
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any
+further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
 
 
 {title:Example}
@@ -97,18 +105,26 @@ where families have both a marriage and a business relationship. In contrast, th
 relationship.
 
 
-{title:Remarks on plot}
+{title:Stored results}
 
-{pstd}
-The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(EI_index)}}E-I index{p_end}
+{synopt:{bf:r(EI_pvalue)}}p-value of the E-I index from the QAP permutations (with {opt permutations()} > 1){p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname1)}}name of the first network{p_end}
+{synopt:{bf:r(netname2)}}name of the second network{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(table)}}the cell frequencies of the table{p_end}
+{synopt:{bf:r(row)}}the tie values of {it:netname1} (rows){p_end}
+{synopt:{bf:r(col)}}the tie values of {it:netname2} (columns){p_end}
 
 
 {title:See also}
 
-	{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}
-
-
-
+{p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

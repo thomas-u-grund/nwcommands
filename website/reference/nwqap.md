@@ -17,8 +17,8 @@ Multivariate QAP regression
 nwqap 
 depnet
 [indepvars]
-, 
-permutations(int)
+[,
+perm:utations(#)
 mode(mode)
 type(regcmd)
 typeoptions(regoptions)
@@ -27,11 +27,13 @@ save(filename)
 predict(newnetname)
 plot
 name(string)
+qapspp
+force]
 ```
 
 | | |
 |---|---|
-| `permutations(int)` | number of QAP permutations; default = 500 |
+| `perm:utations(#)` | number of QAP permutations; default = 500 |
 | `mode`(*[mode](nwexpand)*) | modes for expanding variables to networks |
 | `type`(*[regcmd](nwqap)*) | regression command to be used for dyad dataset; default = *logit* |
 | `typeoptions(regoptions)` | options to be passed on to the regression command |
@@ -101,31 +103,27 @@ Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Reg
 ```
 This example shows that two individuals are more likely to be friends at time2 (glasgow2) when they already were friends at time1 (glasgow1). Furthermore two individuals *i* and *j* are more likely to be friends at time2 when they both scored the same on smoking at time1 (smoke1). There is no effect for both having scored the same on sport1.
 
-## Supported network types
-
-Binary: yes. Directed: yes, and undirected networks are not collapsed to unique dyads - both *(i,j)* and *(j,i)* appear as separate observations in the dyad-level dataset (for an undirected network they carry the same value, so this does not bias point estimates, but it does mean the reported "Number of obs" and any raw regression standard errors reflect double-counted dyads; QAP's own permutation-based p-values, not these raw standard errors, are what `nwqap` actually reports). Weighted: **W3**, explicit binary-only for the dependent network under the default (and any other binary-outcome) `type()` - `logit`, `probit`, `cloglog`, and `scobit` all treat any nonzero value as a positive outcome (this is those commands' own documented behavior, not something `nwqap` does intentionally) - so a valued/weighted dependent network's tie strength is silently discarded by the chosen regression command unless a continuous-outcome `type()` (e.g. `type(regress)`) is used instead; `nwqap` now warns explicitly when this combination is detected, rather than leaving it silent. Independent networks and variables are not affected - their values enter the regression directly, weighted or not. Signed: not checked. Two-mode: not supported - error 6088; QAP over the square matrix would regress dyads that cannot hold a tie; make a one-mode network of one mode first with [nwproject](nwproject). A full weighted-QAP alternative (rather than a warning) remains on the roadmap as a larger follow-on.
-
 ## Stored results
 
 `nwqap` is an **eclass** command: results are posted with `ereturn`, so `estimates store`, `estimates table`, and other standard postestimation commands that only need *e(b)*/*e(V)* (e.g. `test`, `lincom`) work as usual. *e(V)* is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a classical OLS/logit covariance matrix - dyadic network data violates the independent- observations assumption those classical formulas require, which is the entire reason QAP permutation testing exists in the first place. The data set holds one row per node, not per dyad, so fitted values cannot be stored in a variable: after `nwqap`, `predict` *newnetname* stores the dyad-level fitted values of the last model as a new valued network (the same as `predict(newnetname)` at estimation time; the values are kept in memory until the next `nwqap`, and `predict` takes no variable name, `if`, `in` or options).
 
-**Scalars**
+- **Scalars**
+- **e(N)** --- number of dyad-level observations
+- **e(permutations)** --- number of QAP permutations
 
-- **e(N)** number of dyad-level observations
-- **e(permutations)** number of QAP permutations
+- **Macros**
+- **e(cmd)** --- **nwqap**
+- **e(title)** --- title of estimation
+- **e(depvar)** --- name of dependent network
+- **e(qap_regcmd)** --- regression command used (**type()**)
+- **e(predict)** --- **nwqap_p**, program used by `predict` (only when **type()** has a default prediction)
+- **e(fit_directed)** --- **true** or **false**, direction of the network `predict` creates (as **e(predict)**)
+- **e(fit_labs)** --- node labels of the network `predict` creates (as **e(predict)**)
 
-**Macros**
-
-- **e(cmd)** **nwqap**
-- **e(title)** title of estimation
-- **e(depvar)** name of dependent network
-- **e(qap_regcmd)** regression command used (**type()**)
-
-**Matrices**
-
-- **e(b)** coefficient vector
-- **e(V)** diagonal matrix of QAP-permutation coefficient variances
-- **e(pvalues)** matrix with QAP p-values, in the same column order as **e(b)**
+- **Matrices**
+- **e(b)** --- coefficient vector
+- **e(V)** --- diagonal matrix of QAP-permutation coefficient variances
+- **e(pvalues)** --- matrix with QAP p-values, in the same column order as **e(b)**
 
 ## See also
 
@@ -133,4 +131,4 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

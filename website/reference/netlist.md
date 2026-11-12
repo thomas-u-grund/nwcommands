@@ -27,7 +27,7 @@ Examples include
 - `my~net` one network starting with `my` &
 - ending with `net` with any number of other characters
 - between
-- `my?var` networks starting with `my` & ending
+- `my?net` networks starting with `my` & ending
 - with `net` with one other character between
 - `mynet1-mynet6` `mynet1`, `mynet2`, ...,
 - `net6` (probably)
@@ -68,4 +68,4 @@ The networks in the dataset can be reordered with [nworder](nworder).
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

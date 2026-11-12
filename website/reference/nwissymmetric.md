@@ -34,13 +34,10 @@ For example, [nwimport](nwimport) automatically checks if a network (e.g. Ucinet
 . return list
 
 scalars:
-        r(issymmetric) = 1
 ```
+- **r(issymmetric) = 1**
+
 Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**false** string macros most other boolean-flag results in this group use (e.g. [nwname](nwname)'s **r(directed)**), since it is a computed test result rather than a stored network property.
-
-## Supported network types
-
-Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## See also
 
@@ -48,4 +45,4 @@ Binary: yes. Directed: yes - this command's entire purpose is checking whether a
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

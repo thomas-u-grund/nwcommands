@@ -9,6 +9,7 @@
 {p2col :nwbrokerage {hline 2}}Gould-Fernandez brokerage roles{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -24,12 +25,13 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth group(varname)}}Existing Stata variable holding each node's group membership (required){p_end}
+{synopt:{opth group(varname)}}Existing numeric Stata variable holding each node's group membership (required; encode a string variable first){p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Stem for the 5 new Stata variables that store role counts{p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -51,7 +53,8 @@ Fernandez), the role is determined by comparing the group membership of
 {opt generate()} is required and gives the stem for five new Stata variables, one per role, each
 holding node {it:b}'s count of that role (e.g. {opt generate(_broker)} produces {it:_broker_coordinator},
 {it:_broker_gatekeeper}, {it:_broker_representative}, {it:_broker_consultant} and
-{it:_broker_liaison}).
+{it:_broker_liaison}). With more than one network in the {it:netlist}, a number is appended
+to each name ({it:_broker_coordinator1}, {it:_broker_coordinator2}, ...).
 
 {pstd}
 For a directed network, {it:a} ranges over {it:b}'s incoming ties and {it:c} over its outgoing
@@ -60,16 +63,28 @@ undirected network, incoming and outgoing ties are identical, so {it:a} and {it:
 {it:b}'s (undirected) neighbors - the same five-role classification still applies, just without the
 directional distinction a directed network provides.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(pairs)}		total number of a-b-c two-paths counted, summed across all nodes and all five roles
+{title:Network types}
+
+{pstd}
+{bf:Directed:} directions are used (the measure is defined for directed networks); on an undirected network the
+directional roles collapse. {bf:Valued:} tie values are ignored (the command prints a note on a valued network).
+{bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} negative values are not
+treated specially. See {help nwnetworktypes}.{p_end}
+
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. gen faction = mod(_n, 2)}
 	{cmd:. nwbrokerage flomarriage, group(faction) generate(_broker)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(pairs)}}total number of a-b-c two-paths counted, summed across all nodes and all five roles (of the last network in a {it:netlist}){p_end}
 
 
 {title:References}
@@ -79,28 +94,9 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 transaction networks. {it:Sociological Methodology} 19, 89-126.
 
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, and directionality is used directly (see Description) - this is the
-network type the model was originally defined for. Undirected networks are supported too, with the
-directional distinction collapsing away as described above. Weighted: not used - only the
-presence/absence of a tie determines whether a two-path exists; tie strength does not affect role
-counts. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation). {opt group()} must be an existing {it:numeric} Stata variable (a string variable is refused; use {cmd:encode} first) already aligned with the network's nodes
-(the same convention {help nwmodularity}'s own {opt group()} option uses) - {cmd:nwbrokerage} does
-not detect groups itself; pair it with {help nwconcor}, {help nwcoreperiphery}, {help nwcommunity},
-or a substantive attribute for the grouping.
-
 {title:See also}
 
 	{help nwconcor}, {help nwcoreperiphery}, {help nwcommunity}, {help nwmodularity}
 
-last certified : 21 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

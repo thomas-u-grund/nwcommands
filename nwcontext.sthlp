@@ -9,6 +9,7 @@
 {p2col :nwcontext {hline 2}}Create a context variable{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -33,7 +34,7 @@
 {synopt:{opt stat}({it:{help nwcontext##statistic:statistic}})}Statistic that is used to calculate context variable for node i from attributes of network neighbors{p_end}
 {synopt:{opt mode}({it:{help nwcontext##context:context}})}Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both{p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the context variable to be generated{p_end}
-{synopt:{opt mat(string)}}Store the result in a Mata matrix of this name instead of generating a Stata variable{p_end}
+{synopt:{opt mat(string)}}Store the result in a Mata matrix of this name instead of generating a Stata variable ({opt generate()} must still be given; no variable is created){p_end}
 {synopt:{opt noweight}}Ignore valued ties and treats all as binary{p_end}
 {synopt:{opt replace}}Replace {opt generate()}'s target variable if it already exists{p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 12 GB otherwise){p_end}
@@ -75,7 +76,8 @@
 		{p_end}
 {p2col:{cmd: incoming}}network neighbors of node i are all nodes j who send a tie to i
 		{p_end}
-{p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s {opt mode()} - {cmd:both} is accepted as a synonym)
+{p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s
+{opt mode()} - {cmd:both} is accepted as a synonym)
 		{p_end}
 
 
@@ -109,14 +111,10 @@ Sometimes, however, one might want to calculate statistics including the attribu
 {it:newvarname}[i] = {it:stat}({it:varname}[j]), for all {it:j} with {it:y_ij} > 0 or j == i
 
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, via {opt mode(outgoing|incoming|both|either)}. Weighted: yes by default (neighbor attribute values weighted by tie strength); {opt noweight} treats all ties as binary. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 {title:Scope}
 {pstd}
 Directed and undirected, weighted and unweighted, one-mode and two-mode.
+
 
 {title:Remarks}
 
@@ -126,12 +124,29 @@ In the case of undirected networks, no {it: mode} option needs to be specified.
 {pstd}
 By default, nodes with missing attributes are excluded from the calculation.
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} the neighbors follow {opt mode(outgoing|incoming|both|either)}. {bf:Valued:} attribute values are
+weighted by tie values by default; {opt noweight} ignores them. {bf:Two-mode:} same as for the bipartite graph read as
+a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The statistics are computed on the dense network and three {it:n}-by-{it:n} matrices are held at once. Above about 22,000 nodes (12 GB) the command stops at once with r(484) and names
+{help nwaltergen} as the alternative: it computes the mean, sum, minimum, maximum and standard deviation of the attribute of the neighbors from the stored ties and works at 100,000 nodes and
+more. Option {opt force} runs the command anyway.
+
+
 {title:Examples}
 
 {pstd}
 This example loads the Florentine marriage data. The variable {it:wealth} indicates how rich each family is. {bf: nwcontext}
 generates different variables: {it:w_avg} = average wealth of network neighbors,  {it:w_min} = wealth of poorest network neighbor,
-{it:w_min} = wealth of richest network neighbor, {it:w_sd} = standard deviation of wealth over network neighbors.
+{it:w_max} = wealth of richest network neighbor, {it:w_sd} = standard deviation of wealth over network neighbors.
 
 	{com}. nwwebuse florentine
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_avg)
@@ -170,16 +185,10 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
 
 	{cmd:. nwplot flomarriage, label(wealth)}
 
-{title:Limits}
-
-{pstd}
-The statistics are computed on the dense network and three {it:n}-by-{it:n} matrices are held at once. Above about 22,000 nodes (12 GB) the command stops at once with r(484) and names {help nwaltergen} as the alternative: it computes the mean, sum, minimum, maximum and standard deviation of the attribute of the neighbors from the stored ties and works at 100,000 nodes and more. Option {opt force} runs the command anyway.
 
 {title:See also}
 
    {help nwneighbor}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

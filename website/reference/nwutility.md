@@ -16,25 +16,26 @@ Utility scores of Jackson and Wolinsky (1996)
 ```stata
 nwutility
 [netname]
-,
-[benefit(real)
-cost(real)
-intrvalue(netname)
-intrcost(netname)
+[,
+b:enefit(#)
+c:ost(#)
+intrv:alue(netname)
+intrc:ost(netname)
+force
 geodesic_options]
 ```
 
 | | |
 |---|---|
-| `benefit(real)` | benefit from connected node; default = 1 |
-| `cost(real)` | cost of connection; default = 1 |
-| `intrvalue(netname)` | intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair |
-| `intrcost(netname)` | per-dyad cost y_ij, replacing the constant *cost* for direct connections; default = *cost* for every tied pair |
+| `b:enefit(#)` | benefit from connected node, between 0 and 1; default = 1 |
+| `c:ost(#)` | cost of connection; default = 1 |
+| `intrv:alue(netname)` | intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair |
+| `intrc:ost(netname)` | per-dyad cost y_ij, replacing the constant *cost* for direct connections; default = *cost* for every tied pair |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 19,300 nodes otherwise) |
 
 ## Description
 
-`nwutility` calculates node-level utility scores according to the connections model in Jackson and Wollinsky (1996). The command generates the variables _benefit, _cost and _util. In this model of strategic network formation, each node i is assigned a utility score, which is calculated as:
+`nwutility` calculates node-level utility scores according to the connections model in Jackson and Wolinsky (1996). The command generates the variables _benefit, _cost and _util. In this model of strategic network formation, each node i is assigned a utility score, which is calculated as:
 
 U(i) = w_ii + sum_j[benefit^(d_ij) * w_ij] - sum_j_in_N(i)[cost * y_ij]
 
@@ -61,10 +62,6 @@ Then one can use `intrvalue()` in `nwutility`:
 
 When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij = *cost*, and w_ii = 0 (i.e. `intrvalue()` is not given).
 
-## Supported network types
-
-Binary: yes. Directed: not checked (the connections model as implemented here assumes an undirected notion of reachability via [nwgeodesic](nwgeodesic)). Weighted: **W1**, native - the network under analysis only needs to be binary for the underlying geodesic-distance calculation, but `intrvalue()`/`intrcost()` let tie strength (as a full per-dyad value, not the analyzed network's own weight) enter the utility formula directly, not as a distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

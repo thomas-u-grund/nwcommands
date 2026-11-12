@@ -16,12 +16,12 @@
 {cmdab: nwrandom} 
 {it:{help int:nodes}}
 {cmd:,}
-[{opth prob(float)}
-{opth density(float)}
-{opt census}({help nwdyads:{it:mutual asym} [{it:null}]})
-{opt degree}({it:numlist}|{varname})
-{opt outdegree}({it:numlist}|{varname}) {opt indegree}({it:numlist}|{varname})
-{opth swaps(int)}
+[{opt p:rob(#)}
+{opt d:ensity(#)}
+{opt c:ensus}({help nwdyads:{it:mutual}} [{it:asym} [{it:null}]])
+{opt deg:ree}({it:numlist}|{varname})
+{opt out:degree}({it:numlist}|{varname}) {opt in:degree}({it:numlist}|{varname})
+{opt swaps(#)}
 {opt weights(p1, p2,...)}
 {opt undirected}
 {opt directed}
@@ -35,12 +35,12 @@
 {synopthdr}
 {synoptline}
 {synopt:{it:{help int:nodes}}}number of nodes{p_end}
-{synopt:{opth prob(float)}}probability for a tie{p_end}
-{synopt:{opth density(float)}}exact density of the new network{p_end}
-{synopt:{opt census}({help nwdyads:{it:mutual} [{it:asym null}]})}dyad census of the new network{p_end}
-{synopt:{opt degree}({it:numlist}|{varname})}degree of every node of a new undirected network: a list of {it:nodes} numbers, or a variable (its first {it:nodes} observations){p_end}
-{synopt:{opt outdegree()} {opt indegree()}}out-degree and in-degree of every node of a new directed network; both are needed{p_end}
-{synopt:{opth swaps(int)}}with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties{p_end}
+{synopt:{opt p:rob(#)}}probability for a tie{p_end}
+{synopt:{opt d:ensity(#)}}exact density of the new network{p_end}
+{synopt:{opt c:ensus}({help nwdyads:{it:mutual}} [{it:asym} [{it:null}]])}dyad census of the new network: numbers of mutual and asymmetric dyads (default 0); a third number is ignored{p_end}
+{synopt:{opt deg:ree}({it:numlist}|{varname})}degree of every node of a new undirected network: a list of {it:nodes} numbers, or a variable (its first {it:nodes} observations){p_end}
+{synopt:{opt out:degree()} {opt in:degree()}}out-degree and in-degree of every node of a new directed network; both are needed{p_end}
+{synopt:{opt swaps(#)}}with degrees: the number of attempted tie swaps that randomize the network; default = 10 times the number of ties{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt directed}}generate a directed network; this is the default, so the option changes nothing (it cannot be combined with {opt undirected}){p_end}
@@ -63,7 +63,7 @@ the exact number of ties can vary.
 {pstd}
 Alternatively, the overall density of the network can be specified with 
 {bf:density()}. This option always generates the same number of ties
-( = {it:density * nodes}), where each tie has the same probability to exist.
+({it:density} times the number of possible ties, rounded down), where each tie has the same probability to exist.
 
 {pstd}
 Lastly, one can also generate a random network that has a specific {help nwdyads:dyad census} using {opt census()} (see {help nwdyads}).  
@@ -99,6 +99,7 @@ By default, directed networks are generated, option {bf:undirected} generates un
 {pstd}
 The command can also be used to generate both complete ({bf:prob(1)}) and empty networks ({bf:prob(0)}). 
 
+
 {marker degrees}{...}
 {title:Networks with given degrees}
 
@@ -129,11 +130,24 @@ degree 2. {opt degree()} cannot be combined with {opt prob()}, {opt density()}, 
 	{cmd:. nwrandom 50, outdegree(od) indegree(id) name(glasgow_null)}
 
 
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed); with degrees, {opt degree()} draws an undirected network and {opt outdegree()} {opt indegree()} a directed one. Weighted: yes, via {opt weights()} - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself ({opt density()}/{opt prob()}/{opt census()}). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+Generates a one-mode network. {bf:Directed:} directed by default, {opt undirected} for undirected; {opt degree()}
+draws an undirected, {opt outdegree()} / {opt indegree()} a directed network. {bf:Valued:} {opt weights()} sets the
+tie values. {bf:Two-mode:} not applicable. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+{opt prob()} above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives
+the same network). {opt density()} above 5,000 nodes draws the positions of the ties directly instead of shuffling all {it:n}^2
+cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used.
+{opt weights()} and {opt census()} work on the matrix. Measured in Stata/BE, density 0.0001: 5,000
+nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds ({opt density(.0002)});
+{opt prob(.0002)} at 20,000 nodes 2.8 seconds.
+
 
 {title:Examples}
 	
@@ -146,28 +160,19 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	{cmd:. nwrandom 10, density(.2) weights(0.1, 0.3, 0.6)}
 	{cmd:. nwrandom 8, degree(3 3 2 2 2 2 1 1)}
 
+
 {title:Stored results}
 
 	{bf:nwrandom} stores the following in {bf:r()}:
 		  
-	Macros
-	  {bf:r(netlist)}	list of new networks
-	  
-{title:Limits}
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netlist)}}list of new networks{p_end}
 
-{pstd}
-{opt prob()} above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives
-the same network). {opt density()} above 5,000 nodes draws the positions of the ties directly instead of shuffling all {it:n}^2
-cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used.
-{opt weights()} and {opt census()} work on the matrix. Measured in Stata/BE, density 0.0001: 5,000
-nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds ({opt density(.0002)});
-{opt prob(.0002)} at 20,000 nodes 2.8 seconds.
 
 {title:See also}
 
 	{help nwsmall}, {help nwpref}, {help nwlattice}, {help nwring}, {help nwcug}, {help nwpermute}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

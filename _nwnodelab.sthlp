@@ -9,6 +9,7 @@
 {p2col :_nwnodelab {hline 2}}Returns the nodelab of a node given its nodeid{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -31,42 +32,47 @@
 
 {pstd}
 Returns the {help nodeid:nodelab} of a node given its {help nodeid}. Results are also stored
-in the return vector. When no node with the specified id is found in network {it:netname} and error is thrown.
+in the return vector. When {it:nodeid} is larger than the number of nodes in network {it:netname} an error is thrown.
 This command is mostly used for programming with networks.
 
 
-{title:Stored results}
-
-	Scalars
-	  {bf:r(nodeid)}	nodeid of node
-	  
-	Macros:
-	  {bf:r(netname)}	name of the networks
-	  {bf:r(nodelab)}	node label of the node
-	  
-	  
 {title:Examples}
 
    {cmd:. nwwebuse florentine}
-   {cmd:. _nwnodelab flomarriage, nodeid(9)}
+   {cmd:. _nwnodelab flomarriage, nodeid(9) detail}
    
-		{txt}Network: {res}flomarriage
-		{hline 15}
-		{txt}  Nodeid: {res}9
-		{txt}  Nodelab: {res}medici
+		{hline 40}
+		{txt}  Network: {res}flomarriage
+		{hline 40}
+		{txt}    Nodeid: {res}9
+		{txt}    Nodelab: {res}medici
 		
    {com}. return list
 
 	{txt}scalars:
-			r(nodeid) =  {res}9
+{synoptset 28 tabbed}{...}
+{synopt:r(nodeid) =}{res}9{p_end}
 
 	{txt}macros:
-			r(netname) : "{res}flomarriage{txt}"
-			r(nodelab) : "{res}medici{txt}"
+{synoptset 28 tabbed}{...}
+{synopt:r(netname) : "{res}flomarriage{txt}"}{p_end}
+{synopt:r(nodelab) : "{res}medici{txt}"}{p_end}
+
+
+{title:Stored results}
+
+{synoptset 28 tabbed}{...}
+{p2col 5 28 32 2: Scalars}{p_end}
+{synopt:{bf:r(nodeid)}}nodeid of node{p_end}
+	  
+{p2col 5 28 32 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the networks{p_end}
+{synopt:{bf:r(nodelab)}}node label of the node{p_end}
+
 
 {title:See also}
 
    {help _nwnodeid}, {help nodeid:nodelab}, {help nodeid}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

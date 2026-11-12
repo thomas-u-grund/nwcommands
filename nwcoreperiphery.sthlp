@@ -9,6 +9,7 @@
 {p2col :nwcoreperiphery {hline 2}}Discrete core-periphery detection{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -33,6 +34,7 @@
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
@@ -50,47 +52,23 @@ uses for modularity maximization.
 
 {pstd}
 {opt generate()} is required and names the new variable which stores, for each node, 1
-if it was assigned to the core and 0 if it was assigned to the periphery.
+if it was assigned to the core and 0 if it was assigned to the periphery. With more than one network in the
+{it:netlist}, a number is appended to the name ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...) and the stored results
+are those of the last network.
 
 {pstd}
 Always operates on the undirected version of the network (the classical model does not distinguish
-incoming from outgoing ties); a directed network is symmetrized automatically, matching
-{help nwcommunity}'s own convention - no separate {bf:symmetrize} option is needed or offered.
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(fitness)}		correlation between the observed network and the ideal pattern implied by the found partition (-1 to 1; 1 = a perfect discrete core-periphery structure)
-	  {bf:r(core)}		number of nodes assigned to the core
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcoreperiphery flomarriage, generate(_core)}
+incoming from outgoing ties); a directed network is symmetrized automatically - no separate {bf:symmetrize} option is needed or offered
+(unlike {help nwcommunity}, which needs {bf:symmetrize} for a directed network).
 
 
-{title:References}
+{title:Network types}
 
 {pstd}
-Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:Social Networks}
-21(4), 375-395.
+{bf:Directed:} symmetrized automatically. {bf:Valued:} tie values are used by default ({opt measure(valued)});
+{opt measure(binary)} ignores them. {bf:Two-mode:} not supported (error 6088; use {help nwproject} first). {bf:Signed:}
+not checked. See {help nwnetworktypes}.{p_end}
 
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: not supported - error 6088; a core-periphery model of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (no explicit {bf:symmetrize} option, unlike
-{help nwcommunity} - the model itself does not distinguish direction). Weighted:
-{opt measure(valued)} uses tie weights directly when computing the fitness correlation;
-{opt measure(binary)} uses presence/absence only; default follows the network's own weighted-ness,
-matching {help nwcommunity}'s convention. Signed: not checked. Two-mode: not supported - error 6088; a core-periphery model of the square matrix would mix the two modes; make a one-mode network of one mode first with {help nwproject}. A network with no ties at all is rejected explicitly
-(there is no structure to fit a core-periphery pattern to); a node with no ties of its own (an
-isolate) is handled without error and is simply assigned to the periphery.
 
 {title:Limits}
 
@@ -100,11 +78,35 @@ the cores found are those of the matrix version, the fitness equal up to roundin
 random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds and 0.2 GB,
 20,000 nodes 0.6 seconds.
 
+{pstd}
+A network with no ties at all is rejected (there is no structure to fit a core-periphery pattern to); an isolate is assigned
+to the periphery.
+
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwcoreperiphery flomarriage, generate(_core)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(fitness)}}correlation between the observed network and the ideal pattern implied by the found partition (-1 to 1; 1 = a perfect discrete core-periphery structure){p_end}
+{synopt:{bf:r(core)}}number of nodes assigned to the core{p_end}
+
+
+{title:References}
+
+{pstd}
+Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:Social Networks}
+21(4), 375-395.
+
+
 {title:See also}
 
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
-last certified : 21 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

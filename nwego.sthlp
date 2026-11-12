@@ -9,6 +9,7 @@
 {p2col :nwego {hline 2}}Ego-network size and density{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -30,6 +31,7 @@
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -55,7 +57,18 @@ for it, not spuriously 0 or 1.
 
 {pstd}
 {opt sizevar()} and {opt densvar()} are both required and name the Stata variables that store
-ego-network size and density, respectively.
+ego-network size and density, respectively. With a list of several networks the variables are numbered by
+network: {it:sizevar}{bf:1} and {it:densvar}{bf:1} for the first network, {it:sizevar}{bf:2} and {it:densvar}{bf:2} for
+the second, and so on.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} the alters are the in- and out-neighbours; the alter-alter density counts ordered pairs. {bf:Valued:} tie
+values are ignored (every tie counts as present; the command prints a note). {bf:Two-mode:} same as for the bipartite
+graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
 
 {title:Examples}
 
@@ -71,24 +84,9 @@ Press. (ego-network density as used in structural holes analysis - see also {hel
 {help nwburt})
 
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density
-counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network
-membership and alter-alter density; tie strength does not affect these measures. Signed: not
-checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 {title:See also}
 
 	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}
 
-last certified : 21 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

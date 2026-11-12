@@ -9,32 +9,34 @@
 {p2col :nwpagerank {hline 2}}PageRank centrality{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
 {cmdab: nwpagerank}
 [{it:{help netname}}]
 [{cmd:,}
-{opth generate(newvarname)}
+{opth gen:erate(newvarname)}
 {opt replace}
-{opt damping(real)}
+{opt damp:ing(real)}
 {opt maxiter(int)}
 {opt tol(real)}
 {opt silent}
-{opt binary}]
+{opt bin:ary}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's PageRank score{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's PageRank score{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
-{synopt:{opt damping(real)}}Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value){p_end}
+{synopt:{opt damp:ing(real)}}Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value){p_end}
 {synopt:{opt maxiter(int)}}Maximum power-iteration sweeps; default 1000{p_end}
 {synopt:{opt tol(real)}}Convergence tolerance; default 1e-10{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
-{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt bin:ary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -62,20 +64,14 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 scalability discipline this package's own sparse-backend commands ({help nwkcore},
 {help nwevcent}) already follow.
 
-{title:Valued networks}
+
+{title:Network types}
 
 {pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network the random surfer follows the tie from i to j with probability w_ij / s_i, s_i the out-strength ({it:igraph::page_rank} with its weight attribute); {opt binary} follows a uniformly chosen tie. Both walks run in the native kernel when your platform's plugin has it.
-On a network that is not valued, {opt binary} has no effect.
+{bf:Directed:} ties are followed in their direction. {bf:Valued:} the surfer follows a tie with probability w_ij / s_i
+by default; {opt binary} ignores the values. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - the natural case (a random surfer follows ties in their own real
-direction); an undirected network is handled identically, since its own symmetric tie matrix
-already represents "can move either way" directly. Weighted: not checked - tie values are ignored
-(a random surfer moves to each out-neighbor with EQUAL probability, matching the classical
-definition; a value-weighted variant is not implemented). Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 {title:Limits}
 
@@ -83,14 +79,10 @@ definition; a value-weighted variant is not implemented). Signed: not checked. T
 The power iteration runs in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
 and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations.
 Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.03 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes
-0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds). The weighted walk is about twice as fast as its Mata route (10,000 nodes with 30,000 ties: 0.05 against 0.09 seconds).
+0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds). The weighted walk is about twice as fast as its Mata route (10,000 nodes with 30,000 ties: 0.05 against 0.09 seconds).{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
-{title:Stored results}
-
-	Macros
-	  {bf:r(generate)}	name of the generated PageRank variable
 
 {title:Examples}
 
@@ -99,16 +91,23 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 	{cmd:. gsort -_pagerank}
 	{cmd:. list _name _pagerank in 1/5}
 
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(generate)}}name of the generated PageRank variable{p_end}
+
+
 {title:References}
 
 {pstd}
 Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Ranking: Bringing Order to the Web. Stanford InfoLab Technical Report.
 
+
 {title:See also}
 
 	{help nwevcent}, {help nwrandomwalk}, {help nwbetween}, {help nwcloseness}
 
-last certified : 31 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -18,24 +18,28 @@
 [{cmd:,}
 {opt alpha(real)}
 {opt walks}
-{opt generate}({it:{help varname}})
+{opt gen:erate}({it:{help varname}})
 {opt replace}
+{opt nosym}
 {it:{help nwgeodesic:geodesic_options}}
 {opt force}
-{opt binary}]
+{opt bin:ary}]
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt alpha(real)}}penalization factor for calculation of weights; default = 1 (distance-decay mode) or {bf:0.9/rho} (walk-counting mode, {opt walks}){p_end}
-{synopt:{opt walks}}switch to the literature's own genuine walk-counting Katz/Bonacich centrality, {it:(I - alpha*A)^-1 * 1}, instead of this command's own default distance-decay formula (see Description){p_end}
-{synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores{p_end}
+{synopt:{opt walks}}switch to the literature's own genuine walk-counting Katz/Bonacich centrality, {it:(I - alpha*A)^-1 * 1}, instead of this command's own default distance-decay formula (see
+Description){p_end}
+{synopt:{opt gen:erate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores; for a directed network
+the variables {it:varname}{bf:_out} and {it:varname}{bf:_in} are generated{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opt nosym}}Distance-decay form: keep the direction of the ties of a directed network (by default the network is symmetrized); not used with {opt walks}{p_end}
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
-{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt bin:ary}}With {opt walks}: ignore the tie values of a valued network (by default the walks are weighted by them); the distance-decay form always counts steps{p_end}
 
 
 {title:Description}
@@ -57,8 +61,8 @@ where {it:dist(i,j)} is the {help nwgeodesic:geodesic (shortest-path) distance} 
 {it:i} and {it:j}, and unreachable pairs contribute 0.
 
 {pstd}
-{bf:The DEFAULT formula (without {opt walks}) is not the same as the Katz centrality defined in
-the literature.} Katz's (1953) original measure counts the total number of {it:walks} of every
+{bf:The DEFAULT formula (without {opt walks}) is not the same as the Katz centrality defined in}
+{bf:the literature.} Katz's (1953) original measure counts the total number of {it:walks} of every
 length between two nodes, attenuated by {it:alpha} raised to the walk length, and is computed as
 {it:(I - alpha*A)^-1 * 1} (a matrix-inverse, eigenvector-family measure closely related to
 Bonacich power centrality) - not as a sum over {it:shortest-path distances} the way this command's
@@ -79,29 +83,27 @@ valid range if violated. Default {opt alpha()} in this mode is {bf:0.9/rho}, a c
 the same convention the default distance-decay formula already uses.
 
 
-{title:Valued networks}
+{title:Network types}
 
 {pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. With {opt walks} on a valued network the walks are weighted ({it:igraph::alpha_centrality} with weights; the {it:_in} variable is igraph's); {opt binary} counts a tie once. The distance-decay form counts steps and does not use tie values.
-On a network that is not valued, {opt binary} has no effect.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - generates separate {it:_in}/{it:_out} variables automatically when the
-network is directed (the network is otherwise symmetrized for the underlying distance calculation
-unless {help nwgeodesic:geodesic_options} specifies {opt nosym}). Weighted: distances come from
-{help nwgeodesic}, which supports valued networks via its own {opt alpha()}/weighting options,
-forwarded through this command's {it:geodesic_options}; weight meaning follows whatever
-{help nwgeodesic} uses (tie strength inverted into a path cost via the Opsahl et al. formulation -
-see {help nwgeodesic} for detail), not tie strength directly. Signed: not checked; negative tie
-values are not validated or rejected. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} {it:_in} and {it:_out} variables; the distance-decay form symmetrizes by default ({opt nosym} keeps the
+direction), {opt walks} does not. {bf:Valued:} {opt walks} weights the walks by the tie values ({opt binary} counts a
+tie once); the distance-decay form counts steps. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
 
-{title:References}
+{title:Limits}
 
 {pstd}
-Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychometrika}, 39-43.
+The distance-decay score (without {opt walks}) is summed over breadth-first searches from every node in the plugin, without a
+matrix of distances, unless {it:geodesic_options} are given or the platform has no plugin (then the matrix of {help nwgeodesic} is used). Measured in Stata/BE on a random directed network with 10 ties
+per node: 20,000 nodes 10 seconds and 0.35 GB
+(99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
+
+{pstd}
+Without {opt walks} the time grows with the number of nodes times the number of ties like that of {help nwcloseness}: when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties
+per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. With {opt walks} the matrix is dense and a network of more than 20,000
+nodes is refused.
 
 
 {title:Examples}
@@ -111,21 +113,15 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 	{cmd:. sum _katz}
 
 
-{title:Limits}
+{title:References}
 
 {pstd}
-The distance-decay score (without {opt walks}) is summed over breadth-first searches from every node in the plugin, without a
-matrix of distances, unless {it:geodesic_options} are given or the platform has no plugin (then the matrix of {help nwgeodesic} is used). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB
-(99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
+Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychometrika}, 39-43.
 
-{pstd}
-Without {opt walks} the time grows with the number of nodes times the number of ties like that of {help nwcloseness}: when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. With {opt walks} the matrix is dense and a network of more than 20,000 nodes is refused.
 
 {title:See also}
 
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

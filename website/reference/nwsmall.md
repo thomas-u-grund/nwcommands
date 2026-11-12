@@ -41,13 +41,13 @@ xvars]
 | | |
 |---|---|
 | *`nodes`* | number of nodes |
-| `k(int)` | number of neighhbors on ring-lattice on each side |
+| `k(int)` | number of neighbors on ring-lattice on each side |
 | `prob(float)` | probability for a tie to rewire |
 | `shortcuts(int)` | exact number of ties to rewire |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `ntimes(int)` | number of small-world networks to be generated; default = 1 |
-| `name`(*[newnetname](newnetname)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network; default = *small* |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
 | `xvars` | generate Stata variables for the network |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
@@ -84,17 +84,12 @@ In the second example, there are exactly three shortcuts.
 . nwplot, layout(circle)
 ```
 
-## Supported network types
-
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `undirected` (default is directed). Weighted: yes, via `weights()`, independent of the small-world rewiring mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## Stored results
 
 - **nwsmall** stores the following in **r()**:
 
-**Macros**
-
-- **r(netlist)** list of new networks
+- **Macros**
+- **r(netlist)** --- list of new networks
 
 ## References
 
@@ -106,4 +101,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

@@ -42,14 +42,10 @@ By default, this generates a new network called *flomarriage_sub*. Notice that s
 
 However, the last command does not copy the node labels of network *flomarriage*. This is because the `if` condition in [nwgen](nwgen) applies to a whole [network expression](netexp). Because network expressions can be very complicated, no labels are copied.
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: yes - the flag, the modes and the level labels are kept for the nodes that remain.
-
 ## See also
 
 - [nwgenerate](nwgenerate), [nwduplicate](nwduplicate)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

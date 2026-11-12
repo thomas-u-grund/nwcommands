@@ -21,6 +21,7 @@ generate(varname)
 off
 on
 overwrite
+force]
 ```
 
 | | |
@@ -29,10 +30,11 @@ overwrite
 | `off` | Switch datasync off |
 | `on` | Switch datasync on; default |
 | `overwrite` | Only used for advanced programming |
+| `force` | Always match by merging on **_nwnode**, even when the dataset already holds the node names in network order |
 
 ## Description
 
-Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Beginning with version 2.0.0 both are automatically matched by the name of the nodes. In the dataset this match is performed on the variable **_nwnode**. In case this variable does not exist, it is automatically created.
+Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Both are automatically matched by the name of the nodes. In the dataset this match is performed on the variable **_nwnode**. In case this variable does not exist, it is automatically created.
 
 Normally, there is no need to explicitly call **_nwdatasync**. All other nwcommands that make use of variables in the Stata dataset (e.g. node attributes) sync automatically.
 
@@ -48,8 +50,7 @@ Generate a variable indicating which dataset observations correspond to nodes in
 . _nwdatasync mynet, generate(innet)
 . list innet
 ```
-- last certified : 22 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

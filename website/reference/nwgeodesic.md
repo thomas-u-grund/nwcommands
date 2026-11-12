@@ -26,7 +26,7 @@ nwreplace
 generate(newvarname)
 xvars
 force
-binary]
+bin:ary]
 ```
 
 | | |
@@ -36,21 +36,21 @@ binary]
 | `sym` | Calculate distances from symmetrized network |
 | `symopt(options)` | Options controlling the symmetrization when `sym` is specified (see [nwsym](nwsym)) |
 | `name`(*[newnetname](newnetname)*) | Name of the new distance network; default = *_geodesic* |
-| `nwreplace` | Overwrite existing network *newnetname* |
+| `nwreplace` | Overwrite existing network *newnetname*; the default *_geodesic* is overwritten without it |
 | `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
-| `force` | with a plugin of the current generation the least-cost distances of a valued network are computed natively at any size and `force` is not needed; without it a valued network of more than 100 nodes stops with r(198) unless `force` (slow Mata routine) or `binary` (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
-| `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `force` | the least-cost distances of a valued network are computed natively at any size and `force` is not needed; on a platform without the plugin a valued network of more than 100 nodes stops with r(198) unless `force` (slow Mata routine) or `binary` (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
+| `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
 
 ## Description
 
-`nwgeodesic` calculates the shortest paths (also known as geodesic distances) between all nodes *i* and *j*, the average shortest path length and the diameter of the (un-)weighted network [netname](netname) according to Opsahl et al. (2010). The matrix of distances is saved as a new network called [newnetname](newnetname) (default: *geodesic*).
+`nwgeodesic` calculates the shortest paths (also known as geodesic distances) between all nodes *i* and *j*, the average shortest path length and the diameter of the (un-)weighted network [netname](netname) according to Opsahl et al. (2010). The matrix of distances is saved as a new network called [newnetname](newnetname) (default: *_geodesic*).
 
 With option `sym` the distances are calculated from the symmetrized network. Option `symopt()` allows control over the symmetrization (see options in [nwsym](nwsym)).
 
-`nwgeodesic`'s primary output is the distance network itself (`name()`); the network's *radius* (the smallest node eccentricity across the whole network) is always returned as **r(radius)**, regardless of `generate()`. If `generate()` is also given, `nwgeodesic` additionally stores each node's own *eccentricity* - the length of the longest shortest path from that node to any other node - as a Stata variable under that name; omit `generate()` to skip this per-node variable entirely (unlike most other nwcommands `generate()` options, there is no default name - eccentricity is a secondary, opt-in output here, not this command's main purpose). Like the diameter, both **r(radius)** and a node's eccentricity are undefined (**r(radius) = -1**; missing for the node) when the network has unconnected pairs and **unconnected()** was not specified. An existing `generate()` variable is overwritten when **nwreplace** is specified (there is no separate **replace** option for just the variable).
+`nwgeodesic`'s primary output is the distance network itself (`name()`); the network's *radius* (the smallest node eccentricity across the whole network) is always returned as **r(radius)**, regardless of `generate()`. If `generate()` is also given, `nwgeodesic` additionally stores each node's own *eccentricity* - the length of the longest shortest path from that node to any other node - as a Stata variable under that name; omit `generate()` to skip this per-node variable entirely (unlike most other nwcommands `generate()` options, there is no default name - eccentricity is a secondary, opt-in output here, not this command's main purpose). Like the diameter, **r(radius)** is undefined (**r(radius) = -1**) when the network has unconnected pairs and **unconnected()** was not specified; a node's eccentricity is then the longest distance to the nodes it can reach. An existing `generate()` variable is overwritten when **nwreplace** is specified (there is no separate **replace** option for just the variable).
 
-By default, the distance between two unconnected nodes *i* and *j*, i.e. there is no path that connects node *i* with node *j*, is set to missing. Non-existent paths are excluded from the calculation of the average shortest path length (unless option **unconnected()** is specified).
+By default, the distance between two unconnected nodes *i* and *j*, i.e. there is no path that connects node *i* with node *j*, is set to missing. The average shortest path length, the diameter and the radius over all pairs are then not defined; the output says so and gives instead the share of pairs that are connected and the average and longest distance over the connected pairs (unless option **unconnected()** is specified).
 
 The option **unconnected(max)** sets the distance of non-connected nodes to the maximum distance observed in the network plus 1.
 
@@ -64,25 +64,24 @@ where *w_ih* is the weight (value) of the tie between node *i* and node *h*. Whe
 
 which is essentially what Newman (2001) and Brandes (2001) suggested. This simply equates the distance between two nodes with the inverse of the weight of the tie that connects them. Such a solution for dealing with valued networks, however, does not explicitly account for the number of steps that need to be taken to connect to nodes. In contrast, Opsahl et al. (2010) allows giving different weight to longer and shorter paths. When ***alpha* = 0** the formula above ignores tie weights.
 
-## Supported network types
-
-Binary: yes. Directed: yes - symmetrized by default (matching [nwcloseness](nwcloseness)/[nwkatz](nwkatz)'s own identical convention), `sym`/`nosym` control it explicitly. Weighted: yes, via `alpha()` - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(nodes)** --- number of nodes
+- **r(numpaths)** --- number of shortest paths
+- **r(diameter)** --- network diameter
+- **r(radius)** --- network radius (minimum node eccentricity)
+- **r(avgpath)** --- average shortest path length (-1 if some pairs are unconnected)
+- **r(unconnected)** --- number of unconnected pairs
+- **r(alpha)** --- value of *alpha* used (1 on an unvalued network)
+- **r(connected)** --- share of pairs connected (only if some are not)
+- **r(avgpath_connected)** --- average distance over connected pairs (only if some are not)
+- **r(diameter_connected)** --- longest distance over connected pairs (only if some are not)
 
-- **r(nodes)** number of nodes
-- **r(numpaths)** number of shortest paths
-- **r(diameter)** network diameter
-- **r(radius)** network radius (minimum node eccentricity)
-- **r(avgpath)** average shortest path length
-
-**Macros**
-
-- **r(symmetrized)** calculated on symmetrized network
-- **r(netname)** name of the original network
-- **r(netname)** name of the new distance network
+- **Macros**
+- **r(symmetrized)** --- calculated on symmetrized network
+- **r(netname)** --- name of the original network
+- **r(geodesic)** --- name of the new distance network
 
 ## References
 
@@ -96,8 +95,6 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 - [nwcloseness](nwcloseness), [nwreach](nwreach), [nwpath](nwpath), [nwcomponents](nwcomponents)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

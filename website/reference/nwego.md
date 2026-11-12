@@ -38,7 +38,7 @@ silent]
 
 **Ego-network density** is the proportion of possible ties actually present *among the alters themselves* - ego itself is excluded, the standard convention for reporting how interconnected an ego's contacts are with each other, independent of their (by definition, complete) ties to ego. For a directed network, ordered alter-alter pairs are counted (an alter set of size *k* has *k(k-1)* possible ties); for an undirected network, unordered pairs are counted (*k(k-1)/2* possible ties). An ego with fewer than 2 alters has no pair to assess - density is reported missing for it, not spuriously 0 or 1.
 
-`sizevar()` and `densvar()` are both required and name the Stata variables that store ego-network size and density, respectively.
+`sizevar()` and `densvar()` are both required and name the Stata variables that store ego-network size and density, respectively. With a list of several networks the variables are numbered by network: *sizevar***1** and *densvar***1** for the first network, *sizevar***2** and *densvar***2** for the second, and so on.
 
 ## Examples
 
@@ -46,10 +46,6 @@ silent]
 . nwwebuse florentine, nwclear
 . nwego flomarriage, sizevar(_egosize) densvar(_egodensity)
 ```
-
-## Supported network types
-
-Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alter-alter density counts ordered pairs. Weighted: not used - only presence/absence of a tie determines ego-network membership and alter-alter density; tie strength does not affect these measures. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
 
 ## References
 
@@ -59,8 +55,6 @@ Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harv
 
 - [nwdegree](nwdegree), [nwaltergen](nwaltergen), [nwconstraint](nwconstraint), [nwburt](nwburt)
 
-- last certified : 21 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

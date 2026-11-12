@@ -9,6 +9,7 @@
 {p2col :nwmaxflow {hline 2}}Maximum flow and minimum cut between two nodes{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -17,8 +18,8 @@
 {cmd:,}
 {opt source(nodename)}
 {opt sink(nodename)}
-[{opt weighted}
-{opth generate(newvarname)}
+[{opt weight:ed}
+{opth gen:erate(newvarname)}
 {opt replace}]
 
 {synoptset 25 tabbed}{...}
@@ -26,11 +27,12 @@
 {synoptline}
 {synopt:{opt source(nodename)}}The flow's own origin node{p_end}
 {synopt:{opt sink(nodename)}}The flow's own destination node{p_end}
-{synopt:{opt weighted}}Use tie VALUES as edge capacities instead of a uniform capacity of 1 per tie{p_end}
-{synopt:{opth generate(newvarname)}}Save a 0/1 variable marking which nodes are on the SOURCE side of the minimum cut{p_end}
+{synopt:{opt weight:ed}}Use tie VALUES as edge capacities instead of a uniform capacity of 1 per tie{p_end}
+{synopt:{opth gen:erate(newvarname)}}Save a 0/1 variable marking which nodes are on the SOURCE side of the minimum cut{p_end}
 {synopt:{opt replace}}Replace an existing variable of the same name{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -46,7 +48,7 @@ when a network's own tie strength genuinely represents a throughput/capacity (e.
 bandwidth, transaction size).
 
 {pstd}
-{opth generate(newvarname)} marks which nodes remain reachable from {opt source()} in the FINAL
+{opth gen:erate(newvarname)} marks which nodes remain reachable from {opt source()} in the FINAL
 residual graph once the flow has converged - the standard max-flow/min-cut construction. Every
 existing tie from a marked (1) node to an unmarked (0) node is one of the edges in the minimum cut;
 {cmd:r(cutedges)} reports how many such edges exist, without requiring {opt generate()} to be given
@@ -58,29 +60,40 @@ the underlying idea that a directed relation only "carries" one way); an undirec
 symmetric tie matrix already represents capacity in both directions naturally, needing no special
 handling.
 
-{title:Supported network types}
+
+{title:Network types}
 
 {pstd}
-Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual
-directedness (unlike {help nwlambda}, which always symmetrizes first; a flow network is inherently
-a directed concept). Weighted: yes, via {opt weighted}. Signed: not checked - a negative capacity
-has no meaning here. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} directions are used. {bf:Valued:} each tie has capacity 1 by default; {opt weighted} uses the tie
+values as capacities. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} a
+negative capacity has no meaning. See {help nwnetworktypes}.{p_end}
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(maxflow)}	the maximum flow value
-	  {bf:r(cutedges)}	number of edges in the minimum cut
+{title:Limits}
 
-	Macros
-	  {bf:r(source)}	the source node requested
-	  {bf:r(sink)}		the sink node requested
+{pstd}
+A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} capacity and flow matrices: 100,000 nodes with 10 ties per node take 1.7 seconds. The result (flow value, source side of
+the minimum cut, number of cut ties) is the same as that of the matrix route.
+
 
 {title:Examples}
 
 	{cmd:. nwset, mat((0,2,1,0\0,0,1,1\0,0,0,2\0,0,0,0)) name(flownet) directed valued labs(A,B,C,D)}
 	{cmd:. nwmaxflow flownet, source(A) sink(D) weighted generate(cutside)}
 	{cmd:. nwmaxflow flownet, source(A) sink(D)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(maxflow)}}the maximum flow value{p_end}
+{synopt:{bf:r(cutedges)}}number of edges in the minimum cut{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(source)}}the source node requested{p_end}
+{synopt:{bf:r(sink)}}the sink node requested{p_end}
+
 
 {title:References}
 
@@ -91,16 +104,10 @@ Ford, L.R., Fulkerson, D.R. (1956). Maximal flow through a network. {it:Canadian
 Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficiency for network flow
 problems. {it:Journal of the ACM} 19(2), 248-264.
 
-{title:Limits}
-
-{pstd}
-A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} capacity and flow matrices: 100,000 nodes with 10 ties per node take 1.7 seconds. The result (flow value, source side of the minimum cut, number of cut ties) is the same as that of the matrix route.
 
 {title:See also}
 
 	{help nwmatching}, {help nwlambda}, {help nwkcomponents}, {help nwbridges}
 
-last certified : 31 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

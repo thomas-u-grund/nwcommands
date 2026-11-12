@@ -22,7 +22,7 @@ generate(namelist)]
 
 | | |
 |---|---|
-| `generate(namelist)` | Up to 3 names, for the per-node balance ratio, count of balanced triads, and count of closed triads a node belongs to; default = *_balance _baltriad _clotriad* |
+| `generate(namelist)` | Up to 3 names, for the per-node balance ratio, count of balanced triads, and count of closed triads a node belongs to; default = *_balance _baltriad _clotriad*; existing variables of these names are replaced |
 
 ## Description
 
@@ -47,18 +47,13 @@ For each node, `nwbalance` generates the number of closed triads it belongs to, 
 ```
 Of the 4 triads in this network, *A-B-C* (all positive) and *A-B-D* (two negative ties) are balanced; *A-C-D* and *B-C-D* (one negative tie each) are not.
 
-## Supported network types
-
-Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when **either** direction has a tie; if both directions are tied (a mutual dyad), the value used for the balance product is whichever direction is checked first (*i->j* before *j->i*), which matters only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is the command's whole purpose - see Description. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a bipartite graph has no triangle: every count is 0 and the balance is missing.
-
 ## Stored results
 
-**Scalars**
-
-- **r(closed_triad)** number of closed triads
-- **r(balanced_triad)** number of balanced closed triads
-- **r(unbalanced_triad)** number of unbalanced closed triads
-- **r(balance)** *balanced_triad* / *closed_triad*
+- **Scalars**
+- **r(closed_triad)** --- number of closed triads
+- **r(balanced_triad)** --- number of balanced closed triads
+- **r(unbalanced_triad)** --- number of unbalanced closed triads
+- **r(balance)** --- *balanced_triad* / *closed_triad*
 
 ## References
 
@@ -68,8 +63,6 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 - [nwtriads](nwtriads), [nwvalue](nwvalue)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

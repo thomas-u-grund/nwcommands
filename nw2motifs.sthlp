@@ -9,8 +9,9 @@
 {viewerjumpto "Motifs and positions" "nw2motifs##table"}{...}
 {viewerjumpto "Examples" "nw2motifs##examples"}{...}
 {viewerjumpto "Stored results" "nw2motifs##results"}{...}
-{viewerjumpto "Supported network types" "nw2motifs##types"}{...}
+{viewerjumpto "Network types" "nw2motifs##types"}{...}
 {viewerjumpto "References" "nw2motifs##references"}{...}
+
 {title:Title}
 
 {p2colset 5 18 20 2}{...}
@@ -32,7 +33,8 @@
 {synopt:{opt replace}}replace existing variables{p_end}
 {synopt:{opt mat:rix(name)}}store the node position counts in a Stata matrix (one row per node, columns np1, np2, ...); only if the network has no more nodes than a matrix may have rows{p_end}
 {synopt:{opt norm:alise}}add the four normalised frequencies of {cmd:bmotif::mcount} to the motif table{p_end}
-{synopt:{opt posn:orm(type)}}normalise the node position counts as {cmd:bmotif::node_positions}: {cmd:none} (default), {cmd:sum}, {cmd:position}, {cmd:sizeclass}, {cmd:sizeclass_plus1}, {cmd:sizeclass_NAzero}, {cmd:levelsize}, {cmd:levelsize_plus1}, {cmd:levelsize_NAzero}, {cmd:motif}, {cmd:motif_plus1}, {cmd:motif_NAzero}{p_end}
+{synopt:{opt posn:orm(type)}}normalise the node position counts as {cmd:bmotif::node_positions}: {cmd:none} (default), {cmd:sum}, {cmd:position}, {cmd:sizeclass}, {cmd:sizeclass_plus1},
+{cmd:sizeclass_NAzero}, {cmd:levelsize}, {cmd:levelsize_plus1}, {cmd:levelsize_NAzero}, {cmd:motif}, {cmd:motif_plus1}, {cmd:motif_NAzero}{p_end}
 {synopt:{opt silent}}suppress the output{p_end}
 {synoptline}
 
@@ -41,41 +43,64 @@
 {title:Description}
 
 {pstd}
-{cmd:nw2motifs} is the form of {help nwmotifs} for a two-mode network: {cmd:nwmotifs} uses it by default on a two-mode network (and {opt onemode} forces the 4-node census of the bipartite graph). The two names give the same result with the same options.
+{cmd:nw2motifs} is the form of {help nwmotifs} for a two-mode network: {cmd:nwmotifs} uses it by default on a two-mode network (and {opt onemode} forces the 4-node census of the bipartite graph). The
+two names give the same result with the same options.
 
 {pstd}
-{cmd:nw2motifs} counts the bipartite motifs of a two-mode network: the small connected patterns of ties between two sets of nodes that make up the building blocks of species-by-site, plant-pollinator and membership networks (Baker et al. 2015; Simmons et al. 2019, {it:Methods in Ecology and Evolution}). There are 17 motifs of two to five nodes and 27 more of six nodes (44 in all), and each motif has one or more {it:positions} (46 for the five-node set, 148 with six nodes): the nodes of a motif that are not equivalent, such as the end and the middle of a path. The command gives two things.
+{cmd:nw2motifs} counts the bipartite motifs of a two-mode network: the small connected patterns of ties between two sets of nodes that make up the building blocks of species-by-site, plant-pollinator
+and membership networks (Baker et al. 2015; Simmons et al. 2019, {it:Methods in Ecology and Evolution}). There are 17 motifs of two to five nodes and 27 more of six nodes (44 in all), and each motif
+has one or more {it:positions} (46 for the five-node set, 148 with six nodes): the nodes of a motif that are not equivalent, such as the end and the middle of a path. The command gives two things.
 
 {phang2}1. The {bf:motif table}, the number of times each motif occurs in the network (what {cmd:bmotif::mcount} returns), shown on screen and returned in {cmd:r(motifs)}.{p_end}
-{phang2}2. The {bf:node position counts}, for every node the number of times it holds each position (what {cmd:bmotif::node_positions} returns), stored in variables with {opt generate()} or in a matrix with {opt matrix()}. They quantify the structural role of a node, for example in a plant-pollinator network.{p_end}
+{phang2}2. The {bf:node position counts}, for every node the number of times it holds each position (what {cmd:bmotif::node_positions} returns), stored in variables with {opt generate()} or in a
+matrix with {opt matrix()}. They quantify the structural role of a node, for example in a plant-pollinator network.{p_end}
 
 {pstd}
-A motif occurrence is a set of nodes whose subgraph, with {it:all} the ties between them, is connected and has the shape of the motif; an occurrence is counted once however many ways it can be read (the motifs are induced subgraphs, so a path of two rows and two columns and a four-cycle are two different motifs, and a set of four nodes is exactly one of them). The first mode of the network (mode 1) forms the {it:rows} of the biadjacency matrix of {cmd:bmotif} and the second mode the {it:columns}; the numbering of the motifs and of the positions is the one of {cmd:bmotif} (Simmons et al.), listed in the table below. The motif table equals {cmd:bmotif::mcount} and the position counts {cmd:bmotif::node_positions} (bmotif 2.0.2) exactly, on a toy network, the Southern women, the Swedish directors, a subsample of them and 34 random networks.
+A motif occurrence is a set of nodes whose subgraph, with {it:all} the ties between them, is connected and has the shape of the motif; an occurrence is counted once however many ways it can be read
+(the motifs are induced subgraphs, so a path of two rows and two columns and a four-cycle are two different motifs, and a set of four nodes is exactly one of them). The first mode of the network (mode
+1) forms the {it:rows} of the biadjacency matrix of {cmd:bmotif} and the second mode the {it:columns}; the numbering of the motifs and of the positions is the one of {cmd:bmotif} (Simmons et al.),
+listed in the table below. The motif table equals {cmd:bmotif::mcount} and the position counts {cmd:bmotif::node_positions} (bmotif 2.0.2) exactly, on a toy network, the Southern women, the Swedish
+directors, a subsample of them and 34 random networks.
 
 {pstd}
-The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network: the 5,092 directors and 455 firms of {cmd:ftdirectors_se} (5,669 ties) take 0.04 seconds for the motifs and positions up to five nodes, and 0.05 seconds with {opt sixnode}; a random network of 1,000 and 150 nodes with 14,800 ties takes 0.05 and 0.9 seconds. (The R function takes about a minute for the five-node set on the directors.) The time with {opt sixnode} grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are exact up to 9 x 10^15. The command stops with a message when the plugin of the installed copy is older than the command or missing for the platform: update the installation ({cmd:net install nwcommands, replace}) and restart Stata.
+The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network: the 5,092 directors and 455 firms of {cmd:ftdirectors_se} (5,669 ties) take 0.04 seconds for
+the motifs and positions up to five nodes, and 0.05 seconds with {opt sixnode}; a random network of 1,000 and 150 nodes with 14,800 ties takes 0.05 and 0.9 seconds. (The R function takes about a
+minute for the five-node set on the directors.) The time with {opt sixnode} grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are exact up
+to 9 x 10^15. The command stops with a message when the plugin of the installed copy is older than the command or missing for the platform: update the installation
+({cmd:net install nwcommands, replace}) and restart Stata.
 
 {pstd}
-The node position counts of a node that is in no motif (an isolate) are zero. In the variables and the matrix the nodes are in the order of the network, the rows of the matrix of {cmd:bmotif} being the nodes of mode 1 in that order and its columns those of mode 2; the position ids {it:np1} to {it:np148} are those of {cmd:bmotif} ({it:stub}1 holds position 1).
+The node position counts of a node that is in no motif (an isolate) are zero. In the variables and the matrix the nodes are in the order of the network, the rows of the matrix of {cmd:bmotif} being
+the nodes of mode 1 in that order and its columns those of mode 2; the position ids {it:np1} to {it:np148} are those of {cmd:bmotif} ({it:stub}1 holds position 1).
 
 
 {marker options}{...}
 {title:Options}
 
 {phang}
-{opt sixnode} counts the motifs of six nodes (motifs 18 to 44, positions 47 to 148) as well. Without it only the motifs up to five nodes are counted (17 motifs, 46 positions), as {cmd:bmotif} does by default.
+{opt sixnode} counts the motifs of six nodes (motifs 18 to 44, positions 47 to 148) as well. Without it only the motifs up to five nodes are counted (17 motifs, 46 positions), as {cmd:bmotif} does by
+default.
 
 {phang}
-{opt generate(stub)} stores the counts of the positions in double variables {it:stub}1 to {it:stub}46 ({it:stub}148 with {opt sixnode}), one row per node of the network in the order of the nodes. The data set is aligned with the network first, as in the other node-level commands. Existing variables stop the command unless {opt replace} is given.
+{opt generate(stub)} stores the counts of the positions in double variables {it:stub}1 to {it:stub}46 ({it:stub}148 with {opt sixnode}), one row per node of the network in the order of the nodes. The
+data set is aligned with the network first, as in the other node-level commands. Existing variables stop the command unless {opt replace} is given.
 
 {phang}
-{opt matrix(name)} stores the same table as a Stata matrix with one row per node and the columns np1, np2, ... The matrix is limited by the largest matrix Stata allows (800 rows in Stata BE); for larger networks use {opt generate()}.
+{opt matrix(name)} stores the same table as a Stata matrix with one row per node and the columns np1, np2, ... The matrix is limited by the largest matrix Stata allows (800 rows in Stata BE); for
+larger networks use {opt generate()}.
 
 {phang}
-{opt normalise} adds to {cmd:r(motifs)} (and to the display) the four normalisations of {cmd:bmotif::mcount}: {cmd:normalise_sum} (the frequency as a share of all motifs counted), {cmd:normalise_sizeclass} (as a share of the motifs with the same number of nodes), {cmd:normalise_levelsize} (as a share of the motifs with the same number of rows and columns; motifs that are alone in their class always give 1) and {cmd:normalise_nodesets} (as a share of the number of node sets that could form the motif, choose(rows, a) times choose(columns, b)). A share whose denominator is zero is missing.
+{opt normalise} adds to {cmd:r(motifs)} (and to the display) the four normalisations of {cmd:bmotif::mcount}: {cmd:normalise_sum} (the frequency as a share of all motifs counted),
+{cmd:normalise_sizeclass} (as a share of the motifs with the same number of nodes), {cmd:normalise_levelsize} (as a share of the motifs with the same number of rows and columns; motifs that are alone
+in their class always give 1) and {cmd:normalise_nodesets} (as a share of the number of node sets that could form the motif, choose(rows, a) times choose(columns, b)). A share whose denominator is
+zero is missing.
 
 {phang}
-{opt posnorm(type)} divides the node position counts (in the variables and the matrix) as {cmd:bmotif::node_positions(normalisation = )} does: {cmd:sum} by the number of times the node holds any position (row sums); {cmd:position} by the number of times any node holds the position (column sums); {cmd:sizeclass} by the node's count in the positions of motifs with the same number of nodes; {cmd:levelsize} by its count in the positions of motifs with the same number of rows and columns; {cmd:motif} by its count in the positions of the same motif. The suffix {cmd:_plus1} adds one to all counts first (so that nodes outside a class are not missing); the suffix {cmd:_NAzero} replaces the missing values of a node that holds none of the positions of the class by 0. Without them such values are missing. It needs {opt generate()} or {opt matrix()}; the table {cmd:r(motifs)} is not affected.
+{opt posnorm(type)} divides the node position counts (in the variables and the matrix) as {cmd:bmotif::node_positions(normalisation = )} does: {cmd:sum} by the number of times the node holds any
+position (row sums); {cmd:position} by the number of times any node holds the position (column sums); {cmd:sizeclass} by the node's count in the positions of motifs with the same number of nodes;
+{cmd:levelsize} by its count in the positions of motifs with the same number of rows and columns; {cmd:motif} by its count in the positions of the same motif. The suffix {cmd:_plus1} adds one to all
+counts first (so that nodes outside a class are not missing); the suffix {cmd:_NAzero} replaces the missing values of a node that holds none of the positions of the class by 0. Without them such
+values are missing. It needs {opt generate()} or {opt matrix()}; the table {cmd:r(motifs)} is not affected.
 
 {phang}
 {opt silent} suppresses the output.
@@ -85,7 +110,9 @@ The node position counts of a node that is in no motif (an isolate) are zero. In
 {title:The motifs and their node positions}
 
 {pstd}
-The numbering is that of {cmd:bmotif} (the figure of its vignette "bmotif-dictionary"). {it:r1}, {it:r2}, ... are the rows (nodes of mode 1) and {it:c1}, {it:c2}, ... the columns (nodes of mode 2) of an occurrence; "r1:12" means that row r1 is tied to columns c1 and c2. The last column lists the position id of each row node, then (after the bar) of each column node, in the order r1, r2, ... | c1, c2, ...; nodes with the same id play the same role. The positions of motif {it:m} are the consecutive ids from the smallest to the largest listed. Every row-column pair that is not listed is not tied.
+The numbering is that of {cmd:bmotif} (the figure of its vignette "bmotif-dictionary"). {it:r1}, {it:r2}, ... are the rows (nodes of mode 1) and {it:c1}, {it:c2}, ... the columns (nodes of mode 2) of
+an occurrence; "r1:12" means that row r1 is tied to columns c1 and c2. The last column lists the position id of each row node, then (after the bar) of each column node, in the order r1, r2, ... | c1,
+c2, ...; nodes with the same id play the same role. The positions of motif {it:m} are the consecutive ids from the smallest to the largest listed. Every row-column pair that is not listed is not tied.
 
 {col 3}motif{col 9}nodes{col 15}r x c{col 23}ties{col 53}positions (rows | columns)
 {hline 75}
@@ -136,7 +163,21 @@ The numbering is that of {cmd:bmotif} (the figure of its vignette "bmotif-dictio
 {hline 75}
 
 {pstd}
-Examples: motif 1 is a single tie (positions 2 for the row and 1 for the column); motifs 2 and 3 are the two-ties stars (one row with two columns, two rows with one column); motif 5 is the path of two rows and two columns and motif 6 the four-cycle; motif 7 and motif 4 are the stars with three columns and three rows. Positions 1 to 2 are those of the two-node motif, 3 to 6 of the three-node motifs, 7 to 16 of the four-node motifs, 17 to 46 of the five-node motifs and 47 to 148 of the six-node motifs.
+Examples: motif 1 is a single tie (positions 2 for the row and 1 for the column); motifs 2 and 3 are the two-ties stars (one row with two columns, two rows with one column); motif 5 is the path of two
+rows and two columns and motif 6 the four-cycle; motif 7 and motif 4 are the stars with three columns and three rows. Positions 1 to 2 are those of the two-node motif, 3 to 6 of the three-node motifs,
+7 to 16 of the four-node motifs, 17 to 46 of the five-node motifs and 47 to 148 of the six-node motifs.
+
+
+{marker types}{...}
+{marker valued}{...}
+{marker twomode}{...}
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not applicable. {bf:Valued:} a tie counts when its value is above zero; the values are ignored (the
+command prints a note) and the weighted measures of {cmd:bmotif} are not offered. {bf:Two-mode:} yes - the command needs
+a two-mode network (one-mode networks: error 198, use {help nwmotifs}); mode 1 = rows. {bf:Signed:} negative ties count
+as absent. See {help nwnetworktypes}.{p_end}
 
 
 {marker examples}{...}
@@ -181,38 +222,19 @@ Examples: motif 1 is a single tie (positions 2 for the row and 1 for the column)
 {cmd:nw2motifs} stores in {cmd:r()}:
 
 {synoptset 20 tabbed}{...}
-{p2col 5 20 24 2: Scalars}{p_end}
+{p2col 5 16 20 2: Scalars}{p_end}
 {synopt:{cmd:r(sixnode)}}1 if the motifs of six nodes were counted{p_end}
 {synopt:{cmd:r(n_mode1)}}number of nodes of mode 1 (rows){p_end}
 {synopt:{cmd:r(n_mode2)}}number of nodes of mode 2 (columns){p_end}
 
-{p2col 5 20 24 2: Matrices}{p_end}
-{synopt:{cmd:r(motifs)}}17 x 3 (44 x 3 with {opt sixnode}): motif, nodes, frequency; 17 x 7 (44 x 7) with {opt normalise}, with the columns normalise_sum, normalise_sizeclass, normalise_levelsize and normalise_nodesets added{p_end}
+{p2col 5 16 20 2: Matrices}{p_end}
+{synopt:{cmd:r(motifs)}}17 x 3 (44 x 3 with {opt sixnode}): motif, nodes, frequency; 17 x 7 (44 x 7) with {opt normalise}, with the columns normalise_sum, normalise_sizeclass, normalise_levelsize and
+normalise_nodesets added{p_end}
 
-{p2col 5 20 24 2: Macros}{p_end}
+{p2col 5 16 20 2: Macros}{p_end}
 {synopt:{cmd:r(netname)}}name of the network{p_end}
 {synopt:{cmd:r(posnorm)}}the normalisation of the node position counts{p_end}
 {p2colreset}{...}
-
-
-{marker types}{...}
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued: a tie counts when its value is above zero; the values are ignored and the command prints the usual one-line note on a valued network (bmotif's mean weight of the motifs is not offered). Two-mode: yes - native, the command needs a two-mode network and counts the motifs of the two modes as {cmd:bmotif} does (mode 1 = rows). For one-mode networks the 4-node census is {help nwmotifs}.
-
-
-{marker valued}{...}
-{title:Valued networks}
-
-{pstd}
-A network is valued when it was created with tie values (see {help nwnetworktypes}). Motif counts are defined on the presence of ties: a tie of a valued network is present when its value is above zero, as {cmd:bmotif} converts a weighted matrix. The weighted measures of {cmd:bmotif} (the mean weight of the occurrences of a motif and the weighted position measures) are not offered. On a valued network the command prints "(note: tie values are ignored; this measure is binary)".
-
-{marker twomode}{...}
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes, the command needs a two-mode network (one-mode networks are refused with error 198; use {help nwmotifs} for the 4-node census of a one-mode network). The nodes of mode 1 are the rows and those of mode 2 the columns of the biadjacency matrix of {cmd:bmotif}. For one-mode networks the 4-node census of {help nwmotifs} counts all subgraphs; {cmd:nw2motifs} is its two-mode counterpart.
 
 
 {marker references}{...}
@@ -222,7 +244,8 @@ Two-mode: yes, the command needs a two-mode network (one-mode networks are refus
 Baker, N., R. Kaartinen, T. Roslin, and D. B. Stouffer. 2015. Species' roles in food webs show fidelity across a highly variable oak forest. {it:Ecography} 38: 130-139.
 
 {phang}
-Simmons, B. I., M. J. M. Sweering, M. Schillinger, L. V. Dicks, W. J. Sutherland, and R. Di Clemente. 2019. bmotif: A package for motif analyses of bipartite networks. {it:Methods in Ecology and Evolution} 10: 695-701.
+Simmons, B. I., M. J. M. Sweering, M. Schillinger, L. V. Dicks, W. J. Sutherland, and R. Di Clemente. 2019. bmotif: A package for motif analyses of bipartite
+networks. {it:Methods in Ecology and Evolution} 10: 695-701.
 
 {phang}
 Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutionary conservation of species' roles in food webs. {it:Science} 335: 1489-1492.
@@ -234,4 +257,4 @@ Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutiona
 {help nwmotifs}, {help nw2set}, {help nw2nested}, {help nw2clustering}, {help nw2degree}, {help nwnetworktypes}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

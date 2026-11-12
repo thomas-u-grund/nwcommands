@@ -26,7 +26,7 @@ mat(matamatrix)
 
 ## Description
 
-This creates a Mata matrix with name *matatamatrix* holding a copy of the adjacency matrix of a network.
+This creates a Mata matrix with name *matamatrix* holding a copy of the adjacency matrix of a network.
 
 You do not need to know Mata to use any of the nwcommands, but sometimes you might want to obtain the adjacency matrix, for example, when programming your own network commands.
 
@@ -39,9 +39,13 @@ The adjacency matrix of a network can also be displayed with:
 ```
 Advanced programmers who might want to directly interact with the adjacency matrix of a network and not with a copy of it, see [advanced network programming](nwprogramming).
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a plain copy of the raw adjacency matrix exactly as stored, independent of any of these properties.
+- **Macros**
+- **r(netname)** --- name of the network
+- **r(adj_copy)** --- name of the new Mata matrix
+- **r(adj)** --- Mata expression for the network's own matrix (see [nwtomatafast](nwtomatafast))
+- **r(netobj)** --- name of the Mata network object
 
 ## See also
 
@@ -49,4 +53,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns 
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

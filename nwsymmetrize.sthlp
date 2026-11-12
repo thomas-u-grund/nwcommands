@@ -30,10 +30,10 @@ elsewhere (e.g. {help nwcollapse}, {help nwexpand}, {help nwrecode}). {help nwsy
 fully supported - see its own help file for the complete option
 reference, mode() details, and worked examples.
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Identical to {help nwsym} - see that command's help file.
+As {help nwsym}. See {help nwnetworktypes}.{p_end}
 
 {title:Examples}
 
@@ -49,7 +49,5 @@ This loads the Glasgow data and symmetrizes the network {it:glasgow1}, identical
 {pstd}
 See {help nwsym}.
 
-last certified : 28 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

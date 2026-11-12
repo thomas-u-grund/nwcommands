@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.20.0  12nov2026}{...}
+{* *! version 3.20.1  12nov2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -18,11 +18,13 @@
 {title:Description}
 
 {pstd}
-{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}, whether it is installed and in which version.
+{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}, whether it
+is installed and in which version.
 The model packages are installed separately ({cmd:nwinstall, models}, see {help nwinstall##models:help nwinstall}); each has its own {cmd:version} subcommand, for example {cmd:nwsaom version}.
 
 {pstd}
-Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is installed from {cmd:net install nwcommands, from(https://nwcommands.org/net/) replace}; an older one can be installed by its tag, for example
+Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is installed from {cmd:net install nwcommands, from(https://nwcommands.org/net/) replace}; an older one can be installed by
+its tag, for example
 {cmd:net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.0.0/") replace}.
 
 {title:Stored results}
@@ -34,4 +36,4 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 {pstd}Thomas U. Grund, RWTH Aachen University{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

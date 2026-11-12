@@ -9,6 +9,7 @@
 {p2col :nwmixing {hline 2}}E-I index and mixing table for a categorical node attribute{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -33,17 +34,18 @@ ties by{p_end}
 value marked{p_end}
 {synopt:{opt eiplotoptions(string)}}Additional options forwarded to the {opt eiplot}'s own
 {help kdensity}{p_end}
-{synopt:{opt plot}}Plot the ego/alter mixing table via {help tabplot}{p_end}
-{synopt:{opt plotoptions(string)}}Additional options forwarded to {opt plot}'s own {help tabplot}{p_end}
+{synopt:{opt plot}}Plot the ego/alter mixing table as a bar plot in the style of {cmd:tabplot} (built in; see Remarks on plot){p_end}
+{synopt:{opt plotoptions(string)}}Additional options forwarded to {help twoway} for {opt plot}{p_end}
 {synopt:{opth permutations(int)}}Number of QAP permutations for the E-I index's own null
 distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the
 observed table/index are reported){p_end}
 {synopt:{opth save(filename)}}Save the QAP permutation draws (variable {it:EI_simulated}) and the
-observed value (variable {it:EI_observed}) to a new dataset{p_end}
+observed value (variable {it:EI_observed}) to a dataset (an existing file is replaced); only when {opt permutations()} > 1{p_end}
 {synopt:{it:tab_options}}Any other option is forwarded to the underlying {help tabulate twoway:tab}
 call that builds the mixing table (e.g. {opt row}, {opt column}, {opt cell}){p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -66,50 +68,21 @@ permutation test: the attribute assignment is held fixed while the network itsel
 randomly permuted, building a null distribution of the E-I index under "no association between this
 attribute and tie placement", and reports a two-sided p-value.
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - ego/alter mixing is directional for a directed network (an
-{it:attribute}{cmd:_ego}/{it:attribute}{cmd:_alter} pair is not symmetric); an undirected network's
-own mixing table instead shows each edge counted from both endpoints, noted explicitly in the
-output. Weighted: not applicable - see Description (ties are always treated as unvalued). Signed:
-not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
-{title:Stored results}
-
-	Scalars
-	  {bf:r(EI_index)}		the observed E-I index
-	  {bf:r(EI_pvalue)}		two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0 (only when {opt permutations()} > 1)
-
-	Macros
-	  {bf:r(netname)}		the network name
-	  {bf:r(attribute)}		the {opt attribute()} variable name
-
-	Matrices
-	  {bf:r(table)}			the mixing table's own tie counts
-	  {bf:r(col)}			the mixing table's column category values
-	  {bf:r(row)}			the mixing table's row category values
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwmixing flomarriage, attribute(priorates)}
-
-{title:References}
-
-{pstd}
-Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises: An experimental
-simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 
 {title:Remarks on plot}
 
 {pstd}
-The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any
+further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} the mixing table is directional (ego to alter); on an undirected network every tie is counted from both
+ends, as the output notes. {bf:Valued:} tie values are ignored (every tie counts as present; the command prints a note).
+{bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See
+{help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
@@ -125,9 +98,41 @@ The permutations of {opt permutations()} act on the stored ties of a network tha
 (inv u, inv v) of the permuted matrix, O(ties) per draw). 20,000 nodes
 with 20 permutations: 1.2 seconds.
 
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwmixing flomarriage, attribute(priorates)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(EI_index)}}the observed E-I index{p_end}
+{synopt:{bf:r(EI_pvalue)}}two-sided QAP permutation p-value with the plus-one Monte Carlo correction, 2(1 + k)/(permutations + 1) with k the number of draws in the smaller tail, so that it is never 0
+(only when {opt permutations()} > 1){p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}the network name{p_end}
+{synopt:{bf:r(attribute)}}the {opt attribute()} variable name{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(table)}}the mixing table's own tie counts{p_end}
+{synopt:{bf:r(col)}}the mixing table's column category values{p_end}
+{synopt:{bf:r(row)}}the mixing table's row category values{p_end}
+
+
+{title:References}
+
+{pstd}
+Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises: An experimental
+simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
+
+
 {title:See also}
 
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

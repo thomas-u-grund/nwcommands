@@ -76,7 +76,7 @@ two networks {it:flomarriage} and {it:flobusiness}.
 {title:Advanced programming with network expression}
 
 {pstd}
-When writing own network programs one can also include network expressions using {bf:_nwnevalnetexp}. The syntax for this
+When writing own network programs one can also include network expressions using {bf:_nwevalnetexp}. The syntax for this
 command is:
 
 	{bf:_nwevalnetexp} {it:netexp} % {it:matamatrix}
@@ -86,4 +86,4 @@ This evaluates whatever is in {it:netexp} and generates a new mata matrix {it:ma
 result of the network expression.
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

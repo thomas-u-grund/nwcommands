@@ -16,16 +16,13 @@
 {p 8 32 2}
 {helpb nwtab3:nwtabulate twoway}{space 7}for two-way table of network and node attribute
 
-{title:Valued networks}
+{title:Network types}
 
 {pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings,
-not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+{bf:Directed:} yes. {bf:Valued:} the one-way table and the table of two networks show the tie values; the table by
+{opt attribute()} counts ties only. On a valued network the command prints a note.
+{bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not applicable. See
+{help nwnetworktypes}.{p_end}
 
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}
@@ -96,7 +93,8 @@ With {opt attribute()} the permutation test acts on the stored ties of a network
 permutations: 1.6 seconds). The test of two networks works on the matrices.
 
 {pstd}
-Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by {cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored). A network of 100,000 nodes takes 0.1 seconds.
+Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by
+{cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored). A network of 100,000 nodes takes 0.1 seconds.
 
 {title:See also}
 
@@ -132,12 +130,12 @@ Frequency weights of Stata stop at 2,147,483,647: a directed network of more tha
 {synoptline}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
-{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index{p_end}
+{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
 
 {title:Description}
 
 {pstd}
-Teh command produces the network version of {help tabulate twoway} for two networks. It
+The command produces the network version of {help tabulate twoway} for two networks. It
 shows the overlap of ties for two networks that share the same nodes (see {help nodeid}) on the dyadic level. The
 command essentially transforms {it:netname1} and {it:netname2} in edgelist format (see {help nwtoedge})
 and runs a normal {help tabulate twoway}, hence,
@@ -201,15 +199,33 @@ where families have both a marriage and a business relationship. In contrast, th
 relationship.
 
 
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(EI_index)}}E-I index{p_end}
+{synopt:{bf:r(EI_pvalue)}}p-value of the E-I index from the QAP permutations (with {opt permutations()} > 1){p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname1)}}name of the first network{p_end}
+{synopt:{bf:r(netname2)}}name of the second network{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(table)}}the cell frequencies of the table{p_end}
+{synopt:{bf:r(row)}}the tie values of {it:netname1} (rows){p_end}
+{synopt:{bf:r(col)}}the tie values of {it:netname2} (columns){p_end}
+
+
 {title:Remarks on plot}
 
 {pstd}
-The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any
+further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
 
 
 {title:See also}
 
-	{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}
+{p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}
@@ -242,7 +258,7 @@ The {opt plot} option draws the table with a built-in bar plot (the same plot th
 {synopt:{opth attribute(varname)}}Node-level attribute{p_end}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
-{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index{p_end}
+{synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
 
 {title:Description}
 
@@ -303,17 +319,33 @@ has a seat in the civic council and the other one does not.
 
 	
 
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(EI_index)}}E-I index{p_end}
+{synopt:{bf:r(EI_pvalue)}}p-value of the E-I index from the permutations (with {opt permutations()} > 1){p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(netname)}}name of the network{p_end}
+{synopt:{bf:r(attribute)}}name of the attribute{p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(table)}}the cell frequencies of the table{p_end}
+{synopt:{bf:r(row)}}the attribute values of the sender (rows){p_end}
+{synopt:{bf:r(col)}}the attribute values of the receiver (columns){p_end}
+
+
 {title:Remarks on plot}
 
 {pstd}
-The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any
+further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
 
 
 {title:See also}
-{pstd}
-	{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}
 
-last certified : 24 Aug 2026
+{p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

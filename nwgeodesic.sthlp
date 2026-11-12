@@ -25,7 +25,7 @@
 {opth generate(newvarname)}
 {opt xvars}
 {opt force}
-{opt binary}]
+{opt bin:ary}]
 
 
 {synoptset 30 tabbed}{...}
@@ -37,10 +37,13 @@
 {synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}; the default {it:_geodesic} is overwritten without it{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
+{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via
+{bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
-{synopt:{opt force}}the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; on a platform without the plugin a valued network of more than 100 nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes){p_end}
-{synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt force}}the least-cost distances of a valued network are computed natively at any size and {opt force} is not needed; on a platform without the plugin a valued network of more than 100
+nodes stops with r(198) unless {opt force} (slow Mata routine) or {opt binary} (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000
+nodes){p_end}
+{synopt:{opt bin:ary}}Ignore the tie values of a valued network (by default they are used){p_end}
 
 
 {title:Description}
@@ -48,7 +51,7 @@
 {pstd}
 {cmd:nwgeodesic} calculates the shortest paths (also known as geodesic distances) between all nodes {it:i} and {it:j}, the average shortest path length
 and the diameter of the (un-)weighted network {help netname} according to Opsahl et al. (2010). The matrix of distances
-is saved as a new network called {help newnetname} (default: {it:geodesic}). 
+is saved as a new network called {help newnetname} (default: {it:_geodesic}). 
 
 {pstd}
 With option {opt sym} the distances are calculated from the symmetrized network. Option {opt symopt()}
@@ -62,14 +65,15 @@ allows control over the symmetrization (see options in {help nwsym}).
 longest shortest path from that node to any other node - as a Stata variable under that name;
 omit {opt generate()} to skip this per-node variable entirely (unlike most other nwcommands
 {opt generate()} options, there is no default name - eccentricity is a secondary, opt-in output
-here, not this command's main purpose). Like the diameter, both {bf:r(radius)} and a node's
-eccentricity are undefined ({bf:r(radius) = -1}; missing for the node) when the network has
-unconnected pairs and {bf:unconnected()} was not specified. An existing {opt generate()}
+here, not this command's main purpose). Like the diameter, {bf:r(radius)} is undefined ({bf:r(radius) = -1}) when the network has
+unconnected pairs and {bf:unconnected()} was not specified; a node's eccentricity is then the longest
+distance to the nodes it can reach. An existing {opt generate()}
 variable is overwritten when {bf:nwreplace} is specified (there is no separate {bf:replace} option for
 just the variable).
 
 {pstd}
-By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. The average shortest path length, the diameter and the radius over all pairs are then not defined;
+By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. The average shortest path length, the
+diameter and the radius over all pairs are then not defined;
 the output says so and gives instead the share of pairs that are connected and the average and longest
 distance over the connected pairs (unless option {bf:unconnected()} is specified). 
 
@@ -99,34 +103,30 @@ In contrast, Opsahl et al. (2010) allows giving different weight to longer and s
 the formula above ignores tie weights.
 
 
-
-{title:Valued networks}
-
-{pstd}
-A network is valued when it was created with tie values ({help nwfromedge} with a value variable, an import or a matrix with values, {cmd:nwset, valued}); the flag is shown by {help nwsummarize} and explained in {help nwnetworktypes}. On a valued network a step along a tie of value w costs 1/w^alpha, with {cmd:alpha(1)} by default, so that a stronger tie is a shorter step (Opsahl et al. 2010; {it:igraph::distances} with weights 1/w, {it:tnet::distance_w}); {cmd:alpha(-1)} reads the values as lengths, as {it:igraph} does. {opt binary} (or {cmd:alpha(0)}) counts steps. Weighted distances are computed at any size by the native plugin; on a platform without it a valued network of more than 100 nodes stops with an error unless {opt force} (slow Mata routine) or {opt binary} is given.
-On a network that is not valued, {opt binary} has no effect.
-
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
+{bf:Directed:} used as directed; {opt sym} symmetrizes the network first. {bf:Valued:} tie values are used by default: a
+step along a tie of value w costs 1/w^alpha ({opt alpha(1)} by default, {opt alpha(-1)} reads the values as lengths);
+{opt binary} (or {opt alpha(0)}) counts steps. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
 
-{pstd}
-Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation); a person is two steps from a person who shares a group.
-
-{title:References}
-
-{pstd}
-Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical Sociology} 25, 163–177.
+{title:Limits}
 
 {pstd}
-Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks: Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds,
+20,000 nodes 10 seconds and
+6.4 GB; the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
+not build the matrix.
 
 {pstd}
-Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, weighted
-networks, and centrality. {it:Physical Review E} 64, 016132.
+The distances of all pairs of nodes are an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), names {help nwcloseness},
+{help nwkatz}, {help nwcomponents} and {help nwpath} as the alternatives for sums of distances, connectedness and single pairs, and {opt force} runs it anyway.
+
+{pstd}
+Weighted distances are computed at any size by the native plugin; on a platform without it a valued network of more than
+100 nodes stops with an error unless {opt force} (slow Mata routine) or {opt binary} is given.
 
 
 {title:Example}
@@ -174,41 +174,44 @@ them the length 6.
 additional line here, and, if {opt generate()} is specified, stores each node's own
 {it:eccentricity} under that name; not reproduced above since it depends on live data.)
 
-	
-{title:Stored results}	
 
-	Scalars
-	  {bf:r(nodes)}		number of nodes
-	  {bf:r(numpaths)}	number of shortest paths
-	  {bf:r(diameter)}	network diameter
-	  {bf:r(radius)}	network radius (minimum node eccentricity)
-	  {bf:r(avgpath)}	average shortest path length (-1 if some pairs are unconnected)
-	  {bf:r(unconnected)}	number of unconnected pairs
-	  {bf:r(connected)}	share of pairs connected (only if some are not)
-	  {bf:r(avgpath_connected)}	average distance over connected pairs (only if some are not)
-	  {bf:r(diameter_connected)}	longest distance over connected pairs (only if some are not)
-		  
-	Macros
-	  {bf:r(symmetrized)}	calculated on symmetrized network
-	  {bf:r(netname)}	name of the original network
-	  {bf:r(netname)}	name of the new distance network	  
-		  
-		  
-{title:Limits}
+{title:Stored results}
 
-{pstd}
-The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and
-6.4 GB; the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
-not build the matrix.
+{synoptset 23 tabbed}{...}
+{p2col 5 23 27 2: Scalars}{p_end}
+{synopt:{bf:r(nodes)}}number of nodes{p_end}
+{synopt:{bf:r(numpaths)}}number of shortest paths{p_end}
+{synopt:{bf:r(diameter)}}network diameter{p_end}
+{synopt:{bf:r(radius)}}network radius (minimum node eccentricity){p_end}
+{synopt:{bf:r(avgpath)}}average shortest path length (-1 if some pairs are unconnected){p_end}
+{synopt:{bf:r(unconnected)}}number of unconnected pairs{p_end}
+{synopt:{bf:r(alpha)}}value of {it:alpha} used (1 on an unvalued network){p_end}
+{synopt:{bf:r(connected)}}share of pairs connected (only if some are not){p_end}
+{synopt:{bf:r(avgpath_connected)}}average distance over connected pairs (only if some are not){p_end}
+{synopt:{bf:r(diameter_connected)}}longest distance over connected pairs (only if some are not){p_end}
+		  
+{p2col 5 23 27 2: Macros}{p_end}
+{synopt:{bf:r(symmetrized)}}calculated on symmetrized network{p_end}
+{synopt:{bf:r(netname)}}name of the original network{p_end}
+{synopt:{bf:r(geodesic)}}name of the new distance network{p_end}
+
+
+{title:References}
 
 {pstd}
-The distances of all pairs of nodes are an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), names {help nwcloseness}, {help nwkatz}, {help nwcomponents} and {help nwpath} as the alternatives for sums of distances, connectedness and single pairs, and {opt force} runs it anyway.
+Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical Sociology} 25, 163–177.
+
+{pstd}
+Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks: Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
+
+{pstd}
+Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, weighted
+networks, and centrality. {it:Physical Review E} 64, 016132.
+
 
 {title:See also}
 
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

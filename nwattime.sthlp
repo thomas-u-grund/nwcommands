@@ -9,6 +9,7 @@
 {p2col :nwattime {hline 2}}Static graph view of a temporal network at a given time{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -30,6 +31,7 @@
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -73,21 +75,15 @@ existed in wave 2:
 	{cmd:. nwset ego alter, time(wave) name(mynet)}
 	{cmd:. nwattime mynet, at(2) name(wave2)}
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(ties)}		number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed {it:Ties} line)
-	  {bf:r(at)}		the timepoint sliced at
-
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: preserved from the source network. Weighted: preserved from the source network's
-own tie values (the slice selects which ties are active, it does not change their values). Signed: not
-checked. Two-mode: not yet supported as a source (see {help nwset}'s own note that {bf:time()}/
-{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/{bf:bipartite} - a
-composability item for a later pass).
+{bf:Directed:} kept from the source network. {bf:Valued:} the tie values of the source network are kept (the slice
+selects ties, it does not change their values). {bf:Two-mode:} a temporal two-mode network ({help nwset} with
+{opt twomode} and {opt time()}, {opt interval()} or {opt eventtime()}) is sliced to a one-mode network over the nodes of
+both modes; the modes are not kept. {bf:Signed:} negative values are not treated
+specially. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
@@ -98,13 +94,21 @@ The ties at the time point are taken from the stored ties and the matrix of tie 
 waves: 0.3 seconds. The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
 
 {pstd}
-For a temporal network of more than 2,000 nodes the times (or the starts and ends) of the ties are kept as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000 nodes). {cmd:nwattime} of a network with 100,000 nodes and 1 million ties takes about 2 seconds.
+For a temporal network of more than 2,000 nodes the times (or the starts and ends) of the ties are kept as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000
+nodes). {cmd:nwattime} of a network with 100,000 nodes and 1 million ties takes about 2 seconds.
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(ties)}}number of rows in the tie list of the static view (an undirected tie is stored as two rows, so this is twice the number of ties in the printed {it:Ties} line){p_end}
+{synopt:{bf:r(at)}}the timepoint sliced at{p_end}
+
 
 {title:See also}
 
 	{help nwset}, {help nwsummarize}
 
-last certified : 21 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

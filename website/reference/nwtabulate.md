@@ -28,11 +28,20 @@ For example, for a directed network with 5 nodes, the commands displays the dist
 
 The command makes use of the normal `tabulate` command, hence, all *`tabulate1_options`* can be applied. This can be useful to extract the distribution of tie values for further calculation.
 
-## Supported network types
+## Stored results
 
-Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings, not tie values. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
+- **Scalars**
+- **r(EI_index)** --- E-I index
+- **r(EI_pvalue)** --- p-value of the E-I index from the QAP permutations (with `permutations()` > 1)
 
-- * *! 12jul2016: Thomas Grund
+- **Macros**
+- **r(netname1)** --- name of the first network
+- **r(netname2)** --- name of the second network
+
+- **Matrices**
+- **r(table)** --- the cell frequencies of the table
+- **r(row)** --- the tie values of *netname1* (rows)
+- **r(col)** --- the tie values of *netname2* (columns)
 
 ## See also
 
@@ -42,4 +51,4 @@ Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/at
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

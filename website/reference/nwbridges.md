@@ -44,18 +44,13 @@ The command saves all bridges as a new network *newnetname*.
 . nwbridges flobusiness, type(local) nwreplace
 ```
 
-## Supported network types
-
-Binary: yes (only) - bridge status is a structural property, tie values are ignored. Directed: yes - `type()` distinguishes local/global bridges and arcs vs. edges. Weighted: not applicable. Signed: not applicable. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-
 ## Stored results
 
-**Macros**
-
-- **r(name)** name of the source network
-- **r(directed)** whether the source network is directed (**true**/**false**)
-- **r(bridges)** number of bridges found
-- **r(bridges_type)** the `type()` used (**global**/**local**/**distance**)
+- **Macros**
+- **r(name)** --- name of the source network
+- **r(directed)** --- whether the source network is directed (**true**/**false**)
+- **r(bridges)** --- number of bridges found
+- **r(bridges_type)** --- the `type()` used (**global**/**local**/**distance**)
 
 ## References
 
@@ -65,8 +60,6 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 - [nwburt](nwburt), [nwpath](nwpath)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

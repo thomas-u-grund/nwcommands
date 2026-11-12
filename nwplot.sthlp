@@ -16,6 +16,7 @@
 {cmdab: nwplot}
 [{it:{help netname}}] 
 [{it:{help if}}]
+[{it:{help in}}]
 [{cmd:,} {it:{help nwplot##node_options:node_options}}
 {it:{help nwplot##label_options:label_options}}
 {it:{help nwplot##edge_options:edge_options}}
@@ -69,7 +70,6 @@
 {p2col:{opth sizebin(int)}}finetune size of nodes{p_end}
 {p2col:{opth mlcolor(colorstyle)}}lcolor of nodes{p_end}
 {p2col:{opth mlwidth(linewidthstyle)}}lwidth of nodes{p_end}
-{p2col:{opth nodeclash(real)}}separate overlaped node in mdsclassical{p_end}
 
 {synoptset 35 tabbed}{...}
 {p2col:{it:label_options}}Description{p_end}
@@ -84,11 +84,16 @@
 {p2col:{it:edge_options}}Description{p_end}
 {marker edge_options}{...}
 {p2line}
-{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
+{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions; the values
+are mapped linearly onto line widths of 1 to 8 units (largest absolute value = 8; all ties of equal value keep the default width), see {opt edgesizeraw}{p_end}
 {p2col:{opt edgesizeraw}}with {opt edgesize()}: use the tie values themselves for the line widths instead of the 1 to 8 mapping (very large values are cut at 20){p_end}
-{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with {opt edgecolorpalette()}){p_end}
-{p2col:{opt binary}}ignore the tie values: on a valued network the widths of the edges follow the tie values by default (1 to 4 units, the largest absolute value is the widest; all ties of equal value keep the default width) and the layouts {cmd:kk} and {cmd:frucht} use them as strengths; {opt binary} draws all edges with the same width and lays the nodes out as for an unvalued network{p_end}
-{p2col:{opt nosign}}on a signed network (valued, with negative ties) positive ties are drawn solid in navy and negative ties dashed in cranberry, with a legend (the line pattern keeps them apart in black and white); {opt nosign} switches that off. {opt edgecolor()} given by you takes the place of the sign colours{p_end}
+{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions. Integer
+values are categories, one color each; a continuous network (non-integer or negative values) is cut into five equal-width classes drawn with a light-to-dark blue palette (override with
+{opt edgecolorpalette()}){p_end}
+{p2col:{opt binary}}ignore the tie values: on a valued network the widths of the edges follow the tie values by default (1 to 4 units, the largest absolute value is the widest; all ties of equal value
+keep the default width) and the layouts {cmd:kk} and {cmd:frucht} use them as strengths; {opt binary} draws all edges with the same width and lays the nodes out as for an unvalued network{p_end}
+{p2col:{opt nosign}}on a signed network (valued, with negative ties) positive ties are drawn solid in navy and negative ties dashed in cranberry, with a legend (the line pattern keeps them apart in
+black and white); {opt nosign} switches that off. {opt edgecolor()} given by you takes the place of the sign colours{p_end}
 {p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
 {p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
@@ -108,7 +113,7 @@
 {marker arrow_options}{...}
 {p2line}
 {p2col:{opt arcstyle}({it:{help nwplot##arcstyle:arcstyle}})}change the look of arcs (curved, straight){p_end}
-{p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 2{p_end}
+{p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 1{p_end}
 {p2col:{opth arcsplines(int)}}resolution for curved arcs{p_end}
 {p2col:{opt arrows}}force arrowheads on an otherwise-undirected network{p_end}
 {p2col:{opth arrowfactor(float)}}multiply arrowhead by a factor{p_end}
@@ -133,9 +138,13 @@
 {marker layout_options}{...}
 {p2line}
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
-{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...) are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
-{p2col:{opt basemap}({it:filename} [{cmd:if} {it:exp}] [{cmd:,} {it:{help line_options}}])}with {opt nodexy()}: draw outlines, such as the borders of a map, under the network; {it:filename} is a Stata file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} file that {help spshape2dta} makes from a shapefile), a web address, or the name of a map among the example data ({cmd:usmap}); {cmd:if} {it:exp} keeps part of the map, with a condition on the variables of the map file{p_end}
-{p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
+{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes; in the {opt interactive} view coordinates outside the usual range (degrees, metres, ...)
+are shifted and scaled uniformly (aspect ratio kept) to a canvas of 1,500 pixels, and the default node and label size follow the node density{p_end}
+{p2col:{opt base:map}({it:filename} [{cmd:if} {it:exp}] [{cmd:,} {it:{help line_options}}])}with {opt nodexy()}: draw outlines, such as the borders of a map, under the network;
+{it:filename} is a Stata
+file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} file that {help spshape2dta} makes from a shapefile), a web address, or the name of a map among the example data
+({cmd:usmap}); {cmd:if} {it:exp} keeps part of the map, with a condition on the variables of the map file{p_end}
+{p2col:{opt gen:erate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
 {p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
 	legend, adjust size/width factors) alongside the usual static plot; combine with {opt generate()}
 	to also keep the resulting coordinates{p_end}
@@ -151,7 +160,7 @@
 	(".html" is added if there is no extension; a relative name is relative to the working directory;
 	an existing file is replaced) instead of a time-stamped file in Stata's temporary folder. The
 	path is displayed and returned in {cmd:r(fname)} in either case{p_end}
-{p2col:{opt noopen}}with {opt interactive}: build the interactive view but do not open a viewer
+{p2col:{opt noo:pen}}with {opt interactive}: build the interactive view but do not open a viewer
 	window for it (used together with {opt movieexport()} - {help nwmovie} does not want a viewer
 	window popping open for every network in its own sequence){p_end}
 
@@ -161,11 +170,12 @@
 {marker layout_sub}{...}
 {p2line}
 {p2col:{opt lgc}}only plot largest component{p_end}
-{p2col:{opth components(int)}}control the number of components rendered{p_end}
+{p2col:{opth components(int)}}control the number of components rendered (an option of {cmd:nwplot} itself, not of {opt layout()}){p_end}
 {p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
 {p2col:{opth iterations(int)}}only relevant for layout = mds/frucht/kk; maximum number of iterations in the underlying iterative procedure, default = 1000{p_end}
 {p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
 {p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
+{p2col:{opth nodeclash(real)}}only relevant for layout = mdsclassical; separate overlapping nodes{p_end}
 {p2col:{opt vertical}}only relevant for layout = bipartite; arrange the two modes as two columns instead of the default two rows{p_end}
 
 
@@ -175,11 +185,20 @@
 {p2line}
 {p2col:{cmd: mds}}modern multidimensional scaling{p_end}
 {p2col:{cmd: mdsclassical}}classical multidimensional scaling{p_end}
-{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout; on a valued network the attraction along a tie is multiplied by the tie value (see {help nwplot##valuedlayout:Valued networks and layouts})
+{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout; on a valued network the attraction along a tie is multiplied by the tie value (see
+{help nwplot##valuedlayout:Valued networks and layouts})
 		{p_end}
-{p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout; on a valued network the distances follow the tie values (see {help nwplot##valuedlayout:Valued networks and layouts}). Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override this scaling{p_end}
-{p2col:{cmd: hierarchy}}Sugiyama-style layered/hierarchical layout - assigns nodes to top-down layers by longest path from sources and orders each layer to reduce edge crossings; meant for directed, roughly acyclic networks (org charts, dependency/citation graphs, event sequences). An undirected network, or one with cycles, still plots (no error, no crash) but degrades to a less meaningful ordering, since there is no edge direction to layer by{p_end}
-{p2col:{cmd: bipartite}}dedicated two-mode layout - the two modes placed in two parallel rows (or two columns with the {opt vertical} sub-option), ordered to reduce crossings between them; requires a two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode}){p_end}
+{p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up
+proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout; on a valued network the distances follow the tie values (see
+{help nwplot##valuedlayout:Valued networks and layouts}). Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a
+plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred
+nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override
+this scaling{p_end}
+{p2col:{cmd: hierarchy}}Sugiyama-style layered/hierarchical layout - assigns nodes to top-down layers by longest path from sources and orders each layer to reduce edge crossings; meant for directed,
+roughly acyclic networks (org charts, dependency/citation graphs, event sequences). An undirected network, or one with cycles, still plots (no error, no crash) but degrades to a less meaningful
+ordering, since there is no edge direction to layer by{p_end}
+{p2col:{cmd: bipartite}}dedicated two-mode layout - the two modes placed in two parallel rows (or two columns with the {opt vertical} sub-option), ordered to reduce crossings between them; requires a
+two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode}){p_end}
 {p2col:{cmd: circle}}circle layout
 		{p_end}
 {p2col:{cmd: grid}}grid layout
@@ -194,7 +213,7 @@
 {p2col:{it:other_options}}Description{p_end}
 {marker other_options}{...}
 {p2line}
-{p2col:{opth aspectratio(float)}}height/width ratio{p_end}
+{p2col:{opth aspect:ratio(float)}}height/width ratio{p_end}
 {p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
 {p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
 {p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
@@ -296,7 +315,7 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 {pstd}
 The button {bf:Save do-file} does all of this in one step. It saves {bf:nwedit_plot.do}, which writes the two
 files ({bf:nwedit_nodes.csv} and {bf:nwedit_edges.csv}) into the working directory and then calls {cmd:nwplot}
-with the network, {help if}/{help in} and options of the call that wrote the page, completed with
+with the network, {help if} / {help in} and options of the call that wrote the page, completed with
 {opt nodexy()}, {opt importcoords()} and {opt edgeimport()} (the options of the page itself, of exporting and
 of saving coordinates are left out). Run it with the same data in memory as when the page was written:
 
@@ -326,7 +345,7 @@ view lists an undirected tie once).
 {opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
 {opt interactive} view they came from (row order is how nwplot matches an edit back to a node/tie,
 the same way {opt nodexy()}/{opt label()} already do) - re-export from {opt interactive} rather
-than reusing an old CSV after the network or an {help if}/{help in} restriction changes. Node size
+than reusing an old CSV after the network or an {help if} / {help in} restriction changes. Node size
 is not yet individually editable in the interactive view; the size-factor slider maps onto
 {opt nodefactor()} instead.
 
@@ -383,7 +402,6 @@ to {bf:s1network} unless {opt scheme()} is specified explicitly.
 	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(s1network)}{p_end}
 {phang2}	
 	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(economist)}{p_end}
-	{cmd:. set scheme s2network}
 
 {pstd}
 This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path
@@ -478,39 +496,6 @@ The graph itself is unaffected by {opt export()} - it remains the normal, curren
 afterward, so the Graph Editor, {stata graph save}, and a second {help graph export} in a different format
 all continue to work exactly as they would without {opt export()}.
 
-{title:Stored results}
-
-{pstd}
-{cmd:nwplot} is {cmd:rclass}.
-
-	Macros:
-	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
-	  {bf:r(fname)}	path of the interactive HTML page written by {opt interactive}
-	  {bf:r(interactive)}	same as {bf:r(fname)}
-	  {bf:r(edgewidth)}	{cmd:values}, {cmd:edgesize} or {cmd:binary}: how the edge widths were set
-
-	Scalars:
-	  {bf:r(signcolor)}	1 if the sign colours (solid navy, dashed cranberry) were used
-	  {bf:r(modesymbols)}	1 if the two modes of a two-mode network got their own symbols
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - plots the nodes and the ties between the modes; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}).
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Weighted: yes. On a valued network the widths of the edges follow the tie values by default (as {cmd:edgesize(}{it:network}{cmd:)} with 1 to 4 units;
-{opt binary} switches it off; {opt edgesize()} sets the 1 to 8 range and any other network). The values never change the colour of an
-edge unless you ask for it with {opt edgecolor()}. Signed: yes - a network with negative ties draws positive ties solid navy and negative ties dashed cranberry, with a legend, and
-the width follows the absolute value ({opt nosign} switches the colours off; {opt binary} keeps the colours and drops the widths).
-The layouts {cmd:kk} (the default) and {cmd:frucht} use the tie values as strengths on a valued network (see {help nwplot##valuedlayout:Valued networks and layouts}; {opt binary} switches it off), the other layouts use the ties only.
-Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
-dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
-directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: yes - plots the nodes and the ties between the modes; the modes get a symbol (circle, diamond) and a colour each, with a legend, unless {opt color()} or {opt symbol()} is given; {opt layout(bipartite)} puts the two modes in two rows ({cmd:igraph::layout_as_bipartite}). Self-loops: not rendered -
-a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
-in the package's own visualization roadmap rather than fixed here.
 
 {marker valuedlayout}{...}
 {title:Valued networks and layouts}
@@ -522,10 +507,21 @@ strengths, as {cmd:igraph::plot()} does for a graph with a {cmd:weight} edge att
 its value. {cmd:kk}: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's
 {cmd:layout_with_kk()} takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean,
 so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both
-directions counts with its larger value. {opt binary} lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as {cmd:igraph::plot()} does ({cmd:layout_with_fr()} and
+directions counts with its larger value. {opt binary} lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a
+note, as {cmd:igraph::plot()} does ({cmd:layout_with_fr()} and
 {cmd:layout_with_kk()} refuse non-positive weights). Two-mode networks, and the layouts {cmd:mds}, {cmd:mdsclassical},
 {cmd:hierarchy}, {cmd:bipartite}, {cmd:circle} and {cmd:grid}, do not use the values. {cmd:kk} with values needs the
 shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} arrows; mutual dyads are curved apart ({opt arcstyle()}). {bf:Valued:} edge widths and the {cmd:kk} /
+{cmd:frucht} layouts follow the tie values; {opt binary} switches this off. {bf:Two-mode:} yes - each mode gets its
+own symbol and colour with a legend; {opt layout(bipartite)} puts the modes in two rows. {bf:Signed:} negative ties
+dashed cranberry, positive solid navy ({opt nosign}). See {help nwnetworktypes}.{p_end}
+
 
 {title:Limits}
 
@@ -544,8 +540,28 @@ the network ({help nwsubset}, {help nwego}, {help nwkcore}).
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwplot} is {cmd:rclass}.
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(export)}}filename actually passed to {opt export()}, if specified{p_end}
+{synopt:{bf:r(fname)}}path of the interactive HTML page written by {opt interactive}{p_end}
+{synopt:{bf:r(interactive)}}same as {bf:r(fname)}{p_end}
+{synopt:{bf:r(edgewidth)}}{cmd:values}, {cmd:edgesize} or {cmd:binary}: how the edge widths were set{p_end}
+{synopt:{bf:r(scheme)}}the scheme used for the plot ({bf:s1network} unless {opt scheme()} is given){p_end}
+{synopt:{bf:r(importcoords)}}the file given in {opt importcoords()}, if specified{p_end}
+
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(signcolor)}}1 if the sign colours (solid navy, dashed cranberry) were used{p_end}
+{synopt:{bf:r(modesymbols)}}1 if the two modes of a two-mode network got their own symbols{p_end}
+
+
 {title:See also}
 		{help nwplotmatrix}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

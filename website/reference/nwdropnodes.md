@@ -78,14 +78,10 @@ Everything this command does can also be achieved with [nwdrop](nwdrop) using th
 ```
 Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) leaves Stata dataset rows alone unless **clean** is specified, while `nwdropnodes` rebuilds the Stata dataset by default unless **netonly** is specified.
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing ties and their values are untouched for surviving nodes. Two-mode: yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level.
-
 ## See also
 
 - [nwkeepnodes](nwkeepnodes), [nwdrop](nwdrop), [nwclear](nwclear), [nwkeep](nwkeep)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

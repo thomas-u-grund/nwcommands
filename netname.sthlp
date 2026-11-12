@@ -31,7 +31,8 @@ characters may be
 
 {pstd}
 When we use the term netname, we usually mean an existing netname -- a
-network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a network generator (see {help nwtopical##generator:[NW-1.2] Generators}). The alternative would be a
+network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a network generator (see {help nwtopical##generator:[NW-1.2] Generators}). The alternative
+would be a
 {it:{help newnetname}}.
 
 {pstd} 
@@ -67,4 +68,4 @@ to change the current network use {it: {help nwcurrent}}.
 {phang}{cmd:. nwcomponents *marriage}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -32,9 +32,12 @@ program nwexpand
 		local nodenamesopt "nodenames(__nwx_names)"
 	}
 	
-	if "`if'" != "" {
-		qui keep `if'
-	}
+	// if selects the observations that become the nodes; the data in memory are not changed
+	tempvar touse
+	qui gen byte `touse' = 1 `if'
+	qui replace `touse' = 0 if `touse' >= .
+	qui count if `touse'
+	local nsel = r(N)
 	
 	local varname `varlist'
 	
@@ -52,9 +55,9 @@ program nwexpand
 	// Changed the not-given sentinel to 0 (never a legal node count),
 	// so `nodes(1)' is now honored exactly as requested.
 	if `nodes' == 0 {
-		local nodes = `=_N'
+		local nodes = `nsel'
 	}
-	if (`nodes' > `=_N' | `=_N' == 0) {
+	if (`nodes' > `nsel' | `nsel' == 0) {
 		di "{err}Not enough observations for variable {bf:`varlist'}."
 		error 6200
 	}
@@ -86,7 +89,7 @@ program nwexpand
 	}
 
 	// generate network
-	mata: __nwexpand_attr = st_data((1::`nodes'),"`varlist'")
+	mata: __nwexpand_attr = select(st_data(., "`varlist'"), st_data(., "`touse'"))[(1::`nodes')]
 	if "`mode'" == "" {
 		di "{txt}Option {it:mode(same)} selected."
 		local mode = "same"

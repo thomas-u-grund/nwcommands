@@ -31,7 +31,7 @@ tabulate2_options]
 | `attribute(varname)` | Node-level attribute |
 | `plot` | Make a tabplot |
 | `eiplot` | Make a plot for significance of E-I-index |
-| `permutations(integer)` | QAP permutations for significance of E-I-index |
+| `permutations(integer)` | QAP permutations for significance of E-I-index; default = 100 |
 
 ## Description
 
@@ -45,13 +45,25 @@ where I (internal) is the number of ties within a social group G and E is the nu
 
 More intuitively, the E-I-index simply calculates the number of ties off the diagonal (in the table produced by the command) by the total number of ties. By default, the command runs 100 QAP permutations of the network (see [nwqap](nwqap)) to obtain a p-value for the E-I-index. Basically, the network is randomly permuted and the E-I-index is calculated again to obtain a distribution for the E-I-index under the condition that the network and the attribute are unrelated.
 
+## Stored results
+
+- **Scalars**
+- **r(EI_index)** --- E-I index
+- **r(EI_pvalue)** --- p-value of the E-I index from the permutations (with `permutations()` > 1)
+
+- **Macros**
+- **r(netname)** --- name of the network
+- **r(attribute)** --- name of the attribute
+
+- **Matrices**
+- **r(table)** --- the cell frequencies of the table
+- **r(row)** --- the attribute values of the sender (rows)
+- **r(col)** --- the attribute values of the receiver (columns)
+
 ## See also
 
 - [one-way nwtabulate](nwtab1), [two-way nwtabulate network](nwtab2), [nwcorrelate](nwcorrelate), [nwqap](nwqap), `tabulate`
 
-- version: 2.0.0
-- certified: 12 Jul 2016, 18:18:52
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

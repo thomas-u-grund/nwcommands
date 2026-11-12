@@ -28,7 +28,7 @@ old]
 
 ## Description
 
-**nwsave** saves all networks (and Stata variables) currently in memory on disk. Since version 2.1 the command saves data in its own file format **.nwdta**. Network data saved in this way can be loaded with [nwuse](nwuse). Notice that the command `save` does not save network data.
+**nwsave** saves all networks (and Stata variables) currently in memory on disk. The command saves data in its own file format **.nwdta**. Network data saved in this way can be loaded with [nwuse](nwuse). Notice that the command `save` does not save network data.
 
 ## Examples
 
@@ -45,15 +45,10 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 . nwuse mynets
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - the file holds the ties between the two modes only (the pairs of nodes inside one mode are not stored), the mode of every node and the node attributes, so a network with 5,000 + 500 nodes takes about a megabyte; [nwuse](nwuse) restores the same network. Files written by earlier versions (which listed every pair of nodes) are still read by `nwuse`, and files written now can be read by earlier versions.
-
 ## See also
 
 - [nwuse](nwuse), [nwwebuse](nwwebuse), `save`
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

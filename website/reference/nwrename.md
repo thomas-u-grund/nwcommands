@@ -44,16 +44,10 @@ flobusiness    flomarriage
 business    marriage
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames the network object only; its content, including directed/valued/two-mode status, is completely unchanged.
-
 ## See also
 
 - [nwname](nwname), `rename`
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

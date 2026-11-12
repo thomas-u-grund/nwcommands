@@ -23,6 +23,7 @@ prob(float)
 weights(p1, p2,...)
 undirected
 name(newnetname)
+labs(lab1, lab2, ...)
 xvars
 ntimes(int)]
 ```
@@ -36,8 +37,9 @@ ntimes(int)]
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `name`(*[newnetname](newnetname)*) | name of the new network |
+| `labs`(*lab1, lab2, ...*) | overwrite node labels |
 | `xvars` | generate Stata variables for the network |
-| `ntimes(int)` | number of small-world networks to be generated; default = 1 |
+| `ntimes(int)` | number of preferential-attachment networks to be generated (named *name*_1, *name*_2, ...); default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
 
 ## Description
@@ -65,17 +67,12 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwplot, layout(circle)
 ```
 
-## Supported network types
-
-Binary: yes (only structural attachment - see Weighted). Directed: yes, via `undirected` (default is directed). Weighted: yes, via `weights()` - a Stata expression assigning each new tie's value, independent of the preferential-attachment mechanism itself (which is always driven by degree, not tie value). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
 ## Stored results
 
 - **nwpref** stores the following in **r()**:
 
-**Macros**
-
-- **r(netlist)** list of new networks
+- **Macros**
+- **r(netlist)** --- list of new networks
 
 ## References
 
@@ -85,8 +82,6 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. *Sci
 
 - [nwsmall](nwsmall), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwring](nwring)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

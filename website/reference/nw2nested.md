@@ -32,10 +32,6 @@ Ties are read as present or absent; tie values are ignored. A pair with an empty
 
 `level(#)` chooses the mode whose pairs of nodes enter the C-score. The default 2 uses the nodes of the second mode (the columns of the matrix with the first mode as rows). NODF always uses both modes.
 
-## Supported network types
-
-Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued: tie values are ignored (presence of a tie). Two-mode: yes - the command needs a two-mode network and uses the biadjacency matrix of the two modes (`bipartite::nested`, `vegan::nestednodf`, `bipartite::C.score`).
-
 ## Stored results
 
 `nw2nested` stores in `r()`:
@@ -49,6 +45,9 @@ Binary: yes. Directed: not applicable (a two-mode network is undirected). Valued
 - **`r(cscore_pairs)`** --- number of pairs in the normalised mean
 - **`r(level)`** --- mode of the C-score pairs
 
+- **Macros**
+- **`r(netname)`** --- name of the network
+
 ## References
 
 Almeida-Neto, M., P. Guimaraes, P. R. Guimaraes, R. D. Loyola, and W. Ulrich. 2008. A consistent metric for nestedness analysis in ecological systems. *Oikos* 117: 1227-1239.
@@ -57,4 +56,4 @@ Stone, L., and A. Roberts. 1990. The checkerboard score and species distribution
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

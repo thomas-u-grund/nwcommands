@@ -3,7 +3,6 @@
 {marker topic}
 {helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
-
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
@@ -16,20 +15,21 @@
 {p 8 17 2}
 {cmdab: nwdissimilar} 
 [{it:{help netname}}]
-{cmd:,}
-[{opt type}({it:{help nwdissimilar##type:type}})
+[{cmd:,}
+{opt type}({it:{help nwdissimilar##type:type}})
 {opt context}({it:{help nwdissimilar##context:context}})
 {opt name}({it:{help newnetname}})
 {opt xvars}
 {opt labs}({it:lab1 lab2 ...})
-{opt vars}({it:{help newvarlist}})]
+{opt vars}({it:{help newvarlist}})
+{opt force}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt type}({it:{help nwdissimilar##type:type}})}Type of dissimilarity between two nodes; default = euclidean{p_end}
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
-{synopt:{opt name}({it:{help newnetname}})}Name of the new dissimilarity network; default = {it:_dissimilar}{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new dissimilarity network; default = {it:_dissimilar}; when the name is in use, a new valid name is chosen{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels; default = the source network's own labels{p_end}
 {synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
@@ -122,36 +122,14 @@ from these alters.
 {it:D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)}
 
 
-
-{title:Example}
-
-{cmd:. nwwebuse florentine}
-{cmd:. nwdissimilar flomarriage}
-
-{cmd:. nwdissimilar flomarriage, type(hamming) context(outgoing)}
-
-
-{title:Two-mode networks}
+{title:Network types}
 
 {pstd}
-Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::dist} on the incidence matrix).
+{bf:Directed:} {opt context()} restricts the comparison to incoming or outgoing ties. {bf:Valued:} {bf:euclidean} and
+{bf:manhatten} use the tie values, {bf:hamming}, {bf:jaccard} and {bf:nonmatches} only their presence. {bf:Two-mode:}
+yes - a node is compared with the nodes of its own mode over the other mode; pairs across modes are missing.
+{bf:Signed:} negative values enter like any value. See {help nwnetworktypes}.{p_end}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes ({bf:context()} lets you restrict the comparison to incoming or
-outgoing ties only, which only matters for a directed network - an undirected network's
-in-ties and out-ties are identical, so all three {bf:context()} values agree). Weighted:
-{bf:euclidean}/{bf:manhatten} use tie weights directly in their distance formula (a genuinely
-weighted-aware comparison); {bf:hamming}/{bf:jaccard}/{bf:nonmatches} binarize each tie
-({it:present vs. absent}) before comparing, so tie strength does not affect these three - not
-checked for automatic behavior beyond this, choose {bf:type()} to match whether tie strength
-should matter. Signed: not checked - a negative tie weight participates in {bf:euclidean}/
-{bf:manhatten}'s arithmetic like any other value, and in the binarizing types' {cmd: != 0} test
-like any nonzero value, but no dedicated signed-network semantics exist. Two-mode: yes - a node is compared with the other nodes of its own mode, over the nodes of the other mode (the profile of a person is the set of groups); pairs of nodes from different modes are missing ({cmd:sna::sedist}, {cmd:stats::dist} on the incidence matrix).
-The dissimilarity network itself always carries a genuine (non-missing) diagonal of 0 (a node
-is never dissimilar from itself) and inherits its source network's own node labels by default,
-so it can be compared directly against the source network node-for-node.
 
 {title:Limits}
 
@@ -165,9 +143,18 @@ The result is a dense {it:n}-by-{it:n} valued network. About 8 matrices of that 
 6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000
 nodes); option {opt force} runs it anyway. The node labels of the new network are the labels of the source network at any size.
 
+
+{title:Example}
+
+{cmd:. nwwebuse florentine, nwclear}
+{cmd:. nwdissimilar flomarriage}
+
+{cmd:. nwdissimilar flomarriage, type(hamming) context(outgoing)}
+
+
 {title:See also}
 
 	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

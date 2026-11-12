@@ -20,14 +20,15 @@ nw2clustering
 measure(string)
 level(int)
 generate(newvarname)
-replace]
+replace
+ra]
 ```
 
 | | |
 |---|---|
 | `measure(binary\|arithmetic\|geometric\|maximum\|minimum)` | How to combine a 4-path's own four tie values; *binary* dichotomizes every tie to presence/absence first; *arithmetic*/*geometric*/*maximum*/*minimum* combine the four raw tie values via that function; default = *arithmetic* for a valued network, *binary* otherwise |
 | `level(int)` | Which mode (1 or 2) to compute clustering scores for; default = 1 |
-| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each `level()`-mode node's own clustering coefficient |
+| `generate(newvarname)` | **Required** unless `ra` is given. Name of the Stata variable that stores each `level()`-mode node's own clustering coefficient |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
 | `ra` | The global clustering coefficient of Robins and Alexander (2004), 4 C4 / L3 (C4 the number of four-cycles, L3 the number of paths of length three) of the binary network; `generate()` is then optional; results in `r(ra)`, `r(C4)`, `r(L3)` |
 
@@ -39,7 +40,7 @@ replace]
 
 Only nodes of the requested `level()` receive a value; nodes of the other mode are left missing. A node with too few alters, or whose own connected component has fewer than 3 same-mode nodes, has no possible 4-path and its own coefficient is reported missing (not spuriously 0).
 
-[nwclustering](nwclustering) automatically switches to this command whenever it is called on a two-mode network, forwarding `measure()` and `generate()` (always at the default `level(1)` in that case) - call `nw2clustering` directly to choose `level(2)` or a non-default `measure()`.
+[nwclustering](nwclustering) automatically switches to this computation whenever it is called on a two-mode network (unless `onemode` is given), with the same options `measure()`, `level()`, `generate()`, `replace` and `ra`.
 
 ## Examples
 
@@ -49,21 +50,17 @@ Only nodes of the requested `level()` receive a value; nodes of the other mode a
 . sum _clustering2_lev1
 ```
 
-## Supported network types
-
-Binary: yes (the default `measure(binary)` case). Directed: not checked - a two-mode network's ties are treated as undirected. Weighted: yes, via `measure(arithmetic|geometric|maximum|minimum)`, each combining the 4-path's own four tie values before testing closure. Signed: not checked; negative tie values are not validated or rejected. Two-mode: yes - the clustering coefficient of Opsahl (2013), four-paths closed by a fifth tie (as `tnet::clustering_tm`); `ra` adds the global coefficient of Robins and Alexander (2004), 4 C4 / L3.
-
 ## Stored results
 
-**Scalars**
+- **Scalars**
+- **r(C_avg)** --- mean of the per-node clustering coefficients (the requested `level()` only)
+- **r(C_global)** --- network-level global clustering coefficient (ratio of total closed to total potential 4-paths)
+- **r(ra)** --- Robins-Alexander coefficient 4 C4 / L3 (only with `ra`)
+- **r(C4)** --- number of four-cycles (only with `ra`)
+- **r(L3)** --- number of paths of length three (only with `ra`)
 
-- **r(C_avg)** mean of the per-node clustering coefficients (the requested `level()` only)
-- **r(C_global)** network-level global clustering coefficient (ratio of total closed to total
-- potential 4-paths)
-
-**Macros**
-
-- **r(measure)** the `measure()` actually used
+- **Macros**
+- **r(measure)** --- the `measure()` actually used (only with `generate()`)
 
 ## References
 
@@ -75,8 +72,6 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 
 - [nwclustering](nwclustering), [nw2project](nw2project), [nw2degree](nw2degree)
 
-- last certified : 24 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

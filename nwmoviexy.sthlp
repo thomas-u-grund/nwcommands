@@ -9,6 +9,7 @@
 {p2col :nwmoviexy {hline 2}}Animate a sequence of networks (alias for nwmovie){p_end}
 {p2colreset}{...}
 
+
 {marker syntax}{...}
 {title:Syntax}
 
@@ -17,6 +18,7 @@
 {it:{help netlist}}
 [{cmd:,}
 {it:{help nwmovie:nwmovie_options}}]
+
 
 {marker description}{...}
 {title:Description}
@@ -31,6 +33,15 @@ option set, nothing more. Fixed node positions across waves are produced by {cmd
 New code should call {help nwmovie:nwmovie} directly - see its own help file for the complete option
 reference and worked examples.
 
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} yes. {bf:Valued:} the layouts use the tie values and the values set the line widths; {opt binary}
+switches that off (see {help nwplot##valuedlayout:nwplot}). {bf:Two-mode:} yes - a symbol and a colour per mode.
+{bf:Signed:} negative ties are dashed in a second colour ({opt nosign} is passed on). See {help nwnetworktypes}.{p_end}
+
+
 {title:Examples}
 
 {pstd}
@@ -41,14 +52,10 @@ Animate two waves of a network (accepts exactly the same arguments as {help nwmo
 	{cmd:. nwrandom 6, prob(.3) name(wave2)}
 	{cmd:. nwmoviexy wave1 wave2, duration(400)}
 
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes. Weighted: yes (on valued networks the layouts use the tie values; {opt binary} switches that off, see {help nwplot##valuedlayout:nwplot}). Signed: not checked. Two-mode: not checked - a direct alias for {help nwmovie}; see that command's own identical classification.
 
 {title:See also}
 
 	{help nwmovie}, {help nwplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

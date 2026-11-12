@@ -24,10 +24,16 @@
 
 {p2colreset}{...}
 
+
 {title:Description}
 
 {pstd}
 {cmd:nw2fromedge} imports a two-mode network from a dataset in edgelist format. It is very similar to {help nwfromedge}. 
+
+{pstd}
+The two id variables must name different nodes. When both are numeric and their ranges overlap, the ids in {it:level2} are
+shifted by the largest id in {it:level1}; when both are string variables and share a value, the prefixes {bf:m1_} and
+{bf:m2_} are added to the ids of {it:level1} and {it:level2}. Both changes are made to the variables in the data in memory.
 
 {pstd} 
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation
@@ -99,15 +105,6 @@ automatically; pass the {it:_nwmode} variable this command creates to {opt color
 {marker project_stat}{...}
 {marker project_level}{...}
 
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie.
-
-{title:Supported network types}
-
-{pstd}
-Two-mode: yes - builds the two-mode network from two columns of ids; the two column names become the level labels. A value of 0 declares the node without a tie. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use {help nwaddnodes}'s own {bf:mode()} option afterward to add any isolates the source data could not represent.
 
 {title:One-mode projection}
 
@@ -183,7 +180,7 @@ The option {bf:stat(sum)} takes the sum over all these ties and generates the pr
 Peter - Thomas  - 14 years
 
 {pstd}
-The option {bf:stat(mean)} takes the sum over all these ties and generates the projection:
+The option {bf:stat(mean)} takes the mean over all these ties and generates the projection:
 
 {pmore}
 Peter - Thomas  - 3.5 years
@@ -195,8 +192,16 @@ longest time that Peter and Thomas were at the same institution. This is the def
 
 {pmore}
 Peter - Thomas  - 5 years
- 
-	
+
+
+{title:Network types}
+
+{pstd}
+{bf:Directed:} not applicable (two-mode ties are undirected). {bf:Valued:} tie values from an optional third column.
+{bf:Two-mode:} yes - builds the two-mode network from two columns of ids, whose names become the level labels; a row
+with value 0 declares a node without a tie. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+
+
 {title:Limits}
 
 {pstd}
@@ -204,11 +209,10 @@ Above 20,000 nodes in both modes together the command stops at once with r(484).
 A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw2degree}, {help nw2clustering}, {help nwmatching},
 {help nwproject} and {help nw2project} then take 1.7 to 12 seconds at that size.
 
+
 {title:Also see}
 	
-	{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}
-
-last certified : 29 Aug 2026
+{p 4 4 2}{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

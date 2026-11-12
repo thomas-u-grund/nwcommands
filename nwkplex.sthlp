@@ -9,6 +9,7 @@
 {p2col :nwkplex {hline 2}}Maximal k-plex enumeration{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
@@ -16,13 +17,13 @@
 [{it:{help netlist}}]
 [{cmd:,}
 {opth k(int)}
-{opth generate(newvarname)}
+{opth gen:erate(newvarname)}
 {opt replace}
 {opth minsize(int)}
-{opt maxplexes(#)}
-{opt maxtime(#)}
-{opt countonly}
-{opt nomatrix}
+{opt maxp:lexes(#)}
+{opt maxt:ime(#)}
+{opt count:only}
+{opt nom:atrix}
 {opt silent}]
 
 
@@ -30,16 +31,19 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth k(int)}}How many ties each member may miss; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = {it:_kplexnum}{p_end}
+{synopt:{opth gen:erate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = {it:_kplexnum}; with several networks the variables are
+numbered ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest k-plex size to report; default = {it:k}+1{p_end}
-{synopt:{opt maxplexes(#)}}Stop with an error when more than this many maximal k-plexes of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default = 100,000{p_end}
-{synopt:{opt maxtime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
-{synopt:{opt countonly}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth generate(newvarname)} is then not needed{p_end}
-{synopt:{opt nomatrix}}Do not build the sets-by-nodes matrix; the {opth generate(newvarname)} variable and the count are still returned{p_end}
+{synopt:{opt maxp:lexes(#)}}Stop with an error when more than this many maximal k-plexes of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default =
+100,000{p_end}
+{synopt:{opt maxt:ime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
+{synopt:{opt count:only}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth gen:erate(newvarname)} is then not needed{p_end}
+{synopt:{opt nom:atrix}}Do not build the sets-by-nodes matrix; the {opth gen:erate(newvarname)} variable and the count are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -73,57 +77,13 @@ uninformative case while still reporting the smallest {it:genuinely} constrained
 that belongs to no k-plex meeting {opth minsize(int)} gets a missing value in the generated
 variable, not a spurious 0.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(kplexes)}		number of maximal k-plexes found meeting {opth minsize(int)}
-	  {bf:r(maxsize)}	size of the largest set (with {opt countonly} or {opt nomatrix})
-
-	Matrices
-	  {bf:r(size_table)}	(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size
-	  {bf:r(kplex_matrix)}	k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex (not with {opt countonly} or {opt nomatrix})
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwkplex flomarriage}
-	{cmd:. nwkplex flomarriage, k(3) replace}
-
-
-{title:References}
+{title:Network types}
 
 {pstd}
-Seidman, S.B., Foster, B.L. (1978). A graph-theoretic generalization of the clique concept.
-{it:Journal of Mathematical Sociology} 6(1), 139-154.
+{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored and a note is printed. {bf:Two-mode:} same as for the
+bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{pstd}
-Bron, C., Kerbosch, J. (1973). Algorithm 457: finding all cliques of an undirected graph.
-{it:Communications of the ACM} 16(9), 575-577.
-
-{pstd}
-Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
-University Press. (cliques and cohesive subgroups)
-
-
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each
-member's own missing-tie count - has no natural directed generalization, the same reasoning
-{help nwclique} already applies). Weighted: not used - only presence/absence of a tie matters.
-Signed: not checked. Two-mode: same as for the bipartite graph read as a one-mode network (valid; no mode-specific normalisation).
-Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem
-itself, true of any correct algorithm) and, for a fixed network, generally slower than
-{help nwclique}'s own clique enumeration for the same reason its own "Supported network types"
-section already notes for cliques, compounded further here since checking whether a candidate can
-still be added requires examining the whole candidate set's own induced structure, not just a
-simple neighbor lookup. The number of maximal k-plexes is what limits this command, not the size of the
-network; see {bf:Limits} below.
 
 {title:Limits}
 
@@ -147,11 +107,44 @@ variable and the counts but not the matrix.
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwkplex flomarriage}
+	{cmd:. nwkplex flomarriage, k(3) replace}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(kplexes)}}number of maximal k-plexes found meeting {opth minsize(int)}{p_end}
+{synopt:{bf:r(maxsize)}}size of the largest set (with {opt countonly} or {opt nomatrix}){p_end}
+
+{p2col 5 20 24 2: Matrices}{p_end}
+{synopt:{bf:r(size_table)}}(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size{p_end}
+{synopt:{bf:r(kplex_matrix)}}k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex (not with {opt countonly} or {opt nomatrix}){p_end}
+
+
+{title:References}
+
+{pstd}
+Seidman, S.B., Foster, B.L. (1978). A graph-theoretic generalization of the clique concept.
+{it:Journal of Mathematical Sociology} 6(1), 139-154.
+
+{pstd}
+Bron, C., Kerbosch, J. (1973). Algorithm 457: finding all cliques of an undirected graph.
+{it:Communications of the ACM} 16(9), 575-577.
+
+{pstd}
+Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge
+University Press. (cliques and cohesive subgroups)
+
+
 {title:See also}
 
-	{help nwclique}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
-
-last certified : 24 Aug 2026
+{p 4 4 2}{help nwclique}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

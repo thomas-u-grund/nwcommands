@@ -25,7 +25,7 @@ options]
 
 ## Description
 
-This command collapses a network, i.e. it merges network nodes. It works very similar as `collapse`. With option `by(varname)` one specifies which nodes should be merged. The rule for collapsing two nodes are specified with *stat*, by default *stat* = **max** (`see here for possible values`). For example, when nodes A and B are collapsed to node Z, Z inherits all the ties from node A and B. The nodes in the new network are named after the values in *varname*.
+This command collapses a network, i.e. it merges network nodes. It works very similar as `collapse`. With option `by(varname)` one specifies which nodes should be merged. The rule for collapsing two nodes are specified with *stat*, by default *stat* = **max** (`see here for possible values`). For example, when nodes A and B are collapsed to node Z, Z inherits all the ties from node A and B. A merged node takes the label of the first node of its group with the prefix **new_** (e.g. *new_A*); a node that is alone in its group keeps its label.
 
 By default, an existing network is replaced, unless option `generate(newnetname)` is specified.
 
@@ -40,15 +40,10 @@ This collapses the first and the second node of a random network. The collapsed 
 . nwcollapse mynet, by(att)
 ```
 
-## Supported network types
-
-Binary: yes. Directed: yes. Weighted: yes - `generate()`'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - error 6088; make a one-mode network of one mode first with [nwproject](nwproject).
-
 ## See also
 
 - `collapse`
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

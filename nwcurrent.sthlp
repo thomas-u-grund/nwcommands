@@ -21,7 +21,7 @@
 {synoptset 15 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth id(int)}}Originl network ID of the the network that should be made the current network{p_end}
+{synopt:{opth id(int)}}Original network ID of the network that should be made the current network{p_end}
 {synoptline}
 	
 		
@@ -44,10 +44,10 @@ in the r() vector.
 
 
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Not applicable - reports or sets which network is the "current" one; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:Examples}
 
@@ -64,20 +64,20 @@ Not applicable - reports or sets which network is the "current" one; does not re
 	{txt}   Number of nodes: {res} 16
 	{hline 40}
 
-{title:Stored results} {txt}
+{title:Stored results}
 
-	Scalars:
-	  r(networks)	number of networks
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(networks)}}number of networks{p_end}
+{synopt:{bf:r(nodes)}}number of nodes of the current network{p_end}
 	
-	Macros:
-	  r(current)	name of current network
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(current)}}name of current network{p_end}
 	  
 
 {title:Also see}
 
 	{help nwname}, {help nwload}, {help nwset}
 
-last certified : 24 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

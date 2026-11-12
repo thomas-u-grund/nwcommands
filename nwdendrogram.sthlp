@@ -21,7 +21,8 @@
 {p2col:{it:options}}Description{p_end}
 {p2line}
 {p2col:{opth factor(float)}}zoom in or out{p_end}
-{p2col:{opt lab}}display node labels saved with the network ({bf:_nwnode}), the same convention {help nwplot} and {help nwplotmatrix} use; takes precedence over an explicit {opt label()} if both are given{p_end}
+{p2col:{opt lab}}display node labels saved with the network ({bf:_nwnode}), the same convention {help nwplot} and {help nwplotmatrix} use; takes precedence over an explicit {opt label()} if both are
+given{p_end}
 {p2col:{opth label(varname)}} label observations{p_end}
 {p2col:{opt colorpalette}({it:colstyle1 ...})} overwrite colorpalette{p_end} 
 {p2col:{opt symbolpalette}({it:symbstyle1 ...})} overwrite symbolpalette{p_end} 
@@ -37,10 +38,10 @@ Displays results from hierarchical clustering (see {help nwhierarchy} or {help c
 	
 		
 
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Not applicable - visualizes an existing hierarchical-clustering result (from {help nwhierarchy}), not a network directly; whatever directed/valued/two-mode support {help nwhierarchy} itself has already determined the clustering this command displays.
+The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 {title:Example}
 
@@ -49,4 +50,4 @@ Not applicable - visualizes an existing hierarchical-clustering result (from {he
 	{cmd:. nwdendrogram _clus_1}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -35,15 +35,10 @@ Alternatively, one can also just drop networks. This does not delete the Stata v
 . nwdrop _all
 ```
 
-## Supported network types
-
-Not applicable - clears all networks and Stata variables from memory unconditionally, independent of any network's own properties.
-
 ## See also
 
 - [nwdrop](nwdrop), `clear`
-- last certified : 24 Aug 2026
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

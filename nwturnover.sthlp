@@ -9,25 +9,27 @@
 {p2col :nwturnover {hline 2}}Tie turnover/stability between two waves of the same network{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
 {cmdab: nwturnover}
 {it:net1} {it:net2}
-[{cmd:,}
-{opth generate(newvarname)}
-{opt replace}
+{cmd:,}
+{opth gen:erate(newvarname)}
+[{opt rep:lace}
 {opt silent}]
 
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own local stability{p_end}
-{synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own local stability{p_end}
+{synopt:{opt rep:lace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
+
 
 {title:Description}
 
@@ -66,20 +68,40 @@ number of actual undirected ties involved (the same convention {help nwmixing} u
 mixing table). {bf:r(jaccard)} and {bf:r(persistence)} are unaffected, since the doubling cancels
 in both ratios.
 
-{title:Stored results}
 
-	Scalars
-	  {bf:r(stable)}		number of ties present in both networks
-	  {bf:r(formed)}		number of ties present only in {it:net2}
-	  {bf:r(dissolved)}		number of ties present only in {it:net1}
-	  {bf:r(jaccard)}		stable / (stable + formed + dissolved)
-	  {bf:r(persistence)}		stable / (stable + dissolved); missing if {it:net1} has no ties
+{title:Network types}
+
+{pstd}
+{bf:Directed:} each ordered pair is compared; both networks must have the same directedness. {bf:Valued:} tie values
+are ignored (the command prints a note on a valued network). {bf:Two-mode:} yes - only the ties between the modes are
+counted; both networks should have the same modes. {bf:Signed:} negative values are not treated specially. See
+{help nwnetworktypes}.{p_end}
+
+
+{title:Limits}
+
+{pstd}
+The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as
+stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
+
 
 {title:Examples}
 
 	{cmd:. nwset, mat((0,1,1\1,0,0\1,0,0)) name(wave1)}
 	{cmd:. nwset, mat((0,1,0\1,0,1\0,1,0)) name(wave2)}
 	{cmd:. nwturnover wave1 wave2, generate(_turnover)}
+
+
+{title:Stored results}
+
+{synoptset 20 tabbed}{...}
+{p2col 5 20 24 2: Scalars}{p_end}
+{synopt:{bf:r(stable)}}number of ties present in both networks{p_end}
+{synopt:{bf:r(formed)}}number of ties present only in {it:net2}{p_end}
+{synopt:{bf:r(dissolved)}}number of ties present only in {it:net1}{p_end}
+{synopt:{bf:r(jaccard)}}stable / (stable + formed + dissolved){p_end}
+{synopt:{bf:r(persistence)}}stable / (stable + dissolved); missing if {it:net1} has no ties{p_end}
+
 
 {title:References}
 
@@ -88,29 +110,10 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 models for network dynamics. {it:Social Networks} 32(1), 44-60. (the Jaccard index of network
 change, used as a standard diagnostic for whether panel-wave data is suitable for dynamic modeling)
 
-{title:Valued networks}
-
-{pstd}
-This measure uses the presence of ties only (R has no weighted form of it either). On a valued network ({help nwnetworktypes}) the command prints the line "(note: tie values are ignored; this measure is binary)" once (not with {opt silent} or {cmd:quietly}) and treats every tie as present. To choose which ties count, make a binary copy with {help nwdichotomize} first.
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes (each ordered pair compared independently, both networks must share
-the same directedness). Weighted: not used - only tie presence/absence is compared. Signed: not
-checked. Two-mode: yes - only the ties between the two modes are counted (the cells inside a mode cannot hold ties and are left out); both networks should have the same modes.
-
-{title:Limits}
-
-{pstd}
-The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as
-stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
 
 {title:See also}
 
 	{help nwcorrelate}, {help nwcomponents}, {help nwqap}
 
-last certified : 22 Aug 2026
-
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

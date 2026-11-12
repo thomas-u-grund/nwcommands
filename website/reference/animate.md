@@ -32,7 +32,7 @@ graphs(_all | g1 g2 g3...)
 | | |
 |---|---|
 | `imagickpath(path)` | path of ImageMagick |
-| `delay(#)` | milliseconds between frames |
+| `delay(#)` | delay between frames in hundredths of a second; default is `delay(50)` |
 | `noloop` | no loop of movie |
 | `showcommand` | display ImageMagick command |
 | `keepeps` | keep .eps files |
@@ -54,4 +54,4 @@ graphs(_all | g1 g2 g3...)
 
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))

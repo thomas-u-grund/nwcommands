@@ -51,8 +51,9 @@ program nwkeep
 		_nwdatasync `netname'
 		order `nw_nodename' `nw_included'
 	}
-	if "`clean'" != "" {
-		drop if `orig' == 1 & `nw_included' != 1
+	// clean: drop the observations of the nodes deleted by if/in (without if/in no node is deleted)
+	if "`clean'" != "" & "`orig'" != "" {
+		qui drop if `orig' == 1 & `nw_included' != 1
 	}
 	mata: st_rclear()
 end

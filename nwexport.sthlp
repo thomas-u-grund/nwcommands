@@ -9,20 +9,22 @@
 {p2col :nwexport  {hline 2}}Export a network as a Pajek, UCINET, GML or edge list file{p_end}
 {p2colreset}{...}
 
+
 {title:Syntax}
 
 {p 8 17 2}
 {cmdab: nwexport} 
 [{it:{help netname}}],
 {opt type}({it:{help nwexport##exp_type:exp_type}})
-[, {opth fname(filename)}
+[{opth fn:ame(filename)}
 {opt replace}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth fname(filename)}}filename of the exported network: default = {it:netname}{p_end}
+{synopt:{opt type}({it:{help nwexport##exp_type:exp_type}})}{bf:Required.} file format: {cmd:pajek}, {cmd:ucinet}, {cmd:gml} or {cmd:edgelist}{p_end}
+{synopt:{opth fn:ame(filename)}}filename of the exported network without the file ending: default = {it:netname}{p_end}
 {synopt:{opt replace}}overwrite exported file{p_end}
 
 
@@ -38,8 +40,8 @@
 		{p_end}
 {p2col:{cmd: edgelist}}network is saved as a plain-text edge list (file ending .txt)
 		{p_end}
-		
-		
+
+
 {title:Description}
 
 {pstd}
@@ -49,25 +51,13 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {it:netname.net} (Pajek), {it:netname.gml} (GML) or {it:netname.txt} (edge list).
 
 
-
-{title:Two-mode networks}
-
-{pstd}
-Two-mode: yes - Pajek gets the bipartite form (first line {cmd:*Vertices n n1}, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute {cmd:nwmode}. {help nwimport} reads each of the four back as a two-mode network. The level labels of the two modes (for example {it:women} and {it:events}) are kept in three of the formats: Pajek has no place for names of modes, so they are written as a comment line (starting with %) before {cmd:*Vertices}, which Pajek ignores; in GML they are the graph attributes {cmd:nwmodelabel1} and {cmd:nwmodelabel2}; in the edge list the columns of the modes hold the labels instead of 1 and 2 (1 and 2 when the network has no labels of its own). UCINET DL has no place for them: a file read back gets the labels {it:rows} and {it:columns}.
-
-{title:Supported network types}
+{title:Network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: yes - Pajek gets the bipartite form (first line {cmd:*Vertices n n1}, the first mode first); UCINET a rectangular matrix with row and column labels; the edge list five columns (ego, alter, value, mode of the ego, mode of the alter); GML the node attribute {cmd:nwmode}. {help nwimport} reads each of the four back as a two-mode network. The level labels of the two modes (for example {it:women} and {it:events}) are kept in three of the formats: Pajek has no place for names of modes, so they are written as a comment line (starting with %) before {cmd:*Vertices}, which Pajek ignores; in GML they are the graph attributes {cmd:nwmodelabel1} and {cmd:nwmodelabel2}; in the edge list the columns of the modes hold the labels instead of 1 and 2 (1 and 2 when the network has no labels of its own). UCINET DL has no place for them: a file read back gets the labels {it:rows} and {it:columns}.
+{bf:Directed:} yes. {bf:Valued:} tie values are written. {bf:Two-mode:} yes - Pajek bipartite form, UCINET rectangular
+matrix, edge list with the modes of both nodes, GML attribute {cmd:nwmode}; level labels are kept except in UCINET DL.
+{bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
-{title:Examples}
-
-{pstd}
-This example loads the {help netexample:Florentine marriage data} and exports to both .DL and .NET format. 
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwexport flomarriage, type(ucinet)}
-	{cmd:. nwexport flobusiness, type(pajek)}
 
 {title:Limits}
 
@@ -79,8 +69,16 @@ ordered by the label of the alter, then of the ego.
  {title:See also}
  
 	{help nwimport}, {help nwuse}, {help nwsave}
-	
-last certified : 24 Aug 2026
+
+
+{title:Examples}
+
+{pstd}
+This example loads the {help netexample:Florentine marriage data} and exports to both .DL and .NET format. 
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwexport flomarriage, type(ucinet)}
+	{cmd:. nwexport flobusiness, type(pajek)}
 
 {hline}
-{pstd}{it:nwcommands version 3.20.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.20.1, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

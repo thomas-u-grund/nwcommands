@@ -25,7 +25,7 @@ replace]
 
 ## Description
 
-`nwsymmetrize` is an exact alias for [nwsym](nwsym) - it forwards every argument and option unchanged and returns the identical stored results. It exists only so the verb `symmetrize` is directly discoverable by name, matching the package's spelled-out-verb naming convention used elsewhere (e.g. [nwcollapse](nwcollapse), [nwexpand](nwexpand), [nwrecode](nwrecode)). [nwsym](nwsym) itself is unaffected and remains fully supported - see its own help file for the complete option reference, mode() details, and worked examples.
+`nwsymmetrize` is an exact alias for [nwsym](nwsym) - it forwards every argument and option unchanged and returns the identical stored results. It exists only so the verb `symmetrize` is directly discoverable by name, matching the package's spelled-out-verb naming convention used elsewhere (e.g. [nwcollapse](nwcollapse), [nwexpand](nwexpand), [nwrecode](nwrecode)). [nwsym](nwsym) itself is fully supported - see its own help file for the complete option reference, mode() details, and worked examples.
 
 ## Examples
 
@@ -36,16 +36,10 @@ This loads the Glasgow data and symmetrizes the network *glasgow1*, identically 
 . nwsymmetrize glasgow1
 ```
 
-## Supported network types
-
-Identical to [nwsym](nwsym) - see that command's help file.
-
 ## Stored results
 
 See [nwsym](nwsym).
 
-- last certified : 28 Aug 2026
-
 ---
 
-*nwcommands version 3.18.0, 11 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.20.1, 12 November 2026* ([check your installed version](nwversion))
