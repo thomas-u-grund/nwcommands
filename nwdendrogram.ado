@@ -109,8 +109,15 @@ program nwdendrogram
 	set more off
 	qui dendrogram_classes `mylevels', `factor' cutpoints(`cutpts') `options' label(`label') 
 	}
+	local rc = _rc
 	capture drop __lev*
 	restore
+	if `rc' {
+		// 3.20.1: an error while drawing was swallowed, so that nothing was drawn and nothing said
+		di "{err}nwdendrogram could not draw the tree (error `rc')."
+		capture mata: mata drop __nwdendrogram_*
+		exit `rc'
+	}
 	
 	capture mata: mata drop __nwdendrogram_*
 	capture confirm number 0
@@ -118,7 +125,7 @@ end
 
 capture program drop dendrogram_classes
 program dendrogram_classes
-	syntax varlist [, factor(real 1) cutpoints(numlist) yscale(string) xscale(string) colorpalette(passthru) symbolpalette(passthru) obsopt(string) nodeopt(string) ringopt(string) beamopt(string) coreopt(string) label(varname) *]
+	syntax varlist [, factor(real 1) cutpoints(numlist) yscale(string) xscale(string) colorpalette(string) symbolpalette(string) obsopt(string) nodeopt(string) ringopt(string) beamopt(string) coreopt(string) label(varname) *]
 
 	if "`colorpalette'" == "" {
 		local colorpalette = "black"
@@ -145,6 +152,11 @@ program dendrogram_classes
 		}
 	}
 	
+	// with one color and one symbol (the default), every group of a ring is drawn alike, so each
+	// kind of element is drawn as one plot instead of one plot per group; otherwise the graph
+	// command of a large tree (one ring per merge) is longer than Stata allows (3.20.1)
+	local onestyle = (wordcount(`"`colorpalette'"') == 1 & wordcount(`"`symbolpalette'"') == 1)
+
 	local hierarchies "`varlist'"
 	checkhierarchy `hierarchies'
 	
@@ -267,11 +279,14 @@ program dendrogram_classes
 	}
 	else {
 		qui levelsof `firstcol'
-		foreach val in `r(levels)' {
+		local lev `r(levels)'
+		if `onestyle' local lev : word 1 of `lev'
+		foreach val in `lev' {
 			_getcolorstyle, i(`val')  symbolpalette(`symbolpalette') colorpalette(`colorpalette')
 			local onecol `r(col_fill)'
 			local onesymb `r(symbol)'
-			local scattercmd `"`scattercmd' (scatter _x _y if `firstcol' == `val'  & _bx1 != .,  mcolor("`onecol'")  msymbol("`onesymb'") `obsopt') "'
+			local cond = cond(`onestyle', "`firstcol' < .", "`firstcol' == `val'")
+			local scattercmd `"`scattercmd' (scatter _x _y if `cond'  & _bx1 != .,  mcolor("`onecol'")  msymbol("`onesymb'") `obsopt') "'
 		}
 	}
 
@@ -299,11 +314,14 @@ program dendrogram_classes
 	levelsof `onevar'
 	local onevartotal : word count `r(levels)'
 	local coltotal = `onevartotal'
+	local lev `r(levels)'
+	if `onestyle' local lev : word 1 of `lev'
 
-	foreach val in `r(levels)' {
+	foreach val in `lev' {
 		_getcolorstyle, i( `val')  symbolpalette(`symbolpalette') colorpalette(`colorpalette')
 		local onecol `r(col_fill)'
-		local outerringcmd `"`outerringcmd' (pcspike _ring`i'x1 _ring`i'y1 _ring`i'x2 _ring`i'y2 if `onevar' == `val', lcolor("`onecol'") `ringopt') "'
+		local cond = cond(`onestyle', "`onevar' < .", "`onevar' == `val'")
+		local outerringcmd `"`outerringcmd' (pcspike _ring`i'x1 _ring`i'y1 _ring`i'x2 _ring`i'y2 if `cond', lcolor("`onecol'") `ringopt') "'
 	}
 	
 	// Plot inner rings
@@ -350,10 +368,13 @@ program dendrogram_classes
 
 			levelsof `onevar'
 			local onevartotal : word count `r(levels)'
-			foreach val in `r(levels)' {
+			local lev `r(levels)'
+			if `onestyle' local lev : word 1 of `lev'
+			foreach val in `lev' {
 				_getcolorstyle, i(`=`coltotal' + `val'')  symbolpalette(`symbolpalette') colorpalette(`colorpalette')
 				local onecol `r(col_fill)'
-				local innerringcmd `"`innerringcmd' (pcspike _ring`i'x1 _ring`i'y1 _ring`i'x2 _ring`i'y2 if `onevar' == `val' & flip`i' == 1 , lcolor("`onecol'") `ringopt')"'
+				local cond = cond(`onestyle', "`onevar' < .", "`onevar' == `val'")
+				local innerringcmd `"`innerringcmd' (pcspike _ring`i'x1 _ring`i'y1 _ring`i'x2 _ring`i'y2 if `cond' & flip`i' == 1 , lcolor("`onecol'") `ringopt')"'
 			}
 			local coltotal = `coltotal' + `onevartotal'
 		}
@@ -377,10 +398,13 @@ program dendrogram_classes
 	local onevar : word 1 of `hierarchies'
 	levelsof `onevar'
 	local onevartotal : word count `r(levels)'
-	foreach val in `r(levels)' {
+	local lev `r(levels)'
+	if `onestyle' local lev : word 1 of `lev'
+	foreach val in `lev' {
 		_getcolorstyle, i(`val')  symbolpalette(`symbolpalette') colorpalette(`colorpalette')
 		local onecol `r(col_fill)'
-		local beamcmd `"`beamcmd' (pcspike _bx1 _by1 _bx2 _by2 if `onevar' == `val', lcolor("`onecol'") `beamopt')"'
+		local cond = cond(`onestyle', "`onevar' < .", "`onevar' == `val'")
+		local beamcmd `"`beamcmd' (pcspike _bx1 _by1 _bx2 _by2 if `cond', lcolor("`onecol'") `beamopt')"'
 	}
 	local coltotal = `onevartotal'
 	local coltotallag = 0 
@@ -410,11 +434,14 @@ program dendrogram_classes
 			
 		levelsof `var'
 		local onevartotal : word count `r(levels)'	
-		foreach val in `r(levels)' {
+		local lev `r(levels)'
+		if `onestyle' local lev : word 1 of `lev'
+		foreach val in `lev' {
 			_getcolorstyle, i(`=`coltotallag' + `val'')  symbolpalette(`symbolpalette') colorpalette(`colorpalette')
 			local onecol `r(col_fill)'
 			local onesymb `r(symbol)'
-			local scattercmd `"`scattercmd' (scatter _beam`i'x1 _beam`i'y1 if idcent_`var' == 0 & `var' == `val', msymbol("`onesymb'") mcolor("`onecol'") `nodeopt')"'				
+			local cond = cond(`onestyle', "`var' < .", "`var' == `val'")
+			local scattercmd `"`scattercmd' (scatter _beam`i'x1 _beam`i'y1 if idcent_`var' == 0 & `cond', msymbol("`onesymb'") mcolor("`onecol'") `nodeopt')"'				
 		}
 		
 		local var2 : word `=`i' + 1' of `hierarchies'

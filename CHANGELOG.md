@@ -15,6 +15,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwplot ..., labelopt(mlabvposition(varname))`** places the label of each node at the clock position held in a variable of the node data, for example the first mode of a two-mode network to the left of its column and the second mode to the right. Before, the variable was not found, because the plot is drawn from nwplot's own data. New test `test_nwplot_labpos`.
 
 ### Fixed
+- **`nwdendrogram` on larger trees.** The wheel has one ring for each merge, and every ring was drawn as one plot per group, so that the graph command for a tree of about 50 nodes or more was longer than Stata/BE allows; the error was swallowed, nothing was drawn and nothing was said. With one color and one symbol (the default) each kind of element is now one plot, which draws the same picture (identical for small trees), and the 71 lawyers of `lazega` draw in Stata/BE. An error while drawing is now reported. `colorpalette()` and `symbolpalette()` were passed on nested and failed the same silent way; they work now. New test `test_nwdendrogram_large`.
 - **`nwplot` after a failed `if`/`in` call.** The temporary networks of such a call were dropped under names with one underscore too few, so they were left behind and the next call stopped with "already exists". They are now dropped.
 
 ## [3.20.0] - 2026-11-12
