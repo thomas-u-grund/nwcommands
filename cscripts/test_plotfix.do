@@ -8,6 +8,7 @@ cscript
 set graphics off
 tempfile dummy
 local tmp "`c(tmpdir)'"
+if substr("`tmp'", -1, 1) != "/" & substr("`tmp'", -1, 1) != "\" local tmp "`tmp'/"
 
 nwuse data/gang, nwclear
 nwuse data/davis, nwappend
