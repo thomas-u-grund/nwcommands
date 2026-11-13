@@ -141,4 +141,4 @@ The result is a network with a tie for every pair of nodes. Above about 27,000 n
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

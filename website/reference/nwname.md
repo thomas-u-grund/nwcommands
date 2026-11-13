@@ -109,4 +109,4 @@ This changes the name of the network *flobusiness* into *flob*. This could also 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

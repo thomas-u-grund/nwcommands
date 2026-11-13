@@ -91,4 +91,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

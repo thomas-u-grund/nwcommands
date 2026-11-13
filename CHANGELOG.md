@@ -4,7 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.23.0] - 2026-11-13
+
+### Results that change (read before you re-run old analyses)
+- **Return codes.** A Stata variable that already exists (a `generate()` target, for example of `nwdegree`, `nwbetween`, `nwcloseness`, `nwplot`, `nwgen`, `nwaltergen`) now stops with r(110), Stata's own code for "already defined", in every command; about 40 commands used r(99), which is not a Stata code. Other uses of r(99) now give the code of `help nwerrorcodes` for their situation: a network that already exists r(483) (`nwgeodesic`, `nwreach`, `nwbridges`, `nwneighbor, subnet()`), a node that does not exist or a node id out of range r(485) (`nwmaxflow`, `nwrandomwalk`, `nwneighbor`, `nwnode, egoid()`), `nwnode` without `ego()` or `egoid()` r(198). `nwaltergen` with fewer rows of data than nodes gives r(2001) (was r(4)). Do-files that test `_rc == 99` must be updated.
+- **Temporal networks: a tie observed at several times keeps all of them** (see Fixed): `nwattime` of a network declared with `time()` or `interval()` now returns ties that came and went, which it dropped before; `nwsummarize` and `nwattime` agree now.
+- **`nwplot, importcoords()` / `edgeimport()` node size.** A node-size slider value saved by the interactive view is now used as `nodefactor()` itself (a page saved at slider 1 comes back with the default sizes); before it was multiplied by 0.2 and the nodes came back small. An explicit `nodefactor()` still wins.
 
 ### Added
 - **`nwregular`** finds the classes of regularly equivalent nodes (maximal regular equivalence, the CATREGE refinement of Borgatti and Everett 1993 for binary data): nodes are in one class when they send ties to, and receive ties from, the same classes. It stores the class of each node in a variable and returns the number of classes and the image matrix (`r(classes)`, `r(image)`). New test `test_nwregular`.
@@ -19,10 +24,10 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **String variables in categorical options.** `nwbrokerage, group()`, `nwmodularity, group()` and `nwtabulate, attribute()` take a string variable: only whether two nodes share a value matters, so the command runs with the variable encoded (levels in alphabetical order) and the string variable is put back afterwards. Results are the same as with the encoded variable. Before, `nwbrokerage` refused strings, `nwmodularity` said the variable had missing values, and `nwtabulate` stopped with "option matcol() not allowed". The new internal helper `_nwstrcat varlist : command` does the encoding and restoring, for other commands and the model packages. New test `test_nwstrcat`.
 - **`nwplot ..., labelopt(mlabvposition(varname))`** places the label of each node at the clock position held in a variable of the node data, for example the first mode of a two-mode network to the left of its column and the second mode to the right. Before, the variable was not found, because the plot is drawn from nwplot's own data. New test `test_nwplot_labpos`.
 
-### Results that change (read before you re-run old analyses)
-- **Return codes.** A Stata variable that already exists (a `generate()` target, for example of `nwdegree`, `nwbetween`, `nwcloseness`, `nwplot`, `nwgen`, `nwaltergen`) now stops with r(110), Stata's own code for "already defined", in every command; about 40 commands used r(99), which is not a Stata code. Other uses of r(99) now give the code of `help nwerrorcodes` for their situation: a network that already exists r(483) (`nwgeodesic`, `nwreach`, `nwbridges`, `nwneighbor, subnet()`), a node that does not exist or a node id out of range r(485) (`nwmaxflow`, `nwrandomwalk`, `nwneighbor`, `nwnode, egoid()`), `nwnode` without `ego()` or `egoid()` r(198). `nwaltergen` with fewer rows of data than nodes gives r(2001) (was r(4)). Do-files that test `_rc == 99` must be updated.
-
 ### Fixed
+- **`nwinstall` reports what it could not download.** The core is installed in numbered parts; a failed download in the middle used to drop that part and all later ones without a message. Each part is tried twice, and `nwinstall` stops with r(677) and names the parts that are missing.
+- **Console Stata on macOS** (`c(os)` is Unix there) finds the macOS plugin and the interactive viewer; `animate` removes its files with `rm` on every non-Windows system.
+- **Interactive viewer (macOS):** an unattended export stops at once with a clear message when its window is closed too early, instead of waiting for the time limit.
 - **Temporal networks: a tie observed at several times keeps all of them.** `nwset ..., time()` kept one time per pair of nodes, the last row's: a tie listed at waves 1 and 3 was missing from `nwattime ..., at(1)`, while `nwsummarize` still counted it, so ties could not come and go. The same held for `interval()`: a pair with two periods kept only the last. The times are now kept as a list with one entry per row, for one-mode and two-mode networks of any size, and `nwattime` returns every tie observed at (or active at) the time asked for. Networks declared by an older version are sliced as before. New test `test_nwattime_multi`.
 - **`nwqap` table:** a rounded coefficient, p-value or constant could print with all its binary digits (`.9570000000000001` instead of `.957`), which also shifted the p-value column. The values are now formatted before they are shown; stored results are unchanged.
 - **`nwsummarize ..., save(filename, replace)`** wrote a file named "filename, replace.dta" and no filename.dta, without a message. The option now takes a file name with an optional `replace`; the file is replaced in either case, as before.
@@ -31,6 +36,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwdendrogram` on larger trees.** The wheel has one ring for each merge, and every ring was drawn as one plot per group, so that the graph command for a tree of about 50 nodes or more was longer than Stata/BE allows; the error was swallowed, nothing was drawn and nothing was said. With one color and one symbol (the default) each kind of element is now one plot, which draws the same picture (identical for small trees), and the 71 lawyers of `lazega` draw in Stata/BE. `colorpalette()` and `symbolpalette()` were passed on nested and failed the same silent way; they work now. New test `test_nwdendrogram_large`.
 - **`help nwerrorcodes`** lists every code the core commands raise, the package-specific codes and the Stata codes, with the situations in which each is raised. It said it documented every code but listed only the package-specific ones, and it listed r(481), which no command raises (Stata uses 481 for another error).
 - **Website command reference:** sections of the help files with other titles than the standard ones were left out of the web pages, among them "Network types" (129 commands), "Limits" (83 commands), the code tables of `nwerrorcodes`, the data set descriptions of `nwwebuse` and most of `nwintro` and `nwprogramming`. All sections are now converted.
+
+Tested on: TO BE FILLED
 
 ## [3.22.0] - 2026-11-13
 

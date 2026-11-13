@@ -51,4 +51,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 	{help nwtomata}, {help nwload}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

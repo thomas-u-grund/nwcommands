@@ -48,14 +48,6 @@ A share of balanced triads cannot be judged by itself: it depends on the share o
 
 Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
 
-- With `reps()`, also
-- **r(reps)** number of draws
-- **r(p_positive)** share of the ties that are positive
-- **r(null_mean)** mean share of balanced triads over the draws
-- **r(null_sd)** standard deviation of that share over the draws
-- **r(null_ge)** number of draws with a share at least the observed **r(balance)**
-- **r(null_expected)** (1 + (2*p* - 1)^3) / 2 with *p* = **r(p_positive)**
-
 ## Examples
 
 ```stata
@@ -81,6 +73,13 @@ Of the 4 triads in this network, *A-B-C* (all positive) and *A-B-D* (two negativ
 - **r(balanced_triad)** --- number of balanced closed triads
 - **r(unbalanced_triad)** --- number of unbalanced closed triads
 - **r(balance)** --- *balanced_triad* / *closed_triad*
+- **With `reps()`**
+- **r(reps)** --- number of draws
+- **r(p_positive)** --- share of the ties that are positive
+- **r(null_mean)** --- mean share of balanced triads over the draws
+- **r(null_sd)** --- standard deviation of that share over the draws
+- **r(null_ge)** --- number of draws with a share at least the observed **r(balance)**
+- **r(null_expected)** --- (1 + (2*p* - 1)^3) / 2 with *p* = **r(p_positive)**
 
 ## References
 
@@ -92,4 +91,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -93,4 +93,4 @@ The result is a dense *n*-by-*n* valued network. Measured in Stata/BE, random di
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

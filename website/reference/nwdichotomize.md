@@ -64,4 +64,4 @@ Instead of the in-place call, keep the original valued network and save the bina
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

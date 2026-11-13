@@ -67,3 +67,7 @@ White, D. R., and K. P. Reitz. 1983. Graph and semigroup homomorphisms on networ
 
 - psee
 - [nwconcor](nwconcor), [nwhierarchy](nwhierarchy), [nwdissimilar](nwdissimilar), [nwsimilar](nwsimilar), [nwcollapse](nwcollapse)
+
+---
+
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

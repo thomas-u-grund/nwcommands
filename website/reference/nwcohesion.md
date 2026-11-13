@@ -80,4 +80,4 @@ Even, S. (1979). *Graph Algorithms*. Computer Science Press. (the vertex-splitti
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

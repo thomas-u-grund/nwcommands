@@ -73,4 +73,4 @@ This load the Florentine dataset from the internet and appends it to the existin
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

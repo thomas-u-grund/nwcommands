@@ -87,4 +87,4 @@ For a temporal network of more than 2,000 nodes the times (or the starts and end
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

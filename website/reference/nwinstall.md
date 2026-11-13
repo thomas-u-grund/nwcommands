@@ -189,4 +189,4 @@ or make that permanent by adding the same line to your own `profile.do` (see `pr
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

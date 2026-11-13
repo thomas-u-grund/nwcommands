@@ -62,3 +62,7 @@ The plot is drawn by [nwplot](nwplot) with `nodexy()` and `if`, so all options o
 - **`r(alters)`** --- number of nodes drawn besides ego
 - **Macros**
 - **`r(ego)`** --- name of ego
+
+---
+
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -78,3 +78,6 @@ apply; {cmd:nwegoplot} itself changes no network and no variable (except those o
 {psee}
 {help nwplot}, {help nwego}, {help nwaltergen}, {help nwcontext}
 {p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

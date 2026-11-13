@@ -3,13 +3,12 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 1)
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 13nov2026
-d Version: 3.22.0
+d Version: 3.23.0
 f _nwrowalign.ado
 f _extract_valuelabels.ado
 f _gnwdegree.ado
 f _growmedian2.ado
 f _nwdeploy.ado
-f _nwcensusplot.ado
 f _nwdialog.ado
 f _nwdialog_append.ado
 f _nwdialog_clusters.ado
@@ -18,6 +17,7 @@ f _nwevalnetexp.ado
 f _nwnodeid.ado
 f _nwnodelab.ado
 f _nwsetobs.ado
+f _nwsyncrows.ado
 f _opts_oneof.ado
 f animate.ado
 f nw2clustering.ado
@@ -29,10 +29,10 @@ f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
 f _nwdatasync.ado
-f _nwsyncrows.ado
 f _nwdenseguard.ado
 f _nwtimeguard.ado
-f _nwlibcheck.ado
+f _nwstrcat.ado
+f _nwcensusplot.ado
 f _nwvaluednote.ado
 f _nwwlayout.ado
 f _nw2guard.ado
@@ -44,6 +44,7 @@ f _nwtabplot.ado
 f _nwopenviewer.ado
 f _nwsetsparse.ado
 f _nwsyntax.ado
+f _nwlibcheck.ado
 f _nwtomata.ado
 f nwaddnodes.ado
 f nwaltergen.ado
@@ -65,6 +66,7 @@ f nwcommunity.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
+f nwregular.ado
 f nwconstraint.ado
 f nwcontext.ado
 f nwcoreperiphery.ado
@@ -82,14 +84,3 @@ f nwduplicate.ado
 f nwdyadprob.ado
 f nwdyads.ado
 f nwego.ado
-f nwevcent.ado
-f nwexpand.ado
-f nwexport.ado
-f nwfactions.ado
-f nwfromedge.ado
-f nwgen.ado
-f nwgenerate.ado
-f nwgenvar.ado
-f nwgeodesic.ado
-f nwhierarchy.ado
-f nwhomophily.ado

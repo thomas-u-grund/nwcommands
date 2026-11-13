@@ -756,6 +756,7 @@ program nwinstall_menu
 	window menu append item "Positions and Equivalence" "Hierarchical clustering of nodes (role/position analysis)" "db nwhierarchy"
 	window menu append item "Positions and Equivalence" "E-I index and mixing table for a categorical node attribute" "db nwmixing"
 	window menu append item "Positions and Equivalence" "Calculate number of shared neighbors between nodes and..." "db nwshared"
+	window menu append item "Positions and Equivalence" "Classes of regularly equivalent nodes" "db nwregular"
 	window menu append item "Positions and Equivalence" "Generate node similarities" "db nwsimilar"
 	window menu append item "Positions and Equivalence" "Common-neighbor similarity indices between all node pairs" "db nwsimindex"
 
@@ -862,6 +863,7 @@ program nwinstall_menu
 	window menu append submenu "Network Analysis" "Visualize Networks"
 	window menu append item "Visualize Networks" "Plot a wheel dendrogram" "db nwdendrogram"
 	window menu append item "Visualize Networks" "Animate a sequence of networks" "db nwmovie"
+	window menu append item "Visualize Networks" "Draw the ego network of one node" "db nwegoplot"
 	window menu append item "Visualize Networks" "Plot a network" "db nwplot"
 	window menu append item "Visualize Networks" "Plot a network as sociomatrix" "db nwplotmatrix"
 

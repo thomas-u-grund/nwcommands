@@ -76,4 +76,4 @@ Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with `k(5)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
