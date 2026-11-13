@@ -42,12 +42,12 @@ program nwego, rclass
 		capture confirm variable `netsizevar'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netsizevar'`k'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 		capture confirm variable `netdensvar'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netdensvar'`k'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 
 		mata: st_rclear()

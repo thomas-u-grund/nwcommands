@@ -41,7 +41,7 @@ program nwcomponents, rclass
 		capture confirm variable `generate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`generate'`k'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 		
 		capture confirm new variable `generate'`k'

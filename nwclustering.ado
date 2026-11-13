@@ -43,7 +43,7 @@ program nwclustering
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		err 110
+		exit 110
 	}
 
 	tempname symnet
@@ -257,7 +257,7 @@ program _nwclustering_two
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" & "`generate'" != "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		err 110
+		exit 110
 	}
 	_nwsyntax `netname'
 	_nwdatasync `netname'

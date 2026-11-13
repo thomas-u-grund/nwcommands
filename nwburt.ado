@@ -15,20 +15,20 @@ program nwburt, rclass
 	mata: st_local("__kind", strofreal(nw_burtkind(`netobj')))
 	if `__kind' == 2 {
 		di "{err}nwburt is not defined for networks with negative or missing tie values"
-		err 198
+		exit 198
 	}
 	local __weighted = ("`valued'" == "true" & "`binary'" == "")
 	if `__weighted' & ("`dyadredundancy'" != "" | "`dyadconstraint'" != "") {
 		di "{err}{p 0 0 2}The network is valued: dyadredundancy and dyadconstraint are defined for ties that are present or absent.{p_end}"
 		di "{err}{p 0 0 2}Add the option {bf:binary} (every positive value counts as a tie) or dichotomize the network first.{p_end}"
-		err 198
+		exit 198
 	}
 
 	foreach v in _effsize _efficiency _constraint _hierarchy {
 		capture confirm variable `v'
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`v'} already exists; use {bf:replace}"
-			err 110
+			exit 110
 		}
 	}
 
@@ -58,7 +58,7 @@ program nwburt, rclass
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
 			if !`__fast' {
 				di "{err}{p 0 0 2}Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the {bf:binary} option for the unweighted measures{p_end}"
-				err 198
+				exit 198
 			}
 		}
 		else {
@@ -66,7 +66,7 @@ program nwburt, rclass
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
 			if !`__fast' & `__kind' == 1 {
 				di "{err}{p 0 0 2}The {bf:binary} option for a valued network needs the native plugin of nwcommands >= 3.6.0{p_end}"
-				err 198
+				exit 198
 			}
 			if !`__fast' {
 				mata: `__burt' = `netobj'->calculate_burt()
