@@ -58,7 +58,7 @@ xa bt_coordinator[2] == 0
 * errors
 gen str1 sg = "a"
 capture nwbrokerage tr, group(sg) generate(bs)
-xa _rc == 109
+xa _rc == 0    // a string group variable is encoded for the command (categories compared only)
 capture nwbrokerage tr, group(grp)
 xa _rc == 198
 capture nwbrokerage tr, generate(bx)

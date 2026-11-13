@@ -109,7 +109,7 @@ nwset, mat((0,2,1\0,0,3\0,0,0)) name(dv3) directed
 nwclustering v3, generate(w)
 drop w
 capture nwclustering v3
-xa _rc == 198
+xa _rc == 0    // without generate() the result is only displayed and returned
 capture nwclustering v3, generate(q) measure(foo)
 xa _rc == 6556
 capture nwclustering dv3, generate(q) measure(arithmetic)
@@ -122,10 +122,10 @@ gen byte old = 7
 capture nwclustering v3, generate(old)
 xa _rc == 110
 xa old == 7 in 1/3
-* symmetrize without generate(): r(198) and no symmetrized helper network left
+* symmetrize without generate(): runs, displays and returns the result, and no symmetrized helper network is left
 mata: st_local("n0", strofreal(__nw.nws.get_number()))
 capture nwclustering d3, symmetrize
-xa _rc == 198
+xa _rc == 0
 mata: st_local("n1", strofreal(__nw.nws.get_number()))
 * SUSPECTED BUG: generate() is checked after nwsym created the helper network
 xa `n1' == `n0'    // fixed: CONFIRMED BUG M7b
