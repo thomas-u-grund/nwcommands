@@ -60,6 +60,7 @@ program _nwopenviewer, rclass
 		capture file open `_nwov_lddh' using "`_nwov_lddout'", read text
 		if _rc == 0 {
 			file read `_nwov_lddh' _nwov_lddline
+			local _nwov_lddline = strtrim(subinstr(`"`_nwov_lddline'"', char(9), " ", .))
 			local _nwov_lddmissing = (r(eof) == 0)
 			file close `_nwov_lddh'
 			if `_nwov_lddmissing' {
@@ -113,7 +114,11 @@ program _nwopenviewer, rclass
 		}
 	}
 	if !`_nwov_usedviewer' {
-		view browse "`htmlpath'"
+		// console Stata has no -view-: say where the file is
+		if "`c(console)'" != "" {
+			di as text "{p 0 0 2}open this file in a web browser: {it:`htmlpath'}{p_end}"
+		}
+		else view browse "`htmlpath'"
 	}
 	return local usedviewer = `_nwov_usedviewer'
 end
