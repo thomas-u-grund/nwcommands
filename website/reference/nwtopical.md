@@ -209,6 +209,7 @@ search_exclude: false
 - hline 3 *Utilities*
 - hline 24
 
+- **[nwapi](nwapi)** --- Mata functions to read networks
 - **[nwclear](nwclear)** --- Clear all networks and variables from memory
 - **[nwcurrent](nwcurrent)** --- Report and set current network
 - **[nwerrorcodes](nwerrorcodes)** --- Return codes of nwcommands

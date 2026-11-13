@@ -20,6 +20,7 @@ search_exclude: false
 - [**[NW-5.5]****Reading the ties**](nwprogramming)
 - [**[NW-5.6]****Conventions**](nwprogramming)
 - [**[NW-5.7]****Pitfalls**](nwprogramming)
+- [**[NW-5.8]****Stable Mata functions: nwapi**](nwprogramming)
 
 ## A first network command
 
@@ -139,9 +140,13 @@ Methods of **NWdef** that read the sparse index (node numbers run from 1 to ``no
 
 5. **One-line Mata.** `mata: if (...) ...` and `mata: for (...) ...` on one line of an ado-file do not work; put loops and conditions in a Mata function.
 
+## Stable Mata functions: nwapi
+
+The classes and methods described in this help file are internal: they can change in any release. If you only need to read networks in your own Mata code (the number of nodes, the adjacency matrix, the edge list, degrees, neighbors), use the functions `nwapi_nodes()`, `nwapi_matrix()`, `nwapi_edgelist()`, `nwapi_outdegree()`, `nwapi_neighbors()` and the others of [nwapi](nwapi). They take the name of a network, return copies with documented shapes, stop with the return codes of [nwerrorcodes](nwerrorcodes) and keep their signatures within a major version. For example, `A = nwapi_matrix("flomarriage")` is an adjacency matrix without missing values, which can be multiplied at once (pitfall 1).
+
 ## See also
 
-[_nwsyntax](nwprogramming), [nwtomata](nwtomata), [nwset](nwset), [nwfromedge](nwfromedge), [nwunab](nwunab), [nwerrorcodes](nwerrorcodes), [nwinternals](nwinternals)
+[nwapi](nwapi), [_nwsyntax](nwprogramming), [nwtomata](nwtomata), [nwset](nwset), [nwfromedge](nwfromedge), [nwunab](nwunab), [nwerrorcodes](nwerrorcodes), [nwinternals](nwinternals)
 
 ---
 

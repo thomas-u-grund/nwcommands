@@ -23,6 +23,7 @@ f nw2set.sthlp
 f nw2toedge.sthlp
 f nwalphabetical.sthlp
 f _nwdatasync.sthlp
+f nwapi.sthlp
 f nwerrorcodes.sthlp
 f nwintro.sthlp
 f nwinternals.sthlp
@@ -83,4 +84,3 @@ f nwgeodesic.sthlp
 f nwhierarchy.sthlp
 f nwhomophily.sthlp
 f nwimport.sthlp
-f nwinduced.sthlp

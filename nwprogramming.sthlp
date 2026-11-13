@@ -15,6 +15,7 @@
 {help nwprogramming##access:{col 14}{bf:[NW-5.5]}{col 31}{bf:Reading the ties}}
 {help nwprogramming##conventions:{col 14}{bf:[NW-5.6]}{col 31}{bf:Conventions}}
 {help nwprogramming##pitfalls:{col 14}{bf:[NW-5.7]}{col 31}{bf:Pitfalls}}
+{help nwprogramming##stable:{col 14}{bf:[NW-5.8]}{col 31}{bf:Stable Mata functions: nwapi}}
 
 
 {marker first}{...}
@@ -216,10 +217,23 @@ inside the program, use the local or scalar it came from.
 put loops and conditions in a Mata function.
 
 
+{marker stable}{...}
+{title:Stable Mata functions: nwapi}
+
+{pstd}
+The classes and methods described in this help file are internal: they can change in any release. If you only need to
+read networks in your own Mata code (the number of nodes, the adjacency matrix, the edge list, degrees, neighbors),
+use the functions {cmd:nwapi_nodes()}, {cmd:nwapi_matrix()}, {cmd:nwapi_edgelist()},
+{cmd:nwapi_outdegree()}, {cmd:nwapi_neighbors()} and the others of {help nwapi}. They take the name of a network, return copies with
+documented shapes, stop with the return codes of {help nwerrorcodes} and keep their signatures within a major version.
+For example, {cmd:A = nwapi_matrix("flomarriage")} is an adjacency matrix without missing values, which can be multiplied at once
+(pitfall 1).
+
+
 {title:See also}
 
 {pstd}
-{help nwprogramming##syntax:_nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
+{help nwapi}, {help nwprogramming##syntax:_nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
 
 {hline}
 {pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
