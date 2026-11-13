@@ -51,6 +51,26 @@ program _nwopenviewer, rclass
 
 	mata: st_local("_nwov_viewerpath", NweditViewerAvailable() ? NweditViewerPath() : "")
 	local _nwov_usedviewer = 0
+	// Linux: the viewer needs the GTK/WebKit libraries. When ldd reports one as missing, say how to install it
+	// (the commands are only shown, never run) and go on without the viewer.
+	if "`c(os)'" == "Unix" & "`_nwov_viewerpath'" != "" {
+		tempfile _nwov_lddout
+		capture shell ldd "`_nwov_viewerpath'" 2>/dev/null | grep "not found" > "`_nwov_lddout'"
+		tempname _nwov_lddh
+		capture file open `_nwov_lddh' using "`_nwov_lddout'", read text
+		if _rc == 0 {
+			file read `_nwov_lddh' _nwov_lddline
+			local _nwov_lddmissing = (r(eof) == 0)
+			file close `_nwov_lddh'
+			if `_nwov_lddmissing' {
+				di as text "{p 0 0 2}the native viewer cannot start: a WebKit library it needs is missing (`_nwov_lddline'). Install it with your package manager, for example{p_end}"
+				di as text "{p 4 4 2}Debian/Ubuntu: {cmd:sudo apt install libwebkit2gtk-4.1-0}{p_end}"
+				di as text "{p 4 4 2}Fedora/RHEL: {cmd:sudo dnf install webkit2gtk4.1}{p_end}"
+				di as text "{p 4 4 2}Arch: {cmd:sudo pacman -S webkit2gtk-4.1}{p_end}"
+				local _nwov_viewerpath ""
+			}
+		}
+	}
 	if "`output'" != "" & "`_nwov_viewerpath'" == "" {
 		di as error "{p 0 0 2}the native viewer for this platform was not found; export() needs it. Reinstall the package.{p_end}"
 		exit 601
