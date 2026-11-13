@@ -77,7 +77,8 @@
 {p2col:{cmd: incoming}}network neighbors of node i are all nodes j who send a tie to i
 		{p_end}
 {p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s
-{opt mode()} - {cmd:both} is accepted as a synonym)
+{opt mode()} - {cmd:both} is accepted as a synonym). A node tied to i in both directions counts once; on a valued
+network its weight is the larger of the two tie values
 		{p_end}
 
 
@@ -91,7 +92,11 @@ For each node the set of network neighbors is specified in {opt mode()}, by defa
 variable {it:newvarname}[i] is calculated based on an all values {it:varname}[j], for which there is a tie from node {it:i} to node
 {it:j}. A network neighborhood of
 node {it:i} can be either 1) all nodes {it:j} to whom i has outgoing ties (default), 2) all nodes {it:j} from whom {it:i} receives incoming ties, or 3) both. In the case 
-of valued ties {it:varname}[j] is weighted accordingly.
+of valued ties {it:varname}[j] is weighted accordingly: {bf:mean} and {bf:sum} are the weighted mean and the weighted sum of
+{it:varname}[j] with the tie values {it:y_ij} as weights; {bf:max} and {bf:min} are the largest and smallest product
+{it:y_ij} * {it:varname}[j], and {bf:sd} is computed from the deviations of these products from the weighted mean (the root of the
+sum of their squares divided by the sum of the tie values). On a valued network max, min and sd are therefore in the units of
+tie value times attribute, not attribute values; {opt noweight} gives the statistics of the neighbors' attribute values themselves.
 
 {pstd}
 After that a {it:statistic} defined in {opt stat()} is calculated from all weigthed {it:varname}[j]. By default, the mean is calculated. More formally:
@@ -191,4 +196,4 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
    {help nwneighbor}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

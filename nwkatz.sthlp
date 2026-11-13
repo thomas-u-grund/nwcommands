@@ -79,7 +79,8 @@ instead: {it:x = (I - alpha*A)^-1 * 1}, solved via a linear solve (not an explic
 inverse). {opt alpha()} must then satisfy {it:|alpha| * rho < 1} (rho = the network's own spectral
 radius) or the implied infinite walk sum diverges - {cmd:nwkatz} checks this and errors with the
 valid range if violated. Default {opt alpha()} in this mode is {bf:0.9/rho}, a conventional
-"safely inside the convergent range" choice. Directed networks get separate in/out-walk variants,
+"safely inside the convergent range" choice; on a network with rho = 0 (no cycles, so every walk
+is finite and every {opt alpha()} is valid) the default is 1. Directed networks get separate in/out-walk variants,
 the same convention the default distance-decay formula already uses.
 
 
@@ -124,4 +125,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

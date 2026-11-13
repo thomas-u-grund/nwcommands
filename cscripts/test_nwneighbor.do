@@ -105,7 +105,9 @@ assert inc[3] == 0
 nwwebuse florentine, nwclear
 local sawbarbadori = 0
 local sawmedici = 0
+* nwneighbor restores the random-number state after the draw, so the draw changes with the seed
 forvalues i = 1/30 {
+	set seed `i'
 	nwneighbor flobusiness, ego(ginori)
 	assert `"`r(oneneighbor)'"' == "barbadori" | `"`r(oneneighbor)'"' == "medici"
 	if `"`r(oneneighbor)'"' == "barbadori" local sawbarbadori = 1

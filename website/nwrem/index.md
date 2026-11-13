@@ -44,7 +44,7 @@ the sister package that splits each event into the choice of the actor and the c
 | Not implemented | triadic and shared-partner effects, fixed effects, the waiting-time (non-ordinal) likelihood, Bayesian estimation |
 | Engine | Mata (no compiled plugin) |
 | Speed | Faster than relevent with degree, inertia and covariate effects (up to 41 times when relevent computes its Hessian, as nwrem always does), slower with recency effects; see [Speed compared with relevent](speed/) |
-| Version | 1.0.13 (12 November 2026) |
+| Version | 1.1.0 (13 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section

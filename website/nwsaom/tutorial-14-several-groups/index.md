@@ -16,8 +16,7 @@ Chris Baerveldt; Houtzager and Baerveldt 1999; Snijders and Baerveldt 2003; RSie
 redistributed with citation of the source, and the terms of use on the [Siena page](https://www.stats.ox.ac.uk/~snijders/siena/BaerveldtData.html) apply to anyone who reuses them. They are not part of `nwwebuse`; the eight csv
 files are on this website next to this tutorial (`school1_wave1.csv`, ..., `school4_wave2.csv`). (2) The 50 pupils of the Teenage Friends and Lifestyle Study (RSiena `s50`, three waves, with alcohol use; Michell and Amos 1997; Pearson and West 2003, see
 [Data sets](../../datasets/)), which for the demonstration in the second half of the tutorial are **cut into three artificial groups** of 15, 20 and 15 pupils (pupils 1-15, 16-35 and 36-50; ties between the groups removed). This is a stand-in for three classes, not a real multi-group
-study. The four csv files (`s50g_actors.csv`, `s50g_wave1.csv` to `s50g_wave3.csv`) are also here. Download all the files into the folder in which you run the script. The commands were run with `nwsaom` 1.2.0 and the core 3.10.0 in Stata 18, and checked in Stata 17
-(identical numbers). Joint estimation needs `nwsaom` 1.2 or later. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+study. The four csv files (`s50g_actors.csv`, `s50g_wave1.csv` to `s50g_wave3.csv`) are also here. Download all the files into the folder in which you run the script. The commands were run with `nwsaom` 1.6.0 and the core 3.22.0 in Stata 17. Joint estimation needs `nwsaom` 1.2 or later. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## The idea
 
@@ -50,15 +49,21 @@ matrices, which then become the networks `w1` and `w2` of all classes together:
 
 . nwsaom describe, waves(w1 w2)
 
-Network data: 2 waves, 151 actors, directed
-----------------------------------------------------------
-wave          ties     density   avg. degree
-1              246      0.0109         1.629
-2              335      0.0148         2.219
-----------------------------------------------------------
-period      kept  created dissolved  Jaccard   Hamming
-1->2         139      196       107    0.314       303
-----------------------------------------------------------
+Network data                        Number of actors  =       151
+Directed                            Number of waves   =         2
+
+------------------------------------------------------------------
+        Wave |       Ties     Density   Avg. degree
+-------------+----------------------------------------------------
+           1 |        246      0.0109         1.629
+           2 |        335      0.0148         2.219
+------------------------------------------------------------------
+
+------------------------------------------------------------------
+      Period |    Kept   Created  Dissolved   Jaccard   Hamming
+-------------+----------------------------------------------------
+        1->2 |     139       196        107     0.314       303
+------------------------------------------------------------------
 ```
 
 The density looks very low (0.01) because the empty blocks between the classes are counted: all ties are within a class, and pairs of pupils from different classes cannot be friends in the model either
@@ -70,31 +75,33 @@ The model of the earlier tutorials, `outdegree reciprocity transtrip`, for the f
 
 ```stata
 . nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip seed(5)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: w1 w2
 Actors: 151                            Periods: 4
 Groups: 4 (variable class), actors per group: 45, 37, 33, 36; waves per group: 2, 2, 2, 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
     w1_to_w2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.247226   .0808946   -27.78   0.000    -2.405776   -2.088675
- reciprocity |    1.86988   .1595137    11.72   0.000     1.557239    2.182522
-   transtrip |   .4650632   .0590168     7.88   0.000     .3493924    .5807339
+   outdegree |  -2.246167   .0820687   -27.37   0.000    -2.407018   -2.085315
+ reciprocity |   1.862864   .1569308    11.87   0.000     1.555285    2.170443
+   transtrip |   .4655751   .0541992     8.59   0.000     .3593466    .5718035
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+----------------------------------------------------------
              |   period1    period3    period5    period7 
--------------+-------------------------------------------
-        rate |    6.4599     5.3856     2.2902     8.1389 
-          se |    1.0048     1.3792     0.5385     1.9861 
-Overall maximum convergence ratio: 0.067 (criterion: below 0.25; met)
+-------------+--------------------------------------------
+        rate |    6.4989     5.3821     2.2893     8.2490
+          se |    0.9714     1.4169     0.5299     2.1306
+----------------------------------------------------------
+Overall maximum convergence ratio: 0.017 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 **The header** says there are four groups, how many pupils are in each, and how many waves each has. **The coefficient table** is one table for all 151 pupils: friendships are reciprocated
-(1.87) and closed (0.47) beyond what density alone gives. **The rates** come as four numbers, one for each class (each class has one period here). Pupils in the fourth class had about three and a half times as many opportunities to change a tie between
-the waves as pupils in the third class (8.1 against 2.3); classes 1 and 2 are in between (6.5 and 5.4).
+(1.86) and closed (0.47) beyond what density alone gives. **The rates** come as four numbers, one for each class (each class has one period here). Pupils in the fourth class had about three and a half times as many opportunities to change a tie between
+the waves as pupils in the third class (8.2 against 2.3); classes 1 and 2 are in between (6.5 and 5.4).
 
 **Why are the rates called `period1`, `period3`, `period5`, `period7`?** RSiena numbers the periods of the combined series, and the step from the last wave of one class to the first wave of the next class is not a period (nothing happens
 there). With two waves per class the periods are 1, 3, 5 and 7, and the numbers 2, 4 and 6 are those switches. `nwsaom` uses the same numbers so that its rate rows can be matched to RSiena's output. Three groups with three waves each have the periods
@@ -133,12 +140,12 @@ Fit the same four classes one by one and combine the fits, as in Tutorial 13:
 ------------------------------------------------------
     Variable | school1   school2   school3   school4  
 -------------+----------------------------------------
-   outdegree |  -2.269    -2.328    -3.340    -2.006  
-             |   0.116     0.206     0.451     0.137  
- reciprocity |   1.561     2.589     2.230     1.541  
-             |   0.254     0.399     0.750     0.287  
-   transtrip |   0.468     1.133     1.067     0.494  
-             |   0.061     0.306     0.288     0.109  
+   outdegree |  -2.274    -2.343    -3.331    -2.011
+             |   0.122     0.214     0.428     0.141
+ reciprocity |   1.571     2.611     2.266     1.554
+             |   0.238     0.385     0.675     0.302
+   transtrip |   0.469     1.133     1.043     0.494
+             |   0.066     0.284     0.291     0.110
 ------------------------------------------------------
                                           Legend: b/se
 ```
@@ -147,13 +154,13 @@ Fit the same four classes one by one and combine the fits, as in Tutorial 13:
 . nwsaom meta school1 school2 school3 school4
 
 IWLS estimates (Snijders and Baerveldt 2003)
--------------------------------------------------------------------------------
-      effect |   n      Mean  Std. err.       t   P>|t|      SD       Q     P>Q
--------------+-----------------------------------------------------------------
-   outdegree |   4   -2.3772     0.2535   -9.38   0.003  0.5069    9.05   0.029
- reciprocity |   4    1.8653     0.2664    7.00   0.006  0.5328    5.91   0.116
-   transtrip |   4    0.6958     0.1734    4.01   0.028  0.3468    8.39   0.039
--------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+      Effect |  N      Mean Std. err.        t   P>|t|      SD       Q     P>Q
+-------------+----------------------------------------------------------------
+   outdegree |  4   -2.3922    0.2552    -9.37   0.003  0.5104    9.44   0.024
+ reciprocity |  4    1.8994    0.2698     7.04   0.006  0.5397    6.51   0.089
+   transtrip |  4    0.6963    0.1711     4.07   0.027  0.3422    8.53   0.036
+------------------------------------------------------------------------------
 ```
 
 (The rest of the meta-analysis output is in the log.) Next to each other, the simple average of the four class estimates, the mean of the meta-analysis and the estimate of the joint model:
@@ -162,15 +169,15 @@ IWLS estimates (Snijders and Baerveldt 2003)
 . matrix list cmp, format(%7.3f)
 
 cmp[3,3]
-            outdegree  reciprocity    transtrip
-avg_classes    -2.486        1.980        0.791
-  meta_IWLS    -2.377        1.865        0.696
-      joint    -2.247        1.870        0.465
+               outdegree  reciprocity    transtrip
+avg_classes       -2.490        2.001        0.785
+  meta_IWLS       -2.392        1.899        0.696
+      joint       -2.246        1.863        0.466
 ```
 
-The three agree on the picture: the density effect is negative, reciprocity is strong, closure is positive. They differ in the details, and above all in the **standard errors**. The joint model's are small (0.08, 0.16, 0.06), those of the mean in the meta-analysis
-are three times as large (0.25, 0.27, 0.17), because the joint model *assumes* that all classes have the same parameters, while the meta-analysis treats the parameters as varying between classes (estimated between-class standard deviations
-of 0.51, 0.53 and 0.35) and does not take the sameness for granted. The heterogeneity test says that the classes do differ in the outdegree and the closure effects (p(Q) = 0.029 and 0.039). When such a test is clearly significant,
+The three agree on the picture: the density effect is negative, reciprocity is strong, closure is positive. They differ in the details, and above all in the **standard errors**. The joint model's are small (0.08, 0.16, 0.05), those of the mean in the meta-analysis
+are three times as large (0.26, 0.27, 0.17), because the joint model *assumes* that all classes have the same parameters, while the meta-analysis treats the parameters as varying between classes (estimated between-class standard deviations
+of 0.51, 0.54 and 0.34) and does not take the sameness for granted. The heterogeneity test says that the classes do differ in the outdegree and the closure effects (p(Q) = 0.024 and 0.036). When such a test is clearly significant,
 the joint model's standard errors are too optimistic.
 
 **When to use which.**
@@ -181,65 +188,99 @@ the joint model's standard errors are too optimistic.
   parameters. Each group must be large enough for its own fit to converge.
 - You can use both: the joint model first, the heterogeneity test of the meta-analysis as a check, and then a joint model in which some effects may differ between groups.
 
-**Letting an effect differ between groups.** Add an indicator of the group and its interaction with the effect. Here reciprocity may differ for class 2:
+**Letting an effect differ between groups.** Add an indicator of the group and its interaction with the effect. Here reciprocity may differ for class 2. The first fit (seed 5) narrowly misses the t-ratio criterion, so we run it quietly and restart it from its estimates with `nwsaom refit` (see [Tutorial 12](../tutorial-12-estimation-speed/)):
 
 ```stata
 . generate byte c2 = (class == 2)
-. nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#reciprocity) seed(5)
+
+. quietly nwsaom, waves(w1 w2) groups(class) outdegree reciprocity transtrip egox(c2) interact(egox_c2#reciprocity) seed(5)
+
+. nwsaom refit, seed(6)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.193)
+------------------------------------------------------------------------------
+
+SAOM (Method of Moments, conditional), waves: w1 w2
+Actors: 151                            Periods: 4
+Groups: 4 (variable class), actors per group: 45, 37, 33, 36; waves per group: 2, 2, 2, 2
+
 ----------------------------------------------------------------------------------------------
                     w1_to_w2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -----------------------------+----------------------------------------------------------------
-                   outdegree |  -2.239454   .0868974   -25.77   0.000     -2.40977   -2.069138
-                 reciprocity |   1.885847    .163172    11.56   0.000     1.566036    2.205659
-                     egox_c2 |   .1364565   .1939773     0.70   0.482    -.2437321    .5166451
-                   transtrip |   .4965696   .0615531     8.07   0.000     .3759277    .6172114
-interact_egox_c2_reciprocity |   1.119204   .3962136     2.82   0.005     .3426394    1.895768
+                   outdegree |  -2.241351   .0796204   -28.15   0.000    -2.397405   -2.085298
+                 reciprocity |   1.886244   .1650781    11.43   0.000     1.562696    2.209791
+                     egox_c2 |   .1452663   .1816843     0.80   0.424    -.2108284    .5013611
+                   transtrip |   .4962169   .0593797     8.36   0.000     .3798348    .6125991
+interact_egox_c2_reciprocity |   1.090653   .3927705     2.78   0.005     .3208368    1.860469
 ----------------------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+----------------------------------------------------------
+             |   period1    period3    period5    period7 
+-------------+--------------------------------------------
+        rate |    6.7110     3.9092     2.2991     9.0592
+          se |    1.1341     0.7416     0.5387     2.5223
+----------------------------------------------------------
+Overall maximum convergence ratio: 0.037 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.018, overall ratio 0.037 (converged)
 ```
 
-The interaction coefficient (1.12, z = 2.8) is the difference of the reciprocity effect between class 2 and the other classes: pupils in class 2 reciprocate more. (`egox_c2`, the main effect of the indicator,
+The restarted fit has converged (largest |t| 0.018). The interaction coefficient (1.09, z = 2.8) is the difference of the reciprocity effect between class 2 and the other classes: pupils in class 2 reciprocate more. (`egox_c2`, the main effect of the indicator,
 is the difference in the tendency to send ties.) This is how RSiena's manual recommends letting parameters differ between groups, too.
 
 ## A behavior in several groups
 
 A behavior is declared as in [Tutorial 4](../tutorial-4-selection-influence/): `behavior()` with its effects. In a joint model its effects are shared by all groups and its **rate is estimated for every period of every group**, like the rate of the
-network. The 50 pupils of the second data set, cut into three groups, with alcohol use (1 to 5) at the three waves (`alc1 alc2 alc3`):
+network. The 50 pupils of the second data set, cut into three groups, with alcohol use (1 to 5) at the three waves (`alc1 alc2 alc3`). Again the first fit narrowly misses the t-ratio criterion (for one rate), and we restart it:
 
 ```stata
-. nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
+. quietly nwsaom, waves(g1 g2 g3) groups(group) outdegree reciprocity transtrip ///
 >     behavior(alc1 alc2 alc3) linear quadratic avalt behegox behaltx seed(1)
-----------------------------------------------------------------------------------------------------
+
+. nwsaom refit, seed(3)
+
+------------------------------------------------------------------------------
+nwsaom refit, run 1: starting from the last estimates (overall ratio 0.211)
+------------------------------------------------------------------------------
+
 SAOM co-evolution (Method of Moments), waves: g1 g2 g3
 Actors: 50                             Periods: 6
 Behavior: alc1 alc2 alc3
 Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 3, 3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
      g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.979649   .2695164   -11.06   0.000    -3.507892   -2.451407
-  reciprocity |    2.93249   .3884028     7.55   0.000     2.171235    3.693746
-    transtrip |   .6542929   .1518174     4.31   0.000     .3567362    .9518496
-      behegox |   .0223577   .1753387     0.13   0.899    -.3212998    .3660153
-      behaltx |   .0115348   .1772157     0.07   0.948    -.3358017    .3588713
-   beh_linear |   .3858774   .1753668     2.20   0.028     .0421649      .72959
-beh_quadratic |  -.2719056    .139211    -1.95   0.051    -.5447541    .0009429
-    beh_avalt |   .5038188   .3862251     1.30   0.192    -.2531685    1.260806
+    outdegree |    -2.9822   .2696216   -11.06   0.000    -3.510648   -2.453751
+  reciprocity |   2.944426   .3817924     7.71   0.000     2.196127    3.692725
+    transtrip |   .6515202   .1514665     4.30   0.000     .3546514    .9483891
+      behegox |   .0324336   .1896462     0.17   0.864    -.3392661    .4041334
+      behaltx |   .0024598   .1851116     0.01   0.989    -.3603522    .3652718
+   beh_linear |   .3888647   .1610635     2.41   0.016     .0731861    .7045434
+beh_quadratic |  -.2768536   .1237379    -2.24   0.025    -.5193755   -.0343318
+    beh_avalt |   .5332747   .3854061     1.38   0.166    -.2221074    1.288657
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+--------------------------------------------------------------------------------
              |   period1    period2    period4    period5    period7    period8 
--------------+-----------------------------------------------------------------
-network_rate |    3.6297     1.9451     5.7289     2.3628     1.1390     2.3669 
-          se |    1.3939     0.9042     1.8273     0.6066     0.5659     1.0102 
-behavior_r~e |    1.2869     1.4586     1.8702     2.0337     0.6656     1.4133 
-          se |    0.5556     0.7007     0.6802     0.8578     0.3447     0.6553 
-Overall maximum convergence ratio: 0.200 (criterion: below 0.25; met)
+-------------+------------------------------------------------------------------
+network_rate |    3.5563     1.8662     5.6934     2.3435     1.1238     2.3844
+          se |    1.1494     0.8203     1.7903     0.6715     0.4892     1.0067
+behavior_r~e |    1.2947     1.4269     1.8353     1.9919     0.6596     1.4494
+          se |    0.7357     0.5799     0.7541     0.8815     0.3271     0.7152
+--------------------------------------------------------------------------------
+Overall maximum convergence ratio: 0.160 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+
+nwsaom refit: 1 run; largest |t| 0.067, overall ratio 0.160 (converged)
 ```
 
 Three groups with three waves each give six periods, with six network rates and six behavior rates (groups 1, 2 and 3 have the periods 1-2, 4-5 and 7-8). The effects are shared. In these small groups the estimated influence of the friends'
-alcohol use (`beh_avalt` 0.50, z = 1.3) and the selection effects (`behegox`, `behaltx`) are not distinguishable from zero.
+alcohol use (`beh_avalt` 0.53, z = 1.4) and the selection effects (`behegox`, `behaltx`) are not distinguishable from zero.
 
 ## Groups with different waves
 
@@ -247,25 +288,27 @@ The groups need not have been observed at the same occasions. Suppose group 1 wa
 
 ```stata
 . nwsaom, waves(g1 g2 g3) groups(group) gwaves(2: 1 2 | 3: 2 3) outdegree reciprocity transtrip seed(1)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: g1 g2 g3
 Actors: 50                             Periods: 4
 Groups: 3 (variable group), actors per group: 15, 20, 15; waves per group: 3, 2, 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
     g1_to_g3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.682548   .2634191   -10.18   0.000     -3.19884   -2.166256
- reciprocity |   2.623762   .3910328     6.71   0.000     1.857352    3.390172
-   transtrip |    .554422   .1317472     4.21   0.000     .2962022    .8126417
+   outdegree |  -2.676822   .2586404   -10.35   0.000    -3.183748   -2.169896
+ reciprocity |   2.617165   .4142432     6.32   0.000     1.805263    3.429067
+   transtrip |   .5477705   .1367602     4.01   0.000     .2797255    .8158156
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+----------------------------------------------------------
              |   period1    period2    period4    period6 
--------------+-------------------------------------------
-        rate |    3.1495     1.5944     5.2404     2.0249 
-          se |    1.0063     0.6410     1.3535     0.7708 
-Overall maximum convergence ratio: 0.038 (criterion: below 0.25; met)
+-------------+--------------------------------------------
+        rate |    3.1403     1.6238     5.2689     1.9980
+          se |    1.0861     0.6607     1.3756     0.7814
+----------------------------------------------------------
+Overall maximum convergence ratio: 0.064 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
@@ -281,72 +324,76 @@ the effects the same in all periods, and are they the same in all groups. It pri
 ```stata
 . estat timetest, fixrates
 
-Test of time heterogeneity (score-type test; as RSiena sienaTimeTest)
-Is the parameter of an effect the same in all periods?
+Test of time heterogeneity (score-type test)
+H0: the parameter of each effect is the same in all periods
 
-            effect |      chi2  d.f.  Prob>chi2
--------------------+---------------------------
-         outdegree |     3.080     5     0.6876
-       reciprocity |     2.672     5     0.7503
-          altx_alc |    10.794     5     0.0556
-          egox_alc |     8.384     5     0.1363
-         transtrip |    11.680     5     0.0394
--------------------+---------------------------
-        Joint test |    36.336    25     0.0667
------------------------------------------------
+---------------------------------------------------------
+      Effect |          chi2        df        Prob > chi2
+-------------+-------------------------------------------
+   outdegree |         3.081         5             0.6875
+ reciprocity |         2.857         5             0.7220
+    altx_alc |        10.791         5             0.0557
+    egox_alc |         8.193         5             0.1459
+   transtrip |        10.335         5             0.0663
+-------------+-------------------------------------------
+       Joint |        36.338        25             0.0666
+---------------------------------------------------------
 
-Are the parameters of the periods of a group the same as in the other groups?
-             group |      chi2  d.f.  Prob>chi2
--------------------+---------------------------
-                 1 |     2.320     5     0.8033
-                 2 |    13.036    10     0.2217
-                 3 |    21.967    10     0.0153
------------------------------------------------
+H0: the parameters of the periods of a group are the same as in the other groups
+---------------------------------------------------------
+       Group |          chi2        df        Prob > chi2
+-------------+-------------------------------------------
+           1 |         2.512         5             0.7747
+           2 |        14.204        10             0.1639
+           3 |        19.699        10             0.0322
+---------------------------------------------------------
 
 Test of each period (all effects)
-            period |      chi2  d.f.  Prob>chi2
--------------------+---------------------------
-                 1 |     2.320     5     0.8033
-                 2 |     6.085     5     0.2980
-                 3 |     8.021     5     0.1551
-                 4 |     7.133     5     0.2109
-                 5 |    18.300     5     0.0026
-                 6 |     4.452     5     0.4864
------------------------------------------------
+---------------------------------------------------------
+      Period |          chi2        df        Prob > chi2
+-------------+-------------------------------------------
+           1 |         2.512         5             0.7747
+           2 |         6.014         5             0.3049
+           3 |         9.393         5             0.0944
+           4 |         6.753         5             0.2397
+           5 |        16.287         5             0.0061
+           6 |         4.428         5             0.4896
+---------------------------------------------------------
 
 Period-specific deviations (one-step estimates) and separate tests
-            effect |  Period   Deviation      chi2  Prob>chi2
--------------------+-----------------------------------------
-         outdegree |       2      0.2988     0.274     0.6010
-         outdegree |       3      1.6235     0.427     0.5136
-         outdegree |       4     -0.7329     1.279     0.2580
-         outdegree |       5     -1.3394     0.146     0.7020
-         outdegree |       6      1.6103     1.591     0.2072
-       reciprocity |       2     -1.0102     0.159     0.6905
-       reciprocity |       3     -2.1005     1.911     0.1669
-       reciprocity |       4      0.7115     0.033     0.8552
-       reciprocity |       5      0.1293     0.767     0.3812
-       reciprocity |       6     -1.0216     0.574     0.4488
-          altx_alc |       2      0.8134     4.967     0.0258
-          altx_alc |       3      0.2044     0.072     0.7885
-          altx_alc |       4     -0.0930     0.855     0.3551
-          altx_alc |       5     -0.1689     5.891     0.0152
-          altx_alc |       6      0.3480     0.042     0.8374
-          egox_alc |       2     -0.1810     2.700     0.1003
-          egox_alc |       3     -0.3759     0.032     0.8586
-          egox_alc |       4     -0.5497     0.835     0.3608
-          egox_alc |       5     -0.7085     5.245     0.0220
-          egox_alc |       6     -0.2133     0.008     0.9278
-         transtrip |       2     -0.0329     1.817     0.1776
-         transtrip |       3     -0.6396     2.752     0.0971
-         transtrip |       4     -0.0458     0.054     0.8170
-         transtrip |       5      1.6144     9.134     0.0025
-         transtrip |       6     -0.6095     0.000     0.9910
--------------------------------------------------------------
+---------------------------------------------------------
+      Effect |  Period   Deviation      chi2  Prob > chi2
+-------------+-------------------------------------------
+   outdegree |       2      0.3635     0.253       0.6151
+   outdegree |       3      1.8492     0.481       0.4879
+   outdegree |       4     -0.6176     1.355       0.2444
+   outdegree |       5     -1.2576     0.156       0.6924
+   outdegree |       6      1.6724     1.730       0.1884
+ reciprocity |       2     -1.1435     0.138       0.7100
+ reciprocity |       3     -2.2154     2.115       0.1458
+ reciprocity |       4      0.5027     0.040       0.8412
+ reciprocity |       5      0.1703     0.779       0.3775
+ reciprocity |       6     -1.1711     0.672       0.4125
+    altx_alc |       2      0.7122     4.756       0.0292
+    altx_alc |       3      0.1672     0.069       0.7929
+    altx_alc |       4     -0.1277     0.753       0.3856
+    altx_alc |       5     -0.4399     5.822       0.0158
+    altx_alc |       6      0.2905     0.070       0.7918
+    egox_alc |       2     -0.1191     2.661       0.1028
+    egox_alc |       3     -0.4459     0.014       0.9064
+    egox_alc |       4     -0.4985     0.674       0.4117
+    egox_alc |       5     -0.5893     5.185       0.0228
+    egox_alc |       6     -0.1623     0.009       0.9225
+   transtrip |       2     -0.0263     2.010       0.1563
+   transtrip |       3     -0.7608     3.342       0.0675
+   transtrip |       4     -0.1186     0.058       0.8102
+   transtrip |       5      1.2466     7.742       0.0054
+   transtrip |       6     -0.5735     0.002       0.9689
+---------------------------------------------------------
 ```
 
-(The table of the period-specific deviations follows in the log.) The joint test is borderline (p = 0.067). The closure effect varies most across periods; group 3 is the group that differs from the others (p = 0.015), and period 5, the first
-period of group 3 (the periods are numbered 1 to 6 here, not with RSiena's numbers of the rates), is where the model fits worst (p = 0.003). The test per group follows RSiena; in RSiena 1.6.14 the test that it calls the *group test* is the test per period. The matrices
+(The table of the period-specific deviations follows in the log.) The joint test is borderline (p = 0.067). The alcohol-alter and the closure effects vary most across periods (p = 0.056 and 0.066); group 3 is the group that differs from the others (p = 0.032), and period 5, the first
+period of group 3 (the periods are numbered 1 to 6 here, not with RSiena's numbers of the rates), is where the model fits worst (p = 0.006). The test per group follows RSiena; in RSiena 1.6.14 the test that it calls the *group test* is the test per period. The matrices
 `r(group)` and `r(period)` hold the numbers.
 
 The score test asks whether effects that were left out are needed. Fit the model with the two alcohol effects held fixed at zero (`fix()`), then test them:
@@ -354,35 +401,37 @@ The score test asks whether effects that were left out are needed. Fit the model
 ```stata
 . estat score
 
-Score-type test of the restricted model (as RSiena score.Test)
-Tests whether the fixed effects below differ from their fixed values.
+Score-type test of fixed effects
+H0: each effect below equals its fixed value
 
-            effect |  Fixed at     chi2  d.f. Prob>chi2 One-sided z
--------------------+-----------------------------------------------
-          altx_alc |    0.0000    0.041     1    0.8404      -0.201
-          egox_alc |    0.0000    0.172     1    0.6785      -0.415
--------------------+-----------------------------------------------
-        Joint test |              0.187     2    0.9107
--------------------------------------------------------------------
+-----------------------------------------------------------------
+      Effect |  Fixed at      chi2   df  Prob > chi2  One-sided z
+-------------+---------------------------------------------------
+    altx_alc |    0.0000     0.023    1       0.8782       -0.153
+    egox_alc |    0.0000     0.131    1       0.7178       -0.361
+-------------+---------------------------------------------------
+       Joint |               0.156    2       0.9248
+-----------------------------------------------------------------
 
-One-step estimates (restricted estimate plus the one-step correction)
-            effect |  Estimate
--------------------+----------
-         outdegree |   -2.9696
-       reciprocity |    2.9125
-          altx_alc |    0.0082
-          egox_alc |   -0.0542
-         transtrip |    0.6555
-             rate1 |    3.6195
-             rate2 |    1.8886
-             rate3 |    5.6898
-             rate4 |    2.3420
-             rate5 |    1.1046
-             rate6 |    2.3453
-------------------------------
+One-step estimates (restricted estimates plus the one-step correction)
+-----------------------------------------------------------------
+      Effect |    Estimate
+-------------+---------------------------------------------------
+   outdegree |     -2.9623
+ reciprocity |      2.9244
+    altx_alc |      0.0114
+    egox_alc |     -0.0532
+   transtrip |      0.6418
+       rate1 |      3.6149
+       rate2 |      1.9008
+       rate3 |      5.7916
+       rate4 |      2.3324
+       rate5 |      1.1042
+       rate6 |      2.3262
+-----------------------------------------------------------------
 ```
 
-The alcohol effects are not needed in the network model (p = 0.91). In the fit of the restricted model `nwsaom` says that the convergence criteria are not met for the two fixed effects: their t-ratios are exactly the
+The alcohol effects are not needed in the network model (p = 0.92). In the fit of the restricted model `nwsaom` says that the convergence criteria are not met for the two fixed effects: their t-ratios are exactly the
 quantity the score test examines, not a failure of the estimation.
 
 ## Does it agree with RSiena?

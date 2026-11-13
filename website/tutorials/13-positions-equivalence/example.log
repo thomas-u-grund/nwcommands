@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 13: positions and structural equivalence
 . * Requires the core nwcommands.
 . set graphics off
@@ -19,6 +17,7 @@
    Minimum value:  0
    Maximum value:  3
    Density:  .288
+   Mean outdegree:  4.89
    Temporal: false
 
 . 
@@ -42,6 +41,7 @@
    Minimum value:  -.392
    Maximum value:  .945
    Density:  .993
+   Mean outdegree:  16.89
    Temporal: false
 
 . 
@@ -62,7 +62,6 @@
 . nwdendrogram _nwhierarchy_role, label(_nwnode)
 
 . graph export "dendrogram_sampson.svg", replace
-(file dendrogram_sampson.svg not found)
 file dendrogram_sampson.svg saved as SVG format
 
 . 
@@ -104,7 +103,7 @@ file dendrogram_sampson.svg saved as SVG format
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-     fiedler |         18    2.56e-09    .2425356  -.4544007   .3320163
+     fiedler |         18   -2.56e-09    .2425356  -.3320163   .4544007
  
 
 . tabulate fiedlersign faction
@@ -112,9 +111,7 @@ file dendrogram_sampson.svg saved as SVG format
 fiedlersig |             faction
          n |     Loyal   Outcasts      Turks |     Total
 -----------+---------------------------------+----------
-        -1 |         0          4          6 |        10 
-         1 |         7          0          1 |         8 
+        -1 |         7          0          1 |         8
+         1 |         0          4          6 |        10
 -----------+---------------------------------+----------
      Total |         7          4          7 |        18 
-
-. 

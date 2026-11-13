@@ -34,6 +34,7 @@ draw a random network in which every node has a degree you choose.
    Minimum value:  0
    Maximum value:  1
    Density:  .21
+   Mean degree:  2.93
    Temporal: false
 ```
 
@@ -56,6 +57,7 @@ draw a random network in which every node has a degree you choose.
    Minimum value:  0
    Maximum value:  1
    Density:  .2
+   Mean degree:  2.80
    Temporal: false
 ```
 
@@ -79,6 +81,7 @@ weight `3` about 70%:
    Minimum value:  0
    Maximum value:  3
    Density:  .181
+   Mean degree:  2.53
    Temporal: false
 ```
 
@@ -105,6 +108,7 @@ nodes — the classic "small-world" effect:
    Minimum value:  0
    Maximum value:  1
    Density:  .211
+   Mean degree:  4.00
    Temporal: false
 
 . nwplot, layout(circle) scheme(s1network) export("plot_smallworld.svg") replace
@@ -137,6 +141,7 @@ characteristic *hub* structure — a few nodes accumulate far more ties than the
    Minimum value:  0
    Maximum value:  1
    Density:  .195
+   Mean degree:  3.70
    Temporal: false
 
 . nwdegree, generate(deg)
@@ -205,6 +210,7 @@ ones above). `xwrap`/`ywrap` wrap the grid's edges around so every node has exac
    Minimum value:  0
    Maximum value:  1
    Density:  .267
+   Mean outdegree:  4.00
    Temporal: false
 
 . nwplot, layout(grid) label(_nwnode) scheme(s1network) export("plot_lattice.svg") replace
@@ -264,8 +270,8 @@ and a half ties, and `nwrandom` says so:
 
 ```stata
 . capture noisily nwrandom 3, degree(1 1 1) name(bad)
-No network without loops and repeated ties has these degrees (their sum must be even, and
-> no degree can exceed 2; see the Erdos-Gallai conditions).
+No network without loops and repeated ties has these degrees (their sum must be even,
+and no degree can exceed 2; see the Erdos-Gallai conditions).
 invalid syntax
 ```
 

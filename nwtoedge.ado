@@ -8,6 +8,11 @@ program nwtoedge
 	unw_defs
 	_nwsyntax `netname', max(9999)
 	local nets `netname'
+	// numeric needs exactly one network: refused before anything is changed
+	if "`numeric'" != "" & (`: word count `netname'' > 1 | "`comparevars'" != "") {
+		di "{err}Programming option {bf:numeric} only allowed for one network."
+		exit 198
+	}
 
 	// Isolate preservation (#5): an edgelist has no way to represent a
 	// zero-tie node, so a plain nwtoedge/nwfromedge round trip silently
@@ -223,7 +228,8 @@ program nwtoedge
 		// what the uncompressed list means (and what several networks
 		// merged on one ego/alter pair need).
 		local __sparseok 0
-		if "`compress'" != "" & `: word count `nets'' == 1 {
+		// (the sparse listing does not handle a network of one node)
+		if "`compress'" != "" & `: word count `nets'' == 1 & `nodes' > 1 {
 			mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
 		}
 		if `__sparseok' {
@@ -262,6 +268,14 @@ program nwtoedge
 	qui forvalues j = 1/`=`i'-1' {
 		merge m:n (`ego' `alter') using `__nwedgelist`j'', nogenerate
 	}
+
+	// two-mode network: the mode-1 node of a tie between the modes is always
+	// _ego and the mode-2 node _alter (nw2fromedge _ego _alter rebuilds it)
+	if "`is2mode'" == "true" & "`ignore2mode'" == "" {
+		local __tw_first : word 1 of `nets'
+		_nwsyntax `__tw_first'
+		mata: nwtoedge_mode1ego("`ego'", "`alter'", `netobj'->get_nodenames(), `netobj'->get_modes())
+	}
 	
 	qui if trim("`egovars'") != "" {
 		capture drop `nw_nodename'
@@ -299,11 +313,15 @@ program nwtoedge
 			di "{err}Programming option {bf:numeric} only allowed for one network."
 			exit 198
 		}
+		// node labels -> node numbers (position of the node in the network),
+		// row by row, whatever rows the listing kept
+		_nwsyntax `netname'
+		tempvar __nte __nta
+		mata: nwtoedge_numid("`ego'", "`alter'", "`__nte'", "`__nta'", `netobj'->get_nodenames())
 		drop `ego' `alter'
-		
-		mata: __nwedgelist = vec(J(`nodes',1,(1::`nodes'))), vec(J(1,`nodes',(1::`nodes'))')
-		getmata (`ego' `alter') = __nwedgelist, force
-		mata: mata drop __nwedgelist
+		rename `__nte' `ego'
+		rename `__nta' `alter'
+		order `ego' `alter'
 	}
 
 	// See the isolate-preservation note near the top of this file (#5).
@@ -315,4 +333,61 @@ program nwtoedge
 		char _dta[nwtoedge_nodes] "`__iso_srclabels'"
 	}
 
+end
+
+capture mata: mata drop nwtoedge_mode1ego()
+mata:
+void nwtoedge_mode1ego(string scalar ev, string scalar av, string rowvector nm, string rowvector md)
+{
+	transmorphic A
+	string colvector e, a
+	real colvector sw
+	real scalar i
+	string scalar ie, ia
+
+	A = asarray_create()
+	asarray_notfound(A, "")
+	for (i = 1; i <= min((cols(nm), cols(md))); i++) asarray(A, nm[i], md[i])
+	e = st_sdata(., ev)
+	a = st_sdata(., av)
+	sw = J(rows(e), 1, 0)
+	for (i = 1; i <= rows(e); i++) {
+		ie = asarray(A, e[i])
+		ia = asarray(A, a[i])
+		sw[i] = (ie == "2" & ia == "1")
+	}
+	if (!any(sw)) return
+	sw = selectindex(sw)
+	// both id variables get the same width, so that no label is cut
+	if (st_vartype(ev) != st_vartype(av) & st_vartype(ev) != "strL" & st_vartype(av) != "strL") {
+		stata("quietly recast str" + strofreal(max((strtoreal(substr(st_vartype(ev), 4, .)), strtoreal(substr(st_vartype(av), 4, .))))) + " " + ev + " " + av)
+	}
+	st_sstore(sw, ev, a[sw])
+	st_sstore(sw, av, e[sw])
+}
+end
+
+capture mata: mata drop nwtoedge_numid()
+mata:
+void nwtoedge_numid(string scalar ev, string scalar av, string scalar en, string scalar an, string rowvector nm)
+{
+	transmorphic A
+	string colvector e, a
+	real colvector ie, ia
+	real scalar i
+
+	A = asarray_create()
+	asarray_notfound(A, .)
+	for (i = 1; i <= cols(nm); i++) asarray(A, nm[i], i)
+	e = st_sdata(., ev)
+	a = st_sdata(., av)
+	ie = J(rows(e), 1, .)
+	ia = J(rows(e), 1, .)
+	for (i = 1; i <= rows(e); i++) {
+		ie[i] = asarray(A, e[i])
+		ia[i] = asarray(A, a[i])
+	}
+	(void) st_addvar("long", (en, an))
+	st_store(., (en, an), (ie, ia))
+}
 end

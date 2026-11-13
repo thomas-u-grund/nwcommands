@@ -150,6 +150,7 @@ first mode, `project(2)` would keep the events:
    Minimum value:  0
    Maximum value:  7
    Density:  .908
+   Mean degree:  15.44
    Temporal: false
    Provenance:  projected from network davis, mode 1 (woman), stat=minmax
 ```
@@ -389,8 +390,8 @@ Motif 6 is the four-cycle: two women who attended the same two events. There are
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-         cl_ |         32    .6591892    .0993221   .5238096   .8461539
-        clo1 |         32    .4413106    .0612054   .3690476   .5961539
+         cl_ |         32    .6591892    .0993221   .5238095   .8461538
+        clo1 |         32    .4413106    .0612054   .3690476   .5961538
 
 . nwbetween davis, generate(bw) silent
 ----------------------------------------
@@ -410,7 +411,7 @@ Motif 6 is the four-cycle: two women who attended the same two events. There are
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
           bw |         32    .0451195    .0606926   .0019535   .2438195
-         bw1 |         32       20.25    27.37569   .8693194   110.2064
+         bw1 |         32       20.25    27.37568   .8693195   110.2064
 ```
 
 The normalised closeness of the nodes runs from .52 to .85 (mean .66) and the raw closeness of the bipartite graph from .37 to .60; the normalised betweenness runs from .002 to .24, the raw betweenness from .87 to 110. Compare nodes of the same mode with each other; the normalisation makes the two modes comparable.
@@ -487,9 +488,9 @@ all commands, and the page on [two-mode networks](../../nwcommands/two-mode/) ex
 
 ```stata
 . capture noisily nwspectral davis, generate(sp)
-nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold no 
-> ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a one-mod
-> e graph.
+nwspectral does not support two-mode networks (davis): it reads the blocks between nodes of the same mode, which hold
+no ties. Make a one-mode network of one mode first (nwproject). The option onemode reads the two-mode network as a
+one-mode graph.
 
 . display _rc
 6088
@@ -608,6 +609,7 @@ shared directors:
    Minimum value:  0
    Maximum value:  5
    Density:  .00735
+   Mean degree:  3.34
    Temporal: false
    Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
 ```

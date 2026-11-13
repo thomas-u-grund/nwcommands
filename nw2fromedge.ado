@@ -4,6 +4,7 @@ program nw2fromedge
 	syntax varlist(min=2 max=3) [if] [, xvars name(string) REPLACE * ]
 
 	// a name in use is refused before anything else (nwfromedge would find it only after it has replaced the data)
+	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	if "`name'" != "" & "`replace'" == "" {
 		qui nwvalidate `name'
 		if "`r(exists)'" == "true" {
@@ -44,15 +45,17 @@ program nw2fromedge
 			local g2min = r(min)
 			local g2max = r(max)
 			if (`g1max' >= `g2min') {
+				// in double precision: a float holds integers exactly only up to 16,777,216
+				recast double `group2'
 				replace `group2' = `group2' + `g1max'
 			}
 		}
 	}
 	
-	// Check if the same strings are used for the two modes
-	capture confirm string variable `group1'
+	// Check if the same strings are used for the two modes (both string; a string mode with a numeric one failed
+	// here with r(106))
+	capture confirm string variable `group1' `group2'
 	qui if _rc == 0 {
-		capture confirm string variable `group2'
 		tempfile g1 
 		tempfile g2
 		preserve
@@ -119,7 +122,7 @@ program nw2fromedge
 	collapse (mean) `temp', by(`group1')
 	if `group1numeric' & `group2numeric' {
 		tempvar group1lab
-		gen `group1lab' = "n" + strofreal(`group1')
+		gen `group1lab' = "n" + strofreal(`group1', "%18.0g")
 		mata: `group1labels' = st_sdata(., "`group1lab'")
 	}
 	else {
@@ -151,6 +154,8 @@ program nw2fromedge
 	mata: `modes' = modes_from_labels(`netobj'->get_nodenames(), `group1labels')'
 	mata: `netobj'->set_2mode(1)
 	mata: `netobj'->set_modes(`modes')
+	// mode-1 nodes first (string identifiers are numbered in the sort order of both modes together)
+	mata: nw_modes_first(`netobj')
 	local __dd1 = cond(`"`__id1'"' != "", `"`__id1'"', "`__gname1'")
 	local __dd2 = cond(`"`__id2'"' != "", `"`__id2'"', "`__gname2'")
 	mata: `netobj'->set_description_mode1(`"`__dd1'"')

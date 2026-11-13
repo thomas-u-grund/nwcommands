@@ -65,7 +65,7 @@ Akaike's information criterion and Bayesian information criterion
           m4 |        439          .  -2122.016       2   4248.032   4256.201
           m5 |        439          .  -1968.845       4   3945.689   3962.027
 -----------------------------------------------------------------------------
-Note: BIC uses N = number of observations. See [R] IC note.
+Note: BIC uses N = number of observations. See [R] BIC note.
 
 . lrtest m3 m1
 
@@ -86,41 +86,40 @@ Prob > chi2 = 0.0000
 . 
 . * --- do the estimates depend on the optimiser's starting point? ---
 . nwrem calls, nodsnd nidrec frpsndsnd frrecsnd seed(1)
------------------------------------------------------------------------------
+------------------------------------------------------------
 Relational event model (ordinal partial likelihood, MLE)
 Network: calls                         Actors: 84
 Events: 439                            Log likelihood: -2.12e+03
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------------------------
        calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       nodsnd |   5.392444    .437614    12.32   0.000     4.534736    6.250151
       nidrec |   .9485508   .5809881     1.63   0.103     -.190165    2.087267
    frpsndsnd |   5.782833   .1612639    35.86   0.000     5.466762    6.098905
     frrecsnd |   1.640031   .1538416    10.66   0.000     1.338507    1.941555
------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 . nwrem calls, nodsnd nidrec frpsndsnd frrecsnd seed(2)
------------------------------------------------------------------------------
+------------------------------------------------------------
 Relational event model (ordinal partial likelihood, MLE)
 Network: calls                         Actors: 84
 Events: 439                            Log likelihood: -2.12e+03
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------------------------
        calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       nodsnd |   5.392423   .4376143    12.32   0.000     4.534715    6.250131
       nidrec |   .9485645   .5809885     1.63   0.103    -.1901521    2.087281
    frpsndsnd |    5.78284   .1612634    35.86   0.000      5.46677    6.098911
     frrecsnd |   1.640016   .1538413    10.66   0.000     1.338493     1.94154
------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 . 
 . * --- what is refused ---
 . capture noisily nwrem calls
-nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec() c
-> ovint() covevent() rsndsnd rrecsnd (see nwrem for what each computes; the development notes for what is not yet implem
-> ented).
+nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec()
+covint() covevent() rsndsnd rrecsnd (see nwrem for what each computes).
 invalid syntax
 
 . display "return code: " _rc
@@ -143,5 +142,3 @@ invalid syntax
 
 . display "return code: " _rc
 return code: 198
-
-. 

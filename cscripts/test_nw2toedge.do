@@ -12,7 +12,10 @@ nw2set, mat(J(6,4,1)) name(mynet)
 gen x = _n
 replace x = x + 100 if _nwmode == "2"
 nw2toedge , egovars(x) altervars(x)
+* the mode-1 node is _ego, the mode-2 node _alter
 sum x_ego
+assert `r(max)' < 100
+sum x_alter
 assert `r(min)' >= 100
 
 nwclear

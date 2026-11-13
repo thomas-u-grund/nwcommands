@@ -28,7 +28,7 @@ The program keeps a flag, *Two-mode*, with every network, together with the mode
 
 No command works the flag out from the ties, because the adjacency matrix of a two-mode network looks like that of a one-mode network. The declaration is checked: both modes must hold nodes and no tie may join two nodes of the same mode (`nwname net, new2mode(true)` on a one-mode network, or an import of a file with such a tie, stops with error 459; `nwreplacemat` refuses a matrix with a tie inside a mode).
 
-A two-mode network is stored as one square matrix over the nodes of both modes. The cells between nodes of the same mode hold missing values, not 0. The nodes are ordered by name, not by mode; `_nwmode` (1 or 2) says which mode a row belongs to.
+A two-mode network is stored as one square matrix over the nodes of both modes. The cells between nodes of the same mode hold missing values, not 0. `nwset ..., twomode` and `nw2fromedge` put the nodes of the first mode first, and `nwuse` brings a saved network back in the node order it was saved in; other routes may mix the modes, so use `_nwmode` (1 or 2), which says which mode a row belongs to.
 
 ## Commands that make a new network keep the two modes
 
@@ -72,7 +72,7 @@ Two things are worth knowing. The density of a two-mode network is the number of
 
 ## Edge lists and files
 
-`nwtoedge` and `nw2toedge` write a two-mode network as its ties, one row per tie, with the mode of both nodes; `allpairs` writes the row of every pair of nodes of different modes as before. Read the list back with `nwfromedge ..., twomode` or `nw2fromedge`: the network has the same nodes (the isolated ones included), the same ties and the level labels.
+`nwtoedge` and `nw2toedge` write a two-mode network as its ties, one row per tie, with the node of the first mode in `_ego`, the node of the second mode in `_alter` and the mode of both nodes; `allpairs` writes the row of every pair of nodes of different modes as before. Read the list back with `nwfromedge ..., twomode` or `nw2fromedge`: the network has the same nodes (the isolated ones included), the same ties and the level labels.
 
 `nwexport` and `nwimport` keep the modes in all four formats:
 

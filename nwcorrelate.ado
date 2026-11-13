@@ -126,9 +126,21 @@ unw_defs
 	
 	if "`attribute'" != "" {
 		confirm variable `attribute'
-		capture nwdrop `mode'_`attribute'
-		nwexpand `attribute', nodes(`netnodes1') network(`netname1') mode(`mode') name(`mode'_`attribute')
-		local netname2 = "`mode'_`attribute'"
+		// the expanded network is a temporary network unless keepexpand asks to keep it as mode_varname
+		// (which then replaces a network of that name)
+		if "`keepexpand'" != "" {
+			local __expnet "`mode'_`attribute'"
+			capture nwdrop `__expnet'
+		}
+		else {
+			tempname __expnet
+		}
+		nwexpand `attribute', nodes(`netnodes1') network(`netname1') mode(`mode') name(`__expnet')
+		local netname2 = "`__expnet'"
+		local netname2show = "`mode'_`attribute'"
+	}
+	else {
+		local netname2show "`netname2'"
 	}
 	
 	_nwsyntax `netname2'
@@ -150,7 +162,7 @@ unw_defs
 
 	// Return the names and id's of the networks that are correlated with each other.
 	mata: st_rclear()
-	mata: st_global("r(name_2)", "`netname2'")
+	mata: st_global("r(name_2)", "`netname2show'")
 	mata: st_global("r(name_1)", "`netname1'")
 	
 	// Calculate correlation of two networks.
@@ -167,6 +179,7 @@ unw_defs
 	// operand-less comparison. Caught here with a clear message instead.
 	if "`corr'" == "" | "`corr'" == "." {
 		di "{err}{p 0 0 2}Correlation is undefined (one of the two networks has zero variance); cannot run a QAP permutation test.{p_end}"
+		if "`attribute'" != "" & "`keepexpand'" == "" capture nwdrop `netname2'
 		error 198
 	}
 	
@@ -225,7 +238,7 @@ unw_defs
 			local xmax = `corr'
 		}
 		
-		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2'"') `options'	
+		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2show')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2show'"') `options'	
 
 		restore
 		_return restore `myr'

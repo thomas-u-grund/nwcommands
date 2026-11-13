@@ -45,6 +45,7 @@ profiles of all pairs of nodes and save the result as a new network:
    Minimum value:  -.392
    Maximum value:  .945
    Density:  .993
+   Mean outdegree:  16.89
    Temporal: false
 ```
 
@@ -147,8 +148,8 @@ of the network. Nodes with the same sign on it are on the same side of the best 
 fiedlersig |             faction
          n |     Loyal   Outcasts      Turks |     Total
 -----------+---------------------------------+----------
-        -1 |         0          4          6 |        10 
-         1 |         7          0          1 |         8 
+        -1 |         7          0          1 |         8
+         1 |         0          4          6 |        10
 -----------+---------------------------------+----------
      Total |         7          4          7 |        18 
 ```

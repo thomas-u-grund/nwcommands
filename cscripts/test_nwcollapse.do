@@ -58,7 +58,7 @@ assert         r(maxval)        == 1
 assert         r(minval)        == 1
 assert         r(missing_edges) == 9
 assert         r(selfloops)     == 0
-assert         r(id)            == 2
+assert         r(id)            == 1  // the working copy of nwcollapse is dropped
 
 
 nwclear
@@ -87,7 +87,7 @@ assert         r(minval)        == 0
 assert         r(missing_edges) == 9
 assert         r(selfloops)     == 0
 assert         r(nodes)         == 9
-assert         r(id)            == 2
+assert         r(id)            == 1  // the working copy of nwcollapse is dropped
 
 nwclear
 nwrandom 10, prob(1) name(mynet1)
@@ -115,7 +115,7 @@ assert         r(minval)        == 0
 assert         r(missing_edges) == 8
 assert         r(selfloops)     == 0
 assert         r(nodes)         == 8
-assert         r(id)            == 2
+assert         r(id)            == 1  // the working copy of nwcollapse is dropped
 
 * moderate-severity pass, manipulation_transform group: collapsing a
 * two-mode network used to silently produce a result reported as an

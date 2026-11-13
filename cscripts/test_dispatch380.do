@@ -68,8 +68,14 @@ end
 
 capture program drop _fxv
 program _fxv
-	* _fxv varname key tol message
-	args v key tol msg
+	* _fxv varname key tol message [float]
+	* float: the fixture holds float values (3.7.0); nwcloseness and nwbetween store double now, compare at float precision
+	args v key tol msg fl
+	if "`fl'" == "float" {
+		tempvar vf
+		qui gen float `vf' = `v'
+		local v `vf'
+	}
 	mata: st_numscalar("__d", d380_diff("`v'", "`key'"))
 	_chk `=scalar(__d) <= `tol'' "`msg' (difference `=scalar(__d)')"
 end
@@ -109,11 +115,11 @@ foreach d in flomarriage glasgow3 gahuku gang {
 	_fxs `=r(cluster_global)' "`d'|nwclustering|glob" 0 "`d': nwclustering global as 3.7.0"
 	nwcloseness `d', generate(c1 f1 n1) silent
 	foreach v in c1 f1 n1 {
-		_fxv `v' "`d'|nwcloseness|`v'" 0 "`d': nwcloseness `v' as 3.7.0"
+		_fxv `v' "`d'|nwcloseness|`v'" 0 "`d': nwcloseness `v' as 3.7.0" float
 	}
 	nwbetween `d', generate(b1) silent
-	_fxv b1 "`d'|nwbetween|b1" 0 "`d': nwbetween as 3.7.0"
-	_fxs `=r(bw_central)' "`d'|nwbetween|central" 0 "`d': nwbetween centralisation as 3.7.0"
+	_fxv b1 "`d'|nwbetween|b1" 0 "`d': nwbetween as 3.7.0" float
+	_fxs `=r(bw_central)' "`d'|nwbetween|central" 1e-7 "`d': nwbetween centralisation as 3.7.0 (3.7.0 used float scores)"
 	nwmotifs `d', silent
 	foreach s in path star cycle paw diamond k4 disconnected {
 		_fxs `=r(`s')' "`d'|nwmotifs|`s'" 0 "`d': nwmotifs `s' as 3.7.0"
@@ -241,27 +247,27 @@ foreach d in davis dsub {
 	}
 	capture noisily nwmotifs `net', onemode sixnode silent
 	_chk `=_rc == 198' "nwmotifs: onemode with sixnode is refused"
-
+	* (two-mode: the 3.7.0 values divided float scores, so 1e-6)
 	* ---- closeness and betweenness
 	nwcloseness `net', generate(cd fd nd) silent
 	foreach v in cd fd nd {
-		_fxv `v' "`d'|closeness_2m|`=substr("`v'", 1, 1)'2" 0 "`d': nwcloseness default equals twomode (`v')"
+		_fxv `v' "`d'|closeness_2m|`=substr("`v'", 1, 1)'2" 1e-6 "`d': nwcloseness default equals twomode (`v')" float
 	}
 	nwcloseness `net', generate(ct ft nt) twomode silent
 	_same cd ct 0 "`d': twomode is a synonym of the default (closeness)"
 	nwcloseness `net', generate(co fo no) onemode silent
 	foreach v in co fo no {
-		_fxv `v' "`d'|closeness_1m|`=substr("`v'", 1, 1)'1" 0 "`d': nwcloseness, onemode equals 3.7.0 (`v')"
+		_fxv `v' "`d'|closeness_1m|`=substr("`v'", 1, 1)'1" 0 "`d': nwcloseness, onemode equals 3.7.0 (`v')" float
 	}
 	nwbetween `net', generate(bd) silent
-	_fxv bd "`d'|between_2m|b2" 0 "`d': nwbetween default equals twomode"
+	_fxv bd "`d'|between_2m|b2" 1e-6 "`d': nwbetween default equals twomode" float
 	nwbetween `net', generate(bt) twomode silent
 	_same bd bt 0 "`d': twomode is a synonym of the default (betweenness)"
 	nwbetween `net', generate(bo) onemode silent
-	_fxv bo "`d'|between_1m|b1" 0 "`d': nwbetween, onemode equals 3.7.0"
-	_fxs `=r(bw_central)' "`d'|between_1m|central" 1e-12 "`d': nwbetween centralisation from the raw scores"
+	_fxv bo "`d'|between_1m|b1" 0 "`d': nwbetween, onemode equals 3.7.0" float
+	_fxs `=r(bw_central)' "`d'|between_1m|central" 1e-7 "`d': nwbetween centralisation from the raw scores"
 	nwbetween `net', generate(bd2) silent
-	_fxs `=r(bw_central)' "`d'|between_1m|central" 1e-12 "`d': centralisation of the default form is computed from the raw scores"
+	_fxs `=r(bw_central)' "`d'|between_1m|central" 1e-7 "`d': centralisation of the default form is computed from the raw scores"
 	capture noisily nwbetween `net', generate(bx) onemode twomode silent
 	_chk `=_rc == 198' "nwbetween: onemode with twomode is refused"
 	capture noisily nwcloseness `net', generate(cx fx nx) onemode twomode silent

@@ -1,6 +1,4 @@
-. do example.do
-
-. * nwcommands tutorial 11: cohesion and subgroups
+. * nwcommands tutorial 12: cohesion and subgroups
 . * Requires the core nwcommands.
 . 
 . * 1. Components: who can reach whom?
@@ -19,6 +17,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .00971
+   Mean degree:  1.98
    Temporal: false
 
 . nwcomponents mesa, generate(compid) silent
@@ -60,13 +59,13 @@
      +----------------------------------------------+
      |     _nwnode   _nwinc~e    faction   cloist~e |
      |----------------------------------------------|
-  1. |      Albert          1      Turks      FALSE |
-  2. |       Amand          1   Outcasts      FALSE |
-  3. |     Ambrose          1      Loyal      FALSE |
-  4. |       Basil          1   Outcasts       TRUE |
-  5. |    Berthold          1      Loyal      FALSE |
+  1. |  John Bosco          1      Turks       TRUE |
+  2. |     Gregory          1      Turks       TRUE |
+  3. |       Basil          1   Outcasts       TRUE |
+  4. |       Peter          1      Loyal       TRUE |
+  5. | Bonaventure          1      Loyal       TRUE |
      |----------------------------------------------|
-  6. | Bonaventure          1      Loyal       TRUE |
+  6. |    Berthold          1      Loyal      FALSE |
      +----------------------------------------------+
 
 . nwsymmetrize samplike, generate(likes)
@@ -84,6 +83,7 @@
    Minimum value:  0
    Maximum value:  3
    Density:  .392
+   Mean degree:  6.67
    Temporal: false
 
 . 
@@ -179,8 +179,8 @@
           1 |          3       16.67       16.67
           2 |          4       22.22       38.89
           3 |          4       22.22       61.11
-          4 |          4       22.22       83.33
-          5 |          3       16.67      100.00
+          4 |          3       16.67       77.78
+          5 |          4       22.22      100.00
 ------------+-----------------------------------
       Total |         18      100.00
  
@@ -191,10 +191,10 @@
      comm2 |     Loyal   Outcasts      Turks |     Total
 -----------+---------------------------------+----------
          1 |         3          0          0 |         3 
-         2 |         0          4          0 |         4 
+         2 |         4          0          0 |         4
          3 |         0          0          4 |         4 
-         4 |         4          0          0 |         4 
-         5 |         0          0          3 |         3 
+         4 |         0          0          3 |         3
+         5 |         0          4          0 |         4
 -----------+---------------------------------+----------
      Total |         7          4          7 |        18 
 
@@ -219,8 +219,8 @@
            |             faction
     fgroup |     Loyal   Outcasts      Turks |     Total
 -----------+---------------------------------+----------
-         1 |         0          0          7 |         7 
-         2 |         7          0          0 |         7 
+         1 |         7          0          0 |         7
+         2 |         0          0          7 |         7
          3 |         0          4          0 |         4 
 -----------+---------------------------------+----------
      Total |         7          4          7 |        18 
@@ -255,14 +255,10 @@
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_sampson_faction.svg...
-(file plot_sampson_faction.svg not found)
 file plot_sampson_faction.svg saved as SVG format
 
 . nwplot likes, color(comm) label(_nwnode) scheme(s1network) export("plot_sampson_comm.svg") replace
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_sampson_comm.svg...
-(file plot_sampson_comm.svg not found)
 file plot_sampson_comm.svg saved as SVG format
-
-. 

@@ -2,7 +2,11 @@
 capture program drop nwtabulate
 program nwtabulate
 	syntax [anything(name=netname)] [, attribute(varname) *]
-	_nwsyntax `netname', max(2)
+	_nwsyntax `netname', max(9999)
+	if `networks' > 2 {
+		di "{err}Maximum two networks allowed.{txt}"
+		error 198
+	}
 	local __vndone 0
 	// the note is for the table by attribute(), which counts ties; the other tables show the tie values
 	if "`attribute'" != "" forvalues __vi = 1/2 {
@@ -25,10 +29,6 @@ program nwtabulate
 	if "`attribute'" != "" {
 		_nwsyntax `netname', max(1)
 		nwtab3 `netname', attribute(`attribute') `options'
-	}
-	if `networks' > 2 {
-		di "{err}Maximum two networks allowed.{txt}"
-		exit
 	}
 end
 

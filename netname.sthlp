@@ -27,7 +27,8 @@ A {it:netname} is one network name, such as
 Network names may be 1 to 32 characters long and must start with 
 {cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, or {cmd:_}, and the remaining 
 characters may be 
-{cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, {cmd:_}, or {cmd:0}-{cmd:9}.
+{cmd:a}-{cmd:z}, {cmd:A}-{cmd:Z}, {cmd:_}, or {cmd:0}-{cmd:9}. A name that breaks these rules (for example one
+of 33 characters) is refused with error 198 by every command that creates or renames a network.
 
 {pstd}
 When we use the term netname, we usually mean an existing netname -- a
@@ -68,4 +69,4 @@ to change the current network use {it: {help nwcurrent}}.
 {phang}{cmd:. nwcomponents *marriage}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

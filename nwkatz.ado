@@ -54,7 +54,7 @@ program nwkatz
 	// clobber (or crash later inside getmata on) an existing variable.
 	// Both fixed here.
 	if "`directed'" == "false" {
-		capture confirm variable `generate'
+		capture confirm variable `generate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
 			// Error-code coherence: standardized onto 99 (this
@@ -70,7 +70,7 @@ program nwkatz
 	else {
 		local generate_all ""
 		foreach c in `generate'_in `generate'_out {
-			capture confirm variable `c'
+			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
 				di "{err}Variable {bf:`c'} already exists; use {bf:replace}"
 				// Error-code coherence: standardized onto 99 (this
@@ -103,7 +103,11 @@ program nwkatz
 		mata: st_numscalar("__nwkatz_rho", `__nwkatz_rho')
 		local rho = __nwkatz_rho
 		scalar drop __nwkatz_rho
-		if `alpha' == -999999 {
+		if `alpha' == -999999 & `rho' < 1e-12 {
+			// no cycle, no walk of unbounded length: every alpha is valid; 1 as igraph::alpha_centrality
+			local alpha = 1
+		}
+		else if `alpha' == -999999 {
 			local alpha = 0.9 / `rho'
 		}
 		if abs(`alpha') * `rho' >= 1 {

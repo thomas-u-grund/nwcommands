@@ -35,6 +35,7 @@ and alcohol use (`alcohol1`: 1 to 5). The script is [`example.do`](example.do), 
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 ```
 

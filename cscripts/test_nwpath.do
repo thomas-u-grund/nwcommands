@@ -67,18 +67,18 @@ di "=== valued-network path REGRESSION VERIFIED ==="
 * empty - "0", not "" - when not given, so the intended clear message
 * never actually fired; confirmed directly before this fix, the call
 * fell through to a confusing "Node  or  does not exist" instead);
-* sym and generate() cannot be combined (err 99); a name that isn't a
+* sym and generate() cannot be combined (err 198); a name that isn't a
 * loaded network is rejected via _nwsyntax (482).
 nwclear
 nwset, mat((0,1\1,0)) name(pathfailnet) labs(A,B)
 capture noisily nwpath pathfailnet
-assert _rc == 99
+assert _rc == 198
 
 capture noisily nwpath pathfailnet, ego(A)
-assert _rc == 99
+assert _rc == 198
 
 capture noisily nwpath pathfailnet, ego(A) alter(B) sym generate(pp)
-assert _rc == 99
+assert _rc == 198
 
 capture noisily nwpath nonexistent, ego(A) alter(B)
 assert _rc == 482

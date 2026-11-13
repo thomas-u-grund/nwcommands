@@ -82,7 +82,16 @@ program nwimport, rclass
 		if "`forceundirected'" != "" & strpos(" `options' `typeoptions' ", "undirected") == 0 & strpos(" `options' `typeoptions' ", "directed") == 0 {
 			local typeoptions "`typeoptions' undirected"
 		}
-		 capture _nwimport_edgelist `fname', `options' `typeoptions'
+		// the edge list is read into the data in memory: with nwappend the
+		// user's data are kept and brought back (also when the import fails)
+		if "`nwappend'" != "" {
+			tempfile __nwi_userdata
+			qui save `"`__nwi_userdata'"', emptyok
+		}
+		capture _nwimport_edgelist `fname', `options' `typeoptions'
+		if "`nwappend'" != "" {
+			qui use `"`__nwi_userdata'"', clear
+		}
 	}
 	if "`import_type'" == "pajek" {
 		  _nwimport_pajek `fname', `options'		 
@@ -141,7 +150,7 @@ program nwimport, rclass
 	else {
 		di 
 		noi di `"{err}{it:Loading networks from file {bf:`fname'} failed}"'
-		error 6750
+		error 480
 	}
 	capture mata: mata drop __nwimport_*
 	capture confirm number 0
@@ -514,7 +523,7 @@ program _nwimpdl_rect
 	if _N == 0 {
 		di "{err}The matrix has no ties."
 		restore
-		error 6704
+		error 2000
 	}
 	qui sum _value
 	if r(min) == 1 & r(max) == 1 {
@@ -1065,26 +1074,22 @@ program _nwimport_edgelist
 		}
 	}
 	
-	if `excel' != 0 {
-	// Try other delimiters
-    if ("`delimiter'" != ""){
-		insheet using `"`anything'"', delimiter("`delimiter'") clear
-		
-		di `"insheet using `"`anything'"', delimiter("`delimiter'") clear"'
-		// Check for failure
-		if c(k) == 1 | _rc != 0 {
+	// an explicit delimiter() (text files)
+	if `excel' == 0 & "`delimiter'" != "" {
+		if "`delimiter'" == "tab" capture insheet using `anything', tab clear
+		else capture insheet using `anything', delimiter("`delimiter'") clear
+		if _rc != 0 | c(k) == 1 {
 			local success = 0
 		}
 		else {
 			local success = 1
 		}
 	}
-	}
 	
 	if `success' == 0 {
 		noi di "{err}{it:edgelist} could not be loaded"
 		restore
-		error 6704
+		error 6705
 	}
 
 	if `c(k)' == 5 {
@@ -1128,7 +1133,7 @@ program _nwimport_edgelist
 	if `c(k)' > 3 | `c(k)' < 2 {
 		noi di "{err}Something went wrong; data has more than three columns."
 		restore
-		error 6704
+		error 6705
 	}
 	nwfromedge _all, name(`name') `keeporiginal' `directed' `undirected' `xvars'
 	//restore
@@ -1171,9 +1176,20 @@ end
 
 
 
+capture program drop _nwimpdl_comma
+program _nwimpdl_comma
+	// c_local <first word> = the remaining words (quotes respected) separated by commas
+	gettoken __target 0 : 0
+	local __out ""
+	foreach __w of local 0 {
+		local __out `"`__out',`__w'"'
+	}
+	c_local `__target' `"`=substr(`"`__out'"', 2, .)'"'
+end
+
 capture program drop _nwimpdl_nodelist1
 program _nwimpdl_nodelist1
-	syntax, filehandler(string) nodes(int) [undirected directed rankedlist edgelist netlabs(string) labs(string) labelsembedded collabsembedded rowlabsembedded]
+	syntax, filehandler(string) nodes(int) [undirected directed rankedlist edgelist netlabs(string) labs(string asis) labelsembedded collabsembedded rowlabsembedded]
 
 	preserve
 	clear
@@ -1196,6 +1212,7 @@ program _nwimpdl_nodelist1
 	}
 	
 	local r = 0
+	local __nwi_hasval = ("`rankedlist'" != "")
 	file read `filehandler' line
 	
 	if "`collabsembedded'" != "" {
@@ -1235,6 +1252,7 @@ program _nwimpdl_nodelist1
 				capture confirm number `value1'
 				if _rc == 0 {
 					local value `value1'
+					local __nwi_hasval 1
 				}
 			}
 			capture _insert_edge, from("`sender'") to("`receiver'") value(`value')
@@ -1244,8 +1262,15 @@ program _nwimpdl_nodelist1
 	file close `filehandler'
 	capture drop if _fromid == .
 	capture drop if _fromid == ""
-	
-	nwfromedge _all, name(`netlabs') labs(`labs') `directed' `undirected' `xvars'
+	// nodes given by number (labels in the header): numeric ids, so that
+	// node i gets the i-th label
+	if "`labelsembedded'" == "" {
+		qui destring _fromid _toid, replace
+	}
+	// the labels go to nwfromedge separated by commas (a label may hold a blank)
+	_nwimpdl_comma __nwi_clabs `labs'
+	// a list without tie values (edgelist1 with two columns) is binary
+	nwfromedge _all, name(`netlabs') labs(`__nwi_clabs') `directed' `undirected' `xvars' `=cond(`__nwi_hasval', "valued", "unvalued")'
 	restore
 end
 
@@ -1253,7 +1278,7 @@ end
 
 capture program drop _nwimpdl_fullmatrix
 program _nwimpdl_fullmatrix
-	syntax, filehandler(string) nodes(int) nets(int) [directed netlabs(string) labs(string)  diagonal(string) rowlabsembedded collabsembedded]
+	syntax, filehandler(string) nodes(int) nets(int) [directed netlabs(string) labs(string asis)  diagonal(string) rowlabsembedded collabsembedded]
 
 	mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 	
@@ -1303,7 +1328,8 @@ program _nwimpdl_fullmatrix
 					local onename : word `netcounter' of `netlabs'
 					mata: st_numscalar("r(issymmetric)", issymmetric(__nwimport_onenet))
 					local symmetric = `r(issymmetric)'
-					nwset, name(`onename') labs(`labs') mat(__nwimport_onenet) 
+					_nwimpdl_comma __nwi_clabs `labs'
+					nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet)
 					if "`symmetric'" == "1" & "`directed'" == "" {
 						nwsym `onename'
 					}
@@ -1323,7 +1349,7 @@ end
 
 capture program drop _nwimpdl_lowerhalf
 program _nwimpdl_lowerhalf
-	syntax, filehandler(string) nodes(int) nets(int) [ directed netlabs(string) labs(string)  diagonal(string) rowlabsembedded collabsembedded]
+	syntax, filehandler(string) nodes(int) nets(int) [ directed netlabs(string) labs(string asis)  diagonal(string) rowlabsembedded collabsembedded]
 
 	mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 	
@@ -1368,7 +1394,8 @@ program _nwimpdl_lowerhalf
 		
 			if (`y' == `nodes' & `x' == `nodes' - `ab') {
 				local onename : word `netcounter' of `netlabs'
-				nwset, name(`onename') labs(`labs') mat(__nwimport_onenet) 
+				_nwimpdl_comma __nwi_clabs `labs'
+				nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet)
 				mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 				local x = 0
 				local y = 0 + `ab'
@@ -1438,7 +1465,9 @@ program _nwimpdl
 			local key : list oneword_low  & keywords
 			
 			if `labels_on' == 1 & `netlabels_on' == 0 & "`key'" == "" {
-				local labs "`labs' `oneword'"
+				// a label with a blank was quoted in the file: keep it one word
+				if strpos(`"`oneword'"', " ") local labs `"`labs' "`oneword'""'
+				else local labs `"`labs' `oneword'"'
 			}
 			else {
 				local labels_on = 0
@@ -1526,9 +1555,10 @@ program _nwimpdl
 		local newlabs ""
 		forvalues i = 1/`nodes' {
 			local onelab : word `i' of `labs'
-			local newlabs "`newlabs' `onelab'"
+			if strpos(`"`onelab'"', " ") local newlabs `"`newlabs' "`onelab'""'
+			else local newlabs `"`newlabs' `onelab'"'
 		}
-		local labs `newlabs'
+		local labs `"`newlabs'"'
 	}
 	
 	local format = lower("`format'")

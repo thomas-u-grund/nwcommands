@@ -42,7 +42,7 @@ force]
 
 `nwcontext` generates a context variable, which holds information about the *attribute values* of a node's network neighbors.
 
-For each node the set of network neighbors is specified in `mode()`, by default *context* = **outgoing**. This means that the new context variable *newvarname*[i] is calculated based on an all values *varname*[j], for which there is a tie from node *i* to node *j*. A network neighborhood of node *i* can be either 1) all nodes *j* to whom i has outgoing ties (default), 2) all nodes *j* from whom *i* receives incoming ties, or 3) both. In the case of valued ties *varname*[j] is weighted accordingly.
+For each node the set of network neighbors is specified in `mode()`, by default *context* = **outgoing**. This means that the new context variable *newvarname*[i] is calculated based on an all values *varname*[j], for which there is a tie from node *i* to node *j*. A network neighborhood of node *i* can be either 1) all nodes *j* to whom i has outgoing ties (default), 2) all nodes *j* from whom *i* receives incoming ties, or 3) both. In the case of valued ties *varname*[j] is weighted accordingly: **mean** and **sum** are the weighted mean and the weighted sum of *varname*[j] with the tie values *y_ij* as weights; **max** and **min** are the largest and smallest product *y_ij* * *varname*[j], and **sd** is computed from the deviations of these products from the weighted mean (the root of the sum of their squares divided by the sum of the tie values). On a valued network max, min and sd are therefore in the units of tie value times attribute, not attribute values; `noweight` gives the statistics of the neighbors' attribute values themselves.
 
 After that a *statistic* defined in `stat()` is calculated from all weigthed *varname*[j]. By default, the mean is calculated. More formally:
 
@@ -109,4 +109,4 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

@@ -27,7 +27,7 @@ the options and the names that R uses, are in Stata's help files:
 | Family | Examples (options) | Question |
 |---|---|---|
 | Baseline | `edges` | density (required; the intercept) |
-| Reciprocity and structure | `mutual`, `triangle`, `ctriple`, `structural(twopath transitive cycle(k=3 4) isolates ...)` | reciprocated pairs; triangles; cycles; isolated nodes |
+| Reciprocity and structure | `mutual`, `triangle`, `ctriple`, `structural(twopath transitive cycle(k=3 4) isolates ...)` | reciprocated pairs; triangles (on a directed network transitive plus cyclic triples, as in R); cycles; isolated nodes |
 | Degree | `degree()`, `odegree()`, `idegree()`, `concurrent`, `kstar()`, `ostar()`, `istar()`, `degrange()`, `gwdegree()`, `gwodegree()`, `gwidegree()`, `sender`, `receiver` | how ties are distributed over nodes; popular and active nodes |
 | Triads and shared partners | `gwesp()`, `gwdsp()`, `gwnsp()`, `esp()`, `dsp()`, `transitiveties`, `cyclicalties`, `type()` | friends of friends; clustering |
 | Node covariates | `nodecov()`, `nodefactor()`, `nodeicov()`, `nodeocov()`, `nodeofactor()`, `nodeifactor()`, `sociality()`, `nodecovrange()` | who has more ties; who sends, who receives |

@@ -43,6 +43,13 @@ program nwkeepnodes
 		}
 	}
 	local nodelist "`newnodelist'"
+	// a node number outside 1..nodes is refused (it used to be ignored, or failed with a Mata error for 0)
+	foreach onenode of local nodelist {
+		if `onenode' < 1 | `onenode' > `nodes' {
+			di "{err}node {bf:`onenode'} does not exist: network {bf:`netname'} has nodes 1 to `nodes'"
+			error 485
+		}
+	}
 		
 	// The nodes to keep go to nwdropnodes as a 0/1 vector in Mata (keepmat()). The list of all the OTHER nodes used to
 	// be built as a macro (nodes(1 2 3 ...)): 110,000 characters at 20,000 nodes, over Stata/BE's 264,408 characters

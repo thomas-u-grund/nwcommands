@@ -55,6 +55,7 @@ project they are the files you were given):
    Minimum value:  0
    Maximum value:  1
    Density:  .467
+   Mean degree:  2.33
    Temporal: false
 ```
 

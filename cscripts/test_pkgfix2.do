@@ -60,7 +60,7 @@ assert _rc == 198
 * 7. nwpermute nwreplace
 nwpermute u, generate(up)
 capture nwpermute u, generate(up)
-assert _rc == 99
+assert _rc == 483
 nwpermute u, generate(up) nwreplace
 
 * 11. nwqap quiet progress without detail

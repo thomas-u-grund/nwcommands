@@ -29,16 +29,16 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: chat                          Actors: 3
 Events: 10                             Log likelihood:   -3.9890
 ------------------------------------------------------------
-------------------------------------------------------------
+------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |  -16.95435   4803.848    -0.00   0.997    -9432.324    9398.415
        recip |  -.6931435   1.224744    -0.57   0.571    -3.093598    1.707311
        indeg |  -19.78143   13962.73    -0.00   0.999    -27386.22    27346.66
-------------------------------------------------------------
+------------------------------------------------------------------------------
 Note: no usable standard error for inertia indeg.
-      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
-      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
+      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects that are
+      linear functions of each other). Do not interpret their estimates; drop or recode the effect.
 
 . 
 . * --- the real log: the first 60 events, then all 439 ---
@@ -50,7 +50,7 @@ Note: no usable standard error for inertia indeg.
 . tempfile all
 
 . save `all'
-file /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_10842.000001 saved as .dta format
+file /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_95701.000001 saved as .dta format
 
 . foreach n in 60 120 240 439 {
   2.     use `all', clear
@@ -86,12 +86,12 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: first60                       Actors: 84
 Events: 60                             Log likelihood: -106.2032
 ------------------------------------------------------------
-------------------------------------------------------------
+------------------------------------------------------------------------------
      first60 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |   5.923066   .4134493    14.33   0.000      5.11272    6.733412
        recip |   .3139963   .8760043     0.36   0.720    -1.402941    2.030933
-------------------------------------------------------------
+------------------------------------------------------------------------------
 
 . nwdynam first439, inertia recip
 ------------------------------------------------------------
@@ -99,12 +99,12 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: first439                      Actors: 84
 Events: 439                            Log likelihood: -697.3087
 ------------------------------------------------------------
-------------------------------------------------------------
+------------------------------------------------------------------------------
     first439 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |   5.207598   .1740419    29.92   0.000     4.866482    5.548714
        recip |   1.342851   .1646743     8.15   0.000     1.020096    1.665607
-------------------------------------------------------------
+------------------------------------------------------------------------------
 
 . 
 . * --- how the precision of 'recip' grows with the number of events ---
@@ -127,26 +127,24 @@ Dynamic Network Actor Model - choice sub-model (MLE)
 Network: first60                       Actors: 84
 Events: 60                             Log likelihood: -106.1217
 ------------------------------------------------------------
-------------------------------------------------------------
+------------------------------------------------------------------------------
      first60 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |   6.252711   1.050194     5.95   0.000     4.194369    8.311054
        recip |   .3090334   .8766641     0.35   0.724    -1.409197    2.027263
        indeg |  -.3645551   1.044636    -0.35   0.727    -2.412005    1.682894
        trans |  -8.170142    588.795    -0.01   0.989    -1162.187    1145.847
-------------------------------------------------------------
+------------------------------------------------------------------------------
 Note: no usable standard error for trans.
-      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects
-      that are linear functions of each other). Do not interpret their estimates; drop or recode the effect.
+      These effects are probably not identified (too few events, a perfectly predicted pattern, or effects that are
+      linear functions of each other). Do not interpret their estimates; drop or recode the effect.
 
 . 
 . * --- effects that do not belong to a sub-model are refused ---
 . capture noisily nwdynam first439, submodel(rate) recip
-inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice su
-> b-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
+inertia/recip/same()/diff()/sim()/alter()/trans/cycle/commonsender/commonreceiver/four/egoalterint()/tie() are choice
+sub-model effects (submodel(choice)), not available with submodel(rate) - see nwdynam.
 invalid syntax
 
 . display "return code: " _rc
 return code: 198
-
-. 

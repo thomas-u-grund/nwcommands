@@ -11,7 +11,7 @@ description: "Compare relational event models fitted with nwrem by log likelihoo
 starting point of the optimizer, and know what `nwrem` does not do.
 
 **Data.** The 439 phone calls among 84 students of [Tutorial 1](../tutorial-1-first-rem/) (the data files: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv)). You need
-the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem` 1.0.1 and the core 3.0.0.
+the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem` 1.1.0 and the core 3.22.0.
 Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Five specifications
@@ -51,7 +51,7 @@ Akaike's information criterion and Bayesian information criterion
           m4 |        439          .  -2122.016       2   4248.032   4256.201
           m5 |        439          .  -1968.845       4   3945.689   3962.027
 -----------------------------------------------------------------------------
-Note: BIC uses N = number of observations. See [R] IC note.
+Note: BIC uses N = number of observations. See [R] BIC note.
 ```
 
 Lower AIC and BIC are better. The ranking is the same by both: m5 (activity and recency) is best, followed by m3 and m4 (which are
@@ -108,10 +108,9 @@ about the same, you are on the ridge: do not interpret the individual degree coe
 
 ```stata
 . capture noisily nwrem calls
-nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec() c
-> ovint() covevent() rsndsnd rrecsnd (see nwrem for what each computes; the development notes for what is not yet implem
-> ented).
-nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec() covint() covevent() rsndsnd rrecsnd (see nwrem ...
+nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec()
+covint() covevent() rsndsnd rrecsnd (see nwrem for what each computes).
+invalid syntax
 . capture noisily nwrem calls, frpsndsnd covsnd(nosuchvar)
 variable nosuchvar not found
 (error in option covsnd())

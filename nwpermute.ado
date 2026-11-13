@@ -61,14 +61,18 @@ program nwpermute
 		}
 	}
 	if "`generate'" != "" {
+		mata: nw_assert_netname(st_local("generate"))
 		capture _nwsyntax `generate', other(_chk)
-		if _rc == 0 & "`nwreplace'" == "" & "`replace'" == "" {
+		local __pm_exists = (_rc == 0)
+		if `__pm_exists' & "`nwreplace'" == "" & "`replace'" == "" {
 			di "{err}{p 0 0 2}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}{p_end}"
-			error 99
+			error 483
 		}
-		capture nwdrop `generate'
-		nwduplicate `netname', name(`generate')
-		_nwsyntax `generate'
+		// permute a temporary copy; the network replaced by generate() is
+		// dropped only afterwards (it may be the source itself)
+		tempname __pmnet
+		nwduplicate `netname', name(`__pmnet')
+		_nwsyntax `__pmnet'
 		if "`swap'" != "" {
 			// native tie swapping (plugin generation 10 or later) on the stored ties; an older plugin or a failure leaves the Mata routine
 			if "`is2mode'" == "true" {
@@ -86,6 +90,9 @@ program nwpermute
 		else {
 			mata: `netobj'->permute()
 		}
+		if `__pm_exists' nwdrop `generate'
+		unw_defs
+		mata: `nws'.rename("`__pmnet'", "`generate'")
 	}
 	if "`xvars'" != "" {
 		nwload `netname'

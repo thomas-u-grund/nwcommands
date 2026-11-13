@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 16: valued networks
 . * Requires the core nwcommands.
 . nwwebuse sampson, nwclear
@@ -21,6 +19,7 @@
    Minimum value:  0
    Maximum value:  3
    Density:  .392
+   Mean degree:  6.67
    Temporal: false
 
 . 
@@ -52,6 +51,7 @@
    Minimum value:  0
    Maximum value:  12
    Density:  .417
+   Mean outdegree:  1.25
    Temporal: false
 
 . 
@@ -64,8 +64,8 @@
 ----------------------------------------
   Network name: likes
 ----------------------------------------
-  (valued network: degree is the strength, the sum of the tie values; binary gives the number of tie
-> s)
+  (valued network: degree is the strength, the sum of the tie values; binary gives the number of
+  ties)
     Degree distribution
 
    strength |      Freq.     Percent        Cum.
@@ -168,6 +168,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .242
+   Mean degree:  4.11
    Temporal: false
 
 . nwdegree likes2, generate(deg2)
@@ -188,5 +189,3 @@
       Total |         18      100.00
 
    Degree centralization: .191
-
-. 

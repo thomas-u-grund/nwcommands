@@ -4,6 +4,77 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.22.0] - 2026-11-13
+
+### Results that change (read before you re-run old analyses)
+- `nwcontext, mode(either)` (or `mode(both)`) counted a neighbour tied in both directions twice (every neighbour of an undirected network): the sum and the maximum were doubled and the mean was weighted towards the reciprocated neighbours. Each neighbour now counts once, on a valued network with the larger of the two tie values.
+- `nwqap` with an attribute term (`nwqap y x g`) read the attribute by row position, so after the data had been synchronised with a network of another size the attribute could be attached to the wrong nodes (a second identical call gave other coefficients). The data are now synchronised with the dependent network first.
+- `nwpath` with `ego()` equal to `alter()` reports the trivial path of length 0 (`r(paths)` 1, `r(path_length)` 0), as igraph; it reported "not connected".
+- `nwpath, generate()` on an undirected network stored each tie of the path network in one direction only (an asymmetric matrix flagged undirected); the ties are now stored in both directions.
+- `nwbetween` and `nwcloseness` store their results as double (float rounded large betweenness scores: 16,834,504 instead of 16,834,503); `nwgeodesic, generate()`, `nwevcent`, `nwcontext` and the coordinates of `nwplot, generate()` are double as well.
+- `nwplot, layout(grid, columns(1))` gave missing x coordinates, and more columns than nodes stopped with a conformability error; both now give a grid.
+- `nwexport` writes a binary (unvalued) one-mode network without tie values (Pajek, UCINET DL, GML, edge list: ego and alter only), so that `nwimport` reads it back as binary; valued networks are written with their values as before. Before, every exported binary network came back valued.
+- `nwtoedge` (and `nw2toedge`) list each tie of a two-mode network with the mode-1 node in `_ego` and the mode-2 node in `_alter`, so that `nw2fromedge _ego _alter` rebuilds the same network. Before, the node with the higher index was `_ego`, often the mode-2 node.
+- `nwset, labs()` and `nwfromedge, labs()` with fewer labels than nodes give the remaining nodes only default names that are not already used: `labs(n2)` for 3 nodes gives n2,n4,n3 (before: refused because n2 was repeated). A label repeated in `labs()` itself is still refused.
+- `nwfromedge` with string identifiers keeps the value of the last row when a pair is listed more than once, as with numeric identifiers (before: the largest value).
+- `nwtoedge, numeric` numbers ego and alter by the position of the node; before, the numbers were transposed (the row with the value of cell (1,2) had ego 2, alter 1) and did not match the listing of an undirected network.
+- `nwsubset netname if a == 1 & b == 2` keeps the nodes that meet the whole condition; the condition lost its parentheses, so `&` and `|` conditions kept the wrong nodes.
+- `nwtranspose b, generate(a) replace` transposed another network when `a` stood before `b` in memory; it transposes `b` now.
+- `nwreplace` of one cell of an undirected network that leaves the matrix asymmetric marks the network directed (a note says so); before, it stayed undirected with an asymmetric matrix.
+- `nwdropnodes` and `nwkeepnodes` keep the direction of the network; a directed network whose remaining matrix was symmetric became undirected.
+- `nwdropnodes, nodes(Bob)` on a network with a label containing a blank (e.g. "Anna Maria") dropped another node; labels are looked up exactly now.
+- `nwstack` of undirected networks gives an undirected network (before: directed).
+- `nwuse` restores the diagonal of a network with self-loops, and every network comes back exactly as saved: a directed network with a symmetric matrix stays directed (before, it was read as undirected). The data set `baerveldt` saved its ethnicity networks (`class<k>_ethn`) as directed; it now saves them as undirected, so they load as before. A two-mode network comes back in the node order it was saved in (before: the labels of both modes sorted together). A one-mode network also keeps its saved node order (before: its labels sorted as text, `n1 n10 n100 ... n2`; for example `nwwebuse mesa`). The ties and the node attributes are the same, but everything that depends on the order of the nodes can change: MCMC chains and estimates of `nwergm` and `nwsaom` for a given seed, random layouts, listings.
+- `nwattime` returns the right `r(ties)` when a variable named `ties` exists.
+- `nwimport, type(ucinet)` of an edgelist1 file numbers the nodes by their number, not by their text order (node 10 was node 2 before), and reads a file without tie values as binary.
+- `nwset sender receiver value, eventtime(time)` with a missing or non-numeric value is refused (r(416), r(109)); before, the value was not used for events.
+
+### Added
+- Event networks keep the value of each event: `nwset sender receiver value, eventtime(time)` stores the third variable per event in the event list (column 4 next to sender, receiver and time); without a value variable every event has the value 1. `nwdynam` adds the value of an event to the tie, as goldfish does with the `increment` of an event. The Mata library is rebuilt (`build_eventlist()` takes the values as an optional fifth argument).
+
+### Fixed
+- `nwdegree` on an undirected network with two names in `generate()` (and no `isolates`) dropped the variable named second.
+- `nwdegree`, `nwcloseness`, `nwgeodesic, generate()`, `nwevcent`, `nwkatz`, `nwneighbor` and `nwcontext` treated a variable that merely starts with the requested name as that variable (`generate(d)` with a variable `dlong`): the command stopped with r(99), or dropped the other variable.
+- `nwevcent, replace` into an existing byte or integer variable stored truncated values; the variable is now replaced.
+- `nwkatz, walks` without `alpha()` stopped with an error on a network without cycles (spectral radius 0); the default alpha is then 1.
+- `nwcloseness` and `nwbetween` with `twomode` on a one-mode network left a helper network (and `nwbetween` the result variable) behind; the check now comes first. Their helper networks (`_tempgeodesic`, `<net>_symmetrized`) have temporary names, so a user network of that name no longer stops the command (`nwcloseness` stopped with r(99) without a message).
+- `nwgeodesic, binary alpha()` left the result network behind when it stopped with r(198).
+- `nwclustering, symmetrize` without `generate()` (or with an invalid `measure()`) left the symmetrized helper network behind, and the next correct call stopped with r(483).
+- `nwclustering`, `nwclique` and `nwbrokerage` overwrote or deleted the user's scalars `clust_global`, `nw_ncliques`, `brk_pairs` and matrix `nw_cliquematrix`; `nwneighbor` and `nwcontext` deleted the user's Mata objects `__nb`, `__attr`, `__context` and others; `nwcorrelate, attribute()` deleted a user network called `same_<attribute>` (it is replaced only with `keepexpand`); `nwqap` stopped with r(483) when a user network `_tempexpand` existed. All use temporary names now.
+- `nwneighbor` no longer moves the random-number stream (`r(oneneighbor)` is drawn with the state restored afterwards).
+- `nwpath` stops with the error codes of `help nwerrorcodes`: 485 for a node that does not exist or an id out of range, 483 for a path network that exists, 198 for missing or wrong options (all were r(99)). The message for a missing `alter()` named `ego()`.
+- `nwplot, generate()` with one name wrote `_x_coord` and `_y_coord`, and overwrote existing variables without `replace` (and changed their type); it now needs two names and `replace` to overwrite. A network without ties is plotted (its nodes) and `generate()` exports the coordinates; before, nothing was plotted or exported.
+- `nwsummarize, detail` did not store the documented `r(missing_edges)`; it is stored in every case, and the help says what it counts (cells without a value, including the diagonal of a network without self-loops).
+- `nwtabulate` with more than two networks said "Network ... not found" (r(482)); it says "Maximum two networks allowed" and stops with r(198).
+- The help of `nwcontext` says how `max`, `min` and `sd` use the tie values of a valued network (they are taken over tie value times attribute).
+- `nwset, mat() ... replace` dropped the existing network before checking the new one: a refused request (wrong shape, repeated labels, wrong `vars()`, wrong `nodenames()`) lost it. All checks now come first. `vars()` of the wrong length no longer leaves a half-made network, and `nodenames()` of the wrong length or with repeated names is refused (r(198)).
+- `nwset, mat() labsfromvar()` ignored the variable and used n1, n2, ...; it uses the variable now. A numeric variable is no longer turned into a string.
+- `nwset ..., edgelist keeporiginal` (and `nwimport ..., keeporiginal`) stopped with "option keeporiginal not allowed"; `nwfromedge` has the option `keeporiginal` (variable `_nodeoriginal` with the original identifier of each node) and the new option `selfloop` (keep the ties of a node with itself).
+- `nwfromedge, noclear` overwrote the id variables and dropped rows with a missing identifier; the data are kept as they were.
+- `nwfromedge, labs(x y z)` (blank-separated, as the help shows) gave one label "x y z"; blanks and commas both separate labels now.
+- `nwtoedge` of a network with one node (with `compress`, and so `nwsave` of such a network or of a two-mode network together with it) stopped with a Mata conformability error and left helper variables in the data. `nwtoedge, numeric` with several networks is refused before the data are changed.
+- `nwsave` and `nwuse` failed with `set varabbrev off` ("variable _nw_selfloop not found").
+- `nwexport` moved `_nwinclude` behind the user's variables; the variable order is kept, also when the export fails.
+- `nwexport, type(ucinet)` / `nwimport, type(ucinet)`: the labels were read back as one label; labels with a blank are written in double quotes and read back.
+- `nwimport, type(edgelist) nwappend` replaced the data in memory (and cleared them when the file was missing); the data are kept. `delimiter()` works for edge lists in text files (it stopped with r(6750)).
+- `nwrandom, ntimes() nodenamesmata()` gave none of the networks the labels; `nodenamesmata()`, `directed` and `noreplace` are passed on to every network.
+- A network name longer than 32 characters (or otherwise not a valid Stata name) was accepted by `nwset`, `nwfromedge`, `nwrename`, `nwgenerate`, `nwtranspose, generate()` and `nwpermute, generate()`, after which no network could be found ("Network _all not found"). Such names are refused with r(198); the name suggested for a taken name of 31 or 32 characters is shortened to stay within 32.
+- `nwset ..., eventtime()` stored events with a missing time (sorted last by the event models) and events with a missing sender or receiver (index 0, raw Mata errors later). Such rows are refused with r(416) and a message; nothing is changed.
+- A command that takes one network, given two (`nwtomata g h`, and the event and model commands), said "Network g h not found" (r(482)); it says that only one network is allowed (r(198)).
+- `nwexport, type(gml)` (and `nwtoedge`) of a network with exactly one tie stopped with a Mata conformability error.
+- Error codes follow `help nwerrorcodes`: a node label or number that does not exist (`nwdropnodes`, `nwkeepnodes`, and the helpers behind them) gives r(485) (was r(6012), r(600021), r(600022), or for `nodes(0)` a Mata error; a number above the number of nodes was ignored); `nwsym, mode()` with an invalid value r(6556) (was 6555); `nwpermute, generate()` and `nwstack, name()` onto an existing network r(483) (were 99 and 110); other one-off codes became the standard Stata codes for their meaning (198 invalid syntax, 2001 too few observations, 125 out of range, 480 creation failed, 6082/6705 from the list).
+- `nwplot ... if` / `in` deleted every user network whose name began with `__temp` (and one called `_temp_in`); its helper networks have temporary names now. A wrong `edgecolor()`/`edgesize()` sub-option stopped with r(6088) (two-mode unsupported) and could leave a helper network; it stops with r(198).
+- `nwdropnodes` and `nwkeepnodes`: a label in a network of 2,000 nodes with long labels stopped with r(1) and no message; node id 0 stopped with a Mata error; `generate()` left the copy behind when the request was refused.
+- `nwsubset x if ..., name(x) replace`, `nwduplicate x, name(x) replace`, `nwtranspose x, generate(x) replace`, `nwpermute x, generate(x) nwreplace` and `nwgenerate x = <expression with x>, replace` (also when the expression fails) lost the network `x`; the old network is now replaced only when the new one exists.
+- `nwgenerate y = diff` stopped with r(482): the letters "if" inside a network name were taken for an `if` condition.
+- `nwnoderename` added a row with the old label and renamed a user variable that had the old label as its name; it renames only the network's own node variable (when the node variables are in the data).
+- `nwcollapse` left a network `_temp_<name>` behind.
+- `nwstack` stopped with "observation number out of range" when the data had more rows than the stacked network has nodes.
+- `nwset ..., twomode` (and `nw2fromedge`) with string identifiers, or a string mode with a numeric one, numbered the nodes in the sort order of both modes together (persons "P1".."P3" and organisations "O1", "O2" gave O1 O2 P1 P2 P3), while the network said that the first three nodes are mode 1: matrices, event lists and the commands built on them mixed the modes up. The mode-1 nodes now come first. A string mode with a numeric one stopped with r(106).
+- Numeric node identifiers of 10,000,000 or more were turned into labels such as "n1.00e+07" by `nwset ..., eventtime()`/`time()`/`interval()` and in the mode split of `nwset ..., twomode`, while the network's nodes had the full number: events pointed at no node (index 0), two-mode networks put every node in mode 2. Labels are the full number now (also for a numeric identifier paired with a string one in `nwfromedge`). The offset of mode-2 identifiers in a numeric two-mode list is added in double precision.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite) and on Windows 11 with StataNow 19.5 MP. Linux: plugins built by CI, not tested in Stata.
+
 ## [3.21.0] - 2026-11-12
 
 ### Results that change (read before you re-run old analyses)

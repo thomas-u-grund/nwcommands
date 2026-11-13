@@ -9,7 +9,7 @@ permalink: /nwcommands/
 # nwcommands (core)
 {: .no_toc }
 
-The core package, version 3.21.0, handles networks in Stata: it imports and exports them, generates
+The core package, version 3.22.0, handles networks in Stata: it imports and exports them, generates
 them, describes and analyzes them, and plots them. It is the base for the model packages
 ([nwsaom](../nwsaom/), [nwergm](../nwergm/), [nwdynam](../nwdynam/), [nwrem](../nwrem/)), which need
 it but are installed separately.
@@ -28,7 +28,7 @@ it but are installed separately.
 
 `nwinstall, everything` installs the core (every command, all help files and every dialog box) and the four model
 packages. `nwinstall, all` installs the core only; `nwinstall, models` adds the model packages later. Add
-`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested with Stata 17 and 18;
+`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19;
 Stata BE is enough).
 `nwversion` shows the core version and which model packages are installed. See the
 [Installation & Setup](../tutorials/01-installation-setup/) tutorial for details.
@@ -66,6 +66,6 @@ representation and compiled C kernels, are chosen automatically.
 
 ## Version and license
 
-The core is version 3.21.0 (12 November 2026). It is free software under the GNU General Public License,
+The core is version 3.22.0 (13 November 2026). It is free software under the GNU General Public License,
 version 3; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages
 are separate packages under the same license.

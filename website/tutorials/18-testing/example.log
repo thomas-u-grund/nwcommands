@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 13: testing hypotheses about networks
 . * Requires the core nwcommands.
 . 
@@ -19,6 +17,7 @@
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean degree:  2.50
    Temporal: false
 
 . nwcug flomarriage, stat(nwtriads ##net##) rname(transitivity) reps(500) seed(12345)
@@ -88,6 +87,7 @@ Multiple Regression Quadratic Assignment Procedure
                  _cons |     -4.125
 -------------------------------------------------
 
+
 . 
 . * 4. The CUG test again, holding every family's number of marriages fixed
 . nwwebuse florentine, nwclear
@@ -104,5 +104,3 @@ Multiple Regression Quadratic Assignment Procedure
   p (lower tail): .798
   p (two-sided): .962
 ----------------------------------------
-
-. 

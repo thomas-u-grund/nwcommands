@@ -1,31 +1,3 @@
-
-  ___  ____  ____  ____  ____ ®
- /__    /   ____/   /   ____/      Stata 18.0
-___/   /   /___/   /   /___/       BE—Basic Edition
-
- Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
-                                   StataCorp
-                                   4905 Lakeway Drive
-                                   College Station, Texas 77845 USA
-                                   800-782-8272        https://www.stata.com
-                                   979-696-4600        service@stata.com
-
-Stata license: Single-user  perpetual
-Serial number: 301806005943
-  Licensed to: Thomas Grund
-               RWTH Aachen
-
-Notes:
-      1. Stata is running in batch mode.
-      2. Unicode is supported; see help unicode_advice.
-
-
-Running /Users/tgrund/Documents/Stata/profile.do ...
-
-. do run_tutorials_08-paths-ego-networks.do 
-
-. do example.do
-
 . * Tutorial 8: Paths & Ego Networks
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
 . 
@@ -46,6 +18,9 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
     Average shortest path length:  (not defined)
     Diameter:  (not defined)
     Radius:  (not defined)
+    Share of pairs connected:  .875
+    Average over connected pairs:  2.486
+    Longest over connected pairs:  5
 
 . return list
 
@@ -53,6 +28,10 @@ scalars:
              r(radius) =  -1
            r(diameter) =  -1
             r(avgpath) =  -1
+          r(connected) =  .875
+  r(diameter_connecte
+    d)                 =  5
+  r(avgpath_connected) =  2.485714285714286
               r(alpha) =  1
         r(unconnected) =  15
            r(numpaths) =  120
@@ -79,6 +58,7 @@ macros:
    Minimum value:  1
    Maximum value:  5
    Density:  2.49
+   Mean degree:  13.12
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
@@ -135,6 +115,7 @@ macros:
    Minimum value:  0
    Maximum value:  1
    Density:  .875
+   Mean degree:  13.12
    Temporal: false
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
@@ -187,7 +168,3 @@ macros:
   7. |    peruzzi         3   .6666667 |
   8. |    ridolfi         3   .3333333 |
      +---------------------------------+
-
-. 
-end of do-file
-

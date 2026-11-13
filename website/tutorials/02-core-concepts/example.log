@@ -1,31 +1,3 @@
-
-  ___  ____  ____  ____  ____ ®
- /__    /   ____/   /   ____/      Stata 18.0
-___/   /   /___/   /   /___/       BE—Basic Edition
-
- Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
-                                   StataCorp
-                                   4905 Lakeway Drive
-                                   College Station, Texas 77845 USA
-                                   800-782-8272        https://www.stata.com
-                                   979-696-4600        service@stata.com
-
-Stata license: Single-user  perpetual
-Serial number: 301806005943
-  Licensed to: Thomas Grund
-               RWTH Aachen
-
-Notes:
-      1. Stata is running in batch mode.
-      2. Unicode is supported; see help unicode_advice.
-
-
-Running /Users/tgrund/Documents/Stata/profile.do ...
-
-. do run_tutorials_02-core-concepts.do 
-
-. do example.do
-
 . * Tutorial 2: Core Concepts
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
 . 
@@ -82,6 +54,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -95,6 +68,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -108,6 +82,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . nwsummarize glasgow1-glasgow3
@@ -123,6 +98,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -136,6 +112,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -149,6 +126,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . nwsummarize glasg*
@@ -164,6 +142,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -177,6 +156,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -190,6 +170,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . nwsummarize _all
@@ -205,6 +186,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -218,6 +200,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -231,6 +214,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 
 . 
@@ -243,8 +227,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
 
 . describe
 
-Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/f
-> lorentine.nwdta
+Contains data from https://nwcommands.org/examples/florentine.nwdta
  Observations:            16                  
     Variables:             6                  16 May 2019 17:02
 ------------------------------------------------------------------------------------------
@@ -268,7 +251,3 @@ Sorted by:
      |---------------------|
   1. | wealthiest families |
      +---------------------+
-
-. 
-end of do-file
-

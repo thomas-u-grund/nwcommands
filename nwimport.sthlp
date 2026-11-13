@@ -64,7 +64,7 @@
 		{p_end}
 {p2col:{cmd: colnames}}matrix: {it:not needed} when the file's first {it:row} already holds node names as text - that shape is recognized automatically without any {it:type_sub} at all
 		{p_end}
-{p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
+{p2col:{opth delimiter(string)}}matrix, edgelist: specify the delimiter explicitly (for an edge list in a text file; {cmd:tab} for a tab)
 		{p_end}		
 {p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
 		{p_end}			
@@ -287,4 +287,4 @@ two-mode networks with level labels (not UCINET); a tie inside a mode is refused
 {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

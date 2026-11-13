@@ -122,6 +122,14 @@ program nw2toedge
 		merge m:n (`ego' `alter') using `__nwedgelist`j'', nogenerate
 	}
 
+	// two-mode network: the mode-1 node of a tie between the modes is always
+	// _ego and the mode-2 node _alter (nw2fromedge _ego _alter rebuilds it)
+	if "`is2mode'" == "true" & "`ignore2mode'" == "" {
+		local __tw_first : word 1 of `nets'
+		_nwsyntax `__tw_first'
+		mata: nw2toedge_mode1ego("`ego'", "`alter'", `netobj'->get_nodenames(), `netobj'->get_modes())
+	}
+
 	qui if trim("`egovars'") != "" {
 		capture drop `nw_nodename'
 		gen `nw_nodename' = `ego'
@@ -171,4 +179,36 @@ program nw2toedge
 		mata: st_local("__tm_all", `netobj'->get_isolate_source_string())
 		if `"`__tm_all'"' != "" char _dta[nwtoedge_nodes] `"`__tm_all'"'
 	}
+end
+
+capture mata: mata drop nw2toedge_mode1ego()
+mata:
+void nw2toedge_mode1ego(string scalar ev, string scalar av, string rowvector nm, string rowvector md)
+{
+	transmorphic A
+	string colvector e, a
+	real colvector sw
+	real scalar i
+	string scalar ie, ia
+
+	A = asarray_create()
+	asarray_notfound(A, "")
+	for (i = 1; i <= min((cols(nm), cols(md))); i++) asarray(A, nm[i], md[i])
+	e = st_sdata(., ev)
+	a = st_sdata(., av)
+	sw = J(rows(e), 1, 0)
+	for (i = 1; i <= rows(e); i++) {
+		ie = asarray(A, e[i])
+		ia = asarray(A, a[i])
+		sw[i] = (ie == "2" & ia == "1")
+	}
+	if (!any(sw)) return
+	sw = selectindex(sw)
+	// both id variables get the same width, so that no label is cut
+	if (st_vartype(ev) != st_vartype(av) & st_vartype(ev) != "strL" & st_vartype(av) != "strL") {
+		stata("quietly recast str" + strofreal(max((strtoreal(substr(st_vartype(ev), 4, .)), strtoreal(substr(st_vartype(av), 4, .))))) + " " + ev + " " + av)
+	}
+	st_sstore(sw, ev, a[sw])
+	st_sstore(sw, av, e[sw])
+}
 end

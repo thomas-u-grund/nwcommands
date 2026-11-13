@@ -53,7 +53,14 @@ program nwuse
 		exit
 	}
 
-	confirm variable _nw_format _nw_nets _nw_netname _nw_size _nw_directed _nw_twomode _nw_selfloop _nw_title
+	confirm variable _nw_format _nw_nets _nw_netname _nw_size _nw_directed _nw_twomode _nw_title, exact
+	// nwsave writes the self-loop flag as _nw_selfloops (exact names: works with set varabbrev off)
+	capture confirm variable _nw_selfloops, exact
+	if _rc == 0 local __nwu_slv _nw_selfloops
+	else {
+		confirm variable _nw_selfloop, exact
+		local __nwu_slv _nw_selfloop
+	}
 	// _nw_modes/_nw_mode1desc/_nw_mode2desc are a newer addition (mode
 	// membership was never actually saved before, despite the bare
 	// is-two-mode flag surviving correctly - see nwsave.ado's own
@@ -96,7 +103,7 @@ program nwuse
 		local s = _nw_size[`i']
 		local d = _nw_directed[`i']
 		local t = _nw_twomode[`i']
-		local sl = _nw_selfloop[`i']
+		local sl = `__nwu_slv'[`i']
 		local tl = _nw_title[`i']
 		local v = _nw_valued[`i']
 		local md ""
@@ -152,7 +159,11 @@ program nwuse
 		// value (the nwsym below alone would keep 0 instead of a negative value)
 		local fedir ""
 		if "`d'" == "false" local fedir "undirected"
-		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'") `fedir'
+		// a network comes back exactly as saved: a directed network stays directed even when its matrix is
+		// symmetric (nwfromedge would otherwise declare a symmetric list undirected)
+		if "`d'" == "true" local fedir "directed"
+		// a network with self-loops keeps its diagonal
+		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'") `fedir' `=cond("`sl'" == "true", "selfloop", "")'
 		// BUGFIX: `_nw_netname' is a LOCAL-macro reference to a local
 		// literally named "_nw_netname", which is never defined
 		// anywhere in this loop - `_nw_netname' is the STATA VARIABLE
@@ -183,6 +194,9 @@ program nwuse
 		if `has_modes' {
 			_nwsyntax `ncreate', other(other)
 			mata: `othernetobj'->set_modes_from_labeled_string(__nwmd)
+			// the node order of the file (nwfromedge numbers the nodes in label order; nwset ..., twomode puts
+			// the mode-1 nodes first)
+			mata: nw_reorder_to_labels(`othernetobj', nw_labels_from_modestring(__nwmd))
 			mata: mata drop __nwmd
 		}
 		if "`d'"  == "false" {

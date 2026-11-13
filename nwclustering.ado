@@ -27,6 +27,27 @@ program nwclustering
 	_nwdatasync `netname'
 	local original "`netname'"
 
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwclustering's whole purpose is producing
+	// this variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to.
+	if "`generate'" == "" {
+		di "{err}option {bf:generate()} required."
+		error 198
+	}
+
+	// Consistency (moderate-severity pass, positions_equivalence group):
+	// every sibling command with a generate() option (nwconcor/
+	// nwcoreperiphery/nwburt/nwbrokerage) already requires an explicit
+	// replace before overwriting an existing variable; nwclustering had
+	// no such guard at all and silently clobbered any pre-existing
+	// variable of the target name.
+	capture confirm variable `generate', exact
+	if _rc == 0 & "`replace'" == "" {
+		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
+		err 99
+	}
+
 	tempname symnet
 	local symnet_created = 0
 	if "`symmetrize'" != ""  {
@@ -61,7 +82,12 @@ program nwclustering
 		}
 	}
 
-	_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
+	capture noisily _opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
+	if _rc {
+		local __rc = _rc
+		if `symnet_created' capture nwdrop `symnet'
+		exit `__rc'
+	}
 
 
 	if ("`directed'" == "true" & "`measure'" != "binary") {
@@ -71,28 +97,8 @@ program nwclustering
 		// (success) even though the printed message says the command
 		// failed and no generate() variable was ever created - a
 		// silent-success bug that would fool any caller checking _rc.
+		if `symnet_created' capture nwdrop `symnet'
 		exit 198
-	}
-
-	// generate() is required (suite-wide generate()-required style
-	// decision, 2026-09-05): nwclustering's whole purpose is producing
-	// this variable, so - matching Stata's own egen/predict convention -
-	// there is no default name to silently fall back to.
-	if "`generate'" == "" {
-		di "{err}option {bf:generate()} required."
-		error 198
-	}
-
-	// Consistency (moderate-severity pass, positions_equivalence group):
-	// every sibling command with a generate() option (nwconcor/
-	// nwcoreperiphery/nwburt/nwbrokerage) already requires an explicit
-	// replace before overwriting an existing variable; nwclustering had
-	// no such guard at all and silently clobbered any pre-existing
-	// variable of the target name.
-	capture confirm variable `generate', exact
-	if _rc == 0 & "`replace'" == "" {
-		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		err 99
 	}
 	capture confirm new variable `generate'
 	if _rc capture drop `generate'
@@ -137,11 +143,12 @@ program nwclustering
 		mata: `__nw_clust' = `netobj'->calculate_clustering(`__mode')
 	}
 	mata: st_store((1::`nodes'), "`generate'", `__nw_clust'[.,1])
-	mata: st_numscalar("clust_global", sum(`__nw_clust'[.,2]) / sum(`__nw_clust'[.,3]))
+	tempname __clglob
+	mata: st_numscalar("`__clglob'", sum(`__nw_clust'[.,2]) / sum(`__nw_clust'[.,3]))
 	mata: mata drop `__nw_clust'
 
-	local cluster_global = clust_global
-	capture scalar drop clust_global
+	local cluster_global = `__clglob'
+	capture scalar drop `__clglob'
 
 	qui summarize `generate'
 	local C_avg = r(mean)

@@ -93,6 +93,67 @@ mata: assert(rows(ev) == 3)
 mata: assert(sum(abs(ev[.,3] :- 1.5) :< 1e-6) == 1)
 mata: assert(sum(abs(ev[.,3] :- 2.7) :< 1e-6) == 1)
 mata: assert(sum(abs(ev[.,3] :- 3.1) :< 1e-6) == 1)
+* column 4 is the value of each event: 1 without a value variable
+mata: assert(cols(ev) == 4)
+mata: assert(all(ev[.,4] :== 1))
+
+* --- event values: the third variable is stored per event (column 4), in the row order of the events; the event
+* models add it to the tie (goldfish's increment). Numeric ids and two-mode take the same path.
+nwclear
+clear
+input str10 sender str10 receiver w evtime
+"A" "B" 2   1
+"A" "B" -2  2
+"B" "C" 0.5 3
+"C" "A" 0   4
+end
+nwset sender receiver w, eventtime(evtime) name(evval)
+_nwsyntax evval
+mata: ev = *(`netobj'->get_eventlist())
+mata: assert(cols(ev) == 4 & rows(ev) == 4)
+mata: assert(ev[.,4] == (2 \ -2 \ 0.5 \ 0))
+mata: assert(ev[.,3] == (1 \ 2 \ 3 \ 4))
+nwclear
+clear
+input sender receiver w evtime
+1 2 3 1
+2 1 4 2
+end
+nwset sender receiver w, eventtime(evtime) name(evnum)
+_nwsyntax evnum
+mata: ev = *(`netobj'->get_eventlist())
+mata: assert(ev[.,4] == (3 \ 4))
+nwclear
+clear
+input sender receiver w evtime
+1 1 3 1
+2 1 4 2
+2 2 5 3
+end
+nwset sender receiver w, eventtime(evtime) twomode name(ev2m)
+_nwsyntax ev2m
+mata: ev = *(`netobj'->get_eventlist())
+mata: assert(cols(ev) == 4 & ev[.,4] == (3 \ 4 \ 5))
+* a missing value is refused (416), a string value variable too (109); nothing is created
+nwclear
+clear
+input str10 sender str10 receiver w evtime
+"A" "B" 1 1
+"B" "C" . 2
+end
+capture noisily nwset sender receiver w, eventtime(evtime) name(evmiss)
+assert _rc == 416
+capture nwname evmiss
+assert _rc != 0
+nwclear
+clear
+input str10 sender str10 receiver str5 w evtime
+"A" "B" "x" 1
+end
+capture noisily nwset sender receiver w, eventtime(evtime) name(evstr)
+assert _rc != 0
+mata: mata drop ev
+di as text "PASS: event values in the event list"
 
 * --- mutual exclusivity: time/interval/eventtime cannot be combined.
 nwclear

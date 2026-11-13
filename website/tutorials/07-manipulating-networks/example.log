@@ -1,31 +1,3 @@
-
-  ___  ____  ____  ____  ____ ®
- /__    /   ____/   /   ____/      Stata 18.0
-___/   /   /___/   /   /___/       BE—Basic Edition
-
- Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
-                                   StataCorp
-                                   4905 Lakeway Drive
-                                   College Station, Texas 77845 USA
-                                   800-782-8272        https://www.stata.com
-                                   979-696-4600        service@stata.com
-
-Stata license: Single-user  perpetual
-Serial number: 301806005943
-  Licensed to: Thomas Grund
-               RWTH Aachen
-
-Notes:
-      1. Stata is running in batch mode.
-      2. Unicode is supported; see help unicode_advice.
-
-
-Running /Users/tgrund/Documents/Stata/profile.do ...
-
-. do run_tutorials_06-manipulating-networks.do 
-
-. do example.do
-
 . * Tutorial 6: Manipulating Networks
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
 . 
@@ -45,6 +17,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean degree:  2.50
    Temporal: false
 
 . nwsubset flomarriage if wealth > 50
@@ -62,6 +35,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .333
+   Mean degree:  0.67
    Temporal: false
 
 . 
@@ -82,6 +56,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .429
+   Mean outdegree:  3.00
    Temporal: false
 
 . gen att = _n
@@ -94,7 +69,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
 . nwsummarize mynet_collapsed
 --------------------------------------------------
    Network name:  mynet_collapsed
-   Network id:  6
+   Network id:  5
    Directed: true
    Valued: false
    Two-mode: false
@@ -104,6 +79,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .548
+   Mean outdegree:  3.29
    Temporal: false
 
 . 
@@ -123,6 +99,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . nwsymmetrize glasgow1, generate(glasgow1_sym)
@@ -140,6 +117,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .0604
+   Mean degree:  2.96
    Temporal: false
 
 . nwsym glasgow1_sym, check
@@ -169,6 +147,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  3
    Density:  .833
+   Mean outdegree:  1.67
    Temporal: false
        1   2   3
     +-------------+
@@ -193,6 +172,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  30
    Density:  .833
+   Mean outdegree:  1.67
    Temporal: false
         1    2    3
     +----------------+
@@ -222,6 +202,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  30
    Maximum value:  220
    Density:  1
+   Mean outdegree:  2.00
    Temporal: false
          1     2     3
     +-------------------+
@@ -246,6 +227,7 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
    Minimum value:  0
    Maximum value:  1
    Density:  .333
+   Mean outdegree:  0.67
    Temporal: false
        1   2   3
     +-------------+
@@ -253,7 +235,3 @@ Running /Users/tgrund/Documents/Stata/profile.do ...
   2 |  0   .   1  |
   3 |  0   0   .  |
     +-------------+
-
-. 
-end of do-file
-

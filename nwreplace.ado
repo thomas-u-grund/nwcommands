@@ -31,12 +31,12 @@ program nwreplace, rclass
 	capture mata: `newcmd'
 	if _rc != 0 {
 		di "{err}{it:nwsubset} {bf:`subset'} invalid"
-		error 6400
+		error 198
 	}
 	
 	if "`netname'" == "=" {
 		di "{err}{it:networkname} required before ="
-		error 6001
+		error 198
 	}
 	
 	// get rid of first equal sign
@@ -160,8 +160,10 @@ program nwreplace, rclass
 	// hit this directly).
 	local __symmetric = `r(symmetric)'
 	local __valued = `r(valued)'
+	// an undirected network whose matrix is no longer symmetric is directed now
 	if ("`directed'"=="false" & `__symmetric'==0) {
-		_nwname `netname', newdirected(false)
+		_nwname `netname', newdirected(true)
+		di "{txt}(the matrix of {res}`netname'{txt} is no longer symmetric; {res}`netname'{txt} is now directed)"
 	}
 	// valued flag: set it only when the matrix really holds values outside
 	// 0/1 (__valued, from check_valued above). It used to test r(valued)

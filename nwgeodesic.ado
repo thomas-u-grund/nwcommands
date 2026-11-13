@@ -21,6 +21,12 @@ program nwgeodesic
 	_nwsyntax `netname', max(1)
 	_nwdenseguard, command(nwgeodesic) nodes(`nodes') copies(2) alternative(The distances between all pairs of nodes form an n x n matrix. Use nwcloseness or nwkatz for sums over the distances, nwcomponents for connectedness, nwpath for one pair, or a part of the network (nwsubset).) `force'
 
+	local __alpha_given = (strpos(lower(`"`0'"'), "alpha(") > 0)
+	if "`binary'" != "" & `__alpha_given' & `alpha' != 0 {
+		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
+		error 198
+	}
+
 	local eccvar "`generate'"
 	// nwgeodesic is dual-purpose: its PRIMARY output is the distance
 	// network (name(), already required to be non-empty via its own
@@ -39,7 +45,7 @@ program nwgeodesic
 	// drop its former `eccoff' workaround option entirely; omitting
 	// generate() already does the right thing on its own now.
 	if "`eccvar'" != "" {
-		capture confirm variable `eccvar'
+		capture confirm variable `eccvar', exact
 		if _rc == 0 & "`nwreplace'" == "" {
 			di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
 			err 99
@@ -80,11 +86,6 @@ program nwgeodesic
 	
 	// Tie values: on a valued network a step along a tie of value w costs 1/w^alpha, alpha = 1 by default
 	// (Opsahl et al. 2010; alpha(-1) is igraph's "weights are lengths").  binary or alpha(0): every tie is one step.
-	local __alpha_given = (strpos(lower(`"`0'"'), "alpha(") > 0)
-	if "`binary'" != "" & `__alpha_given' & `alpha' != 0 {
-		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
-		error 198
-	}
 	if "`valued'" == "true" & "`binary'" == "" & !`__alpha_given' {
 		local alpha = 1
 	}
@@ -186,8 +187,9 @@ program nwgeodesic
 	mata: `__nw_ecc' = rowmax(*`netobj'->get_matrix())
 	mata: st_numscalar("r(radius)", min(`__nw_ecc'))
 	if "`eccvar'" != "" {
-		qui capture drop `eccvar'
-		qui gen `eccvar' = .
+		capture confirm variable `eccvar', exact
+		if _rc == 0 drop `eccvar'
+		qui gen double `eccvar' = .
 		// align row i of the data set with node i of the network before the positional
 		// read/write below (see nwcommunity.ado)
 		_nwsyncrows `name'
