@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.21.0  12nov2026}{...}
+{* *! version 3.22.0  13nov2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -36,4 +36,4 @@ its tag, for example
 {pstd}Thomas U. Grund, RWTH Aachen University{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

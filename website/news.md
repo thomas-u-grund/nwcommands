@@ -24,6 +24,8 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 **nwrem 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.0)). Covariates are matched to the actors by their node labels; events or covariates with missing values are refused with a clear message; `nwrem` without arguments redisplays the last fit, with the new option `level()`.
 
+All five were tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19 (the full test suites); the Linux plugins are built in the same way but were not tested in Stata.
+
 ## 12 November 2026: nwsaom 1.5.19
 
 **nwsaom 1.5.19** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.19)). `rates()` of `estat simulate` and `nwsaom simulate` after a non-directed fit of the joint, force or agree type is now on the scale of `e(rates)` (the rates printed by the fit, RSiena's scale); before, the values were taken as rates per actor. `nwsaom simulate` with a single effect (for example a two-mode network with `outdegree theta(-1)`) and fits that fix the only parameter no longer stop with an error.

@@ -52,7 +52,7 @@ To install the core only, type `nwinstall, all` instead of `nwinstall, everythin
 added later with `nwinstall, models` (repeating `nwinstall, everything` or `nwinstall, models` also updates them). To install one model package only, for example nwsaom, type
 `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
 
-Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
+Requirements: Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough).
 
 If Stata answers `option everything not allowed`, an older `nwinstall` is being used. Type `which nwinstall`: the
 path should point into Stata's `ado/plus` folder. If it says `./nwinstall.ado`, an old copy lies in the folder

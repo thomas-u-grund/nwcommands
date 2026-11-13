@@ -71,4 +71,4 @@ A network held as stored ties keeps the ties between the remaining nodes without
 	{help nwgenerate}, {help nwduplicate}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

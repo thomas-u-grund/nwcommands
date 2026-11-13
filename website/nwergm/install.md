@@ -125,4 +125,4 @@ libraries are the better choice when they load; a build with your own Stata is t
 
 ## Requirements
 
-Stata 17 or later (Stata BE is enough; tested with Stata 17 and 18, the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested) and the core `nwcommands` with its Mata library.
+Stata 17 or later (Stata BE is enough; tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested) and the core `nwcommands` with its Mata library.

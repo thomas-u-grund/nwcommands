@@ -106,4 +106,4 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

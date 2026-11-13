@@ -28,7 +28,7 @@ it but are installed separately.
 
 `nwinstall, everything` installs the core (every command, all help files and every dialog box) and the four model
 packages. `nwinstall, all` installs the core only; `nwinstall, models` adds the model packages later. Add
-`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested with Stata 17 and 18;
+`nwinstall, gui` for a "Network Analysis" menu in Stata. Requires Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19;
 Stata BE is enough).
 `nwversion` shows the core version and which model packages are installed. See the
 [Installation & Setup](../tutorials/01-installation-setup/) tutorial for details.

@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.22.0] - 2026-11-13
 
 ### Results that change (read before you re-run old analyses)
 - `nwcontext, mode(either)` (or `mode(both)`) counted a neighbour tied in both directions twice (every neighbour of an undirected network): the sum and the maximum were doubled and the mean was weighted towards the reciprocated neighbours. Each neighbour now counts once, on a valued network with the larger of the two tie values.
@@ -72,6 +72,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwstack` stopped with "observation number out of range" when the data had more rows than the stacked network has nodes.
 - `nwset ..., twomode` (and `nw2fromedge`) with string identifiers, or a string mode with a numeric one, numbered the nodes in the sort order of both modes together (persons "P1".."P3" and organisations "O1", "O2" gave O1 O2 P1 P2 P3), while the network said that the first three nodes are mode 1: matrices, event lists and the commands built on them mixed the modes up. The mode-1 nodes now come first. A string mode with a numeric one stopped with r(106).
 - Numeric node identifiers of 10,000,000 or more were turned into labels such as "n1.00e+07" by `nwset ..., eventtime()`/`time()`/`interval()` and in the mode split of `nwset ..., twomode`, while the network's nodes had the full number: events pointed at no node (index 0), two-mode networks put every node in mode 2. Labels are the full number now (also for a numeric identifier paired with a string one in `nwfromedge`). The offset of mode-2 identifiers in a numeric two-mode list is added in double precision.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite) and on Windows 11 with StataNow 19.5 MP. Linux: plugins built by CI, not tested in Stata.
 
 ## [3.21.0] - 2026-11-12
 

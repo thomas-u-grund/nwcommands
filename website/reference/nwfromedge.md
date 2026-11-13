@@ -120,4 +120,4 @@ This loads a network dataset from the internet and transforms the network *glasg
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

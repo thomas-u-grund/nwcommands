@@ -78,4 +78,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
