@@ -29,7 +29,7 @@ force]
 
 | | |
 |---|---|
-| `attribute(varname)` | Attribute variable |
+| `attribute(varname)` | Numeric attribute variable |
 | `stat`(*[statistic](nwcontext)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
 | `mode`(*[context](nwcontext)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
 | `generate(newvarname)` | Name of the context variable to be generated; `generate()` or `mat()` is required |
@@ -117,7 +117,7 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ## See also
 
-- [nwneighbor](nwneighbor)
+- [nwneighbor](nwneighbor), [nwegoplot](nwegoplot)
 
 ---
 

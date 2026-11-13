@@ -134,6 +134,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwhierarchy`](nwhierarchy) --- Hierarchical clustering of nodes (role/position analysis)
 - [`nwshared`](nwshared) --- Number of shared neighbors of all pairs of nodes, as a network
 - [`nwsimilar`](nwsimilar) --- Generate node similarities
+- [`nwregular`](nwregular) --- Classes of regularly equivalent nodes
 - [`nwsimindex`](nwsimindex) --- Common-neighbor similarity indices between all node pairs
 
 ### Clustering, mixing and balance
@@ -198,6 +199,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwmovie`](nwmovie) --- Interactive, animated network movie (panel waves or a relational-event timeline)
 - [`nwmoviexy`](nwmoviexy) --- Animate a sequence of networks (alias for nwmovie)
 - [`nwplot`](nwplot) --- Plot a network
+- [`nwegoplot`](nwegoplot) --- Draw the ego network of one node, ego in the center
 - [`nwplotmatrix`](nwplotmatrix) --- Plot a network as sociomatrix
 
 ## Programming

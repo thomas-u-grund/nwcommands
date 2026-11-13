@@ -59,7 +59,7 @@ set seed 20261111
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(cugnet) undirected
 msgwrap_chk "nwcug cugnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(20) seed(1) plot name(cugwrapplot)" "dashed line marks the observed value)"
 capture graph drop cugwrapplot
-msgwrap_chk "nwcug cugnet, stat(nwclustering ##net##, generate(_clustering) replace) rname(cluster_global) reps(20) seed(1)" "  Statistic: nwclustering ##net##, generate(_clustering)" "             replace/r(cluster_global)"
+msgwrap_chk "nwcug cugnet, stat(nwclustering ##net##, generate(_clustering) replace) rname(cluster_global) reps(20) seed(1)" "Statistic: r(cluster_global) after nwclustering cugnet," "           replace"
 nwset, mat((0,1,1,0\1,0,0,1\0,1,0,1\1,0,0,0)) name(dyadnet)
 msgwrap_chk "nwcug dyadnet, stat(nwdyads ##net##) rname(reciprocity) reps(20) seed(1) condition(census)" "test is uninformative."
 

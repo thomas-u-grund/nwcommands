@@ -93,7 +93,7 @@ The button **Save do-file** does all of this in one step. It saves **nwedit_plot
 ```stata
 . run nwedit_plot.do
 ```
-How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds to about `nodefactor(0.2)` in the static graph. Without `nodefactor()`, `nwplot` therefore uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of 1.85 gives `nodefactor(0.37)`); an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group.
+How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the node sizes of the call that wrote the page. Without `nodefactor()`, `nwplot` uses the saved slider value as `nodefactor()` (a slider value of 1, the start, gives the default sizes; 1.85 gives `nodefactor(1.85)`). The view draws in screen pixels and the graph relative to its size, so symbols can look a little larger or smaller in the graph than on the screen; an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group.
 
 The view draws *y* upward, as the static plot does, for every layout and for `nodexy()` (with `nodexy(Lon Lat)` the map is upright), and the saved CSV holds the same *y*, so a saved layout comes back in the same orientation. With `edgesize()` the view maps the tie values linearly onto line widths of 1 to 8 pixels (all ties 3 pixels without `edgesize()`; the static plot uses the same 1 to 8 mapping); the edge-width slider is a multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider multiplies on top. `edgeimport()` accepts the edge file of a directed or an undirected network (the view lists an undirected tie once).
 
@@ -193,6 +193,13 @@ The look and feel of node labels is changed with labelopt():
 ```stata
 . nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))
 ```
+`mlabvposition(`*varname*`)` in `labelopt()` places the label of each node at the clock position stored in a numeric variable of the node data (9 left, 3 right, 12 above, 6 below, 0 on the node). In a two-mode network drawn with `layout(bipartite, vertical)`, for example, the labels of the first mode can stand to the left of their column and those of the second mode to the right:
+
+```stata
+. nwwebuse davis, nwclear
+. generate byte lpos = cond(_nwmode == "1", 9, 3)
+. nwplot davis, label(_nwnode) layout(bipartite, vertical) labelopt(mlabvposition(lpos))
+```
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these underlying scatter plots. Here, the color and symbol of nodes is overwritten.
 
 ```stata
@@ -259,7 +266,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 ## See also
 
-- [nwplotmatrix](nwplotmatrix), [nwmovie](nwmovie), [netexample](netexample)
+- [nwplotmatrix](nwplotmatrix), [nwegoplot](nwegoplot), [nwmovie](nwmovie), [netexample](netexample)
 
 ---
 

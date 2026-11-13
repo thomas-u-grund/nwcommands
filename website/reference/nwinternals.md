@@ -51,7 +51,7 @@ This page exists so that a curious user finds an explanation somewhere, rather t
 
 ## Other small utilities
 
-`_opts_oneof` validates that at most one of a set of mutually exclusive suboptions was specified, returning a clear error naming all of them if more than one was. `_extract_valuelabels` reads a variable's Stata value label into a usable form. `_nwedgelabs` is a small, currently-incomplete helper intended to return edge labels for [nwtabulate](nwtabulate).
+`_opts_oneof` validates that at most one of a set of mutually exclusive suboptions was specified, returning a clear error naming all of them if more than one was. `_extract_valuelabels` reads a variable's Stata value label into a usable form. `_nwedgelabs` is a small, currently-incomplete helper intended to return edge labels for [nwtabulate](nwtabulate). `_nwstrcat` *varlist* `:` *command* runs *command* with the string variables of *varlist* encoded under their own names (levels in alphabetical order) and puts the strings back afterwards, also after an error. It is meant for options where the values serve only as categories, such as `group()` of [nwbrokerage](nwbrokerage); options that use values as numbers refuse strings.
 
 ## Shared error-code definitions
 

@@ -1211,7 +1211,7 @@ real matrix CorePeriphery(real matrix net, real scalar maxiter){
 
 	n = rows(net)
 	if (max(net) <= 0){
-		errprintf("Core-periphery detection requires at least one tie in the network.\n")
+		errprintf("{p 0 2 2}Core-periphery detection requires at least one tie in the network.{p_end}\n")
 		exit(error(6556))
 	}
 
@@ -1356,7 +1356,7 @@ real matrix CorePeripheryPairs(real scalar n, real matrix pairs, real scalar max
 	mx = (rows(pairs) > 0 ? max(pairs[., 3]) : 0)
 	if (mx < 0) mx = 0
 	if (mx <= 0) {
-		errprintf("Core-periphery detection requires at least one tie in the network.\n")
+		errprintf("{p 0 2 2}Core-periphery detection requires at least one tie in the network.{p_end}\n")
 		exit(error(6556))
 	}
 	nw_pairs_csr(n, pairs, ptr, nb, w)
@@ -1478,11 +1478,11 @@ real matrix Factions(real matrix net, real scalar K, real scalar maxiter){
 
 	n = rows(net)
 	if (max(net) <= 0){
-		errprintf("Factions detection requires at least one tie in the network.\n")
+		errprintf("{p 0 2 2}Factions detection requires at least one tie in the network.{p_end}\n")
 		exit(error(6556))
 	}
 	if (K < 2 | K > n){
-		errprintf("Factions requires groups() to be between 2 and the number of nodes.\n")
+		errprintf("{p 0 2 2}Factions requires groups() to be between 2 and the number of nodes.{p_end}\n")
 		exit(error(6556))
 	}
 
@@ -3953,7 +3953,7 @@ real matrix nwg_comb(real scalar alg, real scalar n, real matrix ties, real colv
 
 void nwg_fail(real scalar status, string scalar what)
 {
-	errprintf("%s: the native kernel ran out of memory or failed (status %g).\n", what, status)
+	errprintf("{p 0 2 2}%s: the native kernel ran out of memory or failed (status %g).{p_end}\n", what, status)
 	exit(error(3900))
 }
 
@@ -4076,15 +4076,15 @@ real matrix nwg_factions(real scalar K, real scalar val, real scalar maxiter, re
 
 	sw = nwg_symw(el, isdirect, isvalued, val)
 	if (rows(sw) == 0) {
-		errprintf("Factions detection requires at least one tie in the network.\n")
+		errprintf("{p 0 2 2}Factions detection requires at least one tie in the network.{p_end}\n")
 		exit(error(6556))
 	}
 	if (max(sw[., 3]) <= 0) {
-		errprintf("Factions detection requires at least one tie in the network.\n")
+		errprintf("{p 0 2 2}Factions detection requires at least one tie in the network.{p_end}\n")
 		exit(error(6556))
 	}
 	if (K < 2 | K > n) {
-		errprintf("Factions requires groups() to be between 2 and the number of nodes.\n")
+		errprintf("{p 0 2 2}Factions requires groups() to be between 2 and the number of nodes.{p_end}\n")
 		exit(error(6556))
 	}
 	deg = J(n, 1, 0)
@@ -4227,19 +4227,19 @@ real matrix nwg_enum(string scalar what, real scalar alg, real scalar n, real ma
 	res = nwg_comb(alg, n, ties, J(0, 1, .), (par, maxcliques, countonly, extra, maxwork), aux, st)
 	if (st == 1) {
 		if (what == "nwnclan") {
-			errprintf("%s: more than %g maximal n-cliques had to be examined while looking for n-clans; stopped.\n", what, maxcliques)
-			errprintf("  Raise the limit with option %s(#) (each examined n-clique costs a few microseconds), or lower n().\n", optname)
+			errprintf("{p 0 2 2}%s: more than %g maximal n-cliques had to be examined while looking for n-clans; stopped.{p_end}\n", what, maxcliques)
+			errprintf("{p 2 4 2}Raise the limit with option %s(#) (each examined n-clique costs a few microseconds), or lower n().{p_end}\n", optname)
 		}
 		else {
-			errprintf("%s: more than %g maximal sets (size >= minsize) found; stopped to protect memory.\n", what, maxcliques)
-			errprintf("  Raise the limit with option %s(#) (the result matrix needs sets x nodes numbers; option nomatrix skips it), or count only with option countonly.\n", optname)
+			errprintf("{p 0 2 2}%s: more than %g maximal sets (size >= minsize) found; stopped to protect memory.{p_end}\n", what, maxcliques)
+			errprintf("{p 2 4 2}Raise the limit with option %s(#) (the result matrix needs sets x nodes numbers; option nomatrix skips it), or count only with option countonly.{p_end}\n", optname)
 		}
 		exit(error(484))
 	}
 	if (st == 3) {
-		errprintf("%s: the search was stopped after %g seconds without finishing (%g sets found so far).\n", what, maxwork, aux[1])
-		errprintf("  The number of maximal sets, and so the search time, grows exponentially with network size and density (and with k or n).\n")
-		errprintf("  Raise the limit with option maxtime(#) (seconds), or reduce n()/k() or the network.\n")
+		errprintf("{p 0 2 2}%s: the search was stopped after %g seconds without finishing (%g sets found so far).{p_end}\n", what, maxwork, aux[1])
+		errprintf("{p 2 4 2}The number of maximal sets, and so the search time, grows exponentially with network size and density (and with k or n).{p_end}\n")
+		errprintf("{p 2 4 2}Raise the limit with option maxtime(#) (seconds), or reduce n()/k() or the network.{p_end}\n")
 		exit(error(484))
 	}
 	if (st != 0) nwg_fail(st, what)
@@ -4255,8 +4255,8 @@ real matrix nwg_enum(string scalar what, real scalar alg, real scalar n, real ma
 	}
 	cells = aux[1] * n
 	if (cells > 5e7) {
-		errprintf("%s: the result matrix (%g sets x %g nodes = %g numbers, several copies of it are made) is too large to build.\n", what, aux[1], n, cells)
-		errprintf("  Use option nomatrix (per-node variable and counts only) or countonly.\n")
+		errprintf("{p 0 2 2}%s: the result matrix (%g sets x %g nodes = %g numbers, several copies of it are made) is too large to build.{p_end}\n", what, aux[1], n, cells)
+		errprintf("{p 2 4 2}Use option nomatrix (per-node variable and counts only) or countonly.{p_end}\n")
 		exit(error(484))
 	}
 	out = J(aux[1] * n, 1, 0)
@@ -6712,7 +6712,7 @@ real matrix `NWdef'::calculate_concor(real scalar splits, | real scalar valued, 
 		// ~100-char cap ("argument out of range", r(3300)) - confirmed
 		// by bisection; this message is longer, so errprintf()+exit()
 		// is used instead (no such limit found there).
-		errprintf("CONCOR requires every node to have at least one tie (incoming or outgoing) - remove isolates first (see nwdropnodes/nwkeepnodes) and try again.\n")
+		errprintf("{p 0 2 2}CONCOR requires every node to have at least one tie (incoming or outgoing) - remove isolates first (see nwdropnodes/nwkeepnodes) and try again.{p_end}\n")
 		exit(error(6556))
 	}
 
@@ -7771,7 +7771,7 @@ real matrix `NWdef'::calculate_maxflow(real scalar s, real scalar t, | real scal
 	val = (args() >= 3 ? valued : 0)
 	n = get_nodes()
 	if (s < 1 | s > n | t < 1 | t > n | s == t) {
-		errprintf("nwmaxflow: source and sink must be distinct, valid node indices.\n")
+		errprintf("{p 0 2 2}nwmaxflow: source and sink must be distinct, valid node indices.{p_end}\n")
 		exit(error(6556))
 	}
 	// a network held as stored ties only: flow on the arcs, no n x n capacity and flow matrices
@@ -7870,7 +7870,7 @@ real matrix `NWdef'::calculate_bipartite_matching(){
 	real colvector match
 
 	if (is_2mode_boolean() == 0) {
-		errprintf("nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).\n")
+		errprintf("{p 0 2 2}nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).{p_end}\n")
 		exit(error(6556))
 	}
 	n = get_nodes()
@@ -7950,7 +7950,7 @@ real matrix `NWdef'::calculate_matching_maxweight(){
 	real scalar i0, j0, j1, delta, cur
 
 	if (is_2mode_boolean() == 0) {
-		errprintf("nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).\n")
+		errprintf("{p 0 2 2}nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).{p_end}\n")
 		exit(error(6556))
 	}
 	n = get_nodes()
@@ -8272,7 +8272,7 @@ real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t, | real scalar w
 	_diag(A, 0)
 	deg = rowsum(A)
 	if (min(deg) == 0) {
-		errprintf("nwrandomwalk: every node must have at least one tie (an isolate has no well-defined hitting time) - remove isolates first.\n")
+		errprintf("{p 0 2 2}nwrandomwalk: every node must have at least one tie (an isolate has no well-defined hitting time) - remove isolates first.{p_end}\n")
 		exit(error(6556))
 	}
 
@@ -10403,22 +10403,34 @@ string scalar NativeGraphInstallDir(){
 	return(dir)
 }
 
-string scalar NativeGraphPluginSubdir(){
+/*
+	The platform the native binaries are built for: "windows", "macos" or "unix".
+	Console Stata on macOS (stata-mp in a terminal) reports c(os) = "Unix",
+	but c(machine_type) still starts with "Mac" (3.20.1: the console looked
+	for the Linux plugin and viewer and found none).
+*/
+string scalar NwNativePlatform(){
 	string scalar os
 
 	os = st_global("c(os)")
 	if (os == "Windows") return("windows")
-	if (os == "Unix") return("unix")
-	return("macos")
+	if (os == "MacOSX") return("macos")
+	if (substr(st_global("c(machine_type)"), 1, 3) == "Mac") return("macos")
+	return("unix")
+}
+
+string scalar NativeGraphPluginSubdir(){
+	string scalar os
+
+	os = NwNativePlatform()
+	return(os)
 }
 
 string scalar NativeGraphPluginFilename(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("nwgraph_windows.plugin")
-	if (os == "Unix") return("nwgraph_unix.plugin")
-	return("nwgraph_macos.plugin")
+	os = NwNativePlatform()
+	return("nwgraph_" + os + ".plugin")
 }
 
 string scalar NativeGraphPluginPath(){
@@ -10459,10 +10471,8 @@ real scalar NativeGraphAvailable(){
 string scalar NweditViewerSubdir(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("windows")
-	if (os == "Unix") return("unix")
-	return("macos")
+	os = NwNativePlatform()
+	return(os)
 }
 
 /*
@@ -10478,10 +10488,9 @@ string scalar NweditViewerSubdir(){
 string scalar NweditViewerFilename(){
 	string scalar os
 
-	os = st_global("c(os)")
-	if (os == "Windows") return("nwedit_viewer_windows.exe")
-	if (os == "Unix") return("nwedit_viewer_unix")
-	return("nwedit_viewer_macos")
+	os = NwNativePlatform()
+	if (os == "windows") return("nwedit_viewer_windows.exe")
+	return("nwedit_viewer_" + os)
 }
 
 string scalar NweditViewerPath(){

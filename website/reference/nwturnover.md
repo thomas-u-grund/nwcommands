@@ -19,7 +19,8 @@ net1 net2
 ,
 gen:erate(newvarname)
 [rep:lace
-silent]
+silent
+formation]
 ```
 
 | | |
@@ -27,6 +28,7 @@ silent]
 | `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own local stability |
 | `rep:lace` | Replace existing variable |
 | `silent` | Suppress display of results |
+| `formation` | Compare the formed ties with all pairs without a tie in *net1*: the shares that return a tie and that close a two-path |
 
 ## Description
 
@@ -39,6 +41,8 @@ silent]
 *net1* and *net2* must have the same number of nodes and the same directedness (both directed or both undirected) - comparing a directed network to an undirected one, or two networks of different size, is rejected explicitly rather than silently doing something arithmetically possible but conceptually meaningless.
 
 For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(dissolved)** each count both *(i,j)* and *(j,i)* for the same tie, so all three are exactly double the number of actual undirected ties involved (the same convention [nwmixing](nwmixing) uses for its own mixing table). **r(jaccard)** and **r(persistence)** are unaffected, since the doubling cancels in both ratios.
+
+`formation` asks which of the ties formed between the two waves continue a pattern of *net1*. A formed tie from *i* to *j* **returns a tie** if *j* named *i* in *net1*, and it **closes a two-path** if *i* named some *k* who named *j* in *net1*. The command shows both shares among the formed ties and among all pairs without a tie in *net1* (the pairs from which every formed tie comes; the diagonal is not a pair, and a missing value counts as no tie). These are the descriptive precursors of the reciprocity and transitivity effects of an actor-oriented model. For an undirected pair of networks only the two-path share is shown, and the pairs are counted once. Two-mode networks are not allowed with `formation`. The option builds the adjacency matrices of both networks, so its memory use grows with the square of the number of nodes.
 
 ## Network types
 
@@ -54,6 +58,9 @@ The ties kept, formed and dissolved are counted from the lists of ties of the tw
 . nwset, mat((0,1,1\1,0,0\1,0,0)) name(wave1)
 . nwset, mat((0,1,0\1,0,1\0,1,0)) name(wave2)
 . nwturnover wave1 wave2, generate(_turnover)
+
+. nwwebuse glasgow, nwclear
+. nwturnover glasgow1 glasgow2, generate(_turnover) formation
 ```
 
 ## Stored results
@@ -64,6 +71,12 @@ The ties kept, formed and dissolved are counted from the lists of ties of the tw
 - **r(dissolved)** --- number of ties present only in *net1*
 - **r(jaccard)** --- stable / (stable + formed + dissolved)
 - **r(persistence)** --- stable / (stable + dissolved); missing if *net1* has no ties
+- **With `formation`**
+- **r(absent)** --- number of pairs without a tie in *net1*
+- **r(formed_recip)** --- share of formed ties that return a tie (directed networks)
+- **r(absent_recip)** --- the same share among the pairs without a tie (directed networks)
+- **r(formed_closure)** --- share of formed ties that close a two-path
+- **r(absent_closure)** --- the same share among the pairs without a tie
 
 ## References
 

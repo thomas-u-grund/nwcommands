@@ -128,6 +128,19 @@ program nwplot, rclass
 	local edgecolor `edgecolor_original'
 	local edgesize `edgesize_original'
 	
+	// 3.20.1: mlabvposition(varname) in labelopt() places each node's label by a variable of the node data
+	// (clock positions, e.g. 9 for left, 3 for right); the plot is drawn from nwplot's own data, so the values
+	// are carried over as for label()
+	local labposvar ""
+	if regexm(`"`labelopt'"', "mlabvp[a-z]*\(([^)]*)\)") {
+		local labposvar = trim(regexs(1))
+		capture confirm numeric variable `labposvar'
+		if _rc {
+			di "{err}labelopt(mlabvposition()): {bf:`labposvar'} is not a numeric variable"
+			exit 198
+		}
+		local labelopt = regexr(`"`labelopt'"', "mlabvp[a-z]*\(([^)]*)\)", "mlabvposition(nlabpos)")
+	}
 	if "`labelopt'" != "" {
 		local scatteropt "`scatteropt' `labelopt'"
 	}
@@ -251,15 +264,14 @@ program nwplot, rclass
 	// own value wins, else fall back to the top-level default" precedence
 	// this file already uses for sizebin() (see the __sizebin_toplevel
 	// comment above).
-	// The slider in the interactive view is a multiplier on the view's own
-	// baseline size, and the view draws on screen pixels (about 7 px per
-	// unit of Stata's msize), whereas the static graph's symbols are
-	// relative to the graph. A slider value of 1 in the view therefore
-	// corresponds to roughly 0.2 as nodefactor() in the static graph;
-	// scale the imported slider value accordingly so the bring-back looks
-	// like the view without a manual nodefactor().
+	// The slider in the interactive view is a multiplier on the size that
+	// the nwplot call which wrote the page drew (3.20.1: was 0.2 times the
+	// slider, which made a page saved at slider 1 come back with tiny
+	// nodes). Slider value s therefore gives nodefactor(s), so a page whose
+	// slider was not touched comes back with nwplot's default sizes, as
+	// the edge-width slider already does for edgefactor().
 	if "`nodefactor'" == "" & "`_nwedit_nodefactor'" != "" {
-		local nodefactor = `_nwedit_nodefactor' * 0.2
+		local nodefactor = `_nwedit_nodefactor'
 	}
 	if "`nodefactor'" == "" {
 		local nodefactor = 1
@@ -717,6 +729,9 @@ program nwplot, rclass
 	}
 	else {
 		mata: __nwplot_nlabel = J(`nodes',1,"")
+	}
+	if "`labposvar'" != "" {
+		mata: __nwplot_nlabpos = st_data((1,`nodes'),st_varindex("`labposvar'"))
 	}
 
 	////////////////////
@@ -1391,6 +1406,7 @@ program nwplot, rclass
 	qui gen ncolor = .
 	qui gen nsymbol = .
 	qui mata: st_addvar("str20", "nlabel")
+	if "`labposvar'" != "" qui gen nlabpos = .
 	qui gen sx = .
 	qui gen sy = .
 	qui gen ex = .
@@ -1430,6 +1446,10 @@ program nwplot, rclass
 	mata: st_store((1::rows(__nwplot_ncolor)),("ncolor"), __nwplot_ncolor[.,.])
 	mata: st_store((1::rows(__nwplot_ncolor)),("nsymbol"), __nwplot_nsymbol[.,.])
 	mata: st_sstore((1::rows(__nwplot_nlabel)),("nlabel"), __nwplot_nlabel[.,.])
+	if "`labposvar'" != "" {
+		mata: st_store((1::rows(__nwplot_nlabpos)),("nlabpos"), __nwplot_nlabpos[.,.])
+		mata: mata drop __nwplot_nlabpos
+	}
 	
 	local binfactor = 1/`sizebin'
 	qui replace nsize = (ceil(nsize * `binfactor'))* `sizebin'

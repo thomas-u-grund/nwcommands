@@ -25,7 +25,7 @@ silent]
 
 | | |
 |---|---|
-| `group(varname)` | Existing numeric Stata variable holding each node's group membership (required; encode a string variable first) |
+| `group(varname)` | Existing Stata variable holding each node's group membership, numeric or string (required) |
 | `generate(newvarname)` | **Required.** Stem for the 5 new Stata variables that store role counts |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |

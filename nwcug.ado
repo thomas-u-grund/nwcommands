@@ -34,6 +34,15 @@ program nwcug, rclass
 		set seed `seed'
 	}
 
+	// short form (3.20.1): a stat() without the ##net## placeholder is a command that takes the
+	// network as its first argument, so the placeholder goes right after the command name
+	// (stat(nwclustering) is stat(nwclustering ##net##)); ##net## is still needed for a command
+	// or program that takes the network elsewhere
+	if strpos(`"`stat'"', "##net##") == 0 {
+		gettoken __cmd __rest : stat, parse(" ,")
+		local stat `"`__cmd' ##net##`__rest'"'
+	}
+
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
 	// low-level Mata error ("subscript invalid", r3301) from inside
@@ -332,22 +341,29 @@ program nwcug, rclass
 		di "{txt}{p 0 0 2}Note: the null standard deviation is 0 under condition(census); this statistic is fixed by the dyad census, so the test is uninformative.{p_end}"
 	}
 	if "`silent'" == "" {
-		di "{hline 40}"
-		di "{txt}  Network: {res}`origname'"
-		di "{txt}{p 2 13 2}Statistic: {res}`stat'/r(`rname'){p_end}"
-		di "{txt}  Observed: {res}`=strtrim(string(round((`obsval')*1000)/1000,"%9.0g"))'"
-		di "{txt}  Null mean (sd): {res}`=strtrim(string(round((meannull)*1000)/1000,"%9.0g"))' (`=strtrim(string(round((sdnull)*1000)/1000,"%9.0g"))')"
-		di "{txt}  Reps: {res}`reps'"
-		if "`tail'" == "upper" | "`tail'" == "both" {
-			di "{txt}  p (upper tail): {res}`=strtrim(string(round((pgreater)*1000)/1000,"%9.0g"))'"
-		}
-		if "`tail'" == "lower" | "`tail'" == "both" {
-			di "{txt}  p (lower tail): {res}`=strtrim(string(round((pless)*1000)/1000,"%9.0g"))'"
-		}
-		if "`tail'" == "both" {
-			di "{txt}  p (two-sided): {res}`=strtrim(string(round((`ptwo')*1000)/1000,"%9.0g"))'"
-		}
-		di "{hline 40}"
+		// Stata-style display (3.20.1): a header with the network, the statistic, the number of
+		// draws and the condition, then one row for the statistic
+		local __w = max(12, udstrlen("`rname'"))
+		local __np = cond("`tail'" == "both", 3, 1)
+		local __tw = 10 * (3 + `__np') + 1
+		di
+		di as txt "Conditional uniform graph test" _col(50) "Number of draws" _col(66) "=" as res %11.0fc `reps'
+		di as txt "Network: " as res "`origname'" _col(50) as txt "Condition" _col(66) "=" as res %11s "`condition'"
+		di as txt "{p 0 11 2}Statistic: {res}r(`rname'){txt} after {res}`obscmd'{p_end}"
+		di
+		di as txt "{hline `=`__w'+1'}{c TT}{hline `__tw'}"
+		local __h "{space `__w'} {c |}  Observed Null mean   Null sd"
+		if "`tail'" != "lower" local __h "`__h'  P >= obs"
+		if "`tail'" != "upper" local __h "`__h'  P <= obs"
+		if "`tail'" == "both"  local __h "`__h' Two-sided"
+		di as txt "`__h'"
+		di as txt "{hline `=`__w'+1'}{c +}{hline `__tw'}"
+		di as txt %`__w's "`rname'" " {c |}" as res " " %9.0g `obsval' " " %9.0g meannull " " %9.0g sdnull _c
+		if "`tail'" != "lower" di as res " " %9.4f pgreater _c
+		if "`tail'" != "upper" di as res " " %9.4f pless _c
+		if "`tail'" == "both"  di as res " " %9.4f `ptwo' _c
+		di
+		di as txt "{hline `=`__w'+1'}{c BT}{hline `__tw'}"
 	}
 	capture mata: mata drop `origlabs'
 	capture mata: mata drop __nwcug_*

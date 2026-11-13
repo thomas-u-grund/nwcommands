@@ -79,7 +79,7 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ## See also
 
-- [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar), [nwhierarchy](nwhierarchy), [nwcommunity](nwcommunity)
+- [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar), [nwhierarchy](nwhierarchy), [nwcommunity](nwcommunity), [nwregular](nwregular)
 
 ---
 

@@ -27,7 +27,7 @@ one:mode]
 
 | | |
 |---|---|
-| `group(varname)` | Stata variable holding each node's community/group assignment |
+| `group(varname)` | Stata variable holding each node's community/group assignment, numeric or string |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `sym:metrize` | Symmetrize a directed network before scoring (required for directed networks) |
 | `resolution(real)` | Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1 |

@@ -25,6 +25,8 @@ program define nwinstall_buildplugin, rclass
 
 	// this computer
 	local os "`c(os)'"
+	// console Stata on macOS reports c(os) = "Unix"; c(machine_type) still starts with "Mac" (3.20.1)
+	if "`os'" == "Unix" & substr(c(machine_type), 1, 3) == "Mac" local os "MacOSX"
 	if "`os'" == "MacOSX" {
 		local platform "macos"
 		local target "macos"

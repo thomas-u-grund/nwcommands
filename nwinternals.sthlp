@@ -97,6 +97,10 @@ naming requirement ({cmd:egen} looks for a file named {cmd:_g}{it:function} auto
 specified, returning a clear error naming all of them if more than one was. {cmd:_extract_valuelabels}
 reads a variable's Stata value label into a usable form. {cmd:_nwedgelabs} is a small,
 currently-incomplete helper intended to return edge labels for {help nwtabulate}.
+{cmd:_nwstrcat} {it:varlist} {cmd::} {it:command} runs {it:command} with the string variables of
+{it:varlist} encoded under their own names (levels in alphabetical order) and puts the strings back
+afterwards, also after an error. It is meant for options where the values serve only as categories, such
+as {cmd:group()} of {help nwbrokerage}; options that use values as numbers refuse strings.
 
 
 {marker defs}{...}

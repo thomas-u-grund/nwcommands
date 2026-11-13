@@ -2,8 +2,12 @@
 capture program drop nwbalance
 program nwbalance
 	version 9
-	syntax [anything(name=netname)] [, generate(string)]
+	syntax [anything(name=netname)] [, generate(string) reps(integer 0) seed(string)]
 	set more off
+	if `reps' < 0 {
+		di "{err}reps() must be 0 or a positive number of draws."
+		error 198
+	}
 	
 	// BUGFIX: word 2/word 3 were swapped relative to both the .sthlp's
 	// own documented namelist order (ratio, balanced count, closed
@@ -83,4 +87,91 @@ program nwbalance
 	noi di "{txt}    Balanced triad: {res}`r(balanced_triad)'"
 	noi di "{txt}    Unbalanced triad: {res}`r(unbalanced_triad)'"
 
+	// 3.20.1: reps() compares the share of balanced triads with random signs on the same ties: every tie
+	// keeps its place and is positive with the observed share of positive ties as probability,
+	// independently of the others
+	if `reps' > 0 {
+		if `r1' == 0 {
+			noi di "{txt}  No closed triads: there is nothing to compare with random signs."
+			exit
+		}
+		local obsbal = `r2' / `r1'
+		if "`seed'" != "" set seed `seed'
+		nwtomatafast `netname'
+		local srcmata "`r(mata)'"
+		tempname nul
+		mata: `nul' = nw_balance_null(`srcmata', `reps', `obsbal')
+		mata: st_local("ppos", strofreal(`nul'[1], "%18.0g"))
+		mata: st_local("nmean", strofreal(`nul'[2], "%18.0g"))
+		mata: st_local("nsd", strofreal(`nul'[3], "%18.0g"))
+		mata: st_local("nge", strofreal(`nul'[4], "%18.0g"))
+		mata: mata drop `nul'
+		local expect = (1 + (2 * `ppos' - 1)^3) / 2
+		mata: st_rclear()
+		mata: st_numscalar("r(closed_triad)", `r1')
+		mata: st_numscalar("r(balanced_triad)", `r2')
+		mata: st_numscalar("r(unbalanced_triad)", `=`r1' - `r2'')
+		mata: st_numscalar("r(balance)", `obsbal')
+		mata: st_numscalar("r(reps)", `reps')
+		mata: st_numscalar("r(p_positive)", `ppos')
+		mata: st_numscalar("r(null_mean)", `nmean')
+		mata: st_numscalar("r(null_sd)", `nsd')
+		mata: st_numscalar("r(null_ge)", `nge')
+		mata: st_numscalar("r(null_expected)", `expect')
+		noi di "{hline 40}"
+		noi di "{txt}  Random signs on the observed ties, `reps' draws"
+		noi di "{txt}    Share of ties positive:    {res}" %6.3f `ppos'
+		noi di "{txt}    Share balanced, observed:  {res}" %6.3f `obsbal'
+		noi di "{txt}    Share balanced, random:    {res}" %6.3f `nmean' "{txt}  (sd {res}" %5.3f `nsd' "{txt})"
+		noi di "{txt}    Expected by formula:       {res}" %6.3f `expect'
+		noi di "{txt}    Draws at least as balanced: {res}`nge'{txt} of `reps'"
+	}
+
+end
+
+capture mata: mata drop nw_balance_null()
+mata:
+// random signs on the ties of a signed network: returns (share of ties positive, mean and sd of the
+// share of balanced closed triads over the draws, number of draws with a share >= obs). A pair is tied
+// when either direction is; its sign is that of i->j if present, else of j->i (as in nwbalance).
+real rowvector nw_balance_null(real matrix A0, real scalar reps, real scalar obs)
+{
+	real matrix A, V, E, T
+	real scalar n, i, j, ne, nt, r, p
+	real colvector k, sg, s, b
+
+	n = rows(A0)
+	A = editmissing(A0, 0)
+	_diag(A, 0)
+	V = A + (A :== 0) :* A'
+	E = J(n, n, 0)
+	ne = 0
+	sg = J(0, 1, .)
+	for (i = 1; i < n; i++) {
+		for (j = i + 1; j <= n; j++) {
+			if (V[i, j] != 0) {
+				ne++
+				E[i, j] = ne
+				E[j, i] = ne
+				sg = sg \ (V[i, j] > 0)
+			}
+		}
+	}
+	p = mean(sg)
+	T = J(0, 3, .)
+	for (i = 1; i < n - 1; i++) {
+		for (j = i + 1; j < n; j++) {
+			if (!E[i, j]) continue
+			k = select(((j + 1)::n), (E[(j + 1)::n, i] :> 0) :& (E[(j + 1)::n, j] :> 0))
+			if (length(k)) T = T \ (J(rows(k), 1, E[i, j]), E[k, i], E[k, j])
+		}
+	}
+	nt = rows(T)
+	b = J(reps, 1, .)
+	for (r = 1; r <= reps; r++) {
+		s = 2 :* (runiform(ne, 1) :< p) :- 1
+		b[r] = mean((s[T[., 1]] :* s[T[., 2]] :* s[T[., 3]]) :> 0)
+	}
+	return((p, mean(b), (reps > 1 ? sqrt(variance(b)) : 0), sum(b :>= obs - 1e-12)))
+}
 end

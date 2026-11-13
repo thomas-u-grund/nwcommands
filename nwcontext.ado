@@ -4,6 +4,13 @@ program nwcontext
 	version 9
 	syntax [anything(name=netname)],  ATTRibute(string) [ stat(string) mode(string) GENerate(string) mat(string) noweight REPlace force ]
 	_nwsyntax `netname', max(1)
+	// the statistics use the values as numbers; a string variable was read
+	// as all missing and gave an empty variable without an error (3.20.1)
+	capture confirm string variable `attribute'
+	if !_rc {
+		di "{err}{p 0 0 2}attribute() must be a numeric variable: {bf:`attribute'} is a string variable, and the statistics use the values as numbers.{p_end}"
+		error 109
+	}
 	_nwdenseguard, command(nwcontext) nodes(`nodes') copies(3) alternative(Use nwaltergen, which computes mean, sum, min, max, sd and more of the neighbors' attribute from the stored ties and scales to millions of ties.) `force'
 	
 	if "`stat'" == "" {

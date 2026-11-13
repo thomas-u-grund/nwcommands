@@ -10,6 +10,10 @@ program nwclustering
 	// A two-mode network gets the two-mode clustering coefficients (Opsahl 2013, tnet::clustering_tm; ra: Robins and Alexander 2004) by
 	// default; onemode computes the one-mode coefficient of the bipartite graph.  nw2clustering is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
+		if "`generate'" == "" & "`ra'" == "" {
+			tempvar __clocal
+			local generate "`__clocal'"
+		}
 		if "`silent'" != "" | "`symmetrize'" != "" {
 			local __ign ""
 			if "`silent'" != "" local __ign " silent"
@@ -27,13 +31,11 @@ program nwclustering
 	_nwdatasync `netname'
 	local original "`netname'"
 
-	// generate() is required (suite-wide generate()-required style
-	// decision, 2026-09-05): nwclustering's whole purpose is producing
-	// this variable, so - matching Stata's own egen/predict convention -
-	// there is no default name to silently fall back to.
+	// generate() is optional (3.20.1): without it the local coefficients go to a temporary variable,
+	// so that the global coefficient alone (r(cluster_global)) needs no variable, as in nwcug's stat()
 	if "`generate'" == "" {
-		di "{err}option {bf:generate()} required."
-		error 198
+		tempvar __clocal
+		local generate "`__clocal'"
 	}
 
 	// Consistency (moderate-severity pass, positions_equivalence group):

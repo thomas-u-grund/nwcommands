@@ -25,7 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth group(varname)}}Existing numeric Stata variable holding each node's group membership (required; encode a string variable first){p_end}
+{synopt:{opth group(varname)}}Existing Stata variable holding each node's group membership, numeric or string (required){p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Stem for the 5 new Stata variables that store role counts{p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}

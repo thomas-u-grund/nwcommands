@@ -52,6 +52,7 @@
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences (separate package){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
+{p2col:{bf:{help nwegoplot }}}Draw the ego network of one node, ego in the center{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks (separate package){p_end}
 {p2col:{bf:{help nwevcent }}}Eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand a variable to a network{p_end}
@@ -104,6 +105,7 @@
 {p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:{bf:{help nwreach }}}Reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode a network{p_end}
+{p2col:{bf:{help nwregular }}}Classes of regularly equivalent nodes{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events (separate package){p_end}
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace a network{p_end}

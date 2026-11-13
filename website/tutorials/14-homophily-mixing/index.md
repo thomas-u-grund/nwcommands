@@ -161,11 +161,16 @@ nodes. For the same friendship network observed twice it measures stability:
 
 ```stata
 . nwcorrelate glasgow1 glasgow2
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 ```
 
 A correlation of .47 means that friendships in the first wave are a strong predictor of friendships in the

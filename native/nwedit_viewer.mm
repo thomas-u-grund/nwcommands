@@ -33,6 +33,7 @@
 // and quits. A failed export posts {error} instead, written to
 // <path>.error so that the waiting Stata command can report it.
 static NSString *gAutoOut = nil;
+static BOOL gAutoDone = NO;   // set once the unattended export has written its file (or its .error)
 
 @interface NweditSaveBridge : NSObject <WKScriptMessageHandler>
 - (void)handleSaveRequest:(NSDictionary *)body;
@@ -53,6 +54,15 @@ static NSString *gAutoOut = nil;
 @implementation NweditAppDelegate
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
 	return YES;
+}
+// Unattended export: if the window is closed (or the app quit) before the page has posted its
+// result, say so in <path>.error, so that the waiting Stata command stops at once with a clear
+// message instead of waiting for its timeout (3.20.1).
+- (void)applicationWillTerminate:(NSNotification *)notification {
+	if (gAutoOut && !gAutoDone) {
+		[@"the viewer window was closed before the export had finished; leave the window open until it closes by itself"
+			writeToFile:[gAutoOut stringByAppendingString:@".error"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
+	}
 }
 @end
 
@@ -79,10 +89,13 @@ static NSString *gAutoOut = nil;
 			NSData *d = [b64a isKindOfClass:[NSString class]]
 				? [[NSData alloc] initWithBase64EncodedString:b64a options:NSDataBase64DecodingIgnoreUnknownCharacters]
 				: nil;
-			if (d) [d writeToFile:gAutoOut atomically:YES];
-			else [@"no data received from the page" writeToFile:[gAutoOut stringByAppendingString:@".error"]
+			if (!d) [@"no data received from the page" writeToFile:[gAutoOut stringByAppendingString:@".error"]
 				atomically:YES encoding:NSUTF8StringEncoding error:nil];
+			else if (![d writeToFile:gAutoOut atomically:YES])
+				[[@"could not write " stringByAppendingString:gAutoOut] writeToFile:[gAutoOut stringByAppendingString:@".error"]
+					atomically:YES encoding:NSUTF8StringEncoding error:nil];
 		}
+		gAutoDone = YES;
 		[NSApp terminate:nil];
 		return;
 	}

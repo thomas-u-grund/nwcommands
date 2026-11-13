@@ -89,7 +89,7 @@ The result is a dense *n*-by-*n* valued network. Measured in Stata/BE, random di
 
 ## See also
 
-- [nwdissimilar](nwdissimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)
+- [nwdissimilar](nwdissimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy), [nwregular](nwregular)
 
 ---
 

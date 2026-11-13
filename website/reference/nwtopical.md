@@ -163,6 +163,7 @@ search_exclude: false
 - **[nwdissimilar](nwdissimilar)** --- Generate node dissimilarities
 - **[nwfactions](nwfactions)** --- Partition nodes into a specified number of cohesive factions
 - **[nwhierarchy](nwhierarchy)** --- Hierarchical clustering of nodes (role/position analysis)
+- **[nwregular](nwregular)** --- Classes of regularly equivalent nodes
 - **[nwshared](nwshared)** --- Number of shared neighbors of all pairs of nodes, as a network
 - **[nwsimilar](nwsimilar)** --- Generate node similarities
 - **[nwsimindex](nwsimindex)** --- Common-neighbor similarity indices between all node pairs
@@ -223,6 +224,7 @@ search_exclude: false
 
 - **[animate](animate)** --- Animate graphs
 - **[nwdendrogram](nwdendrogram)** --- Plot a wheel dendrogram
+- **[nwegoplot](nwegoplot)** --- Draw the ego network of one node, ego in the center
 - **[nwmovie](nwmovie)** --- Interactive, animated network movie (panel waves or a relational-event timeline)
 - **[nwmoviexy](nwmoviexy)** --- Animate a sequence of networks (alias for nwmovie)
 - **[nwplot](nwplot)** --- Plot a network

@@ -6,12 +6,14 @@ program nwbrokerage, rclass
 
 	_nwsyntax `netname', max(9999)
 
-	// a string group() variable was read as all-missing and every two-path
-	// came out unclassified or as one role: refuse it
-	capture confirm numeric variable `group'
-	if _rc != 0 {
-		di "{err}{p 0 0 2}group() must be a numeric variable; {bf:`group'} is a string variable (use {bf:encode `group', generate(...)} first).{p_end}"
-		error 109
+	// a string group() variable (3.20.1): only whether two nodes share a group
+	// matters, so the command runs once more with the variable encoded
+	// (_nwstrcat) and the string put back afterwards
+	capture confirm string variable `group'
+	if !_rc {
+		_nwstrcat `group' : nwbrokerage `0'
+		return add
+		exit
 	}
 
 	if `networks' > 1 {
