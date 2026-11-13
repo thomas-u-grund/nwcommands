@@ -16,7 +16,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`c(tmpdir)` without a trailing slash** (Linux console Stata) no longer gives file names such as `/tmpnwedit_...` for the viewer, the movie and other temporary files.
 - **Tests:** the dialog tests are skipped under console Stata; `test_animate` detects ImageMagick; `test_plotfix`, `test__nwopenviewer` and the extended tests handle a `c(tmpdir)` without a trailing slash and a Linux system where the viewer cannot start; the expectations of the extended tests are updated for `nwclustering` without `generate()` and string group variables in `nwbrokerage`.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite), on Windows 11 with StataNow 19.5 MP and on Linux (Ubuntu 22.04) with StataNow 19.5 MP. On Linux, in console Stata, the tests that need the Stata GUI (`nwinstall, usermenu` and `remove`) cannot run and are not counted.
 
 ## [3.23.0] - 2026-11-13
 
