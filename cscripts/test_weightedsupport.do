@@ -570,6 +570,7 @@ _isval c1_max
 _chk `=("`r(valued)'" == "true")' "nwcollapse of a valued network keeps the flag"
 foreach d in nwdegree nw2degree nwgeodesic nwcloseness nwbetween nwevcent nwpagerank nwpath nwassortativity nwkatz nwfromedge {
 	capture db `d'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	_chk `=(_rc == 0)' "dialog `d' opens (capture db, rc `=_rc')"
 }
 

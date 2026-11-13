@@ -244,6 +244,7 @@ di as txt "4. valued network: counts of the binary network (ties above zero)"
 
 * ---- 5. the dialog opens; a matrix larger than Stata allows is refused with the way out
 capture db nw2motifs
+if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 _chk `=(_rc == 0)' "dialog nw2motifs opens (capture db, rc `=_rc')"
 nwclear
 nwuse data/ftdirectors_se, nwclear

@@ -72,8 +72,10 @@ program _nwopenviewer, rclass
 		// Random file names without disturbing the user's random-number
 		// stream (a seed set before nwplot or nwmovie must still hold after).
 		local _nwov_rngstate = c(rngstate)
-		local _nwov_viewercopy = "`c(tmpdir)'" + "nwedit_viewer_" + strofreal(int(runiform()*1000000))
-		local _nwov_htmlcopy = "`c(tmpdir)'" + "nwedit_view_" + strofreal(int(runiform()*1000000)) + ".html"
+		local _nwtd "`c(tmpdir)'"
+		if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
+		local _nwov_viewercopy = "`_nwtd'" + "nwedit_viewer_" + strofreal(int(runiform()*1000000))
+		local _nwov_htmlcopy = "`_nwtd'" + "nwedit_view_" + strofreal(int(runiform()*1000000)) + ".html"
 		set rngstate `_nwov_rngstate'
 		// Windows: keep the .exe extension. CreateProcess appends ".exe" to a
 		// name without an extension, so a copy without it is never found.

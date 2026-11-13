@@ -134,6 +134,7 @@ assert _rc == 198
 
 * the dialog opens (with the option binary)
 capture db nwburt
+if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 assert _rc == 0
 
 mata: st_local("maxd", strofreal(bv_maxd, "%9.2e")); st_local("maxb", strofreal(bv_maxb, "%9.2e"))

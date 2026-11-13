@@ -408,6 +408,7 @@ foreach n in 10 60 300 {
 * dialogs of the commands that gained options
 foreach c in nwcommunity nwcug nwsimilar nwdissimilar nwcorrelate {
 	capture db `c'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	if _rc {
 		di as err "dialog `c' does not open (rc `=_rc')"
 		local ++nfail

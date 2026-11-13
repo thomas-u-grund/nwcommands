@@ -293,6 +293,7 @@ capture noisily nwmotifs flomarriage, sixnode silent
 _chk `=_rc == 198' "nwmotifs: sixnode on a one-mode network is refused"
 foreach c in nwdegree nwclustering nwcloseness nwbetween nw2degree nw2clustering nw2motifs {
 	capture db `c'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	_chk `=(_rc == 0)' "dialog `c' opens (capture db, rc `=_rc')"
 }
 di as txt "4. errors, dialogs"

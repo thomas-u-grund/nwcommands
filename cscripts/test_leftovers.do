@@ -111,6 +111,7 @@ assert r(networks) == 2
 * (Stata allows about 50 open dialogs per session, so only a selection is opened)
 foreach nm in nwhierarchy nwconstraint nwcorrelate nwcug nwset nwfromedge nwlattice nwpref nwvalue nwunab nwsimilar nwtranspose nwrecode nwload nwimport nwexport nwmovie nwhomophily nwkatz nwneighbor nwnoderename {
 	capture db `nm'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	assert _rc == 0
 }
 local bad 0
@@ -144,6 +145,7 @@ assert `bad' == 0
 
 * nwhierarchy and the two new controls
 capture db nwhierarchy
+if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 assert _rc == 0
 foreach c in nwconstraint nwcorrelate {
 	tempname fh

@@ -96,6 +96,7 @@ nwcommunity u, generate(cm) replace listall
 * dialogs
 foreach d in nwcommunity nwcomponents nwpath nwcloseness nwpermute nwrandom {
 	capture db `d'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	assert _rc == 0
 }
 di "PASS test_pkgfix2"

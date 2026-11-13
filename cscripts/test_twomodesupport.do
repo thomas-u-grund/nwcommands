@@ -554,6 +554,7 @@ _near `=r(algebraic_connectivity)' 1 1e-9 "ring of 6: algebraic connectivity 1"
 di
 foreach d in nwcommunity nwmodularity nwspectral nwrandomwalk nwsimilar nwdissimilar nwpermute nwexport nwimport nw2nested nw2motifs nw2clustering nw2degree nw2project nwcloseness nwbetween {
 	capture db `d'
+	if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 	_chk `=(_rc == 0)' "dialog `d' opens (capture db, rc `=_rc')"
 }
 

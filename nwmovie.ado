@@ -199,6 +199,7 @@ program nwmovie
 	tempname _nwmv_json
 	tempfile _nwmv_jsonstub
 	local _nwmv_jsondir = "`c(tmpdir)'"
+	if substr("`_nwmv_jsondir'", -1, 1) != "/" & substr("`_nwmv_jsondir'", -1, 1) != "\" local _nwmv_jsondir "`_nwmv_jsondir'/"
 
 	if "`mode'" == "panel" {
 		local _nwmv_first : word 1 of `netname'
@@ -489,7 +490,9 @@ program _nwmovie_export
 	syntax anything(name=htmlpath), export(string) ext(string) timeout(integer)
 	local htmlpath = subinstr(`"`htmlpath'"', char(34), "", .)
 	local _rngstate = c(rngstate)
-	local _tmpout = "`c(tmpdir)'" + "nwmovie_export_" + strofreal(int(runiform()*1000000)) + ".`ext'"
+	local _nwtd "`c(tmpdir)'"
+	if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
+	local _tmpout = "`_nwtd'" + "nwmovie_export_" + strofreal(int(runiform()*1000000)) + ".`ext'"
 	set rngstate `_rngstate'
 	capture erase "`_tmpout'"
 	capture erase "`_tmpout'.error"
