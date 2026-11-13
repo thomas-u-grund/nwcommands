@@ -189,7 +189,14 @@ Core test, one file (this is the wrapper that was used for the 3.3.x to 3.5.0 su
     grep -E '^r\([0-9]+\);' $OUT/logs/$b.log | head -1  # an r() error = FAIL; no error = "no error" (most older tests print no PASS marker)
 
 Full core suite: loop over `$W/cscripts/test_*.do`, skip `test_external_links.do` (it needs the internet and is not part of the "0 errors" bar), two files at a time, and write one summary line per test (`name | pass-lines=N | no-error` or the first `r()` line, or `NOT RUN`).
-At the 3.5.0 release the suite was about 177 files. The core repo has no checked-in runner (**the wrapper above lives only in session scratch directories**; **OPEN:** check a runner into `tools/`).
+At the 3.5.0 release the suite was about 177 files. The core runner is `tools/run_core_suite.sh <17|18|19> <core_dir> <out_dir> [jobs]` (all `test_*.do` and `xt_*.do`, one process per test, a summary line per test with the exit status recorded; `LIST="a b"` runs only the named tests).
+
+**Release test run: all Stata versions in parallel.** The full run is Stata 17, 18 and 19 on the Mac side by side, plus Windows and Linux (their own sessions), all against the same commits of `main`. Rules that make parallel runs reliable (learned on 3.24.0):
+- One core copy per Stata version (`git worktree add --detach <dir> <commit>` or `rsync -a`), and one copy of each model repo per version: the model runners (`cscripts/run_tests.sh`) write `run_<test>.log` into the repository root and delete it, so two versions in one repo overwrite each other's logs.
+- `tools/run_core_suite.sh` gives every version its own `TMPDIR` (Stata's `c(tmpdir)` follows it, verified). A test that kills viewer processes (`test__nwopenviewer`) or builds into shared folders can still collide; a failure that disappears when the test is run alone is a collision, not a bug: re-run those tests alone, one version at a time, and record that you did.
+- Up to about 9 Stata processes at once are fine on the 18-core Mac (three versions with 3 jobs each); the nwsaom full suite is the longest (over an hour).
+- Models' `xt_*.do` tests are not in their runner lists: run them with one process per file as the core runner does.
+- Start the Windows and Linux runs as soon as `main` carries the candidate; fix forward and re-run only what failed.
 
 Model packages have a checked-in runner: `NWCORE=<core dir> cscripts/run_tests.sh [quick|full for nwsaom] [plugin_dir] [jobs]` (nwsaom: `quick|full [plugin_dir] [jobs]`; nwergm, nwdynam, nwrem: `[jobs]`). It runs `tools/check_version.py` first, runs every test in its own `-e` process, and prints `PASS lines` and `errors` per test.
 `NWCORE` must be the core checkout whose `lib/lnwcommands.mlib` is the final one. Note the runner uses the Stata path `/Applications/Stata/StataBE.app/...` unless you set `STATA`; set `STATA` to the Stata 17 binary for the first pass. Models' tests find the core through `adopath ++ NWCORE`; to test a freshly built model plugin pass `plugin_dir`
