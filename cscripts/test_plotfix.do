@@ -142,6 +142,7 @@ assert `nnote' == 1
 
 * ---- dialog
 capture db nwplot
+if _rc == 8005 & "`c(console)'" != "" capture confirm number 1    // dialogs cannot open in console Stata
 assert _rc == 0
 
 * ---- nwplotmatrix: binary network legend names the two classes (no error), two-mode network runs
