@@ -48,7 +48,7 @@ program nwevcent
 		// exists" code, nwerrorcodes.sthlp), matching nwdegree/
 		// nwbetween/nw2degree's own convention for the identical
 		// situation in this same group.
-		err 110
+		exit 110
 	}
 	if `__exists' drop `generate'
 	qui generate double `generate' = .

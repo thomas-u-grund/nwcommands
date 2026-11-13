@@ -13,14 +13,14 @@ program nwneighbor
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" & "`generate'" != "" {
 		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-		err 110
+		exit 110
 	}
 	qui nwnode `netname', ego(`ego')
 	local egoid `r(nodeid)'
 	local ego `r(nodename)'
 	if `egoid' == -1 {
 		di "{err}Node {bf:`ego'} does not exist in network {bf:`netname'}"
-		err 485
+		exit 485
 	}
 
 	if "`mode'" == "" {
@@ -83,7 +83,7 @@ program nwneighbor
 			if "`subreplace'" == "" {
 				di "{err}Network {bf:`subnet'} already exists; use {bf:subreplace}"
 				capture mata: mata drop __nwneighbor_neighbors
-				err 483
+				exit 483
 			}
 			capture nwdrop `subnet'
 		}

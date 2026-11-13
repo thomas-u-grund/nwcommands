@@ -40,7 +40,7 @@ program nwkcomponents, rclass
 		capture confirm variable `netgenerate'`i', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netgenerate'`i'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 
 		mata: st_rclear()

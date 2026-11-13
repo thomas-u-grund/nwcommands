@@ -9,13 +9,13 @@ program nwmaxflow, rclass
 	local srcid `r(nodeid)'
 	if `srcid' == -1 {
 		di "{err}Node {bf:`source'} does not exist in network {bf:`netname'}"
-		err 485
+		exit 485
 	}
 	qui nwnode `netname', ego(`sink')
 	local snkid `r(nodeid)'
 	if `snkid' == -1 {
 		di "{err}Node {bf:`sink'} does not exist in network {bf:`netname'}"
-		err 485
+		exit 485
 	}
 	if `srcid' == `snkid' {
 		di "{err}source() and sink() must be different nodes."
@@ -28,7 +28,7 @@ program nwmaxflow, rclass
 		capture confirm variable `generate'
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-			err 110
+			exit 110
 		}
 	}
 

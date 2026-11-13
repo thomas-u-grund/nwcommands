@@ -351,7 +351,7 @@ program nwdegree
 				capture confirm variable `c', exact
 				if _rc == 0 & "`replace'" == "" {
 					noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:ties()}"
-					err 110
+					exit 110
 				}
 				if _rc == 0 drop `c'
 			}
@@ -364,7 +364,7 @@ program nwdegree
 			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
 				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:generate()}"
-				err 110
+				exit 110
 			}
 			if _rc == 0 drop `c'
 		}
@@ -545,7 +545,7 @@ program _nwdegree_two, rclass
 		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 
 		// BUGFIX: a bare "capture drop X" is subject to Stata's default

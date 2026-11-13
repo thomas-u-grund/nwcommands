@@ -48,7 +48,7 @@ program nwgeodesic
 		capture confirm variable `eccvar', exact
 		if _rc == 0 & "`nwreplace'" == "" {
 			di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
-			err 110
+			exit 110
 		}
 	}
 

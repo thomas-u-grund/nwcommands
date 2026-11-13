@@ -27,7 +27,7 @@ program nwbridges
 	capture _nwsyntax `generate', other(other)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace}"
-		err 483
+		exit 483
 	}
 	capture nwdrop `generate'
 	nwduplicate `netname', name(`generate')

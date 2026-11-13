@@ -51,7 +51,7 @@ program nwconcor, rclass
 		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
-			err 110
+			exit 110
 		}
 
 		local val = ("`netmeasure'" == "valued")

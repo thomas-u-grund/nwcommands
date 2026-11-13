@@ -17,7 +17,7 @@ program nwrandomwalk, rclass
 	local tid `r(nodeid)'
 	if `tid' == -1 {
 		di "{err}Node {bf:`target'} does not exist in network {bf:`netname'}"
-		err 485
+		exit 485
 	}
 
 	if "`generate'" == "" {
@@ -27,7 +27,7 @@ program nwrandomwalk, rclass
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		err 110
+		exit 110
 	}
 
 	// BUGFIX: the active dataset was never synced to the target network

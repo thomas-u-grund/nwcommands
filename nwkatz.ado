@@ -63,7 +63,7 @@ program nwkatz
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.
-			err 110
+			exit 110
 		}
 		local generate_all `generate'
 	}
@@ -79,7 +79,7 @@ program nwkatz
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.
-			err 110
+			exit 110
 			}
 			local generate_all `generate_all' `c'
 		}
