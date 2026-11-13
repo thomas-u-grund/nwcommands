@@ -44,7 +44,7 @@ _nwopenviewer "`htmlfile'.html"
 assert _rc == 0
 if `r(usedviewer)' == 1 {
 	sleep 1000
-	local _nwov_psfile "`c(tmpdir)'nwov_pscheck.txt"
+	local _nwov_psfile "`c(tmpdir)'/nwov_pscheck.txt"
 	* Windows: tasklist shows the running copy (nwedit_viewer_<n>.exe) but not its arguments, so only the launch is
 	* checked there; the arguments are checked on macOS and Linux
 	if "`c(os)'" == "Windows" shell tasklist /fi "imagename eq nwedit_viewer_*" > "`_nwov_psfile'"
