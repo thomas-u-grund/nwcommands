@@ -11,9 +11,10 @@ program nwpath
 	// commands in this group).
 	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string) nopaths alpha(string) BINary]
 	
+	unw_defs
 	if "`sym'" != "" & "`generate'" != "" {
 		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."
-		err 99
+		error 198
 	}
 	// BUGFIX: `egoid'/`alterid' are declared `integer 0' (a numeric
 	// option with a default), so their own string form is never truly
@@ -28,12 +29,12 @@ program nwpath
 	// value against its own documented "not given" sentinel (0) instead
 	// of a string comparison that could never be true.
 	if "`ego'" == "" & `egoid' == 0 {
-		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
-		err 99
+		di "{err}Either option {bf:ego()} or {bf:egoid()} needs to be specified"
+		error 198
 	}
 	if "`alter'" == "" & `alterid' == 0 {
-		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
-		err 99
+		di "{err}Either option {bf:alter()} or {bf:alterid()} needs to be specified"
+		error 198
 	}
 	_nwsyntax `netname', max(1)
 
@@ -59,7 +60,7 @@ program nwpath
 		qui capture nwnode `netname', egoid(`egoid')
 		if _rc != 0 {
 			noi di "{err}Egoid {bf:`egoid'} out of bounds"
-			err 99
+			error `errNodeNotFound'
 		}
 		local ego "`r(nodename)'"
 	}
@@ -67,7 +68,7 @@ program nwpath
 		qui capture nwnode `netname', egoid(`alterid') 
 		if _rc != 0 {
 			noi di "{err}Alterid {bf:`alterid'} out of bounds"
-			err 99
+			error `errNodeNotFound'
 		}
 		local alter "`r(nodename)'"
 	}
@@ -85,7 +86,7 @@ program nwpath
 	capture qui nwvalue `netname', ego("`ego'") alter("`alter'")
 	if _rc != 0 {
 		di "{err}{p 0 0 2}Node {bf:`ego'} or {bf:`alter'} does not exist in network {it:`netname'}; check spelling{p_end}"
-		error 99
+		error `errNodeNotFound'
 	}
 	local egoid `r(ego_id)'
 	local alterid `r(alter_id)'
@@ -99,7 +100,11 @@ program nwpath
 		local symtext " (symmetrized)"
 		local undirected_sign "<"
 	}
-	if `__wtd' {
+	if `egoid' == `alterid' {
+		// a node and itself: the trivial path of length 0 (as igraph)
+		mata: `_path' = (`egoid')
+	}
+	else if `__wtd' {
 		mata: `_path' = `netobj'->get_path_weighted(`egoid', `alterid', `__alpha')
 	}
 	else {
@@ -157,23 +162,24 @@ program nwpath
 	}
 
 	
+	tempname rstore
+	_return hold `rstore'
+	_return restore `rstore', hold
 	if "`generate'" != "" {
 		forvalues i = 1/`r(paths)' {
 			capture _nwsyntax `generate'_`i', other("other")
 			if _rc == 0 & "`nwreplace'" == "" {
 				capture nwdrop `_sym'
 				di "{pstd} {err}Network {bf:`generate'_`i'} already exists; use {bf:nwreplace} or specify another stub {bf:generate()}{p_end}"
-				error 99
+				error `errNWsExists'
 			}
 			capture nwdrop `generate'_`i'
 			nwduplicate `netname', name(`generate'_`i')
 			_nwsyntax 
-			mata: nw_path_net(`netobj', `_path', `i')
+			mata: nwpath_net(`netobj', `_path', `i')
 		}
 	}
 	
-	tempname rstore
-	_return hold `rstore'
 	capture nwdrop `_sym'
 	_return restore `rstore'
 	capture mata: mata drop `_path'
@@ -181,8 +187,41 @@ end
 
 capture mata: mata drop makenet()
 capture mata: mata drop nw_pathcost()
+capture mata: mata drop nwpath_net()
 
 mata:
+// nwpath, generate(): the network of the id-th path (one tie per step; both directions on an undirected network)
+void nwpath_net(pointer(class nw_def scalar) scalar p, real matrix path, real scalar id)
+{
+	real scalar n, i, k, wasvalued
+	real matrix net
+	real colvector e, a, e2
+
+	n = p->get_nodes()
+	// paths of different numbers of steps (equally long weighted paths) are padded with 0 on the right
+	k = sum(path[id, .] :> 0)
+	e = J(0, 1, .)
+	a = J(0, 1, .)
+	if (k > 1) {
+		e = path[id, (1..k-1)]'
+		a = path[id, (2..k)]'
+	}
+	if (!p->is_directed_boolean() & rows(e) > 0) {
+		e2 = e \ a
+		a = a \ e
+		e = e2
+	}
+	if (nw_ties_only(p)) {
+		wasvalued = p->is_valued_boolean()
+		p->set_edge_from_triplets(e, a, J(rows(e), 1, 1), p->is_directed_boolean())
+		p->set_valued(wasvalued)
+		return
+	}
+	net = J(n, n, 0)
+	for (i = 1; i <= rows(e); i++) net[e[i], a[i]] = 1
+	p->set_edge(net)
+}
+
 real scalar nw_pathcost(pointer(class nw_def scalar) scalar p, real rowvector path, real scalar alpha)
 {
 	real scalar i, c, k

@@ -15,60 +15,37 @@ program _nwnodeid
 
 	capture confirm integer number `nodelab'
 	if _rc == 0 {
-		if `nodelab' > `netnodes' {
+		if `nodelab' > `netnodes' | `nodelab' < 1 {
 			
 			mata: st_numscalar("r(nodeid)", -1)
 			di "{err}{it:nodelab} {bf:`nodelab'} out of bounds"
-			error 600021
+			error 485
 		}
 		mata: st_numscalar("r(nodeid)", `nodelab')
 		exit
 	}
 	else {
-		nwname `netname'
-		local labs "`r(labs)'"
-		// r(labs) is comma-separated (see _nwname.ado's own
-		// invtokens with a comma delimiter), but the foreach loop
-		// below needs a space-separated list to iterate over
-		// individual labels - without this, the whole comma-joined
-		// string is treated as a single list item and never matches
-		// any individual label, silently failing every lookup.
-		local labs : subinstr local labs "," " ", all
+		// the label is looked up in Mata: labels may contain blanks, and
+		// the list of labels of a big network does not fit into a macro
+		mata: st_local("__nwid", strofreal(first_index_match(`netobj'->get_nodenames(), st_local("nodelab"))))
 		mata: st_rclear()
 		mata: st_global("r(netname)", "`netname'")
-		mata: st_global("r(nodelab)", "`nodelab'")
-		local i = 1
-		local found = 0
-		// r(labs) is empty for networks too big for a macro (see
-		// nw_labs_string() in unw_core.do): look the label up in Mata
-		if "`labs'" == "" {
-			mata: st_local("__nwid", strofreal(first_index_match(`netobj'->get_nodenames(), "`nodelab'")))
-			if `__nwid' > 0 {
-				mata: st_numscalar("r(nodeid)", `__nwid')
-				exit 1
-			}
-		}
-		 capture foreach onelab in `labs' {
-			noi if "`onelab'" == "`nodelab'"{
-				mata: st_numscalar("r(nodeid)", `i')
-				local found = 1
+		mata: st_global("r(nodelab)", st_local("nodelab"))
+		if `__nwid' > 0 {
+			mata: st_numscalar("r(nodeid)", `__nwid')
+			if "`detail'" == "detail" {
 				di
-				if "`detail'" == "detail" {
-					di "{hline 40}"
-					di "{txt}  Network: {res}`netname'"
-					di "{hline 40}"
-					di "{txt}    Nodeid  : {res}`r(nodeid)'"
-					di "{txt}    Nodelab : {res}`r(nodelab)'"
-				}
-				exit 1
+				di "{hline 40}"
+				di "{txt}  Network: {res}`netname'"
+				di "{hline 40}"
+				di "{txt}    Nodeid  : {res}`__nwid'"
+				di `"{txt}    Nodelab : {res}`nodelab'"'
 			}
-			local i = `i' + 1
+			exit
 		}
-		if `found' == 0 {
-			mata: st_numscalar("r(nodeid)", -1)
-			di "{err}{it:nodelab} `nodelab' not found"
-			error 6012
-		}
+		mata: st_numscalar("r(nodeid)", -1)
+		di `"{err}{it:nodelab} `nodelab' not found"'
+		error 485
 	}
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53

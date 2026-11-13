@@ -1,5 +1,3 @@
-. do example.do
-
 . * nwcommands tutorial 12: dyads, triads and motifs
 . * Requires the core nwcommands.
 . nwwebuse sampson, nwclear
@@ -17,6 +15,7 @@
    Minimum value:  0
    Maximum value:  3
    Density:  .288
+   Mean outdegree:  4.89
    Temporal: false
 
 . 
@@ -111,5 +110,3 @@ nwtriads for a genuinely directed 3-node census.
     Closed triad: 4
     Balanced triad: 2
     Unbalanced triad: 2
-
-. 

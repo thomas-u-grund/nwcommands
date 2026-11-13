@@ -54,7 +54,7 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {title:Network types}
 
 {pstd}
-{bf:Directed:} yes. {bf:Valued:} tie values are written. {bf:Two-mode:} yes - Pajek bipartite form, UCINET rectangular
+{bf:Directed:} yes. {bf:Valued:} the tie values of a valued network are written; a binary (unvalued) network is written without tie values (ego and alter only, in GML without {cmd:value}), so that {help nwimport} reads it back as binary (a two-mode network keeps its form). In UCINET DL a label that contains a blank or a comma is written in double quotes. {bf:Two-mode:} yes - Pajek bipartite form, UCINET rectangular
 matrix, edge list with the modes of both nodes, GML attribute {cmd:nwmode}; level labels are kept except in UCINET DL.
 {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
@@ -81,4 +81,4 @@ This example loads the {help netexample:Florentine marriage data} and exports to
 	{cmd:. nwexport flobusiness, type(pajek)}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -25,6 +25,10 @@ program nwduplicate
 	// requires `replace' instead, same as every sibling.
 	nwvalidate `name'
 	if "`r(exists)'" == "true" & `name_given' {
+		// a copy onto itself with replace leaves the network as it is
+		if "`replace'" != "" & "`name'" == "`netname'" {
+			exit
+		}
 		if "`replace'" != "" {
 			nwdrop `name'
 			local validname "`name'"

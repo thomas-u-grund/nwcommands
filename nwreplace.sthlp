@@ -215,7 +215,7 @@ All network expressions, network subsetting and network conditions can be combin
 
 {pstd}
 {bf:Directed:} a bracket write sets exactly the cell addressed, also on an undirected network
-({bf:nwreplace mynet[2,1] = 55} does not write cell (1,2); write both cells or use {help nwsym}). {bf:Valued:},
+({bf:nwreplace mynet[2,1] = 55} does not write cell (1,2); write both cells or use {help nwsym}); an undirected network whose matrix is then no longer symmetric becomes directed (a note says so). {bf:Valued:},
 {bf:Signed:} any value can be assigned. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. See
 {help nwnetworktypes}.{p_end}
 
@@ -240,4 +240,4 @@ All network expressions, network subsetting and network conditions can be combin
 	{help nwreplacemat}, {help nwsync}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

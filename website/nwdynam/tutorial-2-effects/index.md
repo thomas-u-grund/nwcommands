@@ -12,8 +12,8 @@ coefficients, and decide with a likelihood-ratio test which additions earn their
 
 **Data.** The same 439 phone calls among 84 students, plus two attributes per student: `floor`, the floor of the
 dorm on which the student lived (1 to 9), and `gradetype`. Both data files are part of this section: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv).
-You need the core `nwcommands` and `nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.0.1
-and the core 3.0.0. Script and log: [example.do](example.do), [example.log](example.log).
+You need the core `nwcommands` and `nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.3.0
+and the core 3.22.0. Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Put the attributes where `nwdynam` looks for them
 

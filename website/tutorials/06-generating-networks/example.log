@@ -1,27 +1,3 @@
-
-  ___  ____  ____  ____  ____ ®
- /__    /   ____/   /   ____/      Stata 18.0
-___/   /   /___/   /   /___/       BE—Basic Edition
-
- Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
-                                   StataCorp
-                                   4905 Lakeway Drive
-                                   College Station, Texas 77845 USA
-                                   800-782-8272        https://www.stata.com
-                                   979-696-4600        service@stata.com
-
-Stata license: Single-user  perpetual
-Serial number: 301806005943
-  Licensed to: Thomas Grund
-               RWTH Aachen
-
-Notes:
-      1. Stata is running in batch mode.
-      2. Unicode is supported; see help unicode_advice.
-
-
-. do example.do 
-
 . * Tutorial 5: Generating Networks
 . * Run from a directory with nwcommands net-installed (not a dev checkout).
 . 
@@ -43,6 +19,7 @@ Notes:
    Minimum value:  0
    Maximum value:  1
    Density:  .21
+   Mean degree:  2.93
    Temporal: false
 
 . 
@@ -62,6 +39,7 @@ Notes:
    Minimum value:  0
    Maximum value:  1
    Density:  .2
+   Mean degree:  2.80
    Temporal: false
 
 . 
@@ -82,6 +60,7 @@ Notes:
    Minimum value:  0
    Maximum value:  3
    Density:  .181
+   Mean degree:  2.53
    Temporal: false
 
 . 
@@ -103,13 +82,13 @@ Notes:
    Minimum value:  0
    Maximum value:  1
    Density:  .211
+   Mean degree:  4.00
    Temporal: false
 
 . nwplot, layout(circle) scheme(s1network) export("plot_smallworld.svg") replace
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_smallworld.svg...
-(file plot_smallworld.svg not found)
 file plot_smallworld.svg saved as SVG format
 
 . 
@@ -130,6 +109,7 @@ file plot_smallworld.svg saved as SVG format
    Minimum value:  0
    Maximum value:  1
    Density:  .195
+   Mean degree:  3.70
    Temporal: false
 
 . nwdegree, generate(deg)
@@ -169,7 +149,6 @@ file plot_smallworld.svg saved as SVG format
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_prefattach.svg...
-(file plot_prefattach.svg not found)
 file plot_prefattach.svg saved as SVG format
 
 . 
@@ -189,6 +168,7 @@ file plot_prefattach.svg saved as SVG format
    Minimum value:  0
    Maximum value:  1
    Density:  .267
+   Mean outdegree:  4.00
    Temporal: false
 
 . nwplot, layout(grid) label(_nwnode) scheme(s1network) export("plot_lattice.svg") replace
@@ -196,7 +176,6 @@ Calculating node coordinates...
 Generating splines...
 Plotting network...
 Exporting graph to plot_lattice.svg...
-(file plot_lattice.svg not found)
 file plot_lattice.svg saved as SVG format
 
 . 
@@ -240,8 +219,8 @@ file plot_lattice.svg saved as SVG format
 
 . * a list no network can have is refused
 . capture noisily nwrandom 3, degree(1 1 1) name(bad)
-No network without loops and repeated ties has these degrees (their sum must be even, and 
-> no degree can exceed 2; see the Erdos-Gallai conditions).
+No network without loops and repeated ties has these degrees (their sum must be even,
+and no degree can exceed 2; see the Erdos-Gallai conditions).
 invalid syntax
 
 . 
@@ -287,6 +266,3 @@ invalid syntax
     Average clustering coefficient: .118
     Global clustering coefficient: .128
  
-
-. 
-end of do-file

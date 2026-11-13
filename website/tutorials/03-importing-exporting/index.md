@@ -34,6 +34,7 @@ Importing successful
    Minimum value:  0
    Maximum value:  1
    Density:  .417
+   Mean outdegree:  1.25
    Temporal: false
 ```
 
@@ -121,6 +122,7 @@ that are actually tied — the tie value itself is the column named after the ne
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 ```
 

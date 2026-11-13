@@ -44,6 +44,10 @@ untouched{p_end}
 is specified without an extension, {bf:.nwdta} is assumed. If your {it:filename} contains embedded spaces, remember to enclose
 it in double quotes.
 
+{pstd}
+Every network comes back as it was saved: a network saved as directed stays directed even when its ties
+happen to be symmetric, and a two-mode network keeps the node order it was saved in.
+
 
 {title:Network types}
 
@@ -85,4 +89,4 @@ This load the Florentine dataset from the internet and appends it to the existin
         {help nwwebuse}, {help nwsave}, {help use}, {help nwappend}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

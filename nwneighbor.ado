@@ -10,8 +10,8 @@ program nwneighbor
 	_nwdatasync `netname'
 	nwname `netname'
 
-	capture confirm variable `generate'
-	if _rc == 0 & "`replace'" == "" {
+	capture confirm variable `generate', exact
+	if _rc == 0 & "`replace'" == "" & "`generate'" != "" {
 		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
 		err 99
 	}
@@ -37,18 +37,18 @@ program nwneighbor
 	// matches the dense comparison this replaces exactly, so results are
 	// identical, not just equivalent.
 	if "`mode'" == "outgoing" {
-		mata: __nb = `netobj'->neighbors(`egoid')
+		mata: __nwneighbor_nb = `netobj'->neighbors(`egoid')
 	}
 	if "`mode'" == "incoming" {
-		mata: __nb = `netobj'->neighbors_in(`egoid')
+		mata: __nwneighbor_nb = `netobj'->neighbors_in(`egoid')
 	}
 	if "`mode'" == "either"{
-		mata: __nb = uniqrows(`netobj'->neighbors(`egoid') \ `netobj'->neighbors_in(`egoid'))
+		mata: __nwneighbor_nb = uniqrows(`netobj'->neighbors(`egoid') \ `netobj'->neighbors_in(`egoid'))
 	}
 	mata: __nwneighbor_select = J(1, `nodes', 0)
-	mata: __nwneighbor_select[__nb'] = J(1, rows(__nb), 1)
+	mata: __nwneighbor_select[__nwneighbor_nb'] = J(1, rows(__nwneighbor_nb), 1)
 	mata: __nwneighbor_neighbors = select((`netobj'->get_nodenames() \ strofreal(1::`netobj'->get_nodes())'), __nwneighbor_select)
-	mata: mata drop __nb
+	mata: mata drop __nwneighbor_nb
 
 	// subnet(): induced ego-network extraction (ego + its own neighbors,
 	// and the ties among them) as a genuine new named network - built on
@@ -110,7 +110,7 @@ program nwneighbor
 		_nwsyntax `__nwneighbor_origname', max(1)
 	}
 
-	capture confirm variable `generate'
+	capture confirm variable `generate', exact
 	if (_rc != 0 | "`replace'" != "") & "`generate'" != "" {
 		capture confirm new variable `generate'
 		if _rc capture drop `generate'
@@ -134,7 +134,10 @@ program nwneighbor
 	// neighbor's own name (row 1).
 	mata: st_numscalar("__nwneighbor_n", cols(__nwneighbor_neighbors))
 	if `=__nwneighbor_n' > 0 {
+		// the draw leaves the random-number stream of the session where it was
+		local __rngstate = c(rngstate)
 		capture mata: st_global("r(oneneighbor)", __nwneighbor_neighbors[1, runiformint(1,1,1,`=__nwneighbor_n')])
+		set rngstate `__rngstate'
 	}
 	else {
 		mata: st_global("r(oneneighbor)", "")

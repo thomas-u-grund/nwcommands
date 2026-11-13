@@ -120,7 +120,7 @@ program nwsave
 		replace _nw_format = "edgelist" in `i'
 		replace _nw_size = `nodes' in `i'
 		replace _nw_directed = "`r(directed)'" in `i'
-		replace _nw_selfloop = "`r(selfloop)'" in `i' 
+		replace _nw_selfloops = "`r(selfloop)'" in `i'
 		replace _nw_twomode = "`r(mode2)'" in `i'
 		replace _nw_valued = "`r(valued)'" in `i'
 		replace _nw_title = "`r(title)'" in `i'

@@ -25,12 +25,14 @@ nwrandom 12, prob(.25) name(u12) undirected
 set seed 11
 nwplot u12, generate(kx ky) noopen
 set seed 11
-nwplot u12, layout(frucht) iterations(30) generate(fx fy) noopen
-assert reldif(kx[1], 0.303127527237) < 1e-9 & reldif(ky[1], 0.730015695095) < 1e-9
-assert reldif(kx[2], 1.001404523849) < 1e-9 & reldif(ky[2], 0.398880392313) < 1e-9
-assert reldif(kx[4], 1.25) < 1e-9 & reldif(ky[4], 0.855154991150) < 1e-9
-assert reldif(fx[1], -0.342961788177) < 1e-9 & reldif(fy[1], -0.939349293709) < 1e-9
-assert reldif(fx[3], 0.093055047095) < 1e-9 & reldif(fy[3], -0.299707412720) < 1e-9
+* 1000 iterations: the values were made when nwplot ignored iterations() outside layout() and always ran 1000
+* the values were recorded from float variables; generate() stores double, hence 1e-6
+nwplot u12, layout(frucht, iterations(1000)) generate(fx fy) noopen
+assert reldif(kx[1], 0.303127527237) < 1e-6 & reldif(ky[1], 0.730015695095) < 1e-6
+assert reldif(kx[2], 1.001404523849) < 1e-6 & reldif(ky[2], 0.398880392313) < 1e-6
+assert reldif(kx[4], 1.25) < 1e-6 & reldif(ky[4], 0.855154991150) < 1e-6
+assert reldif(fx[1], -0.342961788177) < 1e-6 & reldif(fy[1], -0.939349293709) < 1e-6
+assert reldif(fx[3], 0.093055047095) < 1e-6 & reldif(fy[3], -0.299707412720) < 1e-6
 di "unvalued kk and frucht unchanged: ok"
 
 * ---- a chain of 6 nodes, the tie 3-4 strong (5), the others 1; and two cliques (value 4) joined by two weak ties (1)

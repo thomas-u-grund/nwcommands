@@ -57,13 +57,13 @@ glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ------------------------------------------------------------------------------
 Rate parameters (one per inter-wave period):
 
------------------------------------
+------------------------------------
              |   period1    period2
--------------+---------------------
+-------------+----------------------
         rate |    6.3079     5.2549
           se |    0.8436     0.9311
        tconv |   -0.0008    -0.0352
------------------------------------
+------------------------------------
 Overall maximum t-ratio of the scores: 0.104 (acceptable)
 ```
 
@@ -104,7 +104,8 @@ rate_period2 |     4.8437     0.4542      4.0459      5.8121     4.8109    19
 -----------------------------------------------------------------------------
 Draws (one per main iteration) are in frame nwsaom_bayes_draws:
   b1..b3 (effects), rate1..rate2, nchain, loglik.
-Priors are flat unless priormean(), priorsd() or priorrate() are given.
+Priors: effects flat unless priorsigeta() (with priormeaneta()) is given; rates normal with
+ratepriormean() and ratepriorsd() (ratepriorsd(0): flat), or gamma with gibbsrates/priorrate().
 ```
 
 Posterior means and standard deviations take the place of estimates and standard errors, with a 95%
@@ -166,14 +167,14 @@ net2_reciprocity |   2.033514    .466895     4.36   0.000     1.118416    2.9486
 ----------------------------------------------------------------------------------
 Rates (estimated):
 
------------------------
+------------------------
              |  period1
--------------+---------
+-------------+----------
    rate_net1 |    6.794
    rate_net2 |    1.588
      se_net1 |    1.515
      se_net2 |    0.268
------------------------
+------------------------
 Overall maximum convergence ratio: 0.135 (criterion: below 0.25; met)
 ```
 

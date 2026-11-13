@@ -14,7 +14,7 @@ description: "Fit an ERGM to a network with missing dyads, compare models with A
 * Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
 
 **Data.** The Florentine marriage network (16 families, with `wealth`) and the Lazega friendship
-network (71 lawyers). Run with `nwergm` 1.3.1 and core 3.10.0; the script and log are in
+network (71 lawyers). Run with `nwergm` 1.6.0 and core 3.22.0; the script and log are in
 [example.do](example.do) and [example.log](example.log). Output is shortened to the coefficient
 table and the log-likelihood line; `...` marks what is left out.
 
@@ -52,13 +52,12 @@ The complete network first, and then the one with the missing dyads:
 nodecov_wealth |   .0105459   .0046743     2.26   0.024     .0013845    .0197073
 --------------------------------------------------------------------------------
 ...
-Log-likelihood:   -51.5543 (df = 2)   AIC:     107.1   BIC:     112.7   (MC std. err. =       0)
+Log-likelihood:   -51.5543 (df = 2)   AIC:     107.1   BIC:     112.7
 ```
 
 ```stata
 . nwergm flomiss, edges nodecov(wealth)
-Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)likelihood and handled as in R's ergm (mi
-> ssing-data MCMLE).
+Note: network flomiss has 3 missing dyad(s); they are left out of the likelihood, as in ergm.
 ...
 ```
 
@@ -72,7 +71,7 @@ Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)
 nodecov_wealth |   .0111924   .0047613     2.35   0.019     .0018604    .0205244
 --------------------------------------------------------------------------------
 ...
-Log-likelihood:   -49.1649 (df = 2)   AIC:     102.3   BIC:     107.9   (MC std. err. =       0)
+Log-likelihood:   -49.1649 (df = 2)   AIC:     102.3   BIC:     107.9
 ```
 
 ```stata
@@ -91,14 +90,15 @@ with a dependence term is fitted with the missing-data MCMLE:
 --------------------------------------------------------------------------------
        flomiss | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -2.695761   .5798708    -4.65   0.000    -3.832287   -1.559235
-nodecov_wealth |   .0110237   .0055696     1.98   0.048     .0001075    .0219399
-     gwesp_0.5 |   .0274984   .2881655     0.10   0.924    -.5372955    .5922923
+         edges |  -2.678908   .5691385    -4.71   0.000    -3.794399   -1.563417
+nodecov_wealth |   .0105619   .0054018     1.96   0.051    -.0000255    .0211493
+     gwesp_0.5 |   .0452257   .2927755     0.15   0.877    -.5286037    .6190551
 --------------------------------------------------------------------------------
 
 MCMLE converged after 1 iteration(s).
 ...
-Log-likelihood:   -49.1563 (df = 3)   AIC:     104.3   BIC:     112.6   (MC std. err. =  .00172)
+Log-likelihood:   -49.1518 (df = 3)   AIC:     104.3   BIC:     112.6
+Monte Carlo standard error of the log-likelihood:  .00288
 ```
 
 Two cautions. First, missing **covariate** values are refused with error 416, as in R; drop or impute
@@ -122,14 +122,15 @@ nested specifications.
 --------------------------------------------------------------------------------
      lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -2.740879   .0801423   -34.20   0.000    -2.897955   -2.583803
-        mutual |    .991566   .1626233     6.10   0.000     .6728302    1.310302
-nodematch_prac |    .907421   .0921732     9.84   0.000     .7267649    1.088077
+         edges |   -2.73884   .0813401   -33.67   0.000    -2.898264   -2.579417
+        mutual |   .9924631    .152278     6.52   0.000     .6940037    1.290922
+nodematch_prac |   .9027794   .0922064     9.79   0.000     .7220581    1.083501
 --------------------------------------------------------------------------------
 
-MCMLE converged after 4 iteration(s).
+MCMLE converged after 3 iteration(s).
 ...
-Log-likelihood: -1701.9440 (df = 3)   AIC:    3409.9   BIC:    3429.4   (MC std. err. =  .06952)
+Log-likelihood: -1702.2907 (df = 3)   AIC:    3410.6   BIC:    3430.1
+Monte Carlo standard error of the log-likelihood:  .06401
 ```
 
 ```stata
@@ -138,15 +139,16 @@ Log-likelihood: -1701.9440 (df = 3)   AIC:    3409.9   BIC:    3429.4   (MC std.
 --------------------------------------------------------------------------------
      lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-         edges |  -3.477526   .1008631   -34.48   0.000    -3.675214   -3.279838
-        mutual |   .8207466   .1635668     5.02   0.000     .5001615    1.141332
-nodematch_prac |   .7016325   .0845186     8.30   0.000     .5359792    .8672859
-     gwesp_0.5 |    .496614   .0584773     8.49   0.000     .3820006    .6112274
+         edges |  -3.479122   .1130881   -30.76   0.000     -3.70077   -3.257473
+        mutual |   .8125966   .1626768     5.00   0.000      .493756    1.131437
+nodematch_prac |   .6985484   .0792428     8.82   0.000     .5432353    .8538615
+     gwesp_0.5 |   .4967716   .0653576     7.60   0.000      .368673    .6248702
 --------------------------------------------------------------------------------
 
 MCMLE converged after 6 iteration(s).
 ...
-Log-likelihood: -1670.9684 (df = 4)   AIC:    3349.9   BIC:    3376.0   (MC std. err. =  .17019)
+Log-likelihood: -1670.6819 (df = 4)   AIC:    3349.4   BIC:    3375.4
+Monte Carlo standard error of the log-likelihood:  .15369
 ```
 
 `estat ic` shows the information criteria of the last fit; `estimates stats` puts the stored models in
@@ -160,9 +162,10 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |        N     ll(null)    ll(model)    df       AIC       BIC
 -------------+---------------------------------------------------------------
-   lazega_fr |     4970      -3444.9        -1671     4    3349.9      3376
+   lazega_fr |     4970      -3444.9      -1670.7     4    3349.4    3375.4
 -----------------------------------------------------------------------------
-Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood =  .17019
+Note: BIC uses N = number of informative dyads.
+Monte Carlo standard error of the log-likelihood:  .15369
 ```
 
 ```stata
@@ -173,16 +176,16 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |          N   ll(null)  ll(model)      df        AIC        BIC
 -------------+---------------------------------------------------------------
-          m1 |      4,970  -3444.941  -1701.944       3   3409.888   3429.422
-          m2 |      4,970  -3444.941  -1670.968       4   3349.937   3375.981
+          m1 |      4,970  -3444.941  -1702.291       3   3410.581   3430.115
+          m2 |      4,970  -3444.941  -1670.682       4   3349.364   3375.409
 -----------------------------------------------------------------------------
-Note: BIC uses N = number of observations. See [R] IC note.
+Note: BIC uses N = number of observations. See [R] BIC note.
 ```
 
-Lower AIC and BIC are better. Adding `gwesp(0.5)` lowers AIC from 3409.9 to 3349.9 and BIC from 3429.4
-to 3376.0: the closure term earns its place by both criteria. The log-likelihood of a model with
+Lower AIC and BIC are better. Adding `gwesp(0.5)` lowers AIC from 3410.6 to 3349.4 and BIC from 3430.1
+to 3375.4: the closure term earns its place by both criteria. The log-likelihood of a model with
 dependence is evaluated by bridge sampling, which is a simulation: the footer of each fit and of `estat ic`
-shows its Monte Carlo standard error (here about 0.1), which should be small relative to the differences you
+shows its Monte Carlo standard error (here between 0.06 and 0.15), which should be small relative to the differences you
 interpret. For nested models the likelihood-ratio test is also available:
 
 ```stata
@@ -191,11 +194,11 @@ interpret. For nested models the likelihood-ratio test is also available:
 Likelihood-ratio test
 Assumption: m1 nested within m2
 
- LR chi2(1) =  61.95
+ LR chi2(1) =  63.22
 Prob > chi2 = 0.0000
 ```
 
-The test statistic is 61.95 on one degree of freedom, a strong rejection of the model without closure.
+The test statistic is 63.22 on one degree of freedom, a strong rejection of the model without closure.
 `lrtest` needs the models to be nested and fitted to the same N. The likelihood is not evaluated for a
 model with a curved (free-decay) term fitted by MCMLE, and `nologlik` skips the bridge sampling (then
 AIC and BIC are missing) when you only need coefficients.
@@ -217,7 +220,7 @@ with `gwesp`).
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
-           p |      4,970    .1157708    .0926077   .0299585   .8028117
+           p |      4,970    .1152925    .0920556   .0299122   .8009428
 ```
 
 ```stata
@@ -226,15 +229,15 @@ with `gwesp`).
      +-------------------------+
      | tail   head           p |
      |-------------------------|
-  1. |    1      2   .02995849 |
-  2. |    1      3   .36097975 |
-  3. |    1      4   .10338511 |
-  4. |    1      5   .30611146 |
-  5. |    1      6   .03618957 |
+  1. |    1      2   .02991216 |
+  2. |    1      3   .35812657 |
+  3. |    1      4   .10249971 |
+  4. |    1      5   .30525013 |
+  5. |    1      6   .03613612 |
      +-------------------------+
 ```
 
-The mean probability, 0.116, is close to the density of the network (0.116). Use `xb` instead of `pr` for
+The mean probability, 0.115, is close to the density of the network (0.116). Use `xb` instead of `pr` for
 the conditional log-odds.
 
 ## Things to try

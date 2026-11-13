@@ -66,10 +66,18 @@ program nwcloseness
 		error 198
 	}
 	local generate_all ""
+	if "`twomode'" != "" & "`onemode'" != "" {
+		di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
+		error 198
+	}
 	
 	set more off
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		if "`twomode'" != "" & "`is2mode'" != "true" {
+			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
+			error 198
+		}
 		_nwtimeguard, command(nwcloseness) nodes(`nodes') model(bfs) netobj(`netobj') rate(6.6e8) alternative(Closeness needs one breadth-first search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
 		preserve
 		// The farness of a node is the sum of its distances to the nodes it can reach. With a plugin of the current
@@ -117,8 +125,9 @@ program nwcloseness
 			}
 		}
 		else {
-			qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `binary' `force' `options'
-			nwname _tempgeodesic
+			tempname __geonet
+			qui nwgeodesic `netname_temp', name(`__geonet') `symopt' `binary' `force' `options'
+			nwname `__geonet'
 			// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
 			// full n x n matrix into a second, separately-named Mata matrix
 			// (confirmed via direct source inspection of _nwtomata.ado:
@@ -131,7 +140,7 @@ program nwcloseness
 			// values, only the redundant intermediate copy is removed -
 			// verified byte-identical against the prior nwtomata-based version
 			// in cscripts/test_nwcloseness.do.
-			_nwsyntax _tempgeodesic
+			_nwsyntax `__geonet'
 			mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
 			mata: __nwcloseness_far = rowsum(*`netobj'->get_matrix())
 
@@ -164,18 +173,10 @@ program nwcloseness
 		}
 		// a two-mode network gets the normalisation of Borgatti and Everett (1997) by default; onemode gives the one-mode closeness of the
 		// bipartite graph; twomode (the earlier way to ask for it) is accepted as a synonym
-		if "`twomode'" != "" & "`onemode'" != "" {
-			noi di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
-			error 198
-		}
 		local __tm = ("`twomode'" != "" | ("`is2mode'" == "true" & "`onemode'" == ""))
 		if `__tm' {
 			// Borgatti and Everett (1997): the smallest possible farness of a node is reached when it is tied to every
 			// node of the other mode (distance 1) and every other node of its own mode is at distance 2
-			if "`is2mode'" != "true" {
-				noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
-				error 198
-			}
 			mata: __md = strtoreal(`netobj'->get_modes())'; __n1 = sum(__md :== 1); __n2 = sum(__md :== 2); __nwcloseness_closeness = ((__md :== 1) :* (__n2 + 2 * (__n1 - 1)) :+ (__md :== 2) :* (__n1 + 2 * (__n2 - 1))) :* __nwcloseness_nearness
 			mata: mata drop __md __n1 __n2
 		}
@@ -183,7 +184,7 @@ program nwcloseness
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'
 		if !`__fastcl' & !`__wcl' {
-			nwdrop _tempgeodesic
+			nwdrop `__geonet'
 		}
 		restore
 
@@ -214,12 +215,11 @@ program nwcloseness
 			}
 		}
 
-		qui capture drop `_closeness'`k'
-		qui gen `_closeness'`k' = .
-		qui capture drop `_farness'`k'
-		qui gen `_farness'`k' = .
-		qui capture drop `_nearness'`k'
-		qui gen `_nearness'`k' =.
+		foreach c in `_closeness'`k' `_farness'`k' `_nearness'`k' {
+			capture confirm variable `c', exact
+			if _rc == 0 drop `c'
+			qui gen double `c' = .
+		}
 		
 		mata: st_store((1::`nodes'),"`_closeness'`k'",__nwcloseness_closeness)
 		mata: st_store((1::`nodes'),"`_farness'`k'",__nwcloseness_far)

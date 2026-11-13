@@ -28,6 +28,7 @@ core never overwrites the package; to update the package, repeat the `nwinstall`
 What it offers:
 
 - structural effects such as inertia, reciprocity and degrees, with optional recency windows
+- event values: a third variable in `nwset sender receiver value, eventtime()` gives each event a value, which the weighted effects sum (as goldfish's `increment`)
 - node and dyadic covariates
 - maximum likelihood estimation
 

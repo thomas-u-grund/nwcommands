@@ -78,7 +78,7 @@
 {synopt:{opt valued}}Force network to be treated as valued (tie strength, not just presence/absence){p_end}
 {synopt:{opt unvalued}}Force network to be treated as unvalued (binary){p_end}
 {synopt:{opt selfloop}}Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked{p_end}
-{synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new network, a valid Stata name of at most 32 characters (see {help netname}); default = {it:network}{p_end}
 {synopt:{opt replace}}Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning{p_end}
 {synopt:{opt overwrite}}Alias for {opt replace}{p_end}
 {synopt:{opth nodenames(string)}}Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of {opt labs()}{p_end}
@@ -217,6 +217,10 @@ for string identifiers, {cmd:.} for numeric ones): the node is created, the row 
 identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
 nodes with one tie, {it:Fion} an isolate.
 
+{pstd}
+Numeric identifiers become node labels {it:n} followed by the full number (identifier 10000001 gives
+{it:n10000001}); a string identifier is its own label.
+
 
 {pstd}
 {bf:{ul:3. Declare adjacency matrix from Mata matrix}}
@@ -284,6 +288,8 @@ used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)
 {help nwname}, {help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
 holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
 full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
+The nodes of mode 1 (the first id variable) come first, in the sort order of their identifiers,
+followed by the nodes of mode 2, whatever the type of the identifiers (string ones included).
 {bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
 edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare
 {help varlist} alone, so combining them is rejected as an explicit error rather than guessed at.
@@ -336,7 +342,12 @@ missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
 {p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
 {p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
 tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
-ordinary graph{p_end}
+ordinary graph. Every event needs a sender, a receiver and a time: a row with a missing
+{it:eventtimevar}, sender or receiver is refused (error 416) and nothing is changed; drop such rows
+first. A third variable gives each event a value ({cmd:nwset sender receiver value, eventtime(t)}); it
+must be numeric and not missing. Without it every event has the value 1. The event models
+({help nwdynam}) add the value of an event to the tie between its sender and receiver, as the R
+package goldfish does with the {it:increment} of an event{p_end}
 
 {pstd}
 For example, this declares a snapshot network from three waves of ties:
@@ -385,7 +396,7 @@ larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
-option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names, and extra entries are ignored (a note says
+option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names ({it:n}{it:i} for node {it:i}; a default name that is already one of the given labels is replaced by the next unused {it:n}{it:k} above the number of nodes), and extra entries are ignored (a note says
 so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
 automatically labels nodes according the variables that have been set.
 
@@ -445,4 +456,4 @@ nodes). Two-mode temporal networks keep the matrices.
 {help nwattime}, {help nwintro##limits:feasible network sizes}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

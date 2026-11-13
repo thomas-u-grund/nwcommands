@@ -134,4 +134,4 @@ With option {opt check}, {cmd:nwsym} stores the following in {bf:r()}:
 	{help nwsymmetrize} (an exact alias for this command)
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

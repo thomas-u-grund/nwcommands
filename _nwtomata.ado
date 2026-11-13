@@ -13,11 +13,8 @@ syntax [anything(name=netname)], [ mat(string) ]
 	// failure is not routed through any shared validation helper).
 	// Fixing it here also fixes nwtomata.ado, which forwards straight
 	// to this shared helper.
-	capture _nwsyntax `netname', max(1)
-	if _rc != 0 {
-		di "{err}Network `netname' not found."
-		error `errNWsNotFound'
-	}
+	// _nwsyntax itself stops cleanly: "not found" (r(482)) or "too many networks" (r(198))
+	_nwsyntax `netname', max(1)
 	mata: st_rclear()
 	mata: st_global("r(netname)","`netname'")
 	mata: st_global("r(netobj)", "`netobj'")

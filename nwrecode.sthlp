@@ -165,4 +165,4 @@ to 2, and store the results in {cmd:nx2}{p_end}
 {p 4 4 2}{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -45,4 +45,4 @@ Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**f
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

@@ -14,7 +14,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	local vars = wordcount("`formula'")
 	if (`vars' < 1) {
 		di "{err}Formula wrongly specified."
-		error 6057
+		error 198
 	}
 	
 	local net = word("`formula'", 1)
@@ -96,13 +96,19 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			// a genuine one-to-one match instead of a wholesale miss -
 			// confirmed directly: two nwexpand calls in the same session
 			// only corrupt each other's data when network() is omitted.
-			nwexpand `entry', name(_tempexpand) mode("``t''") nodes(`nodes') network(`net')
-			nwtomata _tempexpand, mat(__nwqap_onenet)
+			// nwexpand reads the attribute by row position: align row i of the data with node i of `net' first
+			if "`__synced'" == "" {
+				_nwdatasync `net'
+				local __synced 1
+			}
+			tempname __expnet
+			nwexpand `entry', name(`__expnet') mode("``t''") nodes(`nodes') network(`net')
+			nwtomata `__expnet', mat(__nwqap_onenet)
 			mata: _diag(__nwqap_onenet, J(rows(__nwqap_onenet), 1, .))
 			mata: __nwqap_temp = transformIntoLong(__nwqap_onenet)
 			mata: __nwqap_datalong[,`i'] = __nwqap_temp
 			local i = `i' + 1
-			nwdrop _tempexpand
+			nwdrop `__expnet'
 			if "``t''" == "" {
 				local prefix "`prefix' same_`entry'"
 			}

@@ -35,6 +35,7 @@ from the numbers. Give `nwfromedge` a third variable, the tie value, and the net
    Minimum value:  0
    Maximum value:  12
    Density:  .417
+   Mean outdegree:  1.25
    Temporal: false
 ```
 
@@ -61,6 +62,7 @@ values 0 (no tie) to 3:
    Minimum value:  0
    Maximum value:  3
    Density:  .392
+   Mean degree:  6.67
    Temporal: false
 ```
 
@@ -74,7 +76,8 @@ output. Degree becomes **strength**, the sum of the tie values of a node:
 ----------------------------------------
   Network name: likes
 ----------------------------------------
-  (valued network: degree is the strength, the sum of the tie values; binary gives the number of ties)
+  (valued network: degree is the strength, the sum of the tie values; binary gives the number of
+  ties)
     Degree distribution
 
    strength |      Freq.     Percent        Cum.
@@ -191,6 +194,7 @@ above it become 1, all others 0. With `generate()` the original remains:
    Minimum value:  0
    Maximum value:  1
    Density:  .242
+   Mean degree:  4.11
    Temporal: false
 ```
 

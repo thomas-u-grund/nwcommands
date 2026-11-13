@@ -61,8 +61,8 @@ measure of "brokerage" rather than direct connectivity:
 
 ```stata
 . nwcloseness flomarriage, generate(clo far near)
-Warning: network flomarriage is not connected; closeness uses only the nodes each node can
->  reach (as igraph). Specify unconnected() to give missing paths a length.
+Warning: network flomarriage is not connected; closeness uses only the nodes each node
+can reach (as igraph). Specify unconnected() to give missing paths a length.
 ----------------------------------------
   Network name: flomarriage
 ----------------------------------------
@@ -152,15 +152,15 @@ a wider margin than its degree alone would suggest:
 
 . list _nwnode deg btw in 1/5
 
-     +---------------------------+
-     |  _nwnode   deg        btw |
-     |---------------------------|
-  1. |   medici     6       47.5 |
-  2. | guadagni     4   23.16667 |
-  3. |  albizzi     3   19.33333 |
-  4. | salviati     2         13 |
-  5. |  ridolfi     3   10.33333 |
-     +---------------------------+
+     +----------------------------+
+     |  _nwnode   deg         btw |
+     |----------------------------|
+  1. |   medici     6        47.5 |
+  2. | guadagni     4   23.166667 |
+  3. |  albizzi     3   19.333333 |
+  4. | salviati     2          13 |
+  5. |  ridolfi     3   10.333333 |
+     +----------------------------+
 ```
 
 `medici` does have the highest degree here too, but the *gap* to second place is far larger for

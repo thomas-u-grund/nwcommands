@@ -215,7 +215,7 @@ The first command installs just {cmd:nwinstall} itself and the landing help topi
 {cmd:from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")} works as well. The second downloads
 everything else - the core commands, all help files, and the dialog boxes with the {it:Network Analysis} menu (set up once, in {bf:profile.do}) - and the four model packages
 {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}. To install the core only, type {cmd:nwinstall, all}; to leave the menu out, add {opt nogui}.
-nwcommands needs Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
+nwcommands needs Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough).
 
 
 {pstd}
@@ -302,4 +302,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

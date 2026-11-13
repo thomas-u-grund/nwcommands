@@ -29,7 +29,7 @@ program _nwname
 	local nets wordcount("`netname'")
 	if `nets' > 1 {
 		di "{err}only one {it:netname} allowed"
-		error 6055
+		error 198
 	}
 	mata: st_local("number", strofreal(__nw.nws.get_number()))
 
@@ -44,6 +44,7 @@ program _nwname
 	}
 	
 	if "`newname'" != "" {
+		mata: nw_assert_netname(st_local("newname"))
 		nwvalidate `newname'
 		if "`r(exists)'" == "true" {
 			noi di "{txt}network name {bf:`newname'} already exists; newname changed to {bf:`r(validname)'}"

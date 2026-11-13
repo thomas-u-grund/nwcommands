@@ -96,12 +96,25 @@ program nwplot, rclass
 	}
 
 	_nwsyntax `netname', max(1)
+	// generate(newxvar newyvar): two names; existing variables are overwritten only with replace
+	if "`generate'" != "" {
+		if wordcount("`generate'") != 2 {
+			di "{err}Option {bf:generate()} needs two names (x and y coordinates)."
+			error 198
+		}
+		foreach __gv in `generate' {
+			capture confirm variable `__gv', exact
+			if _rc == 0 & "`replace'" == "" {
+				di "{err}Variable {bf:`__gv'} already exists; use {bf:replace}"
+				error 99
+			}
+		}
+	}
 	_nwdenseguard, command(nwplot) nodes(`nodes') copies(10) alternative(A picture of that many nodes is unreadable and slow: plot a part of the network (nwsubset, nwego, nwkcore) or export it with nwexport for a dedicated program.) `force'
 	qui nwsummarize `netname'
 	local __nwp_minval = r(minval)
 	if `r(density)' == 0 {
-		di "{txt}Network empty. Plotting does not make sense.{txt}"
-		exit
+		di "{txt}Network has no ties; only the nodes are plotted.{txt}"
 	}
 	
 	local masternetname "`netname'"
@@ -119,48 +132,51 @@ program nwplot, rclass
 		local scatteropt "`scatteropt' `labelopt'"
 	}
 
+	// the helper networks of this call carry a prefix of their own (a tempname), so that cleaning them up
+	// cannot remove a network of the user's (it used to drop every network whose name began with __temp)
+	tempname __nwptmp
     if "`in'" != "" {
-		capture nwdrop _temp_in
-		nwduplicate `netname', name(__temp_in)
-		nwkeep __temp_in in `in'
+		capture nwdrop `__nwptmp'_in
+		nwduplicate `netname', name(`__nwptmp'_in)
+		nwkeep `__nwptmp'_in in `in'
 		if "`edgecolor'" != "" {
-			capture nwdrop __temp_edgecolor_in
-			nwgen __temp_edgecolor_in = `edgecolor'
-			local edgecolor "__temp_edgecolor_in"
+			capture nwdrop `__nwptmp'_edgecolor_in
+			nwgen `__nwptmp'_edgecolor_in = `edgecolor'
+			local edgecolor "`__nwptmp'_edgecolor_in"
 			if "`edgecolor'" != "`netname'" {
-				nwkeep __temp_edgecolor_in in `in'
+				nwkeep `__nwptmp'_edgecolor_in in `in'
 			}
 		}
 		if "`edgesize'" != "" {
-			nwgen __temp_edgesize_in = `edgesize'
-			local edgesize "__temp_edgesize_in"
+			nwgen `__nwptmp'_edgesize_in = `edgesize'
+			local edgesize "`__nwptmp'_edgesize_in"
 			if "`edgesize'" != "`netname'" & "`edgesize'" != "`edgecolor'"{
-				nwkeep __temp_edgesize_in in `in'
+				nwkeep `__nwptmp'_edgesize_in in `in'
 			}
 		}
-		local netname "__temp_in"
+		local netname "`__nwptmp'_in"
 		_nwsyntax `netname', max(1)
 	}
 
      if "`if'"!="" {
 		local ifmaster "if `if'"
-		capture nwdrop __temp_if
-		nwduplicate `netname', name(__temp_if)
-		nwdrop __temp_if if (!(`if'))
+		capture nwdrop `__nwptmp'_if
+		nwduplicate `netname', name(`__nwptmp'_if)
+		nwdrop `__nwptmp'_if if (!(`if'))
 		if "`edgecolor'" != "" {
-			capture nwdrop _temp_edgecolor_if
-			nwduplicate `edgecolor', name(__temp_edgecolor_if)
-			local edgecolor "__temp_edgecolor_if"
-			nwdrop __temp_edgecolor_if if (!(`if'))
+			capture nwdrop `__nwptmp'_edgecolor_if
+			nwduplicate `edgecolor', name(`__nwptmp'_edgecolor_if)
+			local edgecolor "`__nwptmp'_edgecolor_if"
+			nwdrop `__nwptmp'_edgecolor_if if (!(`if'))
 		}
 		if "`edgesize'" != "" {
-			capture nwdrop _temp_edgesize_if
-			nwduplicate `edgesize', name(__temp_edgesize_if)
-			local edgesize "__temp_edgesize_if"
-			nwdrop __temp_edgesize_if if (!(`if'))
+			capture nwdrop `__nwptmp'_edgesize_if
+			nwduplicate `edgesize', name(`__nwptmp'_edgesize_if)
+			local edgesize "`__nwptmp'_edgesize_if"
+			nwdrop `__nwptmp'_edgesize_if if (!(`if'))
 		}
 		
-		local netname "__temp_if"
+		local netname "`__nwptmp'_if"
 	}
 	_nwsyntax `netname', max(1)
 
@@ -727,13 +743,13 @@ program nwplot, rclass
 	}
 	if "`valued'" == "true" & "`nosign'" == "" & "`edgecolor'" == "" & `__nwp_minval' < 0 {
 		local __nwp_autosign 1
-		capture nwdrop __temp_sign
-		qui nwduplicate `netname', name(__temp_sign)
-		qui nwtomata __temp_sign, mat(__nwp_S)
+		capture nwdrop `__nwptmp'_sign
+		qui nwduplicate `netname', name(`__nwptmp'_sign)
+		qui nwtomata `__nwptmp'_sign, mat(__nwp_S)
 		mata: __nwp_S = (editmissing(__nwp_S, 0) :< 0)
-		qui nwreplacemat __temp_sign, newmat(__nwp_S)
+		qui nwreplacemat `__nwptmp'_sign, newmat(__nwp_S)
 		capture mata: mata drop __nwp_S
-		local edgecolor "__temp_sign"
+		local edgecolor "`__nwptmp'_sign"
 		local edgecolor_original "sign"
 		local edgecolor_options ", edgecolorpalette(navy cranberry) edgepatternpalette(solid dash)"
 		if "`legendopt'" == "" local legendopt "position(6) rows(1)"
@@ -742,8 +758,8 @@ program nwplot, rclass
 	// Get edgesize network data
 	if "`edgesize'" != "" {
 		if "`edgesize'" == "," {
-			nwrandom `nodes', prob(1) name(__temp_edgesize_dummy)
-			local edgesize "__temp_edgesize_dummy,"
+			nwrandom `nodes', prob(1) name(`__nwptmp'_edgesize_dummy)
+			local edgesize "`__nwptmp'_edgesize_dummy,"
 			if strpos("`edgesize_options'", "legendoff") == 0 {
 				local edgesize_options `"`edgesize_options' legendoff"'
 			}
@@ -751,8 +767,8 @@ program nwplot, rclass
 		local 0 "`edgesize'`edgesize_options'"
 		capture noi syntax [anything] [, forcekeys(string) legendoff ]
 		if _rc != 0 {
-			nwdrop __temp_edgesize_dummy
-			error 6088
+			capture nwdrop `__nwptmp'_edgesize_dummy
+			error 198
 		}
 		
 		// check and clean networks as edgecolor and edgesize
@@ -802,10 +818,10 @@ program nwplot, rclass
 	// Get edgecolor network data
 	if "`edgecolor'" != ""  {
 		if "`edgecolor'" == "," {
-			capture nwdrop __temp_edgecol_dummy
-			nwrandom `nodes', prob(0) name(__temp_edgecol_dummy)
-			//nwreplace __temp_egdecol_dummy = .
-			local edgecolor "__temp_edgecol_dummy,"
+			capture nwdrop `__nwptmp'_edgecol_dummy
+			nwrandom `nodes', prob(0) name(`__nwptmp'_edgecol_dummy)
+			//nwreplace `__nwptmp'_egdecol_dummy = .
+			local edgecolor "`__nwptmp'_edgecol_dummy,"
 			if strpos("`edgecolor_options'", "legendoff") == 0 {
 				local edgecolor_options `"`edgecolor_options' legendoff"'
 			}
@@ -814,8 +830,8 @@ program nwplot, rclass
 		capture noi syntax [anything] [, foreground(string) forcekeys(string) legendoff edgecolorpalette(string) edgepatternpalette(string)]
 		local edgeforeground = "`foreground'"
 		if _rc != 0 {
-			nwdrop __temp_edgecolor_dummy
-			error 6088
+			capture nwdrop `__nwptmp'_edgecol_dummy
+			error 198
 		}
 		// check and clean network 
 		local edgecolorkeys_legendoff "`legendoff'"
@@ -2222,24 +2238,17 @@ program nwplot, rclass
 
 	if "`generate'" != "" {
 		di "{text:Export coordinates...}"
-		if (wordcount("`generate'") >= 2){
-			local generate_x = word("`generate'", 1)
-			local generate_y = word("`generate'", 2)
-		}
-		else {
-			local generate_x = "_x_coord"
-			local generate_y = "_y_coord"
-		}
-		
-		capture confirm new variable `generate_x'
-		if _rc capture drop `generate_x'
-		capture confirm new variable `generate_y'
-		if _rc capture drop `generate_y'
+		local generate_x = word("`generate'", 1)
+		local generate_y = word("`generate'", 2)
+		capture confirm variable `generate_x', exact
+		if _rc == 0 drop `generate_x'
+		capture confirm variable `generate_y', exact
+		if _rc == 0 drop `generate_y'
 		if _N < `nodes' {
 			set obs `nodes'
 		}
-		qui gen `generate_x' = .
-		qui gen `generate_y' = .
+		qui gen double `generate_x' = .
+		qui gen double `generate_y' = .
 		mata: st_store((1::rows(__nwplot_Coord)),("`generate_x'","`generate_y'"), (__nwplot_Coord[.,.]:/100))
 		qui replace `generate_x' = (`generate_x' - 0.05) / 0.9
 		qui replace `generate_y' = (`generate_y' - 0.05) / 0.9
@@ -2247,7 +2256,7 @@ program nwplot, rclass
 	mata: mata drop __nwplot_plotmat __nwplot_nsize __nwplot_ncolor __nwplot_nlabel __nwplot_Coord __nwplot_edgesizemat __nwplot_edgecolormat
 	capture mata: mata drop __nwplot_Coord_comp __nwplot_compM __nwplot_comp_freq __nwplot_comp_id __nwplot_comp_freqid __nwplot_compmat __nwplot_compfull __nwplot_comp_nonisol
 	capture mata: mata drop __nwplot_TC __nwplot_M __nwplot_nsymbol
-	capture nwdrop __temp* 
+	capture nwdrop `__nwptmp'* 
 	
 	capture mat drop __nwp_edgecolorrow
 	capture mat drop __nwp_valuerow
@@ -3347,17 +3356,22 @@ end
 
 capture mata: mata drop gridlayout()
 mata:
-real matrix function gridlayout(real scalar N,  real scalar cols)
+real matrix function gridlayout(real scalar N,  real scalar cols0)
 {
+	real scalar cols
+
 	real colvector 	V, C
 	real matrix 	Coord
 	real scalar CoordMax1, CoordMax2, rows
 
 	V= (1::N)
+	// more columns than nodes: one row of N columns
+	cols = (cols0 > N ? N : cols0)
 	rows = ceil(N / cols)
 	
 	Coord=J(N,2,.)
-	Coord[.,1] = J(N,1,100) :- floor((V:-1) :/rows) :* (100 / (cols - 1))
+	if (cols > 1) Coord[.,1] = J(N,1,100) :- floor((V:-1) :/rows) :* (100 / (cols - 1))
+	else Coord[.,1] = J(N,1,100)
 	
 	Coord[.,2] = mod(V, rows)
 	
@@ -3365,7 +3379,7 @@ real matrix function gridlayout(real scalar N,  real scalar cols)
     Coord[.,2] = J(N,1,100) :- ((Coord[.,2] :- 1) :* (100 / (rows - 1)))
 	
 	if (rows == 1) {
-		Coord[.,2] = J(cols, 1, 0.5)
+		Coord[.,2] = J(N, 1, 0.5)
 	}
 	CoordMax1 = max(Coord[.,1])
 	CoordMax2 = max(Coord[.,2])

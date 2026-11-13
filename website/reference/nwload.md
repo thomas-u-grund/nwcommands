@@ -91,4 +91,4 @@ Notice that `nwload` does not import or create a network, it simply creates Stat
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

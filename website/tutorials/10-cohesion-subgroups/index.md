@@ -88,6 +88,7 @@ The ties of `samplike` are valued, a liking rank from 1 to 3, and symmetrizing k
    Minimum value:  0
    Maximum value:  3
    Density:  .392
+   Mean degree:  6.67
    Temporal: false
 ```
 

@@ -14,8 +14,8 @@ about this, so that it neither invents changes nor throws the data away.
 **Data.** The Glasgow friendship data of [Tutorial 1](../tutorial-1-first-saom/). The Glasgow data are
 complete, so we **construct** the problems ourselves: we pretend that some pupils joined or left and that
 some answers are missing, and we say exactly how. The constructed examples show how the commands work;
-they are not findings about the school. The commands were run with `nwsaom` 1.1.1 and the core 3.10.0 in
-Stata 18, and checked in Stata 17. The complete script and log are in [example.do](example.do) and
+they are not findings about the school. The commands were run with `nwsaom` 1.6.0 and the core 3.22.0 in
+Stata 17. The complete script and log are in [example.do](example.do) and
 [example.log](example.log).
 
 ## Two different problems
@@ -82,33 +82,40 @@ and the model, with `present()` listing the three variables in the order of the 
 
 ```stata
 . nwsaom, waves(comp1 comp2 comp3) outdegree reciprocity transtrip present(pres1 pres2 pres3) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, unconditional), waves: comp1 comp2 comp3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 comp1_to_c~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.514709   .1123886   -22.38   0.000    -2.734987   -2.294432
- reciprocity |   2.383011   .1944882    12.25   0.000     2.001821    2.764201
-   transtrip |   .5621572   .0847645     6.63   0.000     .3960219    .7282926
+   outdegree |  -2.533458   .1135779   -22.31   0.000    -2.756067    -2.31085
+ reciprocity |   2.401016   .2013638    11.92   0.000      2.00635    2.795682
+   transtrip |   .5687039   .0866895     6.56   0.000     .3987956    .7386123
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    8.2471     4.5747 
-          se |    1.7841     0.7200 
-Overall maximum convergence ratio: 0.169 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+-------------+----------------------
+        rate |    8.3697     4.2092
+          se |    1.7167     0.5975
+------------------------------------
+Overall maximum convergence ratio: 0.144 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  transtrip (0.125) rate_period1 (0.114)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 ```
 
 Three things to notice. First, the header says **unconditional**. With changing actor sets the
 estimation must be unconditional (the rates are estimated together with the other parameters, as
 described in [Tutorial 12](../tutorial-12-estimation-speed/)); `nwsaom` switches to it by itself. Second, the rates
-(8.25 and 4.57) differ from those of the complete data (6.50 and 5.26), because they now describe the actors who are present in
+(8.37 and 4.21) differ from those of the complete data (6.45 and 5.25), because they now describe the actors who are present in
 a period; a pupil who is away is not given opportunities to change. Third, the coefficients are close to
-those of the complete data, as they should be, because we only hid a few pupils.
+those of the complete data, as they should be, because we only hid a few pupils. The t-ratios of `transtrip` and
+of the first rate are slightly above 0.1 in this run; `nwsaom refit` ([Tutorial 2](../tutorial-2-convergence/)) would
+bring them down before the results are reported.
 
 ### What happens if the model is not told?
 
@@ -116,24 +123,26 @@ For comparison, the same networks without `present()`:
 
 ```stata
 . nwsaom, waves(comp1 comp2 comp3) outdegree reciprocity transtrip seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: comp1 comp2 comp3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 comp1_to_c~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |   -2.62262   .1121841   -23.38   0.000    -2.842496   -2.402743
- reciprocity |   2.456261    .196206    12.52   0.000     2.071704    2.840818
-   transtrip |   .6072784   .0879736     6.90   0.000     .4348533    .7797034
+   outdegree |  -2.614313   .1188111   -22.00   0.000    -2.847179   -2.381448
+ reciprocity |   2.440239   .1994858    12.23   0.000     2.049254    2.831224
+   transtrip |   .6092232   .0908508     6.71   0.000      .431159    .7872875
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    7.5197     4.2130 
-          se |    1.4456     0.6905 
-Overall maximum convergence ratio: 0.066 (criterion: below 0.25; met)
+-------------+----------------------
+        rate |    7.5681     4.2258
+          se |    1.4209     0.6866
+------------------------------------
+Overall maximum convergence ratio: 0.134 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
@@ -145,9 +154,9 @@ is wrong in a way that no output will tell you. Whenever the group changes, decl
 
 | model | outdegree | reciprocity | transtrip | rate 1 | rate 2 |
 |---|---|---|---|---|---|
-| complete data | -2.70 | 2.47 | 0.63 | 6.50 | 5.26 |
-| joiners and leavers, `present()` | -2.51 | 2.38 | 0.56 | 8.25 | 4.57 |
-| joiners and leavers, not declared | -2.62 | 2.46 | 0.61 | 7.52 | 4.21 |
+| complete data | -2.68 | 2.44 | 0.62 | 6.45 | 5.25 |
+| joiners and leavers, `present()` | -2.53 | 2.40 | 0.57 | 8.37 | 4.21 |
+| joiners and leavers, not declared | -2.61 | 2.44 | 0.61 | 7.57 | 4.23 |
 
 ## Joiners and leavers at any time: joinat() and leaveat()
 
@@ -169,31 +178,37 @@ everybody who stays to the end):
 
 ```stata
 . nwsaom, waves(timed1 timed2 timed3) outdegree reciprocity transtrip joinat(jn) leaveat(lv) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, unconditional), waves: timed1 timed2 timed3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 timed1_to_~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.613242   .1205242   -21.68   0.000    -2.849465   -2.377019
- reciprocity |   2.467177   .2110509    11.69   0.000     2.053525    2.880829
-   transtrip |    .570416   .0827945     6.89   0.000     .4081418    .7326903
+   outdegree |  -2.611397   .1228231   -21.26   0.000    -2.852126   -2.370668
+ reciprocity |   2.474275   .2042072    12.12   0.000     2.074037    2.874514
+   transtrip |   .5668171   .0805009     7.04   0.000     .4090382     .724596
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    8.1907     6.4872 
-          se |    2.0645     1.0973 
-Overall maximum convergence ratio: 0.140 (criterion: below 0.25; met)
-Convergence t-ratios (criterion: all below 0.1 in absolute value): met
+-------------+----------------------
+        rate |    8.1344     6.5500
+          se |    1.5383     1.4172
+------------------------------------
+Overall maximum convergence ratio: 0.128 (criterion: below 0.25; met)
+Convergence t-ratios (criterion: all below 0.1 in absolute value): not met for
+  reciprocity (0.109) transtrip (0.123)
+Convergence is good only if both criteria are met.
+To refit starting from these estimates, type nwsaom refit.
 ```
 
 The pupils who join halfway through period one are active during the second half of it only, and the
 pupils who leave halfway through period two are active during its first half only; the model counts
-the time each pupil is present. The rates (8.19 and 6.49) are therefore not comparable with those of the
-`present()` model, in which a pupil is either present for a whole period or not at all. Use `joinat()` and `leaveat()`
+the time each pupil is present. The rates (8.13 and 6.55) are therefore not comparable with those of the
+`present()` model, in which a pupil is either present for a whole period or not at all. (Two t-ratios are again
+slightly above 0.1; refit before reporting.) Use `joinat()` and `leaveat()`
 when you know the dates; use `present()` when you only know the waves.
 
 ## Missing data
@@ -217,29 +232,31 @@ unknown. Here the whole outgoing rows of pupils 8 and 9 are missing in wave 2:
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip missnet(miss1 miss2 miss3) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
 glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.747335   .1397676   -19.66   0.000    -3.021274   -2.473395
- reciprocity |   2.544075   .2319734    10.97   0.000     2.089416    2.998735
-   transtrip |   .6478841   .0805108     8.05   0.000     .4900857    .8056824
+   outdegree |  -2.746586   .1378324   -19.93   0.000    -3.016732   -2.476439
+ reciprocity |   2.533789   .2284156    11.09   0.000     2.086102    2.981475
+   transtrip |   .6528808   .0801681     8.14   0.000     .4957542    .8100074
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-        rate |    6.1345     5.2180 
-          se |    1.0683     0.8978 
-Overall maximum convergence ratio: 0.072 (criterion: below 0.25; met)
+-------------+----------------------
+        rate |    6.0834     5.2370
+          se |    1.0307     0.9249
+------------------------------------
+Overall maximum convergence ratio: 0.150 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 The model uses the last observed value to fill in the unknown dyads for the simulation and leaves the dyads out of the
-statistics that are compared with the data. The estimates (-2.75, 2.54 and 0.65) are again close to the full-data
+statistics that are compared with the data. The estimates (-2.75, 2.53 and 0.65) are again close to the full-data
 values, with somewhat larger standard errors, which is exactly what a loss of information should do. Note that a
 missing dyad is a Stata *matrix*, not a network.
 
@@ -256,36 +273,38 @@ Missing behavior works the same way with one 0/1 variable per wave. Here pupils 
 
 ```stata
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt missbeh(mb1 mb2 mb3) seed(4)
-----------------------------------------------------------------------------------------------------
+
 SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
 Actors: 50                             Periods: 2
 Behavior: alcohol1 alcohol2 alcohol3
-----------------------------------------------------------------------------------------------------
+
 -------------------------------------------------------------------------------
 glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 --------------+----------------------------------------------------------------
-    outdegree |  -2.922766   .1522532   -19.20   0.000    -3.221176   -2.624355
-  reciprocity |   2.468063   .1988948    12.41   0.000     2.078236    2.857889
-    gwesp_.69 |   1.604373   .1615976     9.93   0.000     1.287647    1.921098
-       behsim |   1.426698    .615931     2.32   0.021     .2194952      2.6339
-   beh_linear |   .4229424   .2706495     1.56   0.118    -.1075208    .9534057
-beh_quadratic |  -.6064355   .4572518    -1.33   0.185    -1.502633    .2897615
-    beh_avalt |   1.346736   1.122016     1.20   0.230    -.8523742    3.545846
+    outdegree |  -2.921145   .1677994   -17.41   0.000    -3.250026   -2.592264
+  reciprocity |   2.466327   .1909513    12.92   0.000     2.092069    2.840585
+    gwesp_.69 |   1.603193   .1692151     9.47   0.000     1.271537    1.934848
+       behsim |   1.426001   .6629097     2.15   0.031     .1267221     2.72528
+   beh_linear |    .428535   .2586134     1.66   0.098     -.078338     .935408
+beh_quadratic |  -.6037095   .4196919    -1.44   0.150     -1.42629    .2188715
+    beh_avalt |   1.327782   .9986662     1.33   0.184    -.6295674    3.285132
 -------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
--------------+---------------------
-network_rate |    6.5868     5.1593 
-          se |    1.2039     0.9752 
-behavior_r~e |    1.1568     1.8091 
-          se |    0.3251     0.4882 
-Overall maximum convergence ratio: 0.110 (criterion: below 0.25; met)
+-------------+----------------------
+network_rate |    6.5743     5.1583
+          se |    1.2127     1.0772
+behavior_r~e |    1.1632     1.8139
+          se |    0.3271     0.4554
+------------------------------------
+Overall maximum convergence ratio: 0.123 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 
 This is the co-evolution model of [Tutorial 4](../tutorial-4-selection-influence/), read in the same way (selection through
-`behsim` is 1.43, z = 2.3; influence through `avalt` is 1.35 with a large standard error); `missbeh()` needs `behavior()`.
+`behsim` is 1.43, z = 2.2; influence through `avalt` is 1.33 with a large standard error); `missbeh()` needs `behavior()`.
 For `avalt` and `avsim` the treatment of missing values is an approximation, which is the more noticeable the more values are
 missing; the package help describes the limits.
 
@@ -317,24 +336,26 @@ form between the two groups. This changes the Glasgow data, so the numbers are n
 
 ```stata
 . nwsaom, waves(sz1 sz2 sz3) outdegree reciprocity transtrip seed(1)
-----------------------------------------------------------------------------------------------------
+
 SAOM (Method of Moments, conditional), waves: sz1 sz2 sz3
 Actors: 50                             Periods: 2
-----------------------------------------------------------------------------------------------------
+
 ------------------------------------------------------------------------------
   sz1_to_sz3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -2.998832   .2326355   -12.89   0.000    -3.454789   -2.542874
- reciprocity |   2.956383      .3586     8.24   0.000      2.25354    3.659226
-   transtrip |    .669171   .1110585     6.03   0.000     .4515003    .8868417
+   outdegree |  -2.987998   .2289911   -13.05   0.000    -3.436813   -2.539184
+ reciprocity |   2.942142   .3298347     8.92   0.000     2.295677    3.588606
+   transtrip |   .6678744   .1171709     5.70   0.000     .4382236    .8975251
 ------------------------------------------------------------------------------
 Rate parameters (estimated, one per inter-wave period):
 
+------------------------------------
              |   period1    period2 
 -------------+----------------------
-        rate |    4.7306     3.0467 
-          se |    0.8863     0.6340 
-Overall maximum convergence ratio: 0.093 (criterion: below 0.25; met)
+        rate |    4.7006     3.0595
+          se |    0.8448     0.6093
+------------------------------------
+Overall maximum convergence ratio: 0.072 (criterion: below 0.25; met)
 Convergence t-ratios (criterion: all below 0.1 in absolute value): met
 ```
 

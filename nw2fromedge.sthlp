@@ -216,4 +216,4 @@ A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw
 {p 4 4 2}{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

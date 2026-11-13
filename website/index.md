@@ -26,11 +26,11 @@ General Public License, version 3.
 
 | Package | What it does | Follows | Version |
 |---|---|---|---|
-| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.21.0 |
-| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.5.19 |
-| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.5.12 |
-| [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.2.5 |
-| [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.13 |
+| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.22.0 |
+| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.6.0 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.6.0 |
+| [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.3.0 |
+| [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.1.0 |
 
 Not sure which one you need? See [Which package do I need?](which-package/).
 
@@ -52,7 +52,7 @@ To install the core only, type `nwinstall, all` instead of `nwinstall, everythin
 added later with `nwinstall, models` (repeating `nwinstall, everything` or `nwinstall, models` also updates them). To install one model package only, for example nwsaom, type
 `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
 
-Requirements: Stata 17 or later (tested with Stata 17 and 18; StataBE is enough).
+Requirements: Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough).
 
 If Stata answers `option everything not allowed`, an older `nwinstall` is being used. Type `which nwinstall`: the
 path should point into Stata's `ado/plus` folder. If it says `./nwinstall.ado`, an old copy lies in the folder

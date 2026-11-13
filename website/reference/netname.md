@@ -24,7 +24,7 @@ A *netname* is one network name, such as
 - `_advice`
 - `_1994`
 
-Network names may be 1 to 32 characters long and must start with `a`-`z`, `A`-`Z`, or `_`, and the remaining characters may be `a`-`z`, `A`-`Z`, `_`, or `0`-`9`.
+Network names may be 1 to 32 characters long and must start with `a`-`z`, `A`-`Z`, or `_`, and the remaining characters may be `a`-`z`, `A`-`Z`, `_`, or `0`-`9`. A name that breaks these rules (for example one of 33 characters) is refused with error 198 by every command that creates or renames a network.
 
 When we use the term netname, we usually mean an existing netname -- a network that already exists in Stata, i.e. it has been setted by * [nwset](nwset)*, loaded or created by a network generator (see [[NW-1.2] Generators](nwtopical)). The alternative would be a *[newnetname](newnetname)*.
 
@@ -52,4 +52,4 @@ For most network commands a netname is optional. When no netname is explicitly s
 
 ---
 
-*nwcommands version 3.21.0, 12 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))

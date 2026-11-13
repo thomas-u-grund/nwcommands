@@ -90,6 +90,7 @@ wildcard, and the `_all` keyword:
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow2
@@ -103,6 +104,7 @@ wildcard, and the `_all` keyword:
    Minimum value:  0
    Maximum value:  1
    Density:  .0473
+   Mean outdegree:  2.32
    Temporal: false
 --------------------------------------------------
    Network name:  glasgow3
@@ -116,6 +118,7 @@ wildcard, and the `_all` keyword:
    Minimum value:  0
    Maximum value:  1
    Density:  .0498
+   Mean outdegree:  2.44
    Temporal: false
 ```
 

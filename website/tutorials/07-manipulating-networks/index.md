@@ -32,6 +32,7 @@ the wealthiest Florentine families:
    Minimum value:  0
    Maximum value:  1
    Density:  .167
+   Mean degree:  2.50
    Temporal: false
 
 . nwsubset flomarriage if wealth > 50
@@ -49,6 +50,7 @@ the wealthiest Florentine families:
    Minimum value:  0
    Maximum value:  1
    Density:  .333
+   Mean degree:  0.67
    Temporal: false
 ```
 
@@ -78,6 +80,7 @@ variable's value:
    Minimum value:  0
    Maximum value:  1
    Density:  .429
+   Mean outdegree:  3.00
    Temporal: false
 
 . gen att = _n
@@ -90,7 +93,7 @@ variable's value:
 . nwsummarize mynet_collapsed
 --------------------------------------------------
    Network name:  mynet_collapsed
-   Network id:  6
+   Network id:  5
    Directed: true
    Valued: false
    Two-mode: false
@@ -100,6 +103,7 @@ variable's value:
    Minimum value:  0
    Maximum value:  1
    Density:  .548
+   Mean outdegree:  3.29
    Temporal: false
 ```
 
@@ -127,6 +131,7 @@ before:
    Minimum value:  0
    Maximum value:  1
    Density:  .0461
+   Mean outdegree:  2.26
    Temporal: false
 
 . nwsymmetrize glasgow1, generate(glasgow1_sym)
@@ -144,6 +149,7 @@ before:
    Minimum value:  0
    Maximum value:  1
    Density:  .0604
+   Mean degree:  2.96
    Temporal: false
 
 . nwsym glasgow1_sym, check
@@ -180,6 +186,7 @@ instead of a Stata variable:
    Minimum value:  0
    Maximum value:  3
    Density:  .833
+   Mean outdegree:  1.67
    Temporal: false
        1   2   3
     +-------------+
@@ -204,6 +211,7 @@ instead of a Stata variable:
    Minimum value:  0
    Maximum value:  30
    Density:  .833
+   Mean outdegree:  1.67
    Temporal: false
         1    2    3
     +----------------+
@@ -240,6 +248,7 @@ else becomes 0:
    Minimum value:  30
    Maximum value:  220
    Density:  1
+   Mean outdegree:  2.00
    Temporal: false
          1     2     3
     +-------------------+
@@ -264,6 +273,7 @@ else becomes 0:
    Minimum value:  0
    Maximum value:  1
    Density:  .333
+   Mean outdegree:  0.67
    Temporal: false
        1   2   3
     +-------------+

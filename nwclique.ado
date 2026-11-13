@@ -52,7 +52,7 @@ program nwclique, rclass
 		mata: st_rclear()
 		_nwsyntax `netname_temp'
 
-		tempname __nw_cliq __nw_sizes __nw_cliqnum
+		tempname __nw_cliq __nw_sizes __nw_cliqnum __nw_ncl __nw_clm
 		// native kernel 35 (plugin generation 8 or later): the same Bron-Kerbosch search on the stored ties; an
 		// answer of the wrong shape (older plugin, no plugin, a self-loop, a failure) leaves the Mata path. The
 		// global NW_NOFASTKERNELS forces the Mata path.
@@ -64,7 +64,7 @@ program nwclique, rclass
 			mata: `__nw_cliqnum' = nw2_fastcliqnum(`netobj'->edgelist(), `nodes', `minsize')
 			mata: st_local("__fast", strofreal(rows(`__nw_cliqnum') == `nodes' + 1))
 			if `__fast' {
-				mata: st_numscalar("nw_ncliques", `__nw_cliqnum'[`nodes' + 1])
+				mata: st_numscalar("`__nw_ncl'", `__nw_cliqnum'[`nodes' + 1])
 				mata: `__nw_cliqnum' = `__nw_cliqnum'[|1 \ `nodes'|]
 			}
 		}
@@ -75,9 +75,9 @@ program nwclique, rclass
 				mata: `__nw_cliq' = `netobj'->calculate_cliques_filtered(`minsize')
 			}
 			mata: `__nw_sizes' = rowsum(`__nw_cliq')
-			mata: st_numscalar("nw_ncliques", rows(`__nw_cliq'))
+			mata: st_numscalar("`__nw_ncl'", rows(`__nw_cliq'))
 			if "`nomatrix'" == "" {
-				mata: st_matrix("nw_cliquematrix", (rows(`__nw_cliq') > 0 ? `__nw_cliq' : J(1, `nodes', 0)))
+				mata: st_matrix("`__nw_clm'", (rows(`__nw_cliq') > 0 ? `__nw_cliq' : J(1, `nodes', 0)))
 			}
 			mata: `__nw_cliqnum' = (rows(`__nw_cliq') > 0 ? editvalue(colmax(`__nw_cliq' :* `__nw_sizes')', 0, .) : J(`nodes', 1, .))
 			mata: mata drop `__nw_cliq' `__nw_sizes'
@@ -89,11 +89,12 @@ program nwclique, rclass
 		mata: st_store((1::`nodes'), "`netgenerate'`k'", `__nw_cliqnum')
 		mata: mata drop `__nw_cliqnum'
 
-		return scalar cliques = nw_ncliques
+		return scalar cliques = `__nw_ncl'
 		if "`nomatrix'" == "" {
-			return matrix clique_matrix = nw_cliquematrix
+			return matrix clique_matrix = `__nw_clm'
 		}
-		local lcliques = nw_ncliques
+		local lcliques = `__nw_ncl'
+		capture scalar drop `__nw_ncl'
 
 		// see nwbrokerage.ado's own header comment: the "already
 		// exists" probe above leaves _rc stale even after a fully

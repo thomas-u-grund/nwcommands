@@ -17,7 +17,7 @@ program nwstack, rclass
 		capture _nwsyntax `name', max(1)
 		if _rc == 0 {
 			di as err "network {bf:`name'} already exists; use {bf:replace}"
-			error 110
+			error 483
 		}
 	}
 
@@ -69,8 +69,10 @@ program nwstack, rclass
 
 	local opts ""
 	if "`dir0'" == "true" local opts "directed"
+	else local opts "undirected"
 	if "`replace'" != "" local opts "`opts' replace"
-	if _N != `total' {
+	// more rows than nodes are fine (set obs cannot shrink the data)
+	if _N < `total' {
 		quietly set obs `total'
 	}
 	nwset, mat(`S') name(`name') `opts' nooutput

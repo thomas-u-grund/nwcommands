@@ -3,9 +3,9 @@
 . * Run from this folder; the data are in ../data (events and actor attributes).
 . 
 . nwdynam version
-nwdynam version 1.1.3, 26oct2026
+nwdynam version 1.3.0, 13nov2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : .../d/dynam_sim_macos.plugin (ships with the package, no separate version number)
+  native plugin           : .../nwdynam/lib/plugins/macos/dynam_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R goldfish 1.6.12
   license                 : GNU GPL-3
 
@@ -89,33 +89,33 @@ Duplicates in terms of sender receiver
 . 
 . * --- the choice sub-model (the default) ---
 . nwdynam calls
---------------------------------------
+------------------------------------------------------------
 Dynamic Network Actor Model - choice sub-model (MLE)
 Network: calls                         Actors: 84
 Events: 439                            Log likelihood: -695.4608
---------------------------------------
---------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------------------------
        calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
      inertia |   5.365619   .1937551    27.69   0.000     4.985866    5.745372
        recip |   1.389441    .167288     8.31   0.000     1.061562    1.717319
        indeg |  -.1735184   .0909708    -1.91   0.056    -.3518179    .0047811
---------------------------------------
+------------------------------------------------------------------------------
 
 . 
 . * --- the rate sub-model ---
 . nwdynam calls, submodel(rate)
---------------------------------------
+------------------------------------------------------------
 Dynamic Network Actor Model - rate sub-model, no intercept (MLE)
 Network: calls                         Actors: 84
 Events: 439                            Log likelihood: -1.75e+03
---------------------------------------
---------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------------------------
        calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
        indeg |   .5514472   .0663444     8.31   0.000     .4214147    .6814798
       outdeg |   .2637836    .028386     9.29   0.000      .208148    .3194193
---------------------------------------
+------------------------------------------------------------------------------
 
 . 
 . * --- stored results ---
@@ -127,5 +127,3 @@ events: 439, actors: 84, log likelihood:  -1750.91
 
 . display "odds ratio of reciprocity in the choice model: " %6.2f exp(1.389441)
 odds ratio of reciprocity in the choice model:   4.01
-
-. 

@@ -45,7 +45,9 @@ Not implemented in `nwsaom`:
 Maximum likelihood and Bayesian estimation do not cover non-directed or two-mode networks, several networks,
 missing data or composition change. Only binary ties are supported. A few implementation details differ
 and are disclosed in the help: for example `estat gof` simulates fresh networks at the estimates instead
-of reusing those stored during the fit.
+of reusing those stored during the fit. With composition change, the simulations after a fit (`estat simulate`, `estat gof`, `estat mems`) let the
+actors that are active at the start of a period act in it until its end; joining and leaving at times inside a period
+are used by the fit but not by these simulations.
 
 ## How the estimates were compared
 

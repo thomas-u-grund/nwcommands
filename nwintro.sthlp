@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.21.0  12nov2026}{...}
+{* *! version 3.22.0  13nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -63,7 +63,7 @@ Networks are held by nwcommands, not in the Stata dataset: Stata's {cmd:clear} d
 {title:Required software}
 
 {pstd}
-Stata 17 or later. The commands are tested with Stata 17 and 18, on macOS and on Windows. The Mata library is
+Stata 17 or later. The commands are tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19. The Mata library is
 built with Stata 17, because a library built by a newer Stata is ignored by older versions; Stata 16 and older are not
 supported.
 
@@ -343,4 +343,4 @@ own help file is the authority on anything specific to it. When in doubt for a g
 structural commands first (they are the ones proven at real scale), and treat the figures for the dense-matrix commands as realistic planning numbers rather than hard guarantees.
 
 {hline}
-{pstd}{it:nwcommands version 3.21.0, 12 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

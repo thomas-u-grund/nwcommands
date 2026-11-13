@@ -67,6 +67,18 @@ program _nwsyntax
 		}
 	}
 	if `__nwsyntax_ok' == 0 {
+		// more networks than the command takes (e.g. "nwrem g h"): say so, rather than "Network g h not found"
+		if "`anything'" != "" & "`max'" != "." {
+			capture nwunab __nwsx_all : `anything'
+			if _rc == 0 {
+				local __nwsx_n : word count `__nwsx_all'
+				if `__nwsx_n' > `max' {
+					local __nwsx_s = cond(`max' == 1, "network is", "networks are")
+					di "{err}{p 0 0 2}too many networks: {bf:`__nwsx_all'}; only `max' `__nwsx_s' allowed here.{p_end}"
+					error 198
+				}
+			}
+		}
 		di "{err}Network {bf:`anything'} not found"
 	    error `errNWsNotFound'
 	}
