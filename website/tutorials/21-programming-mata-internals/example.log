@@ -1,0 +1,528 @@
+. * Tutorial 21: Reading networks in Mata with the nwapi functions
+. * Requires the core nwcommands 3.24 or later.
+. 
+. * 1. What is in memory
+. nwwebuse florentine, nwclear
+
+. mata: nwapi_version()
+  1
+
+. mata: nwapi_count()
+  2
+
+. mata: nwapi_names()'
+                 1             2
+    +-----------------------------+
+  1 |  flobusiness   flomarriage  |
+    +-----------------------------+
+
+. mata: nwapi_current()
+  flomarriage
+
+. mata: nwapi_exists("flomarriage"), nwapi_exists("nonet")
+       1   2
+    +---------+
+  1 |  1   0  |
+    +---------+
+
+. mata: nwapi_nodes("flomarriage"), nwapi_ties("flomarriage")
+        1    2
+    +-----------+
+  1 |  16   20  |
+    +-----------+
+
+. mata: nwapi_directed("flomarriage"), nwapi_valued("flomarriage"), nwapi_twomode(
+> "flomarriage")
+       1   2   3
+    +-------------+
+  1 |  0   0   0  |
+    +-------------+
+
+. mata: nwapi_nodes(), nwapi_ties()
+        1    2
+    +-----------+
+  1 |  16   20  |
+    +-----------+
+
+. mata: lab = nwapi_nodelabels("flomarriage")
+
+. mata: lab[1..5]'
+                1            2            3            4            5
+    +------------------------------------------------------------------+
+  1 |  acciaiuoli      albizzi    barbadori     bischeri   castellani  |
+    +------------------------------------------------------------------+
+
+. 
+. * 2. Reading the ties
+. mata: A = nwapi_matrix("flomarriage")
+
+. mata: rows(A), cols(A)
+        1    2
+    +-----------+
+  1 |  16   16  |
+    +-----------+
+
+. mata: A[1..4, 1..4]
+[symmetric]
+       1   2   3   4
+    +-----------------+
+  1 |  0              |
+  2 |  0   0          |
+  3 |  0   0   0      |
+  4 |  0   0   0   0  |
+    +-----------------+
+
+. mata: hasmissing(A)
+  0
+
+. mata: A = nwapi_matrix("flomarriage")
+
+. mata: A[2,1] = 7
+
+. mata: B = nwapi_matrix("flomarriage")
+
+. mata: A[1..3, 1..3], B[1..3, 1..3]
+       1   2   3   4   5   6
+    +-------------------------+
+  1 |  0   0   0   0   0   0  |
+  2 |  7   0   0   0   0   0  |
+  3 |  0   0   0   0   0   0  |
+    +-------------------------+
+
+. mata: mata drop A B
+
+. 
+. mata: E = nwapi_edgelist("flomarriage")
+
+. mata: rows(E), cols(E)
+        1    2
+    +-----------+
+  1 |  20    3  |
+    +-----------+
+
+. mata: E[1..5, .]
+       1   2   3
+    +-------------+
+  1 |  1   9   1  |
+  2 |  2   6   1  |
+  3 |  2   7   1  |
+  4 |  2   9   1  |
+  5 |  3   5   1  |
+    +-------------+
+
+. mata: nwapi_outdegree("flomarriage")'
+        1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+    +----------------------------------------------------------------------------
+  1 |   1    3    2    3    3    1    4    1    6    1    3    0    3    2    4
+    +----------------------------------------------------------------------------
+       16
+     ------+
+  1     3  |
+     ------+
+
+. mata: nwapi_outdegree("flomarriage") == nwapi_indegree("flomarriage")
+  1
+
+. mata: id = nwapi_nodeid("flomarriage", "medici")
+
+. mata: id
+  9
+
+. mata: nb = nwapi_neighbors("flomarriage", id)
+
+. mata: nb'
+        1    2    3    4    5    6
+    +-------------------------------+
+  1 |   1    2    3   13   14   16  |
+    +-------------------------------+
+
+. mata: lab[nb]'
+                1            2            3            4            5
+    +------------------------------------------------------------------
+  1 |  acciaiuoli      albizzi    barbadori      ridolfi     salviati
+    +------------------------------------------------------------------
+                6
+     --------------+
+  1    tornabuoni  |
+     --------------+
+
+. mata: lab[nwapi_neighbors("flomarriage", "medici")]'
+                1            2            3            4            5
+    +------------------------------------------------------------------
+  1 |  acciaiuoli      albizzi    barbadori      ridolfi     salviati
+    +------------------------------------------------------------------
+                6
+     --------------+
+  1    tornabuoni  |
+     --------------+
+
+. mata: mata drop E id nb lab
+
+. 
+. * directed networks: out- and in-neighbors
+. nwwebuse glasgow, nwclear
+
+. mata: nwapi_directed("glasgow1"), nwapi_nodes("glasgow1"), nwapi_ties("glasgow1"
+> )
+         1     2     3
+    +-------------------+
+  1 |    1    50   113  |
+    +-------------------+
+
+. mata: nwapi_neighbors("glasgow1", 1)'
+       1   2
+    +---------+
+  1 |  3   6  |
+    +---------+
+
+. mata: nwapi_inneighbors("glasgow1", 1)'
+  6
+
+. mata: nwapi_outdegree("glasgow1")'[1..10]
+        1    2    3    4    5    6    7    8    9   10
+    +---------------------------------------------------+
+  1 |   2    3    3    3    0    3    3    2    5    2  |
+    +---------------------------------------------------+
+
+. mata: nwapi_indegree("glasgow1")'[1..10]
+        1    2    3    4    5    6    7    8    9   10
+    +---------------------------------------------------+
+  1 |   1    3    8    0    0    1    3    2    2    2  |
+    +---------------------------------------------------+
+
+. 
+. * valued networks: the matrix holds the values, the degrees count the ties
+. nwwebuse sampson, nwclear
+
+. mata: nwapi_valued("samplike")
+  1
+
+. mata: A = nwapi_matrix("samplike")
+
+. mata: max(A)
+  3
+
+. mata: sum(A :> 0)
+  88
+
+. mata: nwapi_ties("samplike")
+  88
+
+. nwtomata samplike, mat(S)
+
+. mata: sum(S :> 0)
+  106
+
+. mata: mata drop A S
+
+. 
+. * 3. Looping over the networks in memory
+. nwwebuse glasgow, nwclear
+
+. set seed 2111
+
+. nwrandom 30, prob(.1) undirected name(random30)
+
+. mata:
+------------------------------------------------- mata (type end to exit) --------
+: void nwt_table()
+> {
+>     real scalar i, n, m, dens
+>     string colvector names
+>     string scalar nm
+> 
+>     names = nwapi_names()
+>     printf("{txt}%-14s %6s %6s  %-10s %7s\n", "network", "nodes", "ties", "type"
+> , "density")
+>     for (i = 1; i <= rows(names); i++) {
+>         nm = names[i]
+>         n = nwapi_nodes(nm)
+>         m = nwapi_ties(nm)
+>         dens = m / (nwapi_directed(nm) ? n*(n-1) : n*(n-1)/2)
+>         printf("{res}%-14s %6.0f %6.0f  %-10s %7.3f\n", nm, n, m,
+>             nwapi_directed(nm) ? "directed" : "undirected", dens)
+>     }
+> }
+
+: end
+----------------------------------------------------------------------------------
+
+. mata: nwt_table()
+network         nodes   ties  type       density
+glasgow1           50    113  directed     0.046
+glasgow2           50    116  directed     0.047
+glasgow3           50    122  directed     0.050
+random30           30     51  undirected   0.117
+
+. 
+. * 4. A measure of your own
+. mata:
+------------------------------------------------- mata (type end to exit) --------
+: // how many other nodes are reached in at most two steps (matrix version)
+: real colvector nwt_reach2(string scalar net)
+> {
+>     real matrix A, R
+> 
+>     A = nwapi_matrix(net)
+>     R = ((A + A*A) :> 0)
+>     _diag(R, 0)
+>     return(rowsum(R))
+> }
+
+: // the mean of x over the neighbors of every node; missing for an isolate (works
+>  for large networks)
+: real colvector nwt_nbrmean(string scalar net, real colvector x)
+> {
+>     real scalar i, n
+>     real colvector out, nb
+> 
+>     n = nwapi_nodes(net)
+>     out = J(n, 1, .)
+>     for (i = 1; i <= n; i++) {
+>         nb = nwapi_neighbors(net, i)
+>         if (rows(nb) > 0) out[i] = mean(x[nb])
+>     }
+>     return(out)
+> }
+
+: end
+----------------------------------------------------------------------------------
+
+. nwwebuse florentine, nwclear
+
+. mata: nwt_reach2("flomarriage")'
+        1    2    3    4    5    6    7    8    9   10   11   12   13   14   15
+    +----------------------------------------------------------------------------
+  1 |   6   10    9    8    6    3    9    4   11    2    6    0   11    7    8
+    +----------------------------------------------------------------------------
+       16
+     ------+
+  1    10  |
+     ------+
+
+. mata: x = st_data(., "wealth")
+
+. mata: nwt_nbrmean("flomarriage", x)'
+                 1             2             3             4             5
+    +-----------------------------------------------------------------------
+  1 |          103   47.66666667          61.5   67.66666667   83.33333333
+    +-----------------------------------------------------------------------
+                 6             7             8             9            10
+     -----------------------------------------------------------------------
+  1             36          42.5             8            31            10
+     -----------------------------------------------------------------------
+                11            12            13            14            15
+     -----------------------------------------------------------------------
+  1             70             .            99          75.5            35
+     -----------------------------------------------------------------------
+                16
+     ---------------+
+  1             46  |
+     ---------------+
+
+. 
+. * 5. Back to Stata: variables, matrices, a new network
+. mata: st_store(., st_addvar("double", "reach2"), nwt_reach2("flomarriage"))
+
+. mata: st_store(., st_addvar("double", "nbrwealth"), nwt_nbrmean("flomarriage", x
+> ))
+
+. list _nwnode wealth reach2 nbrwealth in 1/6
+
+     +------------------------------------------+
+     |    _nwnode   wealth   reach2   nbrwealth |
+     |------------------------------------------|
+  1. | acciaiuoli       10        6         103 |
+  2. |    albizzi       36       10   47.666667 |
+  3. |  barbadori       55        9        61.5 |
+  4. |   bischeri       44        8   67.666667 |
+  5. | castellani       20        6   83.333333 |
+     |------------------------------------------|
+  6. |     ginori       32        3          36 |
+     +------------------------------------------+
+
+. mata: st_matrix("R", nwt_reach2("flomarriage"))
+
+. matrix list R
+
+R[16,1]
+     c1
+ r1   6
+ r2  10
+ r3   9
+ r4   8
+ r5   6
+ r6   3
+ r7   9
+ r8   4
+ r9  11
+r10   2
+r11   6
+r12   0
+r13  11
+r14   7
+r15   8
+r16  10
+
+. mata: st_numscalar("meanreach", mean(nwt_reach2("flomarriage")))
+
+. display meanreach
+6.875
+
+. mata:
+------------------------------------------------- mata (type end to exit) --------
+: P = nwapi_matrix("flomarriage")
+
+: P = P*P
+
+: _diag(P, 0)
+
+: end
+----------------------------------------------------------------------------------
+
+. mata: st_local("labs", invtokens(nwapi_nodelabels("flomarriage")', ","))
+
+. nwset, mat(P) name(paths2) labs(`labs') undirected
+
+. nwsummarize paths2
+--------------------------------------------------
+   Network name:  paths2
+   Network id:  3
+   Directed: false
+   Valued: true
+   Two-mode: false
+   Nodes: 16
+   Selfloop: false
+   Edges: 43
+   Minimum value:  0
+   Maximum value:  2
+   Density:  .358
+   Mean degree:  5.38
+   Temporal: false
+
+. mata: mata drop P x
+
+. 
+. * 6. A reusable command
+. capture program drop nwnbrwealth
+
+. program nwnbrwealth
+  1.     syntax [anything(name=netname)], GENerate(name) VARiable(varname numeric)
+  2.     _nwsyntax `netname'
+  3.     _nwdatasync `netname'
+  4.     confirm new variable `generate'
+  5.     quietly generate double `generate' = .
+  6.     mata: st_store(., "`generate'", nwt_nbrmean(st_local("netname"), st_data(
+> ., "`variable'")))
+  7. end
+
+. nwwebuse florentine, nwclear
+
+. nwnbrwealth flomar, generate(nw1) variable(wealth)
+
+. nwnbrwealth flomarriage, generate(nw2) variable(wealth)
+
+. list _nwnode wealth nw1 nw2 in 1/4
+
+     +---------------------------------------------+
+     |    _nwnode   wealth         nw1         nw2 |
+     |---------------------------------------------|
+  1. | acciaiuoli       10         103         103 |
+  2. |    albizzi       36   47.666667   47.666667 |
+  3. |  barbadori       55        61.5        61.5 |
+  4. |   bischeri       44   67.666667   67.666667 |
+     +---------------------------------------------+
+
+. 
+. * 7. Guarding against old versions and errors
+. capture mata: nwapi_version()
+
+. display _rc
+0
+
+. mata: assert(nwapi_version() >= 1)
+
+. capture noisily mata: nwapi_nodes("friends")
+network friends not found
+
+. display _rc
+482
+
+. capture noisily mata: nwapi_neighbors("flomarriage", "nobody")
+node nobody not found in network flomarriage
+
+. display _rc
+485
+
+. capture noisily mata: nwapi_neighbors("flomarriage", 99)
+node 99 does not exist in network flomarriage (it has 16 nodes)
+
+. display _rc
+485
+
+. capture noisily mata: nwapi_neighbors("flomarriage", 1.5)
+the node number must be a whole number, not 1.5
+
+. display _rc
+198
+
+. 
+. * 8. Large networks
+. clear
+
+. quietly set obs 25000
+
+. generate long a = _n
+
+. generate long b = mod(_n, 25000) + 1
+
+. nwset a b, edgelist name(ring) undirected
+
+. mata: nwapi_nodes("ring"), nwapi_ties("ring")
+           1       2
+    +-----------------+
+  1 |  25000   25000  |
+    +-----------------+
+
+. mata: E = nwapi_edgelist("ring")
+
+. mata: E[1..3, .]
+           1       2       3
+    +-------------------------+
+  1 |      1       2       1  |
+  2 |      1   25000       1  |
+  3 |      2       3       1  |
+    +-------------------------+
+
+. mata: E[rows(E), .]
+           1       2       3
+    +-------------------------+
+  1 |  24999   25000       1  |
+    +-------------------------+
+
+. mata: d = nwapi_outdegree("ring")
+
+. mata: min(d), max(d)
+       1   2
+    +---------+
+  1 |  2   2  |
+    +---------+
+
+. mata: nwapi_neighbors("ring", 1)'
+           1       2
+    +-----------------+
+  1 |      2   25000  |
+    +-----------------+
+
+. capture noisily mata: A = nwapi_matrix("ring")
+network ring has 25000 nodes; a dense 25000 x 25000 matrix would need about 4.66 G
+> B and is refused (more than 20000 nodes). Use nwapi_edgelist(), nwapi_neighbors(
+> ) or nwapi_outdegree() instead, which never need the dense matrix.
+
+. display _rc
+484
+
+. mata: mata drop E d
+
+. 
+end of do-file

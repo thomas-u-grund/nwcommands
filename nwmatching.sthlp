@@ -114,4 +114,4 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 	{help nwmaxflow}, {help nw2project}, {help nw2set}, {help nw2fromedge}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -12,6 +12,20 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 13 November 2026: nwcommands 3.24.0, nwsaom 1.7.1, nwergm 1.7.1, nwdynam 1.3.2 and nwrem 1.1.2
+
+**nwcommands 3.24.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.24.0)). A public, read-only Mata interface: 21 `nwapi_*()` functions give your own Mata code a small, stable view of the networks in memory (properties, adjacency matrix, edge list, degrees, neighbors), documented in `help nwapi`; their names and result shapes stay the same within a major version. Tutorial 21 shows how to use them. On Linux, `nwplot, interactive` and `nwmovie` now say which library is missing and how to install it, and in console Stata the viewer commands print the file path instead of stopping. Also fixed: a stray "invalid syntax" line after some error messages, and temporary file names when the temporary directory has no trailing slash.
+
+**nwsaom 1.7.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.7.1)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwergm 1.7.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.7.1)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwdynam 1.3.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.3.2)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwrem 1.1.2** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.2)). Rebuilt for nwcommands 3.24.0; no other change.
+
+Tested on: TO BE FILLED
+
 ## 13 November 2026: nwcommands 3.23.0, nwsaom 1.7.0, nwergm 1.7.0, nwdynam 1.3.1 and nwrem 1.1.1
 
 **nwcommands 3.23.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.23.0)). Two new commands: `nwregular` finds the classes of regularly equivalent nodes, and `nwegoplot` draws the ego network of one node. New options: `nwbalance, reps()` compares the share of balanced triads with random signs, `nwturnover, formation` compares the ties formed between two waves with all pairs that had no tie, `nwcug, stat()` takes a command without the `##net##` placeholder, and `nwclustering` works without `generate()`. `nwbrokerage`, `nwmodularity` and `nwtabulate` take string variables in their categorical options, and `nwplot` places labels by a variable (`mlabvposition()`). `nwcug` and `nwcorrelate` print their results as Stata's own tests do. Results change in a few places: a Stata variable that already exists now stops a command with r(110) everywhere (about 40 commands used r(99)), and other uses of r(99) give the codes of `help nwerrorcodes`; a tie observed at several times in a temporal network keeps all of them, so `nwattime` finds ties that come and go; and a node size saved by the interactive view comes back at the size it had (`nwplot, importcoords()`). Also fixed: `nwsummarize, save(file, replace)`, the `nwqap` table, `nwdendrogram` on trees of about 50 nodes or more, and `nwinstall` now says when a part of the package could not be downloaded.

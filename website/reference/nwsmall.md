@@ -109,4 +109,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))

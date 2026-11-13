@@ -160,4 +160,4 @@ Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
 {p 4 4 2}{help nwpath}, {help nwgeodesic}, {help nwcloseness}, {help nwkatz}, {help nwdegree}, {help nwcloseness}, {help nwevcent}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

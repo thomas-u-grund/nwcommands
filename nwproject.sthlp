@@ -62,4 +62,4 @@ Build a small two-mode network (3 people x 2 events) and project it onto mode 1 
 See {help nw2project}.
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

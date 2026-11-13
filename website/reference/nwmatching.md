@@ -75,4 +75,4 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))

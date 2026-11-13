@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.23.0  13nov2026}{...}
+{* *! version 3.24.0  13nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -219,6 +219,7 @@
 {col 8}{hline 3}{c RT}       {it:Utilities}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwapi }}}Mata functions to read networks{p_end}
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:    {bf:{help nwcurrent }}}Report and set current network{p_end}
 {p2col:    {bf:{help nwerrorcodes }}}Return codes of nwcommands{p_end}
@@ -274,4 +275,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -144,4 +144,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

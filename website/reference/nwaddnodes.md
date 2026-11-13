@@ -61,4 +61,4 @@ This example adds two isolate nodes to a two-mode network - one to each mode (a 
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))

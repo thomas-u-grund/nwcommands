@@ -137,4 +137,4 @@ The result is an {it:n}-by-{it:n} network and two matrices are held at once: abo
 	{help nwkcomponents}, {help nwcohesion}, {help nwhierarchy}, {help nwclique}, {help nwkplex}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
