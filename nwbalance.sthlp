@@ -80,15 +80,6 @@ nodes. The enumeration is a kernel of the native plugin; a platform whose plugin
 Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per
 node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
 
-	With {opt reps()}, also
-	  {bf:r(reps)}		number of draws
-	  {bf:r(p_positive)}		share of the ties that are positive
-	  {bf:r(null_mean)}		mean share of balanced triads over the draws
-	  {bf:r(null_sd)}		standard deviation of that share over the draws
-	  {bf:r(null_ge)}		number of draws with a share at least the observed {bf:r(balance)}
-	  {bf:r(null_expected)}	(1 + (2{it:p} - 1)^3) / 2 with {it:p} = {bf:r(p_positive)}
-
-
 {title:Examples}
 
 	{cmd:. nwset, mat((0,1,1,-1\1,0,1,-1\1,1,0,1\-1,-1,1,0)) undirected labs(A,B,C,D)}
@@ -117,6 +108,13 @@ balanced; {it:A-C-D} and {it:B-C-D} (one negative tie each) are not.
 {synopt:{bf:r(balanced_triad)}}number of balanced closed triads{p_end}
 {synopt:{bf:r(unbalanced_triad)}}number of unbalanced closed triads{p_end}
 {synopt:{bf:r(balance)}}{it:balanced_triad} / {it:closed_triad}{p_end}
+{p2col 5 21 25 2: With {opt reps()}}{p_end}
+{synopt:{bf:r(reps)}}number of draws{p_end}
+{synopt:{bf:r(p_positive)}}share of the ties that are positive{p_end}
+{synopt:{bf:r(null_mean)}}mean share of balanced triads over the draws{p_end}
+{synopt:{bf:r(null_sd)}}standard deviation of that share over the draws{p_end}
+{synopt:{bf:r(null_ge)}}number of draws with a share at least the observed {bf:r(balance)}{p_end}
+{synopt:{bf:r(null_expected)}}(1 + (2{it:p} - 1)^3) / 2 with {it:p} = {bf:r(p_positive)}{p_end}
 
 
 {title:References}

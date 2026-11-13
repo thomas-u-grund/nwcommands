@@ -31,7 +31,7 @@ onemode]
 |---|---|
 | `measure(binary\|arithmetic\|geometric\|maximum\|minimum)` | How to combine the two tie values in a potential triple for a weighted network; *binary* ignores tie values and only checks presence/absence; *arithmetic*/*geometric*/*maximum*/*minimum* combine the two tie values via that function; default = *arithmetic* for a valued undirected network, *binary* otherwise |
 | `symmetrize` | Symmetrize a directed network before calculating (required for any weighted `measure()` on a directed network - see **Network types** below) |
-| `generate(newvarname)` | Name of a new variable that stores each node's own clustering coefficient; without it the coefficients are computed in a temporary variable |
+| `generate(newvarname)` | Name of a new variable that stores each node's own clustering coefficient; for a one-mode network it may be left out, and the coefficients are then computed in a temporary variable (a two-mode network needs it, unless `ra` is given) |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
 | `silent` | Suppress display of results |
 | `level(#)` | Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = *1* |

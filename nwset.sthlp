@@ -335,10 +335,13 @@ temporal dimension via exactly one of three options - {bf:time()}, {bf:interval(
 {p 8 12 2}{bf:time({it:timevar})}{p_end}
 {p 12 12 2}{bf:snapshot} semantics: each row's own {it:timevar} value is the single instant that tie
 was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
-carrying its own recorded time{p_end}
+carrying its own recorded time. A pair listed in several rows with different times is a tie observed at
+each of those times, so ties can come and go: a tie of waves 1 and 3 is present at wave 1, absent at
+wave 2 and present again at wave 3 (see {help nwattime}){p_end}
 {p 8 12 2}{bf:interval({it:startvar endvar})}{p_end}
 {p 12 12 2}{bf:interval} semantics: each row is active for {it:startvar} <= {it:t} < {it:endvar} - a
-missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
+missing {it:endvar} means the tie is still ongoing (open-ended). A pair may have several rows, one for
+each period in which the tie exists{p_end}
 {p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
 {p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
 tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
@@ -433,8 +436,9 @@ an adjacency list or an edgelist represented by Stata variables.
 {title:Limits}
 
 {pstd}
-Options {opt time()} and {opt interval()} of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000
-nodes). Two-mode temporal networks keep the matrices.
+Options {opt time()} and {opt interval()} keep the times as a list with one entry per row of the data
+(pair and time, or pair, start and end), not as {it:n}-by-{it:n} matrices, which would hold only one
+time per pair and take 80 GB each at 100,000 nodes.
 
 
 {title:Stored results}

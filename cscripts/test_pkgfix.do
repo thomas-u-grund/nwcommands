@@ -183,10 +183,11 @@ assert strpos(" `r(nets)' ", " dp2 ") > 0
 * ------------------------------------------------------------------
 * 7. smaller items
 * ------------------------------------------------------------------
-* nwbrokerage refuses a string group()
+* nwbrokerage takes a string group() since 3.20.1 (only whether two
+* nodes share a group matters)
 nwuse data/lazega, nwclear
 capture nwbrokerage lazega_adv, group(office) generate(bk)
-assert _rc == 109
+assert _rc == 0
 * nwgeodesic: no note about alpha unless alpha() is typed
 tempfile l7
 _pf_log `l7'

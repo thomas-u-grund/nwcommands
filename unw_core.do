@@ -407,6 +407,31 @@ real matrix build_edge_value_triplets(string rowvector nodenames, string colvect
 	return((ego[o], alt[o], val[o]))
 }
 
+/*
+	The times of a temporal network as a list with one row per observation: (ego, alter, time) for a snapshot
+	network, (ego, alter, start, end) for an interval network (v2 the ends), sorted by ego, alter, time. A pair
+	listed at several times keeps all of them, so that a tie can be present at wave 1, absent at wave 2 and present
+	again at wave 3 (build_edge_value_triplets() keeps only the last row of a pair, which lost the earlier waves).
+	Rows with a missing time or start, rows whose nodes are not in the network, and repeated identical rows are
+	dropped; symmetric adds the row (alter, ego) of every row.
+*/
+real matrix build_edge_time_list(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric)
+{
+	real colvector i1, i2, keep
+	real matrix L
+	real scalar interval
+
+	interval = (rows(v2) > 0)
+	i1 = nw_label_positions(nodenames, lab1)
+	i2 = nw_label_positions(nodenames, lab2)
+	keep = nw_which((i1 :> 0) :& (i2 :> 0) :& (v1 :!= .))
+	if (rows(keep) == 0) return(J(0, 3 + interval, 0))
+	L = (i1[keep], i2[keep], v1[keep])
+	if (interval) L = (L, v2[keep])
+	if (symmetric) L = L \ (L[., 2], L[., 1], L[|1, 3 \ ., cols(L)|])
+	return(uniqrows(L))
+}
+
 /* the value of cell (el[k,1], el[k,2]) in the list T = (ego, alter, value) sorted by ego, alter; missing when there is none */
 real colvector nw_triplet_values(real matrix T, real scalar n, real matrix el)
 {
@@ -4650,54 +4675,54 @@ class `NWdef' {
 	a documented simplification, not silently wrong.
 */
 real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real scalar at){
-	real matrix et, el, out
-	real colvector vt
-	real scalar k, nout, i, j, w
-	// the ties come from the stored ties (row-major order as before), not from a scan of all n^2 cells
+	real matrix et
 	et = *(p->get_edge_time())
-	el = p->edgelist()
-	if (p->get_time_sparse()) {
-		// times held as a list: the time of every stored tie in one pass
-		vt = nw_triplet_values(et, p->get_nodes(), el)
-		if (rows(el) == 0) return(J(0,3,0))
-		out = select(el, (el[.,1] :!= el[.,2]) :& (vt :!= .) :& (vt :== at) :& (el[.,3] :!= .) :& (el[.,3] :!= 0))
-		return(rows(out) == 0 ? J(0,3,0) : out)
-	}
-	out = J(rows(el), 3, 0)
-	nout = 0
-	for (k=1; k<=rows(el); k++){
-		i = el[k,1]; j = el[k,2]; w = el[k,3]
-		if (i != j & et[i,j] != . & et[i,j] == at & w != . & w != 0){
-			nout = nout + 1
-			out[nout,1] = i
-			out[nout,2] = j
-			out[nout,3] = w
-		}
-	}
-	if (nout == 0) return(J(0,3,0))
-	return(out[(1::nout),.])
+	if (!p->get_time_sparse()) return(nwattime_slice_dense(p, et, et, at, 0))
+	// the pairs observed at exactly this time
+	if (rows(et) == 0) return(J(0,3,0))
+	return(nwattime_ties_of_pairs(p, select(et[., (1, 2)], (et[., 3] :!= .) :& (et[., 3] :== at))))
 }
 
 real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real scalar at){
-	real matrix es, ee, el, out
-	real colvector vs, ve
-	real scalar k, nout, i, j, w
+	real matrix es, ee
 	es = *(p->get_edge_start())
 	ee = *(p->get_edge_end())
+	if (!p->get_time_sparse()) return(nwattime_slice_dense(p, es, ee, at, 1))
+	// the pairs with an interval that contains the time: start <= t < end; a missing end is open-ended (missing is
+	// larger than every number in Mata), a missing start is excluded
+	if (rows(es) == 0) return(J(0,3,0))
+	return(nwattime_ties_of_pairs(p, select(es[., (1, 2)], (es[., 3] :!= .) :& (es[., 3] :<= at) :& (ee[., 3] :> at))))
+}
+
+/* the stored ties (i, j, value) of the pairs in P (rows i, j; repeats allowed), in row-major order, without loops and zero or missing values */
+real matrix nwattime_ties_of_pairs(pointer(class nw_def scalar) scalar p, real matrix P)
+{
+	real matrix el, out
+	real colvector w
+	if (rows(P) == 0) return(J(0,3,0))
+	P = uniqrows(P)
+	P = select(P, P[., 1] :!= P[., 2])
+	if (rows(P) == 0) return(J(0,3,0))
 	el = p->edgelist()
-	if (p->get_time_sparse()) {
-		vs = nw_triplet_values(es, p->get_nodes(), el)
-		ve = nw_triplet_values(ee, p->get_nodes(), el)
-		if (rows(el) == 0) return(J(0,3,0))
-		// a missing end is open-ended (missing is larger than every number in Mata), a missing start is excluded
-		out = select(el, (el[.,1] :!= el[.,2]) :& (vs :!= .) :& (vs :<= at) :& (ve :> at) :& (el[.,3] :!= .) :& (el[.,3] :!= 0))
-		return(rows(out) == 0 ? J(0,3,0) : out)
-	}
+	if (rows(el) == 0) return(J(0,3,0))
+	// the value of the stored tie of every pair (el is sorted by ego, alter)
+	w = nw_triplet_values(el, p->get_nodes(), P)
+	out = select((P, w), (w :!= .) :& (w :!= 0))
+	return(rows(out) == 0 ? J(0,3,0) : out)
+}
+
+/* networks declared by an older version, whose times are n x n matrices (one time per pair) */
+real matrix nwattime_slice_dense(pointer(class nw_def scalar) scalar p, real matrix es, real matrix ee, real scalar at, real scalar interval){
+	real matrix el, out
+	real scalar k, nout, i, j, w, on
+	el = p->edgelist()
 	out = J(rows(el), 3, 0)
 	nout = 0
 	for (k=1; k<=rows(el); k++){
 		i = el[k,1]; j = el[k,2]; w = el[k,3]
-		if (i != j & es[i,j] != . & es[i,j] <= at & ee[i,j] > at & w != . & w != 0){
+		if (interval) on = (es[i,j] != . & es[i,j] <= at & ee[i,j] > at)
+		else on = (es[i,j] != . & es[i,j] == at)
+		if (i != j & on & w != . & w != 0){
 			nout = nout + 1
 			out[nout,1] = i
 			out[nout,2] = j
@@ -4739,24 +4764,22 @@ real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real sca
 }
 
 /*
-	Store the time of every tie (v2 empty: snapshot, one value per tie) or the start and end of every tie (v2 the
-	ends) of the one-mode network p: as n x n matrices up to 2,000 nodes, as lists of the ties that have a value
-	above (the matrices of 100,000 nodes would take 80 GB each).
+	Store the times of the ties of p: for a snapshot network (interval = 0) the list (ego, alter, time), for an
+	interval network the list (ego, alter, start) as edgestart and the matching list (ego, alter, end) as edgeend,
+	row by row. Every observation of a pair is kept (build_edge_time_list()), so a tie can come and go. The lists
+	are always used (timesparse = 1); the n x n matrices of older versions held one time per pair only.
 */
 void nw_set_temporal_values(pointer(class nw_def scalar) scalar p, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric, real scalar interval)
 {
-	string rowvector names
+	real matrix L
 
-	names = p->get_nodenames()
-	if (cols(names) > 2000) {
-		p->set_time_sparse(1)
-		if (!interval) p->set_edge_time(build_edge_value_triplets(names, lab1, lab2, v1, symmetric))
-		else p->set_edge_interval(build_edge_value_triplets(names, lab1, lab2, v1, symmetric), build_edge_value_triplets(names, lab1, lab2, v2, symmetric))
+	p->set_time_sparse(1)
+	if (!interval) {
+		p->set_edge_time(build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, J(0, 1, .), symmetric))
 	}
 	else {
-		p->set_time_sparse(0)
-		if (!interval) p->set_edge_time(build_edge_value_matrix(names, lab1, lab2, v1, symmetric))
-		else p->set_edge_interval(build_edge_value_matrix(names, lab1, lab2, v1, symmetric), build_edge_value_matrix(names, lab1, lab2, v2, symmetric))
+		L = build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, v2, symmetric)
+		p->set_edge_interval(L[., (1, 2, 3)], L[., (1, 2, 4)])
 	}
 }
 
@@ -10811,7 +10834,7 @@ pointer(real matrix) `NWdef'::get_edge_time(){
 }
 
 /*
-	timesparse = 1: edgetime (or edgestart and edgeend) hold a list of (ego, alter, value) rows, sorted by
+	timesparse = 1: edgetime (or edgestart and edgeend) hold a list of (ego, alter, value) rows, one per observation, sorted by
 	ego, alter, instead of an n x n matrix (large networks; see build_edge_value_triplets())
 */
 real scalar `NWdef'::get_time_sparse(){

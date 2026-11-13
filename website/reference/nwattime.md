@@ -37,12 +37,13 @@ replace]
 The slicing rule depends on the source network's own temporal semantics:
 
 - **snapshot**
-- a tie is active at *t* when its own recorded time equals *t* exactly
+- a tie is active at *t* when one of its recorded times equals *t* exactly (a pair
+- listed at several times is active at each of them)
 - **interval**
 - a tie is active at *t* when *start* <= *t* < *end* - the documented convention.
 - A tie with a missing *end* (an ongoing tie with no recorded end date) is treated as open-ended
 - and stays active for every *t* from its *start* onward. A missing *start* is not specially
-- handled and excludes the tie
+- handled and excludes that row. A pair with several rows is active in each of its periods
 - **event**
 - an exact-timestamp match: every event recorded at precisely *t* becomes a binary tie in
 - the static view. This is the one place an event network is allowed to become a persistent graph in

@@ -10,10 +10,6 @@ program nwclustering
 	// A two-mode network gets the two-mode clustering coefficients (Opsahl 2013, tnet::clustering_tm; ra: Robins and Alexander 2004) by
 	// default; onemode computes the one-mode coefficient of the bipartite graph.  nw2clustering is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
-		if "`generate'" == "" & "`ra'" == "" {
-			tempvar __clocal
-			local generate "`__clocal'"
-		}
 		if "`silent'" != "" | "`symmetrize'" != "" {
 			local __ign ""
 			if "`silent'" != "" local __ign " silent"

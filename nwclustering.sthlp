@@ -36,7 +36,7 @@ otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before calculating (required for any
 weighted {opt measure()} on a directed network - see {bf:Network types} below){p_end}
 {synopt:{opth generate(newvarname)}}Name of a new variable that stores each node's own
-clustering coefficient; without it the coefficients are computed in a temporary variable{p_end}
+clustering coefficient; for a one-mode network it may be left out, and the coefficients are then computed in a temporary variable (a two-mode network needs it, unless {opt ra} is given){p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt level(#)}}Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = {it:1}{p_end}

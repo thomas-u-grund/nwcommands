@@ -20,7 +20,7 @@ nwsummarize
 mat
 matonly
 detail
-save(filename)
+save(filename[, replace])
 silent
 ]
 ```
@@ -30,7 +30,7 @@ silent
 | `mat` | Display adjacency matrix of the network |
 | `matonly` | Only display adjacency matrix of the network |
 | `detail` | Calculate additional network measures: reciprocity, transitivity and the centralization measures (their `r()` results are only filled with `detail`); reciprocity is displayed as n/a for an undirected network (the stored `r(reciprocity)` is unchanged) |
-| `save(filename)` | Save network measures in file |
+| `save(`*filename*[`, replace`]`)` | Save the network measures in a Stata data set, one observation per network; an existing file is replaced (with or without `replace`) |
 | `silent` | Compute and return results without displaying anything |
 
 ## Description
