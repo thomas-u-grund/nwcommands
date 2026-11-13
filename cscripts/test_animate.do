@@ -14,8 +14,21 @@ set graphics off
 * without ImageMagick installed, since that is a real, documented,
 * external prerequisite for this command, not something nwcommands
 * itself controls.
-capture shell which convert
+tempfile _whichout
+capture shell which convert > "`_whichout'" 2>/dev/null
 local hasimagemagick = (_rc == 0)
+* Linux/macOS: shell may return 0 whatever the exit status of which, so require a path in its output
+if "`c(os)'" != "Windows" {
+	local hasimagemagick 0
+	capture confirm file "`_whichout'"
+	if _rc == 0 {
+		tempname _wh
+		file open `_wh' using "`_whichout'", read text
+		file read `_wh' _whline
+		file close `_wh'
+		if strpos(`"`_whline'"', "convert") > 0 local hasimagemagick 1
+	}
+}
 * Windows: shell always returns 0, and "convert" is Windows' own disk tool (C:\Windows\System32\convert.exe), not
 * ImageMagick; animate needs imagickpath() there. The test runs on Windows only with NW_IMAGICKPATH set (not done here).
 if "`c(os)'" == "Windows" local hasimagemagick 0

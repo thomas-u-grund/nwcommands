@@ -1634,7 +1634,9 @@ program nwplot, rclass
 		// before `restore', but was already gone by the time the caller's
 		// next command ran). Built manually instead, in the OS temp dir,
 		// so its lifetime isn't tied to this program's own scope.
-		local _nwedit_out = "`c(tmpdir)'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
+		local _nwtd "`c(tmpdir)'"
+		if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
+		local _nwedit_out = "`_nwtd'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
 		// fname(): write the interactive HTML to a chosen file instead of the
 		// time-stamped temp-folder file; ".html" is appended when the name
 		// has no extension, a relative name is taken relative to the
