@@ -1,6 +1,6 @@
 ---
 title: "nwcommands tutorials"
-description: "Twenty-one worked, step-by-step tutorials for nwcommands, in a logical order, with real Stata output."
+description: "Twenty worked, step-by-step tutorials for nwcommands, in a logical order, with real Stata output."
 nav_exclude: true
 ---
 
@@ -65,8 +65,6 @@ rather look up a specific command directly, see the [command reference](../refer
    actor models (`nwdynam`), with their install steps
 - [Tutorial 20: Programming with Mata](20-programming-mata-bridge/) — moving a network into Mata, computing a
    measure of your own and returning it as variables and networks (`nwtomata`, `nwset, mat()`)
-- [Tutorial 21: Inside the Mata classes](21-programming-mata-internals/) — the network objects behind the
-   commands, and how to write your own network command (advanced; the interface is not stable)
 
 The statistical models are separate packages with their own sections, each with installation notes,
 a comparison with the R package it follows and worked tutorials: [nwsaom](../nwsaom/) (SAOM),
