@@ -37,7 +37,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`help nwerrorcodes`** lists every code the core commands raise, the package-specific codes and the Stata codes, with the situations in which each is raised. It said it documented every code but listed only the package-specific ones, and it listed r(481), which no command raises (Stata uses 481 for another error).
 - **Website command reference:** sections of the help files with other titles than the standard ones were left out of the web pages, among them "Network types" (129 commands), "Limits" (83 commands), the code tables of `nwerrorcodes`, the data set descriptions of `nwwebuse` and most of `nwintro` and `nwprogramming`. All sections are now converted.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite), on Windows 11 with StataNow 19.5 MP and on Linux (Ubuntu 22.04) with StataNow 19.5 MP. On Linux, in console Stata, the tests that need the Stata GUI (dialogs, `nwinstall, usermenu`, `view`) cannot run and are not counted.
 
 ## [3.22.0] - 2026-11-13
 
