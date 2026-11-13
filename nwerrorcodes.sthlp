@@ -63,7 +63,8 @@ Inside a program the package-specific codes are also available as local macros f
 {synopt:{bf:4}}{cmd:nwinstall} building the Mata library: the data in memory would be cleared; save them and type {cmd:clear all} first{p_end}
 {synopt:{bf:9}}{cmd:nwinstall} building a native plugin: the compiler stopped{p_end}
 {synopt:{bf:109}}Type mismatch: a string variable where a numeric one is needed (for example {cmd:nwset, eventtime()}, {cmd:group()} of {cmd:nwbrokerage}){p_end}
-{synopt:{bf:110}}A Stata variable already exists (for example a {cmd:generate()} target of a measure such as {cmd:nwdegree}, {cmd:nwbetween} or {cmd:nwplot}); specify {cmd:replace} or another name. {bf:483} is the code for a {it:network} that already exists{p_end}
+{synopt:{bf:110}}A Stata variable already exists (for example a {cmd:generate()} target of a measure such as {cmd:nwdegree}, {cmd:nwbetween} or {cmd:nwplot});
+specify {cmd:replace} or another name. {bf:483} is the code for a {it:network} that already exists{p_end}
 {synopt:{bf:111}}Something named in an option was not found (a variable, a Mata matrix, a cluster){p_end}
 {synopt:{bf:125}}A number is out of its allowed range (for example a probability outside 0 to 1, a number of nodes below 2){p_end}
 {synopt:{bf:184}}Options that may not be combined ({cmd:nwtostata}){p_end}
