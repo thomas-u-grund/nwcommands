@@ -24,7 +24,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 **nwrem 1.1.2** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.2)). Rebuilt for nwcommands 3.24.0; no other change.
 
-Tested on: TO BE FILLED
+All five packages were tested on macOS with Stata 17, 18 and 19 (the full test suites), on Windows 11 with Stata 19 and on Linux (Ubuntu 22.04) with Stata 19. On Linux, in console Stata, the tests that need the Stata GUI cannot run.
 
 ## 13 November 2026: nwcommands 3.23.0, nwsaom 1.7.0, nwergm 1.7.0, nwdynam 1.3.1 and nwrem 1.1.1
 
