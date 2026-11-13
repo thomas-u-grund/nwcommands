@@ -6,6 +6,17 @@ live there. Some entries below still mention them as historical examples.
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
+## The public Mata API (`nwapi_*`, section at the end of `unw_core.do`): rules and the traps met while writing it (2026-11-13)
+
+- Public functions are `nwapi_*`, internal helpers `_nwapi_*`; `cscripts/test_nwapi.do` fails when a signature (type, orientation, number of functions, return codes) changes. The classes stay internal: never return a class pointer, always a copy, and never mutate (no `get_modes()`, which fills the modes on a read; no `make_current`).
+- The registry is the Mata global `__nw` of class `nws`; a library function reaches it with `findexternal("__nw")` (NULL after `nwclear`) and `pointer(class nws scalar) p = q`. The Mata class names in `unw_core.do` are the locals `` `NWs' `` (`nws`), `` `NWdef' `` (`nw_def`).
+- Mata passes arguments by REFERENCE: assigning to an argument inside a helper changes the caller's variable (`name = nwapi_current()` altered the user's string). Copy to a local first.
+- `->` cannot be applied to a function result (`f(x)->get_nodes()` is "invalid expression"): store the pointer first. A column vector with one element has orgtype `scalar`, so a signature test must check element type and `cols() == 1`, not orgtype. `x[i,j] = ...; mata drop x` on one `mata:` line is not accepted: use a `mata: ... end` block.
+- `transmorphic scalar node` makes Mata reject a row vector with its own r(3200) before the function can answer 198: declare the argument `transmorphic matrix` and check the shape in the function.
+- The stored matrix of a two-mode network has MISSING cells for dyads inside a mode (not only the diagonal); `nwtomata` returns them, `nwapi_matrix()` replaces all missing values by 0.
+- `NWsdef::get_current_name()` tests `strpos(get_names(), current)`, a substring match: with networks `abc` and a deleted current `ab` it still reports `ab`. `nwapi_current()` compares exact names and falls back to the first network without changing the current network. Not fixed in the class.
+- The 484 text of `ensure_dense_built()` contains a backtick-quote pair in its source (the message prints `` `big' ``); the new code keeps backticks out of its Mata strings (the do-file is macro-expanded).
+
 ## `nwinstall, buildmata()` rebuilds Mata libraries in the user's session: three traps (2026-11-03)
 
 `nwinstall_buildmata.ado` compiles `unw_core.do`, `unw_saom.do` (+ `unw_saom_struct.do`), `unw_ergm.do`, `unw_dynam.do`, `unw_rem.do` with the Stata that runs, so a library built by a newer Stata can be replaced by one that loads.

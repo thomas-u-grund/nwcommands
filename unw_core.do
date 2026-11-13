@@ -13678,3 +13678,364 @@ real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Sta
 	return(Pos)
 }
 end
+
+/* -------------------------------------------------------------------- */
+/*
+	PUBLIC MATA API (help nwapi): a small, read-only, stable layer over the hidden classes `NWs' / `NWdef'.
+
+	Rules of this section (see also help nwapi):
+	  - every public function is called nwapi_*; internal helpers are called _nwapi_* and are not part of the API
+	  - a network is addressed by its exact name (string); "" is the current network; no class pointer ever leaves
+	  - every function checks its arguments and stops with a package return code (482 network not found, 485 node not
+	    found or id out of range, 484 dense matrix refused, 198 invalid argument) and a readable message, never with a
+	    raw Mata error from the class code
+	  - nothing here changes a network (or the current network); results are copies
+	  - a signature change (arguments, return type or orientation) is a breaking change: cscripts/test_nwapi.do
+	    checks every signature; bump nwapi_version() only when the API generation changes incompatibly
+	Keep the messages free of backtick characters: the source is expanded by Stata's macro processor.
+*/
+mata:
+
+/* the API generation: 1 for the whole of nwcommands 3.x; it changes only with an incompatible change */
+real scalar nwapi_version()
+{
+	return(1)
+}
+
+/* the registry of networks, or NULL when no network was ever created in this session (or after nwclear) */
+pointer(class `NWs' scalar) scalar _nwapi_registry()
+{
+	pointer scalar q
+	pointer(class `NWs' scalar) scalar p
+
+	q = findexternal("__nw")
+	if (q == NULL) return(NULL)
+	if (eltype(*q) != "class") return(NULL)
+	p = q
+	return(p)
+}
+
+real scalar nwapi_count()
+{
+	pointer(class `NWs' scalar) scalar p
+
+	p = _nwapi_registry()
+	if (p == NULL) return(0)
+	return(p->nws.get_number())
+}
+
+string colvector nwapi_names()
+{
+	pointer(class `NWs' scalar) scalar p
+
+	p = _nwapi_registry()
+	if (p == NULL) return(J(0, 1, ""))
+	if (p->nws.get_number() == 0) return(J(0, 1, ""))
+	return(vec(p->nws.names))
+}
+
+/* the exact name of the current network; stops with 482 when there is none */
+string scalar nwapi_current()
+{
+	pointer(class `NWs' scalar) scalar p
+	string scalar s
+
+	p = _nwapi_registry()
+	if (p == NULL) {
+		errprintf("no network in memory\n")
+		exit(`errNWsNotFound')
+	}
+	if (p->nws.get_number() == 0) {
+		errprintf("no network in memory\n")
+		exit(`errNWsNotFound')
+	}
+	if (p->nws.pcurrent != NULL) {
+		s = p->nws.pcurrent->get_name()
+		if (first_index_match(p->nws.names, s) > 0) return(s)
+	}
+	return(p->nws.names[1])
+}
+
+/* 1 if the network exists; nwapi_exists("") is 1 if any network is in memory (there is then a current network) */
+real scalar nwapi_exists(| string scalar name)
+{
+	pointer(class `NWs' scalar) scalar p
+
+	p = _nwapi_registry()
+	if (p == NULL) return(0)
+	if (args() == 0) return(p->nws.get_number() > 0)
+	if (name == "") return(p->nws.get_number() > 0)
+	return(first_index_match(p->nws.names, name) > 0)
+}
+
+/* the network object of name (exact) or of the current network (""), or a clean error; internal */
+pointer(class `NWdef' scalar) scalar _nwapi_net(string scalar name)
+{
+	pointer(class `NWs' scalar) scalar p
+	string scalar nm
+	real scalar i
+
+	// Mata passes arguments by reference: never assign to name (it would change the caller's variable)
+	nm = name
+	if (nm == "") nm = nwapi_current()
+	p = _nwapi_registry()
+	i = 0
+	if (p != NULL) i = first_index_match(p->nws.names, nm)
+	if (i == 0) {
+		errprintf("network %s not found\n", nm)
+		exit(`errNWsNotFound')
+	}
+	return(p->nws.pdefs[i])
+}
+
+real scalar nwapi_nodes(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->get_nodes())
+}
+
+real scalar nwapi_directed(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->is_directed_boolean() == 1)
+}
+
+real scalar nwapi_valued(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->is_valued_boolean() == 1)
+}
+
+real scalar nwapi_twomode(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->is_2mode_boolean() == 1)
+}
+
+real scalar nwapi_selfloops(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->is_selfloop_boolean() == 1)
+}
+
+/* 1 if the network was declared temporal (snapshots, intervals or events); the time data are not part of this API */
+real scalar nwapi_temporal(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	return(q->is_temporal_boolean() == 1)
+}
+
+/* the node labels, one per node, as a column vector */
+string colvector nwapi_nodelabels(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	if (q->get_nodes() == 0) return(J(0, 1, ""))
+	return(vec(q->nodes))
+}
+
+/* the mode (1 or 2) of every node, as a column vector; all 1 for a one-mode network */
+real colvector nwapi_modes(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+	real scalar n
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	n = q->get_nodes()
+	if (n == 0) return(J(0, 1, 1))
+	if (q->is_2mode_boolean() != 1 | cols(q->modes) != n) return(J(n, 1, 1))
+	return(strtoreal(vec(q->modes)))
+}
+
+/* the number of ties: arcs of a directed network, edges of an undirected one (each counted once; a self-loop counts once) */
+real scalar nwapi_ties(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+	real colvector r
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	q->ensure_sparse_built()
+	if (q->is_directed_boolean() == 1) return(rows(q->colidx))
+	r = q->csr_rows()
+	return((rows(r) + sum(r :== q->colidx)) / 2)
+}
+
+/*
+	The adjacency matrix (rows: senders, columns: receivers; the value of a tie, 1 in a network without values; 0
+	where there is no tie), as a COPY without missing values. This differs from the matrix that nwtomata returns,
+	which has missing cells where a tie is impossible (the diagonal of a network without self-loops, the dyads inside
+	a mode of a two-mode network): here they are 0, so that A * A and sums work. Refused above the node limit of
+	the dense matrix.
+*/
+real matrix nwapi_matrix(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+	real scalar n
+	real matrix e
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	n = q->get_nodes()
+	if (n > `nw_max_dense_nodes') {
+		errprintf("network %s has %g nodes; a dense %g x %g matrix would need about %g GB and is refused (more than %g nodes). Use nwapi_edgelist(), nwapi_neighbors() or nwapi_outdegree() instead, which never need the dense matrix.\n", q->get_name(), n, n, n, round((n * n * 8 / 1024^3) * 100) / 100, `nw_max_dense_nodes')
+		exit(`errDenseTooLarge')
+	}
+	e = q->get_matrix_copy()
+	// missing cells are not ties: the diagonal of a network without self-loops, and the dyads inside a mode of a two-mode network
+	_editmissing(e, 0)
+	return(e)
+}
+
+/*
+	The ties as a matrix with three columns: sender, receiver (node numbers) and value (1 in a network without values),
+	one row per tie, ordered by sender and then receiver. An undirected network lists each tie once, with
+	sender <= receiver. No ties: a matrix with 0 rows and 3 columns.
+*/
+real matrix nwapi_edgelist(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+	real colvector r, c, w, keep
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	q->ensure_sparse_built()
+	r = q->csr_rows()
+	c = q->colidx
+	w = q->cweight
+	if (q->is_directed_boolean() != 1) {
+		keep = selectindex(r :<= c)
+		if (rows(keep) == 0) return(J(0, 3, .))
+		return((r[keep], c[keep], w[keep]))
+	}
+	if (rows(r) == 0) return(J(0, 3, .))
+	return((r, c, w))
+}
+
+/* the number of ties each node sends (loops count once), as a column vector, one row per node */
+real colvector nwapi_outdegree(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	if (q->get_nodes() == 0) return(J(0, 1, .))
+	return(vec(q->get_outdegree(0)))
+}
+
+/* the number of ties each node receives; in an undirected network the same as nwapi_outdegree() */
+real colvector nwapi_indegree(| string scalar name)
+{
+	pointer(class `NWdef' scalar) scalar q
+	string scalar s
+
+	s = (args() == 0 ? "" : name)
+	q = _nwapi_net(s)
+	if (q->get_nodes() == 0) return(J(0, 1, .))
+	return(vec(q->get_indegree(0)))
+}
+
+/* the node number of a label; stops with 485 when no node has the label (the first one when several have it) */
+real scalar nwapi_nodeid(string scalar name, string scalar label)
+{
+	pointer(class `NWdef' scalar) scalar q
+	real scalar i
+
+	q = _nwapi_net(name)
+	i = first_index_match(vec(q->nodes), label)
+	if (i == 0) {
+		errprintf("node %s not found in network %s\n", label, q->get_name())
+		exit(`errNodeNotFound')
+	}
+	return(i)
+}
+
+/* a node given as a number or as a label becomes a node number, with the checks of the API; internal */
+real scalar _nwapi_node(pointer(class `NWdef' scalar) scalar q, transmorphic node)
+{
+	real scalar i, n
+
+	if (rows(node) != 1 | cols(node) != 1) {
+		errprintf("the node must be a single node number or a single label\n")
+		exit(198)
+	}
+	n = q->get_nodes()
+	if (eltype(node) == "string") {
+		i = first_index_match(vec(q->nodes), node)
+		if (i == 0) {
+			errprintf("node %s not found in network %s\n", node, q->get_name())
+			exit(`errNodeNotFound')
+		}
+		return(i)
+	}
+	if (eltype(node) != "real") {
+		errprintf("the node must be a node number (real) or a label (string)\n")
+		exit(198)
+	}
+	if (node >= . | node != trunc(node)) {
+		errprintf("the node number must be a whole number, not %s\n", strofreal(node))
+		exit(198)
+	}
+	if (node < 1 | node > n) {
+		errprintf("node %g does not exist in network %s (it has %g nodes)\n", node, q->get_name(), n)
+		exit(`errNodeNotFound')
+	}
+	return(node)
+}
+
+/* the nodes a node sends ties to (all its neighbors in an undirected network), ascending node numbers, a column vector (0 x 1 if none) */
+real colvector nwapi_neighbors(string scalar name, transmorphic matrix node)
+{
+	pointer(class `NWdef' scalar) scalar q
+	real scalar i
+
+	q = _nwapi_net(name)
+	i = _nwapi_node(q, node)
+	return(vec(q->neighbors(i)))
+}
+
+/* the nodes a node receives ties from (the same as nwapi_neighbors() in an undirected network), ascending, a column vector (0 x 1 if none) */
+real colvector nwapi_inneighbors(string scalar name, transmorphic matrix node)
+{
+	pointer(class `NWdef' scalar) scalar q
+	real scalar i
+
+	q = _nwapi_net(name)
+	i = _nwapi_node(q, node)
+	return(vec(q->neighbors_in(i)))
+}
+
+end
