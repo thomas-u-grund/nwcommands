@@ -4,11 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.24.0] - 2026-11-13
 
 ### Added
 - **A public Mata interface, `nwapi_*()` (`help nwapi`).** Twenty-one read-only Mata functions give your own Mata code a small, stable view of the networks in memory: `nwapi_count()`, `nwapi_names()`, `nwapi_exists()`, `nwapi_current()`; the properties `nwapi_nodes()`, `nwapi_ties()`, `nwapi_directed()`, `nwapi_valued()`, `nwapi_twomode()`, `nwapi_selfloops()`, `nwapi_temporal()`, `nwapi_nodelabels()`, `nwapi_modes()`; and the ties as `nwapi_matrix()` (a copy without missing values: the diagonal and the dyads inside a mode of a two-mode network are 0, unlike `nwtomata`), `nwapi_edgelist()` (each tie once in an undirected network), `nwapi_outdegree()`, `nwapi_indegree()`, `nwapi_neighbors()`, `nwapi_inneighbors()` and `nwapi_nodeid()`. A network is given by its exact name (`""` is the current network), nodes by number or label. Errors use the documented return codes (482, 485, 198; 484 for `nwapi_matrix()` above 20,000 nodes). Names, arguments and result shapes stay the same within a major version; `nwapi_version()` is the generation of the interface. The Mata classes behind it stay internal. New help file `nwapi`, a section in `help nwprogramming`, and a test `test_nwapi` that fails when a signature changes. The core Mata library changes, so the model packages are rebuilt with the next lockstep release.
 - Linux: when the native viewer cannot start because a WebKit library is missing, `nwplot, interactive` and `nwmovie` say so and show the install command for apt, dnf and pacman (it is shown, never run) instead of failing silently.
+- **Console Stata (Linux, macOS):** `_nwopenviewer`, which `nwplot, interactive` and `nwmovie` use, has no `view` window to fall back on there; it prints the path of the file instead of stopping with r(199).
+
+### Fixed
+- **A stray `invalid syntax` line after an error message.** Commands that stop with their own message now end with `exit` instead of `err`, which printed a second line, `invalid syntax`, after the real message.
+- **`c(tmpdir)` without a trailing slash** (Linux console Stata) no longer gives file names such as `/tmpnwedit_...` for the viewer, the movie and other temporary files.
+- **Tests:** the dialog tests are skipped under console Stata; `test_animate` detects ImageMagick; `test_plotfix`, `test__nwopenviewer` and the extended tests handle a `c(tmpdir)` without a trailing slash and a Linux system where the viewer cannot start; the expectations of the extended tests are updated for `nwclustering` without `generate()` and string group variables in `nwbrokerage`.
+
+Tested on: TO BE FILLED
 
 ## [3.23.0] - 2026-11-13
 

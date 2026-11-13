@@ -97,4 +97,4 @@ Most commands also have a dialog box: after `nwinstall, all`, the **Network Anal
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))

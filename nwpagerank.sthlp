@@ -110,4 +110,4 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 	{help nwevcent}, {help nwrandomwalk}, {help nwbetween}, {help nwcloseness}
 
 {hline}
-{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

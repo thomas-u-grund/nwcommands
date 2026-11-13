@@ -72,7 +72,7 @@ if `r(usedviewer)' == 1 {
 	else assert `_nwov_found' == 1
 	assert `_nwov_foundbad' == 0
 	if "`c(os)'" == "Windows" shell taskkill /f /fi "imagename eq nwedit_viewer_*" > nul 2>&1
-	else shell pkill -f nwedit_viewer 2>/dev/null
+	else shell pkill -f "nwedit_viewer_[0-9]" 2>/dev/null
 	di "=== _nwopenviewer launches the chromeless viewer with a clean (unquoted) argv REGRESSION VERIFIED ==="
 }
 else {

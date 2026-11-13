@@ -39,4 +39,4 @@ If one wants to know the nodelab that corresponds to a nodeid one can use [_nwno
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))

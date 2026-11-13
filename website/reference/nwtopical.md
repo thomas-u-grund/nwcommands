@@ -257,4 +257,4 @@ The statistical network models are separate packages that need the core. Install
 
 ---
 
-*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
