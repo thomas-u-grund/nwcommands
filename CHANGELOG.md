@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- Linux: when the native viewer cannot start because a WebKit library is missing, `nwplot, interactive` and `nwmovie` say so and show the install command for apt, dnf and pacman (it is shown, never run) instead of failing silently.
+
 ## [3.23.0] - 2026-11-13
 
 ### Results that change (read before you re-run old analyses)
