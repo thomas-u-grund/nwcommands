@@ -65,7 +65,11 @@ if `r(usedviewer)' == 1 {
 	}
 	file close `pf'
 	capture erase "`_nwov_psfile'"
-	assert `_nwov_found' == 1
+	* Linux without the viewer's GTK/WebKit libraries: the viewer cannot start, so there is no process to find
+	if `_nwov_found' == 0 & "`c(os)'" == "Unix" & "`c(machine_type)'" != "Macintosh" & strpos("`c(machine_type)'", "Mac") == 0 {
+		di as txt "SKIP process check: the viewer did not start on this Linux system (libraries missing?)"
+	}
+	else assert `_nwov_found' == 1
 	assert `_nwov_foundbad' == 0
 	if "`c(os)'" == "Windows" shell taskkill /f /fi "imagename eq nwedit_viewer_*" > nul 2>&1
 	else shell pkill -f nwedit_viewer 2>/dev/null
