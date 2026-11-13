@@ -38,6 +38,14 @@ It has its own name so that the common "binarize at a cutoff" operation does not
 
 As with [nwrecode](nwrecode) (and following the package's general convention for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
 
+## Network types
+
+**Directed:** yes. **Valued:** the purpose of the command; a 0/1 network is left unchanged by `threshold(1)`. **Two-mode:** yes - the flag, the modes and the level labels are kept. **Signed:** a negative value is treated as any other value below `threshold()`. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+See [nwrecode](nwrecode): 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, random directed network with 10 ties per node.
+
 ## Examples
 
 Build a small valued trade network (export values between three countries), then dichotomize it at 100, in place:
@@ -56,4 +64,4 @@ Instead of the in-place call, keep the original valued network and save the bina
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

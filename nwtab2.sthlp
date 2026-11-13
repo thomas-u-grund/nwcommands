@@ -131,4 +131,4 @@ relationship.
 {p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

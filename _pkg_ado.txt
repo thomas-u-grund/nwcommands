@@ -25,6 +25,8 @@ f nw2toedge.ado
 f _nwdatasync.ado
 f _nwdenseguard.ado
 f _nwtimeguard.ado
+f _nwstrcat.ado
+f _nwcensusplot.ado
 f _nwvaluednote.ado
 f _nwwlayout.ado
 f _nw2guard.ado
@@ -58,6 +60,7 @@ f nwcommunity.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
+f nwregular.ado
 f nwconstraint.ado
 f nwcontext.ado
 f nwcoreperiphery.ado
@@ -119,6 +122,7 @@ f nwpagerank.ado
 f nwpath.ado
 f nwpermute.ado
 f nwplot.ado
+f nwegoplot.ado
 f nwplotmatrix.ado
 f nwpref.ado
 f nwpreserve.ado

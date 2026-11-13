@@ -29,6 +29,14 @@ This command collapses a network, i.e. it merges network nodes. It works very si
 
 By default, an existing network is replaced, unless option `generate(newnetname)` is specified.
 
+## Network types
+
+**Directed:** yes. **Valued:** the collapse function *stat* works on the tie values. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The collapse is done on the list of all dyads of the network (see [nwtoedge](nwtoedge)), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node and 5 groups: 1,000 nodes 8 seconds, 5,000 nodes 61 seconds and 4.5 GB; above 7,071 nodes (50,000,000 dyads) the command stops at once with r(484), a message that says why and what to do instead.
+
 ## Examples
 
 This collapses the first and the second node of a random network. The collapsed node will have all ties that the original nodes had.
@@ -46,4 +54,4 @@ This collapses the first and the second node of a random network. The collapsed 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

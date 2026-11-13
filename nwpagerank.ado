@@ -26,7 +26,7 @@ program nwpagerank, rclass
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		err 99
+		err 110
 	}
 
 	// BUGFIX: the active dataset was never synced to the target network

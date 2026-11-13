@@ -28,6 +28,14 @@ netname[egoid,alterid]
 
 The command returns the scalar *r(value)* with the value of the tie between the nodes *ego* and *alter* if those nodes exists. It also returns the names of those nodes when ids are used. Either the option pair **ego(), alter()** or **egoid(), alterid()** need to be specified.
 
+## Network types
+
+**Directed:** the stored cell (row ego, column alter) is returned, never symmetrized. **Valued:** the stored value is returned. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** a negative value is returned as stored. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The value of one cell of a network held as stored ties is read from the sparse index (no matrix).
+
 ## Examples
 
 ```stata
@@ -57,4 +65,4 @@ The command returns the scalar *r(value)* with the value of the tie between the 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

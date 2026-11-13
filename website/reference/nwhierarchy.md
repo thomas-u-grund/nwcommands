@@ -54,6 +54,14 @@ This is the clustering step of a three-stage **role/position analysis** workflow
 
 `groups(int)`, when specified, additionally cuts the dendrogram into exactly that many groups (via Stata's own `cluster generate ..., groups()`) and stores the result in `equiv:gen(newvarname)` (or its `generate()` alias - one of the two is then required) - one call in place of first working out `clustermat`'s own auto-generated cluster-object name (never itself returned in `r()`, so it cannot otherwise be recovered programmatically) and then calling `cluster generate` by hand. Without `groups(int)`, `nwhierarchy` creates only the cluster object itself (usable with `cluster` and `clustermat`'s own full postestimation suite, e.g. [nwdendrogram](nwdendrogram) or `cluster dendrogram` directly), and no *_role*-style variable is generated.
 
+## Network types
+
+As for [nwdissimilar](nwdissimilar) with `context()` / `type()`; a matrix from `dismat()` or `disnet()` is used as given (not checked to be a dissimilarity matrix). **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The hierarchical clustering is Stata's `clustermat` on the dense dissimilarity matrix. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 nodes 3 seconds, 2,000 nodes 16 seconds, 3,000 nodes 45 seconds, 5,000 nodes 170 seconds (the dissimilarities themselves take 1 second). 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given (Stata keeps the dissimilarity matrix as a Stata matrix, at most 11,000 rows in Stata/BE). [nwdendrogram](nwdendrogram) of such a clustering adds the time of the plot.
+
 ## Examples
 
 ```stata
@@ -92,4 +100,4 @@ Using a specific dissimilarity type/context, and a custom variable name:
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

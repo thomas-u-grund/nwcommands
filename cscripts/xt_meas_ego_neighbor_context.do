@@ -46,7 +46,7 @@ xa _rc == 198
 capture nwego star4, sizevar(x)
 xa _rc == 198
 capture nwego star4, sizevar(sz) densvar(newd)
-xa _rc == 99
+xa _rc == 110
 capture confirm variable newd
 xa _rc != 0
 * a list: suffix 1, 2
@@ -86,7 +86,7 @@ nwneighbor s5, ego(a) subnet(sa)
 nwsummarize sa
 xa r(nodes) == 4 & r(edges) == 3
 capture nwneighbor s5, ego(a) subnet(sa)
-xa _rc == 99
+xa _rc == 483
 nwneighbor s5, ego(b) subnet(sa) subreplace
 nwsummarize sa
 xa r(nodes) == 2
@@ -96,7 +96,7 @@ xa _rc == 6556
 capture nwneighbor s5, ego(zz)
 xa _rc != 0
 capture nwneighbor s5, ego(a) generate(nb)
-xa _rc == 99
+xa _rc == 110
 nwneighbor s5, ego(b) generate(nb) replace
 xa nb[1] == 1 & nb[2] == 0
 * SUSPECTED BUG: nwneighbor.ado uses the plain Mata global __nb (GOTCHA: tempname or __nw prefix)
@@ -199,7 +199,7 @@ xa _rc == 6556
 capture nwcontext p3, attribute(a) generate(c2) mode(sideways)
 xa _rc == 6556
 capture nwcontext p3, attribute(a) generate(c1)
-xa _rc == 99
+xa _rc == 110
 nwcontext p3, attribute(a) generate(c1) replace stat(sum)
 xa c1[2] == 4
 * CONFIRMED BUG N4: confirm variable without exact (nwcontext.ado:34): c3long makes generate(c3) stop with r(99)

@@ -130,10 +130,20 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 . nwtoedge glasgow1, comparevars(sport1) comparemode(dist)
 ```
 
+## Network types
+
+**Directed:** yes. **Valued:** tie values are written to the edge list. **Two-mode:** yes - one row per tie between the modes (`allpairs`: every pair) with the modes of both nodes. **Signed:** not checked. The node list is stored with the data, so [nwfromedge](nwfromedge) restores isolates. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The list of *all* dyads (without `compress`) has one row for every pair of nodes, so its size grows with the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 nodes (1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072 nodes, 10,000 for an undirected network) the command stops with an error that recommends `compress`. With `compress` only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds. For a two-mode network `compress` lists only the ties between the two modes (as [nw2toedge](nw2toedge) does), never the pairs of nodes inside one mode.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## See also
 
 - [nwfromedge](nwfromedge), [nw2toedge](nw2toedge), [nwsave](nwsave), [nwexpand](nwexpand)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

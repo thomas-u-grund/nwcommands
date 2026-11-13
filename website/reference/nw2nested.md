@@ -32,6 +32,10 @@ Ties are read as present or absent; tie values are ignored. A pair with an empty
 
 `level(#)` chooses the mode whose pairs of nodes enter the C-score. The default 2 uses the nodes of the second mode (the columns of the matrix with the first mode as rows). NODF always uses both modes.
 
+## Network types
+
+**Directed:** not applicable. **Valued:** tie values are ignored (presence of a tie). **Two-mode:** yes - the command needs a two-mode network and uses the biadjacency matrix of the two modes. **Signed:** a negative tie counts as present. See [nwnetworktypes](nwnetworktypes).
+
 ## Stored results
 
 `nw2nested` stores in `r()`:
@@ -54,6 +58,11 @@ Almeida-Neto, M., P. Guimaraes, P. R. Guimaraes, R. D. Loyola, and W. Ulrich. 20
 
 Stone, L., and A. Roberts. 1990. The checkerboard score and species distributions. *Oecologia* 85: 74-79.
 
+## Also see
+
+- psee
+- [nw2set](nw2set), [nw2degree](nw2degree), [nw2clustering](nw2clustering), [nw2project](nw2project), [nwnetworktypes](nwnetworktypes)
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

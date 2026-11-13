@@ -102,6 +102,10 @@ By default, **nwfromedge** recognizes if a network is directed or undirected, i.
 
 One can also transfrom any network that exists in memory into such an edgelist with [nwtoedge](nwtoedge).
 
+## Network types
+
+**Directed:** options `directed`, `undirected`, `forcedirected` and `forceundirected`. **Valued:** a third column supplies the tie values. **Two-mode:** yes - with `twomode`, an alias for [nw2fromedge](nw2fromedge). **Signed:** with `undirected` a tie listed once keeps its sign. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 This loads a network dataset from the internet and transforms the network *glasgow1* into an edgelist.
@@ -118,6 +122,10 @@ This loads a network dataset from the internet and transforms the network *glasg
 ```
 *glasgow1* has 50 nodes but only 47 with at least one tie; *mynet* still comes out with all 50 - the 3 isolates [nwtoedge](nwtoedge) could not write as edgelist rows are added back automatically, with no extra step needed. This only works because `nwtoedge` itself produced this particular edgelist; in an edgelist typed in by hand or imported from an external source, give each isolate a row with a missing other identifier.
 
+## Also see
+
+- [nwtoedge](nwtoedge), [nwuse](nwuse), [nwsave](nwsave), [nwwebuse](nwwebuse), [nwset](nwset), [nwimport](nwimport), [nw2fromedge](nw2fromedge)
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

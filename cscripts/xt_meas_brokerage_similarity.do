@@ -64,7 +64,7 @@ xa _rc == 198
 capture nwbrokerage tr, generate(bx)
 xa _rc == 198
 capture nwbrokerage tr, group(grp) generate(bt)
-xa _rc == 99
+xa _rc == 110
 * SUSPECTED BUG: nwbrokerage.ado stores the count in a Stata scalar called brk_pairs and leaves it behind
 scalar brk_pairs = -1
 nwbrokerage tr, group(grp) generate(bt) replace

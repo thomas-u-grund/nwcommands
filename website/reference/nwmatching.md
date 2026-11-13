@@ -38,6 +38,16 @@ Requires a genuine two-mode network (`twomode`/`bipartite` in [nwset](nwset), or
 
 `gen:erate(newvarname)` is populated only on the MODE-1 side: a mode-1 node's own value is its matched mode-2 partner's node id (0 if left unmatched by the optimal solution - this can happen whenever the two sides have unequal size, or the bipartite graph's own structure has no perfect matching); every mode-2 node's own value is always 0 - read the match off the mode-1 side only, matching [nw2project](nw2project)'s own established "one side owns the report" convention for a two-mode result.
 
+## Network types
+
+**Directed:** not applicable. **Valued:** the matching of largest total tie value (`r(weight)`), which can have fewer pairs; `binary` finds the matching with the most pairs. **Two-mode:** yes - the command needs a two-mode network and finds the largest matching between the modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as the Mata code, so the same matching comes out) by a kernel of the native plugin; a platform without the plugin uses the Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000 mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the Mata code did not finish in 180 seconds and used 4 GB).
+
+The matching of largest total tie value (valued networks) is computed by the Hungarian method in a kernel of the native plugin, with the same result as the Mata routine (the same matching also when several matchings have the same total value, up to 1,500 nodes in the larger mode; beyond that a matching of the same total value). Measured: two modes of 300 nodes 0.013 seconds (Mata 0.33 seconds); 455 and 5,092 nodes 0.2 seconds, which the Mata routine cannot do (it needs a dense matrix of the larger mode squared).
+
 ## Examples
 
 ```stata
@@ -65,4 +75,4 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -40,6 +40,10 @@ The command is useful when one wants to do bulk-operations with networks and whe
 
 `sequential` alphabetizes [netlist](netlist), keeping netnames with the same ordered letters but with differing appended numbers in sequential order. *netlist* is moved to the beginning of the dataset.  For example, here is a netlist in `sequential` order: `a x7 x8 x70 x80 z`.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 **Setup**
@@ -73,4 +77,4 @@ The command is useful when one wants to do bulk-operations with networks and whe
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

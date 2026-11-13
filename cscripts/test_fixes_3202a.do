@@ -185,7 +185,7 @@ nwclear
 nwrandom 6, prob(.5) name(gd)
 nwgeodesic gd
 capture nwgeodesic gd, noreplace
-assert _rc == 99
+assert _rc == 483
 nwgeodesic gd
 di "PASS options"
 

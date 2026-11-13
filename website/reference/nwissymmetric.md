@@ -26,6 +26,10 @@ This command can be useful for programming, when one wants to detect if a networ
 
 For example, [nwimport](nwimport) automatically checks if a network (e.g. Ucinet fullmatrix) is symmetric and if yes, imports the network as undirected.
 
+## Network types
+
+**Directed:** the command checks whether the matrix of a directed network is symmetric. **Valued:** the tie values are compared, not only the presence of ties. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative values are compared like any value. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -45,4 +49,4 @@ Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**f
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

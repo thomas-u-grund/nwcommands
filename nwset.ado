@@ -203,7 +203,7 @@ if "`overwrite'" != "" local replace "replace"
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
 		if "`time'" != "" {
-			mata: `netobj'->set_edge_time(build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval', `symmetric'))
+			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', J(0,1,.), `symmetric', 0)
 			mata: `netobj'->set_temporal_type("snapshot")
 			mata: `netobj'->set_timevar("`time'")
 		}
@@ -213,7 +213,7 @@ if "`overwrite'" != "" local replace "replace"
 			mata: `netobj'->set_eventtimevar("`eventtime'")
 		}
 		else {
-			mata: `netobj'->set_edge_interval(build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval', `symmetric'), build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval2', `symmetric'))
+			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', `tm_tval2', `symmetric', 1)
 			mata: `netobj'->set_temporal_type("interval")
 			mata: `netobj'->set_startvar("`ivstart'")
 			mata: `netobj'->set_endvar("`ivend'")

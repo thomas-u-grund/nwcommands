@@ -28,7 +28,7 @@ program nwburt, rclass
 		capture confirm variable `v'
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`v'} already exists; use {bf:replace}"
-			err 99
+			err 110
 		}
 	}
 

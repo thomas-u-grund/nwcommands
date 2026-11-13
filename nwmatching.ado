@@ -15,7 +15,7 @@ program nwmatching, rclass
 	capture confirm variable `generate'
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-		err 99
+		err 110
 	}
 
 	// BUGFIX: the active dataset was never synced to the target network

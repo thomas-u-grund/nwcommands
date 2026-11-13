@@ -77,6 +77,27 @@ By default, directed networks are generated, option **undirected** generates und
 
 The command can also be used to generate both complete (**prob(1)**) and empty networks (**prob(0)**).
 
+## Networks with given degrees
+
+`degree()` draws an undirected network in which every node has exactly the degree given, with no self-loop and no pair of nodes tied twice; `outdegree()` and `indegree()` do the same for the out-degrees and in-degrees of a directed network. The degrees are a list of whole numbers, one for each node, or a numeric variable whose first *nodes* observations hold them, for example the degrees of an observed network from [nwdegree](nwdegree). Use a variable for long lists. All networks with these degrees are about equally likely: a network with the degrees is first built (Havel-Hakimi; directed: Kleitman-Wang) and then randomized by `swaps()` random tie swaps, which exchange the partners of two ties (a-b and c-d become a-d and c-b) whenever that makes no self-loop and no repeated tie, so the degrees never change. This is the method `edge.switching.simple` of R's `igraph::sample_degseq()`. The network is unweighted. A random network with the degrees of an observed one is the usual baseline for asking whether a pattern (clustering, reciprocity, segregation) goes beyond what the degrees alone produce; [nwcug](nwcug) with `condition(degrees)` runs such a test and [nwpermute](nwpermute) with `swap` rewires a copy of the observed network itself.
+
+Not every list of degrees can be the degrees of a network: their sum must be even (directed: the out-degrees and the in-degrees must have the same sum), no node can have more than *nodes* - 1 ties, and more conditions follow from these (Erdos and Gallai 1960). `nwrandom` stops with error 198 when no network has the degrees. For example, three nodes cannot all have degree 1, and in `degree(3 3 1 1)` the two nodes of degree 3 would give every other node at least degree 2. `degree()` cannot be combined with `prob()`, `density()`, `census()`, `weights()` or `selfloop`. The draws use the native plugin.
+
+```stata
+. nwrandom 8, degree(3 3 2 2 2 2 1 1)
+. nwuse glasgow, nwclear
+. nwdegree glasgow1, generate(od id)
+. nwrandom 50, outdegree(od) indegree(id) name(glasgow_null)
+```
+
+## Network types
+
+Generates a one-mode network. **Directed:** directed by default, `undirected` for undirected; `degree()` draws an undirected, `outdegree()` / `indegree()` a directed network. **Valued:** `weights()` sets the tie values. **Two-mode:** not applicable. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+`prob()` above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives the same network). `density()` above 5,000 nodes draws the positions of the ties directly instead of shuffling all *n*^2 cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used. `weights()` and `census()` work on the matrix. Measured in Stata/BE, density 0.0001: 5,000 nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds (`density(.0002)`); `prob(.0002)` at 20,000 nodes 2.8 seconds.
+
 ## Examples
 
 ```stata
@@ -103,4 +124,4 @@ The command can also be used to generate both complete (**prob(1)**) and empty n
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

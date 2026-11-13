@@ -62,6 +62,18 @@ Then one can use `intrvalue()` in `nwutility`:
 
 When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij = *cost*, and w_ii = 0 (i.e. `intrvalue()` is not given).
 
+## Network types
+
+**Directed:** not checked (distances from [nwgeodesic](nwgeodesic)). **Valued:** the network's tie values are not used; `intrvalue()` / `intrcost()` add per-dyad values to the utility. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The utility is computed from the matrix of shortest paths and holds about 4 matrices of *n*-by-*n* (10,000 nodes: 24 seconds and 3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes); option `force` runs it anyway.
+
+## Bibliography
+
+Jackson, M. and Wolinsky, A. (1996) A Strategic Model of Social and Economic Networks. *Journal of Economic Theory*, 71, pp. 44-74.
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

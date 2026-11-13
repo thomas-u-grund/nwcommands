@@ -23,6 +23,18 @@ nwdendrogram
 
 Displays results from hierarchical clustering (see [nwhierarchy](nwhierarchy) or `cluster`) as wheel dendrogram. The cluster levels must be nested in each other; when they are not, the command stops with error 459. An error of the graph itself (for example an option that `twoway` does not know) is shown and returned.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Example
+
+```stata
+. nwwebuse florentine, nwclear
+. nwhierarchy flomarriage
+. nwdendrogram _clus_1
+```
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

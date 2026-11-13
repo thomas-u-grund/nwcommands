@@ -65,6 +65,16 @@ Hierarchy is another quite complex measure that describes the nature of the cons
 
 The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the work), so the command also runs on large networks (see **Limits**). The weighted measures of a valued network are computed in the compiled plugin only; without it the command stops with an error and the option `binary` needs the plugin for a valued network too. The options `dyadredundancy` and `dyadconstraint` (defined for ties that are present or absent: they need the option `binary` for a valued network) build the full *n*-by-*n* dyadic networks from the adjacency matrix (via [nwtomata](nwtomata)), as [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar) and [nwqap](nwqap) do, and are practical only for moderate network sizes.
 
+## Network types
+
+**Directed:** a valued network is symmetrized (z_ij + z_ji); an unvalued one is not: p_ij uses outgoing ties only. **Valued:** Burt's weighted measures by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative and missing values stop the command with an error. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees, not with *n*^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds, 100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). The options `dyadredundancy` and `dyadconstraint` build *n*-by-*n* networks and take the dense route.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata
@@ -99,4 +109,4 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

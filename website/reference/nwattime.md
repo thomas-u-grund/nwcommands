@@ -37,12 +37,13 @@ replace]
 The slicing rule depends on the source network's own temporal semantics:
 
 - **snapshot**
-- a tie is active at *t* when its own recorded time equals *t* exactly
+- a tie is active at *t* when one of its recorded times equals *t* exactly (a pair
+- listed at several times is active at each of them)
 - **interval**
 - a tie is active at *t* when *start* <= *t* < *end* - the documented convention.
 - A tie with a missing *end* (an ongoing tie with no recorded end date) is treated as open-ended
 - and stays active for every *t* from its *start* onward. A missing *start* is not specially
-- handled and excludes the tie
+- handled and excludes that row. A pair with several rows is active in each of its periods
 - **event**
 - an exact-timestamp match: every event recorded at precisely *t* becomes a binary tie in
 - the static view. This is the one place an event network is allowed to become a persistent graph in
@@ -64,6 +65,16 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 . nwattime mynet, at(2) name(wave2)
 ```
 
+## Network types
+
+**Directed:** kept from the source network. **Valued:** the tie values of the source network are kept (the slice selects ties, it does not change their values). **Two-mode:** a temporal two-mode network ([nwset](nwset) with `twomode` and `time()`, `interval()` or `eventtime()`) gives a two-mode slice with the same modes and level labels. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The ties at the time point are taken from the stored ties and the matrix of tie times; `nwset, time()`/`interval()`/`eventtime()` find the node of every label in a hash. 20,000 nodes with 200,000 ties and 3 waves: 0.3 seconds. The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
+
+For a temporal network of more than 2,000 nodes the times (or the starts and ends) of the ties are kept as a list of the ties that have one, not as *n*-by-*n* matrices (80 GB each at 100,000 nodes). `nwattime` of a network with 100,000 nodes and 1 million ties takes about 2 seconds.
+
 ## Stored results
 
 - **Scalars**
@@ -76,4 +87,4 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

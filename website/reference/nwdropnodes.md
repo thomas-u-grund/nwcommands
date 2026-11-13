@@ -78,10 +78,18 @@ Everything this command does can also be achieved with [nwdrop](nwdrop) using th
 ```
 Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) leaves Stata dataset rows alone unless **clean** is specified, while `nwdropnodes` rebuilds the Stata dataset by default unless **netonly** is specified.
 
+## Network types
+
+**Directed:**, **Valued:**, **Signed:** the ties and their values among the remaining nodes are kept. **Two-mode:** yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+A network held as stored ties stays so: the ties between the remaining nodes are the new network. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB. The node labels of the remaining network are passed on in Mata.
+
 ## See also
 
 - [nwkeepnodes](nwkeepnodes), [nwdrop](nwdrop), [nwclear](nwclear), [nwkeep](nwkeep)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

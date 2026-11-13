@@ -24,6 +24,10 @@ nwrename (old1 old2 ...) (new1 new2 ...)
 
 `nwrename` changes the name of an existing network *old_netname* to *new_netname*; the content of the network remains unchanged.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata
@@ -50,4 +54,4 @@ business    marriage
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

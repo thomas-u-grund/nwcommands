@@ -69,6 +69,14 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 `plot` draws a bar chart of the 7 category counts, via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug)'s own `plot` option and [nwtriads](nwtriads)'s own `plot` option (its 3-node analogue) use. Grayscale by design, matching every other plot this package produces.
 
+## Network types
+
+**Directed:** every tie is treated as undirected and a note is printed. **Valued:** tie values are ignored and a note is printed. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - the bipartite motifs of `bmotif`. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The census is not obtained by listing the *n*(*n*-1)(*n*-2)(*n*-3)/24 four-node sets. The numbers of stars, paths, 4-cycles, triangles with a pendant tie, diamonds and complete 4-sets are counted as subgraphs from the degrees, the triangles on each tie and the common neighbours of node pairs (time proportional to the number of ties times the largest degree), and turned into counts of *induced* subgraphs with the exact inclusion relations between the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.007 / 0.015 / 0.06 seconds. Counts are exact up to the size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of four-node sets).
+
 ## Examples
 
 ```stata
@@ -121,4 +129,4 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

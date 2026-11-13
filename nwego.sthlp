@@ -86,7 +86,7 @@ Press. (ego-network density as used in structural holes analysis - see also {hel
 
 {title:See also}
 
-	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}
+	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}, {help nwegoplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -46,6 +46,14 @@ With `splits(1)` (the default) `nwconcor` performs a single bisection, producing
 
 A node with no ties at all (in any direction) has no tie profile to compare against anyone else's, so `nwconcor` requires every node to have at least one tie; remove isolates first (see [nwdropnodes](nwdropnodes)) if your network has any.
 
+## Network types
+
+**Directed:** directions are used (a node's profile stacks its outgoing and incoming ties). **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds, 2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. The correlation matrix is dense after the first iteration, so there is no sparse form of the method.
+
 ## Examples
 
 ```stata
@@ -71,8 +79,8 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ## See also
 
-- [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar), [nwhierarchy](nwhierarchy), [nwcommunity](nwcommunity)
+- [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar), [nwhierarchy](nwhierarchy), [nwcommunity](nwcommunity), [nwregular](nwregular)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

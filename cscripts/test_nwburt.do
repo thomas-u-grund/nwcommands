@@ -74,7 +74,7 @@ nwclear
 nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(starnet2) undirected labs(A,B,C,D)
 nwburt starnet2, silent
 capture nwburt starnet2, silent
-assert _rc == 99
+assert _rc == 110
 nwburt starnet2, silent replace
 assert _rc == 0
 di "=== replace OPTION / OVERWRITE-PROTECTION VERIFIED ==="

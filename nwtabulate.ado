@@ -2,6 +2,16 @@
 capture program drop nwtabulate
 program nwtabulate
 	syntax [anything(name=netname)] [, attribute(varname) *]
+	// a string attribute (3.20.1): tabulate's matrow()/matcol() need numbers,
+	// so the command runs once more with the variable encoded (the value
+	// labels show the strings) and the string is put back afterwards
+	if "`attribute'" != "" {
+		capture confirm string variable `attribute'
+		if !_rc {
+			_nwstrcat `attribute' : nwtabulate `0'
+			exit
+		}
+	}
 	_nwsyntax `netname', max(9999)
 	if `networks' > 2 {
 		di "{err}Maximum two networks allowed.{txt}"

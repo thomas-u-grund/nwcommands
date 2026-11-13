@@ -44,6 +44,10 @@ Social networks are frequently found to be assortative by degree (popular people
 
 A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value.
 
+## Network types
+
+**Directed:** symmetrized. **Valued:** without `attribute()` the node attribute is the strength instead of the degree (`binary` uses the degree); `weighted` also weights each tie by its value (Leung and Chau 2007). **Two-mode:** same as for the bipartite graph read as a one-mode network (the degree assortativity is negative by construction). **Signed:** negative values would distort the weighted correlation. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -78,4 +82,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

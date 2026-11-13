@@ -68,6 +68,14 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwsmall 20, k(2) prob(.2) weights(0.0, 0.3, 0.7)
 ```
 
+## Network types
+
+**Directed:** directed by default; `undirected` gives an undirected network. **Valued:** `weights()` draws tie values. **Two-mode:** not applicable - the command always creates a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives the same network). 20,000 nodes with `k(5)`: 1 second. `weights()` uses the matrix.
+
 ## Examples
 
 In the first example, each tie on the ring-lattice has a probability to get rewired.
@@ -101,4 +109,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

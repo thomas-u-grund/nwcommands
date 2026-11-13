@@ -48,6 +48,16 @@ Three classical results are reported directly:
 
 For a network with more than one connected component, the Fiedler value is 0 and its own eigenvector is not uniquely defined (any vector constant on each component, summing to zero overall, is an equally valid choice) - `nwspectral` still reports whatever eigenvector the underlying decomposition happens to return in that case, but `bipartition`'s resulting split should not be interpreted as meaningful when **r(algebraic_connectivity)** is (near) 0; use [nwcomponents](nwcomponents) directly instead for a disconnected network's own true partition.
 
+## Network types
+
+**Directed:** symmetrized. **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first); `onemode` gives the spectrum of the bipartite graph. **Signed:** with negative values the Laplacian is not positive semi-definite and the results are not meaningful. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are returned, so the work grows with the cube of the number of nodes and the memory with its square. Measured in Stata/BE, random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 nodes 14 seconds, 3,000 nodes 50 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds (and about 3 GB). Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. There is no exact shortcut for the returned spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
+
+Only a single network is accepted: the Fiedler vector of each network is a full per-node eigenvector.
+
 ## Examples
 
 ```stata
@@ -77,4 +87,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. *Statistics and Compu
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

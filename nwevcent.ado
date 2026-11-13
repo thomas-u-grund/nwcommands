@@ -44,11 +44,11 @@ program nwevcent
 		// script checking _rc after a failed nwevcent call incorrectly
 		// believed it succeeded, with the target variable silently kept
 		// at its stale old values. Error-code coherence: standardized
-		// onto 99 (this package's own standard "Stata variable already
+		// onto 110 (this package's own standard "Stata variable already
 		// exists" code, nwerrorcodes.sthlp), matching nwdegree/
 		// nwbetween/nw2degree's own convention for the identical
 		// situation in this same group.
-		err 99
+		err 110
 	}
 	if `__exists' drop `generate'
 	qui generate double `generate' = .

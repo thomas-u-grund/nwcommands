@@ -48,12 +48,13 @@ temporal section for what is and is not supported yet.
 The slicing rule depends on the source network's own temporal semantics:
 
 {p 8 12 2}{bf:snapshot}{p_end}
-{p 12 12 2}a tie is active at {it:t} when its own recorded time equals {it:t} exactly{p_end}
+{p 12 12 2}a tie is active at {it:t} when one of its recorded times equals {it:t} exactly (a pair
+listed at several times is active at each of them){p_end}
 {p 8 12 2}{bf:interval}{p_end}
 {p 12 12 2}a tie is active at {it:t} when {it:start} <= {it:t} < {it:end} - the documented convention.
 A tie with a missing {it:end} (an ongoing tie with no recorded end date) is treated as open-ended
 and stays active for every {it:t} from its {it:start} onward. A missing {it:start} is not specially
-handled and excludes the tie{p_end}
+handled and excludes that row. A pair with several rows is active in each of its periods{p_end}
 {p 8 12 2}{bf:event}{p_end}
 {p 12 12 2}an exact-timestamp match: every event recorded at precisely {it:t} becomes a binary tie in
 the static view. This is the one place an event network is allowed to become a persistent graph in
@@ -111,4 +112,4 @@ nodes). {cmd:nwattime} of a network with 100,000 nodes and 1 million ties takes 
 	{help nwset}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

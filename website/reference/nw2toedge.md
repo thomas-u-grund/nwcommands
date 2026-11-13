@@ -56,6 +56,14 @@ One can also include node attributes (saved as normal Stata variables) in the ed
 
 For two-mode networks (see [introduction to two-mode networks](nw2set)) the command automatically generates the two variables *_nwmode_ego* and *_nwmode_alter*. They indicate in the edgelist format the mode to which a node belongs. By default only the ties are listed (as with `compress`). With `allpairs`, `nw2toedge` lists every pair of nodes of different modes, while [nwtoedge](nwtoedge) with `allpairs` also lists the pairs of nodes of the same mode.
 
+## Network types
+
+**Directed:** not applicable. **Valued:** the tie values are carried into the edge list. **Two-mode:** yes - one row per tie between the two modes, with the mode of both nodes; `allpairs` also writes the pairs without a tie. **Signed:** negative values are written like any other value. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds, 5,000 nodes 24 seconds with `allpairs`; by default (ties only) 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
+
 ## Examples
 
 Build a small two-mode network (3 people x 2 events) and convert it to an edgelist:
@@ -74,4 +82,4 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

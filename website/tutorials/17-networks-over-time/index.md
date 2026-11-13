@@ -76,10 +76,28 @@ but different question from turnover: it compares the values of the cells, not o
 
 ```stata
 . nwcorrelate glasgow1 glasgow2
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 
 . nwcorrelate glasgow2 glasgow3
-    Correlation: .532
+
+Network correlation
+Network 1: glasgow2
+Network 2: glasgow3
+
+-------------
+ Correlation
+-------------
+   .53208682
+-------------
 ```
 
 The second pair of waves is more alike in both measures. Both fit the same picture: friendships are

@@ -22,6 +22,10 @@ netname
 
 Checks if a network *[netname](netname)* already exists. In case it does, the command makes a suggestion for an alternative name. Normally, the command returns *netname_1*. If that also exists, the commands returns *netname_2*.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata
@@ -39,4 +43,4 @@ Checks if a network *[netname](netname)* already exists. In case it does, the co
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

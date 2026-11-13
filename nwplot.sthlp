@@ -325,10 +325,10 @@ of saving coordinates are left out). Run it with the same data in memory as when
 {pstd}
 How the bring-back works: node positions come from the CSV through {opt nodexy()}; node colors and
 shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier
-on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds
-to about {cmd:nodefactor(0.2)} in the static graph. Without {opt nodefactor()}, {cmd:nwplot} therefore
-uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of
-1.85 gives {cmd:nodefactor(0.37)}); an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
+on the node sizes of the call that wrote the page. Without {opt nodefactor()}, {cmd:nwplot} uses the saved
+slider value as {opt nodefactor()} (a slider value of 1, the start, gives the default sizes; 1.85 gives
+{cmd:nodefactor(1.85)}). The view draws in screen pixels and the graph relative to its size, so symbols can
+look a little larger or smaller in the graph than on the screen; an explicit {opt nodefactor()} (or {opt edgefactor()}) always wins over
 the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when
 the nodes of that group have different shapes (for example when {opt symbol()} is a second variable);
 choosing a shape there sets all nodes of the group.
@@ -452,6 +452,16 @@ but shows how one could use node labels stored elsewhere:
 The look and feel of node labels is changed with labelopt():
 
 	{cmd:. nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))}
+
+{pstd}
+{cmd:mlabvposition(}{it:varname}{cmd:)} in {cmd:labelopt()} places the label of each node at the clock position
+stored in a numeric variable of the node data (9 left, 3 right, 12 above, 6 below, 0 on the node). In a
+two-mode network drawn with {cmd:layout(bipartite, vertical)}, for example, the labels of the first mode can
+stand to the left of their column and those of the second mode to the right:
+
+	{cmd:. nwwebuse davis, nwclear}
+	{cmd:. generate byte lpos = cond(_nwmode == "1", 9, 3)}
+	{cmd:. nwplot davis, label(_nwnode) layout(bipartite, vertical) labelopt(mlabvposition(lpos))}
 	
 {pstd}
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these
@@ -562,7 +572,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 
 
 {title:See also}
-		{help nwplotmatrix}, {help nwmovie}, {help netexample}
+		{help nwplotmatrix}, {help nwegoplot}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -42,6 +42,18 @@ Cliques are fundamentally different from the partitions [nwcomponents](nwcompone
 
 With more than one network in the *netlist*, a number is appended to the variable name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
+## Network types
+
+**Directed:** symmetrized. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** same as for the bipartite graph read as a one-mode network (it has no cliques of three or more nodes). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Only the maximal cliques of at least `minsize()` nodes are stored (the maximal cliques of one or two nodes of a sparse network are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and `minsize(3)`: 5,000 nodes 0.1 seconds, 20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself, which needs time growing with the square of the number of columns to store the clique matrix `r(clique_matrix)` (one row per clique, one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot of memory for that matrix. With option `nomatrix` the matrix is not built or stored: the variable and `r(cliques)` are the same, and 100,000 nodes take about a quarter of a second.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
+The number of maximal cliques can grow exponentially with the size of a network (true of any algorithm), so a very dense, large network can take a long time; `nwclique` has no `maxcliques()` or `maxtime()` guard as [nwnclique](nwnclique) has.
+
 ## Examples
 
 ```stata
@@ -69,4 +81,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

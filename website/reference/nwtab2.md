@@ -50,6 +50,37 @@ where I (internal) is the number of ties within a social group G and E is the nu
 
 More intuitively, the E-I-index simply calculates the number of ties off the diagonal (in the table produced by the command) by the total number of ties. By default, the command runs 100 QAP permutations of the network (see [nwqap](nwqap)) to obtain a p-value for the E-I-index. Basically, the network is randomly permuted and the E-I-index is calculated again to obtain a distribution for the E-I-index under the condition that the network and the attribute are unrelated.
 
+## Remarks on plot
+
+The `plot` option draws the table with a built-in bar plot (the same plot the user-written `tabplot` draws; `tabplot` itself is not needed, and is not used even if it is installed). Any further options in `plotoptions()` are passed to `twoway`. The built-in plot follows the idea and the look of Nick Cox's `tabplot` (SSC); thanks to N. J. Cox.
+
+## Example
+
+This loads the Florentine [data](netexample) and shows the overlap between the networks *flomarriage* and *flobusiness*. Both have the same nodes, i.e. 16 Florentine families.
+
+```stata
+. nwwebuse florentine, nwclear
+. nwtabulate flomarriage flobusiness
+
+Network1:  flomarriage     Directed : false
+                           Selfloops: false
+Network2:  flobusiness     Directed : false
+                           Selfloops: false
+```
+- flomarriag c | flobusiness
+- e c | 0 1 c | Total
+
+```stata
+-----------+----------------------+----------
+         0 |        93          7 |       100
+         1 |        12          8 |        20
+-----------+----------------------+----------
+     Total |       105         15 |       120
+
+   E-I Index: -.683 p-value: 0
+```
+There are 120 possible (undirected) ties between Florentine families that can overlap in the two networks. There are 8 undirected ties where families have both a marriage and a business relationship. In contrast, there are 7 undirected pairs of families with a business, but not with a marriage relationship.
+
 ## Stored results
 
 - **Scalars**
@@ -71,4 +102,4 @@ More intuitively, the E-I-index simply calculates the number of ties off the dia
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

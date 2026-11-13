@@ -115,7 +115,7 @@ The node-level values can be saved with `nwclustering`:
 
 Monks differ a lot: from a clustering of .17 (their contacts hardly know each other) to 1 (all their contacts
 are tied). As with density, the question is whether this closure is more than chance would give. For that use
-`nwcug` with `stat(nwtriads ##net##)` and `rname(transitivity)`, shown in
+`nwcug` with `stat(nwtriads)` and `rname(transitivity)`, shown in
 [Tutorial 18](../18-testing/); add `condition(degrees)` to compare with random networks in which every monk
 keeps the number of ties he sends and receives.
 
@@ -147,7 +147,7 @@ The command says it plainly: for a directed network the census treats ties as un
 network is dense and clustered: 24 complete four-node groups (`k4`) and 91 diamonds (a `k4` minus one tie),
 against 126 stars (one node linked to three others who do not know each other). These counts are not
 comparable between networks of different size or density without a null model: `nwmotifs` has a `normalise`
-option, and `nwcug` with `stat(nwmotifs ##net##, silent)` tests a motif count against random networks.
+option, and `nwcug` with `stat(nwmotifs, silent)` tests a motif count against random networks.
 
 ## Signed networks and structural balance
 

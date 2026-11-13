@@ -48,6 +48,14 @@ The command also returns the reciprocity of the network.
 
 *reciprocity = M / (M + A)*
 
+## Network types
+
+**Directed:** mutual, asymmetric and null dyads; an undirected network has mutual and null dyads only. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity is shown as n/a. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB in Stata/BE.
+
 ## Examples
 
 ```stata
@@ -90,4 +98,4 @@ The command also returns the reciprocity of the network.
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

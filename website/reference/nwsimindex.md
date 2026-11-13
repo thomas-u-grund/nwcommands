@@ -52,6 +52,16 @@ All calculations use the undirected neighbor sense: for directed networks, a nod
 
 The similarity of a node with itself is not defined and is set to missing, as are any pairs where the underlying formula is undefined - most notably **cosine** between two isolate nodes (0/0). This mirrors how [nwgeodesic](nwgeodesic) reports an undefined diameter/radius rather than silently coercing an undefined value to 0.
 
+## Network types
+
+**Directed:** the neighbours of a node are its out- and in-neighbours. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The result is a dense *n*-by-*n* valued network. Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.8 seconds and 1.3 GB.
+
+The result is a dense *n*-by-*n* valued network. About 5 matrices of that size are held at once (10,000 nodes: 2.8 seconds and 4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes); option `force` runs it anyway.
+
 ## Examples
 
 ```stata
@@ -81,4 +91,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

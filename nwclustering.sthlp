@@ -35,8 +35,8 @@ values via that function; default = {it:arithmetic} for a valued undirected netw
 otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before calculating (required for any
 weighted {opt measure()} on a directed network - see {bf:Network types} below){p_end}
-{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own
-clustering coefficient{p_end}
+{synopt:{opth generate(newvarname)}}Name of a new variable that stores each node's own
+clustering coefficient; for a one-mode network it may be left out, and the coefficients are then computed in a temporary variable (a two-mode network needs it, unless {opt ra} is given){p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt level(#)}}Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = {it:1}{p_end}
@@ -56,8 +56,8 @@ themselves friends"). A node with fewer than 2 neighbors has no potential triple
 clustering coefficient is reported as missing.
 
 {pstd}
-{opt generate()} is required and names the new variable that holds each node's own
-clustering coefficient, and returns both the network-level average ({bf:r(cluster_avg)}, the mean
+{opt generate()} names the new variable that holds each node's own
+clustering coefficient (without it only the returned results are kept), and the command returns both the network-level average ({bf:r(cluster_avg)}, the mean
 of the per-node values) and the network-level global clustering coefficient ({bf:r(cluster_global)},
 the ratio of the total count of closed triples to the total count of potential triples across the
 whole network - not the same quantity as the average of per-node ratios, since it weights every
@@ -128,4 +128,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 	{help nw2clustering}, {help nwtriads}, {help nwbrokerage}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

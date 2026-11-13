@@ -47,6 +47,10 @@ ntimes(int)]
 
 `nwlattice` generates a lattice network. Each node is connected to maximally four other nodes. With options *xwrap* and *ywrap* each node is connected to exactly four other nodes.
 
+## Network types
+
+**Directed:** the default; `undirected` makes an undirected lattice. **Valued:** not applicable (the lattice is binary). **Two-mode:** not applicable (the network is one-mode). **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -72,4 +76,4 @@ ntimes(int)]
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

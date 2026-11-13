@@ -35,10 +35,14 @@ Alternatively, one can also just drop networks. This does not delete the Stata v
 . nwdrop _all
 ```
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## See also
 
 - [nwdrop](nwdrop), `clear`
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

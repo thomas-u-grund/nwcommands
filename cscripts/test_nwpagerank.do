@@ -48,7 +48,7 @@ assert _rc == 198
 capture nwpagerank cyc3, maxiter(0)
 assert _rc == 198
 capture nwpagerank cyc3, generate(pr)
-assert _rc == 99
+assert _rc == 110
 nwpagerank cyc3, generate(pr) replace silent
 assert _rc == 0
 di "=== nwpagerank error handling REGRESSION VERIFIED ==="

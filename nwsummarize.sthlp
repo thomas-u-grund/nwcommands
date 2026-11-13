@@ -19,7 +19,7 @@
 {opt mat}
 {opt matonly}
 {opt detail}
-{opth save(filename)}
+{cmd:save(}{it:filename}[{cmd:, replace}]{cmd:)}
 {opt silent}
 ]
 
@@ -30,7 +30,7 @@
 {synopt:{opt matonly}}Only display adjacency matrix of the network{p_end}
 {synopt:{opt detail}}Calculate additional network measures: reciprocity, transitivity and the centralization measures (their {cmd:r()} results are only filled with {opt detail}); reciprocity is
 displayed as n/a for an undirected network (the stored {cmd:r(reciprocity)} is unchanged){p_end}
-{synopt:{opth save(filename)}}Save network measures in file{p_end}
+{synopt:{cmd:save(}{it:filename}[{cmd:, replace}]{cmd:)}}Save the network measures in a Stata data set, one observation per network; an existing file is replaced (with or without {cmd:replace}){p_end}
 {synopt:{opt silent}}Compute and return results without displaying anything{p_end}
 {synoptline}
 {p2colreset}{...}
@@ -156,4 +156,4 @@ With a {it:netlist}, the results are those of the last network. The other result
 	{help nwname}, {help nwdyads}, {help nwtriads}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

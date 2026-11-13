@@ -37,7 +37,7 @@ program nwclique, rclass
 		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
-			err 99
+			err 110
 		}
 
 		mata: st_rclear()

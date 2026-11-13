@@ -36,6 +36,10 @@ All calculations are performed on the undirected version of the network: for dir
 
 `generate()` is required and names the new variable which stores each node's coreness. With a list of several networks the variables are numbered by network (*newvarname***1**, *newvarname***2**, ...), and the stored results are those of the last network.
 
+## Network types
+
+**Directed:** a node's neighbours are its out- and in-neighbours together. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -64,4 +68,4 @@ Batagelj, V., Zaversnik, M. (2003). An O(m) Algorithm for Cores Decomposition of
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

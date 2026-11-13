@@ -69,6 +69,128 @@ This command is the network version of `correlate`. It can be used in three diff
 
 The option **permutation()** creates [QAP permutations](nwqap) of the first network and generates a distribution of correlation coefficients under the null-hypothesis that there is no correlation. In practice, rows and columns of [netname](netname) are reshuffled and the correlation coefficient is calculated again and again. Based on this distribution a *p-value* and a confidence interval is calculated. A plot is displayed and additional information is returned in the return vector.
 
+## Nodes of one network
+
+When the command is used with one [netname](netname) and no `attribute()` option, it correlates the nodes of a network with each other. It takes the vector of outgoing, incoming (or both) ties of node *i* and correlates it with the vector of outgoing, incoming (or both) ties of node *j*. The context is specified in `context()`.
+
+The nodes *i* and *j* are excluded from the tie vectors when calculating the correlation between *i* and *j*. For the network called * mynet* defined by the adjacency matrix in the following example, the command
+
+** nwcorrelate mynet, context(outgoing)**
+
+produces the correlation matrix below (saved as a new network). In this case only the outgoing ties are considered. For example, the score C[2,1] = 0.5 is the correlation of the two row vectors for node 2 *(1,0,1,1) => (.,.,1,1)* and node 1 *(0,1,1,0) => (.,.,1,0)*. Notice that the nodes *i* and *j* are removed from the vectors.
+
+The correlation *C_ij* between two nodes is 1 when the nodes *i* and *j* have exactly the same network neighbors. The coefficient is -1 when the two nodes have no network neighbors in common.
+
+**Adjacency matrix of network *mynet***
+
+```stata
+     1   2   3   4
+  +-----------------+
+1 |  0   1   1   0  |
+2 |  1   0   1   1  |
+3 |  0   0   0   0  |
+4 |  0   1   0   0  |
+  +-----------------+
+```
+** Correlation between nodes**
+
+- 1 2 3 4
+
+```stata
+  +---------------------+
+1 |   1                 |
+2 |  .5    1            |
+3 |  -1   -1    1       |
+4 |  .5   -1   -1    1  |
+  +---------------------+
+```
+In this example, we first load the data from Zachary's Karate Club (see [zachary](netexample)). These are data collected from the members of a university karate club by Wayne Zachary (1977). The *zachary_bin* network represents the presence or absence of ties among the members of the club; *zachary_val* indicates the relative strength of the associations (number of situations in and outside the club in which interactions occurred).
+
+```stata
+. nwwebuse zachary, nwclear
+```
+Next, let us calculate the correlation between nodes (which essentially gives us an idea about the overlap of ties between nodes). Remember that the correlation between two nodes is 1 when these two nodes share exactly the same network neighbors.
+
+```stata
+. nwcorrelate zachary_bin
+```
+This generates the new network *_corr*, which holds the pair-wise node correlations. These node correlations tell us how many friends two nodes i and j have in common. Now we can test if ties between nodes are more likely when these nodes have many common network neighbors.
+
+```stata
+. nwcorrelate zachary_bin _corr, permutations(200)
+```
+Basically, we just proofed one part of Granovetter's (1973) strength of weak ties argument. It seems that ties between two nodes are more likely to exist when these nodes share many network neighbors.
+
+## Two networks
+
+When two networks [netname1](netname) and [netname2](netname) are given, the command calculates the correlation of the underlying adjaceny matrices *M1* and *M2* for the two networks. Notice, that the diagonal of the matrices are not considered.
+
+The correlation coefficient for two networks indicates how much these two networks overlap. It is exactly 1 when the two networks completely overlap (*M1_ij == M2_ij*). It is -1 when the two networks are inverse to each other (*M1_ij != M2_ij*).
+
+This correlates two networks with each other:
+
+```stata
+. nwwebuse florentine, nwclear
+. nwcorrelate flomarriage flobusiness, permutations(50)
+
+----------------------------------------
+  Network1 name: flomarriage
+  Network2 name: flobusiness
+----------------------------------------
+    Correlation: .372
+    P-value: .002
+```
+In this case, there is a moderate positive correlation between the two networks, i.e. ties in the business network are more likely when there are ties in the marriage network.
+
+## One network and one attribute
+
+When the command is called with one [netname](netname) and one `varname` (specified in **attribute()**) it calculates the element-by-element correlation between the adjacency matrix *M* of [netname](netname) and an [expanded network](nwexpand) based on `varname`.
+
+Practically, it compares *M_ij* with *x_ij*, where
+
+- *x_ij = mode(varname[i], varname[j])*
+
+By default, *mode* is set to `mode(same)`, which is (for other modes see [nwexpand](nwexpand)):
+
+- *same(x_ij) = (varname[i] == varname[j])*
+
+Such dyad-level correlation between network ties and some artifically generated network based on some variable, can be extremely useful to e.g. assess the level of homphily in a network. Homophily refers to the concept that network ties might be more likely between similar individuals.
+
+The correlation coefficient between a network and a variable (with *mode=same*) is exactly 1 when ties only exist between individuals who are similar and -1 when ties only exist between individuals who are different according to `varname`. When an attribute is not categorical, but metric instead, it makes a lot of sense to use option **mode(absdist)**.
+
+This correlates one network and one attribute with each other:
+
+```stata
+. nwwebuse glasgow, nwclear
+. nwcorrelate glasgow1, attribute(sport1) permutations(50)
+
+----------------------------------------
+  Network1 name: glasgow1
+  Network2 name: same_sport1
+----------------------------------------
+    Correlation: .0253
+```
+There is hardly any correlation. Similarity on doing sports does not seem to matter for indivdiuals to have friendship ties. Notice that the previous command is equivalent to:
+
+```stata
+. nwexpand sport1, mode(same) name(same_sport)
+. nwcorrelate glasgow1 same_sport, permutations(50)
+```
+
+## Network types
+
+**Directed:** `context(incoming|outgoing|both)` chooses the ties of the nodes that are correlated. **Valued:** tie values are used (no option to ignore them). **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first) for the nodes of one network; two networks are correlated as any pair of networks. **Signed:** negative values are used like any value. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties and take 0.45 seconds at 5,000 nodes (the Mata code: 3.2 seconds); the results agree to 1e-13. A network with missing tie values and a platform whose plugin lacks this kernel use the Mata code described next.
+
+The Mata code computes the correlations between the nodes of one network (`nwcorrelate` *netname*) with about 25 dense node-by-node matrices at once: Stata/BE, random directed network with 10 ties per node, 5,000 nodes 10 seconds and 5.1 GB; the command stops with r(484) above 7,000 nodes (10,000 nodes needed more than 12 GB). The correlation of two networks (with `permutations()`) takes 16 seconds and 7 GB at 10,000 nodes.
+
+The correlation of two networks holds about 9 matrices of *n*-by-*n* (10,000 nodes with 5 permutations: 16 seconds and 7.2 GB) and stops at once with r(484) above about 12,900 nodes; option `force` runs it anyway. The correlation of the nodes of one network needs about 25 matrices and is refused above 7,000 nodes.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Stored results
 
 **Node correlations**
@@ -107,4 +229,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -77,6 +77,22 @@ Krackhardt, David. (1987). "QAP Partialling as a Test of Spuriousness." Social N
 
 Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data." Social Networks 10: 359-381.
 
+## qapspp - double semi-partialling
+
+Plain MR-QAP's own standard permutation test (the default, no `qapspp`) permutes the WHOLE dependent network at once and refits the FULL model on every permuted draw - a valid test that a variable has SOME association with the outcome, but not a valid test that it has an association *net of the other independent variables*, since permuting the whole network scrambles every variable's own relationship to it simultaneously, not just the one being tested. This is exactly the "QAP partialling" problem Krackhardt (1987) originally identified.
+
+`qapspp` instead follows the double semi-partialling (DSP) of Dekker, Krackhardt & Snijders (2007, "Sensitivity of MRQAP Tests to Collinearity and Autocorrelation Conditions", *Psychometrika* 72(4)). For each independent variable *x_k* in turn, *x_k* is regressed by OLS on all the other independent variables, and the rows and columns of the matrix of these residuals are permuted together, so that the permuted *x_k* stays unrelated to the other variables. `nwqap` also residualizes the dependent network on the other independent variables; each permutation draw is the OLS slope of the residualized dependent network on the permuted residuals of *x_k*, and the observed statistic is the same slope on the unpermuted residuals. By the Frisch-Waugh-Lovell theorem the observed statistic equals *x_k*'s coefficient in an OLS regression on all the independent variables, so residualizing the dependent network does not change it. Dekker et al. do not residualize the dependent network: they regress it on the permuted residuals together with the other variables. For a permuted draw the two slopes share the same numerator and differ only in the denominator (the permuted residuals are not exactly uncorrelated with the other variables), so the draws are nearly the same, those of `nwqap` being if anything slightly smaller in absolute value. The statistic is the partial OLS coefficient, not its t-statistic; Dekker et al. found that all MRQAP methods perform better with a pivotal statistic such as t. The p-value is much less sensitive to collinearity among the independent networks than the plain permutation test. It is computed for every independent-variable coefficient (the constant's own p-value is left as the plain single-permutation result, since double semi-partialling is not defined for an intercept). Semi-partialling is always an OLS fit, regardless of which `type()` the main model used, so for a logit or probit model the tested statistic is not the printed coefficient, which is on another scale; the printed coefficients are those of the model.
+
+## Network types
+
+**Directed:** (i,j) and (j,i) both enter, also when undirected. **Valued:** with `type(logit)` (default), `probit`, `cloglog`, `scobit` a nonzero value of the dependent network is a tie (a note says so); `type(regress)` uses the values; independent networks enter with values. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10 ties per node, `type(regress)`, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB. Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
+
+QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of *n*-by-*n* (10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a message with the memory needed (48 GB at 20,000 nodes); option `force` runs it anyway.
+
 ## Examples
 
 ```stata
@@ -131,4 +147,4 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

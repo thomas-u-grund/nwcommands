@@ -40,6 +40,16 @@ By default, a valued network is calculated on the tie values themselves, so that
 
 Eigenvector centrality is only defined for connected networks.
 
+## Network types
+
+**Directed:** symmetrized by default; `nosym` uses outgoing ties (igraph uses incoming ties). **Valued:** the tie values are used by default (`weighted` is redundant); `binary` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The power iteration runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same result (they differ by less than 1e-10 relative). Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.05 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes 0.5 seconds (the Mata route needs 0.6, 2.6 and 14 seconds).
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata
@@ -61,4 +71,4 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

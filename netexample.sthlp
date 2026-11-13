@@ -868,4 +868,4 @@ by school agree with Snijders and Baerveldt 2003; the Siena file page states the
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

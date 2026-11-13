@@ -103,10 +103,18 @@ Notice that when *nwhomophily* is used together with *z* variables in `varlist`,
 
 The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
+## Network types
+
+Generates a one-mode network. **Directed:** directed by default, `undirected` for undirected. **Valued:** no, ties are 0/1. **Two-mode:** not applicable. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these weights from the list of all dyads ([nwdyadprob](nwdyadprob)), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, density 0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more than 50,000,000 dyads), before any matrix is built.
+
 ## See also
 
 - [nwdyadprob](nwdyadprob)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

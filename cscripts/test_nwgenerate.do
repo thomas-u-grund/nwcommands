@@ -92,7 +92,7 @@ assert d_betw[2] == 0
 nwgen d_deg = degree(dirstar), replace
 assert _rc == 0
 capture noisily nwgen d_deg = degree(dirstar)
-assert _rc == 99
+assert _rc == 110
 
 nwclear
 nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) undirected name(undstar) labs(A,B,C,D)

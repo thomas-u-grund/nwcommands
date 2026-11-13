@@ -55,6 +55,10 @@ Missing values of *srcvar* among a node's alters are dropped before the statisti
 
 `nwgen` recognizes the same `mean(alter.`*x*`)`-style syntax (including `proportion(alter.`*x*`==`*value*`)` and `hop(int)`) as a shortcut and dispatches to `nwaltergen` automatically - `nwgen exposure = mean(alter.smoking)` and `nwaltergen exposure = mean(alter.smoking)` are equivalent.
 
+## Network types
+
+**Directed:** alters are the out-neighbors. **Valued:** tie values enter only through **wmean**, which weights by them; all other statistics use the ties only. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** **wmean** uses the values with their signs and prints a note (the weights can sum to near zero). See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -77,8 +81,8 @@ Blau, P.M. (1977). *Inequality and Heterogeneity: A Primitive Theory of Social S
 
 ## See also
 
-- [nwgen](nwgen), [nwneighbor](nwneighbor), [nwdegree](nwdegree)
+- [nwgen](nwgen), [nwneighbor](nwneighbor), [nwdegree](nwdegree), [nwegoplot](nwegoplot)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

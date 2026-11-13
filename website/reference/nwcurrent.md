@@ -32,6 +32,10 @@ The *current network* is simply the last network that has been [set](nwset), [im
 
 `nwcurrent` changes the *current network*. Typically, it can be used with a [netname](netname). When used with **id()**, the network ID refers to the original order the networks were generated in. The command also returns some information about the *current network* in the r() vector.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata
@@ -58,6 +62,10 @@ The *current network* is simply the last network that has been [set](nwset), [im
 - **Macros**
 - **r(current)** --- name of current network
 
+## Also see
+
+- [nwname](nwname), [nwload](nwload), [nwset](nwset)
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

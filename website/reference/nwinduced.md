@@ -46,6 +46,14 @@ A useful free sanity check, not specific to any one network: with `measure(degre
 
 The real computational cost is the leave-one-out reconstruction: computing induced centrality for every node requires recomputing *C* on *n* separate *n-1*-node subgraphs, one per removed node. For a cheap measure (**degree**) this is trivial; for an expensive one (**betweenness**, on a large network) this means *n* full recomputations of an already-expensive measure - worth being aware of before running this against a large network with `measure(betweenness)`.
 
+## Network types
+
+**Directed:** `betweenness`, `closeness` and `evcent` use directions; `measure(degree)` stops with an error. **Valued:** `betweenness`, `closeness` and `evcent` use the tie values, as the commands do; `degree` counts ties; `binary` ignores the values. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** as in the chosen measure. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+**measure(degree)** has a closed form - removing a node takes away its own degree and one tie from each neighbour - so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes: 0.02 / 0.03 / 0.09 seconds). The other measures have no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node: **betweenness** 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, **closeness** 2.8 / 20 / 8 seconds (the time of [nwcloseness](nwcloseness) depends on the network), **evcent** 6 seconds at 50 and 26 seconds at 100 nodes; plan for minutes at a few hundred nodes.
+
 ## Examples
 
 ```stata
@@ -85,4 +93,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

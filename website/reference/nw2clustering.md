@@ -42,6 +42,14 @@ Only nodes of the requested `level()` receive a value; nodes of the other mode a
 
 [nwclustering](nwclustering) automatically switches to this computation whenever it is called on a two-mode network (unless `onemode` is given), with the same options `measure()`, `level()`, `generate()`, `replace` and `ra`.
 
+## Network types
+
+**Directed:** not applicable. **Valued:** used by default (`measure(arithmetic)`; also `geometric`, `maximum`, `minimum`: the four tie values of a 4-path combined); `measure(binary)` ignores them. **Two-mode:** yes - the command needs a two-mode network: the coefficient of Opsahl (2013); `ra` adds that of Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The 4-paths around each node are enumerated in compiled code and the closing 6-cycle is tested with a marker array instead of a copy of the neighbour list per path. The work grows with, for each node, the square of its number of alters times the squares of their numbers of other egos. Measured in Stata/BE on a random two-mode network with N mode-1 nodes, N/2 mode-2 nodes and 10 ties drawn per mode-1 node: N = 300 / 1,000 / 5,000 take 0.09 / 0.25 / 1.4 seconds. Memory is proportional to the number of ties.
+
 ## Examples
 
 ```stata
@@ -74,4 +82,4 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

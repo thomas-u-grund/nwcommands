@@ -55,7 +55,7 @@ assert _rc == 198
 capture nwfactions twotri, groups(2) maxiter(0)
 assert _rc == 198
 capture nwfactions twotri, groups(2) generate(fac)
-assert _rc == 99
+assert _rc == 110
 nwfactions twotri, groups(2) generate(fac) replace silent
 assert _rc == 0
 di "=== nwfactions error handling REGRESSION VERIFIED ==="

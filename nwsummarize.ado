@@ -11,6 +11,20 @@ program nwsummarize
 		local add "indg_central outdg_central dg_central transitivity reciprocity"
 	}
 	tempname memhold
+	// save(filename [, replace]): the file name alone goes to postfile. The whole string used to, so that
+	// save(x, replace) wrote a file named "x, replace.dta" and no x.dta, without a message. The file is
+	// replaced with or without replace (as before); replace is accepted because it is Stata's usual form.
+	if `"`save'"' != "" {
+		local __nws_0 `"`0'"'
+		local 0 `"`save'"'
+		capture syntax anything(name=__nws_file id="file name") [, REPlace]
+		if _rc {
+			di "{err}{p 0 0 2}option {bf:save()}: specify a file name, optionally followed by {bf:, replace}; for example {bf:save(results, replace)}{p_end}"
+			exit 198
+		}
+		local save `__nws_file'
+		local 0 `"`__nws_0'"'
+	}
 	if `"`save'"' != "" {
 		postfile `memhold' str20 name str10 directed id nodes minval maxval edges arcs density `add' using `"`save'"', replace
 	}

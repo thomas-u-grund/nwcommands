@@ -66,6 +66,57 @@ where *w_ih* is the weight (value) of the tie between node *i* and node *h*. Whe
 
 which is essentially what Newman (2001) and Brandes (2001) suggested. This simply equates the distance between two nodes with the inverse of the weight of the tie that connects them. Such a solution for dealing with valued networks, however, does not explicitly account for the number of steps that need to be taken to connect to nodes. In contrast, Opsahl et al. (2010) allows giving different weight to longer and shorter paths. When ***alpha* = 0** the formula above ignores tie weights.
 
+## Network types
+
+**Directed:** used as directed; `sym` symmetrizes the network first. **Valued:** tie values are used by default: a step along a tie of value w costs 1/w^alpha (`alpha(1)` by default, `alpha(-1)` reads the values as lengths); `binary` (or `alpha(0)`) counts steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and 6.4 GB; the result is a dense *n*-by-*n* network. For the sums of the distances alone use [nwcloseness](nwcloseness) or [nwkatz](nwkatz), which do not build the matrix.
+
+The distances of all pairs of nodes are an *n*-by-*n* matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), names [nwcloseness](nwcloseness), [nwkatz](nwkatz), [nwcomponents](nwcomponents) and [nwpath](nwpath) as the alternatives for sums of distances, connectedness and single pairs, and `force` runs it anyway.
+
+Weighted distances are computed at any size by the native plugin; on a platform without it a valued network of more than 100 nodes stops with an error unless `force` (slow Mata routine) or `binary` is given.
+
+## Example
+
+```stata
+. nwwebuse florentine, nwclear
+. nwgeodesic flomarriage
+
+----------------------------------------
+  Network name: flomarriage
+  Network of shortest paths: _geodesic
+----------------------------------------
+    Nodes: 16
+    Symmetrized : (already undirected)
+    ------------------------------------
+    Paths: 120
+    Unconnected paths:  15
+    Average shortest path length:  (not defined)
+    Diameter:  (not defined)
+    Radius:  (not defined)
+```
+In this first example, the average shortest path length is not defined because there are 15 non-existent paths. There is one isolate node who cannot connect to any of the other 15 nodes. The next example, makes use of the option **unconnected()** to assign these non-existent paths a certain length. Here, the option **unconnected(max)** assigns them the length 6.
+
+```stata
+. nwgeodesic flomarriage, unconnected(max) nwreplace
+
+----------------------------------------
+  Network name: flomarriage
+  Network of shortest paths: _geodesic
+----------------------------------------
+    Nodes: 16
+    Symmetrized : (already undirected)
+    ------------------------------------
+    Paths: 120
+    Unconnected paths:  15
+    Unconnected paths replaced with:  6
+    Average shortest path length:  2.925
+    Diameter:  6
+```
+(`nwgeodesic` also reports the network *radius* - the minimum node eccentricity - as an additional line here, and, if `generate()` is specified, stores each node's own *eccentricity* under that name; not reproduced above since it depends on live data.)
+
 ## Stored results
 
 - **Scalars**
@@ -99,4 +150,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

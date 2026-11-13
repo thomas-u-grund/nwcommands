@@ -33,10 +33,22 @@ replace]
 
 The networks must be one-mode (a two-mode network stops with error 6088) and agree in direction. With `group()` the command creates a variable that holds the position of the network in *netlist*, for every node of the stacked network. If there are no data in memory, the command creates the observations; if there are data, they must already have one observation per node, in the order of the stacked network.
 
+## Example
+
+Two waves of three school classes are stacked into one network per wave, with a class variable:
+
+- **. nwstack class1_w1 class2_w1 class3_w1, name(w1) group(class)**
+- **. nwstack class1_w2 class2_w2 class3_w2, name(w2)**
+- **. nwsaom, waves(w1 w2) groups(class) outdegree reciprocity**
+
 ## Stored results
 
 `nwstack` stores in `r()`: `r(k)`, the number of networks stacked, and `r(N)`, the number of nodes of the stacked network.
 
+## Author
+
+Thomas U. Grund, RWTH Aachen University, thomas.u.grund@gmail.com
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

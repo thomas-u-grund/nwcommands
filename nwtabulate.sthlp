@@ -261,7 +261,7 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth attribute(varname)}}Node-level attribute{p_end}
+{synopt:{opth attribute(varname)}}Node-level attribute, numeric or string{p_end}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
@@ -356,4 +356,4 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

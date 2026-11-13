@@ -161,7 +161,7 @@ assert r(nodes) == 1
 
 * collision without subreplace errors cleanly; subreplace overwrites.
 capture nwneighbor subiso, ego(B) subnet(subA)
-assert _rc == 99
+assert _rc == 483
 nwneighbor subiso, ego(B) subnet(subA) subreplace
 qui nwsummarize subA, matonly
 assert r(nodes) == 1
@@ -191,7 +191,7 @@ capture noisily nwneighbor failnet
 assert _rc != 0
 
 capture noisily nwneighbor failnet, ego(Z)
-assert _rc == 99
+assert _rc == 485
 
 capture noisily nwneighbor failnet, ego(A) mode(sideways)
 assert _rc == 6556

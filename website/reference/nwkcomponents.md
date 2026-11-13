@@ -44,6 +44,22 @@ Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - th
 
 With a list of several networks the variables are numbered by network (*newvarname***1**, *newvarname***2**, ...), and the stored results are those of the last network.
 
+## Algorithm
+
+`nwkcomponents` computes k-components for exactly the single level `k(int)` requested, not the full Moody-White hierarchy (which recursively re-applies this same procedure at every increasing connectivity level found, building a complete nested tree from the whole network down to its most cohesive core). Computing just one target level directly is both simpler to verify by hand and matches how [nwkplex](nwkplex) / [nwnclique](nwnclique) already expose their own single-parameter cohesion concepts in this package - a full recursive multi-level hierarchy, if wanted later, would be a natural, separate follow-on built on the same `k(int)`-level primitive this command already provides, not a reason to withhold the single-level version now.
+
+## Network types
+
+**Directed:** symmetrized. **Valued:** tie values are ignored and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The search for vertex cuts runs in compiled code and the network is not turned into a matrix. For k(2), the default, the search needs a single pass over the ties (the blocks of the network, one depth-first search) instead of one max-flow computation per node; for k(3) and higher it is one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds. Both routes give the same components in the same order. Without the compiled plugin for the platform the Mata code is used and is much slower. For large k or many cuts the time is longer.
+
+Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix `r(kcomp_matrix)` (one row per component, one column per node): 100,000 nodes take about one minute. Option `nomatrix` leaves the matrix out; the variable and `r(kcomponents)` are the same. When the estimated time is more than 2 minutes (about 31,000 nodes, an estimate made for the slower route) the command stops at once with r(484) and a message; option `force` runs it anyway. For components use [nwcomponents](nwcomponents), for cores [nwkcore](nwkcore).
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata
@@ -76,4 +92,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -45,6 +45,14 @@ By default, the command also checks if the new adjacency matrix is symmetric and
 
 to overwrite the automatic setting afterwards.
 
+## Network types
+
+**Directed:** the matrix is written as given. **Valued:** any values. **Two-mode:** yes - the matrix must not hold a tie between two nodes of the same mode (error 459). **Signed:** negative values are written as given. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The new matrix is yours; the network takes it over without a further copy, and a network of a new size is created without ties before the matrix is put in.
+
 ## Examples
 
 This example generates a ring lattice first (*mynet*), but then replaces the adjacency matrix of this network with a new Mata matrix **J(5,5,99)**.
@@ -76,4 +84,4 @@ This example generates a ring lattice first (*mynet*), but then replaces the adj
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

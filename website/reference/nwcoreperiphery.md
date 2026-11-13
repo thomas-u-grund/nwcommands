@@ -40,6 +40,16 @@ silent]
 
 Always operates on the undirected version of the network (the classical model does not distinguish incoming from outgoing ties); a directed network is symmetrized automatically - no separate **symmetrize** option is needed or offered (unlike [nwcommunity](nwcommunity), which needs **symmetrize** for a directed network).
 
+## Network types
+
+**Directed:** symmetrized automatically. **Valued:** tie values are used by default (`measure(valued)`); `measure(binary)` ignores them. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Above 2,000 nodes the search runs on the stored ties (the sums of the correlation with the ideal pattern are taken from the ties; the cores found are those of the matrix version, the fitness equal up to rounding in the last digits). Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds and 0.2 GB, 20,000 nodes 0.6 seconds.
+
+A network with no ties at all is rejected (there is no structure to fit a core-periphery pattern to); an isolate is assigned to the periphery.
+
 ## Examples
 
 ```stata
@@ -63,4 +73,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -399,7 +399,7 @@ program nwgenerate
 				capture confirm variable `newnetname', exact
 				if _rc == 0 & !`hasreplace' {
 					noi di "{err}Variable {bf:`newnetname'} already exists; use {bf:replace} or a different name."
-					error 99
+					error 110
 				}
 				capture drop `newnetname'
 				gen `newnetname' = `_tmp_out' + `_tmp_in'

@@ -2,7 +2,7 @@
 capture program drop nwturnover
 program nwturnover, rclass
 	version 12
-	syntax anything(name=netnames) [, GENerate(string) REPlace silent]
+	syntax anything(name=netnames) [, GENerate(string) REPlace silent FORMation]
 	set more off
 
 	_nwsyntax `netnames', max(2) min(2)
@@ -40,6 +40,17 @@ program nwturnover, rclass
 	}
 	local isdirected = ("`directed1'" == "true")
 
+	// formation (3.20.1): two-paths and returned ties are defined inside one mode only
+	if "`formation'" != "" {
+		foreach __k in 1 2 {
+			_nwsyntax `netname`__k''
+			if "`is2mode'" == "true" {
+				di "{err}option {bf:formation} is not available for two-mode networks."
+				error 198
+			}
+		}
+	}
+
 	// a two-mode network holds MISSING in the blocks inside a mode (no tie can exist there); a copy with 0 there
 	// counts only the ties between the modes (missing != 0 would be read as a tie that is in both networks)
 	local orig1 "`netname1'"
@@ -67,7 +78,7 @@ program nwturnover, rclass
 	capture confirm variable `netgenerate', exact
 	if _rc == 0 & "`replace'" == "" {
 		noi di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"
-		err 99
+		err 110
 	}
 
 	mata: st_rclear()
@@ -107,11 +118,40 @@ program nwturnover, rclass
 	local persistdenom = nw_stable + nw_dissolved
 	local persistence = cond(`persistdenom' > 0, nw_stable / `persistdenom', .)
 
+	// formation (3.20.1): among the ties formed, the share that return a tie of net1 (j had named i)
+	// and the share that close a two-path of net1 (i -> k -> j); the same shares among all pairs
+	// without a tie in net1, from which every formed tie comes
+	if "`formation'" != "" {
+		tempname __nw_form
+		mata: `__nw_form' = nw_turnover_formation(*`netobj1'->get_matrix(), *`netobj2'->get_matrix())
+		mata: st_local("f_n", strofreal(`__nw_form'[1]))
+		mata: st_local("f_rec", strofreal(`__nw_form'[2], "%18.0g"))
+		mata: st_local("f_clo", strofreal(`__nw_form'[3], "%18.0g"))
+		mata: st_local("a_n", strofreal(`__nw_form'[4]))
+		mata: st_local("a_rec", strofreal(`__nw_form'[5], "%18.0g"))
+		mata: st_local("a_clo", strofreal(`__nw_form'[6], "%18.0g"))
+		mata: mata drop `__nw_form'
+		if !`isdirected' {
+			local f_n = `f_n' / 2
+			local a_n = `a_n' / 2
+		}
+	}
+
 	return scalar stable = nw_stable
 	return scalar formed = nw_formed
 	return scalar dissolved = nw_dissolved
 	return scalar jaccard = `jaccard'
 	return scalar persistence = `persistence'
+
+	if "`formation'" != "" {
+		return scalar absent = `a_n'
+		return scalar formed_closure = `f_clo'
+		return scalar absent_closure = `a_clo'
+		if `isdirected' {
+			return scalar formed_recip = `f_rec'
+			return scalar absent_recip = `a_rec'
+		}
+	}
 
 	// see nwbrokerage.ado's own header comment: the "already exists"
 	// probe above leaves _rc stale even after a fully successful run -
@@ -128,8 +168,43 @@ program nwturnover, rclass
 		if `persistdenom' > 0 {
 			noi di "{txt}  Persistence: {res}`=strtrim(string(round((`persistence')*1000)/1000,"%9.0g"))'"
 		}
+		if "`formation'" != "" {
+			noi di " "
+			noi di "{txt}  Formed ties, compared with all pairs without a tie in {res}`orig1'{txt}:"
+			noi di "{txt}{col 26}{ralign 10:Formed}{ralign 10:No tie}"
+			noi di "{txt}    Pairs{col 26}{res}{ralign 10:`=string(`f_n', "%9.0f")'}{ralign 10:`=string(`a_n', "%9.0f")'}"
+			if `isdirected' {
+				noi di "{txt}    Return a tie{col 26}{res}{ralign 10:`=string(`f_rec', "%9.3f")'}{ralign 10:`=string(`a_rec', "%9.3f")'}"
+			}
+			noi di "{txt}    Close a two-path{col 26}{res}{ralign 10:`=string(`f_clo', "%9.3f")'}{ralign 10:`=string(`a_clo', "%9.3f")'}"
+		}
 		noi di " "
 	}
 	capture mata: mata drop __nwturnover_*
 	capture confirm number 0
+end
+
+capture mata: mata drop nw_turnover_formation()
+mata:
+// (formed, share returning, share closing, absent, share returning, share closing); a missing
+// entry counts as no tie, and the diagonal is never a pair
+real rowvector nw_turnover_formation(real matrix A10, real matrix A20)
+{
+	real matrix A1, A2, ab, f, r, c
+	real scalar nf, na
+
+	A1 = (editmissing(A10, 0) :!= 0)
+	A2 = (editmissing(A20, 0) :!= 0)
+	_diag(A1, 0)
+	_diag(A2, 0)
+	ab = (A1 :== 0)
+	_diag(ab, 0)
+	f = ab :* A2
+	r = A1'
+	c = ((A1 * A1) :> 0)
+	nf = sum(f)
+	na = sum(ab)
+	return((nf, (nf ? sum(f :* r) / nf : .), (nf ? sum(f :* c) / nf : .),
+		na, (na ? sum(ab :* r) / na : .), (na ? sum(ab :* c) / na : .)))
+}
 end

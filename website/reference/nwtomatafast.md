@@ -24,6 +24,18 @@ Internally, networks are saved as adjacency matrices in Mata. This command retur
 
 This can be useful, when you want to directly interact with the underlying adjacency matrix. But I only recommend this for advanced programmers. Caution is advised because the relevant meta-information is not updated when changing the adjacency matrix of a network.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Example
+
+```stata
+. nwrandom 5, density(.2) name(net)
+. nwtomatafast net
+. return list
+```
+
 ## Stored results
 
 - **Macros**
@@ -35,4 +47,4 @@ This can be useful, when you want to directly interact with the underlying adjac
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

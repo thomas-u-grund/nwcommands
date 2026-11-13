@@ -120,7 +120,7 @@ capture nwclustering v3, generate(q) level(2)
 xa _rc == 198
 gen byte old = 7
 capture nwclustering v3, generate(old)
-xa _rc == 99
+xa _rc == 110
 xa old == 7 in 1/3
 * symmetrize without generate(): r(198) and no symmetrized helper network left
 mata: st_local("n0", strofreal(__nw.nws.get_number()))

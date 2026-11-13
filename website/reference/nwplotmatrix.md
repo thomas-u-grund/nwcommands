@@ -87,10 +87,18 @@ All normal `options for lines` can be applied as well.
 . nwplotmatrix flomarriage, group(seat, lcolor(green))
 ```
 
+## Network types
+
+**Directed:** the matrix shows asymmetry directly. **Valued:** the legend names the value classes of the cells ('no tie' and 'tie' on a binary network); `tievalue` prints the values. **Two-mode:** yes - the nodes of one mode are placed together (unless `sortby()` or `group()`) and a line separates the modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes: 1,000 nodes 5 seconds and 0.8 GB, 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes are refused; plot a part of the network or use [nwplot](nwplot).
+
 ## See also
 
 - [nwplot](nwplot)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

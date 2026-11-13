@@ -48,6 +48,18 @@ silent]
 
 Like n-cliques, n-clans genuinely overlap, so `nwnclan` follows [nwnclique](nwnclique)'s own output shape: a single per-node "largest maximal n-clan membership size" summary variable (`gen:erate(newvarname)`, required), plus the complete overlapping structure in **r(nclan_matrix)** and **r(nclans)**. `minsize(int)` defaults to 3, matching [nwclique](nwclique) / [nwnclique](nwnclique).
 
+## Network types
+
+**Directed:** symmetrized automatically. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+**Feasible sizes.** The n-clans are the maximal n-cliques whose members are also within *n* steps of each other inside the group. The search does not list all maximal n-cliques first: it drops a branch as soon as a member already in the group is more than *n* steps from the newest member inside the group plus its remaining candidates (distances only grow in the subsets a clan below the branch can be), which leaves the clans found, and their order, unchanged. Measured in Stata/BE on a random network with 10 ties drawn per node and `n(2)`: 100 / 300 / 1,000 nodes take 0.006 / 2.0 / 1.8 seconds (no / 114 / 5,777 clans); at 5,000 nodes there are 165,097 clans, found in 2.5 seconds with `nomatrix`, but the clans-by-nodes matrix (165,097 x 5,000) is too large to build, which the default says. Larger `n()` makes the "distance at most *n*" graph denser and the search much longer: at 1,000 nodes and `n(3)` the search took 197 seconds (and found no clan), so the default limit of 60 seconds stops it.
+
+**Guards.** The command stops with r(484) and a message that names the option to raise when more than `maxcliques()` maximal n-cliques (default 1,000,000) had to be examined, when the result matrix would be too large to build (more than 50 million numbers; use `nomatrix`), or when the search has run for `maxtime()` seconds (default 60). `countonly` counts and tabulates the clans by size without storing them.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata
@@ -80,4 +92,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

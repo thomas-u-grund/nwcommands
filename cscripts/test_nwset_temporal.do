@@ -34,15 +34,27 @@ nwname snapnet
 assert `"`r(temporal)'"' == "true"
 assert `"`r(temporaltype)'"' == "snapshot"
 assert `"`r(timevar)'"' == "wave"
+* per-edge times are stored as a list (ego, alter, time), one row per
+* tie and wave, so that a pair can carry several waves (3.23.0)
+capture mata: mata drop _tnt_times()
+mata:
+real colvector _tnt_times(real matrix L, real scalar i, real scalar j, real scalar c)
+{
+	real colvector r
+	r = selectindex(L[., 1] :== i :& L[., 2] :== j)
+	return(rows(r) ? L[r, c] : J(0, 1, .))
+}
+end
+mata: assert(`netobj'->get_time_sparse() == 1)
 mata: et = *(`netobj'->get_edge_time())
-mata: ab = et[first_index_match(`netobj'->get_nodenames(), "A"), first_index_match(`netobj'->get_nodenames(), "B")]
-mata: bc = et[first_index_match(`netobj'->get_nodenames(), "B"), first_index_match(`netobj'->get_nodenames(), "C")]
-mata: ac = et[first_index_match(`netobj'->get_nodenames(), "A"), first_index_match(`netobj'->get_nodenames(), "C")]
-mata: assert(ab == 1)
-mata: assert(bc == 2)
-mata: assert(ac == 3)
+mata: a_id = first_index_match(`netobj'->get_nodenames(), "A")
+mata: b_id = first_index_match(`netobj'->get_nodenames(), "B")
+mata: c_id = first_index_match(`netobj'->get_nodenames(), "C")
+mata: assert(_tnt_times(et, a_id, b_id, 3) == 1)
+mata: assert(_tnt_times(et, b_id, c_id, 3) == 2)
+mata: assert(_tnt_times(et, a_id, c_id, 3) == 3)
 * symmetric (undirected): the reverse direction carries the same time
-mata: assert(et[first_index_match(`netobj'->get_nodenames(), "B"), first_index_match(`netobj'->get_nodenames(), "A")] == 1)
+mata: assert(_tnt_times(et, b_id, a_id, 3) == 1)
 
 * --- interval: start/end per-edge values, same label-resolution check.
 nwclear
@@ -63,10 +75,10 @@ mata: ee = *(`netobj'->get_edge_end())
 mata: a_id = first_index_match(`netobj'->get_nodenames(), "A")
 mata: b_id = first_index_match(`netobj'->get_nodenames(), "B")
 mata: c_id = first_index_match(`netobj'->get_nodenames(), "C")
-mata: assert(es[a_id,b_id] == 1)
-mata: assert(ee[a_id,b_id] == 3)
-mata: assert(es[b_id,c_id] == 2)
-mata: assert(ee[b_id,c_id] == .)
+mata: assert(_tnt_times(es, a_id, b_id, 3) == 1)
+mata: assert(_tnt_times(ee, a_id, b_id, 3) == 3)
+mata: assert(_tnt_times(es, b_id, c_id, 3) == 2)
+mata: assert(_tnt_times(ee, b_id, c_id, 3) == .)
 
 * --- event: raw sender/receiver/eventtime triplets, NOT folded into
 * the ordinary edge matrix (a plain, non-temporal nwdegree-style read

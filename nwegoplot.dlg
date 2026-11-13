@@ -1,0 +1,65 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwegoplot")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 298
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwegoplot - Draw the ego network of one node")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 234, label("Options")
+  TEXT tx_ego 20 54 260 ., label("Required. The focal node: its name or its number")
+  EDIT ed_ego 290 54 190 ., nomem option(ego)
+  TEXT tx_hop 20 82 260 ., label("1 (default) ego and alters; 2 adds the contacts of the alters")
+  EDIT ed_hop 290 82 190 ., nomem option(hop)
+  TEXT tx_sortby 20 110 260 ., label("Place alters with the same value of this variable next to each other")
+  EDIT ed_sortby 290 110 190 ., nomem option(sortby)
+  TEXT tx_generate 20 138 260 ., label("Keep the coordinates in two new variables: xvar yvar")
+  EDIT ed_generate 290 138 190 ., nomem option(generate)
+  TEXT tx_replace 20 166 260 ., label("Overwrite the variables of generate()")
+  CHECKBOX cx_replace 290 166 190 ., label("replace") option(replace)
+  TEXT tx_edgecolor 20 194 260 ., label("Color the ties by another network, as in nwplot")
+  EDIT ed_edgecolor 290 194 190 ., nomem option(edgecolor)
+  TEXT tx_size 20 222 260 ., label("Node size, as in nwplot")
+  EDIT ed_size 290 222 190 ., nomem option(size)
+  TEXT tx_aspectratio 20 250 260 ., label("Aspect ratio, as in nwplot")
+  EDIT ed_aspectratio 290 250 190 ., nomem option(aspectratio)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwegoplot"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	require main.ed_ego
+	put "nwegoplot " main.cb_net
+	beginoptions
+		optionarg main.ed_ego
+		optionarg main.ed_hop
+		optionarg main.ed_sortby
+		optionarg main.ed_generate
+		option main.cx_replace
+		optionarg main.ed_edgecolor
+		optionarg main.ed_size
+		optionarg main.ed_aspectratio
+	endoptions
+	stata
+END

@@ -68,6 +68,10 @@ The stored results **r(dg_central)** (undirected), **r(indg_central)** and **r(o
 
 `nwdegree` accepts a [netlist](netlist) (e.g. **nwdegree glasgow1 glasgow2, generate(deg)**), calculating degree centrality independently for each network in the list. When more than one network is given, `generate()`'s own name(s) get the network's own name appended (e.g. *deg_glasgow1*, *deg_glasgow2*); a single-network call is unaffected and keeps the plain name(s) exactly as given. **r()** results (e.g. **r(dg_central)**) reflect whichever network was processed last, matching this package's convention for other [netlist](netlist) commands.
 
+## Network types
+
+**Directed:** in- and out-degree (in- and out-strength) separately. **Valued:** the strength by default, `alpha()` for Opsahl's generalized degree, `binary` for the number of ties; `ties()` stores the tie counts. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - ties divided by the size of the other mode, `raw` the count. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 - This is the example used in Opsahl et al. (2010, Table 1):
@@ -135,4 +139,4 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

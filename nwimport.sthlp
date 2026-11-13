@@ -287,4 +287,4 @@ two-mode networks with level labels (not UCINET); a tie inside a mode is refused
 {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

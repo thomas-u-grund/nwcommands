@@ -29,7 +29,7 @@ force]
 
 | | |
 |---|---|
-| `attribute(varname)` | Attribute variable |
+| `attribute(varname)` | Numeric attribute variable |
 | `stat`(*[statistic](nwcontext)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
 | `mode`(*[context](nwcontext)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
 | `generate(newvarname)` | Name of the context variable to be generated; `generate()` or `mat()` is required |
@@ -54,11 +54,23 @@ Sometimes, however, one might want to calculate statistics including the attribu
 
 *newvarname*[i] = *stat*(*varname*[j]), for all *j* with *y_ij* > 0 or j == i
 
+## Scope
+
+Directed and undirected, weighted and unweighted, one-mode and two-mode.
+
 ## Remarks
 
 In the case of undirected networks, no * mode* option needs to be specified.
 
 By default, nodes with missing attributes are excluded from the calculation.
+
+## Network types
+
+**Directed:** the neighbors follow `mode(outgoing|incoming|both|either)`. **Valued:** attribute values are weighted by tie values by default; `noweight` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The statistics are computed on the dense network and three *n*-by-*n* matrices are held at once. Above about 22,000 nodes (12 GB) the command stops at once with r(484) and names [nwaltergen](nwaltergen) as the alternative: it computes the mean, sum, minimum, maximum and standard deviation of the attribute of the neighbors from the stored ties and works at 100,000 nodes and more. Option `force` runs the command anyway.
 
 ## Examples
 
@@ -105,8 +117,8 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ## See also
 
-- [nwneighbor](nwneighbor)
+- [nwneighbor](nwneighbor), [nwegoplot](nwegoplot)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

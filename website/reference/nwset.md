@@ -215,10 +215,13 @@ Time belongs to edges/ties, not to a separate network copy per timepoint. An edg
 - **time(*timevar*)**
 - **snapshot** semantics: each row's own *timevar* value is the single instant that tie
 - was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
-- carrying its own recorded time
+- carrying its own recorded time. A pair listed in several rows with different times is a tie observed at
+- each of those times, so ties can come and go: a tie of waves 1 and 3 is present at wave 1, absent at
+- wave 2 and present again at wave 3 (see [nwattime](nwattime))
 - **interval(*startvar endvar*)**
 - **interval** semantics: each row is active for *startvar* <= *t* < *endvar* - a
-- missing *endvar* means the tie is still ongoing (open-ended)
+- missing *endvar* means the tie is still ongoing (open-ended). A pair may have several rows, one for
+- each period in which the tie exists
 - **eventtime(*eventtimevar*)**
 - **event** semantics: each row is a timestamped relational *event*, not a persistent
 - tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
@@ -259,6 +262,14 @@ Whenever a network is set with **nwset**, it is also made the [current network](
 
 Programmers can use **nwset** to write their own import routines  (see also [nwimport](nwimport)) for different network file formats that are not natively supported by the **nwcommands**.All you need to do is transform your data either in an adjacency list or an edgelist represented by Stata variables.
 
+## Network types
+
+**Directed:** `directed` / `undirected`. **Valued:** `valued` / `unvalued`. **Two-mode:** yes - `twomode` (edge list) and `bipartite` (rectangular matrix) declare the network and the sizes of the modes. **Signed:** negative values are stored as they are. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Options `time()` and `interval()` keep the times as a list with one entry per row of the data (pair and time, or pair, start and end), not as *n*-by-*n* matrices, which would hold only one time per pair and take 80 GB each at 100,000 nodes.
+
 ## Stored results
 
 `nwset` without a `varlist` or **mat()** (the list of networks) stores the following in **r()**:
@@ -276,4 +287,4 @@ Programmers can use **nwset** to write their own import routines  (see also [nwi
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

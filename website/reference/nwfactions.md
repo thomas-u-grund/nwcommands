@@ -42,6 +42,14 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 **Starting partition.** Nodes with the same degree are taken in the order of their node number, so the same call always gives the same partition. The fitness of a candidate move is computed from the total tie weight inside the groups and the number of same-group pairs, which takes time proportional to the node's degree plus the number of groups, not to the square of the number of nodes; `r(fitness)` agrees with a direct computation of the correlation to rounding error (about 1e-15).
 
+## Network types
+
+**Directed:** symmetrized. **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes with `groups(3)` take 0.014 / 0.019 / 0.05 seconds. The memory needed is proportional to the number of ties; no N-by-N matrix is built.
+
 ## Examples
 
 ```stata
@@ -69,4 +77,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

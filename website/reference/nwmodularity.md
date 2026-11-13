@@ -27,7 +27,7 @@ one:mode]
 
 | | |
 |---|---|
-| `group(varname)` | Stata variable holding each node's community/group assignment |
+| `group(varname)` | Stata variable holding each node's community/group assignment, numeric or string |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `sym:metrize` | Symmetrize a directed network before scoring (required for directed networks) |
 | `resolution(real)` | Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1 |
@@ -39,6 +39,10 @@ one:mode]
 `nwmodularity` computes Newman's modularity *Q* of the network(s) in [netlist](netlist) against an ul:existing node partition given in **group()** — for example a partition obtained from [nwcomponents](nwcomponents), a block model, or any hand-coded grouping variable. Unlike [nwcommunity](nwcommunity), `nwmodularity` does not search for a partition; it only scores the one given. All calculations are performed on the undirected network; directed networks require **symmetrize**.
 
 Modularity compares the fraction of ties that fall within the given groups to the fraction expected under a random network with the same degree sequence. Values near 0 indicate the grouping is no better than chance; higher (positive) values indicate a grouping that captures real community structure. Scoring a single, all-nodes-in-one-group partition always gives *Q* = 0, for any network.
+
+## Network types
+
+**Directed:** needs `symmetrize` (or a symmetrized network). **Valued:** `measure(valued)` by default on a valued network, `measure(binary)` ignores the values. **Two-mode:** yes - Barber's bipartite modularity; `onemode` gives Newman's modularity of the bipartite graph. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Examples
 
@@ -70,4 +74,4 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 10
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

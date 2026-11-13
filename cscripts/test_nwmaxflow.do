@@ -33,7 +33,7 @@ assert r(mean) == 0
 
 * error handling: unknown node, source==sink.
 capture nwmaxflow flownet, source(bogus) sink(D)
-assert _rc == 99
+assert _rc == 485
 capture nwmaxflow flownet, source(A) sink(A)
 assert _rc == 198
 

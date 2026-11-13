@@ -40,6 +40,20 @@ The diagonal (self-constraint) is not meaningful and is not part of the returned
 
 **Aggregating to the node level**: the quantity most commonly reported in the literature as "Burt's constraint" is node *i*'s aggregate constraint, *C_i = sum_j(c_ij)* for *j* in *i*'s direct contacts only - **not** summed over every *j*. This distinction matters because *c_ij* can be nonzero even when *i* and *j* are not directly tied at all (the *sum_q(p_iq*p_qj)* indirect term alone can make it positive), so naively summing an entire row of this command's output - *sum_j(c_ij)* over **all** *j* - silently over-counts and gives a different, larger number than the standard aggregate for any node with such indirect-only contributions. [nwburt](nwburt) computes the correctly-restricted aggregate directly (as *_constraint*); this command intentionally does not, since restricting the sum to *N(i)* requires already knowing which entries of the raw network matrix are direct ties, which is exactly the extra step [nwburt](nwburt) takes care of.
 
+## Network types
+
+**Directed:** not symmetrized - p_ij uses outgoing ties only, so a node without outgoing ties has zero constraint. **Valued:** tie values are used as Burt's investment proportions. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not supported - negative values distort p_ij (values outside [0,1]). See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The result is a dense *n*-by-*n* network. 20,000 nodes: 9 seconds in Stata/BE.
+
+Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an *n*-by-*n* matrix; only `name()` and `replace` are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7 seconds for a directed network and 2.2 seconds for an undirected one (11 million cells).
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
+The cells are computed in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network (1 second in Stata/BE for an undirected network) goes into storing the result as a network.
+
 ## Examples
 
 ```stata
@@ -60,4 +74,4 @@ Ronald S. Burt (1992). *Structural Holes: The Social Structure of Competition*. 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

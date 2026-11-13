@@ -16,7 +16,9 @@
 {cmdab: nwbalance}
 [{it:{help netname}}]
 [{cmd:,}
-{opt generate(namelist)}]
+{opt generate(namelist)}
+{opt reps(#)}
+{opt seed(#)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -24,6 +26,8 @@
 {synopt:{opt generate(namelist)}}Up to 3 names, for the per-node balance ratio, count of balanced
 triads, and count of closed triads a node belongs to; default =
 {it:_balance _baltriad _clotriad}; existing variables of these names are replaced{p_end}
+{synopt:{opt reps(#)}}compare the share of balanced triads with # draws of random signs on the same ties; default 0 (no comparison){p_end}
+{synopt:{opt seed(#)}}random-number seed for {opt reps()}{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -47,6 +51,17 @@ For each node, {cmd:nwbalance} generates the number of closed triads it belongs 
 those that are balanced, and the ratio of the two. Network-level counts and the overall balance
 ratio are returned in {help return:r()}.
 
+{title:Random signs as a baseline}
+
+{pstd}
+A share of balanced triads cannot be judged by itself: it depends on the share of ties that are
+positive. If each tie were positive with probability {it:p}, independently of the others, a closed
+triad would be balanced with probability (1 + (2{it:p} - 1)^3) / 2. With {opt reps(#)},
+{cmd:nwbalance} draws # networks that keep every tie in its place and give each tie a positive sign
+with the observed share of positive ties as probability, independently of the other ties, and counts
+the balanced triads of each draw. It reports the observed share, the mean and standard deviation of
+the share over the draws, the share the formula gives, and the number of draws whose share is at least
+the observed one. With 500 draws, 0 of 500 means a p-value below about 0.002, not zero.
 
 {title:Network types}
 
@@ -65,7 +80,6 @@ nodes. The enumeration is a kernel of the native plugin; a platform whose plugin
 Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per
 node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
 
-
 {title:Examples}
 
 	{cmd:. nwset, mat((0,1,1,-1\1,0,1,-1\1,1,0,1\-1,-1,1,0)) undirected labs(A,B,C,D)}
@@ -77,6 +91,9 @@ node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata 
 	{txt}    Closed triad: {res}4
 	{txt}    Balanced triad: {res}2
 	{txt}    Unbalanced triad: {res}2
+
+	{cmd:. nwwebuse gahuku, nwclear}
+	{cmd:. nwbalance gahuku, reps(500) seed(1)}
 
 {pstd}
 Of the 4 triads in this network, {it:A-B-C} (all positive) and {it:A-B-D} (two negative ties) are
@@ -91,6 +108,13 @@ balanced; {it:A-C-D} and {it:B-C-D} (one negative tie each) are not.
 {synopt:{bf:r(balanced_triad)}}number of balanced closed triads{p_end}
 {synopt:{bf:r(unbalanced_triad)}}number of unbalanced closed triads{p_end}
 {synopt:{bf:r(balance)}}{it:balanced_triad} / {it:closed_triad}{p_end}
+{p2col 5 21 25 2: With {opt reps()}}{p_end}
+{synopt:{bf:r(reps)}}number of draws{p_end}
+{synopt:{bf:r(p_positive)}}share of the ties that are positive{p_end}
+{synopt:{bf:r(null_mean)}}mean share of balanced triads over the draws{p_end}
+{synopt:{bf:r(null_sd)}}standard deviation of that share over the draws{p_end}
+{synopt:{bf:r(null_ge)}}number of draws with a share at least the observed {bf:r(balance)}{p_end}
+{synopt:{bf:r(null_expected)}}(1 + (2{it:p} - 1)^3) / 2 with {it:p} = {bf:r(p_positive)}{p_end}
 
 
 {title:References}
@@ -105,4 +129,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 	{help nwtriads}, {help nwvalue}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

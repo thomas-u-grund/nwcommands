@@ -68,7 +68,7 @@ nwset, mat((0,1,0\1,0,0\0,0,0)) name(net1) undirected labs(A,B,C)
 nwduplicate net1, name(_reach)
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(net2) undirected labs(X,Y,Z)
 capture noisily nwreach net2
-assert _rc == 99
+assert _rc == 483
 nwsummarize _reach
 assert r(nodes) == 3
 nwreach net2, nwreplace

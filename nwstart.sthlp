@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.22.0  13nov2026}{...}
+{* *! version 3.23.0  13nov2026}{...}
 
 {phang}
 {help nwcommands:NW-4 start} {hline 2} Getting started
@@ -128,4 +128,4 @@ Most commands also have a dialog box: after {cmd:nwinstall, all}, the {bf:Networ
 {bf:User}.
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

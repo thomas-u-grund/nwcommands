@@ -73,6 +73,14 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 . nwplot flobusiness, edgecolor(medici_peruzzi_1) scheme(s2network)
 ```
 
+## Network types
+
+**Directed:** used as directed; `sym` symmetrizes the network first. **Valued:** tie values are used by default: the path of least cost, a tie of value w costing 1/w^alpha (`alpha(1)` by default, `alpha(-1)`: values are lengths; `r(path_cost)`, `r(path_length)` = steps); `binary` finds the fewest steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The paths are enumerated from the stored ties and `generate()` writes each path as a network of its ties; neither builds a matrix. 20,000 nodes 0.25 seconds in Stata/BE for two nodes at 4 steps. The number of walks examined grows with the degree to the power of the path length.
+
 ## Examples
 
 ```stata
@@ -104,6 +112,10 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 - **Matrices**
 - **r(paths_matrix)** --- one row per path found, node ids along the path; only set when **r(paths)** > 0
 
+## Also see
+
+- [nwgeodesic](nwgeodesic)
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

@@ -34,6 +34,50 @@ Keep in mind that when you make alterations to **r(adj)** in Mata you change a n
 
 When the option `mat()` is specified, the command obtains a copy of the adjacency matrix and saves it as a new Mata matrix *matamatrix*. When you make alterations to this *matamtrix* you do not change the network.
 
+## Example
+
+```stata
+. nwclear
+. nwrandom 5, prob(1) name(mynet)
+. _nwtomata, mat(myadj)
+
+. return list
+
+macros:
+           r(adj_copy) : "myadj"
+                r(adj) : "(*__nw.nws.pdefs[1]->get_matrix())"
+             r(netobj) : "__nw.nws.pdefs[1]"
+            r(netname) : "mynet"
+```
+The previous commands generated a new Mata matrix called *myadj*. The next command displays this copy of the adjacency matrix.
+
+```stata
+. mata: `r(adj_copy)'
+[symmetric]
+       1   2   3   4   5
+    +---------------------+
+  1 |  .                  |
+  2 |  1   .              |
+  3 |  1   1   .          |
+  4 |  1   1   1   .      |
+  5 |  1   1   1   1   .  |
+    +---------------------+
+```
+One can also directly interact with the underlying adjacency matrix of a network. But be careful when doing so because you might corrupt your network data. This displays the actual adjacency matrix.
+
+```stata
+. mata: `r(adj)'
+[symmetric]
+       1   2   3   4   5
+    +---------------------+
+  1 |  .                  |
+  2 |  1   .              |
+  3 |  1   1   .          |
+  4 |  1   1   1   .      |
+  5 |  1   1   1   1   .  |
+    +---------------------+
+```
+
 ## Stored results
 
 - **Macros**
@@ -48,4 +92,4 @@ When the option `mat()` is specified, the command obtains a copy of the adjacenc
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

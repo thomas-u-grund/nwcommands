@@ -152,17 +152,10 @@ program nwinstall, rclass
 	if ("`ado'" != "" | "`all'" != "") & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ado"
 		net from "`__nw_src'"
-		local i = 1
-		local keepgoing = 1
-		while `keepgoing' {
-			// no `all': the ancillary files (templates, JavaScript, viewer binaries) are copied by nwinstall_ancillary below,
-			// with their lib/ layout; `all' only dropped them, flattened, into the current working directory
-			capture net install "nwcommands-ado`i'", replace
-			if _rc != 0 {
-				local keepgoing = 0
-			}
-			local i = `i' + 1
-		}
+		// no `all': the ancillary files (templates, JavaScript, viewer binaries) are copied by nwinstall_ancillary below,
+		// with their lib/ layout; `all' only dropped them, flattened, into the current working directory
+		nwinstall_chunks, kind(ado) src(`"`__nw_src'"')
+		local __nw_failed `"`__nw_failed' `r(failed)'"'
 		// The loop's own natural exit is an EXPECTED, captured failure
 		// (chunk `i' genuinely doesn't exist) - without this, that
 		// leaves a misleading nonzero `_rc' standing even when every
@@ -177,15 +170,8 @@ program nwinstall, rclass
 	if "`help'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-hlp"
 		net from "`__nw_src'"
-		local i = 1
-		local keepgoing = 1
-		while `keepgoing' {
-			capture net install "nwcommands-hlp`i'", all replace
-			if _rc != 0 {
-				local keepgoing = 0
-			}
-			local i = `i' + 1
-		}
+		nwinstall_chunks, kind(hlp) src(`"`__nw_src'"') all
+		local __nw_failed `"`__nw_failed' `r(failed)'"'
 		capture confirm number 1
 	}
 
@@ -222,15 +208,8 @@ program nwinstall, rclass
 		// nwdeploy_writepkgchunks), so nwcommands-dlg.pkg is now
 		// shipped chunked (nwcommands-dlg1.pkg, -dlg2.pkg, ...) just
 		// like -ado/-hlp already were; this loop matches those.
-		local i = 1
-		local keepgoing = 1
-		while `keepgoing' {
-			capture net install "nwcommands-dlg`i'", all replace
-			if _rc != 0 {
-				local keepgoing = 0
-			}
-			local i = `i' + 1
-		}
+		nwinstall_chunks, kind(dlg) src(`"`__nw_src'"') all
+		local __nw_failed `"`__nw_failed' `r(failed)'"'
 		capture confirm number 1
 	}
 	
@@ -334,6 +313,12 @@ program nwinstall, rclass
 	}
 	else if "`all'" != "" & !`__nw_models' & "`remove'" == "" {
 		di as text _n "{p 0 0 2}To also install the model packages type: nwinstall, models{space 3}(or nwinstall, everything){p_end}"
+	}
+	// parts of the core that could not be downloaded (3.20.1: these used to be skipped without a message)
+	local __nw_failed = strtrim(`"`__nw_failed'"')
+	if `"`__nw_failed'"' != "" {
+		di as err _n "{p 0 0 2}nwinstall: the installation is INCOMPLETE. These parts could not be downloaded from `__nw_src': `__nw_failed'. Check the internet connection and run the same nwinstall command again.{p_end}"
+		exit 677
 	}
 end
 
@@ -771,6 +756,7 @@ program nwinstall_menu
 	window menu append item "Positions and Equivalence" "Hierarchical clustering of nodes (role/position analysis)" "db nwhierarchy"
 	window menu append item "Positions and Equivalence" "E-I index and mixing table for a categorical node attribute" "db nwmixing"
 	window menu append item "Positions and Equivalence" "Calculate number of shared neighbors between nodes and..." "db nwshared"
+	window menu append item "Positions and Equivalence" "Classes of regularly equivalent nodes" "db nwregular"
 	window menu append item "Positions and Equivalence" "Generate node similarities" "db nwsimilar"
 	window menu append item "Positions and Equivalence" "Common-neighbor similarity indices between all node pairs" "db nwsimindex"
 
@@ -877,6 +863,7 @@ program nwinstall_menu
 	window menu append submenu "Network Analysis" "Visualize Networks"
 	window menu append item "Visualize Networks" "Plot a wheel dendrogram" "db nwdendrogram"
 	window menu append item "Visualize Networks" "Animate a sequence of networks" "db nwmovie"
+	window menu append item "Visualize Networks" "Draw the ego network of one node" "db nwegoplot"
 	window menu append item "Visualize Networks" "Plot a network" "db nwplot"
 	window menu append item "Visualize Networks" "Plot a network as sociomatrix" "db nwplotmatrix"
 
@@ -977,3 +964,50 @@ end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23
 *! v2.1.0 __ added LOCALcopy/from()/dest() offline install path
+
+capture program drop nwinstall_chunks
+program nwinstall_chunks, rclass
+	// installs the numbered packages nwcommands-<kind>1, -<kind>2, ... (the .pkg format has a line limit, so
+	// the core ships in chunks). The number of chunks is read from stata.toc; a chunk that fails is tried once
+	// more and then reported in r(failed) (3.20.1: the old loop stopped at the first failure, so a download
+	// error in the middle silently dropped that chunk and every later one).
+	syntax , kind(string) src(string) [all]
+	local n .
+	tempfile toc
+	capture copy `"`src'/stata.toc"' `"`toc'"', replace
+	if _rc == 0 {
+		tempname fh
+		capture file open `fh' using `"`toc'"', read text
+		if _rc == 0 {
+			local n 0
+			file read `fh' line
+			while r(eof) == 0 {
+				if regexm(`"`line'"', "^p +nwcommands-`kind'[0-9]+ *$") local ++n
+				file read `fh' line
+			}
+			file close `fh'
+		}
+	}
+	local failed ""
+	if `n' < . & `n' > 0 {
+		forvalues i = 1/`n' {
+			capture net install "nwcommands-`kind'`i'", `all' replace
+			if _rc capture net install "nwcommands-`kind'`i'", `all' replace
+			if _rc local failed "`failed' nwcommands-`kind'`i'"
+		}
+	}
+	else {
+		// stata.toc could not be read: install upward until a chunk is missing; the first one must exist
+		local i 1
+		local go 1
+		while `go' {
+			capture net install "nwcommands-`kind'`i'", `all' replace
+			if _rc {
+				if `i' == 1 local failed "nwcommands-`kind'1"
+				local go 0
+			}
+			local ++i
+		}
+	}
+	return local failed = strtrim("`failed'")
+end

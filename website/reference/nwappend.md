@@ -33,10 +33,14 @@ The command stops with an error when the same network names appear in the master
 
 Node attributes are merged together. When the same nodes appear in both the *master* and the *using dataset* with the same node attribute, the node attribute of the *using dataset* is used.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## See also
 
 - [nwuse](nwuse), [nwwebuse](nwwebuse), [nwsave](nwsave), `append`
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

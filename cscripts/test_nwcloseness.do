@@ -74,7 +74,7 @@ nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected labs(A,B,C) name(net3)
 gen _closeness = 999
 capture noisily nwcloseness net3, generate(_closeness _farness _nearness)
-assert _rc == 99
+assert _rc == 110
 assert _closeness[1] == 999
 nwcloseness net3, generate(_closeness _farness _nearness) replace
 assert _rc == 0

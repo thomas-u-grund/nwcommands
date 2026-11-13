@@ -35,7 +35,7 @@ program nwinduced, rclass
 		capture confirm variable `v', exact
 		if _rc == 0 & "`replace'" == "" {
 			di as err "{err}Variable {bf:`v'} already exists; specify {bf:replace}"
-			err 99
+			err 110
 		}
 	}
 

@@ -20,7 +20,7 @@ nwsummarize
 mat
 matonly
 detail
-save(filename)
+save(filename[, replace])
 silent
 ]
 ```
@@ -30,12 +30,20 @@ silent
 | `mat` | Display adjacency matrix of the network |
 | `matonly` | Only display adjacency matrix of the network |
 | `detail` | Calculate additional network measures: reciprocity, transitivity and the centralization measures (their `r()` results are only filled with `detail`); reciprocity is displayed as n/a for an undirected network (the stored `r(reciprocity)` is unchanged) |
-| `save(filename)` | Save network measures in file |
+| `save(`*filename*[`, replace`]`)` | Save the network measures in a Stata data set, one observation per network; an existing file is replaced (with or without `replace`) |
 | `silent` | Compute and return results without displaying anything |
 
 ## Description
 
 `nwsummarize` calculates and displays a variety of network summary statistics. If no netlist is specified, summary statistics are calculated for the current network.
+
+## Network types
+
+**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes 0.02 seconds and 0.2 GB in Stata/BE.
 
 ## Examples
 
@@ -130,4 +138,4 @@ With a *netlist*, the results are those of the last network. The other results o
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

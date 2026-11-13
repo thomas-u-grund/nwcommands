@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.22.0  13nov2026}{...}
+{* *! version 3.23.0  13nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -168,6 +168,7 @@
 {p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:    {bf:{help nwfactions }}}Partition nodes into a specified number of cohesive factions{p_end}
 {p2col:    {bf:{help nwhierarchy }}}Hierarchical clustering of nodes (role/position analysis){p_end}
+{p2col:    {bf:{help nwregular }}}Classes of regularly equivalent nodes{p_end}
 {p2col:    {bf:{help nwshared }}}Number of shared neighbors of all pairs of nodes, as a network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsimindex }}}Common-neighbor similarity indices between all node pairs{p_end}
@@ -234,6 +235,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help animate }}}Animate graphs{p_end}
 {p2col:    {bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
+{p2col:    {bf:{help nwegoplot }}}Draw the ego network of one node, ego in the center{p_end}
 {p2col:    {bf:{help nwmovie }}}Interactive, animated network movie (panel waves or a relational-event timeline){p_end}
 {p2col:    {bf:{help nwmoviexy }}}Animate a sequence of networks (alias for nwmovie){p_end}
 {p2col:    {bf:{help nwplot }}}Plot a network{p_end}
@@ -272,4 +274,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

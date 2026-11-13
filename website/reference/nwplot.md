@@ -93,7 +93,7 @@ The button **Save do-file** does all of this in one step. It saves **nwedit_plot
 ```stata
 . run nwedit_plot.do
 ```
-How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the view's own starting size and the view draws in screen pixels, so a slider value of 1 corresponds to about `nodefactor(0.2)` in the static graph. Without `nodefactor()`, `nwplot` therefore uses 0.2 times the saved slider value, which reproduces the proportions of the view (a slider value of 1.85 gives `nodefactor(0.37)`); an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group.
+How the bring-back works: node positions come from the CSV through `nodexy()`; node colors and shapes are the legend edits, matched to the nodes by row. The size slider in the view is a multiplier on the node sizes of the call that wrote the page. Without `nodefactor()`, `nwplot` uses the saved slider value as `nodefactor()` (a slider value of 1, the start, gives the default sizes; 1.85 gives `nodefactor(1.85)`). The view draws in screen pixels and the graph relative to its size, so symbols can look a little larger or smaller in the graph than on the screen; an explicit `nodefactor()` (or `edgefactor()`) always wins over the saved values. In the interactive legend, the shape drop-down of a colour group reads "mixed" when the nodes of that group have different shapes (for example when `symbol()` is a second variable); choosing a shape there sets all nodes of the group.
 
 The view draws *y* upward, as the static plot does, for every layout and for `nodexy()` (with `nodexy(Lon Lat)` the map is upright), and the saved CSV holds the same *y*, so a saved layout comes back in the same orientation. With `edgesize()` the view maps the tie values linearly onto line widths of 1 to 8 pixels (all ties 3 pixels without `edgesize()`; the static plot uses the same 1 to 8 mapping); the edge-width slider is a multiplier on top. Arrowheads shrink with thin ties and are capped for thick ones; the arrow-size slider multiplies on top. `edgeimport()` accepts the edge file of a directed or an undirected network (the view lists an undirected tie once).
 
@@ -193,6 +193,13 @@ The look and feel of node labels is changed with labelopt():
 ```stata
 . nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))
 ```
+`mlabvposition(`*varname*`)` in `labelopt()` places the label of each node at the clock position stored in a numeric variable of the node data (9 left, 3 right, 12 above, 6 below, 0 on the node). In a two-mode network drawn with `layout(bipartite, vertical)`, for example, the labels of the first mode can stand to the left of their column and those of the second mode to the right:
+
+```stata
+. nwwebuse davis, nwclear
+. generate byte lpos = cond(_nwmode == "1", 9, 3)
+. nwplot davis, label(_nwnode) layout(bipartite, vertical) labelopt(mlabvposition(lpos))
+```
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these underlying scatter plots. Here, the color and symbol of nodes is overwritten.
 
 ```stata
@@ -225,6 +232,22 @@ Raster formats (PNG, TIF, ...) are also supported the same way; `exportopt()` pa
 ```
 The graph itself is unaffected by `export()` - it remains the normal, currently active Stata graph afterward, so the Graph Editor, stata graph save, and a second `graph export` in a different format all continue to work exactly as they would without `export()`.
 
+## Valued networks and layouts
+
+On a valued network (one-mode, all tie values positive) the default layout `kk` and the layout `frucht` use the tie values as tie strengths, as `igraph::plot()` does for a graph with a `weight` edge attribute (`layout_with_fr(weights=)`, `layout_with_kk(weights=)`): strongly tied nodes end up close together. `frucht`: the attraction along a tie is multiplied by its value. `kk`: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's `layout_with_kk()` takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean, so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both directions counts with its larger value. `binary` lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as `igraph::plot()` does (`layout_with_fr()` and `layout_with_kk()` refuse non-positive weights). Two-mode networks, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle` and `grid`, do not use the values. `kk` with values needs the shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
+
+## Network types
+
+**Directed:** arrows; mutual dyads are curved apart (`arcstyle()`). **Valued:** edge widths and the `kk` / `frucht` layouts follow the tie values; `binary` switches this off. **Two-mode:** yes - each mode gets its own symbol and colour with a legend; `layout(bipartite)` puts the modes in two rows. **Signed:** negative ties dashed cranberry, positive solid navy (`nosign`). See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+**Limits of layout(kk).** The layout needs the distance between every pair of nodes, so memory and time grow with the square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes 4 seconds in total, 5,000 nodes 21 seconds and 2.2 GB. Above a few thousand nodes use `layout(circle)`, `layout(grid)` or `layout(frucht)`.
+
+Drawing needs the network as an *n*-by-*n* matrix and about 10 copies of it: above about 12,200 nodes the command stops at once with r(484) (32 GB at 20,000 nodes); option `force` runs it anyway. A picture of that many nodes is not readable: plot a part of the network ([nwsubset](nwsubset), [nwego](nwego), [nwkcore](nwkcore)).
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Stored results
 
 `nwplot` is `rclass`.
@@ -243,8 +266,8 @@ The graph itself is unaffected by `export()` - it remains the normal, currently 
 
 ## See also
 
-- [nwplotmatrix](nwplotmatrix), [nwmovie](nwmovie), [netexample](netexample)
+- [nwplotmatrix](nwplotmatrix), [nwegoplot](nwegoplot), [nwmovie](nwmovie), [netexample](netexample)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

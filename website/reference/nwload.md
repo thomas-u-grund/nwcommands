@@ -85,10 +85,14 @@ For example this code generates 1000 random networks with 100 nodes each without
 ```
 Notice that `nwload` does not import or create a network, it simply creates Stata variables to represent a network. Only networks that already do exist in Stata, i.e. have been set by [nwset](nwset) or imported by [nwimport](nwimport) or [nwuse](nwuse) or [nwwebuse](nwwebuse) or created by a [network generator](nwtopical), can be loaded as Stata variables. Two networks on the same nodes use the same variable names; loading the second replaces the first, with a note.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## See also
 
 - [nwcurrent](nwcurrent), [nwsync](nwsync), [nwuse](nwuse), [nwimport](nwimport), [feasible network sizes](nwintro)
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

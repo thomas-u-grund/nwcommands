@@ -472,11 +472,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	di "{txt}{hline `=`max_l' + 3'}{c TT}{hline 25}"
 	di "{col 2}{ralign `=`max_l'+1':`net'}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 11'}Coef.{col `=`max_l' + 20'}P-value"
 	di "{hline `=`max_l' + 3'}{c +}{hline 25}"
-	local constant = round(__nwqap_reg_results[1,`=`vars''], 0.001)
+	// string(..., "%9.0g"): a rounded value such as .957 is not exact in binary and was shown as .9570000000000001
+	local constant = strtrim(string(round(__nwqap_reg_results[1,`=`vars''], 0.001), "%9.0g"))
 
 	forvalues k=2/`vars'{
-		local coeff = `=round(float(__nwqap_reg_results[1,`=`k'-1']), 0.001)'
-		local pvalue = `=round(float(__nwqap_pvalues[1,`=`k'-1']),0.001)'
+		local coeff = strtrim(string(round(float(__nwqap_reg_results[1,`=`k'-1']), 0.001), "%9.0g"))
+		local pvalue = strtrim(string(round(float(__nwqap_pvalues[1,`=`k'-1']),0.001), "%9.0g"))
 		di as text "{txt}{col 2}{ralign `=`max_l'+1':``k''}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`coeff'}{col `=`max_l' + 20'}{ralign 5:`pvalue'}"
 	}
 	di "{txt}{col 2}{ralign `=`max_l'+1':_cons}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`constant'}"

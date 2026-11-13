@@ -53,6 +53,16 @@ This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a 
 
 `plot` draws each of the 16 triad types as a small picture of three nodes and their ties, with the MAN code and the number of triads of that type underneath. On an undirected network it draws the four types an undirected network can have (003, 102, 201, 300). [nwdyads](nwdyads) has the same option for the dyad census.
 
+## Network types
+
+**Directed:** the census is defined for directed networks; on an undirected one only **_003**, **_102**, **_201** and **_300** can be non-zero (with a note). **Valued:** tie values are ignored (with a note). **Two-mode:** same as for the bipartite graph read as a one-mode network (no triangles; transitivity 0; use [nwclustering](nwclustering)). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The census is counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, *Social Networks* 23: 237-243): triads with at least two ties are enumerated from the neighbours of each node, the empty triads **_003** are obtained by subtraction. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 1 second (the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads **r(_003)** is an exact integer.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata
@@ -99,4 +109,4 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

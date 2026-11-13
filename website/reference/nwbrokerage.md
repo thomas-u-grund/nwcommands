@@ -25,7 +25,7 @@ silent]
 
 | | |
 |---|---|
-| `group(varname)` | Existing numeric Stata variable holding each node's group membership (required; encode a string variable first) |
+| `group(varname)` | Existing Stata variable holding each node's group membership, numeric or string (required) |
 | `generate(newvarname)` | **Required.** Stem for the 5 new Stata variables that store role counts |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
@@ -43,6 +43,10 @@ silent]
 `generate()` is required and gives the stem for five new Stata variables, one per role, each holding node *b*'s count of that role (e.g. `generate(_broker)` produces *_broker_coordinator*, *_broker_gatekeeper*, *_broker_representative*, *_broker_consultant* and *_broker_liaison*). With more than one network in the *netlist*, a number is appended to each name (*_broker_coordinator1*, *_broker_coordinator2*, ...).
 
 For a directed network, *a* ranges over *b*'s incoming ties and *c* over its outgoing ties - brokerage is fundamentally about *a* reaching *c* *through* *b*. For an undirected network, incoming and outgoing ties are identical, so *a* and *c* both range over *b*'s (undirected) neighbors - the same five-role classification still applies, just without the directional distinction a directed network provides.
+
+## Network types
+
+**Directed:** directions are used (the measure is defined for directed networks); on an undirected network the directional roles collapse. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
 
 ## Examples
 
@@ -67,4 +71,4 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

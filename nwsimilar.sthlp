@@ -154,7 +154,7 @@ about 12,900 nodes the command stops at once with r(484) and a message with the 
 
 {title:See also}
 
-	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}
+	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}, {help nwregular}
 
 {hline}
-{pstd}{it:nwcommands version 3.22.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.23.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

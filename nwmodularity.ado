@@ -13,6 +13,14 @@ program nwmodularity, rclass
 		error 198
 	}
 
+	// a string group() variable (3.20.1): run once more with it encoded
+	capture confirm string variable `group'
+	if !_rc {
+		_nwstrcat `group' : nwmodularity `0'
+		return add
+		exit
+	}
+
 	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {

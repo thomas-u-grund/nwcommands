@@ -3,7 +3,18 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 2)
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 13nov2026
-d Version: 3.22.0
+d Version: 3.23.0
+f nwevcent.ado
+f nwexpand.ado
+f nwexport.ado
+f nwfactions.ado
+f nwfromedge.ado
+f nwgen.ado
+f nwgenerate.ado
+f nwgenvar.ado
+f nwgeodesic.ado
+f nwhierarchy.ado
+f nwhomophily.ado
 f nwimport.ado
 f nwinduced.ado
 f nwinstall.ado
@@ -37,6 +48,7 @@ f nwpagerank.ado
 f nwpath.ado
 f nwpermute.ado
 f nwplot.ado
+f nwegoplot.ado
 f nwplotmatrix.ado
 f nwpref.ado
 f nwpreserve.ado
@@ -72,17 +84,3 @@ f nwtomata.ado
 f nwtomatafast.ado
 f nwtostata.ado
 f nwtranspose.ado
-f nwtriads.ado
-f nwturnover.ado
-f nwunab.ado
-f nwuse.ado
-f nwutility.ado
-f nwvalidate.ado
-f nwvalidvars.ado
-f nwvalue.ado
-f nwwebuse.ado
-f unw_defs.ado
-f scheme-s1network.scheme
-f scheme-s2network.scheme
-f scheme-s3network.scheme
-f nwmovie_template.html

@@ -27,6 +27,10 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 
 - `nwversion` stores `r(version)` (for example `3.0.0`) and `r(date)` (for example `24oct2026`) in `r()`.
 
+## Author
+
+- Thomas U. Grund, RWTH Aachen University
+
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

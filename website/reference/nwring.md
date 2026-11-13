@@ -48,6 +48,14 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwring 20, k(2) weights(0.0,0.3,0.7)
 ```
 
+## Network types
+
+**Directed:** directed by default; `undirected` gives an undirected network. **Valued:** `weights()` draws tie values. **Two-mode:** not applicable - the command always creates a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with `k(5)`: 0.2 seconds). `weights()` still uses the matrix.
+
 ## Examples
 
 ```stata
@@ -68,4 +76,4 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))

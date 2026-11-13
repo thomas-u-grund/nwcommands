@@ -95,7 +95,7 @@ nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) undirected labs(A,B,C) name(cnet)
 gen _clustering = 999
 capture noisily nwclustering cnet, generate(_clustering)
-assert _rc == 99
+assert _rc == 110
 assert _clustering[1] == 999
 nwclustering cnet, generate(_clustering) replace
 assert _rc == 0

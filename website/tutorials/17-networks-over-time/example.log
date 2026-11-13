@@ -1,3 +1,6 @@
+
+. do example.do
+
 . * nwcommands tutorial 17: networks over time
 . * Requires the core nwcommands.
 . nwwebuse glasgow, nwclear
@@ -89,18 +92,28 @@ scalars:
 . 
 . * 3. Is the change in the same direction as the correlation?
 . nwcorrelate glasgow1 glasgow2
-----------------------------------------
-  Network1 name: glasgow1
-  Network2 name: glasgow2
-----------------------------------------
-    Correlation: .473
+
+Network correlation
+Network 1: glasgow1
+Network 2: glasgow2
+
+-------------
+ Correlation
+-------------
+   .47324572
+-------------
 
 . nwcorrelate glasgow2 glasgow3
-----------------------------------------
-  Network1 name: glasgow2
-  Network2 name: glasgow3
-----------------------------------------
-    Correlation: .532
+
+Network correlation
+Network 1: glasgow2
+Network 2: glasgow3
+
+-------------
+ Correlation
+-------------
+   .53208682
+-------------
 
 . 
 . * 4. A temporal edge list: one network, tie times as data
@@ -163,3 +176,7 @@ scalars:
   Jaccard index: 0
   Persistence: 0
  
+
+. 
+
+.

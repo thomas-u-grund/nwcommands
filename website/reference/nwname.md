@@ -52,6 +52,10 @@ newmode2desc(string)
 
 `nwname` obtains and changes the meta-information of a network.
 
+## Network types
+
+**Two-mode:** `new2mode(true)` declares a two-mode network only if both modes hold nodes and no tie joins two nodes of the same mode (error 459); `newmodes()` gives the mode of every node. The command otherwise works the same for every network type. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 This loads the Florentine data and returns various information about the *flobusiness* network.
@@ -105,4 +109,4 @@ This changes the name of the network *flobusiness* into *flob*. This could also 
 
 ---
 
-*nwcommands version 3.22.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.23.0, 13 November 2026* ([check your installed version](nwversion))
