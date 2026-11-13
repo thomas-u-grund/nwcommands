@@ -72,6 +72,25 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes *i* and *j* hav
 
 *D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)*
 
+## Network types
+
+**Directed:** `context()` restricts the comparison to incoming or outgoing ties. **Valued:** **euclidean** and **manhatten** use the tie values, **hamming**, **jaccard** and **nonmatches** only their presence. **Two-mode:** yes - a node is compared with the nodes of its own mode over the other mode; pairs across modes are missing. **Signed:** negative values enter like any value. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+When the native plugin of your platform has this kernel, the cells are formed from the stored ties and not from dense matrix products: 5,000 nodes of the same network take 0.4 seconds for every type (1.0 to 1.2 seconds with the Mata code). The results are those of the Mata code (differences below 1e-13). A network with missing tie values, and a platform whose plugin lacks this kernel, use the Mata code.
+
+The result is a dense *n*-by-*n* valued network. About 8 matrices of that size are held at once (10,000 nodes: 4 seconds and 6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000 nodes); option `force` runs it anyway. The node labels of the new network are the labels of the source network at any size.
+
+## Example
+
+```stata
+. nwwebuse florentine, nwclear
+. nwdissimilar flomarriage
+
+. nwdissimilar flomarriage, type(hamming) context(outgoing)
+```
+
 ## See also
 
 - [nwsimilar](nwsimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)

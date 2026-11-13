@@ -25,6 +25,14 @@ new(new_nwnode)
 
 `nwnoderename` changes the name of a single node in a network. When a node with name *old_nwnode* is found in *netname*, it is replaced with *new_nwnode*. If *old_nwnode* is not found or *new_nwnode* is not a valid name, the command stops with an error (r(198)) and the network is not changed.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Limits
+
+20,000 nodes: 0.13 seconds in Stata/BE.
+
 ## Examples
 
 ```stata

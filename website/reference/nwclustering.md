@@ -46,6 +46,16 @@ onemode]
 
 If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mode form by default: the coefficient of Opsahl (2013) (the share of four-paths that a fifth tie closes, `tnet::clustering_tm`), and with `ra` the global coefficient of Robins and Alexander (2004). An ordinary clustering coefficient is not meaningful on a bipartite network's own inherently triangle-free structure; `onemode` computes it anyway. [nw2clustering](nw2clustering) is the same command under another name and takes the same options.
 
+## Network types
+
+**Directed:** `measure(binary)` only; use `symmetrize` for a weighted measure. **Valued:** `measure(arithmetic)` by default on an undirected valued network (`measure(binary)` ignores the values). **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - Opsahl (2013), `ra`: Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+For `measure(binary)` the closed and potential triples are counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients. The work grows with the sum of the squared degrees. Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.06 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.7 seconds (the Mata route needs 1.1, 4.9 and 26 seconds). The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata

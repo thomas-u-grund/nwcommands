@@ -27,7 +27,7 @@ capture nwkatz starnet, alpha(0.5) generate(mykatz)
 * Error-code coherence pass (moderate-severity pass, centrality group):
 * consolidated from 110 onto 99 (this package's own standard code),
 * matching nwdegree/nwbetween/nw2degree's own convention.
-assert _rc == 99
+assert _rc == 110
 
 nwkatz starnet, alpha(0.5) generate(mykatz) replace
 assert reldif(mykatz[1], 1.5) < 1E-6

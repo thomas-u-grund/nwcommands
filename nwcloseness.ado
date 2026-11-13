@@ -211,7 +211,7 @@ program nwcloseness
 			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
 				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace}"
-				err 99
+				err 110
 			}
 		}
 

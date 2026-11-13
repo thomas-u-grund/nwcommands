@@ -27,6 +27,10 @@ replace]
 
 `nwsymmetrize` is an exact alias for [nwsym](nwsym) - it forwards every argument and option unchanged and returns the identical stored results. It exists only so the verb `symmetrize` is directly discoverable by name, matching the package's spelled-out-verb naming convention used elsewhere (e.g. [nwcollapse](nwcollapse), [nwexpand](nwexpand), [nwrecode](nwrecode)). [nwsym](nwsym) itself is fully supported - see its own help file for the complete option reference, mode() details, and worked examples.
 
+## Network types
+
+As [nwsym](nwsym). See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 This loads the Glasgow data and symmetrizes the network *glasgow1*, identically to `nwsym glasgow1`.

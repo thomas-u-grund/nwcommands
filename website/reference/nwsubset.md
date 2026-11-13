@@ -42,6 +42,14 @@ By default, this generates a new network called *flomarriage_sub*. Notice that s
 
 However, the last command does not copy the node labels of network *flomarriage*. This is because the `if` condition in [nwgen](nwgen) applies to a whole [network expression](netexp). Because network expressions can be very complicated, no labels are copied.
 
+## Network types
+
+**Directed:**, **Valued:**, **Signed:** the ties and their values are kept. **Two-mode:** yes - the flag, the modes and the level labels are kept for the remaining nodes. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+A network held as stored ties keeps the ties between the remaining nodes without an *n*-by-*n* matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for [nwdrop](nwdrop), [nwkeep](nwkeep), [nwdropnodes](nwdropnodes) and [nwkeepnodes](nwkeepnodes).
+
 ## See also
 
 - [nwgenerate](nwgenerate), [nwduplicate](nwduplicate)

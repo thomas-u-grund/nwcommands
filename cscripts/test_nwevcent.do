@@ -55,7 +55,7 @@ assert ev_k5[1] > 0.4
 * 0, so a caller checking _rc after a failed call incorrectly believed
 * it succeeded.
 capture noisily nwevcent k5net, generate(ev_k5)
-assert _rc == 99
+assert _rc == 110
 di "=== error-code coherence REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via

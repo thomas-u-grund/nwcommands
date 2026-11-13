@@ -50,6 +50,87 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written **gsample**, for the same random-number seed). Nothing is downloaded or installed.
 
+## Network types
+
+**Directed:** directed by default; `undirected` gives an undirected network. **Valued:** `weights()` draws tie values, only without `density()` (with `density()` it stops with an error). **Two-mode:** not applicable - the command always creates a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+With `mat()` the probabilities are an *n*-by-*n* matrix held by you plus three copies in the command: 20,000 nodes 3.1 seconds. `density()` weights all dyads and is refused above 7,071 nodes.
+
+## Example
+
+The following example generates a network where ties are more likely to exist between nodes with similar *gender* and different *race*.
+
+First, we generate two variables *gender* and *race*.
+
+```stata
+. nwclear
+. set obs 10
+. gen gender = (_n > 5) + 2
+. gen race = int(0.5 + uniform())
+```
+Next, we generate two expanded networks for each of the two variables (see [nwexpand](nwexpand)). Basically, we generate for each variable a matrix *M* where *M_ij* = 1 when nodes *i* and *j* have the same score on an attribute. And these matrices *M* are used to generate new networks.
+
+```stata
+. nwexpand gender
+. nwexpand race
+```
+This creates the following networks.
+
+```stata
+. nwset
+(2 networks)
+--------------------
+        same_gender
+        same_race
+```
+Having a closer look at the new network *same_gender*, shows the network that [nwexpand](nwexpand) created.
+
+```stata
+. nwsummarize same_gender, matonly
+
+       1    2    3    4    5    6    7    8    9   10
+   +---------------------------------------------------+
+ 1 |   0                                               |
+ 2 |   1    0                                          |
+ 3 |   1    1    0                                     |
+ 4 |   1    1    1    0                                |
+ 5 |   1    1    1    1    0                           |
+ 6 |   0    0    0    0    0    0                      |
+ 7 |   0    0    0    0    0    1    0                 |
+ 8 |   0    0    0    0    0    1    1    0            |
+ 9 |   0    0    0    0    0    1    1    1    0       |
+10 |   0    0    0    0    0    1    1    1    1    0  |
+   +---------------------------------------------------+
+```
+In the next step, we generate a network *dyadweight* on the basis of *same_gender* and *same_race*.
+
+As an example, we want that in the final network 1) ties between nodes with the same gender are overrepresented and 2) ties between nodes with the same race are underrepresented. This generates tie probabilitities according to this request.
+
+```stata
+. nwgen dyadweight = exp(5 * same_gender) * exp((-5) * same_race)
+```
+Check out the tie values created in this way:
+
+```stata
+. nwsummarize dyadweight, matonly
+```
+Finally, we create a new network based on tie probabilities defined in network *dyadweight*.
+
+```stata
+. nwdyadprob dyadweight, density(0.1)
+```
+The result can be nicely plotted in the following way:
+
+```stata
+. nwplot, color(gender) layout(circle) title("gender, homophily = exp(5)")
+. graph save g4, replace
+. nwplot, color(race) layout(circle) title("race, homophily = exp(-5)")
+. graph save g5, replace
+. graph combine g4.gph g5.gph
+```
+
 ## See also
 
 - [nwhomophily](nwhomophily), [nwgen](nwgen), [nwexpand](nwexpand)

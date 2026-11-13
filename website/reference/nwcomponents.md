@@ -37,6 +37,10 @@ Calculate the components of a network or a list of networks. A component is a se
 
 `generate()` is required and names the new variable that stores the component membership. When option **lgc** is specified, the command instead stores in that variable information about membership to the largest component (1 for its nodes, 0 for all others). With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
+## Network types
+
+**Directed:** weak components (the direction is ignored). **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -62,6 +66,10 @@ This shows that there are two components in the Florentine marriage network. All
 . nwcomponents _all, lgc generate(_lgc)
 . nwcomponents _all, lgc generate(mylgc)
 ```
+
+## Limits
+
+The components are found from the stored ties (10,000 nodes: 0.04 seconds). A network with more than 1,000 components (any sparse network of a few thousand nodes) has its component sizes counted in Mata; the table is not printed above 1,000 components, and **r(comp_sizeid)** holds the sizes ordered by size and then by component number.
 
 ## Stored results
 

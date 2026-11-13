@@ -100,7 +100,7 @@ assert r(diameter_connected) == 2
 nwgeodesic two
 nwgeodesic two, name(g2)
 capture nwgeodesic two, name(g2)
-assert _rc == 99
+assert _rc == 483
 nwgeodesic two, name(g2) nwreplace
 
 // lazega has office, practice and status also as labeled numbers (3.20.0); the data of this checkout

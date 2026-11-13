@@ -82,6 +82,14 @@ The values of a valued two-mode network are shuffled over the ties of every draw
 ```
 The means and standard deviations of the null distributions agree with those of `vegan::nullmodel` in R (1,000 draws of the nestedness NODF of the Southern women: 36.98 against 36.78 for *density*, 38.81 against 38.81 for *mode1degree*, 44.53 against 44.53 for *mode2degree*, 48.36 against 48.43 for *degrees*).
 
+## Network types
+
+**Directed:** `condition(census)` needs a directed one-mode network; `condition(degrees)` keeps out-degrees and in-degrees. **Valued:** the use of tie values depends on the command in `stat()`; the values of a valued two-mode network are shuffled over the ties of every draw. **Two-mode:** yes - the null networks are two-mode networks with the same nodes (conditions above). **Signed:** depends on the command in `stat()`. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Every draw of the null distribution is a new random network ([nwrandom](nwrandom)) and the statistic is computed on it. With `condition(density)` above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn directly), so the time is that of the statistic: 5 draws with `nwcomponents` as the statistic take 2 seconds at 20,000 nodes. `condition(census)` works on the matrix.
+
 ## Stored results
 
 - **Scalars**

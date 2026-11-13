@@ -32,6 +32,14 @@ Ties do not need to be declared [signed](nwvalue) in any special way - any tie w
 
 For each node, `nwbalance` generates the number of closed triads it belongs to, the number of those that are balanced, and the ratio of the two. Network-level counts and the overall balance ratio are returned in `r()`.
 
+## Network types
+
+**Directed:** a pair counts as tied when either direction has a tie; for a mutual dyad the sign of i->j is used. **Valued:** only the sign of each value is used. **Two-mode:** same as for the bipartite graph read as a one-mode network (no triangles: counts 0, balance missing). **Signed:** the purpose of the command. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
+
 ## Examples
 
 ```stata

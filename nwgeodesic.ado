@@ -48,7 +48,7 @@ program nwgeodesic
 		capture confirm variable `eccvar', exact
 		if _rc == 0 & "`nwreplace'" == "" {
 			di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
-			err 99
+			err 110
 		}
 	}
 
@@ -69,7 +69,7 @@ program nwgeodesic
 	// noreplace: also the default network _geodesic is not overwritten
 	if `name_exists' & "`nwreplace'" == "" & (`name_given' | "`replace'" == "noreplace") {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
-		error 99
+		error 483
 	}
 	// BUGFIX: was an unconditional `capture nwdrop `name'' - in the
 	// ordinary case (no pre-existing network under this name), this

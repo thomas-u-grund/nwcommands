@@ -48,6 +48,10 @@ Option **check** tests if the underlying adjacency matrix of the network is symm
 
 The logic for valued networks works in exactly the same way.
 
+## Network types
+
+**Directed:** the command makes a directed network undirected (`check` only checks). **Valued:** `mode()` sets how two different values of a pair are combined. **Two-mode:** yes - the flag, the modes and the level labels are kept (a two-mode network is undirected already). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 This loads the Glasgow data and symmetrizes the network *glasgow1*. After that the originally directed network has become undirected.

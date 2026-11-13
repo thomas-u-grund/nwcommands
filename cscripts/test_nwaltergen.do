@@ -274,7 +274,7 @@ assert divviaalter == divviagen2
 * every sibling command in the group (99, this package's own standard
 * code for the identical situation).
 capture noisily nwaltergen divviaalter = diversity(alter.divcat3)
-assert _rc == 99
+assert _rc == 110
 di "=== error-code coherence REGRESSION VERIFIED ==="
 
 * --- wmean(alter.srcvar): tie-strength-weighted exposure mean

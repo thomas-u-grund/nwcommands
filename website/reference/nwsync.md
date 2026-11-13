@@ -53,6 +53,10 @@ However, the preferred method to change the same tie value would be using [nwrep
 . nwreplace flomarriage[2,1] = 99
 ```
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## See also
 
 - [nwload](nwload), [nwreplace](nwreplace), [nwname](nwname)

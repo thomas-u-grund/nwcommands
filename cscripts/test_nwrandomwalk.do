@@ -38,7 +38,7 @@ di "=== nwrandomwalk: triangle symmetry REGRESSION VERIFIED ==="
 * --- error handling: unknown target node; a network containing an
 * isolate has no well-defined hitting time.
 capture nwrandomwalk path3rw, target(bogus)
-assert _rc == 99
+assert _rc == 485
 
 nwclear
 nwset, mat((0,1,0\1,0,0\0,0,0)) name(withisolate) labs(A,B,C)

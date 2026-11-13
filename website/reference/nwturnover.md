@@ -40,6 +40,14 @@ silent]
 
 For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(dissolved)** each count both *(i,j)* and *(j,i)* for the same tie, so all three are exactly double the number of actual undirected ties involved (the same convention [nwmixing](nwmixing) uses for its own mixing table). **r(jaccard)** and **r(persistence)** are unaffected, since the doubling cancels in both ratios.
 
+## Network types
+
+**Directed:** each ordered pair is compared; both networks must have the same directedness. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** yes - only the ties between the modes are counted; both networks should have the same modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
+
 ## Examples
 
 ```stata

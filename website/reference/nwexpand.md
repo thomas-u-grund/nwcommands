@@ -125,6 +125,16 @@ The next example loads the *glasgow* dataset and colors ties differently dependi
 . nwplot glasgow1, edgecolor(sender_sport1)
 ```
 
+## Network types
+
+Builds a new one-mode network from a node attribute. **Directed:** undirected for `mode(same|absdist|absdistinv)`, directed otherwise. **Valued:** `mode(same)` gives 0/1 ties; the other modes give valued ties. **Two-mode:** not applicable. **Signed:** `mode(dist)` and `mode(distinv)` can give negative values. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The expanded network is built row by row (one *n*-by-*n* matrix): 10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix).
+
+The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes (`nodes()` or `if`), or use `force`.
+
 ## See also
 
 - [nwcorrelate](nwcorrelate)

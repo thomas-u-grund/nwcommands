@@ -85,6 +85,24 @@ Now, let us permute the network *lattice*.
 ```
 The structure of the network remains exactly the same, however, the nodes have a different order. Often, such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for these statistics) while keeping the overall structure of the network constant (see more [nwqap](nwqap), [nwcorrelate](nwcorrelate)).
 
+## Network types
+
+**Directed:** yes (`swap` keeps out-degrees and in-degrees). **Valued:**, **Signed:** the tie values move with their ties. **Two-mode:** yes - the labels are permuted within the modes (`tnet::rg_reshuffling_tm`); `swap` keeps both degree sequences (`bipartite::swap.web`). See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds in Stata/BE.
+
+## Example
+
+```stata
+. nwclear
+. nwrandom 10, prob(.1) name(mynet)
+. nwplot mynet, lab layout(circle)
+. nwpermute mynet, replace
+. nwplot mynet, lab layout(circle)
+```
+
 ## See also
 
 - [nwqap](nwqap), [nwcorrelate](nwcorrelate)

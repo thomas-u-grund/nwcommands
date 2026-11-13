@@ -23,6 +23,10 @@ nwrestore
 
 The temporary file `nwrestore` reads from is deleted once restored, so a given [nwpreserve](nwpreserve) call can only be restored once - exactly like Stata's own `preserve` / `restore`.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 Preserve a network, drop it, then restore it:
@@ -36,6 +40,10 @@ Preserve a network, drop it, then restore it:
 . nwrestore
 . nwset
 ```
+
+## Also see
+
+- [nwpreserve](nwpreserve), `restore`, `preserve`
 
 ---
 

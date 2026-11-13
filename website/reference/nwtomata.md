@@ -39,6 +39,27 @@ The adjacency matrix of a network can also be displayed with:
 ```
 Advanced programmers who might want to directly interact with the adjacency matrix of a network and not with a copy of it, see [advanced network programming](nwprogramming).
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Example
+
+```stata
+. nwrandom 5, density(.2) name(net)
+. nwtomata net, mat(mymat)
+. mata: mymat
+
+     1   2   3   4   5
+  +---------------------+
+1 |  0   0   0   0   0  |
+2 |  0   0   1   0   0  |
+3 |  0   0   0   1   0  |
+4 |  0   1   0   0   0  |
+5 |  1   0   0   0   0  |
+  +---------------------+
+```
+
 ## Stored results
 
 - **Macros**

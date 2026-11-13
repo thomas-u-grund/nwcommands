@@ -33,6 +33,10 @@ Keeps a network or a list of networks. The command is the network version of `ke
 
 It can also be used together with `if` or `in`. In this case, the command operates on the node-level and keeps only certain nodes of a network.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 Load two networks and keep only one of them by name:

@@ -64,6 +64,16 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 . nwattime mynet, at(2) name(wave2)
 ```
 
+## Network types
+
+**Directed:** kept from the source network. **Valued:** the tie values of the source network are kept (the slice selects ties, it does not change their values). **Two-mode:** a temporal two-mode network ([nwset](nwset) with `twomode` and `time()`, `interval()` or `eventtime()`) gives a two-mode slice with the same modes and level labels. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The ties at the time point are taken from the stored ties and the matrix of tie times; `nwset, time()`/`interval()`/`eventtime()` find the node of every label in a hash. 20,000 nodes with 200,000 ties and 3 waves: 0.3 seconds. The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
+
+For a temporal network of more than 2,000 nodes the times (or the starts and ends) of the ties are kept as a list of the ties that have one, not as *n*-by-*n* matrices (80 GB each at 100,000 nodes). `nwattime` of a network with 100,000 nodes and 1 million ties takes about 2 seconds.
+
 ## Stored results
 
 - **Scalars**

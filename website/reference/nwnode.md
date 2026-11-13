@@ -29,6 +29,15 @@ egoid(nodeid)]
 
 The command checks if node *nodename* exists in network *netname* and returns its *nodeid*. In case it does not exist, it returns -1. Either `ego()` or `egoid()` needs to be specified; if both are given, `egoid()` takes precedence and `ego()` is silently ignored.
 
+## Stored values
+
+- **`r(nodeid)`** --- nodeid of the node; -1 if it does not exist
+- **`r(nodename)`** --- name of the node
+
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata

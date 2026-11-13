@@ -40,6 +40,10 @@ one:mode]
 
 Modularity compares the fraction of ties that fall within the given groups to the fraction expected under a random network with the same degree sequence. Values near 0 indicate the grouping is no better than chance; higher (positive) values indicate a grouping that captures real community structure. Scoring a single, all-nodes-in-one-group partition always gives *Q* = 0, for any network.
 
+## Network types
+
+**Directed:** needs `symmetrize` (or a symmetrized network). **Valued:** `measure(valued)` by default on a valued network, `measure(binary)` ignores the values. **Two-mode:** yes - Barber's bipartite modularity; `onemode` gives Newman's modularity of the bipartite graph. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata

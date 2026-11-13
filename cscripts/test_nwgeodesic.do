@@ -169,7 +169,7 @@ assert _rc == 0
 * a second call naming the SAME variable must require nwreplace, exactly
 * like every other nwcommands generate() target.
 capture noisily nwgeodesic mynet, name(_geo2) generate(ecc) binary
-assert _rc == 99
+assert _rc == 110
 nwgeodesic mynet, name(_geo2) generate(ecc) nwreplace binary
 assert _rc == 0
 

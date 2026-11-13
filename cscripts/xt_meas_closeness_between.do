@@ -130,7 +130,7 @@ xa _rc == 198
 capture nwcloseness p4, generate(a b c d)
 xa _rc == 198
 capture nwcloseness p4, generate(old b c)
-xa _rc == 99
+xa _rc == 110
 xa old == 7 in 1/4
 capture confirm variable b
 xa _rc != 0
@@ -240,7 +240,7 @@ xa _rc == 198
 capture nwbetween p4, generate(x) binary weighted
 xa _rc == 198
 capture nwbetween p4, generate(old)
-xa _rc == 99
+xa _rc == 110
 xa old == 7 in 1/4
 mata: st_local("n0", strofreal(__nw.nws.get_number()))
 capture nwbetween p4, generate(bad) twomode

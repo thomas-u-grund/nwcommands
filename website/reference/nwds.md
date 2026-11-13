@@ -32,6 +32,10 @@ ds_options]
 
 `nwds` lists the networks currently loaded in memory, reusing Stata's own `ds` command for the display (network names are shown the way `ds` shows variable names). With no *netlist*, every loaded network is listed. **r(netlist)** always returns the exact list of network names shown.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata

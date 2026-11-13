@@ -78,4 +78,4 @@ nwclear
 nwset, mat((1,0,1\0,1,0\1,0,0)) name(bipnet3) bipartite
 qui nwmatching bipnet3, generate(match5)
 capture noisily nwmatching bipnet3, generate(match5)
-assert _rc == 99
+assert _rc == 110

@@ -28,7 +28,7 @@ program unw_defs
 	c_local 	errFormatUnsupported	6705	// an unsupported file/data format was requested or detected
 	c_local 	errNodeNotFound	485	// a referenced node (by name or id) does not exist in the network, or an id is out of range
 	// Stata's own reserved codes are used as-is (not reinvented) for
-	// their standard meanings package-wide: 99 = a STATA VARIABLE
+	// their standard meanings package-wide: 110 = a STATA VARIABLE
 	// already exists, specify replace (distinct from errNWsExists
 	// above, which is about a NETWORK); 198 = invalid syntax / a
 	// required option or option combination was not satisfied.

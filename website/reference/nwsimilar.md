@@ -68,6 +68,25 @@ Calculates the cross-product of the tie vectors of nodes *i* and *j*
 
 The similarity network has a non-missing diagonal (a node is maximally similar to itself) and the node labels of its source network, so it can be compared with the source network node for node.
 
+## Network types
+
+**Directed:** `mode()` restricts the comparison to incoming or outgoing ties. **Valued:** `pearson` and `crossproduct` use the tie values; `hamming`, `jaccard` and `matches` use only the presence of ties. **Two-mode:** yes - a node is compared with the nodes of its own mode over the other mode; pairs from different modes are missing. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+When the native plugin of your platform has this kernel, the cells are formed from the stored ties and not from dense matrix products: 5,000 nodes of the same network take 0.4 seconds for every type (1.0 to 1.2 seconds with the Mata code, 3.2 seconds for `type(pearson)`). The results are those of the Mata code (differences below 1e-13). A network with missing tie values, and a platform whose plugin lacks this kernel, use the Mata code.
+
+The result is a dense *n*-by-*n* valued network. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 1.1 seconds and 1.9 GB, 10,000 nodes 4 seconds and 7 GB. About 9 matrices of that size are held at once: above about 12,900 nodes the command stops at once with r(484) and a message with the memory needed (28.8 GB at 20,000 nodes); option `force` runs it anyway. The node labels of the new network are the labels of the source network at any size.
+
+## Example
+
+```stata
+. nwwebuse florentine
+. nwsimilar flomarriage
+
+. nwsimilar flomarriage, type(hamming) mode(outgoing)
+```
+
 ## See also
 
 - [nwdissimilar](nwdissimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)

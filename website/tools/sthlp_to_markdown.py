@@ -648,17 +648,39 @@ def convert_file(path: Path):
             md.append(opt_md)
             md.append("")
 
-    for section in SECTION_ORDER:
+    # sections with other titles than SECTION_ORDER (e.g. the code tables of
+    # nwerrorcodes) are kept: each follows the listed section it follows in
+    # the help file (or comes first if no listed section precedes it)
+    known = {s.lower() for s in SECTION_ORDER}
+    extras = {}
+    last = None
+    for tm in re.finditer(r"\{title:([^}]*)\}", text):
+        t = tm.group(1).strip()
+        if t.lower() in ("title", "syntax") or "{" in t:
+            continue
+        if t.lower() in known:
+            last = t.lower()
+        else:
+            extras.setdefault(last, []).append(t)
+
+    def emit(section):
         raw = get_section(text, section)
         if raw is None:
-            continue
+            return
         body = paragraphs_to_md(raw)
         if not body:
-            continue
+            return
         md.append(f"## {section}")
         md.append("")
         md.append(body)
         md.append("")
+
+    for section in extras.get(None, []):
+        emit(section)
+    for section in SECTION_ORDER:
+        emit(section)
+        for extra in extras.get(section.lower(), []):
+            emit(extra)
 
     if footer_md:
         md += ["---", "", footer_md]

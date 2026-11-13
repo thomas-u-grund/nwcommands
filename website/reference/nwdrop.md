@@ -33,6 +33,10 @@ Drops a network or a list of networks. The command is the network version of `dr
 
 It can also be used with `if` or `in`. Then it only drops certain nodes from a network. This updates the Stata variable **_nwinclude**, which indicates if a node is included in a network.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 Load two networks and drop one of them by name:

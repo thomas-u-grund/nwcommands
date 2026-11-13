@@ -81,7 +81,7 @@ xa _rc == 198
 capture nwclique tt
 xa _rc == 198
 capture nwclique tt, generate(q3)
-xa _rc == 99
+xa _rc == 110
 * a list: variables ql1, ql2
 nwclique tt k4, generate(ql)
 confirm variable ql1 ql2, exact
@@ -167,7 +167,7 @@ xa _rc == 198
 capture nwnclique p4, n(2)
 xa _rc == 198
 capture nwnclique p4, n(2) generate(np)
-xa _rc == 99
+xa _rc == 110
 capture nwnclan p4, n(1) generate(x)
 xa _rc == 198
 capture nwnclan p4, n(2)
@@ -208,7 +208,7 @@ xa _rc == 198
 capture nwkplex p4, k(2) maxtime(0) generate(x)
 xa _rc == 198
 capture nwkplex p4, k(2) generate(kp)
-xa _rc == 99
+xa _rc == 110
 * tiny
 nwset, mat((0)) name(one) undirected
 nwkplex one, k(2) minsize(1) generate(k1n) nomatrix

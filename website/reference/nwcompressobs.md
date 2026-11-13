@@ -21,6 +21,14 @@ nwcompressobs
 
 Compresses the observations in Stata. Deletes every observation in which all variables are missing (an empty string or the system missing value), such as the extra observations that are not needed to represent the largest network. An observation that holds a node name or any other non-missing value is kept.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Limits
+
+All-missing observations are found by testing every variable against "" or . (string and numeric variables).
+
 ## Examples
 
 ```stata

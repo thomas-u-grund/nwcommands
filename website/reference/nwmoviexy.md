@@ -26,6 +26,10 @@ nwmovie_options]
 
 New code should call [nwmovie](nwmovie) directly - see its own help file for the complete option reference and worked examples.
 
+## Network types
+
+**Directed:** yes. **Valued:** the layouts use the tie values and the values set the line widths; `binary` switches that off (see [nwplot](nwplot)). **Two-mode:** yes - a symbol and a colour per mode. **Signed:** negative ties are dashed in a second colour (`nosign` is passed on). See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 Animate two waves of a network (accepts exactly the same arguments as [nwmovie](nwmovie)):

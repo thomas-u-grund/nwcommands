@@ -42,6 +42,14 @@ A classical random-walk characterization of network structure, closely related t
 
 Solved EXACTLY via the standard linear system this quantity satisfies (not simulated, and not subject to any Monte Carlo noise): for every node i other than the target, its own hitting time equals 1 plus the average of its own neighbors' hitting times; the target's own hitting time is fixed at 0. The same "solve directly, do not simulate" discipline [nwkatz](nwkatz)'s own walk-counting Katz centrality already established for an analogous exact random-walk quantity.
 
+## Network types
+
+**Directed:** the network is symmetrized. **Valued:** the walk steps with probability w_ij / s_i by default; `binary` ignores the values. **Two-mode:** not supported (error 6088); `onemode` uses the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Up to 1,500 nodes the hitting times come from the dense linear system (LU decomposition). Above that the system, which is symmetric and positive definite for the walk on the symmetrized network, is solved by conjugate gradients on the stored ties (relative residual 1e-13; the result agrees with the dense solution to better than 1e-13 relative, and the dense route is still the fallback if the iteration does not converge). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 0.15 seconds and 0.2 GB (65 seconds and 4 GB with the dense solution).
+
 ## Examples
 
 ```stata

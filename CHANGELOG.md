@@ -4,6 +4,15 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- **Return codes.** A Stata variable that already exists (a `generate()` target, for example of `nwdegree`, `nwbetween`, `nwcloseness`, `nwplot`, `nwgen`, `nwaltergen`) now stops with r(110), Stata's own code for "already defined", in every command; about 40 commands used r(99), which is not a Stata code. Other uses of r(99) now give the code of `help nwerrorcodes` for their situation: a network that already exists r(483) (`nwgeodesic`, `nwreach`, `nwbridges`, `nwneighbor, subnet()`), a node that does not exist or a node id out of range r(485) (`nwmaxflow`, `nwrandomwalk`, `nwneighbor`, `nwnode, egoid()`), `nwnode` without `ego()` or `egoid()` r(198). `nwaltergen` with fewer rows of data than nodes gives r(2001) (was r(4)). Do-files that test `_rc == 99` must be updated.
+
+### Fixed
+- **`help nwerrorcodes`** lists every code the core commands raise, the package-specific codes and the Stata codes, with the situations in which each is raised. It said it documented every code but listed only the package-specific ones, and it listed r(481), which no command raises (Stata uses 481 for another error).
+- **Website command reference:** sections of the help files with other titles than the standard ones were left out of the web pages, among them "Network types" (129 commands), "Limits" (83 commands), the code tables of `nwerrorcodes`, the data set descriptions of `nwwebuse` and most of `nwintro` and `nwprogramming`. All sections are now converted.
+
 ## [3.22.0] - 2026-11-13
 
 ### Results that change (read before you re-run old analyses)

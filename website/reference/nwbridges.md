@@ -36,6 +36,14 @@ In contrast, a tie between nodes i and j is a local bridge if deleting the tie w
 
 The command saves all bridges as a new network *newnetname*.
 
+## Network types
+
+**Directed:** yes - `type()` distinguishes local/global bridges and arcs vs. edges. **Valued:** tie values are ignored and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+`type(global)` of an undirected network writes the bridges as ties (one depth-first search, no matrix): 20,000 nodes 0.4 seconds and 0.3 GB in Stata/BE. `type(local)` and `type(distance)` work on the matrix.
+
 ## Examples
 
 ```stata

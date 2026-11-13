@@ -40,6 +40,10 @@ silent]
 
 `sizevar()` and `densvar()` are both required and name the Stata variables that store ego-network size and density, respectively. With a list of several networks the variables are numbered by network: *sizevar***1** and *densvar***1** for the first network, *sizevar***2** and *densvar***2** for the second, and so on.
 
+## Network types
+
+**Directed:** the alters are the in- and out-neighbours; the alter-alter density counts ordered pairs. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata

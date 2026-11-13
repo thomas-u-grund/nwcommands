@@ -34,13 +34,13 @@ program nwspectral, rclass
 	capture confirm variable `netgenerate', exact
 	if _rc == 0 & "`replace'" == "" {
 		noi di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"
-		err 99
+		err 110
 	}
 	if "`bipartition'" != "" {
 		capture confirm variable `signvar', exact
 		if _rc == 0 & "`replace'" == "" {
 			noi di "{err}Variable {bf:`signvar'} already exists; specify {bf:replace}"
-			err 99
+			err 110
 		}
 	}
 

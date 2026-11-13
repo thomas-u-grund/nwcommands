@@ -137,7 +137,7 @@ nwclear
 nwset, mat((0,1\1,0)) name(replacenet) undirected labs(A,B)
 nwinduced replacenet, measure(degree) generate(rep1) silent
 capture noisily nwinduced replacenet, measure(degree) generate(rep1) silent
-assert _rc == 99
+assert _rc == 110
 nwinduced replacenet, measure(degree) generate(rep1) replace silent
 assert _rc == 0
 di "=== failure-path REGRESSION VERIFIED ==="

@@ -38,6 +38,14 @@ nwclear]
 
 Every network comes back as it was saved: a network saved as directed stays directed even when its ties happen to be symmetric, and a two-mode network keeps the node order it was saved in.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)); files of two-mode networks that list every pair of nodes also load.
+
+## Limits
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 This example creates 5 new random networks and [saves](nwsave) them as *mynets*.A new dataset called *mynets.nwdta* is created in the working directory with the networks and all Stata variables.

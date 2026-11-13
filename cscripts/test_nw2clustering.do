@@ -182,7 +182,7 @@ nwclear
 nw2set, mat((1,1,0,0\1,1,1,0\0,1,1,1\0,0,1,1\1,0,0,1)) name(bignet)
 gen _clustering2_lev1 = 999
 capture noisily nw2clustering bignet, generate(_clustering2_lev1)
-assert _rc == 99
+assert _rc == 110
 assert _clustering2_lev1[1] == 999
 nw2clustering bignet, generate(_clustering2_lev1) replace
 assert _rc == 0

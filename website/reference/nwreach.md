@@ -36,6 +36,16 @@ force]
 
 `nwreach` calculates the reachability network. The dyads *x_ij* in the reachibility network take value 1 when there is at least one path between *nodes i* and *j* in the original network [netname](netname), and 0 if there is no such path.
 
+## Network types
+
+**Directed:** reachability follows the direction of the ties; `sym` symmetrizes. **Valued:** tie values are ignored and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB.
+
+Reachability of all pairs of nodes is an *n*-by-*n* matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and `force` runs it anyway. For connectedness use [nwcomponents](nwcomponents), for one pair [nwpath](nwpath).
+
 ## Examples
 
 ```stata

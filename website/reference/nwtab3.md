@@ -49,6 +49,33 @@ where I (internal) is the number of ties within a social group G and E is the nu
 
 More intuitively, the E-I-index simply calculates the number of ties off the diagonal (in the table produced by the command) by the total number of ties. By default, the command runs 100 QAP permutations of the network (see [nwqap](nwqap)) to obtain a p-value for the E-I-index. Basically, the network is randomly permuted and the E-I-index is calculated again to obtain a distribution for the E-I-index under the condition that the network and the attribute are unrelated.
 
+## Remarks on plot
+
+The `plot` option draws the table with a built-in bar plot (the same plot the user-written `tabplot` draws; `tabplot` itself is not needed, and is not used even if it is installed). Any further options in `plotoptions()` are passed to `twoway`. The built-in plot follows the idea and the look of Nick Cox's `tabplot` (SSC); thanks to N. J. Cox.
+
+## Example
+
+This loads the Florentine [data](netexample) and shows the attributes of the sending and receiving nodes for those pairs (i,j) who are connected with each other. In this case, it shows the marriage connections between Florentine families who both have a seat in the civic council and so on. For example, there are 12 undirected marriage ties between two Florentine families where both have a seat in the civic council. There are 4 marriage ties where one family has a seat in the civic council and the other one does not.
+
+```stata
+. nwwebuse florentine, nwclear
+. nwtabulate flomarriage, attribute(seat)
+
+   Network:  flomarriage      Directed : false
+                              Selfloops: false
+   Attribute:  seat
+
+           |      seat_alter
+  seat_ego |         0          1 |     Total
+-----------+----------------------+----------
+         0 |         0          4 |         4
+         1 |         4         12 |        16
+-----------+----------------------+----------
+     Total |         4         16 |        20
+
+   E-I Index: -.2   p-value: .84
+```
+
 ## Stored results
 
 - **Scalars**

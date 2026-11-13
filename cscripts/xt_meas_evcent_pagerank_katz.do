@@ -105,7 +105,7 @@ capture nwevcent k4, generate(x) binary weighted
 xa _rc == 198
 gen byte old = 7
 capture nwevcent k4, generate(old)
-xa _rc == 99
+xa _rc == 110
 xa old == 7 in 1/4
 * SUSPECTED BUG: with replace, `capture generate' fails on the existing byte variable and st_store()
 * writes .5 into it (stored as a byte).  Expected: the result is stored with its full value.
@@ -160,7 +160,7 @@ xa _rc == 198
 capture nwpagerank k4
 xa _rc == 198
 capture nwpagerank k4, generate(pk)
-xa _rc == 99
+xa _rc == 110
 nwpagerank k4, generate(pk) replace
 xa reldif(pk[1], .25) < 1e-8
 * a 2,000-node network: the scores sum to 1
@@ -229,7 +229,7 @@ xa reldif(kr_in[3] - kr_in[1], .75) < 1e-9
 capture nwkatz p4
 xa _rc == 198
 capture nwkatz p4, generate(k1)
-xa _rc == 99
+xa _rc == 110
 nwkatz p4, generate(k1) replace
 gen zklong = 1
 * SUSPECTED BUG (as nwevcent): `confirm variable' without `exact' (zk abbreviates zklong only)

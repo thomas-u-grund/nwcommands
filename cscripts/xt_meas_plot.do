@@ -120,7 +120,7 @@ if _rc == 0 {
 * an existing variable is not overwritten without replace (the other measure commands stop with r(99))
 gen byte tx2 = 7
 capture nwplot two, generate(tx2 ty2) noopen
-xa _rc == 99 & tx2[1] == 7    // fixed: CONFIRMED BUG M15c
+xa _rc == 110 & tx2[1] == 7    // fixed: CONFIRMED BUG M15c
 nwplot two, generate(tx2 ty2) replace noopen
 xa tx2 < . & ty2 < . in 1/2
 xa "`: type tx2'" == "double"

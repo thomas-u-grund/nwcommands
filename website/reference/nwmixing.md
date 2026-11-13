@@ -46,6 +46,20 @@ Ties are treated as unvalued (presence/absence only) throughout - tie strength d
 
 With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a QAP permutation test: the attribute assignment is held fixed while the network itself is repeatedly randomly permuted, building a null distribution of the E-I index under "no association between this attribute and tie placement", and reports a two-sided p-value.
 
+## Remarks on plot
+
+The `plot` option draws the table with a built-in bar plot (the same plot the user-written `tabplot` draws; `tabplot` itself is not needed, and is not used even if it is installed). Any further options in `plotoptions()` are passed to `twoway`. The built-in plot follows the idea and the look of Nick Cox's `tabplot` (SSC); thanks to N. J. Cox.
+
+## Network types
+
+**Directed:** the mixing table is directional (ego to alter); on an undirected network every tie is counted from both ends, as the output notes. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The mixing table counts ties, so only the ties are listed (not all dyads). Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.3 seconds. The significance test (`permutations()`) permutes the attribute on the dense adjacency matrix; its running time at 5,000 nodes has not been measured.
+
+The permutations of `permutations()` act on the stored ties of a network that is held that way (a tie (u,v) lands in the cell (inv u, inv v) of the permuted matrix, O(ties) per draw). 20,000 nodes with 20 permutations: 1.2 seconds.
+
 ## Examples
 
 ```stata

@@ -32,6 +32,14 @@ mat(matamatrix)
 
 This is a low-level utility for programmers moving data between Mata and Stata directly; ordinary use of the package does not need it - see [nwtomata](nwtomata) / [nwload](nwload) for the normal way to bring a network's own data into Stata.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
+## Limits
+
+Every column of the matrix becomes a Stata variable, so the number of columns is limited by what the flavour of Stata allows (2,048 variables in Stata/BE, 32,767 in Stata/SE). The command checks this first and stops with r(900) and a message instead of failing half way; use the Mata matrix ([nwtomata](nwtomata)) for larger networks.
+
 ## Examples
 
 ```stata

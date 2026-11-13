@@ -38,6 +38,10 @@ subreplace]
 
 `subnet(newnetname)` additionally saves the INDUCED SUBGRAPH on *ego* plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among them (not just ego's own ties) - as *newnetname*. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute aggregate, which [nwaltergen](nwaltergen) / [nwego](nwego) already compute directly without needing one). The original network is left untouched; *newnetname* inherits its directedness/valued/self-loop/two-mode status.
 
+## Network types
+
+**Directed:** `mode(incoming|outgoing|either)` chooses the neighbours. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata
@@ -65,6 +69,10 @@ This shows that the "ginori" family has business relationships with the "barbado
 
 - **Matrices**
 - **r(neighbors)** --- column vector with the nodeids of all neighbors, in nodeid order
+
+## Also see
+
+- [nwcontext](nwcontext), [nwgeodesic](nwgeodesic), [nwpath](nwpath)
 
 ---
 

@@ -105,6 +105,10 @@ The shortcuts above all generate a new *network*. A second family generates a pe
 
 Three further keywords are recognized but not implemented as a variable shortcut, since they do not naturally reduce to one value per node: **addnodes(** (mutates a network's own node set - see [nwaddnodes](nwaddnodes)), **subset(** (produces a new network, not a variable - see [nwsubset](nwsubset)), and **collapse(** (see [nwcollapse](nwcollapse)). Each raises a clear, immediate error rather than silently doing nothing.
 
+## Network types
+
+What happens with directed, valued, two-mode and signed networks depends on the function that is called (see [nwgen](nwgen) / [nwgenvar](nwgenvar) and the help of the function). See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 Generate a new network with a network function:

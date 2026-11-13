@@ -83,7 +83,7 @@ capture nwcomponents a3
 xa _rc == 198
 gen byte old = 7
 capture nwcomponents a3, generate(old)
-xa _rc == 99
+xa _rc == 110
 xa old == 7 in 1/3
 nwcomponents a3, generate(old) replace
 xa old[1] == old[2]
@@ -153,7 +153,7 @@ xa ckv == 3 in 1/4
 capture nwkcore k4
 xa _rc == 198
 capture nwkcore k4, generate(ck)
-xa _rc == 99
+xa _rc == 110
 di "(4) nwkcore: ok"
 
 * ---------------------------------------------------------------- (5) nwkcomponents
@@ -200,7 +200,7 @@ xa _rc == 198
 capture nwkcomponents bow, k(2)
 xa _rc == 198
 capture nwkcomponents bow, k(2) generate(kb)
-xa _rc == 99
+xa _rc == 110
 di "(5) nwkcomponents: ok"
 
 nwclear

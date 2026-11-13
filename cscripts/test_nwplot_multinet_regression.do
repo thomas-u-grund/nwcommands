@@ -209,4 +209,4 @@ nwclear
 nwrandom 60, prob(.1)
 qui nwdegree random, generate(_outdegree _indegree)
 capture noisily nwdegree random, generate(_outdegree _indegree)
-assert _rc == 99
+assert _rc == 110

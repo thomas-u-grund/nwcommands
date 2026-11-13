@@ -34,6 +34,18 @@ For example, if Adam has a (reciprocated) tie to Betty, and both Adam and Betty 
 
 The concept of a Simmelian tie is related to that of a clique; each pair of nodes (individuals) in a clique has a Simmelian tie between them. Thus a simmelian tie can be defined as a basic tie in a clique, or a co-clique relationship (between individuals who belong to a specific clique).
 
+## Network types
+
+**Directed:** only mutual ties count. **Valued:** tie values are ignored (no strength threshold) and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The mutual ties and the mutual neighbours they share are found from the tie lists. Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,000 nodes need 1.2 GB.
+
+The mutual ties that have a mutual neighbour in common are found in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same network. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.8 seconds (the Mata route needs 0.5, 2.0 and 11.6 seconds). A network with self-loops takes the Mata route.
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Examples
 
 ```stata

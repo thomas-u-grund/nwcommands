@@ -44,6 +44,10 @@ silent]
 
 For a directed network, *a* ranges over *b*'s incoming ties and *c* over its outgoing ties - brokerage is fundamentally about *a* reaching *c* *through* *b*. For an undirected network, incoming and outgoing ties are identical, so *a* and *c* both range over *b*'s (undirected) neighbors - the same five-role classification still applies, just without the directional distinction a directed network provides.
 
+## Network types
+
+**Directed:** directions are used (the measure is defined for directed networks); on an undirected network the directional roles collapse. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata

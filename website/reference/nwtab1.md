@@ -28,6 +28,29 @@ For example, for a directed network with 5 nodes, the commands displays the dist
 
 The command makes use of the normal `tabulate` command, hence, all *`tabulate1_options`* can be applied. This can be useful to extract the distribution of tie values for further calculation.
 
+## Example
+
+```stata
+. nwwebuse gang
+. nwtabulate gang
+
+Network:  gang      Directed: false
+```
+- gang c | Freq. Percent Cum.
+
+```stata
+------------+-----------------------------------
+          0 |      1,116       77.99       77.99
+          1 |        182       12.72       90.71
+          2 |         92        6.43       97.13
+          3 |         25        1.75       98.88
+          4 |         16        1.12      100.00
+------------+-----------------------------------
+      Total |      1,431      100.00
+```
+- In the *gang* network, 1116 potential (undirected) co-offending ties are not realized, 182 ties have the value 1,
+- 92 ties have the value 2 and so on.
+
 ## See also
 
 - [two-way nwtabulate](nwtab2), `tabulate`

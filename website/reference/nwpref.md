@@ -56,6 +56,14 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 . nwpref 20, prob(1) undirected weights(0.0, 0.3, 0.7)
 ```
 
+## Network types
+
+Generates a one-mode network. **Directed:** directed by default, `undirected` for undirected. **Valued:** `weights()` sets the tie values; attachment always follows degree. **Two-mode:** not applicable. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so far (a different stream; `rdiscrete()` takes at most 10,000 probabilities). 20,000 nodes: 0.2 seconds. `weights()` uses the matrix.
+
 ## Examples
 
 ```stata

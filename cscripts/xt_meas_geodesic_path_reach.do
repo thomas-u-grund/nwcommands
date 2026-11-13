@@ -127,11 +127,11 @@ clear
 nwset, mat((0,1,0\1,0,4\0,4,0)) name(v3) undirected
 nwgeodesic v3, name(mine)
 capture nwgeodesic v3, name(mine)
-xa _rc == 99
+xa _rc == 483
 nwgeodesic v3, name(mine) nwreplace
 nwgeodesic v3
 capture nwgeodesic v3, noreplace
-xa _rc == 99
+xa _rc == 483
 mata: st_local("n0", strofreal(__nw.nws.get_number()))
 capture nwgeodesic v3, name(newone) binary alpha(.5)
 xa _rc == 198
@@ -144,7 +144,7 @@ xa _rc != 0    // fixed: CONFIRMED BUG M4a
 set obs 3
 gen byte ec = 7
 capture nwgeodesic v3, name(g2) generate(ec)
-xa _rc == 99
+xa _rc == 110
 xa ec == 7 in 1/3
 * SUSPECTED BUG: `confirm variable' and `capture drop' without exact: with an existing variable eclong,
 * generate(ecx) is fine, but generate(ecl) is taken as eclong (r(99)) and with nwreplace eclong is dropped
@@ -257,7 +257,7 @@ nwtomata _reach, mat(R)
 xm assert(R[1,2] == 1 & R[1,3] == 1 & R[2,3] == 1)
 xm assert(R[2,1] == 0 & R[3,1] == 0 & R[3,2] == 0)
 capture nwreach dp3
-xa _rc == 99
+xa _rc == 483
 nwreach dp3, nwreplace sym
 nwtomata _reach, mat(R)
 xm assert(R[3,1] == 1 & R[2,1] == 1)

@@ -42,7 +42,7 @@ program nwbrokerage, rclass
 			capture confirm variable `netgenerate'_`role'`k', exact
 			if _rc == 0 & "`replace'" == "" {
 				noi di "{err}Variable {bf:`netgenerate'_`role'`k'} already exists; specify {bf:replace}"
-				err 99
+				err 110
 			}
 		}
 

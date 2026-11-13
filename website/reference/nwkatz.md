@@ -52,6 +52,16 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between
 
 `walks` switches to the genuine, literature-standard walk-counting Katz/Bonacich formula instead: *x = (I - alpha*A)^-1 * 1*, solved via a linear solve (not an explicit matrix inverse). `alpha()` must then satisfy *|alpha| * rho < 1* (rho = the network's own spectral radius) or the implied infinite walk sum diverges - `nwkatz` checks this and errors with the valid range if violated. Default `alpha()` in this mode is **0.9/rho**, a conventional "safely inside the convergent range" choice; on a network with rho = 0 (no cycles, so every walk is finite and every `alpha()` is valid) the default is 1. Directed networks get separate in/out-walk variants, the same convention the default distance-decay formula already uses.
 
+## Network types
+
+**Directed:** *_in* and *_out* variables; the distance-decay form symmetrizes by default (`nosym` keeps the direction), `walks` does not. **Valued:** `walks` weights the walks by the tie values (`binary` counts a tie once); the distance-decay form counts steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The distance-decay score (without `walks`) is summed over breadth-first searches from every node in the plugin, without a matrix of distances, unless *geodesic_options* are given or the platform has no plugin (then the matrix of [nwgeodesic](nwgeodesic) is used). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB (99 seconds and 6.4 GB through the matrix). `walks` solves a dense linear system and needs the matrix.
+
+Without `walks` the time grows with the number of nodes times the number of ties like that of [nwcloseness](nwcloseness): when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option `force` runs it anyway. With `walks` the matrix is dense and a network of more than 20,000 nodes is refused.
+
 ## Examples
 
 ```stata

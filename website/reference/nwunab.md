@@ -31,6 +31,10 @@ This is the network version of `unab`. `nwunab` expands and unabbreviates a [net
 - `max(`*#*`)` specifies the maximum number of networks
 - allowed. By default the limit of `unab` applies.
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 ```stata

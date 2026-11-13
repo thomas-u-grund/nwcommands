@@ -94,6 +94,10 @@ For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 
 ```
 The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](nwname), and [nwsummarize](nwsummarize), which displays it.
 
+## Network types
+
+**Directed:** the projection is undirected. **Valued:** on a valued network `stat()` combines the tie values (default `minmax`); on an unvalued network the weight is the number of shared nodes; `count`, `binary`, `jaccard`, `cosine` and `newman` ignore the values. **Two-mode:** yes - the projection onto one mode. **Signed:** not treated specially. See [nwnetworktypes](nwnetworktypes).
+
 ## Stored results
 
 - **Scalars**

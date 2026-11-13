@@ -80,12 +80,8 @@ program nwaltergen
 	capture confirm new variable `newvarname'
 	if _rc & "`replace'" == "" {
 		di as err "{err}Variable {bf:`newvarname'} already exists; specify {bf:replace}"
-		// Error-code coherence: was 110 - every sibling command in this
-		// group (nwgeodesic/nwpath/nwbridges/nwneighbor/nwego) uses 99
-		// for the identical "already exists" situation, matching this
-		// package's own standard use of 99 for "a Stata variable already
-		// exists" (see nwerrorcodes.sthlp).
-		error 99
+		// Stata's own code for "already defined" (see nwerrorcodes.sthlp).
+		error 110
 	}
 
 	_nwsyntax `net'
@@ -101,7 +97,7 @@ program nwaltergen
 
 	if _N < `nodes' {
 		di as err "{p 0 0 2}dataset has fewer observations (`=_N') than the network has nodes (`nodes'){p_end}"
-		error 4
+		error 2001
 	}
 	// align row i of the data set with node i of the network before the positional
 	// read/write below (see nwcommunity.ado)

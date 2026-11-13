@@ -52,6 +52,10 @@ so that a mode-1 node tied to every mode-2 node (or vice versa) scores exactly 1
 
 where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its "strength"). `alpha(0)` (the default for a binary network) reduces this exactly to plain tie-count degree - the two formulas agree bit-for-bit. `alpha(1)` (the default for a valued network) gives pure normalized strength (tie-value sum / other-mode size), ignoring tie count entirely. Values between 0 and 1 blend the two; values above 1 emphasize a few strong ties over many weak ones, and negative values do the reverse. On a binary (unweighted) network every tie already has value 1, so *s_i = k_i*, `alpha()` has no effect at any value, and the plain formula always applies.
 
+## Network types
+
+**Directed:** not applicable. **Valued:** the default is the strength divided by the size of the other mode; `binary` or `alpha(0)` counts the ties, `alpha()` blends ties and values (Opsahl et al. 2010). **Two-mode:** yes - a node's degree divided by the size of the other mode (Borgatti and Everett 1997); `raw` gives the count or strength itself. **Signed:** negative values are not handled. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 ```stata

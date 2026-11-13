@@ -7,7 +7,7 @@ program nwnode
 	
 	if "`ego'" == ""  & "`egoid'" == "" {
 		di "{err}Either option {bf:ego()} or {bf:egoid()} needs to be specified."
-		err 99
+		err 198
 	}
 	
 	mata: st_numscalar("r(nodeid)", -1)
@@ -16,7 +16,7 @@ program nwnode
 		confirm number `egoid'
 		if `egoid' <=0 | `egoid' > `nodes'{
 			di "{err}Egoid `egoid' out of range"
-			err 99
+			err 485
 		}
 		mata: st_global("r(nodename)", `netobj'->get_nodenames()[`egoid'])
 		mata: st_numscalar("r(nodeid)", `egoid')

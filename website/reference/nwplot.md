@@ -225,6 +225,22 @@ Raster formats (PNG, TIF, ...) are also supported the same way; `exportopt()` pa
 ```
 The graph itself is unaffected by `export()` - it remains the normal, currently active Stata graph afterward, so the Graph Editor, stata graph save, and a second `graph export` in a different format all continue to work exactly as they would without `export()`.
 
+## Valued networks and layouts
+
+On a valued network (one-mode, all tie values positive) the default layout `kk` and the layout `frucht` use the tie values as tie strengths, as `igraph::plot()` does for a graph with a `weight` edge attribute (`layout_with_fr(weights=)`, `layout_with_kk(weights=)`): strongly tied nodes end up close together. `frucht`: the attraction along a tie is multiplied by its value. `kk`: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's `layout_with_kk()` takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean, so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both directions counts with its larger value. `binary` lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as `igraph::plot()` does (`layout_with_fr()` and `layout_with_kk()` refuse non-positive weights). Two-mode networks, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle` and `grid`, do not use the values. `kk` with values needs the shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
+
+## Network types
+
+**Directed:** arrows; mutual dyads are curved apart (`arcstyle()`). **Valued:** edge widths and the `kk` / `frucht` layouts follow the tie values; `binary` switches this off. **Two-mode:** yes - each mode gets its own symbol and colour with a legend; `layout(bipartite)` puts the modes in two rows. **Signed:** negative ties dashed cranberry, positive solid navy (`nosign`). See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+**Limits of layout(kk).** The layout needs the distance between every pair of nodes, so memory and time grow with the square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes 4 seconds in total, 5,000 nodes 21 seconds and 2.2 GB. Above a few thousand nodes use `layout(circle)`, `layout(grid)` or `layout(frucht)`.
+
+Drawing needs the network as an *n*-by-*n* matrix and about 10 copies of it: above about 12,200 nodes the command stops at once with r(484) (32 GB at 20,000 nodes); option `force` runs it anyway. A picture of that many nodes is not readable: plot a part of the network ([nwsubset](nwsubset), [nwego](nwego), [nwkcore](nwkcore)).
+
+For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
+
 ## Stored results
 
 `nwplot` is `rclass`.

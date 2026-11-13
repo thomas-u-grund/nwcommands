@@ -87,6 +87,10 @@ The current wave's title/counter (or, in event mode, the active-tie count/time r
 
 `export()` needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), `nwmovie` stops with a message saying so; export a **.gif** file instead, which every engine can write. The **Export video** button in the interactive view writes MP4 where the engine can and WebM otherwise.
 
+## Network types
+
+Panel mode: **Directed:**, **Valued:**, **Signed:** as [nwplot](nwplot) (tie values set the line widths, negative ties dashed in a second colour; `binary` and `nosign` are passed on). **Two-mode:** yes - a symbol and a colour per mode; the layout is the one of `layout()`. Event mode needs a one-mode network with `eventtime()`, as `nwrem`. See [nwnetworktypes](nwnetworktypes).
+
 ## Examples
 
 **Panel mode**, using the three-wave [Glasgow](netexample) friendship data (*glasgow1*/*glasgow2*/*glasgow3*, one wave per school year) already used elsewhere in this package:

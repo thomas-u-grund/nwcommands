@@ -187,7 +187,7 @@ capture nwdegree p4
 xa _rc == 198
 * existing variable without replace: r(99), the variable is untouched
 capture nwdegree p4, generate(taken)
-xa _rc == 99
+xa _rc == 110
 xa taken == 7 in 1/4
 qui datasignature
 xa "`r(datasignature)'" == "`sig0'"
@@ -310,7 +310,7 @@ nwdegree tm, generate(t2c) isolates standardize
 xa t2c == t2 in 1/5
 * existing variable without replace
 capture nwdegree tm, generate(t2)
-xa _rc == 99
+xa _rc == 110
 di "(8) two-mode: ok"
 
 * ---------------------------------------------------------------- (9) 2,000 nodes: sum of degrees = 2 x edges

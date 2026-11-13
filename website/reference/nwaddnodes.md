@@ -35,6 +35,14 @@ Add isolate nodes to an existing networks. By default, [netname](netname) is rep
 
 An isolate node added this way has no ties to any existing node. A network built from an edgelist ([nwset](nwset), [nwfromedge](nwfromedge), [nw2fromedge](nw2fromedge)) only has the nodes that appear in the edgelist (an isolate needs a row of its own with the other identifier missing, see [nwfromedge](nwfromedge)). Call `nwaddnodes` afterward to add any isolates the source data itself did not hold.
 
+## Network types
+
+**Directed:** yes. **Valued:** yes, existing ties and their values are untouched. **Two-mode:** yes - `mode()` is required and says to which mode each new node belongs. **Signed:** yes, as valued. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds.
+
 ## Examples
 
 This example adds three new nodes (isolates) to a random network with 5 nodes.

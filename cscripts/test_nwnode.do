@@ -11,13 +11,13 @@ nwnode, ego("p2")
 * range (err 99); a name that isn't a loaded network (error 482, via
 * _nwsyntax).
 capture noisily nwnode
-assert _rc == 99
+assert _rc == 198
 
 capture noisily nwnode, egoid(999)
-assert _rc == 99
+assert _rc == 485
 
 capture noisily nwnode, egoid(0)
-assert _rc == 99
+assert _rc == 485
 
 capture noisily nwnode nonexistent, ego("p2")
 assert _rc == 482

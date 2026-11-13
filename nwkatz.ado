@@ -57,13 +57,13 @@ program nwkatz
 		capture confirm variable `generate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-			// Error-code coherence: standardized onto 99 (this
+			// Error-code coherence: standardized onto 110 (this
 			// package's own standard "Stata variable already exists"
 			// code, nwerrorcodes.sthlp) - was 110, an unexplained
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.
-			err 99
+			err 110
 		}
 		local generate_all `generate'
 	}
@@ -73,13 +73,13 @@ program nwkatz
 			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
 				di "{err}Variable {bf:`c'} already exists; use {bf:replace}"
-				// Error-code coherence: standardized onto 99 (this
+				// Error-code coherence: standardized onto 110 (this
 			// package's own standard "Stata variable already exists"
 			// code, nwerrorcodes.sthlp) - was 110, an unexplained
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.
-			err 99
+			err 110
 			}
 			local generate_all `generate_all' `c'
 		}

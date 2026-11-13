@@ -36,6 +36,14 @@ Several [network datasets](netexample) are available from this source. If *filen
 
 `nwwebuse` `set` without arguments resets the source to *https://nwcommands.org/examples*.
 
+## Option
+
+`nwclear` specifies that it is okay to replace all network data in memory, even though the current network data have not been saved to disk.
+
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 - Report URL from which network datasets will be obtained

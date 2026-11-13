@@ -32,6 +32,22 @@ replace]
 
 This command calculates for each connected pair of nodes (i,j) the number of nodes k that both i and j have as shared neighbors.
 
+## Network types
+
+**Directed:** needs `undirected` (symmetrizes first); without it the command stops with an error. **Valued:** tie values are ignored (the command prints a note on a valued network). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The two-step paths i -> k -> j are listed from the stored ties (the sum over k of in-degree times out-degree) and counted on the ties; no matrix is built. 20,000 nodes 1.7 seconds in Stata/BE, random directed network with 10 ties per node.
+
+## Example
+
+```stata
+. nwwebuse florentine, nwclear
+. nwshared flomarriage, name(shared)
+. nwplot flomarriage, edgecolor(shared) edgesize(shared) edgefactor(3)
+```
+
 ## See also
 
 - [nwsimmelian](nwsimmelian)

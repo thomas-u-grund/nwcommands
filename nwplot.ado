@@ -106,7 +106,7 @@ program nwplot, rclass
 			capture confirm variable `__gv', exact
 			if _rc == 0 & "`replace'" == "" {
 				di "{err}Variable {bf:`__gv'} already exists; use {bf:replace}"
-				error 99
+				error 110
 			}
 		}
 	}

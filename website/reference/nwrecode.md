@@ -58,6 +58,14 @@ If generate() is not specified, the input networks are overwritten; Overwriting 
 
 `test` specifies that Stata test whether rules are ever invoked or that rules overlap; for example, `(1/5=1) (3=2)`.
 
+## Network types
+
+**Directed:** yes. **Valued:** the command recodes the tie values by a rule. **Two-mode:** yes - the flag, the modes and the level labels are kept. **Signed:** negative values are recoded like any value. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3 seconds. A rule that gives the empty dyads a value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
+
 ## Examples
 
 **Setup**

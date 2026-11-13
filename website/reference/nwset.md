@@ -259,6 +259,14 @@ Whenever a network is set with **nwset**, it is also made the [current network](
 
 Programmers can use **nwset** to write their own import routines  (see also [nwimport](nwimport)) for different network file formats that are not natively supported by the **nwcommands**.All you need to do is transform your data either in an adjacency list or an edgelist represented by Stata variables.
 
+## Network types
+
+**Directed:** `directed` / `undirected`. **Valued:** `valued` / `unvalued`. **Two-mode:** yes - `twomode` (edge list) and `bipartite` (rectangular matrix) declare the network and the sizes of the modes. **Signed:** negative values are stored as they are. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Options `time()` and `interval()` of a one-mode network of more than 2,000 nodes keep the times as a list of the ties that have one, not as *n*-by-*n* matrices (80 GB each at 100,000 nodes). Two-mode temporal networks keep the matrices.
+
 ## Stored results
 
 `nwset` without a `varlist` or **mat()** (the list of networks) stores the following in **r()**:

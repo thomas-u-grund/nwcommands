@@ -26,6 +26,10 @@ nwrestore
 
 `nwrestore` restores network data previously preserved (including all Stata variables).
 
+## Network types
+
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+
 ## Examples
 
 Preserve a network, drop it, then restore it:
@@ -39,6 +43,10 @@ Preserve a network, drop it, then restore it:
 . nwrestore
 . nwset
 ```
+
+## Also see
+
+- `restore`, `preserve`
 
 ---
 

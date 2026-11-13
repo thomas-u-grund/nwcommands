@@ -80,6 +80,14 @@ The stored result **r(bw_central)** is Freeman's betweenness centralization, com
 
 The default (unweighted) mode of `nwbetween` transparently uses a compiled native (C) implementation of the same algorithm when one is available for the current platform (currently: macOS), falling back to an identical, fully-supported Mata implementation everywhere else - there is nothing to configure and no difference in the result, only in how fast it is computed (a native run at 10,000 nodes was measured faster than the Mata implementation at just 1,000). The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same result as the Mata routine: 1,000 nodes with 3,000 valued ties take 0.13 seconds (Mata: 111 seconds), 10,000 nodes 15 seconds; the Mata routine needs a dense work space of n x n cells for every node and is not usable above a few hundred nodes.
 
+## Network types
+
+**Directed:** symmetrized by default; `nosym` computes directed betweenness. **Valued:** used by default (paths of least cost 1/w^alpha, `alpha(1)` by default); `binary` counts steps; `weighted` is redundant. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation). **Signed:** ties of value zero or less, including negative ties, count as absent. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. Measured in Stata/BE on a random directed network with 10 ties per node: 10,000 nodes 7.6 seconds, 20,000 nodes 29 seconds, 100,000 nodes about 15 minutes (estimated). When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option `force` runs it anyway.
+
 ## Stored results
 
 - **Scalars**

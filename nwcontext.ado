@@ -34,7 +34,7 @@ program nwcontext
 		capture confirm variable `generate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
-			err 99
+			err 110
 		}
 		capture confirm new variable `generate'
 		if _rc capture drop `generate'

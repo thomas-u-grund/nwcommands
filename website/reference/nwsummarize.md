@@ -37,6 +37,14 @@ silent
 
 `nwsummarize` calculates and displays a variety of network summary statistics. If no netlist is specified, summary statistics are calculated for the current network.
 
+## Network types
+
+**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+
+## Limits
+
+Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes 0.02 seconds and 0.2 GB in Stata/BE.
+
 ## Examples
 
 ```stata
