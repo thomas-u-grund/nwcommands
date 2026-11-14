@@ -43,6 +43,14 @@ network data.
 the modes only, the mode of every node and the node attributes (5,000 + 500 nodes take about a megabyte). See
 {help nwnetworktypes}.{p_end}
 
+{pstd}
+{bf:Temporal:} yes. A network declared with {cmd:time()}, {cmd:interval()} or {cmd:eventtime()} in {help nwset} is saved with its
+times: every event of an event network (sender, receiver, time and value, in the order they were given), every observation of
+a tie of a snapshot network (a tie can come and go), every interval of an interval network, the temporal type and the names
+of the time variables. {help nwuse} brings back exactly these data. The file also holds the ties of such a network aggregated over all times, as
+for every network, so that an earlier version of nwcommands loads the aggregated network without times. A file that holds no temporal network has none of the
+time columns.{p_end}
+
 
 {title:Limits}
 

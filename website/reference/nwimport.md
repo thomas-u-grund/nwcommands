@@ -110,6 +110,12 @@ This imports networks in [raw edgelist format](nwfromedge). Data can already be 
 
 **Example 2:** peter,thomas,1 thomas,susan,4 susan,thomas3 geoff,john,2
 
+**Edge lists with times.** The options `eventtime`, `time` and `interval` read a list that holds times, as written by [nwexport](nwexport) for a temporal network: *ego alter* [*value*] *time*, or *ego alter* [*value*] *start end* for `interval`; the value column is there when the list has one column more. The columns must be numeric where they hold times and values. The network is declared as [nwset](nwset) declares it with `eventtime()`, `time()` or `interval()`, one row per event or observation, and keeps the direction given by `directed` or `undirected` (the direction is not detected for a list with times). A list with a value and a time has four columns and is refused without one of the options.
+
+```stata
+. nwimport calls.txt, type(edgelist, eventtime directed) name(calls)
+```
+
 ## Import compressed edgelist
 
 This imports networks in compressed edgelist format. As delimiter "," is allowed.
@@ -120,7 +126,7 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 
 ## Network types
 
-**Directed:** detected from the file; `forcedirected` / `forceundirected` override it. **Valued:** tie values are read where the format has them. **Two-mode:** yes - the formats written by [nwexport](nwexport) come back as two-mode networks with level labels (not UCINET); a tie inside a mode is refused (error 459). **Signed:** yes. See [nwnetworktypes](nwnetworktypes).
+**Directed:** detected from the file; `forcedirected` / `forceundirected` override it. **Valued:** tie values are read where the format has them. **Two-mode:** yes - the formats written by [nwexport](nwexport) come back as two-mode networks with level labels (not UCINET); a tie inside a mode is refused (error 459). **Signed:** yes. **Temporal:** edge lists with times (see [edge lists with times](nwimport)). See [nwnetworktypes](nwnetworktypes).
 
 ---
 

@@ -137,7 +137,8 @@ same variable names; loading the second replaces the first, with a note.
 {title:Network types}
 
 {pstd}
-The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+The command works the same for every network type (see {help nwnetworktypes}). {bf:Temporal:} the variables of a temporal network (event, snapshot or interval network, see {help nwset})
+hold its ties aggregated over all times, and the command says so in a note; the times are not part of the variables ({help nwtoedge} with {opt time} lists them).{p_end}
 
 {title:See also}
    

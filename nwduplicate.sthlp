@@ -46,7 +46,8 @@ For example:
 {title:Network types}
 
 {pstd}
-The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+The command works the same for every network type (see {help nwnetworktypes}). {bf:Temporal:} the copy of a temporal network is temporal: events, times, intervals,
+the temporal type and the names of the time variables are copied.{p_end}
 
 {title:See also}
 

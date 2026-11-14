@@ -53,7 +53,9 @@ happen to be symmetric, and a two-mode network keeps the node order it was saved
 
 {pstd}
 The command works the same for every network type (see {help nwnetworktypes}); files of two-mode networks that list
-every pair of nodes also load.{p_end}
+every pair of nodes also load. A temporal network (event, snapshot or interval network, see {help nwset}) comes back with
+its times, and with its type and the names of its time variables, exactly as {help nwsave} wrote them; a file written
+without times (by an earlier version, or of a network that is not temporal) loads as a network that is not temporal.{p_end}
 
 
 {title:Limits}

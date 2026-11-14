@@ -89,7 +89,7 @@ Note the opposite default polarity between the two interfaces: [nwkeep](nwkeep) 
 
 ## Network types
 
-**Directed:** yes. **Valued:** yes, the ties of the remaining nodes and their values are untouched. **Two-mode:** yes - the flag, the modes of the remaining nodes and the level labels are kept. **Signed:** yes, as valued. See [nwnetworktypes](nwnetworktypes).
+**Directed:** yes. **Valued:** yes, the ties of the remaining nodes and their values are untouched. **Two-mode:** yes - the flag, the modes of the remaining nodes and the level labels are kept. **Signed:** yes, as valued. **Temporal:** the events, times and intervals among the remaining nodes are kept. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 

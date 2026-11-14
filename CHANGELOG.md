@@ -4,6 +4,22 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Results that change (read before you re-run old analyses)
+- **Temporal networks (declared with `time()`, `interval()` or `eventtime()` in `nwset`) are no longer flattened silently by the commands that save, export or copy networks.** Networks that are not temporal behave exactly as before; every change below concerns temporal networks only.
+  - `nwsave` + `nwuse` / `nwwebuse` / `nwappend`: the network came back as an ordinary network with its ties aggregated over all times (an event network of 439 calls came back as 84 arcs, "Temporal: false"). It now comes back temporal with every event, time and interval. Code that relied on the aggregated network after loading must call `nwattime` or `nwtoedge ..., aggregate`.
+  - `nwduplicate` of a temporal network gave a network that was not temporal; the copy is now temporal (so are `nworder` and the copies made by `generate()` of `nwdropnodes` / `nwkeepnodes` and by `nwsubset`). `nwdropnodes`, `nwkeepnodes` and `nwsubset` dropped the temporal data of the network they shortened; they now keep the events, times and intervals among the remaining nodes.
+  - `nwexport`: for a temporal network, `type(pajek)`, `type(ucinet)`, `type(gml)` and the edge list of a two-mode network used to write the ties aggregated over all times without a word. They now stop with error 198 and write nothing; the new option `aggregate` gives the old file. `type(edgelist)` of a one-mode temporal network used to write the aggregated ties; it now writes one row per event (observation, interval) with the times (`ego alter [value] time`); `aggregate` gives the old file.
+  - `nwtoedge` of a temporal network lists each tie once, aggregated over all times, as before, and now prints a note saying so; the new option `aggregate` gives the same list without the note, and the new option `time` lists the events.
+  - `nwload` of a temporal network prints a note that the variables hold the ties aggregated over all times; `nwsync, fromstata` warns that the times stay as they were.
+
+### Added
+- **Temporal networks in `nwsave`, `nwuse`, `nwwebuse` and `nwappend`.** A temporal network is saved with its times and comes back exactly: every event of an event network (sender, receiver, time and value, in the order given), every observation of a tie of a snapshot network (a tie can come and go), every interval, the temporal type and the names of the time variables, for one-mode and two-mode networks and for several networks in one file. The file holds the aggregated ties as before, so an earlier version loads the aggregated network; a file without a temporal network has no new columns, and files written by earlier versions load as before.
+- **`nwtoedge ..., time`** replaces the data in memory by one row per event (observation of a tie, interval) of a temporal network: `_ego`, `_alter`, `_time` (`_start` and `_end` for intervals) and `_value`; `nwset` turns the rows into the network again. **`nwtoedge ..., aggregate`** states that the list holds the ties aggregated over all times.
+- **`nwexport ..., type(edgelist)` writes the times of a temporal network and `nwimport ..., type(edgelist, eventtime)`, `type(edgelist, time)` and `type(edgelist, interval)` (with `directed` or `undirected`) read them back.** `nwexport ..., aggregate` exports the ties aggregated over all times in any format.
+- New test `test_temporal_io`.
+
 ## [3.24.0] - 2026-11-13
 
 ### Added

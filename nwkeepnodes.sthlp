@@ -112,7 +112,7 @@ default unless {bf:netonly} is specified.
 
 {pstd}
 {bf:Directed:} yes. {bf:Valued:} yes, the ties of the remaining nodes and their values are untouched. {bf:Two-mode:} yes
-- the flag, the modes of the remaining nodes and the level labels are kept. {bf:Signed:} yes, as valued. See
+- the flag, the modes of the remaining nodes and the level labels are kept. {bf:Signed:} yes, as valued. {bf:Temporal:} the events, times and intervals among the remaining nodes are kept. See
 {help nwnetworktypes}.{p_end}
 
 {title:Limits}

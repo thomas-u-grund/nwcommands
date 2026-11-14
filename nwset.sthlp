@@ -370,6 +370,14 @@ option added:
 	{cmd:. nwset person organisation, twomode time(wave) name(mynet)}
 
 {pstd}
+{bf:Saving, loading, importing and exporting.} {help nwsave}, {help nwuse} and {help nwwebuse} keep a temporal network with all its times, its type and the names of its time
+variables, exactly. {help nwexport} with {cmd:type(edgelist)} writes one row per event (observation, interval) with the times, and {help nwimport} with the type option
+{cmd:eventtime}, {cmd:time} or {cmd:interval} reads such a list back; the other export formats cannot hold times and refuse unless {cmd:aggregate} is given.
+{help nwtoedge} with {cmd:time} lists the events as a data set. {help nwduplicate}, {help nwdropnodes}, {help nwkeepnodes} and {help nwsubset} keep the times of the nodes that remain.
+{help nwload} and {help nwsync} work on the aggregated ties. A command that derives a new network from the ties of a temporal network ({help nwsym}, {help nwtranspose},
+{help nwdichotomize} and the like) gives a network that is not temporal; {help nwattime} gives the static network at a time.{p_end}
+
+{pstd}
 {bf:bipartite}'s own wide-affiliation-matrix shape (one variable per mode-1 node, one row per mode-2
 node) has no natural per-row time value to attach, so it remains explicitly unsupported with any
 temporal option - use {bf:twomode}'s edgelist shape instead. This is deliberate groundwork only, per
@@ -399,7 +407,8 @@ larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
-option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names ({it:n}{it:i} for node {it:i}; a default name that is already one of the given labels is replaced by the next unused {it:n}{it:k} above the number of nodes), and extra entries are ignored (a note says
+option {bf:labs()}. As before, there need to be as many entries as there are nodes in the network; with fewer, the remaining nodes get default names ({it:n}{it:i} for node
+{it:i}; a default name that is already one of the given labels is replaced by the next unused {it:n}{it:k} above the number of nodes), and extra entries are ignored (a note says
 so). Labels must be unique: {bf:nwset} stops with error 198 and names the repeated label, because commands look nodes up by label. When not specified, the program
 automatically labels nodes according the variables that have been set.
 

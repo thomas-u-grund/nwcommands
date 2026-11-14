@@ -39,7 +39,7 @@ For example:
 
 ## Network types
 
-The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)). **Temporal:** the copy of a temporal network is temporal: events, times, intervals, the temporal type and the names of the time variables are copied.
 
 ## See also
 

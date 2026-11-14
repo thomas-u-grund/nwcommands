@@ -87,7 +87,7 @@ Notice that `nwload` does not import or create a network, it simply creates Stat
 
 ## Network types
 
-The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)). **Temporal:** the variables of a temporal network (event, snapshot or interval network, see [nwset](nwset)) hold its ties aggregated over all times, and the command says so in a note; the times are not part of the variables ([nwtoedge](nwtoedge) with `time` lists them).
 
 ## See also
 
