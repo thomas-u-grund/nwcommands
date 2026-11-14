@@ -100,7 +100,7 @@ default unless {bf:netonly} is specified.
 {pstd}
 {bf:Directed:}, {bf:Valued:}, {bf:Signed:} the ties and their values among the remaining nodes are kept.
 {bf:Two-mode:} yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one
-mode are dropped the network stays two-mode with an empty level. See {help nwnetworktypes}.{p_end}
+mode are dropped the network stays two-mode with an empty level. {bf:Temporal:} the events, times and intervals among the remaining nodes are kept (those of a dropped node are dropped with it). See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
@@ -114,4 +114,4 @@ The node labels of the remaining network are passed on in Mata.
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -58,7 +58,7 @@ network expressions can be very complicated, no labels are copied.
 
 {pstd}
 {bf:Directed:}, {bf:Valued:}, {bf:Signed:} the ties and their values are kept. {bf:Two-mode:} yes - the flag, the
-modes and the level labels are kept for the remaining nodes. See {help nwnetworktypes}.{p_end}
+modes and the level labels are kept for the remaining nodes. {bf:Temporal:} the events, times and intervals among the remaining nodes are kept. See {help nwnetworktypes}.{p_end}
 
 {title:Limits}
 
@@ -71,4 +71,4 @@ A network held as stored ties keeps the ties between the remaining nodes without
 	{help nwgenerate}, {help nwduplicate}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

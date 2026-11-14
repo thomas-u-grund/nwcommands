@@ -9,7 +9,7 @@ program nwmotifs, rclass
 	if "`is2mode'" == "true" & "`onemode'" == "" {
 		if "`plot'" != "" | "`name'" != "" {
 			di "{err}{p 0 0 2}Options {bf:plot} and {bf:name()} have no two-mode form; {bf:onemode} gives the one-mode census of the bipartite graph.{p_end}"
-			error 198
+			exit 198
 		}
 		_nwmotifs_two `netname', `sixnode' generate(`generate') `replace' matrix(`matrix') `normalise' posnorm(`posnorm') `silent'
 		return add
@@ -18,7 +18,7 @@ program nwmotifs, rclass
 	}
 	if "`sixnode'`generate'`replace'`matrix'`normalise'`posnorm'" != "" {
 		di "{err}{p 0 0 2}Options {bf:sixnode}, {bf:generate()}, {bf:matrix()}, {bf:normalise} and {bf:posnorm()} belong to the two-mode form and need a two-mode network (and are not used with {bf:onemode}); see {help nw2motifs}.{p_end}"
-		error 198
+		exit 198
 	}
 	local __vnquiet = cond("`silent'" != "", "quiet", "")
 	_nwvaluednote `netname', `__vnquiet'
@@ -138,7 +138,7 @@ program _nwmotifs_two, rclass
 	_nwsyntax `netname', max(1)
 	if "`is2mode'" != "true" {
 		di "{err}nwmotifs: onemode is required to use the one-mode form of this network."
-		error 198
+		exit 198
 	}
 	local six = ("`sixnode'" != "")
 	local P = cond(`six', 148, 46)
@@ -149,28 +149,28 @@ program _nwmotifs_two, rclass
 	local okpn : list posnorm in pn
 	if !`okpn' {
 		di "{err}posnorm() must be one of: `pn'"
-		error 198
+		exit 198
 	}
 	if "`posnorm'" != "none" & "`generate'`matrix'" == "" {
 		di "{err}{p 0 0 2}posnorm() needs generate() or matrix(): it normalises the node position counts.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`generate'" != "" {
 		capture confirm names `generate'1
 		if _rc {
 			di "{err}{p 0 0 2}generate() must be a valid variable name stub (the variables are {it:stub}1, {it:stub}2, ...).{p_end}"
-			error 198
+			exit 198
 		}
 		if length("`generate'") > 28 {
 			di "{err}generate(): the stub is too long."
-			error 198
+			exit 198
 		}
 		if "`replace'" == "" {
 			forvalues i = 1/`P' {
 				capture confirm variable `generate'`i', exact
 				if _rc == 0 {
 					di "{err}Variable {bf:`generate'`i'} already exists; specify {bf:replace}"
-					error 110
+					exit 110
 				}
 			}
 		}
@@ -179,11 +179,11 @@ program _nwmotifs_two, rclass
 		capture confirm names `matrix'
 		if _rc {
 			di "{err}matrix() must be a valid matrix name."
-			error 198
+			exit 198
 		}
 		if `nodes' > c(max_matdim) {
 			di "{err}{p 0 0 2}matrix(): the network has `nodes' nodes and Stata matrices are limited to " c(max_matdim) " rows; use {bf:generate()} for the node position counts.{p_end}"
-			error 908
+			exit 908
 		}
 	}
 

@@ -93,4 +93,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

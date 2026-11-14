@@ -11,7 +11,7 @@ program nwpreserve
 	capture confirm file `nw_tempfile'.nwdta
 	if _rc == 0 {
 		di "{err}Already preserved; nwrestore first."
-		error 621
+		exit 621
 	}
 	capture nwsave `nw_tempfile', replace
 	if _rc != 0 {

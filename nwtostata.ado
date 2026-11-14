@@ -18,13 +18,13 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 	
 	if "`gen'" != "" & "`stub'" != "" {
 		dis as error "Either option gen or option stub needs to be specified, but not both."
-		error 184
+		exit 184
 	}
 	
 	
 	if "`gen'" == "" & "`stub'" == "" {
 		dis as error "Either option gen or option stub needs to be specified."
-		error 198
+		exit 198
 	}
 
 	if "`gen'" != "" {
@@ -41,7 +41,7 @@ syntax, mat(string) [ gen(namelist min=1) stub(string) ]
 		if `cols' + c(k) > c(max_k_theory) {
 			dis as error "{p 0 0 2}nwtostata would create `cols' variables, but `c(flavor)' Stata allows at most `c(max_k_theory)' variables (`c(k)' in use).{p_end}"
 			dis as error "Use the Mata matrix directly (nwtomata) or a larger Stata flavour."
-			error 900
+			exit 900
 		}
 		forvalues i = 1/`cols' {
 			quietly gen `stub'`i' =.

@@ -41,17 +41,17 @@ if "`overwrite'" != "" local replace "replace"
 	// cannot be told apart from the variable list alone.
 	if "`twomode'" != "" & "`bipartite'" != "" {
 		di "{err}{p 0 0 2}options {bf:twomode} and {bf:bipartite} cannot be combined - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix); use whichever one matches your data.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`twomode'" != "" {
 		if "`varlist'" == "" {
 			di "{err}{p 0 0 2}option {bf:twomode} requires exactly two (or three, for a valued network) variables: the mode-1 id, the mode-2 id, and optionally a tie value.{p_end}"
-			error 198
+			exit 198
 		}
 		local twomode_nvars : word count `varlist'
 		if `twomode_nvars' < 2 | `twomode_nvars' > 3 {
 			di "{err}{p 0 0 2}option {bf:twomode} requires exactly two (or three, for a valued network) variables; got `twomode_nvars'.{p_end}"
-			error 198
+			exit 198
 		}
 		if "`name'" == "" {
 			local name "network"
@@ -60,7 +60,7 @@ if "`overwrite'" != "" local replace "replace"
 		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
 		if `ntemporal_opts' > 1 {
 			di "{err}{p 0 0 2}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event).{p_end}"
-			error 198
+			exit 198
 		}
 
 		if `ntemporal_opts' == 0 {
@@ -242,20 +242,20 @@ if "`overwrite'" != "" local replace "replace"
 		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
 		if `ntemporal_opts' > 1 {
 			di "{err}{p 0 0 2}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event).{p_end}"
-			error 198
+			exit 198
 		}
 		if "`bipartite'" != "" {
 			di "{err}{p 0 0 2}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:bipartite} is not supported - {bf:bipartite}'s own wide-affiliation-matrix shape has no per-row time value to attach. Use {bf:twomode} instead (an edgelist shape: mode-1 id, mode-2 id, optional value) - two-mode + temporal composability is supported there.{p_end}"
-			error 198
+			exit 198
 		}
 		if "`varlist'" == "" {
 			di "{err}declaring temporal metadata requires an edgelist varlist: {it:ego alter} [{it:value}]."
-			error 198
+			exit 198
 		}
 		local temporal_nvars : word count `varlist'
 		if `temporal_nvars' < 2 | `temporal_nvars' > 3 {
 			di "{err}{p 0 0 2}temporal edgelist declaration requires exactly two (or three, for a valued network) variables; got `temporal_nvars'.{p_end}"
-			error 198
+			exit 198
 		}
 		if "`name'" == "" {
 			local name "network"
@@ -529,7 +529,7 @@ if "`overwrite'" != "" local replace "replace"
 				// nwsimmelian.ado's own fix for the history of this
 				// convention's drift onto an undocumented `6099'.
 				di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-				error `errNWsExists'
+				exit `errNWsExists'
 			}
 			else {
 				di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
@@ -601,13 +601,13 @@ if "`overwrite'" != "" local replace "replace"
 			if "`bipartite'" == "" {
 				if `=__nwset_mat_rows' != `=__nwset_mat_cols' | `=__nwset_mat_rows' == 0 {
 					di "{err}{p 0 0 2}mat() must be a square, non-empty matrix for a one-mode network (got `=__nwset_mat_rows' x `=__nwset_mat_cols'); use the {bf:bipartite} option for a rectangular affiliation matrix.{p_end}"
-					error 198
+					exit 198
 				}
 			}
 			else {
 				if `=__nwset_mat_rows' == 0 | `=__nwset_mat_cols' == 0 {
 					di "{err}mat() must have at least one row and one column."
-					error 198
+					exit 198
 				}
 			}
 

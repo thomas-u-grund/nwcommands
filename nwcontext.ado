@@ -9,7 +9,7 @@ program nwcontext
 	capture confirm string variable `attribute'
 	if !_rc {
 		di "{err}{p 0 0 2}attribute() must be a numeric variable: {bf:`attribute'} is a string variable, and the statistics use the values as numbers.{p_end}"
-		error 109
+		exit 109
 	}
 	_nwdenseguard, command(nwcontext) nodes(`nodes') copies(3) alternative(Use nwaltergen, which computes mean, sum, min, max, sd and more of the neighbors' attribute from the stored ties and scales to millions of ties.) `force'
 	
@@ -35,7 +35,7 @@ program nwcontext
 	// the result goes to a variable (generate()), to a Mata matrix (mat()), or to both
 	if "`generate'" == "" & "`mat'" == "" {
 		di "{err}option {bf:generate()} or {bf:mat()} required."
-		error 198
+		exit 198
 	}
 	if "`generate'" != "" {
 		capture confirm variable `generate', exact

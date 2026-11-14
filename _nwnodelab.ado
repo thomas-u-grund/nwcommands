@@ -16,7 +16,7 @@ program _nwnodelab
 	if `nodeid' < 1 | `nodeid' > `r(nodes)' {
 		mata: st_rclear()
 		di "{err}{it:nodeid} {bf:`nodeid'} out of bounds"
-		error 485
+		exit 485
 	}
 	else {
 		// read straight from Mata: r(labs) is empty for networks too big

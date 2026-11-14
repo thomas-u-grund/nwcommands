@@ -44,7 +44,7 @@ However, the last command does not copy the node labels of network *flomarriage*
 
 ## Network types
 
-**Directed:**, **Valued:**, **Signed:** the ties and their values are kept. **Two-mode:** yes - the flag, the modes and the level labels are kept for the remaining nodes. See [nwnetworktypes](nwnetworktypes).
+**Directed:**, **Valued:**, **Signed:** the ties and their values are kept. **Two-mode:** yes - the flag, the modes and the level labels are kept for the remaining nodes. **Temporal:** the events, times and intervals among the remaining nodes are kept. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -56,4 +56,4 @@ A network held as stored ties keeps the ties between the remaining nodes without
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

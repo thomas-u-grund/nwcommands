@@ -15,7 +15,7 @@ program nwcug, rclass
 	// undefined too), so that is the floor enforced here.
 	if `reps' < 2 {
 		di "{err}{p 0 0 2}reps() must be at least 2 (a null distribution needs more than one draw); got `reps'.{p_end}"
-		error 198
+		exit 198
 	}
 
 	local tail = lower("`tail'")
@@ -52,30 +52,30 @@ program nwcug, rclass
 	capture _nwsyntax `netname'
 	if _rc != 0 {
 		di "{err}Network {bf:`netname'} not found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	// a two-mode network has its own null models (below); a one-mode network meets the two-mode conditions as an error
 	local __two = ("`is2mode'" == "true")
 	if `__two' {
 		if "`condition'" == "census" {
 			di "{err}{p 0 0 2}condition(census) counts the dyads of a one-mode directed network; for a two-mode network use condition(density), condition(mode1degree), condition(mode2degree) or condition(degrees).{p_end}"
-			error 198
+			exit 198
 		}
 		mata: st_local("__ok", strofreal(nwg_comb_version() >= 12))
 		if "`__ok'" != "1" {
 			di "{err}{p 0 0 2}nwcug for a two-mode network draws with the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing.{p_end}"
 			di "{err}{p 0 0 2}Update it: {stata nwinstall, all}{space 2}(or reinstall the package with {bf:net install nwcommands, replace}).{p_end}"
-			error 198
+			exit 198
 		}
 		if `trades' == 0 | `trades' < -1 {
 			di "{err}trades() must be at least 1."
-			error 198
+			exit 198
 		}
 	}
 	else {
 		if inlist("`condition'", "mode1degree", "mode2degree") {
 			di "{err}{p 0 0 2}condition(`condition') is for two-mode networks; use condition(density), condition(degrees) or condition(census) for a one-mode network.{p_end}"
-			error 198
+			exit 198
 		}
 		_nw2guard `netname', cmd(nwcug)
 		if "`condition'" == "degrees" {
@@ -85,11 +85,11 @@ program nwcug, rclass
 			if "`__ok'" != "1" {
 				di "{err}{p 0 0 2}nwcug, condition(degrees) for a one-mode network draws with the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 				di "{err}Update it: {stata nwinstall, all}"
-				error 198
+				exit 198
 			}
 			if `trades' == 0 | `trades' < -1 {
 				di "{err}trades() must be at least 1."
-				error 198
+				exit 198
 			}
 		}
 	}
@@ -97,7 +97,7 @@ program nwcug, rclass
 
 	if "`condition'" == "census" & "`directed'" != "true" & !`__two' {
 		di "{err}{p 0 0 2}condition(census) requires a directed network - mutual/asymmetric/null dyad types only exist for directed ties; use condition(density) (the default) for an undirected network.{p_end}"
-		error 198
+		exit 198
 	}
 
 	tempname __nw_dens
@@ -113,7 +113,7 @@ program nwcug, rclass
 	// use obsdensity at all.
 	if "`condition'" != "census" & `nodes' < 2 {
 		di "{err}{p 0 0 2}nwcug needs at least 2 nodes for a condition(density) draw (network `origname' has `nodes').{p_end}"
-		error 198
+		exit 198
 	}
 
 	if "`condition'" == "census" {
@@ -149,7 +149,7 @@ program nwcug, rclass
 	local obsval = r(`rname')
 	if "`obsval'" == "" | "`obsval'" == "." {
 		di "{err}stat() did not return a real r(`rname') for network `origname'"
-		error 111
+		exit 111
 	}
 
 	local drawopt "undirected"
@@ -212,7 +212,7 @@ program nwcug, rclass
 			mata: st_local("__okd", strofreal(nw2_cugdraw(`__dobj', `__T', `__K', `__M', `__model', `__nt')))
 			if "`__okd'" != "1" {
 				di "{err}the native draw of the two-mode null model failed (out of memory?)."
-				error 198
+				exit 198
 			}
 			qui `drawcmd'
 			local v = r(`rname')
@@ -238,7 +238,7 @@ program nwcug, rclass
 			mata: st_local("__okd", strofreal(nw1_cugdraw(`__dobj', `__T', `__K', `__thin')))
 			if "`__okd'" != "1" {
 				di "{err}the native draw of the degree-preserving null model failed (out of memory?)."
-				error 198
+				exit 198
 			}
 			qui `drawcmd'
 			local v = r(`rname')

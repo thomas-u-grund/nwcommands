@@ -46,11 +46,12 @@ For example:
 {title:Network types}
 
 {pstd}
-The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+The command works the same for every network type (see {help nwnetworktypes}). {bf:Temporal:} the copy of a temporal network is temporal: events, times, intervals,
+the temporal type and the names of the time variables are copied.{p_end}
 
 {title:See also}
 
 	{help nwgenerate}, {help nwsubset}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

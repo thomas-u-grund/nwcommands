@@ -22,7 +22,7 @@ program _nwevalnetexp
 	}
 	if ("`netexp'" == "" | `parenthesisBalance' != 0){
 		di "{err}{it:netexp} empty or contains unmatched parentheses"
-		error 6077
+		exit 6077
 	}
 	
 	// check for simple non-network expressions

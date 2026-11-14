@@ -68,6 +68,10 @@
 		{p_end}		
 {p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
 		{p_end}			
+{p2col:{opt eventtime}}edgelist: the last column is the time of an event; the network is an event network (see {help nwimport##edgelist_time:edge lists with times}){p_end}
+{p2col:{opt time}}edgelist: the last column is the time of a snapshot (wave) of the tie{p_end}
+{p2col:{opt interval}}edgelist: the last two columns are the start and the end of an interval{p_end}
+{p2col:{opt directed}, {opt undirected}}edgelist with times: the direction of the network (the file does not hold it){p_end}
 
 
 {title:Description}
@@ -255,6 +259,15 @@ in Stata, {help nwfromedge} generates a network. Node labels can be embedded in 
 	susan,thomas3
 	geoff,john,2
 
+{marker edgelist_time}{...}
+{pstd}
+{bf:Edge lists with times.} The options {cmd:eventtime}, {cmd:time} and {cmd:interval} read a list that holds times, as written by {help nwexport} for a temporal network:
+{it:ego alter} [{it:value}] {it:time}, or {it:ego alter} [{it:value}] {it:start end} for {cmd:interval}; the value column is there when the list has one column more.
+The columns must be numeric where they hold times and values. The network is declared as {help nwset} declares it with {cmd:eventtime()},
+{cmd:time()} or {cmd:interval()}, one row per event or observation, and keeps the direction given by {cmd:directed} or {cmd:undirected} (the
+direction is not detected for a list with times). A list with a value and a time has four columns and is refused without one of the options.{p_end}
+
+	{cmd:. nwimport calls.txt, type(edgelist, eventtime directed) name(calls)}
 
 {marker compressed}{...}
 {title:Import compressed edgelist}
@@ -283,8 +296,8 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 {pstd}
 {bf:Directed:} detected from the file; {opt forcedirected} / {opt forceundirected} override it. {bf:Valued:} tie
 values are read where the format has them. {bf:Two-mode:} yes - the formats written by {help nwexport} come back as
-two-mode networks with level labels (not UCINET); a tie inside a mode is refused (error 459). {bf:Signed:} yes. See
-{help nwnetworktypes}.{p_end}
+two-mode networks with level labels (not UCINET); a tie inside a mode is refused (error 459). {bf:Signed:} yes. {bf:Temporal:} edge lists with times
+(see {help nwimport##edgelist_time:edge lists with times}). See {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

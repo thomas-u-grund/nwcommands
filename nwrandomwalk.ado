@@ -22,7 +22,7 @@ program nwrandomwalk, rclass
 
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {

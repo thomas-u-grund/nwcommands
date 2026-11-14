@@ -39,7 +39,7 @@ program nwsubset
 		qui count if ((`if') != 0) in 1/`nodes'
 		if r(N) == 0 {
 			di "{err}{p 0 0 2}The if condition selects no nodes; network {bf:`name'} would have zero nodes remaining.{p_end}"
-			error 198
+			exit 198
 		}
 	}
 	nwduplicate `netname', name(`name') `replace'

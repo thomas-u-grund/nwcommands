@@ -17,7 +17,7 @@ program nwsimilar
 	// specifying both is an error (ambiguous which one wins).
 	if "`mode'" != "" & "`context'" != "" {
 		di "{err}Specify only one of {bf:mode()} or {bf:context()} (they are the same option) - not both."
-		error 198
+		exit 198
 	}
 	if "`context'" != "" {
 		local mode "`context'"

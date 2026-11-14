@@ -19,7 +19,7 @@ program nwmaxflow, rclass
 	}
 	if `srcid' == `snkid' {
 		di "{err}source() and sink() must be different nodes."
-		error 198
+		exit 198
 	}
 
 	local val = ("`weighted'" != "")

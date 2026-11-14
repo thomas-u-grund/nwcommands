@@ -9,7 +9,7 @@ program nwkcomponents, rclass
 
 	if `k' < 1 {
 		di "{err}{p 0 0 2}k() must be at least 1; k(1) is exactly a connected component - use {help nwcomponents} for that case.{p_end}"
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -33,7 +33,7 @@ program nwkcomponents, rclass
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 

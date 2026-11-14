@@ -19,7 +19,7 @@ program nwplotmatrix
 	// unlike a matrix plot of a 1x1 adjacency matrix).
 	if `nodes' <= 1 {
 		di "{err}nwplotmatrix requires a network with at least 2 nodes."
-		error 198
+		exit 198
 	}
 
 	// one box (five points) per dyad: memory and drawing time grow with the

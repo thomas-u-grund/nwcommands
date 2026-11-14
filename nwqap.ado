@@ -14,7 +14,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	local vars = wordcount("`formula'")
 	if (`vars' < 1) {
 		di "{err}Formula wrongly specified."
-		error 198
+		exit 198
 	}
 	
 	local net = word("`formula'", 1)
@@ -27,7 +27,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	capture _nwsyntax `net', max(1)
 	if _rc != 0 {
 		di "{err}Network {bf:`net'} not found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	_nw2guard `net', cmd(nwqap)
 	_nwdenseguard, command(nwqap) nodes(`nodes') copies(15) alternative(QAP regresses the dyads of the networks, one observation per pair of nodes: `=`nodes'*(`nodes'-1)' here. Use a part of the network (nwsubset, nwego) or nwcorrelate for the correlation of two networks.) `force'
@@ -66,7 +66,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			local nextname "`r(netname)'"
 			if r(nodes) != `nodes' {
 				di "{err}Networks of different size."
-				error 6056
+				exit 6056
 			}
 			nwtomata `entry', mat(__nwqap_onenet)
 			mata: _diag(__nwqap_onenet, J(rows(__nwqap_onenet), 1, .))
@@ -168,7 +168,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			}
 			else if `permattempts' >= 20 {
 				noi di "{err}{p 0 0 2}Permutation `j' produced a degenerate dependent network (no variation) on 20 consecutive draws; aborting.{p_end}"
-				error _rc
+				exit _rc
 			}
 		}
 
@@ -203,7 +203,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	if _rc != 0 {
 		di "{err}{p 0 0 2}The observed-data model could not be fit ({bf:`type' `formula'} failed, error `=_rc') - this can happen with perfect prediction/separation, a fully degenerate dependent network, or a misspecified model. Try {bf:detail} to see the underlying regression command's own error text.{p_end}"
-		error _rc
+		exit _rc
 	}
 	mat __nwqap_reg_results = e(b)
 
@@ -232,7 +232,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	else if "`predict'" != "" {
 		di "{err}predict() is not available for {bf:type(`type')}."
-		error 198
+		exit 198
 	}
 
 	// Calculate p-values.

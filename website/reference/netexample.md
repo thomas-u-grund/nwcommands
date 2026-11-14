@@ -32,6 +32,7 @@ Example network data sets
 - [zachary](netexample)`use` | `describe`
 - [kapferer](netexample)`use` | `describe`
 - [socialevolution](netexample)`use` | `describe`
+- [manufacturing](netexample)`use` | `describe`
 - [davis](netexample)`use` | `describe`
 - [ftdirectors_se](netexample)`use` | `describe`
 - [senate114](netexample)`use` | `describe`
@@ -363,6 +364,29 @@ Madan, A., Cebrian, M., Moturu, S., Farrahi, K., and Pentland, A. (2012). Sensin
 
 Distributed with R's own `goldfish` package as `data(Social_Evolution)`, an abbreviated version (fewer variables, a reduced time window) of the original Reality Commons release.
 
+## Manufacturing company emails (events)
+
+**Loaded as:** a plain (not pre-declared) Stata dataset, like [socialevolution](netexample). `nwwebuse manufacturing` loads three variables, *sender*, *receiver* and *t*, one row per email, 50,233 rows sorted by time. Declare the event network with [`nwset`](nwset):
+
+- `. nwwebuse manufacturing, nwclear`
+- `. nwset sender receiver, eventtime(t) name(mail)`
+
+**Vertex attributes:** a companion dataset, `manufacturing_nodes.dta` (`nwwebuse` `manufacturing_nodes`), holds *label*, *supervisor*, *level* and *division* for the 154 employees (144 of them send or receive an email in the data). *supervisor* is the direct supervisor (empty for the CEO, E86), *level* the number of steps to the CEO in the reporting hierarchy (0 = CEO) and *division* the branch of the CEO that the employee belongs to. After `nwset` the node-level dataset carries each employee's label in `_nwnode`; rename it to `label`, merge, then rename back:
+
+- `. rename _nwnode label`
+- `. merge 1:1 label using manufacturing_nodes, keep(master match) nogen`
+- `. rename label _nwnode`
+
+The emails were sent in a mid-sized manufacturing company between January and 30 September 2010 (*t* is the time in days since 1 January 2010, 00:00). Only the metadata are given (who wrote to whom and when), no content. This is a derived subset of the original data: only emails with exactly one recipient, and only the 154 employees whose supervisor is known, were kept; emails to oneself were removed and the employee identifiers were prefixed with *E*. The file is a large event history (144 actors); for a small subset, for example to try `nwrem` or `nwdynam`, keep the first two weeks with `keep if t < 14`: 2,738 emails among 129 employees.
+
+**Source**
+
+Michalski, R. (2020). Manufacturing company email metadata and corporate hierarchy. Harvard Dataverse, V2, doi:10.7910/DVN/6Z3CGX. Related paper: Nurek, M. and Michalski, R. (2020). Combining machine learning and social network analysis to reveal the organizational structures. Applied Sciences, 10(5), 1699.
+
+**Licence**
+
+The original data are released under CC0 1.0 (public-domain dedication, http://creativecommons.org/publicdomain/zero/1.0). Attribution is not required but is given here.
+
 ## Southern women (two-mode)
 
 **Networks:** *davis*
@@ -443,4 +467,4 @@ As for [baerveldt](netexample). Schools 1-7, 9, 11, 12 and 14-18 are the 15 clas
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

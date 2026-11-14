@@ -159,7 +159,7 @@ text happens to be.
 
 {pstd}
 {cmd:nwmovie} builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is
-written (at most {opt timeout()} seconds). The viewer window appears briefly while it works; do not close it. Nothing beyond {cmd:nwcommands}
+written (at most {opt timeout()} seconds). The viewer window appears briefly while it works; do not close it. On macOS {cmd:nwmovie} first checks that the screen is not locked, because the viewer cannot draw while it is, and stops with r(498) if it is. If the file is not written within {opt timeout()} seconds, or the export fails, {cmd:nwmovie} stops the viewer it started. Nothing beyond {cmd:nwcommands}
 itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit
 on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows {opt duration()} (panel mode)
 or {opt speed()} (event mode): three waves with the default {cmd:duration(800)} give a movie of 1.6 seconds, so give a larger
@@ -238,4 +238,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

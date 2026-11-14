@@ -6,7 +6,7 @@ program nwdyadprob
 
 	if "`density'" != "" & "`weightnet'" == "" & "`mat'" == "" {
 		di "{err}{p 0 0 2}Option {bf:density()} needs a weight network or {bf:mat()}: {bf:nwdyadprob} {it:weightnet}{bf:, density(}{it:#}{bf:)} places the ties with probabilities proportional to the tie values of the weight network (or of the matrix in {bf:mat()}). Without either use {help nwrandom}.{p_end}"
-		error 198
+		exit 198
 	}
 	
 	// BUGFIX: an unspecified name() has always been documented/expected
@@ -79,7 +79,7 @@ program nwdyadprob
 		capture mata: `mat'
 		if _rc != 0 {
 			di "{err}Mata matrix `mat' not found.{txt}"
-			error _rc
+			exit _rc
 		}
 		else {
 			mata: st_numscalar("r(matrows)", rows(`mat'))
@@ -92,7 +92,7 @@ program nwdyadprob
 				// this exact situation for nwreplacemat.ado's own
 				// identical check.
 				di "{err}Mata matrix `mat' not square.{txt}"
-				error `errMatrixShape'
+				exit `errMatrixShape'
 			}
 			// BUGFIX: `undirected' used to apply lowertriangle() to the
 			// probability matrix AFTER `__nwnew' had already been drawn
@@ -132,7 +132,7 @@ program nwdyadprob
 					// silently producing an unweighted network while
 					// claiming success.
 					di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-					error 198
+					exit 198
 				}
 				if "`undirected'" != "" {
 					mata: `w' = lowertriangle(`w',0)
@@ -161,7 +161,7 @@ program nwdyadprob
 		// silently producing an unweighted network while claiming
 		// weights() was honored.
 		di "{err}{p 0 0 2}Option {bf:weights()} combined with {bf:density()} is not yet supported; specify {bf:mat()} instead of {bf:density()} to use weights().{txt}{p_end}"
-		error 198
+		exit 198
 	}
 	if "`density'" != "" {
 		// Generate network from weight network
@@ -169,7 +169,7 @@ program nwdyadprob
 		// 50,000,000 rows (7,071 nodes); stop here with the reason instead of after the dense work
 		if `nodes' * `nodes' > 5e7 {
 			di "{err}{p 0 0 2}density() weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself.{p_end}"
-			error `errDenseTooLarge'
+			exit `errDenseTooLarge'
 		}
 		preserve
 		// the helper network _tempdyad must not outlive this call on ANY
@@ -181,7 +181,7 @@ program nwdyadprob
 		capture noisily {
 		nwset, mat(`mat') name(_tempdyad)
 		nwreplace _tempdyad = _tempdyad * 10
-		nwtoedge _tempdyad, full
+		nwtoedge _tempdyad, full aggregate
 
 		if "`undirected'" != "" {
 			replace _tempdyad = 0 if `nw_alter' <= `nw_ego'

@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.24.0** (13 November 2026)
+**Version 3.25.0** (14 November 2026)
 
 Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
@@ -51,6 +51,8 @@ The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled p
   delinquency, class size), and all 19 schools of the study in `baerveldt19` and `baerveldt19_pupils`, are from the
   Dutch Social Behavior study of Baerveldt and colleagues; no licence is stated for
   the data, and they are redistributed with citation of the sources (see `NOTICE.md`).
+  The event data `manufacturing` (50,233 emails among 144 employees of a manufacturing company, 2010, with the
+  reporting hierarchy in `manufacturing_nodes`) are a subset of Michalski 2020, doi:10.7910/DVN/6Z3CGX, CC0 1.0.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu (set up by `nwinstall, all` and `nwinstall, everything`, or later by `nwinstall, gui`; or `db <command>` directly) — for

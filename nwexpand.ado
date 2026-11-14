@@ -23,7 +23,7 @@ program nwexpand
 		capture _nwsyntax `network', other(_check) max(1)
 		if _rc != 0 {
 			di "{err}Network {bf:`network'} not found."
-			error `errNWsNotFound'
+			exit `errNWsNotFound'
 		}
 		_nwsyntax `network', max(1)
 		// the node names of the network go to nwset in a Mata variable: a long Stata option string gets a blank
@@ -59,7 +59,7 @@ program nwexpand
 	}
 	if (`nodes' > `nsel' | `nsel' == 0) {
 		di "{err}Not enough observations for variable {bf:`varlist'}."
-		error 2001
+		exit 2001
 	}
 	_nwdenseguard, command(nwexpand) nodes(`nodes') copies(2) alternative(The result is a network with a tie for every pair of nodes. Expand a part of the nodes (option nodes() or if).) `force'
 	

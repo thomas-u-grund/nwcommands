@@ -129,4 +129,4 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

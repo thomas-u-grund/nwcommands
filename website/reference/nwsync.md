@@ -55,7 +55,7 @@ However, the preferred method to change the same tie value would be using [nwrep
 
 ## Network types
 
-The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)). **Temporal:** the variables of a temporal network hold its ties aggregated over all times. `fromstata` changes these ties only; the times (events, snapshots, intervals) stay as they were and the command warns that they may no longer match the ties.
 
 ## See also
 
@@ -63,4 +63,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

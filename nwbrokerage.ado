@@ -36,7 +36,7 @@ program nwbrokerage, rclass
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 

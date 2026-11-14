@@ -53,7 +53,9 @@ happen to be symmetric, and a two-mode network keeps the node order it was saved
 
 {pstd}
 The command works the same for every network type (see {help nwnetworktypes}); files of two-mode networks that list
-every pair of nodes also load.{p_end}
+every pair of nodes also load. A temporal network (event, snapshot or interval network, see {help nwset}) comes back with
+its times, and with its type and the names of its time variables, exactly as {help nwsave} wrote them; a file written
+without times (by an earlier version, or of a network that is not temporal) loads as a network that is not temporal.{p_end}
 
 
 {title:Limits}
@@ -89,4 +91,4 @@ This load the Florentine dataset from the internet and appends it to the existin
         {help nwwebuse}, {help nwsave}, {help use}, {help nwappend}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

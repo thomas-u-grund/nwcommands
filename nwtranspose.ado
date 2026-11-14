@@ -11,7 +11,7 @@ program nwtranspose
 	syntax [anything(name=netname)], [ generate(string) name(string) replace]
 	if "`generate'" != "" & "`name'" != "" {
 		di "{err}{p 0 0 2}Specify only one of {bf:generate()} or {bf:name()} (they are the same option) - not both.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`name'" != "" {
 		local generate "`name'"
@@ -27,7 +27,7 @@ program nwtranspose
 		local __tr_exists = (_rc == 0)
 		if `__tr_exists' & "`replace'" == "" {
 			di "{err}{p 0 0 2}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}.{p_end}"
-			error `errNWsExists'
+			exit `errNWsExists'
 		}
 		// transpose into a temporary copy; the network replaced by
 		// generate() is dropped only then (it may be the source itself,

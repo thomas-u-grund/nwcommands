@@ -77,7 +77,8 @@ However, the preferred method to change the same tie value would be using {help 
 {title:Network types}
 
 {pstd}
-The command works the same for every network type (see {help nwnetworktypes}).{p_end}
+The command works the same for every network type (see {help nwnetworktypes}). {bf:Temporal:} the variables of a temporal network hold its ties aggregated over all times.
+{cmd:fromstata} changes these ties only; the times (events, snapshots, intervals) stay as they were and the command warns that they may no longer match the ties.{p_end}
 
 
 {title:See also}
@@ -85,4 +86,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 	{help nwload}, {help nwreplace}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

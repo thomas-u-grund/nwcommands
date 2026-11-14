@@ -10,7 +10,7 @@ program nwutility
 	capture _nwsyntax `netname', max(1)
 	if _rc != 0 {
 		di "{err}Network {bf:`netname'} not found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	_nwdenseguard, command(nwutility) nodes(`nodes') copies(4) alternative(The utility is computed from the matrix of all shortest paths. Use a part of the network (nwsubset, nwego).) `force'
 	// _nwsyntax (now _nwsyntax directly, since _nwsyntax never
@@ -33,7 +33,7 @@ program nwutility
 		// below, kept as its own distinct code rather than folded into
 		// `errNWsSizeMismatch'.
 		di "{err}{bf:benefit} needs to be in the range between 0 and 1."
-		error 125
+		exit 125
 	}
 
 	if "`intrvalue'" != "" {
@@ -45,7 +45,7 @@ program nwutility
 			// of this file's own separate, undocumented `60033' (used
 			// here and in the identical intrcost() check just below).
 			di "{err}network {bf:`intrvalue'} of wrong size"
-			error `errNWsSizeMismatch'
+			exit `errNWsSizeMismatch'
 		}
 		nwtomata `intrvalue', mat(__nwutility_checkedvalue)
 	}
@@ -57,7 +57,7 @@ program nwutility
 		_nwsyntax `intrcost', max(1)
 		if `nodes' != `netnodes' {
 			di "{err}network {bf:`intrcost'} of wrong size"
-			error `errNWsSizeMismatch'
+			exit `errNWsSizeMismatch'
 		}
 		// this line used to pull the matrix from intrvalue instead
 		// of intrcost - a real, separate copy-paste bug: intrcost's

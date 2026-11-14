@@ -39,7 +39,7 @@ program nwdropnodes
 	foreach onenode of local nodelist {
 		if `onenode' < 1 | `onenode' > `nodes' {
 			di "{err}node {bf:`onenode'} does not exist: network {bf:`netname'} has nodes 1 to `nodes'"
-			error 485
+			exit 485
 		}
 	}
 
@@ -78,11 +78,11 @@ program nwdropnodes
 		capture mata: st_numscalar("r(keepmatsize)", rows(`keepmat') * (cols(`keepmat') == 1))
 		if _rc {
 			di "{err}Mata matrix {bf:`keepmat'} not found"
-			error 111
+			exit 111
 		}
 		if `r(keepmatsize)' != `nodes' {
 			di "{err}{p 0 0 2}Mata matrix {bf:`keepmat'} must be a column vector with one row per node (`nodes' rows).{p_end}"
-			error 503
+			exit 503
 		}
 	}
 
@@ -99,7 +99,7 @@ program nwdropnodes
 	mata: st_numscalar("r(keepcount)", sum(`keepmat'))
 	if `r(keepcount)' == 0 {
 		di "{err}Cannot drop every node of a network - at least one node must remain."
-		error 198
+		exit 198
 	}
 
 	// the node names of the remaining network go to nwreplacemat in a Mata variable: a long Stata option
@@ -112,6 +112,9 @@ program nwdropnodes
 	// nwreplacemat derives the direction from the symmetry of the new
 	// matrix: the network keeps its own
 	mata: st_local("__dndir", strofreal(`netobj'->is_directed_boolean()))
+	// a temporal network keeps its events, times and intervals among the nodes that remain (the node numbers change)
+	local __dntemporal = ("`istemporal'" == "true")
+	if `__dntemporal' _nwtemporal stash `netname'
 
 	tempname newnames
 	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
@@ -204,6 +207,10 @@ program nwdropnodes
 		mata: mata drop __nwdropnodes_subattr
 	}
 	mata: mata drop `keepnet' `keepvector'
+	if `__dntemporal' {
+		_nwtemporal put `netname', filter
+		_nwtemporal drop
+	}
 	mata: st_rclear()
 	nwcompressobs
 	if "`__dnprivate'" != "" capture mata: mata drop `keepmat'

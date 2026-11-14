@@ -19,7 +19,7 @@ program nwimport, rclass
 	qui nwset
 	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
-		error 999
+		exit 999
 	}
 	
 	local options_original `"`options'"'
@@ -113,6 +113,8 @@ program nwimport, rclass
 		forvalues j = `=`nets_before'+1'/`nets_now' {
 			nwname, id(`j')
 			local d `r(directed)'	
+			// a temporal network keeps the direction it was declared with
+			local __nwi_temp "`r(temporal)'"
 
 			// check if network is undirected or not - r(is_symmetric)
 			// is documented (nwsym.ado) as the string "true"/"false";
@@ -121,10 +123,10 @@ program nwimport, rclass
 			// this call site is updated to match what nwsym now
 			// actually stores.
 			qui nwsym, check
-			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == ""{
+			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == "" & "`__nwi_temp'" != "true"{
 				local newdirectedcmd "newdirected(false)"
 			}
-			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == ""{
+			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == "" & "`__nwi_temp'" != "true"{
 				local newdirectedcmd "newdirected(true)"
 			}
 				
@@ -150,7 +152,7 @@ program nwimport, rclass
 	else {
 		di 
 		noi di `"{err}{it:Loading networks from file {bf:`fname'} failed}"'
-		error 480
+		exit 480
 	}
 	capture mata: mata drop __nwimport_*
 	capture confirm number 0
@@ -424,7 +426,7 @@ program _nwimport_apply2mode
 	if `__bad' > 0 {
 		mata: `netobj'->set_2mode(0)
 		di "{err}{p 0 0 2}The file declares a two-mode network, but `__bad' ties join two nodes of the same mode.{p_end}"
-		error 459
+		exit 459
 	}
 	mata: `netobj'->clean_matrix_2mode()
 	// ties of value 1 only: a binary network (the writers add the value 1 to every tie)
@@ -584,7 +586,7 @@ program _nwimport_ucinet
 			}
 			if ("`mode'" == "data" &  strpos("fullmatrix edgelist1", "`data_format'") == 0) {
 				noi di "{err}format {bf:`data_format'} not supported"
-				error `errFormatUnsupported'
+				exit `errFormatUnsupported'
 			}
 			
 			if "`mode'" == "data" & "`data_format'" == "fullmatrix" {
@@ -1010,9 +1012,16 @@ end
 
 capture program drop _nwimport_edgelist
 program _nwimport_edgelist
-	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars] 
+	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars eventtime time interval] 
 	if "`name'" == "" {
 		local name "network"
+	}
+	// a list with times (written by nwexport, type(edgelist), for a temporal network): ego alter [value] time, or
+	// ego alter [value] start end; eventtime, time or interval says what the time column(s) are
+	local __nwi_ntm = ("`eventtime'" != "") + ("`time'" != "") + ("`interval'" != "")
+	if `__nwi_ntm' > 1 {
+		di "{err}options {bf:eventtime}, {bf:time} and {bf:interval} are mutually exclusive"
+		exit 198
 	}
 
 	if (strpos(lower(`anything'), ".dta") != 0) | (strpos(lower(`anything'), ".DTA") != 0)  {
@@ -1092,6 +1101,37 @@ program _nwimport_edgelist
 		error 6705
 	}
 
+	if `__nwi_ntm' == 1 {
+		local __nwi_core = 3 + ("`interval'" != "")
+		if `c(k)' != `__nwi_core' & `c(k)' != `__nwi_core' + 1 {
+			noi di "{err}{p 0 0 2}a list with times needs `__nwi_core' columns (ego, alter, time" cond("`interval'" != "", " 1, time 2", "") ") or `=`__nwi_core'+1' with a value before the times; the file has `c(k)'.{p_end}"
+			exit 6705
+		}
+		ds
+		local __nwi_v `r(varlist)'
+		local ego : word 1 of `__nwi_v'
+		local alter : word 2 of `__nwi_v'
+		local __nwi_p 3
+		local value ""
+		if `c(k)' == `__nwi_core' + 1 {
+			local value : word 3 of `__nwi_v'
+			local __nwi_p 4
+		}
+		local __nwi_t1 : word `__nwi_p' of `__nwi_v'
+		local __nwi_t2 : word `=`__nwi_p'+1' of `__nwi_v'
+		foreach __nwi_x in `__nwi_t1' `__nwi_t2' `value' {
+			capture confirm numeric variable `__nwi_x'
+			if _rc {
+				noi di "{err}{p 0 0 2}column {bf:`__nwi_x'} must be numeric (times and values).{p_end}"
+				exit 6705
+			}
+		}
+		if "`eventtime'" != "" local __nwi_opt "eventtime(`__nwi_t1')"
+		if "`time'" != "" local __nwi_opt "time(`__nwi_t1')"
+		if "`interval'" != "" local __nwi_opt "interval(`__nwi_t1' `__nwi_t2')"
+		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars'
+		exit
+	}
 	if `c(k)' == 5 {
 		// a two-mode list written by nwexport: ego (first mode), alter (second mode), value, mode_ego, mode_alter
 		ds
@@ -1445,7 +1485,7 @@ program _nwimpdl
 		// (6705, unw_defs.ado) already names this exact situation for
 		// this same file's own "format not supported" check elsewhere.
 		noi di "{err}No valid {bf:.dl} file"
-		error `errFormatUnsupported'
+		exit `errFormatUnsupported'
 	}
 	
 	set more off
@@ -1598,7 +1638,7 @@ program _nwimpdl
 			// convention for that class of fix.
 			if "`rowlab_embedded'" != "" {
 				noi di "{err}Ucinet {bf:row labels embedded} not supported together with format {bf:lowerhalf}"
-				error `errFormatUnsupported'
+				exit `errFormatUnsupported'
 			}
 			else {
 				capture _nwimpdl_lowerhalf, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
@@ -1627,7 +1667,7 @@ program _nwimpdl
 		// disguised-silent-failure class already fixed elsewhere in
 		// this package, see nwevcent.ado's own header comment).
 		noi di "{err}Ucinet format = {bf:`format'} not supported."
-		error `errFormatUnsupported'
+		exit `errFormatUnsupported'
 	}
 	mata: st_global("r(nameoff)","`nameoff'")
 end

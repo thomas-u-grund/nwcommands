@@ -10,7 +10,7 @@ program nwregular, rclass
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
-		error 110
+		exit 110
 	}
 	nwtomatafast `netname'
 	local srcmata "`r(mata)'"

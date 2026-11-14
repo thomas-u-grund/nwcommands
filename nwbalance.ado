@@ -6,7 +6,7 @@ program nwbalance
 	set more off
 	if `reps' < 0 {
 		di "{err}reps() must be 0 or a positive number of draws."
-		error 198
+		exit 198
 	}
 	
 	// BUGFIX: word 2/word 3 were swapped relative to both the .sthlp's

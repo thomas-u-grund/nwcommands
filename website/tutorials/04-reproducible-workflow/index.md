@@ -135,6 +135,11 @@ generated variables that are the beginning of the name of an existing variable.)
 analysis scripts, or to share a network with its attributes in one file. Two Stata users with the core installed
 can open it. For other programs, export a standard format (see [Tutorial 3](../03-importing-exporting/)).
 
+A network with times (declared with `time()`, `interval()` or `eventtime()` in `nwset`) comes back from `nwuse` with its times:
+every event, wave and interval is kept. An export to Pajek, UCINET or GML cannot hold times, so `nwexport` stops with an
+error for such a network; `nwexport ..., type(edgelist)` writes one row per event with the time in the last column, and
+`aggregate` exports the ties aggregated over all times.
+
 ## Hand the ties to another program
 
 `nwtoedge` turns a network into a data set of pairs, one row per possible pair; keep the pairs that are ties and write

@@ -49,7 +49,7 @@ program nwmovie
 		capture confirm file "``_nwmv_f''"
 		if _rc {
 			di as error "{p 0 0 2}required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all{p_end}"
-			error 601
+			exit 601
 		}
 	}
 
@@ -77,6 +77,12 @@ program nwmovie
 			exit 198
 		}
 		local _nwmv_auto = char(34) + "`_nwmv_ext'" + char(34)
+		// macOS: the viewer cannot draw while the screen is locked and would never write the file
+		_nwmovie_screenlocked
+		if r(locked) == 1 {
+			di as error "{p 0 0 2}nwmovie: the screen is locked, so the viewer cannot draw the movie and export() would wait until timeout() for a file that is never written. Unlock the screen and run the command again.{p_end}"
+			exit 498
+		}
 	}
 	else if "`replace'" != "" {
 		di as error "replace is only allowed with export()"
@@ -101,7 +107,7 @@ program nwmovie
 		capture _nwsyntax `netname', max(999) min(2)
 		if _rc != 0 {
 			di as error "{p 0 0 2}nwmovie requires either ONE event-type temporal network (built via {help nwset}'s {bf:eventtime()} option) or AT LEAST 2 panel networks of the same size, in sequence.{p_end}"
-			error 198
+			exit 198
 		}
 		local mode "panel"
 		local sizecheck = 0
@@ -112,7 +118,7 @@ program nwmovie
 			}
 			else if `sizecheck' != `othernodes' {
 				di as error "{p 0 0 2}nwmovie's panel networks must all have the same number of nodes; `_nwmv_onenet' has `othernodes', expected `sizecheck'.{p_end}"
-				error `errNWsSizeMismatch'
+				exit `errNWsSizeMismatch'
 			}
 		}
 	}
@@ -170,16 +176,16 @@ program nwmovie
 		if "``_nwmv_po''" != "" {
 			if "``_nwmv_so''" != "" {
 				di as error "specify only one of {bf:`_nwmv_so'()} or {bf:`_nwmv_po'()}."
-				error 198
+				exit 198
 			}
 			if "`mode'" != "panel" {
 				di as error "{p 0 0 2}{bf:`_nwmv_po'()} (one variable per wave) is panel-mode only; use {bf:`_nwmv_so'()} in event mode.{p_end}"
-				error 198
+				exit 198
 			}
 			local _nwmv_pocount : word count ``_nwmv_po''
 			if `_nwmv_pocount' != `nwords' {
 				di as error "{p 0 0 2}{bf:`_nwmv_po'()} must list exactly `nwords' variable(s), one per network, in the same order as `netname'.{p_end}"
-				error 198
+				exit 198
 			}
 			local _nwmv_list_`_nwmv_po' "``_nwmv_po''"
 		}
@@ -193,7 +199,7 @@ program nwmovie
 	// per-wave options' own validation order above.
 	if `"`titles'"' != "" & "`mode'" != "panel" {
 		di as error "{bf:titles()} (one title per wave) is panel-mode only."
-		error 198
+		exit 198
 	}
 
 	tempname _nwmv_json
@@ -221,7 +227,7 @@ program nwmovie
 			mata: st_local("_nwmv_titlecount", strofreal(cols(_nwmv_labelvec)))
 			if `_nwmv_titlecount' != `_nwmv_k' {
 				di as error "{p 0 0 2}titles() must list exactly `_nwmv_k' double-quoted title(s), one per network, in the same order as `netname'.{p_end}"
-				error 198
+				exit 198
 			}
 		}
 		else {
@@ -381,7 +387,7 @@ program nwmovie
 			capture confirm file "`_nwmv_out'"
 			if _rc {
 				di as error "nwmovie: failed to resolve network `_nwmv_net' via nwplot."
-				error 601
+				exit 601
 			}
 			local _nwmv_keyframes "`_nwmv_keyframes' `_nwmv_out'"
 		}
@@ -412,7 +418,7 @@ program nwmovie
 		scalar drop _nwmv_nev
 		if `_nwmv_nev' < 1 {
 			di as error "nwmovie: `netname' has no events."
-			error 2001
+			exit 2001
 		}
 
 		// `i' here is a plain Mata script variable, not a Stata local -
@@ -455,7 +461,7 @@ program nwmovie
 		capture confirm file "`_nwmv_out'"
 		if _rc {
 			di as error "nwmovie: failed to resolve `netname''s node layout via nwplot."
-			error 601
+			exit 601
 		}
 
 		local _nwmv_windowval "."
@@ -463,7 +469,7 @@ program nwmovie
 			capture confirm number `window'
 			if _rc {
 				di as error "window() must be a number, in the same units as {help nwset}'s {bf:eventtime()} variable."
-				error 198
+				exit 198
 			}
 			local _nwmv_windowval "`window'"
 		}
@@ -497,6 +503,7 @@ program _nwmovie_export
 	capture erase "`_tmpout'"
 	capture erase "`_tmpout'.error"
 	_nwopenviewer "`htmlpath'", output(`_tmpout')
+	local _viewercopy `"`r(viewercopy)'"'
 	di "{txt}{p 0 0 2}Exporting the movie to {bf:`export'} (the viewer window closes when it is done)...{p_end}"
 	local _waited = 0
 	local _done = 0
@@ -511,18 +518,58 @@ program _nwmovie_export
 	if `_done' == 2 {
 		mata: st_local("_errmsg", _nwmovie_slurpfile(st_local("_tmpout") + ".error"))
 		capture erase "`_tmpout'.error"
+		_nwmovie_killviewer `"`_viewercopy'"'
 		di as error `"{p 0 0 2}nwmovie: the export failed: `_errmsg'.{p_end}"'
 		exit 498
 	}
 	if `_done' == 0 {
-		di as error "{p 0 0 2}nwmovie: no file after `timeout' seconds; the viewer may still be encoding (raise timeout()) or was closed{p_end}"
+		_nwmovie_killviewer `"`_viewercopy'"'
+		di as error "{p 0 0 2}nwmovie: no file after `timeout' seconds; the viewer may still be encoding (raise timeout()) or was closed. The viewer was stopped.{p_end}"
 		exit 498
 	}
 	// the viewer writes the file atomically, but give it a moment to close
 	sleep 200
-	quietly copy "`_tmpout'" `"`export'"', replace
+	capture quietly copy "`_tmpout'" `"`export'"', replace
+	local _copyrc = _rc
 	capture erase "`_tmpout'"
+	_nwmovie_killviewer `"`_viewercopy'"'
+	if `_copyrc' exit `_copyrc'
 	di `"{txt}Wrote {bf:`export'}"'
+end
+
+// macOS: is the screen session locked? r(locked) is 1 (locked), 0 (not locked) or -1 (unknown: other
+// system, or ioreg is missing or gave no answer). Only a clear "locked" stops nwmovie.
+capture program drop _nwmovie_screenlocked
+program _nwmovie_screenlocked, rclass
+	return scalar locked = -1
+	if "`c(os)'" != "MacOSX" exit
+	tempfile _lk
+	capture shell ioreg -n Root -d1 2>/dev/null | grep -c "ScreenIsLocked.=Yes" > "`_lk'"
+	tempname _fh
+	capture file open `_fh' using "`_lk'", read text
+	if _rc exit
+	file read `_fh' _line
+	file close `_fh'
+	local _line = strtrim(`"`_line'"')
+	if "`_line'" == "1" return scalar locked = 1
+	else if "`_line'" == "0" return scalar locked = 0
+end
+
+// Stops the viewer process that nwmovie started. The argument is the staged copy of the viewer
+// (c(tmpdir)/nwedit_viewer_<number>[.exe]); the process is found by that exact name only.
+capture program drop _nwmovie_killviewer
+program _nwmovie_killviewer
+	args vpath
+	if `"`vpath'"' == "" exit
+	local vname = substr(`"`vpath'"', max(strrpos(`"`vpath'"', "/"), strrpos(`"`vpath'"', "\")) + 1, .)
+	if !regexm(`"`vname'"', "^nwedit_viewer_[0-9]+(\.exe)?$") exit
+	if "`c(os)'" == "Windows" {
+		capture shell taskkill /f /im "`vname'" > nul 2>&1
+	}
+	else {
+		capture shell pkill -f "`vname'( |$)" > /dev/null 2>&1
+	}
+	capture erase `"`vpath'"'
 end
 
 // -----------------------------------------------------------------------

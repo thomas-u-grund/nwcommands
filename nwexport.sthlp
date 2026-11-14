@@ -17,7 +17,8 @@
 [{it:{help netname}}],
 {opt type}({it:{help nwexport##exp_type:exp_type}})
 [{opth fn:ame(filename)}
-{opt replace}]
+{opt replace}
+{opt agg:regate}]
 
 
 {synoptset 20 tabbed}{...}
@@ -26,6 +27,7 @@
 {synopt:{opt type}({it:{help nwexport##exp_type:exp_type}})}{bf:Required.} file format: {cmd:pajek}, {cmd:ucinet}, {cmd:gml} or {cmd:edgelist}{p_end}
 {synopt:{opth fn:ame(filename)}}filename of the exported network without the file ending: default = {it:netname}{p_end}
 {synopt:{opt replace}}overwrite exported file{p_end}
+{synopt:{opt agg:regate}}temporal network: export the ties aggregated over all times (see {help nwexport##temporal:Temporal networks}){p_end}
 
 
 {synoptset 20 tabbed}{...}
@@ -54,9 +56,26 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {title:Network types}
 
 {pstd}
-{bf:Directed:} yes. {bf:Valued:} the tie values of a valued network are written; a binary (unvalued) network is written without tie values (ego and alter only, in GML without {cmd:value}), so that {help nwimport} reads it back as binary (a two-mode network keeps its form). In UCINET DL a label that contains a blank or a comma is written in double quotes. {bf:Two-mode:} yes - Pajek bipartite form, UCINET rectangular
+{bf:Directed:} yes. {bf:Valued:} the tie values of a valued network are written; a binary (unvalued) network is written without tie values (ego and alter only, in GML without {cmd:value}), so that
+{help nwimport} reads it back as binary (a two-mode network keeps its form). In UCINET DL a label that contains a blank or a comma is written in double quotes. {bf:Two-mode:} yes - Pajek bipartite form, UCINET rectangular
 matrix, edge list with the modes of both nodes, GML attribute {cmd:nwmode}; level labels are kept except in UCINET DL.
-{bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+{bf:Signed:} not checked. {bf:Temporal:} see below. See {help nwnetworktypes}.{p_end}
+
+{marker temporal}{...}
+{title:Temporal networks}
+
+{pstd}
+A network declared with {cmd:time()}, {cmd:interval()} or {cmd:eventtime()} in {help nwset} has times that only the edge list can hold.
+{cmd:type(edgelist)} writes one row per event (per observation of a tie of a snapshot network, per interval of an interval network) with the
+times in the last column(s), tab-delimited and without a header: {it:ego alter} [{it:value}] {it:time} for event and snapshot networks, {it:ego alter} [{it:value}]
+{it:start end} for interval networks. The value column is there for a valued network. {help nwimport} reads such a file back with
+the type option {cmd:eventtime}, {cmd:time} or {cmd:interval}, and every event, time and value comes back exactly. The file does not say whether a network is directed;
+state {cmd:directed} or {cmd:undirected} when importing it.{p_end}
+
+{pstd}
+The formats {cmd:pajek}, {cmd:ucinet} and {cmd:gml}, and the edge list of a two-mode network, cannot hold times: for a temporal network the command stops with
+error 198 and writes nothing. Specify {opt aggregate} to write the ties of the network aggregated over all times (a tie that is present at any time), as a network that is not temporal;
+with {cmd:type(edgelist)}, {opt aggregate} writes the aggregated tie list instead of the times. {help nwsave} keeps the temporal network as it is.{p_end}
 
 
 {title:Limits}
@@ -81,4 +100,4 @@ This example loads the {help netexample:Florentine marriage data} and exports to
 	{cmd:. nwexport flobusiness, type(pajek)}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

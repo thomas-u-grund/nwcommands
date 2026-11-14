@@ -244,6 +244,8 @@ A temporal network is otherwise a completely ordinary **nwset**-declared network
 ```stata
 . nwset person organisation, twomode time(wave) name(mynet)
 ```
+**Saving, loading, importing and exporting.** [nwsave](nwsave), [nwuse](nwuse) and [nwwebuse](nwwebuse) keep a temporal network with all its times, its type and the names of its time variables, exactly. [nwexport](nwexport) with `type(edgelist)` writes one row per event (observation, interval) with the times, and [nwimport](nwimport) with the type option `eventtime`, `time` or `interval` reads such a list back; the other export formats cannot hold times and refuse unless `aggregate` is given. [nwtoedge](nwtoedge) with `time` lists the events as a data set. [nwduplicate](nwduplicate), [nwdropnodes](nwdropnodes), [nwkeepnodes](nwkeepnodes) and [nwsubset](nwsubset) keep the times of the nodes that remain. [nwload](nwload) and [nwsync](nwsync) work on the aggregated ties. A command that derives a new network from the ties of a temporal network ([nwsym](nwsym), [nwtranspose](nwtranspose), [nwdichotomize](nwdichotomize) and the like) gives a network that is not temporal; [nwattime](nwattime) gives the static network at a time.
+
 **bipartite**'s own wide-affiliation-matrix shape (one variable per mode-1 node, one row per mode-2 node) has no natural per-row time value to attach, so it remains explicitly unsupported with any temporal option - use **twomode**'s edgelist shape instead. This is deliberate groundwork only, per the package's own stated scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models, temporal ERGMs) is implemented or attempted here.
 
 ## Remarks
@@ -287,4 +289,4 @@ Options `time()` and `interval()` keep the times as a list with one entry per ro
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

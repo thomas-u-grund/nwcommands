@@ -20,12 +20,12 @@ program nwinduced, rclass
 	// at (docs/INDUCED_CENTRALITY_ROADMAP.md's own scope-question 2).
 	if "`directed'" == "true" & "`measure'" == "degree" {
 		di as err "{p 0 0 2}nwinduced, measure(degree) does not support directed networks - nwdegree itself splits into separate outdegree/indegree variables when directed, and induced degree would need a choice between them with no single obviously-right answer. measure(betweenness/closeness/evcent) all support directed networks directly. Use the undirected version or one of these measures.{p_end}"
-		error 198
+		exit 198
 	}
 
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	local endogvar "`generate'_endog"
 	local inducedvar "`generate'_induced"

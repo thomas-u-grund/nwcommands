@@ -6,11 +6,11 @@ program nwpagerank, rclass
 
 	if `damping' <= 0 | `damping' >= 1 {
 		di "{err}damping() must be strictly between 0 and 1."
-		error 198
+		exit 198
 	}
 	if `maxiter' < 1 {
 		di "{err}maxiter() must be a positive integer."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname'
@@ -21,7 +21,7 @@ program nwpagerank, rclass
 	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {

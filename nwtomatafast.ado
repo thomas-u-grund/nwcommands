@@ -19,7 +19,7 @@ program nwtomatafast
 	capture _nwsyntax `netname'
 	if _rc != 0 {
 		di "{err}Network `netname' not found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	mata: st_global("r(mata)", "(*`netobj'->get_matrix())")
 end

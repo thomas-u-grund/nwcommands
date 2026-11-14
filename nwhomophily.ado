@@ -17,7 +17,7 @@ program def nwhomophily
 	
 	if (`vc' != `hc') {
 		di "{err}option {bf:homophily()} needs to have one entry for each variable in {it:varlist}."
-		error 198
+		exit 198
 	}
 	
 	if "`nodes'" == "" {
@@ -33,7 +33,7 @@ program def nwhomophily
 	else {
 		if `nodes' > `=_N' {
 			di "{err}Not enough observations of variables: {bf:`varlist'}{txt}"
-			error 2001
+			exit 2001
 		}
 	}
 	
@@ -48,7 +48,7 @@ program def nwhomophily
 	// rows (7,071 nodes): say so now, not after building several n x n matrices
 	if `nodes' * `nodes' > 5e7 {
 		di "{err}{p 0 0 2}nwhomophily weights all `=`nodes'*(`nodes'-1)' dyads of the `nodes' nodes (more than 50,000,000 rows). Above 7,071 nodes use nwrandom or nwset with ties you generate yourself.{p_end}"
-		error 484
+		exit 484
 	}
 
 	local name_was_given = ("`name'" != "")

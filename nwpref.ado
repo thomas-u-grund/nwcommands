@@ -7,7 +7,7 @@ program nwpref
 	
 	if `nodes' <= 1 {
 		noisily display as error "The number of nodes must be an integer larger than 1."
-		error 125
+		exit 125
 	}
 
 	local directed = ("`undirected'" == "")
@@ -85,7 +85,7 @@ program nwpref
 				// print the message and fall through, silently producing an
 				// unweighted network while claiming success.
 				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-				error 198
+				exit 198
 			}
 			if "`undirected'" != "" {
 				mata: `w' = lowertriangle(`w',0)

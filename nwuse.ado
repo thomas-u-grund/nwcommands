@@ -15,7 +15,7 @@ program nwuse
 	qui nwset
 	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
-		error 999
+		exit 999
 	}
 
 	qui if "`nwappend'" != "" {
@@ -47,7 +47,7 @@ program nwuse
 				use `existing'
 			}
 			di "{err}{p 0 0 2}could not load {bf:`basename'} as either a saved network ({bf:.nwdta}) or a plain dataset ({bf:.dta}){p_end}"
-			error 601
+			exit 601
 		}
 		di "{txt}{p 0 0 2}(plain Stata dataset loaded - not a saved {help nwsave:network} file; build a network from it directly, e.g. with {help nwfromedge} or {help nwgenerate}){p_end}"
 		exit
@@ -77,6 +77,10 @@ program nwuse
 	local has_mode2desc = (_rc == 0)
 	capture confirm variable _nw_provenance
 	local has_provenance = (_rc == 0)
+	// temporal networks (nwsave of version 3.25 and later): the type and the names of the time variables of each network,
+	// and the temporal data as rows; files without these columns hold no temporal network
+	capture confirm variable _nw_ttype _nw_tvars _nw_tnet _nw_tego _nw_talter _nw_tt1 _nw_tt2 _nw_tval, exact
+	local has_temporal = (_rc == 0)
 	local f = _nw_format[1]
 	local nets = _nw_nets[1]
 	// check if network names already exist
@@ -116,6 +120,13 @@ program nwuse
 		if `has_mode1desc' local m1d = _nw_mode1desc[`i']
 		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
 		if `has_provenance' local prov = _nw_provenance[`i']
+		local ttype ""
+		local tvars ""
+		if `has_temporal' {
+			local ttype = _nw_ttype[`i']
+			local tvars = _nw_tvars[`i']
+			if "`ttype'" != "" _nwtemporal take, tnet(`i') type(`ttype') tvars(`tvars')
+		}
 		keep if _nw_match_`n'_nw_ego == 1
 		// Networks of different sizes in one file: the tie list of a network holds its pairs with every node of the file (the other
 		// networks' nodes with a missing value), so a smaller network came back with the nodes of the largest one as isolates.
@@ -202,12 +213,16 @@ program nwuse
 		if "`d'"  == "false" {
 			nwsym `ncreate'
 		}
+		if "`ttype'" != "" {
+			_nwtemporal put `ncreate'
+			_nwtemporal drop
+		}
 		restore
 	}
 	
 	if _rc != 0 {
 		di "{err}error in loading"
-		error 999
+		exit 999
 	}
 	
 	qui keep if _nwnode != ""

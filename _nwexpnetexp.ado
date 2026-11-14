@@ -20,7 +20,7 @@ program _nwexpnetexp
 	}
 	if (`"`netexp'"' == "" | `parenthesisBalance' != 0){a
 		di "{err}{it:netexp} empty or contains unmatched parentheses"
-		error 6077
+		exit 6077
 	}
 	
 	// left-align parenthesis
@@ -99,7 +99,7 @@ program _nwexpnetexp
 				// names this exact situation for several sibling
 				// commands.
 				di "{err}Networks of different size"
-				error `errNWsSizeMismatch'
+				exit `errNWsSizeMismatch'
 			}
 			
 			// word is Stata _n or _N

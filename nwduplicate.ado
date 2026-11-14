@@ -35,12 +35,18 @@ program nwduplicate
 		}
 		else {
 			di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-			error 483
+			exit 483
 		}
 	}
 	else {
 		local validname "`r(validname)'"
 	}
 	mata: `nws'.duplicate("`netname'", "`validname'")
+	// a copy of a temporal network is temporal: event list, times, intervals and their variable names are copied
+	if "`istemporal'" == "true" {
+		_nwtemporal stash `netname'
+		_nwtemporal put `validname'
+		_nwtemporal drop
+	}
 end
 

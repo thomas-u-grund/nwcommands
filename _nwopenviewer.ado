@@ -121,4 +121,6 @@ program _nwopenviewer, rclass
 		else view browse "`htmlpath'"
 	}
 	return local usedviewer = `_nwov_usedviewer'
+	// the staged copy of the viewer binary, so that the caller can stop exactly this process (nwmovie export())
+	if `_nwov_usedviewer' return local viewercopy `"`_nwov_viewercopy'"'
 end

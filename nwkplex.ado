@@ -9,7 +9,7 @@ program nwkplex, rclass
 
 	if `k' < 2 {
 		di "{err}{p 0 0 2}k() must be at least 2; a 1-plex is exactly a clique - use {help nwclique} for that case.{p_end}"
-		error 198
+		exit 198
 	}
 
 	if `minsize' < 0 {
@@ -17,15 +17,15 @@ program nwkplex, rclass
 	}
 	if `minsize' < 1 {
 		di "{err}minsize() must be a positive integer."
-		error 198
+		exit 198
 	}
 	if `maxplexes' < 1 {
 		di "{err}maxplexes() must be a positive number."
-		error 198
+		exit 198
 	}
 	if `maxtime' <= 0 {
 		di "{err}maxtime() must be a positive number."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)

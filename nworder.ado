@@ -20,7 +20,7 @@ program nworder
 		local found : list onerequested in allnets
 		if `found' == 0 {
 			di "{err}Network {bf:`onerequested'} not found"
-			error `errNWsNotFound'
+			exit `errNWsNotFound'
 		}
 	}
 

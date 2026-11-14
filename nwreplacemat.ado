@@ -25,7 +25,7 @@ program nwreplacemat
 	if "`triplets'" != "" {
 		if "`labsmata'" == "" | "`netonly'" != "" | "`newmat'" != "" {
 			di "{err}triplets() needs labsmata() and cannot be combined with newmat() or netonly."
-			error 198
+			exit 198
 		}
 		mata: st_local("matrows", strofreal(cols(`labsmata')))
 		nwdrop `netname'
@@ -50,7 +50,7 @@ program nwreplacemat
 	}
 	if "`newmat'" == "" {
 		di "{err}option newmat() or triplets() required."
-		error 198
+		exit 198
 	}
 
 	tempname __rmm
@@ -74,7 +74,7 @@ program nwreplacemat
 		// check now also uses it, having previously drifted onto an
 		// unrelated code.
 		di "{err}input matrix has invalid dimensions"
-		error `errMatrixShape'
+		exit `errMatrixShape'
 	}
 	
 	// newmat is of different size than the network
@@ -168,7 +168,7 @@ program nwreplacemat
 			mata: mata drop `__md2' `__bm2'
 			if `__bad2' > 0 {
 				di "{err}{p 0 0 2}The matrix has `__bad2' ties between nodes of the same mode; network {bf:`netname'} is two-mode (no tie can join two nodes of one mode).{p_end}"
-				error 459
+				exit 459
 			}
 		}
 		mata: `netobj'->set_edge(`__matname')

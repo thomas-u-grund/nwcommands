@@ -73,4 +73,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

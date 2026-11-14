@@ -26,7 +26,7 @@ program nwspectral, rclass
 
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	local netgenerate "`generate'"
 	local signvar = "`netgenerate'" + "sign"
@@ -55,14 +55,14 @@ program nwspectral, rclass
 	// all.
 	if `nodes' < 2 {
 		di "{err}{p 0 0 2}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes.{p_end}"
-		error 198
+		exit 198
 	}
 
 	// the complete eigendecomposition of the dense Laplacian is O(n^3): 5,000 nodes take about 4 minutes, 10,000 nodes
 	// more than 30 minutes and 3 GB (measured 1,000 nodes 1.5 s, 2,000 14 s, 3,000 50 s)
 	if `nodes' > 6000 & "`force'" == "" {
 		di "{err}{p 0 0 2}nwspectral decomposes the complete dense `nodes' x `nodes' Laplacian completely: about `=round(50*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*4/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
-		error 484
+		exit 484
 	}
 
 	mata: st_rclear()

@@ -80,7 +80,7 @@ Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) 
 
 ## Network types
 
-**Directed:**, **Valued:**, **Signed:** the ties and their values among the remaining nodes are kept. **Two-mode:** yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level. See [nwnetworktypes](nwnetworktypes).
+**Directed:**, **Valued:**, **Signed:** the ties and their values among the remaining nodes are kept. **Two-mode:** yes - the flag, the modes of the remaining nodes and the level labels are kept; if all nodes of one mode are dropped the network stays two-mode with an empty level. **Temporal:** the events, times and intervals among the remaining nodes are kept (those of a dropped node are dropped with it). See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -92,4 +92,4 @@ A network held as stored ties stays so: the ties between the remaining nodes are
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

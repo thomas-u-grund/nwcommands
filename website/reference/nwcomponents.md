@@ -85,4 +85,4 @@ The components are found from the stored ties (10,000 nodes: 0.04 seconds). A ne
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

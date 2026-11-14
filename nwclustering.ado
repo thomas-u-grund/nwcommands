@@ -22,7 +22,7 @@ program nwclustering
 	}
 	if "`ra'" != "" | `level' != 1 {
 		di "{err}{p 0 0 2}Options {bf:ra} and {bf:level()} need a two-mode network (and are not used with {bf:onemode}).{p_end}"
-		error 198
+		exit 198
 	}
 	_nwdatasync `netname'
 	local original "`netname'"
@@ -238,7 +238,7 @@ program _nwclustering_two
 	// instead of (generate() absent) or in addition to the local and global coefficients of Opsahl (2013)
 	if "`generate'" == "" & "`ra'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 
 	// BUGFIX (moderate-severity pass, positions_equivalence group): no
@@ -269,7 +269,7 @@ program _nwclustering_two
 	// initial `_nwmode_ego == "level"' filter simply matched nothing.
 	if !inlist(`level', 1, 2) {
 		di "{err}level() must be 1 or 2"
-		error 198
+		exit 198
 	}
 
 	// BUGFIX: calling nw2clustering directly on a one-mode network
@@ -280,7 +280,7 @@ program _nwclustering_two
 	// wrong kind of network.
 	if "`is2mode'" != "true" {
 		di "{err}nwclustering: onemode is required to use the one-mode form of this network."
-		error 198
+		exit 198
 	}
 
 	// Auto-detect from the network's own stored valued/unvalued state

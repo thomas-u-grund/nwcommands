@@ -29,7 +29,7 @@ program nwbetween
 	local totalnetworks = `networks'
 	if "`binary'" != "" & "`weighted'" != "" {
 		di "{err}Options {bf:binary} and {bf:weighted} cannot be combined."
-		error 198
+		exit 198
 	}
 
 	// generate() is required (suite-wide generate()-required style
@@ -40,18 +40,18 @@ program nwbetween
 	// clobbered.
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	if "`twomode'" != "" & "`onemode'" != "" {
 		di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
-		error 198
+		exit 198
 	}
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 		if "`twomode'" != "" & "`is2mode'" != "true" {
 			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
-			error 198
+			exit 198
 		}
 		// tie values: shortest paths with step cost 1/value^alpha on a valued network (weighted is redundant there);
 		// binary ignores the values

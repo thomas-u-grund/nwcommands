@@ -10,7 +10,7 @@ program nw2fromedge
 		if "`r(exists)'" == "true" {
 			unw_defs
 			di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-			error `errNWsExists'
+			exit `errNWsExists'
 		}
 	}
 	if "`name'" != "" local options `"`options' name(`name')"'

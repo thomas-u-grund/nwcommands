@@ -40,7 +40,7 @@ Every network comes back as it was saved: a network saved as directed stays dire
 
 ## Network types
 
-The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)); files of two-mode networks that list every pair of nodes also load.
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)); files of two-mode networks that list every pair of nodes also load. A temporal network (event, snapshot or interval network, see [nwset](nwset)) comes back with its times, and with its type and the names of its time variables, exactly as [nwsave](nwsave) wrote them; a file written without times (by an earlier version, or of a network that is not temporal) loads as a network that is not temporal.
 
 ## Limits
 
@@ -73,4 +73,4 @@ This load the Florentine dataset from the internet and appends it to the existin
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

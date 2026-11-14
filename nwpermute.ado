@@ -10,7 +10,7 @@ program nwpermute
 		// A missing required option is exactly what Stata's own 198
 		// already means package-wide.
 		di "{err}Either option {bf:replace} or {bf:generate} required."
-		error 198
+		exit 198
 	}
 	_nwsyntax `netname', max(1)
 	// a two-mode network is permuted within its modes (the labels of the mode-1 nodes among themselves, the mode-2
@@ -24,7 +24,7 @@ program nwpermute
 		if "`__ok'" != "1" {
 			di "{err}{p 0 0 2}Option {bf:swap} on a one-mode network needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 			di "{err}Update it: {stata nwinstall, all}"
-			error 198
+			exit 198
 		}
 	}
 	if "`swap'" != "" {
@@ -38,7 +38,7 @@ program nwpermute
 		}
 		if `swaps' < 1 {
 			di "{err}Option {bf:swaps()} must be at least 1."
-			error 198
+			exit 198
 		}
 	}
 	if "`generate'" == "" & "`replace'" != "" {
@@ -52,7 +52,7 @@ program nwpermute
 				mata: st_local("__done", strofreal(nw1_swap(`netobj', `swaps')))
 				if "`__done'" != "1" {
 					di "{err}The native tie swapping failed (out of memory?)."
-					error 198
+					exit 198
 				}
 			}
 		}
@@ -66,7 +66,7 @@ program nwpermute
 		local __pm_exists = (_rc == 0)
 		if `__pm_exists' & "`nwreplace'" == "" & "`replace'" == "" {
 			di "{err}{p 0 0 2}Network {bf:`generate'} already exists; use {bf:nwreplace} or specify another name in {bf:generate()}{p_end}"
-			error 483
+			exit 483
 		}
 		// permute a temporary copy; the network replaced by generate() is
 		// dropped only afterwards (it may be the source itself)
@@ -83,7 +83,7 @@ program nwpermute
 				mata: st_local("__done", strofreal(nw1_swap(`netobj', `swaps')))
 				if "`__done'" != "1" {
 					di "{err}The native tie swapping failed (out of memory?)."
-					error 198
+					exit 198
 				}
 			}
 		}

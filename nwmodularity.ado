@@ -10,7 +10,7 @@ program nwmodularity, rclass
 	// the full reasoning.
 	if `resolution' <= 0 {
 		di "{err}Option {bf:resolution()} must be > 0."
-		error 198
+		exit 198
 	}
 
 	// a string group() variable (3.20.1): run once more with it encoded
@@ -43,13 +43,13 @@ program nwmodularity, rclass
 
 		if "`directed'" == "true" & "`symmetrize'" == "" {
 			noi di "{err}{p 0 0 2}Modularity not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym}).{p_end}"
-			error 198
+			exit 198
 		}
 
 		capture assert `group' < .
 		if _rc != 0 {
 			noi di "{err}{p 0 0 2}Variable {bf:`group'} contains missing values; every node must be assigned to a group.{p_end}"
-			error 198
+			exit 198
 		}
 
 		local val = ("`netmeasure'" == "valued")
