@@ -113,6 +113,8 @@ program nwimport, rclass
 		forvalues j = `=`nets_before'+1'/`nets_now' {
 			nwname, id(`j')
 			local d `r(directed)'	
+			// a temporal network keeps the direction it was declared with
+			local __nwi_temp "`r(temporal)'"
 
 			// check if network is undirected or not - r(is_symmetric)
 			// is documented (nwsym.ado) as the string "true"/"false";
@@ -121,10 +123,10 @@ program nwimport, rclass
 			// this call site is updated to match what nwsym now
 			// actually stores.
 			qui nwsym, check
-			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == ""{
+			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == "" & "`__nwi_temp'" != "true"{
 				local newdirectedcmd "newdirected(false)"
 			}
-			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == ""{
+			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == "" & "`__nwi_temp'" != "true"{
 				local newdirectedcmd "newdirected(true)"
 			}
 				
@@ -1010,9 +1012,16 @@ end
 
 capture program drop _nwimport_edgelist
 program _nwimport_edgelist
-	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars] 
+	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars eventtime time interval] 
 	if "`name'" == "" {
 		local name "network"
+	}
+	// a list with times (written by nwexport, type(edgelist), for a temporal network): ego alter [value] time, or
+	// ego alter [value] start end; eventtime, time or interval says what the time column(s) are
+	local __nwi_ntm = ("`eventtime'" != "") + ("`time'" != "") + ("`interval'" != "")
+	if `__nwi_ntm' > 1 {
+		di "{err}options {bf:eventtime}, {bf:time} and {bf:interval} are mutually exclusive"
+		error 198
 	}
 
 	if (strpos(lower(`anything'), ".dta") != 0) | (strpos(lower(`anything'), ".DTA") != 0)  {
@@ -1092,6 +1101,37 @@ program _nwimport_edgelist
 		error 6705
 	}
 
+	if `__nwi_ntm' == 1 {
+		local __nwi_core = 3 + ("`interval'" != "")
+		if `c(k)' != `__nwi_core' & `c(k)' != `__nwi_core' + 1 {
+			noi di "{err}{p 0 0 2}a list with times needs `__nwi_core' columns (ego, alter, time" cond("`interval'" != "", " 1, time 2", "") ") or `=`__nwi_core'+1' with a value before the times; the file has `c(k)'.{p_end}"
+			error 6705
+		}
+		ds
+		local __nwi_v `r(varlist)'
+		local ego : word 1 of `__nwi_v'
+		local alter : word 2 of `__nwi_v'
+		local __nwi_p 3
+		local value ""
+		if `c(k)' == `__nwi_core' + 1 {
+			local value : word 3 of `__nwi_v'
+			local __nwi_p 4
+		}
+		local __nwi_t1 : word `__nwi_p' of `__nwi_v'
+		local __nwi_t2 : word `=`__nwi_p'+1' of `__nwi_v'
+		foreach __nwi_x in `__nwi_t1' `__nwi_t2' `value' {
+			capture confirm numeric variable `__nwi_x'
+			if _rc {
+				noi di "{err}{p 0 0 2}column {bf:`__nwi_x'} must be numeric (times and values).{p_end}"
+				error 6705
+			}
+		}
+		if "`eventtime'" != "" local __nwi_opt "eventtime(`__nwi_t1')"
+		if "`time'" != "" local __nwi_opt "time(`__nwi_t1')"
+		if "`interval'" != "" local __nwi_opt "interval(`__nwi_t1' `__nwi_t2')"
+		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars'
+		exit
+	}
 	if `c(k)' == 5 {
 		// a two-mode list written by nwexport: ego (first mode), alter (second mode), value, mode_ego, mode_alter
 		ds

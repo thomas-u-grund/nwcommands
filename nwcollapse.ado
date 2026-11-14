@@ -64,7 +64,7 @@ program nwcollapse
 	qui replace _nwnode = "new_" + _nwnode if `by_group' > 1
 	nwname `__nwcolcopy', newlabsfromvar(_nwnode)
 	
-	nwtoedge `__nwcolcopy', egovars(`by') altervars(`by') ego(_fromid) alter(_toid)
+	nwtoedge `__nwcolcopy', egovars(`by') altervars(`by') ego(_fromid) alter(_toid) aggregate
 	// Isolate preservation (#5) is for a genuine round trip back to the
 	// SAME node set nwtoedge started from - wrong here, where the whole
 	// point is collapsing several original nodes into fewer new ones.

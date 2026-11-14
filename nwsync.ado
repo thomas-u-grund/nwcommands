@@ -37,6 +37,9 @@ program def nwsync
 		}
 		else {
 			mata: `netobj'->set_edge(st_data((1::`nodes'), "`r(vars)'"))
+			if "`istemporal'" == "true" {
+				di "{txt}{p 0 0 2}(warning: network {bf:`netname'} is temporal; {bf:fromstata} changes the aggregated ties only, the times (events, snapshots, intervals) stay as they were and may no longer match the ties.){p_end}"
+			}
 		}
 	}
 	// A bare, uncaptured successful command does NOT reset `_rc' back

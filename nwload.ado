@@ -112,6 +112,9 @@ program nwload
 		mata: _nwload_mark(`netobj'->nodesvar, "`netname'")
 
 		order `nw_nodename' 
+		if "`istemporal'" == "true" {
+			di "{txt}{p 0 0 2}(note: network {bf:`netname'} is temporal; the variables hold its ties aggregated over all times. {bf:nwtoedge `netname', time} lists the times.){p_end}"
+		}
 		
 		// connect edge matrix as view to dataset
 		if "`viewon'" != "" {

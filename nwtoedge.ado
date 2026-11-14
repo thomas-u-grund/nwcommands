@@ -3,7 +3,7 @@ capture program drop nwtoedge
 program nwtoedge
 	version 9
 	syntax [anything(name=netname)][, isolates0 compress upper egovars(varlist) altervars(varlist) numeric ///
-	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string) ALLpairs]
+	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string) ALLpairs time AGGregate]
 
 	unw_defs
 	_nwsyntax `netname', max(9999)
@@ -12,6 +12,50 @@ program nwtoedge
 	if "`numeric'" != "" & (`: word count `netname'' > 1 | "`comparevars'" != "") {
 		di "{err}Programming option {bf:numeric} only allowed for one network."
 		exit 198
+	}
+
+	// Temporal networks. time: one row per event (event network), per observation of a tie (snapshot network) or per
+	// interval (interval network), with the time in _time (_start and _end for intervals) and, for a valued network, the
+	// value in _value; the data in memory are replaced like the list of ties below. Without time the list holds each tie
+	// once, aggregated over all times: a note says so, and aggregate states the aggregation and leaves the note out.
+	if "`time'" != "" {
+		if "`aggregate'" != "" {
+			di "{err}options {bf:time} and {bf:aggregate} cannot be combined"
+			exit 198
+		}
+		if `: word count `netname'' != 1 | "`numeric'`comparevars'`egovars'`altervars'`isolates0'`compress'`upper'`full'`ignore2mode'`allpairs'" != "" {
+			di "{err}{p 0 0 2}option {bf:time} needs exactly one network and cannot be combined with other options except {bf:ego()} and {bf:alter()}.{p_end}"
+			exit 198
+		}
+		if "`istemporal'" != "true" {
+			di "{err}{p 0 0 2}Network {bf:`netname'} is not temporal; option {bf:time} needs a network declared with {help nwset:nwset}'s {bf:time()}, {bf:interval()} or {bf:eventtime()}.{p_end}"
+			exit 198
+		}
+		if "`is2mode'" == "true" {
+			di "{err}{p 0 0 2}option {bf:time} is not available for a two-mode network.{p_end}"
+			exit 198
+		}
+		local __tev = ("`temporaltype'" == "event")
+		local __tvalued = ("`valued'" == "true")
+		local __tegoname = cond("`ego'" == "", "`nw_ego'", "`ego'")
+		local __talname = cond("`alter'" == "", "`nw_alter'", "`alter'")
+		if "`temporaltype'" == "interval" local __tt "t1(_start) t2(_end)"
+		else local __tt "t1(_time)"
+		if `__tev' & `__tvalued' local __tt "`__tt' value(_value)"
+		_nwtemporal pack `netname', ego(`__tegoname') alter(`__talname') `__tt' half
+		_nwtemporal drop
+		qui compress
+		exit
+	}
+	if "`aggregate'" == "" {
+		local __nwte_tnets ""
+		foreach __nwte_n of local netname {
+			qui nwname `__nwte_n'
+			if "`r(temporal)'" == "true" local __nwte_tnets "`__nwte_tnets' `__nwte_n'"
+		}
+		if "`__nwte_tnets'" != "" {
+			di "{txt}{p 0 0 2}(note: `__nwte_tnets' is temporal. The list holds each tie once, aggregated over all times; specify {bf:time} to list the times of the ties, or {bf:aggregate} to state the aggregation and leave this note out.){p_end}"
+		}
 	}
 
 	// Isolate preservation (#5): an edgelist has no way to represent a

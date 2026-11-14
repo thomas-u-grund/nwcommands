@@ -70,7 +70,7 @@ program nwmixing
 	// index is unchanged (internal and external counts both double).
 	local __nwmix_full = cond("`undirected'" != "", "full", "")
 	// compress: only the ties are listed (the table below counts ties only), not all N x N dyads
-	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full' compress
+	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full' compress aggregate
 	local egoname "`egosrc'_ego"
 	local altername "`egosrc'_alter"
 	// a string attribute was encoded into a temporary variable: give the

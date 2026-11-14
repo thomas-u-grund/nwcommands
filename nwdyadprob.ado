@@ -181,7 +181,7 @@ program nwdyadprob
 		capture noisily {
 		nwset, mat(`mat') name(_tempdyad)
 		nwreplace _tempdyad = _tempdyad * 10
-		nwtoedge _tempdyad, full
+		nwtoedge _tempdyad, full aggregate
 
 		if "`undirected'" != "" {
 			replace _tempdyad = 0 if `nw_alter' <= `nw_ego'

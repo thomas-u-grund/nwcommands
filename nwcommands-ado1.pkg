@@ -45,6 +45,7 @@ f _nwopenviewer.ado
 f _nwsetsparse.ado
 f _nwsyntax.ado
 f _nwlibcheck.ado
+f _nwtemporal.ado
 f _nwtomata.ado
 f nwaddnodes.ado
 f nwaltergen.ado
@@ -83,4 +84,3 @@ f nwds.ado
 f nwduplicate.ado
 f nwdyadprob.ado
 f nwdyads.ado
-f nwego.ado

@@ -57,7 +57,7 @@ program nwsave
 		local __nws_first = 1
 		qui foreach onenet in `netname' {
 			use `__nws_prep', clear
-			nwtoedge `onenet', egovars(_nw_match_`onenet') ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+			nwtoedge `onenet', egovars(_nw_match_`onenet') ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
 			// the isolate list nwtoedge attaches belongs to one network
 			// only; with several networks in the file it would add
 			// another network's nodes to each one on nwuse (the
@@ -77,7 +77,7 @@ program nwsave
 		use `__nws_all', clear
 	}
 	else {
-		qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+		qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
 	}
 	qui gen _nw_running = _n
 	tempfile edgelist
@@ -133,12 +133,62 @@ program nwsave
 		local i = `i' + 1
 	}
 	qui replace _nw_nets = `=`i'-1' in 1
+	// Temporal networks (event times, times of the ties of snapshot networks, intervals): the file gets the columns _nw_ttype
+	// and _nw_tvars (one row per network) and the rows of the temporal data in _nw_tnet, _nw_tego, _nw_talter, _nw_tt1, _nw_tt2
+	// and _nw_tval. A file without a temporal network has none of these columns, and a version that does not know them
+	// loads the (aggregated) ties of the network, so that a file stays readable by older versions.
+	local __nws_anyt = 0
+	qui foreach onenet in `netname' {
+		nwname `onenet'
+		if "`r(temporal)'" == "true" local __nws_anyt = 1
+	}
+	if `__nws_anyt' {
+		qui gen str20 _nw_ttype = ""
+		qui gen str244 _nw_tvars = ""
+		local i = 1
+		qui foreach onenet in `netname' {
+			_nwsyntax `onenet', other(other)
+			if "`otheristemporal'" == "true" {
+				replace _nw_ttype = "`othertemporaltype'" in `i'
+				mata: st_sstore(`i', "_nw_tvars", `othernetobj'->get_timevar() + "|" + `othernetobj'->get_startvar() + "|" + `othernetobj'->get_endvar() + "|" + `othernetobj'->get_eventtimevar())
+			}
+			local i = `i' + 1
+		}
+	}
 	qui gen _nw_running = _n
 	tempfile metadata
 	qui save`old' `metadata', replace
+	if `__nws_anyt' {
+		tempfile __nws_tall __nws_tone
+		local i = 1
+		local __nws_tfirst = 1
+		qui foreach onenet in `netname' {
+			nwname `onenet'
+			if "`r(temporal)'" == "true" {
+				_nwtemporal pack `onenet', ego(_nw_tego) alter(_nw_talter) t1(_nw_tt1) t2(_nw_tt2) value(_nw_tval) tnet(`i')
+				_nwtemporal drop
+				if `__nws_tfirst' {
+					save `__nws_tall', replace
+					local __nws_tfirst = 0
+				}
+				else {
+					append using `__nws_tall'
+					save `__nws_tall', replace
+				}
+			}
+			local i = `i' + 1
+		}
+		use `__nws_tall', clear
+		qui gen _nw_running = _n
+		qui save`old' `__nws_tone', replace
+		use `metadata', clear
+	}
 	
 	qui merge 1:1 _nw_running using `attributes', nogenerate
 	qui merge 1:1 _nw_running using `edgelist', nogenerate
+	if `__nws_anyt' {
+		qui merge 1:1 _nw_running using `__nws_tone', nogenerate
+	}
 	
 	// BUGFIX: this used to hardcode the literal "replace" here regardless
 	// of whether the caller actually passed the `replace' option (that

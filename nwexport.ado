@@ -2,10 +2,24 @@
 capture program drop nwexport
 program nwexport, rclass
 	version 9
-	syntax [anything(name=netname)], type(string) [FName(string asis) replace]	
+	syntax [anything(name=netname)], type(string) [FName(string asis) replace AGGregate]	
 	
 	_nwsyntax `netname', max(1)
 	_opts_oneof "pajek ucinet gml edgelist" "type" "`type'" 6556
+
+	// a temporal network: only the edge list can hold the times; the other formats refuse unless the aggregation over
+	// all times is asked for
+	if "`istemporal'" == "true" & "`aggregate'" == "" {
+		if "`type'" != "edgelist" | "`is2mode'" == "true" {
+			if "`type'" == "edgelist" {
+				di "{err}{p 0 0 2}Network {bf:`netname'} is temporal (`temporaltype'): the edge list of a two-mode network cannot hold times. Use {help nwsave} to keep the temporal network, or specify {bf:aggregate} to export the ties aggregated over all times.{p_end}"
+			}
+			else {
+				di "{err}{p 0 0 2}Network {bf:`netname'} is temporal (`temporaltype'): the format {bf:`type'} cannot hold times. Use {bf:type(edgelist)} to write the times (one-mode networks), {help nwsave} to keep the temporal network, or specify {bf:aggregate} to export the ties aggregated over all times.{p_end}"
+			}
+			exit 198
+		}
+	}
 
 	if `"`fname'"' == "" {
 		local fname = "`netname'"
@@ -33,7 +47,7 @@ program nwexport, rclass
 		 local ending ".gml"
 	}
 	if "`type'" == "edgelist" {
-		 capture noisily qui _nwexport_edgelist `netname', fname(`fname') `replace'
+		 capture noisily qui _nwexport_edgelist `netname', fname(`fname') `replace' `aggregate'
 		 local __nwx_rc = _rc
 		 local ending ".txt"
 	}
@@ -83,7 +97,7 @@ program _nwexport_pajek
 		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes')
 	}
 
-	qui nwtoedge `netname', compress
+	qui nwtoedge `netname', compress aggregate
 	qui keep if `netname' != 0
 	// merge m:1 orders the rows of one alter arbitrarily; fix the order
 	// (by alter label, then ego label) so a file is reproducible
@@ -170,7 +184,7 @@ program _nwexport_ucinet
 	// labels with a blank are written in double quotes
 	mata: nwx_exp_ucinet_head(st_local("fname") + ".dl", `netobj'->get_nodenames())
 
-	qui nwtoedge `netname', compress
+	qui nwtoedge `netname', compress aggregate
 	qui keep if `netname' != 0
 	// merge m:1 orders the rows of one alter arbitrarily; fix the order
 	// (by alter label, then ego label) so a file is reproducible
@@ -248,7 +262,7 @@ program _nwexport_gml
 	keep `nw_nodename' `_running'
 	save `f', replace
 
-	qui nwtoedge `netname', compress
+	qui nwtoedge `netname', compress aggregate
 	// `!= 0' alone lets nwtoedge's own diagonal self-rows through
 	// whenever they hold a MISSING tie value rather than a real 0 (`.'
 	// is not `== 0') - confirmed directly (a real, self-loop-free test
@@ -299,10 +313,26 @@ end
 // numeric id/lookup step needed on either side of the round-trip.
 capture program drop _nwexport_edgelist
 program _nwexport_edgelist
-	syntax [anything(name=netname)], fname(string) [replace]
+	syntax [anything(name=netname)], fname(string) [replace AGGregate]
 
 	unw_defs
 	_nwsyntax `netname'
+	// temporal network: one row per event (snapshot observation, interval) with the time column(s) last:
+	// ego alter [value] time, or ego alter [value] start end; nwimport reads it back with the option eventtime, time or interval
+	if "`istemporal'" == "true" & "`aggregate'" == "" {
+		local __tx_type "`temporaltype'"
+		preserve
+		qui nwtoedge `netname', time ego(ego) alter(alter)
+		if "`__tx_type'" == "interval" local __tx_cols "_start _end"
+		else local __tx_cols "_time"
+		capture confirm variable _value
+		local __tx_v = cond(_rc == 0, "_value", "")
+		keep ego alter `__tx_v' `__tx_cols'
+		order ego alter `__tx_v' `__tx_cols'
+		export delimited using "`fname'.txt", delimiter(tab) novarnames `replace'
+		restore
+		exit
+	}
 	_nwdatasync `netname'
 	_nwexport_levels `netname'
 	local __lv1 `"`r(d1)'"'
@@ -310,7 +340,7 @@ program _nwexport_edgelist
 	local __haslv = ("`r(has)'" == "1")
 
 	preserve
-	qui nwtoedge `netname', compress
+	qui nwtoedge `netname', compress aggregate
 	// `!= 0' alone lets nwtoedge's own diagonal self-rows through
 	// whenever they hold a MISSING tie value rather than a real 0 - see
 	// _nwexport_gml's own identical comment above.

@@ -117,7 +117,7 @@ program nwtab2
 	}
 	
 	preserve
-	nwtoedge `netname0', `upper'
+	nwtoedge `netname0', `upper' aggregate
 	
 	local net1: word 1 of `netname0'
 	local net2: word 2 of `netname0'
@@ -260,7 +260,7 @@ program nwtab3
 	di "{txt}   Attribute:  {res}`attribute'{txt}"
 	
 	// compress: only the ties are listed (the table below counts ties only), not all N x N dyads
-	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full compress
+	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full compress aggregate
 
 	unw_defs
 	_nwsyntax `netname'
