@@ -150,4 +150,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

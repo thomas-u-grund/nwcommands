@@ -236,4 +236,4 @@ For example, {cmd:A = nwapi_matrix("flomarriage")} is an adjacency matrix withou
 {help nwapi}, {help nwprogramming##syntax:_nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

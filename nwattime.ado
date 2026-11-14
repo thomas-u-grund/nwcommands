@@ -8,7 +8,7 @@ program nwattime, rclass
 
 	if "`istemporal'" != "true" {
 		di "{err}{p 0 0 2}Network {bf:`netname'} is not temporal; nwattime requires a network declared via {help nwset}'s {bf:time()}, {bf:interval()}, or {bf:eventtime()} options.{p_end}"
-		error 198
+		exit 198
 	}
 
 	if "`name'" == "" {

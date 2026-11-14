@@ -75,12 +75,12 @@ program _nwsyntax
 				if `__nwsx_n' > `max' {
 					local __nwsx_s = cond(`max' == 1, "network is", "networks are")
 					di "{err}{p 0 0 2}too many networks: {bf:`__nwsx_all'}; only `max' `__nwsx_s' allowed here.{p_end}"
-					error 198
+					exit 198
 				}
 			}
 		}
 		di "{err}Network {bf:`anything'} not found"
-	    error `errNWsNotFound'
+	    exit `errNWsNotFound'
 	}
 
 	mata: st_local("directed", `nws'.pdefs[`r(id)']->is_directed())

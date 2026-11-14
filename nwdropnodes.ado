@@ -39,7 +39,7 @@ program nwdropnodes
 	foreach onenode of local nodelist {
 		if `onenode' < 1 | `onenode' > `nodes' {
 			di "{err}node {bf:`onenode'} does not exist: network {bf:`netname'} has nodes 1 to `nodes'"
-			error 485
+			exit 485
 		}
 	}
 
@@ -78,11 +78,11 @@ program nwdropnodes
 		capture mata: st_numscalar("r(keepmatsize)", rows(`keepmat') * (cols(`keepmat') == 1))
 		if _rc {
 			di "{err}Mata matrix {bf:`keepmat'} not found"
-			error 111
+			exit 111
 		}
 		if `r(keepmatsize)' != `nodes' {
 			di "{err}{p 0 0 2}Mata matrix {bf:`keepmat'} must be a column vector with one row per node (`nodes' rows).{p_end}"
-			error 503
+			exit 503
 		}
 	}
 
@@ -99,7 +99,7 @@ program nwdropnodes
 	mata: st_numscalar("r(keepcount)", sum(`keepmat'))
 	if `r(keepcount)' == 0 {
 		di "{err}Cannot drop every node of a network - at least one node must remain."
-		error 198
+		exit 198
 	}
 
 	// the node names of the remaining network go to nwreplacemat in a Mata variable: a long Stata option

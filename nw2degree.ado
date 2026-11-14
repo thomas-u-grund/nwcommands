@@ -11,7 +11,7 @@ program nw2degree
 		_nwsyntax `netname_temp'
 		if "`is2mode'" != "true" {
 			noi di "{err}{p 0 0 2}nw2degree requires a two-mode network; `netname_temp' is one-mode. See {help nwdegree} instead.{p_end}"
-			error 198
+			exit 198
 		}
 	}
 	local netname "`__netlist'"

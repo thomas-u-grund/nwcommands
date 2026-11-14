@@ -11,12 +11,12 @@ program nwqap_p
 	syntax anything(name=newnet id="new network name") [if] [in] [, *]
 	if `"`options'"' != "" | `"`if'`in'"' != "" {
 		di "{err}predict after {bf:nwqap} takes only a new network name: {bf:predict} {it:newnetname}"
-		error 198
+		exit 198
 	}
 	capture mata: st_numscalar("__nwqap_ok", rows(__nwqapfit))
 	if _rc != 0 | scalar(__nwqap_ok) == . {
 		di "{err}the fitted values of the last {bf:nwqap} are no longer in memory; rerun {bf:nwqap}"
-		error 498
+		exit 498
 	}
 	capture scalar drop __nwqap_ok
 	nwvalidate `newnet'

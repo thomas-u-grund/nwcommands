@@ -7,7 +7,7 @@ program nwclique, rclass
 
 	if `minsize' < 1 {
 		di "{err}minsize() must be a positive integer."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -30,7 +30,7 @@ program nwclique, rclass
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 

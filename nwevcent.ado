@@ -11,7 +11,7 @@ program nwevcent
 	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	// Per Stata's own [P] syntax convention for a "no"-prefixed toggle:
 	// declaring `nosym' in the option list makes Stata define a local
@@ -28,7 +28,7 @@ program nwevcent
 	local getvalued = 0
 	if "`binary'" != "" & "`weighted'" != "" {
 		di "{err}Options {bf:binary} and {bf:weighted} cannot be combined."
-		error 198
+		exit 198
 	}
 	// a valued network is analysed with its tie values (igraph::eigen_centrality); binary ignores them
 	if "`binary'" == "" & "`valued'" == "true" {

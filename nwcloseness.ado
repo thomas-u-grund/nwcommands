@@ -59,16 +59,16 @@ program nwcloseness
 	local gencount : word count `generate'
 	if (`gencount' == 0) {
 		di "{err}{p 0 0 2}option {bf:generate()} required - needs exactly 3 names (closeness, farness, nearness).{p_end}"
-		error 198
+		exit 198
 	}
 	if (`gencount' != 3) {
 		di "{err}{p 0 0 2}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'.{p_end}"
-		error 198
+		exit 198
 	}
 	local generate_all ""
 	if "`twomode'" != "" & "`onemode'" != "" {
 		di "{err}Options {bf:twomode} and {bf:onemode} cannot be combined."
-		error 198
+		exit 198
 	}
 	
 	set more off
@@ -76,7 +76,7 @@ program nwcloseness
 		_nwsyntax `netname_temp'
 		if "`twomode'" != "" & "`is2mode'" != "true" {
 			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
-			error 198
+			exit 198
 		}
 		_nwtimeguard, command(nwcloseness) nodes(`nodes') model(bfs) netobj(`netobj') rate(6.6e8) alternative(Closeness needs one breadth-first search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
 		preserve

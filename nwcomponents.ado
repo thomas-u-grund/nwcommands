@@ -16,7 +16,7 @@ program nwcomponents, rclass
 	// inside it would only ever catch an omitted generate() on network 1.
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 
 	if `networks' > 1 {

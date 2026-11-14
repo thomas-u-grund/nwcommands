@@ -17,7 +17,7 @@ program nwstack, rclass
 		capture _nwsyntax `name', max(1)
 		if _rc == 0 {
 			di as err "network {bf:`name'} already exists; use {bf:replace}"
-			error 483
+			exit 483
 		}
 	}
 
@@ -57,7 +57,7 @@ program nwstack, rclass
 		}
 		else if _N != `total' {
 			di as err "{p 0 0 2}the data in memory have " _N " observations, the stacked network has `total' nodes; use {bf:group()} with an empty data set or one that already lists the nodes of all networks in the order of {it:netlist}{p_end}"
-			error 198
+			exit 198
 		}
 		quietly generate long `group' = .
 		local first_obs = 1

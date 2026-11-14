@@ -21,11 +21,11 @@ program nwaddnodes
 	// wrong.
 	if "`is2mode'" == "true" & "`mode'" == "" {
 		di "{err}{p 0 0 2}option {bf:mode()} is required when adding nodes to a two-mode (bipartite) network {bf:`netname'} - say which of the two node sets each new node belongs to (mode 1 or mode 2). nwaddnodes never silently assumes mode 1 for what might be a mode-2 isolate.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`is2mode'" != "true" & "`mode'" != "" {
 		di "{err}{p 0 0 2}option {bf:mode()} only applies to two-mode (bipartite) networks; {bf:`netname'} is one-mode.{p_end}"
-		error 198
+		exit 198
 	}
 
 	if "`generate'" != "" {
@@ -61,13 +61,13 @@ program nwaddnodes
 	local __nan_nmode : word count `mode'
 	if "`mode'" != "" & `__nan_nmode' != 1 & `__nan_nmode' != `__nan_nnames' {
 		di "{err}{p 0 0 2}option {bf:mode()} lists `__nan_nmode' value(s) but {bf:nodenames()} lists `__nan_nnames' node(s) - specify either a single mode (applied to every new node) or exactly one mode per node, in order.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`mode'" != "" {
 		foreach __nan_m of numlist `mode' {
 			if !inlist(`__nan_m', 1, 2) {
 				di "{err}{p 0 0 2}option {bf:mode()} accepts only 1 or 2 (this package's own two-mode convention); got `__nan_m'.{p_end}"
-				error 198
+				exit 198
 			}
 		}
 	}

@@ -32,11 +32,11 @@ program nwturnover, rclass
 
 	if `nodes1' != `nodes2' {
 		di "{err}Networks of different size."
-		error 6056
+		exit 6056
 	}
 	if "`directed1'" != "`directed2'" {
 		di "{err}{bf:`netname1'} and {bf:`netname2'} must both be directed or both be undirected."
-		error 198
+		exit 198
 	}
 	local isdirected = ("`directed1'" == "true")
 
@@ -46,7 +46,7 @@ program nwturnover, rclass
 			_nwsyntax `netname`__k''
 			if "`is2mode'" == "true" {
 				di "{err}option {bf:formation} is not available for two-mode networks."
-				error 198
+				exit 198
 			}
 		}
 	}
@@ -72,7 +72,7 @@ program nwturnover, rclass
 
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	local netgenerate "`generate'"
 	capture confirm variable `netgenerate', exact

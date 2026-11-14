@@ -14,7 +14,7 @@ program nwshared
 	syntax [anything(name=netname)] [, name(string) nwreplace replace undirected]
 	if "`nwreplace'" != "" & "`replace'" != "" {
 		di "{err}{p 0 0 2}Specify only one of {bf:nwreplace} or {bf:replace} (they are the same option) - not both.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`replace'" != "" {
 		local nwreplace "replace"
@@ -26,7 +26,7 @@ program nwshared
 	// command ran on a directed network without it and without a message.
 	if "`directed'" == "true" & "`undirected'" == "" {
 		di "{err}{p 0 0 2}Network {bf:`netname'} is directed: {bf:nwshared} needs the option {bf:undirected} (it symmetrizes the network first).{p_end}"
-		error 198
+		exit 198
 	}
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
@@ -48,7 +48,7 @@ program nwshared
 		// (483, unw_defs.ado) - see nwsimmelian.ado's own identical fix
 		// for the full history of this convention's drift.
 		noi di "{err}{p 0 0 2}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}.{p_end}"
-		error `errNWsExists'
+		exit `errNWsExists'
 	}
 	// BUGFIX: was an unconditional `capture nwdrop `name'' - when `name'
 	// did NOT already exist (the ordinary first-creation case), `nwdrop'

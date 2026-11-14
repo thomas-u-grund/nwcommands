@@ -8,18 +8,18 @@ program nwegoplot, rclass
 	_nw2guard `netname', cmd(nwegoplot)
 	if !inlist(`hop', 1, 2) {
 		di "{err}hop() must be 1 or 2."
-		error 198
+		exit 198
 	}
 	if "`generate'" != "" {
 		if wordcount("`generate'") != 2 {
 			di "{err}generate() needs two new variable names, for the x and the y coordinate."
-			error 198
+			exit 198
 		}
 		foreach v of local generate {
 			capture confirm variable `v', exact
 			if _rc == 0 & "`replace'" == "" {
 				di "{err}Variable {bf:`v'} already exists; specify {bf:replace}"
-				error 110
+				exit 110
 			}
 		}
 	}
@@ -40,7 +40,7 @@ program nwegoplot, rclass
 	}
 	if `egoid' == 0 {
 		di "{err}ego(): {bf:`ego'} is neither the name nor the number of a node of `netname'."
-		error 198
+		exit 198
 	}
 	mata: st_local("egoname", `names'[`egoid'])
 
@@ -62,7 +62,7 @@ program nwegoplot, rclass
 	local nalter = r(N) - 1
 	if `nalter' == 0 {
 		di "{err}`egoname' has no ties in `netname'; there is no ego network to draw."
-		error 2000
+		exit 2000
 	}
 
 	// by default the ties of ego (the spokes) are drawn light and the ties among the other nodes dark (value v of the tie-type network takes word v+1 of the palette)

@@ -14,7 +14,7 @@ program nwpath
 	unw_defs
 	if "`sym'" != "" & "`generate'" != "" {
 		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."
-		error 198
+		exit 198
 	}
 	// BUGFIX: `egoid'/`alterid' are declared `integer 0' (a numeric
 	// option with a default), so their own string form is never truly
@@ -30,11 +30,11 @@ program nwpath
 	// of a string comparison that could never be true.
 	if "`ego'" == "" & `egoid' == 0 {
 		di "{err}Either option {bf:ego()} or {bf:egoid()} needs to be specified"
-		error 198
+		exit 198
 	}
 	if "`alter'" == "" & `alterid' == 0 {
 		di "{err}Either option {bf:alter()} or {bf:alterid()} needs to be specified"
-		error 198
+		exit 198
 	}
 	_nwsyntax `netname', max(1)
 
@@ -45,12 +45,12 @@ program nwpath
 		capture confirm number `alpha'
 		if _rc {
 			di "{err}Option {bf:alpha()} must be a number."
-			error 198
+			exit 198
 		}
 	}
 	if "`binary'" != "" & "`alpha'" != "" {
 		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
-		error 198
+		exit 198
 	}
 	local __wtd = ("`alpha'" != "" | ("`valued'" == "true" & "`binary'" == ""))
 	local __alpha 1
@@ -60,7 +60,7 @@ program nwpath
 		qui capture nwnode `netname', egoid(`egoid')
 		if _rc != 0 {
 			noi di "{err}Egoid {bf:`egoid'} out of bounds"
-			error `errNodeNotFound'
+			exit `errNodeNotFound'
 		}
 		local ego "`r(nodename)'"
 	}
@@ -68,7 +68,7 @@ program nwpath
 		qui capture nwnode `netname', egoid(`alterid') 
 		if _rc != 0 {
 			noi di "{err}Alterid {bf:`alterid'} out of bounds"
-			error `errNodeNotFound'
+			exit `errNodeNotFound'
 		}
 		local alter "`r(nodename)'"
 	}
@@ -86,7 +86,7 @@ program nwpath
 	capture qui nwvalue `netname', ego("`ego'") alter("`alter'")
 	if _rc != 0 {
 		di "{err}{p 0 0 2}Node {bf:`ego'} or {bf:`alter'} does not exist in network {it:`netname'}; check spelling{p_end}"
-		error `errNodeNotFound'
+		exit `errNodeNotFound'
 	}
 	local egoid `r(ego_id)'
 	local alterid `r(alter_id)'
@@ -171,7 +171,7 @@ program nwpath
 			if _rc == 0 & "`nwreplace'" == "" {
 				capture nwdrop `_sym'
 				di "{pstd} {err}Network {bf:`generate'_`i'} already exists; use {bf:nwreplace} or specify another stub {bf:generate()}{p_end}"
-				error `errNWsExists'
+				exit `errNWsExists'
 			}
 			capture nwdrop `generate'_`i'
 			nwduplicate `netname', name(`generate'_`i')

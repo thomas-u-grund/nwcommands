@@ -9,20 +9,20 @@ program nwnclique, rclass
 
 	if `n' < 2 {
 		di "{err}n() must be at least 2; n(1) is exactly a clique - use {help nwclique} for that case."
-		error 198
+		exit 198
 	}
 
 	if `minsize' < 1 {
 		di "{err}minsize() must be a positive integer."
-		error 198
+		exit 198
 	}
 	if `maxcliques' < 1 {
 		di "{err}maxcliques() must be a positive number."
-		error 198
+		exit 198
 	}
 	if `maxtime' <= 0 {
 		di "{err}maxtime() must be a positive number."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -45,7 +45,7 @@ program nwnclique, rclass
 
 		if "`generate'" == "" & "`countonly'" == "" {
 			noi di "{err}option {bf:generate()} required (or {bf:countonly})."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 

@@ -11,7 +11,7 @@ program nwrandom
 	unw_defs
 	if "`directed'" != "" & "`undirected'" != "" {
 		di "{err}Options {bf:directed} and {bf:undirected} cannot be combined."
-		error 198
+		exit 198
 	}
 	
 	// Generate valid network name and valid varlist
@@ -67,33 +67,33 @@ program nwrandom
 	if `"`degree'`outdegree'`indegree'"' != "" {
 		if `"`prob'`density'`census'`weights'"' != "" {
 			di "{err}{p 0 0 2}Options {bf:degree()}, {bf:outdegree()} and {bf:indegree()} cannot be combined with {bf:prob()}, {bf:density()}, {bf:census()} or {bf:weights()}.{p_end}"
-			error 198
+			exit 198
 		}
 		if "`selfloop'" != "" {
 			di "{err}{p 0 0 2}A network drawn from degrees has no self-loops; option {bf:selfloop} is not allowed.{p_end}"
-			error 198
+			exit 198
 		}
 		if `"`degree'"' != "" & `"`outdegree'`indegree'"' != "" {
 			di "{err}{p 0 0 2}Give either {bf:degree()} (undirected network) or {bf:outdegree()} and {bf:indegree()} (directed network).{p_end}"
-			error 198
+			exit 198
 		}
 		if `"`degree'"' == "" & (`"`outdegree'"' == "" | `"`indegree'"' == "") {
 			di "{err}A directed network needs both {bf:outdegree()} and {bf:indegree()}."
-			error 198
+			exit 198
 		}
 		if `"`degree'"' != "" & "`directed'" != "" {
 			di "{err}{p 0 0 2}{bf:degree()} draws an undirected network; for a directed one give {bf:outdegree()} and {bf:indegree()}.{p_end}"
-			error 198
+			exit 198
 		}
 		if `swaps' == 0 | `swaps' < -1 {
 			di "{err}Option {bf:swaps()} must be at least 1."
-			error 198
+			exit 198
 		}
 		mata: st_local("__ok", strofreal(nwg_comb_version() >= 13))
 		if "`__ok'" != "1" {
 			di "{err}{p 0 0 2}nwrandom with degrees needs the native plugin of nwcommands 3.17.0 or later; the plugin found for this platform is older or missing.{p_end}"
 			di "{err}Update it: {stata nwinstall, all}"
-			error 198
+			exit 198
 		}
 		tempname __dv __din __trip
 		local __dir = (`"`degree'"' == "")
@@ -118,7 +118,7 @@ program nwrandom
 		}
 		if "`__st'" != "0" {
 			di "{err}The native draw of the network failed (out of memory?)."
-			error 198
+			exit 198
 		}
 		mata: st_rclear()
 		if "`nodenamesmata'" != "" {
@@ -197,7 +197,7 @@ program nwrandom
 				// comment). Also fixed a typo ("manny" -> "many") while
 				// touching this line.
 				di "{err}Too many dyads requested,"
-				error 198
+				exit 198
 			}
 			mata: `__nwnew' = dyadcensusGenerator(`nodes', `mutual', `asym')
 		}
@@ -219,7 +219,7 @@ program nwrandom
 				// Same fix applied identically to nwring.ado/nwsmall.ado/
 				// nwpref.ado/nwdyadprob.ado, which all share this exact code.
 				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-				error 198
+				exit 198
 			}
 
 			if "`undirected'" != "" {
@@ -237,7 +237,7 @@ program nwrandom
 			// comment, and nwsmall.ado's own identical "neither prob() nor
 			// shortcuts() given" case).
 			di "{err}either {it:prob}(), {it:density}() or {it:census()} missing"
-			error 198
+			exit 198
 		}
 
 		mata: st_rclear()
@@ -279,25 +279,25 @@ program _nwrandom_degvec
 	if _rc == 0 & wordcount(`"`spec'"') == 1 {
 		if _N < `nodes' {
 			di "{err}{p 0 0 2}Variable {bf:`spec'} of {bf:`opt'()} has `=_N' observations; `nodes' degrees are needed.{p_end}"
-			error 198
+			exit 198
 		}
 		mata: `mname' = st_data((1::`nodes'), "`spec'")
 		mata: st_local("__bad", strofreal(missing(`mname') > 0))
 		if "`__bad'" == "1" {
 			di "{err}{p 0 0 2}Variable {bf:`spec'} of {bf:`opt'()} has missing values among its first `nodes' observations.{p_end}"
-			error 198
+			exit 198
 		}
 	}
 	else {
 		capture numlist `"`spec'"', integer range(>=0)
 		if _rc {
 			di "{err}{p 0 0 2}{bf:`opt'()} takes a numeric variable or a list of whole numbers 0 or more.{p_end}"
-			error 198
+			exit 198
 		}
 		local L `r(numlist)'
 		if wordcount("`L'") != `nodes' {
 			di "{err}{bf:`opt'()} lists `=wordcount("`L'")' degrees for `nodes' nodes."
-			error 198
+			exit 198
 		}
 		mata: `mname' = strtoreal(tokens("`L'"))'
 	}

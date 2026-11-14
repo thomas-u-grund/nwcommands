@@ -15,7 +15,7 @@ program nwuse
 	qui nwset
 	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
-		error 999
+		exit 999
 	}
 
 	qui if "`nwappend'" != "" {
@@ -47,7 +47,7 @@ program nwuse
 				use `existing'
 			}
 			di "{err}{p 0 0 2}could not load {bf:`basename'} as either a saved network ({bf:.nwdta}) or a plain dataset ({bf:.dta}){p_end}"
-			error 601
+			exit 601
 		}
 		di "{txt}{p 0 0 2}(plain Stata dataset loaded - not a saved {help nwsave:network} file; build a network from it directly, e.g. with {help nwfromedge} or {help nwgenerate}){p_end}"
 		exit
@@ -222,7 +222,7 @@ program nwuse
 	
 	if _rc != 0 {
 		di "{err}error in loading"
-		error 999
+		exit 999
 	}
 	
 	qui keep if _nwnode != ""

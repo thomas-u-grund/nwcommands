@@ -19,7 +19,7 @@ program _nwnodeid
 			
 			mata: st_numscalar("r(nodeid)", -1)
 			di "{err}{it:nodelab} {bf:`nodelab'} out of bounds"
-			error 485
+			exit 485
 		}
 		mata: st_numscalar("r(nodeid)", `nodelab')
 		exit
@@ -45,7 +45,7 @@ program _nwnodeid
 		}
 		mata: st_numscalar("r(nodeid)", -1)
 		di `"{err}{it:nodelab} `nodelab' not found"'
-		error 485
+		exit 485
 	}
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53

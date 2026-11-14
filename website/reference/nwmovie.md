@@ -83,7 +83,7 @@ The current wave's title/counter (or, in event mode, the active-tie count/time r
 - **.webm** --- VP9 or VP8 video, for web pages
 - **.gif** --- an animated image, which needs no video player at all, at the cost of a larger file and fewer colors
 
-`nwmovie` builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is written (at most `timeout()` seconds). The viewer window appears briefly while it works; do not close it. Nothing beyond `nwcommands` itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows `duration()` (panel mode) or `speed()` (event mode): three waves with the default `duration(800)` give a movie of 1.6 seconds, so give a larger `duration()` for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
+`nwmovie` builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is written (at most `timeout()` seconds). The viewer window appears briefly while it works; do not close it. On macOS `nwmovie` first checks that the screen is not locked, because the viewer cannot draw while it is, and stops with r(498) if it is. If the file is not written within `timeout()` seconds, or the export fails, `nwmovie` stops the viewer it started. Nothing beyond `nwcommands` itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows `duration()` (panel mode) or `speed()` (event mode): three waves with the default `duration(800)` give a movie of 1.6 seconds, so give a larger `duration()` for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
 
 `export()` needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), `nwmovie` stops with a message saying so; export a **.gif** file instead, which every engine can write. The **Export video** button in the interactive view writes MP4 where the engine can and WebM otherwise.
 
@@ -146,4 +146,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

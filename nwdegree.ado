@@ -39,11 +39,11 @@ program nwdegree
 		capture confirm number `alpha'
 		if _rc {
 			noi di "{err}Option {bf:alpha()} must be a number."
-			error 198
+			exit 198
 		}
 		if "`binary'" != "" & real("`alpha'") != 0 {
 			noi di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
-			error 198
+			exit 198
 		}
 	}
 
@@ -78,7 +78,7 @@ program nwdegree
 	}
 	else if "`raw'" != "" {
 		noi di "{err}Option {bf:raw} is the two-mode degree and cannot be combined with {bf:onemode}."
-		error 198
+		exit 198
 	}
 
 	qui foreach netname_temp in `netname' {
@@ -220,13 +220,13 @@ program nwdegree
 		// reads it afterward).
 		if ("`netgenerate'" == "") {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		if ("`netgenerate'" != "" & "`directed'" == "true") {
 			local __nwdeg_gencount : word count `netgenerate'
 			if (`__nwdeg_gencount' < 2) {
 				noi di "{err}{p 0 0 2}Option {bf:generate()} needs at least 2 names (outdegree, indegree) for a directed network; got `__nwdeg_gencount'.{p_end}"
-				error 198
+				exit 198
 			}
 		}
 		// Give isolates its own word slot whenever the (default or
@@ -335,11 +335,11 @@ program nwdegree
 			local __tcount : word count `ties'
 			if "`directed'" == "true" & `__tcount' != 2 {
 				noi di "{err}{p 0 0 2}Option {bf:ties()} needs 2 names (outdegree, indegree) for a directed network; got `__tcount'.{p_end}"
-				error 198
+				exit 198
 			}
 			if "`directed'" != "true" & `__tcount' != 1 {
 				noi di "{err}Option {bf:ties()} needs 1 name for an undirected network; got `__tcount'."
-				error 198
+				exit 198
 			}
 			local __cntout : word 1 of `ties'
 			local __cntin : word 2 of `ties'
@@ -516,11 +516,11 @@ program _nwdegree_two, rclass
 		capture confirm number `alpha'
 		if _rc {
 			di "{err}Option {bf:alpha()} must be a number."
-			error 198
+			exit 198
 		}
 		if "`binary'" != "" & real("`alpha'") != 0 {
 			di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
-			error 198
+			exit 198
 		}
 	}
 
@@ -533,12 +533,12 @@ program _nwdegree_two, rclass
 
 		if "`is2mode'" != "true" {
 			noi di "{err}nwdegree: onemode is required to use the one-mode form of `netname_temp'."
-			error 198
+			exit 198
 		}
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 

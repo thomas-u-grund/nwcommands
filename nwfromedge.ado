@@ -22,7 +22,7 @@ program nwfromedge
 	if "`twomode'" != "" {
 		if "`directed'" != "" | "`undirected'" != "" | "`forcedirected'" != "" | "`forceundirected'" != "" {
 			di "{err}{p 0 0 2}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}.{p_end}"
-			error 198
+			exit 198
 		}
 		nw2fromedge `varlist' `if', name(`name') `xvars' `replace'
 		exit
@@ -61,7 +61,7 @@ program nwfromedge
 		qui nwvalidate `name'
 		if "`r(exists)'" == "true" {
 			noi di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-			error `errNWsExists'
+			exit `errNWsExists'
 		}
 	}
 	// noclear: the edge list is worked on in place below (ids replaced,
@@ -358,7 +358,7 @@ program nwfromedge
 			// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 			// history of this convention's drift onto an undocumented `6099'.
 			noi di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-			error `errNWsExists'
+			exit `errNWsExists'
 		}
 	}
 	else {

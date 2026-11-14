@@ -42,7 +42,7 @@ program nwkatz
 	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 
 	// `replace' was previously absorbed by the trailing `*' catch-all

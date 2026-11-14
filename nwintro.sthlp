@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.24.0  13nov2026}{...}
+{* *! version 3.25.0  14nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -343,4 +343,4 @@ own help file is the authority on anything specific to it. When in doubt for a g
 structural commands first (they are the ones proven at real scale), and treat the figures for the dense-matrix commands as realistic planning numbers rather than hard guarantees.
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

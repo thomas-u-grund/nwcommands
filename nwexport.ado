@@ -163,7 +163,7 @@ program _nwexport_ucinet
 		capture confirm file "`fname'.dl"
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}file `fname'.dl already exists"
-			error 602
+			exit 602
 		}
 		mata: nw_exp_ucinet_rect(st_local("fname") + ".dl", `netobj')
 		exit

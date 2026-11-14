@@ -12,7 +12,7 @@ program nwkeepnodes
 	// match on the raw forwarded option text.
 	if "`nodes'" == "" & strpos(`"`options'"', "keepmat(") == 0 {
 		di "{err}Specify {bf:nodes()} or {bf:keepmat()} - which nodes to keep."
-		error 198
+		exit 198
 	}
 
 	capture numlist "`nodes'"
@@ -47,7 +47,7 @@ program nwkeepnodes
 	foreach onenode of local nodelist {
 		if `onenode' < 1 | `onenode' > `nodes' {
 			di "{err}node {bf:`onenode'} does not exist: network {bf:`netname'} has nodes 1 to `nodes'"
-			error 485
+			exit 485
 		}
 	}
 		

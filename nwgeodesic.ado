@@ -24,7 +24,7 @@ program nwgeodesic
 	local __alpha_given = (strpos(lower(`"`0'"'), "alpha(") > 0)
 	if "`binary'" != "" & `__alpha_given' & `alpha' != 0 {
 		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
-		error 198
+		exit 198
 	}
 
 	local eccvar "`generate'"
@@ -69,7 +69,7 @@ program nwgeodesic
 	// noreplace: also the default network _geodesic is not overwritten
 	if `name_exists' & "`nwreplace'" == "" & (`name_given' | "`replace'" == "noreplace") {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
-		error 483
+		exit 483
 	}
 	// BUGFIX: was an unconditional `capture nwdrop `name'' - in the
 	// ordinary case (no pre-existing network under this name), this
@@ -116,7 +116,7 @@ program nwgeodesic
 			if "`symmetrized'" == "true" capture nwdrop `symnet'
 			di "{err}{p 0 0 2}Distances on a valued network of more than 100 nodes need the native plugin of the current version, which this platform does not have.{p_end}"
 			di "{err}{p 0 0 2}Use option {bf:force} to compute them with the slow Mata routine, or option {bf:binary} to count steps.{p_end}"
-			error 198
+			exit 198
 		}
 		else {
 			mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "dijkstra"))

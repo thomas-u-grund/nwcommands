@@ -15,7 +15,7 @@ program _nwsetsparse
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		di "{err}{p 0 0 2}Network `name' already exists. Specify option {bf:replace} to overwrite it.{p_end}"
-		error `errNWsExists'
+		exit `errNWsExists'
 	}
 
 	tempname __nwnodenames

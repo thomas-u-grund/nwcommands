@@ -35,7 +35,7 @@ program nwgenerate
 		// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
 		// history of this convention's drift onto an undocumented `6099'.
 		di "{err}{p 0 0 2}Network {bf:`newnetname'} already exists. Change {it:netname} or specify option {bf:replace}.{txt}{p_end}"
-		error `errNWsExists'
+		exit `errNWsExists'
 	}
 	
 	// if condition
@@ -64,7 +64,7 @@ program nwgenerate
 			// `errNWsExists' (483, unw_defs.ado) instead of its own
 			// separate, undocumented `6004'.
 			di "{err}network {it:`newnetname'} already defined"
-			error `errNWsExists'
+			exit `errNWsExists'
 		}
 	
 		// replace the network if it exists already
@@ -221,7 +221,7 @@ program nwgenerate
 		// error pointing at the real command.
 		qui if "`whichjob'" == "path(" {
 			noi di "{err}{p 0 0 2}nwgen's path() shortcut is not currently implemented - nwpath can produce zero, one, or several output networks (one per shortest path found), which does not fit nwgen's own single-network-per-call form; use {help nwpath} directly (its own generate() option names one network per path found).{p_end}"
-			error 199
+			exit 199
 		}
 		// nwpermute shortcut
 		qui if "`whichjob'" == "permute(" {
@@ -399,7 +399,7 @@ program nwgenerate
 				capture confirm variable `newnetname', exact
 				if _rc == 0 & !`hasreplace' {
 					noi di "{err}Variable {bf:`newnetname'} already exists; use {bf:replace} or a different name."
-					error 110
+					exit 110
 				}
 				capture drop `newnetname'
 				gen `newnetname' = `_tmp_out' + `_tmp_in'
@@ -441,15 +441,15 @@ program nwgenerate
 		}
 		qui if "`whichjob'" == "addnodes(" {
 			noi di "{err}{p 0 0 2}nwgen's addnodes() shortcut is not currently implemented (it does not naturally reduce to a single per-node variable - nwaddnodes mutates a network's own node set); use {help nwaddnodes} directly.{p_end}"
-			error 199
+			exit 199
 		}
 		qui if "`whichjob'" == "collapse(" {
 			noi di "{err}{p 0 0 2}nwgen's collapse() shortcut is not currently implemented; use {help nwcollapse} directly.{p_end}"
-			error 199
+			exit 199
 		}
 		qui if "`whichjob'" == "subset(" {
 			noi di "{err}{p 0 0 2}nwgen's subset() shortcut is not currently implemented (it produces a new NETWORK, not a variable, so it does not fit nwgen's VAR = fcn(netname) form); use {help nwsubset} directly.{p_end}"
-			error 199
+			exit 199
 		}
 		}
 		local __ngrc = _rc

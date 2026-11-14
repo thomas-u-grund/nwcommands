@@ -33,7 +33,7 @@ program nwvalue
 	// down) get the new `errNodeNotFound' (485) instead.
 	if (!(("`ego'" != "" & "`alter'" != "" ) | (`egoid' != 0 & `alterid' != 0))){
 		di "{err}Either options {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified."
-		error 198
+		exit 198
 	}
 	_nwsyntax `netname', max(1)
 	if `"`ego'"' != "" {
@@ -44,11 +44,11 @@ program nwvalue
 
 			if `r(ego_valid)' != 1 {
 				di "{err}node {it:`ego'} does not exist in network {bf:`netname'}"
-				error `errNodeNotFound'
+				exit `errNodeNotFound'
 			}
 			if `r(alter_valid)' != 1 {
 				di "{err}node {it:`alter'} does not exist in network {it:`netname'}"
-				error `errNodeNotFound'
+				exit `errNodeNotFound'
 			}
 			
 			capture mata: st_numscalar("r(ego_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`ego'")'))
@@ -72,11 +72,11 @@ program nwvalue
 		// this file's own name-based ego()/alter() path above uses).
 		if `egoid' < 1 | `egoid' > `nodes' {
 			di "{err}egoid {it:`egoid'} out of range (network `netname' has `nodes' nodes)"
-			error `errNodeNotFound'
+			exit `errNodeNotFound'
 		}
 		if `alterid' < 1 | `alterid' > `nodes' {
 			di "{err}alterid {it:`alterid'} out of range (network `netname' has `nodes' nodes)"
-			error `errNodeNotFound'
+			exit `errNodeNotFound'
 		}
 		capture mata: st_numscalar("r(value)",`netobj'->cell_value(`egoid', `alterid'))
 		capture mata: st_numscalar("r(ego_id)", `egoid')

@@ -169,4 +169,4 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 	{help nwgen}, {help nwneighbor}, {help nwdegree}, {help nwegoplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

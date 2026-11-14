@@ -13,11 +13,11 @@ program nwego, rclass
 	// convention - there is no default name to silently fall back to.
 	if "`sizevar'" == "" {
 		di "{err}option {bf:sizevar()} required."
-		error 198
+		exit 198
 	}
 	if "`densvar'" == "" {
 		di "{err}option {bf:densvar()} required."
-		error 198
+		exit 198
 	}
 
 	if `networks' > 1 {

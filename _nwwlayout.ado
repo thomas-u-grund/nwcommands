@@ -29,7 +29,7 @@ program _nwwlayout, rclass
 		else {
 			capture mata: mata drop _nww_S
 			di "{err}_nwwlayout: method() must be kk or frucht"
-			error 198
+			exit 198
 		}
 	}
 	else if `why' == 1 & "`quiet'" == "" {

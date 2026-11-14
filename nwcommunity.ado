@@ -15,7 +15,7 @@ program nwcommunity, rclass
 	// should never occur.
 	if `resolution' <= 0 {
 		di "{err}Option {bf:resolution()} must be > 0."
-		error 198
+		exit 198
 	}
 
 	local algorithm = lower("`algorithm'")
@@ -30,11 +30,11 @@ program nwcommunity, rclass
 
 	if `reps' < 1 | `minmodules' < 1 {
 		di "{err}Options {bf:reps()} and {bf:minmodules()} must be at least 1."
-		error 198
+		exit 198
 	}
 	if `starts' < 1 {
 		di "{err}Option {bf:starts()} must be at least 1."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -59,12 +59,12 @@ program nwcommunity, rclass
 
 		if "`directed'" == "true" & "`symmetrize'" == "" {
 			noi di "{err}{p 0 0 2}Community detection not defined for directed networks. Either specify {bf:symmetrize} or symmetrize the network first (see {help nwsym}).{p_end}"
-			error 198
+			exit 198
 		}
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 
@@ -92,11 +92,11 @@ program nwcommunity, rclass
 		if "`algorithm'" == "dirtlpa" {
 			if !`__bip' {
 				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} is for two-mode networks (without the option {bf:onemode}); a one-mode network is searched with {bf:louvain} or {bf:labelprop}.{p_end}"
-				error 198
+				exit 198
 			}
 			if `resolution' != 1 {
 				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} maximises Barber's modularity with the resolution 1; {bf:resolution()} is not available for it.{p_end}"
-				error 198
+				exit 198
 			}
 		}
 
@@ -126,7 +126,7 @@ program nwcommunity, rclass
 			if !`__fast' {
 				noi di "{err}{p 0 0 2}{bf:algorithm(dirtlpa)} needs the native plugin of nwcommands 3.10.0 or later (plugin generation 12); the plugin found for this platform is older or missing, or could not run.{p_end}"
 				noi di "{err}{p 0 0 2}Update it: {stata nwinstall, all}{space 2}(or reinstall the package with {bf:net install nwcommands, replace}); {bf:algorithm(louvain)} works with any plugin.{p_end}"
-				error 198
+				exit 198
 			}
 		}
 		else if `__bip' {

@@ -14,7 +14,7 @@ program nwaltergen
 	}
 	if `hop' < 1 {
 		di as err "{err}hop() must be a positive integer."
-		error 198
+		exit 198
 	}
 	local expr = subinstr("`expr'", " ", "", .)
 
@@ -52,12 +52,12 @@ program nwaltergen
 		capture confirm number `propval'
 		if _rc {
 			di as err "{err}proportion()'s comparison value must be numeric; got {bf:`propval'}."
-			error 198
+			exit 198
 		}
 	}
 	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|wmean|sum|min|max|sd|count|diversity)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
 		di as err "{p 0 0 2}syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|wmean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value){p_end}"
-		error 198
+		exit 198
 	}
 	else {
 		local newvarname = regexs(1)
@@ -71,7 +71,7 @@ program nwaltergen
 			// unlike the unweighted hop-count case calculate_alterstat_
 			// hop() already handles cleanly - not attempted here.
 			di as err "{err}{p 0 0 2}wmean() is only supported at hop(1) (direct alters) - combining it with hop() > 1 would need a choice of which tie weight represents a multi-hop path, which has no single well-defined answer.{p_end}"
-			error 198
+			exit 198
 		}
 	}
 
@@ -81,7 +81,7 @@ program nwaltergen
 	if _rc & "`replace'" == "" {
 		di as err "{err}Variable {bf:`newvarname'} already exists; specify {bf:replace}"
 		// Stata's own code for "already defined" (see nwerrorcodes.sthlp).
-		error 110
+		exit 110
 	}
 
 	_nwsyntax `net'
@@ -97,7 +97,7 @@ program nwaltergen
 
 	if _N < `nodes' {
 		di as err "{p 0 0 2}dataset has fewer observations (`=_N') than the network has nodes (`nodes'){p_end}"
-		error 2001
+		exit 2001
 	}
 	// align row i of the data set with node i of the network before the positional
 	// read/write below (see nwcommunity.ado)

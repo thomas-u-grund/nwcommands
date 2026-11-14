@@ -14,7 +14,7 @@ program nwcorrelate
 	capture _nwsyntax `anything', min(1) max(2)
 	if _rc != 0 {
 		di "{err}One or more of the specified networks could not be found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 
 	if "`attribute'"!= "" {
@@ -42,7 +42,7 @@ program nwcorrelate_nodes
 	// 5.1 GB; 10,000 nodes: more than 12 GB), so a larger network is refused before any of them is allocated
 	if `nodes' > 7000 {
 		di "{err}{p 0 0 2}nwcorrelate of the nodes of network {bf:`netname'} needs about 25 dense `nodes' x `nodes' matrices (about `=round(`nodes'^2*205/1e9, .1)' GB) and is refused above 7,000 nodes.{p_end}"
-		error 484
+		exit 484
 	}
 	if "`context'" == "" {
 		local context = "outgoing"
@@ -112,7 +112,7 @@ unw_defs
 	capture _nwsyntax `netnames', max(2) min(1)
 	if _rc != 0 {
 		di "{err}One or more of the specified networks could not be found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
@@ -154,7 +154,7 @@ unw_defs
 		// onto it instead of this file's own separate, undocumented
 		// `100'.
 		di "{err}Networks of different size.{txt}"
-		error `errNWsSizeMismatch'
+		exit `errNWsSizeMismatch'
 	}
 	
 	

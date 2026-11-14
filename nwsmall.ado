@@ -24,7 +24,7 @@ program nwsmall
 	if "`prob'" != "" {
 		if (`prob' > 1) | (`prob' < 0){
 			di "{err}Probability needs to be between 0 and 1.{txt}"
-			error 198
+			exit 198
 		}
 	}
 	// The `density' block that used to sit here was genuinely dead code:
@@ -96,7 +96,7 @@ program nwsmall
 	// package-wide convention for.
 	if ("`prob'"=="" & "`shortcuts'"==""){
 		di "{err}either {it:prob}() or {it:shortcuts}() missing"
-		error 198
+		exit 198
 	}
 	
 	if "`weights'" == "" & `nodes' > 2000 & ("`prob'" == "" | "`shortcuts'" == "") {
@@ -131,7 +131,7 @@ program nwsmall
 				// print the message and fall through, silently producing an
 				// unweighted network while claiming success.
 				di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
-				error 198
+				exit 198
 			}
 			if "`undirected'" != "" {
 				mata: `w' = lowertriangle(`w',0)

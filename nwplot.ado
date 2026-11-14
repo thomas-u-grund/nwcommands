@@ -92,7 +92,7 @@ program nwplot, rclass
 	// it has nothing to merge into without nodexy() also being given.
 	if "`importcoords'" != "" & "`nodexy'" == "" {
 		di "{err}{p 0 0 2}Option {bf:importcoords()} requires {bf:nodexy(xvar yvar)} - it merges the imported x/y coordinates into those variables before they are read as the plot's layout.{p_end}"
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(1)
@@ -100,13 +100,13 @@ program nwplot, rclass
 	if "`generate'" != "" {
 		if wordcount("`generate'") != 2 {
 			di "{err}Option {bf:generate()} needs two names (x and y coordinates)."
-			error 198
+			exit 198
 		}
 		foreach __gv in `generate' {
 			capture confirm variable `__gv', exact
 			if _rc == 0 & "`replace'" == "" {
 				di "{err}Variable {bf:`__gv'} already exists; use {bf:replace}"
-				error 110
+				exit 110
 			}
 		}
 	}
@@ -205,12 +205,12 @@ program nwplot, rclass
 		import delimited "`importcoords'", clear varnames(1) case(preserve)
 		if _N != `nodes' {
 			di "{err}{p 0 0 2}importcoords() file `importcoords' has `=_N' rows but network `netname' has `nodes' nodes; re-export from the interactive view, or check if/in - importcoords() must be run against a network of the same size as the interactive export it came from.{p_end}"
-			error 6056
+			exit 6056
 		}
 		capture assert node_row == _n
 		if _rc {
 			di "{err}{p 0 0 2}importcoords() file `importcoords' is not in row order (node_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file.{p_end}"
-			error 6056
+			exit 6056
 		}
 		// color_group/shape_group columns are exported for possible future
 		// diagnostic use but not consumed here - the actual join is by
@@ -315,7 +315,7 @@ program nwplot, rclass
 	if `iterations' == -1 local iterations = 1000
 	if `iterations' < 1 {
 		di "{err}option {bf:iterations()} must be a positive integer"
-		error 198
+		exit 198
 	}
 	
 	if("`anything'"=="") {
@@ -796,12 +796,12 @@ program nwplot, rclass
 		
 		if "`labs'" != "`otherlabs'" & "`force'" == ""{
 			di "{err}{p 0 0 2}{it:network} {bf:`edgesize'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}{p_end}"
-			error 6056
+			exit 6056
 		}
 		
 		if `nodes' != `siznodes' {
 			di "{err}{it:network} {bf:`edgesize'} needs to be of the same size as {it:network} {bf:`netname'}"
-			error 6056
+			exit 6056
 		}
 		local edgesizekeys "`forcekeys'"
 		if "`forcekeys'" == "" {
@@ -858,12 +858,12 @@ program nwplot, rclass
 		
 		if "`labs'" != "`otherlabs'" & "`force'" == ""{
 			di "{err}{p 0 0 2}{it:network} {bf:`edgecolor'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}{p_end}"
-			error 6056
+			exit 6056
 		}
 		
 		if `nodes' != `siznodes' {
 			di "{err}{it:network} {bf:`edgecolor'} needs to be of the same size as {it:network} {bf:`netname'}"
-			error 6056
+			exit 6056
 		}
 		local edgecolorkeys "`forcekeys'"
 
@@ -1090,7 +1090,7 @@ program nwplot, rclass
 	if ("`layout'"=="bipartite" & `nodes' > 1){
 		if "`is2mode'" != "true" {
 			di "{err}{p 0 0 2}Option {bf:layout(bipartite)} requires a two-mode network; network `netname' is not two-mode.{p_end}"
-			error 198
+			exit 198
 		}
 		mata: __nwplot_Mdir2 = __nwplot_plotmat
 		mata: _editmissing(__nwplot_Mdir2, 0)
@@ -1348,7 +1348,7 @@ program nwplot, rclass
 		// above, which layout(nodexy) alone does not trigger.
 		if "`nodex'" == "" | "`nodey'" == "" {
 			di "{err}Option {bf:nodexy(xvar yvar)} is required with {bf:layout(nodexy)}."
-			error 198
+			exit 198
 		}
 		mata: __nwplot_Coord = J(rows(__nwplot_M),2,0)
 		mata: __nwplot_Coord[.,1] = st_data((1,rows(__nwplot_M)),"`nodex'")
@@ -1378,13 +1378,13 @@ program nwplot, rclass
 		}
 		if _N != `_nwedit_ties' & _N != `_nwedit_expect' {
 			di "{err}{p 0 0 2}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_expect' ties (`_nwedit_ties' when counting both directions of undirected ties); re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from.{p_end}"
-			error 6056
+			exit 6056
 		}
 		local _nwedit_edgehalf = (_N != `_nwedit_ties')
 		capture assert edge_row == _n
 		if _rc {
 			di "{err}{p 0 0 2}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file.{p_end}"
-			error 6056
+			exit 6056
 		}
 		mata: _nwedit_edgecolor = st_sdata(., "color")
 		mata: _nwedit_edgestyle = st_sdata(., "style")
@@ -1480,12 +1480,12 @@ program nwplot, rclass
 		capture confirm file "`_nwedit_template'"
 		if _rc {
 			di "{err}{p 0 0 2}nwedit_template.html not found at `_nwedit_template'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}.{p_end}"
-			error 601
+			exit 601
 		}
 		capture confirm file "`_nwedit_vendorjs'"
 		if _rc {
 			di "{err}{p 0 0 2}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package with {bf:nwinstall, all}, or omit {bf:interactive}.{p_end}"
-			error 601
+			exit 601
 		}
 
 		// Resolve concrete node colors for the browser -- _getcolorstyle's
@@ -2131,7 +2131,7 @@ program nwplot, rclass
 		local _nwp_bmfile `_nwp_bmfile'
 		if "`nodexy'" == "" {
 			di "{err}{p 0 0 2}Option {bf:basemap()} requires {bf:nodexy(xvar yvar)}: the outlines are drawn on the scale of the node coordinates, such as longitude and latitude.{p_end}"
-			error 198
+			exit 198
 		}
 		// a local file, a web address, or the name of a map among the example data ($nwwebpath, as nwwebuse)
 		local _nwp_bmweb = regexm(`"`_nwp_bmfile'"', "^https?://")
@@ -2145,7 +2145,7 @@ program nwplot, rclass
 				}
 				else {
 					di `"{err}basemap() file `_nwp_bmfile' not found{txt}"'
-					error 601
+					exit 601
 				}
 			}
 		}
@@ -2171,7 +2171,7 @@ program nwplot, rclass
 		version 16: frame drop `_nwp_bmframe'
 		if `_nwp_bmrc' {
 			di `"{err}{p 0 0 2}basemap(): could not read the variables {bf:_X} and {bf:_Y} from `_nwp_bmfile'. The file must hold the outline coordinates in them, as the *_shp.dta file of {help spshape2dta} does.{p_end}"'
-			error `_nwp_bmrc'
+			exit `_nwp_bmrc'
 		}
 		mata: st_numscalar("r(bmN)", rows(__nwplot_BM))
 		local _nwp_bmN = r(bmN)
@@ -2225,7 +2225,7 @@ program nwplot, rclass
 		// produces a broken/incomplete file, worse: fail silently).
 		if substr(lower("`export'"), -4, .) == ".svg" & c(stata_version) < 16 {
 			di "{err}{p 0 0 2}SVG export requires Stata 16 or later (this is Stata `c(stata_version)'). Export to a different format (png/pdf/eps/...), or upgrade Stata.{p_end}"
-			error 9
+			exit 9
 		}
 		di "{text:Exporting graph to `export'...}"
 		graph export "`export'", `replace' `exportopt'

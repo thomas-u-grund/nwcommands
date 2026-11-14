@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
-## [Unreleased]
+## [3.25.0] - 2026-11-14
 
 ### Results that change (read before you re-run old analyses)
 - **Temporal networks (declared with `time()`, `interval()` or `eventtime()` in `nwset`) are no longer flattened silently by the commands that save, export or copy networks.** Networks that are not temporal behave exactly as before; every change below concerns temporal networks only.
@@ -20,6 +20,12 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwexport ..., type(edgelist)` writes the times of a temporal network and `nwimport ..., type(edgelist, eventtime)`, `type(edgelist, time)` and `type(edgelist, interval)` (with `directed` or `undirected`) read them back.** `nwexport ..., aggregate` exports the ties aggregated over all times in any format.
 - **Data sets `manufacturing` and `manufacturing_nodes`**, for `nwwebuse`: 50,233 emails (sender, receiver, time in days since 1 January 2010) among 144 employees of a manufacturing company between January and 30 September 2010, and the reporting hierarchy of the 154 employees with a known supervisor (supervisor, level, division). Plain data to declare with `nwset sender receiver, eventtime(t)`; `keep if t < 14` gives a small subset (2,738 emails, 129 employees). Subset of Michalski 2020, doi:10.7910/DVN/6Z3CGX, CC0 1.0. Source and changes: `help netexample`, `NOTICE.md` and the website page "Data sets". New test `cscripts/test_manufacturing_data.do`.
 - New test `test_temporal_io`.
+
+### Fixed
+- **`nwmovie ..., export(file)` no longer leaves the viewer running.** When the viewer never wrote the file (typically on macOS with a locked screen) the command stopped with r(498) after `timeout()` seconds but the viewer process went on running. `nwmovie` now stops the viewer it started (found by the exact name of its staged copy, never by a pattern that could match another process) on a timeout, on an error from the viewer and after a finished export. On macOS it also checks before the viewer is started whether the screen is locked and stops at once with a message (r(498)); if the check cannot be made the command goes on as before. The default `timeout()` is unchanged. New test `test_nwmovie_kill`.
+- **A second error line after the command's own message.** 335 error exits in 100 commands showed their message and then called `error N`, which printed Stata's canned text for N ("invalid syntax" for 198) as a second line; they now end with `exit N`. Return codes are unchanged. Where a command shows no message of its own, Stata's text is still printed. New test `test_noextra_errtext`.
+
+Tested on: TO BE FILLED
 
 ## [3.24.0] - 2026-11-13
 

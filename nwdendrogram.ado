@@ -40,7 +40,7 @@ program nwdendrogram
 		local found : list clus & clusternames
 		if "`found'" == "" {
 			di "{err}Cluster name {bf:`clus'} not found."
-			error 111
+			exit 111
 		}
 	}
 	else {
@@ -53,7 +53,7 @@ program nwdendrogram
 			// elsewhere in this package, see nwevcent.ado's own header
 			// comment). Confirmed directly.
 			di "{err}No cluster analysis found"
-			error 198
+			exit 198
 		}
 	}	
 	
@@ -181,7 +181,7 @@ program dendrogram_classes
 			// disguised-silent-failure class as the "No cluster
 			// analysis found" guard above.
 			di "{err}Wrong number of cutpoints"
-			error 198
+			exit 198
 		}
 	}
 	

@@ -15,7 +15,7 @@ program nwtabulate
 	_nwsyntax `netname', max(9999)
 	if `networks' > 2 {
 		di "{err}Maximum two networks allowed.{txt}"
-		error 198
+		exit 198
 	}
 	local __vndone 0
 	// the note is for the table by attribute(), which counts ties; the other tables show the tie values

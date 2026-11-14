@@ -27,7 +27,7 @@ program nwreach
 	capture _nwsyntax `name', other(_check)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}{p 0 0 2}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}.{p_end}"
-		error 483
+		exit 483
 	}
 	if _rc == 0 {
 		nwdrop `name'

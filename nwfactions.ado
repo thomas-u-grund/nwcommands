@@ -9,11 +9,11 @@ program nwfactions, rclass
 
 	if `groups' < 2 {
 		di "{err}groups() must be at least 2 - a 1-group partition is not a factions solution."
-		error 198
+		exit 198
 	}
 	if `maxiter' < 1 {
 		di "{err}maxiter() must be a positive integer."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname'
@@ -21,7 +21,7 @@ program nwfactions, rclass
 
 	if `groups' > `nodes' {
 		di "{err}groups(`groups') exceeds the number of nodes (`nodes')."
-		error 198
+		exit 198
 	}
 
 	local netmeasure "`measure'"
@@ -37,7 +37,7 @@ program nwfactions, rclass
 
 	if "`generate'" == "" {
 		di "{err}option {bf:generate()} required."
-		error 198
+		exit 198
 	}
 	local netgenerate "`generate'"
 

@@ -21,7 +21,7 @@ program nwmixing
 	capture _nwsyntax `netname', max(1)
 	if _rc != 0 {
 		di "{err}Network {bf:`netname'} not found."
-		error `errNWsNotFound'
+		exit `errNWsNotFound'
 	}
 	_nwvaluednote `netname'
 	if r(shown) == 1 {

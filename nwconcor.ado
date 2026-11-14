@@ -7,11 +7,11 @@ program nwconcor, rclass
 
 	if `splits' < 1 {
 		di "{err}splits() must be a positive integer."
-		error 198
+		exit 198
 	}
 	if `maxiter' < 1 {
 		di "{err}maxiter() must be a positive integer."
-		error 198
+		exit 198
 	}
 
 	_nwsyntax `netname', max(9999)
@@ -37,7 +37,7 @@ program nwconcor, rclass
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`generate'"
 
@@ -84,7 +84,7 @@ program nwconcor, rclass
 		// minute, 5,000 nodes more than 4 minutes, 10,000 nodes more than 30 minutes and 4 GB
 		if `nodes' > 6000 & "`force'" == "" {
 			noi di "{err}{p 0 0 2}nwconcor correlates the dense `nodes' x `nodes' matrix in every iteration: about `=round(57*(`nodes'/3000)^3/60)' minutes and `=round(`nodes'^2*8*5/1e9, .1)' GB. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
-			error 484
+			exit 484
 		}
 
 		mata: st_rclear()

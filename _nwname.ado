@@ -29,7 +29,7 @@ program _nwname
 	local nets wordcount("`netname'")
 	if `nets' > 1 {
 		di "{err}only one {it:netname} allowed"
-		error 198
+		exit 198
 	}
 	mata: st_local("number", strofreal(__nw.nws.get_number()))
 
@@ -128,12 +128,12 @@ program _nwname
 		if `__n1' == 0 | `__n2' == 0 {
 			mata: __nw.nws.pdefs[`id']->set_2mode(0)
 			di "{err}{p 0 0 2}Network {bf:`netname'} cannot be declared two-mode: only `=cond(`__n2' == 0, "mode 1", "mode 2")' has nodes. Give the mode of every node with {bf:newmodes()} in the same call, or build the network with {bf:nwset, twomode} or {bf:nw2fromedge}.{p_end}"
-			error 459
+			exit 459
 		}
 		if `__bad' > 0 {
 			mata: __nw.nws.pdefs[`id']->set_2mode(0)
 			di "{err}{p 0 0 2}Network {bf:`netname'} cannot be declared two-mode: `__bad' ties join two nodes of the same mode.{p_end}"
-			error 459
+			exit 459
 		}
 	}
 

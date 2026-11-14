@@ -21,7 +21,7 @@ program nwhierarchy, rclass
 	// compatibility.
 	if "`equivgen'" != "" & "`generate'" != "" {
 		di "{err}{p 0 0 2}Specify only one of {bf:equivgen()} or {bf:generate()} (they are the same option) - not both.{p_end}"
-		error 198
+		exit 198
 	}
 	if "`generate'" != "" {
 		local equivgen "`generate'"
@@ -41,7 +41,7 @@ program nwhierarchy, rclass
 	// Stata/BE): 3,000 nodes take 45 s, 5,000 nodes 170 s, 10,000 nodes more than 20 minutes
 	if `nodes' > 6000 & "`force'" == "" & "`dismat'" == "" {
 		di "{err}{p 0 0 2}nwhierarchy clusters the dense `nodes' x `nodes' dissimilarity matrix with Stata's clustermat: about `=round(45*(`nodes'/3000)^3/60)' minutes. It is refused above 6,000 nodes; option {bf:force} runs it anyway.{p_end}"
-		error 484
+		exit 484
 	}
 
 	if "`dismat'" == "" {
@@ -91,7 +91,7 @@ program nwhierarchy, rclass
 		// default name to silently fall back to.
 		if "`equivgen'" == "" {
 			di "{err}option {bf:generate()} (or its {bf:equivgen()} alias) required."
-			error 198
+			exit 198
 		}
 		local netgenerate "`equivgen'"
 		capture confirm variable `netgenerate', exact

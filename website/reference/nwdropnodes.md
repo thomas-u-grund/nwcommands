@@ -92,4 +92,4 @@ A network held as stored ties stays so: the ties between the remaining nodes are
 
 ---
 
-*nwcommands version 3.24.0, 13 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))

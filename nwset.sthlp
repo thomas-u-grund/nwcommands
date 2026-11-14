@@ -469,4 +469,4 @@ time per pair and take 80 GB each at 100,000 nodes.
 {help nwattime}, {help nwintro##limits:feasible network sizes}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.24.0, 13 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
