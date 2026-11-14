@@ -33,6 +33,7 @@
         {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
         {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
         {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "describe using https://nwcommands.org/examples/socialevolution.dta":describe}
+        {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
         {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
         {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
         {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "describe using https://nwcommands.org/examples/senate114.nwdta":describe}
@@ -651,6 +652,56 @@ doi:10.1109/MPRV.2011.79.
 {pmore}
 Distributed with R's own {cmd:goldfish} package as {cmd:data(Social_Evolution)}, an abbreviated
 version (fewer variables, a reduced time window) of the original Reality Commons release.
+
+{hline}
+{marker manufacturing}
+{title:Manufacturing company emails (events)}
+
+{pstd}
+{bf:Loaded as:} a plain (not pre-declared) Stata dataset, like {help netexample##socialevolution:socialevolution}.
+{cmd:nwwebuse manufacturing} loads three variables, {it:sender}, {it:receiver} and {it:t}, one row per
+email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
+
+{phang2}{cmd:. nwwebuse manufacturing, nwclear}{p_end}
+{phang2}{cmd:. nwset sender receiver, eventtime(t) name(mail)}{p_end}
+
+{pstd}
+{bf:Vertex attributes:} a companion dataset, {cmd:manufacturing_nodes.dta} ({cmd:nwwebuse}
+{cmd:manufacturing_nodes}), holds {it:label}, {it:supervisor}, {it:level} and {it:division} for the 154
+employees (144 of them send or receive an email in the data). {it:supervisor} is the direct
+supervisor (empty for the CEO, E86), {it:level} the number of steps to the CEO in the reporting
+hierarchy (0 = CEO) and {it:division} the branch of the CEO that the employee belongs to. After
+{cmd:nwset} the node-level dataset carries each employee's label in {cmd:_nwnode}; rename it to
+{cmd:label}, merge, then rename back:{p_end}
+
+{phang2}{cmd:. rename _nwnode label}{p_end}
+{phang2}{cmd:. merge 1:1 label using manufacturing_nodes, keep(master match) nogen}{p_end}
+{phang2}{cmd:. rename label _nwnode}{p_end}
+
+{pstd}
+The emails were sent in a mid-sized manufacturing company between January and 30 September 2010
+({it:t} is the time in days since 1 January 2010, 00:00). Only the metadata are given (who wrote to
+whom and when), no content. This is a derived subset of the original data: only emails with exactly
+one recipient, and only the 154 employees whose supervisor is known, were kept; emails to oneself were
+removed and the employee identifiers were prefixed with {it:E}. The file is a large event history
+(144 actors); for a small subset, for example to try {help nwrem} or {help nwdynam}, keep the first
+two weeks with {cmd:keep if t < 14}: 2,738 emails among 129 employees.
+
+{pmore}
+{bf:Source}
+
+{pmore}
+Michalski, R. (2020). Manufacturing company email metadata and corporate hierarchy. Harvard
+Dataverse, V2, doi:10.7910/DVN/6Z3CGX. Related paper: Nurek, M. and Michalski, R. (2020).
+Combining machine learning and social network analysis to reveal the organizational structures.
+Applied Sciences, 10(5), 1699.
+
+{pmore}
+{bf:Licence}
+
+{pmore}
+The original data are released under CC0 1.0 (public-domain dedication,
+http://creativecommons.org/publicdomain/zero/1.0). Attribution is not required but is given here.
 
 {hline}
 {marker davis}

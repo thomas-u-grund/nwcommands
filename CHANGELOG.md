@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [Unreleased]
+
+### Added
+- **Data sets `manufacturing` and `manufacturing_nodes`**, for `nwwebuse`: 50,233 emails (sender, receiver, time in days since 1 January 2010) among 144 employees of a manufacturing company between January and 30 September 2010, and the reporting hierarchy of the 154 employees with a known supervisor (supervisor, level, division). Plain data to declare with `nwset sender receiver, eventtime(t)`; `keep if t < 14` gives a small subset (2,738 emails, 129 employees). Subset of Michalski 2020, doi:10.7910/DVN/6Z3CGX, CC0 1.0. Source and changes: `help netexample`, `NOTICE.md` and the website page "Data sets". New test `cscripts/test_manufacturing_data.do`.
+
 ## [3.24.0] - 2026-11-13
 
 ### Added

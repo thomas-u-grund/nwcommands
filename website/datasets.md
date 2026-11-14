@@ -171,6 +171,15 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
   ```
 - **Used in:** [nwdynam tutorial 1](../nwdynam/tutorial-1-first-dynam/) and [nwrem tutorial 1](../nwrem/tutorial-1-first-rem/) (both use the same 439 calls, read from a file in the tutorial folder).
 
+### manufacturing: emails in a manufacturing company
+- **What:** 50,233 timestamped emails among 144 employees of a mid-sized manufacturing company, January to 30 September 2010 (time in days since 1 January 2010). Only metadata (sender, receiver, time), no content. This is plain data, not a ready network: declare it with `nwset`. A second file, `manufacturing_nodes`, has the reporting hierarchy of the 154 employees with a known supervisor (supervisor, level below the CEO, division). The data are a subset of the original: only emails with exactly one recipient and only employees with a known supervisor were kept. For a small subset, `keep if t < 14` gives the first two weeks: 2,738 emails among 129 employees.
+- **Source and licence:** Michalski, R. (2020), "Manufacturing company email metadata and corporate hierarchy", Harvard Dataverse, V2, [doi:10.7910/DVN/6Z3CGX](https://doi.org/10.7910/DVN/6Z3CGX). Released under CC0 1.0 (public-domain dedication); attribution is not required but is given. Related paper: Nurek, M. and Michalski, R. (2020), "Combining machine learning and social network analysis to reveal the organizational structures", *Applied Sciences* 10(5), 1699.
+- **Load:**
+  ```stata
+  . nwwebuse manufacturing, nwclear
+  . nwset sender receiver, eventtime(t) name(mail)
+  ```
+
 ## Networks that are not social
 
 These show that the commands work on any network.
