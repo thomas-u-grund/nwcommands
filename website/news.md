@@ -22,13 +22,13 @@ Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core su
 
 **nwrem 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.2.0)). Fits are much faster. The likelihood and its gradient are computed from sums over senders and receivers instead of an n x n softmax per event, and the state-dependent dyadic effects (`frpsndsnd`, `frrecsnd`, `rsndsnd`, `rrecsnd`) are updated only at the rows of the sender and receiver after each event. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.9 s instead of 20.3 s, and with `covevent()` 1.3 s instead of 35.4 s. In the [benchmark against relevent](/nwrem/speed/) nwrem is faster in every cell where both finished. The estimates are the same as before (coefficients to about 1e-11). Effects that are exactly collinear with earlier effects, for example `ntdegsnd` together with `nodsnd` and `nidsnd`, are now found before the optimizer runs, left out (coefficient 0, listed in `e(unidentified)`) instead of being run on a flat ridge. Requires nwcommands 3.24.0 or later.
 
-Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). Windows and Linux are not tested for this release.
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite) and on Linux (Ubuntu 22.04) with StataNow 19.5 MP. Windows is not yet tested for this release.
 
 ## 15 November 2026: nwdynam 1.4.0
 
 **nwdynam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.4.0)). `nwdynam, submodel(rate) intercept` is fast: the first 14 days of the manufacturing emails (2,738 events) fit in a fraction of a second instead of not finishing, and 50,000 events among 1,000 actors take a few seconds. The estimate is found by Newton-Raphson and equals the converged maximum to 12 digits (fits made with earlier versions agreed with it to about 5 digits). Needs nwcommands 3.24.0 or later.
 
-Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP. The Linux and Windows plugins are rebuilt by the build workflow; until they are tested there, those platforms use the Mata evaluator, which is fast as well.
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP, and on Linux (Ubuntu 22.04) with StataNow 19.5 MP, where the native plugin is used and agrees with the Mata evaluator. The Windows plugin is built by the build workflow; until it is tested there, that platform may use the Mata evaluator, which is fast as well.
 
 ## 14 November 2026: nwcommands 3.25.0
 
