@@ -56,18 +56,9 @@ EOF
 for p in dynam rem; do
   hdr > "$T/s_nw$p.do"
   cat >> "$T/s_nw$p.do" <<EOF
-import delimited "$CORE/website/nw$p/data/calls_events.csv", clear
-levelsof sender, local(a) clean
-levelsof receiver, local(b) clean
-local all : list a | b
-local miss
-forvalues i = 1/84 {
-    if !\`: list i in all' local miss \`miss',\`i'
-}
-local miss = substr("\`miss'", 2, .)
-nwset sender receiver, directed eventtime(eventtime) name(calls)
-nwaddnodes calls, nodenames(\`miss')
-nwset
+use "$CORE/data/manufacturing.dta", clear
+keep if t < 4
+nwset sender receiver, directed eventtime(t) name(calls)
 EOF
 done
 echo 'nwdynam calls' >> "$T/s_nwdynam.do"
