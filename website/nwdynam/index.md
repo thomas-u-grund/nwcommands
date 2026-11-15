@@ -44,7 +44,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Sub-models | choice, rate (ordinal partial likelihood, or with an intercept the continuous-time hazard), and choice_coordination for undirected events |
 | Effects | inertia, reciprocity, in- and out-degree, transitivity and other closure effects, covariate effects (same, diff, sim, ego, alter and more), windowed and weighted versions, a separate static network |
 | Networks | directed one-mode, undirected one-mode (coordination), two-mode (a narrow set of effects) |
-| Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data and on small hand-built examples |
+| Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data, on the manufacturing email data of the tutorials and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood and gradient (macOS, Linux, Windows); the optimization runs in Mata |
 | Speed | Faster than goldfish in our benchmark: 7.7 to 76 times for the original structural effects (compiled plug-in), 1.2 to 2.4 times for an effect set that runs in Mata, with the gain shrinking as the number of actors grows; see [Speed compared with goldfish](speed/) |
 | Version | 1.4.0 (15 November 2026) |
