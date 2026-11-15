@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwcommands (core)"
-nav_order: 20
+nav_order: 30
 description: "Installing the nwcommands core and, optionally, the model packages."
 permalink: /nwcommands/install/
 ---
