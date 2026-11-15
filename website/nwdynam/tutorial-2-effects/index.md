@@ -10,10 +10,12 @@ description: "Add covariates, closure effects, recency windows and weights to a 
 **Goal.** Extend the model of [Tutorial 1](../tutorial-1-first-dynam/) with actor attributes, closure effects and recency, read the new
 coefficients, and decide with a likelihood-ratio test which additions earn their place.
 
-**Data.** The same 439 phone calls among 84 students, plus two attributes per student: `floor`, the floor of the
-dorm on which the student lived (1 to 9), and `gradetype`. Both data files are part of this section: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv).
-You need the core `nwcommands` and `nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.3.0
-and the core 3.22.0. Script and log: [example.do](example.do), [example.log](example.log).
+**Data.** The same 631 emails among 154 employees of the manufacturing company (see [Tutorial 1](../tutorial-1-first-dynam/); Michalski 2020, Harvard Dataverse,
+[doi:10.7910/DVN/6Z3CGX](https://doi.org/10.7910/DVN/6Z3CGX), CC0 1.0; Nurek and Michalski 2020, *Applied Sciences* 10(5), 1699; see [Data sets](../../datasets/)), plus attributes
+of the employees from the company file `manufacturing_nodes`: `level`, the number of steps to the CEO in the reporting hierarchy
+(0 to 5), and `division`, the branch of the CEO the employee belongs to (twelve values; we turn it into the numeric variable `div`).
+Both files are loaded from the web with `nwwebuse`. You need the core `nwcommands` and `nwdynam` (see [Install](../install/)); the commands were run with `nwdynam` 1.4.0
+and the core 3.25.1. Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Put the attributes where `nwdynam` looks for them
 
@@ -23,110 +25,131 @@ into it. The merge sorts the rows, so we restore the original order afterwards. 
 go wrong, so check the result:
 
 ```stata
-. nwload calls, xvars
-. gen long actor = real(subinstr(_nwnode, "n", "", 1))
+. nwload mail, xvars
 . gen long row = _n
-. merge m:1 actor using `actors', keep(master match) nogenerate
+. rename _nwnode label
+. merge m:1 label using `actors', keep(master match) nogenerate
 . sort row
-. list _nwnode actor floor gradetype in 1/4
+. list label level div in 1/4
 
-     +------------------------------------+
-     | _nwnode   actor   floor   gradet~e |
-     |------------------------------------|
-  1. |      n1       1       3          5 |
-  2. |      n2       2       5          1 |
-  3. |      n3       3       5          2 |
-  4. |      n4       4       2          2 |
-     +------------------------------------+
+     +----------------------+
+     | label   level    div |
+     |----------------------|
+  1. |  E102       2    E36 |
+  2. |  E103       2    E85 |
+  3. |  E104       1   E104 |
+  4. |  E105       2   E104 |
+     +----------------------+
+
+. list label level div in 130/133
+
+     +---------------------+
+     | label   level   div |
+     |---------------------|
+130. |   E28       4   E69 |
+131. |   E29       3   E69 |
+132. |   E31       3   E69 |
+133. |   E32       4   E69 |
+     +---------------------+
 ```
 
-(The 54 students who appear in the log come first and are labelled `n1`, `n2`, ...; the 30 added isolates follow
-and carry their plain number. The variable `actor` recovers the student id from either form.)
+(The 102 employees who appear in the log come first, then the 52 added isolates, each group in label order. All 154 rows
+are matched. `div` is a numeric variable that carries the division as its value label, which is why `E36` is printed.)
 
-## Homophily: do people call others on their own floor?
+## Homophily: do people write to others in their own division?
 
-`same(floor)` is 1 when caller and candidate share the value of `floor`. We fit the baseline model of Tutorial 1,
+`same(div)` is 1 when sender and candidate belong to the same division. We fit the baseline model of Tutorial 1,
 store it, add the effect, and put the two side by side:
 
 ```stata
-. nwdynam calls, inertia recip indeg
+. nwdynam mail, inertia recip indeg
 . estimates store base
-. nwdynam calls, inertia recip indeg same(floor)
-. estimates store samefloor
-. estimates table base samefloor, b(%9.3f) stats(ll N)
+. nwdynam mail, inertia recip indeg same(div)
+. estimates store samediv
+. estimates table base samediv, b(%9.3f) stats(ll N)
 
 --------------------------------------
-    Variable |   base      samefloor  
+    Variable |   base       samediv   
 -------------+------------------------
-     inertia |     5.366       5.405  
-       recip |     1.389       1.365  
-       indeg |    -0.174      -0.182  
-        same |                -0.170  
+     inertia |     1.765       1.713  
+       recip |     2.922       2.870  
+       indeg |     0.110       0.114  
+        same |                 0.595  
 -------------+------------------------
-          ll |  -695.461    -694.859  
-           N |       439         439  
+          ll | -2307.397   -2290.415  
+           N |       631         631  
 --------------------------------------
 
-. lrtest samefloor base
+. lrtest samediv base
 
 Likelihood-ratio test
-Assumption: base nested within samefloor
+Assumption: base nested within samediv
 
- LR chi2(1) =   1.20
-Prob > chi2 = 0.2726
+ LR chi2(1) =  33.96
+Prob > chi2 = 0.0000
 ```
 
-The coefficient of `same` is -0.17 with a standard error of 0.16 (z = -1.09, not shown above; the full table is in
-[example.log](example.log)): callers do not prefer people from their own floor once they have called them before. The
-likelihood-ratio test says the same, with p = 0.27, and the other coefficients hardly move. `estimates store`,
+The coefficient of `same` is 0.60 with a standard error of 0.10 (z = 5.81, not shown above; the full table is in
+[example.log](example.log)): an employee is `exp(0.60)`, about 1.8 times more likely to write to a colleague of the own division, over and
+above repetition and reciprocation. The likelihood-ratio test agrees (chi-squared 33.96 with one degree of freedom, p < 0.001), and the other coefficients hardly move. `estimates store`,
 `estimates table` and `lrtest` work on `nwdynam` results because the fit leaves `e(b)`, `e(V)` and `e(ll)` behind.
 (The test is meaningful for nested models fitted to the same events.)
 
-## Closure: do friends of friends call each other?
+## Closure: do friends of friends write to each other?
 
-`trans` counts the two-paths sender, third person, candidate on the calls so far; `nodetrans` measures how embedded the
+`trans` counts the two-paths sender, third person, candidate on the emails so far; `nodetrans` measures how embedded the
 candidate is in such structures:
 
 ```stata
-. nwdynam calls, inertia recip indeg trans
+. nwdynam mail, inertia recip indeg trans
 ...
-       indeg |  -.1632543   .1032653    -1.58   0.114    -.3656505    .0391419
-       trans |  -.0506873   .2438788    -0.21   0.835    -.5286809    .4273062
+       indeg |   .0947766   .0091763    10.33   0.000     .0767914    .1127618
+       trans |    .502668   .1032237     4.87   0.000     .3003533    .7049827
 ...
-. nwdynam calls, inertia recip indeg nodetrans
+. display "log likelihood: " %9.2f e(ll)
+log likelihood:  -2296.49
+
+. nwdynam mail, inertia recip indeg nodetrans
 ...
-   nodetrans |  -.0274378   .1325023    -0.21   0.836    -.2871376    .2322619
+   nodetrans |   .0428565   .0230401     1.86   0.063    -.0023012    .0880142
+...
+. display "log likelihood: " %9.2f e(ll)
+log likelihood:  -2305.71
 ```
 
-Both coefficients are close to zero with wide intervals, and the log likelihood hardly changes (-695.44 against
--695.46). In this log there is no sign of triadic closure beyond repetition and reciprocation. Only the part of a
+`trans` is clearly positive (0.50, z = 4.87) and raises the log likelihood from -2307.40 to -2296.49: a colleague who is
+reachable through a third person is more likely to be written to, beyond repetition and reciprocation, a sign of triadic closure. `nodetrans` is
+small, with an interval that includes zero (p = 0.063), and the log likelihood hardly changes (-2305.71). Only the part of a
 model that has support in the data is worth keeping.
 
 ## Recency and weights
 
-By default `inertia` is 1 if the pair *ever* talked before. Two alternatives change what "before" means:
+By default `inertia` is 1 if the pair *ever* wrote before. Two alternatives change what "before" means:
 
 ```stata
-. nwdynam calls, inertiawindow(604800) recip indeg
+. nwdynam mail, inertiawindow(0.5) recip indeg
 ...
-Events: 439                            Log likelihood: -687.0629
-...
-     inertia |   5.180362   .1899864    27.27   0.000     4.807996    5.552729
-       recip |   1.708492   .1880702     9.08   0.000     1.339881    2.077103
-       indeg |  -.0787753   .0907875    -0.87   0.386    -.2567155    .0991649
+     inertia |   1.651971   .1348708    12.25   0.000     1.387629    1.916312
+       recip |   3.225301    .126903    25.42   0.000     2.976576    3.474027
+       indeg |   .1241474   .0077913    15.93   0.000     .1088768     .139418
+. display "log likelihood: " %9.2f e(ll)
+log likelihood:  -2312.85
 
-. nwdynam calls, weightedinertia recip indeg
+. nwdynam mail, weightedinertia recip indeg
 ...
-Events: 439                            Log likelihood: -921.2929
-...
-     inertia |   .2412274    .020603    11.71   0.000     .2008462    .2816087
+     inertia |   .4343398   .0509665     8.52   0.000     .3344473    .5342323
+       recip |   3.499136   .1203136    29.08   0.000     3.263326    3.734946
+       indeg |   .1305183   .0076684    17.02   0.000     .1154886    .1455481
+. display "log likelihood: " %9.2f e(ll)
+log likelihood:  -2350.15
 ```
 
-`inertiawindow(604800)` counts a past call only if it happened within the last 604,800 seconds (one week, the unit
-is the unit of your time variable). The log likelihood rises from -695.46 to -687.06 with the same number of
-parameters: recent calls predict the next call better than old ones, and reciprocity gets stronger (1.71).
-`weightedinertia` counts how many times the pair called instead of whether they did; this model fits clearly worse
-(-921.29): how often a pair called is a worse guide to the next call than whether they called. Models with the same number of parameters, as here, can be compared
+`inertiawindow(0.5)` counts a past email only if it was sent within the last half day (the unit
+is the unit of your time variable, here days). The log likelihood falls from -2307.40 to -2312.85 with the same number of
+parameters: in these days a pair that wrote earlier is as likely to write again whether the earlier email was recent or not, so cutting off
+the old emails loses information; reciprocity gets stronger (3.23).
+`weightedinertia` counts how many times the pair wrote instead of whether they did; this model fits clearly worse
+(-2350.15): how often a pair wrote is a worse guide to the next email than whether they wrote. Models with the same number of parameters, as here, can be compared
 by their log likelihood directly; the window and the weights are not nested in the plain effect, so there is no
 likelihood-ratio test between them.
 
@@ -135,30 +158,30 @@ likelihood-ratio test between them.
 In the rate sub-model a covariate describes the actor who acts, and is called `ego`:
 
 ```stata
-. nwdynam calls, submodel(rate) indeg outdeg
+. nwdynam mail, submodel(rate) indeg outdeg
 . estimates store rate0
-. nwdynam calls, submodel(rate) indeg outdeg ego(floor)
+. nwdynam mail, submodel(rate) indeg outdeg ego(level)
 . estimates store rate1
 ...
-       indeg |   .5167077   .0637887     8.10   0.000     .3916841    .6417312
-      outdeg |   .2622773    .028161     9.31   0.000     .2070829    .3174718
-         ego |  -.4007556   .0306576   -13.07   0.000    -.4608434   -.3406678
+       indeg |   .0317144   .0119843     2.65   0.008     .0082255    .0552032
+      outdeg |    .289142   .0177914    16.25   0.000     .2542714    .3240126
+         ego |  -.1205667   .0423815    -2.84   0.004     -.203633   -.0375005
 
 . lrtest rate1 rate0
 
- LR chi2(1) = 224.58
-Prob > chi2 = 0.0000
+ LR chi2(1) =   8.12
+Prob > chi2 = 0.0044
 ```
 
-Each floor up multiplies a student's rate of calling by `exp(-0.40)`, about 0.67; students on low floors make the
-calls, and the improvement in fit is large. This is an association in these data, not an explanation: floors are
-numbered in the data set and who lives where may be related to many things.
+Each step down the hierarchy multiplies an employee's rate of writing by `exp(-0.12)`, about 0.89: people closer to the top
+send emails sooner, and the improvement in fit is moderate (chi-squared 8.12, p = 0.004). This is an association in these data, not an
+explanation: the level in the hierarchy is related to the tasks, the workload and the number of colleagues of an employee.
 
 ## Things to try
 
-- Try `diff(floor)` or `sim(floor)` instead of `same(floor)`; `sim` is exactly `-diff`, so do not enter both.
-- Try `alter(floor)` in the choice model: do students call people from certain floors more?
-- Try different window lengths for `inertiawindow()` (one day is 86400) and watch the log likelihood.
+- Try `diff(level)` or `sim(level)` instead of `same(div)`; `sim` is exactly `-diff`, so do not enter both.
+- Try `alter(level)` in the choice model: do employees write more often to people high up in the hierarchy?
+- Try different window lengths for `inertiawindow()` (one day is 1) and watch the log likelihood.
 - Add `recipwindow()` to give reciprocity its own window.
 
 ## Next

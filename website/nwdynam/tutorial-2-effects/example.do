@@ -1,52 +1,62 @@
 * nwdynam tutorial 2: effects, covariates and comparing models
 * Requires the core nwcommands and the package nwdynam.
-* Run from this folder; the data are in ../data.
+* The data (manufacturing company emails and the reporting hierarchy) are loaded from the web.
 
-* --- declare the events (see tutorial 1) ---
-import delimited "../data/calls_actors.csv", clear
+* --- the actor attributes: level in the hierarchy and division (one row per employee) ---
+nwwebuse manufacturing_nodes, nwclear
+encode division, generate(div)
 tempfile actors
 save `actors'
-import delimited "../data/calls_events.csv", clear
-levelsof sender, local(a) clean
-levelsof receiver, local(b) clean
-local all : list a | b
+quietly levelsof label, local(everyone) clean
+
+* --- declare the events (see tutorial 1) ---
+nwwebuse manufacturing, nwclear
+keep if t < 5
+quietly levelsof sender, local(a) clean
+quietly levelsof receiver, local(b) clean
+local seen : list a | b
+local without : list everyone - seen
 local miss
-forvalues i = 1/84 {
-    if !`: list i in all' local miss `miss',`i'
+foreach e of local without {
+    local miss `miss',`e'
 }
 local miss = substr("`miss'", 2, .)
-nwset sender receiver, directed eventtime(eventtime) name(calls)
-nwaddnodes calls, nodenames(`miss')
+nwset sender receiver, directed eventtime(t) name(mail)
+nwaddnodes mail, nodenames(`miss')
 
 * --- put the actor attributes into the data, in the actor order of the network ---
-nwload calls, xvars
-gen long actor = real(subinstr(_nwnode, "n", "", 1))
+nwload mail, xvars
 gen long row = _n
-merge m:1 actor using `actors', keep(master match) nogenerate
+rename _nwnode label
+merge m:1 label using `actors', keep(master match) nogenerate
 sort row
-list _nwnode actor floor gradetype in 1/4
-list _nwnode actor floor gradetype in 55/58
-tabulate floor
+list label level div in 1/4
+list label level div in 130/133
+tabulate level
 
-* --- the baseline choice model, then homophily on the floor of the dorm ---
-nwdynam calls, inertia recip indeg
+* --- the baseline choice model, then homophily on the division ---
+nwdynam mail, inertia recip indeg
 estimates store base
-nwdynam calls, inertia recip indeg same(floor)
-estimates store samefloor
-estimates table base samefloor, b(%9.3f) stats(ll N)
-lrtest samefloor base
+nwdynam mail, inertia recip indeg same(div)
+estimates store samediv
+estimates table base samediv, b(%9.3f) stats(ll N)
+lrtest samediv base
 
 * --- closure effects ---
-nwdynam calls, inertia recip indeg trans
-nwdynam calls, inertia recip indeg nodetrans
+nwdynam mail, inertia recip indeg trans
+display "log likelihood: " %9.2f e(ll)
+nwdynam mail, inertia recip indeg nodetrans
+display "log likelihood: " %9.2f e(ll)
 
-* --- recency: should an old call still count? ---
-nwdynam calls, inertiawindow(604800) recip indeg
-nwdynam calls, weightedinertia recip indeg
+* --- recency: should an old email still count? ---
+nwdynam mail, inertiawindow(0.5) recip indeg
+display "log likelihood: " %9.2f e(ll)
+nwdynam mail, weightedinertia recip indeg
+display "log likelihood: " %9.2f e(ll)
 
 * --- the rate model with a covariate ---
-nwdynam calls, submodel(rate) indeg outdeg
+nwdynam mail, submodel(rate) indeg outdeg
 estimates store rate0
-nwdynam calls, submodel(rate) indeg outdeg ego(floor)
+nwdynam mail, submodel(rate) indeg outdeg ego(level)
 estimates store rate1
 lrtest rate1 rate0
