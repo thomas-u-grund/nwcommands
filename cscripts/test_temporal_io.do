@@ -320,9 +320,9 @@ nwdropnodes cp2, nodes(1 2 3)
 tflags cp2 event
 qui _nwsyntax cp2
 mata: st_local("n2", strofreal(`netobj'->get_nodes()))
-assert `n2' == 51
+assert `n2' == 126
 mata: E = *`netobj'->get_eventlist()
-mata: assert(max(E[., 1]) <= 51 & max(E[., 2]) <= 51 & min(E[., 1]) >= 1 & min(E[., 2]) >= 1)
+mata: assert(max(E[., 1]) <= 126 & max(E[., 2]) <= 126 & min(E[., 1]) >= 1 & min(E[., 2]) >= 1)
 mata: st_local("nev", strofreal(rows(E)))
 * every event of the copy is an event of the original among the same two people
 tstash cp2 d2
