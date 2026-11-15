@@ -25,7 +25,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - **`nwmovie ..., export(file)` no longer leaves the viewer running.** When the viewer never wrote the file (typically on macOS with a locked screen) the command stopped with r(498) after `timeout()` seconds but the viewer process went on running. `nwmovie` now stops the viewer it started (found by the exact name of its staged copy, never by a pattern that could match another process) on a timeout, on an error from the viewer and after a finished export. On macOS it also checks before the viewer is started whether the screen is locked and stops at once with a message (r(498)); if the check cannot be made the command goes on as before. The default `timeout()` is unchanged. New test `test_nwmovie_kill`.
 - **A second error line after the command's own message.** 335 error exits in 100 commands showed their message and then called `error N`, which printed Stata's canned text for N ("invalid syntax" for 198) as a second line; they now end with `exit N`. Return codes are unchanged. Where a command shows no message of its own, Stata's text is still printed. New test `test_noextra_errtext`.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 259 tests per version; two tests need the model repositories next to the core and an unlocked screen and were run separately), on Windows 11 with StataNow 19.5 MP (254 of 259 tests ran clean; the other five end with the known Stata teardown crash after their checks) and on Linux (Ubuntu 22.04) with StataNow 19.5 MP: not yet tested for this release.
 
 ## [3.24.0] - 2026-11-13
 

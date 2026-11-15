@@ -12,11 +12,17 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 15 November 2026: nwdynam 1.4.0
+
+**nwdynam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.4.0)). `nwdynam, submodel(rate) intercept` is fast: the first 14 days of the manufacturing emails (2,738 events) fit in a fraction of a second instead of not finishing, and 50,000 events among 1,000 actors take a few seconds. The estimate is found by Newton-Raphson and equals the converged maximum to 12 digits (fits made with earlier versions agreed with it to about 5 digits). Needs nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP. The Linux and Windows plugins are rebuilt by the build workflow; until they are tested there, those platforms use the Mata evaluator, which is fast as well.
+
 ## 14 November 2026: nwcommands 3.25.0
 
 **nwcommands 3.25.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.0)). Temporal networks are no longer flattened silently: `nwsave` and `nwuse` (also `nwwebuse` and `nwappend`) keep the event times, snapshot times and intervals of a network declared with `time()`, `interval()` or `eventtime()`, `nwduplicate` and `nwdropnodes` keep them, `nwtoedge, time` lists one row per event, and `nwexport` and `nwimport` write and read the times of an edge list (`type(edgelist)`). Formats that cannot hold times (Pajek, UCINET, GML) now refuse a temporal network unless you ask for the aggregate, instead of writing the ties without telling you; `nwtoedge` and `nwload` of a temporal network say that the ties are aggregated over all times. Two new example data sets for `nwwebuse`, `manufacturing` and `manufacturing_nodes` (50,233 emails among 144 employees of a manufacturing company, with times in days). `nwmovie, export()` stops the viewer it started when the file is not written, and on macOS stops at once when the screen is locked. Commands that showed their own error message no longer print a second line ("invalid syntax") after it; the return codes are unchanged. The model packages are not re-released: nwsaom 1.7.1, nwergm 1.7.1, nwdynam 1.3.2 and nwrem 1.1.2 work with this core.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 259 tests per version; two tests need the model repositories next to the core and an unlocked screen and were run separately), on Windows 11 with StataNow 19.5 MP (254 of 259 tests ran clean; the other five end with the known Stata teardown crash after their checks) and on Linux (Ubuntu 22.04) with StataNow 19.5 MP: not yet tested for this release.
 
 ## 13 November 2026: nwcommands 3.24.0, nwsaom 1.7.1, nwergm 1.7.1, nwdynam 1.3.2 and nwrem 1.1.2
 
