@@ -18,6 +18,12 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
 
+## 15 November 2026: nwdynam 1.5.0
+
+**nwdynam 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.5.0)). Every fit now runs in the compiled plugin: choice, rate, rate with intercept and choice coordination, with all effects, windows, weighted effects, two-mode networks, `opportunities()` and `tie()`. The slower Mata fit path is gone. Choice coordination is 12 to 14 times faster (1,019 manufacturing emails, `inertia trans`: 31 s instead of 449 s) with the same estimates, and the default rate fit without `intercept` takes under a second instead of a minute. **Update the package as a whole:** a plugin older than 1.5.0 is refused with return code 3495, and a missing plugin with 601. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+
 ## 15 November 2026: nwrem 1.2.0
 
 **nwrem 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.2.0)). Fits are much faster. The likelihood and its gradient are computed from sums over senders and receivers instead of an n x n softmax per event, and the state-dependent dyadic effects (`frpsndsnd`, `frrecsnd`, `rsndsnd`, `rrecsnd`) are updated only at the rows of the sender and receiver after each event. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.9 s instead of 20.3 s, and with `covevent()` 1.3 s instead of 35.4 s. In the [benchmark against relevent](/nwrem/speed/) nwrem is faster in every cell where both finished. The estimates are the same as before (coefficients to about 1e-11). Effects that are exactly collinear with earlier effects, for example `ntdegsnd` together with `nodsnd` and `nidsnd`, are now found before the optimizer runs, left out (coefficient 0, listed in `e(unidentified)`) instead of being run on a flat ridge. Requires nwcommands 3.24.0 or later.

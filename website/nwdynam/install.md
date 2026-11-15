@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.4.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.5.0:
 
 ```stata
-. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.4.0/) replace
+. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.5.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwdynam version
-nwdynam version 1.4.0, 15nov2026
+nwdynam version 1.5.0, 15nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../d/dynam_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R goldfish 1.6.12
@@ -76,12 +76,12 @@ Repeat the `net install` line with `replace`. Updating the core never overwrites
 ## The native plugin
 
 The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and
-found automatically; nothing needs to be configured. The Windows plugin passes the full test suite of `nwdynam`
-(Stata 19 MP, 9 November 2026); the Linux plugin is built the same way but has not been tested on a Linux machine. The plugin evaluates the likelihood and its gradient, which
-the optimizer in Mata calls many times. It serves the three default structural effects of the choice model;
-other effect sets run in the Mata engine of the package (this is documented in `help nwdynam`) and give the same
-results, only more slowly. `nwdynam version` shows the path of the plugin in use, or "missing" if none is found,
-in which case everything runs in Mata.
+found automatically; nothing needs to be configured. The plugin of version 1.5.0 has been tested on macOS; the Windows and Linux
+plugins of this version are built the same way but have not been tested yet. Every fit (choice, rate, rate with
+intercept and choice coordination, with all effects and options) evaluates the likelihood, its gradient and its
+Hessian in the plugin, which the optimizer in Mata calls. There is no slower fallback: without a working plugin
+`nwdynam` stops with return code 601 (plugin file missing) or 3495 (plugin older than the package or not loadable).
+`nwdynam version` shows the path of the plugin in use, or "missing" if none is found.
 
 ### If the plugin does not work on your computer
 
