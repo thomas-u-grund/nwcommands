@@ -7,11 +7,14 @@ description: "Add actor covariates, a pair covariate and recency effects to a re
 
 # Tutorial 2: Covariates, pairs and recency
 
-**Goal.** Extend the model of [Tutorial 1](../tutorial-1-first-rem/) with the floor on which a student lives (an attribute of one actor),
-whether two students share a floor (an attribute of a pair), and with recency instead of frequency.
+**Goal.** Extend the model of [Tutorial 1](../tutorial-1-first-rem/) with the level of an employee in the reporting hierarchy (an attribute of one actor),
+whether two employees have the same supervisor (an attribute of a pair), and with recency instead of frequency.
 
-**Data.** The same 439 phone calls among 84 students, plus the attribute `floor` (1 to 9) of each student; both data files are available: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv). You need the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem`
-1.1.0 and the core 3.22.0. Script and log: [example.do](example.do), [example.log](example.log).
+**Data.** The same e-mails as in Tutorial 1 (the first five days of the manufacturing company data: 631 e-mails among 144 employees; Michalski, R.
+(2020), Harvard Dataverse, [doi:10.7910/DVN/6Z3CGX](https://doi.org/10.7910/DVN/6Z3CGX), CC0 1.0; Nurek, M. and Michalski, R. (2020), *Applied Sciences*
+10(5), 1699), plus the attributes of the employees from the second file, `manufacturing_nodes`: the direct supervisor, the `level` (steps to the CEO; 0 to 5) and the division. Both files are loaded
+with `nwwebuse` and described on the [data sets page](../../datasets/). You need the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem`
+1.1.2 and the core 3.25.1. Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Where the covariates come from
 
@@ -24,37 +27,37 @@ The three kinds of covariate effects read their data from different places:
 | `covint(var)` | the same attribute of sender and receiver, one shared coefficient | a variable with one row per actor |
 | `covevent(net)` | a value for each ordered pair | another network with the same actors |
 
-For the first three, `nwload calls, xvars` gives a dataset with one row per actor, in the actor order of the network; we merge the attribute into
-it and restore the order, and check the result:
+For the first three, `nwload mail, xvars` gives a dataset with one row per actor, in the actor order of the network (variable `_nwnode`); we merge the attributes into
+it by the employee label, restore the order, and check the result:
 
 ```stata
-. nwload calls, xvars
-. gen long actor = real(subinstr(_nwnode, "n", "", 1))
+. nwload mail, xvars
+. gen str4 label = _nwnode
 . gen long row = _n
-. merge m:1 actor using `actors', keep(master match) nogenerate
+. merge m:1 label using `staff', keep(master match) nogenerate
 . sort row
-. list _nwnode actor floor in 1/4
+. list _nwnode level supervisor division in 1/4
 ...
 ```
 
-For `covevent()` we make a second network, `sameflr`, with a tie from `i` to `j` if the two live on the same floor. Mata builds
+For `covevent()` we make a second network, `samesup`, with a tie from `i` to `j` if the two have the same direct supervisor. Mata builds
 the matrix and `nwset` declares it:
 
 ```stata
 . mata:
-: F = st_data(., "floor")
-: n = rows(F)
+: V = st_sdata(., "supervisor")
+: n = rows(V)
 : S = J(n, n, 0)
 : for (i = 1; i <= n; i++) {
->     for (j = 1; j <= n; j++) S[i, j] = (i != j) & (F[i] == F[j])
+>     for (j = 1; j <= n; j++) S[i, j] = (i != j) & (V[i] != "") & (V[i] == V[j])
 > }
 : end
-. nwset, mat(S) name(sameflr) directed
+. nwset, mat(S) name(samesup) directed
 . nwset
 (2 networks)
 --------------------
-      calls
-      sameflr
+      mail
+      samesup
 ```
 
 The pair covariate is read as given: an ordered pair has the value in its own cell, and nothing is symmetrised. Here
@@ -62,38 +65,37 @@ the relation is symmetric, so the matrix is as well.
 
 ## Actor covariates
 
-Start from the model of the pair's history and add the floor of the sender and of the receiver:
+Start from the model of the pair's history and add the level of the sender and of the receiver:
 
 ```stata
-. nwrem calls, frpsndsnd frrecsnd
+. nwrem mail, frpsndsnd frrecsnd
 . estimates store hist
-. nwrem calls, frpsndsnd frrecsnd covsnd(floor) covrec(floor)
-. estimates store floors
+. nwrem mail, frpsndsnd frrecsnd covsnd(level) covrec(level)
+. estimates store levels
 ...
-Events: 439                            Log likelihood: -2.20e+03
+Events: 631                            Log likelihood: -5.71e+03
 ...
-   frpsndsnd |   6.134409   .1464316    41.89   0.000     5.847408     6.42141
-    frrecsnd |   1.562276   .1440921    10.84   0.000     1.279861    1.844692
-covsnd_floor |  -.2432981   .0274013    -8.88   0.000    -.2970036   -.1895926
-covrec_floor |  -.1703417   .0256821    -6.63   0.000    -.2206777   -.1200057
+   frpsndsnd |   3.114008   .2134949    14.59   0.000     2.695566     3.53245
+    frrecsnd |   3.462617   .2013362    17.20   0.000     3.068005    3.857229
+covsnd_level |  -.2328669    .040124    -5.80   0.000    -.3115084   -.1542254
+covrec_level |  -.1210011   .0397191    -3.05   0.002    -.1988492    -.043153
 ```
 
-Both coefficients are negative and clear: for each floor higher, a person's odds of being the caller fall by a factor of
-`exp(-0.24)`, about 0.78, and the odds of being the person called by `exp(-0.17)`, about 0.84. People on low floors
-call more and are called more. The reciprocity effect dropped from 2.03 to 1.56 once the floor was in the model, so part of the
-apparent reciprocity is shared with the floor effects.
+Both coefficients are negative and clear: for each step further from the CEO, a person's odds of being the sender fall by a factor of
+`exp(-0.23)`, about 0.79, and the odds of being the receiver by `exp(-0.12)`, about 0.89. People higher up in the hierarchy
+send more e-mails and receive more of them. The effects of the pair's history hardly change (inertia 3.17 to 3.11, reciprocity of receipt 3.48 to 3.46).
 
 ## A pair covariate
 
 ```stata
-. nwrem calls, frpsndsnd frrecsnd covevent(sameflr)
+. nwrem mail, frpsndsnd frrecsnd covevent(samesup)
 ...
-covevent_sameflr |  -.5312484   .1219874    -4.35   0.000    -.7703393   -.2921574
+covevent_same~p |   .3651419   .1365699     2.67   0.008     .0974698    .6328141
 ```
 
-Sharing a floor *lowers* the odds that a given pair makes a call, by `exp(-0.53)`, about 0.59, once the history of the pair is
-in the model. A plausible reading is that people on the same floor talk in person and use the phone for others; the model
-only says that this is the pattern in the data.
+Having the same supervisor *raises* the odds that a given pair makes an e-mail by `exp(0.37)`, about 1.44, once the history of the pair is
+in the model. A plausible reading is that colleagues who report to the same person work together; the model
+only says that this is the pattern in these days of data. The effect is modest: the log likelihood improves by only 3.3 units over the history model.
 
 ## Recency instead of frequency
 
@@ -102,56 +104,57 @@ only says that this is the pattern in the data.
 partners (most recent partner = rank 1, never contacted = 0). Only the order counts, not how often.
 
 ```stata
-. nwrem calls, rsndsnd rrecsnd
+. nwrem mail, rsndsnd rrecsnd
 . estimates store recent
-. nwrem calls, frpsndsnd frrecsnd rsndsnd rrecsnd
+. nwrem mail, frpsndsnd frrecsnd rsndsnd rrecsnd
 . estimates store both
 ```
 
 ## Putting the models side by side
 
 ```stata
-. estimates table hist floors samefloor recent both, b(%9.3f) stats(ll N)
+. estimates table hist levels samesuper recent both, b(%9.3f) stats(ll N)
 
 --------------------------------------------------------------------------
-    Variable |   hist       floors     samefloor    recent       both     
+    Variable |   hist       levels     samesuper    recent       both     
 -------------+------------------------------------------------------------
-   frpsndsnd |     6.254       6.134       6.390                   1.193  
-    frrecsnd |     2.035       1.562       2.014                   0.757  
-covsnd_floor |                -0.243                                      
-covrec_floor |                -0.170                                      
-covevent_s~r |                            -0.531                          
-     rsndsnd |                                         6.417       5.475  
-     rrecsnd |                                         1.600       0.931  
+   frpsndsnd |     3.166       3.114       3.114                  -0.044  
+    frrecsnd |     3.480       3.463       3.394                  -0.446  
+covsnd_level |                -0.233                                      
+covrec_level |                -0.121                                      
+covevent_s~p |                             0.365                          
+     rsndsnd |                                         2.449       2.482  
+     rrecsnd |                                         3.548       3.792  
 -------------+------------------------------------------------------------
-          ll | -2274.048   -2197.731   -2263.785   -2122.016   -2094.776
-           N |       439         439         439         439         439  
+          ll | -5733.442   -5709.705   -5730.093   -5389.231   -5386.947  
+           N |       631         631         631         631         631  
 --------------------------------------------------------------------------
 
-. lrtest floors hist
- LR chi2(2) = 152.63
+. lrtest levels hist
+ LR chi2(2) = 47.47
 Prob > chi2 = 0.0000
 . lrtest both hist
- LR chi2(2) = 358.54
+ LR chi2(2) = 692.99
 Prob > chi2 = 0.0000
 ```
 
 Reading across the log likelihoods (higher, i.e. less negative, is better):
 
-- Adding the floors improves on the history model by 76 log-likelihood units (LR test 152.6 on 2 degrees of freedom).
-- Recency (-2122.0) fits clearly better than frequency (-2274.0) with the same number of parameters. Whom you called *last* tells more than whom
-  you called most.
-- Using both gives the best fit (-2094.8), and the recency effect of the sender keeps most of its size (6.42 to 5.48) while the frequency effects shrink (6.25 to 1.19
-  and 2.03 to 0.76). Recency does most of the work.
+- Adding the levels improves on the history model by 24 log-likelihood units (LR test 47.5 on 2 degrees of freedom).
+- Recency (-5389.2) fits clearly better than frequency (-5733.4) with the same number of parameters. Whom you wrote to *last* tells more than whom
+  you wrote to most.
+- Using both gives the best fit (-5386.9), but only 2.3 units better than recency alone: with the recency effects in the model, the
+  frequency effects fall to zero or below (-0.04 and -0.45, the second with a p-value of 0.07), while the recency effects keep their size (2.45 to 2.48 and 3.55 to 3.79).
+  Recency does all the work.
 
 The `lrtest` between nested models is the formal comparison; between the frequency and the recency model, which are not nested, only the
 log likelihoods can be compared.
 
 ## Things to try
 
-- Use `covint(floor)` in place of `covsnd` and `covrec`: it forces one coefficient for both roles.
-- Build `sameflr` with another attribute, such as `gradetype`, and use it in `covevent()`.
-- Fit `rsndsnd` and `rrecsnd` together with `covevent(sameflr)`.
+- Use `covint(level)` in place of `covsnd` and `covrec`: it forces one coefficient for both roles.
+- Build `samesup` with another attribute, such as `division`, and use it in `covevent()`.
+- Fit `rsndsnd` and `rrecsnd` together with `covevent(samesup)`.
 
 ## Next
 
