@@ -1,37 +1,42 @@
-* nwrem tutorial 1: a first relational event model on a phone-call log
+* nwrem tutorial 1: a first relational event model on an email log
 * Requires the core nwcommands and the package nwrem.
-* Run from this folder; the data are in ../data (events and actor attributes).
+* The data (Michalski 2020, CC0) are loaded from the nwcommands website.
 
 nwrem version
 
-* --- the event data: one row per call, with the time it happened ---
-import delimited "../data/calls_events.csv", clear
+* --- the event data: one row per email, with the time it was sent (days since 1 January 2010) ---
+nwwebuse manufacturing, nwclear
 list in 1/5
 count
-display "span in days: " (eventtime[_N] - eventtime[1]) / 86400
 
-* --- declare the events as an event network ---
-* The log mentions 54 of the 84 students; the other 30 never call or are called.
-* They still are possible senders and receivers, so we add them as isolates.
+* --- a short window: the emails of the first five days of the data ---
+* All 144 employees could have sent or received an email, but fewer appear in the window.
+* The others are still possible senders and receivers, so we add them as isolates.
 levelsof sender, local(a) clean
 levelsof receiver, local(b) clean
 local all : list a | b
-local miss
-forvalues i = 1/84 {
-    if !`: list i in all' local miss `miss',`i'
-}
-local miss = substr("`miss'", 2, .)
-nwset sender receiver, directed eventtime(eventtime) name(calls)
-nwaddnodes calls, nodenames(`miss')
+keep if t < 5
+count
+display "span in days: " %5.2f (t[_N] - t[1])
+
+* --- declare the events as an event network ---
+levelsof sender, local(a) clean
+levelsof receiver, local(b) clean
+local present : list a | b
+local miss : list all - present
+display "employees in the window: " `: word count `present'' ", added as isolates: " `: word count `miss''
+nwset sender receiver, directed eventtime(t) name(mail)
+local miss : subinstr local miss " " ",", all
+nwaddnodes mail, nodenames(`miss')
 nwset
 
 * --- a model of activity: do busy senders and popular receivers keep their roles? ---
-nwrem calls, nodsnd nidrec
+nwrem mail, nodsnd nidrec
 
-* --- a model of history: do people call those they called, or who called them? ---
-nwrem calls, frpsndsnd frrecsnd
+* --- a model of history: do people write to those they wrote to, or who wrote to them? ---
+nwrem mail, frpsndsnd frrecsnd
 display "events: " e(N) ", actors: " e(nodes) ", log likelihood: " %9.2f e(ll)
 display "effect of inertia on the odds: x" %6.1f exp(_b[frpsndsnd] * 0.1) " per 10 percentage points"
 
 * --- both together ---
-nwrem calls, nodsnd nidrec frpsndsnd frrecsnd
+nwrem mail, nodsnd nidrec frpsndsnd frrecsnd

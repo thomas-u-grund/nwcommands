@@ -19,7 +19,7 @@ Relational event models (REM) for Stata: why this sender and this receiver, in a
 ## What nwrem is
 
 `nwrem` fits relational event models (Butts 2008) to a sequence of timed events between actors: who sent what to whom, and
-when (phone calls, e-mails, messages). At each event the model asks which of all possible ordered pairs of actors
+when (e-mails, phone calls, messages). At each event the model asks which of all possible ordered pairs of actors
 was going to interact, and estimates which effects make the pair that was observed more likely than the others.
 The effects include the activity of sender and receiver (degrees), inertia (the sender returns to partners of the past),
 reciprocity of receipt, recency, and covariates of actors and of pairs. The estimation is by the ordinal partial likelihood, as in a Cox model.

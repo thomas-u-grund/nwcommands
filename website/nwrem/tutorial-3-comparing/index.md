@@ -10,9 +10,10 @@ description: "Compare relational event models fitted with nwrem by log likelihoo
 **Goal.** Choose between several relational event models for the same events, check that the estimates do not depend on the
 starting point of the optimizer, and know what `nwrem` does not do.
 
-**Data.** The 439 phone calls among 84 students of [Tutorial 1](../tutorial-1-first-rem/) (the data files: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv)). You need
-the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem` 1.1.0 and the core 3.22.0.
-Script and log: [example.do](example.do), [example.log](example.log).
+**Data.** The e-mails of [Tutorial 1](../tutorial-1-first-rem/): the first five days of the manufacturing company e-mail data, 631 e-mails among 144 employees
+(Michalski, R. (2020), Harvard Dataverse, [doi:10.7910/DVN/6Z3CGX](https://doi.org/10.7910/DVN/6Z3CGX), CC0 1.0; Nurek, M. and Michalski, R. (2020),
+*Applied Sciences* 10(5), 1699; see the [data sets page](../../datasets/)). You need the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem` 1.1.2 and the
+core 3.25.1. Script and log: [example.do](example.do), [example.log](example.log).
 
 ## Five specifications
 
@@ -28,10 +29,10 @@ covariates. We fit five models that combine the first two groups, and store each
 | m5 | `nodsnd nidrec rsndsnd rrecsnd` | activity and recency |
 
 ```stata
-. quietly nwrem calls, nodsnd nidrec
+. quietly nwrem mail, nodsnd nidrec
 . estimates store m1
 ...
-. quietly nwrem calls, nodsnd nidrec rsndsnd rrecsnd
+. quietly nwrem mail, nodsnd nidrec rsndsnd rrecsnd
 . estimates store m5
 ```
 
@@ -45,32 +46,32 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |          N   ll(null)  ll(model)      df        AIC        BIC
 -------------+---------------------------------------------------------------
-          m1 |        439          .  -3117.419       2   6238.837   6247.006
-          m2 |        439          .  -2274.048       2   4552.096   4560.265
-          m3 |        439          .   -2115.76       4   4239.519   4255.857
-          m4 |        439          .  -2122.016       2   4248.032   4256.201
-          m5 |        439          .  -1968.845       4   3945.689   3962.027
+          m1 |        631          .  -5992.517       2   11989.03   11997.93
+          m2 |        631          .  -5733.442       2   11470.88   11479.78
+          m3 |        631          .  -5531.783       4   11071.57   11089.36
+          m4 |        631          .  -5389.231       2   10782.46   10791.36
+          m5 |        631          .  -5221.696       4   10451.39   10469.18
 -----------------------------------------------------------------------------
 Note: BIC uses N = number of observations. See [R] BIC note.
 ```
 
-Lower AIC and BIC are better. The ranking is the same by both: m5 (activity and recency) is best, followed by m3 and m4 (which are
-close, m3 a little ahead), then m2, with m1 (activity alone) far behind. Three conclusions follow:
+Lower AIC and BIC are better. The ranking is the same by both: m5 (activity and recency) is best, followed by m4 (recency), m3 (activity and frequency), then
+m2, with m1 (activity alone) last. Three conclusions follow:
 
-1. The history of the pair matters much more than the general activity of the actors (m1 against m2: 1,700 AIC units).
-2. Recency beats frequency: m4 and m2 have two parameters each, and m4 is better by 304 AIC units. Even m3, with four parameters,
-   is only slightly ahead of m4 (4239.5 against 4248.0).
-3. Activity still adds something once recency is in the model (m5 against m4: a gain of about 300 AIC units), although in m3 the
-   receiver's activity was not distinguishable from zero (Tutorial 1).
+1. The history of the pair matters more than the general activity of the actors (m1 against m2: 518 AIC units).
+2. Recency beats frequency: m4 and m2 have two parameters each, and m4 is better by 688 AIC units. Even m3, with four parameters,
+   is 289 units behind m4 (11071.6 against 10782.5).
+3. Activity still adds something once recency is in the model (m5 against m4: a gain of about 331 AIC units), and in m3 the activity
+   effects were clearly different from zero as well (Tutorial 1).
 
 Nested models can also be tested, as in a likelihood-ratio test (`lrtest` needs the larger model first):
 
 ```stata
 . lrtest m3 m1
- LR chi2(2) = 2003.32
+ LR chi2(2) = 921.47
 Prob > chi2 =  0.0000
 . lrtest m3 m2
- LR chi2(2) = 316.58
+ LR chi2(2) = 403.32
 Prob > chi2 =  0.0000
 ```
 
@@ -85,37 +86,39 @@ model can form a nearly flat ridge in the likelihood. Check this for the most cr
 decides which restart of the optimizer is tried first:
 
 ```stata
-. nwrem calls, nodsnd nidrec frpsndsnd frrecsnd seed(1)
+. nwrem mail, nodsnd nidrec frpsndsnd frrecsnd seed(1)
 ...
-      nodsnd |   5.392444    .437614    12.32   0.000     4.534736    6.250151
-      nidrec |   .9485508   .5809881     1.63   0.103     -.190165    2.087267
-   frpsndsnd |   5.782833   .1612639    35.86   0.000     5.466762    6.098905
-    frrecsnd |   1.640031   .1538416    10.66   0.000     1.338507    1.941555
+      nodsnd |   14.36445   1.616696     8.89   0.000     11.19579    17.53312
+      nidrec |   22.01799   1.182937    18.61   0.000     19.69948    24.33651
+   frpsndsnd |   2.296243   .1856085    12.37   0.000     1.932457    2.660029
+    frrecsnd |   3.821278   .1618695    23.61   0.000      3.50402    4.138537
 
-. nwrem calls, nodsnd nidrec frpsndsnd frrecsnd seed(2)
+. nwrem mail, nodsnd nidrec frpsndsnd frrecsnd seed(2)
 ...
-      nodsnd |   5.392423   .4376143    12.32   0.000     4.534715    6.250131
-      nidrec |   .9485645   .5809885     1.63   0.103    -.1901521    2.087281
-   frpsndsnd |    5.78284   .1612634    35.86   0.000      5.46677    6.098911
-    frrecsnd |   1.640016   .1538413    10.66   0.000     1.338493     1.94154
+      nodsnd |   14.36445   1.616694     8.89   0.000     11.19579    17.53312
+      nidrec |   22.02006   1.182888    18.62   0.000     19.70164    24.33848
+   frpsndsnd |   2.296228   .1856043    12.37   0.000     1.932451    2.660006
+    frrecsnd |   3.821261   .1618674    23.61   0.000     3.504007    4.138515
 ```
 
-The two fits agree to four digits, so this model is well determined by these data. (The estimates in the earlier tutorials differ from these in the
-fifth digit, which is the tolerance of the optimizer.) If your own model changes visibly with the seed while the log likelihood stays
+The two fits agree to three digits or more (the largest difference is 0.002, in `nidrec`), so this model is well determined by these data. (The estimates in Tutorial 1 differ from these
+in the third or fourth digit, for example 14.362 and 14.364 for `nodsnd`, which is the tolerance of the optimizer.) If your own model changes visibly with the seed while the log likelihood stays
 about the same, you are on the ridge: do not interpret the individual degree coefficients, and prefer a simpler model or more events.
 
 ## What `nwrem` refuses
 
 ```stata
-. capture noisily nwrem calls
-nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd ntdegrec frpsndsnd frrecsnd covsnd() covrec()
-covint() covevent() rsndsnd rrecsnd (see nwrem for what each computes).
+. capture noisily nwrem mail
+nwrem requires at least one effect: nodsnd nidrec nidsnd nodrec ntdegsnd
+ntdegrec frpsndsnd frrecsnd covsnd() covrec() covint() covevent() rsndsnd
+rrecsnd (see nwrem for what each computes).
 invalid syntax
-. capture noisily nwrem calls, frpsndsnd covsnd(nosuchvar)
+. capture noisily nwrem mail, frpsndsnd covsnd(nosuchvar)
 variable nosuchvar not found
 (error in option covsnd())
 . capture noisily nwrem ordinary, nodsnd
-nwrem requires a network declared via nwset's eventtime() option (an event-type temporal network) - see nwset.
+nwrem requires a network declared via nwset's eventtime() option (an event-type
+temporal network) - see nwset.
 ```
 
 There is no intercept option: a term that is the same for every possible pair at a given event cancels out of the partial
@@ -134,8 +137,8 @@ If you need effects that `nwrem` does not have, the DyNAM of [nwdynam](../../nwd
 
 ## Things to try
 
-- Fit `nwrem calls, nodsnd nidrec nidsnd nodrec` and look at the standard errors: with four degree effects at once the ridge appears.
-- Add `covsnd(floor)` to m5 (see Tutorial 2 for how to load the attribute) and compare by AIC.
-- Fit the models on the first 150 events only, and see which conclusions survive.
+- Fit `nwrem mail, nodsnd nidrec nidsnd nodrec` and look at the standard errors: with four degree effects at once the ridge appears.
+- Add `covsnd(level)` to m5 (see Tutorial 2 for how to load the attribute) and compare by AIC.
+- Fit the models on the first 300 events only, and see which conclusions survive.
 
 Back to the [overview of nwrem](../).
