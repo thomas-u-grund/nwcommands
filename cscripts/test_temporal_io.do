@@ -80,7 +80,7 @@ program tflags
 end
 
 * ---------------------------------------------------------------------------------------------
-* 1  event network, 439 timestamped calls: nwsave / nwuse
+* 1  event network, 2,738 timestamped emails: nwsave / nwuse
 nwclear
 use data/manufacturing.dta, clear
 keep if t < 14
@@ -123,7 +123,7 @@ preserve
 use "`dir'/calls.nwdta", clear
 confirm variable _nw_ttype _nw_tvars _nw_tnet _nw_tego _nw_talter _nw_tt1 _nw_tt2 _nw_tval
 count if _nw_tnet == 1
-assert r(N) == 439
+assert r(N) == 2738
 assert _nw_ttype[1] == "event"
 restore
 
@@ -380,7 +380,7 @@ confirm variable _ego _alter _time
 capture confirm variable calls
 assert _rc != 0
 qui sum _time
-assert r(N) == 439
+assert r(N) == 2738
 * build the network again from the rows
 nwset _ego _alter, eventtime(_time) name(back) directed
 tflags back event
