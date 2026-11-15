@@ -8,7 +8,7 @@ Apple M5 Pro, macOS, Stata 18 BE, R 4.6.0. All timings are with Stata 18; Stata 
 |---|---|
 | nwergm against ergm | nwergm 1.4.0 and 1.3.7 (8 November; 1.3.0 and 1.2.3 on 26 October), ergm 4.12.0 |
 | nwsaom against RSiena | nwsaom 1.1.1 (27 October; the run of nwsaom 1.1.0 of 26 October is kept), RSiena 1.6.14 |
-| nwrem against relevent | nwrem 1.0.10, relevent 1.2-1 (`hessian = TRUE` and `FALSE`) |
+| nwrem against relevent | nwrem 1.2.0 (15 November, Stata 17, core 3.25.1; the relevent times of 26 and 27 October in `raw/rem.csv`, relevent 1.2-1, `hessian = TRUE` and `FALSE`; the nwrem 1.0.10 rows of that file are the earlier run) |
 | nwdynam against goldfish | nwdynam 1.2.0, goldfish 1.6.12 (engines `default`, `default_c`, `gather_compute`) |
 
 All with nwcommands core 3.10.0.
@@ -42,7 +42,7 @@ and `SCR` to a scratch folder that holds a clean `PLUS` directory and the instal
 `SCR` as well. The machine should have no other R or Stata process running.
 
 - nwsaom against RSiena: `BENCH=... SCR=... python3 scripts/plan_saom.py main` (also `extra` and `cores`); the 1.1.1 run used `scripts/plan_111.py` (`small`, `large`, `extra`, `cores`).
-- nwrem against relevent: `Rscript scripts/gen_rem.R`, then `python3 scripts/plan_rem.py`.
+- nwrem against relevent: `Rscript scripts/gen_rem.R`, then `python3 scripts/plan_rem.py`. The nwrem 1.2.0 fits alone: `python3 scripts/run_nwrem120.py` (`raw/rem_nwrem120.csv`, with the peak memory of each fit), then `python3 scripts/aggregate_rem_nwrem120.py raw/rem.csv raw/rem_nwrem120.csv` for the ratios (`summary/rem_nwrem120.csv`).
 - nwdynam against goldfish: `Rscript scripts/gen_dynam.R`, then `python3 scripts/plan_dynam.py`.
 - nwergm against ergm: `zsh nwergm/idle/drive.sh` (needs the networks of `nwergm/networks/` and both nwergm versions).
 - Summaries: `python3 scripts/aggregate_all.py` rewrites `summary/` from `raw/`.
