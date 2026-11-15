@@ -4,6 +4,17 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.25.1] - 2026-11-15
+
+### Removed
+- The example data sets `socialevolution` and `socialevolution_nodes` (phone calls among students, from the Social Evolution study of the MIT Media Lab, Madan et al. 2012) are no longer distributed with the package: their redistribution is not permitted by the licence of the original data. `nwwebuse socialevolution` and `nwuse data/socialevolution` therefore no longer work. The email log `manufacturing` (with `manufacturing_nodes`, CC0) is the example event data set; its entry in `netexample` and on the data page of the website explains how to use it.
+
+### Changed
+- The tests that used the phone-call data now use `manufacturing`.
+- Website menu: the pages of the core package that are not tutorials now come after the 21 tutorials, so Tutorial 21 follows Tutorial 20.
+
+Tested on: TO BE FILLED
+
 ## [3.25.0] - 2026-11-14
 
 ### Results that change (read before you re-run old analyses)

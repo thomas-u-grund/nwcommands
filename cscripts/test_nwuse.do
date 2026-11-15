@@ -137,28 +137,28 @@ qui nwsummarize kapferer_t2
 assert r(nodes) == 43
 assert r(edges) == 190
 
-* --- socialevolution: this package's only bundled real continuous-time
-* event dataset (real MIT Reality Commons phone-call log, via R's
-* goldfish::Social_Evolution, not typed from memory) - loaded as a
-* plain sender/receiver/t dataset, not a pre-declared network, so the
-* regression coverage checks the raw load AND the nwset(eventtime())
+* --- manufacturing: this package's bundled real continuous-time event
+* dataset (Michalski 2020, CC0: the email log of a manufacturing company) -
+* loaded as a plain sender/receiver/t dataset, not a pre-declared network,
+* so the regression coverage checks the raw load AND the nwset(eventtime())
 * declaration, unlike every other entry in this file.
 nwclear
-nwuse data/socialevolution, nwclear
+nwuse data/manufacturing, nwclear
 count
-assert r(N) == 439
+assert r(N) == 50233
 confirm variable sender receiver t
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 qui nwsummarize calls
-assert r(nodes) == 54
-assert r(arcs) == 84
+assert r(nodes) == 129
+assert r(arcs) == 1162
 assert r(temporaltype) == "event"
 rename _nwnode label
-merge 1:1 label using data/socialevolution_nodes, keep(master match) nogen
+merge 1:1 label using data/manufacturing_nodes, keep(master match) nogen
 count
-assert r(N) == 54
-confirm variable floor gradeType
-count if missing(floor)
+assert r(N) == 129
+confirm variable supervisor level division
+count if missing(level)
 assert r(N) == 0
 rename label _nwnode
 

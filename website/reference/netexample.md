@@ -31,7 +31,6 @@ Example network data sets
 - [mesa](netexample)`use` | `describe`
 - [zachary](netexample)`use` | `describe`
 - [kapferer](netexample)`use` | `describe`
-- [socialevolution](netexample)`use` | `describe`
 - [manufacturing](netexample)`use` | `describe`
 - [davis](netexample)`use` | `describe`
 - [ftdirectors_se](netexample)`use` | `describe`
@@ -343,30 +342,9 @@ Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester 
 
 Distributed with R's own `ergm` package as `data(kapferer)` (part of the Statnet Project).
 
-## Social Evolution calls data
-
-**Loaded as:** a plain (not pre-declared) Stata dataset - unlike every other entry on this page, `nwwebuse socialevolution` does NOT hand back a ready-to-use network. It loads three columns, *sender*, *receiver*, *t*, one row per timestamped event, exactly the shape [`nwset`'s](nwset) own `eventtime()` declaration expects:
-
-- `. nwwebuse socialevolution, nwclear`
-- `. nwset sender receiver, eventtime(t) name(calls)`
-
-**Vertex attributes:** a companion dataset, `socialevolution_nodes.dta` (`nwwebuse` `socialevolution_nodes`), holds *label, floor, gradeType* for the 84 students who appear anywhere in the study (not only the 54 who placed or received a call). After `nwset` declares the event network, its node-level dataset carries each actor's own label in `_nwnode` - rename it to `label`, merge, then rename back:
-
-- `. rename _nwnode label`
-- `. merge 1:1 label using socialevolution_nodes, keep(master match) nogen`
-- `. rename label _nwnode`
-
-This is an abbreviated real relational-event dataset from the MIT Media Lab's "Social Evolution" study (part of the Reality Commons project): 439 real, timestamped mobile-phone calls placed among 84 students in a university dormitory over roughly six weeks of an academic year, *t* recorded here as days elapsed since the first call in the set. *floor* is the dormitory floor each student lived on; *gradeType* is class year (freshman through graduate tutor, coded 1-5, missing for a small number of students not otherwise classified). This package's only bundled example of genuine continuous-time event data (contrast every panel-wave dataset above, which records ties at a handful of discrete timepoints, not individual timestamped events) - the natural worked example for `nwrem` and `nwdynam`.
-
-**Reference**
-
-Madan, A., Cebrian, M., Moturu, S., Farrahi, K., and Pentland, A. (2012). Sensing the "Health State" of a Community. IEEE Pervasive Computing, 11(4), 36-45. doi:10.1109/MPRV.2011.79.
-
-Distributed with R's own `goldfish` package as `data(Social_Evolution)`, an abbreviated version (fewer variables, a reduced time window) of the original Reality Commons release.
-
 ## Manufacturing company emails (events)
 
-**Loaded as:** a plain (not pre-declared) Stata dataset, like [socialevolution](netexample). `nwwebuse manufacturing` loads three variables, *sender*, *receiver* and *t*, one row per email, 50,233 rows sorted by time. Declare the event network with [`nwset`](nwset):
+**Loaded as:** a plain (not pre-declared) Stata dataset, unlike the ready-made networks above. `nwwebuse manufacturing` loads three variables, *sender*, *receiver* and *t*, one row per email, 50,233 rows sorted by time. Declare the event network with [`nwset`](nwset):
 
 - `. nwwebuse manufacturing, nwclear`
 - `. nwset sender receiver, eventtime(t) name(mail)`

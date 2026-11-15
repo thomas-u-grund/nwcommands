@@ -69,4 +69,4 @@ to change the current network use {it: {help nwcurrent}}.
 {phang}{cmd:. nwcomponents *marriage}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.1, 15 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

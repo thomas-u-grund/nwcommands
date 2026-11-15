@@ -82,12 +82,13 @@ end
 * ---------------------------------------------------------------------------------------------
 * 1  event network, 439 timestamped calls: nwsave / nwuse
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 tflags calls event
 tstash calls c1
-mata: assert(tio_k_c1 == 439)
-mata: assert(rows(uniqrows((tio_l1_c1, tio_l2_c1))) < 439)
+mata: assert(tio_k_c1 == 2738)
+mata: assert(rows(uniqrows((tio_l1_c1, tio_l2_c1))) < 2738)
 tstatic calls c1
 nwsave "`dir'/calls", replace
 nwclear
@@ -307,7 +308,8 @@ nwexport tm2, type(edgelist) fname("`dir'/tm2") replace aggregate
 * ---------------------------------------------------------------------------------------------
 * 6  copies: nwduplicate keeps the temporal data, nwdropnodes / nwkeepnodes keep the events among the remaining nodes
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 tstash calls d1
 nwduplicate calls, name(cp)
@@ -360,7 +362,8 @@ mata: assert(tio_k_w2 == 4)
 * ---------------------------------------------------------------------------------------------
 * 7  nwtoedge, time: event rows <-> network
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 tstash calls e1
 * no option: the aggregated tie list, with a note
@@ -368,10 +371,11 @@ nwtoedge calls
 nwtoedge calls, aggregate
 count if calls != 0 & calls != .
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 nwtoedge calls, time
-assert _N == 439
+assert _N == 2738
 confirm variable _ego _alter _time
 capture confirm variable calls
 assert _rc != 0
@@ -384,7 +388,8 @@ tstash back e2
 mata: assert(all(tio_l1_e1 :== tio_l1_e2) & all(tio_l2_e1 :== tio_l2_e2) & all(tio_X_e1 :== tio_X_e2))
 * option errors
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls)
 capture nwtoedge calls, time aggregate
 assert _rc == 198
@@ -403,7 +408,8 @@ nwtoedge plain, aggregate
 * ---------------------------------------------------------------------------------------------
 * 8  nwexport: type(edgelist) writes the times, the other formats refuse unless aggregate is given; nwimport reads the times
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls) directed
 tstash calls x1
 foreach ty in pajek ucinet gml {
@@ -420,13 +426,14 @@ tflags calls event
 tsame calls x1
 * aggregate writes the ties only
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls) directed
 nwexport calls, type(edgelist) fname("`dir'/ex_agg") replace aggregate
 nwclear
 nwimport "`dir'/ex_agg.txt", type(edgelist) name(agg)
 qui nwsummarize agg
-assert r(arcs) == 84
+assert r(arcs) == 1162
 qui nwname agg
 assert "`r(temporal)'" == "false"
 
@@ -484,7 +491,8 @@ assert _rc != 0
 * ---------------------------------------------------------------------------------------------
 * 9  nwload and nwsync: the variables hold the aggregated ties; the temporal data are not touched
 nwclear
-use data/socialevolution.dta, clear
+use data/manufacturing.dta, clear
+keep if t < 14
 nwset sender receiver, eventtime(t) name(calls) directed
 tstash calls l1
 nwload calls
