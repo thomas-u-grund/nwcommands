@@ -13,7 +13,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - The tests that used the phone-call data now use `manufacturing`.
 - Website menu: the pages of the core package that are not tutorials now come after the 21 tutorials, so Tutorial 21 follows Tutorial 20.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
 
 ## [3.25.0] - 2026-11-14
 

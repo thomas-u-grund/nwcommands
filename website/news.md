@@ -16,7 +16,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 **nwcommands 3.25.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.1)). The example data sets `socialevolution` and `socialevolution_nodes` are removed because their redistribution is not permitted by the licence of the original data; the email log `manufacturing` is the example event data. The menu of this site now lists Tutorial 21 directly after Tutorial 20.
 
-Tested on: TO BE FILLED
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
 
 ## 15 November 2026: nwdynam 1.4.0
 
