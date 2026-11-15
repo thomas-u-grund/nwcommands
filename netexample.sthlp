@@ -32,7 +32,6 @@
         {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
         {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
         {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
-        {help netexample##socialevolution:socialevolution}{col 29}{stata "nwwebuse socialevolution":use} | {stata "describe using https://nwcommands.org/examples/socialevolution.dta":describe}
         {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
         {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
         {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
@@ -607,58 +606,12 @@ Distributed with R's own {cmd:ergm} package as {cmd:data(kapferer)} (part of the
 
 
 
-{marker socialevolution}
-{title:Social Evolution calls data}
-
-{pstd}
-{bf:Loaded as:} a plain (not pre-declared) Stata dataset - unlike every other entry on this page,
-{cmd:nwwebuse socialevolution} does NOT hand back a ready-to-use network. It loads three columns,
-{it:sender}, {it:receiver}, {it:t}, one row per timestamped event, exactly the shape
-{help nwset##temporal:{cmd:nwset}'s} own {opt eventtime()} declaration expects:{p_end}
-
-{phang2}{cmd:. nwwebuse socialevolution, nwclear}{p_end}
-{phang2}{cmd:. nwset sender receiver, eventtime(t) name(calls)}{p_end}
-
-{pstd}
-{bf:Vertex attributes:} a companion dataset, {cmd:socialevolution_nodes.dta} ({cmd:nwwebuse}
-{cmd:socialevolution_nodes}), holds {it:label, floor, gradeType} for the 84 students who appear
-anywhere in the study (not only the 54 who placed or received a call). After {cmd:nwset} declares
-the event network, its node-level dataset carries each actor's own label in {cmd:_nwnode} - rename
-it to {cmd:label}, merge, then rename back:{p_end}
-
-{phang2}{cmd:. rename _nwnode label}{p_end}
-{phang2}{cmd:. merge 1:1 label using socialevolution_nodes, keep(master match) nogen}{p_end}
-{phang2}{cmd:. rename label _nwnode}{p_end}
-
-{pstd}
-This is an abbreviated real relational-event dataset from the MIT Media Lab's "Social Evolution"
-study (part of the Reality Commons project): 439 real, timestamped mobile-phone calls placed
-among 84 students in a university dormitory over roughly six weeks of an academic year, {it:t}
-recorded here as days elapsed since the first call in the set. {it:floor} is the dormitory floor
-each student lived on; {it:gradeType} is class year (freshman through graduate tutor, coded 1-5,
-missing for a small number of students not otherwise classified). This package's only bundled
-example of genuine continuous-time event data (contrast every panel-wave dataset above, which
-records ties at a handful of discrete timepoints, not individual timestamped events) - the natural
-worked example for {help nwrem} and {help nwdynam}.
-
-{pmore}
-{bf:Reference}
-
-{pmore}
-Madan, A., Cebrian, M., Moturu, S., Farrahi, K., and Pentland, A. (2012). Sensing the "Health
-State" of a Community. IEEE Pervasive Computing, 11(4), 36-45.
-doi:10.1109/MPRV.2011.79.
-
-{pmore}
-Distributed with R's own {cmd:goldfish} package as {cmd:data(Social_Evolution)}, an abbreviated
-version (fewer variables, a reduced time window) of the original Reality Commons release.
-
 {hline}
 {marker manufacturing}
 {title:Manufacturing company emails (events)}
 
 {pstd}
-{bf:Loaded as:} a plain (not pre-declared) Stata dataset, like {help netexample##socialevolution:socialevolution}.
+{bf:Loaded as:} a plain (not pre-declared) Stata dataset, unlike the ready-made networks above.
 {cmd:nwwebuse manufacturing} loads three variables, {it:sender}, {it:receiver} and {it:t}, one row per
 email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
 
@@ -919,4 +872,4 @@ by school agree with Snijders and Baerveldt 2003; the Siena file page states the
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
 {hline}
-{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.1, 15 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

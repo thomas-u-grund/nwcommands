@@ -135,4 +135,4 @@ simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.25.0, 14 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.25.1, 15 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

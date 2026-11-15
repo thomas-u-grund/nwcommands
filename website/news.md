@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 15 November 2026: nwcommands 3.25.1
+
+**nwcommands 3.25.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.1)). The example data sets `socialevolution` and `socialevolution_nodes` are removed because their redistribution is not permitted by the licence of the original data; the email log `manufacturing` is the example event data. The menu of this site now lists Tutorial 21 directly after Tutorial 20.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
+
 ## 15 November 2026: nwdynam 1.4.0
 
 **nwdynam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.4.0)). `nwdynam, submodel(rate) intercept` is fast: the first 14 days of the manufacturing emails (2,738 events) fit in a fraction of a second instead of not finishing, and 50,000 events among 1,000 actors take a few seconds. The estimate is found by Newton-Raphson and equals the converged maximum to 12 digits (fits made with earlier versions agreed with it to about 5 digits). Needs nwcommands 3.24.0 or later.

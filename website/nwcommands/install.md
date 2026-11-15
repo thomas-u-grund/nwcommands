@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwcommands (core)"
-nav_order: 20
+nav_order: 30
 description: "Installing the nwcommands core and, optionally, the model packages."
 permalink: /nwcommands/install/
 ---
@@ -117,5 +117,5 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.25.0/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.25.1/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.

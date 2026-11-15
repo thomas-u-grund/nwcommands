@@ -2,19 +2,22 @@
 title: "Tutorial 1: A first DyNAM"
 parent: "nwdynam (DyNAM)"
 nav_order: 2
-description: "Fit a first dynamic network actor model with nwdynam to a log of phone calls: declare the events, fit the choice and the rate sub-model, and read the tables."
+description: "Fit a first dynamic network actor model with nwdynam to a log of emails: declare the events, fit the choice and the rate sub-model, and read the tables."
 ---
 
-# Tutorial 1: A first DyNAM on a phone-call log
+# Tutorial 1: A first DyNAM on an email log
 
 **Goal.** Declare a stream of timed events, fit the two parts of a dynamic network actor model (DyNAM),
 and understand what each part estimates.
 
-**Data.** The phone calls among 84 university students that the R package goldfish ships as the
-`calls` data of its Social Evolution example (data from a study of MIT students, distributed with goldfish): 439 calls over about six weeks in 2008, each with the
-caller, the person called and the time (in seconds) of the call. The two data files ([events](../data/calls_events.csv), [actors](../data/calls_actors.csv)) are part of this section, so you can run everything below. You need the core `nwcommands` and
-the `nwdynam` package (see [Install](../install/)); the commands were run with `nwdynam` 1.3.0 and the core
-3.22.0. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+**Data.** The email metadata of a manufacturing company, the example data `manufacturing` of the core package
+(Michalski 2020, Harvard Dataverse, [doi:10.7910/DVN/6Z3CGX](https://doi.org/10.7910/DVN/6Z3CGX), CC0 1.0; see also Nurek and
+Michalski 2020, *Applied Sciences* 10(5), 1699; the page [Data sets](../../datasets/) says more). Each row is one email with the
+sender, the receiver and the time it was sent, in days since 1 January 2010. We use the first part of the log, 631 emails
+sent on 4 and 5 January 2010 (`keep if t < 5`), among 154 employees. The data are loaded from the web with
+`nwwebuse manufacturing, nwclear`; no file is needed. You need the core `nwcommands` and
+the `nwdynam` package (see [Install](../install/)); the commands were run with `nwdynam` 1.4.0 and the core
+3.25.1. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 For a short, general introduction to event models, see
 [Intro to Longitudinal Network Models](../../tutorials/19-intro-longitudinal-models/).
 
@@ -23,34 +26,35 @@ For a short, general introduction to event models, see
 A relational event is a single act from one actor to another at a known moment. Between two events nothing
 else is observed, so the model asks, event by event: given everything that has happened so far, which
 actor was going to act next (the **rate** sub-model), and whom did that actor pick (the **choice**
-sub-model)? Both sub-models weigh effects, such as "a person calls someone they called before", and
+sub-model)? Both sub-models weigh effects, such as "a person writes to someone they wrote to before", and
 `nwdynam` estimates how strong each effect is. In the form fitted here only the *order* of the events enters the
 likelihood, not the length of the gaps between them.
 
 ## Look at the events
 
 ```stata
-. import delimited "../data/calls_events.csv", clear
+. nwwebuse manufacturing, nwclear
+. keep if t < 5
 . list in 1/5
 
-     +--------------------------------+
-     | sender   receiver    eventtime |
-     |--------------------------------|
-  1. |     72         50   1220733470 |
-  2. |     43         51   1221102974 |
-  3. |     43         51   1221784293 |
-  4. |     43         22   1221785882 |
-  5. |     43         55   1221787264 |
-     +--------------------------------+
+     +------------------------------+
+     | sender   receiver          t |
+     |------------------------------|
+  1. |    E39        E81   3.235255 |
+  2. |    E39        E81   3.235822 |
+  3. |   E112       E136    3.25566 |
+  4. |   E112        E60    3.25728 |
+  5. |   E112        E57   3.257963 |
+     +------------------------------+
 
 . count
-  439
+  631
 
-. display "span in days: " (eventtime[_N] - eventtime[1]) / 86400
-span in days: 42.125949
+. display "span in days: " %5.2f t[_N] - t[1]
+span in days:  1.75
 ```
 
-Each row is one call. The data must be sorted by time (they are here). Many calls repeat the same pair:
+Each row is one email. The data must be sorted by time (they are here). Many emails repeat the same pair:
 
 ```stata
 . duplicates report sender receiver
@@ -60,64 +64,73 @@ Duplicates in terms of sender receiver
 --------------------------------------
    Copies | Observations       Surplus
 ----------+---------------------------
-        1 |           36             0
-        2 |           26            13
-        ...
-       64 |           64            63
-      115 |          115           114
+        1 |          235             0
+        2 |          160            80
+        3 |           75            50
+        4 |           76            57
+        5 |           55            44
+        6 |            6             5
+        8 |           24            21
 --------------------------------------
 ```
 
-Of the pairs that appear, 36 appear exactly once, while one pair accounts for 115 calls.
-This strong repetition is what the effect `inertia` below picks up.
+Of the 374 pairs that appear, 235 appear exactly once, while three pairs account for eight emails each.
+This repetition is what the effect `inertia` below picks up.
 
 ## Declare the events
 
-The calls name 54 of the 84 students. The other 30 never make or receive a call, but they were
-there and could have been called, so they belong to the set of possible choices. A list of events can only
+The emails name 102 of the 154 employees of the company file. The other 52 neither send nor receive an email in these
+days, but they were there and could have been written to, so they belong to the set of possible choices. A list of events can only
 create the actors it mentions, so we add the missing ones as isolates with `nwaddnodes`:
 
 ```stata
-. nwset sender receiver, eventtime(eventtime) name(calls)
-. nwaddnodes calls, nodenames(`miss')
+. nwset sender receiver, directed eventtime(t) name(mail)
+. nwaddnodes mail, nodenames(`miss')
 ```
 
-(`miss` is the list of the ids 1 to 84 that do not occur in the log; the lines that build it are in
-[example.do](example.do).) The option `eventtime()` tells `nwset` that each row is an event with a
-time, not a lasting tie. Leaving the 30 actors out would change the estimates, because it shrinks the
-set of people a caller can choose.
+(`miss` is the list of the labels in the company file, `manufacturing_nodes`, that do not occur in the log; the lines that
+build it are in [example.do](example.do).) The option `eventtime()` tells `nwset` that each row is an event with a
+time, not a lasting tie. Leaving the 52 actors out would change the estimates, because it shrinks the
+set of people a sender can choose.
 
 ## The choice sub-model
 
 `nwdynam` with no options fits the choice sub-model with its three standard effects:
 
 ```stata
-. nwdynam calls
+. nwdynam mail
 ------------------------------------------------------------
 Dynamic Network Actor Model - choice sub-model (MLE)
-Network: calls                         Actors: 84
-Events: 439                            Log likelihood: -695.4608
+Network: mail                          Actors: 154
+Events: 631                            Log likelihood: -2.31e+03
+Note: 3 events share a time point with an earlier event; events with equal times
+are simultaneous (as in goldfish).
 ------------------------------------------------------------
 ------------------------------------------------------------------------------
-       calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+        mail | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-     inertia |   5.365619   .1937551    27.69   0.000     4.985866    5.745372
-       recip |   1.389441    .167288     8.31   0.000     1.061562    1.717319
-       indeg |  -.1735184   .0909708    -1.91   0.056    -.3518179    .0047811
+     inertia |   1.764848   .1422702    12.40   0.000     1.486004    2.043693
+       recip |   2.922411   .1401072    20.86   0.000     2.647806    3.197016
+       indeg |   .1096219   .0083143    13.18   0.000     .0933262    .1259177
 ------------------------------------------------------------------------------
+
+. display "log likelihood: " %9.2f e(ll)
+log likelihood:  -2307.40
 ```
 
-**How to read it.** At every call, the caller is known and the model compares everyone the caller could have
-called, a conditional logit. A coefficient is the change in the log odds of being chosen when the effect increases by one
+The note says that three emails were sent at exactly the same moment as an earlier one; such events are treated as simultaneous.
+
+**How to read it.** At every email, the sender is known and the model compares everyone the sender could have
+written to, a conditional logit. A coefficient is the change in the log odds of being chosen when the effect increases by one
 unit:
 
-- `inertia` (5.37) is 1 if the caller has called this person before. A person called earlier is `exp(5.37)`, about 200
-  times more likely to be called again than an otherwise similar person never called. Phone calls are
-  extremely habitual.
-- `recip` (1.39) is 1 if the candidate has called the caller before. Returning a call multiplies the odds by
-  `exp(1.39)`, about 4.0.
-- `indeg` (-0.17) is the number of different people who have called the candidate. Its coefficient is small and
-  the 95% interval touches zero (p = 0.056): there is no clear evidence that popular people are chosen more often
+- `inertia` (1.76) is 1 if the sender has written to this person before. A person written to earlier is `exp(1.76)`, about 5.8
+  times more likely to be written to again than an otherwise similar person never written to. Email contacts are
+  habitual.
+- `recip` (2.92) is 1 if the candidate has written to the sender before. Answering an email multiplies the odds by
+  `exp(2.92)`, about 18.6.
+- `indeg` (0.11) is the number of different people who have written to the candidate. Each additional person multiplies the
+  odds by `exp(0.11)`, about 1.12: people who receive mail from many colleagues are more likely to receive more, even
   once repetition and reciprocation are accounted for.
 
 The header gives the number of events, the number of actors and the log likelihood, which is the number you
@@ -125,28 +138,31 @@ compare between models (Tutorial 2).
 
 ## The rate sub-model
 
-The same events, now asking *who* calls next:
+The same events, now asking *who* writes next:
 
 ```stata
-. nwdynam calls, submodel(rate)
+. nwdynam mail, submodel(rate)
 ------------------------------------------------------------
 Dynamic Network Actor Model - rate sub-model, no intercept (MLE)
-Network: calls                         Actors: 84
-Events: 439                            Log likelihood: -1.75e+03
+Network: mail                          Actors: 154
+Events: 631                            Log likelihood: -2.99e+03
+Note: 3 events share a time point with an earlier event; events with equal times
+are simultaneous (as in goldfish).
 ------------------------------------------------------------
 ------------------------------------------------------------------------------
-       calls | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+        mail | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       indeg |   .5514472   .0663444     8.31   0.000     .4214147    .6814798
-      outdeg |   .2637836    .028386     9.29   0.000      .208148    .3194193
+       indeg |    .032447   .0121149     2.68   0.007     .0087021    .0561918
+      outdeg |   .2981679   .0176337    16.91   0.000     .2636064    .3327294
 ------------------------------------------------------------------------------
 ```
 
-Here every one of the 84 actors is a candidate for the next call, and the effects describe the caller:
+Here every one of the 154 actors is a candidate for the next email, and the effects describe the sender:
 
-- `indeg` (0.55): the more different people have called someone, the sooner that person is likely to be the
-  next caller. Those who are called also call.
-- `outdeg` (0.26): the more different people someone has called, the more likely they call again.
+- `indeg` (0.03): the more different people have written to someone, the sooner that person is likely to be the
+  next sender, but the effect is weak (z = 2.68).
+- `outdeg` (0.30): the more different people someone has written to, the more likely they write again. Active
+  senders stay active.
 
 The effects mean different things in the two sub-models: in the choice model `indeg` and `outdeg` are
 properties of the *candidate being chosen*, in the rate model of the *actor who acts*. That is why the
@@ -159,20 +175,22 @@ The stored results hold everything for later use:
 sub-model: rate, effects: indeg outdeg
 
 . display "events: " e(N) ", actors: " e(nodes) ", log likelihood: " %9.2f e(ll)
-events: 439, actors: 84, log likelihood:  -1750.91
+events: 631, actors: 154, log likelihood:  -2986.28
 ```
 
 ## A check against goldfish
 
-For the choice model above, goldfish 1.6.12 gives `inertia` 5.36556 (s.e. 0.19375), `recip` 1.38944
-(0.16729), `indeg` -0.17353 (0.09097) and a log likelihood of -695.46 on the same data, the same 84 actors
-and the same model. The numbers agree to the digits shown.
+For the choice model above, goldfish 1.6.12 gives `inertia` 1.76485 (s.e. 0.14227), `recip` 2.92238
+(0.14011), `indeg` 0.10962 (0.00831) and a log likelihood of -2307.40 on the same events, the same 154 actors
+and the same model. For the rate model it gives `indeg` 0.03246 (0.01211), `outdeg` 0.29812 (0.01763) and a log likelihood of
+-2986.28. The numbers agree to the digits shown, apart from the last digit of `recip` (2.92241 against 2.92238), which is
+within the tolerance of the two optimizers.
 
 ## Things to try
 
-- Fit only `inertia`: `nwdynam calls, inertia`. Asking for any effect restricts the model to the effects named.
+- Fit only `inertia`: `nwdynam mail, inertia`. Asking for any effect restricts the model to the effects named.
 - Fit the rate model with `outdeg` alone and see how the coefficient changes.
-- Leave out the 30 isolates (skip `nwaddnodes`) and compare the coefficients with the table above.
+- Leave out the 52 isolates (skip `nwaddnodes`) and compare the coefficients with the table above.
 
 ## Next
 
