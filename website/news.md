@@ -18,6 +18,12 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
 
+## 15 November 2026: nwrem 1.2.0
+
+**nwrem 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.2.0)). Fits are much faster. The likelihood and its gradient are computed from sums over senders and receivers instead of an n x n softmax per event, and the state-dependent dyadic effects (`frpsndsnd`, `frrecsnd`, `rsndsnd`, `rrecsnd`) are updated only at the rows of the sender and receiver after each event. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.9 s instead of 20.3 s, and with `covevent()` 1.3 s instead of 35.4 s. In the [benchmark against relevent](/nwrem/speed/) nwrem is faster in every cell where both finished. The estimates are the same as before (coefficients to about 1e-11). Effects that are exactly collinear with earlier effects, for example `ntdegsnd` together with `nodsnd` and `nidsnd`, are now found before the optimizer runs, left out (coefficient 0, listed in `e(unidentified)`) instead of being run on a flat ridge. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). Windows and Linux are not tested for this release.
+
 ## 15 November 2026: nwdynam 1.4.0
 
 **nwdynam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.4.0)). `nwdynam, submodel(rate) intercept` is fast: the first 14 days of the manufacturing emails (2,738 events) fit in a fraction of a second instead of not finishing, and 50,000 events among 1,000 actors take a few seconds. The estimate is found by Newton-Raphson and equals the converged maximum to 12 digits (fits made with earlier versions agreed with it to about 5 digits). Needs nwcommands 3.24.0 or later.
