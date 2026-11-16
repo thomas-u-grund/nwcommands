@@ -54,6 +54,7 @@ the sister package that splits each event into the choice of the actor and the c
 - [Tutorial 2: Effects and interpretation](tutorial-2-effects/): actor and pair covariates, recency, side-by-side comparison.
 - [Tutorial 3: Comparing specifications](tutorial-3-comparing/): AIC, BIC and likelihood-ratio tests, stability, limits.
 - [nwrem and relevent](r-relevent/): what is the same, what differs, a translation table, and where the package comes from.
+- [Manual](manual/): the reference, as a PDF.
 - [How to cite](citation/)
 
 ## Links
