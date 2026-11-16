@@ -22,9 +22,6 @@ set more off
 * Description
 * ============================================================
 nwwebuse lazega, nwclear
-foreach v in office practice status {
-    encode `v', generate(`v'n)
-}
 preserve
 quietly nwtoedge lazega_adv, egovars(status) altervars(status)
 drop if _ego == _alter
@@ -96,17 +93,17 @@ frame sims: summarize size if allp
 * ============================================================
 * QAP regression
 * ============================================================
-generate byte partner_i = (status == "partner")
+generate byte partner_i = partner
 generate byte partner_j = partner_i
 set seed 12345
-nwqap lazega_adv lazega_fr officen practicen partner_i partner_j, ///
-    mode(same same sender receiver) permutations(1000)
+nwqap lazega_adv lazega_fr office practice partner_i partner_j, mode(same ///
+    same sender receiver) permutations(1000)
 
 * ============================================================
 * An ERGM: status and niches net of reciprocity and closure
 * ============================================================
-nwergm lazega_adv, edges mutual nodematch(officen practicen) ///
-    nodeofactor(statusn) nodeifactor(statusn) gwesp(.5) edgecov(lazega_fr) ///
+nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
     seed(12345)
 estimates store firm
 quietly estat mcmcdiag
@@ -118,16 +115,16 @@ estat gof, gof(espartners) seed(12345)
 * Sensitivity: tie rule and two very active lawyers
 * ============================================================
 nwsym lazega_fr, mode(min) generate(fr_and)
-quietly nwergm lazega_adv, edges mutual nodematch(officen practicen) ///
-    nodeofactor(statusn) nodeifactor(statusn) gwesp(.5) edgecov(fr_and) ///
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(fr_and) ///
     seed(12345)
 estimates store and_fr
 display "converged: " e(converged)
 list _nwnode office status adv_out adv_in if adv_out >= 30, clean
 nwdrop lazega_fr if adv_out >= 33
 nwdrop lazega_adv if adv_out >= 33, clean
-quietly nwergm lazega_adv, edges mutual nodematch(officen practicen) ///
-    nodeofactor(statusn) nodeifactor(statusn) gwesp(.5) edgecov(lazega_fr) ///
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
     seed(12345)
 estimates store drop2
 display "converged: " e(converged)

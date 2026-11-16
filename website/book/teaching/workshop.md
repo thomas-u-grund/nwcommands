@@ -155,7 +155,7 @@ Send participants this list:
   permuted networks.
 - **R equivalents:** `sna::cug.test()`, `sna::qaptest()`, `sna::netlm()`.
 - **Hands-on:** Ch. 19, Ex. 4 (advice and co-work); Ch. 20, Ex. 5 (the advice model without friendship);
-  Ch. 18, Ex. 3 (the friendship network's null mean), run with `reps(200)` to save time.
+  Ch. 18, Ex. 3 (the friendship network's null mean).
 - **Read afterwards:** Chapters 18, 19 and 20.
 
 ### 6. Reproducible scripts, questions (10 min)
@@ -293,7 +293,6 @@ Send participants this list:
 All the model runs above are short. Appendix A of the book reports that an ERGM of the advice network with seven
 terms took about three seconds in Stata/BE on a Mac. On a laptop with Stata/BE, each fit of this session (the
 staged ERGMs, `estat gof`, 100 simulated networks, the Glasgow SAOMs, the score test and the co-evolution model)
-finished within a few seconds. The one exception in Session 1 is `nwcug` with `reps(1000)`, which took about a
-minute; with many participants, use `reps(200)` for the hands-on. Chapter 24 notes that a Bayesian run takes a few minutes,
+finished within a few seconds, and in Session 1 `nwcug` with `reps(1000)` took about ten seconds. Chapter 24 notes that a Bayesian run takes a few minutes,
 and that fitting the 19 Dutch schools one by one took minutes; show those from prepared output rather than run
 them live.
