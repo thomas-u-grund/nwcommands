@@ -27,9 +27,8 @@ its correctness rests on numerical comparison with the R package.
 - **The effects.** The effects of the choice and rate models that are listed in the table below, with the same definitions.
 - **The estimation.** Maximum likelihood with the ordinal partial likelihood (only the order of events); with `intercept`,
   the continuous-time hazard of the rate model.
-- **The comparison.** Coefficients and log likelihoods were compared with goldfish 1.6.12 on the Social Evolution
-  data that goldfish ships (84 actors, 439 phone calls), on the first 631 emails of the manufacturing company data used in the
-  tutorials and on small hand-built examples. On the email data the choice model
+- **The comparison.** Coefficients and log likelihoods were compared with goldfish 1.6.12 on the first 631 emails of the
+  manufacturing company data used in the tutorials, on random event logs and on small hand-built examples. On the email data the choice model
   with `inertia`, `recip` and `indeg` gives 1.7648, 2.9224 and 0.1096 in both programs (see
   [Tutorial 1](../tutorial-1-first-dynam/)). The compiled plugin was checked against the Mata implementation of the
   package to floating-point round-off.
