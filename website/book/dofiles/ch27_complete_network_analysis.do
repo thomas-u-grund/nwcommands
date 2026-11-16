@@ -29,66 +29,8 @@ table status_ego status_alter, statistic(mean lazega_adv) nformat(%5.3f)
 restore
 
 quietly nwdegree lazega_adv, generate(adv_out adv_in)
-quietly nwbetween lazega_adv, generate(bet)
-quietly nwsym lazega_adv, mode(min) generate(advm)
-quietly nwkcore advm, generate(kc)
-tabstat adv_in adv_out bet kc, by(status) statistics(mean) format(%6.1f)
-tab kc status if kc == 5
-
-* ============================================================
-* A baseline: could the core be chance?
-* ============================================================
-display comb(36,11)/comb(71,11)
-
-preserve
-quietly nwergm simulate 71, edges theta(0) basis(lazega_adv) ///
-    constraints(degrees) directed nsim(500) generate(deg) seed(12345)
-restore
-frame create sims kmax size partners mutual
-forvalues s = 1/500 {
-    quietly nwsym deg_`s', mode(min) generate(dm)
-    quietly nwsummarize dm
-    local mu = r(edges)
-    quietly nwkcore dm, generate(kcs)
-    quietly summarize kcs
-    local k = r(max)
-    quietly count if kcs == `k'
-    local n = r(N)
-    quietly count if kcs == `k' & status == "partner"
-    frame post sims (`k') (`n') (r(N)) (`mu')
-    nwdrop deg_`s' dm
-    drop kcs
-}
-frame sims: generate allp = partners == size
-frame sims: tab kmax allp
-frame sims: summarize size if allp
-frame sims: summarize mutual
-
-frame drop sims
-preserve
-quietly nwergm simulate 71, edges mutual theta(0 1.6) basis(lazega_adv) ///
-    constraints(degrees) directed nsim(500) generate(deg) seed(12345)
-restore
-frame create sims kmax size partners mutual
-* setup (not printed in the book):
-forvalues s = 1/500 {
-    quietly nwsym deg_`s', mode(min) generate(dm)
-    quietly nwsummarize dm
-    local mu = r(edges)
-    quietly nwkcore dm, generate(kcs)
-    quietly summarize kcs
-    local k = r(max)
-    quietly count if kcs == `k'
-    local n = r(N)
-    quietly count if kcs == `k' & status == "partner"
-    frame post sims (`k') (`n') (r(N)) (`mu')
-    nwdrop deg_`s' dm
-    drop kcs
-}
-frame sims: summarize mutual
-frame sims: generate allp = partners == size
-frame sims: tab kmax allp
-frame sims: summarize size if allp
+tabstat adv_in adv_out seniority, by(status) statistics(mean min max) ///
+    format(%5.1f)
 
 * ============================================================
 * QAP regression
@@ -100,7 +42,7 @@ nwqap lazega_adv lazega_fr office practice partner_i partner_j, mode(same ///
     same sender receiver) permutations(1000)
 
 * ============================================================
-* An ERGM: status and niches net of reciprocity and closure
+* An ERGM: status net of niches, reciprocity and closure
 * ============================================================
 nwergm lazega_adv, edges mutual nodematch(office practice) ///
     nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
@@ -112,20 +54,48 @@ mata: min(st_matrix("r(ess)"))
 estat gof, gof(espartners) seed(12345)
 
 * ============================================================
+* Whose choices carry the status effect?
+* ============================================================
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodemix(status) gwesp(.5) edgecov(lazega_fr) seed(12345)
+estimates store mix
+quietly estat mcmcdiag
+mata: min(st_matrix("r(ess)"))
+estimates table firm mix, b(%7.3f) se(%7.3f) stats(converged) varwidth(22)
+lincom nodemix_status_2_2 - nodemix_status_2_1
+
+* ============================================================
+* Partnership or seniority?
+* ============================================================
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodeofactor(status) nodeifactor(status) nodeocov(seniority) ///
+    nodeicov(seniority) gwesp(.5) edgecov(lazega_fr) seed(12345)
+estimates store senior
+quietly estat mcmcdiag
+mata: min(st_matrix("r(ess)"))
+estimates table firm senior, b(%7.3f) se(%7.3f) stats(converged) varwidth(22)
+
+* ============================================================
 * Sensitivity: tie rule and two very active lawyers
 * ============================================================
 nwsym lazega_fr, mode(min) generate(fr_and)
-quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
-    nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(fr_and) ///
-    seed(12345)
-estimates store and_fr
-display "converged: " e(converged)
-list _nwnode office status adv_out adv_in if adv_out >= 30, clean
+local rest edges mutual nodematch(office practice) gwesp(.5) seed(12345)
+quietly nwergm lazega_adv, `rest' nodemix(status) edgecov(fr_and)
+estimates store mix_and
+quietly nwergm lazega_adv, `rest' nodeofactor(status) nodeifactor(status) ///
+    nodeocov(seniority) nodeicov(seniority) edgecov(fr_and)
+estimates store sen_and
+list _nwnode office status seniority adv_out adv_in if adv_out >= 30, clean
 nwdrop lazega_fr if adv_out >= 33
 nwdrop lazega_adv if adv_out >= 33, clean
-quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
-    nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
-    seed(12345)
-estimates store drop2
-display "converged: " e(converged)
-estimates table firm and_fr drop2, b(%7.3f) se(%7.3f) varwidth(22)
+quietly nwergm lazega_adv, `rest' nodemix(status) edgecov(lazega_fr)
+estimates store mix_d2
+quietly nwergm lazega_adv, `rest' nodeofactor(status) nodeifactor(status) ///
+    nodeocov(seniority) nodeicov(seniority) edgecov(lazega_fr)
+estimates store sen_d2
+estimates table mix mix_and mix_d2, keep(nodemix_status_2_1 ///
+    nodemix_status_1_2 nodemix_status_2_2) b(%7.3f) se(%7.3f) ///
+    stats(converged) varwidth(22)
+estimates table senior sen_and sen_d2, keep(nodeofactor_status_2 ///
+    nodeifactor_status_2 nodeocov_seniority nodeicov_seniority) b(%7.3f) ///
+    se(%7.3f) stats(converged) varwidth(22)
