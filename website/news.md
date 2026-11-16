@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 16 November 2026: nwdynam 1.8.1
+
+**nwdynam 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.1)). Fixes. With `netterms()` and a network declared with `eventtime()`, the first fit was correct but every later fit in the same session with the same event network gave wrong estimates; fits are now identical on every call (results are affected only if they came from a second or later fit with an event network whose actor order differs from that of the fitted network). `estat changepoints, plot` works again, and `choice_coordination` with statistics of large values such as `indeg` no longer stops with "flat region".
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (all tests, plus a new test for these fixes). Windows and Linux: not tested for this version; the plugin is the one of 1.8.0.
+
 ## 16 November 2026: nwdynam 1.8.0
 
 **nwdynam 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.0)). Closer to goldfish, in one release. New: effects through other networks (`netterms()`, with `window`, `weighted` and `ignorerep`), the mixed closures (`mixedtrans` and the others), `tertiusdiff()`, `ignorerep()` for the built-in effects, a time-varying network in `tie()`, windowed rate effects with `intercept`, `tertiuswindow()`, windows and weights in `choice_coordination`, two-mode attribute and closure effects, `opportunities()` with attribute effects (`oppframe()`) and `change()` in two-mode networks. Postestimation, as in goldfish: `estat ic`, `estat eventlik`, `estat eventprob`, `estat outliers` and `estat changepoints` (PELT, AMOC and binary segmentation, a port of the R package changepoint). Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 to 1e-6 on about 700 random and fixed event logs; per-event values agree on 90 logs. **Update the package as a whole:** a plugin older than 1.8.0 is refused with return code 3495.

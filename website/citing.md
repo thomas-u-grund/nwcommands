@@ -32,7 +32,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version (the nwrem manual is a PDF on this website, cited by its address: *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.8.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.8.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.4.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
