@@ -16,13 +16,13 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 **nwdynam 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.0)). Closer to goldfish, in one release. New: effects through other networks (`netterms()`, with `window`, `weighted` and `ignorerep`), the mixed closures (`mixedtrans` and the others), `tertiusdiff()`, `ignorerep()` for the built-in effects, a time-varying network in `tie()`, windowed rate effects with `intercept`, `tertiuswindow()`, windows and weights in `choice_coordination`, two-mode attribute and closure effects, `opportunities()` with attribute effects (`oppframe()`) and `change()` in two-mode networks. Postestimation, as in goldfish: `estat ic`, `estat eventlik`, `estat eventprob`, `estat outliers` and `estat changepoints` (PELT, AMOC and binary segmentation, a port of the R package changepoint). Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 to 1e-6 on about 700 random and fixed event logs; per-event values agree on 90 logs. **Update the package as a whole:** a plugin older than 1.8.0 is refused with return code 3495.
 
-Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP and on Linux (Ubuntu 22.04, StataNow 19.5 MP; all 29 tests). The Windows plugin is built by the build workflow and has not been tested yet.
 
 ## 16 November 2026: nwrem 1.4.0
 
 **nwrem 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.4.0)). Closer to relevent. New: the likelihood that uses the waiting times (`interval`, with `starttime()`, `endtime()` and `condition()`), the triadic effects `otpsnd`, `itpsnd`, `ospsnd` and `ispsnd`, the fixed effects `fesnd`, `ferec` and `feint`, six participation shifts (`psabba`, `psabby`, `psabxa`, `psabxb`, `psabxy`, `psabay`), the posterior mode (`postmode`), restricted risk sets (`riskset()`, `entry()`, `exit()`) and several covariates per option. Coefficients agree with the exact maximum of relevent to about 2e-6 on 60 random event logs, standard errors to about 1e-7. The check for effects that are exactly collinear now covers all effects, and fits with the state-dependent dyadic effects are about 1.5 times faster. **Update the package as a whole:** a plugin older than 1.4.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later (3.26.0 for `nwinstall, buildplugin(nwrem)`).
 
-Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP and on Linux (Ubuntu 22.04, StataNow 19.5 MP; all 23 tests). The Windows plugin is built by the build workflow and has not been tested yet.
 
 ## 16 November 2026: nwdynam 1.7.0
 

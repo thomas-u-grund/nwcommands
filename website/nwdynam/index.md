@@ -46,7 +46,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Networks | directed one-mode, undirected one-mode (coordination), two-mode (a narrow set of effects) |
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data, on the manufacturing email data of the tutorials and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood, gradient and Hessian of every fit (macOS, Linux, Windows); the optimization runs in Mata |
-| Speed | Faster than goldfish in our benchmark: 7.7 to 76 times for the original structural effects (compiled plug-in), 1.2 to 2.4 times for an effect set that runs in Mata, with the gain shrinking as the number of actors grows; see [Speed compared with goldfish](speed/) |
+| Speed | Faster than goldfish in every timed cell: 7 to 119 times against its `default_c` engine and 12 to 1,637 times against its default engine (choice and rate models, every fit in the compiled plug-in); see [Speed compared with goldfish](speed/) |
 | Version | 1.8.0 (16 November 2026) |
 | License | GNU General Public License, version 3 |
 
