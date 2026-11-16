@@ -74,7 +74,7 @@ versions at the end{p_end}
 {synopt:{opt nogui}}with {opt all} or {opt everything}: do not set up the menu and do not touch {bf:profile.do}{p_end}
 {synopt:{opt dup:check}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
 {synopt:{opth modelp:kg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
-{synopt:{opth buildp:lugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; {cmd:all} for all four) and install them; macOS and
+{synopt:{opth buildp:lugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; {cmd:all} for all five) and install them; macOS and
 Linux; used alone{p_end}
 {synopt:{opth buildm:ata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; {cmd:all} for the core and every
 installed package); the repair if the shipped library was built by a newer Stata; used alone{p_end}
@@ -302,4 +302,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.25.1, 15 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.26.0, 16 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

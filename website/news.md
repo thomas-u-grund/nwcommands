@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 16 November 2026: nwcommands 3.26.0 and nwrem 1.3.0
+
+**nwrem 1.3.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.3.0)). Every fit now runs in a compiled plugin that returns the likelihood, the gradient and the exact Hessian of all 14 effects; the optimizer uses Newton steps. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.03 s (was 0.76 s) and with `frpsndsnd` 0.27 s (was 4.6 s); at 20,000 events among 100 actors `nodsnd nidrec` takes 0.16 s (was 3.7 s). The estimates are the same to the printed digits, with slightly tighter convergence. **Update the package as a whole:** a plugin older than 1.3.0 is refused with return code 3495, and a missing plugin with 601. Requires nwcommands 3.24.0 or later.
+
+**nwcommands 3.26.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.26.0)). `nwinstall, buildplugin(nwrem)` compiles the nwrem plugin on your computer, like those of the other model packages; `buildplugin(all)` covers five packages.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (core: full suite, 258 tests per version, all pass; nwrem: full suite). The Windows and Linux plugins of nwrem are built by the build workflow and have not been tested yet.
+
 ## 16 November 2026: nwdynam 1.5.1
 
 **nwdynam 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.5.1)). Fits with `submodel(rate) intercept` and choice fits with effects such as `trans` on dense data (thousands of events among few actors) no longer spend up to a thousand likelihood evaluations after the maximum was reached: 5,000 events among 50 actors take 0.1 s instead of 1.5 to 2.6 s. The estimates are the same. The compiled plugins are those of 1.5.0.

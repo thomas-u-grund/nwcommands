@@ -16,7 +16,7 @@ example `nwsaom version`.
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.25.1) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.26.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 
@@ -34,7 +34,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.5.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
+> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 

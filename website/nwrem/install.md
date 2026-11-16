@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.2.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.3.0:
 
 ```stata
-. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.2.0/) replace
+. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.3.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,9 +51,9 @@ version produced the results.
 
 ```stata
 . nwrem version
-nwrem version 1.2.0, 15nov2026
+nwrem version 1.3.0, 16nov2026
   core package nwcommands : installed (development copy, no distribution date)
-  native plugin           : none (Mata only)
+  native plugin           : .../m/rem_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R relevent 1.2-1
   license                 : GNU GPL-3
 ```
@@ -75,10 +75,15 @@ changes the core. `net describe nwrem` shows the installed version and distribut
 `nwrem` in Stata's PLUS folder as well as a new one elsewhere on the ado-path, Stata uses the first one it finds;
 `which nwrem` and `nwrem version` show which copy is in use.
 
-## No plugin
+## The native plugin
 
-Unlike `nwdynam`, `nwrem` has no compiled plugin: it runs entirely in Stata and Mata, so there is nothing platform-specific to
-install, and `nwrem version` says "none (Mata only)".
+The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and found
+automatically; nothing needs to be configured. The plugin of version 1.3.0 has been tested on macOS; the Windows and
+Linux plugins of this version are built the same way but have not been tested yet. Every fit evaluates the likelihood, its
+gradient and its Hessian in the plugin, which the optimizer in Mata calls. There is no slower fallback: without a working
+plugin `nwrem` stops with return code 601 (plugin file missing) or 3495 (plugin older than the package or not loadable).
+`nwrem version` shows the path of the plugin in use, or "missing" if none is found. If the plugin of your platform does not
+work, compile it on your own computer with `nwinstall, buildplugin(nwrem)` (core 3.26.0 or later; it needs a C compiler).
 
 ## Rebuilding the Mata libraries on your own computer
 

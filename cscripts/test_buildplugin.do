@@ -29,6 +29,17 @@ assert `"`r(plugin_nwcommands)'"' == `"`scratch'/dest/nwgraph_`plat'.plugin"'
 * a second run keeps the first plugin as .prev
 nwinstall, buildplugin(nwcommands) buildfrom("`scratch'/from") dest("`scratch'/dest")
 confirm file "`scratch'/dest/nwgraph_`plat'.plugin.prev"
+* the nwrem plugin from a checkout of nwrem (NWMODELS, default: the parent folder), when it is there
+local models : env NWMODELS
+if `"`models'"' == "" local models "`here'/.."
+capture confirm file "`models'/nwrem/native/rem_sim.c"
+if _rc == 0 {
+	if `win' quietly shell mklink /J "`=subinstr("`scratch'/from/nwrem", "/", char(92), .)'" "`=subinstr("`models'/nwrem", "/", char(92), .)'"
+	else quietly shell ln -s "`models'/nwrem" "`scratch'/from/nwrem"
+	nwinstall, buildplugin(nwrem) buildfrom("`scratch'/from") dest("`scratch'/dest")
+	confirm file "`scratch'/dest/rem_sim_`plat'.plugin"
+	if `win' quietly shell rmdir "`=subinstr("`scratch'/from/nwrem", "/", char(92), .)'"
+}
 * an unknown package is refused
 capture nwinstall, buildplugin(nwxyz)
 assert _rc == 198

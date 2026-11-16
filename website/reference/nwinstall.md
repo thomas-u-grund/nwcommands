@@ -66,7 +66,7 @@ buildk:eep]
 | `nogui` | with `all` or `everything`: do not set up the menu and do not touch **profile.do** |
 | `dup:check` | report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing |
 | `modelp:kg(namelist)` | install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone |
-| `buildp:lugin(namelist)` | compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam; `all` for all four) and install them; macOS and Linux; used alone |
+| `buildp:lugin(namelist)` | compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; `all` for all five) and install them; macOS and Linux; used alone |
 | `buildm:ata(namelist)` | rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem; `all` for the core and every installed package); the repair if the shipped library was built by a newer Stata; used alone |
 | `buildf:rom(string)` | with `buildplugin()` or `buildmata()`: a folder or URL with one subfolder per package that holds the source (`native/` for the plugins, the `unw_*.do` files for the Mata libraries); default: the GitHub repositories |
 | `buildk:eep` | with `buildplugin()` or `buildmata()`: keep the build folder (it holds the build log) |
