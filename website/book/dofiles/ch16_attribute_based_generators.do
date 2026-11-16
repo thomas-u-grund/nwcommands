@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -20,8 +22,6 @@ set more off
 * Tie probabilities from group membership
 * ============================================================
 nwwebuse lazega, nwclear
-rename practice practice_str
-encode practice_str, generate(practice)
 nwexpand practice, name(samepractice)
 preserve
 nwtoedge lazega_adv samepractice, full
@@ -86,8 +86,6 @@ foreach h in 0 .5 1 2 3 {
 * ============================================================
 * Sorting without sorters
 * ============================================================
-rename office office_str
-encode office_str, generate(office)
 foreach var in practice office {
     set seed 12345
     quietly nwhomophily `var', density(.179) homophily(0) name(zero_`var')
@@ -97,3 +95,38 @@ foreach var in practice office {
     display "`var', observed advice network:  E-I index = " %6.3f r(EI_index)
 }
 tabulate office
+
+* ============================================================
+* All the attributes at once
+* ============================================================
+nwexpand office, name(sameoffice)
+nwexpand partner, mode(sender) name(frompartner)
+nwexpand partner, mode(receiver) name(topartner)
+nwexpand seniority, mode(absdist) name(senioritygap)
+preserve
+nwtoedge lazega_adv samepractice sameoffice frompartner topartner senioritygap
+drop if _ego == _alter
+logit lazega_adv samepractice sameoffice frompartner topartner ///
+    senioritygap, nolog
+predict p
+nwfromedge _ego _alter p, name(attrprob)
+restore
+
+matrix A = J(20, 4, .)
+set seed 12345
+forvalues r = 1/20 {
+    capture nwdrop attrdraw
+    quietly nwdyadprob attrprob, name(attrdraw)
+    quietly nwsummarize attrdraw, detail
+    matrix A[`r', 1] = (r(reciprocity), r(transitivity))
+    quietly nwmixing attrdraw, attribute(office) permutations(1)
+    matrix A[`r', 3] = r(EI_index)
+    quietly nwmixing attrdraw, attribute(practice) permutations(1)
+    matrix A[`r', 4] = r(EI_index)
+}
+matrix colnames A = reciprocity transitivity EI_office EI_practice
+preserve
+clear
+quietly svmat A, names(col)
+summarize
+restore

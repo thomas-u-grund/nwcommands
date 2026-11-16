@@ -1,13 +1,15 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Chapter 26: A complete network analysis
+* Chapter 27: A complete network analysis
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -45,19 +47,48 @@ preserve
 quietly nwergm simulate 71, edges theta(0) basis(lazega_adv) ///
     constraints(degrees) directed nsim(500) generate(deg) seed(12345)
 restore
-frame create sims kmax size partners
+frame create sims kmax size partners mutual
 forvalues s = 1/500 {
     quietly nwsym deg_`s', mode(min) generate(dm)
+    quietly nwsummarize dm
+    local mu = r(edges)
     quietly nwkcore dm, generate(kcs)
     quietly summarize kcs
     local k = r(max)
     quietly count if kcs == `k'
     local n = r(N)
     quietly count if kcs == `k' & status == "partner"
-    frame post sims (`k') (`n') (r(N))
+    frame post sims (`k') (`n') (r(N)) (`mu')
     nwdrop deg_`s' dm
     drop kcs
 }
+frame sims: generate allp = partners == size
+frame sims: tab kmax allp
+frame sims: summarize size if allp
+frame sims: summarize mutual
+
+frame drop sims
+preserve
+quietly nwergm simulate 71, edges mutual theta(0 1.6) basis(lazega_adv) ///
+    constraints(degrees) directed nsim(500) generate(deg) seed(12345)
+restore
+frame create sims kmax size partners mutual
+* setup (not printed in the book):
+forvalues s = 1/500 {
+    quietly nwsym deg_`s', mode(min) generate(dm)
+    quietly nwsummarize dm
+    local mu = r(edges)
+    quietly nwkcore dm, generate(kcs)
+    quietly summarize kcs
+    local k = r(max)
+    quietly count if kcs == `k'
+    local n = r(N)
+    quietly count if kcs == `k' & status == "partner"
+    frame post sims (`k') (`n') (r(N)) (`mu')
+    nwdrop deg_`s' dm
+    drop kcs
+}
+frame sims: summarize mutual
 frame sims: generate allp = partners == size
 frame sims: tab kmax allp
 frame sims: summarize size if allp
@@ -80,6 +111,8 @@ nwergm lazega_adv, edges mutual nodematch(officen practicen) ///
 estimates store firm
 quietly estat mcmcdiag
 mata: min(st_matrix("r(ess)"))
+
+estat gof, gof(espartners) seed(12345)
 
 * ============================================================
 * Sensitivity: tie rule and two very active lawyers

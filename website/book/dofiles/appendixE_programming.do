@@ -1,13 +1,15 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Appendix: Programming with network objects
+* Appendix: Programming with networks in Mata
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -17,7 +19,21 @@ clear all
 set more off
 
 * ============================================================
-* Worked example 1: a node-level statistic
+* The second way: the nwapi functions
+* ============================================================
+nwwebuse florentine, nwclear
+mata:
+    A   = nwapi_matrix("flomarriage")
+    n   = nwapi_nodes("flomarriage")
+    lab = nwapi_nodelabels("flomarriage")
+    nb  = nwapi_neighbors("flomarriage", "medici")
+    sum(A) / (n*(n-1))                           // density
+    invtokens(lab[nb]')                          // Medici's marriage partners
+    trace(A*A*A) / 6                             // triangles
+end
+
+* ============================================================
+* Writing a command
 * ============================================================
 program myindegree
     syntax [anything(name=netname)] , [ generate(string)]
@@ -33,9 +49,14 @@ nwwebuse florentine, nwclear
 myindegree flomarriage, generate(myindegree_flomarriage)
 list _nwnode myindegree_flomarriage in 1/5
 
-* ============================================================
-* Worked example 2: a command that produces a new network
-* ============================================================
+program myindegree2
+    syntax [anything(name=netname)] , [ generate(string)]
+    _nwsyntax `netname'
+    local generate = cond("`generate'"=="", "_myindegree", "`generate'")
+    mata: st_store((1::`nodes'), st_addvar("double", "`generate'"), ///
+        nwapi_indegree("`netname'"))
+end
+
 program myinverse
     syntax [anything(name=netname)] , [ name(string)]
     _nwsyntax `netname'
@@ -45,25 +66,5 @@ program myinverse
     nwset, mat(inverse) name("`name'") undirected
     mata: mata drop net inverse
 end
-nwwebuse florentine, nwclear
 myinverse flomarriage, name(flomarriage_inverse)
 nwsummarize flomarriage_inverse
-
-* ============================================================
-* Worked example 3: a network-level statistic with stored results
-* ============================================================
-program mydensity2, rclass
-    syntax [anything(name=netname)]
-    _nwsyntax `netname'
-    nwtomata `netname', mat(net)
-    mata: st_numscalar("r_edges", sum(net :!= 0 :& net :< .) / 2)
-    local e = r_edges
-    local n = `nodes'
-    local dens2 = `e' / (`n' * (`n' - 1) / 2)
-    return scalar edges = `e'
-    return scalar nodes = `n'
-    return scalar density = `dens2'
-end
-nwwebuse florentine, nwclear
-mydensity2 flomarriage
-return list

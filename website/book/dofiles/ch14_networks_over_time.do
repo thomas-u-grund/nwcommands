@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -42,24 +44,8 @@ nwmovie glasgow1 glasgow2 glasgow3, duration(2000) fixedlayout ///
 * ============================================================
 * What a model of change has to explain
 * ============================================================
-nwtomata glasgow1, mat(A1)
-nwtomata glasgow2, mat(A2)
-nwtomata glasgow3, mat(A3)
-mata:
-A1 = editmissing(A1, 0); A2 = editmissing(A2, 0); A3 = editmissing(A3, 0)
-off = J(rows(A1), rows(A1), 1) - I(rows(A1))
-ab1 = off :* (A1 :== 0); f1 = ab1 :* A2
-ab2 = off :* (A2 :== 0); f2 = ab2 :* A3
-r1 = A1'; c1 = (A1 * A1) :> 0; r2 = A2'; c2 = (A2 * A2) :> 0
-P = (sum(f1), sum(f1:*r1)/sum(f1), sum(f1:*c1)/sum(f1))
-P = P \ (sum(ab1), sum(ab1:*r1)/sum(ab1), sum(ab1:*c1)/sum(ab1))
-P = P \ (sum(f2), sum(f2:*r2)/sum(f2), sum(f2:*c2)/sum(f2))
-P = P \ (sum(ab2), sum(ab2:*r2)/sum(ab2), sum(ab2:*c2)/sum(ab2))
-st_matrix("P", P)
-end
-matrix rownames P = "formed 1-2" "absent 1" "formed 2-3" "absent 2"
-matrix colnames P = pairs recip two-path
-matlist P, format(%9.3f) names(all)
+nwturnover glasgow1 glasgow2, generate(_turnover) replace formation
+nwturnover glasgow2 glasgow3, generate(_turnover) replace formation
 
 * ============================================================
 * Slicing a genuinely timestamped network

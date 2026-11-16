@@ -157,7 +157,7 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
   . nwstack school*_w1, name(w1) group(school)
   . nwstack school*_w2, name(w2)
   ```
-- **Used in:** the book *Network Analysis with Stata* (Chapter 23, joint models of several groups).
+- **Used in:** the book *Network Analysis with Stata* (Chapter 24, joint models of several groups).
 
 ## Event data
 

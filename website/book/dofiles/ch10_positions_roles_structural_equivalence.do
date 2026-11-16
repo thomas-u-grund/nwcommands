@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -17,39 +19,43 @@ clear all
 set more off
 
 * ============================================================
-* Dissimilarity and similarity of tie profiles
+* A small example: who could replace whom?
 * ============================================================
-nwwebuse lazega, nwclear
-encode practice, generate(practicen)
-generate byte partner = (status == "partner")
-nwdissimilar lazega_adv, type(euclidean) name(dis)
-preserve
-quietly nwtoedge dis
-keep if _ego > _alter
-summarize dis
-restore
+nwclear
+clear
+input str8 ego str8 alter
+"Anna" "Gwen"
+"Sophie" "Gwen"
+"Fion" "Leh"
+"Magalie" "Leh"
+"Gwen" "Antonia"
+"Leh" "Antonia"
+end
+nwset ego alter, edgelist directed name(firm)
+
+nwsimindex firm, measure(jaccard) name(simfirm)
+nwsummarize simfirm, matonly
+
+nwregular firm, generate(regular)
+list _nwnode regular, noobs sep(0)
+matrix list r(image)
 
 * ============================================================
-* Comparing similarity measures
+* Similar tie profiles among the lawyers
 * ============================================================
+nwwebuse lazega, nwclear
 nwsimindex lazega_adv, measure(jaccard) name(simj)
-nwsimindex lazega_adv, measure(adamicadar) name(simaa)
 preserve
-quietly nwtoedge simj, egovars(partner practicen) altervars(partner practicen)
+quietly nwtoedge simj, egovars(partner practicenum) altervars(partner ///
+    practicenum)
 keep if _ego > _alter
 generate byte same_status = (partner_ego == partner_alter)
-generate byte same_practice = (practicen_ego == practicen_alter)
+generate byte same_practice = (practicenum_ego == practicenum_alter)
 summarize simj
 tabstat simj, by(same_status) statistics(mean sd n)
 tabstat simj, by(same_practice) statistics(mean sd n)
 gsort -simj _ego _alter
 list _ego _alter simj partner_ego partner_alter in 1/5, clean noobs
-restore
-preserve
-quietly nwtoedge simaa
-keep if _ego > _alter
-gsort -simaa _ego _alter
-list _ego _alter simaa in 1/5, clean noobs
 restore
 
 * ============================================================
@@ -78,6 +84,18 @@ nwhierarchy lazega_adv, groups(4) linkage(wardslinkage) generate(role)
 tab role status
 tab role practice
 tab role office
+
+nwwebuse florentine, nwclear
+nwhierarchy flomarriage, linkage(wardslinkage)
+nwdendrogram _clus_1, lab scheme(s1network)
+quietly nwwebuse lazega, nwclear
+
+* ============================================================
+* Regular equivalence: the same kind of contacts
+* ============================================================
+nwregular lazega_adv, generate(regadv)
+nwregular lazega_fr, generate(regfr) silent
+display r(classes)
 
 * ============================================================
 * Core-periphery structure

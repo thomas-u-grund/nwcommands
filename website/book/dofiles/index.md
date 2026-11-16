@@ -23,9 +23,9 @@ net install nwcommands, from(https://nwcommands.org/net/)
 nwinstall, everything
 ```
 
-The do-files were checked against nwcommands 3.18 and the model packages current in November 2026.
-Results of the model chapters (21 to 25) depend on the random-number seed and can differ slightly from the
-printed output with other versions.
+The do-files were checked against the versions the book was printed with: nwcommands 3.26.0, nwergm 1.7.1,
+nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1. Results of the model chapters (21 to 26) depend on the
+random-number seed and can differ slightly from the printed output with other versions.
 
 **All files at once:** [nwbook_dofiles.zip](nwbook_dofiles.zip)
 
@@ -47,20 +47,21 @@ printed output with other versions.
 | Chapter 14: Networks over time | [`ch14_networks_over_time.do`](ch14_networks_over_time.do) |
 | Chapter 15: Random and structured network generators | [`ch15_random_structured_generators.do`](ch15_random_structured_generators.do) |
 | Chapter 16: Generating networks from attributes and tie probabilities | [`ch16_attribute_based_generators.do`](ch16_attribute_based_generators.do) |
-| Chapter 17: Simulating from network models | [`ch17_simulating_from_models.do`](ch17_simulating_from_models.do) |
+| Chapter 17: Network structure and diffusion | [`ch17_network_structure_diffusion.do`](ch17_network_structure_diffusion.do) |
 | Chapter 18: Random networks and null models | [`ch18_random_networks_null_models.do`](ch18_random_networks_null_models.do) |
 | Chapter 19: Permutation inference and comparing networks | [`ch19_permutation_inference_comparing_networks.do`](ch19_permutation_inference_comparing_networks.do) |
 | Chapter 20: QAP regression | [`ch20_qap_regression.do`](ch20_qap_regression.do) |
 | Chapter 21: Exponential random graph models | [`ch21_exponential_random_graph_models.do`](ch21_exponential_random_graph_models.do) |
-| Chapter 22: Stochastic actor-oriented models | [`ch22_stochastic_actor_oriented_models.do`](ch22_stochastic_actor_oriented_models.do) |
-| Chapter 23: Advanced stochastic actor-oriented models | [`ch23_advanced_stochastic_actor_oriented_models.do`](ch23_advanced_stochastic_actor_oriented_models.do) |
-| Chapter 24: Relational event models | [`ch24_relational_event_models.do`](ch24_relational_event_models.do) |
-| Chapter 25: The Dynamic Network Actor Model | [`ch25_dynamic_network_actor_models.do`](ch25_dynamic_network_actor_models.do) |
-| Chapter 26: A complete network analysis | [`ch26_complete_network_analysis.do`](ch26_complete_network_analysis.do) |
-| Chapter 27: Reproducible and responsible network research | [`ch27_reproducible_responsible_research.do`](ch27_reproducible_responsible_research.do) |
+| Chapter 22: Advanced exponential random graph models | [`ch22_advanced_exponential_random_graph_models.do`](ch22_advanced_exponential_random_graph_models.do) |
+| Chapter 23: Stochastic actor-oriented models | [`ch23_stochastic_actor_oriented_models.do`](ch23_stochastic_actor_oriented_models.do) |
+| Chapter 24: Advanced stochastic actor-oriented models | [`ch24_advanced_stochastic_actor_oriented_models.do`](ch24_advanced_stochastic_actor_oriented_models.do) |
+| Chapter 25: Relational event models | [`ch25_relational_event_models.do`](ch25_relational_event_models.do) |
+| Chapter 26: The Dynamic Network Actor Model | [`ch26_dynamic_network_actor_models.do`](ch26_dynamic_network_actor_models.do) |
+| Chapter 27: A complete network analysis | [`ch27_complete_network_analysis.do`](ch27_complete_network_analysis.do) |
+| Chapter 28: Reproducible and responsible network research | [`ch28_reproducible_responsible_research.do`](ch28_reproducible_responsible_research.do) |
 | Appendix A: Performance and network size | [`appendixH_performance.do`](appendixH_performance.do) |
 | Appendix B: When things go wrong | [`appendixG_troubleshooting.do`](appendixG_troubleshooting.do) |
-| Appendix F: Programming with network objects | [`appendixE_programming.do`](appendixE_programming.do) |
+| Appendix F: Programming with networks in Mata | [`appendixE_programming.do`](appendixE_programming.do) |
 
 Chapter 1 has no code. `nwedit_nodes.csv` and `nwedit_edges.csv` are the node and edge files that the
 interactive page of Chapter 5 saves; the Chapter 5 do-file reads them, so that it also runs without the browser
