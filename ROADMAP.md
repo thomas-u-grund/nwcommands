@@ -71,6 +71,9 @@ scale.
   betweenness backend, rather than a purely algorithmic fix.
 - Self-loop rendering, automatic two-mode color/symbol styling, and parallel-edge rendering in
   `nwplot`.
+- A dedicated plot for relational events: the event sequence over time (sender, receiver and time of each
+  event, for example as an actor-by-time timeline or an arc diagram), so that an event log can be inspected before
+  and after fitting nwrem or nwdynam.
 - Full blockmodeling (image matrices, stochastic block models, goodness-of-fit) building on the
   existing structural-equivalence engine.
 - A general induced-subgraph extraction primitive, for any future feature that needs a real
