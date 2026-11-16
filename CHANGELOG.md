@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
 
+## [3.26.0] - 2026-11-16
+
+### Added
+- `nwinstall, buildplugin(nwrem)` compiles the native plugin of nwrem 1.3.0 on this computer, like the plugins of the other model packages; `buildplugin(all)` now covers five packages.
+
 ## [3.25.1] - 2026-11-15
 
 ### Removed

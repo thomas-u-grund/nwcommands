@@ -94,4 +94,4 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}
 
 {hline}
-{pstd}{it:nwcommands version 3.25.1, 15 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.26.0, 16 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
