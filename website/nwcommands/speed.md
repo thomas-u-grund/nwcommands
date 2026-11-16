@@ -85,7 +85,7 @@ of each package:
   1.8 to 3.4 before the fits).
 - **Machine, nwsaom run of 8 and 9 November.** The same laptop; RSiena ran on 8 November and nwsaom on 9 November,
   with no other Stata or R job running during a fit (median load average 2.2 and 2.9).
-- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm and nwsaom runs), nwergm 1.5.2, nwsaom 1.5.7, nwdynam 1.2.0, nwrem 1.2.0 (Stata 17, core 3.25.1, 15 November 2026; relevent timed on 26 and 27 October); ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
+- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm and nwsaom runs), nwergm 1.5.2, nwsaom 1.5.7 (nwdynam and nwrem: versions given above) (Stata 17, core 3.25.1, 15 November 2026; relevent timed on 26 and 27 October); ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
   goldfish 1.6.12. All timings are with Stata 18 except those of nwdynam and nwrem, which are with StataNow 19.5 MP on a Linux server (Intel Core i7-12700K, Ubuntu 22.04; nwdynam 1.8.0, nwrem 1.4.0, relevent 1.2-1 and goldfish 1.6.12 timed on the same server). The plug-ins are the released builds.
 - **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first
   call (loading libraries) is not in the time. The timer covers the estimation command (for goldfish, the
