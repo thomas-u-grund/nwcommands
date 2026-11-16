@@ -30,7 +30,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.7.1").
 
-**nwdynam and nwrem.** These have no DOI. Cite the repository and the version (the nwrem manual is a PDF on this website, cited by its address: *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
+**nwdynam and nwrem.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.8.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
