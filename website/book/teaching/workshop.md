@@ -19,6 +19,14 @@ model packages `nwergm` and `nwsaom`.
 - **Session 1 (3 hours):** the nwcommands core.
 - **Session 2 (3 hours):** ERGMs with `nwergm` and SAOMs with `nwsaom`.
 
+**Slides.** PowerPoint decks for both sessions, with speaker notes. Instructors are free to use, adapt and share
+them.
+
+- Session 1, the nwcommands core: [PowerPoint](/book/teaching/slides/session1_nwcommands_core.pptx) ·
+  [PDF](/book/teaching/slides/session1_nwcommands_core.pdf)
+- Session 2, ERGMs and SAOMs: [PowerPoint](/book/teaching/slides/session2_ergm_saom.pptx) ·
+  [PDF](/book/teaching/slides/session2_ergm_saom.pdf)
+
 Every demonstration uses the data and the commands of the book's chapters. Exercises are cited as
 "Ch. 8, Ex. 3", numbered as in the book. The R column of Appendix C of the book (*Commands by task, with R and
 Python equivalents*) gives the R functions quoted below.

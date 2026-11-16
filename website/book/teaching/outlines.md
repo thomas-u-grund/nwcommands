@@ -309,8 +309,8 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   The report states the construction decisions and confronts the disclosure risk of relational data.
 - **Demonstration:** the QAP model; the ERGM with friendship as `edgecov()`; `nodemix(status)` and `lincom` for
   whose choices carry the status effect; seniority rank next to partnership (`nodeicov()`, `nodeocov()`); the
-  sensitivity runs with the AND rule (`nwsym lazega_fr, mode(min)`) and without the two most
-  active lawyers (`nwdrop`); stored results from Chapter 28.
+  sensitivity run without the two most active
+  lawyers (`nwdrop`); stored results from Chapter 28.
 - **Exercises:** Ch. 27, Ex. 2 (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
   Ch. 27, Ex. 3 (the mixing model and the status-match model are the same model); Ch. 27, Ex. 6 (a sensitivity
   check of your own choice); Ch. 27, Ex. 9 (deference or competence); Ch. 28, Ex. 5
