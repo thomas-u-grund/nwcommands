@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 16 November 2026: nwrem 1.4.0
+
+**nwrem 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.4.0)). Closer to relevent. New: the likelihood that uses the waiting times (`interval`, with `starttime()`, `endtime()` and `condition()`), the triadic effects `otpsnd`, `itpsnd`, `ospsnd` and `ispsnd`, the fixed effects `fesnd`, `ferec` and `feint`, six participation shifts (`psabba`, `psabby`, `psabxa`, `psabxb`, `psabxy`, `psabay`), the posterior mode (`postmode`), restricted risk sets (`riskset()`, `entry()`, `exit()`) and several covariates per option. Coefficients agree with the exact maximum of relevent to about 2e-6 on 60 random event logs, standard errors to about 1e-7. The check for effects that are exactly collinear now covers all effects, and fits with the state-dependent dyadic effects are about 1.5 times faster. **Update the package as a whole:** a plugin older than 1.4.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later (3.26.0 for `nwinstall, buildplugin(nwrem)`).
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+
 ## 16 November 2026: nwdynam 1.7.0
 
 **nwdynam 1.7.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.7.0)). Composition change: actors can join or leave the network over the event log. `present(var)` gives who is present at the start, `compchange(net)` the joins and leaves as an event list (value 1 = join, 0 = leave). Absent actors are not candidates in the choice model, do not act in the rate model and are left out of the exposure time, and an event of an absent actor is an error, as in goldfish. Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 on 67 random event logs (one-mode and two-mode, with windows and with time-varying covariates). Fits without composition change are not slower. **Update the package as a whole:** a plugin older than 1.7.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later.

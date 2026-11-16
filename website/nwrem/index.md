@@ -41,10 +41,10 @@ the sister package that splits each event into the choice of the actor and the c
 | Effects | degree effects (6), inertia and reciprocity of receipt (2), recency (2), actor covariates (3), pair covariate (1): 14 in all |
 | Networks | directed one-mode event networks, declared with `nwset ..., eventtime()` |
 | Agreement with relevent | coefficients and log likelihoods compared with `rem.dyad()` of relevent 1.2-1 on identical simulated event sequences |
-| Not implemented | triadic and shared-partner effects, fixed effects, the waiting-time (non-ordinal) likelihood, Bayesian estimation |
+| Not implemented | MCMC and BSIR estimation, risk-set sampling, simulation, goodness-of-fit residuals, time-varying covariates |
 | Engine | a compiled plugin for the likelihood, gradient and Hessian (macOS, Linux, Windows); the optimization runs in Mata |
 | Speed | Faster than relevent in every timed cell: 33 to 4,130 times when relevent computes its Hessian (as nwrem always does), 23 to 2,544 times without; the smallest ratios are with recency effects; see [Speed compared with relevent](speed/) |
-| Version | 1.3.0 (16 November 2026) |
+| Version | 1.4.0 (16 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
