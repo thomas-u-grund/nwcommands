@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 16 November 2026: nwdynam 1.5.1
+
+**nwdynam 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.5.1)). Fits with `submodel(rate) intercept` and choice fits with effects such as `trans` on dense data (thousands of events among few actors) no longer spend up to a thousand likelihood evaluations after the maximum was reached: 5,000 events among 50 actors take 0.1 s instead of 1.5 to 2.6 s. The estimates are the same. The compiled plugins are those of 1.5.0.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). Windows and Linux are not yet tested for this release.
+
 ## 15 November 2026: nwcommands 3.25.1
 
 **nwcommands 3.25.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.1)). The example data sets `socialevolution` and `socialevolution_nodes` are removed because their redistribution is not permitted by the licence of the original data; the email log `manufacturing` is the example event data. The menu of this site now lists Tutorial 21 directly after Tutorial 20.
