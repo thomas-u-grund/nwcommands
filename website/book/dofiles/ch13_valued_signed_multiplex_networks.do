@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -41,11 +43,11 @@ nwrecode gang_valued (1 2 = 1) (3/4 = 2), generate(intensity)
 nwsummarize intensity
 nwtabulate intensity
 
-nwbetween gang_valued, binary generate(_between_binary)
-nwbetween gang_valued, generate(_between_weighted)
-correlate _between_binary _between_weighted
-gsort -_between_binary
-list _nwnode _between_binary _between_weighted in 1/8, clean
+nwbetween gang_valued, binary generate(btw_bin)
+nwbetween gang_valued, generate(btw_wgt)
+correlate btw_bin btw_wgt
+gsort -btw_bin
+list _nwnode btw_bin btw_wgt in 1/8, clean
 
 nwwebuse chesapeake, nwclear
 nwsummarize chesapeake
@@ -97,50 +99,9 @@ nwtabulate spos, attribute(republican)
 nwtabulate sneg, attribute(republican)
 nwbalance sneg
 
-capture program drop randbal
-program randbal, rclass
-    args tie n p
-    capture nwdrop _u _s
-    quietly nwrandom `n', density(`p') undirected name(_u)
-    quietly nwgen _s = `tie' * (2 * _u - 1)
-    quietly nwbalance _s
-    return scalar balance = r(balance)
-end
-capture program drop signnull
-program signnull
-    args net reps seed
-    quietly nwbalance `net'
-    local obs = r(balance)
-    capture nwdrop _pos _tie
-    quietly nwrecode `net' (-1 = 0) (1 = 1), generate(_pos)
-    quietly nwrecode `net' (-1 = 1) (1 = 1), generate(_tie)
-    quietly nwsummarize _pos
-    local npos = r(edges)
-    local n = r(nodes)
-    quietly nwsummarize _tie
-    local p = `npos' / r(edges)
-    local cmd randbal _tie `n' `p'
-    local opt reps(`reps') seed(`seed') nodots
-    preserve
-    quietly simulate bal = r(balance), `opt': `cmd'
-    quietly summarize bal
-    local mean = r(mean)
-    local sd = r(sd)
-    quietly count if bal >= `obs'
-    local k = r(N)
-    local formula = (1 + (2 * `p' - 1)^3) / 2
-    display "share of ties that are positive:  " %5.3f `p'
-    display "share balanced, observed:         " %5.3f `obs'
-    display "share balanced, random signs:     " %5.3f `mean'
-    display "  standard deviation over draws:  " %5.3f `sd'
-    display "  draws at least as balanced:     " `k' " of `reps'"
-    display "share expected by the formula:    " %5.3f `formula'
-    restore
-end
-
 nwwebuse gahuku, nwclear
-signnull gahuku 500 1
+nwbalance gahuku, reps(500) seed(1)
 nwwebuse senate114, nwclear
-signnull senate114 500 1
+nwbalance senate114, reps(500) seed(1)
 nwwebuse senate93, nwclear
-signnull senate93 500 1
+nwbalance senate93, reps(500) seed(1)

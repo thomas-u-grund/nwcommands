@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -31,11 +33,6 @@ list _nwnode _degree _closeness _between _effsize _constraint, clean
 * Degree centrality
 * ============================================================
 nwwebuse lazega, nwclear
-encode office, generate(officen)
-encode practice, generate(practicen)
-generate byte partner = (status == "partner")
-label define partlab 0 "associate" 1 "partner"
-label values partner partlab
 tab office partner
 
 nwdegree lazega_adv, generate(adv_out adv_in) silent
@@ -87,9 +84,18 @@ list _nwnode _effsize _constraint adv_in adv_out status in 1/6, clean
 correlate _constraint adv_in adv_out
 
 * ============================================================
+* Ties that bridge and ties that are embedded
+* ============================================================
+nwsym lazega_adv, mode(min) generate(advm)
+nwbridges advm, name(advbridges)
+nwbridges advm, type(local) name(advlocal)
+nwsimmelian advm, name(simm)
+nwsummarize simm
+
+* ============================================================
 * Gould-Fernandez brokerage roles
 * ============================================================
-nwbrokerage lazega_adv, generate(brk) group(officen)
+nwbrokerage lazega_adv, generate(brk) group(officenum)
 rename (brk_coordinator brk_gatekeeper brk_representative brk_consultant ///
     brk_liaison) (coord gatek repr consult liais)
 gsort -liais _nwnode
@@ -101,14 +107,3 @@ egen brs_total = rowtotal(brs_coordinator brs_gatekeeper ///
 generate share_gate = brs_gatekeeper / brs_total
 generate share_rep = brs_representative / brs_total
 tabstat brs_total share_gate share_rep, by(partner) statistics(mean)
-
-* ============================================================
-* A different question: position as strategic value
-* ============================================================
-nwutility lazega_adv, benefit(.5) cost(.1)
-summarize _benefit _cost _util
-gsort -_util _nwnode
-list _nwnode _benefit _cost _util adv_in adv_out in 1/6, clean
-nwutility lazega_adv, benefit(.5) cost(.6) replace
-gsort -_util _nwnode
-list _nwnode _benefit _cost _util adv_in adv_out in 1/6, clean

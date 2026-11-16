@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -28,13 +30,15 @@ nwdegree toy, generate(_outdegree _indegree)
 * Importing from external formats
 * ============================================================
 nwclear
-nwimport "$nwwebpath/edgelist_example.txt", type(edgelist) name(tiny)
+nwimport "https://nwcommands.org/examples/edgelist_example.txt", ///
+    type(edgelist) name(tiny)
 nwsummarize tiny
-list _nwnode
+nwplot tiny, label(_nwnode)
 
 * ============================================================
 * Building an edge list from raw survey data
 * ============================================================
+nwclear
 clear
 input str6 id str6 friend1 str6 friend2 str6 friend3
 "anna" "sophie" "gwen" ""
@@ -47,7 +51,7 @@ list, clean
 
 reshape long friend, i(id) j(nomination)
 list, clean sepby(id)
-drop if missing(friend)
+drop if missing(friend) & nomination > 1
 list, clean
 
 nwfromedge id friend, name(friends) undirected
@@ -112,6 +116,5 @@ nwkeepnodes lazega_adv, nodes(1/10) generate(adv_first10)
 nwsymmetrize lazega_fr, mode(max) generate(fr_or)
 nwsymmetrize lazega_fr, mode(min) generate(fr_and)
 nwsummarize fr_or fr_and
-nwtranspose lazega_adv, generate(adv_asked_by)
 nwduplicate lazega_adv, name(adv_copy)
 nwset

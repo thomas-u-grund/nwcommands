@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -20,37 +22,23 @@ set more off
 * Size and density: what the numbers tell us
 * ============================================================
 nwwebuse lazega, nwclear
-foreach r in adv cow fr {
-    quietly nwsummarize lazega_`r'
-    display "`r': nodes = " r(nodes) "  arcs = " r(arcs) "  density = " ///
-        %5.3f r(density) "  mean outdegree = " %5.2f r(arcs)/r(nodes)
-}
+nwsummarize lazega_adv
 
 * ============================================================
 * Dyad census and reciprocity
 * ============================================================
-nwdyads lazega_adv
+nwdyads lazega_adv, plot
 nwdyads lazega_fr
-
-nwwebuse glasgow, nwclear
-nwdyads glasgow1
-nwdyads glasgow2
-nwdyads glasgow3
 
 * ============================================================
 * Triples: transitivity and the triad census
 * ============================================================
 nwwebuse lazega, nwclear
-nwtriads lazega_adv
+nwtriads lazega_adv, plot
 
 foreach r in adv cow fr {
     quietly nwtriads lazega_`r'
     display "`r': transitivity = " %5.3f r(transitivity)
-}
-nwwebuse glasgow, nwclear
-foreach w in 1 2 3 {
-    quietly nwtriads glasgow`w'
-    display "glasgow`w': transitivity = " %5.3f r(transitivity)
 }
 
 * ============================================================
@@ -66,15 +54,23 @@ nwmixing lazega_fr, attribute(office)
 display "status: " (35*34 + 36*35) / (71*70)
 display "office: " (48*47 + 19*18 + 4*3) / (71*70)
 
-nwassortativity lazega_adv
-nwassortativity lazega_adv, attribute(age)
-nwassortativity lazega_fr, attribute(age)
-
-nwwebuse glasgow, nwclear
-nwassortativity glasgow1
-nwassortativity glasgow1, attribute(sport1)
-
 nwwebuse gang, nwclear
 nwmixing gang, attribute(Birthplace)
 
 tab Birthplace
+
+nwwebuse lazega, nwclear
+nwassortativity lazega_adv
+nwassortativity lazega_adv, attribute(age)
+nwassortativity lazega_fr, attribute(age)
+
+nwdegree lazega_adv, generate(adv_out adv_in) silent
+xtile asks = adv_out, nquantiles(3)
+label define asks 1 "few" 2 "middle" 3 "many"
+label values asks asks
+set seed 12345
+nwmixing lazega_adv, attribute(asks)
+
+nwwebuse glasgow, nwclear
+nwassortativity glasgow1
+nwassortativity glasgow1, attribute(sport1)

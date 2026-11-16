@@ -1,13 +1,15 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Chapter 23: Advanced stochastic actor-oriented models
+* Chapter 24: Advanced stochastic actor-oriented models
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -28,7 +30,7 @@ quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity ///
     transtrip indegpopularity outactivity cycle3 theta0(`=b[1,1]' ///
     `=b[1,2]' 0 0 `=b[1,3]' 0) fix(indegpopularity outactivity cycle3) ///
     seed(1)
-display "Overall maximum t-ratio of the restricted fit: " %5.3f e(tconv_max)
+display "Overall max. convergence ratio, restricted fit: " %5.3f e(tconv_max)
 estat score
 
 quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity ///
@@ -53,6 +55,13 @@ program mutualties, rclass
     return scalar stat = scalar(__mut)
 end
 estat mems, effect(reciprocity) macro(mutualties) nsim(100) seed(1)
+
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 2 0.5) rates(1) nsim(100) seed(7)
 
 * ============================================================
 * Which estimator?

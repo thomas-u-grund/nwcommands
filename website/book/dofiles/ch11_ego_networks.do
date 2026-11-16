@@ -7,7 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom; it was checked against nwcommands 3.18.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
+* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -20,22 +22,26 @@ set more off
 * Size and density
 * ============================================================
 nwwebuse lazega, nwclear
-encode office, generate(officen)
-generate byte partner = (status == "partner")
 quietly nwdegree lazega_adv, generate(adv_out adv_in)
 nwego lazega_adv, sizevar(egosize) densvar(egodens)
 correlate egosize adv_out adv_in
 tabstat egosize egodens, by(partner) statistics(mean sd n)
 
+list _nwnode egosize egodens if inlist(_nwnode, "n62", "n70"), noobs
+nwegoplot lazega_adv, ego(n62) label(_nwnode) color(partner) ///
+    arrowfactor(0) scheme(s1network)
+nwegoplot lazega_adv, ego(n70) label(_nwnode) color(partner) ///
+    arrowfactor(0) scheme(s1network)
+
 * ============================================================
 * Composition: who the alters are
 * ============================================================
 nwaltergen pshare = proportion(alter.partner==1), net(lazega_adv)
-nwaltergen sh1 = proportion(alter.officen==1), net(lazega_adv)
-nwaltergen sh2 = proportion(alter.officen==2), net(lazega_adv)
-nwaltergen sh3 = proportion(alter.officen==3), net(lazega_adv)
-generate sameoff = cond(officen==1, sh1, cond(officen==2, sh2, sh3))
-nwaltergen odiv = diversity(alter.officen), net(lazega_adv)
+nwaltergen sh1 = proportion(alter.officenum==1), net(lazega_adv)
+nwaltergen sh2 = proportion(alter.officenum==2), net(lazega_adv)
+nwaltergen sh3 = proportion(alter.officenum==3), net(lazega_adv)
+generate sameoff = cond(officenum==1, sh1, cond(officenum==2, sh2, sh3))
+nwaltergen odiv = diversity(alter.officenum), net(lazega_adv)
 tabstat pshare, by(partner) statistics(mean sd n)
 tabstat sameoff odiv, by(office) statistics(mean n)
 tabulate office if odiv == 0
