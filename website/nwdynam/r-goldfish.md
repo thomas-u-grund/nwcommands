@@ -36,20 +36,18 @@ its correctness rests on numerical comparison with the R package.
 
 ## What differs
 
-Things that goldfish does and `nwdynam` does not (yet) do, as documented in `help nwdynam`:
+Things that goldfish does and `nwdynam` does not do, as documented in `help nwdynam`:
 
-- the effect `tertiusDiff`, the mixed variants of the closure effects that use two networks, and closure effects through
-  an exogenous network;
-- a second network in `tie()` that itself changes over time (`nwdynam` accepts a static network only);
-- the `ignoreRep` argument and, for `tie()`, the arguments `weighted` and `window`;
-- windowed rate effects (`indegwindow()`, `outdegwindow()`) in combination with `intercept`;
-- windows on `tertius()`, and weighted or windowed versions in `choice_coordination`;
-- attribute effects (`same`, `diff`, `sim`, `ego`, `alter`, `egoalterint`, `tertius`) and closure effects in two-mode networks;
-- `opportunities()` in the same call as an attribute effect (the two need different data layouts);
-- time-varying covariates in two-mode networks and together with `opportunities()`.
+- `ignoreRep` in the rate sub-model (goldfish accepts it; its likelihood could not be reproduced);
+- `tertiusDiff` with time-varying attributes or in two-mode networks;
+- `tertius`, `indeg`, `outdeg`, `recip` and `nodeTrans` computed through another network (the closure effects, `tie`
+  and the mixed closures are supported);
+- effects of two-mode networks that goldfish itself cannot compute: `nwdynam` refuses them with a message.
 
-The help file documents no goodness-of-fit, simulation or Bayesian command. The estimates and the log likelihood are
-the output. Data preparation is also different: instead of goldfish's objects (`defineNodes`, `defineNetwork`,
+Everything else that goldfish 1.6.12 offers for DyNAMs is supported, with estimates, standard errors and log likelihoods
+that agree with goldfish to 1e-6 on several hundred random event logs (for `choice_coordination` the standard errors are
+numerical in both programs and agree to 10%). goldfish has no goodness-of-fit or simulation function, and `nwdynam` adds
+none: the postestimation commands are those that goldfish has (see the table). Data preparation is also different: instead of goldfish's objects (`defineNodes`, `defineNetwork`,
 `linkEvents`, `defineDependentEvents`) you declare an event list with `nwset ..., eventtime()` (with an optional third
 variable for the value of each event) and read attributes
 from the dataset of the actors (`nwload ..., xvars`). Changes of an attribute over time, and actors who join or leave, are further event lists (see the table). Absent actors are outside the risk sets; a join or leave at the time of an event counts for that event; an event or covariate change of an absent actor is an error; actors without any event of their own must be added with `nwaddnodes`. Before using `nwdynam` for an important result, run the same model in goldfish.
@@ -70,7 +68,18 @@ from the dataset of the actors (`nwload ..., xvars`). Changes of an attribute ov
 | `ego(attr)` (rate), `alter(attr)` (choice) | `ego(var)`, `alter(var)` |
 | `egoAlterInt(attr)` | `egoalterint(var1 var2)` |
 | `tertius(attr)` | `tertius(var)` |
-| `tie(network)` | `tie(netname)` |
+| `tie(network)` (also a network that changes over time; `weighted`, `window`, `ignoreRep`) | `tie(netname)`; through another network `netterms(tie(netname) ...)` with the options `window(#)`, `weighted`, `ignorerep` |
+| `trans`, `cycle`, `commonSender`, `commonReceiver`, `four` through another network | `netterms(trans(netname) cycle(netname) ...)` |
+| `mixedTrans`, `mixedCycle`, `mixedCommonSender`, `mixedCommonReceiver` | `netterms(mixedtrans(net1 net2) ...)` and the other mixed terms |
+| `tertiusDiff(attr)` | `tertiusdiff(var [net])` |
+| `ignoreRep = TRUE` on a built-in effect | `ignorerep(effects)` |
+| a window on `tertius` | `tertiuswindow(#)` |
+| `opportunitiesList` with attribute effects | `opportunities(evvar actvar) oppframe(framename)` |
+| `logLik()`, `AIC()`, `BIC()` | `estat ic` |
+| `returnIntervalLogL = TRUE` | `estat eventlik` |
+| `returnEventProbabilities = TRUE` | `estat eventprob` |
+| `examineOutliers()` (Hampel, IQR, Top) | `estat outliers` |
+| `examineChangepoints()` (PELT, AMOC, BinSeg) | `estat changepoints` |
 | `window = w` on an effect | `inertiawindow(#)`, `recipwindow(#)`, `indegwindow(#)`, `outdegwindow(#)` |
 | `weighted = TRUE` on an effect | `weightedinertia`, `weightedrecip`, `weightedindeg`, `weightedoutdeg` |
 | `weighted = TRUE, window = w` on an effect | a weighted effect with its own window, for example `weightedinertia inertiawindow(#)` |
@@ -89,4 +98,5 @@ always lists the effects.
 ## Acknowledgment
 
 `nwdynam` is a port of ideas, definitions and methods that others developed. If you use it, please cite the DyNAM
-papers and goldfish, as on the page [How to cite](../citation/).
+papers and goldfish, as on the page [How to cite](../citation/). The change point methods of `estat changepoints`
+are a port of the R package changepoint (Killick, Haynes, Eckley, Fearnhead and Lee; GPL), which goldfish calls for the same purpose.
