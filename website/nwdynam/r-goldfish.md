@@ -52,7 +52,7 @@ The help file documents no goodness-of-fit, simulation or Bayesian command. The 
 the output. Data preparation is also different: instead of goldfish's objects (`defineNodes`, `defineNetwork`,
 `linkEvents`, `defineDependentEvents`) you declare an event list with `nwset ..., eventtime()` (with an optional third
 variable for the value of each event) and read attributes
-from the dataset of the actors (`nwload ..., xvars`). Changes of an attribute over time are a second event list (see the table). Before using `nwdynam` for an important result, run the same model in goldfish.
+from the dataset of the actors (`nwload ..., xvars`). Changes of an attribute over time, and actors who join or leave, are further event lists (see the table). Absent actors are outside the risk sets; a join or leave at the time of an event counts for that event; an event or covariate change of an absent actor is an error; actors without any event of their own must be added with `nwaddnodes`. Before using `nwdynam` for an important result, run the same model in goldfish.
 
 ## Translation table
 
@@ -75,6 +75,8 @@ from the dataset of the actors (`nwload ..., xvars`). Changes of an attribute ov
 | `weighted = TRUE` on an effect | `weightedinertia`, `weightedrecip`, `weightedindeg`, `weightedoutdeg` |
 | `weighted = TRUE, window = w` on an effect | a weighted effect with its own window, for example `weightedinertia inertiawindow(#)` |
 | `linkEvents(nodes, changeEvents, attribute = "x")` with `replace` or `increment` columns (time-varying attributes) | the changes of `x` as an event list in which sender and receiver are the same actor and the value is the new value: `nwset id id2 value, eventtime(t) selfloop name(xchg)` (`id2` a copy of `id`), then `change(x xchg)`; `increment` makes the values increments |
+| `defineNodes(..., present = TRUE/FALSE)` (composition change) | `present(var)`, a 0/1 variable with one row per actor in the actor dataset (default: everybody present) |
+| `linkEvents(nodes, changeEvent = comp, attribute = "present")` with `replace` TRUE/FALSE | `compchange(net)`, an event network made with `nwset id id2 value, eventtime(t) selfloop name(net)`; value 1 = the actor joins, 0 = it leaves |
 | `increment` of an event (`linkEvents()`) | a value variable: `nwset sender receiver value, directed eventtime(t)`; without it every event has the value 1 |
 | a leading `1 +` in the formula (intercept, rate model) | `intercept` with `submodel(rate)` |
 | `opportunitiesList` in `estimationInit` | `opportunities(evvar actvar)` |
