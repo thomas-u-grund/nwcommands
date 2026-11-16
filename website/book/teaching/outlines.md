@@ -157,17 +157,17 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   (fitted tie probabilities by hand); Ch. 20, Ex. 5 (the advice model without friendship).
 
 ### Week 12. One complete analysis, and reporting it
-- **Chapters:** 27 *A complete network analysis* (theory, data, description, the baseline and QAP);
+- **Chapters:** 27 *A complete network analysis* (theory, data, description and QAP);
   28 *Reproducible and responsible network research*
 - **Core idea:** state the expectations, and what would count against them, before any model is fitted. Agreement
   of analyses on the same arcs is one piece of evidence, not three. A report owes its readers the construction
   decisions, and its subjects a judgment about disclosure risk.
-- **Demonstration:** advice density by the status of sender and receiver; the all-partner 5-core; the QAP model of
-  Chapter 27. The baseline section draws networks with `nwergm simulate` and the next section fits an ERGM; both
-  are easier after Chapter 21, so present their results here and leave the code to course B. From Chapter 28,
+- **Demonstration:** advice density by the status of sender and receiver; activity and seniority by status; the QAP
+  model of Chapter 27. The ERGMs that follow are easier after Chapter 21, so present their results here (associates
+  do not favor partners; being asked follows seniority) and leave the code to course B. From Chapter 28,
   stored results after `nwcug` (`return list`) and `nwqap` (`ereturn list`).
-- **Exercises:** Ch. 27, Ex. 1 (density ratios from the status table); Ch. 27, Ex. 3 (could an all-Boston and
-  Providence core be chance?); Ch. 28, Ex. 1 (the construction decisions of Chapter 27); Ch. 28, Ex. 4 (how many
+- **Exercises:** Ch. 27, Ex. 1 (density ratios from the status table); Ch. 27, Ex. 7 (could an all-partner core be
+  chance?); Ch. 28, Ex. 1 (the construction decisions of Chapter 27); Ch. 28, Ex. 4 (how many
   lawyers their degrees alone identify).
 
 ## B. Statistical models for networks (12 weeks)
@@ -303,14 +303,17 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
 
 ### Week 12. One complete analysis, and reporting it
 - **Chapters:** 27 *A complete network analysis*; 28 *Reproducible and responsible network research*
-- **Core idea:** one question about the law firm is carried from theory and stated expectations through
-  description, a baseline, QAP regression and an ERGM to a synthesis, with sensitivity runs chosen in advance.
+- **Core idea:** one question about the law firm, whether advice runs up the status order, is carried from theory
+  and stated expectations through description, QAP regression and a sequence of ERGMs to a synthesis, with
+  sensitivity runs chosen in advance.
   The report states the construction decisions and confronts the disclosure risk of relational data.
-- **Demonstration:** the degree-preserving baseline with `nwergm simulate`; the QAP model; the ERGM with friendship
-  as `edgecov()`; the sensitivity runs with the AND rule (`nwsym lazega_fr, mode(min)`) and without the two most
+- **Demonstration:** the QAP model; the ERGM with friendship as `edgecov()`; `nodemix(status)` and `lincom` for
+  whose choices carry the status effect; seniority rank next to partnership (`nodeicov()`, `nodeocov()`); the
+  sensitivity runs with the AND rule (`nwsym lazega_fr, mode(min)`) and without the two most
   active lawyers (`nwdrop`); stored results from Chapter 28.
 - **Exercises:** Ch. 27, Ex. 2 (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
-  Ch. 27, Ex. 5 (a sensitivity check of your own choice); Ch. 27, Ex. 8 (deference or competence); Ch. 28, Ex. 5
+  Ch. 27, Ex. 3 (the mixing model and the status-match model are the same model); Ch. 27, Ex. 6 (a sensitivity
+  check of your own choice); Ch. 27, Ex. 9 (deference or competence); Ch. 28, Ex. 5
   (a do-file that collects results without retyping them).
 
 ## C. Workshop or summer school (5 days)
@@ -374,8 +377,8 @@ afternoon the next.
   option, `nwturnover`, `nwsaom describe` and `nwsaom` on the Glasgow waves; for the capstone option, the QAP and
   ERGM models of Chapter 27.
 - **Exercises:** Ch. 21, Ex. 1 (what the office coefficient says about a pair); Ch. 21, Ex. 3 (homophily on
-  gender); then Ch. 23, Ex. 3 (homophily in sport) for the panel option, or Ch. 27, Ex. 3 (could the core be
-  chance?) for the capstone option.
+  gender); then Ch. 23, Ex. 3 (homophily in sport) for the panel option, or Ch. 27, Ex. 4 (a step or a slope:
+  seniority in odds ratios) for the capstone option.
 
 Permutation tests and model fits repeat a computation many times. Appendix A of the book advises setting `reps()`
 or `permutations()` deliberately; in a lab with many students, a smaller number of repetitions than the book's

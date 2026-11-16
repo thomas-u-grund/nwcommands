@@ -464,17 +464,20 @@ One entry for each chapter. The entries use these headings:
 
 ### Chapter 27. A complete network analysis
 - **Time:** 2 sessions.
-- **Data:** `lazega`; `gang` in Ex. 7.
-- **Builds on:** 6, 8, 9, 18, 20, 21; 22 helps.
-- **Commands:** no new commands; the chapter combines `nwdegree`, `nwkcore`, `nwsym`, `nwqap`, `nwergm`,
-  `nwergm simulate`, `estat`, `nwdrop` and frames.
+- **Data:** `lazega`; `gang` in Ex. 8.
+- **Builds on:** 6, 18, 20, 21; 9 and 22 for Ex. 7.
+- **Commands:** no new commands; the chapter combines `nwtoedge`, `nwdegree`, `nwqap`, `nwergm` (with
+  `nodemix()`, `nodeicov()` and `nodeocov()`), `lincom`, `estat`, `nwsym`, `nwdrop` and `estimates table`.
 - **Where students get stuck:**
   - Reading a receiver effect of status as deference. It shows only that partners are sought more.
   - Counting the same finding three times. The density table, the QAP model and the ERGM use the same 892 arcs.
-  - Judging the all-partner core against random labels alone. Activity alone puts lawyers into a k-core, so the
-    baseline has to hold it fixed, and for cores of reciprocated ties the reciprocity as well.
+  - Stopping at sender and receiver effects. They add up by construction; `nodemix()` shows which pairs of groups
+    carry the effect (here partners' choices, not associates').
+  - Reading the cell names of `nodemix()`: the sender's level comes first, so `nodemix_status_1_2` is an associate
+    asking a partner.
+  - Reading a status effect as an effect of the title when partnership and seniority rank overlap.
   - Choosing the sensitivity runs after seeing the results. State them with the expectations.
-- **Exercises:** 8. Basic 3 (1–3); applied 3 (4–6); open 2 (7, 8).
+- **Exercises:** 9. Basic 4 (1–4); applied 3 (5–7); open 2 (8, 9).
 
 ### Chapter 28. Reproducible and responsible network research
 - **Time:** 1 session.
