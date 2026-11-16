@@ -15,7 +15,8 @@ timestamped events.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-dynam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[nwdynam on GitHub](https://github.com/thomas-u-grund/nwdynam){: .btn .fs-5 .mb-4 .mb-md-0 }
+[nwdynam on GitHub](https://github.com/thomas-u-grund/nwdynam){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Manual](manual/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## What nwdynam is
 
@@ -57,6 +58,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 - [Tutorial 2: Effects and interpretation](tutorial-2-effects/): covariates, closure, windows, comparing models.
 - [Tutorial 3: Limits and diagnostics](tutorial-3-limits/): what a small event log can and cannot tell you.
 - [nwdynam and goldfish](r-goldfish/): what is the same, what differs, a translation table.
+- [Manual](manual/): the PDF reference, with worked examples and the comparison with goldfish.
 - [How to cite](citation/)
 
 ## Links

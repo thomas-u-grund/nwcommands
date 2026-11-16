@@ -13,6 +13,10 @@ description: "How to cite nwdynam, and the original papers and software it build
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models (version 1.8.1).* GitHub. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
+The manual is a PDF on this website:
+
+> Grund, T. U. (2026). *nwdynam: Dynamic network actor models in Stata. Manual.* [https://nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf)
+
 Please also cite the core package, nwcommands.
 
 **The model and goldfish.** `nwdynam` implements the model of Stadtfeld and Block and follows goldfish, so please also cite them:
