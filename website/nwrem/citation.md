@@ -13,6 +13,10 @@ description: "How to cite nwrem, and the original paper and software it builds o
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models (version 1.3.0).* GitHub. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
+The manual is a PDF on this website; cite it, together with the package version, if you refer to it:
+
+> Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* [https://nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)
+
 Please also cite the core package, nwcommands.
 
 **The model and relevent.** `nwrem` implements the model of Butts and was checked against relevent, so please also cite them:
