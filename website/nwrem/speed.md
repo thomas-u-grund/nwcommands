@@ -2,7 +2,7 @@
 title: "Speed"
 parent: "nwrem (REM)"
 nav_order: 5.5
-description: "Run times of nwrem 1.2.0 against R's relevent on the same data and models, in every cell nwrem was faster; the closest case, the largest fits and the memory."
+description: "Run times of nwrem 1.4.0 against R's relevent on the same data and models: every cell, the closest case and the largest fits."
 permalink: /nwrem/speed/
 ---
 
@@ -17,75 +17,74 @@ permalink: /nwrem/speed/
 Five effect sets on simulated event logs of 200 to 20,000 events among 20 to 100 actors: S1 two degree effects;
 S2 four degree effects; S3 four degree and two inertia effects; S4 two degree and two recency effects; S5 two
 degree and three covariate effects. relevent's `hessian` argument defaults to `FALSE`, but nwrem always returns a
-variance matrix, which it gets from the Hessian. A like-for-like comparison therefore uses `hessian = TRUE` in R.
-Both settings were timed.
+variance matrix, which it gets from the exact Hessian. A like-for-like comparison therefore uses `hessian = TRUE` in R.
+Both settings were timed. "-" means relevent did not finish within the 600-second limit or was not run because it had
+timed out in a smaller cell of the same effect set ("n.r." in the last column). The last column is the time of relevent
+divided by the time of nwrem, with the Hessian / without.
 
-The table shows the time of relevent divided by the time of nwrem, as "with Hessian / without Hessian". Median of
-7 fits of nwrem (5 in the largest S4 cell) against the medians of relevent (7 fits; 5, 3 or 1 in the larger cells). A ">" means relevent did not finish within the 600-second limit, so
-the ratio is a lower bound. "n.r." means relevent was not run because it had timed out in a smaller cell of the same
-effect set.
+| Cell | nwrem (s) | relevent, Hessian (s) | relevent, no Hessian (s) | ratio with / without |
+|---|---:|---:|---:|---:|
+| S1, 200 events, 20 actors | 0.006 | 0.133 | 0.107 | 22 / 18 |
+| S1, 1000 events, 30 actors | 0.009 | 1.104 | 0.774 | 123 / 86 |
+| S1, 5000 events, 20 actors | 0.016 | 3.240 | 2.478 | 202 / 155 |
+| S1, 5000 events, 50 actors | 0.024 | 16.3 | 11.8 | 679 / 491 |
+| S1, 5000 events, 100 actors | 0.041 | 58.5 | 40.7 | 1,428 / 992 |
+| S1, 20000 events, 100 actors | 0.213 | 396.1 | 320.3 | 1,859 / 1,504 |
+| S2, 200 events, 20 actors | 0.010 | 0.292 | 0.155 | 29 / 16 |
+| S2, 1000 events, 30 actors | 0.013 | 3.213 | 1.636 | 247 / 126 |
+| S2, 5000 events, 20 actors | 0.039 | 8.795 | 5.306 | 226 / 136 |
+| S2, 5000 events, 50 actors | 0.048 | 49.5 | 29.3 | 1,032 / 611 |
+| S2, 5000 events, 100 actors | 0.068 | 151.4 | 73.4 | 2,227 / 1,079 |
+| S2, 20000 events, 100 actors | 0.261 | - | 576.4 | n.r. / 2,208 |
+| S3, 200 events, 20 actors | 0.013 | 7.012 | 3.428 | 539 / 264 |
+| S3, 1000 events, 30 actors | 0.051 | 106.3 | 49.2 | 2,085 / 965 |
+| S3, 5000 events, 20 actors | 0.176 | 312.2 | 174.6 | 1,774 / 992 |
+| S3, 5000 events, 50 actors | 0.667 | - | - | n.r. / n.r. |
+| S3, 5000 events, 100 actors | 1.334 | - | - | n.r. / n.r. |
+| S3, 20000 events, 100 actors | 9.534 | - | - | n.r. / n.r. |
+| S4, 200 events, 20 actors | 0.014 | 0.402 | 0.249 | 29 / 18 |
+| S4, 1000 events, 30 actors | 0.042 | 4.333 | 2.694 | 103 / 64 |
+| S4, 5000 events, 20 actors | 0.137 | 12.8 | 8.103 | 93 / 59 |
+| S4, 5000 events, 50 actors | 0.599 | 84.1 | 62.0 | 140 / 104 |
+| S4, 5000 events, 100 actors | 0.792 | 203.8 | 125.4 | 257 / 158 |
+| S4, 20000 events, 100 actors | 6.568 | - | - | n.r. / n.r. |
+| S5, 200 events, 20 actors | 0.012 | 0.558 | 0.326 | 46 / 27 |
+| S5, 1000 events, 30 actors | 0.015 | 5.587 | 3.187 | 372 / 212 |
+| S5, 5000 events, 20 actors | 0.040 | 15.2 | 9.390 | 379 / 235 |
+| S5, 5000 events, 50 actors | 0.053 | 81.6 | 48.5 | 1,540 / 916 |
+| S5, 5000 events, 100 actors | 0.083 | 295.4 | 169.2 | 3,560 / 2,038 |
+| S5, 20000 events, 100 actors | 0.352 | - | - | n.r. / n.r. |
 
-| Effect set \ events / actors | 200 / 20 | 1,000 / 30 | 5,000 / 20 | 5,000 / 50 | 5,000 / 100 | 20,000 / 100 |
-|---|---:|---:|---:|---:|---:|---:|
-| S1 nodsnd, nidrec | 22 / 17 | 39 / 27 | 23 / 17 | 62 / 44 | 117 / 69 | 107 / 94 |
-| S2 four degree effects | 17 / 9.1 | 44 / 22 | 25 / 15 | 86 / 51 | 88 / 42 | >98 / 94 |
-| S3 four degree + two inertia effects | 84 / 41 | 213 / 96 | 137 / 76 | >154 / >154 | n.r. / n.r. | n.r. / n.r. |
-| S4 two degree + two recency effects | 5.0 / 3.1 | 7.3 / 4.5 | 3.3 / 2.1 | 12 / 8.7 | 15 / 9.2 | >6.2 / 6.1 |
-| S5 two degree + three covariate effects | 20 / 12 | 36 / 19 | 22 / 14 | 58 / 35 | 105 / 58 | >47 / >47 |
-
-nwrem's median times (seconds), in the same layout:
-
-| Effect set \ events / actors | 200 / 20 | 1,000 / 30 | 5,000 / 20 | 5,000 / 50 | 5,000 / 100 | 20,000 / 100 |
-|---|---:|---:|---:|---:|---:|---:|
-| S1 | 0.009 | 0.042 | 0.19 | 0.40 | 0.78 | 3.7 |
-| S2 | 0.015 | 0.067 | 0.32 | 0.56 | 1.8 | 6.1 |
-| S3 | 0.059 | 0.36 | 1.6 | 3.9 | 13 | 43 |
-| S4 | 0.070 | 0.54 | 3.4 | 6.7 | 14 | 97 |
-| S5 | 0.024 | 0.14 | 0.60 | 1.4 | 2.8 | 13 |
-
-nwrem was faster than relevent in every cell in which both programs finished: the ratios range from 3.3 to 213 with
-the Hessian and from 2.1 to 96 without. The cells with a ">" are lower bounds. The largest fit nwrem was timed on has 20,000 events and 100
-actors (S4: 97 seconds, median of 5 fits). The peak memory of the Stata process, which includes the data and the warm-up fit, was 0.21 GB at 200 events, 0.28 to 0.30 GB at 5,000
-events and 20 actors, 0.35 to 0.37 GB at 5,000 events and 50 actors, 0.42 to 0.44 GB at 5,000 events and 100 actors and 0.55 to 0.59 GB at 20,000 events and 100 actors;
-the memory of relevent was not measured. The largest difference between the mean estimates of the two programs was
-0.006 relevent standard errors in the cells where relevent computed the Hessian, and 0.016 in the coefficients
-(about 10 to 50) of the two cells at 20,000 events for which only the fit without the Hessian finished.
+nwrem was faster than relevent in every cell in which both programs finished: the ratios range from 22 to 3,560 with the Hessian and from 16
+to 2,208 without. Fits with several hundred events take a few milliseconds in nwrem. The largest fit, S3 with 20,000 events among 100 actors (relevent did not finish), took 9.5 seconds. Estimates agree: the
+largest relative difference of a coefficient between the programs was 4.2e-3, in a cell where relevent's own optimizer stops early
+(its estimates differ from the exact maximum by about that much); the other cells agree to 1e-3 or better.
 
 ## Where the speed comes from
 
-- **The Hessian costs relevent time.** Computing the Hessian took 12 to 55 percent of relevent's time. A user who
-  does not need standard errors gets relevent 1.1 to 2.2 times faster than in the "with Hessian" figures. nwrem
-  was faster than relevent in every cell also against the faster setting (ratios 2.1 to 96).
-- **Largest gain with inertia effects.** For the model with four degree and two inertia effects the ratio was 84 to
-  213 with the Hessian (41 to 96 without). At 5,000 events and 50 actors relevent did not finish in 600 seconds
-  and nwrem needed 3.9 seconds. We have not traced the reason in the code of relevent.
-- **No plug-in.** nwrem runs entirely in Mata, with ado for parsing and output. relevent's likelihood is compiled
-  code. The gain therefore does not come from compiled against interpreted code.
+- **Compiled likelihood, gradient and Hessian.** Every fit of nwrem runs in a plug-in written in C that computes the likelihood, the gradient and the exact Hessian
+  (all 14 effects); the optimizer takes Newton steps with it.
+- **The Hessian costs relevent time.** Computing the Hessian took up to half of relevent's time. A user who
+  does not need standard errors gets relevent up to about 2 times faster than in the "with Hessian" figures. nwrem was faster in every cell also against the faster setting.
+- **Largest gain with inertia and covariate effects.** Where relevent finishes, S3 has ratios of 540 to 2,085 with the Hessian.
+  relevent did not finish at 5,000 events among 50 actors within 600 seconds; nwrem needed 0.7 seconds.
 
 ## The closest case and the largest fits
 
-- **Recency effects (S4).** This is the effect set with the smallest ratios: 3.3 to 15 with the Hessian and 2.1 to
-  9.2 without. nwrem still needed 97 seconds at 20,000 events and 100 actors (5 fits), where relevent without the
-  Hessian needed 588 seconds (1 fit) and with the Hessian did not finish in 600 seconds.
-- **The largest problems.** At 20,000 events relevent timed out with the Hessian in three of the five effect sets
-  (and was not run for a fourth), and without it in one. nwrem finished all five sets, in 3.7 to 97 seconds.
-- **Start-up.** The first nwrem call in a Stata session takes about 0.1 seconds longer, because the Mata library is
-  loaded. The times above do not contain it (each fit follows an untimed warm-up fit).
+- **Recency effects (S4).** This is the effect set with the smallest ratios (29 to 257 with the Hessian). The largest S4 fit
+  (20,000 events, 100 actors) took 6.6 seconds in nwrem; relevent did not finish.
+- **The largest problems.** At 20,000 events relevent finished only the two-degree and four-degree sets (and then only without the Hessian for four degree effects). nwrem finished all five sets, in 0.21 to 9.5 seconds.
+- **Earlier versions.** Version 1.2.0, which ran in Mata, needed 7 to 136 seconds in the largest S3 and S4 cells; the plug-in of
+  version 1.3.0 and the evaluation changes of 1.4.0 made fits 1.5 to 32 times faster than 1.2.0 (the 20,000-event recency fit took 136 seconds in 1.2.0 and 6.6 seconds in 1.4.0).
 
 ## How we measured
 
-- **Machine.** Apple M5 Pro, macOS, one laptop. The times of relevent were measured on 26 and 27 October 2026 and those of nwrem on 15 November 2026. In both runs no other R or Stata process was running; the one-minute load average before each fit is in the data files (1.7 to 3.9 before the nwrem fits).
-- **Software.** nwrem 1.2.0 with nwcommands core 3.25.1 in Stata 17 BE (15 November 2026); relevent 1.2-1 in R 4.6.0 (26 and 27 October 2026). The times of relevent were not repeated; the times of nwrem were measured again with the same data, seeds (the repeat number), effect sets and design.
+- **Machine.** Intel Core i7-12700K (20 logical CPUs), 125 GB RAM, Ubuntu 22.04.4 LTS (kernel 6.5.0), one server with no other load (load average about 1). Stata is StataNow 19.5 MP (limited to 8 processors by the licence; the fits use one core), R 4.6.0.
+- **Dates.** the times of nwrem 1.4.0 (the table): 16 November 2026; the times of relevent 1.2-1 (R 4.6.0): 15 November 2026, measured with nwrem 1.2.0 on the same machine and not repeated. The two programs were therefore not timed in turn for this table.
 - **Data and scripts.** Simulated event logs from the generator scripts; scripts, data and one row per fit in the [bench folder](https://github.com/thomas-u-grund/nwcommands/tree/main/bench).
-- **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first
-  call (loading libraries) is not in the time. The timer covers the estimation command (for goldfish, the
-  `estimate()` call including its preprocessing). Loading the data is not timed.
-- **Medians.** The fits of one program run one process at a time, with up to 7 repeats and a different seed for each
-  repeat (the same seeds as in the relevent runs). The relevent fits of October were run in turn with Stata fits; the
-  nwrem 1.2.0 fits were run on their own, so the two programs were not timed in turn.
-  The tables show medians of the repeats.
-- **Same data, same model, defaults.** Both programs get the same data and the same specification with their default
-  control settings. Neither side is tuned. Fits that finished in both programs agree in their estimates (see above).
+- **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first call (loading libraries) is not in the time. The timer covers the estimation command (for the R packages, the estimation call including its preprocessing). Loading the data is not timed.
+- **Medians.** Up to 7 repeats with a different seed for each repeat in both programs (5, 3 or 1 in the largest cells of the R packages); the tables show medians.
+- **Same data, same model, defaults.** Both programs get the same data and the same specification with their default control settings. Neither side is tuned.
 - **Time limit.** Each fit has a limit of 600 seconds. A fit that reaches it is reported as a time-out, not dropped.
 
 The other model packages are compared with their R counterparts on the page [Speed compared with R](../../nwcommands/speed/).
