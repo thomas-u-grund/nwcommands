@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.5.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.6.0:
 
 ```stata
-. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.5.1/) replace
+. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.6.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwdynam version
-nwdynam version 1.5.1, 16nov2026
+nwdynam version 1.6.0, 16nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../d/dynam_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R goldfish 1.6.12
@@ -76,7 +76,7 @@ Repeat the `net install` line with `replace`. Updating the core never overwrites
 ## The native plugin
 
 The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and
-found automatically; nothing needs to be configured. The plugin of version 1.5.1 has been tested on macOS; the Windows and Linux
+found automatically; nothing needs to be configured. The plugin of version 1.6.0 has been tested on macOS; the Windows and Linux
 plugins of this version are built the same way but have not been tested yet. Every fit (choice, rate, rate with
 intercept and choice coordination, with all effects and options) evaluates the likelihood, its gradient and its
 Hessian in the plugin, which the optimizer in Mata calls. There is no slower fallback: without a working plugin
