@@ -467,7 +467,7 @@ One entry for each chapter. The entries use these headings:
 - **Data:** `lazega`; `gang` in Ex. 8.
 - **Builds on:** 6, 18, 20, 21; 9 and 22 for Ex. 7.
 - **Commands:** no new commands; the chapter combines `nwtoedge`, `nwdegree`, `nwqap`, `nwergm` (with
-  `nodemix()`, `nodeicov()` and `nodeocov()`), `lincom`, `estat`, `nwsym`, `nwdrop` and `estimates table`.
+  `nodemix()`, `nodeicov()` and `nodeocov()`), `lincom`, `estat`, `nwdrop` and `estimates table`.
 - **Where students get stuck:**
   - Reading a receiver effect of status as deference. It shows only that partners are sought more.
   - Counting the same finding three times. The density table, the QAP model and the ERGM use the same 892 arcs.

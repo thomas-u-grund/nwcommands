@@ -44,9 +44,10 @@ nwqap lazega_adv lazega_fr office practice partner_i partner_j, mode(same ///
 * ============================================================
 * An ERGM: status net of niches, reciprocity and closure
 * ============================================================
-nwergm lazega_adv, edges mutual nodematch(office practice) ///
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
     nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
     seed(12345)
+ereturn display, noci
 estimates store firm
 quietly estat mcmcdiag
 mata: min(st_matrix("r(ess)"))
@@ -76,26 +77,19 @@ mata: min(st_matrix("r(ess)"))
 estimates table firm senior, b(%7.3f) se(%7.3f) stats(converged) varwidth(22)
 
 * ============================================================
-* Sensitivity: tie rule and two very active lawyers
+* Sensitivity: two very active lawyers
 * ============================================================
-nwsym lazega_fr, mode(min) generate(fr_and)
-local rest edges mutual nodematch(office practice) gwesp(.5) seed(12345)
-quietly nwergm lazega_adv, `rest' nodemix(status) edgecov(fr_and)
-estimates store mix_and
-quietly nwergm lazega_adv, `rest' nodeofactor(status) nodeifactor(status) ///
-    nodeocov(seniority) nodeicov(seniority) edgecov(fr_and)
-estimates store sen_and
 list _nwnode office status seniority adv_out adv_in if adv_out >= 30, clean
 nwdrop lazega_fr if adv_out >= 33
 nwdrop lazega_adv if adv_out >= 33, clean
-quietly nwergm lazega_adv, `rest' nodemix(status) edgecov(lazega_fr)
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodemix(status) gwesp(.5) edgecov(lazega_fr) seed(12345)
 estimates store mix_d2
-quietly nwergm lazega_adv, `rest' nodeofactor(status) nodeifactor(status) ///
-    nodeocov(seniority) nodeicov(seniority) edgecov(lazega_fr)
+quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+    nodeofactor(status) nodeifactor(status) nodeocov(seniority) ///
+    nodeicov(seniority) gwesp(.5) edgecov(lazega_fr) seed(12345)
 estimates store sen_d2
-estimates table mix mix_and mix_d2, keep(nodemix_status_2_1 ///
-    nodemix_status_1_2 nodemix_status_2_2) b(%7.3f) se(%7.3f) ///
-    stats(converged) varwidth(22)
-estimates table senior sen_and sen_d2, keep(nodeofactor_status_2 ///
+estimates table mix mix_d2 senior sen_d2, keep(nodemix_status_2_1 ///
+    nodemix_status_1_2 nodemix_status_2_2 nodeofactor_status_2 ///
     nodeifactor_status_2 nodeocov_seniority nodeicov_seniority) b(%7.3f) ///
     se(%7.3f) stats(converged) varwidth(22)
