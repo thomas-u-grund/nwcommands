@@ -9,6 +9,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 ### Added
 - `nwinstall, buildplugin(nwrem)` compiles the native plugin of nwrem 1.3.0 on this computer, like the plugins of the other model packages; `buildplugin(all)` now covers five packages.
 
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass). Windows and Linux: not yet tested for this release.
+
 ## [3.25.1] - 2026-11-15
 
 ### Removed
