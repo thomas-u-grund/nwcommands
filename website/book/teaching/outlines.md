@@ -27,7 +27,10 @@ For students new to network analysis. The course follows the common ground (Chap
 *Describing a network* up to Chapter 11, and the first part of the path *Statistical models for one observed
 network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone that do not need an ERGM.
 
+Each week has a deck with speaker notes, a hands-on slide for each block and the book's exercises, as PowerPoint with a PDF; the lecture and the lab of a week are in one deck, and instructors are free to use, adapt and share them.
+
 ### Week 1. Relations and their vocabulary
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week01_relations.pptx) · [PDF](/book/teaching/slides/courseA_week01_relations.pdf)
 - **Chapters:** 1 *Why networks?*; 2 *What is a network?*
 - **Core idea:** a relational question needs data on pairs. A tie is directed or undirected, binary or valued,
   signed or not, and each choice keeps some information and discards other information. A network can be a cause,
@@ -40,6 +43,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   Ch. 2, Ex. 7 (mutual pairs from the numbers of arcs and edges).
 
 ### Week 2. From a question to network data in Stata
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week02_question_to_data.pptx) · [PDF](/book/teaching/slides/courseA_week02_question_to_data.pdf)
 - **Chapters:** 3 *From a research question to a network and a method*; 4 *Working with networks in Stata*
 - **Core idea:** a network is constructed, not found. Boundary, tie definition, name generator, the rule for
   one-sided reports and missing data each shape what it can answer, and each belongs in the report. In Stata a
@@ -53,6 +57,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   intersection versions of the survey network).
 
 ### Week 3. Pictures of networks
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week03_pictures.pptx) · [PDF](/book/teaching/slides/courseA_week03_pictures.pdf)
 - **Chapters:** 5 *Seeing networks*
 - **Core idea:** in most layouts the ties are data and the node positions are not. A claim about structure needs a
   measure defined on the ties. Fixed coordinates are needed to compare pictures; a matrix plot avoids the
@@ -65,6 +70,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   Ch. 5, Ex. 10 (which display for which question).
 
 ### Week 4. Describing a whole network
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week04_describing_a_whole_network.pptx) · [PDF](/book/teaching/slides/courseA_week04_describing_a_whole_network.pdf)
 - **Chapters:** 6 *Describing networks*
 - **Core idea:** density is hard to compare across sizes, so report mean degree with it. Reciprocity, transitivity
   and the triad census describe closure; the E-I index and assortativity are read against the value the group sizes
@@ -76,6 +82,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   and friendship); Ch. 6, Ex. 7 (gender and the expected E-I index); Ch. 6, Ex. 11 (density or mean degree).
 
 ### Week 5. Paths and reachability
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week05_paths_reachability.pptx) · [PDF](/book/teaching/slides/courseA_week05_paths_reachability.pdf)
 - **Chapters:** 7 *Paths, distance, and reachability*
 - **Core idea:** reachability asks whether anything can flow; distance asks how far. A network that is not
   connected needs a stated convention for unreachable pairs. In a directed network distance need not be
@@ -88,6 +95,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   rumor).
 
 ### Week 6. Centrality and brokerage
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week06_centrality_brokerage.pptx) · [PDF](/book/teaching/slides/courseA_week06_centrality_brokerage.pdf)
 - **Chapters:** 8 *Centrality, brokerage, and structural holes*
 - **Core idea:** name the mechanism (activity, access, control, prestige) before choosing the measure. Say whether
   ties are counted in their direction. A score measures position, not power or influence.
@@ -98,6 +106,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   Ch. 8, Ex. 7 (tenure as a rival source of a high in-degree); Ch. 8, Ex. 11 (whom to brief first).
 
 ### Week 7. Cohesive groups and communities
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week07_cohesion_communities.pptx) · [PDF](/book/teaching/slides/courseA_week07_cohesion_communities.pdf)
 - **Chapters:** 9 *Cohesion, subgroups, and communities*
 - **Core idea:** "hard to separate" has three meanings: local density (cliques, k-plexes, n-cliques, k-cores),
   robustness (k-components, the cohesion hierarchy) and separation (communities). A detected community is not by
@@ -110,6 +119,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   Ch. 9, Ex. 5 (label propagation under four seeds); Ch. 9, Ex. 7 (what a cohesion result stands for).
 
 ### Week 8. Positions and roles
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week08_positions_roles.pptx) · [PDF](/book/teaching/slides/courseA_week08_positions_roles.pdf)
 - **Chapters:** 10 *Positions, roles, and structural equivalence*
 - **Core idea:** two actors can occupy the same position without being tied. Similar tie profiles, blocks,
   regular equivalence and core and periphery are different answers to "who could replace whom?"
@@ -120,6 +130,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   splits); Ch. 10, Ex. 7 (is the core just the busiest lawyers?); Ch. 10, Ex. 8 (who could replace lawyer n17).
 
 ### Week 9. Ego networks
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week09_ego_networks.pptx) · [PDF](/book/teaching/slides/courseA_week09_ego_networks.pdf)
 - **Chapters:** 11 *Ego networks*. Chapters 12 (two-mode), 13 (valued, signed, multiplex) or 14 (over time) can
   replace it, or Chapter 10, if the students' own data call for them.
 - **Core idea:** an ego network is a unit of analysis in its own right. Size, density, effective size and
@@ -133,6 +144,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   question about promotion).
 
 ### Week 10. Baselines
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week10_baselines.pptx) · [PDF](/book/teaching/slides/courseA_week10_baselines.pdf) (the deck is shared with Course B, Week 3)
 - **Chapters:** 15 *Random and structured network generators* (the sections on density and random graphs);
   18 *Random networks and null models*
 - **Core idea:** size and density alone set the chance level of many statistics. A null model holds some features
@@ -145,6 +157,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   inside the Boston office).
 
 ### Week 11. Permutation tests and QAP regression
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week11_permutation_qap.pptx) · [PDF](/book/teaching/slides/courseA_week11_permutation_qap.pdf) (the deck is shared with Course B, Week 4)
 - **Chapters:** 19 *Permutation inference and comparing networks*; 20 *QAP regression*
 - **Core idea:** relabeling the nodes keeps the structure and breaks the link between identity and position. QAP
   keeps a regression's point estimates and replaces its inference with permutation p-values. Significance and
@@ -156,6 +169,7 @@ network* (Chapters 15, 18, 19 and 20). It ends with the parts of the capstone th
   (fitted tie probabilities by hand); Ch. 20, Ex. 5 (the advice model without friendship).
 
 ### Week 12. One complete analysis, and reporting it
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the deck is shared with Course B, Week 12)
 - **Chapters:** 27 *A complete network analysis* (theory, data, description and QAP);
   28 *Reproducible and responsible network research*
 - **Core idea:** state the expectations, and what would count against them, before any model is fitted. Agreement
@@ -199,6 +213,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   ignores status); Ch. 16, Ex. 4 (the homophily sweep for office); Ch. 16, Ex. 9 (preference or opportunity).
 
 ### Week 3. Null models
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week10_baselines.pptx) · [PDF](/book/teaching/slides/courseA_week10_baselines.pdf) (the same deck as Course A, Week 10)
 - **Chapters:** 18 *Random networks and null models*
 - **Core idea:** the conditional uniform graph test compares an observed statistic with networks that share some of
   its features. Conditioning on density, the dyad census or the degrees answers different questions. Rejecting a
@@ -210,6 +225,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   Ch. 18, Ex. 6 (questions to ask of a "significant" clustering).
 
 ### Week 4. Permutation tests and QAP regression
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week11_permutation_qap.pptx) · [PDF](/book/teaching/slides/courseA_week11_permutation_qap.pdf) (the same deck as Course A, Week 11)
 - **Chapters:** 19 *Permutation inference and comparing networks*; 20 *QAP regression*
 - **Core idea:** permutation keeps the observed structure and relabels it; the p-value concerns the data in hand.
   QAP regression adds several predictors, and turns logit coefficients into odds ratios and fitted probabilities.
@@ -301,6 +317,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   receipt); Ch. 26, Ex. 3 (an expected waiting time); Ch. 26, Ex. 8 (which of five models for which question).
 
 ### Week 12. One complete analysis, and reporting it
+- **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the same deck as Course A, Week 12)
 - **Chapters:** 27 *A complete network analysis*; 28 *Reproducible and responsible network research*
 - **Core idea:** one question about the law firm, whether advice runs up the status order, is carried from theory
   and stated expectations through description, QAP regression and a sequence of ERGMs to a synthesis, with
