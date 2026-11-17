@@ -8,7 +8,7 @@
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
 * The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
-* nwergm 1.7.1, nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1, the versions the
+* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0, the versions the
 * book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
@@ -44,10 +44,9 @@ nwqap lazega_adv lazega_fr office practice partner_i partner_j, mode(same ///
 * ============================================================
 * An ERGM: status net of niches, reciprocity and closure
 * ============================================================
-quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
+nwergm lazega_adv, edges mutual nodematch(office practice) ///
     nodeofactor(status) nodeifactor(status) gwesp(.5) edgecov(lazega_fr) ///
     seed(12345)
-ereturn display, noci
 estimates store firm
 quietly estat mcmcdiag
 mata: min(st_matrix("r(ess)"))
