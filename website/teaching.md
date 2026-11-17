@@ -1,7 +1,7 @@
 ---
 title: "Teaching and workshops"
 has_children: true
-nav_order: 8.5
+nav_order: 11.6
 permalink: /teaching/
 description: "Teaching material for network analysis with Stata: slides for workshops and courses, course outlines, notes on every chapter, assignments, the do-files of the book and the tutorials."
 ---
