@@ -7,6 +7,9 @@ description: "Restrict the sample space with constraints(), model two-mode (bipa
 
 # Tutorial 5: Constraints, two-mode networks and operators
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwergm` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Three tools beyond the basic model: **constraints** that restrict the networks the model is
 defined on, **two-mode** terms for networks between two kinds of nodes (people and clubs), and
 **operators** that evaluate terms on a derived network.

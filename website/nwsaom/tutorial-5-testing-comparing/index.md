@@ -7,6 +7,9 @@ description: "Score tests for effects held fixed with fix(), tests of time heter
 
 # Tutorial 5: Testing and comparing effects
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Decide which effects belong in a model, whether an effect is the same in every period,
 and how much each effect matters for the actors' choices.
 

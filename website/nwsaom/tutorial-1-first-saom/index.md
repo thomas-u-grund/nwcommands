@@ -7,6 +7,9 @@ description: "Fit a first stochastic actor-oriented model to the Glasgow friends
 
 # Tutorial 1: A first SAOM on the Glasgow friendship data
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Fit a first stochastic actor-oriented model (SAOM) with `nwsaom`, understand every
 part of the output, and know when you can trust it.
 

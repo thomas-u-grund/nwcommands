@@ -7,6 +7,9 @@ description: "Maximum likelihood and Bayesian estimation with nwsaom, and two ne
 
 # Tutorial 6: Beyond the basic model
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** A short tour of three things `nwsaom` can do besides the method-of-moments fit of one
 network: **maximum likelihood**, **Bayesian estimation** and **several networks** that change
 together. Each section is a small, complete example; the full documentation is in `help nwsaom`,

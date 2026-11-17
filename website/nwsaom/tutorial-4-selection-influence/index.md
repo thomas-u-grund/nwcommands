@@ -7,6 +7,9 @@ description: "Model friendship and drinking together with nwsaom: network-behavi
 
 # Tutorial 4: Selection and influence, network-behavior co-evolution
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Friends resemble each other. Is that because people **select** friends who are like
 them, or because friends **influence** each other so that they become alike? An SAOM can estimate
 both processes in one model, with the network and a behavior as two outcomes that change together.

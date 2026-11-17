@@ -7,6 +7,9 @@ description: "How to read the convergence diagnostics of nwsaom and what to do w
 
 # Tutorial 2: Reading convergence, and what to do when it fails
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Recognize a model that has not converged, restart it from its own estimates, and
 test hypotheses about the coefficients afterwards.
 

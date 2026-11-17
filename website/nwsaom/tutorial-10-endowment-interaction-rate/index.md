@@ -7,6 +7,9 @@ description: "Separate effects for creating and for ending ties (endow, creation
 
 # Tutorial 10: Endowment, creation, interactions and rate effects
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Three ways of refining a model that you already know how to fit: let an effect work differently when a tie
 is made and when it is ended; let two effects reinforce or weaken each other; and let the *speed* of change, not only its
 direction, depend on something.
