@@ -65,4 +65,5 @@ the simpler relational event model is [nwrem](../nwrem/).
 
 - Source code and releases: [github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 - Stata's own documentation: `help nwdynam`
+- Teaching: [workshop session on relational events](/book/teaching/workshop/#session-3-optional-relational-events-with-nwrem-and-nwdynam-3-hours) (slides with speaker notes)
 - The R package: [goldfish on CRAN](https://cran.r-project.org/package=goldfish)

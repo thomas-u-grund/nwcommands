@@ -3,7 +3,7 @@ title: "Six-hour workshop"
 grand_parent: "Book companion"
 parent: "Teaching with the book"
 nav_order: 2
-description: "A six-hour workshop in two sessions for network researchers who are new to Stata or to nwcommands: the core workflow, then ERGMs with nwergm and SAOMs with nwsaom, with the book's data and commands."
+description: "A six-hour workshop in two sessions for network researchers who are new to Stata or to nwcommands: the core workflow, then ERGMs with nwergm and SAOMs with nwsaom, with an optional third session on relational events with nwrem and nwdynam; the book's data and commands."
 permalink: /book/teaching/workshop/
 ---
 
@@ -18,14 +18,17 @@ model packages `nwergm` and `nwsaom`.
 
 - **Session 1 (3 hours):** the nwcommands core.
 - **Session 2 (3 hours):** ERGMs with `nwergm` and SAOMs with `nwsaom`.
+- **Session 3 (3 hours, optional):** relational events with `nwrem` and `nwdynam`.
 
-**Slides.** PowerPoint decks for both sessions, with speaker notes. Instructors are free to use, adapt and share
+**Slides.** PowerPoint decks for all three sessions, with speaker notes. Instructors are free to use, adapt and share
 them.
 
 - Session 1, the nwcommands core: [PowerPoint](/book/teaching/slides/session1_nwcommands_core.pptx) ·
   [PDF](/book/teaching/slides/session1_nwcommands_core.pdf)
 - Session 2, ERGMs and SAOMs: [PowerPoint](/book/teaching/slides/session2_ergm_saom.pptx) ·
   [PDF](/book/teaching/slides/session2_ergm_saom.pdf)
+- Session 3 (optional), relational events: [PowerPoint](/book/teaching/slides/session3_relational_events.pptx) ·
+  [PDF](/book/teaching/slides/session3_relational_events.pdf)
 
 Every demonstration uses the data and the commands of the book's chapters. Exercises are cited as
 "Ch. 8, Ex. 3", numbered as in the book. The R column of Appendix C of the book (*Commands by task, with R and
@@ -296,11 +299,63 @@ Send participants this list:
   `nwdynam` (R: `goldfish`).
 - **Read afterwards:** Chapters 24 to 27.
 
+## Session 3 (optional): relational events with nwrem and nwdynam (3 hours)
+
+An optional third session for groups that work with time-stamped data (e-mails, calls, messages). It needs
+Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing company, the first 14 days
+(`keep if t < 14`: 2,738 events among 129 employees), as Chapters 25 and 26 do. The commands were run with
+`nwrem` 1.5.0 and `nwdynam` 1.9.0.
+
+| Time | Block |
+|---|---|
+| 0:00–0:15 | 1. Events and event data |
+| 0:15–1:00 | 2. The relational event model: `nwrem` |
+| 1:00–1:40 | 3. The DyNAM: who acts, and whom they choose |
+| 1:40–1:55 | Break |
+| 1:55–2:15 | 4. Comparing the two models |
+| 2:15–2:40 | 5. Postestimation: fit, outliers, change points |
+| 2:40–3:00 | 6. Limits, pitfalls and where to go |
+
+### 1. Events and event data (15 min)
+- **Goal:** an event is a dated act with a sender and a receiver; the question is which event comes next, given
+  the history. Declare the log with `nwset sender receiver, eventtime(t)`; a ten-event toy log shows the output.
+- **Read afterwards:** Chapter 25.
+
+### 2. The relational event model: `nwrem` (45 min)
+- **Goal:** the model compares the observed pair with all 129 × 128 = 16,512 ordered pairs at each event; there
+  is no intercept. Fit `nodsnd nidrec`, add inertia (`frpsndsnd`), compare frequency with recency
+  (`rsndsnd`) by AIC, add a pair covariate (`covevent()`, same supervisor), and read the display (`ci`).
+- **Hands-on:** Ch. 25, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 25, Ex. 4 (recency of
+  receipt).
+- **Read afterwards:** Chapter 25.
+
+### 3. The DyNAM: who acts, and whom they choose (40 min)
+- **Goal:** two sub-models. The rate model says who acts next (with an intercept: how long it takes), the choice
+  model whom the actor chooses. The same effect name means different things in the two. Fit `nwdynam` (choice),
+  `submodel(rate)`, `same()` on a branch variable, and the rate with an intercept.
+- **Hands-on:** Ch. 26, Ex. 3 (an expected waiting time); Ch. 26, Ex. 7 (`choice_coordination` on the
+  undirected log).
+- **Read afterwards:** Chapter 26.
+
+### 4. Comparing the two models (20 min)
+- **Goal:** the same log in `nwrem` and `nwdynam`; the coefficients are not comparable in size; which model
+  answers which question (Ch. 26, Ex. 8).
+
+### 5. Postestimation: fit, outliers, change points (25 min)
+- **Goal:** `estat ic`, `estat eventprob` (350,464 rows for 2,738 events and 128 candidates), `estat outliers`
+  and `estat changepoints`, as goldfish's `examineOutliers()` and `examineChangepoints()`.
+- **Hands-on:** list the five least likely events and compare change-point methods and windows.
+
+### 6. Limits, pitfalls and where to go (20 min)
+- **Goal:** no intercept in the REM; `indeg` and `outdeg` mean different things in rate and choice; declare the
+  log first; what the packages refuse; the R equivalents.
+- **Read afterwards:** Chapters 25 to 27.
+
 ## Run times
 
 All the model runs above are short. Appendix A of the book reports that an ERGM of the advice network with seven
 terms took about three seconds in Stata/BE on a Mac. On a laptop with Stata/BE, each fit of this session (the
-staged ERGMs, `estat gof`, 100 simulated networks, the Glasgow SAOMs, the score test and the co-evolution model)
+staged ERGMs, `estat gof`, 100 simulated networks, the Glasgow SAOMs, the score test and the co-evolution model; in Session 3 each `nwrem` and `nwdynam` fit takes seconds)
 finished within a few seconds, and in Session 1 `nwcug` with `reps(1000)` took about ten seconds. Chapter 24 notes that a Bayesian run takes a few minutes,
 and that fitting the 19 Dutch schools one by one took minutes; show those from prepared output rather than run
 them live.

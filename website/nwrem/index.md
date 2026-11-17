@@ -62,4 +62,5 @@ the sister package that splits each event into the choice of the actor and the c
 
 - Source code and releases: [github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 - Stata's own documentation: `help nwrem`
+- Teaching: [workshop session on relational events](/book/teaching/workshop/#session-3-optional-relational-events-with-nwrem-and-nwdynam-3-hours) (slides with speaker notes)
 - The R package: [relevent on CRAN](https://cran.r-project.org/package=relevent)
