@@ -1,11 +1,12 @@
 ---
-title: "Teaching"
+title: "Teaching and workshops"
+has_children: true
 nav_order: 8.5
 permalink: /teaching/
 description: "Teaching material for network analysis with Stata: slides for workshops and courses, course outlines, notes on every chapter, assignments, the do-files of the book and the tutorials."
 ---
 
-# Teaching with nwcommands
+# Teaching and workshops
 {: .no_toc }
 
 Everything you need to teach network analysis with Stata and the nwcommands packages, in one place. The slides are
@@ -13,8 +14,9 @@ PowerPoint files with speaker notes (and PDFs); instructors are free to use, ada
 
 ## Slides
 
-- [Six-hour workshop](/book/teaching/workshop/): two sessions of three hours, with slides. Session 1: the
-  nwcommands core. Session 2: ERGMs with nwergm and SAOMs with nwsaom.
+- [Workshop](/book/teaching/workshop/): two sessions of three hours, with slides. Session 1: the
+  nwcommands core. Session 2: ERGMs with nwergm and SAOMs with nwsaom. An optional Session 3: relational events
+  with nwrem and nwdynam.
 - [Course outlines and slides](/book/teaching/outlines/): a 12-week course on descriptive and inferential network analysis,
   a 12-week course on statistical models for networks, and a five-day workshop. Each week or day gives the chapters, the
   core idea, a demonstration with data and commands, and exercises.

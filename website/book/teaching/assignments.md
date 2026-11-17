@@ -1,7 +1,6 @@
 ---
 title: "Assignments with other data"
-grand_parent: "Book companion"
-parent: "Teaching with the book"
+parent: "Teaching and workshops"
 nav_order: 4
 description: "Nine assignments that apply the methods of Network Analysis with Stata to data sets that nwwebuse loads but the book's chapters do not use as their main example."
 permalink: /book/teaching/assignments/

@@ -17,5 +17,5 @@ from Stata Press, expected 2027). Nothing here is needed to use the software, an
   that the book builds (Florentine families, the law firm, Glasgow, Chesapeake Bay), with the commands that wrote
   them.
 - [Do-files of the book](dofiles/): one do-file per chapter with every command the book prints, in order.
-- [Teaching with the book](teaching/): course outlines, a six-hour workshop, notes on every chapter and
+- [Teaching and workshops](../teaching/): course outlines, a six-hour workshop, notes on every chapter and
   assignments with other data sets, for instructors.
