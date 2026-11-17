@@ -85,9 +85,9 @@ Updating the core never overwrites `nwsaom`, and updating `nwsaom` never changes
 The simulations at the heart of an SAOM run in a compiled plugin that `nwsaom` ships for
 macOS, Linux and Windows. It is installed together with the package and found automatically; there is
 nothing to configure, and it uses all physical cores of the computer by default (`cores(1)` runs it on a single
-thread; the results for a given `seed()` are the same whatever the number of threads). The Windows plugin passes the
-full test suite of `nwsaom` (Stata 19 MP, 9 November 2026), and the examples of the article give the same numbers on
-Windows as on macOS in every digit that Stata displays; the Linux plugin is built the same way but has not been tested on a Linux machine.
+thread; the results for a given `seed()` are the same whatever the number of threads). The Windows and Linux plugins
+pass the full test suite of `nwsaom` (Stata 19 MP, 17 November 2026), and the examples of the article give the same numbers on
+Windows as on macOS in every digit that Stata displays.
 `nwsaom version` shows the path of the plugin in use.
 
 If no plugin can be found, `nwsaom version` says "missing", and the fit is run by a slower engine written in Mata
@@ -134,7 +134,7 @@ libraries are the better choice when they load; a build with your own Stata is t
 
 ## Requirements
 
-- Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19; Windows with Stata 19 was tested up to version 1.7.1, Linux with Stata 19 passed the full suite of 1.8.0, Windows is not yet tested for 1.8.0 (the Mata libraries are built with Stata 17, the oldest tested
+- Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19; Linux and Windows with Stata 19 passed the full suite of 1.8.0 (the Mata libraries are built with Stata 17, the oldest tested
   version; Stata 16 and older are untested). The plugin exchanges data with Mata through frames. The examples used Stata/BE 18.
 - The core `nwcommands`, as above.
 - No R and no other software.
