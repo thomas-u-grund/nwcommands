@@ -12,6 +12,17 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 17 November 2026: nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0
+
+Four releases with one change that all users see: **coefficient tables show the full term names by default.** Up to 32 characters are printed without cutting, and the confidence-interval columns are left out when `linesize` is below 100, where a long name does not fit next to them. The option `ci` brings the intervals back (the names are then cut as before); an explicit `level(#)` also shows them; `noci` leaves them out; `ci` together with `noci` stops with r(198). `nopvalues`, `cformat()`, `pformat()` and `sformat()` are passed through. The numbers are unchanged. The tables of `nwsaom` (fit, replay, `ml`, multinet, multiplex, refit), the rate tables and `estat score` follow the same rule; other custom nwsaom tables (`estat importance`, `timetest`, `gof`, `simulate`, `meta`, `bayes`) still cut long names. The tutorial pages show the output of earlier versions and carry a note on this.
+
+- **nwergm 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.8.0)). Also: `nwergm simulate` keeps the data in memory when the draws are on the data's nodes. Fixed: `simulate N` after `set obs` stopped with r(198).
+- **nwsaom 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.8.0)). Fixed: `nwsaom` multiplex with `theta01()` or `theta02()` of the wrong length ended in a Mata error; it now stops with r(198) and a message.
+- **nwrem 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.5.0)). The [manual](../nwrem/manual/) is rebuilt for this version.
+- **nwdynam 1.9.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.9.0)). The [manual](../nwdynam/manual/) is rebuilt for this version.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suites). On Linux (Ubuntu 22.04, StataNow 19.5 MP), nwergm 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0 passed their full suites (88, 23 and 30 tests); nwsaom 1.8.0 on Linux and all four on Windows: not tested yet. No plugin changed in these releases.
+
 ## 16 November 2026: nwdynam 1.8.1
 
 **nwdynam 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.1)). Fixes. With `netterms()` and a network declared with `eventtime()`, the first fit was correct but every later fit in the same session with the same event network gave wrong estimates; fits are now identical on every call (results are affected only if they came from a second or later fit with an event network whose actor order differs from that of the fitted network). `estat changepoints, plot` works again, and `choice_coordination` with statistics of large values such as `indeg` no longer stops with "flat region".

@@ -218,7 +218,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
 - **Demonstration:** `nwcorrelate` and `nwmixing` with `permutations()`; `nwqap lazega_adv lazega_fr office
   practice status, permutations(500) plot`, `qapspp`, `mode(receiver absdist)`, `type(regress)` on a valued
   outcome, and `predict()`; the Glasgow model with an earlier wave as predictor.
-- **Exercises:** Ch. 19, Ex. 5 (is advice sorted by gender?); Ch. 20, Ex. 3 (odds ratio and the p-value floor);
+- **Exercises:** Ch. 19, Ex. 5 (is advice sorted by gender?); Ch. 20, Ex. 2 (odds ratio and the p-value floor);
   Ch. 20, Ex. 4 (the Glasgow model with fewer predictors); Ch. 20, Ex. 9 (what is wrong with ordinary standard
   errors).
 
