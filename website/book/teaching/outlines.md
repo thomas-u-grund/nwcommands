@@ -317,12 +317,15 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
 
 ## C. Workshop or summer school (5 days)
 
+Each day has a deck of 60 to 75 slides, with speaker notes, a hands-on slide for each block and the book's exercises; the decks are PowerPoint files with PDFs, and instructors are free to use, adapt and share them.
+
 For participants who know Stata and want to apply network analysis to their own data. The first three days cover
 the common ground and the main descriptive tools, the fourth the inference for one network, and the fifth the
 first model, with a choice for the afternoon. A morning can take one chapter as a lecture and a lab; an
 afternoon the next.
 
 ### Day 1. Networks as data
+- **Slides:** [PowerPoint](/book/teaching/slides/courseC_day1_networks_as_data.pptx) · [PDF](/book/teaching/slides/courseC_day1_networks_as_data.pdf)
 - **Chapters:** 1 *Why networks?*; 2 *What is a network?*; 3 *From a research question to a network and a
   method* (the reporting checklist); 4 *Working with networks in Stata*; 5 *Seeing networks*
 - **Core idea:** a relational question needs data on pairs, and every construction decision changes the network.
@@ -334,6 +337,7 @@ afternoon the next.
   symmetrizing); Ch. 4, Ex. 4 (wildcards, `nwsave` and `nwuse`); Ch. 5, Ex. 1 (one network, three layouts).
 
 ### Day 2. Describing networks and positions in them
+- **Slides:** [PowerPoint](/book/teaching/slides/courseC_day2_describing_positions.pptx) · [PDF](/book/teaching/slides/courseC_day2_describing_positions.pdf)
 - **Chapters:** 6 *Describing networks*; 7 *Paths, distance, and reachability*; 8 *Centrality, brokerage, and
   structural holes*
 - **Core idea:** each statistic describes one named relation in one network and is read against what chance and
@@ -344,6 +348,7 @@ afternoon the next.
   girls); Ch. 8, Ex. 4 (closeness under two penalties); Ch. 8, Ex. 6 (sought or broker?).
 
 ### Day 3. Groups, positions and ego networks
+- **Slides:** [PowerPoint](/book/teaching/slides/courseC_day3_groups_positions_ego.pptx) · [PDF](/book/teaching/slides/courseC_day3_groups_positions_ego.pdf)
 - **Chapters:** 9 *Cohesion, subgroups, and communities*; 10 *Positions, roles, and structural equivalence*;
   11 *Ego networks*. Participants with affiliation or valued data can take Chapter 12 or 13 in place of 10 or 11.
 - **Core idea:** a cohesive group, a community, a position and an ego network answer different questions about
@@ -354,6 +359,7 @@ afternoon the next.
   splits); Ch. 11, Ex. 4 (ego density against constraint).
 
 ### Day 4. Inference for one network
+- **Slides:** [PowerPoint](/book/teaching/slides/courseC_day4_inference.pptx) · [PDF](/book/teaching/slides/courseC_day4_inference.pdf)
 - **Chapters:** 15 *Random and structured network generators* (the sections on density and random graphs);
   18 *Random networks and null models*; 19 *Permutation inference and comparing networks*; 20 *QAP regression*
 - **Core idea:** dyads are not independent observations. A conditional uniform graph test compares a statistic with
@@ -366,6 +372,7 @@ afternoon the next.
   Ch. 20, Ex. 5 (the advice model without friendship); Ch. 20, Ex. 7 (homophily or shared office).
 
 ### Day 5. A first network model
+- **Slides:** morning (ERGM): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_am.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_am.pdf); afternoon, panel option (Chapters 14 and 23): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_panel.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_panel.pdf); afternoon, capstone option (Chapter 27): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pdf)
 - **Chapters:** morning: 21 *Exponential random graph models*. Afternoon, one of two: 14 *Networks over time* and
   23 *Stochastic actor-oriented models*, for participants with panel data; or 27 *A complete network analysis*,
   which brings the week together on the law firm.
