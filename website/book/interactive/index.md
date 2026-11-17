@@ -21,7 +21,7 @@ write files to your own computer.
 - [The Florentine marriage network](florentine/): move the Medici family and see what a layout can and cannot show.
 - [Interactive demo: Lazega advice network](lazega/): the chapter's full workflow, with a guide to what to try and
   how to bring the layout back into Stata.
-- [Glasgow friendship, wave 1, by smoking](glasgow-smoking/) (exercise).
+- [Glasgow friendship, wave 1, by smoking](glasgow-smoking/): a further example of the interactive page, with node colors from an attribute.
 - [The Chesapeake Bay food web](chesapeake/) (exercise): why the edge-width slider cannot replace a transformation.
 
 **Chapter 14: Networks over time**
