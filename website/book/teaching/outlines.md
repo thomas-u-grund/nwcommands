@@ -190,7 +190,10 @@ a second course. The course follows the path *Statistical models for one observe
 (Chapters 15, 18 to 22) and then the path *Change and events* (Chapters 14, 23 to 26), and closes with the
 capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models.
 
+Each week has a deck with speaker notes, a hands-on slide for each block and the book's exercises, as PowerPoint with a PDF; Weeks 3, 4 and 12 use the same decks as Course A, and instructors are free to use, adapt and share them.
+
 ### Week 1. Random graphs and generators
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week01_random_graphs_generators.pptx) · [PDF](/book/teaching/slides/courseB_week01_random_graphs_generators.pdf)
 - **Chapters:** 15 *Random and structured network generators*
 - **Core idea:** a random graph fixes only size and density; other generators add one idea each (geometry,
   shortcuts, growth). A resemblance shows that a mechanism could produce a pattern, not that it did. One draw is
@@ -202,6 +205,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   attachment); Ch. 15, Ex. 9 (what a small-world claim needs).
 
 ### Week 2. Networks from attributes
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week02_networks_from_attributes.pptx) · [PDF](/book/teaching/slides/courseB_week02_networks_from_attributes.pdf)
 - **Chapters:** 16 *Generating networks from attributes and tie probabilities*
 - **Core idea:** tie probabilities can come from group membership or from a homophily coefficient, which is a
   log-odds ratio. Group sizes and opportunity can produce the same sorting as preference. A logit on the edge list
@@ -238,6 +242,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   errors).
 
 ### Week 5. ERGM I: dependence and change statistics
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week05_ergm1_dependence.pptx) · [PDF](/book/teaching/slides/courseB_week05_ergm1_dependence.pdf)
 - **Chapters:** 21 *Exponential random graph models*, from the start through the reciprocity step and the check of
   the MCMC simulation
 - **Core idea:** a model of a whole network lets ties depend on other ties. An ERGM coefficient is a change in the
@@ -249,6 +254,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   normalizing constant cannot be computed); Ch. 21, Ex. 3 (homophily on gender); Ch. 21, Ex. 7 (two MCMC intervals).
 
 ### Week 6. ERGM II: closure, comparison and fit
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week06_ergm2_closure_fit.pptx) · [PDF](/book/teaching/slides/courseB_week06_ergm2_closure_fit.pdf)
 - **Chapters:** 21, from the transitivity step to the end
 - **Core idea:** homophily, status, reciprocity and closure compete for the same ties. Convergence of MCMLE is not
   a verdict on the model. Fit is judged on statistics the model does not contain.
@@ -258,6 +264,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   gwodegree); Ch. 21, Ex. 9 (co-work as a rival to closure); Ch. 21, Ex. 10 (a statistic for unreachable pairs).
 
 ### Week 7. ERGM III: simulation, degeneracy and missing data
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pptx) · [PDF](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pdf)
 - **Chapters:** 22 *Advanced exponential random graph models*
 - **Core idea:** simulating from a model shows what it implies. A coefficient does not move only its own
   statistic. A raw triangle count can make a model degenerate; geometrically weighted terms avoid it. A missing
@@ -270,6 +277,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   missing dyads).
 
 ### Week 8. Change between waves
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week08_change_between_waves.pptx) · [PDF](/book/teaching/slides/courseB_week08_change_between_waves.pdf)
 - **Chapters:** 14 *Networks over time*; 23 *Stochastic actor-oriented models*, through the ministep process, the
   objective function and the first look at the data
 - **Core idea:** a network observed once is a snapshot of a process. Ties between waves are stable, formed or
@@ -282,6 +290,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   pairs without a tie); Ch. 23, Ex. 1 (the counts of `nwsaom describe`); Ch. 23, Ex. 7 (what the rate counts).
 
 ### Week 9. Stochastic actor-oriented models
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week09_saom.pptx) · [PDF](/book/teaching/slides/courseB_week09_saom.pdf)
 - **Chapters:** 23, from building up a model on Glasgow to the end
 - **Core idea:** convergence t-ratios check the estimation; the z statistics test effects. Goodness of fit shows
   where a model fails. A co-evolution model separates selection from influence, given its assumptions and a
@@ -293,6 +302,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   Ex. 5 (`avsim` in place of `avalt`); Ch. 23, Ex. 8 (a teacher's seating plan).
 
 ### Week 10. SAOM: adequacy, estimators and several groups
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week10_saom_advanced.pptx) · [PDF](/book/teaching/slides/courseB_week10_saom_advanced.pdf)
 - **Chapters:** 24 *Advanced stochastic actor-oriented models*
 - **Core idea:** the score test says which effect to try next; the time test whether effects stay constant;
   simulation and the importance table show what a model implies. Method of Moments, maximum likelihood and Bayesian
@@ -305,6 +315,7 @@ capstone. Chapter 16 is added because its logit on the edge list leads directly 
   seeds); Ch. 24, Ex. 3 (freeing outdegree activity); Ch. 24, Ex. 4 (40 classes: joint model or meta-analysis).
 
 ### Week 11. Event models
+- **Slides:** [PowerPoint](/book/teaching/slides/courseB_week11_event_models.pptx) · [PDF](/book/teaching/slides/courseB_week11_event_models.pdf)
 - **Chapters:** 25 *Relational event models*; 26 *The Dynamic Network Actor Model*
 - **Core idea:** with a time-stamped log the unit is the event. The relational event model compares, at every
   event, the pair that fired with all pairs at risk, so it has no intercept. Frequency and recency of past contact

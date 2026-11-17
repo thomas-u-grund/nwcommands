@@ -18,7 +18,7 @@ network models, from the Stata command line or from dialog boxes.
 [Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Teaching and slides](teaching/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-New: [workshop slides](book/teaching/workshop/) for three three-hour sessions, including relational events with `nwrem` and `nwdynam` (PowerPoint, with speaker notes).
+New: [slides for every week and day of the three course outlines](book/teaching/outlines/) (two 12-week courses and a five-day workshop), and [workshop slides](book/teaching/workshop/) for three three-hour sessions, including relational events with `nwrem` and `nwdynam`. PowerPoint and PDF, with speaker notes, free to use.
 
 ## The packages
 

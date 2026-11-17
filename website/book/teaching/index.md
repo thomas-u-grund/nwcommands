@@ -16,6 +16,13 @@ The book assumes that readers know Stata and does not assume any knowledge of ne
 in it runs in Stata/BE, the smallest edition, and every data set is loaded with `nwwebuse`, so students need
 nothing on their computers beyond Stata and the software (installation is described in *Getting started*).
 
+{: .highlight }
+> **Slides for all three course outlines.** Every week of the two 12-week courses and every day of the five-day
+> workshop has a deck, as PowerPoint and PDF, with speaker notes on every slide, a hands-on slide for each block
+> that quotes the book's exercises by number, and the numbers from real runs. Instructors are free to use, adapt
+> and share them. Find them in the [course outlines](outlines/) (a *Slides* line under each week and day), and the
+> three three-hour sessions of the [six-hour workshop](workshop/) have their own decks.
+
 1. TOC
 {:toc}
 
