@@ -7,6 +7,9 @@ description: "Exponential-family random graph models with the nwergm package: a 
 
 # Tutorial 1: A first ERGM
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwergm` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 Every tutorial so far has treated a network's structure as a fixed thing to *describe* — count
 ties, compute centrality, extract a path. An **exponential-family random graph model (ERGM)**
 turns that around: instead of describing one observed network, it asks what statistical process

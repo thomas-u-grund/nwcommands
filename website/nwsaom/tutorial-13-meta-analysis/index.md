@@ -7,6 +7,9 @@ description: "Fit the same stochastic actor-oriented model to several school cla
 
 # Tutorial 13: Combining several groups with a meta-analysis
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Many studies have *several* independent networks of the same kind: school classes, teams, villages. A model fitted to one
 class tells you about that class. `nwsaom meta` combines the fits of all classes into one answer: what is the typical effect, and how much do the classes differ?
 

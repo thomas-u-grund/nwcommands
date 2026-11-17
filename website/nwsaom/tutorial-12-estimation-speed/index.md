@@ -7,6 +7,9 @@ description: "What conditional and unconditional estimation mean in nwsaom, how 
 
 # Tutorial 12: Conditional and unconditional estimation, threads and speed
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Understand the choices in the "engine room": the two ways in which the rate of change can be handled, how to
 restart a fit, how many threads the program uses, and how to lengthen the estimation when you want more precision.
 

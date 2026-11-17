@@ -7,6 +7,9 @@ description: "Fit a first dynamic network actor model with nwdynam to a log of e
 
 # Tutorial 1: A first DyNAM on an email log
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwdynam` 1.9.0. From 1.9.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Declare a stream of timed events, fit the two parts of a dynamic network actor model (DyNAM),
 and understand what each part estimates.
 

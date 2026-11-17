@@ -7,6 +7,9 @@ description: "Stochastic actor-oriented models for undirected networks (symtype)
 
 # Tutorial 9: Undirected and two-mode networks
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** So far every tie had a sender and a receiver, and every actor chose its own outgoing ties.
 This tutorial covers two other kinds of network: **undirected** ties (a friendship that is simply there between two
 people) and **two-mode** ties (people attending events, authors writing papers). Both need a few extra

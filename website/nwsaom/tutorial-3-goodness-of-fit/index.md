@@ -7,6 +7,9 @@ description: "Check how well an nwsaom model describes the Glasgow friendship ne
 
 # Tutorial 3: Goodness of fit, and fixing a poor model
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** A converged model is not necessarily a good model. Here you learn to ask whether the
 model can reproduce features of the data that you did *not* put into it, and what to do when it
 cannot.

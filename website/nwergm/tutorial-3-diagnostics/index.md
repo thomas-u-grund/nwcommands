@@ -7,6 +7,9 @@ description: "Check a Monte Carlo ERGM fit with estat mcmcdiag, judge it with es
 
 # Tutorial 3: Diagnostics and goodness of fit
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwergm` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Know when a Monte Carlo ERGM fit can be trusted. Two questions need two tools:
 *did the simulation behind the estimates behave?* (`estat mcmcdiag`) and *does the fitted model
 reproduce the network?* (`estat gof`). The page also shows a model that cannot be fitted and what to do about it.

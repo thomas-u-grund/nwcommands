@@ -7,6 +7,9 @@ description: "Fit a first relational event model with nwrem to an e-mail log: de
 
 # Tutorial 1: A first relational event model on an e-mail log
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwrem` 1.5.0. From 1.5.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Declare a sequence of timed events, fit a relational event model (REM) with `nwrem`, and understand what the coefficients
 say.
 

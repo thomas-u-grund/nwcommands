@@ -7,6 +7,9 @@ description: "Pupils who join or leave between waves and values that were not ob
 
 # Tutorial 7: Changing actor sets and missing data
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Real panel data are rarely tidy. Some people join the group after the first survey, some
 leave before the last one, and some do not answer at one wave. This tutorial shows how to tell `nwsaom`
 about this, so that it neither invents changes nor throws the data away.

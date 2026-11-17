@@ -7,6 +7,9 @@ description: "Fit an ERGM to a network with missing dyads, compare models with A
 
 # Tutorial 4: Missing data and comparing models
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwergm` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Fit a model when some dyads were not observed, and choose between models with `estat ic`,
 `estimates stats` and `lrtest`. At the end, `predict` gives the probability of each tie under the model.
 

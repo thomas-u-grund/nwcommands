@@ -7,6 +7,9 @@ description: "Covariates that change between waves (tvcov) and covariates define
 
 # Tutorial 8: Time-varying and dyadic covariates
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Add two kinds of explanatory variables that [Tutorial 1](../tutorial-1-first-saom/) did not need:
 a variable of the *pupils* that changes from wave to wave (here: delinquency), and a variable of *pairs* of pupils
 (here: whether they went to the same primary school).

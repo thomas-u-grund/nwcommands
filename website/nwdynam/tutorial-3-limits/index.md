@@ -7,6 +7,9 @@ description: "What a small event log cannot tell you: a ten-event toy log gives 
 
 # Tutorial 3: Limits and diagnostics
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwdynam` 1.9.0. From 1.9.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Learn to recognize a fit that cannot be trusted, see how much data a DyNAM needs, and know what the
 command refuses and what it does not do.
 

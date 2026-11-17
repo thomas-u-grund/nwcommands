@@ -7,6 +7,9 @@ description: "Estimate one stochastic actor-oriented model for several groups jo
 
 # Tutorial 14: Several groups at once
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** [Tutorial 13](../tutorial-13-meta-analysis/) fitted each school class on its own and combined the estimates. Here you fit **one model to all
 classes at once**. This is what RSiena does with `sienaGroupCreate()` and `siena07()`, and in `nwsaom` it is the option `groups()`. You learn how to arrange the data, how to read the
 rates of the groups, how to add a behavior, what to do when the groups were not observed at the same occasions, and how to choose between the joint model and the meta-analysis.

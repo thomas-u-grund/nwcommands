@@ -7,6 +7,9 @@ description: "Use a fitted stochastic actor-oriented model to simulate networks 
 
 # Tutorial 11: Simulation and what-if analysis
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwsaom` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** A SAOM is a *model of a process*, so it can be run forward. This tutorial shows how to simulate networks from a fitted
 model, how to simulate at coefficients that you choose, and how to ask a what-if question: how different would the network be
 if one of the effects were switched off?

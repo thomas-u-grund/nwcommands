@@ -7,6 +7,9 @@ description: "How to choose and read the terms of an ERGM with nwergm: structura
 
 # Tutorial 2: Terms and model specification
 
+> **Display of the tables.** The coefficient tables on this page were produced before `nwergm` 1.8.0. From 1.8.0 on, a table prints the full term names and leaves out the confidence-interval columns when `linesize` is below 100; the option `ci` brings the intervals back (the names are then cut as before), and `noci` leaves them out. The numbers are the same.
+
+
 **Goal.** Learn how a model is written in `nwergm` and how to read the coefficient of each kind of
 term: covariate terms (`nodematch`, `nodefactor`, `nodemix`, `nodeicov`), structural terms (`mutual`)
 and triad terms (`gwesp`, with its decay parameter).
