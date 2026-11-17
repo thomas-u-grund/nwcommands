@@ -21,7 +21,7 @@ Four releases with one change that all users see: **coefficient tables show the 
 - **nwrem 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.5.0)). The [manual](../nwrem/manual/) is rebuilt for this version.
 - **nwdynam 1.9.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.9.0)). The [manual](../nwdynam/manual/) is rebuilt for this version.
 
-Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suites). On Linux (Ubuntu 22.04, StataNow 19.5 MP), nwergm 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0 passed their full suites (88, 23 and 30 tests); nwsaom 1.8.0 on Linux and all four on Windows: not tested yet. No plugin changed in these releases.
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suites). On Linux (Ubuntu 22.04, StataNow 19.5 MP), all four passed their full suites (nwergm 88 tests, nwsaom 91, nwrem 23, nwdynam 30); Windows: not tested yet. No plugin changed in these releases.
 
 ## 16 November 2026: nwdynam 1.8.1
 
