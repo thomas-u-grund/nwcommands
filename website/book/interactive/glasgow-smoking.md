@@ -3,13 +3,13 @@ title: "Glasgow friendship, wave 1, by smoking"
 grand_parent: "Book companion"
 parent: "Interactive pages from the book"
 nav_order: 3
-description: "Interactive view of the Glasgow friendship network at wave 1, colored by smoking, for the exercise of Chapter 5."
+description: "Interactive view of the Glasgow friendship network at wave 1, colored by smoking, as a further example for Chapter 5."
 permalink: /book/interactive/glasgow-smoking/
 ---
 
 # Glasgow friendship, wave 1, by smoking
 
-*Chapter 5, exercise.*
+*Chapter 5, further example.*
 
 <iframe src="../glasgow1_smoke_interactive.html" width="100%" height="650" style="border:1px solid #d0d7de; border-radius:6px;" loading="lazy" title="Interactive view of the Glasgow friendship network, wave 1"></iframe>
 
