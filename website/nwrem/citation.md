@@ -9,7 +9,7 @@ description: "How to cite nwrem, and the original paper and software it builds o
 # How to cite
 
 **nwrem.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwrem version` (for example "nwrem 1.4.0"). The package has no DOI:
+`nwrem version` (for example "nwrem 1.5.0"). The package has no DOI:
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models (version 1.3.0).* GitHub. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
