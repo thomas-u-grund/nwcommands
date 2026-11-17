@@ -15,7 +15,8 @@ network models, from the Stata command line or from dialog boxes.
 [Install](#install-in-two-steps){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Teaching and slides](teaching/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## The packages
 
