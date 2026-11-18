@@ -55,7 +55,7 @@ Current versions, as PDF files. All four are under review; the text may change b
 
 ### nwalaam (autologistic actor attribute models)
 
-- Robins, G., Pattison, P. and Elliott, P. (2001). Network models for social influence processes. *Psychometrika* 66(2), 161-190.
+- Robins, G., Pattison, P. and Elliott, P. (2001). Network models for social influence processes. *Psychometrika* 66(2), 161-189.
 - Daraganova, G. and Robins, G. (2013). Autologistic actor attribute models. In Lusher, D., Koskinen, J. and Robins, G. (eds), *Exponential Random Graph Models for Social Networks*, 102-114. Cambridge University Press.
 - Borisenko, A., Byshkin, M. and Lomi, A. (2019). A simple algorithm for scalable Monte Carlo inference. *arXiv:1901.00533*.
 - Stivala, A., Wang, P. and Lomi, A. (2024). ALAAMEE: Open-source software for fitting autologistic actor attribute models. *PLOS Complex Systems* 1(4), e0000021.

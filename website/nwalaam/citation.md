@@ -19,7 +19,7 @@ Please also cite the core package, nwcommands.
 
 - Stivala, A., Wang, P. and Lomi, A. (2024). ALAAMEE: Open-source software for fitting autologistic actor attribute models. *PLOS Complex Systems* 1(4), e0000021. ALAAMEE is on [GitHub](https://github.com/stivalaa/ALAAMEE) (MIT licence).
 - Borisenko, A., Byshkin, M. and Lomi, A. (2019). A simple algorithm for scalable Monte Carlo inference. *arXiv:1901.00533*.
-- Robins, G., Pattison, P. and Elliott, P. (2001). Network models for social influence processes. *Psychometrika* 66(2), 161-190.
+- Robins, G., Pattison, P. and Elliott, P. (2001). Network models for social influence processes. *Psychometrika* 66(2), 161-189.
 - Daraganova, G. and Robins, G. (2013). Autologistic actor attribute models. In Lusher, D., Koskinen, J. and Robins, G. (eds), *Exponential Random Graph Models for Social Networks*, 102-114. Cambridge University Press.
 
 MPNet (Wang, Robins and Pattison) is the other reference implementation of the model; the default estimator of `nwalaam`, stochastic approximation, is the one of MPNet.
