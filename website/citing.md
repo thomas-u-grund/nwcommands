@@ -32,9 +32,9 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 **nwdynam and nwrem.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.9.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.9.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.5.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
+> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.5.1) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
