@@ -380,21 +380,27 @@ One entry for each chapter. The entries use these headings:
 
 ### Chapter 22. Advanced exponential random graph models
 - **Time:** 2 sessions.
-- **Data:** `lazega`, `mesa`.
-- **Builds on:** 18, 21.
+- **Data:** `lazega`, `mesa`, `glasgow` (the optional ALAAM section).
+- **Builds on:** 18, 21; the ALAAM section also on 11 (the exposure regression) and, as a contrast, 23.
 - **Commands:** `nwergm simulate`, `nwergm` on an undirected network and with missing dyads, `nwtomata`; a small
-  program `simsummary` written in the chapter.
+  program `simsummary` written in the chapter; in the optional last section `nwalaam` (new in 2026, a fifth model
+  package), `estat mcmcdiag`, `estat gof` and `nwalaam simulate`.
 - **Where students get stuck:**
   - Treating a coefficient as if it controlled only its own statistic. Setting the `mutual` coefficient to zero also
     lowered the density; setting the gwesp coefficient to zero cut it to a third. Adjust `edges` and report the
     density with every comparison.
   - Using raw triad counts (`triangle`, `ctriple`) on a clustered network. On Faux Mesa High estimation stops;
     use `gwesp`.
-  - Losing the node attributes. `nwergm simulate` with a number of nodes replaces the data in memory; run it
-    between `preserve` and `restore`.
+  - Losing the node attributes. `nwergm simulate` keeps the data in memory when the draws are on the same nodes;
+    with any other number of nodes it replaces the data, so run it between `preserve` and `restore`.
   - Coding a missing dyad as a non-tie. Leave it missing; `nwergm` then leaves it out of the likelihood, which
     assumes the dyads are missing at random.
-- **Exercises:** 6. Basic 2 (1, 2); applied 4 (3–6); open 0.
+  - Reading the ALAAM contagion coefficient as influence. It describes how an outcome and the ties around it line
+    up in one observation; friends influencing each other, choosing friends who already smoke and a shared third
+    cause give the same coefficient. Use waves (Chapter 23) for influence.
+  - Coding a binary outcome the other way round and expecting a mirror image. Contagion counts ties between actors
+    who have the outcome, so the litigation coding of Exercise 8 does not converge when the corporate coding does.
+- **Exercises:** 8. Basic 2 (1, 2); applied 5 (3–7); open 1 (8). Ex. 7 and 8 belong to the optional ALAAM section.
 
 ### Chapter 23. Stochastic actor-oriented models
 - **Time:** 2 sessions.
