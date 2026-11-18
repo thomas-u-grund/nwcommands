@@ -136,6 +136,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Core idea:** an ego network is a unit of analysis in its own right. Size, density, effective size and
   constraint are largely redundant. Composition is read against what the setting makes available, and exposure
   before an outcome is a covariate, not proof of influence.
+- **Pointer:** the exposure regression treats the actors as independent. The model that does not is the
+  autologistic actor attribute model (`nwalaam`; Chapter 22, Section 22.7), taught in Course B, Week 7.
 - **Demonstration:** `nwego lazega_adv, sizevar(egosize) densvar(egodens)`, `nwegoplot`, and `nwaltergen` with
   `proportion()` and `diversity()`; exposure to smoking friends in the Glasgow data with `nwaltergen` and
   `regress`; the same measures from survey data with `collapse`.
@@ -188,7 +190,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 For students who know the material of Chapters 1 to 8, from course A or from another course. It can be taught as
 a second course. The course follows the path *Statistical models for one observed network* to its end
 (Chapters 15, 18 to 22) and then the path *Change and events* (Chapters 14, 23 to 26), and closes with the
-capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models.
+capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models. Chapter 22 also has an
+optional section on autologistic actor attribute models (`nwalaam`), for questions in which an attribute of the
+actors, not the ties, is the outcome; Week 7 offers it as an extra block.
 
 Each week has a deck with speaker notes, a hands-on slide for each block and the book's exercises, as PowerPoint with a PDF; Weeks 3, 4 and 12 use the same decks as Course A, and instructors are free to use, adapt and share them.
 
@@ -418,6 +422,9 @@ afternoon the next.
 - **Exercises:** Ch. 21, Ex. 1 (what the office coefficient says about a pair); Ch. 21, Ex. 3 (homophily on
   gender); then Ch. 23, Ex. 3 (homophily in sport) for the panel option, or Ch. 27, Ex. 4 (a step or a slope:
   seniority in odds ratios) for the capstone option.
+- **Optional:** participants whose outcome is an attribute of the actors (smoking, adoption, a rating) and who
+  have a single observation of the network can read Chapter 22, Section 22.7 on `nwalaam`, which is the one-wave
+  counterpart of the panel option; it needs no further preparation than the morning's ERGM.
 
 Permutation tests and model fits repeat a computation many times. Appendix A of the book advises setting `reps()`
 or `permutations()` deliberately; in a lab with many students, a smaller number of repetitions than the book's
