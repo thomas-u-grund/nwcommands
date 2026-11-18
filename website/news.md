@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 18 November 2026: nwdynam 1.9.1 and nwrem 1.5.1
+
+**nwdynam 1.9.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.9.1)) and **nwrem 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.5.1)). Fix for Stata on a Mac: the console version of StataNow 19.5 reports its operating system as "Unix", so both packages looked for the Linux plugin and stopped with the message that the plugin was too old or could not be loaded. A Mac now always uses the macOS plugin. If you hit this, update with `nwinstall, models`. The plugins themselves are unchanged.
+
 ## 17 November 2026: nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0
 
 Four releases with one change that all users see: **coefficient tables show the full term names by default.** Up to 32 characters are printed without cutting, and the confidence-interval columns are left out when `linesize` is below 100, where a long name does not fit next to them. The option `ci` brings the intervals back (the names are then cut as before); an explicit `level(#)` also shows them; `noci` leaves them out; `ci` together with `noci` stops with r(198). `nopvalues`, `cformat()`, `pformat()` and `sformat()` are passed through. The numbers are unchanged. The tables of `nwsaom` (fit, replay, `ml`, multinet, multiplex, refit), the rate tables and `estat score` follow the same rule; other custom nwsaom tables (`estat importance`, `timetest`, `gof`, `simulate`, `meta`, `bayes`) still cut long names. The tutorial pages show the output of earlier versions and carry a note on this.

@@ -52,6 +52,7 @@ scale.
 
 ## In progress
 
+- **nwalaam, a sixth package for autologistic actor attribute models (ALAAM)**: models of a binary actor outcome (for example smoking) given an observed network, the outcome-side counterpart of ERGMs, estimated by equilibrium expectation in a native plugin and following the Python implementation ALAAMEE. The repository is public at [github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam); a first release is being prepared.
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.

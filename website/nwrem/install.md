@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.5.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.5.1:
 
 ```stata
-. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.5.0/) replace
+. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.5.1/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwrem version
-nwrem version 1.5.0, 17nov2026
+nwrem version 1.5.1, 18nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../m/rem_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R relevent 1.2-1
@@ -78,7 +78,7 @@ changes the core. `net describe nwrem` shows the installed version and distribut
 ## The native plugin
 
 The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and found
-automatically; nothing needs to be configured. The plugin of version 1.5.0 (the same file as in 1.4.0) has been tested on macOS, Linux and Windows. Every fit evaluates the likelihood, its
+automatically; nothing needs to be configured. The plugin of version 1.5.1 (the same file as in 1.4.0) has been tested on macOS, Linux and Windows. Every fit evaluates the likelihood, its
 gradient and its Hessian in the plugin, which the optimizer in Mata calls. There is no slower fallback: without a working
 plugin `nwrem` stops with return code 601 (plugin file missing) or 3495 (plugin older than the package or not loadable).
 `nwrem version` shows the path of the plugin in use, or "missing" if none is found. If the plugin of your platform does not
