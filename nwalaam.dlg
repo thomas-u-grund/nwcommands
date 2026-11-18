@@ -1,0 +1,164 @@
+/* nwalaam.dlg - dialog of nwalaam (autologistic actor attribute models). */
+VERSION 14.0
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwalaam")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 580 520
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwalaam - Autologistic actor attribute model (ALAAM)")
+BEGIN
+  TEXT tx_out 20 14 260 ., label("Outcome variable (0/1, one row per actor):")
+  VARLIST vl_out 290 14 190 ., nomem
+  TEXT tx_net 20 42 260 ., label("Network (the ties are taken as given):")
+  COMBOBOX cb_net 290 42 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_eff 10 70 560 214, label("Effects")
+  CHECKBOX cx_density 20 88 130 ., label("density") default(1)
+  CHECKBOX cx_activity 160 88 130 ., label("activity")
+  CHECKBOX cx_contagion 300 88 130 ., label("contagion")
+  CHECKBOX cx_twostar 20 112 130 ., label("twostar")
+  CHECKBOX cx_threestar 160 112 130 ., label("threestar")
+  CHECKBOX cx_triangle1 300 112 130 ., label("triangle1")
+  CHECKBOX cx_triangle2 20 136 130 ., label("triangle2")
+  CHECKBOX cx_triangle3 160 136 130 ., label("triangle3")
+  CHECKBOX cx_gwactivity 300 136 130 ., label("gwactivity")
+  CHECKBOX cx_gwcontagion 440 136 120 ., label("gwcontagion")
+  TEXT tx_dir 20 166 540 ., label("Directed network only:")
+  CHECKBOX cx_sender 20 186 130 ., label("sender")
+  CHECKBOX cx_receiver 160 186 130 ., label("receiver")
+  CHECKBOX cx_reciprocity 300 186 130 ., label("reciprocity")
+  TEXT tx_other 20 220 260 ., label("Other effects (covariates, e.g. alter(age) same(sex)):")
+  EDIT ed_other 290 220 270 ., nomem
+  TEXT tx_oth2 20 246 540 ., label("Effect names and options are listed in help nwalaam.")
+  GROUPBOX gb_est 10 292 560 150, label("Estimation")
+  CHECKBOX cx_mple 20 312 540 ., label("Pseudo-likelihood estimate only (no simulation, no standard errors from runs)")
+  TEXT tx_runs 20 340 260 ., label("Number of independent runs:")
+  SPINNER sp_runs 290 340 70 ., default(30) min(1) max(9999) nomem
+  TEXT tx_iter 20 368 260 ., label("Iterations per run:")
+  SPINNER sp_iter 290 368 90 ., default(50000) min(100) max(99999999) nomem
+  TEXT tx_seed 20 396 260 ., label("Random-number seed (blank = none):")
+  EDIT ed_seed 290 396 90 ., nomem
+  TEXT tx_lrate 20 418 260 ., label("Learning rate (default 0.01):")
+  EDIT ed_lrate 290 418 90 ., nomem
+  GROUPBOX gb_dis 10 450 560 56, label("Display")
+  CHECKBOX cx_ci 20 470 120 ., label("ci") onclickoff(script ci_off) onclickon(script ci_on)
+  CHECKBOX cx_noci 160 470 120 ., label("noci")
+  TEXT tx_level 300 472 90 ., label("Level (%):")
+  EDIT ed_level 390 470 60 ., nomem
+END
+
+SCRIPT ci_on
+BEGIN
+	main.cx_noci.setoff
+END
+
+SCRIPT ci_off
+BEGIN
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwalaam"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	require main.vl_out
+	if main.ed_lrate.isneq("") & !main.ed_lrate.isnumlist() {
+		stopbox stop "Learning rate: enter a number."
+	}
+	if main.ed_level.isneq("") & !main.ed_level.isnumlist() {
+		stopbox stop "Level: enter a number."
+	}
+	if main.ed_seed.isneq("") & !main.ed_seed.isnumlist() {
+		stopbox stop "Seed: enter an integer."
+	}
+	if main.cx_ci & main.cx_noci {
+		stopbox stop "Choose either ci or noci, not both."
+	}
+	put "nwalaam " main.vl_out
+	if main.cb_net.isneq(" ") & main.cb_net.isneq("") {
+		put " " main.cb_net
+	}
+	put ", effects("
+	if main.cx_density {
+		put "density "
+	}
+	if main.cx_activity {
+		put "activity "
+	}
+	if main.cx_contagion {
+		put "contagion "
+	}
+	if main.cx_twostar {
+		put "twostar "
+	}
+	if main.cx_threestar {
+		put "threestar "
+	}
+	if main.cx_triangle1 {
+		put "triangle1 "
+	}
+	if main.cx_triangle2 {
+		put "triangle2 "
+	}
+	if main.cx_triangle3 {
+		put "triangle3 "
+	}
+	if main.cx_gwactivity {
+		put "gwactivity "
+	}
+	if main.cx_gwcontagion {
+		put "gwcontagion "
+	}
+	if main.cx_sender {
+		put "sender "
+	}
+	if main.cx_receiver {
+		put "receiver "
+	}
+	if main.cx_reciprocity {
+		put "reciprocity "
+	}
+	put main.ed_other
+	put ")"
+	if main.cx_mple {
+		put " mple"
+	}
+	if !main.sp_runs.isdefault() {
+		put " runs(" main.sp_runs ")"
+	}
+	if !main.sp_iter.isdefault() {
+		put " iterations(" main.sp_iter ")"
+	}
+	if main.ed_seed.isneq("") {
+		put " seed(" main.ed_seed ")"
+	}
+	if main.ed_lrate.isneq("") {
+		put " lrate(" main.ed_lrate ")"
+	}
+	if main.cx_ci {
+		put " ci"
+	}
+	if main.cx_noci {
+		put " noci"
+	}
+	if main.ed_level.isneq("") {
+		put " level(" main.ed_level ")"
+	}
+	stata
+END

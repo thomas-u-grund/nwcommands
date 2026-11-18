@@ -11,7 +11,8 @@ areas, and preserve compatibility for everything already shipped.
 
 **Statistical network models** now live in their own packages (all GPL-3, each requiring this
 core): `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
-models) and `nwdynam` (Dynamic Network Actor Models). Their roadmaps are kept in their own
+models), `nwdynam` (Dynamic Network Actor Models) and `nwalaam` (autologistic actor attribute
+models, ALAAMs). Their roadmaps are kept in their own
 repositories. The core keeps the temporal/two-mode groundwork they build on.
 
 **Cohesive subgroups and graph structure**: k-cores, cliques, k-plexes, n-cliques/n-clans,

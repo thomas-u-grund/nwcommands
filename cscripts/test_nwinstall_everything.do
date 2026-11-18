@@ -1,6 +1,6 @@
-* nwinstall, everything: installs the core and the four model packages as one set; nwinstall, all installs the core only and prints a hint.
+* nwinstall, everything: installs the core and the five model packages as one set; nwinstall, all installs the core only and prints a hint.
 * Everything is installed from LOCAL folders into a scratch PLUS (nothing is downloaded, the real PLUS and profile.do are not touched).
-* Run from the core folder, with the global (or the environment variable) NWMODELS set to a folder with the subfolders nwsaom nwergm nwdynam nwrem
+* Run from the core folder, with the global (or the environment variable) NWMODELS set to a folder with the subfolders nwsaom nwergm nwdynam nwrem nwalaam
 * (default: the parent folder of the core), e.g.   global NWMODELS "/path/to/models"
 * Logs through the version of Stata that runs it (the test is meant to be run under Stata 17 and Stata 18).
 cscript
@@ -79,7 +79,7 @@ assert `hint' == 1
 * all (and everything) set up the menu once: one line in profile.do
 tcount, file("`scratch'/prof2/profile.do")
 assert r(n) == 1 & r(tot) == 1
-foreach p in nwsaom nwergm nwdynam nwrem {
+foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
 	capture confirm file "`scratch'/plus/`=substr("`p'",1,1)'/`p'.ado"
 	assert _rc != 0
 }
@@ -88,7 +88,7 @@ foreach p in nwsaom nwergm nwdynam nwrem {
 log using "`scratch'/every.log", text replace name(everyrun)
 nwinstall, everything from("`core'") modelsfrom("`models'") path("`scratch'/prof")
 log close everyrun
-foreach p in nwsaom nwergm nwdynam nwrem {
+foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
 	capture confirm file "`scratch'/plus/`=substr("`p'",1,1)'/`p'.ado"
 	assert _rc == 0
 }
@@ -99,14 +99,14 @@ local hint 0
 file open `fh' using "`scratch'/every.log", read text
 file read `fh' line
 while r(eof) == 0 {
-	foreach p in nwsaom nwergm nwdynam nwrem {
+	foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
 		if substr(strtrim(`"`line'"'), 1, strlen("`p'")) == "`p'" & strpos(`"`line'"', "not installed") == 0 & strpos(`"`line'"', "Installing") == 0 & regexm(`"`line'"', "[0-9]+\.[0-9]+\.[0-9]+") local ++nver
 	}
 	if strpos(`"`line'"', "To also install the model packages") local hint 1
 	file read `fh' line
 }
 file close `fh'
-assert `nver' == 4
+assert `nver' == 5
 assert `hint' == 0
 
 * 3b. everything also sets up the menu: one line, said once; a second run does not add another
@@ -148,7 +148,7 @@ nwinstall, remove path("`scratch'/prof")
 tcount, file("`scratch'/prof/profile.do")
 assert r(n) == 0 & r(tot) == 0
 nwinstall, models remove
-foreach p in nwsaom nwergm nwdynam nwrem {
+foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
 	capture confirm file "`scratch'/plus/`=substr("`p'",1,1)'/`p'.ado"
 	assert _rc != 0
 }
@@ -159,7 +159,7 @@ nwinstall, everything from("`core'") modelsfrom("`models'") path("`scratch'/prof
 tcount, file("`scratch'/prof/profile.do")
 assert r(n) == 1 & r(tot) == 1
 
-* nwversion lists five versions
+* nwversion lists the versions of the five model packages
 nwversion
 assert "`r(version)'" != ""
 
@@ -179,7 +179,7 @@ capture nwinstall, everything modelpkg(nwsaom)
 assert _rc == 198
 
 * 5b. a model that needs a newer core than the one being installed: stop before installing anything, name the package
-foreach p in nwsaom nwergm nwdynam nwrem {
+foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
 	capture mkdir "`scratch'/fake"
 	capture mkdir "`scratch'/fake/`p'"
 	copy "`models'/`p'/`p'.pkg" "`scratch'/fake/`p'/`p'.pkg", replace

@@ -73,9 +73,10 @@ commit was authored on.
 The statistical models for networks are separate packages in separate repositories, each
 GPL-3 and each depending only on this core (never on one another, and the core never depends on
 them): `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
-models) and `nwdynam` (Dynamic Network Actor Models). They use the core's `NWdef` network
+models), `nwdynam` (Dynamic Network Actor Models) and `nwalaam` (autologistic actor attribute
+models, ALAAMs). They use the core's `NWdef` network
 objects, `nwset`, `_nwsyntax` and the Mata library `lnwcommands.mlib`, and ship their own Mata
-library and native plugins. The core ships nothing with these four command names, so installing or updating the core never
+library and native plugins. The core ships nothing with these five command names, so installing or updating the core never
 overwrites an installed model package. See each repository for its own architecture notes.
 
 ## Testing and certification
