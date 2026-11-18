@@ -18,7 +18,7 @@ GNU General Public License, version 3, and it needs the core installed first.
 |---|---|
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam) |
-| Install | `nwinstall, modelpkg(nwdynam)` (after the core; `nwinstall, everything` installs the core and the four model packages) |
+| Install | `nwinstall, modelpkg(nwdynam)` (after the core; `nwinstall, everything` installs the core and the five model packages) |
 | Version | `nwdynam version`; release history on [GitHub](https://github.com/thomas-u-grund/nwdynam/releases) |
 | Without `nwinstall` | `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/) replace` |
 

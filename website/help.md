@@ -1,7 +1,7 @@
 ---
 title: "Get help and community"
 nav_order: 10
-description: "Where to ask questions, report problems and follow announcements for nwcommands, nwsaom, nwergm, nwdynam and nwrem."
+description: "Where to ask questions, report problems and follow announcements for nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam."
 permalink: /help/
 ---
 
@@ -21,6 +21,7 @@ Use **GitHub Discussions** of the package your question is about. You need a fre
 | nwergm | [Discussions](https://github.com/thomas-u-grund/nwergm/discussions) | [Issues](https://github.com/thomas-u-grund/nwergm/issues) |
 | nwdynam | [Discussions](https://github.com/thomas-u-grund/nwdynam/discussions) | [Issues](https://github.com/thomas-u-grund/nwdynam/issues) |
 | nwrem | [Discussions](https://github.com/thomas-u-grund/nwrem/discussions) | [Issues](https://github.com/thomas-u-grund/nwrem/issues) |
+| nwalaam | [Issues](https://github.com/thomas-u-grund/nwalaam/issues) (questions too, for now) | [Issues](https://github.com/thomas-u-grund/nwalaam/issues) |
 
 Use a *question* (Discussions) for "how do I...?" and "how should I read this output?". Use an *issue* when something gives an error or a wrong result, or when you want a feature. If you are not sure which package you need, see [Which package do I need?](../which-package/).
 

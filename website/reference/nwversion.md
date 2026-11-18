@@ -19,7 +19,7 @@ nwversion
 
 ## Description
 
-`nwversion` shows the version and release date of the `nwcommands` core package and, for each of the four model packages `nwsaom`, `nwergm`, `nwdynam` and `nwrem`, whether it is installed and in which version. The model packages are installed separately (`nwinstall, models`, see [help nwinstall](nwinstall)); each has its own `version` subcommand, for example `nwsaom version`.
+`nwversion` shows the version and release date of the `nwcommands` core package and, for each of the five model packages `nwsaom`, `nwergm`, `nwdynam`, `nwrem` and `nwalaam`, whether it is installed and in which version. The model packages are installed separately (`nwinstall, models`, see [help nwinstall](nwinstall)); each has its own `version` subcommand, for example `nwsaom version`.
 
 Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is installed from `net install nwcommands, from(https://nwcommands.org/net/) replace`; an older one can be installed by its tag, for example `net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.0.0/") replace`.
 
@@ -33,4 +33,4 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))

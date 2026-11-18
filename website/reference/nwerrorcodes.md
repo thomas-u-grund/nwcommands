@@ -15,7 +15,7 @@ Return codes of nwcommands
 
 The commands of `nwcommands` stop with two kinds of return codes: a small set of codes defined by this package for situations that recur across many commands and have no natural Stata code (network not found, network already exists, node not found, ...), and Stata's own codes, used for their standard meaning (invalid syntax, variable already defined, file not found, ...).
 
-The two tables below list every code that the commands of the core package raise themselves, and in which situations. When Stata itself stops inside a command (for example a file that cannot be read, or too little memory), its own code is passed on unchanged; see `error` and **[P] error** for all of Stata's codes. The model packages (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`) describe their messages in their own help files.
+The two tables below list every code that the commands of the core package raise themselves, and in which situations. When Stata itself stops inside a command (for example a file that cannot be read, or too little memory), its own code is passed on unchanged; see `error` and **[P] error** for all of Stata's codes. The model packages (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`) describe their messages in their own help files.
 
 Use these codes when you catch errors in a do-file (`capture ...` followed by `if _rc == 482 ...`): a code keeps its meaning in every command.
 
@@ -80,4 +80,4 @@ Catch a package-specific error code programmatically:
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))

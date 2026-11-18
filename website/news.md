@@ -1,7 +1,7 @@
 ---
 title: "Releases and news"
 nav_order: 12
-description: "Dated list of releases of nwcommands, nwsaom, nwergm, nwdynam and nwrem, and changes to this site."
+description: "Dated list of releases of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam, and changes to this site."
 permalink: /news/
 ---
 
@@ -11,6 +11,14 @@ permalink: /news/
 Newest first. Announcements also go to the [nwcommands mailing list](https://groups.google.com/g/nwcommands). The full change history of each package is in its `CHANGELOG`, and every release has notes on GitHub.
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
+
+## 18 November 2026: nwalaam 1.0.0 and nwcommands 3.27.0
+
+A sixth package joins the family: **nwalaam 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.0.0)) fits autologistic actor attribute models (ALAAM), models of a binary outcome on the actors of a network (who smokes, who adopts, which side is taken) given the network around them. It follows ALAAMEE (Python) and MPNet. The default estimator is stochastic approximation, which reproduces the exact maximum likelihood estimates where those can be computed by enumeration (the karate club, a network of 16 actors); the equilibrium-expectation update of ALAAMEE is available as `method(ee)`. There are effects for undirected, directed and two-mode networks, covariates, setting and distance effects, three samplers (toggle, zero-or-one, snowball-conditional), `nwalaam simulate`, `estat gof` and `estat mcmcdiag`. The change statistics agree with ALAAMEE's to rounding error. See the [nwalaam section](../nwalaam/) with its [install page](../nwalaam/install/) and two tutorials.
+
+**nwcommands 3.27.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.27.0)). The core knows the new package: `nwinstall, models` and `nwinstall, everything` install it (and `modelpkg(nwalaam)`, `buildplugin(nwalaam)` and `buildmata(nwalaam)` work), `nwversion` lists it, and a dialog box and a menu entry for it appear under Statistical Models.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite of nwalaam).
 
 ## 18 November 2026: nwdynam 1.9.1 and nwrem 1.5.1
 

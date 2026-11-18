@@ -17,7 +17,7 @@ description: "Install nwdynam for Stata: the core nwcommands first, then the nwd
 . nwinstall, everything
 ```
 
-`nwinstall, everything` installs the core and all four model packages in one step; `nwinstall, all` installs the core only.
+`nwinstall, everything` installs the core and all five model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.
@@ -112,7 +112,7 @@ r(3499)). If that happens, build the libraries with your own Stata:
 ```
 
 The command fetches the Mata source from the GitHub repositories, compiles it with the Stata that is running and installs the libraries where Stata finds the current
-ones, keeping an existing file as a `.prev` copy. `buildmata()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam`, `nwrem` or `all` (the core and every installed package).
+ones, keeping an existing file as a `.prev` copy. `buildmata()` takes `nwcommands`, `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam` or `all` (the core and every installed package).
 Three things to know: the build **clears the data and the Mata objects in memory** (it stops with error 4 if data is loaded, so save first); the libraries of nwsaom and
 nwergm are compiled against the core library, so rebuilding the core rebuilds the installed nwsaom and nwergm libraries as well; and a build takes a few minutes.
 Update the packages first (`nwinstall, all` and `nwinstall, models`), because the source of the current release is used. Restart Stata afterwards. The shipped

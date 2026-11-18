@@ -46,8 +46,8 @@ complete collection as described in *Getting started*:
 . nwinstall, everything
 ```
 
-The first command installs a small starter package; `nwinstall` fetches the rest, including the four model
-packages `nwergm`, `nwsaom`, `nwrem` and `nwdynam`. Appendix B of the book covers installation problems.
+The first command installs a small starter package; `nwinstall` fetches the rest, including the five model
+packages `nwergm`, `nwsaom`, `nwrem`, `nwdynam` and `nwalaam`. Appendix B of the book covers installation problems.
 
 All data sets are loaded over the internet with `nwwebuse`, so the room needs a working internet connection. The
 [do-files of the book](../../dofiles/) contain every printed command, chapter by chapter, and can be handed out

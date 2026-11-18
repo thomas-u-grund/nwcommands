@@ -12,7 +12,7 @@ permalink: /nwcommands/install/
 Requirements: Stata 17 or later. The packages are tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough. The Mata
 libraries are built with Stata 17, and older versions are untested.
 
-## Everything: the core and the four model packages
+## Everything: the core and the five model packages
 
 ```stata
 . net install nwcommands, from(https://nwcommands.org/net/) replace
@@ -20,7 +20,7 @@ libraries are built with Stata 17, and older versions are untested.
 ```
 
 The first line installs `nwinstall` and the landing help topics. `nwinstall, everything` then downloads the
-core (every command, all help files and every dialog box) and the four model packages, checks first that every
+core (every command, all help files and every dialog box) and the five model packages, checks first that every
 package can be reached, sets up the "Network Analysis" menu in Stata's User menu (one line in your `profile.do`, written only once, however often you run the command), and prints the version of each package at the end. Add `nogui` (`nwinstall, everything nogui`) to leave the menu out.
 
 ## The core only
@@ -47,7 +47,7 @@ The core builds and describes networks of 100,000 nodes, but not every command s
 ## Model packages
 
 The statistical models are separate packages that need the core: [nwsaom](../../nwsaom/install/),
-[nwergm](../../nwergm/install/), [nwdynam](../../nwdynam/install/) and [nwrem](../../nwrem/install/). If you installed the core with `nwinstall, all`, add all four with
+[nwergm](../../nwergm/install/), [nwdynam](../../nwdynam/install/), [nwrem](../../nwrem/install/) and [nwalaam](../../nwalaam/install/). If you installed the core with `nwinstall, all`, add all five with
 
 ```stata
 . nwinstall, models
@@ -57,7 +57,7 @@ or pick one on its own page. `nwinstall, everything` does both steps at once.
 
 ## Compiling the plugins on your own computer
 
-The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled plugins for macOS, Linux and Windows. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine.
+The core and the model packages `nwsaom`, `nwergm`, `nwdynam` and `nwalaam` ship compiled plugins for macOS, Linux and Windows. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine.
 If the plugin of your platform is
 missing, is older than the `.ado` files or does not work on your system, compile it there:
 
@@ -117,5 +117,5 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.26.0/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.27.0/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.

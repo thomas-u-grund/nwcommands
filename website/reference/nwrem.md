@@ -18,7 +18,7 @@ GNU General Public License, version 3, and it needs the core installed first.
 |---|---|
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem) |
-| Install | `nwinstall, modelpkg(nwrem)` (after the core; `nwinstall, everything` installs the core and the four model packages) |
+| Install | `nwinstall, modelpkg(nwrem)` (after the core; `nwinstall, everything` installs the core and the five model packages) |
 | Version | `nwrem version`; release history on [GitHub](https://github.com/thomas-u-grund/nwrem/releases) |
 | Without `nwinstall` | `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/) replace` |
 
