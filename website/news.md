@@ -12,6 +12,16 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 18 November 2026: nwergm 1.8.1, nwsaom 1.8.1 and nwalaam 1.1.1
+
+**nwergm 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.8.1)). The help file points to the new package `nwalaam`; no command, term or result changed. The manual describes series 1.8 (the table format, the display options).
+
+**nwsaom 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.8.1)). The rate table of a replayed fit and the rate rows of `estat score` use the same labels as the table printed after the fit. The numbers are unchanged. The manual describes series 1.8.
+
+**nwalaam 1.1.1** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.1.1)). A two-mode network whose nodes are stored in label order now takes the right actors as the outcome mode (before, the header could show the wrong number of actors and a fit could stop with r(430)); the help file says that the equilibrium-expectation standard errors can be too small on larger networks. The first manual of `nwalaam` is written. The manuals of nwdynam 1.9 and nwrem 1.5 on this site name the current patch versions.
+
+Tested on macOS with Stata 17 BE: the quick tests of nwergm (14 tests) and nwsaom (39 tests) and all 10 test files of nwalaam pass.
+
 ## 18 November 2026: nwalaam 1.1.0
 
 **nwalaam 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.1.0)). The independent runs of `method(ee)` now run in parallel threads, one per core by default; the option `threads(#)` sets the number, and the results are identical for any number of threads. The Karate Club fit with the default settings takes 4 seconds on a computer with 20 threads, against 40 seconds with `threads(1)`, and 9 seconds on a Windows computer with 8 cores, against 62 seconds. The default estimator (stochastic approximation) and all printed numbers are unchanged. Also: the test of the version number now follows the package version, and `method(mple)` carries the pseudo-likelihood title.
