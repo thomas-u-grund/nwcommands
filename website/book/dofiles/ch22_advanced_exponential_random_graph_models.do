@@ -7,8 +7,8 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.26.0,
-* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0, the versions the
+* The do-file runs from top to bottom. It was checked against nwcommands 3.27.0,
+* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0, nwdynam 1.9.0 and nwalaam 1.0.0, the versions the
 * book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
@@ -90,3 +90,29 @@ mata: st_matrix("M", A)
 nwset, mat(M) undirected name(mesa_na)
 nwergm mesa_na, edges nodematch(grade race) seed(12345)
 display "informative dyads: " e(N) "   missing dyads: " e(nmissing)
+
+* ============================================================
+* An attribute as the outcome: the autologistic actor attribute model
+* ============================================================
+nwwebuse glasgow, nwclear
+generate byte smoker1 = (smoke1 > 1)
+tabulate smoker1
+nwalaam smoker1 glasgow1, effects(density contagion) mple
+
+nwalaam smoker1 glasgow1, effects(density contagion sender receiver) ///
+    seed(12345)
+estat mcmcdiag
+display exp(_b[contagion])
+
+quietly summarize alcohol1
+generate double alc_c = alcohol1 - r(mean)
+quietly summarize sport1
+generate double sport_c = sport1 - r(mean)
+nwalaam smoker1 glasgow1, effects(density contagion sender receiver ///
+    ego(alc_c) ego(sport_c)) seed(12345)
+
+estat gof, nsim(1000) seed(7)
+
+nwalaam simulate, nsim(100) generate(sim) seed(2)
+nwalaam smoker1 glasgow1, effects(density contagion sender receiver) ///
+    method(ee) seed(12345)

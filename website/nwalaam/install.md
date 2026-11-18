@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.1.0:
 
 ```stata
-. net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/v1.0.0/) replace
+. net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/v1.1.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwalaam version
-nwalaam version 1.0.0, 18nov2026
+nwalaam version 1.1.0, 18nov2026
   native plugin           : .../a/alaam_sim_macos.plugin (ships with the package)
   reference               : ALAAMEE (Stivala, Wang and Lomi) and MPNet
   license                 : GNU GPL-3
@@ -76,7 +76,9 @@ The package ships a compiled plugin for macOS, Linux and Windows. It is installe
 found automatically; nothing needs to be configured. The sampler that every fit, every simulation and every goodness-of-fit
 check needs runs in the plugin; the optimization and the tables are Stata code. There is no slower fallback: without a working plugin
 `nwalaam` stops with return code 601 (plugin file missing) or 3495 (plugin older than the package or not loadable).
-`nwalaam version` shows the path of the plugin in use, or "missing" if none is found.
+`nwalaam version` shows the path of the plugin in use, or "missing" if none is found. The plugin has been tested on macOS, Linux and Windows.
+
+The independent runs of `method(ee)` run in parallel threads, one per core by default; `threads(#)` sets the number, and the results are identical for any number of threads.
 
 ### If the plugin does not work on your computer
 
@@ -114,7 +116,7 @@ libraries are the better choice when they load; a build with your own Stata is t
 
 ## Requirements
 
-- Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested). The examples on this site used Stata/BE 17.
+- Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19 and on Linux and Windows with Stata 19 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested). The examples on this site used Stata/BE 17.
 - The core `nwcommands`, as above. No Python and no other software.
 
 ## Next
