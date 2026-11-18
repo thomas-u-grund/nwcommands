@@ -12,6 +12,12 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
 
+## 18 November 2026: nwalaam 1.1.0
+
+**nwalaam 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.1.0)). The independent runs of `method(ee)` now run in parallel threads, one per core by default; the option `threads(#)` sets the number, and the results are identical for any number of threads. The Karate Club fit with the default settings takes 4 seconds on a computer with 20 threads, against 40 seconds with `threads(1)`, and 9 seconds on a Windows computer with 8 cores, against 62 seconds. The default estimator (stochastic approximation) and all printed numbers are unchanged. Also: the test of the version number now follows the package version, and `method(mple)` carries the pseudo-likelihood title.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP, on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): all 9 test files pass on each.
+
 ## 18 November 2026: nwalaam 1.0.0 and nwcommands 3.27.0
 
 A sixth package joins the family: **nwalaam 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.0.0)) fits autologistic actor attribute models (ALAAM), models of a binary outcome on the actors of a network (who smokes, who adopts, which side is taken) given the network around them. It follows ALAAMEE (Python) and MPNet. The default estimator is stochastic approximation, which reproduces the exact maximum likelihood estimates where those can be computed by enumeration (the karate club, a network of 16 actors); the equilibrium-expectation update of ALAAMEE is available as `method(ee)`. There are effects for undirected, directed and two-mode networks, covariates, setting and distance effects, three samplers (toggle, zero-or-one, snowball-conditional), `nwalaam simulate`, `estat gof` and `estat mcmcdiag`. The change statistics agree with ALAAMEE's to rounding error. See the [nwalaam section](../nwalaam/) with its [install page](../nwalaam/install/) and two tutorials.

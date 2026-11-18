@@ -124,7 +124,7 @@ that contains one subfolder per package (option `modelsfrom()`; see `help nwinst
 
 ## If a plugin does not work on your computer
 
-The core and the model packages `nwsaom`, `nwergm`, `nwdynam` and `nwalaam` ship compiled plugins for macOS, Linux and Windows. The full test suites of the core and of all four model packages pass on Windows (347 tests, Stata 19 MP, 9 November 2026); the Linux plugins are built the same way but have not been tested on a Linux machine.
+The core and the model packages `nwsaom`, `nwergm`, `nwdynam`, `nwrem` and `nwalaam` ship compiled plugins for macOS, Linux and Windows. The current releases of the model packages have been tested on macOS (Stata 17, 18 and 19), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP); the [news](../../news/) entries give the details for each release.
 If the plugin of your platform is
 missing or does not load (Stata then reports a plugin error, or a command warns that it is falling back to a slower route), compile it on your own computer:
 

@@ -60,7 +60,7 @@ close to it. [Tutorial 1](tutorial-1-first-alaam/) shows the numbers; `method(ee
 | Agreement with ALAAMEE | every change statistic agrees with ALAAMEE's to rounding error on random undirected, directed and two-mode networks with missing values |
 | Agreement with exact maximum likelihood | karate club (2^34 outcome vectors) and a network of 16 actors (2^16): stochastic approximation reproduces the exact estimates |
 | Engine | a compiled plugin for the sampler (macOS, Linux, Windows); there is no slower fallback |
-| Version | 1.0.0 (18 November 2026) |
+| Version | 1.1.0 (18 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
