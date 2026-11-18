@@ -46,12 +46,12 @@ program nwinstall, rclass
 		}
 	}
 
-	// everything = the core (exactly what all installs) plus the four model packages (what models installs), as one consistent set
+	// everything = the core (exactly what all installs) plus the five model packages (what models installs), as one consistent set
 	if "`everything'" != "" {
 		local all "all"
 		local models "models"
 		if "`modelpkg'" != "" {
-			di as err "{p 0 0 2}everything installs all four model packages; it cannot be combined with modelpkg(){p_end}"
+			di as err "{p 0 0 2}everything installs all five model packages; it cannot be combined with modelpkg(){p_end}"
 			exit 198
 		}
 	}
@@ -59,7 +59,7 @@ program nwinstall, rclass
 	// gui is the documented name of the option that installs the "Network Analysis" menu and dialogs permanently; permanently remains accepted as the older name
 	if "`gui'" != "" local permanently "permanently"
 
-	// the model packages nwsaom, nwergm, nwdynam, nwrem are separate GPL-3 packages (nwinstall_models.ado)
+	// the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam are separate GPL-3 packages (nwinstall_models.ado)
 	local __nw_models = ("`models'" != "" | "`modelpkg'" != "")
 	if `__nw_models' & "`update'`usermenu'`permanently'`dialog'`downloadoff'`help'`ado'`ext'`all'`localcopy'" == "" {
 		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
@@ -766,12 +766,13 @@ program nwinstall_menu
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 
-	// Model packages: ONE menu entry per package (nwsaom, nwergm); every other dialog of a package (Bayes, several networks,
+	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam); every other dialog of a package (Bayes, several networks,
 	// postestimation, simulation, ...) opens from a button inside the main dialog. An entry is listed only when the
 	// package's dialog file is installed (nwdynam and nwrem have no dialogs)
 	local __nwmodeldlg ""
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom|Stochastic actor-oriented model (nwsaom)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
+	local __nwmodeldlg `"`__nwmodeldlg' "nwalaam|Autologistic actor attribute model (nwalaam)""'
 	local __nwfirst = 1
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")

@@ -1,7 +1,7 @@
 ---
 title: "Literature"
 nav_order: 13
-description: "Publications about nwcommands, the methods papers behind nwsaom, nwergm, nwdynam and nwrem, and how to add your application."
+description: "Publications about nwcommands, the methods papers behind nwsaom, nwergm, nwdynam, nwrem and nwalaam, and how to add your application."
 permalink: /literature/
 ---
 
@@ -53,10 +53,17 @@ Current versions, as PDF files. All four are under review; the text may change b
 
 - Butts, C. T. (2008). A relational event framework for social action. *Sociological Methodology* 38(1), 155-200.
 
+### nwalaam (autologistic actor attribute models)
+
+- Robins, G., Pattison, P. and Elliott, P. (2001). Network models for social influence processes. *Psychometrika* 66(2), 161-190.
+- Daraganova, G. and Robins, G. (2013). Autologistic actor attribute models. In Lusher, D., Koskinen, J. and Robins, G. (eds), *Exponential Random Graph Models for Social Networks*, 102-114. Cambridge University Press.
+- Borisenko, A., Byshkin, M. and Lomi, A. (2019). A simple algorithm for scalable Monte Carlo inference. *arXiv:1901.00533*.
+- Stivala, A., Wang, P. and Lomi, A. (2024). ALAAMEE: Open-source software for fitting autologistic actor attribute models. *PLOS Complex Systems* 1(4), e0000021.
+
 ## Using nwcommands in your work
 
-We would like to list work that used nwcommands, nwsaom, nwergm, nwdynam or nwrem. To add yours, open a post in **Show and tell** under Discussions of the package you used, or open an issue if you prefer:
+We would like to list work that used nwcommands, nwsaom, nwergm, nwdynam, nwrem or nwalaam. To add yours, open a post in **Show and tell** under Discussions of the package you used, or open an issue if you prefer:
 
-- [nwcommands](https://github.com/thomas-u-grund/nwcommands/discussions), [nwsaom](https://github.com/thomas-u-grund/nwsaom/discussions), [nwergm](https://github.com/thomas-u-grund/nwergm/discussions), [nwdynam](https://github.com/thomas-u-grund/nwdynam/discussions), [nwrem](https://github.com/thomas-u-grund/nwrem/discussions).
+- [nwcommands](https://github.com/thomas-u-grund/nwcommands/discussions), [nwsaom](https://github.com/thomas-u-grund/nwsaom/discussions), [nwergm](https://github.com/thomas-u-grund/nwergm/discussions), [nwdynam](https://github.com/thomas-u-grund/nwdynam/discussions), [nwrem](https://github.com/thomas-u-grund/nwrem/discussions) and [nwalaam](https://github.com/thomas-u-grund/nwalaam/issues) (issues).
 
 Please give the full reference, a link (DOI or preprint), the package and version, and one sentence on what you modeled. The list will be added to as submissions arrive; there are no entries yet.

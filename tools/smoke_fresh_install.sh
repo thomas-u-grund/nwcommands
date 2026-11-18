@@ -1,10 +1,10 @@
 #!/bin/bash
 # smoke_fresh_install.sh [core_dir [model_parent_dir]]
-# Installs nwcommands and the four model packages from LOCAL folders into an empty PLUS directory (Stata -e), then
+# Installs nwcommands and the five model packages from LOCAL folders into an empty PLUS directory (Stata -e), then
 # runs one real fit of each package in a NEW Stata process (a new session is what a user sees after a fresh install).
 # Fails (exit 1) if any step returns an error or does not reach its end marker. A missing log counts as NOT RUN.
 # core_dir: the nwcommands folder (default: the repository containing this script);
-# model_parent_dir: a folder with the subfolders nwsaom nwergm nwdynam nwrem (default: the parent of core_dir).
+# model_parent_dir: a folder with the subfolders nwsaom nwergm nwdynam nwrem nwalaam (default: the parent of core_dir).
 # SMOKE_STALE=1 additionally makes every fit session start with a Mata library index that was built when only the core library was
 # visible (what a user session can look like: Stata indexes the Mata libraries once, early in a session).
 # The environment variable STATA overrides the Stata executable. nwergm needs internet access (nwwebuse reads the mesa data).
@@ -66,8 +66,17 @@ echo 'nwrem calls, nodsnd nidrec' >> "$T/s_nwrem.do"
 echo 'display "SMOKE_OK"' >> "$T/s_nwdynam.do"
 echo 'display "SMOKE_OK"' >> "$T/s_nwrem.do"
 
+hdr > "$T/s_nwalaam.do"
+cat >> "$T/s_nwalaam.do" <<'EOF'
+nwwebuse glasgow, nwclear
+generate byte smoker = smoke1 > 1 if !missing(smoke1)
+nwalaam smoker glasgow1, effects(density contagion) mple
+nwalaam smoker glasgow1, effects(density contagion) runs(2) iterations(3000) seed(1)
+display "SMOKE_OK"
+EOF
+
 fail=0
-for f in s0_install s1_nwsaom s2_nwergm s_nwdynam s_nwrem; do
+for f in s0_install s1_nwsaom s2_nwergm s_nwdynam s_nwrem s_nwalaam; do
   ( cd "$T" && perl -e 'alarm 900; exec @ARGV' "$STATA" -e do "$f.do" >/dev/null 2>&1 )   # one Stata process at a time
   if [ "$f" = s0_install ] && [ "$STALE" = 1 ]; then   # the stale index knows the core library only
     mkdir -p "$T/stalecore/l"; cp "$T/plus/l/lnwcommands.mlib" "$T/stalecore/l/" 2>/dev/null

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.26.0  16nov2026}{...}
+{* *! version 3.27.0  18nov2026}{...}
 
 {phang}
 {help nwcommands:NW-4 start} {hline 2} Getting started
@@ -107,8 +107,8 @@ on each other, but each one also stands alone.
 
 {pstd}
 The statistical model packages have their own tutorials: {browse "https://nwcommands.org/nwsaom/":nwsaom},
-{browse "https://nwcommands.org/nwergm/":nwergm}, {browse "https://nwcommands.org/nwdynam/":nwdynam} and
-{browse "https://nwcommands.org/nwrem/":nwrem}.
+{browse "https://nwcommands.org/nwergm/":nwergm}, {browse "https://nwcommands.org/nwdynam/":nwdynam},
+{browse "https://nwcommands.org/nwrem/":nwrem} and {browse "https://nwcommands.org/nwalaam/":nwalaam}.
 
 
 {marker more}{...}
@@ -128,4 +128,4 @@ Most commands also have a dialog box: after {cmd:nwinstall, all}, the {bf:Networ
 {bf:User}.
 
 {hline}
-{pstd}{it:nwcommands version 3.26.0, 16 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

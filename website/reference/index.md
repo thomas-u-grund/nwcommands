@@ -9,7 +9,7 @@ has_children: false
 
 All nwcommands commands, grouped as in `help nwtopical`.
 
-`nwsaom`, `nwergm`, `nwdynam` and `nwrem` are not part of the core. They are separate GPL-3
+`nwsaom`, `nwergm`, `nwdynam`, `nwrem` and `nwalaam` are not part of the core. They are separate GPL-3
 packages with their own sections (see the menu); the entries below only point to them. The
 complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
@@ -180,6 +180,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwergm`](nwergm) --- Exponential random graph models (ERGM). Section: [nwergm](../nwergm/)
 - [`nwdynam`](nwdynam) --- Dynamic network actor models (DyNAM) for event data. Section: [nwdynam](../nwdynam/)
 - [`nwrem`](nwrem) --- Relational event models (REM) for event data. Section: [nwrem](../nwrem/)
+- [`nwalaam`](nwalaam) --- Autologistic actor attribute models (ALAAM): a binary outcome on the actors of a network. Section: [nwalaam](../nwalaam/)
 
 ## Utilities
 

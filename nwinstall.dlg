@@ -46,7 +46,7 @@ BEGIN
   EDIT ed_from 800 188 190 ., nomem option(from)
   TEXT tx_ed_dest 20 216 260 ., label("with localcopy: local ado directory to copy files into; default = your PERSONAL ado directory")
   EDIT ed_dest 290 216 190 ., nomem option(dest)
-  TEXT tx_cx_everything 20 244 260 ., label("install the core and the four model packages (nwsaom, nwergm, nwdynam, nwrem)")
+  TEXT tx_cx_everything 20 244 260 ., label("install the core and the five model packages (nwsaom, nwergm, nwdynam, nwrem, nwalaam)")
   CHECKBOX cx_everything 290 244 190 ., label("everything") option(everything)
   TEXT tx_cx_nogui 530 244 260 ., label("do not install the menu (with all or everything; profile.do is left alone)")
   CHECKBOX cx_nogui 800 244 190 ., label("nogui") option(nogui)

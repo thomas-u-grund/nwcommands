@@ -2,7 +2,12 @@
 
 All notable changes to the nwcommands core package. The format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
-(`nwsaom`, `nwergm`, `nwdynam`, `nwrem`).
+(`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`).
+
+## [3.27.0] - 2026-11-18
+
+### Added
+- The model package `nwalaam` (autologistic actor attribute models, ALAAMs) is known to the core: `nwinstall, models` and `nwinstall, everything` install it, `modelpkg(nwalaam)`, `buildplugin(nwalaam)` and `buildmata(nwalaam)` work, `nwversion` lists it, `help nwtopical` and `help nwalphabetical` link it, and `nwinstall` sets up a menu entry and a dialog box (Statistical Models) for it once it is installed.
 
 ## [3.26.0] - 2026-11-16
 

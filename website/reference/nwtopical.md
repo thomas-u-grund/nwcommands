@@ -254,7 +254,8 @@ The statistical network models are separate packages that need the core. Install
 - **[nwergm](https://nwcommands.org/nwergm/)** --- Exponential random graph models (ERGM) for cross-sectional networks
 - **[nwdynam](https://nwcommands.org/nwdynam/)** --- Dynamic network actor models (DyNAM): choice and rate models for event sequences
 - **[nwrem](https://nwcommands.org/nwrem/)** --- Relational event models (REM) for timed interaction events
+- **[nwalaam](https://nwcommands.org/nwalaam/)** --- Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))

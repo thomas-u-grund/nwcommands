@@ -40,6 +40,15 @@ if _rc == 0 {
 	confirm file "`scratch'/dest/rem_sim_`plat'.plugin"
 	if `win' quietly shell rmdir "`=subinstr("`scratch'/from/nwrem", "/", char(92), .)'"
 }
+* the nwalaam plugin from a checkout of nwalaam, when it is there
+capture confirm file "`models'/nwalaam/native/alaam_sim.c"
+if _rc == 0 {
+	if `win' quietly shell mklink /J "`=subinstr("`scratch'/from/nwalaam", "/", char(92), .)'" "`=subinstr("`models'/nwalaam", "/", char(92), .)'"
+	else quietly shell ln -s "`models'/nwalaam" "`scratch'/from/nwalaam"
+	nwinstall, buildplugin(nwalaam) buildfrom("`scratch'/from") dest("`scratch'/dest")
+	confirm file "`scratch'/dest/alaam_sim_`plat'.plugin"
+	if `win' quietly shell rmdir "`=subinstr("`scratch'/from/nwalaam", "/", char(92), .)'"
+}
 * an unknown package is refused
 capture nwinstall, buildplugin(nwxyz)
 assert _rc == 198

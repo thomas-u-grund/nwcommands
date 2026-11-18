@@ -82,7 +82,7 @@ Nineteen worked tutorials, each with real Stata output, are at browse "https://n
 - **18** --- [Testing hypotheses about networks](https://nwcommands.org/tutorials/18-testing/)
 - **19** --- [Longitudinal models: an overview](https://nwcommands.org/tutorials/19-intro-longitudinal-models/)
 
-The statistical model packages have their own tutorials: [nwsaom](https://nwcommands.org/nwsaom/), [nwergm](https://nwcommands.org/nwergm/), [nwdynam](https://nwcommands.org/nwdynam/) and [nwrem](https://nwcommands.org/nwrem/).
+The statistical model packages have their own tutorials: [nwsaom](https://nwcommands.org/nwsaom/), [nwergm](https://nwcommands.org/nwergm/), [nwdynam](https://nwcommands.org/nwdynam/), [nwrem](https://nwcommands.org/nwrem/) and [nwalaam](https://nwcommands.org/nwalaam/).
 
 ## Where to look next
 
@@ -97,4 +97,4 @@ Most commands also have a dialog box: after `nwinstall, all`, the **Network Anal
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))

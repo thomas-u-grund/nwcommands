@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.26.0  16nov2026}{...}
+{* *! version 3.27.0  18nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -272,7 +272,8 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:    {bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwalaam/":nwalaam}}}Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network{p_end}
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.26.0, 16 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -23,7 +23,7 @@ The two tables below list every code that the commands of the core package raise
 in which situations. When Stata itself stops inside a command (for example a file that cannot be
 read, or too little memory), its own code is passed on unchanged; see {help error} and
 {bf:[P] error} for all of Stata's codes. The model packages ({cmd:nwsaom}, {cmd:nwergm},
-{cmd:nwdynam}, {cmd:nwrem}) describe their messages in their own help files.
+{cmd:nwdynam}, {cmd:nwrem}, {cmd:nwalaam}) describe their messages in their own help files.
 
 {pstd}
 Use these codes when you catch errors in a do-file ({cmd:capture ...} followed by
@@ -105,4 +105,4 @@ Catch a package-specific error code programmatically:
 {help nwcommands}, {help nwtopical}
 
 {hline}
-{pstd}{it:nwcommands version 3.26.0, 16 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

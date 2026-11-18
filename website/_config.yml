@@ -18,12 +18,13 @@ aux_links:
   "nwergm": ["https://github.com/thomas-u-grund/nwergm"]
   "nwdynam": ["https://github.com/thomas-u-grund/nwdynam"]
   "nwrem": ["https://github.com/thomas-u-grund/nwrem"]
+  "nwalaam": ["https://github.com/thomas-u-grund/nwalaam"]
   "Request a feature": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"]
   "Report an issue": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"]
 
 footer_content: >-
   nwcommands is free software under the GNU General Public License, version 3,
-  as are the model packages nwsaom, nwergm, nwdynam and nwrem.
+  as are the model packages nwsaom, nwergm, nwdynam, nwrem and nwalaam.
   <a href="/citing/">Citing and licenses</a> ·
   <a href="/help/">Get help</a> ·
   <a href="https://github.com/thomas-u-grund/nwcommands">GitHub</a>.
