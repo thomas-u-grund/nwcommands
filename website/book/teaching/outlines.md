@@ -272,6 +272,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwergm simulate` from hand-chosen coefficients and from the fitted advice model with one
   coefficient changed; `nwergm mesa, edges nodematch(grade race) gwesp(.25) seed(12345)` and the same model with
   `triangle`, which fails; a version of `mesa` with missing dyads built with `nwtomata`.
+- **Optional extra:** an attribute as the outcome (Chapter 22, Section 22.7): `nwalaam smoker1 glasgow1,
+  effects(density contagion sender receiver) seed(12345)`, its pseudolikelihood start with `mple`, and `estat gof`;
+  a cross-sectional association, not influence. Homework: Ch. 22, Ex. 7 and 8.
 - **Exercises:** Ch. 22, Ex. 1 (why `mutual` has no meaning in an undirected network); Ch. 22, Ex. 2 (why a
   triangle count degenerates); Ch. 22, Ex. 4 (simulate with the gwesp coefficient at 0.3); Ch. 22, Ex. 6 (ten
   missing dyads).
@@ -298,6 +301,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip nodematch(smoke1)
   seed(12345)`; three waves with `waves()`; `nwsaom refit`; `estat gof, nsim(100) seed(1)`; the co-evolution model
   with `behavior(alcohol1 alcohol2 alcohol3)`, `behsim` and `avalt`.
+- **Pointer:** with one wave only, `nwalaam` (the optional block of Week 7) describes how an attribute and the
+  ties around each actor line up, and cannot separate selection from influence.
 - **Exercises:** Ch. 23, Ex. 2 (the second period and a restart); Ch. 23, Ex. 3 (homophily in sport); Ch. 23,
   Ex. 5 (`avsim` in place of `avalt`); Ch. 23, Ex. 8 (a teacher's seating plan).
 
