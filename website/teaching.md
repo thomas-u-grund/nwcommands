@@ -20,6 +20,7 @@ PowerPoint files with speaker notes (and PDFs); instructors are free to use, ada
 - [Course outlines and slides](/book/teaching/outlines/): a 12-week course on descriptive and inferential network analysis,
   a 12-week course on statistical models for networks, and a five-day workshop. Each week or day gives the chapters, the
   core idea, a demonstration with data and commands, and exercises.
+  Week 7 of the models course has an optional block on autologistic actor attribute models (ALAAM) with `nwalaam`.
 
 ## Material for instructors
 
