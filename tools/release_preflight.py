@@ -5,7 +5,7 @@
     python3 tools/release_preflight.py --require-pushed   the same, and develop must equal origin/develop
     python3 tools/release_preflight.py --post             after the release: tag exists and is in origin/main, tree clean
     python3 tools/release_preflight.py --models-parent DIR [--model-pattern 'rd_{name}']
-                                                           where the clones of nwsaom nwergm nwdynam nwrem are
+                                                           where the clones of nwsaom nwergm nwdynam nwrem nwalaam are
                                                            (default: the parent of the core checkout, folder = the package name)
     python3 tools/release_preflight.py --no-network       skip the checks that ask GitHub (git ls-remote)
 
@@ -24,7 +24,9 @@ import argparse, datetime, glob, hashlib, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
-MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem"]
+MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam"]
+# packages whose Mata library does not use the core library (no lib/core_mlib.sha256, no lockstep)
+NO_CORE_LIB = {"nwalaam"}
 results = []
 
 
@@ -235,7 +237,9 @@ def main():
             rec("SKIP", f"{name} clone", f"{d} not found")
             continue
         h = (read(os.path.join(d, "lib", "core_mlib.sha256"), "") or "").split()
-        if not h or libhash is None:
+        if name in NO_CORE_LIB and not h:
+            rec("PASS", f"{name} Mata library independent of the core library", "no lockstep needed")
+        elif not h or libhash is None:
             rec("FAIL", f"{name} lib/core_mlib.sha256", "missing")
         elif h[0] == libhash:
             rec("PASS", f"{name} built against this core library", h[0][:12] + "...")

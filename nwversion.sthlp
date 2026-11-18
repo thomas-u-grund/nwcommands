@@ -18,7 +18,7 @@
 {title:Description}
 
 {pstd}
-{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem}, whether it
+{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the five model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem} and {cmd:nwalaam}, whether it
 is installed and in which version.
 The model packages are installed separately ({cmd:nwinstall, models}, see {help nwinstall##models:help nwinstall}); each has its own {cmd:version} subcommand, for example {cmd:nwsaom version}.
 

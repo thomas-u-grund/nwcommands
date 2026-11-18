@@ -4,14 +4,14 @@
  1. every {help X} entry of the two lists has a help file X.sthlp in the core;
  2. every core command (X.ado, not starting with "_") with a help file is listed in both lists;
  3. every other help file with a {marker topic} (topic pages without .ado) is listed in nwtopical;
- 4. the four model packages are listed in both lists as web links, not as {help} links;
+ 4. the model packages are listed in both lists as web links, not as {help} links;
  5. every file named in _pkg_hlp.txt exists.
 Help files without .ado and without {marker topic} are landing/companion pages (DOC_ONLY below), never listed.
 If this fails after adding a command: give its help file a {marker topic} line, then regenerate with tools/make_help_index.py.
 """
 import re, os, glob, sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); os.chdir(root)
-MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem"]
+MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam"]
 DOC_ONLY = {"nwcommands", "nwintro", "nwstart", "nwtopical", "nwalphabetical", "nwprogramming", "nwinternals", "nwtab1", "nwtab2", "nwtab3"}
 NOT_A_COMMAND = {"nwinstall_models"}   # worker of "nwinstall, models", documented in nwinstall.sthlp
 bad = []

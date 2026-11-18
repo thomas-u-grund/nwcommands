@@ -1,4 +1,4 @@
-*! version 1.0.0  03nov2026  nwinstall_buildmata: rebuild the Mata libraries of nwcommands, nwsaom, nwergm, nwdynam and nwrem with the Stata that is running
+*! version 1.0.0  03nov2026  nwinstall_buildmata: rebuild the Mata libraries of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam with the Stata that is running
 capture program drop nwinstall_buildmata
 program define nwinstall_buildmata, rclass
 	version 14
@@ -8,12 +8,12 @@ program define nwinstall_buildmata, rclass
 	// fetches the Mata source of each package, compiles it here and installs the libraries over the shipped ones (the old files are
 	// kept as .prev). Mata classes carry their compile time: the libraries of nwsaom and nwergm are only accepted by the very core
 	// library they were compiled against, so rebuilding the core always rebuilds the installed nwsaom and nwergm libraries too.
-	local known "nwcommands nwsaom nwergm nwdynam nwrem"
+	local known "nwcommands nwsaom nwergm nwdynam nwrem nwalaam"
 	local usescore "nwsaom nwergm"
 	if "`pkgs'" == "core" local pkgs "nwcommands"
 	foreach p of local pkgs {
 		if !`: list p in known' & "`p'" != "all" {
-			di as err "{p 0 0 2}`p': the Mata libraries that can be built are those of nwcommands, nwsaom, nwergm, nwdynam and nwrem.{p_end}"
+			di as err "{p 0 0 2}`p': the Mata libraries that can be built are those of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam.{p_end}"
 			exit 198
 		}
 	}
@@ -114,6 +114,8 @@ program define nwinstall_buildmata_tab, rclass
 	if "`pkg'" == "nwdynam"    return local libs "lnwdynam"
 	if "`pkg'" == "nwrem"      return local src "unw_rem.do"
 	if "`pkg'" == "nwrem"      return local libs "lnwrem"
+	if "`pkg'" == "nwalaam"    return local src "unw_alaam.do"
+	if "`pkg'" == "nwalaam"    return local libs "lnwalaam"
 	if "`lib'" == "lnwsaom1" return local add "stat*() Saom*()"
 	else if "`lib'" == "lnwsaom2" return local add "change*() _*() sn*() saom*() mm*()"
 	else if "`lib'" != "" return local add "*()"

@@ -1,13 +1,13 @@
-*! version 1.1.0  25oct2026  nwinstall_models: install, update or remove the model packages nwsaom, nwergm, nwdynam, nwrem
+*! version 1.1.0  25oct2026  nwinstall_models: install, update or remove the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam
 capture program drop nwinstall_models
 program define nwinstall_models
 	version 14
 	syntax [, PKGs(string) RELease(string) FROM(string) REMOVE STOP PREflight COREver(string)]
-	local known "nwsaom nwergm nwdynam nwrem"
+	local known "nwsaom nwergm nwdynam nwrem nwalaam"
 	if "`pkgs'" == "" local pkgs "`known'"
 	foreach p of local pkgs {
 		if !`: list p in known' {
-			di as err "{p 0 0 2}`p' is not a model package of nwcommands (nwsaom nwergm nwdynam nwrem).{p_end}"
+			di as err "{p 0 0 2}`p' is not a model package of nwcommands (nwsaom nwergm nwdynam nwrem nwalaam).{p_end}"
 			exit 198
 		}
 	}

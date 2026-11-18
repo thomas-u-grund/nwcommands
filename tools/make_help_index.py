@@ -17,6 +17,7 @@ MODELS = [
     ("nwergm", "Exponential random graph models (ERGM) for cross-sectional networks"),
     ("nwdynam", "Dynamic network actor models (DyNAM): choice and rate models for event sequences"),
     ("nwrem", "Relational event models (REM) for timed interaction events"),
+    ("nwalaam", "Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network"),
 ]
 NOT_A_COMMAND = {"nwinstall_models"}
 MODELS_INTRO = ('{pstd}\nThe statistical network models are separate packages that need the core. Install them with\n'

@@ -272,6 +272,7 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:    {bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwalaam/":nwalaam}}}Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network{p_end}
 {p2colreset}{...}
 
 {hline}

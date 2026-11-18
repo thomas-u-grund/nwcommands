@@ -15,6 +15,7 @@
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
 {p2col:{bf:{help nw2toedge }}}Convert a two-mode network to an edge list{p_end}
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwalaam/":nwalaam}}}Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network (separate package){p_end}
 {p2col:{bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
 {p2col:{bf:{help nwappend }}}Append a network dataset{p_end}
 {p2col:{bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}

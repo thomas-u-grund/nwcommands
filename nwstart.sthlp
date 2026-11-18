@@ -107,8 +107,8 @@ on each other, but each one also stands alone.
 
 {pstd}
 The statistical model packages have their own tutorials: {browse "https://nwcommands.org/nwsaom/":nwsaom},
-{browse "https://nwcommands.org/nwergm/":nwergm}, {browse "https://nwcommands.org/nwdynam/":nwdynam} and
-{browse "https://nwcommands.org/nwrem/":nwrem}.
+{browse "https://nwcommands.org/nwergm/":nwergm}, {browse "https://nwcommands.org/nwdynam/":nwdynam},
+{browse "https://nwcommands.org/nwrem/":nwrem} and {browse "https://nwcommands.org/nwalaam/":nwalaam}.
 
 
 {marker more}{...}

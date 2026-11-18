@@ -129,8 +129,8 @@ Many commands work like the Stata commands they are named after. The full list o
 
 {pstd}
 The statistical models for networks are separate packages that build on {cmd:nwcommands}: {cmd:nwsaom} (stochastic
-actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and
-{cmd:nwrem} (relational event models). Install them with {stata "nwinstall, models":nwinstall, models}; {help nwversion}
+actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models),
+{cmd:nwrem} (relational event models) and {cmd:nwalaam} (autologistic actor attribute models). Install them with {stata "nwinstall, models":nwinstall, models}; {help nwversion}
 shows which are installed. Which package you need is explained at
 {browse "https://nwcommands.org/which-package/"}.
 
