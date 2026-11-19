@@ -1,16 +1,16 @@
-*! version 1.1.0  09nov2026  nwinstall_buildplugin: compile the native plugins of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam on this computer
+*! version 1.1.0  09nov2026  nwinstall_buildplugin: compile the native plugins of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm and nwlsm on this computer
 *! 1.1.0: builds on Windows too, with Microsoft's free C compiler (Build Tools for Visual Studio), found with vswhere
 capture program drop nwinstall_buildplugin
 program define nwinstall_buildplugin, rclass
 	version 14
 	syntax [, PKGs(string) FROM(string) RELease(string) DEST(string) KEEP]
 	// package -> repository folder, plugin, the files of the build (relative to the repository), the C file that is compiled
-	local known "nwcommands nwsaom nwergm nwdynam nwrem nwalaam"
+	local known "nwcommands nwsaom nwergm nwdynam nwrem nwalaam nwsbm nwlsm"
 	if "`pkgs'" == "" | "`pkgs'" == "all" local pkgs "`known'"
 	if "`pkgs'" == "core" local pkgs "nwcommands"
 	foreach p of local pkgs {
 		if !`: list p in known' {
-			di as err "{p 0 0 2}`p': the plugins that can be built are those of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam.{p_end}"
+			di as err "{p 0 0 2}`p': the plugins that can be built are those of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm and nwlsm.{p_end}"
 			exit 198
 		}
 	}
@@ -20,12 +20,16 @@ program define nwinstall_buildplugin, rclass
 	local plug_nwdynam    "dynam_sim"
 	local plug_nwrem      "rem_sim"
 	local plug_nwalaam    "alaam_sim"
+	local plug_nwsbm      "sbm_vem"
+	local plug_nwlsm      "lsm_sim"
 	local files_nwcommands "nwgraph.c nwtypes.h nwcomb.h nwcomb2.h nwfast.h nwfast2.h nwburtw.h nwbrokerage.h nwbmotif_dict.h nwnative370.h nwnative380.h nwnative390.h"
 	local files_nwsaom     "saom_sim.c saom_ml.c saom_bayes.c saom_struct.c"
 	local files_nwergm     "ergm_mcmc.c ergm_mcmc_e6.h ergm_struct.h"
 	local files_nwdynam    "dynam_sim.c"
 	local files_nwrem      "rem_sim.c"
 	local files_nwalaam    "alaam_sim.c"
+	local files_nwsbm      "sbm_vem.c"
+	local files_nwlsm      "lsm_sim.c"
 
 	// this computer
 	local os "`c(os)'"

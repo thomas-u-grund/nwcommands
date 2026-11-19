@@ -1,10 +1,10 @@
 {smcl}
-{* *! version 3.27.0  18nov2026}{...}
+{* *! version 3.28.0  19nov2026}{...}
 
 {title:nwcommands {hline 2} Network analysis in Stata}
 
 {pstd}
-nwcommands imports, generates, describes, analyzes and plots networks in Stata. It has 134 commands, most of them
+nwcommands imports, generates, describes, analyzes and plots networks in Stata. It has 138 commands, most of them
 with a dialog box. Tutorials, data sets and manuals are at {browse "https://nwcommands.org"}.
 {p_end}
 
@@ -57,4 +57,4 @@ nwcommands is free software under the GNU General Public License, version 3, as 
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

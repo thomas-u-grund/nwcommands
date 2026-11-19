@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.27.0  18nov2026}{...}
+{* *! version 3.28.0  19nov2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -18,7 +18,7 @@
 {title:Description}
 
 {pstd}
-{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the five model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem} and {cmd:nwalaam}, whether it
+{cmd:nwversion} shows the version and release date of the {cmd:nwcommands} core package and, for each of the seven model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem}, {cmd:nwalaam}, {cmd:nwsbm} and {cmd:nwlsm}, whether it
 is installed and in which version.
 The model packages are installed separately ({cmd:nwinstall, models}, see {help nwinstall##models:help nwinstall}); each has its own {cmd:version} subcommand, for example {cmd:nwsaom version}.
 
@@ -36,4 +36,4 @@ its tag, for example
 {pstd}Thomas U. Grund, RWTH Aachen University{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

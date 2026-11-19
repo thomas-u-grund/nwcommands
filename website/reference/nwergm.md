@@ -18,7 +18,7 @@ GNU General Public License, version 3, and it needs the core installed first.
 |---|---|
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm) |
-| Install | `nwinstall, modelpkg(nwergm)` (after the core; `nwinstall, everything` installs the core and the five model packages) |
+| Install | `nwinstall, modelpkg(nwergm)` (after the core; `nwinstall, everything` installs the core and the seven model packages) |
 | Version | `nwergm version`; release history on [GitHub](https://github.com/thomas-u-grund/nwergm/releases) |
 | Without `nwinstall` | `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace` |
 

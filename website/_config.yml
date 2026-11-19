@@ -3,7 +3,7 @@ description: >-
   Network analysis for Stata: import, generate, describe, analyze and plot
   networks, with the companion packages nwsaom (stochastic actor-oriented
   models), nwergm (exponential random graph models), nwdynam (dynamic network
-  actor models) and nwrem (relational event models).
+  actor models), nwrem (relational event models), nwalaam (autologistic actor attribute models), nwlsm (latent space models) and nwsbm (stochastic block models).
 url: "https://nwcommands.org"
 
 theme: just-the-docs
@@ -19,12 +19,14 @@ aux_links:
   "nwdynam": ["https://github.com/thomas-u-grund/nwdynam"]
   "nwrem": ["https://github.com/thomas-u-grund/nwrem"]
   "nwalaam": ["https://github.com/thomas-u-grund/nwalaam"]
+  "nwlsm": ["https://github.com/thomas-u-grund/nwlsm"]
+  "nwsbm": ["https://github.com/thomas-u-grund/nwsbm"]
   "Request a feature": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"]
   "Report an issue": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"]
 
 footer_content: >-
   nwcommands is free software under the GNU General Public License, version 3,
-  as are the model packages nwsaom, nwergm, nwdynam, nwrem and nwalaam.
+  as are the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm.
   <a href="/citing/">Citing and licenses</a> ·
   <a href="/help/">Get help</a> ·
   <a href="https://github.com/thomas-u-grund/nwcommands">GitHub</a>.

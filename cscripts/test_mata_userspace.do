@@ -187,6 +187,9 @@ global NEWOBJ ""
 
 * ---- commands ----------------------------------------------------------------------------------------------------
 runc nwcommunity    : nwcommunity g, generate(cm) algorithm(louvain) seed(1) replace silent
+runc nwcommunity2   : nwcommunity g, generate(cm) algorithm(leiden) seed(1) replace silent
+runc nwcommunity3   : nwcommunity g, generate(cm) algorithm(infomap) seed(1) replace silent
+runc nwbackbone     : nwbackbone gv, method(disparity) generate(bbx) replace silent
 runc nwmodularity   : nwmodularity g, group(grp)
 runc nwcomponents   : nwcomponents g, generate(cc) silent
 runc nwkcore        : nwkcore g, generate(kc) silent

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.27.0  18nov2026}{...}
+{* *! version 3.28.0  19nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -39,7 +39,7 @@ A network G = (V,E) is a set of nodes {it:V} and a set of ties {it:E} between pa
 is no tie from {it:i} to {it:j}, and {it:M_ij} = 1 (or, in a valued network, the value of the tie) when there is one.
 
 {pstd}
-The core package {help nwcommands} has 134 commands. They {help nwtopical##import:import, export, load and save},
+The core package {help nwcommands} has 138 commands. They {help nwtopical##import:import, export, load and save},
 {help nwtopical##generator:generate}, {help nwtopical##manipulation:manipulate}, {help nwtopical##information:describe},
 {help nwtopical##analysis:analyze} and {help nwtopical##visualization:plot and animate} networks: centrality, cohesion and
 subgroups, communities, positions and roles, paths and flows, homophily and mixing, and tests such as QAP and conditional
@@ -130,7 +130,7 @@ Many commands work like the Stata commands they are named after. The full list o
 {pstd}
 The statistical models for networks are separate packages that build on {cmd:nwcommands}: {cmd:nwsaom} (stochastic
 actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models),
-{cmd:nwrem} (relational event models) and {cmd:nwalaam} (autologistic actor attribute models). Install them with {stata "nwinstall, models":nwinstall, models}; {help nwversion}
+{cmd:nwrem} (relational event models), {cmd:nwalaam} (autologistic actor attribute models), {cmd:nwlsm} (latent space models) and {cmd:nwsbm} (stochastic block models). Install them with {stata "nwinstall, models":nwinstall, models}; {help nwversion}
 shows which are installed. Which package you need is explained at
 {browse "https://nwcommands.org/which-package/"}.
 
@@ -343,4 +343,4 @@ own help file is the authority on anything specific to it. When in doubt for a g
 structural commands first (they are the ones proven at real scale), and treat the figures for the dense-matrix commands as realistic planning numbers rather than hard guarantees.
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

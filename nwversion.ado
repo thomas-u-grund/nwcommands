@@ -1,15 +1,15 @@
-*! version 3.27.0  18nov2026  nwversion: version of the nwcommands core and of the installed model packages
+*! version 3.28.0  19nov2026  nwversion: version of the nwcommands core and of the installed model packages
 capture program drop nwversion
 program define nwversion, rclass
 	version 14
-	local nwv "3.27.0"
-	local nwd "18nov2026"
+	local nwv "3.28.0"
+	local nwd "19nov2026"
 	di as text _n "nwcommands " as res "`nwv'" as text " (`nwd'), core package; Stata " as res c(stata_version) as text ", " as res c(os)
 	if c(stata_version) < 17 {
 		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
 	}
 	di as text "Model packages (separate, GPL-3; install with {stata nwinstall, models}):"
-	foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
+	foreach p in nwsaom nwergm nwdynam nwrem nwalaam nwsbm nwlsm {
 		capture findfile `p'.ado
 		if _rc {
 			di as text "  " %-8s "`p'" "not installed"

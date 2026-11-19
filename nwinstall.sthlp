@@ -68,15 +68,15 @@ recommends: %USERPROFILE% on Windows, ~/Documents/Stata on macOS, PERSONAL on Un
 {synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be
 configured for the default case){p_end}
 
-{synopt:{opt model:s}}also install the five model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem} and {cmd:nwalaam} (see below); with {opt remove} they are uninstalled{p_end}
-{synopt:{opt every:thing}}install the core (everything {opt all} installs) and the five model packages (what {opt models} installs) as one set, set up the menu (as {opt gui}), and show all six
+{synopt:{opt model:s}}also install the seven model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem}, {cmd:nwalaam}, {cmd:nwsbm} and {cmd:nwlsm} (see below); with {opt remove} they are uninstalled{p_end}
+{synopt:{opt every:thing}}install the core (everything {opt all} installs) and the seven model packages (what {opt models} installs) as one set, set up the menu (as {opt gui}), and show all eight
 versions at the end{p_end}
 {synopt:{opt nogui}}with {opt all} or {opt everything}: do not set up the menu and do not touch {bf:profile.do}{p_end}
 {synopt:{opt dup:check}}report dialog files (.dlg) that exist in more than one folder of the ado path; changes nothing{p_end}
 {synopt:{opth modelp:kg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem, nwalaam); can be used alone{p_end}
-{synopt:{opth buildp:lugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam; {cmd:all} for all six) and install them; macOS and
+{synopt:{opth buildp:lugin(namelist)}}compile the native plugins of these packages on this computer (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm, nwlsm; {cmd:all} for all eight) and install them; macOS and
 Linux; used alone{p_end}
-{synopt:{opth buildm:ata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam; {cmd:all} for the core and every
+{synopt:{opth buildm:ata(namelist)}}rebuild the Mata libraries of these packages with the Stata that is running (any of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm, nwlsm; {cmd:all} for the core and every
 installed package); the repair if the shipped library was built by a newer Stata; used alone{p_end}
 {synopt:{opth buildf:rom(string)}}with {opt buildplugin()} or {opt buildmata()}: a folder or URL with one subfolder per package that holds the source ({cmd:native/} for the plugins, the {cmd:unw_*.do}
 files for the Mata libraries); default: the GitHub repositories{p_end}
@@ -98,14 +98,14 @@ advanced functions are only available through Stata syntax (see {help nwcommands
 {title:The model packages}
 
 {pstd}
-The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models), {cmd:nwrem} (relational event models) and {cmd:nwalaam} (autologistic actor attribute models) are
+The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models), {cmd:nwrem} (relational event models), {cmd:nwalaam} (autologistic actor attribute models), {cmd:nwlsm} (latent space models) and {cmd:nwsbm} (stochastic block models) are
 packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
 They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
 {cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular
 release.
 {cmd:nwinstall, all} installs the core only (and sets up the menu, unless {opt nogui}) and ends with a hint about the model packages.
 {cmd:nwinstall, models} and {cmd:nwinstall, modelpkg()} install packages only; they do not touch the menu or {bf:profile.do}.
-{cmd:nwinstall, everything} installs the core and the five model packages in one step, sets up the {it:Network Analysis} menu with the dialog boxes (the same as adding {opt gui}; add {opt nogui} to
+{cmd:nwinstall, everything} installs the core and the seven model packages in one step, sets up the {it:Network Analysis} menu with the dialog boxes (the same as adding {opt gui}; add {opt nogui} to
 skip that), and prints the version of each package at the end (as {help nwversion} does).
 Before anything is installed, {opt everything} checks that every model repository can be reached and that no model needs a newer core than the one being installed; if not, it stops with a message that
 names the package and installs nothing.
@@ -213,8 +213,8 @@ New to nwcommands? The full install is two commands:
 {pstd}
 The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); if {cmd:nwcommands.org} cannot be reached,
 {cmd:from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")} works as well. The second downloads
-everything else - the core commands, all help files, and the dialog boxes with the {it:Network Analysis} menu (set up once, in {bf:profile.do}) - and the five model packages
-{cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem} and {cmd:nwalaam}. To install the core only, type {cmd:nwinstall, all}; to leave the menu out, add {opt nogui}.
+everything else - the core commands, all help files, and the dialog boxes with the {it:Network Analysis} menu (set up once, in {bf:profile.do}) - and the seven model packages
+{cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam}, {cmd:nwrem}, {cmd:nwalaam}, {cmd:nwsbm} and {cmd:nwlsm}. To install the core only, type {cmd:nwinstall, all}; to leave the menu out, add {opt nogui}.
 nwcommands needs Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough).
 
 
@@ -302,4 +302,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

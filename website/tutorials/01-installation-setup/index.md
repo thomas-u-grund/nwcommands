@@ -7,8 +7,8 @@ description: "Installing nwcommands 3.0.0 and the model packages from scratch wi
 
 # Tutorial 1: Installation & Setup
 
-This page covers the core `nwcommands` (version 3.0.0) and the five model packages (`nwsaom`,
-`nwergm`, `nwdynam`, `nwrem`, `nwalaam`), which are installed separately.
+This page covers the core `nwcommands` (version 3.0.0) and the seven model packages (`nwsaom`,
+`nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm`, `nwsbm`), which are installed separately.
 
 nwcommands isn't on Stata's built-in SSC-style search path, so installing the core is a two-step
 process: first you install a small starter package (`nwinstall` itself) from the address of the project, and
@@ -35,10 +35,10 @@ Older versions are untested; on one, `nwinstall` and `nwversion` print a note bu
 . nwinstall, everything
 ```
 
-`nwinstall, everything` installs the core and the five model packages as one consistent set. It first
+`nwinstall, everything` installs the core and the seven model packages as one consistent set. It first
 checks that every model package can be reached and that none needs a newer core, then it downloads every
 command, every help file and every dialog box of the core, one group after the other (command files, then
-help files, then dialog boxes), then the five model packages, then it sets up the "Network Analysis" menu
+help files, then dialog boxes), then the seven model packages, then it sets up the "Network Analysis" menu
 (see below), and it prints the version of each package at the end. While it runs, Stata prints the package listing of the repository once for each group, so the
 same listing scrolls by several times. That is expected.
 
@@ -95,24 +95,26 @@ without leaving Stata for `help`.
 
 ## Installing the model packages
 
-The model commands are packages of their own and need the core installed first. The core and all five
+The model commands are packages of their own and need the core installed first. The core and all seven
 model packages are free software under the GNU General Public License, version 3.
 
 | Package | Model | Install |
 |---|---|---|
-| `nwsaom` | stochastic actor-oriented models (SAOM) | `nwinstall, models` installs all five; one only: `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)` |
-| `nwergm` | exponential random graph models (ERGM) | `nwinstall, models` installs all five; one only: `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)` |
-| `nwdynam` | dynamic network actor models (DyNAM) | `nwinstall, models` installs all five; one only: `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
-| `nwrem` | relational event models (REM) | `nwinstall, models` installs all five; one only: `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
-| `nwalaam` | autologistic actor attribute models (ALAAM) | `nwinstall, models` installs all five; one only: `net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/main/)` |
+| `nwsaom` | stochastic actor-oriented models (SAOM) | `nwinstall, models` installs all seven; one only: `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)` |
+| `nwergm` | exponential random graph models (ERGM) | `nwinstall, models` installs all seven; one only: `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)` |
+| `nwdynam` | dynamic network actor models (DyNAM) | `nwinstall, models` installs all seven; one only: `net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)` |
+| `nwrem` | relational event models (REM) | `nwinstall, models` installs all seven; one only: `net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)` |
+| `nwalaam` | autologistic actor attribute models (ALAAM) | `nwinstall, models` installs all seven; one only: `net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/main/)` |
+| `nwlsm` | latent space models | `nwinstall, models` installs all seven; one only: `net install nwlsm, from(https://raw.githubusercontent.com/thomas-u-grund/nwlsm/main/)` |
+| `nwsbm` | stochastic block models (SBM) | `nwinstall, models` installs all seven; one only: `net install nwsbm, from(https://raw.githubusercontent.com/thomas-u-grund/nwsbm/main/)` |
 
-If you installed the core alone (`nwinstall, all`), all five at once, from the core:
+If you installed the core alone (`nwinstall, all`), all seven at once, from the core:
 
 ```stata
 . nwinstall, models
 ```
 
-(`nwinstall, everything` does the core and the five model packages in one step.)
+(`nwinstall, everything` does the core and the seven model packages in one step.)
 
 `nwinstall, modelpkg(nwsaom nwergm)` installs only the ones you name, and `release(v1.0.1)` picks a
 release. After the installation, `nwversion` lists each model package with its version instead of

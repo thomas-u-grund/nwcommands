@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nwcommunity {hline 2}}Detect communities via the Louvain method or label propagation{p_end}
+{p2col :nwcommunity {hline 2}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}
 {p2colreset}{...}
 
 
@@ -21,7 +21,7 @@
 {opt measure(string)}
 {opt SYMmetrize}
 {opth resolution(real)}
-{opt algorithm(louvain|labelprop|dirtlpa)}
+{opt algorithm(louvain|leiden|infomap|labelprop|dirtlpa)}
 {opt seed(int)}
 {opt silent}
 {opt listall}
@@ -40,7 +40,7 @@
 {synopt:{opt symmetrize}}Symmetrize a directed network before detecting communities (required for directed networks){p_end}
 {synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)}
 regardless of algorithm; default = 1{p_end}
-{synopt:{opt algorithm(louvain|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:dirtlpa} (two-mode networks only) is the label propagation of Beckett (2016) for the
+{synopt:{opt algorithm(louvain|leiden|infomap|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:leiden} and {it:infomap} are described below; {it:dirtlpa} (two-mode networks only) is the label propagation of Beckett (2016) for the
 bipartite modularity of Barber{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -52,6 +52,10 @@ nodes, the others in random order ({opt seed()}){p_end}
 {synopt:{opt reps(#)}}{bf:algorithm(dirtlpa)}: the number of repeated runs of the label propagation for every number of starting modules (the {bf:reps} of {cmd:bipartite::DIRT_LPA_wb_plus}); default =
 {it:10}{p_end}
 {synopt:{opt minmodules(#)}}{bf:algorithm(dirtlpa)}: the smallest number of starting modules of the repeated runs (the {bf:mini} of {cmd:bipartite::DIRT_LPA_wb_plus}); default = {it:4}{p_end}
+{synopt:{opt beta(#)}}{bf:algorithm(leiden)}: randomness of the refinement step (the {bf:beta} of {cmd:igraph::cluster_leiden}); must be > 0; default = {it:0.01}{p_end}
+{synopt:{opt iterations(#)}}{bf:algorithm(leiden)}: number of passes of the algorithm, each starting from the partition of the last; a negative number repeats until the partition no longer changes (at most 100
+passes); default = {it:2} (as {bf:n_iterations} of {cmd:igraph::cluster_leiden}){p_end}
+{synopt:{opt trials(#)}}{bf:algorithm(leiden)} and {bf:algorithm(infomap)}: number of independent runs; the partition with the highest modularity (Leiden) or the shortest codelength (Infomap) is kept; default = {it:10}{p_end}
 
 {p2colreset}{...}
 
@@ -59,7 +63,7 @@ nodes, the others in random order ({opt seed()}){p_end}
 {title:Description}
 
 {pstd}
-{cmd:nwcommunity} detects communities in the network(s) in {help netlist} using one of two algorithms
+{cmd:nwcommunity} detects communities in the network(s) in {help netlist} using one of several algorithms
 ({opt algorithm()}): the Louvain method (Blondel et al 2008, the default), a greedy algorithm that
 repeatedly moves nodes between communities and aggregates communities into a coarser network, in
 order to maximize Newman's modularity {it:Q}; or label propagation (Raghavan, Albert & Kumar 2007),
@@ -90,6 +94,20 @@ name ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...) and the stored results 
 
 
 {marker algorithm}{...}
+{pstd}
+{bf:algorithm(leiden)} is the Leiden algorithm (Traag, Waltman and van Eck 2019): fast local moving with a queue, a refinement
+step that splits each community into well-connected parts (randomised with the parameter {opt beta()}), and aggregation of the
+refined parts. It maximises the same modularity as Louvain, with {opt resolution()}, and guarantees connected communities.
+It takes the tie values of a valued network as weights. The best of {opt trials()} independent runs is kept.
+
+{pstd}
+{bf:algorithm(infomap)} is the two-level map equation (Rosvall and Bergstrom 2008) for an undirected network: the
+partition that gives the shortest description of a random walk, found by a greedy core loop with node moves and aggregation,
+followed by fine tuning; the best of {opt trials()} runs is kept. The number of communities is found by the method, and a
+network without clear structure gives one community. {opt resolution()} does not apply. The code length (bits) is returned in
+{bf:r(codelength)}. It differs from the code length of {cmd:igraph::cluster_infomap}, which lets the walker teleport also on an
+undirected network; the partitions agree where the structure is clear.
+
 {title:Algorithm}
 
 {pstd}
@@ -144,6 +162,19 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcommunity flomarriage, generate(_community)}
 	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345) generate(_community) replace}
+	{cmd:. nwcommunity flomarriage, algorithm(leiden) seed(1) generate(_community) replace}
+	{cmd:. nwcommunity flomarriage, algorithm(infomap) trials(20) seed(1) generate(_community) replace}
+
+{pstd}
+Leiden and Infomap run in Mata on the stored ties and are meant for networks of up to a few thousand nodes. Measured in
+Stata/BE with the default {opt trials(10)}: 1,000 nodes 0.9 seconds (Leiden) and 2 seconds (Infomap); 5,000 nodes with
+33,000 ties 3.7 and 9.5 seconds (Louvain: 0.15 seconds). Both need a one-mode network: a two-mode network requires
+{opt onemode}, a directed network {opt symmetrize}. Infomap is the undirected two-level map equation only: there is no
+directed map equation, no hierarchical (multilevel) partition and no coarse tuning. Leiden optimises modularity only (no
+constant Potts model). On the Zachary karate club, planted-partition networks and the three Lazega law-firm networks the
+partitions of both algorithms agree with those of igraph (adjusted Rand index 1 where the structure is clear), and the
+modularity of Leiden equals the best of 30 igraph runs; on a network with weak structure the landscape is rugged and a
+single run can end in a different partition: raise {opt trials()}.
 
 
 {title:Stored results}
@@ -152,6 +183,7 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,
 {p2col 5 20 24 2: Scalars}{p_end}
 {synopt:{bf:r(communities)}}number of communities{p_end}
 {synopt:{bf:r(modularity)}}modularity Q of the detected partition{p_end}
+{synopt:{bf:r(codelength)}}{bf:algorithm(infomap)}: code length of the map equation in bits{p_end}
 
 {p2col 5 20 24 2: Macros}{p_end}
 {synopt:{bf:r(modularity_type)}}{bf:newman}, or {bf:barber} for the bipartite modularity of a two-mode network{p_end}
@@ -173,6 +205,14 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. {it:PNAS}
 Beckett, S.J. (2016). Improved community detection in weighted bipartite networks. {it:Royal Society Open Science} 3(1), 140536. doi:10.1098/rsos.140536.
 
 {pstd}
+Traag, V.A., Waltman, L., van Eck, N.J. (2019). From Louvain to Leiden: guaranteeing well-connected communities.
+{it:Scientific Reports} 9, 5233.
+
+{pstd}
+Rosvall, M., Bergstrom, C.T. (2008). Maps of random walks on complex networks reveal community structure.
+{it:PNAS} 105(4), 1118-1123.
+
+{pstd}
 Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to detect community
 structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 
@@ -182,4 +222,4 @@ structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

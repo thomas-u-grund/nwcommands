@@ -11,7 +11,7 @@ If this fails after adding a command: give its help file a {marker topic} line, 
 """
 import re, os, glob, sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); os.chdir(root)
-MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam"]
+MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam", "nwsbm", "nwlsm"]
 DOC_ONLY = {"nwcommands", "nwintro", "nwstart", "nwtopical", "nwalphabetical", "nwprogramming", "nwinternals", "nwtab1", "nwtab2", "nwtab3"}
 NOT_A_COMMAND = {"nwinstall_models"}   # worker of "nwinstall, models", documented in nwinstall.sthlp
 bad = []

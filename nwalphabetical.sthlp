@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.27.0  18nov2026}{...}
+{* *! version 3.28.0  19nov2026}{...}
 {phang}
 {help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network commands
 
@@ -20,6 +20,7 @@
 {p2col:{bf:{help nwappend }}}Append a network dataset{p_end}
 {p2col:{bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}
 {p2col:{bf:{help nwattime }}}Static graph view of a temporal network at a given time{p_end}
+{p2col:{bf:{help nwbackbone }}}Backbone extraction for valued networks and two-mode projections{p_end}
 {p2col:{bf:{help nwbalance }}}Structural balance of a signed network{p_end}
 {p2col:{bf:{help nwbetween }}}Betweenness centrality{p_end}
 {p2col:{bf:{help nwbridges }}}Find bridges (ties whose removal disconnects the network){p_end}
@@ -31,7 +32,8 @@
 {p2col:{bf:{help nwclustering }}}Clustering coefficient (transitivity) of a network{p_end}
 {p2col:{bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}
-{p2col:{bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
+{p2col:{bf:{help nwcommunity }}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}
+{p2col:{bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:{bf:{help nwcomponents }}}Network components and the largest component{p_end}
 {p2col:{bf:{help nwcompressobs }}}Drop observations that no network needs{p_end}
 {p2col:{bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
@@ -44,6 +46,7 @@
 {p2col:{bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:{bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
 {p2col:{bf:{help nwdichotomize }}}Dichotomize a network at a threshold{p_end}
+{p2col:{bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:{bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:{bf:{help nwdrop }}}Drop networks or nodes{p_end}
 {p2col:{bf:{help nwdropnodes }}}Drop nodes from a network{p_end}
@@ -79,6 +82,7 @@
 {p2col:{bf:{help nwlambda }}}Edge (line) connectivity matrix between all node pairs{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwlsm/":nwlsm}}}Latent space models for networks (Hoff, Raftery and Handcock) (separate package){p_end}
 {p2col:{bf:{help nwmatching }}}Maximum-cardinality bipartite matching{p_end}
 {p2col:{bf:{help nwmaxflow }}}Maximum flow and minimum cut between two nodes{p_end}
 {p2col:{bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
@@ -115,6 +119,7 @@
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwsaom/":nwsaom}}}Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves (separate package){p_end}
 {p2col:{bf:{help nwsave }}}Save network data in a file{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwsbm/":nwsbm}}}Stochastic block models (SBM, latent block models) for one-mode and two-mode networks (separate package){p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Number of shared neighbors of all pairs of nodes, as a network{p_end}
 {p2col:{bf:{help nwsimilar }}}Generate node similarities{p_end}
@@ -122,6 +127,7 @@
 {p2col:{bf:{help nwsimmelian }}}Simmelian ties{p_end}
 {p2col:{bf:{help nwsmall }}}Generate a small-world network{p_end}
 {p2col:{bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
+{p2col:{bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
 {p2col:{bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:{bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:{bf:{help nwsummarize }}}Summarize a network{p_end}
@@ -153,4 +159,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

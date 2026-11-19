@@ -300,4 +300,4 @@ two-mode networks with level labels (not UCINET); a tie inside a mode is refused
 (see {help nwimport##edgelist_time:edge lists with times}). See {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

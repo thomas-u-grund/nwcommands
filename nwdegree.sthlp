@@ -175,4 +175,4 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
    {help nwbetween}, {help nwcloseness}, {help nwclustering}, {help nwevcent}, {help nwkatz}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

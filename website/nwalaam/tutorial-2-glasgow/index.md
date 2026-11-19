@@ -11,7 +11,7 @@ description: "Fit contagion and covariate effects for smoking in a school friend
 
 **Data.** The Teenage Friends and Lifestyle Study excerpt: 50 girls in a school in the West of Scotland, directed friendship nominations (`glasgow1` is the first wave) and smoking, alcohol use and sport (see the
 [data sets page](../../datasets/)). The outcome is whether a pupil smokes occasionally or regularly at the first wave: 12 of the 50. You need the core `nwcommands` and the `nwalaam` package (see [Install](../install/));
-the commands were run with `nwalaam` 1.0.0. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+the commands were run with `nwalaam` 1.2.0. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## The outcome and the network
 

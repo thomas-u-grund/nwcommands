@@ -2,7 +2,7 @@
 title: "Citing and licenses"
 nav_order: 9
 permalink: /citing/
-description: "How to cite nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam, the license of each package, and where the releases are."
+description: "How to cite nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm, the license of each package, and where the releases are."
 ---
 
 # Citing and licenses
@@ -16,7 +16,7 @@ example `nwsaom version`.
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.27.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.28.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 
@@ -28,21 +28,25 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.7.1").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.10.0").
 
-**nwdynam, nwrem and nwalaam.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
+**nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.9.1) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.5.1) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
-> Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.1.1) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
+> Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
+
+> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 0.6.0) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
+
+> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 0.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
 The model packages follow established programs (R packages, and for nwalaam the Python program ALAAMEE) and methods papers, which you should cite as well.
 Each section lists them: [nwsaom](../nwsaom/citation/), [nwdynam](../nwdynam/citation/),
-[nwrem](../nwrem/citation/), [nwergm](../nwergm/citation/) and [nwalaam](../nwalaam/citation/).
+[nwrem](../nwrem/citation/), [nwergm](../nwergm/citation/), [nwalaam](../nwalaam/citation/), [nwlsm](../nwlsm/citation/) and [nwsbm](../nwsbm/citation/).
 
 ## Licenses
 
@@ -54,8 +58,10 @@ Each section lists them: [nwsaom](../nwsaom/citation/), [nwdynam](../nwdynam/cit
 | nwdynam | GNU General Public License, version 3 |
 | nwrem | GNU General Public License, version 3 |
 | nwalaam | GNU General Public License, version 3 |
+| nwlsm | GNU General Public License, version 3 |
+| nwsbm | GNU General Public License, version 3 |
 
-All six packages are free software. The full license text is the `LICENSE` file in each repository.
+All eight packages are free software. The full license text is the `LICENSE` file in each repository.
 The model packages are separate from the core and need it to run; they contain none of its code.
 
 ## Releases
@@ -70,6 +76,8 @@ Each package has its own releases on GitHub:
 | nwdynam | [github.com/thomas-u-grund/nwdynam/releases](https://github.com/thomas-u-grund/nwdynam/releases) |
 | nwrem | [github.com/thomas-u-grund/nwrem/releases](https://github.com/thomas-u-grund/nwrem/releases) |
 | nwalaam | [github.com/thomas-u-grund/nwalaam/releases](https://github.com/thomas-u-grund/nwalaam/releases) |
+| nwlsm | [github.com/thomas-u-grund/nwlsm/releases](https://github.com/thomas-u-grund/nwlsm/releases) |
+| nwsbm | [github.com/thomas-u-grund/nwsbm/releases](https://github.com/thomas-u-grund/nwsbm/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
 example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.8.1/) replace`.

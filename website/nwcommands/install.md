@@ -12,7 +12,7 @@ permalink: /nwcommands/install/
 Requirements: Stata 17 or later. The packages are tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough. The Mata
 libraries are built with Stata 17, and older versions are untested.
 
-## Everything: the core and the five model packages
+## Everything: the core and the seven model packages
 
 ```stata
 . net install nwcommands, from(https://nwcommands.org/net/) replace
@@ -20,7 +20,7 @@ libraries are built with Stata 17, and older versions are untested.
 ```
 
 The first line installs `nwinstall` and the landing help topics. `nwinstall, everything` then downloads the
-core (every command, all help files and every dialog box) and the five model packages, checks first that every
+core (every command, all help files and every dialog box) and the seven model packages, checks first that every
 package can be reached, sets up the "Network Analysis" menu in Stata's User menu (one line in your `profile.do`, written only once, however often you run the command), and prints the version of each package at the end. Add `nogui` (`nwinstall, everything nogui`) to leave the menu out.
 
 ## The core only
@@ -47,7 +47,7 @@ The core builds and describes networks of 100,000 nodes, but not every command s
 ## Model packages
 
 The statistical models are separate packages that need the core: [nwsaom](../../nwsaom/install/),
-[nwergm](../../nwergm/install/), [nwdynam](../../nwdynam/install/), [nwrem](../../nwrem/install/) and [nwalaam](../../nwalaam/install/). If you installed the core with `nwinstall, all`, add all five with
+[nwergm](../../nwergm/install/), [nwdynam](../../nwdynam/install/), [nwrem](../../nwrem/install/), [nwalaam](../../nwalaam/install/), [nwlsm](../../nwlsm/install/) and [nwsbm](../../nwsbm/install/). If you installed the core with `nwinstall, all`, add all seven with
 
 ```stata
 . nwinstall, models

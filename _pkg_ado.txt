@@ -46,6 +46,7 @@ f nwaltergen.ado
 f nwappend.ado
 f nwassortativity.ado
 f nwattime.ado
+f nwbackbone.ado
 f nwbalance.ado
 f nwbetween.ado
 f nwbridges.ado
@@ -58,6 +59,7 @@ f nwclustering.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado
+f nwcompare.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
@@ -71,6 +73,7 @@ f nwcurrent.ado
 f nwdegree.ado
 f nwdendrogram.ado
 f nwdichotomize.ado
+f nwdiffuse.ado
 f nwdissimilar.ado
 f nwdrop.ado
 f nwdropnodes.ado
@@ -147,6 +150,7 @@ f nwsimindex.ado
 f nwsimmelian.ado
 f nwsmall.ado
 f nwspectral.ado
+f nwspmatrix.ado
 f nwstack.ado
 f nwsubset.ado
 f nwsummarize.ado

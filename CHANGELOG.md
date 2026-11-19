@@ -2,7 +2,17 @@
 
 All notable changes to the nwcommands core package. The format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
-(`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`).
+(`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
+
+## [3.28.0] - 2026-11-19
+
+### Added
+- `nwspmatrix`: spatial weighting matrix from a network, for `spregress` (agrees with `sna::lnam` to about five digits); `nwdiffuse`: exposure, thresholds and adoption tools for diffusion and contagion (equal to netdiffuseR 1.25.1 to nine digits). Both have dialogs and menu entries.
+- `nwbackbone`: backbone extraction after the R package backbone 3.0.4. One-mode valued networks: `global`, `disparity`, `lans`, `mlf`; two-mode projections: `sdsm`, `fdsm`, `fixedrow`, `fixedcol`, `fixedfill`; multiple-testing corrections as `p.adjust`, `signed`, `keepvalues`, `missingaszero`, `project(1|2)`. The p-values and retained ties equal the R values for all deterministic methods (`cscripts/test_nwbackbone.do`, fixture made by R); `fdsm` is Monte Carlo. Not included: SDSM-EC, `backbone_from_unweighted`, valued bipartite networks. Dialog and menu entry (Manipulate Networks).
+- `nwcommunity, algorithm(leiden)` (Leiden of Traag, Waltman and van Eck 2019; `beta()`, `iterations()`, `trials()`) and `algorithm(infomap)` (undirected two-level map equation; `r(codelength)`). Mata only, meant for up to a few thousand nodes. The partitions and the modularity agree with igraph (`cscripts/test_nwcommunity_algorithms.do`). Infomap has no directed or multilevel map equation, and its code length differs from igraph's, which teleports on undirected networks. Dialog extended.
+- `nwcompare`: table of N, log likelihood, number of parameters, AIC, BIC and ICL of stored (or active) estimation results of nwergm, nwsaom, nwlsm, nwsbm, nwalaam and Stata's own commands, with a note that criteria of different model families are not always comparable. Dialog and menu entry (Statistical Models).
+- Menu entries for the nwsbm and nwlsm dialogs (listed when the dialog is installed).
+- The model packages `nwsbm` and `nwlsm` are known to the core: `nwinstall, models`, `buildplugin()`, `buildmata()`, `nwversion`, the help index and `tools/release_preflight.py` list them.
 
 ## [3.27.0] - 2026-11-18
 

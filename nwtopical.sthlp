@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.27.0  18nov2026}{...}
+{* *! version 3.28.0  19nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -98,6 +98,7 @@
 {p2col:    {bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:    {bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:    {bf:{help nwattime }}}Static graph view of a temporal network at a given time{p_end}
+{p2col:    {bf:{help nwbackbone }}}Backbone extraction for valued networks and two-mode projections{p_end}
 {p2col:    {bf:{help nwcollapse }}}Collapse a network{p_end}
 {p2col:    {bf:{help nwdichotomize }}}Dichotomize a network at a threshold{p_end}
 {p2col:    {bf:{help nwdrop }}}Drop networks or nodes{p_end}
@@ -153,7 +154,7 @@
 {marker analysis_community}{...}
 {p 11 11 2}{bf:{it:Communities}}{p_end}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
+{p2col:    {bf:{help nwcommunity }}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}
 {p2col:    {bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
 {p2col:    {bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
 
@@ -201,15 +202,18 @@
 {marker analysis_statmodels}{...}
 {p 11 11 2}{bf:{it:Statistical tests}}{p_end}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
+{p2col:    {bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
 {p2col:    {bf:{help nwutility }}}Utility scores of Jackson and Wolinsky (1996){p_end}
 
 {marker analysis_other}{...}
 {p 11 11 2}{bf:{it:Other analysis tools}}{p_end}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
+{p2col:    {bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:    {bf:{help nwnode }}}Check whether a node exists in a network{p_end}
 {p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
 {p2col:    {bf:{help nwvalue }}}Return a tie value{p_end}
@@ -273,7 +277,9 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2col:    {bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
 {p2col:    {bf:{browse "https://nwcommands.org/nwalaam/":nwalaam}}}Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwsbm/":nwsbm}}}Stochastic block models (SBM, latent block models) for one-mode and two-mode networks{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwlsm/":nwlsm}}}Latent space models for networks (Hoff, Raftery and Handcock){p_end}
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

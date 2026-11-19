@@ -17,7 +17,7 @@ description: "Install nwsaom for Stata: the core nwcommands first, then the nwsa
 . nwinstall, everything
 ```
 
-`nwinstall, everything` installs the core and all five model packages in one step; `nwinstall, all` installs the core only.
+`nwinstall, everything` installs the core and all seven model packages in one step; `nwinstall, all` installs the core only.
 
 See [Installation & Setup](../../tutorials/01-installation-setup/) for details, including computers without
 internet access or administrator rights.

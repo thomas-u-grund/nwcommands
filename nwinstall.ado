@@ -46,12 +46,12 @@ program nwinstall, rclass
 		}
 	}
 
-	// everything = the core (exactly what all installs) plus the five model packages (what models installs), as one consistent set
+	// everything = the core (exactly what all installs) plus the seven model packages (what models installs), as one consistent set
 	if "`everything'" != "" {
 		local all "all"
 		local models "models"
 		if "`modelpkg'" != "" {
-			di as err "{p 0 0 2}everything installs all five model packages; it cannot be combined with modelpkg(){p_end}"
+			di as err "{p 0 0 2}everything installs all seven model packages; it cannot be combined with modelpkg(){p_end}"
 			exit 198
 		}
 	}
@@ -59,7 +59,7 @@ program nwinstall, rclass
 	// gui is the documented name of the option that installs the "Network Analysis" menu and dialogs permanently; permanently remains accepted as the older name
 	if "`gui'" != "" local permanently "permanently"
 
-	// the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam are separate GPL-3 packages (nwinstall_models.ado)
+	// the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm, nwlsm are separate GPL-3 packages (nwinstall_models.ado)
 	local __nw_models = ("`models'" != "" | "`modelpkg'" != "")
 	if `__nw_models' & "`update'`usermenu'`permanently'`dialog'`downloadoff'`help'`ado'`ext'`all'`localcopy'" == "" {
 		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
@@ -738,7 +738,7 @@ program nwinstall_menu
 	window menu append item "Cohesion and Subgroups" "Calculate Simmelian ties" "db nwsimmelian"
 
 	window menu append submenu "Network Analysis" "Community and Spectral"
-	window menu append item "Community and Spectral" "Detect communities via the Louvain method or label..." "db nwcommunity"
+	window menu append item "Community and Spectral" "Detect communities (Louvain, Leiden, Infomap...)" "db nwcommunity"
 	window menu append item "Community and Spectral" "Score an existing node partition using Newman's modularity" "db nwmodularity"
 	window menu append item "Community and Spectral" "Graph Laplacian spectral analysis" "db nwspectral"
 
@@ -761,18 +761,22 @@ program nwinstall_menu
 	window menu append item "Positions and Equivalence" "Common-neighbor similarity indices between all node pairs" "db nwsimindex"
 
 	window menu append submenu "Network Analysis" "Statistical Models"
+	window menu append item "Statistical Models" "Compare fit statistics of stored network models" "db nwcompare"
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
+	window menu append item "Statistical Models" "Spatial weighting matrix from a network, for spregress" "db nwspmatrix"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 
-	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam); every other dialog of a package (Bayes, several networks,
+	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam, nwsbm); every other dialog of a package (Bayes, several networks,
 	// postestimation, simulation, ...) opens from a button inside the main dialog. An entry is listed only when the
 	// package's dialog file is installed (nwdynam and nwrem have no dialogs)
 	local __nwmodeldlg ""
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom|Stochastic actor-oriented model (nwsaom)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwalaam|Autologistic actor attribute model (nwalaam)""'
+	local __nwmodeldlg `"`__nwmodeldlg' "nwsbm|Stochastic block model (nwsbm)""'
+	local __nwmodeldlg `"`__nwmodeldlg' "nwlsm|Latent space model (nwlsm)""'
 	local __nwfirst = 1
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")
@@ -787,6 +791,7 @@ program nwinstall_menu
 
 	window menu append submenu "Network Analysis" "Other Analysis"
 	window menu append item "Other Analysis" "Create a context variable" "db nwcontext"
+	window menu append item "Other Analysis" "Diffusion and contagion: exposure, thresholds, curve, simulation" "db nwdiffuse"
 	window menu append item "Other Analysis" "Network extensions to generate" "db nwgenerate"
 	window menu append item "Other Analysis" "Checks if node exists in a network" "db nwnode"
 	window menu append item "Other Analysis" "Tie turnover/stability between two waves of the same network" "db nwturnover"
@@ -810,6 +815,7 @@ program nwinstall_menu
 	window menu append item "Manipulate Networks" "One-mode projection of a two-mode network" "db nw2project"
 	window menu append item "Manipulate Networks" "Add nodes to network" "db nwaddnodes"
 	window menu append item "Manipulate Networks" "Static graph view of a temporal network at a given time" "db nwattime"
+	window menu append item "Manipulate Networks" "Backbone of a valued network or of a two-mode projection" "db nwbackbone"
 	window menu append item "Manipulate Networks" "Collapse a network" "db nwcollapse"
 	window menu append item "Manipulate Networks" "Drop networks or network nodes" "db nwdrop"
 	window menu append item "Manipulate Networks" "Drop nodes from a network" "db nwdropnodes"
