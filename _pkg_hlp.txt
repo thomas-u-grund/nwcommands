@@ -58,6 +58,7 @@ f nwcurrent.sthlp
 f nwdegree.sthlp
 f nwdendrogram.sthlp
 f nwdichotomize.sthlp
+f nwdiffuse.sthlp
 f nwdissimilar.sthlp
 f nwdrop.sthlp
 f nwdropnodes.sthlp
@@ -132,6 +133,7 @@ f nwsimindex.sthlp
 f nwsimmelian.sthlp
 f nwsmall.sthlp
 f nwspectral.sthlp
+f nwspmatrix.sthlp
 f nwstack.sthlp
 f nwsubset.sthlp
 f nwsummarize.sthlp

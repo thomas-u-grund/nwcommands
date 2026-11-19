@@ -44,6 +44,7 @@
 {p2col:{bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:{bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
 {p2col:{bf:{help nwdichotomize }}}Dichotomize a network at a threshold{p_end}
+{p2col:{bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:{bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:{bf:{help nwdrop }}}Drop networks or nodes{p_end}
 {p2col:{bf:{help nwdropnodes }}}Drop nodes from a network{p_end}
@@ -122,6 +123,7 @@
 {p2col:{bf:{help nwsimmelian }}}Simmelian ties{p_end}
 {p2col:{bf:{help nwsmall }}}Generate a small-world network{p_end}
 {p2col:{bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
+{p2col:{bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
 {p2col:{bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:{bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:{bf:{help nwsummarize }}}Summarize a network{p_end}
