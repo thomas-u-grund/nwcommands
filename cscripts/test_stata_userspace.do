@@ -82,6 +82,10 @@ uchk "x"
 nwcommunity g, generate(cm) algorithm(louvain) seed(1) replace silent
 assert r(communities) >= 1
 uchk "x"
+nwcommunity g, generate(cm) algorithm(leiden) seed(1) replace silent
+uchk "x"
+nwcommunity g, generate(cm) algorithm(infomap) seed(1) replace silent
+uchk "x"
 generate grp = 1 + (_n > 4)
 nwmodularity g, group(grp)
 assert r(communities) >= 1

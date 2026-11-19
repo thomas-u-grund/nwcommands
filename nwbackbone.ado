@@ -138,9 +138,6 @@ program nwbackbone, rclass
 	local sg = ("`signed'" != "")
 	local trg = `trials'
 	mata: `tri' = nw_backbone(`M', "`method'", `alpha', "`mtc'", `sg', `mz', `trg', `tr1', `tr2', `trh', `dirflag', "`keepvalues'" != "")
-	mata: st_local("nin", strofreal(nw_bb_info[1]))
-	mata: st_local("nout", strofreal(nw_bb_info[2]))
-	mata: st_local("ntrials", strofreal(nw_bb_info[3]))
 	mata: st_local("nstat", strofreal(rows(`tri')))
 	mata: mata drop `M'
 
@@ -162,7 +159,7 @@ program nwbackbone, rclass
 	if "`method'" == "global" local prov "`prov', threshold `threshold'"
 	else local prov "`prov', alpha `alpha', mtc `mtc'"
 	mata: `netobj'->set_provenance(`"`prov'"')
-	capture mata: mata drop `tri' `nm' nw_bb_info
+	capture mata: mata drop `tri' `nm'
 
 	local pct = .
 	if `nin' > 0 local pct = 100 * (`nin' - `nout') / `nin'
@@ -727,32 +724,36 @@ real scalar nw_bb_hyptail(real scalar N, real scalar K, real scalar n, real scal
 }
 
 // the backbone as a list of ties (row, column, value) in node numbers of the (chosen mode of the) network;
-// undirected: each tie in both directions. Sets nw_bb_info = (ties tested, ties kept, draws).
+// undirected: each tie in both directions. Sets the locals nin (ties tested), nout (ties kept) and ntrials (draws) of the caller.
 real matrix nw_backbone(real matrix A, string scalar method, real scalar alpha, string scalar mtc, real scalar sgn, real scalar mz, ///
 	real scalar trials, real scalar thr1, real scalar thr2, real scalar nthr, real scalar directed, real scalar keepvalues)
 {
 	real matrix upper, lower, B, V
 	real colvector k, vv
 	real scalar n, ntr, i
-	external real rowvector nw_bb_info
+	real rowvector info
 	n = rows(A)
 	if (method == "global") {
 		V = A
 		B = mz ? (A :> thr1) : ((A :> thr1) :& (A :!= 0))
 		if (nthr == 2) B = B - (mz ? (A :< thr2) : ((A :< thr2) :& (A :!= 0)))
-		nw_bb_info = (sum(A :!= 0) - sum(diagonal(A) :!= 0), 0, .)
+		info = (sum(A :!= 0) - sum(diagonal(A) :!= 0), 0, .)
 	}
 	else {
 		if (method == "disparity" | method == "lans" | method == "mlf") V = A
 		else V = A * A'
 		nw_bb_pvals(method, A, sgn, mz, trials, alpha, mtc, upper, lower, ntr)
 		B = nw_bb_retain(upper, lower, sgn, alpha, mtc)
-		nw_bb_info = (sum(V :!= 0) - sum(diagonal(V) :!= 0), 0, ntr)
-		if (method != "disparity" & method != "lans" & method != "mlf" & mz) nw_bb_info[1] = n * (n - 1)
+		info = (sum(V :!= 0) - sum(diagonal(V) :!= 0), 0, ntr)
+		if (method != "disparity" & method != "lans" & method != "mlf" & mz) info[1] = n * (n - 1)
 	}
-	if (!directed) nw_bb_info[1] = nw_bb_info[1] / 2
-	nw_bb_info[2] = sum(B :!= 0) - sum(diagonal(B) :!= 0)
-	if (!directed) nw_bb_info[2] = nw_bb_info[2] / 2
+	if (!directed) info[1] = info[1] / 2
+	info[2] = sum(B :!= 0) - sum(diagonal(B) :!= 0)
+	if (!directed) info[2] = info[2] / 2
+	// the counts go to the calling ado program
+	st_local("nin", strofreal(info[1]))
+	st_local("nout", strofreal(info[2]))
+	st_local("ntrials", strofreal(info[3]))
 	k = selectindex(vec(B :!= 0))
 	if (rows(k) == 0) return(J(0, 3, .))
 	if (keepvalues) vv = vec(V)[k]

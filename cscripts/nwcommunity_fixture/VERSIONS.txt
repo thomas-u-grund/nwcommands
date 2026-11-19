@@ -1,0 +1,3 @@
+igraph 2.3.2
+R version 4.6.0 (2026-04-24)
+seed 20261119; best of 30 runs (Louvain, Leiden, label propagation), best of 5 x 10 trials (Infomap)

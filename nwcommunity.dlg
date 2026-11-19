@@ -6,18 +6,18 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 478
+POSITION 10 10 550 566
 
 SCRIPT PREINIT
 BEGIN
 	program initialize
 END
 
-DIALOG main, title("nwcommunity - Detect communities via the Louvain method or label...")
+DIALOG main, title("nwcommunity - Detect communities: Louvain, Leiden, Infomap, label propagation")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 384, label("Options")
+  GROUPBOX gb_opt 10 44 520 472, label("Options")
   TEXT tx_ed_generate 20 54 260 ., label("Required. Name of the Stata variable that stores community membership")
   EDIT ed_generate 290 54 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing variable")
@@ -44,6 +44,12 @@ BEGIN
   EDIT ed_reps 290 362 100 ., numonly nomem option(reps)
   TEXT tx_ed_minmodules 20 390 260 ., label("dirtlpa: smallest number of starting modules (default 4)")
   EDIT ed_minmodules 290 390 100 ., numonly nomem option(minmodules)
+  TEXT tx_ed_beta 20 418 260 ., label("leiden: randomness of the refinement step, > 0 (default 0.01)")
+  EDIT ed_beta 290 418 100 ., numonly nomem option(beta)
+  TEXT tx_ed_iterations 20 446 260 ., label("leiden: number of passes; negative = until stable (default 2)")
+  EDIT ed_iterations 290 446 100 ., nomem option(iterations)
+  TEXT tx_ed_trials 20 474 260 ., label("leiden, infomap: independent runs, the best is kept (default 10)")
+  EDIT ed_trials 290 474 100 ., numonly nomem option(trials)
 END
 
 LIST netlist
@@ -54,6 +60,8 @@ END
 LIST list_algorithm
 BEGIN
 	louvain
+	leiden
+	infomap
 	labelprop
 	dirtlpa
 END
@@ -79,6 +87,15 @@ BEGIN
 	if main.ed_starts.isneq("") & !main.ed_starts.isnumlist() {
 		stopbox stop "Two-mode network: number of starting orders of the search...: enter a number (or numbers)."
 	}
+	if main.ed_beta.isneq("") & !main.ed_beta.isnumlist() {
+		stopbox stop "leiden: randomness of the refinement step: enter a number."
+	}
+	if main.ed_iterations.isneq("") & !main.ed_iterations.isnumlist() {
+		stopbox stop "leiden: number of passes: enter a number."
+	}
+	if main.ed_trials.isneq("") & !main.ed_trials.isnumlist() {
+		stopbox stop "leiden, infomap: independent runs: enter a number."
+	}
 	require main.ed_generate
 	put "nwcommunity " main.cb_net
 	beginoptions
@@ -95,6 +112,9 @@ BEGIN
 		optionarg main.ed_starts
 		optionarg main.ed_reps
 		optionarg main.ed_minmodules
+		optionarg main.ed_beta
+		optionarg main.ed_iterations
+		optionarg main.ed_trials
 	endoptions
 	stata
 END
