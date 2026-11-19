@@ -1,0 +1,140 @@
+
+. * nwsbm tutorial 1: a stochastic block model for the karate club
+. * Requires the core nwcommands and the package nwsbm. The data (Zachary 1977) ar
+> e loaded from the nwcommands website.
+. set linesize 80
+
+. 
+. nwwebuse zachary, nwclear
+
+. nwsummarize zachary_bin
+--------------------------------------------------
+   Network name:  zachary_bin
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 34
+   Selfloop: false
+   Edges: 78
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .139
+   Mean degree:  4.59
+   Temporal: false
+
+. 
+. * --- fit block models with one to five blocks and select the number of blocks
+>  by the ICL ---
+. nwsbm zachary_bin, maxblocks(5) seed(20261120) generate(block) replace
+
+Stochastic block model (bernoulli, undirected)             Actors    =        34
+Network: zachary_bin                                       Blocks    =         2
+                                                           ICL       =   -206.06
+                                                           Lower bound J=   -193
+> .95
+
+--------------------------------------------------------------
+      Blocks |         ICL           J          PL  parameters
+-------------+------------------------------------------------
+          1  |     -229.37     -226.20     -226.20           1
+          2* |     -206.06     -193.95     -194.80           3
+          3  |     -216.63     -189.07     -194.11           6
+          4  |     -218.32     -177.58     -181.38          10
+          5  |     -230.01     -171.03     -175.49          15
+--------------------------------------------------------------
+* selected by the largest ICL
+
+Block sizes:
+
+    b1  b2
+r1  29   5
+Block proportions:
+
+        b1      b2
+r1  0.8517  0.1483
+Block connectivity, tie probability, from the row block to the column block:
+
+        b1      b2
+b1  0.0476
+b2  0.3680  0.4937
+
+. 
+. * --- the model selection table again, and the blocks ---
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), bernoulli mod
+> el
+----------------------------------------------------------------------------
+      Blocks |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+          1  |      -229.37     -226.20     -226.20        0.00           1
+          2* |      -206.06     -193.95     -194.80        0.85           3
+          3  |      -216.63     -189.07     -194.11        5.05           6
+          4  |      -218.32     -177.58     -181.38        3.80          10
+          5  |      -230.01     -171.03     -175.49        4.46          15
+----------------------------------------------------------------------------
+* largest ICL
+
+. estat blocks
+
+Blocks
+---------------------------------------------
+  Block |      Size  Proportion        Within
+--------+------------------------------------
+      1 |        29      0.8517        0.0476
+      2 |         5      0.1483        0.4937
+---------------------------------------------
+Within: connectivity within the block (the diagonal of the connectivity matrix).
+
+. 
+. * --- how do the blocks relate to the two factions of the club? ---
+. tabulate block group
+
+     nwsbm |
+     block |         group
+     (MAP) |         1          2 |     Total
+-----------+----------------------+----------
+         1 |        13         16 |        29 
+         2 |         3          2 |         5 
+-----------+----------------------+----------
+     Total |        16         18 |        34 
+
+. 
+. * --- force three blocks ---
+. nwsbm zachary_bin, blocks(3) seed(20261120) generate(block3) replace
+
+Stochastic block model (bernoulli, undirected)             Actors    =        34
+Network: zachary_bin                                       Blocks    =         3
+                                                           ICL       =   -216.63
+                                                           Lower bound J=   -189
+> .07
+
+Block sizes:
+
+    b1  b2  b3
+r1  13   5  16
+Block proportions:
+
+        b1      b2      b3
+r1  0.4129  0.1491  0.4380
+Block connectivity, tie probability, from the row block to the column block:
+
+        b1      b2      b3
+b1  0.1606
+b2  0.2523  0.4953
+b3  0.0017  0.4740  0.0385
+
+. tabulate block3 group
+
+     nwsbm |
+     block |         group
+     (MAP) |         1          2 |     Total
+-----------+----------------------+----------
+         1 |         5          8 |        13 
+         2 |         3          2 |         5 
+         3 |         8          8 |        16 
+-----------+----------------------+----------
+     Total |        16         18 |        34 
+
+. 

@@ -11,6 +11,9 @@ lib/*.log
 !website/nwergm/**/example.log
 !website/nwdynam/**/example.log
 !website/nwrem/**/example.log
+!website/nwalaam/**/example.log
+!website/nwlsm/**/example.log
+!website/nwsbm/**/example.log
 
 # Editor/OS
 .DS_Store
