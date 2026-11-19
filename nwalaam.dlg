@@ -7,7 +7,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 580 520
+POSITION 10 10 580 590
 
 SCRIPT PREINIT
 BEGIN
@@ -20,7 +20,7 @@ BEGIN
   VARLIST vl_out 290 14 190 ., nomem
   TEXT tx_net 20 42 260 ., label("Network (the ties are taken as given):")
   COMBOBOX cb_net 290 42 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_eff 10 70 560 214, label("Effects")
+  GROUPBOX gb_eff 10 70 560 274, label("Effects")
   CHECKBOX cx_density 20 88 130 ., label("density") default(1)
   CHECKBOX cx_activity 160 88 130 ., label("activity")
   CHECKBOX cx_contagion 300 88 130 ., label("contagion")
@@ -31,28 +31,39 @@ BEGIN
   CHECKBOX cx_triangle3 160 136 130 ., label("triangle3")
   CHECKBOX cx_gwactivity 300 136 130 ., label("gwactivity")
   CHECKBOX cx_gwcontagion 440 136 120 ., label("gwcontagion")
-  TEXT tx_dir 20 166 540 ., label("Directed network only:")
-  CHECKBOX cx_sender 20 186 130 ., label("sender")
-  CHECKBOX cx_receiver 160 186 130 ., label("receiver")
-  CHECKBOX cx_reciprocity 300 186 130 ., label("reciprocity")
-  TEXT tx_other 20 220 260 ., label("Other effects (covariates, e.g. alter(age) same(sex)):")
-  EDIT ed_other 290 220 270 ., nomem
-  TEXT tx_oth2 20 246 540 ., label("Effect names and options are listed in help nwalaam.")
-  GROUPBOX gb_est 10 292 560 150, label("Estimation")
-  CHECKBOX cx_mple 20 312 540 ., label("Pseudo-likelihood estimate only (no simulation, no standard errors from runs)")
-  TEXT tx_runs 20 340 260 ., label("Number of independent runs:")
-  SPINNER sp_runs 290 340 70 ., default(30) min(1) max(9999) nomem
-  TEXT tx_iter 20 368 260 ., label("Iterations per run:")
-  SPINNER sp_iter 290 368 90 ., default(50000) min(100) max(99999999) nomem
-  TEXT tx_seed 20 396 260 ., label("Random-number seed (blank = none):")
-  EDIT ed_seed 290 396 90 ., nomem
-  TEXT tx_lrate 20 418 260 ., label("Learning rate (default 0.01):")
-  EDIT ed_lrate 290 418 90 ., nomem
-  GROUPBOX gb_dis 10 450 560 56, label("Display")
-  CHECKBOX cx_ci 20 470 120 ., label("ci") onclickoff(script ci_off) onclickon(script ci_on)
-  CHECKBOX cx_noci 160 470 120 ., label("noci")
-  TEXT tx_level 300 472 90 ., label("Level (%):")
-  EDIT ed_level 390 470 60 ., nomem
+  CHECKBOX cx_thrcont 20 160 150 ., label("thresholdcontagion(k)")
+  EDIT ed_thrcont 175 160 40 ., nomem
+  CHECKBOX cx_fraccont 230 160 150 ., label("fractioncontagion(q)")
+  EDIT ed_fraccont 385 160 40 ., nomem
+  CHECKBOX cx_sharecont 440 160 120 ., label("sharecontagion")
+  CHECKBOX cx_threxp 20 184 150 ., label("thresholdexposure(k)")
+  EDIT ed_threxp 175 184 40 ., nomem
+  CHECKBOX cx_fracexp 230 184 150 ., label("fractionexposure(q)")
+  EDIT ed_fracexp 385 184 40 ., nomem
+  CHECKBOX cx_shareexp 440 184 120 ., label("shareexposure")
+  TEXT tx_par 20 210 540 ., label("k: positive integer (default 2); q: share above 0 up to 1 (default 0.5); leave blank for the default.")
+  TEXT tx_dir 20 226 540 ., label("Directed network only:")
+  CHECKBOX cx_sender 20 246 130 ., label("sender")
+  CHECKBOX cx_receiver 160 246 130 ., label("receiver")
+  CHECKBOX cx_reciprocity 300 246 130 ., label("reciprocity")
+  TEXT tx_other 20 280 260 ., label("Other effects (covariates, e.g. alter(age) same(sex)):")
+  EDIT ed_other 290 280 270 ., nomem
+  TEXT tx_oth2 20 306 540 ., label("Effect names and options are listed in help nwalaam.")
+  GROUPBOX gb_est 10 352 560 150, label("Estimation")
+  CHECKBOX cx_mple 20 372 540 ., label("Pseudo-likelihood estimate only (no simulation, no standard errors from runs)")
+  TEXT tx_runs 20 400 260 ., label("Number of independent runs:")
+  SPINNER sp_runs 290 400 70 ., default(30) min(1) max(9999) nomem
+  TEXT tx_iter 20 428 260 ., label("Iterations per run:")
+  SPINNER sp_iter 290 428 90 ., default(50000) min(100) max(99999999) nomem
+  TEXT tx_seed 20 456 260 ., label("Random-number seed (blank = none):")
+  EDIT ed_seed 290 456 90 ., nomem
+  TEXT tx_lrate 20 478 260 ., label("Learning rate (default 0.01):")
+  EDIT ed_lrate 290 478 90 ., nomem
+  GROUPBOX gb_dis 10 510 560 56, label("Display")
+  CHECKBOX cx_ci 20 530 120 ., label("ci") onclickoff(script ci_off) onclickon(script ci_on)
+  CHECKBOX cx_noci 160 530 120 ., label("noci")
+  TEXT tx_level 300 532 90 ., label("Level (%):")
+  EDIT ed_level 390 530 60 ., nomem
 END
 
 SCRIPT ci_on
@@ -86,6 +97,18 @@ BEGIN
 	}
 	if main.ed_seed.isneq("") & !main.ed_seed.isnumlist() {
 		stopbox stop "Seed: enter an integer."
+	}
+	if main.ed_thrcont.isneq("") & !main.ed_thrcont.isnumlist() {
+		stopbox stop "thresholdcontagion: k must be a number."
+	}
+	if main.ed_threxp.isneq("") & !main.ed_threxp.isnumlist() {
+		stopbox stop "thresholdexposure: k must be a number."
+	}
+	if main.ed_fraccont.isneq("") & !main.ed_fraccont.isnumlist() {
+		stopbox stop "fractioncontagion: q must be a number."
+	}
+	if main.ed_fracexp.isneq("") & !main.ed_fracexp.isnumlist() {
+		stopbox stop "fractionexposure: q must be a number."
 	}
 	if main.cx_ci & main.cx_noci {
 		stopbox stop "Choose either ci or noci, not both."
@@ -124,6 +147,40 @@ BEGIN
 	}
 	if main.cx_gwcontagion {
 		put "gwcontagion "
+	}
+	if main.cx_thrcont {
+		put "thresholdcontagion"
+		if main.ed_thrcont.isneq("") {
+			put "(" main.ed_thrcont ")"
+		}
+		put " "
+	}
+	if main.cx_fraccont {
+		put "fractioncontagion"
+		if main.ed_fraccont.isneq("") {
+			put "(" main.ed_fraccont ")"
+		}
+		put " "
+	}
+	if main.cx_sharecont {
+		put "sharecontagion "
+	}
+	if main.cx_threxp {
+		put "thresholdexposure"
+		if main.ed_threxp.isneq("") {
+			put "(" main.ed_threxp ")"
+		}
+		put " "
+	}
+	if main.cx_fracexp {
+		put "fractionexposure"
+		if main.ed_fracexp.isneq("") {
+			put "(" main.ed_fracexp ")"
+		}
+		put " "
+	}
+	if main.cx_shareexp {
+		put "shareexposure "
 	}
 	if main.cx_sender {
 		put "sender "
