@@ -36,7 +36,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.5.1) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
-> Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.1.1) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
+> Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
