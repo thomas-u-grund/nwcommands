@@ -58,6 +58,7 @@ f nwcurrent.sthlp
 f nwdegree.sthlp
 f nwdendrogram.sthlp
 f nwdichotomize.sthlp
+f nwdiffuse.sthlp
 f nwdissimilar.sthlp
 f nwdrop.sthlp
 f nwdropnodes.sthlp

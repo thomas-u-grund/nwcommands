@@ -211,6 +211,7 @@
 {p 11 11 2}{bf:{it:Other analysis tools}}{p_end}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
+{p2col:    {bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:    {bf:{help nwnode }}}Check whether a node exists in a network{p_end}
 {p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
 {p2col:    {bf:{help nwvalue }}}Return a tie value{p_end}

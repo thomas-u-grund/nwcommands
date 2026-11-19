@@ -44,6 +44,7 @@
 {p2col:{bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:{bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
 {p2col:{bf:{help nwdichotomize }}}Dichotomize a network at a threshold{p_end}
+{p2col:{bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:{bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:{bf:{help nwdrop }}}Drop networks or nodes{p_end}
 {p2col:{bf:{help nwdropnodes }}}Drop nodes from a network{p_end}
