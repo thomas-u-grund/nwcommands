@@ -32,7 +32,7 @@ Network analysis studies the relationships (ties) between units, such as friends
 
 A network G = (V,E) is a set of nodes *V* and a set of ties *E* between pairs (dyads) of nodes *i* and *j*. It can be stored as an adjacency matrix *M* with one row and one column per node: *M_ij* = 0 when there is no tie from *i* to *j*, and *M_ij* = 1 (or, in a valued network, the value of the tie) when there is one.
 
-The core package [nwcommands](nwcommands) has 134 commands. They [import, export, load and save](nwtopical), [generate](nwtopical), [manipulate](nwtopical), [describe](nwtopical), [analyze](nwtopical) and [plot and animate](nwtopical) networks: centrality, cohesion and subgroups, communities, positions and roles, paths and flows, homophily and mixing, and tests such as QAP and conditional uniform graph tests. You can also write your own [network commands](nwprogramming).
+The core package [nwcommands](nwcommands) has 138 commands. They [import, export, load and save](nwtopical), [generate](nwtopical), [manipulate](nwtopical), [describe](nwtopical), [analyze](nwtopical) and [plot and animate](nwtopical) networks: centrality, cohesion and subgroups, communities, positions and roles, paths and flows, homophily and mixing, and tests such as QAP and conditional uniform graph tests. You can also write your own [network commands](nwprogramming).
 
 A minimal example, which loads a real network and computes degree centrality:
 

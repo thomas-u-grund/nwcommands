@@ -22,7 +22,7 @@ New: [slides for every week and day of the three course outlines](book/teaching/
 
 ## The packages
 
-nwcommands is a family of eight packages. The core handles networks (134 commands and 120 dialog boxes).
+nwcommands is a family of eight packages. The core handles networks (138 commands and 130 dialog boxes).
 Seven model packages build on it. They are installed separately, and each follows an established program
 (an R package, or for nwalaam the Python program ALAAMEE) without replacing it. The core and all seven model packages are free software under the GNU
 General Public License, version 3.

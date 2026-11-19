@@ -46,12 +46,12 @@ program nwinstall, rclass
 		}
 	}
 
-	// everything = the core (exactly what all installs) plus the five model packages (what models installs), as one consistent set
+	// everything = the core (exactly what all installs) plus the seven model packages (what models installs), as one consistent set
 	if "`everything'" != "" {
 		local all "all"
 		local models "models"
 		if "`modelpkg'" != "" {
-			di as err "{p 0 0 2}everything installs all five model packages; it cannot be combined with modelpkg(){p_end}"
+			di as err "{p 0 0 2}everything installs all seven model packages; it cannot be combined with modelpkg(){p_end}"
 			exit 198
 		}
 	}
@@ -59,7 +59,7 @@ program nwinstall, rclass
 	// gui is the documented name of the option that installs the "Network Analysis" menu and dialogs permanently; permanently remains accepted as the older name
 	if "`gui'" != "" local permanently "permanently"
 
-	// the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam are separate GPL-3 packages (nwinstall_models.ado)
+	// the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwsbm, nwlsm are separate GPL-3 packages (nwinstall_models.ado)
 	local __nw_models = ("`models'" != "" | "`modelpkg'" != "")
 	if `__nw_models' & "`update'`usermenu'`permanently'`dialog'`downloadoff'`help'`ado'`ext'`all'`localcopy'" == "" {
 		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'

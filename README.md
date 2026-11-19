@@ -2,7 +2,7 @@
 
 **Version 3.27.0** (18 November 2026)
 
-Network analysis for Stata — 134 commands for importing, generating, describing,
+Network analysis for Stata — 138 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
 data commands.
 
