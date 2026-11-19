@@ -14,7 +14,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 ## 19 November 2026: nwalaam 1.2.0
 
-**nwalaam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.2.0)). Six new effects let the exposure to neighbours with the outcome enter in other forms than a count: `thresholdcontagion(k)`, `fractioncontagion(q)` and `sharecontagion` for the actors with the outcome, and `thresholdexposure(k)`, `fractionexposure(q)` and `shareexposure` for the actors that are exposed but do not have it. The package has 33 effects for undirected and 43 for directed networks. As with every ALAAM effect, a coefficient describes how the outcome is distributed over the network, not the process that produced it. The plugin is protocol 7: update the package as a whole. The manual describes series 1.2.
+**nwalaam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.2.0)). Six new effects let the exposure to neighbours with the outcome enter in other forms than a count: `thresholdcontagion(k)`, `fractioncontagion(q)` and `sharecontagion` for the actors with the outcome, and `thresholdexposure(k)`, `fractionexposure(q)` and `shareexposure` for the actors that are exposed but do not have it. The package has 33 effects for undirected and 43 for directed networks. As with every ALAAM effect, a coefficient describes how the outcome is distributed over the network, not the process that produced it. Update the package as a whole (the plugin changed). The manual describes series 1.2.
 
 Tested on macOS with Stata 17 BE (change statistics against their definitions, the new effects, the main test file) and on Linux (Ubuntu 22.04, StataNow 19 MP); Windows is not tested for this version.
 
