@@ -25,7 +25,7 @@ Each is a separate GPL-3 package that needs the core `nwcommands`
 nwinstall, models
 ```
 
-for all five model packages at once (`nwinstall, everything` installs the core as well; a single package: `nwinstall, modelpkg(nwsaom)`). Each package reports its own release
+for all seven model packages at once (`nwinstall, everything` installs the core as well; a single package: `nwinstall, modelpkg(nwsaom)`). Each package reports its own release
 (and stores it in `r(version)`):
 
 ```stata

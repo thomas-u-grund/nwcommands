@@ -1,7 +1,7 @@
 ---
 title: "Releases and news"
 nav_order: 12
-description: "Dated list of releases of nwcommands, nwsaom, nwergm, nwdynam, nwrem and nwalaam, and changes to this site."
+description: "Dated list of releases of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm, and changes to this site."
 permalink: /news/
 ---
 
@@ -10,7 +10,21 @@ permalink: /news/
 
 Newest first. Announcements also go to the [nwcommands mailing list](https://groups.google.com/g/nwcommands). The full change history of each package is in its `CHANGELOG`, and every release has notes on GitHub.
 
-All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases).
+All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
+
+## 20 November 2026: nwcommands 3.28.0, nwergm 1.10.0 and two new packages, nwlsm 0.6.0 and nwsbm 0.3.0
+
+Two packages join the family, a seventh and eighth: **nwlsm 0.6.0** fits latent space models and **nwsbm 0.3.0** fits stochastic block models. Both describe a network that is observed once, by positions or by blocks instead of by local patterns, and both follow R packages. The core and nwergm bring new tools as well.
+
+**nwlsm 0.6.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v0.6.0)). Latent space models of Hoff, Raftery and Handcock (2002) after the R package `latentnet`: Euclidean and bilinear models for undirected and directed networks, binary and valued (Poisson, binomial, normal), with edge covariates, random sender, receiver and sociality effects, latent clusters, parallel chains, minimum Kullback-Leibler positions, goodness of fit and posterior predictive checks, plots and dialog boxes. New in this version is the latent space model for social influence of Sweet and Adhikari (2020): the tie model and a model for an outcome of the actors, in which the outcomes of the others enter weighted by their distance in the latent space, are fitted jointly (`influence()`, `estat influence`). Posterior means, log likelihoods and goodness-of-fit statistics agree with `latentnet` 2.12.0 within Monte Carlo error on the test networks. See the [nwlsm section](../nwlsm/) with its [install page](../nwlsm/install/) and a tutorial.
+
+**nwsbm 0.3.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v0.3.0)). Stochastic block models for undirected and directed networks with Bernoulli, Poisson and Gaussian ties, degree correction (Karrer and Newman 2011), latent block models for two-mode networks, dyadic covariates, choice of the number of blocks by the integrated classification likelihood (also the exact criterion of `greed`), parallel starts, `estat` tables, plots and dialog boxes. The number of blocks, the memberships and the criterion agree with the R packages `sbm` 1.0.0, `blockmodels` 1.2.1 and `greed` 0.6.2 on the test networks. See the [nwsbm section](../nwsbm/) with its [install page](../nwsbm/install/) and a tutorial.
+
+**nwergm 1.10.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.10.0)). Two additions. *Bayesian ERGM:* `estimate(bayes)` fits the model by the exchange algorithm with adaptive direction sampling, after R's `Bergm`, with normal priors, posterior summaries (`estat posterior`), convergence diagnostics and a posterior predictive check; see [Bayesian ERGM](../nwergm/bayesian/). *ERGM for egocentrically sampled data:* `nwergm ego` fits the model to a sample of egos and their alters, after R's `ergm.ego`, with design-based standard errors, `estat gof` and simulation; see [Ego-network ERGM](../nwergm/ego/). The estimates of `nwergm ego` agree with `ergm.ego` 1.1.4 on its test data. The plugin has changed, so update the package as a whole. The manual chapters on both are part of the manual of series 1.10.
+
+**nwcommands 3.28.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.28.0)). New commands: `nwspmatrix` builds a spatial weighting matrix from a network for Stata's `spregress` (it agrees with R's `sna::lnam` to about five digits); `nwdiffuse` computes exposure, thresholds, adoption curves and hazard data for diffusion and contagion (equal to `netdiffuseR` 1.25.1 to nine digits); `nwbackbone` extracts the backbone of valued networks and two-mode projections after the R package `backbone` (global, disparity, LANS and marginal likelihood filters, and the stochastic degree sequence, fixed degree sequence and fixed-margin models for projections; the deterministic methods give the R results); `nwcompare` tabulates N, log likelihood, number of parameters, AIC, BIC and ICL of stored estimation results of `nwergm`, `nwsaom`, `nwlsm`, `nwsbm`, `nwalaam` and Stata's own commands. `nwcommunity` has two new algorithms, `algorithm(leiden)` and `algorithm(infomap)` (undirected two-level map equation); the Leiden and Infomap partitions agree with `igraph`. All have dialog boxes, and the core knows the two new model packages: `nwinstall, models` and `nwinstall, everything` install them, and `nwversion` lists them. See the [reference pages](../reference/) of the new commands.
+
+Tested on macOS with Stata 17, 18 and 19 (the new tests of this release); Linux and Windows: the plugins are built by the build workflow and have not been tested yet. <!-- UPDATE AT RELEASE -->
 
 ## 19 November 2026: nwalaam 1.2.0
 

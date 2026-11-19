@@ -2,7 +2,7 @@
 title: "Which package do I need?"
 nav_order: 2
 permalink: /which-package/
-description: "Choose between nwcommands (core), nwsaom, nwergm, nwdynam, nwrem and nwalaam by the kind of network data you have and the question you ask."
+description: "Choose between nwcommands (core), nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm by the kind of network data you have and the question you ask."
 ---
 
 # Which package do I need?
@@ -18,9 +18,21 @@ Pick by your data and your question.
 | Timestamped events (e-mails, calls), ordered by time | Who acts next, and whom do they choose, given the history? | [nwdynam](../nwdynam/) (DyNAM) |
 | Timestamped events (e-mails, calls), ordered by time | Why this sender and this receiver at each event? | [nwrem](../nwrem/) (REM) |
 | One network, observed once, with a yes/no outcome on the actors (smoking, adoption, a side taken) | Why do these actors have the outcome, given the network around them? | [nwalaam](../nwalaam/) (ALAAM) |
+| One network, observed once | Where do the actors lie, if the network is a map in which close actors are tied? | [nwlsm](../nwlsm/) (latent space model) |
+| One network, observed once | Which actors play the same role, and how do the roles connect? | [nwsbm](../nwsbm/) (stochastic block model) |
 
-All five model packages need the core. The core is where you import, prepare and describe the data,
+All seven model packages need the core. The core is where you import, prepare and describe the data,
 so most projects start there. If your network is large, see [how large a network can be](../nwcommands/size-limits/).
+
+## Latent space, block model or ERGM?
+
+Three of the packages describe the same kind of data, one network observed once, and answer different questions. In plain words:
+
+- **ERGM ([nwergm](../nwergm/))** explains *which local patterns* build the network: reciprocity, triangles, homophily on an attribute, a few hubs. Each pattern gets a coefficient that you can interpret and test. Choose it when you have a hypothesis about how ties form.
+- **Latent space model ([nwlsm](../nwlsm/))** gives every actor a *position* on a hidden map and says that close actors are likely to be tied. It describes clustering and transitivity through the map rather than through counts of triangles, and the map is a picture you can look at. Choose it when you want to see the structure of the network and a measure of how far apart actors are.
+- **Stochastic block model ([nwsbm](../nwsbm/))** sorts the actors into *blocks* with the same pattern of ties and tells you how likely ties are within and between blocks. Choose it when you want roles (core and periphery, hubs and leaves, two sides that only tie across), or a partition of the actors with the number of groups chosen by a criterion. Blocks are not the same as communities.
+
+They can be combined: a block model or a latent space can serve as a description before you fit an ERGM, and `nwcompare` of the core compares the fit statistics of stored models, with the caution that criteria of different model families are not always comparable. None of the three says anything about change over time; for that see nwsaom, nwdynam and nwrem.
 
 ## If you know the R packages
 
@@ -31,6 +43,8 @@ so most projects start there. If your network is large, see [how large a network
 | `goldfish` | nwdynam | [nwdynam and goldfish](../nwdynam/r-goldfish/) |
 | `relevent` | nwrem | [nwrem and relevent](../nwrem/r-relevent/) |
 | ALAAMEE (Python), MPNet | nwalaam | [nwalaam](../nwalaam/) |
+| `latentnet` | nwlsm | [nwlsm](../nwlsm/) |
+| `sbm`, `blockmodels`, `greed` | nwsbm | [nwsbm](../nwsbm/) |
 
 Each Stata package follows its R package (nwalaam: ALAAMEE, a Python program) and is not a replacement for it. The R package is the
 reference implementation and the more complete program; each section says what is the same, what
@@ -38,7 +52,7 @@ differs and what is missing.
 
 ## Install
 
-The simplest way is `nwinstall, everything`, which installs the core and all five model packages (requires
+The simplest way is `nwinstall, everything`, which installs the core and all seven model packages (requires
 Stata 17 or later; see [Installation](../nwcommands/install/)). To install the core and then only the model
 package you need, see the Install page in each package's section.
 

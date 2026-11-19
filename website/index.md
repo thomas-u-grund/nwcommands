@@ -1,7 +1,7 @@
 ---
 title: Home
 nav_order: 1
-description: "nwcommands: network analysis for Stata. Import, generate, describe, analyze and plot networks; fit statistical network models with the companion packages nwsaom (SAOM), nwergm (ERGM), nwdynam (DyNAM), nwrem (REM) and nwalaam (ALAAM)."
+description: "nwcommands: network analysis for Stata. Import, generate, describe, analyze and plot networks; fit statistical network models with the companion packages nwsaom (SAOM), nwergm (ERGM), nwdynam (DyNAM), nwrem (REM), nwalaam (ALAAM), nwlsm (latent space models) and nwsbm (stochastic block models)."
 permalink: /
 ---
 
@@ -22,19 +22,21 @@ New: [slides for every week and day of the three course outlines](book/teaching/
 
 ## The packages
 
-nwcommands is a family of six packages. The core handles networks (134 commands and 120 dialog boxes).
-Five model packages build on it. They are installed separately, and each follows an established program
-(an R package, or for nwalaam the Python program ALAAMEE) without replacing it. The core and all five model packages are free software under the GNU
+nwcommands is a family of eight packages. The core handles networks (134 commands and 120 dialog boxes).
+Seven model packages build on it. They are installed separately, and each follows an established program
+(an R package, or for nwalaam the Python program ALAAMEE) without replacing it. The core and all seven model packages are free software under the GNU
 General Public License, version 3.
 
 | Package | What it does | Follows | Version |
 |---|---|---|---|
-| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.27.0 |
-| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.8.0 |
-| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.8.0 |
+| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.28.0 |
+| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.8.1 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.10.0 |
 | [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data ([Manual](nwdynam/manual/)) | R package `goldfish` | 1.9.1 |
 | [**nwrem**](nwrem/) | Relational event models (REM) for event data ([Manual](nwrem/manual/)) | R package `relevent` | 1.5.1 |
 | [**nwalaam**](nwalaam/) | Autologistic actor attribute models (ALAAM) for a binary outcome on the actors of one network | ALAAMEE (Python) and MPNet | 1.2.0 |
+| [**nwlsm**](nwlsm/) | Latent space models for the ties of a network, and for social influence | R package `latentnet` | 0.6.0 |
+| [**nwsbm**](nwsbm/) | Stochastic block models and latent block models: which actors play the same role | R packages `sbm`, `blockmodels` and `greed` | 0.3.0 |
 
 Not sure which one you need? See [Which package do I need?](which-package/).
 
@@ -48,7 +50,7 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 
 1. The first line installs `nwinstall` itself and the landing help topics.
 2. `nwinstall, everything` downloads everything else: the core (every command, all help files and every dialog
-   box) and the five model packages, sets up the "Network Analysis" menu in Stata's User menu (one line in your
+   box) and the seven model packages, sets up the "Network Analysis" menu in Stata's User menu (one line in your
    `profile.do`, never written twice), and prints the version of each package at the end. Add `nogui` to leave
    the menu out; `nwinstall, gui` adds it later (the older option name `permanently` still works).
 

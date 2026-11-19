@@ -15,6 +15,8 @@ permalink: /links/
 - [goldfish](https://github.com/stocnet/goldfish): dynamic network actor models and relational event models in R. The reference for [nwdynam](../nwdynam/).
 - [relevent](https://cran.r-project.org/package=relevent): relational event models in R. The reference for [nwrem](../nwrem/).
 - [ALAAMEE](https://github.com/stivalaa/ALAAMEE): autologistic actor attribute models in Python (MIT licence). The reference for [nwalaam](../nwalaam/).
+- [latentnet](https://CRAN.R-project.org/package=latentnet) (statnet): latent position and cluster models in R. The reference for [nwlsm](../nwlsm/).
+- [sbm](https://CRAN.R-project.org/package=sbm), [blockmodels](https://CRAN.R-project.org/package=blockmodels) and [greed](https://CRAN.R-project.org/package=greed): stochastic block models in R. The references for [nwsbm](../nwsbm/).
 - [manynet](https://github.com/stocnet/manynet) ([CRAN](https://cran.r-project.org/package=manynet)): tools for many kinds of networks in R.
 - [Pajek](http://mrvar.fdv.uni-lj.si/pajek/): large-network analysis and visualization for Windows.
 - [UCINET](https://sites.google.com/site/ucinetsoftware/home): social network analysis software.
@@ -35,6 +37,6 @@ permalink: /links/
 
 ## Our own
 
-- GitHub: [nwcommands](https://github.com/thomas-u-grund/nwcommands), [nwsaom](https://github.com/thomas-u-grund/nwsaom), [nwergm](https://github.com/thomas-u-grund/nwergm), [nwdynam](https://github.com/thomas-u-grund/nwdynam), [nwrem](https://github.com/thomas-u-grund/nwrem), [nwalaam](https://github.com/thomas-u-grund/nwalaam). Questions and problems: [Get help and community](../help/).
+- GitHub: [nwcommands](https://github.com/thomas-u-grund/nwcommands), [nwsaom](https://github.com/thomas-u-grund/nwsaom), [nwergm](https://github.com/thomas-u-grund/nwergm), [nwdynam](https://github.com/thomas-u-grund/nwdynam), [nwrem](https://github.com/thomas-u-grund/nwrem), [nwalaam](https://github.com/thomas-u-grund/nwalaam), [nwlsm](https://github.com/thomas-u-grund/nwlsm), [nwsbm](https://github.com/thomas-u-grund/nwsbm). Questions and problems: [Get help and community](../help/).
 - The nwsaom manual at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807). The nwdynam manual (PDF): [nwcommands.org/nwdynam/manual](https://nwcommands.org/nwdynam/manual/). The nwrem manual (PDF): [nwcommands.org/nwrem/manual](https://nwcommands.org/nwrem/manual/). The nwergm manual at Zenodo: [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331).
 - The [nwcommands mailing list](https://groups.google.com/g/nwcommands), for announcements only.

@@ -31,8 +31,8 @@ The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled p
   installed silently on first use), no internet after installation, and nothing is written to your PLUS directory.
 - **Statistical network models** live in separate packages that build on this one (all GPL-3):
   `nwergm` (exponential-family random graph models), `nwsaom` (stochastic actor-oriented
-  models), `nwrem` (relational event models), `nwdynam` (Dynamic Network Actor Models) and `nwalaam`
-  (autologistic actor attribute models).
+  models), `nwrem` (relational event models), `nwdynam` (Dynamic Network Actor Models), `nwalaam`
+  (autologistic actor attribute models), `nwlsm` (latent space models) and `nwsbm` (stochastic block models).
   Install each with `net install <name>, from(https://raw.githubusercontent.com/thomas-u-grund/<name>/main/)`.
   They are separate packages, so they are not part of the core: installing or updating `nwcommands`
   never replaces them.
@@ -78,7 +78,7 @@ all` then downloads everything else — every command, all help files, and all 1
 boxes — and sets up a "Network Analysis" menu in Stata's own User menu (one line in your
 `profile.do`, written only once), so every command is reachable through a dialog box, not just
 the command line. Add `nogui` to leave the menu out. `nwinstall, everything` does the same for
-the core and the five model packages. See `help nwinstall` for the full option reference.
+the core and the seven model packages. See `help nwinstall` for the full option reference.
 
 **No internet access or admin rights?** `nwinstall, localcopy` installs by copying files
 directly from an nwcommands folder you already have (zip, USB drive, shared network drive) into
@@ -104,7 +104,7 @@ index; `help nwintro` covers general concepts, conventions, and — importantly 
 guidance on what network sizes are actually feasible for which commands.
 
 **Branches**: `main` is the current, tested release — install/point at this by default (the
-model packages nwsaom, nwergm, nwdynam, nwrem and nwalaam also use `main`). `develop` is where active work
+model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm also use `main`). `develop` is where active work
 happens and is merged into `main` once a batch of changes is regression-tested. `master` is an
 exact copy of `main`, kept so that older install lines and links keep working; it is updated
 automatically.
@@ -161,4 +161,4 @@ evidence-based summary of what to expect at various network sizes.
 
 ## License
 
-nwcommands is free software under the GNU General Public License, version 3 (see `LICENSE` and `NOTICE.md`). The model packages nwsaom, nwergm, nwdynam, nwrem and nwalaam are separate packages under the same license.
+nwcommands is free software under the GNU General Public License, version 3 (see `LICENSE` and `NOTICE.md`). The model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm are separate packages under the same license.
