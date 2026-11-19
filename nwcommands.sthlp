@@ -4,7 +4,7 @@
 {title:nwcommands {hline 2} Network analysis in Stata}
 
 {pstd}
-nwcommands imports, generates, describes, analyzes and plots networks in Stata. It has 134 commands, most of them
+nwcommands imports, generates, describes, analyzes and plots networks in Stata. It has 138 commands, most of them
 with a dialog box. Tutorials, data sets and manuals are at {browse "https://nwcommands.org"}.
 {p_end}
 

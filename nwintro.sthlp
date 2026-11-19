@@ -39,7 +39,7 @@ A network G = (V,E) is a set of nodes {it:V} and a set of ties {it:E} between pa
 is no tie from {it:i} to {it:j}, and {it:M_ij} = 1 (or, in a valued network, the value of the tie) when there is one.
 
 {pstd}
-The core package {help nwcommands} has 134 commands. They {help nwtopical##import:import, export, load and save},
+The core package {help nwcommands} has 138 commands. They {help nwtopical##import:import, export, load and save},
 {help nwtopical##generator:generate}, {help nwtopical##manipulation:manipulate}, {help nwtopical##information:describe},
 {help nwtopical##analysis:analyze} and {help nwtopical##visualization:plot and animate} networks: centrality, cohesion and
 subgroups, communities, positions and roles, paths and flows, homophily and mixing, and tests such as QAP and conditional
