@@ -154,7 +154,7 @@
 {marker analysis_community}{...}
 {p 11 11 2}{bf:{it:Communities}}{p_end}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
+{p2col:    {bf:{help nwcommunity }}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}
 {p2col:    {bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
 {p2col:    {bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
 
@@ -202,6 +202,7 @@
 {marker analysis_statmodels}{...}
 {p 11 11 2}{bf:{it:Statistical tests}}{p_end}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}

@@ -32,7 +32,8 @@
 {p2col:{bf:{help nwclustering }}}Clustering coefficient (transitivity) of a network{p_end}
 {p2col:{bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}
-{p2col:{bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
+{p2col:{bf:{help nwcommunity }}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}
+{p2col:{bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:{bf:{help nwcomponents }}}Network components and the largest component{p_end}
 {p2col:{bf:{help nwcompressobs }}}Drop observations that no network needs{p_end}
 {p2col:{bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}

@@ -46,6 +46,7 @@ f nwcohesion.sthlp
 f nwcollapse.sthlp
 f nwcommands.sthlp
 f nwcommunity.sthlp
+f nwcompare.sthlp
 f nwcomponents.sthlp
 f nwcompressobs.sthlp
 f nwconcor.sthlp

@@ -59,6 +59,7 @@ f nwclustering.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado
+f nwcompare.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
