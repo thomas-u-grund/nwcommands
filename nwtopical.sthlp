@@ -98,6 +98,7 @@
 {p2col:    {bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:    {bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:    {bf:{help nwattime }}}Static graph view of a temporal network at a given time{p_end}
+{p2col:    {bf:{help nwbackbone }}}Backbone extraction for valued networks and two-mode projections{p_end}
 {p2col:    {bf:{help nwcollapse }}}Collapse a network{p_end}
 {p2col:    {bf:{help nwdichotomize }}}Dichotomize a network at a threshold{p_end}
 {p2col:    {bf:{help nwdrop }}}Drop networks or nodes{p_end}

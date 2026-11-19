@@ -46,6 +46,7 @@ f nwaltergen.ado
 f nwappend.ado
 f nwassortativity.ado
 f nwattime.ado
+f nwbackbone.ado
 f nwbalance.ado
 f nwbetween.ado
 f nwbridges.ado

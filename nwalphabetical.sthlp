@@ -20,6 +20,7 @@
 {p2col:{bf:{help nwappend }}}Append a network dataset{p_end}
 {p2col:{bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}
 {p2col:{bf:{help nwattime }}}Static graph view of a temporal network at a given time{p_end}
+{p2col:{bf:{help nwbackbone }}}Backbone extraction for valued networks and two-mode projections{p_end}
 {p2col:{bf:{help nwbalance }}}Structural balance of a signed network{p_end}
 {p2col:{bf:{help nwbetween }}}Betweenness centrality{p_end}
 {p2col:{bf:{help nwbridges }}}Find bridges (ties whose removal disconnects the network){p_end}

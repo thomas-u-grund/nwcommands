@@ -814,6 +814,7 @@ program nwinstall_menu
 	window menu append item "Manipulate Networks" "One-mode projection of a two-mode network" "db nw2project"
 	window menu append item "Manipulate Networks" "Add nodes to network" "db nwaddnodes"
 	window menu append item "Manipulate Networks" "Static graph view of a temporal network at a given time" "db nwattime"
+	window menu append item "Manipulate Networks" "Backbone of a valued network or of a two-mode projection" "db nwbackbone"
 	window menu append item "Manipulate Networks" "Collapse a network" "db nwcollapse"
 	window menu append item "Manipulate Networks" "Drop networks or network nodes" "db nwdrop"
 	window menu append item "Manipulate Networks" "Drop nodes from a network" "db nwdropnodes"

@@ -18,6 +18,7 @@ f nw2toedge.sthlp
 f nwalphabetical.sthlp
 f _nwdatasync.sthlp
 f nwapi.sthlp
+f nwbackbone.sthlp
 f nwerrorcodes.sthlp
 f nwintro.sthlp
 f nwinternals.sthlp
