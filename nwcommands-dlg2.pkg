@@ -49,4 +49,6 @@ f nwcomponents.dlg
 f nwplotmatrix.dlg
 f nw_nodes_size.dlg
 f nwsimmelian.dlg
+f nwspmatrix.dlg
+f nwdiffuse.dlg
 f header.idlg
