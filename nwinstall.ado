@@ -767,13 +767,14 @@ program nwinstall_menu
 	window menu append item "Statistical Models" "Spatial weighting matrix from a network, for spregress" "db nwspmatrix"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 
-	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam); every other dialog of a package (Bayes, several networks,
+	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam, nwsbm); every other dialog of a package (Bayes, several networks,
 	// postestimation, simulation, ...) opens from a button inside the main dialog. An entry is listed only when the
 	// package's dialog file is installed (nwdynam and nwrem have no dialogs)
 	local __nwmodeldlg ""
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom|Stochastic actor-oriented model (nwsaom)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwalaam|Autologistic actor attribute model (nwalaam)""'
+	local __nwmodeldlg `"`__nwmodeldlg' "nwsbm|Stochastic block model (nwsbm)""'
 	local __nwfirst = 1
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")
