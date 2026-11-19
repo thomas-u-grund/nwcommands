@@ -1,0 +1,34 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwcompare")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 170
+
+DIALOG main, title("nwcompare - Compare the fit statistics of stored network models")
+BEGIN
+  TEXT tx_names 20 20 260 ., label("Stored results (names, blank = all; . = active results)")
+  EDIT ed_names 290 20 230 ., nomem
+  TEXT tx_sort 20 54 260 ., label("Sort rows by")
+  COMBOBOX cb_sort 290 54 150 ., dropdown contents(list_sort) nomem option(sort)
+END
+
+LIST list_sort
+BEGIN
+	aic
+	bic
+	icl
+	ll
+END
+
+PROGRAM command
+BEGIN
+	put "nwcompare " main.ed_names
+	beginoptions
+		optionarg main.cb_sort
+	endoptions
+	stata
+END

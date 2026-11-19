@@ -5,7 +5,7 @@
     python3 tools/release_preflight.py --require-pushed   the same, and develop must equal origin/develop
     python3 tools/release_preflight.py --post             after the release: tag exists and is in origin/main, tree clean
     python3 tools/release_preflight.py --models-parent DIR [--model-pattern 'rd_{name}']
-                                                           where the clones of nwsaom nwergm nwdynam nwrem nwalaam are
+                                                           where the clones of nwsaom nwergm nwdynam nwrem nwalaam nwsbm nwlsm are
                                                            (default: the parent of the core checkout, folder = the package name)
     python3 tools/release_preflight.py --no-network       skip the checks that ask GitHub (git ls-remote)
 
@@ -24,9 +24,9 @@ import argparse, datetime, glob, hashlib, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
-MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam"]
+MODELS = ["nwsaom", "nwergm", "nwdynam", "nwrem", "nwalaam", "nwsbm", "nwlsm"]
 # packages whose Mata library does not use the core library (no lib/core_mlib.sha256, no lockstep)
-NO_CORE_LIB = {"nwalaam"}
+NO_CORE_LIB = {"nwalaam", "nwsbm", "nwlsm"}
 results = []
 
 

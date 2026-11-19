@@ -46,6 +46,7 @@ f nwaltergen.ado
 f nwappend.ado
 f nwassortativity.ado
 f nwattime.ado
+f nwbackbone.ado
 f nwbalance.ado
 f nwbetween.ado
 f nwbridges.ado
@@ -58,6 +59,7 @@ f nwclustering.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado
+f nwcompare.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado

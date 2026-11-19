@@ -738,7 +738,7 @@ program nwinstall_menu
 	window menu append item "Cohesion and Subgroups" "Calculate Simmelian ties" "db nwsimmelian"
 
 	window menu append submenu "Network Analysis" "Community and Spectral"
-	window menu append item "Community and Spectral" "Detect communities via the Louvain method or label..." "db nwcommunity"
+	window menu append item "Community and Spectral" "Detect communities (Louvain, Leiden, Infomap...)" "db nwcommunity"
 	window menu append item "Community and Spectral" "Score an existing node partition using Newman's modularity" "db nwmodularity"
 	window menu append item "Community and Spectral" "Graph Laplacian spectral analysis" "db nwspectral"
 
@@ -761,6 +761,7 @@ program nwinstall_menu
 	window menu append item "Positions and Equivalence" "Common-neighbor similarity indices between all node pairs" "db nwsimindex"
 
 	window menu append submenu "Network Analysis" "Statistical Models"
+	window menu append item "Statistical Models" "Compare fit statistics of stored network models" "db nwcompare"
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
@@ -814,6 +815,7 @@ program nwinstall_menu
 	window menu append item "Manipulate Networks" "One-mode projection of a two-mode network" "db nw2project"
 	window menu append item "Manipulate Networks" "Add nodes to network" "db nwaddnodes"
 	window menu append item "Manipulate Networks" "Static graph view of a temporal network at a given time" "db nwattime"
+	window menu append item "Manipulate Networks" "Backbone of a valued network or of a two-mode projection" "db nwbackbone"
 	window menu append item "Manipulate Networks" "Collapse a network" "db nwcollapse"
 	window menu append item "Manipulate Networks" "Drop networks or network nodes" "db nwdrop"
 	window menu append item "Manipulate Networks" "Drop nodes from a network" "db nwdropnodes"

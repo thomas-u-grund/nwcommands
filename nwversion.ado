@@ -9,7 +9,7 @@ program define nwversion, rclass
 		di as text "nwcommands is tested with Stata 17 and 18; your Stata is version " c(stata_version)
 	}
 	di as text "Model packages (separate, GPL-3; install with {stata nwinstall, models}):"
-	foreach p in nwsaom nwergm nwdynam nwrem nwalaam {
+	foreach p in nwsaom nwergm nwdynam nwrem nwalaam nwsbm nwlsm {
 		capture findfile `p'.ado
 		if _rc {
 			di as text "  " %-8s "`p'" "not installed"
