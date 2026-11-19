@@ -21,6 +21,8 @@ The statistical models are separate packages that need this core. Install them w
 - **[nwdynam](https://nwcommands.org/nwdynam/)** --- Dynamic network actor models (DyNAM): choice and rate models for event sequences
 - **[nwrem](https://nwcommands.org/nwrem/)** --- Relational event models (REM) for timed interaction events
 - **[nwalaam](https://nwcommands.org/nwalaam/)** --- Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network
+- **[nwlsm](https://nwcommands.org/nwlsm/)** --- Latent space models for networks (Hoff, Raftery and Handcock)
+- **[nwsbm](https://nwcommands.org/nwsbm/)** --- Stochastic block models (SBM, latent block models) for one-mode and two-mode networks
 
 ## Author
 

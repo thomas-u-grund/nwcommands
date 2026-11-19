@@ -1,0 +1,18 @@
+* nwlsm tutorial 1: a latent space model for the karate club
+* Requires the core nwcommands and the package nwlsm. The data (Zachary 1977) are loaded from the nwcommands website.
+set linesize 80
+
+nwwebuse zachary, nwclear
+nwsummarize zachary_bin
+
+* --- a two-dimensional Euclidean latent space model, two chains of 1,000 draws ---
+nwlsm zachary_bin, dim(2) nsample(2000) burnin(5000) interval(10) chains(2) seed(20261120)
+
+* --- did the chains converge? ---
+estat mcmcdiag
+
+* --- the positions of the actors ---
+estat positions
+
+* --- does the fitted model reproduce the degrees and distances of the network? ---
+estat gof

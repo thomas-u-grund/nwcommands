@@ -3,7 +3,7 @@ title: "nwergm (ERGM)"
 nav_order: 6
 has_children: true
 permalink: /nwergm/
-description: "nwergm: exponential random graph models (ERGM) for Stata, after R's ergm. Installation, tutorials, a map of the terms, a guide for ergm users and how to cite."
+description: "nwergm: exponential random graph models (ERGM) for Stata, after R's ergm, with Bayesian estimation and ERGMs for egocentric data. Installation, tutorials, a map of the terms, a guide for ergm users and how to cite."
 ---
 
 # nwergm
@@ -26,7 +26,7 @@ number of ties, of reciprocated pairs, of triangles, of ties between people of t
 coefficient that is estimated from the data. A coefficient tells you whether the pattern occurs more or less
 often than expected by chance, given the other patterns in the model. `nwergm` estimates the models by maximum
 pseudolikelihood where this is exact and by Monte Carlo maximum likelihood otherwise, and it provides the tools to check, compare and
-simulate from the fitted model. It is a port of the R package `ergm` of the statnet project to Stata and is part
+simulate from the fitted model; since version 1.10.0 it can also fit the model by Bayesian inference and to a sample of egos instead of a whole network. It is a port of the R package `ergm` of the statnet project to Stata and is part
 of the nwcommands family of packages.
 
 ## Who it is for
@@ -42,7 +42,8 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 |---|---|
 | Terms | 125 of the 139 terms of R's `ergm` 4.12.0 (89.9%), and 125 of the 126 that apply to binary networks (99%); the missing ones are the 13 terms for valued networks and the operator `B`, see [nwergm and R's ergm](rergm/). |
 | Agreement with ergm | for each term, the observed statistics, the maximum pseudolikelihood estimates and the Monte Carlo maximum likelihood estimates were compared with `ergm` 4.12.0 |
-| Estimators | maximum pseudolikelihood (also penalized and other variants), Monte Carlo maximum likelihood, contrastive divergence, stochastic approximation |
+| Estimators | maximum pseudolikelihood (also penalized and other variants), Monte Carlo maximum likelihood, contrastive divergence, stochastic approximation; Bayesian estimation by the exchange algorithm (`estimate(bayes)`, after R's `Bergm`; [Bayesian ERGM](bayesian/)) |
+| Egocentric data | `nwergm ego`: an ERGM fitted to a sample of egos and their alters, after R's `ergm.ego` ([Ego-network ERGM](ego/)) |
 | Networks | directed, undirected and two-mode (bipartite), binary ties |
 | Missing data | missing dyads handled as in R (Handcock and Gile); missing covariate values are refused, as in R |
 | Fit statistics | log-likelihood, deviance, AIC, BIC, `estat ic`, `lrtest`, `predict` |
@@ -51,7 +52,7 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 | Postestimation | goodness of fit (`estat gof`), MCMC diagnostics (`estat mcmcdiag`), simulation from a fit (`nwergm simulate`) |
 | Engine | a compiled plugin for the Monte Carlo sampler (macOS, Linux, Windows) |
 | Speed | Faster than R's `ergm` on all eight of our benchmark models (2.1 to 4.0 times, medians of seven fits, version 1.5.2), with the same algorithm and about the same number of proposals per fit; see [Speed compared with ergm](speed/) |
-| Version | 1.8.1 (18 November 2026) |
+| Version | 1.10.0 (20 November 2026) |
 | License | GNU General Public License, version 3 |
 
 The operator terms (`operators()`), the term `balance`, the curved two-mode terms and `altkstar` with an estimated decay were added in version 1.1.0; earlier releases do not have them.
@@ -64,10 +65,13 @@ The operator terms (`operators()`), the term `balance`, the curved two-mode term
 - [Tutorial 3: Diagnostics and goodness of fit](tutorial-3-diagnostics/): `estat mcmcdiag`, `estat gof` and what to do when a fit does not converge.
 - [Tutorial 4: Missing data and comparing models](tutorial-4-missing-comparing/): missing dyads, `estat ic`, `lrtest`, `predict`.
 - [Tutorial 5: Constraints, two-mode networks and operators](tutorial-5-constraints-twomode-operators/).
+- [Bayesian ERGM](bayesian/): `estimate(bayes)`, priors, posterior summaries and diagnostics.
+- [Ego-network ERGM](ego/): `nwergm ego` for samples of egos and their alters.
 - [nwergm and R's ergm](rergm/): what is the same, what differs, a translation table.
 - [Terms](terms/): a map of the term families.
 - [How to cite](citation/)
 - [nwalaam](../nwalaam/): the companion package for a yes/no outcome on the actors of a network (autologistic actor attribute models, ALAAM), where `nwergm` models the ties
+- [nwlsm](../nwlsm/) and [nwsbm](../nwsbm/): the companion packages for latent space models and stochastic block models, which describe the same kind of network by positions and by blocks rather than by local patterns
 
 ## Links
 

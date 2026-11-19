@@ -11,9 +11,9 @@ areas, and preserve compatibility for everything already shipped.
 
 **Statistical network models** now live in their own packages (all GPL-3, each requiring this
 core): `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
-models), `nwdynam` (Dynamic Network Actor Models) and `nwalaam` (autologistic actor attribute
-models, ALAAMs). Their roadmaps are kept in their own
-repositories. The core keeps the temporal/two-mode groundwork they build on.
+models), `nwdynam` (Dynamic Network Actor Models), `nwalaam` (autologistic actor attribute
+models, ALAAMs), `nwlsm` (latent space models) and `nwsbm` (stochastic block models). Their roadmaps are kept in their own
+repositories. The core keeps the temporal/two-mode groundwork they build on. The newest, `nwlsm` and `nwsbm`, describe a network by latent positions and by blocks; the core gained `nwspmatrix`, `nwdiffuse`, `nwbackbone` and `nwcompare` and the Leiden and Infomap algorithms of `nwcommunity` (3.28.0).
 
 **Cohesive subgroups and graph structure**: k-cores, cliques, k-plexes, n-cliques/n-clans,
 k-components, and a full multi-level Moody-White cohesive-blocking hierarchy (`nwcohesion`);
@@ -53,7 +53,7 @@ scale.
 
 ## In progress
 
-- **nwalaam, a sixth package for autologistic actor attribute models (ALAAM)**: models of a binary actor outcome (for example smoking) given an observed network, the outcome-side counterpart of ERGMs, estimated by equilibrium expectation in a native plugin and following the Python implementation ALAAMEE. The repository is public at [github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam); a first release is being prepared.
+- **nwalaam, a sixth package for autologistic actor attribute models (ALAAM)**: models of a binary actor outcome (for example smoking) given an observed network, the outcome-side counterpart of ERGMs, estimated by equilibrium expectation in a native plugin and following the Python implementation ALAAMEE. The repository is public at [github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam); released (1.2.0).
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.

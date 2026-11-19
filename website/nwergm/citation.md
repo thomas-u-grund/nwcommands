@@ -9,13 +9,13 @@ description: "How to cite nwergm, and the statnet and ergm papers it builds on."
 # How to cite
 
 **nwergm.** Cite the package by repository and report the version that produced your results, as printed by
-`nwergm version` (for example "nwergm 1.8.1"). Cite the manual, which has a DOI:
+`nwergm version` (for example "nwergm 1.10.0"). Cite the manual, which has a DOI:
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
 The DOI is the one of all versions of the manual, so it always leads to the latest manual. Source code and releases are at [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm).
 
-Give the version printed by `nwergm version`: the operator terms and some other additions need version 1.1.0 or later.
+Give the version printed by `nwergm version`: the operator terms and some other additions need version 1.1.0 or later, Bayesian estimation and `nwergm ego` version 1.10.0.
 
 **The model and the software it follows.** `nwergm` implements the ERGM framework and follows R's
 `ergm` of the statnet project, so please also cite:
@@ -29,6 +29,6 @@ Depending on what you used, also cite the papers behind the method: Hunter and H
 curved exponential family and the pseudolikelihood, Hunter (2007) for the geometrically weighted terms,
 Morris, Handcock and Hunter (2008) for the model terms and the TNT proposal, Hummel, Hunter and Handcock (2012)
 for the Monte Carlo maximum likelihood algorithm, and Handcock and Gile (2010) if your network has missing
-dyads. The references are listed in `help nwergm`.
+dyads. For `estimate(bayes)`, cite Caimo and Friel (2011), *Social Networks* 33(1), 41-55 ([doi:10.1016/j.socnet.2010.09.004](https://doi.org/10.1016/j.socnet.2010.09.004)), and Caimo and Friel (2014), *Journal of Statistical Software* 61(2) ([doi:10.18637/jss.v061.i02](https://doi.org/10.18637/jss.v061.i02)); for `nwergm ego`, Krivitsky and Morris (2017), *The Annals of Applied Statistics* 11(1), 427-455 ([doi:10.1214/16-AOAS1010](https://doi.org/10.1214/16-AOAS1010)). The references are listed in `help nwergm`.
 
 **The core.** `nwergm` runs on the nwcommands core package; cite it as described in the documentation of the core (`help nwcommands`).

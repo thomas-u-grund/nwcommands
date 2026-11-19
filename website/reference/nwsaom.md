@@ -18,7 +18,7 @@ GNU General Public License, version 3, and it needs the core installed first.
 |---|---|
 | License | GPL-3 |
 | Repository | [github.com/thomas-u-grund/nwsaom](https://github.com/thomas-u-grund/nwsaom) |
-| Install | `nwinstall, modelpkg(nwsaom)` (after the core; `nwinstall, everything` installs the core and the five model packages) |
+| Install | `nwinstall, modelpkg(nwsaom)` (after the core; `nwinstall, everything` installs the core and the seven model packages) |
 | Version | `nwsaom version`; release history on [GitHub](https://github.com/thomas-u-grund/nwsaom/releases) |
 | Without `nwinstall` | `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace` |
 

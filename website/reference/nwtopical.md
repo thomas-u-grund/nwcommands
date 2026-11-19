@@ -98,6 +98,7 @@ search_exclude: false
 - **[nw2project](nw2project)** --- One-mode projection of a two-mode network
 - **[nwaddnodes](nwaddnodes)** --- Add nodes to network
 - **[nwattime](nwattime)** --- Static graph view of a temporal network at a given time
+- **[nwbackbone](nwbackbone)** --- Backbone extraction for valued networks and two-mode projections
 - **[nwcollapse](nwcollapse)** --- Collapse a network
 - **[nwdichotomize](nwdichotomize)** --- Dichotomize a network at a threshold
 - **[nwdrop](nwdrop)** --- Drop networks or nodes
@@ -149,7 +150,7 @@ search_exclude: false
 
 - ***Communities***
 
-- **[nwcommunity](nwcommunity)** --- Detect communities via the Louvain method or label propagation
+- **[nwcommunity](nwcommunity)** --- Detect communities: Louvain, Leiden, Infomap, label propagation
 - **[nwmodularity](nwmodularity)** --- Score an existing node partition using Newman's modularity
 - **[nwspectral](nwspectral)** --- Graph Laplacian spectral analysis
 
@@ -193,14 +194,17 @@ search_exclude: false
 
 - ***Statistical tests***
 
+- **[nwcompare](nwcompare)** --- Compare the fit statistics of stored network models
 - **[nwcorrelate](nwcorrelate)** --- Correlate networks and variables
 - **[nwcug](nwcug)** --- Conditional Uniform Graph (CUG) test
 - **[nwqap](nwqap)** --- Multivariate QAP regression
+- **[nwspmatrix](nwspmatrix)** --- Spatial weighting matrix from a network, for spregress
 - **[nwutility](nwutility)** --- Utility scores of Jackson and Wolinsky (1996)
 
 - ***Other analysis tools***
 
 - **[nwcontext](nwcontext)** --- Create a context variable
+- **[nwdiffuse](nwdiffuse)** --- Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation
 - **[nwnode](nwnode)** --- Check whether a node exists in a network
 - **[nwturnover](nwturnover)** --- Tie turnover/stability between two waves of the same network
 - **[nwvalue](nwvalue)** --- Return a tie value
@@ -255,6 +259,8 @@ The statistical network models are separate packages that need the core. Install
 - **[nwdynam](https://nwcommands.org/nwdynam/)** --- Dynamic network actor models (DyNAM): choice and rate models for event sequences
 - **[nwrem](https://nwcommands.org/nwrem/)** --- Relational event models (REM) for timed interaction events
 - **[nwalaam](https://nwcommands.org/nwalaam/)** --- Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network
+- **[nwsbm](https://nwcommands.org/nwsbm/)** --- Stochastic block models (SBM, latent block models) for one-mode and two-mode networks
+- **[nwlsm](https://nwcommands.org/nwlsm/)** --- Latent space models for networks (Hoff, Raftery and Handcock)
 
 ---
 
