@@ -775,6 +775,7 @@ program nwinstall_menu
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwalaam|Autologistic actor attribute model (nwalaam)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsbm|Stochastic block model (nwsbm)""'
+	local __nwmodeldlg `"`__nwmodeldlg' "nwlsm|Latent space model (nwlsm)""'
 	local __nwfirst = 1
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")
