@@ -222,4 +222,4 @@ structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.27.0, 18 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

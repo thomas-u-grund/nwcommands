@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [3.28.0] - unreleased
+## [3.28.0] - 2026-11-19
 
 ### Added
 - `nwspmatrix`: spatial weighting matrix from a network, for `spregress` (agrees with `sna::lnam` to about five digits); `nwdiffuse`: exposure, thresholds and adoption tools for diffusion and contagion (equal to netdiffuseR 1.25.1 to nine digits). Both have dialogs and menu entries.
