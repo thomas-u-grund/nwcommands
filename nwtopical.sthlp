@@ -204,6 +204,7 @@
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
+{p2col:    {bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
 {p2col:    {bf:{help nwutility }}}Utility scores of Jackson and Wolinsky (1996){p_end}
 
 {marker analysis_other}{...}

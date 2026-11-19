@@ -122,6 +122,7 @@
 {p2col:{bf:{help nwsimmelian }}}Simmelian ties{p_end}
 {p2col:{bf:{help nwsmall }}}Generate a small-world network{p_end}
 {p2col:{bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
+{p2col:{bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
 {p2col:{bf:{help nwstack }}}Stack several networks into one block-diagonal network{p_end}
 {p2col:{bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:{bf:{help nwsummarize }}}Summarize a network{p_end}
