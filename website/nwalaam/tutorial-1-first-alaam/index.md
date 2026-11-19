@@ -11,7 +11,7 @@ description: "Fit a first autologistic actor attribute model with nwalaam to the
 
 **Data.** Zachary's karate club: 34 members of a university karate club and 78 friendship ties (undirected). The club split in two after a conflict; the
 outcome is which side a member joined. Source: Zachary, W. W. (1977), *Journal of Anthropological Research* 33, 452-473; loaded from the website with `nwwebuse zachary`
-(see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwalaam` package (see [Install](../install/)); the commands were run with `nwalaam` 1.0.0.
+(see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwalaam` package (see [Install](../install/)); the commands were run with `nwalaam` 1.2.0.
 The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## What an ALAAM does, in four sentences

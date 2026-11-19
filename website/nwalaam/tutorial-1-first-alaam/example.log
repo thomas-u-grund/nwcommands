@@ -1,0 +1,98 @@
+
+. * nwalaam tutorial 1: a first autologistic actor attribute model on the karate c
+> lub
+. * Requires the core nwcommands and the package nwalaam. The data (Zachary 1977) 
+> are loaded from the nwcommands website.
+. set linesize 80
+
+. 
+. nwalaam version
+nwalaam version 1.2.0, 19nov2026
+  native plugin           : /Users/tgrund/FILES_NEW/SOFTWARE/nwalaam/lib/plugins
+> /macos/alaam_sim_macos.plugin (ships with the package)
+  reference               : ALAAMEE (Stivala, Wang and Lomi) and MPNet
+  license                 : GNU GPL-3
+
+. 
+. * --- the network and the outcome: which of the 34 members joined the officer'
+> s side of the split? ---
+. nwwebuse zachary, nwclear
+
+. tabulate group
+
+      group |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |         16       47.06       47.06
+          2 |         18       52.94      100.00
+------------+-----------------------------------
+      Total |         34      100.00
+
+. generate byte faction = (group == 2)
+
+. nwsummarize zachary_bin
+--------------------------------------------------
+   Network name:  zachary_bin
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: false
+   Nodes: 34
+   Selfloop: false
+   Edges: 78
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .139
+   Mean degree:  4.59
+   Temporal: false
+
+. 
+. * --- the pseudo-likelihood estimate: a logit of the outcome on the change sta
+> tistics ---
+. * In the karate club the outcome is perfectly separated by these statistics, s
+> o this estimate does not exist.
+. capture noisily nwalaam faction zachary_bin, effects(density activity contagio
+> n) mple
+the pseudo-likelihood estimate does not exist (perfect prediction or collinear
+effects).
+convergence not achieved
+
+. display "return code: " _rc
+return code: 430
+
+. 
+. * --- the default: stochastic approximation (maximum likelihood) ---
+. nwalaam faction zachary_bin, effects(density activity contagion) seed(20261118
+> )
+----------------------------------------------------------------------
+Autologistic actor attribute model (stochastic approximation)
+Outcome: faction (18 of 34)                    Network: zachary_bin
+SA repetitions: 2 (converged: yes)             Proposals per iteration: 1000
+----------------------------------------------------------------------
+-----------------------------------------------------
+     faction | Coefficient  Std. err.      z    P>|z|
+-------------+---------------------------------------
+     density |   .5395213   .9510325     0.57   0.571
+    activity |  -.8397623   .3038426    -2.76   0.006
+   contagion |   1.476303   .4046748     3.65   0.000
+-----------------------------------------------------
+All convergence t-ratios are within .1 in absolute value.
+
+. 
+. * --- the update of ALAAMEE (equilibrium expectation), 40 runs ---
+. nwalaam faction zachary_bin, effects(density activity contagion) method(ee) ru
+> ns(40) iterations(100000) seed(20261118)
+----------------------------------------------------------------------
+Autologistic actor attribute model (equilibrium expectation)
+Outcome: faction (18 of 34)                    Network: zachary_bin
+EE runs used: 40 of 40                         Acceptance rate: 0.234
+----------------------------------------------------------------------
+-----------------------------------------------------
+     faction | Coefficient  Std. err.      z    P>|z|
+-------------+---------------------------------------
+     density |  -.0286145   .9728923    -0.03   0.977
+    activity |  -.7477119   .2535431    -2.95   0.003
+   contagion |   1.530625   .3592791     4.26   0.000
+-----------------------------------------------------
+All convergence t-ratios are within .3 in absolute value.
+
+. 
