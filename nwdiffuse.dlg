@@ -1,0 +1,273 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwdiffuse")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 560 560
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+SCRIPT POSTINIT
+BEGIN
+	program sub_changed
+END
+
+DIALOG main, title("nwdiffuse - Diffusion and contagion on a network")
+BEGIN
+  TEXT tx_sub 20 14 260 ., label("What to do:")
+  COMBOBOX cb_sub 290 14 190 ., dropdownlist contents(list_sub) default(exposure) onselchange(program sub_changed) nomem
+  TEXT tx_net 20 42 260 ., label("Network(s) (curve and long: optional / one per period):")
+  COMBOBOX cb_net 290 42 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_when 10 70 540 128, label("Who adopts when (one of the two)")
+  TEXT tx_toa 20 88 260 ., label("toa(): variable with the period of adoption")
+  VARNAME vn_toa 290 88 190 ., nomem option(toa)
+  TEXT tx_adopt 20 114 260 ., label("adopt(): one 0/1 variable per period")
+  VARLIST vl_adopt 290 114 190 ., nomem option(adopt)
+  TEXT tx_t0 20 140 260 ., label("First period (t0)")
+  EDIT ed_t0 290 140 70 ., nomem option(t0)
+  TEXT tx_t1 20 166 260 ., label("Last period (t1)")
+  EDIT ed_t1 290 166 70 ., nomem option(t1)
+  GROUPBOX gb_opt 10 206 540 214, label("Options of exposure, threshold, curve and long")
+  TEXT tx_generate 20 224 260 ., label("generate(): new variable (stub) for the exposure share")
+  EDIT ed_generate 290 224 190 ., nomem option(generate)
+  TEXT tx_count 20 250 260 ., label("count(): new variable (stub) for the number of adopting neighbours")
+  EDIT ed_count 290 250 190 ., nomem option(count)
+  TEXT tx_lag 20 276 260 ., label("Use adoption this many periods earlier")
+  EDIT ed_lag 290 276 70 ., nomem option(lag)
+  TEXT tx_keep 20 302 260 ., label("keep(): variables to carry into the long data")
+  VARLIST vl_keep 290 302 190 ., nomem option(keep)
+  TEXT tx_matrix 20 328 260 ., label("matrix(): store the adoption curve as a matrix")
+  EDIT ed_matrix 290 328 190 ., nomem option(matrix)
+  CHECKBOX cx_valued 20 354 150 ., label("valued") option(valued)
+  CHECKBOX cx_incoming 180 354 150 ., label("incoming") option(incoming)
+  CHECKBOX cx_self 340 354 150 ., label("self") option(self)
+  CHECKBOX cx_replace 20 380 150 ., label("replace") option(replace)
+  CHECKBOX cx_clear 180 380 150 ., label("clear (long)") option(clear) default(1)
+  CHECKBOX cx_graph 20 404 150 ., label("graph (curve)") option(graph)
+  CHECKBOX cx_silent 180 404 150 ., label("silent (curve)") option(silent)
+  GROUPBOX gb_sim 10 428 540 122, label("Options of simulate (generate() above names the new variable)")
+  TEXT tx_model 20 446 110 ., label("model():")
+  COMBOBOX cb_model 130 446 130 ., dropdownlist contents(list_model) nomem option(model)
+  TEXT tx_prob 290 446 120 ., label("prob():")
+  EDIT ed_prob 415 446 90 ., nomem option(prob)
+  TEXT tx_threshold 20 472 110 ., label("threshold():")
+  EDIT ed_threshold 130 472 130 ., nomem option(threshold)
+  TEXT tx_thresholdvar 290 472 120 ., label("thresholdvar():")
+  VARNAME vn_thresholdvar 415 472 120 ., nomem option(thresholdvar)
+  TEXT tx_nseeds 20 498 110 ., label("nseeds():")
+  EDIT ed_nseeds 130 498 130 ., nomem option(nseeds)
+  TEXT tx_seedvar 290 498 120 ., label("seedvar():")
+  VARNAME vn_seedvar 415 498 120 ., nomem option(seedvar)
+  TEXT tx_spont 20 524 110 ., label("spont():")
+  EDIT ed_spont 130 524 60 ., nomem option(spont)
+  TEXT tx_steps 195 524 50 ., label("steps():")
+  EDIT ed_steps 245 524 40 ., nomem option(steps)
+  TEXT tx_seed 290 524 120 ., label("seed():")
+  EDIT ed_seed 415 524 90 ., nomem option(seed)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_sub
+BEGIN
+	exposure
+	threshold
+	curve
+	long
+	simulate
+END
+
+LIST list_model
+BEGIN
+	cascade
+	threshold
+	fraction
+END
+
+// which controls belong to which subcommand
+PROGRAM sub_changed
+BEGIN
+	call script all_off
+	if main.cb_sub.iseq("exposure") | main.cb_sub.iseq("threshold") {
+		call script when_on
+		call script expo_on
+	}
+	if main.cb_sub.iseq("curve") {
+		call script when_on
+		call script curve_on
+	}
+	if main.cb_sub.iseq("long") {
+		call script when_on
+		call script long_on
+	}
+	if main.cb_sub.iseq("simulate") {
+		call script sim_on
+	}
+END
+
+SCRIPT all_off
+BEGIN
+	main.vn_toa.disable
+	main.vl_adopt.disable
+	main.ed_t0.disable
+	main.ed_t1.disable
+	main.ed_generate.disable
+	main.ed_count.disable
+	main.ed_lag.disable
+	main.vl_keep.disable
+	main.ed_matrix.disable
+	main.cx_valued.disable
+	main.cx_incoming.disable
+	main.cx_self.disable
+	main.cx_replace.disable
+	main.cx_clear.disable
+	main.cx_graph.disable
+	main.cx_silent.disable
+	main.cb_model.disable
+	main.ed_prob.disable
+	main.ed_threshold.disable
+	main.vn_thresholdvar.disable
+	main.ed_nseeds.disable
+	main.vn_seedvar.disable
+	main.ed_spont.disable
+	main.ed_steps.disable
+	main.ed_seed.disable
+END
+
+SCRIPT when_on
+BEGIN
+	main.vn_toa.enable
+	main.vl_adopt.enable
+	main.ed_t0.enable
+	main.ed_t1.enable
+END
+
+SCRIPT expo_on
+BEGIN
+	main.ed_generate.enable
+	main.ed_count.enable
+	main.ed_lag.enable
+	main.cx_valued.enable
+	main.cx_incoming.enable
+	main.cx_self.enable
+	main.cx_replace.enable
+END
+
+SCRIPT curve_on
+BEGIN
+	main.ed_matrix.enable
+	main.cx_graph.enable
+	main.cx_silent.enable
+END
+
+SCRIPT long_on
+BEGIN
+	main.ed_lag.enable
+	main.vl_keep.enable
+	main.cx_valued.enable
+	main.cx_incoming.enable
+	main.cx_self.enable
+	main.cx_clear.enable
+END
+
+SCRIPT sim_on
+BEGIN
+	main.ed_generate.enable
+	main.cx_valued.enable
+	main.cx_incoming.enable
+	main.cx_self.enable
+	main.cx_replace.enable
+	main.cb_model.enable
+	main.ed_prob.enable
+	main.ed_threshold.enable
+	main.vn_thresholdvar.enable
+	main.ed_nseeds.enable
+	main.vn_seedvar.enable
+	main.ed_spont.enable
+	main.ed_steps.enable
+	main.ed_seed.enable
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwdiffuse"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	if !main.cb_sub.iseq("simulate") {
+		if !main.vn_toa & !main.vl_adopt {
+			stopbox stop "Specify the variable with the period of adoption (toa) or the 0/1 variables of the periods (adopt)."
+		}
+		if main.vn_toa & main.vl_adopt {
+			stopbox stop "Specify toa or adopt, not both."
+		}
+	}
+	if main.cb_sub.iseq("exposure") | main.cb_sub.iseq("threshold") {
+		if !main.ed_generate & !main.ed_count {
+			stopbox stop "Specify generate() or count(): the name of the new variable(s)."
+		}
+	}
+	if main.cb_sub.iseq("simulate") {
+		require main.cb_model
+		require main.ed_generate
+	}
+	put "nwdiffuse " main.cb_sub " " main.cb_net
+	beginoptions
+		if !main.cb_sub.iseq("simulate") {
+			optionarg main.vn_toa
+			optionarg main.vl_adopt
+			optionarg main.ed_t0
+			optionarg main.ed_t1
+		}
+		if main.cb_sub.iseq("exposure") | main.cb_sub.iseq("threshold") {
+			optionarg main.ed_generate
+			optionarg main.ed_count
+			optionarg main.ed_lag
+			option main.cx_valued
+			option main.cx_incoming
+			option main.cx_self
+			option main.cx_replace
+		}
+		if main.cb_sub.iseq("curve") {
+			option main.cx_graph
+			optionarg main.ed_matrix
+			option main.cx_silent
+		}
+		if main.cb_sub.iseq("long") {
+			optionarg main.ed_lag
+			optionarg main.vl_keep
+			option main.cx_valued
+			option main.cx_incoming
+			option main.cx_self
+			option main.cx_clear
+		}
+		if main.cb_sub.iseq("simulate") {
+			optionarg main.cb_model
+			optionarg main.ed_generate
+			optionarg main.ed_prob
+			optionarg main.ed_threshold
+			optionarg main.vn_thresholdvar
+			optionarg main.ed_nseeds
+			optionarg main.vn_seedvar
+			optionarg main.ed_spont
+			optionarg main.ed_steps
+			optionarg main.ed_seed
+			option main.cx_valued
+			option main.cx_incoming
+			option main.cx_self
+			option main.cx_replace
+		}
+	endoptions
+	stata
+END

@@ -764,6 +764,7 @@ program nwinstall_menu
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
+	window menu append item "Statistical Models" "Spatial weighting matrix from a network, for spregress" "db nwspmatrix"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 
 	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam); every other dialog of a package (Bayes, several networks,
@@ -787,6 +788,7 @@ program nwinstall_menu
 
 	window menu append submenu "Network Analysis" "Other Analysis"
 	window menu append item "Other Analysis" "Create a context variable" "db nwcontext"
+	window menu append item "Other Analysis" "Diffusion and contagion: exposure, thresholds, curve, simulation" "db nwdiffuse"
 	window menu append item "Other Analysis" "Network extensions to generate" "db nwgenerate"
 	window menu append item "Other Analysis" "Checks if node exists in a network" "db nwnode"
 	window menu append item "Other Analysis" "Tie turnover/stability between two waves of the same network" "db nwturnover"
