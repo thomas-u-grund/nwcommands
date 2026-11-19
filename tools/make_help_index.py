@@ -18,6 +18,8 @@ MODELS = [
     ("nwdynam", "Dynamic network actor models (DyNAM): choice and rate models for event sequences"),
     ("nwrem", "Relational event models (REM) for timed interaction events"),
     ("nwalaam", "Autologistic actor attribute models (ALAAM): explaining actor outcomes from the network"),
+    ("nwsbm", "Stochastic block models (SBM, latent block models) for one-mode and two-mode networks"),
+    ("nwlsm", "Latent space models for networks (Hoff, Raftery and Handcock)"),
 ]
 NOT_A_COMMAND = {"nwinstall_models"}
 MODELS_INTRO = ('{pstd}\nThe statistical network models are separate packages that need the core. Install them with\n'

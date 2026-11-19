@@ -82,6 +82,7 @@
 {p2col:{bf:{help nwlambda }}}Edge (line) connectivity matrix between all node pairs{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwlsm/":nwlsm}}}Latent space models for networks (Hoff, Raftery and Handcock) (separate package){p_end}
 {p2col:{bf:{help nwmatching }}}Maximum-cardinality bipartite matching{p_end}
 {p2col:{bf:{help nwmaxflow }}}Maximum flow and minimum cut between two nodes{p_end}
 {p2col:{bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
@@ -118,6 +119,7 @@
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:{bf:{browse "https://nwcommands.org/nwsaom/":nwsaom}}}Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves (separate package){p_end}
 {p2col:{bf:{help nwsave }}}Save network data in a file{p_end}
+{p2col:{bf:{browse "https://nwcommands.org/nwsbm/":nwsbm}}}Stochastic block models (SBM, latent block models) for one-mode and two-mode networks (separate package){p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Number of shared neighbors of all pairs of nodes, as a network{p_end}
 {p2col:{bf:{help nwsimilar }}}Generate node similarities{p_end}
