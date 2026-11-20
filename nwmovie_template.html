@@ -138,6 +138,13 @@ function nextPaint() {
 
 const isEvent = MOVIE_DATA.mode === 'event';
 
+// WebKitGTK (Linux): its WebCodecs VideoEncoder and MediaRecorder exist and
+// report support, but a build made for a newer GStreamer than the system has
+// aborts the whole web process on first use, which no script can catch. So a
+// Linux WebKit engine never gets a video encoder instance; GIF is drawn
+// natively, and nwmovie.ado turns the GIF into MP4/WebM with ffmpeg.
+const NO_VIDEO = /Linux|X11/.test(navigator.userAgent) && !/Android|Chrome|Chromium|Edg\//.test(navigator.userAgent);
+
 // nwplot's own per-network resolved JSON (movieexport()) ids each edge
 // by a plain per-network positional counter ("e1","e2",...) - NOT a
 // stable per-dyad identity. Across two different networks the same id
@@ -769,8 +776,8 @@ function blobToBase64(blob) {
   });
 }
 
-async function makeGifBlob(status) {
-  const GIF_DELAY = 90;
+async function makeGifBlob(status, delayMs) {
+  const GIF_DELAY = delayMs || 90;
   const canvases = await composeExportFrames(GIF_DELAY, status);
   const workerUrl = URL.createObjectURL(new Blob([GIF_WORKER_SRC], { type: 'application/javascript' }));
   // gif.js's own default is repeat:0 (loop forever) regardless of the
@@ -798,6 +805,7 @@ function evenCanvas(src) {
 // so the file has the movie's timing regardless of how fast this machine
 // renders. Returns null if the engine has no usable H.264 encoder.
 async function encodeMp4WebCodecs(canvases, fps, status) {
+  if (NO_VIDEO) return null;
   if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof Mp4Muxer === 'undefined') return null;
   const width = canvases[0].width, height = canvases[0].height;
   const bitrate = Math.min(12e6, Math.max(2e6, width * height * fps * 0.15));
@@ -847,6 +855,7 @@ async function encodeMp4WebCodecs(canvases, fps, status) {
 // when a recorder is started), so a recorder counts as usable only after a
 // real start and stop on a tiny canvas.
 function recorderWorks(mime) {
+  if (NO_VIDEO) return false;
   try {
     if (typeof MediaRecorder === 'undefined' || typeof HTMLCanvasElement.prototype.captureStream !== 'function') return false;
     if (!MediaRecorder.isTypeSupported(mime)) return false;
@@ -873,6 +882,7 @@ const MP4_MIMES = ['video/mp4;codecs=avc1', 'video/mp4'];
 // H.264 encoder without GStreamer's bad plugins and no usable MediaRecorder,
 // but its WebCodecs encode VP8/VP9. Returns null if there is no such encoder.
 async function webmConfig(width, height, fps) {
+  if (NO_VIDEO) return null;
   if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof WebMMuxer === 'undefined') return null;
   const bitrate = Math.min(12e6, Math.max(2e6, width * height * fps * 0.15));
   for (const [codec, mux] of [['vp09.00.10.08', 'V_VP9'], ['vp8', 'V_VP8']]) {
@@ -997,6 +1007,7 @@ exportButton('btnVideo', status => makeVideoBlob(status, 'any'));
 // when the requested format cannot be made.
 async function videoSupport() {
   const r = { mp4: false, webm: false };
+  if (NO_VIDEO) return r;
   if (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
     for (const codec of ['avc1.640033', 'avc1.4d0033', 'avc1.42003e', 'avc1.42001f']) {
       try {
@@ -1035,12 +1046,14 @@ if (AUTO_EXPORT && hasNativeSave) {
   }, 2000);
   const run = async () => {
     try {
-      if (AUTO_EXPORT !== 'gif') {
+      if (AUTO_EXPORT !== 'gif' && AUTO_EXPORT !== 'gifv') {
         const sup = await videoSupport();
         const can = AUTO_EXPORT === 'webm' ? sup.webm : (sup.mp4 || sup.webm);
         if (!can) throw new Error('this viewer cannot encode ' + AUTO_EXPORT.toUpperCase() + ' video (no usable video encoder in its web engine); export a .gif file instead');
       }
+      // 'gifv': a GIF at 25 frames per second (40 ms), which ffmpeg turns into MP4/WebM
       const out = AUTO_EXPORT === 'gif' ? await makeGifBlob(status)
+        : AUTO_EXPORT === 'gifv' ? await makeGifBlob(status, 40)
         : await makeVideoBlob(status, AUTO_EXPORT === 'mp4' ? 'any' : AUTO_EXPORT);
       if (AUTO_EXPORT === 'webm' && out.ext !== 'webm')
         throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not WEBM');

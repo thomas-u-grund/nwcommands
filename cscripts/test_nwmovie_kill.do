@@ -135,6 +135,59 @@ if "$NW_FAKE_LOCKED" == "" {
 	cd "`oldpwd'"
 }
 
+* --- no leftovers: a run (no viewer) leaves no new nwedit_* / nwmovie_* item in the temp folder
+local td0 "`c(tmpdir)'"
+if substr("`td0'", -1, 1) != "/" & substr("`td0'", -1, 1) != "\\" local td0 "`td0'/"
+local b1 : dir "`td0'" files "nwedit_*"
+local b2 : dir "`td0'" files "nwmovie_*"
+local b3 : dir "`td0'" dirs "nwedit_*"
+local before : word count `b1' `b2' `b3'
+nwset, mat((0,1,1\1,0,0\1,0,0)) name(lf_w2) undirected labs(A,B,C)
+local oldpwd0 "`c(pwd)'"
+cd "`td0'"
+nwmovie cc_w1 lf_w2, fixedlayout noopen fname(nwlf_test)
+capture erase nwlf_test.html
+cd "`oldpwd0'"
+local a1 : dir "`td0'" files "nwedit_*"
+local a2 : dir "`td0'" files "nwmovie_*"
+local a3 : dir "`td0'" dirs "nwedit_*"
+local after : word count `a1' `a2' `a3'
+assert `after' <= `before'
+
+* --- Linux route: .mp4/.webm need ffmpeg, checked before anything is launched
+global NW_FORCE_VIAFF 1
+global NW_FAKE_NOFFMPEG 1
+capture nwmovie cc_w1 lf_w2, fixedlayout export(`td0'nwff.mp4) replace timeout(30)
+assert _rc == 498
+capture confirm file "`td0'nwff.mp4"
+assert _rc != 0
+global NW_FAKE_NOFFMPEG
+global NW_FORCE_VIAFF
+if "`c(os)'" != "Windows" {
+	tempfile ffp
+	shell command -v ffmpeg > "`ffp'" 2>/dev/null
+	tempname fhf
+	file open `fhf' using "`ffp'", read text
+	file read `fhf' fline
+	file close `fhf'
+	if "`fline'" != "" {
+		* ffmpeg is there: its conversion of an odd-sized GIF at 25 fps gives MP4 and WebM files and no log left
+		local gf "`td0'nwff_src.gif"
+		capture erase "`gf'"
+		shell ffmpeg -y -loglevel error -f lavfi -i "testsrc=s=101x75:d=1:r=10" "`gf'" < /dev/null
+		capture confirm file "`gf'"
+		if _rc == 0 {
+			capture erase "`td0'nwff_o.mp4"
+			_nwmovie_ffconv, in("`gf'") out("`td0'nwff_o.mp4") ext(mp4)
+			confirm file "`td0'nwff_o.mp4"
+			capture confirm file "`td0'nwff_o.mp4.log"
+			assert _rc != 0
+			capture erase "`td0'nwff_o.mp4"
+			capture erase "`gf'"
+		}
+	}
+}
+
 * --- no display (Linux): export() stops with 498 before anything is launched
 if "`c(os)'" == "Unix" {
 	nwset, mat((0,1,0\1,0,0\0,0,0)) name(nd_w1) undirected labs(A,B,C)
@@ -214,6 +267,10 @@ if "`c(os)'" == "MacOSX" {
 if inlist("`c(os)'", "Unix", "Windows") & "$NW_NOREALEXPORT" == "" {
 	local disp : environment DISPLAY
 	if "`c(os)'" == "Windows" | "`disp'" != "" {
+		local r1 : dir "`c(tmpdir)'" files "nwedit_*"
+		local r2 : dir "`c(tmpdir)'" files "nwmovie_*"
+		local r3 : dir "`c(tmpdir)'" dirs "nwedit_*"
+		local rbefore : word count `r1' `r2' `r3'
 		nwset, mat((0,1,0\1,0,0\0,0,0)) name(re_w1) undirected labs(A,B,C)
 		nwset, mat((0,1,1\1,0,0\1,0,0)) name(re_w2) undirected labs(A,B,C)
 		local sd "`c(tmpdir)'"
@@ -240,6 +297,13 @@ if inlist("`c(os)'", "Unix", "Windows") & "$NW_NOREALEXPORT" == "" {
 		capture erase "`sd'nwre.gif"
 		capture erase "`sd'nwre.mp4"
 		capture erase "`sd'nwre.webm"
+		* the exports left nothing behind in the temp folder
+		local r1 : dir "`c(tmpdir)'" files "nwedit_*"
+		local r2 : dir "`c(tmpdir)'" files "nwmovie_*"
+		local r3 : dir "`c(tmpdir)'" dirs "nwedit_*"
+		local rafter : word count `r1' `r2' `r3'
+		assert `rafter' <= `rbefore'
+		di "leftovers before/after: `rbefore' / `rafter'"
 	}
 }
 

@@ -128,4 +128,5 @@ program _nwopenviewer, rclass
 	return local usedviewer = `_nwov_usedviewer'
 	// the staged copy of the viewer binary, so that the caller can stop exactly this process (nwmovie export())
 	if `_nwov_usedviewer' return local viewercopy `"`_nwov_viewercopy'"'
+	if `_nwov_usedviewer' return local htmlcopy `"`_nwov_htmlcopy'"'
 end

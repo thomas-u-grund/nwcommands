@@ -170,10 +170,12 @@ or {opt speed()} (event mode): three waves with the default {cmd:duration(800)} 
 {pstd}
 {opt export()} needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode
 the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), {cmd:nwmovie} stops with a message saying so; export a
-{bf:.gif} file instead, which every engine can write. If the engine can record only WebM, an {bf:.mp4} request is converted with {cmd:ffmpeg} when
-that is installed; otherwise the movie is written as {bf:.webm} next to the requested name, and {cmd:nwmovie} says so. On Linux the viewer needs a
+{bf:.gif} file instead, which every engine can write. On Linux the viewer's web engine cannot encode video reliably, so {opt export()} draws a GIF and {cmd:ffmpeg} makes the {bf:.mp4} or {bf:.webm} from it
+(25 frames per second); {cmd:ffmpeg} with the libx264 (MP4) or libvpx-vp9 (WebM) encoder must be installed, otherwise {cmd:nwmovie} stops with r(498)
+before anything is launched; a {bf:.gif} file needs nothing. If a Windows or macOS engine can record only WebM, an {bf:.mp4} request is converted with
+{cmd:ffmpeg} when that is installed and otherwise written as {bf:.webm} next to the requested name, with a message. On Linux the viewer needs a
 graphical display; without one {cmd:nwmovie} stops with r(498). If the viewer closes or stops responding, {cmd:nwmovie} stops with r(498) instead of
-waiting for {opt timeout()}. The {bf:Export video} button in the interactive view writes MP4 where the engine can
+waiting for {opt timeout()}. {cmd:nwmovie} removes the temporary files it made. The {bf:Export video} button in the interactive view writes MP4 where the engine can
 and WebM otherwise.
 
 

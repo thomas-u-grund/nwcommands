@@ -225,8 +225,8 @@ program nwinstall, rclass
 	
 	local __nw_guimsg ""
 	if "`remove'" != "" {
-		window menu clear
-		window menu refresh
+		capture window menu clear
+		capture window menu refresh
 		local __nw_instdir : sysdir PLUS
 		nwinstall_ancillary, dest(`"`__nw_instdir'n"') remove
 		// the ado, help and dialog files are installed as numbered packages (nwcommands-ado1, -ado2, ...); the unnumbered names are the older layout
