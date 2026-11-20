@@ -53,7 +53,7 @@ minmodules(#)]
 
 ## Description
 
-`nwcommunity` detects communities in the network(s) in [netlist](netlist) using one of several algorithms (`algorithm()`): the Louvain method (Blondel et al 2008, the default), a greedy algorithm that repeatedly moves nodes between communities and aggregates communities into a coarser network, in order to maximize Newman's modularity *Q*; or label propagation (Raghavan, Albert & Kumar 2007), a much cheaper algorithm with no modularity optimization at all - each node simply, repeatedly adopts whichever community its neighbors' total edge weight favors most, until no node wants to move. Label propagation does not optimize any global objective the way Louvain does, so its partitions are typically lower-modularity and less consistent run to run, but it scales far better to very large networks. All calculations are performed on the undirected network; directed networks require **symmetrize**.
+`nwcommunity` detects communities in the network(s) in [netlist](netlist) using one of several algorithms (`algorithm()`): the Louvain method (Blondel et al 2008, the default), a greedy algorithm that repeatedly moves nodes between communities and aggregates communities into a coarser network, in order to maximize Newman's modularity *Q*; or label propagation (Raghavan, Albert & Kumar 2007), a much cheaper algorithm with no modularity optimization at all - each node simply, repeatedly adopts whichever community its neighbors' total edge weight favors most, until no node wants to move. Label propagation does not optimize any global objective the way Louvain does, so its partitions are typically lower-modularity and less consistent run to run, but it scales far better to very large networks. All calculations are performed on the undirected network; directed networks require **symmetrize**, which keeps a tie between two nodes if either direction has one (the union, with the larger of the two tie values; not only mutual ties).
 
 **algorithm(labelprop)** uses genuinely randomized sweep order and tie-breaking (unlike Louvain's own fixed, reproducible sweep order) - this is a deliberate, load-bearing part of the algorithm, not an incidental implementation detail: a fixed visiting order with deterministic tie-breaking systematically collapses even simple, cleanly-separated community structure into one giant community (see [Algorithm](nwcommunity) below). Use `seed()` for reproducible results.
 
@@ -125,4 +125,4 @@ Raghavan, U.N., Albert, R., Kumar, S. (2007). Near linear time algorithm to dete
 
 ---
 
-*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.32.1, 20 November 2026* ([check your installed version](nwversion))

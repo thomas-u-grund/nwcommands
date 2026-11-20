@@ -66,6 +66,10 @@ where {it:when} says who adopts when, either
 {pstd}
 {cmd:nwdiffuse} prepares and simulates the diffusion of a behaviour, an innovation or an infection through
 a network. It follows the definitions of the R package netdiffuseR (Vega Yon and Valente), see below.
+In {cmd:simulate}, by default a node is influenced by the nodes it sends ties to (the nodes it has ties to), which is the reverse of the usual
+independent-cascade convention that a node passes the behaviour on along its outgoing ties; specify {opt incoming} for that direction.
+In {cmd:curve}, the {it:Rate} column is the growth of the cumulative number of adopters from the previous period to this one (new adopters divided by
+the cumulative number of adopters before them), not a hazard rate; it is missing ({cmd:.}) in a period with new adopters when nobody had adopted before.
 Observation {it:i} of the data set must hold node {it:i}, as everywhere in nwcommands. Periods are whole numbers.
 The network may be the same in all periods (give one network) or change (give one network for each period,
 in the order of the periods). Directed and undirected, binary and valued networks are allowed; two-mode networks are not.
@@ -202,4 +206,4 @@ Kempe, D., J. Kleinberg, and E. Tardos. 2003. Maximizing the spread of influence
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

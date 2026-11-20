@@ -4,6 +4,20 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [3.32.1] - 2026-11-20
+
+### Fixed
+- `nwtabulate, attribute()` on an undirected network counted the within-group and between-group ties wrongly: it kept every second row of the list of ties, but the two directions of a tie are not in neighbouring rows, so some ties were counted twice and others not at all. The printed table, the number of ties, the E-I index and `r(table)`, `r(N)` and `r(EI_index)` change for undirected networks (for example a star of three nodes with one node in a group of its own had printed 2 within-group ties and E-I = -1; the correct numbers are 1 within, 1 between, E-I = 0). Each tie is now counted once. Directed networks are unchanged. The permutation p-value and the plot options are unchanged.
+- `nwbackbone, method(fixedrow) signed`: a pair of rows with the smallest possible overlap got a missing upper p-value (Stata's `hypergeometric()` returns missing below the lowest possible value), so the pair was never kept and was not counted in the multiple-testing correction. On the Davis data the backbone now keeps 6 ties (before 5), the same as the R package backbone. Unsigned backbones and the other methods are unchanged.
+- `nwbackbone, method(fdsm)` prints a note before it starts when the default number of Monte Carlo draws exceeds 1,000,000 (for example 23,462,686 for the Davis data with `signed` and `mtc(BH)`), naming the number and the option `trials()`. The results are unchanged.
+- `nwdiffuse curve` stopped with r(3301) when all adoption times fall in one period. It now prints the one row. The Rate column printed 1.000e+15 when `t0()` is earlier than the first adoption; it now prints a missing value (`.`) in a period with new adopters when nobody had adopted before.
+- `nwcloseness` prints a one-line note on valued networks that tells how the tie values are used (least-cost distances, or step counts with `binary`), like `nwdegree` and `nwbetween`.
+
+### Help
+- `nwdiffuse`: the direction of `simulate` (a node is influenced by the nodes it sends ties to; `incoming` for the other direction) and the meaning of the Rate column (growth of the cumulative number of adopters, not a hazard rate) are stated at the top.
+- `nwcommunity`: `symmetrize` keeps a tie when either direction has one (the larger of the two values), not only mutual ties.
+- `nwcoreperiphery`: the search is local; a different starting partition can give a better core.
+
 ## [3.32.0] - 2026-11-20
 
 ### Added

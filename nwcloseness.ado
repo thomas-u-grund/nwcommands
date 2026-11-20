@@ -72,6 +72,7 @@ program nwcloseness
 	}
 	
 	set more off
+	local __anyvalued 0
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 		if "`twomode'" != "" & "`is2mode'" != "true" {
@@ -149,6 +150,7 @@ program nwcloseness
 			mata: __nwcloseness_reach = rowsum((*`netobj'->get_matrix()) :< .) :- (diagonal(*`netobj'->get_matrix()) :< .)
 		}
 		_nwsyntax `netname_temp'
+		if "`valued'" == "true" local __anyvalued 1
 
 		mata: __nwcloseness_nearness = J(`nodes', 1,1) :/ __nwcloseness_far
 		// Closeness is the number of nodes a node can reach divided by
@@ -237,6 +239,16 @@ program nwcloseness
 		di "{txt}  Network name: {res}`netname'"
 		di "{hline 40}"
 		di "{txt}    Closeness centrality"
+		if "`__anyvalued'" == "1" {
+			local __wa 1
+			if regexm(`"`options'"', "alpha\(([^)]*)\)") local __wa = strtrim(regexs(1))
+			if "`binary'" != "" | "`__wa'" == "0" {
+				di "{txt}  (valued network, tie values not used: distances are numbers of steps)"
+			}
+			else {
+				di "{txt}{p 2 2 2}(valued network: distances are least-cost, step cost 1/value^alpha, alpha = `__wa'; {bf:binary} counts steps){p_end}"
+			}
+		}
 		sum `generate_all'
 	}
 	capture mata: mata drop __nwcloseness_*

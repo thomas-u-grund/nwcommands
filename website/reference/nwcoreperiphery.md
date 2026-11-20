@@ -34,7 +34,7 @@ silent]
 
 ## Description
 
-`nwcoreperiphery` partitions the nodes of a network into a "core" and a "periphery" using the discrete core-periphery model (Borgatti and Everett 1999). The core-periphery model assumes ties are expected between any pair of nodes where at least one is a core member (core-core and core-periphery ties are both structurally expected), while periphery-periphery ties are not expected at all. `nwcoreperiphery` searches for the 0/1 assignment (0 = periphery, 1 = core) whose implied pattern correlates as highly as possible with the network actually observed, starting from a degree-based seed and then repeatedly trying to flip each node's status in turn, keeping any flip that improves the correlation, until a full sweep produces no further improvement. This is a greedy local search, not an exhaustive search over all 2^n possible partitions, so it can settle on a good but not necessarily globally optimal partition - the same character of algorithm [nwcommunity](nwcommunity) already uses for modularity maximization.
+`nwcoreperiphery` partitions the nodes of a network into a "core" and a "periphery" using the discrete core-periphery model (Borgatti and Everett 1999). The core-periphery model assumes ties are expected between any pair of nodes where at least one is a core member (core-core and core-periphery ties are both structurally expected), while periphery-periphery ties are not expected at all. `nwcoreperiphery` searches for the 0/1 assignment (0 = periphery, 1 = core) whose implied pattern correlates as highly as possible with the network actually observed, starting from a degree-based seed and then repeatedly trying to flip each node's status in turn, keeping any flip that improves the correlation, until a full sweep produces no further improvement. This is a greedy local search, not an exhaustive search over all 2^n possible partitions, so it can settle on a good but not necessarily globally optimal partition (a different starting partition can give a better core) - the same character of algorithm [nwcommunity](nwcommunity) already uses for modularity maximization.
 
 `generate()` is required and names the new variable which stores, for each node, 1 if it was assigned to the core and 0 if it was assigned to the periphery. With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
@@ -78,4 +78,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.32.1, 20 November 2026* ([check your installed version](nwversion))

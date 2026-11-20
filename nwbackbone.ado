@@ -203,6 +203,7 @@ capture mata: mata drop nw_bb_fixedfill()
 capture mata: mata drop nw_bb_lans()
 capture mata: mata drop nw_bb_cummax()
 capture mata: mata drop nw_bb_ord()
+capture mata: mata drop nw_bb_hypcdf()
 capture mata: mata drop nw_bb_hyptail()
 mata:
 // Replaces the n x n matrix M by the incidence block of the chosen mode (rows: the nodes of mode `mode', columns:
@@ -674,7 +675,7 @@ void nw_bb_pvals(string scalar method, real matrix A, real scalar sgn, real scal
 			upper[i, j] = P[i, j] <= 0 ? 1 : nw_bb_hyptail(cols(A), rs[i], rs[j], P[i, j])
 			upper[j, i] = upper[i, j]
 			if (sgn) {
-				lower[i, j] = hypergeometric(cols(A), rs[i], rs[j], P[i, j])
+				lower[i, j] = nw_bb_hypcdf(cols(A), rs[i], rs[j], P[i, j])
 				lower[j, i] = lower[i, j]
 			}
 		}
@@ -697,7 +698,10 @@ void nw_bb_pvals(string scalar method, real matrix A, real scalar sgn, real scal
 		nw_bb_fixedfill(A, P, sgn, upper, lower)
 	}
 	else if (method == "fdsm") {
-		if (trials <= 0) trials = nw_bb_ntrials(P, alpha, mtc, sgn, mz)
+		if (trials <= 0) {
+			trials = nw_bb_ntrials(P, alpha, mtc, sgn, mz)
+			if (trials > 1000000) printf("{txt}note: the default number of Monte Carlo draws is {res}%s{txt}; this can take a long time. Set {bf:trials()} to a smaller number to stop earlier.\n", strofreal(trials, "%15.0gc"))
+		}
 		ntrials = trials
 		nw_bb_fdsm(A, P, trials, sgn, upper, lower)
 	}
@@ -711,15 +715,24 @@ void nw_bb_pvals(string scalar method, real matrix A, real scalar sgn, real scal
 	}
 }
 
+// cumulative probability P(X <= x) of the hypergeometric distribution; Stata's hypergeometric() returns missing for x below
+// the support (x < max(0, K+n-N)), where the probability is 0
+real scalar nw_bb_hypcdf(real scalar N, real scalar K, real scalar n, real scalar x)
+{
+	if (x < max((0, K + n - N))) return(0)
+	if (x >= min((K, n))) return(1)
+	return(hypergeometric(N, K, n, x))
+}
+
 // upper tail P(X >= w) of the hypergeometric distribution (N items, K marked, n drawn); a sum of the probabilities
 // when the tail is small, to keep precision
 real scalar nw_bb_hyptail(real scalar N, real scalar K, real scalar n, real scalar w)
 {
 	real scalar r, x, s
-	r = 1 - hypergeometric(N, K, n, w - 1)
+	r = 1 - nw_bb_hypcdf(N, K, n, w - 1)
 	if (r > 1e-6) return(r)
 	s = 0
-	for (x = w; x <= min((K, n)); x++) s = s + hypergeometricp(N, K, n, x)
+	for (x = max((w, K + n - N, 0)); x <= min((K, n)); x++) s = s + hypergeometricp(N, K, n, x)
 	return(s)
 }
 

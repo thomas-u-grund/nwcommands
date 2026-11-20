@@ -216,4 +216,4 @@ with r(3200) or r(3250) if an argument has the wrong size or type (a vector for 
 {help nwprogramming}, {help nwtomata}, {help nwset}, {help nwerrorcodes}, {help nwversion}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

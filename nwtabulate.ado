@@ -307,8 +307,8 @@ program nwtab3
 		tabulate `attribute'`nw_ego' `attribute'`nw_alter'  , matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
 	}
 	else {	
-		qui gen _temp = mod(_n,2)
-		tabulate `attribute'`nw_ego' `attribute'`nw_alter' if _temp == 0. , matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
+		// the list holds both directions of every tie (sorted by ego): one row per tie, a self-loop once
+		tabulate `attribute'`nw_ego' `attribute'`nw_alter' if `nw_ego' <= `nw_alter', matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
 	}
 	
 	if "`plot'" != "" {
