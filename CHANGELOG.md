@@ -15,6 +15,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - Help files, dialogs and `cscripts/test_nwcore_plots2.do` for these options; examples of the ordered matrix (`nwplotmatrix, sortby() group()`) in the help files of `nwcoreperiphery`, `nwfactions` and `nwconcor`.
 - Dialogs: `name`, `saving` and `export` entries in the `nwdendrogram` dialog, `saving` and `export` entries (tab Save/export) in the `nwplotmatrix` dialog, a `name` entry in the `nwmixing` dialog; the `name` field of the `nwcorrelate` dialog says that it also names the graph of the permutations. `cscripts/test_dlg_plots.do` checks that the dialogs of all plot commands carry their plot options and that the command line a dialog emits runs.
 
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): the tests of the new plot options, the dialog tests and the plot tests of every changed command; on Linux and on Windows the export widths of the new plots (`nwdegree`, `nwgeodesic`, `nwspectral`, `nwdiffuse curve, plot(both)`, `nwtriads` with `expected`) were measured exactly, and Windows was also run from a folder with a space in its name. Stata 18 on the Mac was not run for this release.
+
 ## [3.29.0] - 2026-11-20
 
 ### Added

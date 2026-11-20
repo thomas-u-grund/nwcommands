@@ -28,7 +28,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.11.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.11.1").
 
 **nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
@@ -38,9 +38,9 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
 
-> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 1.0.0) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
+> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
 
-> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 1.0.0) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
+> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
