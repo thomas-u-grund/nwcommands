@@ -28,13 +28,13 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.10.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.11.0").
 
 **nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.10.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.5.1) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
+> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.6.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
 > Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
 
@@ -80,7 +80,7 @@ Each package has its own releases on GitHub:
 | nwsbm | [github.com/thomas-u-grund/nwsbm/releases](https://github.com/thomas-u-grund/nwsbm/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.8.1/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.0/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

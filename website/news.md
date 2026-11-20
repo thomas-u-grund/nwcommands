@@ -12,6 +12,29 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwsaom 1.9.0, nwergm 1.11.0 and nwrem 1.6.0
+
+All three need nwcommands 3.29.0 or later for the graph options.
+
+**nwsaom 1.9.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.9.0)).
+
+- New `estat timetest, plot` (RSiena's `plot.sienaTimeTest`) and `nwsaom meta, plot` (RSiena's `plot.sienaMeta`).
+- `estat convergence` lists the t-ratios for convergence and the overall maximum convergence ratio; `plot` draws them with the limit of 0.1 (an extension; RSiena has no such plot).
+- `saving()`, `export()` and graph options for the violin plots of `estat gof`, `estat timetest, plot`, `estat convergence, plot` and `nwsaom meta, plot`; the default pictures of `estat gof` are unchanged.
+
+**nwergm 1.11.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.11.0)).
+
+- `estat gof, plot` draws one panel for every statistic of `gof()`, as `plot(gof())` of R's ergm does (model statistics, degrees, shared partners, triad census, geodesic distances); two-mode networks now get these panels. The default call on a one-mode network draws the same picture as 1.10.0.
+- `saving()`, `export()` and graph options for `estat gof, plot`, `estat mcmcdiag, plot` and `estat posterior, plot()` (there `gsaving()`); `name()` accepts a trailing `, replace`.
+- Fix: `estat gof, plot` after `nwergm ego` ended with r(3499); it now draws the degree distribution of the egos against the simulated draws.
+
+**nwrem 1.6.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.6.0)).
+
+- New `estat rank`, `estat actors` and `estat time` (extensions; relevent has no such methods): the rank of the observed event among all pairs of the risk set, observed against expected events by actor (as sender and as receiver) and over time, with graphs and tables. Works with both likelihoods, `condition()`, `riskset()`, `entry()`/`exit()` and the fixed effects.
+- `name()`, `saving()`, `export()` and graph options in the same way as the other plots of the family. The evaluation runs in the plugin, which is rebuilt for macOS, Linux and Windows.
+
+Tested on macOS (Stata 17): the plot tests and the package tests of nwsaom and nwergm, and the plot, estat and old-plugin tests of nwrem; on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of nwsaom and nwergm. The plugin tests of nwrem on Linux and Windows with the rebuilt plugins were not confirmed at the time of release. Stata 18 on the Mac was not run for these three releases.
+
 ## 20 November 2026: nwdynam 1.10.0 and nwalaam 1.3.0
 
 **nwdynam 1.10.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.10.0)). Needs nwcommands 3.29.0 or later for the graph options.
