@@ -7,9 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.27.0,
-* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0, nwdynam 1.9.0 and nwalaam 1.0.0, the versions the
-* book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.28.0,
+* nwergm 1.10.0, nwsaom 1.8.1, nwrem 1.5.1, nwdynam 1.9.1, nwalaam 1.2.0,
+* nwlsm 0.6.0 and nwsbm 0.3.0, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -80,6 +80,12 @@ nwcommunity advm, algorithm(louvain) generate(mut_com)
 
 nwwebuse gang, nwclear
 nwcommunity gang, algorithm(louvain) seed(12345) generate(_community)
+
+nwwebuse lazega, nwclear
+nwcommunity lazega_adv, algorithm(leiden) seed(12345) symmetrize ///
+    generate(adv_lei)
+nwcommunity lazega_adv, algorithm(infomap) seed(12345) symmetrize ///
+    generate(adv_inf)
 
 nwwebuse macaque, nwclear
 nwcommunity macaque, algorithm(louvain) seed(12345) symmetrize ///

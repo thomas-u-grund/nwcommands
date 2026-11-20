@@ -15,11 +15,11 @@ estat mcmcdiag
 estat positions
 
 * --- the network drawn in the latent space ---
-nwlsmplot, title("The karate club in the latent space")
+nwlsmplot, title("The karate club in the latent space", color(black))
 graph export "karate_positions.png", width(900) replace
 
 * --- the uncertainty of the positions: 100 posterior draws as a faint cloud ---
-nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the positions")
+nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the positions", color(black))
 graph export "karate_draws.png", width(900) replace
 
 * --- does the fitted model reproduce the degrees and distances of the network? ---

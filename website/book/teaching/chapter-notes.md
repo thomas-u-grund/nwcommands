@@ -249,10 +249,12 @@ One entry for each chapter. The entries use these headings:
 - **Exercises:** 14. Basic 5 (1, 2, 5, 6, 7); applied 8 (3, 4, 8–13); open 1 (14).
 
 ### Chapter 14. Networks over time
-- **Time:** 1 session.
-- **Data:** `glasgow`; a small timestamped edge list typed in.
+- **Time:** 1 session; the section on adoption over the waves (Section 14.6) adds about half a session.
+- **Data:** `glasgow` (the three waves of the friendship network and the smoking variables); a small timestamped
+  edge list typed in.
 - **Builds on:** 3, 5, 6.
 - **Commands:** `nwturnover` (with `formation`), `nwgen`, `nwplot` with `generate()` and `nodexy()`, `nwmovie`,
+  `nwdiffuse curve`, `nwdiffuse exposure` and `nwdiffuse threshold` (`toa()`, `generate()`, `count()`, `lag()`),
   `nwset ..., time()`, `nwattime`.
 - **Where students get stuck:**
   - Comparing waves collected under different name-generator ceilings or boundary rules, which produces turnover
@@ -262,6 +264,12 @@ One entry for each chapter. The entries use these headings:
   - Reading turnover as the speed of the process: ties formed and dissolved within an interval are never seen.
   - Jaccard index and persistence have different denominators: all ties present in either wave, or the ties of the
     first wave (Ex. 2).
+  - Counting exposure in the same wave as the adoption. With `lag(1)` a girl is exposed only by friends who adopted
+    in an earlier wave, so exposure is missing for the first wave. Adoption is permanent in the data: a girl who
+    stops smoking is still an adopter.
+  - Using one network for all waves of the adoption data. The friendship network of the first wave stands for all
+    three here; that is acceptable for friendships named in one survey and wrong when ties form or end between
+    waves.
 - **Exercises:** 8. Basic 3 (1–3); applied 4 (4–7); open 1 (8).
 
 ## Part III. Simulating networks
@@ -301,10 +309,12 @@ One entry for each chapter. The entries use these headings:
 
 ### Chapter 17. Network structure and diffusion
 - **Time:** 2 sessions. Students write and modify small Stata programs.
-- **Data:** generated networks only (small world, ring, random graph, preferential attachment).
-- **Builds on:** 7, 15.
-- **Commands:** `nwsmall`, `nwpref`, `nwcontext`, `nwdegree`; the programs `diffuse`, `seedgroup` and
-  `experiment`, written in the chapter; frames to collect results.
+- **Data:** generated networks only (a small world of 200 nodes, the same ring with 1 or 5 percent of its ties
+  rewired, and random graphs with the same mean degree).
+- **Builds on:** 7, 11 (`nwcontext`), 15. Chapter 24 takes up adoption in observed data, and `nwdiffuse` (Chapter 14,
+  Section 14.6, and Chapter 24) measures exposure and thresholds there.
+- **Commands:** `nwsmall`, `nwrandom`, `nwcontext`; the programs `diffuse`, `seedgroup` and `experiment`, written
+  in the chapter; frames to collect results.
 - **Where students get stuck:**
   - Starting complex contagion with a single adopter. With a threshold of two, nobody ever has two adopting
     neighbors (Ex. 4).
@@ -361,7 +371,7 @@ One entry for each chapter. The entries use these headings:
   - Not reporting the routine and the number of permutations when predictors are correlated.
   - Turning a logit coefficient into a probability: add the coefficients that apply to the constant, then apply
     1/(1+e<sup>−x</sup>) (Ex. 1).
-- **Exercises:** 9. Basic 3 (1–3); applied 5 (4–8); open 1 (9).
+- **Exercises:** 9. Basic 2 (1, 2); applied 6 (3–8); open 1 (9).
 
 ### Chapter 21. Exponential random graph models
 - **Time:** 2–3 sessions.
@@ -380,29 +390,73 @@ One entry for each chapter. The entries use these headings:
 
 ### Chapter 22. Advanced exponential random graph models
 - **Time:** 2 sessions.
-- **Data:** `lazega`, `mesa`, `glasgow` (the optional ALAAM section).
-- **Builds on:** 18, 21; the ALAAM section also on 11 (the exposure regression) and, as a contrast, 23.
+- **Data:** `lazega`, `mesa`.
+- **Builds on:** 18, 21.
 - **Commands:** `nwergm simulate`, `nwergm` on an undirected network and with missing dyads, `nwtomata`; a small
-  program `simsummary` written in the chapter; in the optional last section `nwalaam` (new in 2026, a fifth model
-  package), `estat mcmcdiag`, `estat gof` and `nwalaam simulate`.
+  program `simsummary` written in the chapter; `nwergm` with `estimate(bayes)` (`burnin()`, `iterations()`, `thin()`,
+  `priormean()`, `priorvar()`), `estat posterior`, `estat mcmcdiag`.
 - **Where students get stuck:**
   - Treating a coefficient as if it controlled only its own statistic. Setting the `mutual` coefficient to zero also
     lowered the density; setting the gwesp coefficient to zero cut it to a third. Adjust `edges` and report the
     density with every comparison.
   - Using raw triad counts (`triangle`, `ctriple`) on a clustered network. On Faux Mesa High estimation stops;
     use `gwesp`.
+  - Reading the posterior of the Bayesian fit without looking at the chains. Read the Gelman-Rubin statistic and
+    the effective sample sizes in `estat mcmcdiag`; a single chain can still drift a little over 10,000 iterations.
+    Some options of the main workflow (constraints, operators, networks with missing dyads) are not available
+    with `estimate(bayes)`.
   - Losing the node attributes. `nwergm simulate` keeps the data in memory when the draws are on the same nodes;
     with any other number of nodes it replaces the data, so run it between `preserve` and `restore`.
   - Coding a missing dyad as a non-tie. Leave it missing; `nwergm` then leaves it out of the likelihood, which
     assumes the dyads are missing at random.
-  - Reading the ALAAM contagion coefficient as influence. It describes how an outcome and the ties around it line
-    up in one observation; friends influencing each other, choosing friends who already smoke and a shared third
-    cause give the same coefficient. Use waves (Chapter 23) for influence.
-  - Coding a binary outcome the other way round and expecting a mirror image. Contagion counts ties between actors
-    who have the outcome, so the litigation coding of Exercise 8 does not converge when the corporate coding does.
-- **Exercises:** 8. Basic 2 (1, 2); applied 5 (3–7); open 1 (8). Ex. 7 and 8 belong to the optional ALAAM section.
+- **Exercises:** 7. Basic 2 (1, 2); applied 5 (3–7). Ex. 7 belongs to the section on the Bayesian ERGM (Section
+  22.7).
 
-### Chapter 23. Stochastic actor-oriented models
+### Chapter 23. Latent space and block models
+- **Time:** 1–2 sessions. The latent space fit takes a minute or two to run; the block model is quick.
+- **Data:** `lazega`.
+- **Builds on:** 9, 10 (the blockmodel image), 21; 22 for reading MCMC chains.
+- **Commands:** `nwsbm` (`blocks()`, `maxblocks()`, `generate()`, `seed()`), `nwlsm` (`dim()`, `nsample()`,
+  `burnin()`, `interval()`, `chains()`), `nwlsmplot`, `estat mcmcdiag`, `estat gof`; `tabulate` and `encode` to set
+  the blocks against office, practice and rank. Both packages are young (`nwsbm` 0.3.0, `nwlsm` 0.6.0 when the
+  chapter was written), and their options may still change.
+- **Where students get stuck:**
+  - Treating the number of blocks as a finding. The ICL picks four blocks for the advice network, but three blocks
+    are close (−2158 against −2162). Report the table of ICL values.
+  - Reading a block as a social group. Members of one block need not know each other: the 20 associates of block 4
+    are alike in whom they ask and who asks them.
+  - Reading the axes of the latent space. Positions are identified up to rotation, reflection and translation;
+    interpret distances and neighborhoods, not directions, and do not compare the coordinates of two fits (Ex. 2).
+  - Skipping the chain checks of `nwlsm`. Read `estat mcmcdiag` (effective sample sizes, Geweke z, Gelman-Rubin)
+    before the picture, and lengthen `burnin()` and `nsample()` when it asks for it.
+  - Reporting the fit of a model of independent ties as if dependence did not matter. Both models assume independence
+    given the hidden structure; the distance panel of `estat gof` fits here, but shared partners have not been
+    checked.
+- **Exercises:** 5. Basic 2 (1, 2); applied 2 (3, 4); open 1 (5).
+
+### Chapter 24. Influence and contagion
+- **Time:** 2 sessions. The section on the autologistic model is the longest and can be set as reading.
+- **Data:** `glasgow` (the friendship network and smoking in three waves; drinking in the second wave); `lazega` in
+  Ex. 4 and 5.
+- **Builds on:** 11 (the exposure regression), 14 (Section 14.6 on adoption over the waves), 17, 21 (MCMC
+  diagnostics); 25 for the model that separates influence from selection.
+- **Commands:** `nwdiffuse long` (`toa()`, `lag()`, `clear`) with `logit`; `nwdiffuse threshold`; `nwspmatrix` with
+  Stata's `spregress` and `dvarlag()`; `nwalaam` (`effects(density contagion sender receiver)`, `mple`, `ego()`,
+  `method()`), `estat mcmcdiag`, `estat gof`, `nwalaam simulate`.
+- **Where students get stuck:**
+  - Reading exposure or contagion as influence. Friends who influence each other, girls who choose friends who
+    already smoke and a shared school give the same coefficient; say "associated with".
+  - Forgetting who is at risk. The girls who smoked in the first wave have no rows in the hazard data (Ex. 1).
+  - Reading the spatial lag as the effect of one friend. With a row-normalized matrix it multiplies the average of
+    the friends' outcomes, and a girl without friends has a lag of 0 (Ex. 2).
+  - Trusting the standard errors of a plain logistic regression on rows of girls who are tied to each other.
+  - Treating the two codings of a binary outcome in the autologistic model as mirror images. Contagion counts ties
+    between actors who have the outcome, so the litigation coding of Ex. 5 does not converge when the corporate
+    coding of Ex. 4 does.
+  - Comparing contagion coefficients across networks with different numbers of ties (Ex. 4).
+- **Exercises:** 6. Basic 2 (1, 2); applied 2 (3, 4); open 2 (5, 6).
+
+### Chapter 25. Stochastic actor-oriented models
 - **Time:** 2 sessions.
 - **Data:** `glasgow`.
 - **Builds on:** 14, 21 (the first sections, on effect statistics and change statistics); 20 for the contrast with
@@ -419,10 +473,10 @@ One entry for each chapter. The entries use these headings:
     p-values (Ex. 5).
 - **Exercises:** 9. Basic 3 (1, 4, 7); applied 4 (2, 3, 5, 6); open 2 (8, 9).
 
-### Chapter 24. Advanced stochastic actor-oriented models
-- **Time:** 2–3 sessions.
+### Chapter 26. Advanced stochastic actor-oriented models
+- **Time:** 2 sessions.
 - **Data:** `glasgow`; `baerveldt19` (19 Dutch schools, two waves).
-- **Builds on:** 23.
+- **Builds on:** 25.
 - **Commands:** `estat score`, `estat timetest`, `estat importance`, `estat simulate`, `estat mems`,
   `nwsaom simulate`, `nwsaom` with `ml`, `nwsaom bayes`, `nwsaom multinet` (described), `nwstack`, `nwsaom` with
   `groups()`, `nwsaom meta`.
@@ -437,10 +491,10 @@ One entry for each chapter. The entries use these headings:
     groups do not share their effects.
 - **Exercises:** 5. Basic 1 (1); applied 2 (2, 3); open 2 (4, 5).
 
-### Chapter 25. Relational event models
+### Chapter 27. Relational event models
 - **Time:** 1–2 sessions.
 - **Data:** `manufacturing` (the first two weeks, `keep if t < 14`); a ten-event toy log typed in.
-- **Builds on:** 14 and the first sections of 21; 23 for the comparisons the chapter draws.
+- **Builds on:** 14 and the first sections of 21; 25 for the comparisons the chapter draws.
 - **Commands:** `nwset ..., eventtime()`, `nwrem` (`nodsnd`, `nidrec`, `frpsndsnd`, `rsndsnd`, `covevent()`),
   `nwload ..., xvars`, `nwexpand`.
 - **Where students get stuck:**
@@ -450,10 +504,10 @@ One entry for each chapter. The entries use these headings:
   - The risk set: at each event every ordered pair of actors is at risk, 129 × 128 for the email log (Ex. 2).
 - **Exercises:** 8. Basic 3 (1–3); applied 3 (4–6); open 2 (7, 8).
 
-### Chapter 26. The Dynamic Network Actor Model
+### Chapter 28. The Dynamic Network Actor Model
 - **Time:** 1–2 sessions.
-- **Data:** `manufacturing`; the toy log of Chapter 25 in Ex. 2.
-- **Builds on:** 25.
+- **Data:** `manufacturing`; the toy log of Chapter 27 in Ex. 2.
+- **Builds on:** 27.
 - **Commands:** `nwset ..., eventtime() directed`, `nwdynam` (`submodel(rate)`, the choice sub-model, `intercept`,
   `inertia`, `recip`, `indeg`, `outdeg`, `same()`), `nwload ..., xvars`.
 - **Where students get stuck:**
@@ -467,7 +521,7 @@ One entry for each chapter. The entries use these headings:
 
 ## Part V. Doing network research
 
-### Chapter 27. A complete network analysis
+### Chapter 29. A complete network analysis
 - **Time:** 2 sessions.
 - **Data:** `lazega`; `gang` in Ex. 8.
 - **Builds on:** 6, 18, 20, 21; 9 and 22 for Ex. 7.
@@ -484,10 +538,10 @@ One entry for each chapter. The entries use these headings:
   - Choosing the sensitivity runs after seeing the results. State them with the expectations.
 - **Exercises:** 9. Basic 4 (1–4); applied 3 (5–7); open 2 (8, 9).
 
-### Chapter 28. Reproducible and responsible network research
+### Chapter 30. Reproducible and responsible network research
 - **Time:** 1 session.
 - **Data:** `lazega`; `glasgow` in Ex. 5.
-- **Builds on:** 3, 5, 18, 27.
+- **Builds on:** 3, 5, 18, 29.
 - **Commands:** stored results of `nwcug` and `nwqap` (`return list`, `ereturn list`); in Ex. 5, `postfile` to
   collect results.
 - **Where students get stuck:**
@@ -504,5 +558,6 @@ The appendices have no exercises. For teaching, the most useful are Appendix B (
 reading error codes) for the first labs, Appendix C (*Command reference*, with R and Python equivalents and the
 network types each command supports) for students who come from other software, Appendix D (*Datasets used in
 this book*) for planning, and Appendix A (*Performance and network size*) before students analyze large networks
-of their own. Appendix E is a mathematical reference, Appendix F covers programming with networks in Mata, and
-Appendix G collects the notation and a glossary.
+of their own. Appendix E is a mathematical reference and Appendix F collects the notation and a glossary.
+Programming with networks in Mata is not in the book; it is on the website, on the page
+[Programming with networks in Mata](/book/programming/).

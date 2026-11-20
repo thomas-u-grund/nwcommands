@@ -137,7 +137,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   constraint are largely redundant. Composition is read against what the setting makes available, and exposure
   before an outcome is a covariate, not proof of influence.
 - **Pointer:** the exposure regression treats the actors as independent. The model that does not is the
-  autologistic actor attribute model (`nwalaam`; Chapter 22, Section 22.7), taught in Course B, Week 7.
+  autologistic actor attribute model (`nwalaam`; Chapter 24, Section 24.4), taught in Course B, Week 7. Chapter 24
+  also takes up the question with a hazard model and a spatial lag.
 - **Demonstration:** `nwego lazega_adv, sizevar(egosize) densvar(egodens)`, `nwegoplot`, and `nwaltergen` with
   `proportion()` and `diversity()`; exposure to smoking friends in the Glasgow data with `nwaltergen` and
   `regress`; the same measures from survey data with `collapse`.
@@ -172,27 +173,30 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 
 ### Week 12. One complete analysis, and reporting it
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the deck is shared with Course B, Week 12)
-- **Chapters:** 27 *A complete network analysis* (theory, data, description and QAP);
-  28 *Reproducible and responsible network research*
+- **Chapters:** 29 *A complete network analysis* (theory, data, description and QAP);
+  30 *Reproducible and responsible network research*
 - **Core idea:** state the expectations, and what would count against them, before any model is fitted. Agreement
   of analyses on the same arcs is one piece of evidence, not three. A report owes its readers the construction
   decisions, and its subjects a judgment about disclosure risk.
 - **Demonstration:** advice density by the status of sender and receiver; activity and seniority by status; the QAP
-  model of Chapter 27. The ERGMs that follow are easier after Chapter 21, so present their results here (associates
-  do not favor partners; being asked follows seniority) and leave the code to course B. From Chapter 28,
+  model of Chapter 29. The ERGMs that follow are easier after Chapter 21, so present their results here (associates
+  do not favor partners; being asked follows seniority) and leave the code to course B. From Chapter 30,
   stored results after `nwcug` (`return list`) and `nwqap` (`ereturn list`).
-- **Exercises:** Ch. 27, Ex. 1 (density ratios from the status table); Ch. 27, Ex. 7 (could an all-partner core be
-  chance?); Ch. 28, Ex. 1 (the construction decisions of Chapter 27); Ch. 28, Ex. 4 (how many
+- **Exercises:** Ch. 29, Ex. 1 (density ratios from the status table); Ch. 29, Ex. 7 (could an all-partner core be
+  chance?); Ch. 30, Ex. 1 (the construction decisions of Chapter 29); Ch. 30, Ex. 4 (how many
   lawyers their degrees alone identify).
 
 ## B. Statistical models for networks (12 weeks)
 
 For students who know the material of Chapters 1 to 8, from course A or from another course. It can be taught as
 a second course. The course follows the path *Statistical models for one observed network* to its end
-(Chapters 15, 18 to 22) and then the path *Change and events* (Chapters 14, 23 to 26), and closes with the
-capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models. Chapter 22 also has an
-optional section on autologistic actor attribute models (`nwalaam`), for questions in which an attribute of the
-actors, not the ties, is the outcome; Week 7 offers it as an extra block.
+(Chapters 15, 18 to 22) and then the path *Change and events* (Chapters 14, 25 to 28), and closes with the
+capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models. Chapter 24
+(*Influence and contagion*) has a section on autologistic actor attribute models (`nwalaam`), for questions in
+which an attribute of the actors, not the ties, is the outcome; Week 7 offers it as an extra block. Chapters 23 and
+24 are otherwise not scheduled. Chapter 23 (*Latent space and block models*, `nwsbm` and `nwlsm`) fits after Week 7
+as reading, as another account of the same advice network, and Chapter 24 after Week 9 as reading, because the
+co-evolution model of Week 9 answers the question that Chapter 24 leaves open.
 
 Each week has a deck with speaker notes, a hands-on slide for each block and the book's exercises, as PowerPoint with a PDF; Weeks 3, 4 and 12 use the same decks as Course A, and instructors are free to use, adapt and share them.
 
@@ -269,23 +273,24 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 
 ### Week 7. ERGM III: simulation, degeneracy and missing data
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pptx) · [PDF](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pdf)
-- **Chapters:** 22 *Advanced exponential random graph models*
+- **Chapters:** 22 *Advanced exponential random graph models* (Section 22.7, a Bayesian ERGM, can be left as
+  reading)
 - **Core idea:** simulating from a model shows what it implies. A coefficient does not move only its own
   statistic. A raw triangle count can make a model degenerate; geometrically weighted terms avoid it. A missing
   dyad is not a non-tie.
 - **Demonstration:** `nwergm simulate` from hand-chosen coefficients and from the fitted advice model with one
   coefficient changed; `nwergm mesa, edges nodematch(grade race) gwesp(.25) seed(12345)` and the same model with
   `triangle`, which fails; a version of `mesa` with missing dyads built with `nwtomata`.
-- **Optional extra:** an attribute as the outcome (Chapter 22, Section 22.7): `nwalaam smoker1 glasgow1,
+- **Optional extra:** an attribute as the outcome (Chapter 24, Section 24.4): `nwalaam smoker1 glasgow1,
   effects(density contagion sender receiver) seed(12345)`, its pseudolikelihood start with `mple`, and `estat gof`;
-  a cross-sectional association, not influence. Homework: Ch. 22, Ex. 7 and 8.
+  a cross-sectional association, not influence. Homework: Ch. 24, Ex. 4 and 5.
 - **Exercises:** Ch. 22, Ex. 1 (why `mutual` has no meaning in an undirected network); Ch. 22, Ex. 2 (why a
   triangle count degenerates); Ch. 22, Ex. 4 (simulate with the gwesp coefficient at 0.3); Ch. 22, Ex. 6 (ten
   missing dyads).
 
 ### Week 8. Change between waves
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week08_change_between_waves.pptx) · [PDF](/book/teaching/slides/courseB_week08_change_between_waves.pdf)
-- **Chapters:** 14 *Networks over time*; 23 *Stochastic actor-oriented models*, through the ministep process, the
+- **Chapters:** 14 *Networks over time*; 25 *Stochastic actor-oriented models*, through the ministep process, the
   objective function and the first look at the data
 - **Core idea:** a network observed once is a snapshot of a process. Ties between waves are stable, formed or
   dissolved. An SAOM represents the unseen process as small choices by actors, with a rate function (how often an
@@ -293,12 +298,14 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwturnover glasgow1 glasgow2, generate(_turnover)` with and without `formation`; plots at
   fixed positions with `nodexy()` and `nwmovie`; `nwsaom describe, waves(glasgow1 glasgow2 glasgow3)`;
   `nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)`.
+- **Optional:** Section 14.6, adoption over the waves: `nwdiffuse curve`, `exposure` and `threshold` on smoking
+  in the three Glasgow waves, which leads to the co-evolution model of Week 9.
 - **Exercises:** Ch. 14, Ex. 2 (Jaccard index and persistence by hand); Ch. 14, Ex. 7 (formed ties against all
-  pairs without a tie); Ch. 23, Ex. 1 (the counts of `nwsaom describe`); Ch. 23, Ex. 7 (what the rate counts).
+  pairs without a tie); Ch. 25, Ex. 1 (the counts of `nwsaom describe`); Ch. 25, Ex. 7 (what the rate counts).
 
 ### Week 9. Stochastic actor-oriented models
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week09_saom.pptx) · [PDF](/book/teaching/slides/courseB_week09_saom.pdf)
-- **Chapters:** 23, from building up a model on Glasgow to the end
+- **Chapters:** 25, from building up a model on Glasgow to the end
 - **Core idea:** convergence t-ratios check the estimation; the z statistics test effects. Goodness of fit shows
   where a model fails. A co-evolution model separates selection from influence, given its assumptions and a
   behavior that changes often enough.
@@ -306,13 +313,13 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   seed(12345)`; three waves with `waves()`; `nwsaom refit`; `estat gof, nsim(100) seed(1)`; the co-evolution model
   with `behavior(alcohol1 alcohol2 alcohol3)`, `behsim` and `avalt`.
 - **Pointer:** with one wave only, `nwalaam` (the optional block of Week 7) describes how an attribute and the
-  ties around each actor line up, and cannot separate selection from influence.
-- **Exercises:** Ch. 23, Ex. 2 (the second period and a restart); Ch. 23, Ex. 3 (homophily in sport); Ch. 23,
-  Ex. 5 (`avsim` in place of `avalt`); Ch. 23, Ex. 8 (a teacher's seating plan).
+  ties around each actor line up, and cannot separate selection from influence (Chapter 24).
+- **Exercises:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, Ex. 3 (homophily in sport); Ch. 25,
+  Ex. 5 (`avsim` in place of `avalt`); Ch. 25, Ex. 8 (a teacher's seating plan).
 
 ### Week 10. SAOM: adequacy, estimators and several groups
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week10_saom_advanced.pptx) · [PDF](/book/teaching/slides/courseB_week10_saom_advanced.pdf)
-- **Chapters:** 24 *Advanced stochastic actor-oriented models*
+- **Chapters:** 26 *Advanced stochastic actor-oriented models*
 - **Core idea:** the score test says which effect to try next; the time test whether effects stay constant;
   simulation and the importance table show what a model implies. Method of Moments, maximum likelihood and Bayesian
   estimation have their own diagnostics. Several groups can be pooled in a joint model or combined in a
@@ -320,12 +327,12 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `estat score`, `estat timetest, fixrates`, `estat importance` and `estat simulate`;
   `nwsaom simulate`; the `ml` option and `nwsaom bayes, nmain(250) seed(1)`; `nwwebuse baerveldt19`,
   `nwstack school*_w1, name(w1) group(school)`, a joint model with `groups(school)`, and `nwsaom meta`.
-- **Exercises:** Ch. 24, Ex. 1 (two estimators in standard errors); Ch. 24, Ex. 2 (Bayesian runs with other
-  seeds); Ch. 24, Ex. 3 (freeing outdegree activity); Ch. 24, Ex. 4 (40 classes: joint model or meta-analysis).
+- **Exercises:** Ch. 26, Ex. 1 (two estimators in standard errors); Ch. 26, Ex. 2 (Bayesian runs with other
+  seeds); Ch. 26, Ex. 3 (freeing outdegree activity); Ch. 26, Ex. 4 (40 classes: joint model or meta-analysis).
 
 ### Week 11. Event models
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week11_event_models.pptx) · [PDF](/book/teaching/slides/courseB_week11_event_models.pdf)
-- **Chapters:** 25 *Relational event models*; 26 *The Dynamic Network Actor Model*
+- **Chapters:** 27 *Relational event models*; 28 *The Dynamic Network Actor Model*
 - **Core idea:** with a time-stamped log the unit is the event. The relational event model compares, at every
   event, the pair that fired with all pairs at risk, so it has no intercept. Frequency and recency of past contact
   are different claims. The DyNAM separates who acts from whom the actor chooses.
@@ -333,12 +340,12 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   `nwrem chat, nodsnd nidrec`; the company emails (`keep if t < 14`) with `nwrem mail` and `frpsndsnd`,
   `rsndsnd` and `covevent(samesup)` after `nwload mail, xvars` and `nwexpand supervisor`; `nwdynam mail,
   submodel(rate)`, `nwdynam mail, inertia recip indeg same(branch)` and `submodel(rate) intercept`.
-- **Exercises:** Ch. 25, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 25, Ex. 4 (recency of
-  receipt); Ch. 26, Ex. 3 (an expected waiting time); Ch. 26, Ex. 8 (which of five models for which question).
+- **Exercises:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 4 (recency of
+  receipt); Ch. 28, Ex. 3 (an expected waiting time); Ch. 28, Ex. 8 (which of five models for which question).
 
 ### Week 12. One complete analysis, and reporting it
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the same deck as Course A, Week 12)
-- **Chapters:** 27 *A complete network analysis*; 28 *Reproducible and responsible network research*
+- **Chapters:** 29 *A complete network analysis*; 30 *Reproducible and responsible network research*
 - **Core idea:** one question about the law firm, whether advice runs up the status order, is carried from theory
   and stated expectations through description, QAP regression and a sequence of ERGMs to a synthesis, with
   sensitivity runs chosen in advance.
@@ -346,10 +353,10 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** the QAP model; the ERGM with friendship as `edgecov()`; `nodemix(status)` and `lincom` for
   whose choices carry the status effect; seniority rank next to partnership (`nodeicov()`, `nodeocov()`); the
   sensitivity run without the two most active
-  lawyers (`nwdrop`); stored results from Chapter 28.
-- **Exercises:** Ch. 27, Ex. 2 (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
-  Ch. 27, Ex. 3 (the mixing model and the status-match model are the same model); Ch. 27, Ex. 6 (a sensitivity
-  check of your own choice); Ch. 27, Ex. 9 (deference or competence); Ch. 28, Ex. 5
+  lawyers (`nwdrop`); stored results from Chapter 30.
+- **Exercises:** Ch. 29, Ex. 2 (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
+  Ch. 29, Ex. 3 (the mixing model and the status-match model are the same model); Ch. 29, Ex. 6 (a sensitivity
+  check of your own choice); Ch. 29, Ex. 9 (deference or competence); Ch. 30, Ex. 5
   (a do-file that collects results without retyping them).
 
 ## C. Workshop or summer school (5 days)
@@ -409,21 +416,21 @@ afternoon the next.
   Ch. 20, Ex. 5 (the advice model without friendship); Ch. 20, Ex. 7 (homophily or shared office).
 
 ### Day 5. A first network model
-- **Slides:** morning (ERGM): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_am.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_am.pdf); afternoon, panel option (Chapters 14 and 23): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_panel.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_panel.pdf); afternoon, capstone option (Chapter 27): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pdf)
+- **Slides:** morning (ERGM): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_am.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_am.pdf); afternoon, panel option (Chapters 14 and 25): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_panel.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_panel.pdf); afternoon, capstone option (Chapter 29): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pdf)
 - **Chapters:** morning: 21 *Exponential random graph models*. Afternoon, one of two: 14 *Networks over time* and
-  23 *Stochastic actor-oriented models*, for participants with panel data; or 27 *A complete network analysis*,
+  25 *Stochastic actor-oriented models*, for participants with panel data; or 29 *A complete network analysis*,
   which brings the week together on the law firm.
 - **Core idea:** an ERGM makes the dependence among ties the object of the model; its coefficients are read as
   conditional log-odds through change statistics, and its fit is checked on statistics it does not contain. An
   SAOM models change between waves as choices of actors.
 - **Demonstration:** the staged advice model with `nwergm`, `estat mcmcdiag` and `estat gof`; for the panel
   option, `nwturnover`, `nwsaom describe` and `nwsaom` on the Glasgow waves; for the capstone option, the QAP and
-  ERGM models of Chapter 27.
+  ERGM models of Chapter 29.
 - **Exercises:** Ch. 21, Ex. 1 (what the office coefficient says about a pair); Ch. 21, Ex. 3 (homophily on
-  gender); then Ch. 23, Ex. 3 (homophily in sport) for the panel option, or Ch. 27, Ex. 4 (a step or a slope:
+  gender); then Ch. 25, Ex. 3 (homophily in sport) for the panel option, or Ch. 29, Ex. 4 (a step or a slope:
   seniority in odds ratios) for the capstone option.
 - **Optional:** participants whose outcome is an attribute of the actors (smoking, adoption, a rating) and who
-  have a single observation of the network can read Chapter 22, Section 22.7 on `nwalaam`, which is the one-wave
+  have a single observation of the network can read Chapter 24, Section 24.4 on `nwalaam`, which is the one-wave
   counterpart of the panel option; it needs no further preparation than the morning's ERGM.
 
 Permutation tests and model fits repeat a computation many times. Appendix A of the book advises setting `reps()`

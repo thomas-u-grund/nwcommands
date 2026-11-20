@@ -46,8 +46,8 @@ complete collection as described in *Getting started*:
 . nwinstall, everything
 ```
 
-The first command installs a small starter package; `nwinstall` fetches the rest, including the five model
-packages `nwergm`, `nwsaom`, `nwrem`, `nwdynam` and `nwalaam`. Appendix B of the book covers installation problems.
+The first command installs a small starter package; `nwinstall` fetches the rest, including the seven model
+packages `nwergm`, `nwsaom`, `nwrem`, `nwdynam`, `nwalaam`, `nwlsm` and `nwsbm`. Appendix B of the book covers installation problems.
 
 All data sets are loaded over the internet with `nwwebuse`, so the room needs a working internet connection. The
 [do-files of the book](../../dofiles/) contain every printed command, chapter by chapter, and can be handed out
@@ -64,7 +64,7 @@ Send participants this list:
 4. Check that data can be loaded and drawn: `nwwebuse florentine, nwclear` and then `nwplot flomarriage`.
 5. Participants new to Stata: be able to open and run a do-file and to use `use`, `generate`, `tabulate`,
    `summarize` and `regress`. The book assumes that readers know Stata.
-6. Optional: download the do-files of Chapters 4, 6, 8, 18 to 21 and 23.
+6. Optional: download the do-files of Chapters 4, 6, 8, 18 to 21 and 25.
 
 ## Session 1: the nwcommands core (3 hours)
 
@@ -171,7 +171,7 @@ Send participants this list:
 ### 6. Reproducible scripts, questions (10 min)
 - **Goal:** set seeds, save layout coordinates, and chain commands through stored results (`return list` after
   `nwcug`, `ereturn list` after `nwqap`) instead of retyping numbers.
-- **Read afterwards:** Chapter 28; Appendix C for the full table of commands with R and Python equivalents.
+- **Read afterwards:** Chapter 30; Appendix C for the full table of commands with R and Python equivalents.
 
 ## Session 2: ERGMs and SAOMs (3 hours)
 
@@ -190,7 +190,7 @@ Send participants this list:
   its 139 terms, most with R's names, arguments and defaults; the book calls `ergm` the reference and the more
   complete program. `nwsaom` is derived from `RSiena` and `multiSiena` and checks its results against
   `RSiena::siena()`. Both are installed by `nwinstall, everything`.
-- **Read afterwards:** the opening sections of Chapters 21 and 23.
+- **Read afterwards:** the opening sections of Chapters 21 and 25.
 
 ### 2. Specifying and estimating an ERGM (45 min)
 - **Goal:** build the advice model of the law firm in stages, and read a coefficient as the change in the
@@ -239,7 +239,7 @@ Send participants this list:
 ### 4. Specifying, estimating and checking an SAOM (40 min)
 - **Goal:** look at the amount of change, fit a model between waves, tell the convergence check from the
   significance test, restart, and check fit.
-- **Demo (Chapter 23):**
+- **Demo (Chapter 25):**
   ```stata
   . nwwebuse glasgow, nwclear
   . nwsaom describe, waves(glasgow1 glasgow2 glasgow3)
@@ -257,14 +257,14 @@ Send participants this list:
   `nwwebuse s50` loads the 50-actor example that RSiena calls `s50` (networks `s50_w1` to `s50_w3`), the same
   pupils as `glasgow`.
 - **R equivalent:** `RSiena::siena()`.
-- **Hands-on:** Ch. 23, Ex. 2 (the second period and a restart); Ch. 23, Ex. 3 (homophily in sport, and
+- **Hands-on:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, Ex. 3 (homophily in sport, and
   goodness of fit with two seeds).
-- **Read afterwards:** Chapter 23.
+- **Read afterwards:** Chapter 25.
 
 ### 5. Score tests and co-evolution (25 min)
 - **Goal:** decide which effect to add next without fitting every candidate, and separate selection from
   influence in a model where behavior changes too.
-- **Demo (Chapters 24 and 23):** the restricted fit of Chapter 24, with three candidate effects held at 0 by
+- **Demo (Chapters 26 and 25):** the restricted fit of Chapter 26, with three candidate effects held at 0 by
   `fix()`, followed by `estat score`:
   ```stata
   . quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity ///
@@ -277,7 +277,7 @@ Send participants this list:
           fix(indegpopularity outactivity cycle3) seed(1)
   . estat score
   ```
-  then the co-evolution model of Chapter 23:
+  then the co-evolution model of Chapter 25:
   ```stata
   . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip ///
           behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt ///
@@ -286,23 +286,24 @@ Send participants this list:
 - **Points to make:** each score test is conditional on the effects already in the model, so free one effect at a
   time; a behavior must change often enough to identify a co-evolution model (alcohol use works in these data,
   smoking gives very imprecise behavior estimates).
-- **Hands-on:** Ch. 24, Ex. 3 (free outdegree activity, then rerun `estat score` and `estat gof`); Ch. 23, Ex. 5
+- **Hands-on:** Ch. 26, Ex. 3 (free outdegree activity, then rerun `estat score` and `estat gof`); Ch. 25, Ex. 5
   (`avsim` in place of `avalt`).
-- **Read afterwards:** Chapter 24.
+- **Read afterwards:** Chapter 26.
 
 ### 6. What else the packages do (10 min)
-- **Goal:** point to what the session left out. Chapter 24 covers the time test (`estat timetest`), the importance
+- **Goal:** point to what the session left out. Chapter 26 covers the time test (`estat timetest`), the importance
   of effects (`estat importance`), maximum likelihood and Bayesian estimation, two networks that evolve together
   (`nwsaom multinet`), several groups in a joint model (`groups()`) and meta-analysis (`nwsaom meta`, as
-  `RSiena::siena08()`). Chapters 25 and 26 treat time-stamped events with `nwrem` (R: `relevent::rem.dyad()`) and
-  `nwdynam` (R: `goldfish`).
-- **Read afterwards:** Chapters 24 to 27.
+  `RSiena::siena08()`). Chapters 27 and 28 treat time-stamped events with `nwrem` (R: `relevent::rem.dyad()`) and
+  `nwdynam` (R: `goldfish`). Chapter 23 fits hidden groups and positions with `nwsbm` and `nwlsm`, and Chapter 24
+  an attribute as the outcome with `nwalaam`.
+- **Read afterwards:** Chapters 23, 24 and 26 to 29.
 
 ## Session 3 (optional): relational events with nwrem and nwdynam (3 hours)
 
 An optional third session for groups that work with time-stamped data (e-mails, calls, messages). It needs
 Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing company, the first 14 days
-(`keep if t < 14`: 2,738 events among 129 employees), as Chapters 25 and 26 do. The commands were run with
+(`keep if t < 14`: 2,738 events among 129 employees), as Chapters 27 and 28 do. The commands were run with
 `nwrem` 1.5.0 and `nwdynam` 1.9.0.
 
 | Time | Block |
@@ -318,27 +319,27 @@ Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing 
 ### 1. Events and event data (15 min)
 - **Goal:** an event is a dated act with a sender and a receiver; the question is which event comes next, given
   the history. Declare the log with `nwset sender receiver, eventtime(t)`; a ten-event toy log shows the output.
-- **Read afterwards:** Chapter 25.
+- **Read afterwards:** Chapter 27.
 
 ### 2. The relational event model: `nwrem` (45 min)
 - **Goal:** the model compares the observed pair with all 129 × 128 = 16,512 ordered pairs at each event; there
   is no intercept. Fit `nodsnd nidrec`, add inertia (`frpsndsnd`), compare frequency with recency
   (`rsndsnd`) by AIC, add a pair covariate (`covevent()`, same supervisor), and read the display (`ci`).
-- **Hands-on:** Ch. 25, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 25, Ex. 4 (recency of
+- **Hands-on:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 4 (recency of
   receipt).
-- **Read afterwards:** Chapter 25.
+- **Read afterwards:** Chapter 27.
 
 ### 3. The DyNAM: who acts, and whom they choose (40 min)
 - **Goal:** two sub-models. The rate model says who acts next (with an intercept: how long it takes), the choice
   model whom the actor chooses. The same effect name means different things in the two. Fit `nwdynam` (choice),
   `submodel(rate)`, `same()` on a branch variable, and the rate with an intercept.
-- **Hands-on:** Ch. 26, Ex. 3 (an expected waiting time); Ch. 26, Ex. 7 (`choice_coordination` on the
+- **Hands-on:** Ch. 28, Ex. 3 (an expected waiting time); Ch. 28, Ex. 7 (`choice_coordination` on the
   undirected log).
-- **Read afterwards:** Chapter 26.
+- **Read afterwards:** Chapter 28.
 
 ### 4. Comparing the two models (20 min)
 - **Goal:** the same log in `nwrem` and `nwdynam`; the coefficients are not comparable in size; which model
-  answers which question (Ch. 26, Ex. 8).
+  answers which question (Ch. 28, Ex. 8).
 
 ### 5. Postestimation: fit, outliers, change points (25 min)
 - **Goal:** `estat ic`, `estat eventprob` (350,464 rows for 2,738 events and 128 candidates), `estat outliers`
@@ -348,13 +349,13 @@ Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing 
 ### 6. Limits, pitfalls and where to go (20 min)
 - **Goal:** no intercept in the REM; `indeg` and `outdeg` mean different things in rate and choice; declare the
   log first; what the packages refuse; the R equivalents.
-- **Read afterwards:** Chapters 25 to 27.
+- **Read afterwards:** Chapters 27 to 29.
 
 ## Run times
 
 All the model runs above are short. Appendix A of the book reports that an ERGM of the advice network with seven
 terms took about three seconds in Stata/BE on a Mac. On a laptop with Stata/BE, each fit of this session (the
 staged ERGMs, `estat gof`, 100 simulated networks, the Glasgow SAOMs, the score test and the co-evolution model; in Session 3 each `nwrem` and `nwdynam` fit takes seconds)
-finished within a few seconds, and in Session 1 `nwcug` with `reps(1000)` took about ten seconds. Chapter 24 notes that a Bayesian run takes a few minutes,
+finished within a few seconds, and in Session 1 `nwcug` with `reps(1000)` took about ten seconds. Chapter 26 notes that a Bayesian run takes a few minutes,
 and that fitting the 19 Dutch schools one by one took minutes; show those from prepared output rather than run
 them live.

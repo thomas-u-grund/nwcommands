@@ -107,7 +107,7 @@ The BIC tells us that three clusters describe the positions best. It does not te
 To see the clusters, draw the monks in the latent space with `nwlsmplot`; the option `clusters` colours each monk by cluster and `label()` names them:
 
 ```stata
-. nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space")
+. nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space", color(black))
 . graph export "monks_clusters.png", width(900) replace
 ```
 
@@ -117,10 +117,32 @@ The three groups lie apart: seven monks in the lower left, seven on the right an
 
 The network is directed, so the ties are drawn as arrows from the sender to the receiver; this is the default for a directed network, and `noarrows` draws plain lines instead.
 
+To compare with the factions directly, colour the monks by the faction instead of by cluster. `color()` takes a numeric variable, so we first turn the string `faction` into one with value labels (`encode`); the legend then shows the names of the factions, and its title is the variable label:
+
+```stata
+. encode faction, generate(fac)
+. label variable fac "faction"
+. nwlsmplot, color(fac) label(_nwnode) title("Sampson's monks by faction", color(black)) export(monks_factions.png, width(900))
+```
+
+![Sampson's monks in the latent space, coloured by faction](monks_factions.png)
+
+The picture is the same map as before with the faction names in the legend: the Turks lie in the lower left, the Loyal monks on the right and the four Outcasts at the top, one of them, Amand, set apart from the other three. The colours are the same groups as the three clusters; only the labels differ. (A title you write yourself is drawn in the colour of the graph scheme, which is why the examples add `color(black)`; the default title and the axis titles are black already.)
+
+For a black-and-white print, `colors(gray)` replaces the colours by gray values and gives each group its own marker (filled circles, hollow diamonds, triangles, squares), so that the groups stay apart without colour. `title("")` leaves out the title; here the caption of the figure would carry it.
+
+```stata
+. nwlsmplot, color(fac) colors(gray) label(_nwnode) title("") export(monks_factions_gray.png, width(900))
+```
+
+![Sampson's monks by faction in gray, for print](monks_factions_gray.png)
+
+The Loyal monks are filled circles, the Outcasts hollow diamonds and the Turks filled triangles.
+
 Three more options show what the clusters model estimates. `clustermeans` marks the estimated mean of every cluster, `circles` draws the variance circle of each cluster (the spherical normal distribution of the positions), and `certainty` gives each monk an opacity by the largest posterior membership probability, so that monks who are not clearly assigned look pale. `export()` saves the graph in the same call; the extension sets the format.
 
 ```stata
-. nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty") export(monks_circles.png, width(900))
+. nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty", color(black)) export(monks_circles.png, width(900))
 ```
 
 ![Sampson's monks with the cluster circles and the certainty of the membership](monks_circles.png)
