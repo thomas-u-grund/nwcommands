@@ -194,6 +194,7 @@ search_exclude: false
 
 - ***Statistical tests***
 
+- **[nwcoefplot](nwcoefplot)** --- Coefficient plot of network model results
 - **[nwcompare](nwcompare)** --- Compare the fit statistics of stored network models
 - **[nwcorrelate](nwcorrelate)** --- Correlate networks and variables
 - **[nwcug](nwcug)** --- Conditional Uniform Graph (CUG) test
@@ -264,4 +265,4 @@ The statistical network models are separate packages that need the core. Install
 
 ---
 
-*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

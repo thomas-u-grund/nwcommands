@@ -18,13 +18,19 @@ nwdyads
 [netname]
 [,
 plot
-name(string)]
+name(string)
+saving(filename)
+export(filename[, options])
+twoway_options]
 ```
 
 | | |
 |---|---|
 | `plot` | Draw the dyad types as small pictures with their counts |
 | `name(string)` | Name for the graph created by `plot`; default = **dyads** |
+| `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
+| *twoway_options* | Other options of `twoway`, applied last; without `plot`, `saving()`, `export()` and these options give an error |
 
 ## Description
 
@@ -80,6 +86,12 @@ A network held as stored ties is counted from its ties (each tie is matched with
         45 |        32 |      1148
 ```
 
+## Saving and exporting the graph
+
+`name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
+
+- `. nwdyads flomarriage, plot export(dyads.png, width(1200))`
+
 ## Stored results
 
 - **Scalars**
@@ -98,4 +110,4 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

@@ -10,4 +10,4 @@ search_exclude: false
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

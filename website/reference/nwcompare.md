@@ -14,14 +14,17 @@ Compare the fit statistics of stored network models
 ## Syntax
 
 ```stata
-nwcompare [namelist] [, sort(criterion) graph coefopts(options)]
+nwcompare [namelist] [, sort(criterion) graph name(name) saving(filename) export(filename[, options]) coefopts(options)]
 namelist holds names of results saved with estimates store; a period (.) stands for the active estimation results. Without a list, all stored results are shown.
 ```
 
 | | |
 |---|---|
 | `sort(criterion)` | order the rows by `aic`, `bic`, `icl` (smallest first) or `ll` (largest first); default: the order of the list |
-| `graph` | also draw the coefficients of the models side by side with [nwcoefplot](nwcoefplot) |
+| `graph` | also draw the coefficients of the models side by side with [nwcoefplot](nwcoefplot); `plot` is a synonym |
+| `name(name)` | name of the graph in memory; default `compare` |
+| `sav:ing(filename)` | save the graph to a `.gph` file |
+| `exp:ort(filename[, options])` | write the graph with `graph export` |
 | `coefopts(options)` | options passed to [nwcoefplot](nwcoefplot), for example `keep()` or `eform` |
 
 ## Description
@@ -53,6 +56,7 @@ With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with
 - `. nwcompare m0 m1, sort(bic)`
 
 - `. nwcompare m0 m1, graph coefopts(eform)`
+- `. nwcompare m0 m1, graph export(compare.png, width(1200))`
 
 - `. nwsbm flomarriage, maxblocks(4) seed(1)`
 - `. nwcompare m0 m1 .`
@@ -71,4 +75,4 @@ With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with
 
 ---
 
-*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

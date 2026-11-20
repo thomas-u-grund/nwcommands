@@ -33,4 +33,4 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 
 ---
 
-*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

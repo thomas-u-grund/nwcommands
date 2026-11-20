@@ -16,7 +16,7 @@ Diffusion and contagion on a network: exposure, thresholds, adoption curve, haza
 ```stata
 nwdiffuse exposure [netlist], when gen:erate(stub) | cou:nt(stub) [options]
 nwdiffuse threshold [netlist], when gen:erate(newvar) | cou:nt(newvar) [options]
-nwdiffuse curve [netname], when [graph mat:rix(name) silent]
+nwdiffuse curve [netname], when [graph mat:rix(name) silent name(string) saving(filename) export(filename[, options]) twoway_options]
 nwdiffuse long [netlist], when clear [keep(varlist) lag(#) options]
 nwdiffuse simulate [netlist], model(cascade|threshold|fraction) gen:erate(newvar) [simulation options]
 where when says who adopts when, either
@@ -68,6 +68,12 @@ adopt(varlist) one 0/1 variable for each period (in the order of the periods): 1
 
 With `spont()`, every node that has not adopted also adopts with that probability in each step, apart from the network. The simulation stops early when nobody can adopt any more (no new adopters and `spont()` = 0 on a single network). The default direction is that a node is influenced by the nodes it has ties to, as in `exposure`; `incoming` reverses it.
 
+## Graph of the curve
+
+`nwdiffuse curve` `graph` (or its synonym `plot`) draws the cumulative proportion of adopters. `name()` names the graph in memory (it stays unnamed when `name()`, `saving()` and `export()` are all absent), `saving()` writes a `.gph` file and `export()` writes the graph with `graph export`; the file extension sets the format and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced. Other options go to `twoway` and come last. `saving()` and `export()` need `graph` or `plot`.
+
+- `. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))`
+
 ## Remarks
 
 **Agreement with netdiffuseR.** Exposure (share and count, binary and valued, outgoing and incoming, with and without self, static and changing networks, with lags) and thresholds equal the results of `exposure()` and `threshold()` of netdiffuseR 1.25.1 to 9 digits on the test networks. Deviations: netdiffuseR takes the adoption times from a `diffnet` object and can weight exposure by node attributes, use structural-equivalence weights or group-wise exposure; `nwdiffuse` does not. With a lag, netdiffuseR (and so `nwdiffuse`) uses the network of the lagged period as well. The simulations are not a port of `rdiffnet()`; they implement the textbook models stated above.
@@ -117,4 +123,4 @@ Kempe, D., J. Kleinberg, and E. Tardos. 2003. Maximizing the spread of influence
 
 ---
 
-*nwcommands version 3.27.0, 18 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
