@@ -93,4 +93,4 @@ With a list of models the coefficients of different models are drawn in one row 
 {help nwcompare}, {help nwergm}, {help nwsaom}, {help nwdynam}, {help nwrem}, {help nwalaam}, {help nwlsm}, {help estimates}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
