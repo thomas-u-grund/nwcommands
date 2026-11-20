@@ -12,6 +12,8 @@ copy keeps its copyright and license notice.
   gif.worker.js      Copyright (c) 2013 Johan Nordberg
   mp4-muxer.js       mp4-muxer 5.2.1, https://github.com/Vanilagy/mp4-muxer
                      Copyright (c) 2023 Vanilagy
+  webm-muxer.js      webm-muxer 5.0.3, https://github.com/Vanilagy/webm-muxer
+                     Copyright (c) 2022 Vanilagy
 
 MIT License
 -----------

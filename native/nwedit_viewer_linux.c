@@ -94,6 +94,21 @@ static void on_save_message(WebKitUserContentManager *manager,
 	g_free(err); g_free(filename); g_free(b64); g_free(data);
 }
 
+// Unattended export: a web process that dies, or a page that does not load,
+// would leave nwmovie waiting for a file that never comes. Report it at once.
+static gboolean on_crashed(WebKitWebView *v, gpointer d) {
+	if (g_auto_out) { write_error_file("the viewer's web process crashed"); gtk_main_quit(); }
+	return TRUE;
+}
+static gboolean on_load_failed(WebKitWebView *v, WebKitLoadEvent e, gchar *uri,
+                               GError *err, gpointer d) {
+	if (g_auto_out) {
+		write_error_file(err && err->message ? err->message : "the viewer could not load the page");
+		gtk_main_quit();
+	}
+	return TRUE;
+}
+
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "usage: nwedit_viewer <path-to-html-file> [<output-file>]\n");
@@ -117,6 +132,8 @@ int main(int argc, char *argv[]) {
 
 	GtkWidget *webview = webkit_web_view_new_with_user_content_manager(ucm);
 	gtk_container_add(GTK_CONTAINER(window), webview);
+	g_signal_connect(webview, "web-process-crashed", G_CALLBACK(on_crashed), NULL);
+	g_signal_connect(webview, "load-failed", G_CALLBACK(on_load_failed), NULL);
 
 	// realpath() so a relative path passed by nwplot.ado resolves the same
 	// way regardless of the caller's own cwd, then a file:// URI from it.

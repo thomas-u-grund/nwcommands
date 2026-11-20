@@ -25,6 +25,7 @@ The interactive views of `nwplot` and `nwmovie` include three libraries in `lib/
 - `cytoscape.min.js`: Cytoscape.js 3.30.2, copyright the Cytoscape Consortium, https://js.cytoscape.org
 - `gif.js`, `gif.worker.js`: gif.js 0.2.0, copyright Johan Nordberg, https://github.com/jnordberg/gif.js
 - `mp4-muxer.js`: mp4-muxer 5.2.1, copyright Vanilagy, https://github.com/Vanilagy/mp4-muxer
+- `webm-muxer.js`: webm-muxer 5.0.3, copyright Vanilagy, https://github.com/Vanilagy/webm-muxer
 
 Each file keeps its copyright and license notice; `lib/vendor/THIRD_PARTY_LICENSES.txt` gives the full text of the MIT License.
 

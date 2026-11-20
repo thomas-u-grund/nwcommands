@@ -26,8 +26,28 @@
 *! nwmovie_template.html, opened via the same chromeless native viewer
 *! nwplot's own interactive option uses (_nwopenviewer.ado).
 
+// nwmovie runs _nwmovie_run and then erases every temporary file this run made (listed in $NWMV_CLEAN by _nwmovie_reg),
+// on success and on every failure; only files named in the list are touched.
 capture program drop nwmovie
 program nwmovie
+	global NWMV_CLEAN ""
+	capture noisily _nwmovie_run `0'
+	local _nwmv_rc = _rc
+	foreach _nwmv_f of global NWMV_CLEAN {
+		capture erase `"`_nwmv_f'"'
+	}
+	global NWMV_CLEAN ""
+	exit `_nwmv_rc'
+end
+
+capture program drop _nwmovie_reg
+program _nwmovie_reg
+	args f
+	if `"`f'"' != "" global NWMV_CLEAN `"$NWMV_CLEAN "`f'" "'
+end
+
+capture program drop _nwmovie_run
+program _nwmovie_run
 	// edgecolor()/edgesize() are {help netname}s (a network whose own tie
 	// values supply per-edge color/width - see {help nwplot}'s identical
 	// edgecolor(string)/edgesize(string)), NOT Stata variables like
@@ -45,7 +65,8 @@ program nwmovie
 	local _nwmv_gifjs = "`_nwmv_pkgdir'/lib/vendor/gif.js"
 	local _nwmv_gifworker = "`_nwmv_pkgdir'/lib/vendor/gif.worker.js"
 	local _nwmv_mp4muxer = "`_nwmv_pkgdir'/lib/vendor/mp4-muxer.js"
-	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer {
+	local _nwmv_webmmuxer = "`_nwmv_pkgdir'/lib/vendor/webm-muxer.js"
+	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer _nwmv_webmmuxer {
 		capture confirm file "``_nwmv_f''"
 		if _rc {
 			di as error "{p 0 0 2}required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all{p_end}"
@@ -77,6 +98,26 @@ program nwmovie
 			exit 198
 		}
 		local _nwmv_auto = char(34) + "`_nwmv_ext'" + char(34)
+		// Linux (any Unix but macOS): the viewer's web engine cannot encode video reliably (WebKitGTK built for a newer
+		// GStreamer crashes its web process on the first VideoEncoder or MediaRecorder), so the page draws a GIF and
+		// ffmpeg makes the .mp4 or .webm from it. No ffmpeg: stop before anything is launched.
+		local _nwmv_viaff 0
+		if ("`c(os)'" == "Unix" | "$NW_FORCE_VIAFF" == "1") & inlist("`_nwmv_ext'", "mp4", "webm") {
+			_nwmovie_findffmpeg, ext(`_nwmv_ext')
+			local _nwmv_viaff 1
+			local _nwmv_auto = char(34) + "gifv" + char(34)
+		}
+		// Linux: the viewer needs a display to draw on
+		if "`c(os)'" == "Unix" {
+			local _nwmv_disp : environment DISPLAY
+			local _nwmv_wdisp : environment WAYLAND_DISPLAY
+			if "$NW_FAKE_NODISPLAY" == "1" local _nwmv_disp ""
+			if "$NW_FAKE_NODISPLAY" == "1" local _nwmv_wdisp ""
+			if `"`_nwmv_disp'`_nwmv_wdisp'"' == "" {
+				di as error "{p 0 0 2}nwmovie: export() needs a graphical display (DISPLAY is not set), because the movie is drawn and encoded in a viewer window.{p_end}"
+				exit 498
+			}
+		}
 		// macOS: the viewer cannot draw while the screen is locked and would never write the file
 		_nwmovie_screenlocked
 		if r(locked) == 1 {
@@ -123,8 +164,21 @@ program nwmovie
 		}
 	}
 
+	// export() without fname(): the page is only a means, so it goes to a file of its own in the temp folder (unique
+	// per Stata process, erased at the end); two exports in one folder no longer share (and unlink) movie.html.
+	local _nwmv_tmphtml 0
 	if "`fname'" == "" {
 		local fname "movie"
+		if `"`export'"' != "" {
+			local _nwmv_hd "`c(tmpdir)'"
+			if substr("`_nwmv_hd'", -1, 1) != "/" & substr("`_nwmv_hd'", -1, 1) != "\" local _nwmv_hd "`_nwmv_hd'/"
+			tempfile _nwmv_htf
+			global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+			mata: st_local("_nwmv_hid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_htf")))), "") + st_global("NW_UCNT"))
+			local fname "`_nwmv_hd'nwmovie_page_`_nwmv_hid'"
+			_nwmovie_reg "`fname'.html"
+			local _nwmv_tmphtml 1
+		}
 	}
 	if "`easing'" == "" {
 		local easing "ease-in-out-cubic"
@@ -372,7 +426,12 @@ program nwmovie
 				mata: mata drop _nwmv_waveM
 			}
 
-			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+			// one discarded draw: the random stream (and so a seeded layout) is the same as when the name used runiform()
+			local _nwmv_dummy = runiform()
+			tempfile _nwmv_kftf
+			global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+			mata: st_local("_nwmv_kfid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_kftf")))), "") + st_global("NW_UCNT"))
+			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`_nwmv_kfid'.json"
 			// fopen(path,"w") errors (602) if the path already exists,
 			// unlike a plain overwrite - matching nwplot.ado's own
 			// defensive `capture erase` before its identical interactive-
@@ -382,8 +441,10 @@ program nwmovie
 			// actual collision observed while building this: two
 			// sequential smoke-test runs landed on the identical seed).
 			capture erase "`_nwmv_out'"
+			_nwmovie_reg "`_nwmv_out'"
 			noi di "{txt}Resolving network {bf:`_nwmv_net'} (`_nwmv_i'/`_nwmv_k')..."
 			qui nwplot `_nwmv_net', ignorelgc interactive noopen movieexport("`_nwmv_out'") nodexy(`_nwmv_x' `_nwmv_y') `_nwmv_wave_color' `_nwmv_wave_symbol' `_nwmv_wave_size' `_nwmv_wave_edgecolor' `_nwmv_wave_edgesize' `_nwmv_label' `_nwmv_colorpalette' `_nwmv_edgecolorpalette' `_nwmv_symbolpalette' `_nwmv_scheme' `binary' `nosign'`sign'
+			_nwmovie_reg "`r(interactive)'"
 			capture confirm file "`_nwmv_out'"
 			if _rc {
 				di as error "nwmovie: failed to resolve network `_nwmv_net' via nwplot."
@@ -453,9 +514,15 @@ program nwmovie
 		nwset, mat(_nwmv_cumM_st) directed name(_nwmv_cumnet) labs(`_nwmv_labs')
 		matrix drop _nwmv_cumM_st
 
-		local _nwmv_out "`_nwmv_jsondir'nwmovie_evnodes_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+		local _nwmv_dummy = runiform()
+		tempfile _nwmv_evtf
+		global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+		mata: st_local("_nwmv_evid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_evtf")))), "") + st_global("NW_UCNT"))
+		local _nwmv_out "`_nwmv_jsondir'nwmovie_evnodes_`_nwmv_evid'.json"
 		capture erase "`_nwmv_out'"
+		_nwmovie_reg "`_nwmv_out'"
 		qui nwplot _nwmv_cumnet, ignorelgc `_nwmv_layout' iterations(`iterations') interactive noopen movieexport("`_nwmv_out'") `_nwmv_color' `_nwmv_symbol' `_nwmv_size' `_nwmv_colorpalette' `_nwmv_symbolpalette' `_nwmv_scheme' `_nwmv_label'
+		_nwmovie_reg "`r(interactive)'"
 		capture nwdrop _nwmv_cumnet
 		restore
 		capture confirm file "`_nwmv_out'"
@@ -478,9 +545,16 @@ program nwmovie
 		mata: mata drop `_nwmv_evlist' `_nwmv_cumM'
 	}
 
-	di "{txt}Wrote {bf:`fname'.html}"
+	if !`_nwmv_tmphtml' di "{txt}Wrote {bf:`fname'.html}"
 	if `"`export'"' != "" {
-		_nwmovie_export "`c(pwd)'/`fname'.html", export(`"`export'"') ext(`_nwmv_ext') timeout(`timeout')
+		if `_nwmv_tmphtml' local _nwmv_hfull "`fname'.html"
+		else local _nwmv_hfull "`c(pwd)'/`fname'.html"
+		local _nwmv_viaopt ""
+		if `_nwmv_viaff' local _nwmv_viaopt "viaff"
+		capture noisily _nwmovie_export "`_nwmv_hfull'", export(`"`export'"') ext(`_nwmv_ext') timeout(`timeout') `_nwmv_viaopt'
+		local _nwmv_exrc = _rc
+		if `_nwmv_tmphtml' capture erase "`fname'.html"
+		if `_nwmv_exrc' exit `_nwmv_exrc'
 	}
 	else if "`noopen'" == "" {
 		_nwopenviewer "`c(pwd)'/`fname'.html"
@@ -493,17 +567,29 @@ end
 // file html has AUTO_EXPORT set, so the page exports as soon as it is drawn.
 capture program drop _nwmovie_export
 program _nwmovie_export
-	syntax anything(name=htmlpath), export(string) ext(string) timeout(integer)
+	syntax anything(name=htmlpath), export(string) ext(string) timeout(integer) [viaff]
 	local htmlpath = subinstr(`"`htmlpath'"', char(34), "", .)
 	local _rngstate = c(rngstate)
 	local _nwtd "`c(tmpdir)'"
 	if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
-	local _tmpout = "`_nwtd'" + "nwmovie_export_" + strofreal(int(runiform()*1000000)) + ".`ext'"
+	tempfile _tf
+	global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+	mata: st_local("_id", invtokens(strofreal(ascii(pathbasename(st_local("_tf")))), "") + st_global("NW_UCNT"))
+	// viaff: the viewer writes a GIF, and ffmpeg makes the video from it
+	local _vext "`ext'"
+	if "`viaff'" != "" local _vext "gif"
+	local _tmpout = "`_nwtd'" + "nwmovie_export_" + "`_id'" + ".`_vext'"
 	set rngstate `_rngstate'
 	capture erase "`_tmpout'"
 	capture erase "`_tmpout'.error"
+	_nwmovie_reg "`_tmpout'"
+	_nwmovie_reg "`_tmpout'.error"
+	_nwmovie_reg "`_tmpout'.ff"
+	_nwmovie_reg "`_tmpout'.conv.`ext'"
+	_nwmovie_reg "`_tmpout'.conv.`ext'.log"
 	_nwopenviewer "`htmlpath'", output(`_tmpout')
 	local _viewercopy `"`r(viewercopy)'"'
+	_nwmovie_reg `"`r(htmlcopy)'"'
 	di "{txt}{p 0 0 2}Exporting the movie to {bf:`export'} (the viewer window closes when it is done)...{p_end}"
 	local _waited = 0
 	local _done = 0
@@ -514,6 +600,24 @@ program _nwmovie_export
 		if _rc == 0 local _done = 2
 		capture confirm file "`_tmpout'"
 		if _rc == 0 & `_done' == 0 local _done = 1
+		// the viewer died without a file (crash, closed by hand): stop waiting
+		if `_done' == 0 & mod(`_waited', 2000) == 0 & `_waited' >= 10000 {
+			_nwmovie_viewerlive `"`_viewercopy'"'
+			if r(live) == 0 {
+				capture confirm file "`_tmpout'"
+				if _rc == 0 local _done = 1
+				else {
+					capture confirm file "`_tmpout'.error"
+					if _rc == 0 local _done = 2
+					else local _done = 3
+				}
+			}
+		}
+	}
+	if `_done' == 3 {
+		_nwmovie_killviewer `"`_viewercopy'"'
+		di as error "{p 0 0 2}nwmovie: the viewer closed without writing the file (it crashed or was closed). Nothing was written.{p_end}"
+		exit 498
 	}
 	if `_done' == 2 {
 		mata: st_local("_errmsg", _nwmovie_slurpfile(st_local("_tmpout") + ".error"))
@@ -529,12 +633,113 @@ program _nwmovie_export
 	}
 	// the viewer writes the file atomically, but give it a moment to close
 	sleep 200
-	capture quietly copy "`_tmpout'" `"`export'"', replace
+	_nwmovie_killviewer `"`_viewercopy'"'
+	local _dest `"`export'"'
+	if "`viaff'" != "" {
+		// the page drew a GIF (25 frames per second); ffmpeg makes the requested video
+		_nwmovie_ffconv, in("`_tmpout'") out("`_tmpout'.conv.`ext'") ext(`ext')
+		capture confirm file "`_tmpout'.conv.`ext'"
+		if _rc {
+			di as error "{p 0 0 2}nwmovie: ffmpeg could not make the .`ext' file from the movie. Export a .gif file instead.{p_end}"
+			exit 498
+		}
+		capture erase "`_tmpout'"
+		capture quietly copy "`_tmpout'.conv.`ext'" "`_tmpout'", replace
+		capture erase "`_tmpout'.conv.`ext'"
+	}
+	// An .mp4 request is met with WebM by a web engine that can record only WebM (Windows/macOS engines with no H.264
+	// encoder). Look at the file; ffmpeg converts it if installed, otherwise it is written as .webm.
+	if "`ext'" == "mp4" & "`viaff'" == "" {
+		mata: st_local("_isweb", strofreal(_nwmovie_iswebm(st_local("_tmpout"))))
+		if "`_isweb'" == "1" {
+			local _webdest = substr(`"`export'"', 1, strrpos(`"`export'"', ".")) + "webm"
+			local _conv = 0
+			_nwmovie_ffconv, in("`_tmpout'") out("`_tmpout'.conv.mp4") ext(mp4)
+			capture confirm file "`_tmpout'.conv.mp4"
+			if _rc == 0 {
+				capture erase "`_tmpout'"
+				capture quietly copy "`_tmpout'.conv.mp4" "`_tmpout'", replace
+				capture erase "`_tmpout'.conv.mp4"
+				local _conv = 1
+			}
+			if !`_conv' {
+				local _dest `"`_webdest'"'
+				di as text "{p 0 0 2}nwmovie: this computer's viewer can record WebM but not MP4, and ffmpeg was not found (or failed) to convert it. The movie was written as {bf:`_webdest'} instead.{p_end}"
+			}
+			else di as text "{p 0 0 2}nwmovie: the viewer recorded WebM; ffmpeg converted it to MP4.{p_end}"
+		}
+	}
+	capture quietly copy "`_tmpout'" `"`_dest'"', replace
 	local _copyrc = _rc
 	capture erase "`_tmpout'"
-	_nwmovie_killviewer `"`_viewercopy'"'
 	if `_copyrc' exit `_copyrc'
-	di `"{txt}Wrote {bf:`export'}"'
+	di `"{txt}Wrote {bf:`_dest'}"'
+end
+
+// ffmpeg: path found, with the encoder the format needs. Stops with 498 (nothing launched) when it is not usable.
+capture program drop _nwmovie_findffmpeg
+program _nwmovie_findffmpeg
+	syntax , ext(string)
+	tempfile _ff1 _ff2
+	if "$NW_FAKE_NOFFMPEG" == "1" {
+		local _ffok 0
+	}
+	else {
+		capture shell command -v ffmpeg > "`_ff1'" 2>/dev/null
+		capture mata: st_local("_ffp", strtrim(subinstr(_nwmovie_slurpfile(st_local("_ff1")), char(10), " ")))
+		local _ffok = (_rc == 0 & `"`_ffp'"' != "")
+	}
+	if !`_ffok' {
+		di as error "{p 0 0 2}nwmovie: export(.`ext') on this system needs ffmpeg (the viewer draws a GIF and ffmpeg makes the .`ext' from it), and ffmpeg was not found. Install ffmpeg, or export a .gif file.{p_end}"
+		exit 498
+	}
+	local _enc = cond("`ext'" == "webm", "libvpx-vp9", "libx264")
+	capture shell ffmpeg -hide_banner -encoders 2>/dev/null | grep -c "`_enc'" > "`_ff2'"
+	capture mata: st_local("_ffn", strtrim(subinstr(_nwmovie_slurpfile(st_local("_ff2")), char(10), "")))
+	if _rc | real("`_ffn'") < 1 {
+		di as error "{p 0 0 2}nwmovie: this ffmpeg has no `_enc' encoder, which export(.`ext') needs. Install a full ffmpeg build, or export a .gif file.{p_end}"
+		exit 498
+	}
+end
+
+// ffmpeg conversion of a GIF (or WebM) to mp4/webm: constant 25 frames per second, even dimensions, yuv420p.
+capture program drop _nwmovie_ffconv
+program _nwmovie_ffconv
+	syntax , in(string) out(string) ext(string)
+	capture erase "`out'"
+	local vf `"fps=25,pad=ceil(iw/2)*2:ceil(ih/2)*2"'
+	if "`ext'" == "webm" local enc "-c:v libvpx-vp9 -b:v 0 -crf 33"
+	else local enc "-c:v libx264 -movflags +faststart"
+	if "`c(os)'" == "Windows" {
+		capture shell ffmpeg -y -loglevel error -i "`in'" -vf "`vf'" -pix_fmt yuv420p `enc' "`out'" 2> "`out'.log"
+	}
+	else {
+		capture shell ffmpeg -y -loglevel error -i "`in'" -vf "`vf'" -pix_fmt yuv420p `enc' "`out'" < /dev/null 2> "`out'.log"
+	}
+	capture erase "`out'.log"
+end
+
+// r(live): 1 if the viewer process started by nwmovie still runs, 0 if not, -1 if that cannot be told.
+capture program drop _nwmovie_viewerlive
+program _nwmovie_viewerlive, rclass
+	args vpath
+	return scalar live = -1
+	if `"`vpath'"' == "" exit
+	local vname = substr(`"`vpath'"', max(strrpos(`"`vpath'"', "/"), strrpos(`"`vpath'"', "\")) + 1, .)
+	if !regexm(`"`vname'"', "^nwedit_viewer_[0-9]+(\.exe)?$") exit
+	tempfile _lv
+	if "`c(os)'" == "Windows" {
+		capture shell tasklist /fi "imagename eq `vname'" /nh 2>nul | find /c "`vname'" > "`_lv'"
+	}
+	else {
+		// the bracket keeps the pattern from matching the shell that runs pgrep
+		local _pat = "[" + substr("`vname'", 1, 1) + "]" + substr("`vname'", 2, .)
+		capture shell pgrep -f "`_pat'( |$)" | wc -l > "`_lv'"
+	}
+	capture mata: st_local("_lvn", strtrim(_nwmovie_slurpfile(st_local("_lv"))))
+	if _rc | "`_lvn'" == "" exit
+	local _lvn = strtrim(subinstr(subinstr("`_lvn'", char(10), "", .), char(13), "", .))
+	return scalar live = (real("`_lvn'") > 0)
 end
 
 // macOS: is the screen session locked? r(locked) is 1 (locked), 0 (not locked) or -1 (unknown: other
@@ -574,9 +779,21 @@ program _nwmovie_killviewer
 	if !regexm(`"`vname'"', "^nwedit_viewer_[0-9]+(\.exe)?$") exit
 	if "`c(os)'" == "Windows" {
 		capture shell taskkill /f /im "`vname'" > nul 2>&1
+		// WebView2 keeps its profile folder next to the staged exe; it belongs to this run only
+		sleep 700
+		capture shell rmdir /s /q "`vpath'.WebView2" > nul 2>&1
 	}
 	else {
 		capture shell pkill -f "`vname'( |$)" > /dev/null 2>&1
+		// WebKit keeps per-program folders named after the staged copy (unique to this run); a path that does not exist is harmless
+		if "`c(os)'" == "Unix" {
+			sleep 500
+			// the environment variable, not the Stata global $HOME (that is empty and would point at /.cache)
+			local _kvhome : environment HOME
+			if `"`_kvhome'"' != "" & `"`_kvhome'"' != "/" {
+				capture shell rm -rf "`_kvhome'/.cache/`vname'" "`_kvhome'/.local/share/`vname'" "`_kvhome'/.config/`vname'" 2> /dev/null
+			}
+		}
 	}
 	capture erase `"`vpath'"'
 end
@@ -612,6 +829,19 @@ mata:
 // this one small, stable utility is simpler and more robust than
 // depending on cross-.ado Mata linkage that does not actually hold
 // under real, ordinary command usage.
+real scalar _nwmovie_iswebm(string scalar path)
+{
+	transmorphic fh
+	transmorphic b
+
+	fh = fopen(path, "r")
+	b = fread(fh, 4)
+	fclose(fh)
+	if (eltype(b) != "string" | b == J(0,0,"")) return(0)
+	if (strlen(b) != 4) return(0)
+	return(all(ascii(b) :== (26, 69, 223, 163)))
+}
+
 string scalar _nwmovie_slurpfile(string scalar path)
 {
 	string scalar s, chunk
@@ -645,6 +875,7 @@ void _nwmovie_writehtml(string scalar data, string scalar tplpath,
 	tpl = subinstr(tpl, "__NWMOVIE_CYTOSCAPE__", vjs)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFJS__", gifjs)
 	tpl = subinstr(tpl, "__NWMOVIE_MP4MUXER__", mp4muxer)
+	tpl = subinstr(tpl, "__NWMOVIE_WEBMMUXER__", _nwmovie_slurpfile(subinstr(mp4muxerpath, "mp4-muxer.js", "webm-muxer.js")))
 	tpl = subinstr(tpl, "__NWMOVIE_AUTOEXPORT__", autoexport)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFWORKER__", "atob(" + char(34) + gifworkerb64 + char(34) + ")")
 	tpl = subinstr(tpl, "__NWMOVIE_DATA__", data)
