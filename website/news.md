@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwcommands 3.32.0
+
+**nwcommands 3.32.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.32.0)). `nwmovie export()` now works on Linux: `.gif` is written by the viewer, `.mp4` and `.webm` are made with `ffmpeg` (the command stops at once, before anything is launched, when `ffmpeg` is missing). On macOS and Windows nothing changes. Failures, stalls and a locked macOS screen end the command with error 498 and stop the viewer; temporary files are removed; two exports at the same time no longer collide; `export()` without `fname()` no longer writes `movie.html`; `nwinstall, remove` works in console Stata. Tested on macOS (Stata 17): the movie, install, plot and dialog tests pass, but the real macOS viewer export was not run for this release because the screen was locked (the macOS code path is unchanged, and an earlier build of the same branch produced an `.mp4` there). The Linux and Windows 11 exports (StataNow 19.5 MP) were tested. Stata 18 was not run.
+
 ## 20 November 2026: nwcommands 3.31.0
 
 **nwcommands 3.31.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.31.0)). `nwcoefplot, msymbol(list)` sets one marker symbol per model (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart. Tested on macOS (Stata 17), Linux and Windows 11 (both StataNow 19.5 MP): the `nwcoefplot`, plot and dialog tests pass; on Stata 18 (Mac) the quick checks of 3.30.0 passed and 3.31.0 was not rerun.

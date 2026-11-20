@@ -4,11 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.32.0] - 2026-11-20
+
+### Added
+- `nwmovie export()` on Linux: `.mp4` and `.webm` are made with `ffmpeg` (libx264 and libvpx-vp9) from a GIF that the viewer draws at 25 frames per second; `.gif` is written by the viewer itself and needs nothing. Without `ffmpeg` (or without that encoder) the command stops at once with error 498, before anything is launched. On macOS and Windows nothing changes: the viewer encodes the video itself. Where a viewer engine can encode WebM through WebCodecs it does so with the vendored `webm-muxer.js` (MIT; registered in `NOTICE.md`).
 
 ### Fixed
-- `nwmovie export()` on Linux: `.mp4` and `.webm` no longer hang. The Linux WebKit web engine aborts its web process on the first video encoder it is given (WebCodecs or MediaRecorder; WebKitGTK built for a newer GStreamer than the system has), so on Linux the viewer draws a GIF at 25 frames per second and `ffmpeg` makes the `.mp4` (libx264) or `.webm` (libvpx-vp9) from it. Without `ffmpeg` (or without that encoder) the command stops with error 498 before anything is launched; `.gif` needs nothing. On macOS and Windows the viewer encodes the video itself, as before. In every case a failure, a stall (120 s without progress), a viewer that has disappeared without a file, or a Linux session without a display ends the command with error 498, and the viewer is stopped. Two exports started together no longer collide: temporary file and viewer names (viewer copy, page copy, nwplot's interactive page, keyframe files) are unique per Stata process, `export()` without `fname()` writes its page to the temp folder instead of `movie.html`, and the random stream is unchanged, so seeded layouts stay the same. `nwmovie` erases every temporary file it made (pages, keyframe files, export files, the staged viewer and its WebView2/WebKit profile folder) on success and on failure. `nwinstall, remove path()` no longer stops in console Stata at the window menu. Vendored `webm-muxer.js` (MIT) added for engines that can encode WebM through WebCodecs.
-- `nwmovie export()` on macOS stops at once (error 498) when the screen is locked, and stops the viewer it started when the export fails or times out (a timeout is error 498 as well). Other viewer windows are never touched. Elsewhere nothing changes.
+- `nwmovie export()`: a failure, a stall (120 s without progress), a viewer that has disappeared without a file, or a Linux session without a display ends the command with error 498, and the viewer is stopped. On macOS the command stops at once (error 498) when the screen is locked; other viewer windows are never touched.
+- `nwmovie` erases every temporary file it made (pages, keyframe files, export files, the staged viewer and its profile folder) on success and on failure.
+- Two exports started together no longer collide: temporary file and viewer names are unique per Stata process. The random stream is unchanged, so seeded layouts stay the same.
+- `export()` without `fname()` no longer writes `movie.html` into the current folder; the page goes to the temp folder.
+- `nwinstall, remove path()` no longer stops in console Stata at the window menu.
+
+Tested on macOS (Stata 17): `test_nwmovie`, `test_nwmovie_kill`, `test_nwinstall_ancillary`, `test_nwcoefplot`, `test_nwcore_plots`, `test_nwcore_plots2`, `test_dlg_options` and `test_dlg_plots` pass (in `test_nwinstall_ancillary` only the final real-export step stops, with the expected locked-screen error 498). The real macOS viewer export was not run for this release because the screen was locked; the macOS code path is unchanged, and an earlier build of the same branch produced an `.mp4` on the Mac. The `.mp4`, `.webm` and `.gif` exports, concurrent exports and the cleanup were tested on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP). Stata 18 was not run for this release.
 
 ## [3.31.0] - 2026-11-20
 

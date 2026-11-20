@@ -105,4 +105,4 @@ present; the command prints a note). {bf:Two-mode:} same as for the bipartite gr
 {synopt:{bf:r(comp_sizeid)}}distribution over components: one row per component with the columns size, compid (component id) and share{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

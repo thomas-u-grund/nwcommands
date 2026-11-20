@@ -188,4 +188,4 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
     {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
