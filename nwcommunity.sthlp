@@ -73,7 +73,8 @@ adopts whichever community its neighbors' total edge weight favors most, until n
 move. Label propagation does not optimize any global objective the way Louvain does, so its
 partitions are typically lower-modularity and less consistent run to run, but it scales far better
 to very large networks. All calculations are performed on the undirected network; directed networks
-require {bf:symmetrize}.
+require {bf:symmetrize}, which keeps a tie between two nodes if either direction has one (the union, with
+the larger of the two tie values; not only mutual ties).
 
 {pstd}
 {bf:algorithm(labelprop)} uses genuinely randomized sweep order and tie-breaking (unlike Louvain's
@@ -223,4 +224,4 @@ structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

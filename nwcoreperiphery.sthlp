@@ -47,7 +47,7 @@ correlates as highly as possible with the network actually observed, starting fr
 seed and then repeatedly trying to flip each node's status in turn, keeping any flip that improves
 the correlation, until a full sweep produces no further improvement. This is a greedy local search,
 not an exhaustive search over all 2^n possible partitions, so it can settle on a good but not
-necessarily globally optimal partition - the same character of algorithm {help nwcommunity} already
+necessarily globally optimal partition (a different starting partition can give a better core) - the same character of algorithm {help nwcommunity} already
 uses for modularity maximization.
 
 {pstd}
@@ -112,4 +112,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:S
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

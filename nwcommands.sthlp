@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.32.0  20nov2026}{...}
+{* *! version 3.32.1  20nov2026}{...}
 
 {title:nwcommands {hline 2} Network analysis in Stata}
 
@@ -57,4 +57,4 @@ nwcommands is free software under the GNU General Public License, version 3, as 
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

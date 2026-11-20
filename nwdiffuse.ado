@@ -680,9 +680,16 @@ void nw_dif_curve(real matrix C, real scalar t0, string scalar name)
 	real matrix M
 	T = cols(C)
 	q = colsum(C)'
-	newa = q - (0 \ q[1::(T-1)])
+	// rate: growth of the cumulative number of adopters; missing when nobody had adopted before (T = 1: no earlier period)
+	newa = q
 	rate = J(T, 1, 0)
-	if (T > 1) rate[2::T] = (q[2::T] - q[1::(T-1)]) :/ (q[1::(T-1)] :+ 1e-15)
+	if (T > 1) {
+		newa = q - (0 \ q[1::(T-1)])
+		for (t = 2; t <= T; t++) {
+			if (q[t-1] > 0) rate[t] = (q[t] - q[t-1]) / q[t-1]
+			else if (q[t] > 0) rate[t] = .
+		}
+	}
 	M = ((t0::(t0 + T - 1)), q, q / rows(C), rate, newa)
 	st_matrix(name, M)
 }

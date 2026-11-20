@@ -113,4 +113,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). {it:UCINET for Windows: Sof
 	{help nwcoreperiphery}, {help nwcommunity}, {help nwconcor}, {help nwlambda}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
