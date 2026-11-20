@@ -14,6 +14,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `saving()`, `export()` and the pass-through of graph options (appended last to the `twoway`, `graph bar` or `graph combine` call, so they replace defaults) for `nwcug`, `nwtriads`, `nwdyads`, `nwmotifs` and `nwcorrelate` (plot options); for `nwqap` (graph saving is `gsaving()`, because `save()` writes the permutation data); `nwmixing` and `nwtabulate` (the two pictures are named `name_plot` and `name_eiplot`; the pictures stay unnamed when none of `name()`, `saving()`, `export()` is given; `plotoptions()` and `eiplotoptions()` stay); `nwdiffuse curve` (also `plot` as a synonym of `graph`); `nwplotmatrix` and `nwdendrogram` (`name()`, `saving()`, `export()`). `nwcorrelate, noplot` switches off the density plot that is drawn with `permutations()` above 1. `saving()`, `export()` and graph options without the plot option stop with r(198); `name()` without the plot option is still accepted and ignored in the commands that accepted it before. The default pictures of all these commands are unchanged (default calls produce the same PNG files as before).
 - Help files and dialogs of these commands list the new options (plot entries added to the `nwdyads`, `nwtabulate` and `nwcorrelate` dialogs; `saving` and `export` entries in the `nwcug`, `nwqap`, `nwtriads`, `nwmixing`, `nwcoefplot` and `nwcompare` dialogs).
 
+### Fixes
+- `export(file.png, width(N))` of the plot commands wrote the file but ignored the options after the comma (width, height, ...) when the export string reached `_nw_gfinish save` wrapped in an additional compound-quote layer (`nwcug`, `nwdyads`, `nwtriads`, `nwcoefplot`, `nwcompare` and the other callers). `_nw_gfinish check` and `save` now strip such outer quote layers, so the literal and the double-quoted calling style give the same pictures; tests read the pixel width of each exported PNG.
+
 ## [3.28.0] - 2026-11-19
 
 ### Added

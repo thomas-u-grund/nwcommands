@@ -8,6 +8,7 @@ set graphics off
 local tmp `"`c(tmpdir)'/nwcore_plots_test"'
 capture mkdir `"`tmp'"'
 local nfail 0
+run cscripts/nw_pngwidth.do
 capture program drop nwp_ok
 program define nwp_ok
 	args what
@@ -19,6 +20,8 @@ program define nwp_files
 	gettoken stub rest : 0
 	foreach e of local rest {
 		confirm file `"`stub'.`e'"'
+		* every picture of this test is exported with width(300): the option must reach graph export
+		if "`e'" == "png" nw_assertwidth `"`stub'.`e'"' 300
 		erase `"`stub'.`e'"'
 	}
 end
@@ -213,14 +216,50 @@ capture nwdendrogram, saving(`"`tmp'/nodir/x"')
 assert _rc == 603
 nwp_ok "nwplotmatrix and nwdendrogram"
 
-* ---- the dialogs of the plot commands load (batch mode: db returns rc 0)
+* ---- nwcoefplot and nwcompare: export() with width(), also as the double-quoted string some callers pass; two widths each
+capture program drop nwp_fake
+program define nwp_fake, eclass
+	matrix b = (0.4, -0.3, 0.4)
+	matrix V = I(3) * 0.04
+	matrix colnames b = edges mutual tie
+	matrix colnames V = edges mutual tie
+	matrix rownames V = edges mutual tie
+	ereturn post b V, obs(50)
+	ereturn local cmd "nwergm"
+end
+nwp_fake
+estimates store nwp_f1
+foreach w in 500 700 {
+	nwcoefplot nwp_f1, export(`"`tmp'/cp`w'.png"', width(`w')) name(t_cp, replace)
+	nw_assertwidth `"`tmp'/cp`w'.png"' `w'
+	nwcompare nwp_f1 nwp_f1, graph name(t_cmp, replace) export(`"`tmp'/cmp`w'.png"', width(`w'))
+	nw_assertwidth `"`tmp'/cmp`w'.png"' `w'
+	nwcompare nwp_f1 nwp_f1, graph coefopts(export(`"`tmp'/cmpc`w'.png"', width(`w')))
+	nw_assertwidth `"`tmp'/cmpc`w'.png"' `w'
+	erase `"`tmp'/cp`w'.png"'
+	erase `"`tmp'/cmp`w'.png"'
+	erase `"`tmp'/cmpc`w'.png"'
+}
+* the width really changes the picture (the failure of the double-quoted style was a silent 720 x 432)
+nwclear
+nwrandom 12, prob(.3) name(n1)
+nwcug n1, `stat' plot export(`"`tmp'/w1.png"', width(500))
+nwcug n1, `stat' plot export(`"`tmp'/w2.png"', width(900))
+nw_assertwidth `"`tmp'/w1.png"' 500
+nw_assertwidth `"`tmp'/w2.png"' 900
+erase `"`tmp'/w1.png"'
+erase `"`tmp'/w2.png"'
+nwp_ok "nwcoefplot and nwcompare: export width in pixels"
+
+* ---- the dialogs of the plot commands load (batch mode: db returns r(8005), not testable there)
 foreach d in nwcug nwqap nwdyads nwtriads nwmixing nwtabulate nwcorrelate nwcoefplot nwcompare {
 	capture db `d'
-	if _rc {
+	if _rc == 8005 di as text "  SKIPPED: db `d' (no GUI in batch mode, r(8005))"
+	else if _rc {
 		di as error "  FAIL: db `d' returned r(" _rc ")"
 		local ++nfail
 	}
 }
-if `nfail' == 0 nwp_ok "dialogs load"
+if `nfail' == 0 nwp_ok "dialogs load (or skipped in batch mode)"
 if `nfail' > 0 exit 9
 di as text "ALL TESTS PASSED"

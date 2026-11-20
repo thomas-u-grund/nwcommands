@@ -64,6 +64,8 @@ program define _nw_gfinish, rclass
 			di as err `"{p 0 0 2}`pfx'saving(): only {bf:replace} is allowed after the comma.{p_end}"'
 			exit 198
 		}
+		_nw_gfinish_unquote `"`export'"'
+		local export `"`r(s)'"'
 		if "`plot'" != "" | "`always'" != "" {
 			if `"`sv0'"' != "" _nw_gfinish_file `"`sv0'"', pfx(`"`pfx'"') what(saving) svver(`svver')
 			gettoken ex0 : export, parse(",")
@@ -135,6 +137,8 @@ program define _nw_gfinish, rclass
 		forvalues __i = 1/3 {
 			if inlist(substr(`"`sv0'"', 1, 1), char(34), char(96)) gettoken sv0 : sv0
 		}
+		_nw_gfinish_unquote `"`export'"'
+		local export `"`r(s)'"'
 		gettoken ex0 exrest : export, parse(",")
 		local ex0 = trim(`"`ex0'"')
 		forvalues __i = 1/3 {
@@ -170,6 +174,21 @@ program define _nw_gfinish, rclass
 
 	di as err `"_nw_gfinish: unknown verb {bf:`verb'}"'
 	exit 198
+end
+
+// callers may hand over the export string wrapped in one more compound-quote layer (export(`"`__ex'"') with __ex = "f.png", width(900)):
+// strip such outer `" "' layers so that file name and graph export options parse the same as in the literal form
+capture program drop _nw_gfinish_unquote
+program define _nw_gfinish_unquote, rclass
+	args s
+	local s = trim(`"`s'"')
+	local n = 0
+	while substr(`"`s'"', 1, 2) == (char(96) + char(34)) & substr(`"`s'"', -2, 2) == (char(34) + char(39)) & `n' < 5 {
+		local s = substr(`"`s'"', 3, length(`"`s'"') - 4)
+		local s = trim(`"`s'"')
+		local ++n
+	}
+	return local s `"`s'"'
 end
 
 // the file name with a suffix put before the extension; ext() is added when the name has no extension

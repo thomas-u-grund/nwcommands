@@ -4,6 +4,7 @@ cscript
 capture program drop nwinstall
 set graphics off
 run _nw_gfinish.ado
+run cscripts/nw_pngwidth.do
 local tmp "`c(tmpdir)'/nw_gfinish_test"
 capture mkdir "`tmp'"
 
@@ -160,4 +161,86 @@ assert _rc == 198
 capture _nw_gfinish nosuchverb
 assert _rc == 198
 di as text "  PASS: save"
+
+* ---- save: the export options reach graph export in every calling style (width in pixels of the PNG)
+* style A: literal export("f.png", width(N)); style B: the string from check wrapped in a further compound quote
+* (local ex `"`r(export)'"'; export(`"`ex'"')), as the plot commands do
+twoway scatter mpg weight, name(gf_w, replace)
+local n 0
+foreach nm in "w one" "w,comma" "w_plain" {
+	local ++n
+	local w = 300 + 100 * `n'
+	foreach style in A B C D {
+		capture erase `"`tmp'/`nm'.png"'
+		if "`style'" == "A" _nw_gfinish save, name(gf_w) export(`"`tmp'/`nm'.png"', width(`w'))
+		if "`style'" == "B" {
+			_nw_gfinish check, plot(plot) export(`"`tmp'/`nm'.png"', width(`w'))
+			local ex `"`r(export)'"'
+			_nw_gfinish save, name(gf_w) export(`"`ex'"')
+		}
+		if "`style'" == "C" {
+			* the check output wrapped twice, drawn with always (suffix _gf_w)
+			_nw_gfinish check, plot(plot) export(`"`tmp'/`nm'.png"', width(`w'))
+			local ex `"`r(export)'"'
+			local ex2 `"`ex'"'
+			_nw_gfinish save, name(gf_w) always export(`"`ex2'"')
+			nw_assertwidth `"`tmp'/`nm'_gf_w.png"' `w'
+			capture erase `"`tmp'/`nm'_gf_w.png"'
+			continue
+		}
+		if "`style'" == "D" {
+			* the raw string, one compound-quote layer more than the literal
+			local inner `""`tmp'/`nm'.png", width(`w')"'
+			_nw_gfinish save, name(gf_w) export(`"`inner'"')
+		}
+		nw_assertwidth `"`tmp'/`nm'.png"' `w'
+	}
+	capture erase `"`tmp'/`nm'.png"'
+}
+* style C (always, so the file carries the graph name): width too
+_nw_gfinish check, always export(`"`tmp'/cc.png"', width(650))
+local ex `"`r(export)'"'
+_nw_gfinish save, name(gf_w) always export(`"`ex'"')
+nw_assertwidth `"`tmp'/cc_gf_w.png"' 650
+erase `"`tmp'/cc_gf_w.png"'
+* several graphs: suffixed files, each with the width (with graphics off Stata cannot export a graph that is not the newest
+* when width() is given: r(693) "could not find Graph window"; the test therefore turns graphics on for this block)
+set graphics on
+twoway scatter mpg weight, name(gf_w, replace)
+twoway scatter mpg weight, name(gf_w2, replace)
+_nw_gfinish check, plot(plot) export(`"`tmp'/mm.png"', width(450))
+local ex `"`r(export)'"'
+_nw_gfinish save, graphs(gf_w gf_w2) export(`"`ex'"')
+foreach g in gf_w gf_w2 {
+	nw_assertwidth `"`tmp'/mm_`g'.png"' 450
+	erase `"`tmp'/mm_`g'.png"'
+}
+set graphics off
+* saving() together with a wrapped export
+local inner `""`tmp'/sv.png", width(333)"'
+_nw_gfinish save, name(gf_w) saving(`"`tmp'/sv"') export(`"`inner'"')
+nw_assertwidth `"`tmp'/sv.png"' 333
+confirm file `"`tmp'/sv.gph"'
+erase `"`tmp'/sv.png"'
+erase `"`tmp'/sv.gph"'
+* the string parsing itself: backslash (Windows) paths, spaces, forward slashes, commas inside the quotes
+foreach f in `"C:\Users\x\My Folder\a.png"' `"D:/dir with space/a,b.png"' `"rel/a.png"' {
+	local one `""`f'", width(900)"'
+	local want `"`one'"'
+	_nw_gfinish_unquote `"`one'"'
+	assert `"`r(s)'"' == `"`want'"'
+	_nw_gfinish_unquote `"`"`one'"'"'
+	assert `"`r(s)'"' == `"`want'"'
+	_nw_gfinish_unquote `"`"`"`one'"'"'"'
+	assert `"`r(s)'"' == `"`want'"'
+}
+_nw_gfinish_unquote `"plain.png"'
+assert `"`r(s)'"' == "plain.png"
+_nw_gfinish_unquote ""
+assert `"`r(s)'"' == ""
+* the file name of a wrapped Windows path as the helper sees it
+local inner `""`tmp'/x.png", width(900)"'
+_nw_gfinish check, plot(plot) export(`"`inner'"') svver(16)
+assert `"`r(export)'"' == `"`inner'"'
+di as text "  PASS: export options in every calling style (pixel widths)"
 di as text "ALL TESTS PASSED"
