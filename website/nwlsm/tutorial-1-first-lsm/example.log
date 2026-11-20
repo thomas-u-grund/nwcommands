@@ -1,4 +1,3 @@
-
 . * nwlsm tutorial 1: a latent space model for the karate club
 . * Requires the core nwcommands and the package nwlsm. The data (Zachary 1977) ar
 > e loaded from the nwcommands website.
@@ -119,6 +118,12 @@ r34               0.9653     -0.0242
 Positions are identified up to rotation, reflection and translation only.
 
 . 
+. * --- the network drawn in the latent space ---
+. nwlsmplot, title("The karate club in the latent space")
+
+. graph export "karate_positions.png", width(900) replace
+
+. 
 . * --- does the fitted model reproduce the degrees and distances of the network
 > ? ---
 . estat gof
@@ -165,4 +170,4 @@ Each simulated network is drawn from the model at one of 100 posterior draws
 observed), P(simulated >= observed)), at most 1, as in latentnet. Missing
 dyads of the observed network count as no tie.
 
-.
+. 

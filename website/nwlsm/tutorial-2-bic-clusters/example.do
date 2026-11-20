@@ -21,6 +21,10 @@ display "best number of clusters: " r(best)
 * --- do the clusters agree with the factions that Sampson observed? ---
 estat clusters, generate(grp) nolist
 tabulate grp_class faction
+
+* --- the monks in the latent space, coloured by cluster ---
+nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space")
+graph export "monks_clusters.png", width(900) replace
 summarize grp_p1 grp_p2 grp_p3
 generate pmax = max(grp_p1, grp_p2, grp_p3)
 summarize pmax
