@@ -17,13 +17,19 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opt plot}
-{opt name(string)}]
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
+{it:twoway_options}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt plot}}Draw the dyad types as small pictures with their counts{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:dyads}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{it:twoway_options}}Other options of {helpb twoway}, applied last; without {opt plot}, {opt saving()}, {opt export()} and these options give an error{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -102,6 +108,15 @@ in Stata/BE.
 	{hline 11}{c +}{hline 11}{c +}{hline 11}
 	{res}{ralign 10:45}{col 20}{c |}{ralign 10:32}{col 32}{c |}{ralign 10:1148}{txt}
 
+
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
+replace the defaults. 
+
+{phang2}{cmd:. nwdyads flomarriage, plot export(dyads.png, width(1200))}{p_end}
 
 {title:Stored results}
 

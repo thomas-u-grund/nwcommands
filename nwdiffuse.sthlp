@@ -18,7 +18,7 @@
 {cmd:nwdiffuse threshold} [{it:{help netlist}}]{cmd:,} {it:when} {c -(}{opth gen:erate(newvar)} | {opth cou:nt(newvar)}{c )-} [{it:options}]
 
 {p 8 17 2}
-{cmd:nwdiffuse curve} [{it:{help netname}}]{cmd:,} {it:when} [{opt graph} {opt mat:rix(name)} {opt silent}]
+{cmd:nwdiffuse curve} [{it:{help netname}}]{cmd:,} {it:when} [{opt graph} {opt mat:rix(name)} {opt silent} {opt name(string)} {opt saving(filename)} {opt export(filename[, options])} {it:twoway_options}]
 
 {p 8 17 2}
 {cmd:nwdiffuse long} [{it:{help netlist}}]{cmd:,} {it:when} {opt clear} [{opth keep(varlist)} {opt lag(#)} {it:options}]
@@ -118,6 +118,15 @@ With {opt spont()}, every node that has not adopted also adopts with that probab
 network. The simulation stops early when nobody can adopt any more (no new adopters and {opt spont()} = 0 on a
 single network). The default direction is that a node is influenced by the nodes it has ties to, as in
 {cmd:exposure}; {opt incoming} reverses it.
+
+{title:Graph of the curve}
+
+{pstd}
+{cmd:nwdiffuse curve} {opt graph} (or its synonym {opt plot}) draws the cumulative proportion of adopters. {opt name()} names the graph in memory (it stays unnamed when {opt name()}, {opt saving()} and
+{opt export()} are all absent), {opt saving()} writes a {cmd:.gph} file and {opt export()} writes the graph with {helpb graph export}; the file extension sets the format and {cmd:width()} and the other
+{cmd:graph export} options follow a comma. A graph or file of the same name is replaced. Other options go to {helpb twoway} and come last. {opt saving()} and {opt export()} need {opt graph} or {opt plot}.
+
+{phang2}{cmd:. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))}{p_end}
 
 {title:Remarks}
 

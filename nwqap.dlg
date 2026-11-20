@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 422
+POSITION 10 10 550 478
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwqap - Multivariate QAP regression")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Formula: dependent network, then predictor networks:")
   EDIT cb_net 290 20 190 ., nomem
-  GROUPBOX gb_opt 10 44 520 328, label("Options")
+  GROUPBOX gb_opt 10 44 520 384, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
   TEXT tx_ed_type 20 82 260 ., label("Regression command to be used for dyad dataset; default = logit")
@@ -40,6 +40,10 @@ BEGIN
   EDIT ed_name 290 306 190 ., nomem option(name)
   TEXT tx_cx_force 20 334 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 334 190 ., label("force") option(force)
+  TEXT tx_gsaving 20 362 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_gsaving 290 362 190 ., save nomem option(gsaving)
+  TEXT tx_export 20 390 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 390 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -69,6 +73,8 @@ BEGIN
 		option main.cx_plot
 		optionarg main.ed_name
 		option main.cx_force
+		optionarg main.fi_gsaving
+		optionarg main.fi_export
 	endoptions
 	stata
 END

@@ -26,6 +26,9 @@
 {opth predict(newnetname)}
 {opt plot}
 {opt name(string)}
+{opt gsaving(filename)}
+{opt export(filename[, options])}
+{it:twoway_options}
 {opt qapspp}
 {opt force}]
 
@@ -45,6 +48,9 @@ valued network{p_end}
 {synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws -
 the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
 {synopt:{opt name(string)}}Name for the combined graph created by {opt plot}; default = {bf:qap}{p_end}
+{synopt:{opt gsav:ing(filename)}}Save the graph (not {opt save()}, which saves the permutation data) to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{it:twoway_options}}Other options of {helpb twoway}, applied last; without {opt plot}, {opt saving()}, {opt export()} and these options give an error{p_end}
 {synopt:{opt qapspp}}Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see
 {help nwqap##qapspp:qapspp} below{p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise){p_end}
@@ -229,6 +235,15 @@ when they already were friends at time1 (glasgow1). Furthermore two individuals 
 {it:j} are more likely to be friends at time2 when they both scored the same on smoking at
 time1 (smoke1). There is no effect for both having scored the same on sport1. 
 
+
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt gsaving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
+replace the defaults. 
+
+{phang2}{cmd:. nwqap wdv iv1 iv2, plot export(qap.png, width(1200))}{p_end}
 
 {title:Stored results}
 

@@ -2,7 +2,7 @@
 * (name(), saving(), export(), graph options, noplot, plot for graph), the checks of options without plot, bad values, data untouched,
 * title("") and, when the reference directory exists, that the default pictures are identical to those of the released core.
 * Run from the repository root. Reference: run cscripts/nwcore_plots_defaults.do with the released core (global NWP_OUT) and set the environment
-* variable NWCORE_PLOT_REF to that directory.
+* variable NWCORE_PLOT_REF to that directory. Produce the reference after `cscript` (it changes the rendering state: PNG bytes differ without it).
 cscript
 set graphics off
 local tmp `"`c(tmpdir)'/nwcore_plots_test"'
@@ -194,5 +194,14 @@ capture nwdiffuse curve n1, toa(toa) plot name(a b)
 assert _rc == 198
 nwp_ok "nwdiffuse"
 
+* ---- the dialogs of the plot commands load (batch mode: db returns rc 0)
+foreach d in nwcug nwqap nwdyads nwtriads nwmixing nwtabulate nwcorrelate nwcoefplot nwcompare {
+	capture db `d'
+	if _rc {
+		di as error "  FAIL: db `d' returned r(" _rc ")"
+		local ++nfail
+	}
+}
+if `nfail' == 0 nwp_ok "dialogs load"
 if `nfail' > 0 exit 9
 di as text "ALL TESTS PASSED"
