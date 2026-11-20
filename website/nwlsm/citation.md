@@ -9,9 +9,9 @@ description: "How to cite nwlsm, and the papers and software it builds on."
 # How to cite
 
 **nwlsm.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwlsm version` (for example "nwlsm 0.7.0"). The package has no DOI:
+`nwlsm version` (for example "nwlsm 1.0.0"). The package has no DOI:
 
-> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks (version 0.7.0).* GitHub. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
+> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks (version 1.0.0).* GitHub. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
 
 Please also cite the core package, nwcommands.
 
