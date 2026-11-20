@@ -42,6 +42,7 @@ f nwclear.sthlp
 f nwclique.sthlp
 f nwcloseness.sthlp
 f nwclustering.sthlp
+f nwcoefplot.sthlp
 f nwcohesion.sthlp
 f nwcollapse.sthlp
 f nwcommands.sthlp

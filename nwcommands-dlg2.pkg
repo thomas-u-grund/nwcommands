@@ -53,4 +53,5 @@ f nwspmatrix.dlg
 f nwdiffuse.dlg
 f nwbackbone.dlg
 f nwcompare.dlg
+f nwcoefplot.dlg
 f header.idlg

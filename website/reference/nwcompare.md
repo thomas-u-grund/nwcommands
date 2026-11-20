@@ -14,13 +14,15 @@ Compare the fit statistics of stored network models
 ## Syntax
 
 ```stata
-nwcompare [namelist] [, sort(criterion)]
+nwcompare [namelist] [, sort(criterion) graph coefopts(options)]
 namelist holds names of results saved with estimates store; a period (.) stands for the active estimation results. Without a list, all stored results are shown.
 ```
 
 | | |
 |---|---|
 | `sort(criterion)` | order the rows by `aic`, `bic`, `icl` (smallest first) or `ll` (largest first); default: the order of the list |
+| `graph` | also draw the coefficients of the models side by side with [nwcoefplot](nwcoefplot) |
+| `coefopts(options)` | options passed to [nwcoefplot](nwcoefplot), for example `keep()` or `eform` |
 
 ## Description
 
@@ -40,6 +42,8 @@ Criteria from different model families are not always comparable. An ERGM is a l
 
 `nwsbm` stores no coefficient vector, so `estimates store` cannot keep its results: list them with the period, as the active results. Restoring another model afterwards replaces them, so fit the block model last, or call `nwcompare` again after fitting it.
 
+With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with confidence intervals, one colour for each model) of the models that have a coefficient vector, restricted to the coefficients that all of them share by name; the sample models in the example below share `edges`. Models of different kinds that share no coefficient give a note instead of a graph.
+
 ## Examples
 
 - `. nwergm flomarriage, edges`
@@ -47,6 +51,8 @@ Criteria from different model families are not always comparable. An ERGM is a l
 - `. nwergm flomarriage, edges gwesp(.5)`
 - `. estimates store m1`
 - `. nwcompare m0 m1, sort(bic)`
+
+- `. nwcompare m0 m1, graph coefopts(eform)`
 
 - `. nwsbm flomarriage, maxblocks(4) seed(1)`
 - `. nwcompare m0 m1 .`
@@ -61,7 +67,7 @@ Criteria from different model families are not always comparable. An ERGM is a l
 
 ## Also see
 
-`nwergm`, `nwsaom`, `nwlsm`, `nwsbm`, `nwalaam`, `estimates`
+[nwcoefplot](nwcoefplot), `nwergm`, `nwsaom`, `nwlsm`, `nwsbm`, `nwalaam`, `estimates`
 
 ---
 
