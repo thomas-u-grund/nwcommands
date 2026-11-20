@@ -33,7 +33,7 @@
 {synopt:{opt name(name[, replace])}}name of the graph in memory; default {cmd:coefplot}; an existing graph is replaced{p_end}
 {synopt:{opt sav:ing(filename[, replace])}}save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
 {synopt:{opt exp:ort(filename[, options])}}write the graph with {helpb graph export}; an existing file is replaced{p_end}
-{synopt:{it:twoway_options}}other options of {helpb twoway}, applied to each panel; they come last, so {opt xscale()} and {opt xlabel()} replace the default axis{p_end}
+{synopt:{it:twoway_options}}other options of {helpb twoway}, applied to each panel; they come last, so {opt xscale()} and {opt xlabel()} replace the default axis; the size options {opt xsize()}, {opt ysize()}, {opt aspectratio()} and {opt scale()} replace the default size (with {opt byeq} or {opt mixeq} across several panels they apply to the combined graph){p_end}
 {synoptline}
 
 {title:Description}

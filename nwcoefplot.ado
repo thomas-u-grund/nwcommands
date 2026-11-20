@@ -12,6 +12,18 @@ program nwcoefplot, rclass
 	local saving `"`r(saving)'"'
 	local export `"`r(export)'"'
 
+	// size options (xsize, ysize, aspectratio, scale) are taken out of the pass-through options: the panel keeps its own default height,
+	// a user size replaces it, and in the combined graph the size options go to graph combine
+	local sizeopt ""
+	foreach so in xsize ysize aspectratio scale {
+		while ustrregexm(`"`options'"', "(^|[ ,])(`so'\([^)]*\))") {
+			local one = ustrregexs(2)
+			local sizeopt `"`sizeopt' `one'"'
+			local options = subinstr(`"`options'"', `"`one'"', "", 1)
+		}
+	}
+	local usersize = ustrregexm(`"`sizeopt'"', "ysize|aspectratio")
+
 	if "`byeq'" != "" & "`mixeq'" != "" {
 		di as err "byeq and mixeq cannot be combined"
 		exit 198
@@ -326,15 +338,21 @@ program nwcoefplot, rclass
 		_nw_gfinish blk "`xtp'", kind(xtitle) gopts(`"`options'"')
 		local xtopt `"`r(t)'"'
 		local ysz = min(max(2.5, 0.26 * `nk' * (1 + 0.15 * (`mi' - 1)) + 1.4), 14)
+		local pysz "ysize(`ysz')"
+		local psz ""
+		if `nep' == 1 & `usersize' local pysz ""
+		if `nep' == 1 local psz `"`sizeopt'"'
 		twoway `plots', `xl' `xs' `xr' ylabel(`yl', angle(0) noticks nogrid labsize(small)) yscale(range(0.4 `=`nk' + 0.6') noline) ///
 			ytitle("") `xtopt' `legopt' `ptitle' graphregion(color(white)) plotregion(margin(small)) ///
-			ysize(`ysz') `drawopt' `options'
+			`pysz' `psz' `drawopt' `options'
 		if `nep' > 1 local panels `panels' `g`ip''
 	}
 	if `nep' > 1 {
 		local ctitle ""
 		if `"`title'"' != "" local ctitle `"title(`title')"'
-		graph combine `panels', cols(1) `ctitle' `nopt' graphregion(color(white)) ysize(`=min(max(3, 0.32 * `totrows' + 1.4 * `nep'), 20)')
+		local cysz "ysize(`=min(max(3, 0.32 * `totrows' + 1.4 * `nep'), 20)')"
+		if `usersize' local cysz ""
+		graph combine `panels', cols(1) `ctitle' `nopt' graphregion(color(white)) `cysz' `sizeopt'
 	}
 	if `nep' > 1 {
 		foreach g of local panels {
