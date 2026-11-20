@@ -14,7 +14,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 ## 20 November 2026: nwcommands 3.31.0
 
-**nwcommands 3.31.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.31.0)). `nwcoefplot, msymbol(list)` sets one marker symbol per model (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart.
+**nwcommands 3.31.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.31.0)). `nwcoefplot, msymbol(list)` sets one marker symbol per model (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart. Tested on macOS (Stata 17), Linux and Windows 11 (both StataNow 19.5 MP): the `nwcoefplot`, plot and dialog tests pass; on Stata 18 (Mac) the quick checks of 3.30.0 passed and 3.31.0 was not rerun.
 
 ## 20 November 2026: nwlsm 1.0.2 and nwsaom 1.9.1
 
