@@ -170,7 +170,7 @@ One entry for each chapter. The entries use these headings:
 - **Data:** `lazega`, `gang`, `macaque`; `florentine` in Ex. 2.
 - **Builds on:** 6, 7.
 - **Commands:** `nwsym`, `nwcomponents`, `nwclique`, `nwkplex`, `nwnclique`, `nwkcore`, `nwkcomponents`,
-  `nwcohesion`, `nwcommunity`, `nwmodularity`, `nwplot`.
+  `nwcohesion`, `nwcommunity` (Louvain, Leiden, Infomap, label propagation), `nwmodularity`, `nwplot`.
 - **Where students get stuck:**
   - Forgetting that n-clique paths can leave the group, so two members may be connected only through outsiders.
   - Reporting a community result without the algorithm, its settings and the partition sizes. Louvain and label
@@ -188,7 +188,8 @@ One entry for each chapter. The entries use these headings:
 - **Data:** a small office typed in; `lazega`; `florentine`.
 - **Builds on:** 8, 9.
 - **Commands:** `nwsimindex`, `nwregular`, `nwconcor`, `nwcollapse`, `nwhierarchy`, `nwdendrogram`,
-  `nwcoreperiphery`, `nwtoedge`; `nwdissimilar` for directed profiles.
+  `nwcoreperiphery`, `nwplotmatrix`, `nwtoedge`; `nwdissimilar` for directed profiles; `nwsbm` (Chapter 23) when the
+  number of blocks should come from the data.
 - **Where students get stuck:**
   - Running `nwconcor` or `nwhierarchy` on two-mode data, which stops with error 6088. Project first, or cluster
     the profiles of one mode.
@@ -418,8 +419,10 @@ One entry for each chapter. The entries use these headings:
 - **Builds on:** 9, 10 (the blockmodel image), 21; 22 for reading MCMC chains.
 - **Commands:** `nwsbm` (`blocks()`, `maxblocks()`, `generate()`, `seed()`), `nwlsm` (`dim()`, `nsample()`,
   `burnin()`, `interval()`, `chains()`), `nwlsmplot`, `estat mcmcdiag`, `estat gof`; `tabulate` and `encode` to set
-  the blocks against office, practice and rank. Both packages are young (`nwsbm` 0.3.0, `nwlsm` 0.6.0 when the
-  chapter was written), and their options may still change.
+  the blocks against office, practice and rank.
+- **Common idea:** the chapter opens with what the two models share, so teach it first. Each actor has a hidden
+  attribute (a block, or a position); ties are independent once it is known; the amount of hidden structure is
+  chosen; the attribute is known only up to relabeling; no model term stands for reciprocity or closure.
 - **Where students get stuck:**
   - Treating the number of blocks as a finding. The ICL picks four blocks for the advice network, but three blocks
     are close (−2158 against −2162). Report the table of ICL values.
