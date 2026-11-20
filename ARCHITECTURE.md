@@ -9,6 +9,9 @@ Technical overview for anyone reading or extending the codebase, not just using 
   option validation, dispatch into Mata, and `ereturn`/`return` result posting. This is also
   literally the installable package — the repository root *is* the flat directory a plain
   `net install` lays out, so there is no separate `src/`-vs-`build/` split to reason about.
+  Plots in the core and in the model packages share one helper, `_nw_gfinish`, which checks and
+  normalises `name()`, `saving()`, `export()` and the graph options, so every plot command of the
+  family takes the same options.
 - **Mata core** (`unw_core.do`) — compiled into `lib/lnwcommands.mlib`. `NWdef` is the central
   class: every network is an `NWdef` instance, holding node/edge state, metadata (directedness,
   valued-ness, two-mode status, temporal declaration), and the algorithms that operate on it.
