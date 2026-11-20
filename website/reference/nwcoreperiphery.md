@@ -56,6 +56,11 @@ A network with no ties at all is rejected (there is no structure to fit a core-p
 . nwwebuse florentine, nwclear
 . nwcoreperiphery flomarriage, generate(_core)
 ```
+- The adjacency matrix with the core nodes first and the periphery last ([nwplotmatrix](nwplotmatrix)):
+
+```stata
+. nwplotmatrix flomarriage, sortby(_core) group(_core)
+```
 
 ## Stored results
 
@@ -73,4 +78,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

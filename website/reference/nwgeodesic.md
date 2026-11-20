@@ -27,7 +27,12 @@ noreplace
 generate(newvarname)
 xvars
 force
-bin:ary]
+bin:ary
+plot
+average
+gname(string)
+saving(filename)
+export(filename[, options])]
 ```
 
 | | |
@@ -43,6 +48,11 @@ bin:ary]
 | `xvars` | Generate Stata variables for the network |
 | `force` | the least-cost distances of a valued network are computed natively at any size and `force` is not needed; on a platform without the plugin a valued network of more than 100 nodes stops with r(198) unless `force` (slow Mata routine) or `binary` (count steps) is given; also runs the command although its two n x n matrices would not fit in 12 GB (above about 27,000 nodes) |
 | `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
+| `plot` | Draw a histogram of the finite geodesic distances (number of pairs at each whole distance); unconnected pairs are counted in a note, not drawn |
+| `average` | With `plot`: a dashed line at the mean distance of the connected pairs |
+| `gname(string)` | Name for the graph created by `plot`; default = **geodesic** (`name()` names the distance network) |
+| `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
 
 ## Description
 
@@ -117,6 +127,12 @@ In this first example, the average shortest path length is not defined because t
 ```
 (`nwgeodesic` also reports the network *radius* - the minimum node eccentricity - as an additional line here, and, if `generate()` is specified, stores each node's own *eccentricity* under that name; not reproduced above since it depends on live data.)
 
+## Drawing the distances
+
+`plot` draws, for the pairs of distinct nodes, how many are at distance 1, 2, 3, ... steps (the whole numbers are on the x axis). In an undirected network each pair counts once, in a directed network each ordered pair. Pairs without a path are not distances: their number is in a note under the graph, and `unconnected()` does not enter the histogram. `average` adds the mean distance of the connected pairs, the same number as **r(avgpath)** (or **r(avgpath_connected)** when pairs are unconnected). The network of distances and the displayed table are the same as without `plot`. `gname()` names the graph in memory (`name()` is the distance network), `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network and for a valued network whose distances are sums of 1/value^alpha, not step counts (`binary` or `alpha(0)` count steps).
+
+- `. nwgeodesic flomarriage, plot average export(distances.png, width(1000))`
+
 ## Stored results
 
 - **Scalars**
@@ -150,4 +166,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

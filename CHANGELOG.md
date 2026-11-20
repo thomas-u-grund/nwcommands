@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.30.0] - 2026-11-20
 
 ### Added
 - `nwdegree, plot`: the degree distribution as a graph (histogram of the generated degree variable; outdegree and indegree side by side for a directed network); `ccdf` draws P(degree >= k) on log-log axes; `standardize` is respected; `name()`, `saving()`, `export()` and graph options as in the plot convention. One one-mode network (two-mode, a list of networks, and a valued network without `binary` stop with error 198). Without `plot` the extra options are still the tabulate options.

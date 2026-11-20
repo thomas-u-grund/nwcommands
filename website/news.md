@@ -12,6 +12,20 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwcommands 3.30.0
+
+**nwcommands 3.30.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.30.0)).
+
+- `nwdegree, plot` draws the degree distribution (outdegree and indegree side by side for a directed network); `ccdf` draws P(degree >= k) on log-log axes.
+- `nwgeodesic, plot` draws the histogram of the geodesic distances, `average` marks the mean distance.
+- `nwdiffuse curve, plot(cumulative|new|both)` draws the cumulative proportion, the new adopters per period, or both.
+- `nwspectral, plot` draws the scree plot of the Laplacian eigenvalues with the algebraic connectivity; `embedding` adds a scatter of the second and third eigenvector.
+- `nwtriads, plot expected` writes the expected count of every triad type under the observed count.
+- Dialogs: `name`, `saving` and `export` entries for `nwdendrogram`, `nwplotmatrix` and `nwmixing`, and plot entries in the dialogs of the new plot options.
+- Help files of `nwcoreperiphery`, `nwfactions` and `nwconcor` show the ordered matrix (`nwplotmatrix, sortby() group()`).
+
+TESTING_SENTENCE_TO_FILL
+
 ## 20 November 2026: nwsaom 1.9.0, nwergm 1.11.0 and nwrem 1.6.0
 
 All three need nwcommands 3.29.0 or later for the graph options.

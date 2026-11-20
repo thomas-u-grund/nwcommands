@@ -30,7 +30,12 @@ tabulate_opt
 outputoff
 onemode
 raw
-binary]
+binary
+plot
+ccdf
+name(string)
+saving(filename)
+export(filename[, options])]
 ```
 
 | | |
@@ -49,6 +54,11 @@ binary]
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
 | `onemode` | Two-mode network: compute the one-mode degree of the bipartite graph instead of the two-mode degree (the default) |
 | `raw` | Two-mode network: the number of ties itself, not divided by the size of the other mode (`tnet::degree_tm`) |
+| `plot` | Draw the degree distribution: a histogram of the degree variable (outdegree and indegree side by side for a directed network); one one-mode network |
+| `ccdf` | With `plot`: the complementary cumulative distribution P(degree >= k) on log-log axes instead of the histogram |
+| `name(string)` | Name for the graph created by `plot`; default = **degree** |
+| `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
 
 ## Description
 
@@ -117,6 +127,13 @@ The next example saves the out- and indegree centrality in the variables *myout*
 . nwdegree glasgow1, generate(myout myin mysiolate) isolates
 ```
 
+## Drawing the distribution
+
+`plot` draws the distribution of the variable(s) just generated, over the nodes of the network: a histogram of the fraction of nodes at each degree (whole degrees get one bar each), or, with `ccdf`, the share of nodes with degree at least k on log-log axes (nodes of degree 0 are not on a log axis; their number is in the note). A directed network gives two panels, outdegree and indegree. `standardize` is respected: the variables are then the degrees divided by N - 1. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export` (the file extension sets the format; `width()` and the other `graph export` options follow a comma). With `plot`, the options that are not listed here are options of `twoway` (of `graph combine` for a directed network) and come last; without `plot` they are the options of the table, as always, and `name()`, `saving()`, `export()` and `ccdf` give an error. `plot` needs one network: a two-mode network (use `histogram` of the variable of [nw2degree](nw2degree)), a valued network whose degree is the strength (use `binary` or `alpha(0)`) and a list of networks stop with error 198.
+
+- `. nwdegree glasgow1, generate(myout myin) plot export(degree.png, width(1000))`
+- `. nwdegree glasgow1, generate(myout myin) plot ccdf name(ccdf)`
+
 ## Stored results
 
 - **Scalars**
@@ -139,4 +156,4 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

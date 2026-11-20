@@ -16,7 +16,7 @@ Diffusion and contagion on a network: exposure, thresholds, adoption curve, haza
 ```stata
 nwdiffuse exposure [netlist], when gen:erate(stub) | cou:nt(stub) [options]
 nwdiffuse threshold [netlist], when gen:erate(newvar) | cou:nt(newvar) [options]
-nwdiffuse curve [netname], when [graph mat:rix(name) silent name(string) saving(filename) export(filename[, options]) twoway_options]
+nwdiffuse curve [netname], when [graph plot[(cumulative|new|both)] mat:rix(name) silent name(string) saving(filename) export(filename[, options]) twoway_options]
 nwdiffuse long [netlist], when clear [keep(varlist) lag(#) options]
 nwdiffuse simulate [netlist], model(cascade|threshold|fraction) gen:erate(newvar) [simulation options]
 where when says who adopts when, either
@@ -70,6 +70,8 @@ With `spont()`, every node that has not adopted also adopts with that probabilit
 
 ## Graph of the curve
 
+`plot(cumulative)`, `plot(new)` and `plot(both)` choose the picture: `cumulative` (the default of `graph` and plain `plot`) is the cumulative proportion of adopters as a line, `new` is a bar chart of the new adopters in each period (whole numbers on the y axis) and `both` draws the two side by side in one graph (the options then go to `graph combine`).
+
 `nwdiffuse curve` `graph` (or its synonym `plot`) draws the cumulative proportion of adopters. `name()` names the graph in memory (it stays unnamed when `name()`, `saving()` and `export()` are all absent), `saving()` writes a `.gph` file and `export()` writes the graph with `graph export`; the file extension sets the format and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced. Other options go to `twoway` and come last. `saving()` and `export()` need `graph` or `plot`.
 
 - `. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))`
@@ -89,6 +91,7 @@ With `spont()`, every node that has not adopted also adopts with that probabilit
 - `. nwdiffuse exposure glasgow1, toa(toa) generate(expo) count(nexp) lag(1)`
 - `. nwdiffuse threshold glasgow1, toa(toa) generate(thresh) lag(1)`
 - `. nwdiffuse curve, toa(toa) graph`
+- `. nwdiffuse curve, toa(toa) plot(both) export(curve.png, width(1000))`
 
 - Hazard model of adoption with lagged exposure
 - `. preserve`
@@ -123,4 +126,4 @@ Kempe, D., J. Kleinberg, and E. Tardos. 2003. Maximizing the spread of influence
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

@@ -335,4 +335,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 	{help nwtabulate}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
