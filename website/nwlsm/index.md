@@ -13,6 +13,7 @@ Latent space models for networks in Stata: every actor has a position in a hidde
 {: .fs-6 .fw-300 }
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with the tutorial](tutorial-1-first-lsm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwlsm on GitHub](https://github.com/thomas-u-grund/nwlsm){: .btn .fs-5 .mb-4 .mb-md-0 }
 

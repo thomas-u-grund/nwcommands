@@ -13,6 +13,7 @@ Autologistic actor attribute models (ALAAM) for Stata: why do these actors, and 
 {: .fs-6 .fw-300 }
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-alaam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwalaam on GitHub](https://github.com/thomas-u-grund/nwalaam){: .btn .fs-5 .mb-4 .mb-md-0 }
 
