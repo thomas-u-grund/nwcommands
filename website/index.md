@@ -34,7 +34,7 @@ General Public License, version 3.
 | [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.10.0 |
 | [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data ([Manual](nwdynam/manual/)) | R package `goldfish` | 1.9.1 |
 | [**nwrem**](nwrem/) | Relational event models (REM) for event data ([Manual](nwrem/manual/)) | R package `relevent` | 1.5.1 |
-| [**nwalaam**](nwalaam/) | Autologistic actor attribute models (ALAAM) for a binary outcome on the actors of one network | ALAAMEE (Python) and MPNet | 1.2.0 |
+| [**nwalaam**](nwalaam/) | Autologistic actor attribute models (ALAAM) for a binary outcome on the actors of one network | ALAAMEE (Python) and MPNet | 1.3.0 |
 | [**nwlsm**](nwlsm/) | Latent space models for the ties of a network, and for social influence | R package `latentnet` | 1.0.0 |
 | [**nwsbm**](nwsbm/) | Stochastic block models and latent block models: which actors play the same role | R packages `sbm`, `blockmodels` and `greed` | 1.0.0 |
 

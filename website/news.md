@@ -12,6 +12,22 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwdynam 1.10.0 and nwalaam 1.3.0
+
+**nwdynam 1.10.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.10.0)). Needs nwcommands 3.29.0 or later for the graph options.
+
+- New `estat choiceplot` (choice and choice coordination models): the rank of the realised receiver among the risk set of every event by the fitted probability, with the share of events at rank k or better, mean and median rank and a table of top-k hits.
+- New `estat rateplot` (rate models, with or without intercept): observed against expected events per actor as sender, or per period for the most active actors.
+- `estat outliers`, `estat changepoints`, `estat choiceplot` and `estat rateplot` take `name()`, `saving()`, `export()` and the graph options of `twoway`, in the same way as the plots of the core; default pictures are unchanged; titles of the new plots are black.
+
+**nwalaam 1.3.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.3.0)). The plots need nwcommands 3.29.0 or later.
+
+- New `estat gof, distplot`: histogram of the simulated values of every statistic with the observed value as a red line.
+- `estat gof` and `estat mcmcdiag` take `saving()`, `export()` and graph options, with default graph names.
+- Fix: `estat mcmcdiag, plot` drew the wrong columns of the stored trace in the panels of the differences after `method(sa)` and `method(ee)`.
+
+Tested on macOS (Stata 17), and on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of both packages. Stata 18 on the Mac was not run for these two releases; the compiled plugins are unchanged.
+
 ## 20 November 2026: nwcommands 3.29.0
 
 **nwcommands 3.29.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.29.0)).
