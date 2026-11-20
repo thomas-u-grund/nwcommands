@@ -9,9 +9,15 @@ description: "How to cite nwalaam, and the papers and software it builds on."
 # How to cite
 
 **nwalaam.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwalaam version` (for example "nwalaam 1.3.0"). The package has no DOI:
+`nwalaam version` (for example "nwalaam 1.3.0"). To cite the software:
 
 > Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models (version 1.3.0).* GitHub. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
+
+Cite the manual, which has a DOI:
+
+> Grund, T. U. (2026). *nwalaam: Autologistic actor attribute models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24397901](https://doi.org/10.5281/zenodo.24397901)
+
+The DOI is the one of all versions of the manual, so it always leads to the latest manual.
 
 Please also cite the core package, nwcommands.
 

@@ -17,7 +17,7 @@ timestamped events.
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-dynam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwdynam on GitHub](https://github.com/thomas-u-grund/nwdynam){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Manual](manual/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Manual](https://doi.org/10.5281/zenodo.24398099){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## What nwdynam is
 
