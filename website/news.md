@@ -25,7 +25,7 @@ All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases
 
 The new plots of the model packages (`nwsaom`, `nwergm`, `nwalaam`, `nwdynam`, `nwrem`) come with their own releases and need nwcommands 3.29.0 or later.
 
-TESTING_SENTENCE_TO_FILL
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): the test files of the new and changed plot commands run clean on all three, and the widths of exported pictures were measured on Linux and Windows, including a Windows folder name with a space.
 
 ## 20 November 2026: nwlsm 1.0.0 and nwsbm 1.0.0
 
