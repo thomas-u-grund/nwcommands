@@ -22,7 +22,7 @@ example `nwsaom version`.
 
 > Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.9.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.9.1").
 
 **nwergm.** Cite the manual. It has a DOI:
 
@@ -50,7 +50,7 @@ Each DOI is the one of all versions of the manual, so it always leads to the lat
 
 > Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
 
-> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
+> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 1.0.2) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
 
 > Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
 
@@ -92,7 +92,7 @@ Each package has its own releases on GitHub:
 | nwsbm | [github.com/thomas-u-grund/nwsbm/releases](https://github.com/thomas-u-grund/nwsbm/releases) |
 
 To install a particular release of a model package, put its tag in the URL of `net install`, for
-example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.0/) replace`.
+example `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.1/) replace`.
 See [Installation & Setup](../tutorials/01-installation-setup/).
 
 ## Acknowledgments

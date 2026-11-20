@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwlsm 1.0.2 and nwsaom 1.9.1
+
+**nwlsm 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.2)). `edgecov()` with a network, or with a matrix that has a missing diagonal (as the matrix of a network from `nwtomata` has), no longer stops with "edge covariates must not have missing values": the diagonal of a one-mode matrix is not a dyad and is ignored; missing values off the diagonal are still an error.
+
+**nwsaom 1.9.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.9.1)). No change in any command; the dialog test now also covers the plot options of `estat gof`, `estat timetest`, `estat convergence` and `nwsaom meta`.
+
+Tested on macOS (Stata 17) and, for the plot and error-path tests, on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): for nwlsm the `edgecov()` test (a fit with `edgecov()` of a network and a missing diagonal ran on all three systems), the error-path tests, the plot tests and the dialog plot tests, plus the dialog assembly test on the Mac only; for nwsaom the dialog assembly test and the ado test on the Mac, and the plot test on all three. Stata 18 on the Mac was not run.
+
 ## 20 November 2026: nwcommands 3.30.0
 
 **nwcommands 3.30.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.30.0)).
