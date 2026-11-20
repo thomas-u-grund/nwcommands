@@ -859,7 +859,10 @@ async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
   const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6e6 });
   const chunks = [];
   rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  const stopped = new Promise(resolve => { rec.onstop = resolve; });
+  const stopped = new Promise((resolve, reject) => {
+    rec.onstop = resolve;
+    rec.onerror = e => reject(new Error('the video recorder failed' + (e && e.error && e.error.message ? ': ' + e.error.message : '')));
+  });
   rec.start();
   for (let i = 0; i < canvases.length; i++) {
     status.textContent = 'Recording frame ' + (i + 1) + '/' + canvases.length;
@@ -868,7 +871,8 @@ async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
     await new Promise(r => setTimeout(r, 1000 / fps));
   }
   rec.stop();
-  await stopped;
+  await Promise.race([stopped, new Promise((_, reject) => setTimeout(() => reject(new Error('the video recorder did not finish')), 15000))]);
+  if (!chunks.length) throw new Error('the video recorder produced no data');
   const type = mime.split(';')[0];
   return { blob: new Blob(chunks, { type }), ext: type === 'video/mp4' ? 'mp4' : 'webm', mime: type };
 }
@@ -915,21 +919,63 @@ function exportButton(id, make) {
 exportButton('btnGif', makeGifBlob);
 exportButton('btnVideo', status => makeVideoBlob(status, 'any'));
 
+// What this web engine can encode, without rendering anything: used by the
+// unattended export to stop at once (instead of rendering all frames first)
+// when the requested format cannot be made.
+async function videoSupport() {
+  const r = { mp4: false, webm: false };
+  if (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
+    for (const codec of ['avc1.640033', 'avc1.4d0033', 'avc1.42003e', 'avc1.42001f']) {
+      try {
+        const s = await VideoEncoder.isConfigSupported({ codec, width: 640, height: 480, bitrate: 2e6, framerate: 25, avc: { format: 'avc' } });
+        if (s.supported) { r.mp4 = true; break; }
+      } catch (e) { /* next */ }
+    }
+  }
+  if (typeof MediaRecorder !== 'undefined' && typeof HTMLCanvasElement.prototype.captureStream === 'function') {
+    if (MediaRecorder.isTypeSupported('video/mp4')) r.mp4 = true;
+    if (['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].some(m => MediaRecorder.isTypeSupported(m))) r.webm = true;
+  }
+  return r;
+}
+
 // Unattended export (nwmovie ..., export(file)): the viewer was started
 // with an output path, and nwmovie.ado set AUTO_EXPORT to the format. The
 // page exports once it has drawn, then posts the file (or the error) to
-// the native bridge, which writes it and closes the window.
+// the native bridge, which writes it and closes the window. Anything that
+// goes wrong - a thrown error, an unhandled promise, a step that stalls -
+// is reported to the bridge at once, so the viewer never waits for a file
+// that will not come. An MP4 request is met with WebM when the engine can
+// record only WebM; nwmovie.ado looks at the file and says so.
 if (AUTO_EXPORT && hasNativeSave) {
   const status = document.getElementById('gifStatus');
+  let finished = false, lastProgress = Date.now();
+  const report = msg => { if (finished) return; finished = true; nativeSaver(msg); };
+  const fail = err => report({ error: String(err && err.message ? err.message : err) });
+  window.addEventListener('error', e => fail(e.error || e.message || 'script error'));
+  window.addEventListener('unhandledrejection', e => fail(e.reason || 'unhandled error'));
+  new MutationObserver(() => { lastProgress = Date.now(); })
+    .observe(status, { childList: true, characterData: true, subtree: true });
+  const STALL_MS = 120000;
+  const dog = setInterval(() => {
+    if (finished) { clearInterval(dog); return; }
+    if (Date.now() - lastProgress > STALL_MS)
+      fail('the export stalled (last step: ' + (status.textContent || 'start') + ')');
+  }, 2000);
   const run = async () => {
     try {
+      if (AUTO_EXPORT !== 'gif') {
+        const sup = await videoSupport();
+        const can = AUTO_EXPORT === 'webm' ? sup.webm : (sup.mp4 || sup.webm);
+        if (!can) throw new Error('this viewer cannot encode ' + AUTO_EXPORT.toUpperCase() + ' video (no usable video encoder in its web engine); export a .gif file instead');
+      }
       const out = AUTO_EXPORT === 'gif' ? await makeGifBlob(status)
-        : await makeVideoBlob(status, AUTO_EXPORT);
-      if (AUTO_EXPORT !== 'gif' && out.ext !== AUTO_EXPORT)
-        throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not ' + AUTO_EXPORT.toUpperCase());
-      nativeSaver({ filename: 'nwmovie_export.' + out.ext, dataBase64: await blobToBase64(out.blob) });
+        : await makeVideoBlob(status, AUTO_EXPORT === 'mp4' ? 'any' : AUTO_EXPORT);
+      if (AUTO_EXPORT === 'webm' && out.ext !== 'webm')
+        throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not WEBM');
+      report({ filename: 'nwmovie_export.' + out.ext, dataBase64: await blobToBase64(out.blob) });
     } catch (err) {
-      nativeSaver({ error: String(err && err.message ? err.message : err) });
+      fail(err);
     }
   };
   // two animation frames: the first layout pass and paint have happened

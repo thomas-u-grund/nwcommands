@@ -77,6 +77,17 @@ program nwmovie
 			exit 198
 		}
 		local _nwmv_auto = char(34) + "`_nwmv_ext'" + char(34)
+		// Linux: the viewer needs a display to draw on
+		if "`c(os)'" == "Unix" {
+			local _nwmv_disp : environment DISPLAY
+			local _nwmv_wdisp : environment WAYLAND_DISPLAY
+			if "$NW_FAKE_NODISPLAY" == "1" local _nwmv_disp ""
+			if "$NW_FAKE_NODISPLAY" == "1" local _nwmv_wdisp ""
+			if `"`_nwmv_disp'`_nwmv_wdisp'"' == "" {
+				di as error "{p 0 0 2}nwmovie: export() needs a graphical display (DISPLAY is not set), because the movie is drawn and encoded in a viewer window.{p_end}"
+				exit 498
+			}
+		}
 		// macOS: the viewer cannot draw while the screen is locked and would never write the file
 		_nwmovie_screenlocked
 		if r(locked) == 1 {
@@ -514,6 +525,24 @@ program _nwmovie_export
 		if _rc == 0 local _done = 2
 		capture confirm file "`_tmpout'"
 		if _rc == 0 & `_done' == 0 local _done = 1
+		// the viewer died without a file (crash, closed by hand): stop waiting
+		if `_done' == 0 & mod(`_waited', 2000) == 0 & `_waited' >= 10000 {
+			_nwmovie_viewerlive `"`_viewercopy'"'
+			if r(live) == 0 {
+				capture confirm file "`_tmpout'"
+				if _rc == 0 local _done = 1
+				else {
+					capture confirm file "`_tmpout'.error"
+					if _rc == 0 local _done = 2
+					else local _done = 3
+				}
+			}
+		}
+	}
+	if `_done' == 3 {
+		_nwmovie_killviewer `"`_viewercopy'"'
+		di as error "{p 0 0 2}nwmovie: the viewer closed without writing the file (it crashed or was closed). Nothing was written.{p_end}"
+		exit 498
 	}
 	if `_done' == 2 {
 		mata: st_local("_errmsg", _nwmovie_slurpfile(st_local("_tmpout") + ".error"))
@@ -529,12 +558,74 @@ program _nwmovie_export
 	}
 	// the viewer writes the file atomically, but give it a moment to close
 	sleep 200
-	capture quietly copy "`_tmpout'" `"`export'"', replace
+	_nwmovie_killviewer `"`_viewercopy'"'
+	// An .mp4 request is met with WebM by a web engine that can record only WebM. Look at the file.
+	local _dest `"`export'"'
+	if "`ext'" == "mp4" {
+		mata: st_local("_isweb", strofreal(_nwmovie_iswebm(st_local("_tmpout"))))
+		if "`_isweb'" == "1" {
+			local _webdest = substr(`"`export'"', 1, strrpos(`"`export'"', ".")) + "webm"
+			local _ff ""
+			if "`c(os)'" == "Windows" {
+				capture shell where ffmpeg > "`_tmpout'.ff" 2>nul
+			}
+			else {
+				capture shell command -v ffmpeg > "`_tmpout'.ff" 2>/dev/null
+			}
+			mata: st_local("_ff", strtrim(subinstr(subinstr(_nwmovie_slurpfile(st_local("_tmpout") + ".ff"), char(10), " "), char(13), " ")))
+			capture erase "`_tmpout'.ff"
+			local _conv = 0
+			if `"`_ff'"' != "" {
+				capture erase "`_tmpout'.conv.mp4"
+				if "`c(os)'" == "Windows" {
+					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4"
+				}
+				else {
+					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4" < /dev/null
+				}
+				capture confirm file "`_tmpout'.conv.mp4"
+				if _rc == 0 {
+					capture erase "`_tmpout'"
+					capture quietly copy "`_tmpout'.conv.mp4" "`_tmpout'", replace
+					capture erase "`_tmpout'.conv.mp4"
+					local _conv = 1
+				}
+			}
+			if !`_conv' {
+				local _dest `"`_webdest'"'
+				di as text "{p 0 0 2}nwmovie: this computer's viewer can record WebM but not MP4, and ffmpeg was not found (or failed) to convert it. The movie was written as {bf:`_webdest'} instead.{p_end}"
+			}
+			else di as text "{p 0 0 2}nwmovie: the viewer recorded WebM; ffmpeg converted it to MP4.{p_end}"
+		}
+	}
+	capture quietly copy "`_tmpout'" `"`_dest'"', replace
 	local _copyrc = _rc
 	capture erase "`_tmpout'"
-	_nwmovie_killviewer `"`_viewercopy'"'
 	if `_copyrc' exit `_copyrc'
-	di `"{txt}Wrote {bf:`export'}"'
+	di `"{txt}Wrote {bf:`_dest'}"'
+end
+
+// r(live): 1 if the viewer process started by nwmovie still runs, 0 if not, -1 if that cannot be told.
+capture program drop _nwmovie_viewerlive
+program _nwmovie_viewerlive, rclass
+	args vpath
+	return scalar live = -1
+	if `"`vpath'"' == "" exit
+	local vname = substr(`"`vpath'"', max(strrpos(`"`vpath'"', "/"), strrpos(`"`vpath'"', "\")) + 1, .)
+	if !regexm(`"`vname'"', "^nwedit_viewer_[0-9]+(\.exe)?$") exit
+	tempfile _lv
+	if "`c(os)'" == "Windows" {
+		capture shell tasklist /fi "imagename eq `vname'" /nh 2>nul | find /c "`vname'" > "`_lv'"
+	}
+	else {
+		// the bracket keeps the pattern from matching the shell that runs pgrep
+		local _pat = "[" + substr("`vname'", 1, 1) + "]" + substr("`vname'", 2, .)
+		capture shell pgrep -f "`_pat'( |$)" | wc -l > "`_lv'"
+	}
+	capture mata: st_local("_lvn", strtrim(_nwmovie_slurpfile(st_local("_lv"))))
+	if _rc | "`_lvn'" == "" exit
+	local _lvn = strtrim(subinstr(subinstr("`_lvn'", char(10), "", .), char(13), "", .))
+	return scalar live = (real("`_lvn'") > 0)
 end
 
 // macOS: is the screen session locked? r(locked) is 1 (locked), 0 (not locked) or -1 (unknown: other
@@ -612,6 +703,19 @@ mata:
 // this one small, stable utility is simpler and more robust than
 // depending on cross-.ado Mata linkage that does not actually hold
 // under real, ordinary command usage.
+real scalar _nwmovie_iswebm(string scalar path)
+{
+	transmorphic fh
+	transmorphic b
+
+	fh = fopen(path, "r")
+	b = fread(fh, 4)
+	fclose(fh)
+	if (eltype(b) != "string" | b == J(0,0,"")) return(0)
+	if (strlen(b) != 4) return(0)
+	return(all(ascii(b) :== (26, 69, 223, 163)))
+}
+
 string scalar _nwmovie_slurpfile(string scalar path)
 {
 	string scalar s, chunk

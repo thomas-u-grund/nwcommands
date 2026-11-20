@@ -170,7 +170,10 @@ or {opt speed()} (event mode): three waves with the default {cmd:duration(800)} 
 {pstd}
 {opt export()} needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode
 the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), {cmd:nwmovie} stops with a message saying so; export a
-{bf:.gif} file instead, which every engine can write. The {bf:Export video} button in the interactive view writes MP4 where the engine can
+{bf:.gif} file instead, which every engine can write. If the engine can record only WebM, an {bf:.mp4} request is converted with {cmd:ffmpeg} when
+that is installed; otherwise the movie is written as {bf:.webm} next to the requested name, and {cmd:nwmovie} says so. On Linux the viewer needs a
+graphical display; without one {cmd:nwmovie} stops with r(498). If the viewer closes or stops responding, {cmd:nwmovie} stops with r(498) instead of
+waiting for {opt timeout()}. The {bf:Export video} button in the interactive view writes MP4 where the engine can
 and WebM otherwise.
 
 
