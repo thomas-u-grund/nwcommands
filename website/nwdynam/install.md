@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.9.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.10.0:
 
 ```stata
-. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.9.1/) replace
+. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/v1.10.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwdynam version
-nwdynam version 1.9.1, 18nov2026
+nwdynam version 1.10.0, 20nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../d/dynam_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R goldfish 1.6.12
@@ -76,7 +76,7 @@ Repeat the `net install` line with `replace`. Updating the core never overwrites
 ## The native plugin
 
 The package ships a compiled plugin for macOS, Linux and Windows. It is installed together with the package and
-found automatically; nothing needs to be configured. The plugin of version 1.9.1 (the same file as in 1.8.0) has been tested on macOS, Linux and Windows. Every fit (choice, rate, rate with
+found automatically; nothing needs to be configured. The plugin of version 1.10.0 (the same file as in 1.8.0) has been tested on macOS, Linux and Windows. Every fit (choice, rate, rate with
 intercept and choice coordination, with all effects and options) evaluates the likelihood, its gradient and its
 Hessian in the plugin, which the optimizer in Mata calls. There is no slower fallback: without a working plugin
 `nwdynam` stops with return code 601 (plugin file missing) or 3495 (plugin older than the package or not loadable).

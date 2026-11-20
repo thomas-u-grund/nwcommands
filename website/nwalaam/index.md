@@ -57,11 +57,11 @@ close to it. [Tutorial 1](tutorial-1-first-alaam/) shows the numbers; `method(ee
 | Effects | for undirected, directed and two-mode networks: density, activity, contagion (also as threshold, fraction and share of exposed neighbours, and the same for exposed actors without the outcome), two- and three-stars, triangles, geometrically weighted effects, four-cycles, covariate effects (binary, categorical, continuous), and setting, geographic and distance effects; the list is in `help nwalaam` |
 | Estimation | stochastic approximation (default, maximum likelihood) or the equilibrium-expectation update of ALAAMEE (`method(ee)`); maximum pseudo-likelihood (`mple`) for a first look |
 | Samplers | toggle sampler, zero-or-one sampler for rare outcomes, snowball-conditional sampler with zones |
-| After the fit | `nwalaam simulate` (outcome vectors from the model), `estat gof` (goodness of fit), `estat mcmcdiag` (convergence) |
+| After the fit | `nwalaam simulate` (outcome vectors from the model), `estat gof` (goodness of fit, also as histograms with `distplot`), `estat mcmcdiag` (convergence) |
 | Agreement with ALAAMEE | every change statistic agrees with ALAAMEE's to rounding error on random undirected, directed and two-mode networks with missing values |
 | Agreement with exact maximum likelihood | karate club (2^34 outcome vectors) and a network of 16 actors (2^16): stochastic approximation reproduces the exact estimates |
 | Engine | a compiled plugin for the sampler (macOS, Linux, Windows); there is no slower fallback |
-| Version | 1.2.0 (19 November 2026) |
+| Version | 1.3.0 (20 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
