@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 478
+POSITION 10 10 550 618
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwdegree - Degree centrality and distribution")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 384, label("Options")
+  GROUPBOX gb_opt 10 44 520 524, label("Options")
   TEXT tx_cx_replace 20 54 260 ., label("Overwrite existing variables")
   CHECKBOX cx_replace 290 54 190 ., label("replace") option(replace)
   TEXT tx_cx_standardize 20 82 260 ., label("Divide degree or strength by N - 1")
@@ -44,6 +44,16 @@ BEGIN
   CHECKBOX cx_onemode 290 362 190 ., label("onemode") option(onemode)
   TEXT tx_cx_raw 20 390 260 ., label("Two-mode network: raw degree, not divided by the size of the other mode")
   CHECKBOX cx_raw 290 390 190 ., label("raw") option(raw)
+  TEXT tx_plot 20 418 260 ., label("Draw the degree distribution (histogram; one network, one-mode)")
+  CHECKBOX cx_plot 290 418 190 ., label("plot") option(plot)
+  TEXT tx_ccdf 20 446 260 ., label("plot: complementary cumulative distribution on log-log axes")
+  CHECKBOX cx_ccdf 290 446 190 ., label("ccdf") option(ccdf)
+  TEXT tx_gname 20 474 260 ., label("name for the graph created by plot; default = degree")
+  EDIT ed_gname 290 474 190 ., nomem option(name)
+  TEXT tx_saving 20 502 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 502 190 ., save nomem option(saving)
+  TEXT tx_export 20 530 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 530 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -79,6 +89,11 @@ BEGIN
 		optionarg main.ed_ties
 		option main.cx_onemode
 		option main.cx_raw
+		option main.cx_plot
+		option main.cx_ccdf
+		optionarg main.ed_gname
+		optionarg main.fi_saving
+		optionarg main.fi_export
 	endoptions
 	stata
 END

@@ -100,6 +100,9 @@ is no sparse form of the method.
 	{cmd:. nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)}
 	{cmd:. nwconcor flomarriage2, generate(_concor)}
 
+{pstd}The adjacency matrix with the nodes ordered by block ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage2, sortby(_concor) group(_concor)}
+
 	{cmd:. nwconcor flomarriage2, splits(2) generate(_concor) replace}
 
 

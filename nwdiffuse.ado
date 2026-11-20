@@ -276,9 +276,22 @@ end
 // ---------------------------------------------------------------------------------------------
 capture program drop nwdiffuse_curve
 program nwdiffuse_curve, rclass
+	// plot is a synonym of graph; plot(cumulative|new|both) chooses the picture (plot, graph: the cumulative proportion as always;
+	// new: bars of the new adopters per period; both: the two side by side); name() without it stays ignored as before, saving() and export()
+	// need it; the graph stays unnamed unless name(), saving() or export() is given
+	local __ptype "cumulative"
+	if regexm(`"`0'"', "(^|[ ,])[Pp][Ll][Oo][Tt][ ]*\(([^)]*)\)") {
+		local __ptype = lower(trim(regexs(2)))
+		local __pm = regexs(0)
+		local __pg = regexs(1)
+		local 0 : subinstr local 0 `"`__pm'"' `"`__pg'plot"', count(local __pc)
+		if !inlist("`__ptype'", "cumulative", "new", "both") {
+			di as err "{p 0 0 2}nwdiffuse curve: plot(`__ptype') is not allowed; use {bf:plot(cumulative)}, {bf:plot(new)} or {bf:plot(both)}.{p_end}"
+			exit 198
+		}
+	}
 	syntax [anything(name=netlist)] , [TOA(varname numeric) ADOPT(varlist numeric) T0(string) T1(string) ///
 		GRAPH PLOT MATrix(name) silent NAME(string) SAVing(string asis) EXPort(string asis) *]
-	// plot is a synonym of graph; name() without it stays ignored as before, saving() and export() need it; the graph stays unnamed unless name(), saving() or export() is given
 	if "`plot'" != "" local graph "graph"
 	local __uname `"`name'"'
 	_nw_gfinish check, plot(`graph') name(`name') nameok saving(`saving') export(`export') default(diffuse) cmd(nwdiffuse curve)
@@ -315,7 +328,39 @@ program nwdiffuse_curve, rclass
 		quietly {
 			drop _all
 			svmat double `Cv', names(col)
-			twoway line proportion period, ytitle("Proportion of adopters") xtitle("Period") `__nopt' `options'
+			if "`__ptype'" == "cumulative" {
+				twoway line proportion period, ytitle("Proportion of adopters") xtitle("Period") `__nopt' `options'
+			}
+			else {
+				// the new adopters per period as bars (integers on the count axis)
+				local __go `"`options'"'
+				_nw_gfinish blk "Period", kind(xtitle) gopts(`"`__go'"')
+				local __xt `"`r(t)'"'
+				_nw_gfinish blk "New adopters", kind(ytitle) gopts(`"`__go'"')
+				local __yt `"`r(t)'"'
+				local __xl "xlabel(, format(%9.0f))"
+				if `T' <= 20 local __xl "xlabel(`=`Cv'[1,1]'(1)`=`Cv'[`T',1]', format(%9.0f))"
+				if "`__ptype'" == "new" {
+					_nw_gfinish title "New adopters per period", gopts(`"`__go'"')
+					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' ylabel(, angle(0) format(%9.0f)) ///
+						`__xt' `__yt' `r(t)' graphregion(color(white)) `__nopt' `options'
+				}
+				else {
+					// both: the cumulative proportion and the new adopters, side by side
+					tempname __g1 __g2
+					_nw_gfinish blk "Proportion of adopters", kind(ytitle)
+					local __yt1 `"`r(t)'"'
+					_nw_gfinish title "Cumulative adoption", size(medsmall)
+					twoway line proportion period, lcolor(gs4) `__xl' ylabel(, angle(0)) `__xt' `__yt1' `r(t)' ///
+						graphregion(color(white)) nodraw name(`__g1', replace)
+					_nw_gfinish title "New adopters per period", size(medsmall)
+					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' ylabel(, angle(0) format(%9.0f)) ///
+						`__xt' `__yt' `r(t)' graphregion(color(white)) nodraw name(`__g2', replace)
+					_nw_gfinish title "Diffusion curve", gopts(`"`__go'"')
+					graph combine `__g1' `__g2', cols(2) `r(t)' graphregion(color(white)) `__nopt' `options'
+					graph drop `__g1' `__g2'
+				}
+			}
 		}
 		restore
 		if `"`__nopt'"' != "" _nw_gfinish save, name(`__gn') saving(`"`__sv'"') export(`"`__ex'"')

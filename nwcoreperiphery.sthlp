@@ -88,6 +88,9 @@ to the periphery.
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcoreperiphery flomarriage, generate(_core)}
 
+{pstd}The adjacency matrix with the core nodes first and the periphery last ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage, sortby(_core) group(_core)}
+
 
 {title:Stored results}
 

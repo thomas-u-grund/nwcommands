@@ -1,7 +1,18 @@
 capture program drop nwgeodesic
 program nwgeodesic
 	version 9
-	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) BINary xvars unconnected(string) sym symopt(string) generate(string)]
+	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) BINary xvars unconnected(string) sym symopt(string) generate(string) ///
+		PLOT AVErage GNAME(string asis) SAVing(string asis) EXPort(string asis) *]
+
+	// plot: histogram of the geodesic distances (the graph name is gname(): name() is the distance network)
+	_nw_gfinish check, plot(`plot') name(`gname') saving(`saving') export(`export') gopts(`"`options'"') default(geodesic) cmd(nwgeodesic)
+	local __gname `"`r(name)'"'
+	local __gsv `"`r(saving)'"'
+	local __gex `"`r(export)'"'
+	if "`average'" != "" & "`plot'" == "" {
+		di as err "{p 0 0 2}nwgeodesic: option {bf:average} needs {bf:plot}.{p_end}"
+		exit 198
+	}
 
 	capture
 	unw_defs
@@ -25,6 +36,17 @@ program nwgeodesic
 	if "`binary'" != "" & `__alpha_given' & `alpha' != 0 {
 		di "{err}Options {bf:binary} and {bf:alpha()} cannot be combined."
 		exit 198
+	}
+
+	if "`plot'" != "" {
+		if "`is2mode'" == "true" {
+			di as err "{p 0 0 2}nwgeodesic: {bf:plot} is not available for the two-mode network {bf:`netname'}: the histogram counts the distances between nodes of one mode. Use a one-mode network (for example from {help nw2project}).{p_end}"
+			exit 198
+		}
+		if "`valued'" == "true" & "`binary'" == "" & (!`__alpha_given' | `alpha' != 0) {
+			di as err "{p 0 0 2}nwgeodesic: {bf:plot} draws whole numbers of steps; the distances of the valued network {bf:`netname'} are sums of 1/value^alpha. Use {bf:binary} (or {bf:alpha(0)}) to count steps.{p_end}"
+			exit 198
+		}
 	}
 
 	local eccvar "`generate'"
@@ -137,6 +159,23 @@ program nwgeodesic
 	// Get number of unconnected links
 	mata: st_numscalar("r(unconnected)", missing(*`netobj'->get_matrix()) - missing(diagonal(*`netobj'->get_matrix())))
 	
+	// the histogram of the distances (before unconnected() replaces the missing ones): connected pairs of distinct nodes,
+	// each pair once in an undirected network, each ordered pair in a directed one
+	if "`plot'" != "" {
+		tempname __ghist
+		mata: __nwgeodesic_D = *`netobj'->get_matrix()
+		mata: __nwgeodesic_s = (`=cond("`directed'" == "true", 1, 0)' ? J(rows(__nwgeodesic_D), rows(__nwgeodesic_D), 1) - I(rows(__nwgeodesic_D)) : uppertriangle(J(rows(__nwgeodesic_D), rows(__nwgeodesic_D), 1), 0))
+		mata: __nwgeodesic_v = select(vec(__nwgeodesic_D), vec(__nwgeodesic_s) :== 1)
+		mata: st_local("__gunc", strofreal(sum(__nwgeodesic_v :>= .)))
+		mata: __nwgeodesic_v = select(__nwgeodesic_v, __nwgeodesic_v :< .)
+		mata: st_local("__gmax", strofreal(rows(__nwgeodesic_v) > 0 ? max(__nwgeodesic_v) : 0))
+		mata: st_local("__gmean", strofreal(rows(__nwgeodesic_v) > 0 ? mean(__nwgeodesic_v) : .))
+		if `__gmax' > 0 {
+			mata: __nwgeodesic_c = J(`__gmax', 1, 0); for (__nwgeodesic_i = 1; __nwgeodesic_i <= `__gmax'; __nwgeodesic_i++) __nwgeodesic_c[__nwgeodesic_i] = sum(__nwgeodesic_v :== __nwgeodesic_i)
+			mata: st_matrix("`__ghist'", __nwgeodesic_c)
+		}
+	}
+
 	// Deal with non-existing paths
 	if "`unconnected'" != "" {
 		mata: __nwgeodesic_d = diagonal(*`netobj'->get_matrix())
@@ -266,6 +305,10 @@ program nwgeodesic
 	}
 
 
+	if "`plot'" != "" {
+		_nwgeodesic_plot `__ghist', netname(`origname') directed(`directed') max(`__gmax') mean(`__gmean') unc(`__gunc') ///
+			name(`__gname') `average' saving(`"`__gsv'"') export(`"`__gex'"') gopts(`"`options'"')
+	}
 	if "`xvars'" != "" {
 		nwload `name'
 	}
@@ -286,6 +329,48 @@ program nwgeodesic
 	_return restore _geo
 	capture mata: mata drop __nwgeodesic_*
 	capture confirm number 0
+end
+
+// the histogram of the finite geodesic distances: bars of the number of pairs at each whole distance
+capture program drop _nwgeodesic_plot
+program _nwgeodesic_plot
+	version 15
+	syntax [anything(name=hist)], NETname(string) DIRected(string) MAX(integer) MEAN(string) UNC(integer) NAME(string) ///
+		[AVErage SAVing(string asis) EXPort(string asis) GOPTS(string asis)]
+	if strpos(`"`gopts'"', char(96) + char(34)) == 1 gettoken gopts : gopts
+	if `max' < 1 {
+		di as txt "{p 0 0 2}(nothing to plot: no pair of nodes of {bf:`netname'} is connected){p_end}"
+		exit
+	}
+	local what = cond("`directed'" == "true", "ordered pairs", "pairs")
+	preserve
+	quietly {
+		drop _all
+		svmat double `hist', names(__cnt)
+		rename __cnt1 __n
+		generate double __d = _n
+		generate double __cnt = __n
+	}
+	local notes ""
+	if "`average'" != "" local notes `"`"Mean distance of the connected `what': `=strtrim(string(`mean', "%9.2f"))'"'"'
+	if `unc' > 0 local notes `"`notes' `"`=strtrim(string(`unc', "%15.0fc"))' unconnected `what' (not shown)"'"'
+	local note ""
+	if `"`notes'"' != "" local note `"note(`notes', size(small) color(black))"'
+	local xl "xlabel(1(1)`max', format(%9.0f))"
+	if `max' > 20 local xl "xlabel(#10, format(%9.0f))"
+	local xline ""
+	if "`average'" != "" local xline "xline(`mean', lpattern(dash) lcolor(gs4) lwidth(medthin))"
+	_nw_gfinish blk "Geodesic distance (number of steps)", kind(xtitle) gopts(`"`gopts'"')
+	local xtit `"`r(t)'"'
+	_nw_gfinish blk "Number of `what'", kind(ytitle) gopts(`"`gopts'"')
+	local ytit `"`r(t)'"'
+	_nw_gfinish title "Geodesic distances: `netname'", gopts(`"`gopts'"')
+	local ttl `"`r(t)'"'
+	quietly twoway bar __n __d, barwidth(0.9) fcolor(gs10) lcolor(gs4) `xl' `xline' ///
+		ylabel(, angle(0) format(%9.0fc)) `xtit' `ytit' `ttl' `note' graphregion(color(white)) ///
+		name(`name', replace) `gopts'
+	restore
+	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')
 end
 
 /*

@@ -18,7 +18,7 @@
 {cmd:nwdiffuse threshold} [{it:{help netlist}}]{cmd:,} {it:when} {c -(}{opth gen:erate(newvar)} | {opth cou:nt(newvar)}{c )-} [{it:options}]
 
 {p 8 17 2}
-{cmd:nwdiffuse curve} [{it:{help netname}}]{cmd:,} {it:when} [{opt graph} {opt mat:rix(name)} {opt silent} {opt name(string)} {opt saving(filename)} {opt export(filename[, options])} {it:twoway_options}]
+{cmd:nwdiffuse curve} [{it:{help netname}}]{cmd:,} {it:when} [{opt graph} {opt plot}[{opt (cumulative|new|both)}] {opt mat:rix(name)} {opt silent} {opt name(string)} {opt saving(filename)} {opt export(filename[, options])} {it:twoway_options}]
 
 {p 8 17 2}
 {cmd:nwdiffuse long} [{it:{help netlist}}]{cmd:,} {it:when} {opt clear} [{opth keep(varlist)} {opt lag(#)} {it:options}]
@@ -122,6 +122,9 @@ single network). The default direction is that a node is influenced by the nodes
 {title:Graph of the curve}
 
 {pstd}
+{opt plot(cumulative)}, {opt plot(new)} and {opt plot(both)} choose the picture: {opt cumulative} (the default of {opt graph} and plain {opt plot}) is the cumulative proportion of adopters as a line, {opt new} is a bar chart of the new adopters in each period (whole numbers on the y axis) and {opt both} draws the two side by side in one graph (the options then go to {helpb graph combine}).
+
+{pstd}
 {cmd:nwdiffuse curve} {opt graph} (or its synonym {opt plot}) draws the cumulative proportion of adopters. {opt name()} names the graph in memory (it stays unnamed when {opt name()}, {opt saving()} and
 {opt export()} are all absent), {opt saving()} writes a {cmd:.gph} file and {opt export()} writes the graph with {helpb graph export}; the file extension sets the format and {cmd:width()} and the other
 {cmd:graph export} options follow a comma. A graph or file of the same name is replaced. Other options go to {helpb twoway} and come last. {opt saving()} and {opt export()} need {opt graph} or {opt plot}.
@@ -161,6 +164,7 @@ matrix {cmd:r(curve)} (columns period, adopters, proportion, rate, new). {cmd:lo
 {phang2}{cmd:. nwdiffuse exposure glasgow1, toa(toa) generate(expo) count(nexp) lag(1)}{p_end}
 {phang2}{cmd:. nwdiffuse threshold glasgow1, toa(toa) generate(thresh) lag(1)}{p_end}
 {phang2}{cmd:. nwdiffuse curve, toa(toa) graph}{p_end}
+{phang2}{cmd:. nwdiffuse curve, toa(toa) plot(both) export(curve.png, width(1000))}{p_end}
 
 {pstd}Hazard model of adoption with lagged exposure{p_end}
 {phang2}{cmd:. preserve}{p_end}
