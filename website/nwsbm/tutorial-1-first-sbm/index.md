@@ -11,7 +11,7 @@ description: "Fit stochastic block models with nwsbm to the karate club, choose 
 
 **Data.** Zachary's karate club: 34 members and 78 friendship ties (undirected). The club split in two after a conflict; the variable `group` records which side a member joined. Source: Zachary, W. W. (1977),
 *Journal of Anthropological Research* 33, 452-473; loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwsbm` package
-(see [Install](../install/)); the commands were run with `nwsbm` 0.4.0 under Stata 17. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+(see [Install](../install/)); the commands were run with `nwsbm` 1.0.0 under Stata 17. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## What a stochastic block model does, in four sentences
 
@@ -95,6 +95,43 @@ Within: connectivity within the block (the diagonal of the connectivity matrix).
 
 The model has found a block of 29 actors that are rarely tied to each other (a tie probability of 0.05 inside the block) and a small block of 5 actors that are tied to each other (0.49) and to the large block (0.37). That is a
 core and a periphery and not two groups of friends: it is a statement about the role of the actors in the pattern of ties.
+
+## Looking at the blocks
+
+`nwsbmplot` draws pictures of the last fit. Every plot can be written to a file with `export()` (the format follows the extension: `.png`, `.pdf`, `.eps`); the pictures on this page were made that way.
+
+```stata
+. nwsbmplot, type(matrix) export(nwsbm1_matrix.png)
+```
+
+![Blocked adjacency matrix of the karate club, two blocks](nwsbm1_matrix.png)
+
+The blocked adjacency matrix draws every tie as a black square, with the members ordered by their block: the 29 members of block 1 first (top rows, left columns), the 5 members of block 2 last, and red lines between the blocks. The square of block 1 with block 1 (top left) is mostly empty, with ties scattered here and there. The rows and columns of block 2 (the bottom strip and the right strip) are
+crowded with squares, and so is the small square where block 2 meets block 2 (bottom right). This is the pattern of the connectivity matrix above: a few ties inside the large block, many to and within the small one.
+
+```stata
+. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
+```
+
+![Block graph of the karate club](nwsbm1_blocks.png)
+
+The block graph draws each block as a circle whose size follows the number of members (the large circle is block 1, the small one block 2) and the connectivity between the blocks as a line whose width follows the tie probability relative to the largest entry of the connectivity matrix. Here there are two circles and one line, the 0.37 between the blocks. Ties inside a block are not drawn, which is why the dense small block does not show its 0.49.
+
+```stata
+. nwsbmplot, type(icl) export(nwsbm1_icl.png)
+```
+
+![ICL by number of blocks for the karate club](nwsbm1_icl.png)
+
+The ICL curve plots the ICL column of the table: it climbs steeply from one block (-229.4) to two blocks (-206.1), where the diamond marks the selected number, and falls again for three (-216.6), four (-218.3) and five blocks (-230.0). A curve with a clear peak, as here, is a more comfortable basis for the choice than a flat one.
+
+```stata
+. nwsbmplot, type(membership) export(nwsbm1_membership.png)
+```
+
+![Membership probabilities of the karate club](nwsbm1_membership.png)
+
+The membership plot shows, for every member, the posterior probability of each block as a stacked bar (blue for block 1, red for block 2), the members ordered by block and, within a block, by decreasing certainty. Nearly all bars are of one colour: the 29 members of block 1 are almost certainly in it, and the 5 of block 2 are as well. Only the last two bars on the right carry a thin sliver of the other colour, so the memberships are sharp and the hard assignment in `block` loses little.
 
 ## Blocks are not factions
 

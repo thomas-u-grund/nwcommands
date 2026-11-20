@@ -11,6 +11,8 @@ nwsummarize lazega_fr
 nwsbm lazega_fr, maxblocks(6) seed(20261120) generate(b0) replace nodisplay
 estat icl
 display "ICL without covariates: " %9.2f e(ICL) " with " e(Q) " blocks"
+nwsbmplot, type(expected) sort export(nwsbm2_expected.png)
+nwsbmplot, type(matrix) sort export(nwsbm2_matrix.png)
 
 * --- the same network with covariates: same office, same practice, same gender, seniority difference ---
 nwsbm lazega_fr, maxblocks(4) seed(20261120) same(office practice gender) absdiff(seniority) generate(b1) replace
@@ -27,6 +29,7 @@ display "odds ratio of same_office: " %6.2f exp(el(e(beta), 1, 2))
 nwsbm lazega_fr, maxblocks(6) seed(20261120) icl(exact) generate(e1) replace nodisplay
 estat icl
 display "exact ICL: " %9.2f e(ICL) "   criterion of blockmodels at the same fit: " %9.2f e(ICLbm)
+nwsbmplot, type(icl) export(nwsbm2_icl_exact.png)
 nwsbm lazega_fr, maxblocks(6) seed(20261120) icl(exact) greedy generate(e2) replace nodisplay
 estat icl
 display "exact ICL with greedy: " %9.2f e(ICL) " with " e(Q) " blocks"
@@ -38,10 +41,13 @@ nwsummarize davis
 nwsbm davis, maxblocks(4 4) seed(20261120) generate(d0) replace nodisplay
 estat icl
 display "Bernoulli, ICL of blockmodels: " %8.2f e(ICL) ", blocks " e(Q1) " x " e(Q2)
+nwsbmplot, type(matrix) export(nwsbm2_davis_matrix.png)
+nwsbmplot, type(icl) export(nwsbm2_davis_icl.png)
 
 * --- degree-corrected Poisson latent block model, exact ICL ---
 nwsbm davis, maxblocks(4 4) seed(20261120) model(poisson) degreecorrected icl(exact) generate(d1) replace nodisplay
 display "degree-corrected, exact ICL: " %8.2f e(ICL) ", blocks " e(Q1) " x " e(Q2)
+estat icl
 
 * --- two blocks on each side, without and with the greedy search ---
 nwsbm davis, blocks(2 2) seed(20261120) model(poisson) degreecorrected icl(exact) generate(d2) replace nodisplay

@@ -12,6 +12,12 @@ nwsbm zachary_bin, maxblocks(5) seed(20261120) generate(block) replace
 estat icl
 estat blocks
 
+* --- plots: blocked adjacency matrix, block graph, ICL curve, memberships ---
+nwsbmplot, type(matrix) export(nwsbm1_matrix.png)
+nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
+nwsbmplot, type(icl) export(nwsbm1_icl.png)
+nwsbmplot, type(membership) export(nwsbm1_membership.png)
+
 * --- how do the blocks relate to the two factions of the club? ---
 tabulate block group
 
