@@ -8,4 +8,4 @@ description: "The nwergm manual (PDF), archived at Zenodo."
 <meta http-equiv="refresh" content="0; url=https://doi.org/10.5281/zenodo.23661331">
 <script>window.location.replace("https://doi.org/10.5281/zenodo.23661331");</script>
 
-The nwergm manual (the current one describes nwergm 1.3.x) is archived at Zenodo under the DOI of all versions: [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331).
+The nwergm manual (the current one describes nwergm 1.11.x) is archived at Zenodo under the DOI of all versions: [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331).

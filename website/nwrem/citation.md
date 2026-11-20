@@ -9,13 +9,15 @@ description: "How to cite nwrem, and the original paper and software it builds o
 # How to cite
 
 **nwrem.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwrem version` (for example "nwrem 1.6.0"). The package has no DOI:
+`nwrem version` (for example "nwrem 1.6.0"). To cite the software:
 
 > Grund, T. U. (2026). *nwrem: a Stata package for relational event models (version 1.3.0).* GitHub. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
 
-The manual is a PDF on this website; cite it, together with the package version, if you refer to it:
+Cite the manual, which has a DOI:
 
-> Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* [https://nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)
+> Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398012](https://doi.org/10.5281/zenodo.24398012)
+
+The DOI is the one of all versions of the manual, so it always leads to the latest manual. The PDF is also available on this website.
 
 Please also cite the core package, nwcommands.
 

@@ -22,7 +22,7 @@ example `nwsaom version`.
 
 > Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.6.0").
+The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.9.0").
 
 **nwergm.** Cite the manual. It has a DOI:
 
@@ -30,7 +30,19 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.11.1").
 
-**nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** These have no DOI. Cite the repository and the version (the nwdynam and nwrem manuals are PDFs on this website, cited by their addresses: *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf); *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)):
+**nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** Cite the manual of the package. Each has a DOI:
+
+> Grund, T. U. (2026). *nwalaam: Autologistic actor attribute models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24397901](https://doi.org/10.5281/zenodo.24397901)
+
+> Grund, T. U. (2026). *nwdynam: Dynamic network actor models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398099](https://doi.org/10.5281/zenodo.24398099)
+
+> Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398012](https://doi.org/10.5281/zenodo.24398012)
+
+> Grund, T. U. (2026). *nwlsm: Latent space models for networks in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398243](https://doi.org/10.5281/zenodo.24398243)
+
+> Grund, T. U. (2026). *nwsbm: Stochastic block models for networks in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398296](https://doi.org/10.5281/zenodo.24398296)
+
+Each DOI is the one of all versions of the manual, so it always leads to the latest manual. Report the exact version that produced your results as printed by `<package> version`. You may also cite the software; for nwdynam:
 
 > Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.10.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 

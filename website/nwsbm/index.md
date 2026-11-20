@@ -15,6 +15,7 @@ Stochastic block models for networks in Stata: which actors play the same role i
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with the tutorial](tutorial-1-first-sbm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Manual](https://doi.org/10.5281/zenodo.24398296){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsbm on GitHub](https://github.com/thomas-u-grund/nwsbm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## What nwsbm is

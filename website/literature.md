@@ -14,9 +14,12 @@ A short list, kept small on purpose. It names what to cite for the software and 
 
 - Grund, T. U. (2027). *Network Analysis with Stata: Concepts, Methods, and Applications.* Stata Press, College Station, TX. Forthcoming.
 - Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
-- Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
-- Grund, T. U. (2026). *nwdynam: Dynamic network actor models in Stata. Manual.* [nwcommands.org/nwdynam/nwdynam_manual.pdf](https://nwcommands.org/nwdynam/nwdynam_manual.pdf)
-- Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* [nwcommands.org/nwrem/nwrem_manual.pdf](https://nwcommands.org/nwrem/nwrem_manual.pdf)
+- Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
+- Grund, T. U. (2026). *nwalaam: Autologistic actor attribute models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24397901](https://doi.org/10.5281/zenodo.24397901)
+- Grund, T. U. (2026). *nwdynam: Dynamic network actor models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24398099](https://doi.org/10.5281/zenodo.24398099)
+- Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24398012](https://doi.org/10.5281/zenodo.24398012)
+- Grund, T. U. (2026). *nwlsm: Latent space models for networks in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24398243](https://doi.org/10.5281/zenodo.24398243)
+- Grund, T. U. (2026). *nwsbm: Stochastic block models for networks in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24398296](https://doi.org/10.5281/zenodo.24398296)
 
 How to cite each package is on the [citing page](../citing/).
 
