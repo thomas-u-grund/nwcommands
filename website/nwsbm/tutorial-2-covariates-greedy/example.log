@@ -1,0 +1,451 @@
+
+. * nwsbm tutorial 2: covariates with standard errors, the exact ICL with the gr
+> eedy search,
+. * the degree-corrected two-mode model, block variances and ordered blocks.
+. * Requires the core nwcommands and the package nwsbm. The data are loaded from
+>  the nwcommands website:
+. * Lazega (2001), lawyers of a law firm; Davis, Gardner and Gardner (1941), Sou
+> thern women.
+. set linesize 80
+
+. 
+. nwwebuse lazega, nwclear
+
+. nwsummarize lazega_fr
+--------------------------------------------------
+   Network name:  lazega_fr
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 71
+   Selfloop: false
+   Arcs: 575
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .116
+   Mean outdegree:  8.10
+   Temporal: false
+
+. 
+. * --- friendship among the lawyers, blocks without covariates ---
+. nwsbm lazega_fr, maxblocks(6) seed(20261120) generate(b0) replace nodisplay
+
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), bernoulli mod
+> el
+----------------------------------------------------------------------------
+      Blocks |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+          1  |     -1784.79    -1780.54    -1780.54        0.00           1
+          2  |     -1773.81    -1749.10    -1754.66        5.56           4
+          3* |     -1768.33    -1718.38    -1725.77        7.39           9
+          4  |     -1781.55    -1699.30    -1707.07        7.77          16
+          5  |     -1809.48    -1689.59    -1694.56        4.97          25
+          6  |     -1841.63    -1672.08    -1677.77        5.69          36
+----------------------------------------------------------------------------
+* largest ICL
+
+. display "ICL without covariates: " %9.2f e(ICL) " with " e(Q) " blocks"
+ICL without covariates:  -1768.33 with 3 blocks
+
+. 
+. * --- the same network with covariates: same office, same practice, same gende
+> r, seniority difference ---
+. nwsbm lazega_fr, maxblocks(4) seed(20261120) same(office practice gender) absd
+> iff(seniority) generate(b1) replace
+
+Stochastic block model (bernoulli, directed)               Actors    =        71
+Network: lazega_fr                                         Blocks    =         2
+                                                           ICL       =  -1646.99
+                                                           Lower bound J=  -1595
+> .65
+
+--------------------------------------------------------------
+      Blocks |         ICL           J          PL  parameters
+-------------+------------------------------------------------
+          1  |    -1651.65    -1630.38    -1630.38           5
+          2* |    -1646.99    -1595.65    -1610.81           8
+          3  |    -1664.83    -1587.58    -1605.25          13
+          4  |    -1684.69    -1580.39    -1593.18          20
+--------------------------------------------------------------
+* selected by the largest ICL
+
+Block sizes:
+
+    b1  b2
+r1  45  26
+Block proportions:
+
+        b1      b2
+r1  0.6256  0.3744
+Block connectivity, tie probability (all covariates 0), from the row block to th
+> e column block:
+
+        b1      b2
+b1  0.0194  0.0217
+b2  0.0511  0.0664
+
+Covariate coefficients (logit scale):
+-----------------------------------------------------------------------------
+             |       Coef.   Std. err.        z     P>|z|[95% conf. interval]
+-------------+---------------------------------------------------------------
+abs_senior~y |    -0.01421     0.00299    -4.75     0.000  -0.02008  -0.00835
+ same_office |     1.34275     0.10608    12.66     0.000   1.13484   1.55067
+same_pract~e |     1.12811     0.10118    11.15     0.000   0.92981   1.32641
+ same_gender |     0.25040     0.09864     2.54     0.011   0.05707   0.44373
+-----------------------------------------------------------------------------
+Standard errors are conditional on the estimated block memberships (they do
+not reflect the uncertainty about the blocks).
+
+. estat blocks
+
+Blocks
+---------------------------------------------
+  Block |      Size  Proportion        Within
+--------+------------------------------------
+      1 |        45      0.6256        0.0194
+      2 |        26      0.3744        0.0664
+---------------------------------------------
+Within: connectivity within the block (the diagonal of the connectivity matrix).
+
+. 
+. * --- coefficients, standard errors and the variance matrix are stored ---
+. matrix list e(beta)
+
+e(beta)[1,4]
+      abs_senior~y   same_office  same_pract~e   same_gender
+beta    -.01421224     1.3427543     1.1281074     .25039538
+
+. matrix list e(se_beta)
+
+e(se_beta)[1,4]
+      abs_senior~y   same_office  same_pract~e   same_gender
+beta     .00299199     .10607885     .10117618     .09863951
+
+. matrix list e(V_beta)
+
+symmetric e(V_beta)[4,4]
+              abs_senior~y   same_office  same_pract~e   same_gender
+abs_senior~y     8.952e-06
+ same_office    -.00001761     .01125272
+same_pract~e    -9.805e-06      .0007576     .01023662
+ same_gender     .00001947     .00049094     .00028585     .00972975
+
+. display "z of same_office: " %6.2f el(e(beta), 1, 2) / el(e(se_beta), 1, 2)
+z of same_office:  12.66
+
+. display "odds ratio of same_office: " %6.2f exp(el(e(beta), 1, 2))
+odds ratio of same_office:   3.83
+
+. 
+. * --- exact ICL, without and with the greedy search ---
+. nwsbm lazega_fr, maxblocks(6) seed(20261120) icl(exact) generate(e1) replace n
+> odisplay
+
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), bernoulli mod
+> el
+----------------------------------------------------------------------------
+      Blocks |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+          1  |     -1793.69    -1780.54    -1780.54        0.00           1
+          2  |     -1781.95    -1749.10    -1754.66        5.56           4
+          3  |     -1768.62    -1718.38    -1725.77        7.39           9
+          4* |     -1768.27    -1699.30    -1707.07        7.77          16
+          5  |     -1789.35    -1689.59    -1694.56        4.97          25
+          6  |     -1800.47    -1672.08    -1677.77        5.69          36
+----------------------------------------------------------------------------
+* largest ICL
+
+. display "exact ICL: " %9.2f e(ICL) "   criterion of blockmodels at the same fi
+> t: " %9.2f e(ICLbm)
+exact ICL:  -1768.27   criterion of blockmodels at the same fit:  -1781.55
+
+. nwsbm lazega_fr, maxblocks(6) seed(20261120) icl(exact) greedy generate(e2) re
+> place nodisplay
+
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), bernoulli mod
+> el
+----------------------------------------------------------------------------
+      Blocks |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+          1  |     -1793.69    -1780.54    -1780.54        0.00           1
+          2  |     -1781.61    -1751.11    -1751.11        0.00           4
+          3  |     -1768.55    -1719.93    -1719.93        0.00           9
+          4* |     -1767.84    -1699.15    -1699.15        0.00          16
+          5  |     -1787.79    -1684.54    -1684.54        0.00          25
+          6  |     -1794.72    -1664.73    -1664.73        0.00          36
+----------------------------------------------------------------------------
+* largest ICL
+
+. display "exact ICL with greedy: " %9.2f e(ICL) " with " e(Q) " blocks"
+exact ICL with greedy:  -1767.84 with 4 blocks
+
+. tabulate e1 e2
+
+     nwsbm |
+     block |              nwsbm block (MAP)
+     (MAP) |         1          2          3          4 |     Total
+-----------+--------------------------------------------+----------
+         1 |         1          0          0          8 |         9 
+         2 |         0          0         18          0 |        18 
+         3 |         0         22          0          0 |        22 
+         4 |        22          0          0          0 |        22 
+-----------+--------------------------------------------+----------
+     Total |        23         22         18          8 |        71 
+
+. 
+. * --- a two-mode network: the Southern women and their events ---
+. nwwebuse davis, nwclear
+
+. nwsummarize davis
+--------------------------------------------------
+   Network name:  davis
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 32
+      Level 1: 18 (woman)
+      Level 2: 14 (event)
+   Selfloop: false
+   Edges: 89
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .353
+   Temporal: false
+
+. nwsbm davis, maxblocks(4 4) seed(20261120) generate(d0) replace nodisplay
+
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), bernoulli mod
+> el
+----------------------------------------------------------------------------
+Blocks 1 x 2 |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+      1 x 1  |      -166.41     -163.65     -163.65        0.00           1
+      1 x 2  |      -165.21     -156.22     -158.36        2.14           2
+      1 x 3  |      -171.94     -156.20     -161.00        4.81           3
+      1 x 4  |      -177.43     -156.20     -162.41        6.21           4
+      2 x 1  |      -171.24     -163.65     -164.27        0.62           2
+      2 x 2  |      -166.82     -150.79     -152.99        2.21           4
+      2 x 3* |      -160.90     -137.25     -140.23        2.98           6
+      2 x 4  |      -167.87     -136.44     -140.35        3.91           8
+      3 x 1  |      -176.07     -163.65     -164.88        1.24           3
+      3 x 2  |      -172.23     -147.67     -151.44        3.77           6
+      3 x 3  |      -168.16     -133.14     -137.75        4.61           9
+      3 x 4  |      -175.64     -131.26     -135.61        4.36          12
+      4 x 1  |      -188.11     -162.95     -172.72        9.77           4
+      4 x 2  |      -181.29     -147.29     -153.51        6.22           8
+      4 x 3  |      -178.23     -131.66     -138.08        6.42          12
+      4 x 4  |      -188.86     -131.09     -136.33        5.25          16
+----------------------------------------------------------------------------
+* largest ICL
+
+. display "Bernoulli, ICL of blockmodels: " %8.2f e(ICL) ", blocks " e(Q1) " x "
+>  e(Q2)
+Bernoulli, ICL of blockmodels:  -160.90, blocks 2 x 3
+
+. 
+. * --- degree-corrected Poisson latent block model, exact ICL ---
+. nwsbm davis, maxblocks(4 4) seed(20261120) model(poisson) degreecorrected icl(
+> exact) generate(d1) replace nodisplay
+
+. display "degree-corrected, exact ICL: " %8.2f e(ICL) ", blocks " e(Q1) " x " e
+> (Q2)
+degree-corrected, exact ICL:  -307.71, blocks 1 x 1
+
+. 
+. * --- two blocks on each side, without and with the greedy search ---
+. nwsbm davis, blocks(2 2) seed(20261120) model(poisson) degreecorrected icl(exa
+> ct) generate(d2) replace nodisplay
+
+. display "2 x 2, exact ICL: " %8.2f e(ICL)
+2 x 2, exact ICL:  -313.68
+
+. nwsbm davis, blocks(2 2) seed(20261120) model(poisson) degreecorrected icl(exa
+> ct) greedy orderblocks generate(d3) replace
+
+Stochastic block model (poisson, degree corrected, two-mode)Actors   =        32
+Network: davis                                             Blocks    =         2
+>  x 2
+                                                           ICL       =   -313.60
+                                                           Lower bound J=   -161
+> .99
+
+Block sizes (mode 1):
+
+    b1  b2
+r1  10   8
+Block sizes (mode 2):
+
+    c1  c2
+r1   8   6
+Block proportions (mode 1):
+
+        b1      b2
+r1  0.5556  0.4444
+Block proportions (mode 2):
+
+        c1      c2
+r1  0.5714  0.4286
+Block connectivity, expected tie value, from the row block to the column block:
+
+        c1      c2
+b1  0.0054  0.0211
+b2  0.0167  0.0020
+
+. estat blocks
+
+Blocks of mode 1 (rows of the connectivity matrix)
+---------------------------------------------
+  Block |      Size  Proportion      Mean tie
+--------+------------------------------------
+      1 |        10      0.5556        0.0121
+      2 |         8      0.4444        0.0104
+---------------------------------------------
+
+Blocks of mode 2 (columns of the connectivity matrix)
+---------------------------------------------
+  Block |      Size  Proportion      Mean tie
+--------+------------------------------------
+      1 |         8      0.5714        0.0104
+      2 |         6      0.4286        0.0126
+---------------------------------------------
+
+. tabulate d3 title if _nwmode == "1"
+
+     nwsbm |
+     block |         title
+     (MAP) |      Miss        Mrs |     Total
+-----------+----------------------+----------
+         1 |         4          6 |        10 
+         2 |         7          1 |         8 
+-----------+----------------------+----------
+     Total |        11          7 |        18 
+
+. 
+. * --- Gaussian ties with one variance and with a variance for every pair of bl
+> ocks ---
+. nwwebuse lazega, nwclear
+
+. nwgenerate ties3 = lazega_adv + lazega_cow + lazega_fr
+
+. nwsummarize ties3
+--------------------------------------------------
+   Network name:  ties3
+   Network id:  4
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 71
+   Selfloop: false
+   Arcs: 1574
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .317
+   Mean outdegree:  22.17
+   Temporal: false
+
+. nwsbm ties3, model(gaussian) maxblocks(5) seed(20261120) generate(g1) replace 
+> nodisplay
+
+. display "one variance: ICL " %9.2f e(ICL) ", " e(Q) " blocks, variance " %6.3f
+>  e(sigma2)
+one variance: ICL  -5992.99, 5 blocks, variance  0.596
+
+. estat blocks
+
+Blocks
+---------------------------------------------
+  Block |      Size  Proportion        Within
+--------+------------------------------------
+      1 |         7      0.0992        1.3863
+      2 |        24      0.3366        0.7504
+      3 |         9      0.1274        1.5614
+      4 |        18      0.2531        1.1781
+      5 |        13      0.1836        0.3665
+---------------------------------------------
+Within: connectivity within the block (the diagonal of the connectivity matrix).
+
+. nwsbm ties3, model(gaussian) blockvar maxblocks(5) seed(20261120) orderblocks 
+> generate(g2) replace
+
+Stochastic block model (gaussian, directed)                Actors    =        71
+Network: ties3                                             Blocks    =         5
+                                                           ICL       =  -5253.88
+                                                           Lower bound J=  -5029
+> .47
+                                                           Pooled variance=     
+> .6502
+
+--------------------------------------------------------------
+      Blocks |         ICL           J          PL  parameters
+-------------+------------------------------------------------
+          1  |    -6346.75    -6338.24    -6338.24           2
+          2  |    -6045.43    -6007.59    -6009.25           8
+          3  |    -5462.54    -5380.17    -5381.68          18
+          4  |    -5279.12    -5134.23    -5136.55          32
+          5* |    -5253.88    -5029.47    -5032.57          50
+--------------------------------------------------------------
+* selected by the largest ICL
+
+Block sizes:
+
+    b1  b2  b3  b4  b5
+r1  16  16  15  12  12
+Block proportions:
+
+        b1      b2      b3      b4      b5
+r1  0.2252  0.2252  0.2110  0.1692  0.1694
+Block means, expected tie value, from the row block to the column block:
+
+        b1      b2      b3      b4      b5
+b1  0.7667  0.0045  0.7885  0.1815  0.3514
+b2  0.0126  0.3495  0.2075  0.5349  0.6069
+b3  0.8337  0.1575  0.7314  0.4407  0.7034
+b4  0.1352  0.4417  0.3639  0.7980  0.7602
+b5  0.6819  0.6854  0.9748  1.1319  1.1147
+Block variances, from the row block to the column block:
+
+        b1      b2      b3      b4      b5
+b1  0.7186  0.0083  0.8969  0.2680  0.5017
+b2  0.0170  0.5355  0.3099  0.7477  0.8811
+b3  0.9595  0.2118  0.9273  0.6598  0.9173
+b4  0.1743  0.6314  0.4579  1.0333  0.8736
+b5  1.0276  1.0453  1.0440  1.2296  1.1364
+
+. matrix list e(sigma2_block)
+
+e(sigma2_block)[5,5]
+           b1         b2         b3         b4         b5
+b1   .7185553  .00830269  .89686485  .26799088   .5016641
+b2  .01697511  .53547141  .30990159  .74771478  .88108128
+b3  .95949349  .21183141  .92731163  .65982045  .91727259
+b4  .17429797  .63137542  .45787398  1.0332808  .87355493
+b5  1.0275909  1.0452712  1.0440325  1.2296223  1.1363793
+
+. display "pooled residual variance: " %6.3f e(sigma2)
+pooled residual variance:  0.650
+
+. tabulate g1 g2
+
+     nwsbm |
+     block |                   nwsbm block (MAP)
+     (MAP) |         1          2          3          4          5 |     Total
+-----------+-------------------------------------------------------+----------
+         1 |         0          0          5          0          2 |         7 
+         2 |        16          0          8          0          0 |        24 
+         3 |         0          0          0          3          6 |         9 
+         4 |         0          8          0          6          4 |        18 
+         5 |         0          8          2          3          0 |        13 
+-----------+-------------------------------------------------------+----------
+     Total |        16         16         15         12         12 |        71 
+
+. 
