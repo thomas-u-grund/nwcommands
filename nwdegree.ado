@@ -10,7 +10,11 @@ program nwdegree
 	// complementary cumulative distribution on log-log axes).  Without plot the remaining options are the options of the
 	// tabulate of the table, as always; with plot they are graph options and go to twoway (graph combine for a directed network).
 	local __go ""
-	if "`plot'" != "" local __go `"`options'"'
+	local __tabopt `"`options'"'
+	if "`plot'" != "" {
+		local __go `"`options'"'
+		local __tabopt ""
+	}
 	_nw_gfinish check, plot(`plot') name(`name') saving(`saving') export(`export') gopts(`"`__go'"') default(degree) cmd(nwdegree)
 	local __gname `"`r(name)'"'
 	local __gsv `"`r(saving)'"'
@@ -476,7 +480,7 @@ program nwdegree
 					noi tab `_outdegree' if `included' == 1, `out'
 				}
 				else {
-					noi tab `_degree' if `included' == 1, `options'
+					noi tab `_degree' if `included' == 1, `__tabopt'
 				}
 			}
 			else {

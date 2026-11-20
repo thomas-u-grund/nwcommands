@@ -87,6 +87,9 @@ Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,00
 	{cmd:. nwfactions flomarriage, groups(3) generate(_faction)}
 	{cmd:. tab _faction}
 
+{pstd}The adjacency matrix with the nodes ordered by faction, the factions as blocks ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage, sortby(_faction) group(_faction)}
+
 
 {title:Stored results}
 
