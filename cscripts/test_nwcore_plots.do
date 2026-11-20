@@ -194,6 +194,25 @@ capture nwdiffuse curve n1, toa(toa) plot name(a b)
 assert _rc == 198
 nwp_ok "nwdiffuse"
 
+* ---- nwplotmatrix and nwdendrogram: name(), saving(), export() added; unnamed unless one is given
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
+nwplotmatrix net1, name(t_pm) saving(`"`tmp'/pm"') export(`"`tmp'/pm.png"', width(300))
+graph describe t_pm
+nwp_files `"`tmp'/pm"' gph png
+nwplotmatrix net1, export(`"`tmp'/pm2.png"', width(300))
+graph describe plotmatrix
+nwp_files `"`tmp'/pm2"' png
+capture nwplotmatrix net1, name(a b)
+assert _rc == 198
+nwhierarchy net1
+nwdendrogram, name(t_dg) saving(`"`tmp'/dg"') export(`"`tmp'/dg.png"', width(300))
+graph describe t_dg
+nwp_files `"`tmp'/dg"' gph png
+capture nwdendrogram, saving(`"`tmp'/nodir/x"')
+assert _rc == 603
+nwp_ok "nwplotmatrix and nwdendrogram"
+
 * ---- the dialogs of the plot commands load (batch mode: db returns rc 0)
 foreach d in nwcug nwqap nwdyads nwtriads nwmixing nwtabulate nwcorrelate nwcoefplot nwcompare {
 	capture db `d'

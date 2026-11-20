@@ -1,6 +1,15 @@
 capture program drop nwplotmatrix
 program nwplotmatrix
-	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) NOGROUPLabels ]
+	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) NOGROUPLabels NAME(string) SAVing(string asis) EXPort(string asis) ]
+	// name(), saving(), export(): the graph stays unnamed unless one of them is given (name() already worked through the twoway options)
+	local __uname `"`name'"'
+	_nw_gfinish check, always name(`name') saving(`saving') export(`export') default(plotmatrix) cmd(nwplotmatrix)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+	local __nopt ""
+	if `"`__uname'`__sv'`__ex'"' != "" local __nopt `"name(`__gn', replace)"'
+
 	unw_defs
 	_nwsyntax `netname'
 
@@ -165,7 +174,8 @@ program nwplotmatrix
 	if `"`__nwpm_glab'"' != "" local __nwpm_xang "angle(45) noticks labsize(small)"
 	local __nwpm_yang "angle(0)"
 	if `"`__nwpm_glab'"' != "" local __nwpm_yang "angle(0) noticks labsize(small)"
-	qui plotmatrix, `xlinecmd' `ylinecmd' `l' `__nwpm_glab' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, `__nwpm_yang' `labelopt' `ylabel') xlabel(, `__nwpm_xang' `labelopt' `xlabel') legendopt(`legendopt') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
+	qui plotmatrix, `xlinecmd' `ylinecmd' `l' `__nwpm_glab' legend(`lgd') `freq' tievalueopt(`tievalueopt') ylabel(, `__nwpm_yang' `labelopt' `ylabel') xlabel(, `__nwpm_xang' `labelopt' `xlabel') legendopt(`legendopt') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `__nopt' `options'  
+	_nw_gfinish save, name(`__gn') saving(`"`__sv'"') export(`"`__ex'"')
 	restore
 end
 
