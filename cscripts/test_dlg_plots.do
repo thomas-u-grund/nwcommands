@@ -18,7 +18,7 @@ local exp_nwdiffuse   plot name saving export
 local exp_nwdegree    plot ccdf name saving export
 local exp_nwgeodesic  plot average gname saving export
 local exp_nwspectral  plot embedding name saving export
-local exp_nwcoefplot  name saving export
+local exp_nwcoefplot  name saving export msymbol
 local exp_nwcompare   graph name saving export
 local exp_nwdendrogram name saving export
 local exp_nwplotmatrix saving export

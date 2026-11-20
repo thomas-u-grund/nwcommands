@@ -6,13 +6,13 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 358
+POSITION 10 10 550 390
 
 DIALOG main, title("nwcoefplot - Coefficient plot of network model results")
 BEGIN
   TEXT tx_names 20 20 260 ., label("Stored results (names, blank = active results)")
   EDIT ed_names 290 20 230 ., nomem
-  GROUPBOX gb_opt 10 48 520 300, label("Options")
+  GROUPBOX gb_opt 10 48 520 332, label("Options")
   TEXT tx_level 20 66 260 ., label("Confidence level")
   EDIT ed_level 290 66 80 ., nomem option(level)
   TEXT tx_keep 20 94 260 ., label("Keep coefficients (names or patterns)")
@@ -32,6 +32,8 @@ BEGIN
   FILE fi_export 290 286 230 ., save nomem option(export)
   TEXT tx_saving 20 314 260 ., label("Save the graph to a file (.gph)")
   FILE fi_saving 290 314 190 ., save nomem option(saving)
+  TEXT tx_msym 20 342 260 ., label("Marker symbol per model (e.g. O D T)")
+  EDIT ed_msym 290 342 230 ., nomem option(msymbol)
 END
 
 LIST list_eq
@@ -57,5 +59,6 @@ BEGIN
 		optionarg main.ed_name
 		optionarg main.fi_export
 		optionarg main.fi_saving
+		optionarg main.ed_msym
 	endoptions
 END

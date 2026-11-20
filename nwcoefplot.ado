@@ -3,7 +3,7 @@ capture program drop nwcoefplot
 program nwcoefplot, rclass
 	version 15
 	syntax [anything(name=names)] [, Level(cilevel) KEEP(string) DROP(string) EForm BYEq MIXeq noCONStant COMMON ///
-		SKIPmissing TItle(string asis) NAME(string asis) SAVing(string asis) EXPort(string asis) *]
+		SKIPmissing MSYmbol(string) TItle(string asis) NAME(string asis) SAVing(string asis) EXPort(string asis) *]
 
 	// name(), saving(), export(): checked first; the plot is always drawn; replace is implied everywhere
 	_nw_gfinish check, always name(`name') saving(`saving') export(`export') gopts(`"`options'"') default(coefplot) cmd(nwcoefplot)
@@ -29,6 +29,18 @@ program nwcoefplot, rclass
 		exit 198
 	}
 	if "`level'" == "" local level = c(level)
+
+	// msymbol(): one marker symbol per model, in order (grayscale print); fewer symbols than models are used again from the start
+	local nmsym : word count `msymbol'
+	if `nmsym' {
+		local okmsym "circle diamond triangle square plus x smcircle smdiamond smsquare smtriangle smplus smx circle_hollow diamond_hollow triangle_hollow square_hollow smcircle_hollow smdiamond_hollow smsquare_hollow smtriangle_hollow point none O D T S o d s t + X x p i Oh Dh Sh Th oh dh sh th"
+		foreach sy of local msymbol {
+			if !`:list sy in okmsym' {
+				di as err "msymbol(): {bf:`sy'} is not a marker symbol name; see {help scatter##symbolstyle:symbolstyle}"
+				exit 198
+			}
+		}
+	}
 
 	// the models to plot: stored names, a period for the active results, nothing for the active results
 	if "`names'" == "" local names "."
@@ -133,6 +145,10 @@ program nwcoefplot, rclass
 	if `mi' == 0 {
 		di as err "No estimation results with a coefficient vector were found."
 		exit 321
+	}
+	if `nmsym' > `mi' {
+		di as err "msymbol() has `nmsym' symbols for `mi' models; give at most one symbol per model."
+		exit 198
 	}
 	if `nposted' == 0 {
 		di as err "The estimation results contain no estimated coefficients."
@@ -266,7 +282,9 @@ program nwcoefplot, rclass
 		local leg ""
 		forvalues m = 1/`mi' {
 			local col : word `m' of `cols'
-			local plots `plots' (rcap lo hi ypos if eqord == `eo' & mod == `m', horizontal lcolor(`col') msize(*.5)) (scatter ypos b if eqord == `eo' & mod == `m', mcolor(`col') msymbol(O) msize(medsmall))
+			local msy "O"
+			if `nmsym' local msy : word `=mod(`m' - 1, `nmsym') + 1' of `msymbol'
+			local plots `plots' (rcap lo hi ypos if eqord == `eo' & mod == `m', horizontal lcolor(`col') msize(*.5)) (scatter ypos b if eqord == `eo' & mod == `m', mcolor(`col') msymbol(`msy') msize(medsmall))
 			local ml : word `m' of `mlabs'
 			local leg `"`leg' `=2*`m'' "`ml'""'
 		}

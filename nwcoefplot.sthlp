@@ -29,6 +29,7 @@
 {synopt:{opt mixeq}}all equations on one axis, labelled {it:eq}{cmd::}{it:name}{p_end}
 {synopt:{opt common}}with several models: only the coefficients that all models have{p_end}
 {synopt:{opt skip:missing}}leave out models without {cmd:e(b)} and {cmd:e(V)} instead of stopping{p_end}
+{synopt:{opt msy:mbol(symbols)}}marker symbol for each model, in the order of the models (for example {cmd:msymbol(O D T)}); symbols are used again from the start when there are fewer than models; default is a circle for all{p_end}
 {synopt:{opt ti:tle(string)}}title of the graph{p_end}
 {synopt:{opt name(name[, replace])}}name of the graph in memory; default {cmd:coefplot}; an existing graph is replaced{p_end}
 {synopt:{opt sav:ing(filename[, replace])}}save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
@@ -61,6 +62,8 @@ The order of the {opt keep()} patterns is the order of the coefficients from top
 
 {pstd}
 With a list of models the coefficients of different models are drawn in one row in different colours, with a legend; {cmd:nwcompare, graph} calls this for the fit table.
+For a black-and-white print give each model its own marker with {opt msymbol()}, for example {cmd:msymbol(O D T)} for three models (circle, diamond, triangle; hollow
+forms are {cmd:Oh Dh Th Sh}); at most one symbol per model is allowed, and a symbol that is not a Stata marker symbol name stops the command with r(198).
 
 {title:Examples}
 
@@ -72,6 +75,8 @@ With a list of models the coefficients of different models are drawn in one row 
 {phang2}{cmd:. nwergm flomarriage, edges gwesp(.5)}{p_end}
 {phang2}{cmd:. estimates store m1}{p_end}
 {phang2}{cmd:. nwcoefplot m0 m1, keep(edges) export(coefs.png, width(1200))}{p_end}
+
+{phang2}{cmd:. nwcoefplot m0 m1, msymbol(O D) export(coefs_gray.png, width(1200))}{p_end}
 
 {phang2}{cmd:. nwlsm advice, dim(2) influence(belief2 belief1 tenure) neighbors(10)}{p_end}
 {phang2}{cmd:. nwcoefplot, noconstant}{p_end}
