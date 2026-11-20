@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 366
+POSITION 10 10 550 394
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwmixing - E-I index and mixing table for a categorical node
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 272, label("Options")
+  GROUPBOX gb_opt 10 44 520 300, label("Options")
   TEXT tx_vr_attribute 20 54 260 ., label("Categorical (string or numeric) node attribute to cross-tabulate")
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_cx_eiplot 20 82 260 ., label("Plot the null (QAP-permutation) distribution of the E-I index, with the observed")
@@ -32,10 +32,12 @@ BEGIN
   SPINNER sp_permutations 290 194 70 ., default(100) max(999999) min(1) nomem option(permutations)
   TEXT tx_ed_save 20 222 260 ., label("Save the QAP permutation draws (variable EI_simulated) and the observed value (variable EI_observed) to a new dataset")
   EDIT ed_save 290 222 190 ., nomem option(save)
-  TEXT tx_saving 20 250 260 ., label("Save the graph to a file (.gph)")
-  FILE fi_saving 290 250 190 ., save nomem option(saving)
-  TEXT tx_export 20 278 260 ., label("Export the graph to a file (.png, .pdf, ...)")
-  FILE fi_export 290 278 190 ., save nomem option(export)
+  TEXT tx_name 20 250 260 ., label("name of the graphs (name_plot, name_eiplot)")
+  EDIT ed_name 290 250 190 ., nomem option(name)
+  TEXT tx_saving 20 278 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 278 190 ., save nomem option(saving)
+  TEXT tx_export 20 306 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 306 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -61,6 +63,7 @@ BEGIN
 		optionarg main.ed_plotoptions
 		optionarg main.sp_permutations
 		optionarg main.ed_save
+		optionarg main.ed_name
 		optionarg main.fi_saving
 		optionarg main.fi_export
 	endoptions

@@ -13,6 +13,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwspectral, plot`: scree plot of the Laplacian eigenvalues with the algebraic connectivity marked; `embedding` adds the second and third eigenvector as a scatter. Two-mode and directed networks stop with error 198.
 - `nwtriads, plot expected`: the expected count of every triad type under random dyad types with the dyad census fixed (the uniform distribution on networks with the same dyad census, closed form) is written under the observed count.
 - Help files, dialogs and `cscripts/test_nwcore_plots2.do` for these options; examples of the ordered matrix (`nwplotmatrix, sortby() group()`) in the help files of `nwcoreperiphery`, `nwfactions` and `nwconcor`.
+- Dialogs: `name`, `saving` and `export` entries in the `nwdendrogram` dialog, `saving` and `export` entries (tab Save/export) in the `nwplotmatrix` dialog, a `name` entry in the `nwmixing` dialog; the `name` field of the `nwcorrelate` dialog says that it also names the graph of the permutations. `cscripts/test_dlg_plots.do` checks that the dialogs of all plot commands carry their plot options and that the command line a dialog emits runs.
 
 ## [3.29.0] - 2026-11-20
 

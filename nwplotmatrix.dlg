@@ -69,6 +69,15 @@ BEGIN
 END
 
 
+DIALOG output, tabtitle("Save/export")
+BEGIN
+  GROUPBOX gb_out 10 10 420 120, label("Save or export the graph (the name of the graph is on the Overall tab)")
+  TEXT tx_saving 20 35 400 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 20 55 400 ., save nomem option(saving)
+  TEXT tx_export 20 80 400 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 20 100 400 ., save nomem option(export)
+END
+
 INCLUDE gr_yaxis
 INCLUDE gr_xaxis
 INCLUDE gr_titles
@@ -151,6 +160,8 @@ BEGIN
 		if main.rb_nolabel.isneq(1) {
 			put " " /program main_outputLabels
 		}
+		optionarg output.fi_saving
+		optionarg output.fi_export
 		put " " /program get_patchesOptions
 		put " " /program get_tieOptions
 		put " " /program gr_yaxis_output
