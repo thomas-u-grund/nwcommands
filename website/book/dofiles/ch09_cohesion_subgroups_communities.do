@@ -81,6 +81,12 @@ nwcommunity advm, algorithm(louvain) generate(mut_com)
 nwwebuse gang, nwclear
 nwcommunity gang, algorithm(louvain) seed(12345) generate(_community)
 
+nwwebuse lazega, nwclear
+nwcommunity lazega_adv, algorithm(leiden) seed(12345) symmetrize ///
+    generate(adv_lei)
+nwcommunity lazega_adv, algorithm(infomap) seed(12345) symmetrize ///
+    generate(adv_inf)
+
 nwwebuse macaque, nwclear
 nwcommunity macaque, algorithm(louvain) seed(12345) symmetrize ///
     generate(_community)

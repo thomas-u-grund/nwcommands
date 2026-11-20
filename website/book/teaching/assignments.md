@@ -110,7 +110,7 @@ The questions do not give the results. Every assignment ends with an open questi
   (`delinq1` to `delinq4`) and alcohol use at waves 2 to 4. In the delinquency and alcohol variables 0 means
   missing. In the loaded networks, a missing answer and a pupil who was not in the class at a wave are both coded
   as no tie (`help netexample`).
-- **Draws on:** Chapters 3, 6, 14, 23 and 24.
+- **Draws on:** Chapters 3, 6, 14, 25 and 26.
 - **Questions:**
   1. Run `nwsaom describe, waves(klas12b_wave1 klas12b_wave2 klas12b_wave3 klas12b_wave4)` and `nwturnover`
      (with `generate()`, as in Chapter 14) for each pair of consecutive waves. Is there enough change, and not too much, for an SAOM?
@@ -120,7 +120,7 @@ The questions do not give the results. Every assignment ends with an open questi
      nodematch(sex) seed(12345)`. Check both convergence criteria and restart with `nwsaom refit` if needed.
      Interpret `nodematch_sex` as a statement about the pupils' choices.
   4. Run `estat gof, nsim(100) seed(1)`. Where does the model fail?
-  5. Hold two candidate effects at 0 with `fix()`, as Chapter 24 does, and run `estat score`. Which effect would
+  5. Hold two candidate effects at 0 with `fix()`, as Chapter 26 does, and run `estat score`. Which effect would
      you free first?
   6. Open: no tie and no answer are coded alike here. Which of your results could that affect, and in which
      direction?
@@ -146,13 +146,13 @@ The questions do not give the results. Every assignment ends with an open questi
 ## 7. Nineteen Dutch schools compared
 - **Data:** the Dutch Social Behavior study, `nwwebuse baerveldt19`. Nineteen schools, two waves; for each school
   *k* the networks `schoolk_w1` and `schoolk_w2` (directed) and `schoolk_ethn` (whether the parents of two pupils
-  were born in the same country). Chapter 24 uses these data for a joint SAOM; this assignment compares the
+  were born in the same country). Chapter 26 uses these data for a joint SAOM; this assignment compares the
   schools descriptively and with permutation methods.
-- **Draws on:** Chapters 6, 14, 18, 19, 20 and 28; Chapter 24 for the last question.
+- **Draws on:** Chapters 6, 14, 18, 19, 20 and 30; Chapter 26 for the last question.
 - **Questions:**
   1. In a loop over the schools, collect size, density, mean degree, reciprocity (`nwdyads`) and the Jaccard index
      between the waves (`nwturnover`) into a results data set with `postfile`, using stored results instead of
-     retyped numbers (as in Chapter 28, Ex. 5). Which schools are dense? Does the ranking change with mean degree?
+     retyped numbers (as in Chapter 30, Ex. 5). Which schools are dense? Does the ranking change with mean degree?
   2. Check whether the waves contain missing ties, and how the measures you use treat them.
   3. Test the reciprocity of the first wave in each school with `nwcug, stat(nwdyads) rname(reciprocity)
      condition(density)`, with a modest `reps()`. Then repeat the test for one school with `condition(census)`
@@ -161,7 +161,7 @@ The questions do not give the results. Every assignment ends with an open questi
      schoolk_w1 schoolk_ethn, permutations(500)`. Is friendship sorted by ethnic background, once the earlier
      friendships are held fixed?
   5. Open: on the evidence of your table, would you pool the schools in one model or analyze them separately and
-     combine the results? Compare your answer with the reasoning of Chapter 24.
+     combine the results? Compare your answer with the reasoning of Chapter 26.
 
 ## 8. The full US airport network
 - **Data:** US airports, `nwwebuse usair_full`. Every US airport with a scheduled non-stop domestic route: 549
