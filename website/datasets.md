@@ -73,7 +73,7 @@ The core package ships with example networks, so every tutorial and help example
 - **What:** 18 novice monks; ranked choices (1 to 3, valued, directed) at three times (`samplk1` to `samplk3`) and a liking ranking (`samplike`, 88 ties). Attributes: faction (Loyal, Turks, Outcasts) and "Cloisterville".
 - **Source:** Sampson, S. F. (1969), *Crisis in a Cloister*, unpublished doctoral dissertation, Cornell University.
 - **Load:** `nwwebuse sampson`
-- **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
+- **Used in:** [nwlsm tutorial 2](../nwlsm/tutorial-2-bic-clusters/); listed in the [`netexample` reference](../reference/netexample).
 
 ### zachary: karate club
 - **What:** 34 members of a university karate club, undirected: `zachary_bin` (binary) and `zachary_val` (valued, 78 ties, values up to 7). Attribute: the faction each member joined after the split.
