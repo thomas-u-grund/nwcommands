@@ -88,6 +88,19 @@ estimates store f2
 nwcoefplot f2 f1, keep(edges)
 chk "models with different equations" `=(r(n_models) == 2 & r(n_coef) == 3)'
 
+* axis range: a panel whose intervals lie on one side of the reference line (one positive, one negative coefficient)
+* is drawn with the reference line inside the range and with room left of the first interval, on both scales
+nwcoefplot f1, keep(edges) export("`tmp'/c1.png", width(600)) name(cp_c1, replace)
+confirm file "`tmp'/c1.png"
+chk "single coefficient, linear axis" `=(r(n_coef) == 1)'
+nwcoefplot f1, keep(mutual) eform export("`tmp'/c2.png", width(600)) name(cp_c2, replace)
+confirm file "`tmp'/c2.png"
+chk "single coefficient, eform (log axis)" `=(r(n_coef) == 1)'
+nwcoefplot f1, keep(edges) eform name(cp_c3, replace)
+chk "eform with the interval right of 1" `=(r(n_coef) == 1)'
+nwcoefplot f1, keep(edges) xscale(range(-5 5)) xlabel(-5(5)5) name(cp_c4, replace)
+chk "user xscale and xlabel override the default range" `=(r(n_coef) == 1)'
+
 * nwcompare, graph
 nwcompare f1 f2, graph coefopts(keep(edges mutual))
 chk "nwcompare graph does not touch the table" `=(rowsof(r(table)) == 2)'

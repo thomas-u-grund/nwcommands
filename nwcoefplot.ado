@@ -265,13 +265,60 @@ program nwcoefplot, rclass
 			local xl "xline(1, lcolor(gs10) lpattern(dash))"
 			local xs "xscale(log)"
 		}
+		// the axis range always contains the intervals and the reference line, with a margin
+		quietly summarize lo if eqord == `eo', meanonly
+		local rlo = r(min)
+		quietly summarize hi if eqord == `eo', meanonly
+		local rhi = r(max)
+		quietly summarize b if eqord == `eo', meanonly
+		local rlo = min(`rlo', r(min))
+		local rhi = max(`rhi', r(max))
+		local xr ""
+		if `isef' {
+			local rlo = ln(min(`rlo', 1))
+			local rhi = ln(max(`rhi', 1))
+			local mar = max(0.08 * (`rhi' - `rlo'), 0.05)
+			local alo = exp(`rlo' - `mar')
+			local ahi = exp(`rhi' + `mar')
+			local xlab ""
+			foreach set in "1 1.25 1.5 2 2.5 3 4 5 6 8" "1 2 3 5" "1 2 5" "1" {
+				local cand ""
+				local nc = 0
+				forvalues ex = -6/6 {
+					foreach mm of local set {
+						local v = `mm' * 10^`ex'
+						if `v' >= `alo' & `v' <= `ahi' {
+							local cand "`cand' `=trim(strofreal(`v', "%9.4g"))'"
+							local ++nc
+						}
+					}
+				}
+				if `nc' >= 3 & `nc' <= 9 & "`xlab'" == "" local xlab "`cand'"
+			}
+			if "`xlab'" == "" local xlab "1"
+			if !`:list posof "1" in xlab' local xlab "`xlab' 1"
+			local xr "xscale(range(`alo' `ahi')) xlabel(`xlab')"
+		}
+		else {
+			local rlo = min(`rlo', 0)
+			local rhi = max(`rhi', 0)
+			if `rhi' - `rlo' <= 0 {
+				local rlo = -1
+				local rhi = 1
+			}
+			local mar = 0.08 * (`rhi' - `rlo')
+			local alo = `rlo' - `mar'
+			local ahi = `rhi' + `mar'
+			quietly _natscale `alo' `ahi' 6
+			local xr "xscale(range(`=r(min)' `=r(max)')) xlabel(`=r(min)'(`=r(delta)')`=r(max)')"
+		}
 		local ptitle ""
 		if `neq' > 1 local ptitle `"title("`eqname'", size(medsmall))"'
 		else if `"`title'"' != "" local ptitle `"title(`title')"'
 		tempname g`ip'
 		if `nep' > 1 local drawopt "nodraw name(`g`ip'', replace)"
 		local ysz = min(max(2.5, 0.26 * `nk' * (1 + 0.15 * (`mi' - 1)) + 1.4), 14)
-		twoway `plots', `xl' `xs' ylabel(`yl', angle(0) noticks nogrid labsize(small)) yscale(range(0.4 `=`nk' + 0.6') noline) ///
+		twoway `plots', `xl' `xs' `xr' ylabel(`yl', angle(0) noticks nogrid labsize(small)) yscale(range(0.4 `=`nk' + 0.6') noline) ///
 			ytitle("") xtitle("`xtp'") `legopt' `ptitle' graphregion(color(white)) plotregion(margin(small)) ///
 			ysize(`ysz') `drawopt' `options'
 		if `nep' > 1 local panels `panels' `g`ip''

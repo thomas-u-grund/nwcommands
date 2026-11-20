@@ -33,7 +33,7 @@
 {synopt:{opt name(name[, replace])}}name of the graph in memory{p_end}
 {synopt:{opt saving(filename[, replace])}}save the graph{p_end}
 {synopt:{opt exp:ort(filename[, options])}}write the graph with {helpb graph export}; an existing file is replaced{p_end}
-{synopt:{it:twoway_options}}other options of {helpb twoway}, applied to each panel{p_end}
+{synopt:{it:twoway_options}}other options of {helpb twoway}, applied to each panel; they come last, so {opt xscale()} and {opt xlabel()} replace the default axis{p_end}
 {synoptline}
 
 {title:Description}
@@ -42,7 +42,7 @@
 {cmd:nwcoefplot} draws point estimates with confidence intervals of the coefficients in {cmd:e(b)} and {cmd:e(V)} of the last estimation or of stored results. It works after {helpb nwsaom}, {helpb nwergm}, {helpb nwdynam}, {helpb nwrem}, {helpb nwalaam}, {helpb nwlsm} and after any other command that leaves {cmd:e(b)} and {cmd:e(V)}. The coefficients are labelled with their names. The intervals are {it:b} {c +-} {it:z} se, with a {it:t} quantile when the command stores {cmd:e(df_r)}. For {cmd:nwlsm} the coefficients are posterior means with posterior standard deviations, so the intervals are normal approximations; the credible intervals of the fit are in the output of {helpb nwlsm}. Coefficients that were omitted or have no variance are not drawn.
 
 {pstd}
-Equations are never mixed on one axis unless {opt mixeq} is given: a model with several equations (for example the network and outcome equations of {cmd:nwlsm} with {opt influence()}) gets one panel for each, with its own scale.
+Equations are never mixed on one axis unless {opt mixeq} is given: a model with several equations (for example the network and outcome equations of {cmd:nwlsm} with {opt influence()}) gets one panel for each, with its own scale. The axis of a panel always contains all intervals and the reference line (0, or 1 with {opt eform}), with a margin; with {opt eform} the axis is logarithmic and labelled at 1, 2, 5 times powers of ten.
 
 {pstd}
 {opt eform} gives odds ratios after {cmd:nwergm}, {cmd:nwalaam} and {cmd:nwlsm} with the Bernoulli or binomial family, and rate ratios after {cmd:nwdynam} and {cmd:nwrem} (and after {cmd:nwlsm} with the Poisson family). It is refused for {cmd:nwsaom} and {cmd:nwsbm}, whose parameters are not log odds or log rates; in the outcome equation of {cmd:nwlsm} the coefficients stay on their own scale. For other commands the axis reads "Exponentiated coefficient".
