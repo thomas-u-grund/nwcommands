@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 170
+POSITION 10 10 550 250
 
 DIALOG main, title("nwcompare - Compare the fit statistics of stored network models")
 BEGIN
@@ -14,6 +14,14 @@ BEGIN
   EDIT ed_names 290 20 230 ., nomem
   TEXT tx_sort 20 54 260 ., label("Sort rows by")
   COMBOBOX cb_sort 290 54 150 ., dropdown contents(list_sort) nomem option(sort)
+  CHECKBOX cx_graph 20 88 500 ., label("Also draw the coefficients of the models side by side") option(graph)
+  GROUPBOX gb_opt 10 106 520 94, label("Options")
+  TEXT tx_name 20 116 260 ., label("name of the coefficient graph; default = compare")
+  EDIT ed_name 290 116 190 ., nomem option(name)
+  TEXT tx_saving 20 144 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 144 190 ., save nomem option(saving)
+  TEXT tx_export 20 172 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 172 190 ., save nomem option(export)
 END
 
 LIST list_sort
@@ -29,6 +37,10 @@ BEGIN
 	put "nwcompare " main.ed_names
 	beginoptions
 		optionarg main.cb_sort
+		option main.cx_graph
+		optionarg main.ed_name
+		optionarg main.fi_saving
+		optionarg main.fi_export
 	endoptions
 	stata
 END

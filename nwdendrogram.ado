@@ -1,6 +1,15 @@
 capture program drop nwdendrogram
 program nwdendrogram
-	syntax [anything(name=clus)], [ factor(passthru) label(varname) lab * ]
+	syntax [anything(name=clus)], [ factor(passthru) label(varname) lab NAME(string) SAVing(string asis) EXPort(string asis) * ]
+	// name(), saving(), export(): the graph stays unnamed unless one of them is given (name() already worked through the twoway options)
+	local __uname `"`name'"'
+	_nw_gfinish check, always name(`name') saving(`saving') export(`export') default(dendrogram) cmd(nwdendrogram)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+	local __nopt ""
+	if `"`__uname'`__sv'`__ex'"' != "" local __nopt `"name(`__gn', replace)"'
+
 
 	// BUGFIX: unlike its siblings nwplot and nwplotmatrix, nwdendrogram
 	// only accepted label(varname) - it had no bare `lab' flag to reuse
@@ -108,11 +117,12 @@ program nwdendrogram
 	}
 	local cutpts "`cutpts' 0"
 	set more off
-	qui dendrogram_classes `mylevels', `factor' cutpoints(`cutpts') `options' label(`label') 
+	qui dendrogram_classes `mylevels', `factor' cutpoints(`cutpts') `__nopt' `options' label(`label') 
 	}
 	local __dg_rc = _rc
 	capture drop __lev*
 	restore
+	if `__dg_rc' == 0 & `"`__nopt'"' != "" _nw_gfinish save, name(`__gn') saving(`"`__sv'"') export(`"`__ex'"')
 	if `__dg_rc' {
 		// 3.20.1: an error while drawing was swallowed, so that nothing was drawn and nothing said
 		di "{err}nwdendrogram could not draw the tree (error `__dg_rc')."

@@ -1,13 +1,20 @@
 capture program drop nwmotifs
 program nwmotifs, rclass
 	version 9
-	syntax [anything(name=netname)] [, silent PLOT NAME(string) ONEmode SIXnode GENerate(string) replace MATrix(string) NORMalise POSNorm(string)]
+	syntax [anything(name=netname)] [, silent PLOT NAME(string) ONEmode SIXnode GENerate(string) replace MATrix(string) NORMalise POSNorm(string) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving(), export() and graph options (the plot options of the plot convention); name() alone stays accepted without plot as before
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`saving') export(`export') gopts(`"`options'"') default(motifs) cmd(nwmotifs)
+	local name `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+
 
 	_nwsyntax `netname', max(1)
 	// A two-mode network gets the bipartite motifs (Simmons et al. 2019, bmotif) by default; onemode counts the 4-node motifs of the
 	// bipartite graph read as a one-mode graph (the result of earlier versions).  nw2motifs is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
-		if "`plot'" != "" | "`name'" != "" {
+		if "`plot'" != "" | "`__uname'" != "" {
 			di "{err}{p 0 0 2}Options {bf:plot} and {bf:name()} have no two-mode form; {bf:onemode} gives the one-mode census of the bipartite graph.{p_end}"
 			exit 198
 		}
@@ -114,12 +121,15 @@ program nwmotifs, rclass
 		qui replace count = `__nwmotifs_diamond' if catcode==5
 		qui replace count = `__nwmotifs_k4' if catcode==6
 		qui replace count = `__nwmotifs_disc' if catcode==7
+		_nw_gfinish title "4-node motif census: `netname'", size(medium) noblack gopts(`"`options'"')
+		local __ttl `"`r(t)'"'
 		graph bar (asis) count, over(catcode, label(angle(45))) ///
 			ytitle("Count") ///
-			title("4-node motif census: `netname'", size(medium)) ///
+			`__ttl' ///
 			bar(1, fcolor(gs12) lcolor(gs6)) ///
-			legend(off) name(`name', replace)
+			legend(off) name(`name', replace) `options'
 		restore
+		_nw_gfinish save, name(`name') saving(`"`__sv'"') export(`"`__ex'"')
 		di as txt "(plot saved as {bf:`name'}; motif-category counts for `netname')"
 	}
 	capture mata: mata drop `mc'

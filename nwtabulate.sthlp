@@ -124,6 +124,9 @@ Frequency weights of Stata stop at 2,147,483,647: a directed network of more tha
 {opt plotoptions}({it:{help tabplot:tabplot_options}})
 {opt eiplot}
 {opt eiplotoptions}({it:{help kdensity:kdensity_options}})
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
 {it:{help tabulate twoway:tabulate2_options}}]
 
 
@@ -132,6 +135,9 @@ Frequency weights of Stata stop at 2,147,483,647: a directed network of more tha
 {synoptline}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
+{synopt:{opt name(string)}}Name of the graphs in memory: {it:name}{bf:_plot} and {it:name}{bf:_eiplot}; the graphs are unnamed when {opt name()}, {opt saving()} and {opt export()} are all absent{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph; with both plots, the graph name is put before the extension to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph(s) with {helpb graph export}; the file extension sets the format{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
 {synopt:{opt unvalued}}count every tie as 1, whatever its value, in the table and in the E-I index{p_end}
 {synopt:{opth save(filename)}}save the E-I indices of the permutations (variables {bf:EI_simulated}, {bf:EI_observed}) as a Stata data set{p_end}
@@ -220,6 +226,15 @@ relationship.
 {synopt:{bf:r(col)}}the tie values of {it:netname2} (columns){p_end}
 
 
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. {opt plotoptions()} and {opt eiplotoptions()} remain the
+way to pass options to the two graphs ({opt twoway_options} cannot be used here: other options go to {helpb tabulate}).
+
+{phang2}{cmd:. nwtabulate flomarriage flobusiness, plot export(tab.png, width(1200))}{p_end}
+
 {title:Remarks on plot}
 
 {pstd}
@@ -255,6 +270,9 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {opt plotoptions}({it:{help tabplot:tabplot_options}})
 {opt eiplot}
 {opt eiplotoptions}({it:{help kdensity:kdensity_options}})
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
 {it:{help tabulate twoway:tabulate2_options}}]
 
 
@@ -264,6 +282,9 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {synopt:{opth attribute(varname)}}Node-level attribute, numeric or string{p_end}
 {synopt:{opt plot}}Make a tabplot{p_end}
 {synopt:{opt eiplot}}Make a plot for significance of E-I-index{p_end}
+{synopt:{opt name(string)}}Name of the graphs in memory: {it:name}{bf:_plot} and {it:name}{bf:_eiplot}; the graphs are unnamed when {opt name()}, {opt saving()} and {opt export()} are all absent{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph; with both plots, the graph name is put before the extension to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph(s) with {helpb graph export}; the file extension sets the format{p_end}
 {synopt:{opth permutations(integer)}}QAP permutations for significance of E-I-index; default = 100{p_end}
 {synopt:{opt unvalued}}accepted; the table counts ties already, whatever their values{p_end}
 {synopt:{opth save(filename)}}save the E-I indices of the permutations (variables {bf:EI_simulated}, {bf:EI_observed}) as a Stata data set{p_end}

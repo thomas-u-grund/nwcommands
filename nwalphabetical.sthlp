@@ -30,6 +30,7 @@
 {p2col:{bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:{bf:{help nwcloseness }}}Closeness centrality{p_end}
 {p2col:{bf:{help nwclustering }}}Clustering coefficient (transitivity) of a network{p_end}
+{p2col:{bf:{help nwcoefplot }}}Coefficient plot of network model results{p_end}
 {p2col:{bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}
 {p2col:{bf:{help nwcommunity }}}Detect communities: Louvain, Leiden, Infomap, label propagation{p_end}

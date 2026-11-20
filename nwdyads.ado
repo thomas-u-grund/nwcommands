@@ -2,13 +2,18 @@
 capture program drop nwdyads
 program nwdyads
 	version 9
-	syntax [anything(name=netname)] [, PLOT NAME(string)]
-	
+	syntax [anything(name=netname)] [, PLOT NAME(string) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving(), export() and graph options (the plot options of the plot convention); name() alone stays accepted without plot as before
+	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`saving') export(`export') gopts(`"`options'"') default(dyads) cmd(nwdyads)
+	local name `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+
 	// netlist and wildcards (nwdyads lazega_*) as in nwsummarize; the
 	// r() results are those of the last network
 	_nwsyntax `netname', max(100000)
 	foreach onenet in `netname' {
-		_nwdyads1 `onenet', `plot' name(`name')
+		_nwdyads1 `onenet', `plot' name(`name') saving(`"`__sv'"') export(`"`__ex'"') `options'
 	}
 	capture mata: mata drop __nwdyads_*
 	capture confirm number 0
@@ -17,7 +22,7 @@ end
 capture program drop _nwdyads1
 program _nwdyads1
 	version 9
-	syntax anything(name=netname) [, PLOT NAME(string)]
+	syntax anything(name=netname) [, PLOT NAME(string) SAVing(string asis) EXPort(string asis) *]
 	_nwsyntax `netname', max(1)
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
@@ -75,7 +80,7 @@ program _nwdyads1
 		else local cnts "`=r(_100)' `=r(_001)'"
 		tempname rr
 		_return hold `rr'
-		_nwcensusplot, kind(dyad) directed(`directed') counts(`cnts') netname(`netname') name(`name')
+		_nwcensusplot, kind(dyad) directed(`directed') counts(`cnts') netname(`netname') name(`name') saving(`"`saving'"') export(`"`export'"') `options'
 		_return restore `rr'
 	}
 end

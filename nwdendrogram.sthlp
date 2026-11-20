@@ -21,6 +21,9 @@
 {p2col:{it:options}}Description{p_end}
 {p2line}
 {p2col:{opth factor(float)}}zoom in or out{p_end}
+{p2col:{opt name(string)}}name of the graph in memory; an existing graph is replaced; the graph is unnamed when {opt name()}, {opt saving()} and {opt export()} are all absent{p_end}
+{p2col:{opt sav:ing(filename)}}save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{p2col:{opt exp:ort(filename[, options])}}write the graph with {helpb graph export}; the file extension sets the format{p_end}
 {p2col:{opt lab}}display node labels saved with the network ({bf:_nwnode}), the same convention {help nwplot} and {help nwplotmatrix} use; takes precedence over an explicit {opt label()} if both are
 given{p_end}
 {p2col:{opth label(varname)}} label observations{p_end}

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 394
+POSITION 10 10 550 450
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcug - Conditional Uniform Graph (CUG) test")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 300, label("Options")
+  GROUPBOX gb_opt 10 44 520 356, label("Options")
   TEXT tx_ed_stat 20 54 260 ., label("Command template used to compute the test statistic")
   EDIT ed_stat 290 54 190 ., nomem option(stat)
   TEXT tx_ed_rname 20 82 260 ., label("Name of the r() scalar of the command to use as the test statistic")
@@ -38,6 +38,10 @@ BEGIN
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot; default = cug")
   EDIT ed_name 290 306 190 ., nomem option(name)
+  TEXT tx_saving 20 334 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 334 190 ., save nomem option(saving)
+  TEXT tx_export 20 362 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 362 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -83,6 +87,8 @@ BEGIN
 		option main.cx_silent
 		option main.cx_plot
 		optionarg main.ed_name
+		optionarg main.fi_saving
+		optionarg main.fi_export
 	endoptions
 	stata
 END

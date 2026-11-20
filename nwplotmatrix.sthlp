@@ -54,6 +54,9 @@
 {p2col:{opth ba:ckground(colorstyle)}}overwrite background color{p_end}
 {synopt:{opt tievalue}}show tie values as text inside patches{p_end}
 {p2col:{opt tievalueopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look and feel of tie value text{p_end}
+{p2col:{opt name(string)}}name of the graph in memory; an existing graph is replaced; the graph is unnamed when {opt name()}, {opt saving()} and {opt export()} are all absent{p_end}
+{p2col:{opt sav:ing(filename)}}save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{p2col:{opt exp:ort(filename[, options])}}write the graph with {helpb graph export}; the file extension sets the format{p_end}
 
 
 		
