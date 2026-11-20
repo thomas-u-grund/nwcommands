@@ -109,7 +109,7 @@ translation, so only the distances between actors mean anything, never the axes.
 A table of coordinates is hard to read. `nwlsmplot` draws the same positions as a map, with the ties of the network as light lines:
 
 ```stata
-. nwlsmplot, title("The karate club in the latent space")
+. nwlsmplot, title("The karate club in the latent space", color(black))
 . graph export "karate_positions.png", width(900) replace
 ```
 
@@ -120,7 +120,7 @@ Actors that are tied sit close together, and actors without ties in common lie f
 The map shows one point per actor, but each position is an estimate. The option `draws(#)` adds the uncertainty: it draws that many of the kept posterior draws of all positions, aligned to the minimum Kullback-Leibler positions, as small faint dots in the colour of the actors under the map:
 
 ```stata
-. nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the positions")
+. nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the positions", color(black))
 . graph export "karate_draws.png", width(900) replace
 ```
 

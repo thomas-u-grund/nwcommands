@@ -119,7 +119,7 @@ Positions are identified up to rotation, reflection and translation only.
 
 . 
 . * --- the network drawn in the latent space ---
-. nwlsmplot, title("The karate club in the latent space")
+. nwlsmplot, title("The karate club in the latent space", color(black))
 
 . graph export "karate_positions.png", width(900) replace
 
@@ -127,7 +127,7 @@ Positions are identified up to rotation, reflection and translation only.
 . * --- the uncertainty of the positions: 100 posterior draws as a faint cloud -
 > --
 . nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the p
-> ositions")
+> ositions", color(black))
 
 . graph export "karate_draws.png", width(900) replace
 
@@ -179,3 +179,4 @@ observed), P(simulated >= observed)), at most 1, as in latentnet. Missing
 dyads of the observed network count as no tie.
 
 . 
+

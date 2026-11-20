@@ -13,9 +13,9 @@ estat icl
 estat blocks
 
 * --- plots: blocked adjacency matrix, ICL curve, memberships ---
-nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
+nwsbmplot, type(matrix) shade blocklabels(periphery core) export(nwsbm1_matrix.png)
 nwsbmplot, type(icl) export(nwsbm1_icl.png)
-nwsbmplot, type(membership) export(nwsbm1_membership.png)
+nwsbmplot, type(membership) blocklabels(periphery core) title("") export(nwsbm1_membership.png)
 
 * --- how do the blocks relate to the two factions of the club? ---
 tabulate block group
