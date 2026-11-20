@@ -2,14 +2,14 @@
 title: "When things go wrong: more"
 parent: "Book companion"
 nav_order: 6
-description: "More error messages and installation details that go with Appendix B of the book: several groups in nwsaom, two mistakes the package now stops, and building plugins and Mata libraries."
+description: "More error messages and installation details that go with Appendix B of the book: several groups in nwsaom, two mistakes that the package stops with a message, and building plugins and Mata libraries."
 permalink: /book/troubleshooting/
 ---
 
 # When things go wrong: more
 {: .no_toc }
 
-This page goes with Appendix B of the book *Network Analysis with Stata*. The appendix covers how to read `_rc`, the five categories of error, installation problems and a checklist; here are the messages and procedures that the appendix leaves out for length.
+This page goes with Appendix B of the book *Network Analysis with Stata*. The appendix covers how to read `_rc`, the five categories of error, installation problems and a checklist; this page gives further messages and procedures.
 
 1. TOC
 {:toc}
@@ -43,9 +43,9 @@ _rc = 198
 
 A fit that runs but whose convergence criteria are not met is a different kind of failure. `nwsaom` prints which criterion failed and suggests `nwsaom refit`, which reruns the fit from its estimates; `nwsaom refit, maxruns(3)` repeats the restart until both criteria are met. With groups of 15 pupils a different `seed()` may be enough.
 
-## Two mistakes that used to pass silently
+## Two mistakes the package stops
 
-Two silent mistakes were common enough that the package now stops them. The first is a network whose nodes share a label:
+Two mistakes are common enough that the package stops them with a message. The first is a network whose nodes share a label:
 
 ```stata
 . capture noisily nwset, mat((0,1,1\1,0,1\1,1,0)) undirected labs(A,A,B)
