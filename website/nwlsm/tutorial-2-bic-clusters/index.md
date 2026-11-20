@@ -11,7 +11,7 @@ description: "Choose the number of latent clusters of a latent space model with 
 
 **Data.** Sampson's monastery: 18 novice monks who named the fellow monks they liked, at several times. The anthropologist Sampson observed three factions during his stay: Loyal (7 monks), Turks (7) and Outcasts (4); the faction is stored as a node attribute.
 Source: Sampson, S. F. (1969), *Crisis in a Cloister*, unpublished doctoral dissertation, Cornell University; loaded with `nwwebuse sampson` (see the [data sets page](../../datasets/)). The data set holds the choices at three times (`samplk1` to `samplk3`) and a liking ranking (`samplike`).
-You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 0.7.0 under Stata 17.
+You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 1.0.0 under Stata 17.
 The complete script and log are in [example.do](example.do) and [example.log](example.log). [Tutorial 1](../tutorial-1-first-lsm/) explains the model and the sampler; read it first.
 
 ## Why clusters, and why the BIC
@@ -61,7 +61,8 @@ Random effects, if present, add a part of their own, as we see below. The BIC is
 ## Comparing 0, 2, 3 and 4 clusters
 
 ```stata
-. nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit
+. nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit graph
+. graph export "monks_bic.png", width(900) replace
 
 ------------------------------------------------------------------------
   Clusters         BIC     BIC (Y)     BIC (Z) Mean loglik   BIC - min
@@ -78,6 +79,12 @@ Random effects, if present, add a part of their own, as we see below. The BIC is
 Read the parts. The part for the ties barely moves: 180.0 without clusters, between 182.2 and 185.6 with them, and the mean log likelihood is about the same. Clusters do not make the ties fit better. What changes is the part for the positions: with three clusters it falls from 141.3 to 99.6.
 The gain of 41.7 in that part and the loss of 5.7 in the part for the ties leave three clusters 36.1 points ahead of no clusters. Two clusters are 9.8 behind and four clusters 7.5. A difference of about 10 points is usually called strong, a difference below 2 or 3 hardly worth mentioning,
 so here the BIC clearly prefers three clusters over none and over two, and moderately over four. The BIC is a rough guide, and `latentnet` itself warns that it is not certain to be right for comparing clustered with unclustered models.
+
+The option `graph` draws this table (and the same graph can be saved with `graph export`):
+
+![BIC against the number of latent clusters: overall BIC, BIC of the ties and BIC of the positions](monks_bic.png)
+
+The solid line is the overall BIC, which falls from about 321 without clusters to 295 with two and 285 with three, and rises again to 293 with four; the dashed vertical line marks the minimum at three clusters. The dashed line of the BIC of the ties (Y) is nearly flat, between 180 and 186, and the dashed line of the BIC of the positions (Z) falls from 141 to 100 at three clusters and rises to 111 at four. The picture shows the point of the table: the clusters change the part for the positions and not the part for the ties. `gname()` names the graph and `gopts()` passes further `twoway` options such as `title()` or `scheme()`.
 
 ## Do the clusters match the factions?
 
@@ -107,6 +114,18 @@ To see the clusters, draw the monks in the latent space with `nwlsmplot`; the op
 ![Sampson's monks in the latent space, coloured by cluster](monks_clusters.png)
 
 The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model.
+
+The network is directed, so the ties are drawn as arrows from the sender to the receiver; this is the default for a directed network, and `noarrows` draws plain lines instead.
+
+Three more options show what the clusters model estimates. `clustermeans` marks the estimated mean of every cluster, `circles` draws the variance circle of each cluster (the spherical normal distribution of the positions), and `certainty` gives each monk an opacity by the largest posterior membership probability, so that monks who are not clearly assigned look pale. `export()` saves the graph in the same call; the extension sets the format.
+
+```stata
+. nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty") export(monks_circles.png, width(900))
+```
+
+![Sampson's monks with the cluster circles and the certainty of the membership](monks_circles.png)
+
+Each cluster is surrounded by a dashed ellipse in its colour (the circles look like ellipses because the two axes have different scales). The three circles are of similar size, the one of the top cluster (the outcasts) the largest. Most monks are drawn in full colour; a few at the edge of their group, for example John Bosco and Hugh in the lower left cluster and Amand next to the outcasts, are paler, which agrees with the three monks below 0.8 in the table of probabilities that follows. The cluster means themselves are hard to see on this picture, because they lie at the centre of the groups under the monks.
 
 The three clusters of the model are the three factions, with no monk in the wrong place. The numbering of the clusters is arbitrary; only the grouping counts. The model has never seen the faction variable. How sure is it about each monk?
 

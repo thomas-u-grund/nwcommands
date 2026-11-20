@@ -83,7 +83,7 @@ effects or between a clustered and an unclustered model.
 
 . 
 . * --- the BIC for 0, 2, 3 and 4 clusters; refit keeps the best model ---
-. nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit
+. nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit graph
 
 Selection of the number of latent clusters by BIC (as latentnet's bic.ergmm), ne
 > twork choice3
@@ -97,6 +97,8 @@ Selection of the number of latent clusters by BIC (as latentnet's bic.ergmm), ne
 ------------------------------------------------------------------------
 Sorted by BIC, smaller is better; 0 clusters is the model without clusters.
 The BIC compares fits to the same network with the same options.
+
+. graph export "monks_bic.png", width(900) replace
 
 . matrix list r(table), format(%9.2f)
 
@@ -138,6 +140,13 @@ Classification stored in grp_class, probabilities in grp_p1 to grp_p3.
 > )
 
 . graph export "monks_clusters.png", width(900) replace
+
+. 
+. * --- cluster means, variance circles and certainty of the membership; export(
+> ) writes the file ---
+. nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Samps
+> on's monks: cluster means, circles, certainty") export(monks_circles.png, widt
+> h(900))
 
 . summarize grp_p1 grp_p2 grp_p3
 
