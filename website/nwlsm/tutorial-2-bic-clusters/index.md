@@ -200,7 +200,7 @@ Goodness of fit: minimum geodesic distance (100 networks simulated from the post
 The distances are reproduced well: every Monte Carlo p-value is large. The out-degrees are not. In the data 16 of the 18 monks name exactly three others, probably a feature of how the choices were collected; the model, which knows nothing about such a restriction, simulates networks with out-degrees spread from 0 to 9 and therefore misses degree 2 and degree 3
 (p-values 0.00). A fit table is a reason to think about the data collection, not only about the model.
 
-For a valued network the dyads carry values. The liking ranking `samplike` has the values 0 to 3 (a higher value means liked more). We fit it with the binomial family and three trials, with three clusters:
+For a valued network the dyads carry values. The liking ranking `samplike` has the values 0 to 3. We fit it with the binomial family and three trials, with three clusters:
 
 ```stata
 . nwlsm samplike, family(binomial) trials(3) dim(2) clusters(3) seed(12)
