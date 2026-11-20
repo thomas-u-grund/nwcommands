@@ -890,7 +890,7 @@ program nwinstall_ancillary
 	// Keep this list equal to the f lines of _pkg_ado.txt with these extensions (cscripts/test_nwinstall_ancillary.do checks it).
 	syntax , dest(string) [from(string) remove]
 	local files nwmovie_template.html nwedit_template.html lib/vendor/cytoscape.min.js lib/vendor/gif.js ///
-		lib/vendor/gif.worker.js lib/vendor/mp4-muxer.js lib/plugins/macos/nwedit_viewer_macos ///
+		lib/vendor/gif.worker.js lib/vendor/mp4-muxer.js lib/vendor/webm-muxer.js lib/plugins/macos/nwedit_viewer_macos ///
 		lib/plugins/windows/nwedit_viewer_windows.exe lib/plugins/unix/nwedit_viewer_unix
 	if "`remove'" != "" {
 		foreach f of local files {

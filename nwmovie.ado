@@ -45,7 +45,8 @@ program nwmovie
 	local _nwmv_gifjs = "`_nwmv_pkgdir'/lib/vendor/gif.js"
 	local _nwmv_gifworker = "`_nwmv_pkgdir'/lib/vendor/gif.worker.js"
 	local _nwmv_mp4muxer = "`_nwmv_pkgdir'/lib/vendor/mp4-muxer.js"
-	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer {
+	local _nwmv_webmmuxer = "`_nwmv_pkgdir'/lib/vendor/webm-muxer.js"
+	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker _nwmv_mp4muxer _nwmv_webmmuxer {
 		capture confirm file "``_nwmv_f''"
 		if _rc {
 			di as error "{p 0 0 2}required file not found: ``_nwmv_f''; reinstall the package with: nwinstall, all{p_end}"
@@ -383,7 +384,9 @@ program nwmovie
 				mata: mata drop _nwmv_waveM
 			}
 
-			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+			tempfile _nwmv_kftf
+			mata: st_local("_nwmv_kfid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_kftf")))), ""))
+			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`_nwmv_kfid'.json"
 			// fopen(path,"w") errors (602) if the path already exists,
 			// unlike a plain overwrite - matching nwplot.ado's own
 			// defensive `capture erase` before its identical interactive-
@@ -509,7 +512,9 @@ program _nwmovie_export
 	local _rngstate = c(rngstate)
 	local _nwtd "`c(tmpdir)'"
 	if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
-	local _tmpout = "`_nwtd'" + "nwmovie_export_" + strofreal(int(runiform()*1000000)) + ".`ext'"
+	tempfile _tf
+	mata: st_local("_id", invtokens(strofreal(ascii(pathbasename(st_local("_tf")))), ""))
+	local _tmpout = "`_nwtd'" + "nwmovie_export_" + "`_id'" + ".`ext'"
 	set rngstate `_rngstate'
 	capture erase "`_tmpout'"
 	capture erase "`_tmpout'.error"
@@ -578,10 +583,10 @@ program _nwmovie_export
 			if `"`_ff'"' != "" {
 				capture erase "`_tmpout'.conv.mp4"
 				if "`c(os)'" == "Windows" {
-					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4"
+					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4"
 				}
 				else {
-					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4" < /dev/null
+					capture shell ffmpeg -y -loglevel error -i "`_tmpout'" -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -c:v libx264 -pix_fmt yuv420p "`_tmpout'.conv.mp4" < /dev/null
 				}
 				capture confirm file "`_tmpout'.conv.mp4"
 				if _rc == 0 {
@@ -749,6 +754,7 @@ void _nwmovie_writehtml(string scalar data, string scalar tplpath,
 	tpl = subinstr(tpl, "__NWMOVIE_CYTOSCAPE__", vjs)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFJS__", gifjs)
 	tpl = subinstr(tpl, "__NWMOVIE_MP4MUXER__", mp4muxer)
+	tpl = subinstr(tpl, "__NWMOVIE_WEBMMUXER__", _nwmovie_slurpfile(subinstr(mp4muxerpath, "mp4-muxer.js", "webm-muxer.js")))
 	tpl = subinstr(tpl, "__NWMOVIE_AUTOEXPORT__", autoexport)
 	tpl = subinstr(tpl, "__NWMOVIE_GIFWORKER__", "atob(" + char(34) + gifworkerb64 + char(34) + ")")
 	tpl = subinstr(tpl, "__NWMOVIE_DATA__", data)
