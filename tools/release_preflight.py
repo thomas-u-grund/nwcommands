@@ -188,7 +188,8 @@ def main():
             rec("FAIL", "plugin generation", f"the code asks for generation {need} but native/nwcomb.h says NWCOMB_VERSION {gen}")
         else:
             rec("PASS", "plugin generation", f"NWCOMB_VERSION {gen}, highest generation the code asks for: {need}")
-        rc, nc, _ = git("log", "-1", "--format=%H", "--", "native")
+        # the graph plugins are built from the C sources, headers and Makefile; the macOS viewer launcher (nwedit_viewer.mm) has its own binary
+        rc, nc, _ = git("log", "-1", "--format=%H", "--", "native/*.c", "native/*.h", "native/Makefile", "native/spi")
         for plat, fn in (("unix", "nwgraph_unix.plugin"), ("windows", "nwgraph_windows.plugin"), ("macos", "nwgraph_macos.plugin")):
             path = f"lib/plugins/{plat}/{fn}"
             rc, pc, _ = git("log", "-1", "--format=%H", "--", path)
