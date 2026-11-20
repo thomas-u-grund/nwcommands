@@ -121,8 +121,10 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 {title:Drawing the spectrum}
 
 {pstd}
-{opt plot} draws the Laplacian eigenvalues in ascending order, the values of {bf:r(eigenvalues)}; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. {opt embedding} adds a second panel with the second and third eigenvectors, one marker per node.
-{opt name()} names the graph in memory, {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to {helpb twoway} ({helpb graph combine} with {opt embedding}) and come last; without {opt plot} they give an error.
+{opt plot} draws the Laplacian eigenvalues in ascending order, the values of {bf:r(eigenvalues)}; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few
+well separated groups, and the number of eigenvalues at 0 is the number of components. {opt embedding} adds a second panel with the second and third eigenvectors, one marker per node.
+{opt name()} names the graph in memory, {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to {helpb twoway} ({helpb graph combine} with
+{opt embedding}) and come last; without {opt plot} they give an error.
 {opt plot} stops with error 198 for a two-mode network and for a directed network (symmetrize it with {help nwsym} first).
 
 {phang2}{cmd:. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))}{p_end}
@@ -154,4 +156,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. {it:Statistics and Co
 	{help nwevcent}, {help nwcommunity}, {help nwcomponents}, {help nwkcomponents}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

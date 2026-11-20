@@ -297,5 +297,26 @@ capture erase "`tmp'/b.png"
 capture erase "`tmp'/ergm.png"
 capture erase "`tmp'/ergm2.png"
 capture erase "`tmp'/lsm.png"
+* ---- msymbol(): one marker symbol per model; the default picture is unchanged
+nwcoefplot g1 g2, export("`tmp'/ms_def.png", width(600))
+nwcoefplot g1 g2, msymbol(O O) export("`tmp'/ms_oo.png", width(600))
+quietly checksum "`tmp'/ms_def.png"
+local c1 = r(checksum)
+quietly checksum "`tmp'/ms_oo.png"
+chk "msymbol(O O) gives the default picture byte for byte" `=(`c1' == r(checksum))'
+nwcoefplot g1 g2, msymbol(O D) export("`tmp'/ms_od.png", width(600))
+quietly checksum "`tmp'/ms_od.png"
+chk "msymbol(O D) changes the picture" `=(`c1' != r(checksum))'
+nwcoefplot g1 g2, msymbol(D) name(ms_cyc, replace)
+chk "msymbol with fewer symbols than models cycles" `=(r(n_models) == 2)'
+capture nwcoefplot g1 g2, msymbol(O D T)
+chk "msymbol with more symbols than models: r(198)" `=(_rc == 198)'
+capture nwcoefplot g1 g2, msymbol(O banana)
+chk "msymbol with a bad symbol name: r(198)" `=(_rc == 198)'
+capture nwcoefplot g1, msymbol(O Dh)
+chk "msymbol with two symbols for one model: r(198)" `=(_rc == 198)'
+nwcoefplot g1 g2, msymbol(Oh Th) title("") name(ms_hol, replace)
+graph describe ms_hol
+
 if $NWC_FAIL == 0 di as txt "PASS nwcoefplot plots, nwcompare graph and error paths"
 else di as err "FAIL nwcoefplot: $NWC_FAIL checks"

@@ -122,7 +122,8 @@ single network). The default direction is that a node is influenced by the nodes
 {title:Graph of the curve}
 
 {pstd}
-{opt plot(cumulative)}, {opt plot(new)} and {opt plot(both)} choose the picture: {opt cumulative} (the default of {opt graph} and plain {opt plot}) is the cumulative proportion of adopters as a line, {opt new} is a bar chart of the new adopters in each period (whole numbers on the y axis) and {opt both} draws the two side by side in one graph (the options then go to {helpb graph combine}).
+{opt plot(cumulative)}, {opt plot(new)} and {opt plot(both)} choose the picture: {opt cumulative} (the default of {opt graph} and plain {opt plot}) is the cumulative proportion of adopters as a line,
+{opt new} is a bar chart of the new adopters in each period (whole numbers on the y axis) and {opt both} draws the two side by side in one graph (the options then go to {helpb graph combine}).
 
 {pstd}
 {cmd:nwdiffuse curve} {opt graph} (or its synonym {opt plot}) draws the cumulative proportion of adopters. {opt name()} names the graph in memory (it stays unnamed when {opt name()}, {opt saving()} and
@@ -201,4 +202,4 @@ Kempe, D., J. Kleinberg, and E. Tardos. 2003. Maximizing the spread of influence
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

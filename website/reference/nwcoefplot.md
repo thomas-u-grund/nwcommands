@@ -29,11 +29,12 @@ namelist holds names of results saved with estimates store; a period (.) stands 
 | `mixeq` | all equations on one axis, labelled *eq*`:`*name* |
 | `common` | with several models: only the coefficients that all models have |
 | `skip:missing` | leave out models without `e(b)` and `e(V)` instead of stopping |
+| `msy:mbol(symbols)` | marker symbol for each model, in the order of the models (for example `msymbol(O D T)`); symbols are used again from the start when there are fewer than models; default is a circle for all |
 | `ti:tle(string)` | title of the graph |
 | `name(name[, replace])` | name of the graph in memory; default `coefplot`; an existing graph is replaced |
 | `sav:ing(filename[, replace])` | save the graph to a `.gph` file; an existing file is replaced |
 | `exp:ort(filename[, options])` | write the graph with `graph export`; an existing file is replaced |
-| *twoway_options* | other options of `twoway`, applied to each panel; they come last, so `xscale()` and `xlabel()` replace the default axis |
+| *twoway_options* | other options of `twoway`, applied to each panel; they come last, so `xscale()` and `xlabel()` replace the default axis; the size options `xsize()`, `ysize()`, `aspectratio()` and `scale()` replace the default size (with `byeq` or `mixeq` across several panels they apply to the combined graph) |
 
 ## Description
 
@@ -45,7 +46,7 @@ Equations are never mixed on one axis unless `mixeq` is given: a model with seve
 
 `keep()` and `drop()` take coefficient names or patterns with `*` and `?`. A pattern is compared with the name (`edges`, `gwesp*`) and with *eq*`:`*name* (`network:*`). The order of the `keep()` patterns is the order of the coefficients from top to bottom.
 
-With a list of models the coefficients of different models are drawn in one row in different colours, with a legend; `nwcompare, graph` calls this for the fit table.
+With a list of models the coefficients of different models are drawn in one row in different colours, with a legend; `nwcompare, graph` calls this for the fit table. For a black-and-white print give each model its own marker with `msymbol()`, for example `msymbol(O D T)` for three models (circle, diamond, triangle; hollow forms are `Oh Dh Th Sh`); at most one symbol per model is allowed, and a symbol that is not a Stata marker symbol name stops the command with r(198).
 
 ## Examples
 
@@ -57,6 +58,8 @@ With a list of models the coefficients of different models are drawn in one row 
 - `. nwergm flomarriage, edges gwesp(.5)`
 - `. estimates store m1`
 - `. nwcoefplot m0 m1, keep(edges) export(coefs.png, width(1200))`
+
+- `. nwcoefplot m0 m1, msymbol(O D) export(coefs_gray.png, width(1200))`
 
 - `. nwlsm advice, dim(2) influence(belief2 belief1 tenure) neighbors(10)`
 - `. nwcoefplot, noconstant`
@@ -77,4 +80,4 @@ With a list of models the coefficients of different models are drawn in one row 
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.31.0, 20 November 2026* ([check your installed version](nwversion))

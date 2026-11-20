@@ -158,4 +158,4 @@ than 50,000,000 dyads), before any matrix is built.
 	{help nwdyadprob}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

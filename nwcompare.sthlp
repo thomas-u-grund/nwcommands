@@ -31,7 +31,8 @@
 {title:Description}
 
 {pstd}
-{cmd:nwcompare} lists, one row per model, the number of observations {it:N}, the log likelihood, the number of parameters {it:k}, and the criteria AIC, BIC and ICL, as stored by {helpb nwergm}, {helpb nwsaom}, {helpb nwlsm}, {helpb nwsbm}, {helpb nwalaam} and by Stata's own estimation commands. A statistic that a model does not provide is shown as a period.
+{cmd:nwcompare} lists, one row per model, the number of observations {it:N}, the log likelihood, the number of parameters {it:k}, and the criteria AIC, BIC and ICL, as stored by {helpb nwergm},
+{helpb nwsaom}, {helpb nwlsm}, {helpb nwsbm}, {helpb nwalaam} and by Stata's own estimation commands. A statistic that a model does not provide is shown as a period.
 
 {pstd}
 What is shown for each command:
@@ -45,10 +46,13 @@ What is shown for each command:
 {title:Remarks}
 
 {pstd}
-Criteria from different model families are not always comparable. An ERGM is a likelihood for the {it:N} dyads, a latent space model with a posterior mean log likelihood is not a maximised likelihood, and the block model's PL and ICL refer to the actors and include the memberships. Compare AIC and BIC between models of the same family fitted to the same network (for example several {cmd:nwergm} specifications, or several numbers of blocks), and treat a comparison across families as a rough guide at most. {cmd:nwcompare} prints a note when the rows differ in {it:N} or in the network.
+Criteria from different model families are not always comparable. An ERGM is a likelihood for the {it:N} dyads, a latent space model with a posterior mean log likelihood is not a maximised likelihood,
+and the block model's PL and ICL refer to the actors and include the memberships. Compare AIC and BIC between models of the same family fitted to the same network (for example several {cmd:nwergm}
+specifications, or several numbers of blocks), and treat a comparison across families as a rough guide at most. {cmd:nwcompare} prints a note when the rows differ in {it:N} or in the network.
 
 {pstd}
-{cmd:nwsbm} stores no coefficient vector, so {cmd:estimates store} cannot keep its results: list them with the period, as the active results. Restoring another model afterwards replaces them, so fit the block model last, or call {cmd:nwcompare} again after fitting it.
+{cmd:nwsbm} stores no coefficient vector, so {cmd:estimates store} cannot keep its results: list them with the period, as the active results. Restoring another model afterwards replaces them, so fit
+the block model last, or call {cmd:nwcompare} again after fitting it.
 
 {pstd}
 With {opt graph}, {cmd:nwcompare} adds a graph of the coefficients (point estimates with confidence intervals, one colour for each model) of the models that have a coefficient vector, restricted to the
@@ -84,4 +88,4 @@ coefficients that all of them share by name; the sample models in the example be
 {help nwcoefplot}, {help nwergm}, {help nwsaom}, {help nwlsm}, {help nwsbm}, {help nwalaam}, {help estimates}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

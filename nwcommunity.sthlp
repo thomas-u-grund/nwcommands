@@ -40,7 +40,8 @@
 {synopt:{opt symmetrize}}Symmetrize a directed network before detecting communities (required for directed networks){p_end}
 {synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)}
 regardless of algorithm; default = 1{p_end}
-{synopt:{opt algorithm(louvain|leiden|infomap|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:leiden} and {it:infomap} are described below; {it:dirtlpa} (two-mode networks only) is the label propagation of Beckett (2016) for the
+{synopt:{opt algorithm(louvain|leiden|infomap|labelprop|dirtlpa)}}Community-detection algorithm; default = {it:louvain}; {it:leiden} and {it:infomap} are described below; {it:dirtlpa} (two-mode
+networks only) is the label propagation of Beckett (2016) for the
 bipartite modularity of Barber{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -222,4 +223,4 @@ structures in large-scale networks. {it:Physical Review E} 76(3), 036106.
 	{help nwmodularity}, {help nwcomponents}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -12,6 +12,10 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwcommands 3.31.0
+
+**nwcommands 3.31.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.31.0)). `nwcoefplot, msymbol(list)` sets one marker symbol per model (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart. Tested on macOS (Stata 17), Linux and Windows 11 (both StataNow 19.5 MP): the `nwcoefplot`, plot and dialog tests pass; on Stata 18 (Mac) the quick checks of 3.30.0 passed and 3.31.0 was not rerun.
+
 ## 20 November 2026: nwlsm 1.0.2 and nwsaom 1.9.1
 
 **nwlsm 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.2)). `edgecov()` with a network, or with a matrix that has a missing diagonal (as the matrix of a network from `nwtomata` has), no longer stops with "edge covariates must not have missing values": the diagonal of a one-mode matrix is not a dyad and is ignored; missing values off the diagonal are still an error.
