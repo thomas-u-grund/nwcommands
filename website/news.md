@@ -12,6 +12,16 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwlsm 1.0.0 and nwsbm 1.0.0
+
+Both packages reach their first stable release. From 1.0.0 the syntax, the stored results and the options are kept within 1.x.
+
+**nwlsm 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.0)). `nwlsmplot` draws with the same scale on both axes, so distances and circles keep their shape, and labels are placed where the fewest markers are. New options: arrows for directed ties (and `noarrows`), cluster means, circles, certainty, posterior draws, `colors()` with a gray version for print, `label()` and `color()` with numeric or string variables and value-labelled legends, `export()`. Titles are black by default. `nwlsmselect` has a graph of the BIC against the number of clusters, and a dialog.
+
+**nwsbm 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.0)). `nwsbmplot` draws the blocked adjacency matrix (also shaded and sorted), the block graph, the ICL against the number of blocks, the expected ties and the membership probabilities, for one-mode and two-mode fits. Options: `blocklabels()`, `actorlabels()`, `colors()` including gray, `nolegend`, `title("")`, `export()`. Titles are black by default. `estat icl` now resolves ties between block numbers as documented (the fewest blocks win).
+
+Both packages were tested on macOS (Stata 17), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP). Every test file of both packages was run on Linux and Windows on the release candidate, and the plot, goodness-of-fit, BIC, tie-break, ordering, error and post-estimation tests were run again on the final commits, with the shipped plugins. The dialog boxes load without error; they have not been inspected on screen on Linux or Windows.
+
 ## 20 November 2026: nwlsm 0.7.0 and nwsbm 0.4.0
 
 **nwlsm 0.7.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v0.7.0)). `estat bic` computes the BIC of `latentnet` (`bic.ergmm`) and `nwlsmselect` fits the model for several numbers of latent clusters and ranks them by BIC. `estat gof` takes `cutoff()` for valued networks. The passes over all dyads use a persistent team of threads, so `threads()` pays from about 40 actors on, with the same results for any number of threads. With sender, receiver or sociality effects the fit of the positions now starts from four draws by default (`mklstarts()`), because the minimum Kullback-Leibler fit has two local optima there (latentnet ends in the poorer one in 3 of 12 seeds on the Sampson monks); this deviates from `latentnet` on purpose.

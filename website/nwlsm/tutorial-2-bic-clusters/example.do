@@ -24,17 +24,15 @@ estat clusters, generate(grp) nolist
 tabulate grp_class faction
 
 * --- the monks in the latent space, coloured by cluster ---
-nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space", color(black))
+nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space")
 graph export "monks_clusters.png", width(900) replace
 
-* --- the same map coloured by the observed faction (color() needs a numeric variable; the legend shows its value labels), and in gray for print ---
-encode faction, generate(fac)
-label variable fac "faction"
-nwlsmplot, color(fac) label(_nwnode) title("Sampson's monks by faction", color(black)) export(monks_factions.png, width(900))
-nwlsmplot, color(fac) colors(gray) label(_nwnode) title("") export(monks_factions_gray.png, width(900))
+* --- the same map coloured by the observed faction (the string variable gives the legend), and in gray for print ---
+nwlsmplot, color(faction) label(_nwnode) title("Sampson's monks by faction") export(monks_factions.png, width(900))
+nwlsmplot, color(faction) colors(gray) label(_nwnode) title("") export(monks_factions_gray.png, width(900))
 
 * --- cluster means, variance circles and certainty of the membership; export() writes the file ---
-nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty", color(black)) export(monks_circles.png, width(900))
+nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty") export(monks_circles.png, width(900))
 summarize grp_p1 grp_p2 grp_p3
 generate pmax = max(grp_p1, grp_p2, grp_p3)
 summarize pmax

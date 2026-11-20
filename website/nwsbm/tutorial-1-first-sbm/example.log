@@ -149,6 +149,6 @@ b3  0.0017  0.4740  0.0385
 . 
 . * --- the block graph of the three-block fit ---
 . nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
-
 . 
+
 
