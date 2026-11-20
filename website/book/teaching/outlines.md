@@ -113,7 +113,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   itself evidence of a cohesive social group.
 - **Demonstration:** the reciprocated advice network from `nwsym lazega_adv, mode(min)`; `nwclique`, `nwkplex`,
   `nwnclique`, `nwkcore`, `nwkcomponents` and `nwcohesion`; `nwcommunity lazega_adv, algorithm(louvain)
-  seed(12345) symmetrize` and `nwmodularity lazega_adv, group(officenum) symmetrize`; the gang and the macaque
+  seed(12345) symmetrize`, the same with `leiden` and `infomap` for comparison, and `nwmodularity lazega_adv,
+  group(officenum) symmetrize`; the gang and the macaque
   cortex as further cases.
 - **Exercises:** Ch. 9, Ex. 1 (k-components against k-cores); Ch. 9, Ex. 4 (communities of the co-work network);
   Ch. 9, Ex. 5 (label propagation under four seeds); Ch. 9, Ex. 7 (what a cohesion result stands for).
@@ -125,7 +126,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   regular equivalence and core and periphery are different answers to "who could replace whom?"
 - **Demonstration:** the small office typed with `input` and `nwset`, with `nwsimindex` and `nwregular`; on the
   advice network `nwsimindex lazega_adv, measure(jaccard)`, `nwconcor lazega_adv, splits(2)`, `nwcollapse`,
-  `nwhierarchy` with single and Ward linkage, and `nwcoreperiphery`; `nwdendrogram` on the Florentine families.
+  `nwhierarchy` with single and Ward linkage, and `nwcoreperiphery` with `nwplotmatrix lazega_adv, sortby(core)
+  group(core)`; `nwdendrogram` on the Florentine families. CONCOR needs a number of blocks in advance; Chapter 23's
+  stochastic block model chooses it from the data.
 - **Exercises:** Ch. 10, Ex. 3 (structural equivalence by hand); Ch. 10, Ex. 4 (Ward and CONCOR as two-group
   splits); Ch. 10, Ex. 7 (is the core just the busiest lawyers?); Ch. 10, Ex. 8 (who could replace lawyer n17).
 
@@ -191,12 +194,12 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 For students who know the material of Chapters 1 to 8, from course A or from another course. It can be taught as
 a second course. The course follows the path *Statistical models for one observed network* to its end
 (Chapters 15, 18 to 22) and then the path *Change and events* (Chapters 14, 25 to 28), and closes with the
-capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models. Chapter 24
-(*Influence and contagion*) has a section on autologistic actor attribute models (`nwalaam`), for questions in
-which an attribute of the actors, not the ties, is the outcome; Week 7 offers it as an extra block. Chapters 23 and
-24 are otherwise not scheduled. Chapter 23 (*Latent space and block models*, `nwsbm` and `nwlsm`) fits after Week 7
-as reading, as another account of the same advice network, and Chapter 24 after Week 9 as reading, because the
-co-evolution model of Week 9 answers the question that Chapter 24 leaves open.
+capstone. Chapter 16 is added because its logit on the edge list leads directly to dyadic models. Week 7 carries
+two optional blocks. Chapter 23 (*Latent space and block models*, `nwsbm` and `nwlsm`) gives a second and a third
+account of the advice network that the ERGMs explain, with hidden groups and hidden positions in place of counted
+tendencies. Chapter 24 (*Influence and contagion*) has a section on autologistic actor attribute models (`nwalaam`),
+for questions in which an attribute of the actors, not the ties, is the outcome. The rest of Chapter 24 is reading
+after Week 9, because the co-evolution model of Week 9 answers the question that Chapter 24 leaves open.
 
 Each week has a deck with speaker notes, a hands-on slide for each block and the book's exercises, as PowerPoint with a PDF; Weeks 3, 4 and 12 use the same decks as Course A, and instructors are free to use, adapt and share them.
 
@@ -281,7 +284,14 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwergm simulate` from hand-chosen coefficients and from the fitted advice model with one
   coefficient changed; `nwergm mesa, edges nodematch(grade race) gwesp(.25) seed(12345)` and the same model with
   `triangle`, which fails; a version of `mesa` with missing dyads built with `nwtomata`.
-- **Optional extra:** an attribute as the outcome (Chapter 24, Section 24.4): `nwalaam smoker1 glasgow1,
+- **Optional extra 1, another account of the same network (Chapter 23):** the ERGM explains ties by counted
+  tendencies; a stochastic block model and a latent space model explain them by hidden groups and hidden positions.
+  Demonstration: `nwsbm lazega_adv, maxblocks(6) seed(12345) generate(block) replace`, the table of ICL values, the
+  blocks against office and status with `tabulate`; `nwsbmplot, type(matrix) sort shade`; `nwlsm` with `estat
+  mcmcdiag` and `nwlsmplot`. The chapter opens with what both models share: ties that depend on hidden attributes,
+  an amount of hidden structure that is chosen, and positions and labels known only up to relabeling. Homework:
+  Ch. 23, Ex. 2 and 3.
+- **Optional extra 2, an attribute as the outcome (Chapter 24, Section 24.4):** `nwalaam smoker1 glasgow1,
   effects(density contagion sender receiver) seed(12345)`, its pseudolikelihood start with `mple`, and `estat gof`;
   a cross-sectional association, not influence. Homework: Ch. 24, Ex. 4 and 5.
 - **Exercises:** Ch. 22, Ex. 1 (why `mutual` has no meaning in an undirected network); Ch. 22, Ex. 2 (why a
