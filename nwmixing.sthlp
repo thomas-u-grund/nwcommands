@@ -21,6 +21,9 @@
 {opt eiplotoptions(string)}
 {opt plot}
 {opt plotoptions(string)}
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
 {opth permutations(int)}
 {opth save(filename)}
 {it:tab_options}]
@@ -36,6 +39,9 @@ value marked{p_end}
 {help kdensity}{p_end}
 {synopt:{opt plot}}Plot the ego/alter mixing table as a bar plot in the style of {cmd:tabplot} (built in; see Remarks on plot){p_end}
 {synopt:{opt plotoptions(string)}}Additional options forwarded to {help twoway} for {opt plot}{p_end}
+{synopt:{opt name(string)}}Name of the graphs in memory: {it:name}{bf:_plot} and {it:name}{bf:_eiplot}; the graphs are unnamed when {opt name()}, {opt saving()} and {opt export()} are all absent{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph; with both plots, the graph name is put before the extension to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph(s) with {helpb graph export}; the file extension sets the format{p_end}
 {synopt:{opth permutations(int)}}Number of QAP permutations for the E-I index's own null
 distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the
 observed table/index are reported){p_end}
@@ -68,6 +74,15 @@ permutation test: the attribute assignment is held fixed while the network itsel
 randomly permuted, building a null distribution of the E-I index under "no association between this
 attribute and tie placement", and reports a two-sided p-value.
 
+
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. {opt plotoptions()} and {opt eiplotoptions()} remain the
+way to pass options to the two graphs ({opt twoway_options} cannot be used here: other options go to {helpb tabulate}).
+
+{phang2}{cmd:. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))}{p_end}
 
 {title:Remarks on plot}
 
@@ -135,4 +150,4 @@ simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 	{help nwassortativity}, {help nwqap}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

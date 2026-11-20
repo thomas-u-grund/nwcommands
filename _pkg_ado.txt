@@ -3,6 +3,7 @@ f _extract_valuelabels.ado
 f _gnwdegree.ado
 f _growmedian2.ado
 f _nwdeploy.ado
+f _nw_gfinish.ado
 f _nwdialog.ado
 f _nwdialog_append.ado
 f _nwdialog_clusters.ado
@@ -56,6 +57,7 @@ f nwclear.ado
 f nwclique.ado
 f nwcloseness.ado
 f nwclustering.ado
+f nwcoefplot.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado

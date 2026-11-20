@@ -17,13 +17,19 @@
 [{help netname}]
 [{cmd:,}
 {opt plot}
-{opt name(string)}]
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
+{it:twoway_options}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt plot}}Draw the 16 triad types as small pictures with their counts{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:triads}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{it:twoway_options}}Other options of {helpb twoway}, applied last; without {opt plot}, {opt saving()}, {opt export()} and these options give an error{p_end}
 {p2colreset}{...}
 
 {title:Description}
@@ -114,6 +120,15 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 {txt}This example shows, e.g. that in the {it:glasgow3} network, there are 12 triads where all nodes {it:i}, {it:j} and {it:k} are directely connected with each other.
 
 
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
+replace the defaults. 
+
+{phang2}{cmd:. nwtriads flomarriage, plot export(triads.png, width(1200))}{p_end}
+
 {title:Stored results}
 
 {synoptset 20 tabbed}{...}
@@ -133,4 +148,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 	{help nwdyads}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

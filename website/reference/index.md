@@ -68,6 +68,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 - [`nw2project`](nw2project) --- One-mode projection of a two-mode network
 - [`nwaddnodes`](nwaddnodes) --- Add nodes to network
+- [`nwbackbone`](nwbackbone) --- Backbone extraction for valued networks and two-mode projections
 - [`nwattime`](nwattime) --- Static graph view of a temporal network at a given time
 - [`nwcollapse`](nwcollapse) --- Collapse a network
 - [`nwdichotomize`](nwdichotomize) --- Dichotomize a network at a threshold
@@ -118,7 +119,7 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ### Communities
 
-- [`nwcommunity`](nwcommunity) --- Detect communities via the Louvain method or label propagation
+- [`nwcommunity`](nwcommunity) --- Detect communities: Louvain, Leiden, Infomap, label propagation
 - [`nwmodularity`](nwmodularity) --- Score an existing node partition using Newman's modularity
 - [`nwspectral`](nwspectral) --- Graph Laplacian spectral analysis
 
@@ -162,14 +163,18 @@ complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ### Statistical tests
 
+- [`nwcoefplot`](nwcoefplot) --- Coefficient plot of network model results
+- [`nwcompare`](nwcompare) --- Compare the fit statistics of stored network models
 - [`nwcorrelate`](nwcorrelate) --- Correlate networks and variables
 - [`nwcug`](nwcug) --- Conditional Uniform Graph (CUG) test
 - [`nwqap`](nwqap) --- Multivariate QAP regression
+- [`nwspmatrix`](nwspmatrix) --- Spatial weighting matrix from a network, for spregress
 - [`nwutility`](nwutility) --- Utility scores of Jackson and Wolinsky (1996)
 
 ### Other analysis tools
 
 - [`nwcontext`](nwcontext) --- Create a context variable
+- [`nwdiffuse`](nwdiffuse) --- Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation
 - [`nwnode`](nwnode) --- Check whether a node exists in a network
 - [`nwturnover`](nwturnover) --- Tie turnover/stability between two waves of the same network
 - [`nwvalue`](nwvalue) --- Return a tie value

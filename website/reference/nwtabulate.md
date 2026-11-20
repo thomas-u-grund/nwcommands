@@ -136,6 +136,12 @@ Network:  gang      Directed: false
 - **r(row)** --- the tie values of *netname1* (rows)
 - **r(col)** --- the tie values of *netname2* (columns)
 
+## Saving and exporting the graph
+
+`name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `plotoptions()` and `eiplotoptions()` remain the way to pass options to the two graphs (`twoway_options` cannot be used here: other options go to `tabulate`).
+
+- `. nwtabulate flomarriage flobusiness, plot export(tab.png, width(1200))`
+
 ## Remarks on plot
 
 The `plot` option draws the table with a built-in bar plot (the same plot the user-written `tabplot` draws; `tabplot` itself is not needed, and is not used even if it is installed). Any further options in `plotoptions()` are passed to `twoway`. The built-in plot follows the idea and the look of Nick Cox's `tabplot` (SSC); thanks to N. J. Cox.
@@ -152,4 +158,4 @@ The `plot` option draws the table with a built-in bar plot (the same plot the us
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

@@ -19,6 +19,9 @@
 {opt silent}
 {opt plot}
 {opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
+{it:twoway_options}
 {opt onemode}
 {opt six:node}
 {opt gen:erate(stub)}
@@ -33,6 +36,9 @@
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt plot}}Draw a bar chart of the 7 category counts{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:motifs}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{it:twoway_options}}Other options of {helpb twoway}, applied last; without {opt plot}, {opt saving()}, {opt export()} and these options give an error{p_end}
 {synopt:{opt onemode}}Two-mode network: the 4-node census of the bipartite graph read as a one-mode graph, instead of the bipartite motifs (the default){p_end}
 {synopt:{opt six:node}}Two-mode network: count the motifs of six nodes too (44 motifs and 148 node positions instead of 17 and 46){p_end}
 {synopt:{opt gen:erate(stub)}}Two-mode network: store the node position counts in the variables {it:stub}1, {it:stub}2, ...{p_end}
@@ -130,6 +136,15 @@ four-node sets).
     {cmd:. nwcug flomarriage, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)}
 
 
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
+replace the defaults. 
+
+{phang2}{cmd:. nwmotifs flomarriage, plot export(motifs.png, width(1200))}{p_end}
+
 {title:Stored results}
 
     Scalars
@@ -173,4 +188,4 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
     {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

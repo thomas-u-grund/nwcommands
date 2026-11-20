@@ -103,7 +103,24 @@ end
 
 capture program drop nwtab2
 program nwtab2
-	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) *]
+	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) NAME(string) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving() and export() of the two pictures (plot: name_plot, eiplot: name_eiplot); the pictures stay unnamed when none of the three is given
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`plot'`eiplot') name(`name') saving(`saving') export(`export') default(tabulate) cmd(nwtabulate)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+	local __named = (`"`__uname'`__sv'`__ex'"' != "")
+	local __both = ("`plot'" != "" & "`eiplot'" != "")
+	local __alw ""
+	if `__both' local __alw "always"
+	local __nopt_plot ""
+	local __nopt_ei ""
+	if `__named' {
+		local __nopt_plot "name(`__gn'_plot, replace)"
+		local __nopt_ei "name(`__gn'_eiplot, replace)"
+	}
+
 		
 	
 	local netname0 `netname'
@@ -156,7 +173,8 @@ program nwtab2
 	}
 	
 	if "`plot'" != "" {
-		_nwtabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `__nopt_plot' `plotoptions'
+		if `__named' _nw_gfinish save, graphs(`__gn'_plot) saving(`"`__sv'"') export(`"`__ex'"') `__alw'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -212,7 +230,8 @@ program nwtab2
 		local xmax = max(`EI_index',r(max))
 		local bandwidth `= 1 / `nodes''
 		if "`eiplot'" != "" {
-			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `eiplotoptions'	
+			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `__nopt_ei' `eiplotoptions'
+			if `__named' _nw_gfinish save, graphs(`__gn'_eiplot) saving(`"`__sv'"') export(`"`__ex'"') `__alw'
 		}		
 	}
 	_return restore res1
@@ -237,7 +256,24 @@ end
 capture program drop nwtab3
 program nwtab3
 	// unvalued is accepted: this table counts ties, whatever their values
-	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) *]
+	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) save(string) NAME(string) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving() and export() of the two pictures (plot: name_plot, eiplot: name_eiplot); the pictures stay unnamed when none of the three is given
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`plot'`eiplot') name(`name') saving(`saving') export(`export') default(tabulate) cmd(nwtabulate)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+	local __named = (`"`__uname'`__sv'`__ex'"' != "")
+	local __both = ("`plot'" != "" & "`eiplot'" != "")
+	local __alw ""
+	if `__both' local __alw "always"
+	local __nopt_plot ""
+	local __nopt_ei ""
+	if `__named' {
+		local __nopt_plot "name(`__gn'_plot, replace)"
+		local __nopt_ei "name(`__gn'_eiplot, replace)"
+	}
+
 		
 	
 	_nwsyntax `netname', max(1) min(1)
@@ -276,7 +312,8 @@ program nwtab3
 	}
 	
 	if "`plot'" != "" {
-		_nwtabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `__nopt_plot' `plotoptions'
+		if `__named' _nw_gfinish save, graphs(`__gn'_plot) saving(`"`__sv'"') export(`"`__ex'"') `__alw'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -343,7 +380,8 @@ program nwtab3
 		local xmax = max(`EI_index',r(max))
 		local bandwidth `= 1 / `nodes''
 		if "`eiplot'" != "" {
-			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `eiplotoptions'	
+			kdensity EI_simulated, xscale(range(`xmin' `xmax')) title("") bwidth(`bandwidth') ytitle("Density") xtitle("E-I Index") xline(`EI_index',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of network `net1'"') `__nopt_ei' `eiplotoptions'
+			if `__named' _nw_gfinish save, graphs(`__gn'_eiplot) saving(`"`__sv'"') export(`"`__ex'"') `__alw'
 		}		
 	}
 

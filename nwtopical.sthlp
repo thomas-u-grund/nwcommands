@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.28.0  19nov2026}{...}
+{* *! version 3.29.0  20nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -202,6 +202,7 @@
 {marker analysis_statmodels}{...}
 {p 11 11 2}{bf:{it:Statistical tests}}{p_end}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcoefplot }}}Coefficient plot of network model results{p_end}
 {p2col:    {bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
@@ -282,4 +283,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

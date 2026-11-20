@@ -36,6 +36,9 @@ cat >> "$T/s0_install.do" <<EOF
 net install nwcommands, from("$CORE/") replace
 capture program drop nwinstall
 nwinstall, everything from("$CORE") modelsfrom("$MODELS") path("$T/prof")
+findfile _nw_gfinish.ado
+_nw_gfinish version
+assert r(api) >= 1
 display "SMOKE_OK"
 EOF
 

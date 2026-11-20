@@ -12,6 +12,21 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwcommands 3.29.0
+
+**nwcommands 3.29.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.29.0)).
+
+- New `nwcoefplot`: coefficient plot (point estimates with confidence intervals) after `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and any command that leaves `e(b)` and `e(V)`, so the user-written `coefplot` is not needed. Options `level()`, `keep()`, `drop()`, `noconstant`, `eform` (odds ratios or rate ratios where they make sense), one panel for each equation (`byeq`, `mixeq`), and several stored models side by side. Dialog and menu entry.
+- `nwcompare` has a `graph` option (`coefopts()`) that also draws the coefficients of the compared models side by side, and takes `name()`, `saving()`, `export()` and `plot`.
+- A common set of options for the plots of the core: `name()`, `saving()`, `export()` and the graph options of `twoway`, which come last and replace the defaults, now work in the same way in `nwcug`, `nwqap` (graph saving is `gsaving()`), `nwdyads`, `nwtriads`, `nwmotifs`, `nwmixing`, `nwtabulate`, `nwcorrelate`, `nwdiffuse, curve`, `nwplotmatrix` and `nwdendrogram`. Default pictures are unchanged. Titles of new plots are black.
+- `nwcorrelate, noplot` switches off the density plot that is drawn with `permutations()` above 1; `nwdiffuse, curve` accepts `plot` as a synonym of `graph`.
+- Fix: `export(file.png, width(N))` wrote the file but ignored the options after the comma in some calls; the width and other export options now apply.
+- Help files and dialogs list the new options.
+
+The new plots of the model packages (`nwsaom`, `nwergm`, `nwalaam`, `nwdynam`, `nwrem`) come with their own releases and need nwcommands 3.29.0 or later.
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): the test files of the new and changed plot commands run clean on all three, and the widths of exported pictures were measured on Linux and Windows, including a Windows folder name with a space.
+
 ## 20 November 2026: nwlsm 1.0.0 and nwsbm 1.0.0
 
 Both packages reach their first stable release. From 1.0.0 the syntax, the stored results and the options are kept within 1.x.

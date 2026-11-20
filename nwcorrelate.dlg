@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 394
+POSITION 10 10 550 478
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcorrelate - Correlate networks and variables")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 300, label("Options")
+  GROUPBOX gb_opt 10 44 520 384, label("Options")
   TEXT tx_vr_attribute 20 54 260 ., label("Node attribute to correlate with the network (instead of a second network)")
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_ed_context 20 82 260 ., label("Ties used for node correlations: outgoing, incoming or both")
@@ -38,6 +38,12 @@ BEGIN
   CHECKBOX cx_undirected 290 278 190 ., label("undirected") option(undirected)
   TEXT tx_cx_directed 20 306 260 ., label("Store the node correlations as a directed network")
   CHECKBOX cx_directed 290 306 190 ., label("directed") option(directed)
+  TEXT tx_noplot 20 334 260 ., label("no density plot of the permutations")
+  CHECKBOX cx_noplot 290 334 190 ., label("noplot") option(noplot)
+  TEXT tx_saving 20 362 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 362 190 ., save nomem option(saving)
+  TEXT tx_export 20 390 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 390 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -69,6 +75,9 @@ BEGIN
 		option main.cx_force
 		option main.cx_undirected
 		option main.cx_directed
+		option main.cx_noplot
+		optionarg main.fi_saving
+		optionarg main.fi_export
 	endoptions
 	stata
 END

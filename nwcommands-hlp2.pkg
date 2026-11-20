@@ -2,8 +2,12 @@ v 3
 d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2)
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 19nov2026
-d Version: 3.28.0
+d Distribution-Date: 20nov2026
+d Version: 3.29.0
+f nwgeodesic.sthlp
+f nwhierarchy.sthlp
+f nwhomophily.sthlp
+f nwimport.sthlp
 f nwinduced.sthlp
 f nwinstall.sthlp
 f nwversion.sthlp
@@ -58,6 +62,7 @@ f nwsimindex.sthlp
 f nwsimmelian.sthlp
 f nwsmall.sthlp
 f nwspectral.sthlp
+f nwspmatrix.sthlp
 f nwstack.sthlp
 f nwsubset.sthlp
 f nwsummarize.sthlp
@@ -79,6 +84,3 @@ f nwunab.sthlp
 f nwuse.sthlp
 f nwutility.sthlp
 f nwvalidate.sthlp
-f nwvalidvars.sthlp
-f nwvalue.sthlp
-f nwwebuse.sthlp

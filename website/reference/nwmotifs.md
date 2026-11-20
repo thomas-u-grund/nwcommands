@@ -20,6 +20,9 @@ nwmotifs
 silent
 plot
 name(string)
+saving(filename)
+export(filename[, options])
+twoway_options
 onemode
 six:node
 gen:erate(stub)
@@ -34,6 +37,9 @@ posn:orm(type)]
 | `silent` | Suppress display of results |
 | `plot` | Draw a bar chart of the 7 category counts |
 | `name(string)` | Name for the graph created by `plot`; default = **motifs** |
+| `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
+| *twoway_options* | Other options of `twoway`, applied last; without `plot`, `saving()`, `export()` and these options give an error |
 | `onemode` | Two-mode network: the 4-node census of the bipartite graph read as a one-mode graph, instead of the bipartite motifs (the default) |
 | `six:node` | Two-mode network: count the motifs of six nodes too (44 motifs and 148 node positions instead of 17 and 46) |
 | `gen:erate(stub)` | Two-mode network: store the node position counts in the variables *stub*1, *stub*2, ... |
@@ -85,6 +91,12 @@ The census is not obtained by listing the *n*(*n*-1)(*n*-2)(*n*-3)/24 four-node 
 . nwcug flomarriage, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)
 ```
 
+## Saving and exporting the graph
+
+`name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
+
+- `. nwmotifs flomarriage, plot export(motifs.png, width(1200))`
+
 ## Stored results
 
 **Scalars**
@@ -129,4 +141,4 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

@@ -22,6 +22,9 @@ attribute(varname)
 eiplotoptions(string)
 plot
 plotoptions(string)
+name(string)
+saving(filename)
+export(filename[, options])
 permutations(int)
 save(filename)
 tab_options]
@@ -34,6 +37,9 @@ tab_options]
 | `eiplotoptions(string)` | Additional options forwarded to the `eiplot`'s own `kdensity` |
 | `plot` | Plot the ego/alter mixing table as a bar plot in the style of `tabplot` (built in; see Remarks on plot) |
 | `plotoptions(string)` | Additional options forwarded to `twoway` for `plot` |
+| `name(string)` | Name of the graphs in memory: *name***_plot** and *name***_eiplot**; the graphs are unnamed when `name()`, `saving()` and `export()` are all absent |
+| `sav:ing(filename)` | Save the graph; with both plots, the graph name is put before the extension to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph(s) with `graph export`; the file extension sets the format |
 | `permutations(int)` | Number of QAP permutations for the E-I index's own null distribution and p-value; default = 100. Set to 1 to skip the permutation test entirely (only the observed table/index are reported) |
 | `save(filename)` | Save the QAP permutation draws (variable *EI_simulated*) and the observed value (variable *EI_observed*) to a dataset (an existing file is replaced); only when `permutations()` > 1 |
 | *tab_options* | Any other option is forwarded to the underlying `tab` call that builds the mixing table (e.g. `row`, `column`, `cell`) |
@@ -45,6 +51,12 @@ tab_options]
 Ties are treated as unvalued (presence/absence only) throughout - tie strength does not affect the mixing table or the E-I index.
 
 With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a QAP permutation test: the attribute assignment is held fixed while the network itself is repeatedly randomly permuted, building a null distribution of the E-I index under "no association between this attribute and tie placement", and reports a two-sided p-value.
+
+## Saving and exporting the graph
+
+`name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `plotoptions()` and `eiplotoptions()` remain the way to pass options to the two graphs (`twoway_options` cannot be used here: other options go to `tabulate`).
+
+- `. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))`
 
 ## Remarks on plot
 
@@ -92,4 +104,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

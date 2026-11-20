@@ -25,7 +25,10 @@
 {opt trades(#)}
 {opt silent}
 {opt plot}
-{opt name(string)}]
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}
+{it:twoway_options}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -42,6 +45,9 @@ nodes of the smaller mode, the first draw follows 6 times that many) between two
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt plot}}Draw a histogram of the {bf:reps()} null draws, with a dashed reference line at the observed statistic (the same comparison R's {bf:sna::plot.cug.test()} draws){p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:cug}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{it:twoway_options}}Other options of {helpb twoway}, applied last; without {opt plot}, {opt saving()}, {opt export()} and these options give an error{p_end}
 
 {p2colreset}{...}
 
@@ -160,6 +166,15 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 {cmd:condition(census)} works on the matrix.
 
 
+{title:Saving and exporting the graph}
+
+{pstd}
+{opt name()} names the graph in memory, {opt saving()} writes it to a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}: the file extension sets the format, and {cmd:width()} and the
+other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
+replace the defaults. 
+
+{phang2}{cmd:. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(500) seed(3) plot export(cug.png, width(1200))}{p_end}
+
 {title:Stored results}
 
 {synoptset 20 tabbed}{...}
@@ -189,4 +204,4 @@ indices. {it:Social Networks} 21(3), 239-267.
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

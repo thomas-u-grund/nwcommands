@@ -277,7 +277,16 @@ end
 capture program drop nwdiffuse_curve
 program nwdiffuse_curve, rclass
 	syntax [anything(name=netlist)] , [TOA(varname numeric) ADOPT(varlist numeric) T0(string) T1(string) ///
-		GRAPH MATrix(name) silent *]
+		GRAPH PLOT MATrix(name) silent NAME(string) SAVing(string asis) EXPort(string asis) *]
+	// plot is a synonym of graph; name() without it stays ignored as before, saving() and export() need it; the graph stays unnamed unless name(), saving() or export() is given
+	if "`plot'" != "" local graph "graph"
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`graph') name(`name') nameok saving(`saving') export(`export') default(diffuse) cmd(nwdiffuse curve)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+	local __nopt ""
+	if `"`__uname'`__sv'`__ex'"' != "" & "`graph'" != "" local __nopt `"name(`__gn', replace)"'
 	local nn "nonet"
 	if "`netlist'" != "" local nn ""
 	local so ""
@@ -306,9 +315,10 @@ program nwdiffuse_curve, rclass
 		quietly {
 			drop _all
 			svmat double `Cv', names(col)
-			twoway line proportion period, ytitle("Proportion of adopters") xtitle("Period") `options'
+			twoway line proportion period, ytitle("Proportion of adopters") xtitle("Period") `__nopt' `options'
 		}
 		restore
+		if `"`__nopt'"' != "" _nw_gfinish save, name(`__gn') saving(`"`__sv'"') export(`"`__ex'"')
 	}
 	if "`matrix'" != "" matrix `matrix' = `Cv'
 	return matrix curve = `Cv'

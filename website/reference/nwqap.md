@@ -27,6 +27,9 @@ save(filename)
 predict(newnetname)
 plot
 name(string)
+gsaving(filename)
+export(filename[, options])
+twoway_options
 qapspp
 force]
 ```
@@ -42,6 +45,9 @@ force]
 | `predict(newnetname)` | store the fitted dyad-level values (from **type()**'s own default prediction, e.g. Pr(y=1) for **logit**/**probit**, the fitted mean for **regress**) as a new valued network |
 | `plot` | Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own `permutations()` null draws - the same comparison R's **sna::plot.qaptest()** draws, generalized to every coefficient in the regression |
 | `name(string)` | Name for the combined graph created by `plot`; default = **qap** |
+| `gsav:ing(filename)` | Save the graph (not `save()`, which saves the permutation data) to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
+| *twoway_options* | Other options of `twoway`, applied last; without `plot`, `saving()`, `export()` and these options give an error |
 | `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see [qapspp](nwqap) below |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above 10,000 nodes otherwise) |
 
@@ -119,6 +125,12 @@ QAP regresses the dyads of the networks, one observation per pair of nodes, and 
 ```
 This example shows that two individuals are more likely to be friends at time2 (glasgow2) when they already were friends at time1 (glasgow1). Furthermore two individuals *i* and *j* are more likely to be friends at time2 when they both scored the same on smoking at time1 (smoke1). There is no effect for both having scored the same on sport1.
 
+## Saving and exporting the graph
+
+`name()` names the graph in memory, `gsaving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
+
+- `. nwqap wdv iv1 iv2, plot export(qap.png, width(1200))`
+
 ## Stored results
 
 `nwqap` is an **eclass** command: results are posted with `ereturn`, so `estimates store`, `estimates table`, and other standard postestimation commands that only need *e(b)*/*e(V)* (e.g. `test`, `lincom`) work as usual. *e(V)* is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a classical OLS/logit covariance matrix - dyadic network data violates the independent- observations assumption those classical formulas require, which is the entire reason QAP permutation testing exists in the first place. The data set holds one row per node, not per dyad, so fitted values cannot be stored in a variable: after `nwqap`, `predict` *newnetname* stores the dyad-level fitted values of the last model as a new valued network (the same as `predict(newnetname)` at estimation time; the values are kept in memory until the next `nwqap`, and `predict` takes no variable name, `if`, `in` or options).
@@ -147,4 +159,4 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))

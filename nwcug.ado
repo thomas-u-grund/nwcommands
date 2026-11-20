@@ -2,7 +2,14 @@
 capture program drop nwcug
 program nwcug, rclass
 	version 12
-	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string) trades(integer -1)]
+	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string) trades(integer -1) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving(), export() and graph options (the plot options of the plot convention); name() alone stays accepted without plot as before
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`saving') export(`export') gopts(`"`options'"') default(cug) cmd(nwcug)
+	local name `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+
 
 	// BUGFIX: reps() was never validated - reps(0) silently "succeeded"
 	// with a meaningless result (mean_null/sd_null missing, but p(two-
@@ -309,14 +316,17 @@ program nwcug, rclass
 		// draws on top; the hidden axis(2), fixed to range(0 1),
 		// makes the segment span the full panel height regardless of
 		// the histogram's own (data-dependent) density scale.
+		_nw_gfinish title "CUG test: `rname'", size(medium) noblack gopts(`"`options'"')
+		local __ttl `"`r(t)'"'
 		twoway (histogram nwcug_null, fcolor(gs14) lcolor(gs8)) ///
 			(scatteri 0 `obsval' 1 `obsval', recast(line) ///
 				lcolor(black) lwidth(thick) lpattern(dash) yaxis(2)), ///
 			yscale(off axis(2) range(0 1)) ///
-			title("CUG test: `rname'", size(medium)) ///
+			`__ttl' ///
 			xtitle("`rname' (`reps' condition(`condition') draws)") ytitle("Density") ///
-			legend(off) name(`name', replace)
+			legend(off) name(`name', replace) `options'
 		restore
+		_nw_gfinish save, name(`name') saving(`"`__sv'"') export(`"`__ex'"')
 		di as txt "{p 0 0 2}(plot saved as {bf:`name'}; histogram of the `reps' null draws under condition(`condition'), dashed line marks the observed value){p_end}"
 	}
 
