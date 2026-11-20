@@ -9,7 +9,7 @@
 * ). The data sets are loaded from the internet with nwwebuse.
 * The do-file runs from top to bottom. It was checked against nwcommands 3.28.0,
 * nwergm 1.10.0, nwsaom 1.8.1, nwrem 1.5.1, nwdynam 1.9.1, nwalaam 1.2.0,
-* nwlsm 0.6.0 and nwsbm 0.3.0, the versions the book was printed with.
+* nwlsm 1.0.0 and nwsbm 1.0.0, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -24,8 +24,13 @@ set more off
 nwwebuse lazega, nwclear
 nwsbm lazega_adv, maxblocks(6) seed(12345) generate(block) replace
 
+nwsbmplot, type(icl) nolegend title("") scheme(s1network)
+
 tabulate block partner
 tabulate block office
+
+nwsbmplot, type(matrix) sort shade title("") scheme(s1network)
+nwsbmplot, type(membership) colors(gray) title("") scheme(s1network)
 
 * ============================================================
 * A latent space model
@@ -35,6 +40,8 @@ nwlsm lazega_adv, dim(2) nsample(2000) burnin(5000) interval(10) chains(2) ///
 estat mcmcdiag
 
 encode status, generate(rank)
-nwlsmplot, color(rank) scheme(s1network) title("")
+nwlsmplot, color(rank) colors(gray) noarrows edgecolor(gs12%30) ///
+    legend(position(6) rows(1) title("") region(lstyle(none))) ///
+    scheme(s1network) title("")
 
 estat gof, gof(distance) nsim(100) seed(1)

@@ -24,7 +24,7 @@ nwinstall, everything
 ```
 
 The do-files were checked against the versions the book was printed with: nwcommands 3.28.0, nwergm 1.10.0,
-nwlsm 0.6.0, nwsbm 0.3.0, nwalaam 1.2.0, nwsaom 1.8.1, nwrem 1.5.1 and nwdynam 1.9.1. Results of the model chapters (21 to 28) depend on the
+nwlsm 1.0.0, nwsbm 1.0.0, nwalaam 1.2.0, nwsaom 1.8.1, nwrem 1.5.1 and nwdynam 1.9.1. Results of the model chapters (21 to 28) depend on the
 random-number seed and can differ slightly from the printed output with other versions.
 
 **All files at once:** [nwbook_dofiles.zip](nwbook_dofiles.zip)
