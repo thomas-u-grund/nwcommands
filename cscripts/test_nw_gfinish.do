@@ -1,0 +1,163 @@
+* _nw_gfinish: unit test of the verbs version, check, title, blk and save.
+* Run from the repository root.
+cscript
+capture program drop nwinstall
+set graphics off
+run _nw_gfinish.ado
+local tmp "`c(tmpdir)'/nw_gfinish_test"
+capture mkdir "`tmp'"
+
+* ---- version
+_nw_gfinish version
+assert r(api) == 1
+di as text "  PASS: version"
+
+* ---- check: defaults, replace stripping
+_nw_gfinish check, plot(plot) default(gof)
+assert "`r(name)'" == "gof"
+assert `"`r(nameopt)'"' == "name(gof, replace)"
+assert r(draw) == 1
+assert r(hastitle) == 0
+_nw_gfinish check, plot(plot) name(mine, replace) saving(`"`tmp'/a.gph"', replace) export(`"`tmp'/a.png"', width(500)) gopts(`"scheme(s2color) title("x")"') default(gof)
+assert "`r(name)'" == "mine"
+assert `"`r(nameopt)'"' == "name(mine, replace)"
+assert `"`r(saving)'"' == `"`tmp'/a.gph"'
+assert `"`r(export)'"' == `"`"`tmp'/a.png"', width(500)"'
+assert `"`r(gopts)'"' == `"scheme(s2color) title("x")"'
+assert r(hastitle) == 1
+_nw_gfinish check, plot(plot) saving("`tmp'/a b.gph")
+assert `"`r(saving)'"' == `"`tmp'/a b.gph"'
+_nw_gfinish check, default(gof)
+assert r(draw) == 0
+_nw_gfinish check, always default(gof) name(zz)
+assert r(draw) == 1 & "`r(name)'" == "zz"
+di as text "  PASS: check normalisation"
+
+* ---- check: 198 messages
+foreach o in `"name(x)"' `"saving(a.gph)"' `"export(a.png)"' `"gopts(xlabel(none))"' {
+	capture _nw_gfinish check, `o' default(gof)
+	assert _rc == 198
+}
+capture _nw_gfinish check, name(x) default(gof) cmd(estat gof)
+assert _rc == 198
+quietly {
+	capture noisily _nw_gfinish check, name(x) default(gof) cmd(estat gof)
+}
+* the text itself, taken from a log
+local lg `"`tmp'/msg.log"'
+capture log close _msg
+log using `"`lg'"', replace text name(_msg)
+capture noisily _nw_gfinish check, saving(a.gph) default(gof)
+capture noisily _nw_gfinish check, name(x) default(gof) cmd(estat gof)
+log close _msg
+tempname fh
+file open `fh' using `"`lg'"', read text
+local found1 0
+local found2 0
+file read `fh' line
+while r(eof) == 0 {
+	if strpos(`"`line'"', "name(), saving(), export() and graph options need plot.") & !strpos(`"`line'"', "estat gof") local found1 1
+	if strpos(`"`line'"', "estat gof: name(), saving(), export() and graph options need plot.") local found2 1
+	file read `fh' line
+}
+file close `fh'
+assert `found1' == 1
+assert `found2' == 1
+capture _nw_gfinish check, plot(plot) name(x, keep)
+assert _rc == 198
+capture _nw_gfinish check, plot(plot) name("a b")
+assert _rc == 198
+capture _nw_gfinish check, plot(plot) saving(a.gph, append)
+assert _rc == 198
+* always: no need for plot
+_nw_gfinish check, always name(x) saving(a.gph) default(gof)
+di as text "  PASS: check 198 messages"
+
+* ---- check: directory and SVG
+capture _nw_gfinish check, plot(plot) saving(`"`tmp'/nodir/a.gph"')
+assert _rc == 603
+capture _nw_gfinish check, plot(plot) export(`"`tmp'/nodir/a.png"')
+assert _rc == 603
+_nw_gfinish check, plot(plot) saving(`"`tmp'/a.gph"')
+capture _nw_gfinish check, plot(plot) export(`"`tmp'/a.svg"') svver(15)
+assert _rc == 198
+_nw_gfinish check, plot(plot) export(`"`tmp'/a.svg"') svver(16)
+_nw_gfinish check, plot(plot) export(`"`tmp'/a.png"') svver(15)
+di as text "  PASS: check directory and SVG"
+
+* ---- title
+_nw_gfinish title "Goodness of fit"
+assert `"`r(t)'"' == `"title("Goodness of fit", size(medium) color(black))"'
+_nw_gfinish title "Goodness of fit", size(small)
+assert `"`r(t)'"' == `"title("Goodness of fit", size(small) color(black))"'
+_nw_gfinish title "Goodness of fit", gopts(`"scheme(s2color) title("mine", color(red))"')
+assert `"`r(t)'"' == ""
+_nw_gfinish title "Goodness of fit", gopts(`"title("")"')
+assert `"`r(t)'"' == ""
+_nw_gfinish title "Goodness of fit", gopts(`"subtitle("s") xtitle("x")"')
+assert `"`r(t)'"' == `"title("Goodness of fit", size(medium) color(black))"'
+_nw_gfinish title "Sub", subtitle gopts(`"title("t")"')
+assert `"`r(t)'"' == `"subtitle("Sub", color(black))"'
+_nw_gfinish title "Sub", subtitle gopts(`"subtitle("t")"')
+assert `"`r(t)'"' == ""
+_nw_gfinish title "", size(small)
+assert `"`r(t)'"' == ""
+_nw_gfinish title "Time", xtitle
+assert `"`r(t)'"' == `"xtitle("Time", color(black))"'
+_nw_gfinish blk "Count", kind(ytitle) size(small)
+assert `"`r(t)'"' == `"ytitle("Count", size(small) color(black))"'
+_nw_gfinish blk "Count", kind(ytitle) gopts(`"ytitle("mine")"')
+assert `"`r(t)'"' == ""
+* a drawn graph: the default title is black, a user title keeps its own colour
+sysuse auto, clear
+_nw_gfinish title "Black default"
+twoway scatter mpg weight, `r(t)' name(gf_a, replace)
+_nw_gfinish title "Black default", gopts(`"title("Red", color(red))"')
+twoway scatter mpg weight, `r(t)' title("Red", color(red)) name(gf_b, replace)
+_nw_gfinish title "Black default", gopts(`"title("")"')
+twoway scatter mpg weight, `r(t)' title("") name(gf_c, replace)
+_nw_gfinish title "Plain", size(small) noblack
+assert `"`r(t)'"' == `"title("Plain", size(small))"'
+_nw_gfinish title "Plain", noblack
+assert `"`r(t)'"' == `"title("Plain")"'
+_nw_gfinish title "Plain", noblack gopts(`"title("mine")"')
+assert `"`r(t)'"' == ""
+_nw_gfinish check, name(x) nameok default(gof)
+assert "`r(name)'" == "x" & r(draw) == 0
+capture _nw_gfinish check, name(x) nameok saving(a.gph) default(gof)
+assert _rc == 198
+di as text "  PASS: title and blk"
+
+* ---- save: one graph, replace, .gph extension added
+foreach f in one.gph one.png many_gf_a.gph many_gf_b.gph many_gf_a.png many_gf_b.png yes_gf_a.gph yes_gf_a.png {
+	capture erase `"`tmp'/`f'"'
+}
+_nw_gfinish save, name(gf_a) saving(`"`tmp'/one"') export(`"`tmp'/one.png"', width(400))
+confirm file `"`tmp'/one.gph"'
+confirm file `"`tmp'/one.png"'
+assert strpos(`"`r(saved)'"', "one.gph") > 0
+assert strpos(`"`r(exported)'"', "one.png") > 0
+* again: replaced without asking, also with ", replace"
+_nw_gfinish save, name(gf_a) saving(`"`tmp'/one.gph"', replace) export(`"`tmp'/one.png"')
+* several graphs: the graph name goes before the extension
+_nw_gfinish save, graphs(gf_a gf_b) saving(`"`tmp'/many.gph"') export(`"`tmp'/many.png"')
+foreach g in gf_a gf_b {
+	confirm file `"`tmp'/many_`g'.gph"'
+	confirm file `"`tmp'/many_`g'.png"'
+}
+* always: the suffix also for one graph
+_nw_gfinish save, graphs(gf_a) always saving(`"`tmp'/yes.gph"') export(`"`tmp'/yes.png"')
+confirm file `"`tmp'/yes_gf_a.gph"'
+confirm file `"`tmp'/yes_gf_a.png"'
+* nothing to do without saving and export
+_nw_gfinish save, name(gf_a)
+assert `"`r(saved)'`r(exported)'"' == ""
+* directory missing: message instead of a raw error
+capture _nw_gfinish save, name(gf_a) saving(`"`tmp'/nodir/x.gph"')
+assert _rc == 603
+capture _nw_gfinish save
+assert _rc == 198
+capture _nw_gfinish nosuchverb
+assert _rc == 198
+di as text "  PASS: save"
+di as text "ALL TESTS PASSED"

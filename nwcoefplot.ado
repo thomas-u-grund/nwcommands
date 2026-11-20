@@ -3,7 +3,14 @@ capture program drop nwcoefplot
 program nwcoefplot, rclass
 	version 15
 	syntax [anything(name=names)] [, Level(cilevel) KEEP(string) DROP(string) EForm BYEq MIXeq noCONStant COMMON ///
-		SKIPmissing TItle(string asis) NAME(string asis) SAVING(string asis) EXPort(string asis) *]
+		SKIPmissing TItle(string asis) NAME(string asis) SAVing(string asis) EXPort(string asis) *]
+
+	// name(), saving(), export(): checked first; the plot is always drawn; replace is implied everywhere
+	_nw_gfinish check, always name(`name') saving(`saving') export(`export') gopts(`"`options'"') default(coefplot) cmd(nwcoefplot)
+	local name `"`r(name)'"'
+	local nopt `"`r(nameopt)'"'
+	local saving `"`r(saving)'"'
+	local export `"`r(export)'"'
 
 	if "`byeq'" != "" & "`mixeq'" != "" {
 		di as err "byeq and mixeq cannot be combined"
@@ -220,13 +227,9 @@ program nwcoefplot, rclass
 	local xt0 "Coefficient (`level'% CI)"
 	local xt "`xt' (`level'% CI)"
 
-	local nopt ""
-	if `"`name'"' != "" local nopt `"name(`name')"'
-	local sopt ""
-	if `"`saving'"' != "" local sopt `"saving(`saving')"'
 	quietly levelsof eqord, local(eqords0)
 	local nep : word count `eqords0'
-	local drawopt "`nopt' `sopt'"
+	local drawopt "`nopt'"
 	local cols `" "navy" "maroon" "forest_green" "dkorange" "purple" "teal" "cranberry" "gs8" "'
 	local panels ""
 	local ip = 0
@@ -313,31 +316,32 @@ program nwcoefplot, rclass
 			local xr "xscale(range(`=r(min)' `=r(max)')) xlabel(`=r(min)'(`=r(delta)')`=r(max)')"
 		}
 		local ptitle ""
-		if `neq' > 1 local ptitle `"title("`eqname'", size(medsmall))"'
+		if `neq' > 1 {
+			_nw_gfinish title "`eqname'", size(medsmall) gopts(`"`options'"')
+			local ptitle `"`r(t)'"'
+		}
 		else if `"`title'"' != "" local ptitle `"title(`title')"'
 		tempname g`ip'
 		if `nep' > 1 local drawopt "nodraw name(`g`ip'', replace)"
+		_nw_gfinish blk "`xtp'", kind(xtitle) gopts(`"`options'"')
+		local xtopt `"`r(t)'"'
 		local ysz = min(max(2.5, 0.26 * `nk' * (1 + 0.15 * (`mi' - 1)) + 1.4), 14)
 		twoway `plots', `xl' `xs' `xr' ylabel(`yl', angle(0) noticks nogrid labsize(small)) yscale(range(0.4 `=`nk' + 0.6') noline) ///
-			ytitle("") xtitle("`xtp'") `legopt' `ptitle' graphregion(color(white)) plotregion(margin(small)) ///
+			ytitle("") `xtopt' `legopt' `ptitle' graphregion(color(white)) plotregion(margin(small)) ///
 			ysize(`ysz') `drawopt' `options'
 		if `nep' > 1 local panels `panels' `g`ip''
 	}
 	if `nep' > 1 {
 		local ctitle ""
 		if `"`title'"' != "" local ctitle `"title(`title')"'
-		graph combine `panels', cols(1) `ctitle' `nopt' `sopt' graphregion(color(white)) ysize(`=min(max(3, 0.32 * `totrows' + 1.4 * `nep'), 20)')
+		graph combine `panels', cols(1) `ctitle' `nopt' graphregion(color(white)) ysize(`=min(max(3, 0.32 * `totrows' + 1.4 * `nep'), 20)')
 	}
 	if `nep' > 1 {
 		foreach g of local panels {
 			capture graph drop `g'
 		}
 	}
-	if `"`export'"' != "" {
-		gettoken efile eopts : export, parse(",")
-		local eopts = subinstr(`"`eopts'"', ",", "", 1)
-		graph export `efile', replace `eopts'
-	}
+	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')
 	return scalar level = `level'
 	return scalar n_coef = _N
 	return scalar n_panels = `nep'

@@ -235,6 +235,36 @@ if `have_lsm' {
 }
 else di as txt "  skipped: nwlsm fits (package not found next to the core)"
 
+* ---- shared plot convention: default names, implied replace, title(""), saving/export, errors
+capture graph drop coefplot
+capture graph drop compare
+nwcoefplot f1
+graph describe coefplot
+nwcoefplot f1, name(cp_x) saving("`tmp'/cp_x.gph") export("`tmp'/cp_x.png", width(400))
+nwcoefplot f1, name(cp_x) saving("`tmp'/cp_x.gph") export("`tmp'/cp_x.png", width(400))
+confirm file "`tmp'/cp_x.gph"
+confirm file "`tmp'/cp_x.png"
+nwcoefplot f1, title("")
+nwcoefplot f1, title("My title") name(cp_y, replace) saving("`tmp'/cp_y", replace)
+confirm file "`tmp'/cp_y.gph"
+fake_fit nwergm _
+estimates store g1
+estimates store g2
+nwcompare g1 g2, graph
+graph describe compare
+nwcompare g1 g2, plot name(cmp_z) saving("`tmp'/cmp_z.gph")
+graph describe cmp_z
+confirm file "`tmp'/cmp_z.gph"
+capture nwcompare g1 g2, name(cmp_z)
+chk "nwcompare name() without graph: r(198)" `=(_rc == 198)'
+capture nwcoefplot f1, name(cp_x, keep)
+chk "nwcoefplot name(, keep): r(198)" `=(_rc == 198)'
+capture nwcoefplot f1, saving("`tmp'/nodir/x.gph")
+chk "nwcoefplot saving() into a missing directory: r(603)" `=(_rc == 603)'
+foreach f in cp_x.gph cp_x.png cp_y.gph cmp_z.gph {
+	capture erase "`tmp'/`f'"
+}
+
 capture erase "`tmp'/a.png"
 capture erase "`tmp'/b.png"
 capture erase "`tmp'/ergm.png"

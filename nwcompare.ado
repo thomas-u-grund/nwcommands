@@ -2,7 +2,13 @@
 capture program drop nwcompare
 program nwcompare, rclass
 	version 15
-	syntax [anything(name=names)] [, SORT(string) GRAPH COEFOPTs(string asis)]
+	syntax [anything(name=names)] [, SORT(string) GRAPH PLOT COEFOPTs(string asis) NAME(string asis) SAVing(string asis) EXPort(string asis)]
+	if "`plot'" != "" local graph "graph"
+	// name(), saving(), export() belong to the coefficient graph and need graph (or plot)
+	_nw_gfinish check, plot(`graph') name(`name') saving(`saving') export(`export') gopts(`"`coefopts'"') default(compare) cmd(nwcompare)
+	local gname `"`r(name)'"'
+	local gsaving `"`r(saving)'"'
+	local gexport `"`r(export)'"'
 
 	if "`sort'" != "" {
 		local sort = lower("`sort'")
@@ -160,7 +166,10 @@ program nwcompare, rclass
 		foreach nm of local rown {
 			local plist `plist' `=cond("`nm'" == "(active)", ".", "`nm'")'
 		}
-		capture noisily nwcoefplot `plist', common skipmissing `coefopts'
+		local pass ""
+		if `"`gsaving'"' != "" local pass `"saving(`"`gsaving'"')"'
+		if `"`gexport'"' != "" local pass `"`pass' export(`gexport')"'
+		capture noisily nwcoefplot `plist', common skipmissing name(`gname') `pass' `coefopts'
 		if _rc di as txt "Note: the coefficient graph was not drawn (r(" _rc "))."
 	}
 	return matrix table = `T'
