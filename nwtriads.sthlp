@@ -134,8 +134,11 @@ replace the defaults.
 {title:Expected counts}
 
 {pstd}
-{opt expected} adds, under every count of the {opt plot}, the number of triads of that type expected when the three kinds of dyad (mutual, asymmetric, null) are placed at random on the node pairs with the dyad census of the network fixed, and an asymmetric tie points either way with probability 1/2.
-This is the uniform distribution over the networks with the same dyad census (Holland, P. W., and S. Leinhardt. 1976. Local structure in social networks. {it:Sociological Methodology} 7: 1-45), the null model of {helpb nwcug} with {opt condition(census)} and of {helpb nwrandom} with {opt census()}. With D = n(n-1)/2 dyads, M mutual, A asymmetric and N null ones, a type with m mutual, a asymmetric and k null dyads
+{opt expected} adds, under every count of the {opt plot}, the number of triads of that type expected when the three kinds of dyad (mutual, asymmetric, null) are placed at random on the node pairs with
+the dyad census of the network fixed, and an asymmetric tie points either way with probability 1/2.
+This is the uniform distribution over the networks with the same dyad census (Holland, P. W., and S. Leinhardt. 1976. Local structure in social networks. {it:Sociological Methodology} 7: 1-45), the
+null model of {helpb nwcug} with {opt condition(census)} and of {helpb nwrandom} with {opt census()}. With D = n(n-1)/2 dyads, M mutual, A asymmetric and N null ones, a type with m mutual, a
+asymmetric and k null dyads
 (the digits of its name) and w labelled forms (1, 6, 3, 3, 3, 6, 6, 6, 6, 2, 3, 3, 3, 6, 6, 1 in the order of the table above) has the expected count C(n,3) w (M)m (A)a (N)k / (2^a (D)3), where (x)j = x(x-1)...(x-j+1).
 The formula is exact, not an approximation by simulation. {helpb nwcug} compares one statistic at a time with a null distribution; {opt expected} shows all types at once, without simulation.
 A two-mode and a valued network stop with error 198 ({helpb nwdichotomize} first). {opt expected} needs {opt plot}.

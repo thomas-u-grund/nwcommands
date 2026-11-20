@@ -98,7 +98,8 @@ advanced functions are only available through Stata syntax (see {help nwcommands
 {title:The model packages}
 
 {pstd}
-The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models), {cmd:nwrem} (relational event models), {cmd:nwalaam} (autologistic actor attribute models), {cmd:nwlsm} (latent space models) and {cmd:nwsbm} (stochastic block models) are
+The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models), {cmd:nwrem} (relational event models),
+{cmd:nwalaam} (autologistic actor attribute models), {cmd:nwlsm} (latent space models) and {cmd:nwsbm} (stochastic block models) are
 packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
 They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
 {cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular

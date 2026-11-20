@@ -190,9 +190,11 @@ additional line here, and, if {opt generate()} is specified, stores each node's 
 {title:Drawing the distances}
 
 {pstd}
-{opt plot} draws, for the pairs of distinct nodes, how many are at distance 1, 2, 3, ... steps (the whole numbers are on the x axis). In an undirected network each pair counts once, in a directed network each ordered pair. Pairs without a path are not distances: their number is in a note under the graph, and {opt unconnected()} does not enter the histogram.
+{opt plot} draws, for the pairs of distinct nodes, how many are at distance 1, 2, 3, ... steps (the whole numbers are on the x axis). In an undirected network each pair counts once, in a directed
+network each ordered pair. Pairs without a path are not distances: their number is in a note under the graph, and {opt unconnected()} does not enter the histogram.
 {opt average} adds the mean distance of the connected pairs, the same number as {bf:r(avgpath)} (or {bf:r(avgpath_connected)} when pairs are unconnected). The network of distances and the displayed table are the same as without {opt plot}.
-{opt gname()} names the graph in memory ({opt name()} is the distance network), {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to {helpb twoway} and come last; without {opt plot} they give an error.
+{opt gname()} names the graph in memory ({opt name()} is the distance network), {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to
+{helpb twoway} and come last; without {opt plot} they give an error.
 {opt plot} stops with error 198 for a two-mode network and for a valued network whose distances are sums of 1/value^alpha, not step counts ({opt binary} or {opt alpha(0)} count steps).
 
 {phang2}{cmd:. nwgeodesic flomarriage, plot average export(distances.png, width(1000))}{p_end}
