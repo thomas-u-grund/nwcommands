@@ -12,6 +12,14 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwlsm 0.7.0 and nwsbm 0.4.0
+
+**nwlsm 0.7.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v0.7.0)). `estat bic` computes the BIC of `latentnet` (`bic.ergmm`) and `nwlsmselect` fits the model for several numbers of latent clusters and ranks them by BIC. `estat gof` takes `cutoff()` for valued networks. The passes over all dyads use a persistent team of threads, so `threads()` pays from about 40 actors on, with the same results for any number of threads. With sender, receiver or sociality effects the fit of the positions now starts from four draws by default (`mklstarts()`), because the minimum Kullback-Leibler fit has two local optima there (latentnet ends in the poorer one in 3 of 12 seeds on the Sampson monks); this deviates from `latentnet` on purpose.
+
+**nwsbm 0.4.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v0.4.0)). The degree-corrected model now also fits two-mode networks (as `DcLbm` in `greed`); standard errors of the covariate coefficients (`e(se_beta)`, `e(V_beta)`, conditional on the estimated blocks; the R packages give none); the Bernoulli covariate model is 2.5 to 3 times faster; `greedy` searches node swaps and merges on the exact ICL (as `greed`); `blockvar` fits a variance for every pair of blocks; `orderblocks` numbers the blocks by size.
+
+Both packages were tested on macOS (Stata 17 and 18), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): every test file of both packages, with the shipped plugins.
+
 ## 19 November 2026: nwcommands 3.28.0, nwergm 1.10.0 and two new packages, nwlsm 0.6.0 and nwsbm 0.3.0
 
 Two packages join the family, a seventh and eighth: **nwlsm 0.6.0** fits latent space models and **nwsbm 0.3.0** fits stochastic block models. Both describe a network that is observed once, by positions or by blocks instead of by local patterns, and both follow R packages. The core and nwergm bring new tools as well.
