@@ -14,10 +14,13 @@ p nwcommands-ado3
 d nwcommands-ado. Social Network Analysis Using Stata (part 3 of 3)
 
 p nwcommands-hlp1
-d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1 of 2)
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1 of 3)
 
 p nwcommands-hlp2
-d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2 of 2)
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2 of 3)
+
+p nwcommands-hlp3
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 3 of 3)
 
 p nwcommands-dlg1
 d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part 1 of 2)

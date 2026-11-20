@@ -9,6 +9,7 @@ f _extract_valuelabels.ado
 f _gnwdegree.ado
 f _growmedian2.ado
 f _nwdeploy.ado
+f _nw_gfinish.ado
 f _nwdialog.ado
 f _nwdialog_append.ado
 f _nwdialog_clusters.ado
@@ -52,6 +53,7 @@ f nwaltergen.ado
 f nwappend.ado
 f nwassortativity.ado
 f nwattime.ado
+f nwbackbone.ado
 f nwbalance.ado
 f nwbetween.ado
 f nwbridges.ado
@@ -61,9 +63,11 @@ f nwclear.ado
 f nwclique.ado
 f nwcloseness.ado
 f nwclustering.ado
+f nwcoefplot.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado
+f nwcompare.ado
 f nwcomponents.ado
 f nwcompressobs.ado
 f nwconcor.ado
@@ -77,10 +81,6 @@ f nwcurrent.ado
 f nwdegree.ado
 f nwdendrogram.ado
 f nwdichotomize.ado
+f nwdiffuse.ado
 f nwdissimilar.ado
 f nwdrop.ado
-f nwdropnodes.ado
-f nwds.ado
-f nwduplicate.ado
-f nwdyadprob.ado
-f nwdyads.ado

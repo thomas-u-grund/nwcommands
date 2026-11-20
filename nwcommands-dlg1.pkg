@@ -36,10 +36,12 @@ f nwassortativity.dlg
 f nwring.dlg
 f nwutility.dlg
 f nw_nodes_color.dlg
+f nwdiffuse.dlg
 f nwvalidvars.dlg
 f nwdegree.dlg
 f nwhierarchy.dlg
 f nwgenerate.dlg
+f nwbackbone.dlg
 f nw2nested.dlg
 f nwunab.dlg
 f nwsave.dlg
@@ -76,11 +78,9 @@ f nwissymmetric.dlg
 f nw_nodes_labels.dlg
 f nwcollapse.dlg
 f nw_edges_color.dlg
+f nwcoefplot.dlg
 f nwuse.dlg
+f nwspmatrix.dlg
 f nw_edges_size.dlg
 f nwcontext.dlg
 f nw2toedge.dlg
-f nwds.dlg
-f nw2project.dlg
-f nwnoderename.dlg
-f nwpermute.dlg
