@@ -189,7 +189,8 @@ nwp_ok "nwtriads expected"
 * ---- the dialogs load
 foreach dd in nwdegree nwgeodesic nwdiffuse nwspectral nwtriads {
 	capture db `dd'
-	if _rc {
+	if _rc == 8005 di as text "  SKIPPED: db `dd' (no GUI in batch mode, r(8005))"
+	else if _rc {
 		di as error "  FAIL: db `dd' returned r(" _rc ")"
 		local ++nfail
 	}
