@@ -3,7 +3,7 @@ title: "nwlsm (latent space)"
 nav_order: 8.6
 has_children: true
 permalink: /nwlsm/
-description: "nwlsm: latent space models for networks (Hoff, Raftery and Handcock) for Stata, following the R package latentnet, with a latent space model for social influence. Installation, a worked tutorial and how to cite."
+description: "nwlsm: latent space models for networks (Hoff, Raftery and Handcock) for Stata, following the R package latentnet, with a latent space model for social influence. Installation, two worked tutorials and how to cite."
 ---
 
 # nwlsm
@@ -59,7 +59,6 @@ A latent space is a summary of the network, not a measurement of anything. The p
 
 - Latent space models for several networks at once and hierarchical models (the influence model of Sweet and Adhikari for several networks with random coefficients), a susceptibility indicator, several outcome waves, and binary or count outcomes in the influence model.
 - The influence model differs from the paper in a few places: the intercept of the tie model is estimated instead of being fixed, and the outcome coefficients and the error variance are updated by Gibbs steps rather than random-walk steps. The help file lists the deviations.
-- Choosing the number of clusters by a BIC-type criterion, as latentnet does: only the log likelihoods of fits with different `clusters()` can be compared by hand.
 - Goodness of fit for valued networks beyond the distribution of the values.
 - Bipartite (two-mode) and dynamic networks.
 - A version below 1.0 is a young package: use it alongside `latentnet` where the result matters, and report what you find.
@@ -68,5 +67,6 @@ A latent space is a summary of the network, not a measurement of anything. The p
 
 - [Install](install/): core first, then `nwlsm`; releases, updating, the plugin.
 - [Tutorial 1: A latent space for the karate club](tutorial-1-first-lsm/): fit, diagnostics, positions and goodness of fit.
+- [Tutorial 2: How many latent clusters?](tutorial-2-bic-clusters/): the BIC, `nwlsmselect`, sender and receiver effects, goodness of fit for binary and valued networks.
 - [How to cite](citation/)
 - [nwsbm](../nwsbm/): the companion package that finds blocks of actors with similar tie patterns, where `nwlsm` finds positions.

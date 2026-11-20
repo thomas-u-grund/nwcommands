@@ -37,4 +37,4 @@ A first model:
 . nwlsm zachary_bin, dim(2) seed(20261120)
 ```
 
-Section: [nwlsm](../nwlsm/). First tutorial: [A latent space for the karate club](../nwlsm/tutorial-1-first-lsm/). `nwlsm` follows the R package `latentnet`; it is not a replacement for it.
+Section: [nwlsm](../nwlsm/). Tutorials: [A latent space for the karate club](../nwlsm/tutorial-1-first-lsm/) and [How many latent clusters?](../nwlsm/tutorial-2-bic-clusters/). `nwlsm` follows the R package `latentnet`; it is not a replacement for it.
