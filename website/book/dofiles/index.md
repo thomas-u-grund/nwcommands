@@ -23,8 +23,8 @@ net install nwcommands, from(https://nwcommands.org/net/)
 nwinstall, everything
 ```
 
-The do-files were checked against the versions the book was printed with: nwcommands 3.26.0, nwergm 1.7.1,
-nwsaom 1.7.1, nwrem 1.3.0 and nwdynam 1.5.1. Results of the model chapters (21 to 26) depend on the
+The do-files were checked against the versions the book was printed with: nwcommands 3.28.0, nwergm 1.10.0,
+nwlsm 0.6.0, nwsbm 0.3.0, nwalaam 1.2.0, nwsaom 1.8.1, nwrem 1.5.1 and nwdynam 1.9.1. Results of the model chapters (21 to 28) depend on the
 random-number seed and can differ slightly from the printed output with other versions.
 
 **All files at once:** [nwbook_dofiles.zip](nwbook_dofiles.zip)
@@ -53,15 +53,16 @@ random-number seed and can differ slightly from the printed output with other ve
 | Chapter 20: QAP regression | [`ch20_qap_regression.do`](ch20_qap_regression.do) |
 | Chapter 21: Exponential random graph models | [`ch21_exponential_random_graph_models.do`](ch21_exponential_random_graph_models.do) |
 | Chapter 22: Advanced exponential random graph models | [`ch22_advanced_exponential_random_graph_models.do`](ch22_advanced_exponential_random_graph_models.do) |
-| Chapter 23: Stochastic actor-oriented models | [`ch23_stochastic_actor_oriented_models.do`](ch23_stochastic_actor_oriented_models.do) |
-| Chapter 24: Advanced stochastic actor-oriented models | [`ch24_advanced_stochastic_actor_oriented_models.do`](ch24_advanced_stochastic_actor_oriented_models.do) |
-| Chapter 25: Relational event models | [`ch25_relational_event_models.do`](ch25_relational_event_models.do) |
-| Chapter 26: The Dynamic Network Actor Model | [`ch26_dynamic_network_actor_models.do`](ch26_dynamic_network_actor_models.do) |
-| Chapter 27: A complete network analysis | [`ch27_complete_network_analysis.do`](ch27_complete_network_analysis.do) |
-| Chapter 28: Reproducible and responsible network research | [`ch28_reproducible_responsible_research.do`](ch28_reproducible_responsible_research.do) |
+| Chapter 23: Latent space and block models | [`ch23_latent_space_block_models.do`](ch23_latent_space_block_models.do) |
+| Chapter 24: Influence and contagion | [`ch24_influence_contagion.do`](ch24_influence_contagion.do) |
+| Chapter 25: Stochastic actor-oriented models | [`ch25_stochastic_actor_oriented_models.do`](ch25_stochastic_actor_oriented_models.do) |
+| Chapter 26: Advanced stochastic actor-oriented models | [`ch26_advanced_stochastic_actor_oriented_models.do`](ch26_advanced_stochastic_actor_oriented_models.do) |
+| Chapter 27: Relational event models | [`ch27_relational_event_models.do`](ch27_relational_event_models.do) |
+| Chapter 28: The Dynamic Network Actor Model | [`ch28_dynamic_network_actor_models.do`](ch28_dynamic_network_actor_models.do) |
+| Chapter 29: A complete network analysis | [`ch29_complete_network_analysis.do`](ch29_complete_network_analysis.do) |
+| Chapter 30: Reproducible and responsible network research | [`ch30_reproducible_responsible_research.do`](ch30_reproducible_responsible_research.do) |
 | Appendix A: Performance and network size | [`appendixH_performance.do`](appendixH_performance.do) |
 | Appendix B: When things go wrong | [`appendixG_troubleshooting.do`](appendixG_troubleshooting.do) |
-| Appendix F: Programming with networks in Mata | [`appendixE_programming.do`](appendixE_programming.do) |
 
 Chapter 1 has no code. `nwedit_nodes.csv` and `nwedit_edges.csv` are the node and edge files that the
 interactive page of Chapter 5 saves; the Chapter 5 do-file reads them, so that it also runs without the browser

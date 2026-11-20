@@ -1,15 +1,15 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Chapter 24: Advanced stochastic actor-oriented models
+* Chapter 26: Advanced stochastic actor-oriented models
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.27.0,
-* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0, nwdynam 1.9.0 and nwalaam 1.0.0, the versions the
-* book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.28.0,
+* nwergm 1.10.0, nwsaom 1.8.1, nwrem 1.5.1, nwdynam 1.9.1, nwalaam 1.2.0,
+* nwlsm 0.6.0 and nwsbm 0.3.0, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -60,8 +60,6 @@ nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
     transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
 nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
     transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
-nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
-    transtrip theta(-2.3 2 0.5) rates(1) nsim(100) seed(7)
 
 * ============================================================
 * Which estimator?
@@ -73,8 +71,6 @@ quietly nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity ///
     transtrip seed(12345)
 quietly nwsaom refit, seed(12346)
 nwsaom bayes, nmain(250) seed(1)
-
-frame nwsaom_bayes_draws: summarize b1 b2 b3
 
 * ============================================================
 * Pool the groups or not?
@@ -88,7 +84,6 @@ bysort school: generate pupil = _n
 merge 1:1 school pupil using "$nwwebpath/baerveldt19_pupils.dta", nogenerate
 nwtomata ethn, mat(E)
 mata: st_matrix("Eth", E)
-tabulate school
 nwsaom describe, waves(w1 w2)
 
 quietly nwsaom, waves(w1 w2) groups(school) outdegree reciprocity ///

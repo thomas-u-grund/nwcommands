@@ -7,9 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.27.0,
-* nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0, nwdynam 1.9.0 and nwalaam 1.0.0, the versions the
-* book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.28.0,
+* nwergm 1.10.0, nwsaom 1.8.1, nwrem 1.5.1, nwdynam 1.9.1, nwalaam 1.2.0,
+* nwlsm 0.6.0 and nwsbm 0.3.0, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -149,42 +149,9 @@ foreach p in 0 .01 .05 .25 1 {
             (r(complex))
     }
 }
-foreach net in nwrandom nwpref {
-    local o = cond("`net'" == "nwrandom", "density(.03)", "m0(4) m(3)")
-    forvalues r = 1/100 {
-        experiment `net' 200, `o' undirected
-        frame post results ("`net'") (.) (r(simple)) (r(reached)) (r(complex))
-    }
-}
 frame change results
 collapse (mean) simple reached complex, by(network rewire)
 gsort -network rewire
 format simple complex %6.1f
 format reached %4.2f
 list, noobs
-
-* ============================================================
-* Where diffusion starts
-* ============================================================
-nwclear
-set seed 12345
-nwpref 200, m0(4) m(3) undirected name(pa)
-quietly nwdegree pa, generate(degree)
-egen rank = rank(-degree), unique
-generate byte hubs = rank <= 7
-summarize degree if hubs
-forvalues k = 2/4 {
-    quietly diffuse pa, start(hubs) threshold(`k') prob(1)
-    local hubs = r(share)
-    local reached = 0
-    forvalues r = 1/100 {
-        capture drop u rstart
-        generate double u = runiform()
-        egen rstart = rank(u)
-        quietly replace rstart = rstart <= 7
-        quietly diffuse pa, start(rstart) threshold(`k') prob(1)
-        local reached = `reached' + (r(share) >= .5)
-    }
-    display "threshold `k': hubs " %5.3f `hubs' ", random `reached' of 100"
-}
-count if degree < 4
