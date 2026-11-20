@@ -98,11 +98,12 @@ program _nwcensusplot
 			}
 			else {
 				local Ax = `col' + 0.2
-				local Ay = `row' + 0.44
+				// with expected counts the triangle sits higher to make room for the third text line
+				local Ay = `row' + cond("`expected'" != "", 0.50, 0.44)
 				local Bx = `col' + 0.5
-				local By = `row' + 0.86
+				local By = `row' + cond("`expected'" != "", 0.80, 0.86)
 				local Cx = `col' + 0.8
-				local Cy = `row' + 0.44
+				local Cy = `row' + cond("`expected'" != "", 0.50, 0.44)
 				local nodes "A B C"
 			}
 			foreach v of local nodes {
@@ -133,9 +134,9 @@ program _nwcensusplot
 			replace cy = `row' + cond("`kind'" == "dyad", 0.12, 0.11) in `obs'
 			if "`expected'" != "" {
 				// a third line under the count: the expected count
-				replace ly = `row' + 0.29 in `obs'
-				replace cy = `row' + 0.17 in `obs'
-				replace ey = `row' + 0.05 in `obs'
+				replace ly = `row' + 0.34 in `obs'
+				replace cy = `row' + 0.20 in `obs'
+				replace ey = `row' + 0.07 in `obs'
 				replace lexp = "exp. " + strtrim(string(`: word `k' of `expected'', "%15.1fc")) in `obs'
 			}
 			replace lcat = "`: word `k' of `cats''" in `obs'
@@ -144,6 +145,7 @@ program _nwcensusplot
 	}
 
 	local asp = `nrow' / `ncol'
+	if "`expected'" != "" & "`kind'" == "triad" local asp = `asp' * 1.2
 	if `nrow' == 1 local tsz "large"
 	else local tsz "medsmall"
 	if `nrow' == 1 local msz "large"
@@ -162,8 +164,8 @@ program _nwcensusplot
 	local __exp ""
 	local __note ""
 	if "`expected'" != "" {
-		local __exp (scatter ey lx, msymbol(none) mlabel(lexp) mlabpos(0) mlabsize(`=cond(`nrow' == 1, "large", "small")') mlabcolor(gs8))
-		local __note `"note("Lighter figure under each count: expected count if the dyad types" "were assigned at random with the dyad census fixed.", size(small))"'
+		local __exp (scatter ey lx, msymbol(none) mlabel(lexp) mlabpos(0) mlabsize(`=cond(`nrow' == 1, "large", "small")') mlabcolor(gs6))
+		local __note `"note("The line exp. under each count is the expected count if the dyad types" "were assigned at random with the dyad census fixed.", size(small))"'
 	}
 	twoway `tiecmd' ///
 		(scatter ny nx, msymbol(O) msize(`msz') mfcolor(gs10) mlcolor(gs3)) ///
@@ -174,7 +176,7 @@ program _nwcensusplot
 		xlabel(none) ylabel(none) aspectratio(`asp') legend(off) ///
 		plotregion(margin(small)) graphregion(color(white)) ///
 		`__ttl' ///
-		xsize(`=cond(`nrow' == 1, 6, 5)') ysize(`=cond(`nrow' == 1, 2.4, 5.5)') ///
+		xsize(`=cond(`nrow' == 1, 6, 5)') ysize(`=cond(`nrow' == 1, 2.4, cond("`expected'" != "", 6.3, 5.5))') ///
 		name(`name', replace) `options'
 	restore
 	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')

@@ -340,21 +340,36 @@ program nwdiffuse_curve, rclass
 				local __yt `"`r(t)'"'
 				local __xl "xlabel(, format(%9.0f))"
 				if `T' <= 20 local __xl "xlabel(`=`Cv'[1,1]'(1)`=`Cv'[`T',1]', format(%9.0f))"
+				// the count axis of the bars starts at 0 with integer labels (nice step 1, 2, 5, 10, ...)
+				summarize new, meanonly
+				local __top = max(r(max), 1)
+				local __k = max(1, cond(`__top'/1 <= 5, 1, cond(`__top'/2 <= 5, 2, cond(`__top'/5 <= 5, 5, ceil(`__top'/5)))))
+				if `__k' > 5 {
+					local __p = 10^floor(log10(`__k'))
+					local __k = ceil(`__k' / `__p') * `__p'
+				}
+				local __top = ceil(`__top' / `__k') * `__k'
+				local __yl "yscale(range(0 `__top')) ylabel(0(`__k')`__top', angle(0) format(%9.0f))"
 				if "`__ptype'" == "new" {
 					_nw_gfinish title "New adopters per period", gopts(`"`__go'"')
-					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' ylabel(, angle(0) format(%9.0f)) ///
+					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' `__yl' ///
 						`__xt' `__yt' `r(t)' graphregion(color(white)) `__nopt' `options'
 				}
 				else {
 					// both: the cumulative proportion and the new adopters, side by side
 					tempname __g1 __g2
+					// xlabel() of the user applies to both panels
+					if regexm(`"`options'"', "(^|[ ,])xlabel[ ]*\(((\([^)]*\)|[^()])*)\)") {
+						local __xl "xlabel(`=regexs(2)')"
+						local options : subinstr local options `"`=regexs(0)'"' " ", all
+					}
 					_nw_gfinish blk "Proportion of adopters", kind(ytitle)
 					local __yt1 `"`r(t)'"'
 					_nw_gfinish title "Cumulative adoption", size(medsmall)
 					twoway line proportion period, lcolor(gs4) `__xl' ylabel(, angle(0)) `__xt' `__yt1' `r(t)' ///
 						graphregion(color(white)) nodraw name(`__g1', replace)
 					_nw_gfinish title "New adopters per period", size(medsmall)
-					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' ylabel(, angle(0) format(%9.0f)) ///
+					twoway bar new period, barwidth(0.8) fcolor(gs10) lcolor(gs4) `__xl' `__yl' ///
 						`__xt' `__yt' `r(t)' graphregion(color(white)) nodraw name(`__g2', replace)
 					_nw_gfinish title "Diffusion curve", gopts(`"`__go'"')
 					graph combine `__g1' `__g2', cols(2) `r(t)' graphregion(color(white)) `__nopt' `options'

@@ -174,6 +174,7 @@ program _nwspectral_plot
 		drop _all
 		svmat double `ev', names(__e)
 		generate double __k = _n
+		replace __e1 = 0 if abs(__e1) < 1e-9
 		if "`embed'" != "" {
 			svmat double `embed', names(__m)
 			rename __m1 __x
@@ -201,8 +202,8 @@ program _nwspectral_plot
 	local xl "xlabel(1 `stp'(`stp')`nodes', format(%9.0f))"
 	if `nodes' <= 15 local xl "xlabel(1(1)`nodes', format(%9.0f))"
 	quietly twoway (connected __e1 __k, msymbol(O) msize(small) lcolor(gs8) mcolor(gs4) lwidth(thin)) ///
-		(scatter __e1 __k if __k == 2, msymbol(D) msize(medlarge) mcolor(black) mlabel(__e1) mlabformat(%5.3f) mlabposition(1) mlabcolor(black)), ///
-		legend(order(2 "Algebraic connectivity (second eigenvalue)") position(6) size(small) region(lcolor(none)) ///
+		(scatter __e1 __k if __k == 2, msymbol(D) msize(medlarge) mcolor(black) mlabel(__e1) mlabformat(%5.3f) mlabposition(12) mlabgap(*6) mlabcolor(black)), ///
+		legend(order(2 "Algebraic connectivity") position(6) size(vsmall) region(lcolor(none)) ///
 		title("", size(small))) ylabel(, angle(0)) `xl' `xt' `yt' `tt' graphregion(color(white)) `nodraw' name(`gs0', replace) `gopt1'
 	if `np' == 2 {
 		_nw_gfinish blk "Second eigenvector", kind(xtitle)
@@ -212,8 +213,8 @@ program _nwspectral_plot
 		_nw_gfinish title "Spectral embedding", size(medsmall)
 		quietly twoway (scatter __y __x if __s == 1, msymbol(O) mcolor(gs4) msize(medsmall)) ///
 			(scatter __y __x if __s == 0, msymbol(Dh) mcolor(gs4) mlcolor(gs4) msize(medsmall)), ///
-			legend(order(1 "2nd eigenvector >= 0" 2 "2nd eigenvector < 0") position(6) size(small) region(lcolor(none))) ///
-			ylabel(, angle(0)) `xt2' `yt2' `r(t)' graphregion(color(white)) nodraw name(`ge', replace)
+			legend(order(1 "2nd eigenvector >= 0" 2 "2nd eigenvector < 0") position(6) rows(2) size(vsmall) symxsize(*0.6) region(lcolor(none))) ///
+			ylabel(, angle(0) format(%4.2f)) `xt2' `yt2' `r(t)' graphregion(color(white)) nodraw name(`ge', replace)
 		_nw_gfinish title "Spectral decomposition: `netname'", gopts(`"`gopts'"')
 		graph combine `gs' `ge', cols(2) `r(t)' graphregion(color(white)) name(`name', replace) `gopts'
 		graph drop `gs' `ge'
