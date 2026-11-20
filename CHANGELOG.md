@@ -18,6 +18,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwcommunity`: `symmetrize` keeps a tie when either direction has one (the larger of the two values), not only mutual ties.
 - `nwcoreperiphery`: the search is local; a different starting partition can give a better core.
 
+Tested on macOS (Stata 17): the new test and the tests of the touched commands, the core plot tests and the dialog tests. On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new test, the tests of the touched commands, the plot and dialog tests, and the star and Davis checks pass. Stata 18 was not run.
+
 ## [3.32.0] - 2026-11-20
 
 ### Added
