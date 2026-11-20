@@ -38,9 +38,9 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.2.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
 
-> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 0.6.0) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
+> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 0.7.0) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
 
-> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 0.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
+> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 0.4.0) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
