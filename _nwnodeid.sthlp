@@ -75,4 +75,4 @@ taken as the {help nodeid} itself (an error is thrown when it is larger than the
    {help _nwnodelab}, {help nodeid}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -55,4 +55,4 @@ Preserve a network, drop it, then restore it:
    {help nwpreserve}, {help restore}, {help preserve}
 
 {hline}
-{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.31.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -4,7 +4,7 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.31.0] - 2026-11-20
 
 ### Added
 - `nwcoefplot, msymbol(list)`: one marker symbol per model, in the order of the models (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart. Fewer symbols than models are used again from the start; more symbols than models, or a name that is not a marker symbol, stop with error 198. Without the option the picture is unchanged. Help file, dialog and test updated.
