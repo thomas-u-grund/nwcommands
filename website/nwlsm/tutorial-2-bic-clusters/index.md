@@ -113,7 +113,7 @@ To see the clusters, draw the monks in the latent space with `nwlsmplot`; the op
 
 ![Sampson's monks in the latent space, coloured by cluster](monks_clusters.png)
 
-The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model.
+The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model. Both axes have the same scale, so distances can be read from the picture (`noequal` switches this off).
 
 The network is directed, so the ties are drawn as arrows from the sender to the receiver; this is the default for a directed network, and `noarrows` draws plain lines instead.
 
@@ -125,7 +125,7 @@ Three more options show what the clusters model estimates. `clustermeans` marks 
 
 ![Sampson's monks with the cluster circles and the certainty of the membership](monks_circles.png)
 
-Each cluster is surrounded by a dashed ellipse in its colour (the circles look like ellipses because the two axes have different scales). The three circles are of similar size, the one of the top cluster (the outcasts) the largest. Most monks are drawn in full colour; a few at the edge of their group, for example John Bosco and Hugh in the lower left cluster and Amand next to the outcasts, are paler, which agrees with the three monks below 0.8 in the table of probabilities that follows. The cluster means themselves are hard to see on this picture, because they lie at the centre of the groups under the monks.
+Each cluster is surrounded by a dashed circle in its colour, with a small cross at the cluster mean at its centre. Because both axes have the same scale the circles are round, and their radii can be compared with the distances between the monks. The three circles are of similar size, and the monks of each cluster lie mostly inside their own circle, the two monks Amand and Hugh near its edge. Most monks are drawn in full colour; a few at the edge of their group, for example John Bosco and Hugh in the lower left cluster and Amand next to the outcasts, are paler, which agrees with the three monks below 0.8 in the table of probabilities that follows.
 
 The three clusters of the model are the three factions, with no monk in the wrong place. The numbering of the clusters is arbitrary; only the grouping counts. The model has never seen the faction variable. How sure is it about each monk?
 
