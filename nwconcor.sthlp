@@ -100,6 +100,9 @@ is no sparse form of the method.
 	{cmd:. nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)}
 	{cmd:. nwconcor flomarriage2, generate(_concor)}
 
+{pstd}The adjacency matrix with the nodes ordered by block ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage2, sortby(_concor) group(_concor)}
+
 	{cmd:. nwconcor flomarriage2, splits(2) generate(_concor) replace}
 
 
@@ -125,4 +128,4 @@ applications to social network analysis and comparison with multidimensional sca
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}, {help nwregular}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

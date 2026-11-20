@@ -4,6 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [3.30.0] - 2026-11-20
+
+### Added
+- `nwdegree, plot`: the degree distribution as a graph (histogram of the generated degree variable; outdegree and indegree side by side for a directed network); `ccdf` draws P(degree >= k) on log-log axes; `standardize` is respected; `name()`, `saving()`, `export()` and graph options as in the plot convention. One one-mode network (two-mode, a list of networks, and a valued network without `binary` stop with error 198). Without `plot` the extra options are still the tabulate options.
+- `nwgeodesic, plot`: histogram of the finite geodesic distances (number of pairs at each whole distance, unconnected pairs counted in a note), `average` marks the mean distance of the connected pairs; the graph name option is `gname()` because `name()` is the distance network. Two-mode and valued networks (without `binary`/`alpha(0)`) stop with error 198.
+- `nwdiffuse curve, plot(cumulative|new|both)`: `new` draws the new adopters per period as bars, `both` the cumulative proportion and the bars side by side; plain `plot` and `graph` draw the cumulative line as before.
+- `nwspectral, plot`: scree plot of the Laplacian eigenvalues with the algebraic connectivity marked; `embedding` adds the second and third eigenvector as a scatter. Two-mode and directed networks stop with error 198.
+- `nwtriads, plot expected`: the expected count of every triad type under random dyad types with the dyad census fixed (the uniform distribution on networks with the same dyad census, closed form) is written under the observed count.
+- Help files, dialogs and `cscripts/test_nwcore_plots2.do` for these options; examples of the ordered matrix (`nwplotmatrix, sortby() group()`) in the help files of `nwcoreperiphery`, `nwfactions` and `nwconcor`.
+- Dialogs: `name`, `saving` and `export` entries in the `nwdendrogram` dialog, `saving` and `export` entries (tab Save/export) in the `nwplotmatrix` dialog, a `name` entry in the `nwmixing` dialog; the `name` field of the `nwcorrelate` dialog says that it also names the graph of the permutations. `cscripts/test_dlg_plots.do` checks that the dialogs of all plot commands carry their plot options and that the command line a dialog emits runs.
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): the tests of the new plot options, the dialog tests and the plot tests of every changed command; on Linux and on Windows the export widths of the new plots (`nwdegree`, `nwgeodesic`, `nwspectral`, `nwdiffuse curve, plot(both)`, `nwtriads` with `expected`) were measured exactly, and Windows was also run from a folder with a space in its name. Stata 18 on the Mac was not run for this release.
+
 ## [3.29.0] - 2026-11-20
 
 ### Added

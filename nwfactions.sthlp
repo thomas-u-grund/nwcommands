@@ -87,6 +87,9 @@ Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,00
 	{cmd:. nwfactions flomarriage, groups(3) generate(_faction)}
 	{cmd:. tab _faction}
 
+{pstd}The adjacency matrix with the nodes ordered by faction, the factions as blocks ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage, sortby(_faction) group(_faction)}
+
 
 {title:Stored results}
 
@@ -110,4 +113,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). {it:UCINET for Windows: Sof
 	{help nwcoreperiphery}, {help nwcommunity}, {help nwconcor}, {help nwlambda}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

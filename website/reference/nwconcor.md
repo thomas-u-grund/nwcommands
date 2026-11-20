@@ -61,6 +61,11 @@ Every iteration correlates the complete node-by-node matrix, so the work grows w
 . * pucci is an isolate in this network - CONCOR requires every node to have a tie
 . nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)
 . nwconcor flomarriage2, generate(_concor)
+```
+- The adjacency matrix with the nodes ordered by block ([nwplotmatrix](nwplotmatrix)):
+
+```stata
+. nwplotmatrix flomarriage2, sortby(_concor) group(_concor)
 
 . nwconcor flomarriage2, splits(2) generate(_concor) replace
 ```
@@ -83,4 +88,4 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

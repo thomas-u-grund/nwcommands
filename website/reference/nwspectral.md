@@ -23,7 +23,12 @@ measure(string)
 replace
 silent
 force
-one:mode]
+one:mode
+plot
+emb:edding
+name(string)
+saving(filename)
+export(filename[, options])]
 ```
 
 | | |
@@ -35,6 +40,11 @@ one:mode]
 | `silent` | Suppress display of results |
 | `force` | Run the complete decomposition of a network with more than 6,000 nodes |
 | `one:mode` | Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088) |
+| `plot` | Draw the scree plot of the Laplacian eigenvalues, with the algebraic connectivity marked |
+| `emb:edding` | With `plot`: a second panel with the second and third eigenvector as a scatter, the marker showing the sign of the second (the bipartition) |
+| `name(string)` | Name for the graph created by `plot`; default = **spectral** |
+| `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
+| `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
 
 ## Description
 
@@ -66,6 +76,12 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 . nwspectral flomarriage, bipartition generate(_fiedler) replace
 ```
 
+## Drawing the spectrum
+
+`plot` draws the Laplacian eigenvalues in ascending order, the values of **r(eigenvalues)**; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. `embedding` adds a second panel with the second and third eigenvectors, one marker per node. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` (`graph combine` with `embedding`) and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network and for a directed network (symmetrize it with [nwsym](nwsym) first).
+
+- `. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))`
+
 ## Stored results
 
 - **Scalars**
@@ -87,4 +103,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. *Statistics and Compu
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

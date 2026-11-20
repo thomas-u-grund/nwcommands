@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 226
+POSITION 10 10 550 254
 
 SCRIPT PREINIT
 BEGIN
@@ -17,15 +17,17 @@ DIALOG main, title("nwtriads - Triad census of the network")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_cx_plot 20 54 260 ., label("draw a bar chart of the 16 MAN-category counts")
   CHECKBOX cx_plot 290 54 190 ., label("plot") option(plot)
-  TEXT tx_ed_name 20 82 260 ., label("name for the graph created by plot; default = triads")
-  EDIT ed_name 290 82 190 ., nomem option(name)
-  TEXT tx_saving 20 110 260 ., label("Save the graph to a file (.gph)")
-  FILE fi_saving 290 110 190 ., save nomem option(saving)
-  TEXT tx_export 20 138 260 ., label("Export the graph to a file (.png, .pdf, ...)")
-  FILE fi_export 290 138 190 ., save nomem option(export)
+  TEXT tx_cx_exp 20 82 260 ., label("plot: add the expected counts under random dyad types (dyad census fixed)")
+  CHECKBOX cx_exp 290 82 190 ., label("expected") option(expected)
+  TEXT tx_ed_name 20 110 260 ., label("name for the graph created by plot; default = triads")
+  EDIT ed_name 290 110 190 ., nomem option(name)
+  TEXT tx_saving 20 138 260 ., label("Save the graph to a file (.gph)")
+  FILE fi_saving 290 138 190 ., save nomem option(saving)
+  TEXT tx_export 20 166 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 166 190 ., save nomem option(export)
 END
 
 LIST netlist
@@ -44,6 +46,7 @@ BEGIN
 	put "nwtriads " main.cb_net
 	beginoptions
 		option main.cx_plot
+		option main.cx_exp
 		optionarg main.ed_name
 		optionarg main.fi_saving
 		optionarg main.fi_export

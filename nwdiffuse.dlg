@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 560 560
+POSITION 10 10 560 700
 
 SCRIPT PREINIT
 BEGIN
@@ -70,6 +70,22 @@ BEGIN
   EDIT ed_steps 245 524 40 ., nomem option(steps)
   TEXT tx_seed 290 524 120 ., label("seed():")
   EDIT ed_seed 415 524 90 ., nomem option(seed)
+  GROUPBOX gb_gr 10 556 540 130, label("Graph of curve (the options need a plot type)")
+  TEXT tx_plot 20 574 110 ., label("plot():")
+  COMBOBOX cb_plot 130 574 130 ., dropdown contents(list_plot) nomem option(plot)
+  TEXT tx_gname 290 574 120 ., label("name():")
+  EDIT ed_gname 415 574 100 ., nomem option(name)
+  TEXT tx_gsaving 20 604 110 ., label("saving():")
+  FILE fi_gsaving 130 604 130 ., save nomem option(saving)
+  TEXT tx_gexport 290 604 120 ., label("export():")
+  FILE fi_gexport 415 604 100 ., save nomem option(export)
+END
+
+LIST list_plot
+BEGIN
+	cumulative
+	new
+	both
 END
 
 LIST netlist
@@ -131,6 +147,10 @@ BEGIN
 	main.cx_replace.disable
 	main.cx_clear.disable
 	main.cx_graph.disable
+	main.cb_plot.disable
+	main.ed_gname.disable
+	main.fi_gsaving.disable
+	main.fi_gexport.disable
 	main.cx_silent.disable
 	main.cb_model.disable
 	main.ed_prob.disable
@@ -166,6 +186,10 @@ SCRIPT curve_on
 BEGIN
 	main.ed_matrix.enable
 	main.cx_graph.enable
+	main.cb_plot.enable
+	main.ed_gname.enable
+	main.fi_gsaving.enable
+	main.fi_gexport.enable
 	main.cx_silent.enable
 END
 
@@ -241,6 +265,10 @@ BEGIN
 		}
 		if main.cb_sub.iseq("curve") {
 			option main.cx_graph
+			optionarg main.cb_plot
+			optionarg main.ed_gname
+			optionarg main.fi_gsaving
+			optionarg main.fi_gexport
 			optionarg main.ed_matrix
 			option main.cx_silent
 		}

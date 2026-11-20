@@ -2,8 +2,27 @@
 capture program drop nwdegree
 program nwdegree
 	version 9
-	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) ONEmode RAW *]
+	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) ONEmode RAW ///
+		PLOT CCDF NAME(string asis) SAVing(string asis) EXPort(string asis) *]
 	set more off
+
+	// plot: the degree distribution as a graph (histogram of the degree variable, in and out for a directed network; ccdf: the
+	// complementary cumulative distribution on log-log axes).  Without plot the remaining options are the options of the
+	// tabulate of the table, as always; with plot they are graph options and go to twoway (graph combine for a directed network).
+	local __go ""
+	local __tabopt `"`options'"'
+	if "`plot'" != "" {
+		local __go `"`options'"'
+		local __tabopt ""
+	}
+	_nw_gfinish check, plot(`plot') name(`name') saving(`saving') export(`export') gopts(`"`__go'"') default(degree) cmd(nwdegree)
+	local __gname `"`r(name)'"'
+	local __gsv `"`r(saving)'"'
+	local __gex `"`r(export)'"'
+	if "`ccdf'" != "" & "`plot'" == "" {
+		di as err "{p 0 0 2}nwdegree: option {bf:ccdf} needs {bf:plot}.{p_end}"
+		exit 198
+	}
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case degree centrality is calculated for z networks
@@ -30,6 +49,21 @@ program nwdegree
 	// nwcomponents/nwcommunity check the "networks" local before
 	// entering their own loops, not inside them).
 	local totalnetworks = `networks'
+	if "`plot'" != "" {
+		if `totalnetworks' > 1 {
+			di as err "{p 0 0 2}nwdegree: {bf:plot} draws the degree distribution of one network; give one network (the variables of a list are ordinary variables: use {bf:histogram}).{p_end}"
+			exit 198
+		}
+		_nwsyntax `netname'
+		if "`is2mode'" == "true" {
+			di as err "{p 0 0 2}nwdegree: {bf:plot} is not available for the two-mode network {bf:`netname'}: its degree is the two-mode degree (see {help nw2degree}), which {bf:nwdegree} does not draw. Use {bf:nwdegree} without {bf:plot} and {bf:histogram} of the variable, or a one-mode network.{p_end}"
+			exit 198
+		}
+		if "`valued'" == "true" & "`binary'" == "" & ("`alpha'" == "" | (real("`alpha'") != 0 & "`alpha'" != "")) {
+			di as err "{p 0 0 2}nwdegree: {bf:plot} draws the distribution of the number of ties; {bf:`netname'} is valued and its degree is the strength. Use {bf:binary} (or {bf:alpha(0)}) for the number of ties, or {bf:histogram} of the variable.{p_end}"
+			exit 198
+		}
+	}
 
 	// Tie values: on a valued network the default is the strength (sum of the tie values,
 	// alpha(1); igraph::strength, tnet::degree_w), as R does for a weighted graph.  alpha(0) or
@@ -446,7 +480,7 @@ program nwdegree
 					noi tab `_outdegree' if `included' == 1, `out'
 				}
 				else {
-					noi tab `_degree' if `included' == 1, `options'
+					noi tab `_degree' if `included' == 1, `__tabopt'
 				}
 			}
 			else {
@@ -459,6 +493,17 @@ program nwdegree
 			mata: st_local("__mt", strofreal(mean(`netobj'->get_outdegree(0)), "%9.4g"))
 			mata: st_local("__ms", strofreal(mean(`netobj'->get_outdegree(1)), "%9.4g"))
 			noi di "{txt}  Mean number of ties (out): {res}`__mt'{txt}   mean strength (out): {res}`__ms'"
+		}
+		if "`plot'" != "" {
+			// uses the variables just made; the graph is drawn before the results are posted
+			local __pv "`_degree'"
+			local __pl "Degree"
+			if "`directed'" == "true" {
+				local __pv "`_outdegree' `_indegree'"
+				local __pl "Outdegree Indegree"
+			}
+			_nwdegree_plot `__pv', included(`included') netname(`netname_temp') name(`__gname') kinds(`__pl') ///
+				`ccdf' `=cond("`standardize'" != "", "standardized", "")' saving(`"`__gsv'"') export(`"`__gex'"') gopts(`"`__go'"')
 		}
 		mata: st_rclear()
 		mata: st_numscalar("r(alpha)", `__alpha')
@@ -504,6 +549,102 @@ program nwdegree
 
 end
 
+
+// the degree distribution graph: one panel per variable (outdegree and indegree for a directed network)
+capture program drop _nwdegree_plot
+program _nwdegree_plot
+	version 15
+	syntax varlist(min=1 max=2), INCluded(varname) NETname(string) NAME(string) KINDs(string) [CCDF STANDARDized SAVing(string asis) EXPort(string asis) GOPTS(string asis)]
+	local np : word count `varlist'
+	if strpos(`"`gopts'"', char(96) + char(34)) == 1 gettoken gopts : gopts
+	if "`ccdf'" != "" local what "Degree distribution (CCDF)"
+	else local what "Degree distribution"
+	quietly count if `included' == 1
+	local N = r(N)
+	local panels ""
+	local k 0
+	foreach v of local varlist {
+		local ++k
+		local kind : word `k' of `kinds'
+		local xt = cond("`standardized'" != "", "`kind' (standardized)", "`kind'")
+		local gn `name'
+		if `np' > 1 {
+			tempname gtmp
+			local gn `gtmp'
+			local panels "`panels' `gn'"
+		}
+		_nw_gfinish blk "`xt'", kind(xtitle) gopts(`"`gopts'"')
+		local xtit `"`r(t)'"'
+		if `np' > 1 {
+			// the panel title names the variable; the x axis is not titled a second time
+			_nw_gfinish title "`xt'", size(medsmall)
+			local ptit `"`r(t)'"'
+			local xtit `"xtitle("")"'
+			local gx ""
+			local nodraw "nodraw"
+		}
+		else {
+			_nw_gfinish title "`what': `netname'", gopts(`"`gopts'"')
+			local ptit `"`r(t)'"'
+			local gx `"`gopts'"'
+			local nodraw ""
+		}
+		if "`ccdf'" == "" {
+			quietly count if `included' == 1 & `v' != floor(`v')
+			local disc = cond(r(N) == 0, "discrete", "")
+			_nw_gfinish blk "Fraction of nodes", kind(ytitle) gopts(`"`gopts'"')
+			local ytit `"`r(t)'"'
+			quietly histogram `v' if `included' == 1, `disc' fraction color(gs10) lcolor(gs4) ///
+				`xtit' `ytit' `ptit' graphregion(color(white)) `nodraw' name(`gn', replace) `gx'
+		}
+		else {
+			// P(degree >= k) at the observed degrees k >= 1 (degree 0 is not on a log axis; the count is in the note)
+			preserve
+			quietly {
+				keep if `included' == 1
+				count if `v' == 0
+				local n0 = r(N)
+				keep `v'
+				contract `v', freq(__f)
+				sort `v'
+				generate double __cum = sum(__f)
+				generate double __ccdf = (`N' - __cum + __f) / `N'
+				keep if `v' > 0
+				summarize __ccdf, meanonly
+				local pmin = r(min)
+				summarize `v', meanonly
+				local kmax = r(max)
+			}
+			// round labels on the log axes (the default labels of a log axis are sparse on a short range)
+			local yl ""
+			foreach c in .001 .002 .005 .01 .02 .05 .1 .2 .5 1 {
+				if `c' >= `pmin' / 1.3 local yl "`yl' `c'"
+			}
+			local xl ""
+			if "`standardized'" == "" {
+				// few ticks, one per decade step (1 2 5 10 20 50 ...), the largest degree is not labelled separately
+				foreach c in 1 2 5 10 20 50 100 200 500 1000 2000 5000 10000 {
+					if `c' <= `kmax' * 1.1 local xl "`xl' `c'"
+				}
+				local xl "xlabel(`xl')"
+			}
+			_nw_gfinish blk "P(degree >= k)", kind(ytitle) gopts(`"`gopts'"')
+			local ytit `"`r(t)'"'
+			local note ""
+			if `n0' > 0 local note `"note("`n0' node(s) with degree 0 are not on the log axis.", size(small) color(black))"'
+			quietly twoway connected __ccdf `v', msymbol(O) msize(small) lcolor(gs4) mcolor(gs4) lwidth(thin) ///
+				xscale(log) yscale(log) ylabel(`yl', angle(0)) `xl' `xtit' `ytit' `ptit' `note' ///
+				graphregion(color(white)) `nodraw' name(`gn', replace) `gx'
+			restore
+		}
+	}
+	if `np' > 1 {
+		_nw_gfinish title "`what': `netname'", gopts(`"`gopts'"')
+		local ctit `"`r(t)'"'
+		graph combine `panels', cols(2) `=cond("`ccdf'" == "", "ycommon", "")' `ctit' graphregion(color(white)) name(`name', replace) `gopts'
+	}
+	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')
+end
 
 capture program drop _nwdegree_two
 program _nwdegree_two, rclass

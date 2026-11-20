@@ -22,7 +22,12 @@
 {opt replace}
 {opt silent}
 {opt force}
-{opt one:mode}]
+{opt one:mode}
+{opt plot}
+{opt emb:edding}
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}]
 
 
 {synoptset 25 tabbed}{...}
@@ -35,6 +40,11 @@
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt force}}Run the complete decomposition of a network with more than 6,000 nodes{p_end}
 {synopt:{opt one:mode}}Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088){p_end}
+{synopt:{opt plot}}Draw the scree plot of the Laplacian eigenvalues, with the algebraic connectivity marked{p_end}
+{synopt:{opt emb:edding}}With {opt plot}: a second panel with the second and third eigenvector as a scatter, the marker showing the sign of the second (the bipartition){p_end}
+{synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:spectral}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
 
 {p2colreset}{...}
 
@@ -108,6 +118,15 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 	{cmd:. nwspectral flomarriage, bipartition generate(_fiedler) replace}
 
 
+{title:Drawing the spectrum}
+
+{pstd}
+{opt plot} draws the Laplacian eigenvalues in ascending order, the values of {bf:r(eigenvalues)}; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. {opt embedding} adds a second panel with the second and third eigenvectors, one marker per node.
+{opt name()} names the graph in memory, {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to {helpb twoway} ({helpb graph combine} with {opt embedding}) and come last; without {opt plot} they give an error.
+{opt plot} stops with error 198 for a two-mode network and for a directed network (symmetrize it with {help nwsym} first).
+
+{phang2}{cmd:. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))}{p_end}
+
 {title:Stored results}
 
 {synoptset 27 tabbed}{...}
@@ -135,4 +154,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. {it:Statistics and Co
 	{help nwevcent}, {help nwcommunity}, {help nwcomponents}, {help nwkcomponents}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

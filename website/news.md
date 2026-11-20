@@ -12,6 +12,30 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwcommands 3.30.0
+
+**nwcommands 3.30.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.30.0)).
+
+- `nwdegree, plot` draws the degree distribution (outdegree and indegree side by side for a directed network); `ccdf` draws P(degree >= k) on log-log axes.
+- `nwgeodesic, plot` draws the histogram of the geodesic distances, `average` marks the mean distance.
+- `nwdiffuse curve, plot(cumulative|new|both)` draws the cumulative proportion, the new adopters per period, or both.
+- `nwspectral, plot` draws the scree plot of the Laplacian eigenvalues with the algebraic connectivity; `embedding` adds a scatter of the second and third eigenvector.
+- `nwtriads, plot expected` writes the expected count of every triad type under the observed count.
+- Dialogs: `name`, `saving` and `export` entries for `nwdendrogram`, `nwplotmatrix` and `nwmixing`, and plot entries in the dialogs of the new plot options.
+- Help files of `nwcoreperiphery`, `nwfactions` and `nwconcor` show the ordered matrix (`nwplotmatrix, sortby() group()`).
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): the tests of the new plot options, the dialog tests and the plot tests of every changed command; on Linux and on Windows the export widths of the new plots (`nwdegree`, `nwgeodesic`, `nwspectral`, `nwdiffuse curve, plot(both)`, `nwtriads` with `expected`) were measured exactly, and Windows was also run from a folder with a space in its name. Stata 18 on the Mac was not run for this release.
+
+## 20 November 2026: nwergm 1.11.1, nwlsm 1.0.1 and nwsbm 1.0.1
+
+**nwergm 1.11.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.11.1)). A curved fit with an estimated decay that stops with r(498) because a simulated network has a count above `gwcutoff()` now says what happened and what to try. The dialog test also covers the plot options of `estat gof`, `estat mcmcdiag` and `estat posterior`.
+
+**nwlsm 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.1)). The `estat` dialog has a field for the graph name and the `nwlsmselect` dialog one for the graph options; the dialog tests check the commands the dialogs build.
+
+**nwsbm 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.1)). The dialog test checks the command that the `nwsbmplot` dialog builds (`type()`, `name()`, `saving()`, `export()`).
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): for nwergm the test of the cutoff message, the plot test and the package test; for nwlsm and nwsbm the plot tests, the error-path tests and the dialog tests. Stata 18 on the Mac was not run.
+
 ## 20 November 2026: nwsaom 1.9.0, nwergm 1.11.0 and nwrem 1.6.0
 
 All three need nwcommands 3.29.0 or later for the graph options.

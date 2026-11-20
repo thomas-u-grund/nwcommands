@@ -3,7 +3,7 @@
 capture program drop _nwcensusplot
 program _nwcensusplot
 	version 16
-	syntax , KIND(string) DIRected(string) COUNTS(numlist) NETname(string) [NAME(string) SAVing(string asis) EXPort(string asis) *]
+	syntax , KIND(string) DIRected(string) COUNTS(numlist) NETname(string) [EXPected(string) NAME(string) SAVing(string asis) EXPort(string asis) *]
 
 	if "`name'" == "" local name "`kind's"
 
@@ -81,6 +81,8 @@ program _nwcensusplot
 		gen double cy = .
 		gen str20 lcat = ""
 		gen str20 lcnt = ""
+		gen double ey = .
+		gen str20 lexp = ""
 
 		local obs 0
 		forvalues k = 1/`ncat' {
@@ -96,11 +98,12 @@ program _nwcensusplot
 			}
 			else {
 				local Ax = `col' + 0.2
-				local Ay = `row' + 0.44
+				// with expected counts the triangle sits higher to make room for the third text line
+				local Ay = `row' + cond("`expected'" != "", 0.50, 0.44)
 				local Bx = `col' + 0.5
-				local By = `row' + 0.86
+				local By = `row' + cond("`expected'" != "", 0.80, 0.86)
 				local Cx = `col' + 0.8
-				local Cy = `row' + 0.44
+				local Cy = `row' + cond("`expected'" != "", 0.50, 0.44)
 				local nodes "A B C"
 			}
 			foreach v of local nodes {
@@ -129,12 +132,20 @@ program _nwcensusplot
 			replace lx = `col' + 0.5 in `obs'
 			replace ly = `row' + cond("`kind'" == "dyad", 0.36, 0.25) in `obs'
 			replace cy = `row' + cond("`kind'" == "dyad", 0.12, 0.11) in `obs'
+			if "`expected'" != "" {
+				// a third line under the count: the expected count
+				replace ly = `row' + 0.34 in `obs'
+				replace cy = `row' + 0.20 in `obs'
+				replace ey = `row' + 0.07 in `obs'
+				replace lexp = "exp. " + strtrim(string(`: word `k' of `expected'', "%15.1fc")) in `obs'
+			}
 			replace lcat = "`: word `k' of `cats''" in `obs'
 			replace lcnt = strtrim(string(`c', "%15.0fc")) in `obs'
 		}
 	}
 
 	local asp = `nrow' / `ncol'
+	if "`expected'" != "" & "`kind'" == "triad" local asp = `asp' * 1.2
 	if `nrow' == 1 local tsz "large"
 	else local tsz "medsmall"
 	if `nrow' == 1 local msz "large"
@@ -150,15 +161,22 @@ program _nwcensusplot
 	}
 	_nw_gfinish title "`ttl': `netname'", size(medium) noblack gopts(`"`options'"')
 	local __ttl `"`r(t)'"'
+	local __exp ""
+	local __note ""
+	if "`expected'" != "" {
+		local __exp (scatter ey lx, msymbol(none) mlabel(lexp) mlabpos(0) mlabsize(`=cond(`nrow' == 1, "large", "small")') mlabcolor(gs6))
+		local __note `"note("The line exp. under each count is the expected count if the dyad types" "were assigned at random with the dyad census fixed.", size(small))"'
+	}
 	twoway `tiecmd' ///
 		(scatter ny nx, msymbol(O) msize(`msz') mfcolor(gs10) mlcolor(gs3)) ///
 		(scatter ly lx, msymbol(none) mlabel(lcat) mlabpos(0) mlabsize(`tsz') mlabcolor(black)) ///
-		(scatter cy lx, msymbol(none) mlabel(lcnt) mlabpos(0) mlabsize(`tsz') mlabcolor(gs5)), ///
+		(scatter cy lx, msymbol(none) mlabel(lcnt) mlabpos(0) mlabsize(`tsz') mlabcolor(gs5)) ///
+		`__exp', `__note' ///
 		xscale(range(0 `ncol') off) yscale(range(-0.05 `nrow') off) ///
 		xlabel(none) ylabel(none) aspectratio(`asp') legend(off) ///
 		plotregion(margin(small)) graphregion(color(white)) ///
 		`__ttl' ///
-		xsize(`=cond(`nrow' == 1, 6, 5)') ysize(`=cond(`nrow' == 1, 2.4, 5.5)') ///
+		xsize(`=cond(`nrow' == 1, 6, 5)') ysize(`=cond(`nrow' == 1, 2.4, cond("`expected'" != "", 6.3, 5.5))') ///
 		name(`name', replace) `options'
 	restore
 	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')

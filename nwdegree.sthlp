@@ -30,7 +30,12 @@
 {opt onemode}
 {opt raw}
 
-{opt binary}]
+{opt binary}
+{opt plot}
+{opt ccdf}
+{opt name(string)}
+{opt saving(filename)}
+{opt export(filename[, options])}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -51,6 +56,11 @@ along with any other one-mode-only option, in the note explaining which options 
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
 {synopt:{opt onemode}}Two-mode network: compute the one-mode degree of the bipartite graph instead of the two-mode degree (the default){p_end}
 {synopt:{opt raw}}Two-mode network: the number of ties itself, not divided by the size of the other mode ({cmd:tnet::degree_tm}){p_end}
+{synopt:{opt plot}}Draw the degree distribution: a histogram of the degree variable (outdegree and indegree side by side for a directed network); one one-mode network{p_end}
+{synopt:{opt ccdf}}With {opt plot}: the complementary cumulative distribution P(degree >= k) on log-log axes instead of the histogram{p_end}
+{synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:degree}{p_end}
+{synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
+{synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -148,6 +158,17 @@ The next example saves the out- and indegree centrality in the variables {it:myo
 	{cmd:. nwdegree glasgow1, generate(myout myin mysiolate) isolates}
 
 
+{title:Drawing the distribution}
+
+{pstd}
+{opt plot} draws the distribution of the variable(s) just generated, over the nodes of the network: a histogram of the fraction of nodes at each degree (whole degrees get one bar each), or, with {opt ccdf}, the share of nodes with degree at least k on log-log axes (nodes of degree 0 are not on a log axis; their number is in the note).
+A directed network gives two panels, outdegree and indegree. {opt standardize} is respected: the variables are then the degrees divided by N - 1. {opt name()} names the graph in memory, {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export} (the file extension sets the format; {cmd:width()} and the other {cmd:graph export} options follow a comma).
+With {opt plot}, the options that are not listed here are options of {helpb twoway} (of {helpb graph combine} for a directed network) and come last; without {opt plot} they are the options of the table, as always, and {opt name()}, {opt saving()}, {opt export()} and {opt ccdf} give an error.
+{opt plot} needs one network: a two-mode network (use {cmd:histogram} of the variable of {help nw2degree}), a valued network whose degree is the strength (use {opt binary} or {opt alpha(0)}) and a list of networks stop with error 198.
+
+{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) plot export(degree.png, width(1000))}{p_end}
+{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) plot ccdf name(ccdf)}{p_end}
+
 {title:Stored results}
 
 {synoptset 22 tabbed}{...}
@@ -175,4 +196,4 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
    {help nwbetween}, {help nwcloseness}, {help nwclustering}, {help nwevcent}, {help nwkatz}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

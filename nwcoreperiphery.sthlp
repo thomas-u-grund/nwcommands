@@ -88,6 +88,9 @@ to the periphery.
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcoreperiphery flomarriage, generate(_core)}
 
+{pstd}The adjacency matrix with the core nodes first and the periphery last ({help nwplotmatrix}):{p_end}
+	{cmd:. nwplotmatrix flomarriage, sortby(_core) group(_core)}
+
 
 {title:Stored results}
 
@@ -109,4 +112,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:S
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

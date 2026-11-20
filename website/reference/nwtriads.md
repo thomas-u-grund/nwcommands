@@ -18,6 +18,7 @@ nwtriads
 [netname]
 [,
 plot
+expected
 name(string)
 saving(filename)
 export(filename[, options])
@@ -27,6 +28,7 @@ twoway_options]
 | | |
 |---|---|
 | `plot` | Draw the 16 triad types as small pictures with their counts |
+| `expected` | With `plot`: the expected count of every type under random dyad types (dyad census fixed) under the count |
 | `name(string)` | Name for the graph created by `plot`; default = **triads** |
 | `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
 | `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
@@ -104,6 +106,12 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 - `. nwtriads flomarriage, plot export(triads.png, width(1200))`
 
+## Expected counts
+
+`expected` adds, under every count of the `plot`, the number of triads of that type expected when the three kinds of dyad (mutual, asymmetric, null) are placed at random on the node pairs with the dyad census of the network fixed, and an asymmetric tie points either way with probability 1/2. This is the uniform distribution over the networks with the same dyad census (Holland, P. W., and S. Leinhardt. 1976. Local structure in social networks. *Sociological Methodology* 7: 1-45), the null model of [nwcug](nwcug) with `condition(census)` and of [nwrandom](nwrandom) with `census()`. With D = n(n-1)/2 dyads, M mutual, A asymmetric and N null ones, a type with m mutual, a asymmetric and k null dyads (the digits of its name) and w labelled forms (1, 6, 3, 3, 3, 6, 6, 6, 6, 2, 3, 3, 3, 6, 6, 1 in the order of the table above) has the expected count C(n,3) w (M)m (A)a (N)k / (2^a (D)3), where (x)j = x(x-1)...(x-j+1). The formula is exact, not an approximation by simulation. [nwcug](nwcug) compares one statistic at a time with a null distribution; `expected` shows all types at once, without simulation. A two-mode and a valued network stop with error 198 ([nwdichotomize](nwdichotomize) first). `expected` needs `plot`.
+
+- `. nwtriads flomarriage, plot expected export(triads_expected.png, width(1100))`
+
 ## Stored results
 
 - **Scalars**
@@ -121,4 +129,4 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))

@@ -17,6 +17,7 @@
 [{help netname}]
 [{cmd:,}
 {opt plot}
+{opt expected}
 {opt name(string)}
 {opt saving(filename)}
 {opt export(filename[, options])}
@@ -26,6 +27,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt plot}}Draw the 16 triad types as small pictures with their counts{p_end}
+{synopt:{opt expected}}With {opt plot}: the expected count of every type under random dyad types (dyad census fixed) under the count{p_end}
 {synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:triads}{p_end}
 {synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
 {synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
@@ -129,6 +131,17 @@ replace the defaults.
 
 {phang2}{cmd:. nwtriads flomarriage, plot export(triads.png, width(1200))}{p_end}
 
+{title:Expected counts}
+
+{pstd}
+{opt expected} adds, under every count of the {opt plot}, the number of triads of that type expected when the three kinds of dyad (mutual, asymmetric, null) are placed at random on the node pairs with the dyad census of the network fixed, and an asymmetric tie points either way with probability 1/2.
+This is the uniform distribution over the networks with the same dyad census (Holland, P. W., and S. Leinhardt. 1976. Local structure in social networks. {it:Sociological Methodology} 7: 1-45), the null model of {helpb nwcug} with {opt condition(census)} and of {helpb nwrandom} with {opt census()}. With D = n(n-1)/2 dyads, M mutual, A asymmetric and N null ones, a type with m mutual, a asymmetric and k null dyads
+(the digits of its name) and w labelled forms (1, 6, 3, 3, 3, 6, 6, 6, 6, 2, 3, 3, 3, 6, 6, 1 in the order of the table above) has the expected count C(n,3) w (M)m (A)a (N)k / (2^a (D)3), where (x)j = x(x-1)...(x-j+1).
+The formula is exact, not an approximation by simulation. {helpb nwcug} compares one statistic at a time with a null distribution; {opt expected} shows all types at once, without simulation.
+A two-mode and a valued network stop with error 198 ({helpb nwdichotomize} first). {opt expected} needs {opt plot}.
+
+{phang2}{cmd:. nwtriads flomarriage, plot expected export(triads_expected.png, width(1100))}{p_end}
+
 {title:Stored results}
 
 {synoptset 20 tabbed}{...}
@@ -148,4 +161,4 @@ replace the defaults.
 	{help nwdyads}
 
 {hline}
-{pstd}{it:nwcommands version 3.29.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.30.0, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
