@@ -56,6 +56,7 @@ f nwclear.ado
 f nwclique.ado
 f nwcloseness.ado
 f nwclustering.ado
+f nwcoefplot.ado
 f nwcohesion.ado
 f nwcollapse.ado
 f nwcommunity.ado

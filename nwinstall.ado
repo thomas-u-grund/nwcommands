@@ -762,6 +762,7 @@ program nwinstall_menu
 
 	window menu append submenu "Network Analysis" "Statistical Models"
 	window menu append item "Statistical Models" "Compare fit statistics of stored network models" "db nwcompare"
+	window menu append item "Statistical Models" "Coefficient plot of network model results" "db nwcoefplot"
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"

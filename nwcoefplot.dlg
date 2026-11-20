@@ -1,0 +1,58 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwcoefplot")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 330
+
+DIALOG main, title("nwcoefplot - Coefficient plot of network model results")
+BEGIN
+  TEXT tx_names 20 20 260 ., label("Stored results (names, blank = active results)")
+  EDIT ed_names 290 20 230 ., nomem
+  GROUPBOX gb_opt 10 48 520 272, label("Options")
+  TEXT tx_level 20 66 260 ., label("Confidence level")
+  EDIT ed_level 290 66 80 ., nomem option(level)
+  TEXT tx_keep 20 94 260 ., label("Keep coefficients (names or patterns)")
+  EDIT ed_keep 290 94 230 ., nomem option(keep)
+  TEXT tx_drop 20 122 260 ., label("Drop coefficients (names or patterns)")
+  EDIT ed_drop 290 122 230 ., nomem option(drop)
+  TEXT tx_eq 20 150 260 ., label("Equations")
+  COMBOBOX cb_eq 290 150 150 ., dropdownlist contents(list_eq) nomem
+  CHECKBOX cx_eform 20 178 250 ., label("Exponentiate (odds or rate ratios)") option(eform)
+  CHECKBOX cx_nocons 290 178 230 ., label("Leave out the constant") option(noconstant)
+  CHECKBOX cx_common 20 202 500 ., label("Several models: only the coefficients that all have") option(common)
+  TEXT tx_title 20 230 260 ., label("Title")
+  EDIT ed_title 290 230 230 ., nomem option(title)
+  TEXT tx_name 20 258 260 ., label("Name of the graph in memory")
+  EDIT ed_name 290 258 230 ., nomem option(name)
+  TEXT tx_export 20 286 260 ., label("Export the graph to a file (.png, .pdf, ...)")
+  FILE fi_export 290 286 230 ., save nomem option(export)
+END
+
+LIST list_eq
+BEGIN
+	one panel per equation
+	all on one axis
+END
+
+PROGRAM command
+BEGIN
+	put "nwcoefplot " main.ed_names
+	beginoptions
+		optionarg main.ed_level
+		optionarg main.ed_keep
+		optionarg main.ed_drop
+		if main.cb_eq.equals("all on one axis") {
+			put " mixeq"
+		}
+		option main.cx_eform
+		option main.cx_nocons
+		option main.cx_common
+		optionarg main.ed_title
+		optionarg main.ed_name
+		optionarg main.fi_export
+	endoptions
+END

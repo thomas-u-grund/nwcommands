@@ -202,6 +202,7 @@
 {marker analysis_statmodels}{...}
 {p 11 11 2}{bf:{it:Statistical tests}}{p_end}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcoefplot }}}Coefficient plot of network model results{p_end}
 {p2col:    {bf:{help nwcompare }}}Compare the fit statistics of stored network models{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}

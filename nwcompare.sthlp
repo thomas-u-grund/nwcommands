@@ -12,7 +12,7 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmd:nwcompare} [{it:namelist}] [{cmd:,} {opt sort(criterion)}]
+{cmd:nwcompare} [{it:namelist}] [{cmd:,} {opt sort(criterion)} {opt graph} {opt coefopts(options)}]
 
 {pstd}
 {it:namelist} holds names of results saved with {helpb estimates store}; a period ({cmd:.}) stands for the active estimation results. Without a list, all stored results are shown.
@@ -21,6 +21,8 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt sort(criterion)}}order the rows by {cmd:aic}, {cmd:bic}, {cmd:icl} (smallest first) or {cmd:ll} (largest first); default: the order of the list{p_end}
+{synopt:{opt graph}}also draw the coefficients of the models side by side with {helpb nwcoefplot}{p_end}
+{synopt:{opt coefopts(options)}}options passed to {helpb nwcoefplot}, for example {cmd:keep()} or {cmd:eform}{p_end}
 {synoptline}
 
 {title:Description}
@@ -45,6 +47,9 @@ Criteria from different model families are not always comparable. An ERGM is a l
 {pstd}
 {cmd:nwsbm} stores no coefficient vector, so {cmd:estimates store} cannot keep its results: list them with the period, as the active results. Restoring another model afterwards replaces them, so fit the block model last, or call {cmd:nwcompare} again after fitting it.
 
+{pstd}
+With {opt graph}, {cmd:nwcompare} adds a graph of the coefficients (point estimates with confidence intervals, one colour for each model) of the models that have a coefficient vector, restricted to the coefficients that all of them share by name; the sample models in the example below share {cmd:edges}. Models of different kinds that share no coefficient give a note instead of a graph.
+
 {title:Examples}
 
 {phang2}{cmd:. nwergm flomarriage, edges}{p_end}
@@ -52,6 +57,8 @@ Criteria from different model families are not always comparable. An ERGM is a l
 {phang2}{cmd:. nwergm flomarriage, edges gwesp(.5)}{p_end}
 {phang2}{cmd:. estimates store m1}{p_end}
 {phang2}{cmd:. nwcompare m0 m1, sort(bic)}{p_end}
+
+{phang2}{cmd:. nwcompare m0 m1, graph coefopts(eform)}{p_end}
 
 {phang2}{cmd:. nwsbm flomarriage, maxblocks(4) seed(1)}{p_end}
 {phang2}{cmd:. nwcompare m0 m1 .}{p_end}
@@ -69,7 +76,7 @@ Criteria from different model families are not always comparable. An ERGM is a l
 {title:Also see}
 
 {pstd}
-{help nwergm}, {help nwsaom}, {help nwlsm}, {help nwsbm}, {help nwalaam}, {help estimates}
+{help nwcoefplot}, {help nwergm}, {help nwsaom}, {help nwlsm}, {help nwsbm}, {help nwalaam}, {help estimates}
 
 {hline}
 {pstd}{it:nwcommands version 3.28.0, 19 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

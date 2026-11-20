@@ -2,7 +2,7 @@
 capture program drop nwcompare
 program nwcompare, rclass
 	version 15
-	syntax [anything(name=names)] [, SORT(string)]
+	syntax [anything(name=names)] [, SORT(string) GRAPH COEFOPTs(string asis)]
 
 	if "`sort'" != "" {
 		local sort = lower("`sort'")
@@ -154,6 +154,15 @@ program nwcompare, rclass
 	}
 	else di as txt "{p 0 2 2}Criteria of different model families (ERGM, latent space, block model) are not always comparable: they are built on different likelihoods and different observation counts. Compare within a family first.{p_end}"
 
+	// the coefficients of the models side by side (the models that share coefficient names)
+	if "`graph'" != "" {
+		local plist ""
+		foreach nm of local rown {
+			local plist `plist' `=cond("`nm'" == "(active)", ".", "`nm'")'
+		}
+		capture noisily nwcoefplot `plist', common skipmissing `coefopts'
+		if _rc di as txt "Note: the coefficient graph was not drawn (r(" _rc "))."
+	}
 	return matrix table = `T'
 	return local names "`rown'"
 	return local commands "`cmds'"

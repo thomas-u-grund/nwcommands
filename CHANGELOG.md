@@ -4,6 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+### Added
+- `nwcoefplot`: coefficient plot (point estimates with confidence intervals) after `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and any command that leaves `e(b)` and `e(V)`, so that the user-written `coefplot` is not needed. `level()`, `keep()` and `drop()` (names, `*` and `?` patterns, `eq:name`; the `keep()` order is the plot order), `noconstant`, `eform` (odds ratios for `nwergm`, `nwalaam` and `nwlsm` with Bernoulli or binomial family; rate ratios for `nwdynam`, `nwrem`; refused for `nwsaom` and `nwsbm`), one panel for each equation by default (`byeq`; `mixeq` for one axis), several stored models side by side (`nwcoefplot m0 m1 .`, `common`), `title()`, `name()`, `saving()`, `export()` and all other `twoway` options. The axis of each panel always contains the intervals and the reference line (0, or 1 for `eform`) with a margin, so the dashed line is never clipped in a panel that holds only a constant; on the log axis of `eform` the labels are 1-2-5 values inside the range and the first interval does not start at the edge. Dialog and menu entry (Statistical Models). Test `cscripts/test_nwcoefplot.do` (fake fits and real `nwergm` and `nwlsm` fits when the packages are found).
+- `nwcompare, graph coefopts()`: also draws the coefficients of the compared models side by side (through `nwcoefplot, common`).
+
 ## [3.28.0] - 2026-11-19
 
 ### Added
