@@ -7,7 +7,7 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.30.0,
+* The do-file runs from top to bottom. It was checked against nwcommands 3.31.0,
 * nwergm 1.11.1, nwsaom 1.9.1, nwrem 1.6.0, nwdynam 1.10.0, nwalaam 1.3.0,
 * nwlsm 1.0.2 and nwsbm 1.0.1, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.

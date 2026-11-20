@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+### Fixed
+- `nwmovie export()` on macOS stops at once (error 498) when the screen is locked, and stops the viewer it started when the export fails or times out (a timeout is error 498 as well). Other viewer windows are never touched. Elsewhere nothing changes.
+
 ## [3.31.0] - 2026-11-20
 
 ### Added

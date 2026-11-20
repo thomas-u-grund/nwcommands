@@ -543,6 +543,15 @@ capture program drop _nwmovie_screenlocked
 program _nwmovie_screenlocked, rclass
 	return scalar locked = -1
 	if "`c(os)'" != "MacOSX" exit
+	// test switch: the global NW_FAKE_LOCKED = 1 reports a locked screen, = 0 an unlocked one (the real state is not asked)
+	if "$NW_FAKE_LOCKED" == "1" {
+		return scalar locked = 1
+		exit
+	}
+	if "$NW_FAKE_LOCKED" == "0" {
+		return scalar locked = 0
+		exit
+	}
 	tempfile _lk
 	capture shell ioreg -n Root -d1 2>/dev/null | grep -c "ScreenIsLocked.=Yes" > "`_lk'"
 	tempname _fh
