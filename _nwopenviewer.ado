@@ -98,7 +98,8 @@ program _nwopenviewer, rclass
 		// Names unique per Stata process (a runiform() draw is not: every fresh Stata starts from the same state, and
 		// two exports started together collided): digits taken from Stata's own tempfile name.
 		tempfile _nwov_tf
-		mata: st_local("_nwov_id", invtokens(strofreal(ascii(pathbasename(st_local("_nwov_tf")))), ""))
+		global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+		mata: st_local("_nwov_id", invtokens(strofreal(ascii(pathbasename(st_local("_nwov_tf")))), "") + st_global("NW_UCNT"))
 		local _nwov_viewercopy = "`_nwtd'" + "nwedit_viewer_" + "`_nwov_id'"
 		local _nwov_htmlcopy = "`_nwtd'" + "nwedit_view_" + "`_nwov_id'" + ".html"
 		set rngstate `_nwov_rngstate'

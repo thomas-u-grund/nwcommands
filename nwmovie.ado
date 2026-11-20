@@ -135,8 +135,20 @@ program nwmovie
 		}
 	}
 
+	// export() without fname(): the page is only a means, so it goes to a file of its own in the temp folder (unique
+	// per Stata process, erased at the end); two exports in one folder no longer share (and unlink) movie.html.
+	local _nwmv_tmphtml 0
 	if "`fname'" == "" {
 		local fname "movie"
+		if `"`export'"' != "" {
+			local _nwmv_hd "`c(tmpdir)'"
+			if substr("`_nwmv_hd'", -1, 1) != "/" & substr("`_nwmv_hd'", -1, 1) != "\" local _nwmv_hd "`_nwmv_hd'/"
+			tempfile _nwmv_htf
+			global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+			mata: st_local("_nwmv_hid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_htf")))), "") + st_global("NW_UCNT"))
+			local fname "`_nwmv_hd'nwmovie_page_`_nwmv_hid'"
+			local _nwmv_tmphtml 1
+		}
 	}
 	if "`easing'" == "" {
 		local easing "ease-in-out-cubic"
@@ -384,8 +396,11 @@ program nwmovie
 				mata: mata drop _nwmv_waveM
 			}
 
+			// one discarded draw: the random stream (and so a seeded layout) is the same as when the name used runiform()
+			local _nwmv_dummy = runiform()
 			tempfile _nwmv_kftf
-			mata: st_local("_nwmv_kfid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_kftf")))), ""))
+			global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+			mata: st_local("_nwmv_kfid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_kftf")))), "") + st_global("NW_UCNT"))
 			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`_nwmv_kfid'.json"
 			// fopen(path,"w") errors (602) if the path already exists,
 			// unlike a plain overwrite - matching nwplot.ado's own
@@ -467,7 +482,11 @@ program nwmovie
 		nwset, mat(_nwmv_cumM_st) directed name(_nwmv_cumnet) labs(`_nwmv_labs')
 		matrix drop _nwmv_cumM_st
 
-		local _nwmv_out "`_nwmv_jsondir'nwmovie_evnodes_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+		local _nwmv_dummy = runiform()
+		tempfile _nwmv_evtf
+		global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+		mata: st_local("_nwmv_evid", invtokens(strofreal(ascii(pathbasename(st_local("_nwmv_evtf")))), "") + st_global("NW_UCNT"))
+		local _nwmv_out "`_nwmv_jsondir'nwmovie_evnodes_`_nwmv_evid'.json"
 		capture erase "`_nwmv_out'"
 		qui nwplot _nwmv_cumnet, ignorelgc `_nwmv_layout' iterations(`iterations') interactive noopen movieexport("`_nwmv_out'") `_nwmv_color' `_nwmv_symbol' `_nwmv_size' `_nwmv_colorpalette' `_nwmv_symbolpalette' `_nwmv_scheme' `_nwmv_label'
 		capture nwdrop _nwmv_cumnet
@@ -492,9 +511,14 @@ program nwmovie
 		mata: mata drop `_nwmv_evlist' `_nwmv_cumM'
 	}
 
-	di "{txt}Wrote {bf:`fname'.html}"
+	if !`_nwmv_tmphtml' di "{txt}Wrote {bf:`fname'.html}"
 	if `"`export'"' != "" {
-		_nwmovie_export "`c(pwd)'/`fname'.html", export(`"`export'"') ext(`_nwmv_ext') timeout(`timeout')
+		if `_nwmv_tmphtml' local _nwmv_hfull "`fname'.html"
+		else local _nwmv_hfull "`c(pwd)'/`fname'.html"
+		capture noisily _nwmovie_export "`_nwmv_hfull'", export(`"`export'"') ext(`_nwmv_ext') timeout(`timeout')
+		local _nwmv_exrc = _rc
+		if `_nwmv_tmphtml' capture erase "`fname'.html"
+		if `_nwmv_exrc' exit `_nwmv_exrc'
 	}
 	else if "`noopen'" == "" {
 		_nwopenviewer "`c(pwd)'/`fname'.html"
@@ -513,7 +537,8 @@ program _nwmovie_export
 	local _nwtd "`c(tmpdir)'"
 	if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
 	tempfile _tf
-	mata: st_local("_id", invtokens(strofreal(ascii(pathbasename(st_local("_tf")))), ""))
+	global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+	mata: st_local("_id", invtokens(strofreal(ascii(pathbasename(st_local("_tf")))), "") + st_global("NW_UCNT"))
 	local _tmpout = "`_nwtd'" + "nwmovie_export_" + "`_id'" + ".`ext'"
 	set rngstate `_rngstate'
 	capture erase "`_tmpout'"

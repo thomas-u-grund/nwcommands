@@ -34,7 +34,7 @@ temporal network - there is no separate option to choose between them.
 {marker options}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
-{synopt:{opth fname(string)}}base filename for the output; writes {it:fname}{bf:.html} in the current directory; default {bf:movie}{p_end}
+{synopt:{opth fname(string)}}base filename for the output; writes {it:fname}{bf:.html} in the current directory; default {bf:movie} (with {opt export()} and no {opt fname()} the page is a temporary file and no {bf:movie.html} is written){p_end}
 {synopt:{opt noo:pen}}build the .html file but do not open it in a viewer{p_end}
 {synopt:{opt exp:ort}({it:filename})}write the movie as a video or GIF
 file without opening the interactive view; the format follows the extension: {bf:.mp4} (H.264 video), {bf:.webm} or {bf:.gif}; see

@@ -1636,7 +1636,12 @@ program nwplot, rclass
 		// so its lifetime isn't tied to this program's own scope.
 		local _nwtd "`c(tmpdir)'"
 		if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
-		local _nwedit_out = "`_nwtd'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
+		// unique per Stata process (runiform() is not: fresh Stata sessions start from the same state)
+		local _nwedit_dummy = runiform()   // keeps the random stream (seeded layouts) as before
+		tempfile _nwedit_tf
+		global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+		mata: st_local("_nwedit_id", invtokens(strofreal(ascii(pathbasename(st_local("_nwedit_tf")))), "") + st_global("NW_UCNT"))
+		local _nwedit_out = "`_nwtd'" + "nwedit_" + "`_nwedit_id'" + ".html"
 		// fname(): write the interactive HTML to a chosen file instead of the
 		// time-stamped temp-folder file; ".html" is appended when the name
 		// has no extension, a relative name is taken relative to the

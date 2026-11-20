@@ -96,6 +96,45 @@ mata: fh = fopen(st_local("wf"), "w"); fwrite(fh, char(26) + char(69)); fclose(f
 mata: st_local("w", strofreal(_nwmovie_iswebm(st_local("wf"))))
 assert "`w'" == "0"
 
+* --- temp names are unique per Stata process: two "processes" with the same rng state get different names
+* (a fresh Stata starts every session from the same rng state; runiform()-based names collided on 2026-11-20)
+nwset, mat((0,1,0\1,0,0\0,0,0)) name(cc_w1) undirected labs(A,B,C)
+set seed 12345
+nwplot cc_w1, interactive noopen
+local p1 "`r(interactive)'"
+set seed 12345
+nwplot cc_w1, interactive noopen
+local p2 "`r(interactive)'"
+assert "`p1'" != "" & "`p2'" != "" & "`p1'" != "`p2'"
+capture erase "`p1'"
+capture erase "`p2'"
+tempfile ta tb
+mata: st_local("ia", invtokens(strofreal(ascii(pathbasename(st_local("ta")))), ""))
+mata: st_local("ib", invtokens(strofreal(ascii(pathbasename(st_local("tb")))), ""))
+assert "`ia'" != "`ib'"
+
+* --- export() without fname() leaves no movie.html behind and does not touch an existing one
+if "$NW_FAKE_LOCKED" == "" {
+	nwset, mat((0,1,1\1,0,0\1,0,0)) name(cc_w2) undirected labs(A,B,C)
+	local sd "`c(tmpdir)'"
+	if substr("`sd'", -1, 1) != "/" & substr("`sd'", -1, 1) != "\" local sd "`sd'/"
+	local oldpwd "`c(pwd)'"
+	cd "`sd'"
+	tempname fh0
+	file open `fh0' using "movie.html", write text replace
+	file write `fh0' "KEEP" _n
+	file close `fh0'
+	global NW_FAKE_LOCKED 1
+	capture nwmovie cc_w1 cc_w2, fixedlayout export(nwcc.mp4) replace timeout(5)
+	global NW_FAKE_LOCKED
+	file open `fh0' using "movie.html", read text
+	file read `fh0' l0
+	file close `fh0'
+	assert "`l0'" == "KEEP"
+	erase "movie.html"
+	cd "`oldpwd'"
+}
+
 * --- no display (Linux): export() stops with 498 before anything is launched
 if "`c(os)'" == "Unix" {
 	nwset, mat((0,1,0\1,0,0\0,0,0)) name(nd_w1) undirected labs(A,B,C)
