@@ -64,7 +64,7 @@ The examples below were run with nwsaom 1.6.0, nwrem 1.1.0, nwdynam 1.3.0 and th
 > 13. [Combining several groups with a meta-analysis](../../nwsaom/tutorial-13-meta-analysis/)
 > 14. [Several groups at once](../../nwsaom/tutorial-14-several-groups/)
 >
-> See also [nwsaom and RSiena](../../nwsaom/rsiena/) and the [installation page](../../nwsaom/install/).
+> See also [what nwsaom is](../../nwsaom/what-is/), [nwsaom and RSiena](../../nwsaom/rsiena/) and the [installation page](../../nwsaom/install/).
 {: .note }
 
 An SAOM (`nwsaom`) models change between two or more observed **panel waves** of the same
@@ -177,6 +177,14 @@ likelihood instead of the method of moments (`ml`), and Bayesian estimation (`nw
 
 ## Relational event models (REM)
 
+> **Full nwrem tutorials.** This page is an overview. `nwrem` has its own section with three worked tutorials, each with real output:
+> 1. [A first relational event model](../../nwrem/tutorial-1-first-rem/)
+> 2. [Effects and interpretation](../../nwrem/tutorial-2-effects/)
+> 3. [Comparing specifications](../../nwrem/tutorial-3-comparing/)
+>
+> See also [what nwrem is](../../nwrem/what-is/), [nwrem and relevent](../../nwrem/r-relevent/) and the [installation page](../../nwrem/install/).
+{: .note }
+
 An REM (`nwrem`) is built for the opposite kind of data: a raw, continuous-time stream of
 individual events (an email sent, a call placed, a message posted) rather than snapshots at a
 handful of waves. There's no aggregation step at all — every single event is its own observation,
@@ -227,6 +235,14 @@ near enough data to estimate anything precisely — the point here is the workfl
 substantive result.
 
 ## Dynamic network actor models (DyNAM)
+
+> **Full nwdynam tutorials.** This page is an overview. `nwdynam` has its own section with three worked tutorials, each with real output:
+> 1. [A first DyNAM](../../nwdynam/tutorial-1-first-dynam/)
+> 2. [Effects and interpretation](../../nwdynam/tutorial-2-effects/)
+> 3. [Limits and diagnostics](../../nwdynam/tutorial-3-limits/)
+>
+> See also [what nwdynam is](../../nwdynam/what-is/), [nwdynam and goldfish](../../nwdynam/r-goldfish/) and the [installation page](../../nwdynam/install/).
+{: .note }
 
 `nwdynam` works on the same kind of event stream, but splits an event into two decisions: *who*
 acts next (the **rate** sub-model) and *whom* that actor chooses (the **choice** sub-model).
