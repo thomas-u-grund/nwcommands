@@ -1,11 +1,10 @@
-
-. * nwsbm tutorial 2: covariates with standard errors, the exact ICL with the gr
-> eedy search,
+. * nwsbm tutorial 2: covariates with standard errors, the exact ICL with the gree
+> dy search,
 . * the degree-corrected two-mode model, block variances and ordered blocks.
-. * Requires the core nwcommands and the package nwsbm. The data are loaded from
->  the nwcommands website:
-. * Lazega (2001), lawyers of a law firm; Davis, Gardner and Gardner (1941), Sou
-> thern women.
+. * Requires the core nwcommands and the package nwsbm. The data are loaded from t
+> he nwcommands website:
+. * Lazega (2001), lawyers of a law firm; Davis, Gardner and Gardner (1941), South
+> ern women.
 . set linesize 80
 
 . 
@@ -45,10 +44,14 @@ Model selection by the integrated classification likelihood (ICL), bernoulli mod
           5  |     -1809.48    -1689.59    -1694.56        4.97          25
           6  |     -1841.63    -1672.08    -1677.77        5.69          36
 ----------------------------------------------------------------------------
-* largest ICL
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . display "ICL without covariates: " %9.2f e(ICL) " with " e(Q) " blocks"
 ICL without covariates:  -1768.33 with 3 blocks
+
+. nwsbmplot, type(expected) sort export(nwsbm2_expected.png)
+
+. nwsbmplot, type(matrix) sort export(nwsbm2_matrix.png)
 
 . 
 . * --- the same network with covariates: same office, same practice, same gende
@@ -158,11 +161,13 @@ Model selection by the integrated classification likelihood (ICL), bernoulli mod
           5  |     -1789.35    -1689.59    -1694.56        4.97          25
           6  |     -1800.47    -1672.08    -1677.77        5.69          36
 ----------------------------------------------------------------------------
-* largest ICL
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . display "exact ICL: " %9.2f e(ICL) "   criterion of blockmodels at the same fi
 > t: " %9.2f e(ICLbm)
 exact ICL:  -1768.27   criterion of blockmodels at the same fit:  -1781.55
+
+. nwsbmplot, type(icl) export(nwsbm2_icl_exact.png)
 
 . nwsbm lazega_fr, maxblocks(6) seed(20261120) icl(exact) greedy generate(e2) re
 > place nodisplay
@@ -181,7 +186,7 @@ Model selection by the integrated classification likelihood (ICL), bernoulli mod
           5  |     -1787.79    -1684.54    -1684.54        0.00          25
           6  |     -1794.72    -1664.73    -1664.73        0.00          36
 ----------------------------------------------------------------------------
-* largest ICL
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . display "exact ICL with greedy: " %9.2f e(ICL) " with " e(Q) " blocks"
 exact ICL with greedy:  -1767.84 with 4 blocks
@@ -227,7 +232,7 @@ exact ICL with greedy:  -1767.84 with 4 blocks
 Model selection by the integrated classification likelihood (ICL), bernoulli mod
 > el
 ----------------------------------------------------------------------------
-Blocks 1 x 2 |          ICL           J          PL           H  parameters
+      Blocks |          ICL           J          PL           H  parameters
 -------------+--------------------------------------------------------------
       1 x 1  |      -166.41     -163.65     -163.65        0.00           1
       1 x 2  |      -165.21     -156.22     -158.36        2.14           2
@@ -246,11 +251,15 @@ Blocks 1 x 2 |          ICL           J          PL           H  parameters
       4 x 3  |      -178.23     -131.66     -138.08        6.42          12
       4 x 4  |      -188.86     -131.09     -136.33        5.25          16
 ----------------------------------------------------------------------------
-* largest ICL
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . display "Bernoulli, ICL of blockmodels: " %8.2f e(ICL) ", blocks " e(Q1) " x "
 >  e(Q2)
 Bernoulli, ICL of blockmodels:  -160.90, blocks 2 x 3
+
+. nwsbmplot, type(matrix) export(nwsbm2_davis_matrix.png)
+
+. nwsbmplot, type(icl) export(nwsbm2_davis_icl.png)
 
 . 
 . * --- degree-corrected Poisson latent block model, exact ICL ---
@@ -260,6 +269,31 @@ Bernoulli, ICL of blockmodels:  -160.90, blocks 2 x 3
 . display "degree-corrected, exact ICL: " %8.2f e(ICL) ", blocks " e(Q1) " x " e
 > (Q2)
 degree-corrected, exact ICL:  -307.71, blocks 1 x 1
+
+. estat icl
+
+Model selection by the integrated classification likelihood (ICL), poisson model
+----------------------------------------------------------------------------
+      Blocks |          ICL           J          PL           H  parameters
+-------------+--------------------------------------------------------------
+      1 x 1* |      -307.71     -161.31     -161.31        0.00           1
+      1 x 2  |      -307.71     -161.31     -161.90        0.59           2
+      1 x 3  |      -307.71     -161.31     -162.50        1.19           3
+      1 x 4  |      -307.71     -161.31     -170.79        9.48           4
+      2 x 1  |      -307.71     -161.31     -161.93        0.62           2
+      2 x 2  |      -313.68     -160.81     -164.56        3.74           4
+      2 x 3  |      -312.04     -157.47     -162.57        5.11           6
+      2 x 4  |      -312.04     -157.47     -165.06        7.59           8
+      3 x 1  |      -307.71     -161.31     -162.55        1.24           3
+      3 x 2  |      -312.96     -160.91     -165.46        4.55           6
+      3 x 3  |      -312.04     -157.55     -163.32        5.77           9
+      3 x 4  |      -312.04     -157.55     -165.80        8.25          12
+      4 x 1  |      -307.71     -161.31     -174.45       13.14           4
+      4 x 2  |      -312.96     -160.94     -166.24        5.30           8
+      4 x 3  |      -312.04     -157.64     -164.06        6.42          12
+      4 x 4  |      -312.04     -157.64     -166.54        8.90          16
+----------------------------------------------------------------------------
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . 
 . * --- two blocks on each side, without and with the greedy search ---

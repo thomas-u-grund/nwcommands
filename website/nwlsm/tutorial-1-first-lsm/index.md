@@ -10,7 +10,7 @@ description: "Fit a first latent space model with nwlsm to the karate club: the 
 **Goal.** Fit a latent space model with `nwlsm`, read the posterior summaries, check that the sampler has converged, and judge whether the model reproduces the network.
 
 **Data.** Zachary's karate club: 34 members of a university karate club and 78 friendship ties (undirected). Source: Zachary, W. W. (1977), *Journal of Anthropological Research* 33, 452-473;
-loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 0.7.0 under Stata 17.
+loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 1.0.0 under Stata 17.
 The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## What a latent space model does, in five sentences
@@ -115,7 +115,18 @@ A table of coordinates is hard to read. `nwlsmplot` draws the same positions as 
 
 ![The karate club in the latent space: actors are points, ties are lines](karate_positions.png)
 
-Actors that are tied sit close together, and actors without ties in common lie far apart. Two actors, one in the middle left and one in the middle right, hold most of the ties, and the others lie around them. A few actors have exactly the same position in the table above because they have the same ties; they are drawn on top of each other. Read the map by distances only: turning or flipping it would change the axes and nothing else. The option `clusters` colours the actors by latent cluster once the model has been fitted with `clusters()` ([tutorial 2](../tutorial-2-bic-clusters/)).
+Actors that are tied sit close together, and actors without ties in common lie far apart. Two actors, one in the middle left and one in the middle right, hold most of the ties, and the others lie around them. A few actors have exactly the same position in the table above because they have the same ties; they are drawn on top of each other. Read the map by distances only: turning or flipping it would change the axes and nothing else. Both axes have the same scale (one unit is equally long horizontally and vertically), so distances can be read directly from the picture; `noequal` switches this off and lets each axis span its own range. The option `clusters` colours the actors by latent cluster once the model has been fitted with `clusters()` ([tutorial 2](../tutorial-2-bic-clusters/)).
+
+The map shows one point per actor, but each position is an estimate. The option `draws(#)` adds the uncertainty: it draws that many of the kept posterior draws of all positions, aligned to the minimum Kullback-Leibler positions, as small faint dots in the colour of the actors under the map:
+
+```stata
+. nwlsmplot, draws(100) title("The karate club with 100 posterior draws of the positions")
+. graph export "karate_draws.png", width(900) replace
+```
+
+![The karate club with a faint cloud of 100 posterior draws of the positions behind the estimated positions](karate_draws.png)
+
+The estimated positions (the dark points, with the ties as thin lines) now sit in a small region in the middle of a much wider, faint cloud that reaches about 5 units from the centre in every direction (both axes have the same scale, so the cloud is drawn undistorted). The cloud is the union of 100 draws for each of the 34 actors, so it shows how far a single actor could lie in the posterior. It is wide compared with the distances between the estimated positions: the map of the minimum Kullback-Leibler positions is a tidy summary, but the data do not pin down the position of an individual actor, and the finer arrangement within the groups should not be over-read. The draws stay in memory until the next fit; if you fit another model first, `draws()` stops with an error.
 
 ## Goodness of fit
 

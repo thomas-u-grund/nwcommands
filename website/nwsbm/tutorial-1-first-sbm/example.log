@@ -1,4 +1,3 @@
-
 . * nwsbm tutorial 1: a stochastic block model for the karate club
 . * Requires the core nwcommands and the package nwsbm. The data (Zachary 1977) ar
 > e loaded from the nwcommands website.
@@ -74,7 +73,7 @@ Model selection by the integrated classification likelihood (ICL), bernoulli mod
           4  |      -218.32     -177.58     -181.38        3.80          10
           5  |      -230.01     -171.03     -175.49        4.46          15
 ----------------------------------------------------------------------------
-* largest ICL
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
 
 . estat blocks
 
@@ -86,6 +85,14 @@ Blocks
       2 |         5      0.1483        0.4937
 ---------------------------------------------
 Within: connectivity within the block (the diagonal of the connectivity matrix).
+
+. 
+. * --- plots: blocked adjacency matrix, ICL curve, memberships ---
+. nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
+
+. nwsbmplot, type(icl) export(nwsbm1_icl.png)
+
+. nwsbmplot, type(membership) export(nwsbm1_membership.png)
 
 . 
 . * --- how do the blocks relate to the two factions of the club? ---
@@ -138,3 +145,8 @@ b3  0.0017  0.4740  0.0385
      Total |        16         18 |        34 
 
 . 
+. * --- the block graph of the three-block fit ---
+. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
+
+. 
+

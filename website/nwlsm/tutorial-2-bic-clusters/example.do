@@ -14,7 +14,8 @@ nwlsm choice3, dim(2) seed(12)
 estat bic
 
 * --- the BIC for 0, 2, 3 and 4 clusters; refit keeps the best model ---
-nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit
+nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit graph
+graph export "monks_bic.png", width(900) replace
 matrix list r(table), format(%9.2f)
 display "best number of clusters: " r(best)
 
@@ -25,6 +26,9 @@ tabulate grp_class faction
 * --- the monks in the latent space, coloured by cluster ---
 nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space")
 graph export "monks_clusters.png", width(900) replace
+
+* --- cluster means, variance circles and certainty of the membership; export() writes the file ---
+nwlsmplot, clusters clustermeans circles certainty label(_nwnode) title("Sampson's monks: cluster means, circles, certainty") export(monks_circles.png, width(900))
 summarize grp_p1 grp_p2 grp_p3
 generate pmax = max(grp_p1, grp_p2, grp_p3)
 summarize pmax

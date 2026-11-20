@@ -11,7 +11,7 @@ description: "Block models with covariates and standard errors for the Lazega la
 
 **Data.** Two data sets from the website. The first is the friendship network of 71 lawyers of a New England law firm (`lazega_fr`, directed, 575 ties), with attributes such as office, practice, gender and seniority. Source: Lazega, E. (2001), *The Collegial Phenomenon*, Oxford University Press; Lazega, E. and van Duijn, M. (1997),
 *Social Networks* 19, 375-397; loaded with `nwwebuse lazega`. The second is the two-mode network of 18 women and 14 social events they attended in a Southern town in 1936 (89 ties). Source: Davis, A., Gardner, B. B. and Gardner, M. R. (1941), *Deep South*, University of Chicago Press; loaded with `nwwebuse davis` (see the [data sets page](../../datasets/)).
-You need the core `nwcommands` and the `nwsbm` package (see [Install](../install/)); the commands were run with `nwsbm` 0.4.0 under Stata 17. This tutorial continues [Tutorial 1](../tutorial-1-first-sbm/), which explains the model and the ICL. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+You need the core `nwcommands` and the `nwsbm` package (see [Install](../install/)); the commands were run with `nwsbm` 1.0.0 under Stata 17. This tutorial continues [Tutorial 1](../tutorial-1-first-sbm/), which explains the model and the ICL. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## Covariates: what explains the ties besides the blocks
 
@@ -25,7 +25,23 @@ First the lawyers' friendship network without covariates, with one to six blocks
 ...
 ```
 
-The ICL selects three blocks (-1768.33). Friends, however, tend to work in the same office, in the same practice and to be of the same gender, and a block model without covariates has to find these facts through the blocks. With covariates the expected tie of a pair depends on the two blocks and on
+The ICL selects three blocks (-1768.33). `nwsbmplot` shows what the three blocks look like; `sort` orders the actors within a block by decreasing certainty of their membership, and `export()` writes the picture to a file.
+
+```stata
+. nwsbmplot, type(expected) sort export(nwsbm2_expected.png)
+```
+
+![Expected ties of the three-block model for the Lazega friendship network](nwsbm2_expected.png)
+
+The expected plot shades every cell by the posterior expected value of the tie (the range is in the subtitle, 0.023 light to 0.222 dark; the diagonal is left out). The blocks form a pattern of rectangles: the ties of block 2 to its own members are the most probable (black), those between blocks 1 and 2 the least (light grey, in both directions), and block 3 sends and receives ties in a middle range, with the ties from block 3 to block 1 darker than those from block 1 to block 3. The picture shows the block part of the model only; covariates are not in it.
+
+```stata
+. nwsbmplot, type(matrix) sort export(nwsbm2_matrix.png)
+```
+
+![Blocked adjacency matrix of the Lazega friendship network](nwsbm2_matrix.png)
+
+The matrix plot draws the observed ties in the same order. Block 2 is a dense square, almost empty towards block 1 (the cells between blocks 1 and 2 hold only a few ties in either direction), and block 3 has ties in all its rows and columns. The observed ties are the picture behind the shaded rectangles of the expected plot. Friends, however, tend to work in the same office, in the same practice and to be of the same gender, and a block model without covariates has to find these facts through the blocks. With covariates the expected tie of a pair depends on the two blocks and on
 pair-level variables: on the logit scale, a block parameter plus coefficients times the covariates. The coefficients are the same for all blocks. `same(varlist)` uses 1 if the two actors have the same value of a node variable (numeric or string), `absdiff(varlist)` the absolute difference of a numeric variable,
 `signeddiff()` the signed difference (directed networks) and `covariates(netlist)` takes networks of the session.
 
@@ -85,7 +101,15 @@ and is available for the Bernoulli model of one-mode networks and for the degree
 exact ICL:  -1768.27   criterion of blockmodels at the same fit:  -1781.55
 ```
 
-The exact ICL selects four blocks (-1768.27). The two criteria differ in level, so compare values only within one criterion; `e(ICLbm)` keeps the other. The variational fit gives a partition, but the exact criterion can sometimes be improved by moving single actors. `greedy` does that: from the fitted partition of every number of blocks it moves actors
+The exact ICL selects four blocks (-1768.27). `nwsbmplot, type(icl)` draws the path; with `icl(exact)` it adds the criterion of `blockmodels` on a second axis.
+
+```stata
+. nwsbmplot, type(icl) export(nwsbm2_icl_exact.png)
+```
+
+![Exact ICL by number of blocks for the Lazega friendship network](nwsbm2_icl_exact.png)
+
+The solid line is the exact ICL (left axis) and the diamond marks the selected number, four blocks; three blocks are almost as good (-1768.62 against -1768.27), which is why the criterion is nearly flat between three and four and then falls steeply. The dashed grey line is the criterion of `blockmodels` (right axis), which peaks at three blocks, in agreement with the table above. The two lines are on different scales and are only compared in their shape. The two criteria differ in level, so compare values only within one criterion; `e(ICLbm)` keeps the other. The variational fit gives a partition, but the exact criterion can sometimes be improved by moving single actors. `greedy` does that: from the fitted partition of every number of blocks it moves actors
 one at a time to the block that raises the exact ICL most, tries the best merge of two blocks of the solution with one block more, and keeps what is better.
 
 ```stata
@@ -118,7 +142,25 @@ In a two-mode network the women and the events are different kinds of nodes and 
 Bernoulli, ICL of blockmodels:  -160.90, blocks 2 x 3
 ```
 
-The Bernoulli model selects two blocks of women and three blocks of events. The degree-corrected model (`degreecorrected` with `model(poisson)`) gives every woman and every event a degree parameter, so that blocks do not simply collect the busy and the quiet actors; its two-mode version is new in 0.4.0.
+The Bernoulli model selects two blocks of women and three blocks of events.
+
+```stata
+. nwsbmplot, type(matrix) export(nwsbm2_davis_matrix.png)
+```
+
+![Blocked adjacency matrix of the Southern women](nwsbm2_davis_matrix.png)
+
+In the two-mode matrix plot the rows are the women (two blocks) and the columns the events (three blocks), each ordered by its blocks. The first block of women attends the events of the first block and some of the second; the second block of women attends the events of the second and third blocks, and the upper right rectangle (first block of women, third block of events) is empty. The second block of events is the bridge that both groups of women attend.
+
+```stata
+. nwsbmplot, type(icl) export(nwsbm2_davis_icl.png)
+```
+
+![ICL by number of blocks for the Southern women](nwsbm2_davis_icl.png)
+
+For a two-mode network the ICL plot has one line for every number of blocks of mode 2 (the events), over the number of blocks of mode 1 (the women) on the horizontal axis. The line for three blocks of events (green) has the highest point of the plot, at two blocks of women, where the diamond marks the selection (-160.90); the other lines stay below it, and all lines fall for four blocks of women.
+
+ The degree-corrected model (`degreecorrected` with `model(poisson)`) gives every woman and every event a degree parameter, so that blocks do not simply collect the busy and the quiet actors.
 We use it with the exact ICL.
 
 ```stata
@@ -126,6 +168,21 @@ We use it with the exact ICL.
 . display "degree-corrected, exact ICL: " %8.2f e(ICL) ", blocks " e(Q1) " x " e(Q2)
 degree-corrected, exact ICL:  -307.71, blocks 1 x 1
 ```
+
+`estat icl` shows the table of this fit.
+
+```stata
+. estat icl
+...
+      1 x 1* |      -307.71     -161.31     -161.31        0.00           1
+      1 x 2  |      -307.71     -161.31     -161.90        0.59           2
+...
+      2 x 2  |      -313.68     -160.81     -164.56        3.74           4
+...
+* selected by the largest ICL (ties within 1e-9: fewest blocks)
+```
+
+Several pairs have exactly the same exact ICL as 1 x 1 (-307.71): there the fit puts all the actors of a mode into one block, so the partition is the same as with one block. When values tie, the fewest blocks are selected, and the star stands on 1 x 1.
 
 With this criterion a single block is enough: once the degrees of the women and of the events are accounted for, the data do not support a block structure on top of them. Do not compare -307.71 with -160.90: the two criteria are on different scales (for the degree-corrected two-mode model the value leaves out the terms that do not depend on the partition, as in `greed`).
 With 18 women and 14 events this is also a small network, where the exact criterion with its conjugate priors is cautious. To see what the model would say with two blocks on each side we force it, without and with the greedy search.

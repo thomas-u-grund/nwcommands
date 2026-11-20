@@ -17,5 +17,12 @@ from Stata Press, expected 2027). Nothing here is needed to use the software, an
   that the book builds (Florentine families, the law firm, Glasgow, Chesapeake Bay), with the commands that wrote
   them.
 - [Do-files of the book](dofiles/): one do-file per chapter with every command the book prints, in order.
+- [Performance and network size](performance/): run times by command and network size, and what each edition of Stata
+  can handle.
+- [Programming with networks in Mata](programming/): how to read and write networks in Mata and write a command of your
+  own.
+- [Mathematical reference: derivations and details](mathematics/): definitions, formulas, derivations and the rules
+  behind the measures in the book.
+- [When things go wrong: more](troubleshooting/): material beyond the troubleshooting appendix.
 - [Teaching and workshops](../teaching/): course outlines, a six-hour workshop, notes on every chapter and
   assignments with other data sets, for instructors.

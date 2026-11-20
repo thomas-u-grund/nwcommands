@@ -52,7 +52,7 @@ A latent space is a summary of the network, not a measurement of anything. The p
 | Agreement with latentnet | posterior means of the coefficients, log likelihoods, distance matrices and goodness-of-fit statistics agree with `latentnet` 2.12.0 within Monte Carlo error on the test networks (Sampson's monks, random networks, planted clusters, valued networks) |
 | Recovery | on simulated networks with planted positions and coefficients, the coefficients and the distances are recovered; for the influence model, 95% posterior intervals of the influence effect covered the true value in 90 to 100 percent of the replications in three simulation scenarios |
 | Engine | a compiled plugin for the sampler; there is no slower fallback |
-| Version | 0.7.0 (19 November 2026) |
+| Version | 1.0.0 (20 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## What is not implemented
