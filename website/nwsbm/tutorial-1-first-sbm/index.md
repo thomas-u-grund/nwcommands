@@ -101,12 +101,12 @@ core and a periphery and not two groups of friends: it is a statement about the 
 `nwsbmplot` draws pictures of the last fit. Every plot can be written to a file with `export()` (the format follows the extension: `.png`, `.pdf`, `.eps`); the pictures on this page were made that way.
 
 ```stata
-. nwsbmplot, type(matrix) export(nwsbm1_matrix.png)
+. nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
 ```
 
 ![Blocked adjacency matrix of the karate club, two blocks](nwsbm1_matrix.png)
 
-The blocked adjacency matrix draws every tie as a black square, with the members ordered by their block: the 29 members of block 1 first (top rows, left columns), the 5 members of block 2 last, and red lines between the blocks. The square of block 1 with block 1 (top left) is mostly empty, with ties scattered here and there. The rows and columns of block 2 (the bottom strip and the right strip) are
+The blocked adjacency matrix draws every tie as a black square, with the members ordered by their block: the 29 members of block 1 first (top rows, left columns), the 5 members of block 2 last, and thin lines between the blocks. The option `shade` fills each block rectangle with a grey that follows the connectivity of that pair of blocks (four levels, relative to the largest entry of the connectivity matrix): the square of block 1 with block 1 (top left) is the lightest, the strips of block 2 with block 1 are mid grey and the small square of block 2 with block 2 (bottom right) is the darkest. The top-left square is mostly empty, with ties scattered here and there. The rows and columns of block 2 (the bottom strip and the right strip) are
 crowded with squares, and so is the small square where block 2 meets block 2 (bottom right). This is the pattern of the connectivity matrix above: a few ties inside the large block, many to and within the small one.
 
 ```stata

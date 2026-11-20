@@ -13,7 +13,7 @@ estat icl
 estat blocks
 
 * --- plots: blocked adjacency matrix, block graph, ICL curve, memberships ---
-nwsbmplot, type(matrix) export(nwsbm1_matrix.png)
+nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
 nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
 nwsbmplot, type(icl) export(nwsbm1_icl.png)
 nwsbmplot, type(membership) export(nwsbm1_membership.png)

@@ -232,7 +232,7 @@ exact ICL with greedy:  -1767.84 with 4 blocks
 Model selection by the integrated classification likelihood (ICL), bernoulli mod
 > el
 ----------------------------------------------------------------------------
-Blocks 1 x 2 |          ICL           J          PL           H  parameters
+      Blocks |          ICL           J          PL           H  parameters
 -------------+--------------------------------------------------------------
       1 x 1  |      -166.41     -163.65     -163.65        0.00           1
       1 x 2  |      -165.21     -156.22     -158.36        2.14           2
@@ -274,7 +274,7 @@ degree-corrected, exact ICL:  -307.71, blocks 1 x 1
 
 Model selection by the integrated classification likelihood (ICL), poisson model
 ----------------------------------------------------------------------------
-Blocks 1 x 2 |          ICL           J          PL           H  parameters
+      Blocks |          ICL           J          PL           H  parameters
 -------------+--------------------------------------------------------------
       1 x 1* |      -307.71     -161.31     -161.31        0.00           1
       1 x 2  |      -307.71     -161.31     -161.90        0.59           2
