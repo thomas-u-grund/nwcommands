@@ -2,7 +2,12 @@
 capture program drop nwtriads
 program nwtriads
 	version 9
-	syntax [anything(name=netname)] [, PLOT NAME(string)]
+	syntax [anything(name=netname)] [, PLOT NAME(string) SAVing(string asis) EXPort(string asis) *]
+	// name(), saving(), export() and graph options (the plot options of the plot convention); name() alone stays accepted without plot as before
+	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`saving') export(`export') gopts(`"`options'"') default(triads) cmd(nwtriads)
+	local name `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
 
 	_nwsyntax `netname', max(1)
 	_nwvaluednote `netname'
@@ -153,7 +158,7 @@ program nwtriads
 		}
 		tempname rr
 		_return hold `rr'
-		_nwcensusplot, kind(triad) directed(`onedirected') counts(`cnts') netname(`netname') name(`name')
+		_nwcensusplot, kind(triad) directed(`onedirected') counts(`cnts') netname(`netname') name(`name') saving(`"`__sv'"') export(`"`__ex'"') `options'
 		_return restore `rr'
 	}
 	capture mata: mata drop `triadcensus'

@@ -97,8 +97,17 @@ end
 
 capture program drop nwcorrelate_nets	
 program nwcorrelate_nets
-syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) force *]
+syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) force NOPlot NAME(string) SAVing(string asis) EXPort(string asis) *]
 unw_defs
+	// plot-convention options: the density plot is drawn as before whenever permutations() > 1; noplot switches it off;
+	// name(), saving() and export() need the plot. (Options that went to kdensity before still do; they are not checked.)
+	local __uname `"`name'"'
+	local __plotflag ""
+	if `permutations' > 1 & "`noplot'" == "" local __plotflag "plot"
+	_nw_gfinish check, plot(`__plotflag') name(`name') nameok saving(`saving') export(`export') default(correlate) cmd(nwcorrelate)
+	local __gn `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
 	
 	if "`mode'" == "" {
 		local mode = "same"
@@ -238,7 +247,12 @@ unw_defs
 			local xmax = `corr'
 		}
 		
-		kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2show')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2show'"') `options'	
+		if "`noplot'" == "" {
+			local __nopt ""
+			if `"`__uname'`__sv'`__ex'"' != "" local __nopt `"name(`__gn', replace)"'
+			kdensity correlation, xscale(range(`xmin' `xmax')) bwidth(`bandwidth') title("Corr(`netname1', `netname2show')") ytitle("density") xline(`corr',lpattern(dash)) xlabel(#5) note(`"based on `permutations' QAP permutations of networks `netname1' and `netname2show'"') `__nopt' `options'
+			if `"`__nopt'"' != "" _nw_gfinish save, name(`__gn') saving(`"`__sv'"') export(`"`__ex'"')
+		}
 
 		restore
 		_return restore `myr'

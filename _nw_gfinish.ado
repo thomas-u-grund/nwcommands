@@ -46,7 +46,7 @@ program define _nw_gfinish, rclass
 			exit 198
 		}
 		if `"`nm0'"' == "" local nm0 `"`default'"'
-		if `"`nm0'"' != "" {
+		if `"`nm0'"' != "" & ("`plot'" != "" | "`always'" != "" | "`nameok'" == "") {
 			capture confirm name `nm0'
 			if _rc | wordcount(`"`nm0'"') != 1 | length(`"`nm0'"') > 32 {
 				di as err `"{p 0 0 2}`pfx'name(): {bf:`nm0'} is not a valid graph name.{p_end}"'
@@ -56,6 +56,9 @@ program define _nw_gfinish, rclass
 		// saving(): a trailing ", replace" is accepted and ignored
 		gettoken sv0 svrest : saving, parse(",")
 		local sv0 = trim(`"`sv0'"')
+		forvalues __i = 1/3 {
+			if inlist(substr(`"`sv0'"', 1, 1), char(34), char(96)) gettoken sv0 : sv0
+		}
 		local svrest = trim(substr(`"`svrest'"', 2, .))
 		if `"`svrest'"' != "" & `"`svrest'"' != "replace" {
 			di as err `"{p 0 0 2}`pfx'saving(): only {bf:replace} is allowed after the comma.{p_end}"'
@@ -63,8 +66,11 @@ program define _nw_gfinish, rclass
 		}
 		if "`plot'" != "" | "`always'" != "" {
 			if `"`sv0'"' != "" _nw_gfinish_file `"`sv0'"', pfx(`"`pfx'"') what(saving) svver(`svver')
-			if `"`export'"' != "" {
-				gettoken ex0 : export, parse(",")
+			gettoken ex0 : export, parse(",")
+			forvalues __i = 1/3 {
+			if inlist(substr(`"`ex0'"', 1, 1), char(34), char(96)) gettoken ex0 : ex0
+		}
+			if `"`ex0'"' != "" {
 				_nw_gfinish_file `"`ex0'"', pfx(`"`pfx'"') what(export) svver(`svver')
 			}
 		}
@@ -126,8 +132,14 @@ program define _nw_gfinish, rclass
 		}
 		gettoken sv0 : saving, parse(",")
 		local sv0 = trim(`"`sv0'"')
+		forvalues __i = 1/3 {
+			if inlist(substr(`"`sv0'"', 1, 1), char(34), char(96)) gettoken sv0 : sv0
+		}
 		gettoken ex0 exrest : export, parse(",")
 		local ex0 = trim(`"`ex0'"')
+		forvalues __i = 1/3 {
+			if inlist(substr(`"`ex0'"', 1, 1), char(34), char(96)) gettoken ex0 : ex0
+		}
 		local exrest = trim(substr(`"`exrest'"', 2, .))
 		if `"`sv0'"' != "" _nw_gfinish_file `"`sv0'"', what(saving) svver(`svver')
 		if `"`ex0'"' != "" _nw_gfinish_file `"`ex0'"', what(export) svver(`svver')

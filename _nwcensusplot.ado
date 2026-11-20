@@ -3,7 +3,7 @@
 capture program drop _nwcensusplot
 program _nwcensusplot
 	version 16
-	syntax , KIND(string) DIRected(string) COUNTS(numlist) NETname(string) [NAME(string)]
+	syntax , KIND(string) DIRected(string) COUNTS(numlist) NETname(string) [NAME(string) SAVing(string asis) EXPort(string asis) *]
 
 	if "`name'" == "" local name "`kind's"
 
@@ -148,6 +148,8 @@ program _nwcensusplot
 	else {
 		local tiecmd (pcspike y1 x1 y2 x2 if mutual == 1, lcolor(gs3) lwidth(medthin))
 	}
+	_nw_gfinish title "`ttl': `netname'", size(medium) noblack gopts(`"`options'"')
+	local __ttl `"`r(t)'"'
 	twoway `tiecmd' ///
 		(scatter ny nx, msymbol(O) msize(`msz') mfcolor(gs10) mlcolor(gs3)) ///
 		(scatter ly lx, msymbol(none) mlabel(lcat) mlabpos(0) mlabsize(`tsz') mlabcolor(black)) ///
@@ -155,9 +157,10 @@ program _nwcensusplot
 		xscale(range(0 `ncol') off) yscale(range(-0.05 `nrow') off) ///
 		xlabel(none) ylabel(none) aspectratio(`asp') legend(off) ///
 		plotregion(margin(small)) graphregion(color(white)) ///
-		title("`ttl': `netname'", size(medium)) ///
+		`__ttl' ///
 		xsize(`=cond(`nrow' == 1, 6, 5)') ysize(`=cond(`nrow' == 1, 2.4, 5.5)') ///
-		name(`name', replace)
+		name(`name', replace) `options'
 	restore
+	_nw_gfinish save, name(`name') saving(`"`saving'"') export(`"`export'"')
 	di as txt "(plot saved as {bf:`name'}; `kind' census of `netname')"
 end

@@ -1,7 +1,14 @@
 
 capture program drop nwqap
 program nwqap, eclass
-syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) qapspp force]
+syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) qapspp force GSAVing(string asis) EXPort(string asis) *]
+	// name(), gsaving(), export() and graph options (the plot options of the plot convention; saving() is not used: save() writes the permutation data)
+	local __uname `"`name'"'
+	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`gsaving') export(`export') gopts(`"`options'"') default(qap) cmd(nwqap)
+	local name `"`r(name)'"'
+	local __sv `"`r(saving)'"'
+	local __ex `"`r(export)'"'
+
     set more off
 
 	mata: st_rclear()
@@ -309,11 +316,13 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			// second y-axis) rather than xline() - xline() draws
 			// behind the histogram's solid fcolor() bars, hiding the
 			// line wherever a bar covers it.
+			_nw_gfinish title "`__coefname'", size(small) noblack
+			local __pttl `"`r(t)'"'
 			twoway (histogram `entry', fcolor(gs14) lcolor(gs8)) ///
 				(scatteri 0 `orig_result' 1 `orig_result', recast(line) ///
 					lcolor(black) lwidth(thick) lpattern(dash) yaxis(2)), ///
 				yscale(off axis(2) range(0 1)) ///
-				title("`__coefname'", size(small)) ///
+				`__pttl' ///
 				xtitle("") ytitle("") ///
 				legend(off) nodraw name(`__g', replace)
 			local __combine_list `"`__combine_list' `__g'"'
@@ -358,9 +367,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		if "`name'" == "" {
 			local name "qap"
 		}
+		_nw_gfinish title "QAP permutation null distributions", size(medium) noblack gopts(`"`options'"')
+		local __ttl `"`r(t)'"'
 		graph combine `__combine_list', cols(2) ///
-			title("QAP permutation null distributions", size(medium)) ///
-			name(`name', replace)
+			`__ttl' ///
+			name(`name', replace) `options'
+		_nw_gfinish save, name(`name') saving(`"`__sv'"') export(`"`__ex'"')
 		foreach __g of local __combine_list {
 			capture graph drop `__g'
 		}
