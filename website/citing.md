@@ -42,17 +42,7 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 
 > Grund, T. U. (2026). *nwsbm: Stochastic block models for networks in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398296](https://doi.org/10.5281/zenodo.24398296)
 
-Each DOI is the one of all versions of the manual, so it always leads to the latest manual. Report the exact version that produced your results as printed by `<package> version`. You may also cite the software; for nwdynam:
-
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models* (version 1.10.0) [Computer software]. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
-
-> Grund, T. U. (2026). *nwrem: a Stata package for relational event models* (version 1.6.0) [Computer software]. [https://github.com/thomas-u-grund/nwrem](https://github.com/thomas-u-grund/nwrem)
-
-> Grund, T. U. (2026). *nwalaam: a Stata package for autologistic actor attribute models* (version 1.3.0) [Computer software]. [https://github.com/thomas-u-grund/nwalaam](https://github.com/thomas-u-grund/nwalaam)
-
-> Grund, T. U. (2026). *nwlsm: a Stata package for latent space models of networks* (version 1.0.2) [Computer software]. [https://github.com/thomas-u-grund/nwlsm](https://github.com/thomas-u-grund/nwlsm)
-
-> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks* (version 1.0.1) [Computer software]. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
+Each DOI is the one of all versions of the manual, so it always leads to the latest manual. Report the exact version that produced your results as printed by `<package> version`.
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
