@@ -67,6 +67,6 @@ A latent space is a summary of the network, not a measurement of anything. The p
 
 - [Install](install/): core first, then `nwlsm`; releases, updating, the plugin.
 - [Tutorial 1: A latent space for the karate club](tutorial-1-first-lsm/): fit, diagnostics, positions and goodness of fit.
-- [Tutorial 2: How many latent clusters?](tutorial-2-bic-clusters/): the BIC, `nwlsmselect`, sender and receiver effects, goodness of fit for binary and valued networks.
+- [Tutorial 2: How many latent clusters?](tutorial-2-bic-clusters/): the BIC, `nwlsmselect`, clusters against the known factions of Sampson's monks, goodness of fit for binary and valued networks.
 - [How to cite](citation/)
 - [nwsbm](../nwsbm/): the companion package that finds blocks of actors with similar tie patterns, where `nwlsm` finds positions.

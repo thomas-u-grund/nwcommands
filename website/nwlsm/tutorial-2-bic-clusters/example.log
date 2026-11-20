@@ -1,44 +1,65 @@
-. * nwlsm tutorial 2: how many latent clusters? BIC for the Lazega lawyers
-. * Requires the core nwcommands and the package nwlsm. The data (Lazega 2001) are
->  loaded from the nwcommands website.
+. * nwlsm tutorial 2: how many latent clusters? BIC for Sampson's monks
+. * Requires the core nwcommands and the package nwlsm. The data (Sampson 1969) ar
+> e loaded from the nwcommands website.
 . set linesize 80
 
 . 
-. nwwebuse lazega, nwclear
+. nwwebuse sampson, nwclear
 
-. nwsummarize lazega_fr
+. nwsummarize samplk3
 --------------------------------------------------
-   Network name:  lazega_fr
+   Network name:  samplk3
    Network id:  3
+   Directed: true
+   Valued: true
+   Two-mode: false
+   Nodes: 18
+   Selfloop: false
+   Arcs: 56
+   Minimum value:  0
+   Maximum value:  3
+   Density:  .183
+   Mean outdegree:  3.11
+   Temporal: false
+
+. 
+. * --- the network of the choices at the third time point, without the ranks --
+> -
+. nwgen choice3 = samplk3 > 0
+
+. nwsummarize choice3
+--------------------------------------------------
+   Network name:  choice3
+   Network id:  5
    Directed: true
    Valued: false
    Two-mode: false
-   Nodes: 71
+   Nodes: 18
    Selfloop: false
-   Arcs: 575
+   Arcs: 56
    Minimum value:  0
    Maximum value:  1
-   Density:  .116
-   Mean outdegree:  8.10
+   Density:  .183
+   Mean outdegree:  3.11
    Temporal: false
 
 . 
 . * --- one model without clusters, and its BIC ---
-. nwlsm lazega_fr, dim(2) seed(12)
+. nwlsm choice3, dim(2) seed(12)
 ------------------------------------------------------------------------------
 Latent space model (Euclidean distance; bernoulli family), posterior by MCMC
-Network: lazega_fr (71 actors, directed)           Latent dimensions: 2
+Network: choice3 (18 actors, directed)             Latent dimensions: 2
 Draws: 4000  burn-in: 10000  interval: 10          Seed: 12
-Posterior mean log likelihood: -1551.040 (sd  9.291)
+Posterior mean log likelihood:   -94.964 (sd  5.647)
 ------------------------------------------------------------------------------
                               Mean        Sd   MC s.e.  Lower 95% Upper 95%
 ------------------------------------------------------------------------------
-_cons                       0.0175    0.1001    0.0040    -0.1770    0.2132
+_cons                       1.8462    0.5361    0.0317     0.8926    2.9833
 ------------------------------------------------------------------------------
 Variance parameters (posterior):
-sigma2                      2.4328    0.3410    0.0096     1.8340    3.1707
+sigma2                      6.0002    2.6203    0.1394     2.4632   12.4440
 ------------------------------------------------------------------------------
-Acceptance rate of the latent positions: 0.239
+Acceptance rate of the latent positions: 0.222
 Positions: minimum Kullback-Leibler estimate e(Z) (also estat positions); mean
 of the draws aligned to it e(Zmean); posterior mean distances e(D); posterior
 mean tie probabilities e(P). Positions are identified up to rotation,
@@ -50,30 +71,29 @@ BIC of the latent position model (as latentnet's bic.ergmm)
 --------------------------------------------
 Component                                BIC
 --------------------------------------------
-Ties given positions (Y)            3016.530
-Positions (Z)                        450.588
+Ties given positions (Y)             179.952
+Positions (Z)                        141.299
 --------------------------------------------
-Overall                             3467.118
+Overall                              321.251
 --------------------------------------------
-Latent clusters: 0; coefficients: 1; effective number of observations (ties): 57
-> 5
+Latent clusters: 0; coefficients: 1; effective number of observations (ties): 56
 Smaller is better. The BIC compares models fitted to the same network; it is
 not certain that it is appropriate for choosing the dimension, the random
 effects or between a clustered and an unclustered model.
 
 . 
-. * --- the BIC for 0, 2, 3 and 4 clusters ---
-. nwlsmselect lazega_fr, clusters(0 2 3 4) seed(12)
+. * --- the BIC for 0, 2, 3 and 4 clusters; refit keeps the best model ---
+. nwlsmselect choice3, clusters(0 2 3 4) seed(12) refit
 
 Selection of the number of latent clusters by BIC (as latentnet's bic.ergmm), ne
-> twork lazega_fr
+> twork choice3
 ------------------------------------------------------------------------
   Clusters         BIC     BIC (Y)     BIC (Z) Mean loglik   BIC - min
 ------------------------------------------------------------------------
-         2    3453.132    3025.173     427.958   -1553.335       0.000  <- best
-         3    3460.268    3025.865     434.403   -1553.315       7.136
-         0    3467.118    3016.530     450.588   -1551.040      13.986
-         4    3467.777    3026.681     441.096   -1553.541      14.646
+         3     285.170     185.608      99.562     -96.860       0.000  <- best
+         4     292.719     182.183     110.536     -96.509       7.549
+         2     294.992     185.482     109.509     -96.763       9.821
+         0     321.251     179.952     141.299     -94.964      36.081
 ------------------------------------------------------------------------
 Sorted by BIC, smaller is better; 0 clusters is the model without clusters.
 The BIC compares fits to the same network with the same options.
@@ -82,37 +102,98 @@ The BIC compares fits to the same network with the same options.
 
 r(table)[4,8]
        clusters          BIC        BIC_Y        BIC_Z  BIC_effects
-r1         0.00      3467.12      3016.53       450.59         0.00
-r2         2.00      3453.13      3025.17       427.96         0.00
-r3         3.00      3460.27      3025.86       434.40         0.00
-r4         4.00      3467.78      3026.68       441.10         0.00
+r1         0.00       321.25       179.95       141.30         0.00
+r2         2.00       294.99       185.48       109.51         0.00
+r3         3.00       285.17       185.61        99.56         0.00
+r4         4.00       292.72       182.18       110.54         0.00
 
          loglik         used        delta
-r1     -1551.04         0.00        13.99
-r2     -1553.34         2.00         0.00
-r3     -1553.31         3.00         7.14
-r4     -1553.54         4.00        14.65
+r1       -94.96         0.00        36.08
+r2       -96.76         2.00         9.82
+r3       -96.86         3.00         0.00
+r4       -96.51         4.00         7.55
 
 . display "best number of clusters: " r(best)
-best number of clusters: 2
+best number of clusters: 3
 
 . 
-. * --- the same comparison with random sender and receiver effects; refit keeps
->  the best model ---
-. nwlsmselect lazega_fr, clusters(0 2 3 4) sender receiver seed(12) refit
+. * --- do the clusters agree with the factions that Sampson observed? ---
+. estat clusters, generate(grp) nolist
+Classification stored in grp_class, probabilities in grp_p1 to grp_p3.
+
+. tabulate grp_class faction
+
+           |             faction
+ grp_class |     Loyal   Outcasts      Turks |     Total
+-----------+---------------------------------+----------
+         1 |         0          0          7 |         7 
+         2 |         0          4          0 |         4 
+         3 |         7          0          0 |         7 
+-----------+---------------------------------+----------
+     Total |         7          4          7 |        18 
+
+. summarize grp_p1 grp_p2 grp_p3
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      grp_p1 |         18    .3815556    .4078996     .00475     .92725
+      grp_p2 |         18    .2320833    .3067596      .0175       .821
+      grp_p3 |         18    .3863611    .4657153      .0045       .977
+
+. generate pmax = max(grp_p1, grp_p2, grp_p3)
+
+. summarize pmax
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        pmax |         18    .8805972    .0924528       .645       .977
+
+. count if pmax < 0.8
+  3
+
+. 
+. * --- the same comparison with random sender and receiver effects ---
+. nwlsmselect choice3, clusters(0 2 3 4) sender receiver seed(12)
 
 Selection of the number of latent clusters by BIC (as latentnet's bic.ergmm), ne
-> twork lazega_fr
+> twork choice3
 ------------------------------------------------------------------------
   Clusters         BIC     BIC (Y)     BIC (Z) Mean loglik   BIC - min
 ------------------------------------------------------------------------
-         2    3364.487    2820.765     421.804   -1487.138       0.000  <- best
-         3    3364.575    2823.273     419.268   -1487.955       0.088
-         4    3367.102    2821.847     422.803   -1487.436       2.615
-         0    3379.585    2815.788     441.720   -1486.275      15.098
+         3     287.176     160.828     108.071     -90.822       0.000  <- best
+         4     287.485     160.870     109.345     -90.826       0.309
+         2     301.541     161.693     117.032     -90.879      14.366
+         0     372.325     154.757     156.427     -88.249      85.149
 ------------------------------------------------------------------------
 Sorted by BIC, smaller is better; 0 clusters is the model without clusters.
 The BIC compares fits to the same network with the same options.
+
+. nwlsm choice3, dim(2) clusters(3) sender receiver seed(12)
+------------------------------------------------------------------------------
+Latent space model (Euclidean distance; bernoulli family), posterior by MCMC
+Network: choice3 (18 actors, directed)             Latent dimensions: 2
+Draws: 4000  burn-in: 10000  interval: 10          Seed: 12
+Latent clusters: 3
+Posterior mean log likelihood:   -90.822 (sd  5.359)
+------------------------------------------------------------------------------
+                              Mean        Sd   MC s.e.  Lower 95% Upper 95%
+------------------------------------------------------------------------------
+_cons                       1.5618    0.5476    0.0317     0.5457    2.7273
+------------------------------------------------------------------------------
+Variance parameters (posterior):
+sigma2_1                    1.1270    1.1999    0.0439     0.2202    4.3803
+sigma2_2                    1.5081    1.6828    0.0573     0.2430    5.5665
+sigma2_3                    1.7161    2.2383    0.0731     0.2083    7.3680
+sender_var                  0.4645    0.2232    0.0046     0.1886    1.0298
+receiver_var                0.9569    0.5685    0.0136     0.2992    2.3468
+------------------------------------------------------------------------------
+Acceptance rate of the latent positions: 0.262
+Latent clusters: estat clusters lists the posterior membership probabilities
+and the classification; cluster means e(cmeans), mixing proportions e(lambda).
+Positions: minimum Kullback-Leibler estimate e(Z) (also estat positions); mean
+of the draws aligned to it e(Zmean); posterior mean distances e(D); posterior
+mean tie probabilities e(P). Positions are identified up to rotation,
+reflection and translation only.
 
 . estat bic
 
@@ -120,15 +201,14 @@ BIC of the latent position model (as latentnet's bic.ergmm)
 --------------------------------------------
 Component                                BIC
 --------------------------------------------
-Ties given positions (Y)            2820.765
-Positions (Z)                        421.804
-Random effect: sender                104.889
-Random effect: receiver               17.029
+Ties given positions (Y)             160.828
+Positions (Z)                        108.071
+Random effect: sender                 -8.749
+Random effect: receiver               27.025
 --------------------------------------------
-Overall                             3364.487
+Overall                              287.176
 --------------------------------------------
-Latent clusters: 2; coefficients: 1; effective number of observations (ties): 57
-> 5
+Latent clusters: 3; coefficients: 1; effective number of observations (ties): 56
 Smaller is better. The BIC compares models fitted to the same network; it is
 not certain that it is appropriate for choosing the dimension, the random
 effects or between a clustered and an unclustered model.
@@ -137,68 +217,27 @@ effects or between a clustered and an unclustered model.
 starting points of the minimum Kullback-Leibler fit: 4
 
 . 
-. * --- the effective number of observations changes only the part for the ties 
-> ---
-. estat bic, effobs(actors)
-
-BIC of the latent position model (as latentnet's bic.ergmm)
---------------------------------------------
-Component                                BIC
---------------------------------------------
-Ties given positions (Y)            2818.674
-Positions (Z)                        421.804
-Random effect: sender                104.889
-Random effect: receiver               17.029
---------------------------------------------
-Overall                             3362.395
---------------------------------------------
-Latent clusters: 2; coefficients: 1; effective number of observations (actors): 
-> 71
-Smaller is better. The BIC compares models fitted to the same network; it is
-not certain that it is appropriate for choosing the dimension, the random
-effects or between a clustered and an unclustered model.
-
-. 
-. * --- how clear are the clusters of the chosen model? ---
-. estat clusters, generate(grp) nolist
-Classification stored in grp_class, probabilities in grp_p1 to grp_p2.
-
-. tabulate grp_class
-
-  grp_class |      Freq.     Percent        Cum.
-------------+-----------------------------------
-          2 |         71      100.00      100.00
-------------+-----------------------------------
-      Total |         71      100.00
-
-. summarize grp_p1 grp_p2
-
-    Variable |        Obs        Mean    Std. dev.       Min        Max
--------------+---------------------------------------------------------
-      grp_p1 |         71    .3669366    .0465165     .28925        .46
-      grp_p2 |         71    .6330634    .0465165        .54     .71075
-
-. 
 . * --- a single starting point instead of the default four ---
-. nwlsm lazega_fr, dim(2) clusters(2) sender receiver seed(12) mklstarts(1)
+. nwlsm choice3, dim(2) clusters(3) sender receiver seed(12) mklstarts(1)
 ------------------------------------------------------------------------------
 Latent space model (Euclidean distance; bernoulli family), posterior by MCMC
-Network: lazega_fr (71 actors, directed)           Latent dimensions: 2
+Network: choice3 (18 actors, directed)             Latent dimensions: 2
 Draws: 4000  burn-in: 10000  interval: 10          Seed: 12
-Latent clusters: 2
-Posterior mean log likelihood: -1487.138 (sd 11.744)
+Latent clusters: 3
+Posterior mean log likelihood:   -90.822 (sd  5.359)
 ------------------------------------------------------------------------------
                               Mean        Sd   MC s.e.  Lower 95% Upper 95%
 ------------------------------------------------------------------------------
-_cons                      -0.1287    0.1458    0.0065    -0.4301    0.1539
+_cons                       1.5618    0.5476    0.0317     0.5457    2.7273
 ------------------------------------------------------------------------------
 Variance parameters (posterior):
-sigma2_1                    2.2718    0.7515    0.0127     1.2880    4.1302
-sigma2_2                    2.0309    0.4279    0.0111     1.3329    3.0126
-sender_var                  0.4092    0.1102    0.0024     0.2351    0.6691
-receiver_var                0.2214    0.0597    0.0012     0.1263    0.3622
+sigma2_1                    1.1270    1.1999    0.0439     0.2202    4.3803
+sigma2_2                    1.5081    1.6828    0.0573     0.2430    5.5665
+sigma2_3                    1.7161    2.2383    0.0731     0.2083    7.3680
+sender_var                  0.4645    0.2232    0.0046     0.1886    1.0298
+receiver_var                0.9569    0.5685    0.0136     0.2992    2.3468
 ------------------------------------------------------------------------------
-Acceptance rate of the latent positions: 0.239
+Acceptance rate of the latent positions: 0.262
 Latent clusters: estat clusters lists the posterior membership probabilities
 and the classification; cluster means e(cmeans), mixing proportions e(lambda).
 Positions: minimum Kullback-Leibler estimate e(Z) (also estat positions); mean
@@ -212,40 +251,79 @@ BIC of the latent position model (as latentnet's bic.ergmm)
 --------------------------------------------
 Component                                BIC
 --------------------------------------------
-Ties given positions (Y)            2820.765
-Positions (Z)                        421.800
-Random effect: sender                104.886
-Random effect: receiver               17.020
+Ties given positions (Y)             160.828
+Positions (Z)                        108.071
+Random effect: sender                 -8.749
+Random effect: receiver               27.025
 --------------------------------------------
-Overall                             3364.471
+Overall                              287.176
 --------------------------------------------
-Latent clusters: 2; coefficients: 1; effective number of observations (ties): 57
-> 5
+Latent clusters: 3; coefficients: 1; effective number of observations (ties): 56
 Smaller is better. The BIC compares models fitted to the same network; it is
 not certain that it is appropriate for choosing the dimension, the random
 effects or between a clustered and an unclustered model.
 
 . 
-. * --- goodness of fit of a binary directed network ---
-. nwlsm lazega_fr, dim(2) clusters(2) sender receiver seed(12)
+. * --- the effective number of observations: ties (56), dyads or actors (18) --
+> -
+. estat bic, effobs(dyads)
+
+BIC of the latent position model (as latentnet's bic.ergmm)
+--------------------------------------------
+Component                                BIC
+--------------------------------------------
+Ties given positions (Y)             162.527
+Positions (Z)                        108.071
+Random effect: sender                 -8.749
+Random effect: receiver               27.025
+--------------------------------------------
+Overall                              288.874
+--------------------------------------------
+Latent clusters: 3; coefficients: 1; effective number of observations (dyads): 3
+> 06
+Smaller is better. The BIC compares models fitted to the same network; it is
+not certain that it is appropriate for choosing the dimension, the random
+effects or between a clustered and an unclustered model.
+
+. estat bic, effobs(actors)
+
+BIC of the latent position model (as latentnet's bic.ergmm)
+--------------------------------------------
+Component                                BIC
+--------------------------------------------
+Ties given positions (Y)             159.693
+Positions (Z)                        108.071
+Random effect: sender                 -8.749
+Random effect: receiver               27.025
+--------------------------------------------
+Overall                              286.041
+--------------------------------------------
+Latent clusters: 3; coefficients: 1; effective number of observations (actors): 
+> 18
+Smaller is better. The BIC compares models fitted to the same network; it is
+not certain that it is appropriate for choosing the dimension, the random
+effects or between a clustered and an unclustered model.
+
+. 
+. * --- goodness of fit of the binary model with three clusters ---
+. nwlsm choice3, dim(2) clusters(3) seed(12)
 ------------------------------------------------------------------------------
 Latent space model (Euclidean distance; bernoulli family), posterior by MCMC
-Network: lazega_fr (71 actors, directed)           Latent dimensions: 2
+Network: choice3 (18 actors, directed)             Latent dimensions: 2
 Draws: 4000  burn-in: 10000  interval: 10          Seed: 12
-Latent clusters: 2
-Posterior mean log likelihood: -1487.138 (sd 11.744)
+Latent clusters: 3
+Posterior mean log likelihood:   -96.860 (sd  4.859)
 ------------------------------------------------------------------------------
                               Mean        Sd   MC s.e.  Lower 95% Upper 95%
 ------------------------------------------------------------------------------
-_cons                      -0.1287    0.1458    0.0065    -0.4301    0.1539
+_cons                       1.3861    0.4489    0.0239     0.5864    2.3740
 ------------------------------------------------------------------------------
 Variance parameters (posterior):
-sigma2_1                    2.2500    0.7565    0.0130     1.2842    4.1242
-sigma2_2                    2.0527    0.4302    0.0107     1.3451    3.0272
-sender_var                  0.4092    0.1102    0.0024     0.2351    0.6691
-receiver_var                0.2214    0.0597    0.0012     0.1263    0.3622
+sigma2_1                    1.2681    1.2712    0.0483     0.2422    4.6147
+sigma2_2                    1.4263    3.2387    0.0610     0.2013    5.8732
+sigma2_3                    1.0410    1.0163    0.0368     0.2287    3.7069
 ------------------------------------------------------------------------------
-Acceptance rate of the latent positions: 0.239
+Acceptance rate of the latent positions: 0.289
 Latent clusters: estat clusters lists the posterior membership probabilities
 and the classification; cluster means e(cmeans), mixing proportions e(lambda).
 Positions: minimum Kullback-Leibler estimate e(Z) (also estat positions); mean
@@ -253,21 +331,40 @@ of the draws aligned to it e(Zmean); posterior mean distances e(D); posterior
 mean tie probabilities e(P). Positions are identified up to rotation,
 reflection and translation only.
 
-. estat gof, gof(distance) nsim(100) seed(1)
+. estat gof, gof(odegree distance) nsim(100) seed(1)
+
+Goodness of fit: out-degree (100 networks simulated from the posterior)
+------------------------------------------------------------------
+  Out-degree |  Observed       Min      Mean       Max  MC p-value
+-------------+----------------------------------------------------
+           0 |         0         0      0.41         2        1.00
+           1 |         0         0      2.10         5        0.24
+           2 |         0         1      4.16         9        0.00
+           3 |        16         0      4.52        10        0.00
+           4 |         2         1      3.91         8        0.40
+           5 |         0         0      1.91         6        0.14
+           6 |         0         0      0.77         4        0.90
+           7 |         0         0      0.18         2        1.00
+           8 |         0         0      0.03         1        1.00
+           9 |         0         0      0.01         1        1.00
+------------------------------------------------------------------
 
 Goodness of fit: minimum geodesic distance (100 networks simulated from the post
 > erior)
 ------------------------------------------------------------------
     Distance |  Observed       Min      Mean       Max  MC p-value
 -------------+----------------------------------------------------
-           1 |       575       496    577.35       647        0.90
-           2 |      2316      1856   2272.55      2630        0.88
-           3 |      1782      1556   1758.89      2060        0.76
-           4 |       154       121    261.43       598        0.12
-           5 |         3         0     15.54       121        0.42
-           6 |         0         0      0.56        10        1.00
-           7 |         0         0      0.02         2        1.00
-         Inf |       140         0     83.66       412        0.50
+           1 |        56        41     55.38        72        0.90
+           2 |        73        44     73.18       114        0.98
+           3 |        63        16     59.16        95        0.84
+           4 |        45         3     38.78        62        0.78
+           5 |        31         0     19.35        50        0.32
+           6 |        15         0      7.44        28        0.32
+           7 |         6         0      2.31        15        0.38
+           8 |         0         0      0.61        12        1.00
+           9 |         0         0      0.13         4        1.00
+          10 |         0         0      0.04         3        1.00
+         Inf |        17         0     49.62       175        0.96
 ------------------------------------------------------------------
 Each simulated network is drawn from the model at one of 100 posterior draws
 (evenly spaced over the stored draws). MC p-value: 2 min(P(simulated <=
@@ -275,43 +372,43 @@ observed), P(simulated >= observed)), at most 1, as in latentnet. Missing
 dyads of the observed network count as no tie.
 
 . 
-. * --- a valued network: the number of the three relations (advice, co-work, fr
-> iendship) of a pair, 0 to 3 ---
-. nwgen lazega_all = lazega_fr + lazega_adv + lazega_cow
-
-. nwsummarize lazega_all
+. * --- a valued network: how much each monk likes the others, 0 to 3 ---
+. nwsummarize samplike
 --------------------------------------------------
-   Network name:  lazega_all
+   Network name:  samplike
    Network id:  4
    Directed: true
    Valued: true
    Two-mode: false
-   Nodes: 71
+   Nodes: 18
    Selfloop: false
-   Arcs: 1574
+   Arcs: 88
    Minimum value:  0
    Maximum value:  3
-   Density:  .317
-   Mean outdegree:  22.17
+   Density:  .288
+   Mean outdegree:  4.89
    Temporal: false
 
-. nwlsm lazega_all, family(binomial) trials(3) dim(2) sender receiver seed(12)
+. nwlsm samplike, family(binomial) trials(3) dim(2) clusters(3) seed(12)
 ------------------------------------------------------------------------------
 Latent space model (Euclidean distance; binomial family), posterior by MCMC
-Network: lazega_all (71 actors, directed)          Latent dimensions: 2
+Network: samplike (18 actors, directed)            Latent dimensions: 2
 Draws: 4000  burn-in: 10000  interval: 10          Seed: 12
-Posterior mean log likelihood: -3889.821 (sd 13.124)
+Latent clusters: 3
+Posterior mean log likelihood:  -238.767 (sd  5.373)
 ------------------------------------------------------------------------------
                               Mean        Sd   MC s.e.  Lower 95% Upper 95%
 ------------------------------------------------------------------------------
-_cons                       0.5872    0.1454    0.0114     0.2970    0.8601
+_cons                       1.6938    0.3017    0.0176     1.1046    2.2975
 ------------------------------------------------------------------------------
 Variance parameters (posterior):
-sigma2                      2.7777    0.3557    0.0094     2.1716    3.5617
-sender_var                  0.6164    0.1256    0.0036     0.4117    0.8959
-receiver_var                0.4852    0.1002    0.0025     0.3204    0.7097
+sigma2_1                    1.6467    2.2978    0.0545     0.2135    6.6927
+sigma2_2                    1.7204    1.5125    0.0442     0.3413    5.4887
+sigma2_3                    2.1897    1.6290    0.0639     0.4952    6.5605
 ------------------------------------------------------------------------------
-Acceptance rate of the latent positions: 0.228
+Acceptance rate of the latent positions: 0.241
+Latent clusters: estat clusters lists the posterior membership probabilities
+and the classification; cluster means e(cmeans), mixing proportions e(lambda).
 Positions: minimum Kullback-Leibler estimate e(Z) (also estat positions); mean
 of the draws aligned to it e(Zmean); posterior mean distances e(D); posterior
 mean tie probabilities e(P). Positions are identified up to rotation,
@@ -324,21 +421,22 @@ Goodness of fit: minimum geodesic distance (100 networks simulated from the post
 ------------------------------------------------------------------
     Distance |  Observed       Min      Mean       Max  MC p-value
 -------------+----------------------------------------------------
-           1 |      1574      1717   1796.38      1877        0.00
-           2 |      3204      3040   3110.65      3199        0.00
-           3 |       190        25     62.17       107        0.00
-           4 |         2         0      0.10         7        0.02
-         Inf |         0         0      0.70        70        1.00
+           1 |        88        88    107.55       129        0.02
+           2 |       136       118    146.96       167        0.20
+           3 |        77        19     48.13        77        0.02
+           4 |         5         0      2.99        17        0.56
+           5 |         0         0      0.03         1        1.00
+         Inf |         0         0      0.34        17        1.00
 ------------------------------------------------------------------
 
 Goodness of fit: tie values (100 networks simulated from the posterior)
 ------------------------------------------------------------------
        Value |  Observed       Min      Mean       Max  MC p-value
 -------------+----------------------------------------------------
-           0 |      3396      3093   3173.62      3253        0.00
-           1 |       824      1105   1178.00      1242        0.00
-           2 |       503       396    472.04       524        0.16
-           3 |       247       116    146.34       179        0.00
+           0 |       218       177    198.45       218        0.02
+           1 |        38        46     62.39        82        0.00
+           2 |        20        21     31.85        45        0.00
+           3 |        30         5     13.31        26        0.00
 ------------------------------------------------------------------
 Each simulated network is drawn from the model at one of 100 posterior draws
 (evenly spaced over the stored draws). MC p-value: 2 min(P(simulated <=
@@ -354,14 +452,19 @@ Goodness of fit: minimum geodesic distance (100 networks simulated from the post
 ------------------------------------------------------------------
     Distance |  Observed       Min      Mean       Max  MC p-value
 -------------+----------------------------------------------------
-           1 |       750       525    618.38       670        0.00
-           2 |      2842      1775   2120.49      2413        0.00
-           3 |      1311      1477   1694.88      1887        0.00
-           4 |        67       185    339.57       594        0.00
-           5 |         0         0     21.63        98        0.02
-           6 |         0         0      0.88        16        1.00
-           7 |         0         0      0.03         1        1.00
-         Inf |         0         0    174.14       547        0.14
+           1 |        50        33     45.16        60        0.38
+           2 |        73        29     50.84        89        0.12
+           3 |        72        11     41.13        84        0.08
+           4 |        51         0     30.03        64        0.18
+           5 |        21         0     18.51        49        0.86
+           6 |         6         0      8.50        35        1.00
+           7 |         0         0      3.08        25        0.92
+           8 |         0         0      0.99        10        1.00
+           9 |         0         0      0.21         8        1.00
+          10 |         0         0      0.07         7        1.00
+          11 |         0         0      0.04         4        1.00
+          12 |         0         0      0.01         1        1.00
+         Inf |        33         0    107.43       217        0.34
 ------------------------------------------------------------------
 Each simulated network is drawn from the model at one of 100 posterior draws
 (evenly spaced over the stored draws). MC p-value: 2 min(P(simulated <=
