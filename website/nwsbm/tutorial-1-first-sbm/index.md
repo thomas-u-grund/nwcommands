@@ -11,7 +11,7 @@ description: "Fit stochastic block models with nwsbm to the karate club, choose 
 
 **Data.** Zachary's karate club: 34 members and 78 friendship ties (undirected). The club split in two after a conflict; the variable `group` records which side a member joined. Source: Zachary, W. W. (1977),
 *Journal of Anthropological Research* 33, 452-473; loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwsbm` package
-(see [Install](../install/)); the commands were run with `nwsbm` 0.3.0 under Stata 17. The complete script and log are in [example.do](example.do) and [example.log](example.log).
+(see [Install](../install/)); the commands were run with `nwsbm` 0.4.0 under Stata 17. The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## What a stochastic block model does, in four sentences
 

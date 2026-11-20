@@ -13,6 +13,7 @@ Relational event models (REM) for Stata: why this sender and this receiver, in a
 {: .fs-6 .fw-300 }
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-rem/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](manual/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwrem on GitHub](https://github.com/thomas-u-grund/nwrem){: .btn .fs-5 .mb-4 .mb-md-0 }

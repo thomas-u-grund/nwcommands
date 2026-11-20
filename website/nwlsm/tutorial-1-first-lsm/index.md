@@ -10,7 +10,7 @@ description: "Fit a first latent space model with nwlsm to the karate club: the 
 **Goal.** Fit a latent space model with `nwlsm`, read the posterior summaries, check that the sampler has converged, and judge whether the model reproduces the network.
 
 **Data.** Zachary's karate club: 34 members of a university karate club and 78 friendship ties (undirected). Source: Zachary, W. W. (1977), *Journal of Anthropological Research* 33, 452-473;
-loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 0.6.0 under Stata 17.
+loaded from the website with `nwwebuse zachary` (see the [data sets page](../../datasets/)). You need the core `nwcommands` and the `nwlsm` package (see [Install](../install/)); the commands were run with `nwlsm` 0.7.0 under Stata 17.
 The complete script and log are in [example.do](example.do) and [example.log](example.log).
 
 ## What a latent space model does, in five sentences

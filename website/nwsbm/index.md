@@ -3,7 +3,7 @@ title: "nwsbm (block models)"
 nav_order: 8.7
 has_children: true
 permalink: /nwsbm/
-description: "nwsbm: stochastic block models and latent block models for networks in Stata, following the R packages sbm, blockmodels and greed. Installation, a worked tutorial and how to cite."
+description: "nwsbm: stochastic block models and latent block models for networks in Stata, following the R packages sbm, blockmodels and greed. Installation, two worked tutorials and how to cite."
 ---
 
 # nwsbm
@@ -13,6 +13,7 @@ Stochastic block models for networks in Stata: which actors play the same role i
 {: .fs-6 .fw-300 }
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with the tutorial](tutorial-1-first-sbm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsbm on GitHub](https://github.com/thomas-u-grund/nwsbm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -39,7 +40,7 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 | Edge models | Bernoulli (binary ties), Poisson (counts), Gaussian (real-valued ties, with one variance, estimated or fixed); missing ties are left out |
 | Degree correction | `degreecorrected` (Karrer and Newman 2011) with the Poisson model |
 | Selection of the number of blocks | ICL as in `blockmodels` and `sbm`, over `minblocks()` to `maxblocks()`; `icl(exact)`: the exact ICL of `greed` for the Bernoulli and the degree-corrected Poisson model |
-| Covariates | dyadic covariates (networks of the session, and absolute, equal or signed differences of node variables) for all three edge models, one-mode and two-mode |
+| Covariates | dyadic covariates (networks of the session, and absolute, equal or signed differences of node variables) for all three edge models, one-mode and two-mode, with standard errors (conditional on the estimated blocks) |
 | Estimation | variational EM in a compiled plugin (macOS, Linux, Windows); spectral, split, merge and random starts evaluated in parallel threads, with the same result for any number of threads |
 | After the fit | `estat icl`, `estat blocks`, memberships and posterior probabilities with `generate()`; `nwsbmplot` (blocked adjacency matrix, block graph); dialog boxes |
 | Agreement with R | the number of blocks, the memberships (adjusted Rand index 1) and the ICL agree with `sbm` 1.0.0 and `blockmodels` 1.2.1 on the test networks (Bernoulli, Poisson, Gaussian, two-mode, with and without covariates; the ICL to a relative difference of about 5e-8 with covariates), and with `greed` 0.6.2 for the degree-corrected model and the exact ICL |
@@ -51,9 +52,8 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 ## What is not implemented
 
 - Multiplex, dynamic and longitudinal block models, and models with several networks on the same actors.
-- Standard errors of the covariate coefficients (R's `sbm` does not give them either).
-- The degree-corrected two-mode model, the exact ICL for the Poisson and Gaussian models without degree correction, block-specific variances for the Gaussian model, and the zero-inflated models of `blockmodels`.
-- Degree correction and `icl(exact)` cannot be combined with covariates.
+- The exact ICL for the Poisson and Gaussian models without degree correction, and the zero-inflated models of `blockmodels`.
+- Degree correction, `icl(exact)` and `blockvar` cannot be combined with covariates.
 - `greed` searches by greedy merge and swap moves on the exact criterion and can find a partition a node or two better than the variational partition at which `icl(exact)` is evaluated.
 - Where R's covariate models differ from the true likelihood (missing ties treated as zeros, an approximate Bernoulli estimator by default, a wrong value for the two-mode Bernoulli case), `nwsbm` follows the exact model and says so in its help file.
 - A version below 1.0 is a young package: use it alongside the R packages where the result matters, and report what you find.
@@ -62,5 +62,6 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 
 - [Install](install/): core first, then `nwsbm`; releases, updating, the plugin.
 - [Tutorial 1: Blocks in the karate club](tutorial-1-first-sbm/): choosing the number of blocks, and what the blocks are.
+- [Tutorial 2: Covariates, the exact ICL and two-mode blocks](tutorial-2-covariates-greedy/): covariates with standard errors, the greedy search, the degree-corrected two-mode model, block variances.
 - [How to cite](citation/)
 - [nwlsm](../nwlsm/): the companion package that places actors in a latent space, where `nwsbm` groups them.
