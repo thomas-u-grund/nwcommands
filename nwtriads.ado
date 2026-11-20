@@ -2,14 +2,32 @@
 capture program drop nwtriads
 program nwtriads
 	version 9
-	syntax [anything(name=netname)] [, PLOT NAME(string) SAVing(string asis) EXPort(string asis) *]
+	syntax [anything(name=netname)] [, PLOT EXPected NAME(string) SAVing(string asis) EXPort(string asis) *]
 	// name(), saving(), export() and graph options (the plot options of the plot convention); name() alone stays accepted without plot as before
 	_nw_gfinish check, plot(`plot') name(`name') nameok saving(`saving') export(`export') gopts(`"`options'"') default(triads) cmd(nwtriads)
 	local name `"`r(name)'"'
 	local __sv `"`r(saving)'"'
 	local __ex `"`r(export)'"'
+	if "`expected'" != "" & "`plot'" == "" {
+		di as err "{p 0 0 2}nwtriads: option {bf:expected} needs {bf:plot}.{p_end}"
+		exit 198
+	}
 
 	_nwsyntax `netname', max(1)
+	if "`expected'" != "" {
+		if "`is2mode'" == "true" {
+			di as err "{p 0 0 2}nwtriads: {bf:expected} is not available for the two-mode network {bf:`netname'} (the expected counts are those of a one-mode network).{p_end}"
+			exit 198
+		}
+		if "`valued'" == "true" {
+			di as err "{p 0 0 2}nwtriads: {bf:expected} is not available for the valued network {bf:`netname'}: the census counts the ties, the null model fixes the dyad types of the network without values. Use {help nwdichotomize} first.{p_end}"
+			exit 198
+		}
+		if `nodes' < 3 {
+			di as err "{p 0 0 2}nwtriads: {bf:expected} needs at least 3 nodes.{p_end}"
+			exit 198
+		}
+	}
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
@@ -157,12 +175,78 @@ program nwtriads
 			local cnts "`cnts' `=r(_`c')'"
 		}
 		tempname rr
+		local __expopt ""
+		if "`expected'" != "" {
+			_nwtriads_expected, n(`nodes') directed(`onedirected') classes(`cl') counts(`cnts')
+			local __expopt `"expected(`r(expected)')"'
+		}
 		_return hold `rr'
-		_nwcensusplot, kind(triad) directed(`onedirected') counts(`cnts') netname(`netname') name(`name') saving(`"`__sv'"') export(`"`__ex'"') `options'
+		_nwcensusplot, kind(triad) directed(`onedirected') counts(`cnts') netname(`netname') name(`name') saving(`"`__sv'"') export(`"`__ex'"') `__expopt' `options'
 		_return restore `rr'
 	}
 	capture mata: mata drop `triadcensus'
 	capture confirm number 0
+end
+
+// Expected triad counts when the dyad types are assigned at random with the dyad census of the network fixed (the uniform
+// distribution on the networks with the same numbers of mutual, asymmetric and null dyads, the U|MAN distribution of
+// Holland and Leinhardt 1976; the null model of nwcug, condition(census), and of nwrandom, census()).  Closed form: the types
+// of three given dyads are drawn without replacement from the D = n(n-1)/2 dyads, an asymmetric dyad points either way with
+// probability 1/2, so a triad class with m mutual, a asymmetric and k null dyads (the digits of its name) and w labelled
+// forms has the expected count  C(n,3) w (M)m (A)a (N)k / (2^a (D)3)  with the falling factorials (x)j = x (x-1) ... (x-j+1).
+// M and A come from the census itself: every dyad lies in n-2 triads, so M = sum(count*m)/(n-2) and A likewise.
+capture program drop _nwtriads_expected
+program _nwtriads_expected, rclass
+	version 15
+	syntax , N(real) DIRected(string) CLasses(string) COUNTS(string)
+	local w003 1
+	local w012 6
+	local w102 3
+	local w021D 3
+	local w021U 3
+	local w021C 6
+	local w111D 6
+	local w111U 6
+	local w030T 6
+	local w030C 2
+	local w201 3
+	local w120D 3
+	local w120U 3
+	local w120C 6
+	local w210 6
+	local w300 1
+	local nc : word count `classes'
+	scalar __nwt_M = 0
+	scalar __nwt_A = 0
+	forvalues j = 1/`nc' {
+		local c : word `j' of `classes'
+		local x : word `j' of `counts'
+		scalar __nwt_M = __nwt_M + `x' * real(substr("`c'", 1, 1)) / (`n' - 2)
+		scalar __nwt_A = __nwt_A + `x' * real(substr("`c'", 2, 1)) / (`n' - 2)
+	}
+	local D = `n' * (`n' - 1) / 2
+	local Nn = `D' - scalar(__nwt_M) - scalar(__nwt_A)
+	local out ""
+	forvalues j = 1/`nc' {
+		local c : word `j' of `classes'
+		local m = real(substr("`c'", 1, 1))
+		local a = real(substr("`c'", 2, 1))
+		local k = real(substr("`c'", 3, 1))
+		local e = `n' * (`n' - 1) * (`n' - 2) / 6 * `w`c''
+		local e = `e' / (2^`a' * `D' * (`D' - 1) * (`D' - 2))
+		local types M A Nn
+		local vals = scalar(__nwt_M)
+		forvalues t = 1/3 {
+			local cnt = cond(`t' == 1, `m', cond(`t' == 2, `a', `k'))
+			local v = cond(`t' == 1, scalar(__nwt_M), cond(`t' == 2, scalar(__nwt_A), `Nn'))
+			forvalues i = 0/`=max(`cnt' - 1, 0)' {
+				if `cnt' > 0 local e = `e' * (`v' - `i')
+			}
+		}
+		local out "`out' `=string(`e', "%18.10g")'"
+	}
+	scalar drop __nwt_M __nwt_A
+	return local expected "`=strtrim("`out'")'"
 end
 
 capture mata: mata drop nw_fasttriads()
