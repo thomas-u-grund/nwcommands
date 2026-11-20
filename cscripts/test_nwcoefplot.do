@@ -265,6 +265,33 @@ foreach f in cp_x.gph cp_x.png cp_y.gph cmp_z.gph {
 	capture erase "`tmp'/`f'"
 }
 
+* size options pass through (single panel, two panels, nwcompare) and the export keeps the aspect ratio
+run cscripts/nw_pngwidth.do
+fake_fit nwdynam rate choice
+foreach v in single multi cmp {
+	capture erase "`tmp'/sz_`v'.png"
+}
+capture nwcoefplot f1, ysize(2.6) xsize(3.6) export("`tmp'/sz_single.png", width(1080)) name(sz1, replace)
+chk "nwcoefplot ysize() xsize() single panel: rc 0" `=(_rc == 0)'
+nw_pngwidth "`tmp'/sz_single.png"
+chk "single panel: width 1080, height 780 (aspect 3.6:2.6)" `=(r(w) == 1080 & abs(r(h) - 780) <= 2)'
+capture nwcoefplot, ysize(2.6) xsize(3.6) export("`tmp'/sz_multi.png", width(1080)) name(sz2, replace)
+chk "nwcoefplot ysize() xsize() two panels: rc 0" `=(_rc == 0)'
+nw_pngwidth "`tmp'/sz_multi.png"
+chk "two panels: width 1080, height 780" `=(r(w) == 1080 & abs(r(h) - 780) <= 2)'
+capture nwcoefplot f1, aspectratio(0.5) scale(1.2) name(sz3, replace)
+chk "nwcoefplot aspectratio() scale(): rc 0" `=(_rc == 0)'
+fake_fit nwergm _
+estimates store h1
+estimates store h2
+capture nwcompare h1 h2, plot coefopts(ysize(2.6) xsize(3.6)) export("`tmp'/sz_cmp.png", width(1080)) name(sz4, replace)
+chk "nwcompare plot ysize() xsize(): rc 0" `=(_rc == 0)'
+nw_pngwidth "`tmp'/sz_cmp.png"
+chk "nwcompare plot: width 1080, height 780" `=(r(w) == 1080 & abs(r(h) - 780) <= 2)'
+foreach v in single multi cmp {
+	capture erase "`tmp'/sz_`v'.png"
+}
+
 capture erase "`tmp'/a.png"
 capture erase "`tmp'/b.png"
 capture erase "`tmp'/ergm.png"
