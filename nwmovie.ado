@@ -787,8 +787,12 @@ program _nwmovie_killviewer
 		capture shell pkill -f "`vname'( |$)" > /dev/null 2>&1
 		// WebKit keeps per-program folders named after the staged copy (unique to this run); a path that does not exist is harmless
 		if "`c(os)'" == "Unix" {
-			sleep 300
-			capture shell rm -rf "$HOME/.cache/`vname'" "$HOME/.local/share/`vname'" "$HOME/.config/`vname'" 2> /dev/null
+			sleep 500
+			// the environment variable, not the Stata global $HOME (that is empty and would point at /.cache)
+			local _kvhome : environment HOME
+			if `"`_kvhome'"' != "" & `"`_kvhome'"' != "/" {
+				capture shell rm -rf "`_kvhome'/.cache/`vname'" "`_kvhome'/.local/share/`vname'" "`_kvhome'/.config/`vname'" 2> /dev/null
+			}
 		}
 	}
 	capture erase `"`vpath'"'

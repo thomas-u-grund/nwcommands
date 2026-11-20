@@ -61,6 +61,31 @@ if "`c(os)'" != "Windows" {
 	assert real(strtrim("`line'")) == 0
 }
 
+* --- Linux: the profile folders WebKit makes for a staged viewer copy are removed with it (and nothing else)
+if "`c(os)'" == "Unix" {
+	local hm : environment HOME
+	local n = 300000 + int(runiform()*190000)
+	local fv "`c(tmpdir)'/nwedit_viewer_`n'"
+	shell mkdir -p "`hm'/.cache/nwedit_viewer_`n'" "`hm'/.local/share/nwedit_viewer_`n'" "`hm'/.cache/nwedit_viewer_`n'0"
+	tempname fh9
+	file open `fh9' using "`fv'", write text replace
+	file write `fh9' "#!/bin/sh" _n
+	file close `fh9'
+	_nwmovie_killviewer "`fv'"
+	shell test -e "`hm'/.cache/nwedit_viewer_`n'" && echo present > "`c(tmpdir)'/nwk_chk" || echo gone > "`c(tmpdir)'/nwk_chk"
+	file open `fh9' using "`c(tmpdir)'/nwk_chk", read text
+	file read `fh9' l9
+	file close `fh9'
+	assert "`l9'" == "gone"
+	* a folder of another run (same digits plus more) is untouched
+	shell test -e "`hm'/.cache/nwedit_viewer_`n'0" && echo present > "`c(tmpdir)'/nwk_chk" || echo gone > "`c(tmpdir)'/nwk_chk"
+	file open `fh9' using "`c(tmpdir)'/nwk_chk", read text
+	file read `fh9' l9
+	file close `fh9'
+	assert "`l9'" == "present"
+	shell rm -rf "`hm'/.cache/nwedit_viewer_`n'0" "`c(tmpdir)'/nwk_chk"
+}
+
 * --- names that are not a staged viewer are refused silently (nothing is killed, nothing erased)
 tempfile keep
 shell echo x > "`keep'"
@@ -271,6 +296,17 @@ if inlist("`c(os)'", "Unix", "Windows") & "$NW_NOREALEXPORT" == "" {
 		local r2 : dir "`c(tmpdir)'" files "nwmovie_*"
 		local r3 : dir "`c(tmpdir)'" dirs "nwedit_*"
 		local rbefore : word count `r1' `r2' `r3'
+		local hm2 : environment HOME
+		local pbefore = 0
+		if "`c(os)'" == "Unix" {
+			tempfile pc
+			shell ls -d "`hm2'"/.cache/nwedit_viewer_* "`hm2'"/.local/share/nwedit_viewer_* "`hm2'"/.config/nwedit_viewer_* 2>/dev/null | wc -l > "`pc'"
+			tempname fh8
+			file open `fh8' using "`pc'", read text
+			file read `fh8' l8
+			file close `fh8'
+			local pbefore = real(strtrim("`l8'"))
+		}
 		nwset, mat((0,1,0\1,0,0\0,0,0)) name(re_w1) undirected labs(A,B,C)
 		nwset, mat((0,1,1\1,0,0\1,0,0)) name(re_w2) undirected labs(A,B,C)
 		local sd "`c(tmpdir)'"
@@ -303,6 +339,13 @@ if inlist("`c(os)'", "Unix", "Windows") & "$NW_NOREALEXPORT" == "" {
 		local r3 : dir "`c(tmpdir)'" dirs "nwedit_*"
 		local rafter : word count `r1' `r2' `r3'
 		assert `rafter' <= `rbefore'
+		if "`c(os)'" == "Unix" {
+			shell ls -d "`hm2'"/.cache/nwedit_viewer_* "`hm2'"/.local/share/nwedit_viewer_* "`hm2'"/.config/nwedit_viewer_* 2>/dev/null | wc -l > "`pc'"
+			file open `fh8' using "`pc'", read text
+			file read `fh8' l8
+			file close `fh8'
+			assert real(strtrim("`l8'")) <= `pbefore'
+		}
 		di "leftovers before/after: `rbefore' / `rafter'"
 	}
 }
