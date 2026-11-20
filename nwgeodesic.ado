@@ -358,15 +358,19 @@ program _nwgeodesic_plot
 	if `"`notes'"' != "" local note `"note(`notes', size(small) color(black))"'
 	local xl "xlabel(1(1)`max', format(%9.0f))"
 	if `max' > 20 local xl "xlabel(#10, format(%9.0f))"
+	// the mean is a dashed line drawn ON TOP of the bars (pci after the bars), not an xline behind them
 	local xline ""
-	if "`average'" != "" local xline "xline(`mean', lpattern(dash) lcolor(gs4) lwidth(medthin))"
+	if "`average'" != "" {
+		quietly summarize __n, meanonly
+		local xline `"(pci 0 `mean' `=r(max)' `mean', lpattern(dash) lcolor(black) lwidth(medthin))"'
+	}
 	_nw_gfinish blk "Geodesic distance (number of steps)", kind(xtitle) gopts(`"`gopts'"')
 	local xtit `"`r(t)'"'
 	_nw_gfinish blk "Number of `what'", kind(ytitle) gopts(`"`gopts'"')
 	local ytit `"`r(t)'"'
 	_nw_gfinish title "Geodesic distances: `netname'", gopts(`"`gopts'"')
 	local ttl `"`r(t)'"'
-	quietly twoway bar __n __d, barwidth(0.9) fcolor(gs10) lcolor(gs4) `xl' `xline' ///
+	quietly twoway (bar __n __d, barwidth(0.9) fcolor(gs10) lcolor(gs4)) `xline', `xl' legend(off) ///
 		ylabel(, angle(0) format(%9.0fc)) `xtit' `ytit' `ttl' `note' graphregion(color(white)) ///
 		name(`name', replace) `gopts'
 	restore

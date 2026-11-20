@@ -115,6 +115,13 @@ graph describe t_db
 nwp_files `"`tmp'/db"' gph png
 nwdiffuse curve u, toa(toa) plot(cumulative) silent name(t_dc)
 graph describe t_dc
+* plot(both) takes xlabel() (both panels), plot(new) xlabel() and ylabel() of the user; the bar axis starts at 0 by default
+nwdiffuse curve u, toa(toa) plot(both) silent name(t_db2) xlabel(1(1)3)
+graph describe t_db2
+nwdiffuse curve u, toa(toa) plot(new) silent name(t_dn2) xlabel(1 2 3) ylabel(0(2)10)
+graph describe t_dn2
+nwdiffuse curve u, toa(toa) plot(new) silent name(t_dn3) yscale(range(0 20))
+graph describe t_dn3
 nwdiffuse curve u, toa(toa) plot silent
 nwdiffuse curve u, toa(toa) graph silent
 nwdiffuse curve u, toa(toa) plot(NEW) silent

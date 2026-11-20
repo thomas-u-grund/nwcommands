@@ -576,8 +576,10 @@ program _nwdegree_plot
 		_nw_gfinish blk "`xt'", kind(xtitle) gopts(`"`gopts'"')
 		local xtit `"`r(t)'"'
 		if `np' > 1 {
-			_nw_gfinish title "`kind'", size(medsmall)
+			// the panel title names the variable; the x axis is not titled a second time
+			_nw_gfinish title "`xt'", size(medsmall)
 			local ptit `"`r(t)'"'
+			local xtit `"xtitle("")"'
 			local gx ""
 			local nodraw "nodraw"
 		}
@@ -620,10 +622,10 @@ program _nwdegree_plot
 			}
 			local xl ""
 			if "`standardized'" == "" {
-				foreach c in 1 2 3 5 10 20 30 50 100 200 300 500 1000 2000 5000 10000 {
+				// few ticks, one per decade step (1 2 5 10 20 50 ...), the largest degree is not labelled separately
+				foreach c in 1 2 5 10 20 50 100 200 500 1000 2000 5000 10000 {
 					if `c' <= `kmax' * 1.1 local xl "`xl' `c'"
 				}
-				if `kmax' > 5 & `: list kmax in xl' == 0 local xl "`xl' `kmax'"
 				local xl "xlabel(`xl')"
 			}
 			_nw_gfinish blk "P(degree >= k)", kind(ytitle) gopts(`"`gopts'"')
