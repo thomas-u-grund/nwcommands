@@ -33,7 +33,7 @@ All three need nwcommands 3.29.0 or later for the graph options.
 - New `estat rank`, `estat actors` and `estat time` (extensions; relevent has no such methods): the rank of the observed event among all pairs of the risk set, observed against expected events by actor (as sender and as receiver) and over time, with graphs and tables. Works with both likelihoods, `condition()`, `riskset()`, `entry()`/`exit()` and the fixed effects.
 - `name()`, `saving()`, `export()` and graph options in the same way as the other plots of the family. The evaluation runs in the plugin, which is rebuilt for macOS, Linux and Windows.
 
-Tested on macOS (Stata 17): the plot tests and the package tests of nwsaom and nwergm, and the plot, estat and old-plugin tests of nwrem; on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of nwsaom and nwergm. The plugin tests of nwrem on Linux and Windows with the rebuilt plugins were not confirmed at the time of release. Stata 18 on the Mac was not run for these three releases.
+Tested on macOS (Stata 17): the plot tests and the package tests of nwsaom and nwergm, and the plot, estat and old-plugin tests of nwrem; on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of nwsaom and nwergm. The plot and estat tests of nwrem also pass on Linux and on Windows with the plugins built for this release. Stata 18 on the Mac was not run for these three releases.
 
 ## 20 November 2026: nwdynam 1.10.0 and nwalaam 1.3.0
 
