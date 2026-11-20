@@ -414,7 +414,7 @@ One entry for each chapter. The entries use these headings:
   22.7).
 
 ### Chapter 23. Latent space and block models
-- **Time:** 1–2 sessions. The latent space fit takes a minute or two to run; the block model is quick.
+- **Time:** 1–2 sessions. The latent space fit takes from several seconds to about a minute; the block model is quick.
 - **Data:** `lazega`.
 - **Builds on:** 9, 10 (the blockmodel image), 21; 22 for reading MCMC chains.
 - **Commands:** `nwsbm` (`blocks()`, `maxblocks()`, `generate()`, `seed()`), `nwlsm` (`dim()`, `nsample()`,

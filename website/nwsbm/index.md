@@ -47,7 +47,7 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 | Agreement with R | the number of blocks, the memberships (adjusted Rand index 1) and the ICL agree with `sbm` 1.0.0 and `blockmodels` 1.2.1 on the test networks (Bernoulli, Poisson, Gaussian, two-mode, with and without covariates; the ICL to a relative difference of about 5e-8 with covariates), and with `greed` 0.6.2 for the degree-corrected model and the exact ICL |
 | Recovery | planted partitions and planted covariate coefficients are recovered on simulated networks |
 | Engine | a compiled plugin; there is no slower fallback |
-| Version | 1.0.1 (20 November 2026) |
+| Version | 1.0.2 (20 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## What is not implemented

@@ -12,6 +12,16 @@ Newest first. Announcements also go to the [nwcommands mailing list](https://gro
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 20 November 2026: nwalaam 1.3.1, nwlsm 1.0.3 and nwsbm 1.0.2
+
+**nwalaam 1.3.1** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.3.1)). A missing value in a covariate of an effect (`ego()`, `alter()` and the other covariate effects) used to be counted as 0 silently; the fit now stops with error 416 and names the variable. The stochastic approximation no longer stops with error 430 for seeds whose starting values were extreme: it restarts from limited and, if needed, from zero starting values (seeds that converged before give the same estimates). A note reports self-loops of a one-mode network.
+
+**nwlsm 1.0.3** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.3)). `estat mcmcdiag`: the Geweke rule accounts for the number of chains and parameters, so converged runs with several chains are no longer flagged (the printed Geweke z values can differ from 1.0.2), a warning is shown when the smallest effective sample size is below 100, and the tables and titles of the `estat` commands fit within 80 columns.
+
+**nwsbm 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.2)). The line "Lower bound J" and the header of `estat icl` no longer wrap at `set linesize 80`; `maxblocks(0)` is an error instead of meaning the default.
+
+Tested on macOS with Stata 17 (the tests of each package including the new ones, and the dialog assembly test for nwlsm and nwsbm) and on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP), where all test files pass; for nwalaam the chapter ego model was also compared for seeds 1 to 30 against 1.3.0 on Linux (identical estimates, seed 111 now works). Stata 18 was not run.
+
 ## 20 November 2026: nwcommands 3.32.0
 
 **nwcommands 3.32.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.32.0)). `nwmovie export()` now works on Linux: `.gif` is written by the viewer, `.mp4` and `.webm` are made with `ffmpeg` (the command stops at once, before anything is launched, when `ffmpeg` is missing). On macOS and Windows nothing changes. Failures, stalls and a locked macOS screen end the command with error 498 and stop the viewer; temporary files are removed; two exports at the same time no longer collide; `export()` without `fname()` no longer writes `movie.html`; `nwinstall, remove` works in console Stata. Tested on macOS (Stata 17): the movie, install, plot and dialog tests pass, but the real macOS viewer export was not run for this release because the screen was locked (the macOS code path is unchanged, and an earlier build of the same branch produced an `.mp4` there). The Linux and Windows 11 exports (StataNow 19.5 MP) were tested. Stata 18 was not run.

@@ -9,9 +9,9 @@ description: "How to cite nwsbm, and the papers and software it builds on."
 # How to cite
 
 **nwsbm.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwsbm version` (for example "nwsbm 1.0.1"). To cite the software:
+`nwsbm version` (for example "nwsbm 1.0.2"). To cite the software:
 
-> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks (version 1.0.1).* GitHub. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
+> Grund, T. U. (2026). *nwsbm: a Stata package for stochastic block models of networks (version 1.0.2).* GitHub. [https://github.com/thomas-u-grund/nwsbm](https://github.com/thomas-u-grund/nwsbm)
 
 Cite the manual, which has a DOI:
 
