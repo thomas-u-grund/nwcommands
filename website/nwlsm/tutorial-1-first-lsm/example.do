@@ -14,5 +14,9 @@ estat mcmcdiag
 * --- the positions of the actors ---
 estat positions
 
+* --- the network drawn in the latent space ---
+nwlsmplot, title("The karate club in the latent space")
+graph export "karate_positions.png", width(900) replace
+
 * --- does the fitted model reproduce the degrees and distances of the network? ---
 estat gof

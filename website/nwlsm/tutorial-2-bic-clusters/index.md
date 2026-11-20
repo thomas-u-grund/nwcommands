@@ -97,6 +97,17 @@ The BIC tells us that three clusters describe the positions best. It does not te
      Total |         7          4          7 |        18
 ```
 
+To see the clusters, draw the monks in the latent space with `nwlsmplot`; the option `clusters` colours each monk by cluster and `label()` names them:
+
+```stata
+. nwlsmplot, clusters label(_nwnode) title("Sampson's monks in the latent space")
+. graph export "monks_clusters.png", width(900) replace
+```
+
+![Sampson's monks in the latent space, coloured by cluster](monks_clusters.png)
+
+The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model.
+
 The three clusters of the model are the three factions, with no monk in the wrong place. The numbering of the clusters is arbitrary; only the grouping counts. The model has never seen the faction variable. How sure is it about each monk?
 
 ```stata

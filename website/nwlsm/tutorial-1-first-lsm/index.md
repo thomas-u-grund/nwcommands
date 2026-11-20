@@ -106,6 +106,17 @@ r9                0.3700     -0.1619
 The reported positions are the minimum Kullback-Leibler positions of `latentnet`: the positions whose tie probabilities are closest to the posterior mean tie probabilities. They are identified only up to rotation, reflection and
 translation, so only the distances between actors mean anything, never the axes. `nwlsmplot` draws the network in the latent space, and the option `clusters(#)` with `estat clusters` finds groups of actors that lie together.
 
+A table of coordinates is hard to read. `nwlsmplot` draws the same positions as a map, with the ties of the network as light lines:
+
+```stata
+. nwlsmplot, title("The karate club in the latent space")
+. graph export "karate_positions.png", width(900) replace
+```
+
+![The karate club in the latent space: actors are points, ties are lines](karate_positions.png)
+
+Actors that are tied sit close together, and actors without ties in common lie far apart. Two actors, one in the middle left and one in the middle right, hold most of the ties, and the others lie around them. A few actors have exactly the same position in the table above because they have the same ties; they are drawn on top of each other. Read the map by distances only: turning or flipping it would change the axes and nothing else. The option `clusters` colours the actors by latent cluster once the model has been fitted with `clusters()` ([tutorial 2](../tutorial-2-bic-clusters/)).
+
 ## Goodness of fit
 
 ```stata
