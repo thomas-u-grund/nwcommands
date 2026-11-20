@@ -87,10 +87,8 @@ Blocks
 Within: connectivity within the block (the diagonal of the connectivity matrix).
 
 . 
-. * --- plots: blocked adjacency matrix, block graph, ICL curve, memberships ---
+. * --- plots: blocked adjacency matrix, ICL curve, memberships ---
 . nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
-
-. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
 
 . nwsbmplot, type(icl) export(nwsbm1_icl.png)
 
@@ -147,3 +145,8 @@ b3  0.0017  0.4740  0.0385
      Total |        16         18 |        34 
 
 . 
+. * --- the block graph of the three-block fit ---
+. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
+
+. 
+

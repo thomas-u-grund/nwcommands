@@ -12,9 +12,8 @@ nwsbm zachary_bin, maxblocks(5) seed(20261120) generate(block) replace
 estat icl
 estat blocks
 
-* --- plots: blocked adjacency matrix, block graph, ICL curve, memberships ---
+* --- plots: blocked adjacency matrix, ICL curve, memberships ---
 nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
-nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
 nwsbmplot, type(icl) export(nwsbm1_icl.png)
 nwsbmplot, type(membership) export(nwsbm1_membership.png)
 
@@ -24,3 +23,6 @@ tabulate block group
 * --- force three blocks ---
 nwsbm zachary_bin, blocks(3) seed(20261120) generate(block3) replace
 tabulate block3 group
+
+* --- the block graph of the three-block fit ---
+nwsbmplot, type(blocks) export(nwsbm1_blocks.png)

@@ -98,7 +98,7 @@ core and a periphery and not two groups of friends: it is a statement about the 
 
 ## Looking at the blocks
 
-`nwsbmplot` draws pictures of the last fit. Every plot can be written to a file with `export()` (the format follows the extension: `.png`, `.pdf`, `.eps`); the pictures on this page were made that way.
+`nwsbmplot` draws pictures of the last fit (the block graph follows below, after the fit with three blocks). Every plot can be written to a file with `export()` (the format follows the extension: `.png`, `.pdf`, `.eps`); the pictures on this page were made that way.
 
 ```stata
 . nwsbmplot, type(matrix) shade export(nwsbm1_matrix.png)
@@ -108,14 +108,6 @@ core and a periphery and not two groups of friends: it is a statement about the 
 
 The blocked adjacency matrix draws every tie as a black square, with the members ordered by their block: the 29 members of block 1 first (top rows, left columns), the 5 members of block 2 last, and thin lines between the blocks. The option `shade` fills each block rectangle with a grey that follows the connectivity of that pair of blocks (four levels, relative to the largest entry of the connectivity matrix): the square of block 1 with block 1 (top left) is the lightest, the strips of block 2 with block 1 are mid grey and the small square of block 2 with block 2 (bottom right) is the darkest. The top-left square is mostly empty, with ties scattered here and there. The rows and columns of block 2 (the bottom strip and the right strip) are
 crowded with squares, and so is the small square where block 2 meets block 2 (bottom right). This is the pattern of the connectivity matrix above: a few ties inside the large block, many to and within the small one.
-
-```stata
-. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
-```
-
-![Block graph of the karate club](nwsbm1_blocks.png)
-
-The block graph draws each block as a circle whose size follows the number of members (the large circle is block 1, the small one block 2) and the connectivity between the blocks as a line whose width follows the tie probability relative to the largest entry of the connectivity matrix. Here there are two circles and one line, the 0.37 between the blocks. Ties inside a block are not drawn, which is why the dense small block does not show its 0.49.
 
 ```stata
 . nwsbmplot, type(icl) export(nwsbm1_icl.png)
@@ -194,6 +186,15 @@ b3  0.0017  0.4740  0.0385
 
 With `blocks(3)` the model splits the large block into two parts (13 and 16 actors) that are tied to the small block with probabilities of 0.25 and 0.47, and the ICL of this fit (-216.6) is lower than that of two blocks (-206.1), so the criterion does not support the third block.
 The three blocks do not follow the two factions either (see the cross-tabulation in the log).
+
+The block graph needs more than two blocks to show a structure, so it is drawn for the three-block fit. It draws each block as a circle whose size follows the number of members (blocks 1 and 3 have 13 and 16 members, the small block 2 has 5) and the connectivity between the blocks as a line whose width follows the tie probability relative to the largest entry of the connectivity matrix. Block 2 is tied to block 3 with a thick line (0.47) and to block 1 with a thinner one (0.25); between blocks 1 and 3 there is no visible line, because their tie probability is 0.002. The small dense block is the hub between the two large ones. Ties inside a block are not drawn, which is why the dense small block does not show its 0.49.
+
+```stata
+. nwsbmplot, type(blocks) export(nwsbm1_blocks.png)
+```
+
+![Block graph of the karate club, three blocks](nwsbm1_blocks.png)
+
 
 ## What to remember
 

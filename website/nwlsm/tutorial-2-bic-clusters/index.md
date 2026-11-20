@@ -113,7 +113,7 @@ To see the clusters, draw the monks in the latent space with `nwlsmplot`; the op
 
 ![Sampson's monks in the latent space, coloured by cluster](monks_clusters.png)
 
-The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model. Both axes have the same scale, so distances can be read from the picture (`noequal` switches this off).
+The three groups lie apart: seven monks in the lower left, seven on the right and a small group of four at the top. Ties run mostly inside each group, and the few ties between groups run through the space between them. The small group at the top is the faction of the outcasts, and one of its four monks lies between it and the rest. Only distances count on this map: the axes can be turned or flipped without changing the model. Both axes have the same scale, so distances can be read from the picture (`noequal` switches this off). The labels are placed automatically (`labposition(auto)`, the default): each name goes to the side of its marker where the fewest other markers and names are in the way; `labposition(#)` fixes a clock position for all.
 
 The network is directed, so the ties are drawn as arrows from the sender to the receiver; this is the default for a directed network, and `noarrows` draws plain lines instead.
 
