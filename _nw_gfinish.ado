@@ -163,6 +163,9 @@ program define _nw_gfinish, rclass
 			if `"`ex0'"' != "" {
 				_nw_gfinish_fnsuffix `"`ex0'"', suffix(`"`sfx'"')
 				local f `"`r(file)'"'
+				// graph export needs the graph to be the current one in headless batch runs (r(693) "could not find Graph window"
+				// for an older graph); graph display makes it current and leaves a machine with a display unchanged
+				capture quietly graph display `g'
 				quietly graph export `"`f'"', name(`g') replace `exrest'
 				local exported `"`exported' `"`f'"'"'
 			}

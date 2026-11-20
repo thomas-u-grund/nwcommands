@@ -203,9 +203,9 @@ local ex `"`r(export)'"'
 _nw_gfinish save, name(gf_w) always export(`"`ex'"')
 nw_assertwidth `"`tmp'/cc_gf_w.png"' 650
 erase `"`tmp'/cc_gf_w.png"'
-* several graphs: suffixed files, each with the width (with graphics off Stata cannot export a graph that is not the newest
-* when width() is given: r(693) "could not find Graph window"; the test therefore turns graphics on for this block)
-set graphics on
+* several graphs: suffixed files, each with the width. With graphics off (headless batch runs) Stata cannot export a graph that is
+* not the newest one drawn (r(693) "could not find Graph window"), also without width(); _nw_gfinish save therefore runs
+* graph display on each graph before graph export. This block fails without that call.
 twoway scatter mpg weight, name(gf_w, replace)
 twoway scatter mpg weight, name(gf_w2, replace)
 _nw_gfinish check, plot(plot) export(`"`tmp'/mm.png"', width(450))
@@ -215,7 +215,12 @@ foreach g in gf_w gf_w2 {
 	nw_assertwidth `"`tmp'/mm_`g'.png"' 450
 	erase `"`tmp'/mm_`g'.png"'
 }
-set graphics off
+* the older graph alone (gf_w was drawn before gf_w2), no width, and saving() of the older graph
+_nw_gfinish save, name(gf_w) saving(`"`tmp'/old"') export(`"`tmp'/old.png"')
+confirm file `"`tmp'/old.png"'
+confirm file `"`tmp'/old.gph"'
+erase `"`tmp'/old.png"'
+erase `"`tmp'/old.gph"'
 * saving() together with a wrapped export
 local inner `""`tmp'/sv.png", width(333)"'
 _nw_gfinish save, name(gf_w) saving(`"`tmp'/sv"') export(`"`inner'"')
