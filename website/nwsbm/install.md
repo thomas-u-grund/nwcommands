@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.2:
 
 ```stata
-. net install nwsbm, from(https://raw.githubusercontent.com/thomas-u-grund/nwsbm/v1.0.1/) replace
+. net install nwsbm, from(https://raw.githubusercontent.com/thomas-u-grund/nwsbm/v1.0.2/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwsbm version
-nwsbm version 1.0.1, 20nov2026
+nwsbm version 1.0.2, 20nov2026
   native plugin           : .../s/sbm_vem_macos.plugin (ships with the package)
   reference               : R packages blockmodels, sbm and greed
   license                 : GNU GPL-3
