@@ -95,8 +95,13 @@ program _nwopenviewer, rclass
 		local _nwov_rngstate = c(rngstate)
 		local _nwtd "`c(tmpdir)'"
 		if substr("`_nwtd'", -1, 1) != "/" & substr("`_nwtd'", -1, 1) != "\" local _nwtd "`_nwtd'/"
-		local _nwov_viewercopy = "`_nwtd'" + "nwedit_viewer_" + strofreal(int(runiform()*1000000))
-		local _nwov_htmlcopy = "`_nwtd'" + "nwedit_view_" + strofreal(int(runiform()*1000000)) + ".html"
+		// Names unique per Stata process (a runiform() draw is not: every fresh Stata starts from the same state, and
+		// two exports started together collided): digits taken from Stata's own tempfile name.
+		tempfile _nwov_tf
+		global NW_UCNT = cond("$NW_UCNT" == "", 1, $NW_UCNT + 1)
+		mata: st_local("_nwov_id", invtokens(strofreal(ascii(pathbasename(st_local("_nwov_tf")))), "") + st_global("NW_UCNT"))
+		local _nwov_viewercopy = "`_nwtd'" + "nwedit_viewer_" + "`_nwov_id'"
+		local _nwov_htmlcopy = "`_nwtd'" + "nwedit_view_" + "`_nwov_id'" + ".html"
 		set rngstate `_nwov_rngstate'
 		// Windows: keep the .exe extension. CreateProcess appends ".exe" to a
 		// name without an extension, so a copy without it is never found.
@@ -123,4 +128,5 @@ program _nwopenviewer, rclass
 	return local usedviewer = `_nwov_usedviewer'
 	// the staged copy of the viewer binary, so that the caller can stop exactly this process (nwmovie export())
 	if `_nwov_usedviewer' return local viewercopy `"`_nwov_viewercopy'"'
+	if `_nwov_usedviewer' return local htmlcopy `"`_nwov_htmlcopy'"'
 end

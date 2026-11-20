@@ -12,6 +12,9 @@ __NWMOVIE_GIFJS__
 <script>
 __NWMOVIE_MP4MUXER__
 </script>
+<script>
+__NWMOVIE_WEBMMUXER__
+</script>
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, Helvetica, Arial, sans-serif; background: #fff; }
   #toolbar { position: absolute; top: 0; left: 0; right: 0; height: 58px; background: #f4f4f6; border-bottom: 1px solid #d5d5da; display: flex; align-items: center; padding: 0 12px; gap: 10px; box-sizing: border-box; }
@@ -134,6 +137,13 @@ function nextPaint() {
 }
 
 const isEvent = MOVIE_DATA.mode === 'event';
+
+// WebKitGTK (Linux): its WebCodecs VideoEncoder and MediaRecorder exist and
+// report support, but a build made for a newer GStreamer than the system has
+// aborts the whole web process on first use, which no script can catch. So a
+// Linux WebKit engine never gets a video encoder instance; GIF is drawn
+// natively, and nwmovie.ado turns the GIF into MP4/WebM with ffmpeg.
+const NO_VIDEO = /Linux|X11/.test(navigator.userAgent) && !/Android|Chrome|Chromium|Edg\//.test(navigator.userAgent);
 
 // nwplot's own per-network resolved JSON (movieexport()) ids each edge
 // by a plain per-network positional counter ("e1","e2",...) - NOT a
@@ -766,8 +776,8 @@ function blobToBase64(blob) {
   });
 }
 
-async function makeGifBlob(status) {
-  const GIF_DELAY = 90;
+async function makeGifBlob(status, delayMs) {
+  const GIF_DELAY = delayMs || 90;
   const canvases = await composeExportFrames(GIF_DELAY, status);
   const workerUrl = URL.createObjectURL(new Blob([GIF_WORKER_SRC], { type: 'application/javascript' }));
   // gif.js's own default is repeat:0 (loop forever) regardless of the
@@ -795,6 +805,7 @@ function evenCanvas(src) {
 // so the file has the movie's timing regardless of how fast this machine
 // renders. Returns null if the engine has no usable H.264 encoder.
 async function encodeMp4WebCodecs(canvases, fps, status) {
+  if (NO_VIDEO) return null;
   if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof Mp4Muxer === 'undefined') return null;
   const width = canvases[0].width, height = canvases[0].height;
   const bitrate = Math.min(12e6, Math.max(2e6, width * height * fps * 0.15));
@@ -840,14 +851,84 @@ async function encodeMp4WebCodecs(canvases, fps, status) {
   return { blob: new Blob([target.buffer], { type: 'video/mp4' }), ext: 'mp4', mime: 'video/mp4' };
 }
 
+// isTypeSupported() is not reliable (WebKitGTK says yes to MP4 and then throws
+// when a recorder is started), so a recorder counts as usable only after a
+// real start and stop on a tiny canvas.
+function recorderWorks(mime) {
+  if (NO_VIDEO) return false;
+  try {
+    if (typeof MediaRecorder === 'undefined' || typeof HTMLCanvasElement.prototype.captureStream !== 'function') return false;
+    if (!MediaRecorder.isTypeSupported(mime)) return false;
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 16;
+    c.getContext('2d').fillRect(0, 0, 16, 16);
+    const rec = new MediaRecorder(c.captureStream(0), { mimeType: mime });
+    rec.start();
+    try { rec.stop(); } catch (e) { /* stopped already */ }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+const _recorderCache = {};
+function recorderOk(mime) {
+  if (!(mime in _recorderCache)) _recorderCache[mime] = recorderWorks(mime);
+  return _recorderCache[mime];
+}
+const WEBM_MIMES = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+const MP4_MIMES = ['video/mp4;codecs=avc1', 'video/mp4'];
+
+// WebM through WebCodecs (VP9, else VP8) and webm-muxer. WebKitGTK has no
+// H.264 encoder without GStreamer's bad plugins and no usable MediaRecorder,
+// but its WebCodecs encode VP8/VP9. Returns null if there is no such encoder.
+async function webmConfig(width, height, fps) {
+  if (NO_VIDEO) return null;
+  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof WebMMuxer === 'undefined') return null;
+  const bitrate = Math.min(12e6, Math.max(2e6, width * height * fps * 0.15));
+  for (const [codec, mux] of [['vp09.00.10.08', 'V_VP9'], ['vp8', 'V_VP8']]) {
+    const c = { codec, width, height, bitrate, framerate: fps };
+    try {
+      const support = await VideoEncoder.isConfigSupported(c);
+      if (support.supported) return { config: c, mux };
+    } catch (e) { /* next */ }
+  }
+  return null;
+}
+
+async function encodeWebmWebCodecs(canvases, fps, status) {
+  const width = canvases[0].width, height = canvases[0].height;
+  const wc = await webmConfig(width, height, fps);
+  if (!wc) return null;
+  const target = new WebMMuxer.ArrayBufferTarget();
+  const muxer = new WebMMuxer.Muxer({ target, video: { codec: wc.mux, width, height, frameRate: fps } });
+  let encodeError = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+    error: e => { encodeError = e; }
+  });
+  encoder.configure(wc.config);
+  const usPerFrame = 1e6 / fps;
+  for (let i = 0; i < canvases.length; i++) {
+    if (encodeError) throw encodeError;
+    status.textContent = 'Encoding frame ' + (i + 1) + '/' + canvases.length;
+    const vf = new VideoFrame(canvases[i], { timestamp: Math.round(i * usPerFrame), duration: Math.round(usPerFrame) });
+    encoder.encode(vf, { keyFrame: i % (fps * 2) === 0 });
+    vf.close();
+    while (encoder.encodeQueueSize > 8) await new Promise(r => setTimeout(r, 5));
+  }
+  await encoder.flush();
+  if (encodeError) throw encodeError;
+  encoder.close();
+  muxer.finalize();
+  return { blob: new Blob([target.buffer], { type: 'video/webm' }), ext: 'webm', mime: 'video/webm' };
+}
+
 // Fallback for engines without WebCodecs: MediaRecorder on a canvas
 // stream, fed frame by frame in real time. MP4 where the engine records
 // it, otherwise WebM.
 async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
   if (typeof MediaRecorder === 'undefined') throw new Error('this viewer cannot encode video; use Export GIF');
-  const webm = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-  const mp4 = ['video/mp4;codecs=avc1', 'video/mp4'];
-  const mime = (wantWebm ? webm : mp4.concat(webm)).find(m => MediaRecorder.isTypeSupported(m));
+  const mime = (wantWebm ? WEBM_MIMES : MP4_MIMES.concat(WEBM_MIMES)).find(m => recorderOk(m));
   if (!mime) throw new Error(wantWebm ? 'this viewer cannot encode WebM video; export a .mp4 or .gif file instead'
     : 'this viewer cannot encode video; use Export GIF');
   const canvas = document.createElement('canvas');
@@ -859,7 +940,10 @@ async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
   const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6e6 });
   const chunks = [];
   rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  const stopped = new Promise(resolve => { rec.onstop = resolve; });
+  const stopped = new Promise((resolve, reject) => {
+    rec.onstop = resolve;
+    rec.onerror = e => reject(new Error('the video recorder failed' + (e && e.error && e.error.message ? ': ' + e.error.message : '')));
+  });
   rec.start();
   for (let i = 0; i < canvases.length; i++) {
     status.textContent = 'Recording frame ' + (i + 1) + '/' + canvases.length;
@@ -868,24 +952,27 @@ async function encodeMediaRecorder(canvases, fps, status, wantWebm) {
     await new Promise(r => setTimeout(r, 1000 / fps));
   }
   rec.stop();
-  await stopped;
+  await Promise.race([stopped, new Promise((_, reject) => setTimeout(() => reject(new Error('the video recorder did not finish')), 15000))]);
+  if (!chunks.length) throw new Error('the video recorder produced no data');
   const type = mime.split(';')[0];
   return { blob: new Blob(chunks, { type }), ext: type === 'video/mp4' ? 'mp4' : 'webm', mime: type };
 }
 
-// format: 'mp4' (MP4 required), 'webm' (WebM required) or 'any' (the
-// Export video button: MP4 where possible, otherwise WebM).
+// format: 'mp4' (MP4 wanted; WebM if that is all the engine can make),
+// 'webm' (WebM required) or 'any' (the Export video button: MP4 where
+// possible, otherwise WebM). Order: the engine's H.264 WebCodecs, a
+// recorder that really starts, WebM through WebCodecs (VP9/VP8).
 async function makeVideoBlob(status, format) {
   const FPS = 25;
-  const requireMp4 = format === 'mp4';
   const canvases = (await composeExportFrames(1000 / FPS, status)).map(evenCanvas);
-  if (format === 'webm') return encodeMediaRecorder(canvases, FPS, status, true);
-  let out = await encodeMp4WebCodecs(canvases, FPS, status);
-  if (!out) {
-    if (requireMp4 && (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported('video/mp4')))
-      throw new Error('this viewer cannot encode MP4 video; export a .webm or .gif file instead');
-    out = await encodeMediaRecorder(canvases, FPS, status, false);
+  let out = null;
+  if (format !== 'webm') {
+    out = await encodeMp4WebCodecs(canvases, FPS, status);
+    if (!out && MP4_MIMES.some(recorderOk)) out = await encodeMediaRecorder(canvases, FPS, status, false);
   }
+  if (!out && WEBM_MIMES.some(recorderOk)) out = await encodeMediaRecorder(canvases, FPS, status, true);
+  if (!out) out = await encodeWebmWebCodecs(canvases, FPS, status);
+  if (!out) throw new Error('this viewer cannot encode ' + (format === 'webm' ? 'WebM' : 'MP4 or WebM') + ' video (no usable video encoder in its web engine); export a .gif file instead');
   return out;
 }
 
@@ -915,21 +1002,64 @@ function exportButton(id, make) {
 exportButton('btnGif', makeGifBlob);
 exportButton('btnVideo', status => makeVideoBlob(status, 'any'));
 
+// What this web engine can encode, without rendering anything: used by the
+// unattended export to stop at once (instead of rendering all frames first)
+// when the requested format cannot be made.
+async function videoSupport() {
+  const r = { mp4: false, webm: false };
+  if (NO_VIDEO) return r;
+  if (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
+    for (const codec of ['avc1.640033', 'avc1.4d0033', 'avc1.42003e', 'avc1.42001f']) {
+      try {
+        const s = await VideoEncoder.isConfigSupported({ codec, width: 640, height: 480, bitrate: 2e6, framerate: 25, avc: { format: 'avc' } });
+        if (s.supported) { r.mp4 = true; break; }
+      } catch (e) { /* next */ }
+    }
+  }
+  if (MP4_MIMES.some(recorderOk)) r.mp4 = true;
+  if (WEBM_MIMES.some(recorderOk) || await webmConfig(640, 480, 25)) r.webm = true;
+  return r;
+}
+
 // Unattended export (nwmovie ..., export(file)): the viewer was started
 // with an output path, and nwmovie.ado set AUTO_EXPORT to the format. The
 // page exports once it has drawn, then posts the file (or the error) to
-// the native bridge, which writes it and closes the window.
+// the native bridge, which writes it and closes the window. Anything that
+// goes wrong - a thrown error, an unhandled promise, a step that stalls -
+// is reported to the bridge at once, so the viewer never waits for a file
+// that will not come. An MP4 request is met with WebM when the engine can
+// record only WebM; nwmovie.ado looks at the file and says so.
 if (AUTO_EXPORT && hasNativeSave) {
   const status = document.getElementById('gifStatus');
+  let finished = false, lastProgress = Date.now();
+  const report = msg => { if (finished) return; finished = true; nativeSaver(msg); };
+  const fail = err => report({ error: String(err && err.message ? err.message : err) });
+  window.addEventListener('error', e => fail(e.error || e.message || 'script error'));
+  window.addEventListener('unhandledrejection', e => fail(e.reason || 'unhandled error'));
+  new MutationObserver(() => { lastProgress = Date.now(); })
+    .observe(status, { childList: true, characterData: true, subtree: true });
+  const STALL_MS = 120000;
+  const dog = setInterval(() => {
+    if (finished) { clearInterval(dog); return; }
+    if (Date.now() - lastProgress > STALL_MS)
+      fail('the export stalled (last step: ' + (status.textContent || 'start') + ')');
+  }, 2000);
   const run = async () => {
     try {
+      if (AUTO_EXPORT !== 'gif' && AUTO_EXPORT !== 'gifv') {
+        const sup = await videoSupport();
+        const can = AUTO_EXPORT === 'webm' ? sup.webm : (sup.mp4 || sup.webm);
+        if (!can) throw new Error('this viewer cannot encode ' + AUTO_EXPORT.toUpperCase() + ' video (no usable video encoder in its web engine); export a .gif file instead');
+      }
+      // 'gifv': a GIF at 25 frames per second (40 ms), which ffmpeg turns into MP4/WebM
       const out = AUTO_EXPORT === 'gif' ? await makeGifBlob(status)
-        : await makeVideoBlob(status, AUTO_EXPORT);
-      if (AUTO_EXPORT !== 'gif' && out.ext !== AUTO_EXPORT)
-        throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not ' + AUTO_EXPORT.toUpperCase());
-      nativeSaver({ filename: 'nwmovie_export.' + out.ext, dataBase64: await blobToBase64(out.blob) });
+        : AUTO_EXPORT === 'gifv' ? await makeGifBlob(status, 40)
+        : await makeVideoBlob(status, AUTO_EXPORT === 'mp4' ? 'any' : AUTO_EXPORT);
+      if (AUTO_EXPORT === 'webm' && out.ext !== 'webm')
+        throw new Error('this viewer can encode ' + out.ext.toUpperCase() + ' video but not WEBM');
+      report({ filename: 'nwmovie_export.' + out.ext, dataBase64: await blobToBase64(out.blob) });
     } catch (err) {
-      nativeSaver({ error: String(err && err.message ? err.message : err) });
+      fail(err);
     }
   };
   // two animation frames: the first layout pass and paint have happened

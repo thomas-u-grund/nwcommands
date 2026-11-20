@@ -65,7 +65,7 @@ capture mata: mata mlib index
 findfile nwset.ado
 assert strpos("`r(fn)'", "`scratch'/plus") == 1
 local inst = substr("`r(fn)'", 1, strlen("`r(fn)'") - strlen("nwset.ado") - 1)
-foreach f in nwmovie_template.html nwedit_template.html lib/vendor/cytoscape.min.js lib/vendor/gif.js lib/vendor/gif.worker.js lib/vendor/mp4-muxer.js lib/plugins/macos/nwedit_viewer_macos lib/plugins/windows/nwedit_viewer_windows.exe lib/plugins/unix/nwedit_viewer_unix {
+foreach f in nwmovie_template.html nwedit_template.html lib/vendor/cytoscape.min.js lib/vendor/gif.js lib/vendor/gif.worker.js lib/vendor/mp4-muxer.js lib/vendor/webm-muxer.js lib/plugins/macos/nwedit_viewer_macos lib/plugins/windows/nwedit_viewer_windows.exe lib/plugins/unix/nwedit_viewer_unix {
 	confirm file "`inst'/`f'"
 }
 di "PASS ancillary files installed under `inst'"
