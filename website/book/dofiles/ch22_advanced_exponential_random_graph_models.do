@@ -7,9 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.31.0,
-* nwergm 1.11.1, nwsaom 1.9.1, nwrem 1.6.0, nwdynam 1.10.0, nwalaam 1.3.0,
-* nwlsm 1.0.2 and nwsbm 1.0.1, the versions the book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.32.1,
+* nwergm 1.11.1, nwsaom 1.9.1, nwrem 1.6.0, nwdynam 1.10.0, nwalaam 1.3.1,
+* nwlsm 1.0.3 and nwsbm 1.0.2, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -26,7 +26,8 @@ nwclear
 set obs 100
 generate grp = ceil(_n / 25)
 nwergm simulate 100, edges mutual nodematch(grp) gwesp(.5) directed ///
-    theta(-4 1.5 1.2 .6) seed(12345) generate(art)
+    theta(-4 1.5 1.2 .6) seed(12345) mcmcburnin(200000) ///
+    mcmcinterval(20000) generate(art)
 nwsummarize art, detail
 
 nwergm art, edges mutual nodematch(grp) gwesp(.5) seed(12345)
