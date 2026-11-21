@@ -19,7 +19,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 The Mata library is unchanged (no lockstep rebuild of the model packages).
 
-Tested on macOS (Stata 17): the new test and the tests of the touched commands, the core plot tests and the dialog tests.
+Tested on macOS with Stata 17 and Stata 18: the new test, the tests of the touched commands, the core plot tests and the dialog tests. On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new test, the tests of the touched commands, the plot and dialog tests; on Linux also the real `nwmovie` export to `.mp4` and `.webm` with `ffmpeg`.
 
 ## [3.32.1] - 2026-11-20
 
