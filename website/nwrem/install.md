@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.6.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.7.0:
 
 ```stata
-. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.6.0/) replace
+. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.7.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwrem version
-nwrem version 1.6.0, 20nov2026
+nwrem version 1.7.0, 21nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../m/rem_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R relevent 1.2-1

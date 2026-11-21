@@ -12,7 +12,7 @@ The manual is the reference for `nwrem`. It covers the model (the ordinal and th
 
 **[Download the manual (PDF, 61 pages)](../nwrem_manual.pdf)**
 
-The manual describes `nwrem` 1.6 (the current release is 1.6.0). It is archived at Zenodo under the DOI of all versions. Cite it as:
+The manual describes `nwrem` 1.6 (the current release is 1.7.0). It is archived at Zenodo under the DOI of all versions. Cite it as:
 
 > Grund, T. U. (2026). *nwrem: Relational event models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398012](https://doi.org/10.5281/zenodo.24398012)
 

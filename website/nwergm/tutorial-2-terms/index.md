@@ -193,8 +193,7 @@ nodeicov_seniority |  -.0066358   .0022502    -2.95   0.003    -.0110462   -.002
 
 MCMLE converged after 3 iteration(s).
 ...
-Log-likelihood: -1697.5351 (df = 4)   AIC:    3403.1   BIC:    3429.1
-Monte Carlo standard error of the log-likelihood:  .12492
+Log-likelihood: -1697.5977 (df = 4)   AIC:    3403.2   BIC:    3429.2
 ```
 
 `mutual` is 0.99: friendships are strongly reciprocal. Lawyers of the same practice are more likely to
@@ -224,7 +223,7 @@ nodeicov_seniority |  -.0044112   .0017983    -2.45   0.014    -.0079358   -.000
 MCMLE converged after 6 iteration(s).
 ...
 Log-likelihood: -1667.5431 (df = 5)   AIC:    3345.1   BIC:    3377.6
-Monte Carlo standard error of the log-likelihood:  .16479
+Monte Carlo standard error of the log-likelihood:  .31731
 ```
 
 ```stata
@@ -243,7 +242,7 @@ nodeicov_seniority |  -.0044404   .0017035    -2.61   0.009    -.0077793   -.001
 MCMLE converged after 6 iteration(s).
 ...
 Log-likelihood: -1666.6226 (df = 5)   AIC:    3343.2   BIC:    3375.8
-Monte Carlo standard error of the log-likelihood:  .07321
+Monte Carlo standard error of the log-likelihood:  .27572
 ```
 
 Both values give a clearly positive closure effect and similar other coefficients, but the two
@@ -274,7 +273,7 @@ nodeicov_seniority |  -.0046807   .0018154    -2.58   0.010    -.0082388   -.001
 MCMLE converged after 8 iteration(s).
 ...
 Log-likelihood: -1667.0506 (df = 6)   AIC:    3346.1   BIC:    3385.2
-Monte Carlo standard error of the log-likelihood:   .0722
+Monte Carlo standard error of the log-likelihood:   .30686
 ```
 
 The coefficient of the in-degree term (1.58) is small relative to its standard error (1.93), so it adds

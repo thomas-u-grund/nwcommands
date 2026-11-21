@@ -12,7 +12,7 @@ The manual is the reference for `nwdynam`. It covers the model (the choice, rate
 
 **[Download the manual (PDF, 73 pages)](../nwdynam_manual.pdf)**
 
-The manual describes `nwdynam` 1.10 (the current release is 1.10.0). It is archived at Zenodo under the DOI of all versions. Cite it as:
+The manual describes `nwdynam` 1.10 (the current release is 1.11.0). It is archived at Zenodo under the DOI of all versions. Cite it as:
 
 > Grund, T. U. (2026). *nwdynam: Dynamic network actor models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398099](https://doi.org/10.5281/zenodo.24398099)
 
