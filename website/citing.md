@@ -14,6 +14,8 @@ Cite the packages you used and report their versions. `nwversion` prints the ver
 lists the installed model packages; each model package prints its own version with `<name> version`, for
 example `nwsaom version`.
 
+The DOIs of the manuals below are the ones of all versions of the manual: each always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwversion` or `<package> version` (for example "nwsaom 1.9.1").
+
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
 > Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.34.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
@@ -22,13 +24,9 @@ example `nwsaom version`.
 
 > Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-The DOI is the one of all versions of the manual: it always leads to the latest manual, which describes the current release series of the package. Report the exact version that produced your results as printed by `nwsaom version` (for example "nwsaom 1.9.1").
-
 **nwergm.** Cite the manual. It has a DOI:
 
 > Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
-
-The DOI is the one of all versions of the manual: it always leads to the latest manual. Report the exact version that produced your results as printed by `nwergm version` (for example "nwergm 1.12.0").
 
 **nwdynam, nwrem, nwalaam, nwlsm and nwsbm.** Cite the manual of the package. Each has a DOI:
 
@@ -41,8 +39,6 @@ The DOI is the one of all versions of the manual: it always leads to the latest 
 > Grund, T. U. (2026). *nwlsm: Latent space models for networks in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398243](https://doi.org/10.5281/zenodo.24398243)
 
 > Grund, T. U. (2026). *nwsbm: Stochastic block models for networks in Stata. Manual.* Zenodo. [https://doi.org/10.5281/zenodo.24398296](https://doi.org/10.5281/zenodo.24398296)
-
-Each DOI is the one of all versions of the manual, so it always leads to the latest manual. Report the exact version that produced your results as printed by `<package> version`.
 
 Each repository contains a `CITATION.cff` file, which GitHub shows as "Cite this repository".
 
