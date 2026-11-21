@@ -53,25 +53,36 @@ reflection and translation only.
 . estat mcmcdiag
 
 MCMC diagnostics (2000 draws in 2 chains, interval 10)
-----------------------------------------------------------------------------
-Parameter                   Mean        Sd       ESS  ESS/draw  Geweke z      Rh
-> at
-----------------------------------------------------------------------------
-_cons                     1.0127    0.3748     160.8     0.080     -0.72     1.0
-> 05
-loglik                 -170.6210    7.5961     263.2     0.132     -1.45     1.0
-> 01
-sigma2                    4.6310    1.5218     229.0     0.114     -0.61     1.0
-> 03
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Parameter                Mean       Sd      ESS ESS/draw Geweke z     Rhat
+--------------------------------------------------------------------------
+_cons                  1.0127   0.3748    160.8    0.080    -0.73    1.005
+loglik              -170.6210   7.5961    263.2    0.132    -1.47    1.001
+sigma2                 4.6310   1.5218    229.0    0.114    -0.72    1.003
+--------------------------------------------------------------------------
 Acceptance rates: positions 0.239, _cons 0.233
 ESS: effective sample size by the initial monotone positive sequence
-estimator. Geweke z: first 10% of the draws against the last 50%; |z| above 2
-suggests that the chain has not settled.
-With 2 chains: ESS is the sum over the chains, Geweke z the value of largest
-size over the chains, Rhat the Gelman-Rubin potential scale reduction factor
-(values close to 1, say below 1.1, indicate that the chains agree).
+estimator.
+With 2 chains: ESS is the sum over the chains, Geweke z (above) the value of
+largest size over the chains, Rhat the Gelman-Rubin potential scale reduction
+factor (values close to 1, say below 1.1, indicate that the chains agree).
 
+Geweke z by chain
+------------------------------
+Parameter       chain1  chain2
+------------------------------
+_cons            -0.73   -0.69
+loglik           -1.47   -1.46
+sigma2           -0.72   -0.58
+------------------------------
+Geweke z: first 10% of the draws against the last 50%, as geweke.diag() of R's
+coda (spectral density at frequency zero of each part from an autoregressive
+fit); |z| > 1.96 is the nominal two-sided 5% limit. 0 of the 6 z values (3
+parameters, 2 chains) exceed it (largest |z| 1.47); about 0.3 (5%) would
+exceed it by chance with long settled chains, and more with short chains (a
+first part of a few dozen draws gives a noisy z), so read the z values
+together with the trace plots (graph) and the effective sample sizes; they are
+no test of convergence.
 . 
 . * --- the positions of the actors ---
 . estat positions
