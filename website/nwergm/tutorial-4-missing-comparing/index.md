@@ -101,7 +101,7 @@ nodecov_wealth |   .0105619   .0054018     1.96   0.051    -.0000255    .0211493
 MCMLE converged after 1 iteration(s).
 ...
 Log-likelihood:   -49.1518 (df = 3)   AIC:     104.3   BIC:     112.6
-Monte Carlo standard error of the log-likelihood:  .00288
+Monte Carlo standard error of the log-likelihood:  .00393
 ```
 
 Two cautions. First, missing **covariate** values are refused with error 416, as in R; drop or impute
@@ -132,8 +132,7 @@ nodematch_prac |   .9027794   .0922064     9.79   0.000     .7220581    1.083501
 
 MCMLE converged after 3 iteration(s).
 ...
-Log-likelihood: -1702.2907 (df = 3)   AIC:    3410.6   BIC:    3430.1
-Monte Carlo standard error of the log-likelihood:  .06401
+Log-likelihood: -1702.2144 (df = 3)   AIC:    3410.4   BIC:    3430.0
 ```
 
 ```stata
@@ -151,7 +150,7 @@ nodematch_prac |   .6985484   .0792428     8.82   0.000     .5432353    .8538615
 MCMLE converged after 6 iteration(s).
 ...
 Log-likelihood: -1670.6819 (df = 4)   AIC:    3349.4   BIC:    3375.4
-Monte Carlo standard error of the log-likelihood:  .15369
+Monte Carlo standard error of the log-likelihood:  .36849
 ```
 
 `estat ic` shows the information criteria of the last fit; `estimates stats` puts the stored models in
@@ -168,7 +167,7 @@ Akaike's information criterion and Bayesian information criterion
    lazega_fr |     4970      -3444.9      -1670.7     4    3349.4    3375.4
 -----------------------------------------------------------------------------
 Note: BIC uses N = number of informative dyads.
-Monte Carlo standard error of the log-likelihood:  .15369
+Monte Carlo standard error of the log-likelihood:  .36849
 ```
 
 ```stata
@@ -179,16 +178,16 @@ Akaike's information criterion and Bayesian information criterion
 -----------------------------------------------------------------------------
        Model |          N   ll(null)  ll(model)      df        AIC        BIC
 -------------+---------------------------------------------------------------
-          m1 |      4,970  -3444.941  -1702.291       3   3410.581   3430.115
+          m1 |      4,970  -3444.941  -1702.214       3   3410.429   3429.962
           m2 |      4,970  -3444.941  -1670.682       4   3349.364   3375.409
 -----------------------------------------------------------------------------
 Note: BIC uses N = number of observations. See [R] BIC note.
 ```
 
-Lower AIC and BIC are better. Adding `gwesp(0.5)` lowers AIC from 3410.6 to 3349.4 and BIC from 3430.1
+Lower AIC and BIC are better. Adding `gwesp(0.5)` lowers AIC from 3410.4 to 3349.4 and BIC from 3430.0
 to 3375.4: the closure term earns its place by both criteria. The log-likelihood of a model with
 dependence is evaluated by bridge sampling, which is a simulation: the footer of each fit and of `estat ic`
-shows its Monte Carlo standard error (here between 0.06 and 0.15), which should be small relative to the differences you
+shows its Monte Carlo standard error (here 0.37; the model with only `mutual` has an exact log-likelihood and no standard error), which should be small relative to the differences you
 interpret. For nested models the likelihood-ratio test is also available:
 
 ```stata
@@ -197,11 +196,11 @@ interpret. For nested models the likelihood-ratio test is also available:
 Likelihood-ratio test
 Assumption: m1 nested within m2
 
- LR chi2(1) =  63.22
+ LR chi2(1) =  63.06
 Prob > chi2 = 0.0000
 ```
 
-The test statistic is 63.22 on one degree of freedom, a strong rejection of the model without closure.
+The test statistic is 63.06 on one degree of freedom, a strong rejection of the model without closure.
 `lrtest` needs the models to be nested and fitted to the same N. The likelihood is not evaluated for a
 model with a curved (free-decay) term fitted by MCMLE, and `nologlik` skips the bridge sampling (then
 AIC and BIC are missing) when you only need coefficients.
