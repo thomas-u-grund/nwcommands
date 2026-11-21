@@ -58,29 +58,40 @@ The acceptance rate of the positions (0.24) is near the value that makes a rando
 . estat mcmcdiag
 
 MCMC diagnostics (2000 draws in 2 chains, interval 10)
-----------------------------------------------------------------------------
-Parameter                   Mean        Sd       ESS  ESS/draw  Geweke z      Rh
-> at
-----------------------------------------------------------------------------
-_cons                     1.0127    0.3748     160.8     0.080     -0.72     1.0
-> 05
-loglik                 -170.6210    7.5961     263.2     0.132     -1.45     1.0
-> 01
-sigma2                    4.6310    1.5218     229.0     0.114     -0.61     1.0
-> 03
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Parameter                Mean       Sd      ESS ESS/draw Geweke z     Rhat
+--------------------------------------------------------------------------
+_cons                  1.0127   0.3748    160.8    0.080    -0.73    1.005
+loglik              -170.6210   7.5961    263.2    0.132    -1.47    1.001
+sigma2                 4.6310   1.5218    229.0    0.114    -0.72    1.003
+--------------------------------------------------------------------------
 Acceptance rates: positions 0.239, _cons 0.233
 ESS: effective sample size by the initial monotone positive sequence
-estimator. Geweke z: first 10% of the draws against the last 50%; |z| above 2
-suggests that the chain has not settled.
-With 2 chains: ESS is the sum over the chains, Geweke z the value of largest
-size over the chains, Rhat the Gelman-Rubin potential scale reduction factor
-(values close to 1, say below 1.1, indicate that the chains agree).
+estimator.
+With 2 chains: ESS is the sum over the chains, Geweke z (above) the value of
+largest size over the chains, Rhat the Gelman-Rubin potential scale reduction
+factor (values close to 1, say below 1.1, indicate that the chains agree).
+
+Geweke z by chain
+------------------------------
+Parameter       chain1  chain2
+------------------------------
+_cons            -0.73   -0.69
+loglik           -1.47   -1.46
+sigma2           -0.72   -0.58
+------------------------------
+Geweke z: first 10% of the draws against the last 50%, as geweke.diag() of R's
+coda (spectral density at frequency zero of each part from an autoregressive
+fit); |z| > 1.96 is the nominal two-sided 5% limit. 0 of the 6 z values (3
+parameters, 2 chains) exceed it (largest |z| 1.47); about 0.3 (5%) would
+exceed it by chance with long settled chains, and more with short chains (a
+first part of a few dozen draws gives a noisy z), so read the z values
+together with the trace plots (graph) and the effective sample sizes; they are
+no test of convergence.
 ```
 
 Look at the last column. The Gelman-Rubin statistic compares the chains with each other; values near 1 (below 1.1) mean that they agree. The effective sample size (ESS) says how many independent draws the 2,000
-correlated draws are worth, here between 160 and 260, which is enough for the means but small for the tails of the intervals; a longer run (`nsample()`, `interval()`) raises it. Geweke z-scores
-within plus or minus 2 mean that the start and the end of a chain have the same mean. With real data, run at least two chains and look at these numbers before looking at anything else.
+correlated draws are worth, here between 160 and 260, which is enough for the means but small for the tails of the intervals; a longer run (`nsample()`, `interval()`) raises it. The Geweke z compares the mean of the first 10% of a chain with that of the last 50% (the value is the one of R's `coda::geweke.diag()`), and the second table gives it for every chain. It is informational and no test of convergence: with several short chains a few z values beyond 1.96 are normal, and the footnote counts them. Here none of the 6 does. With real data, run at least two chains and look at these numbers together with the trace plots (`estat mcmcdiag, graph`) before looking at anything else.
 
 ## The positions
 
