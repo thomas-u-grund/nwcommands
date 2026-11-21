@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.4:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.5:
 
 ```stata
-. net install nwlsm, from(https://raw.githubusercontent.com/thomas-u-grund/nwlsm/v1.0.4/) replace
+. net install nwlsm, from(https://raw.githubusercontent.com/thomas-u-grund/nwlsm/v1.0.5/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwlsm version
-nwlsm version 1.0.4, 21nov2026
+nwlsm version 1.0.5, 21nov2026
   native plugin           : .../l/lsm_sim_macos.plugin (ships with the package)
   reference               : latentnet (Krivitsky and Handcock)
   license                 : GNU GPL-3
