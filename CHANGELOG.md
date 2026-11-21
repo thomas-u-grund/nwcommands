@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+### Added
+- `nwburt, direction(both|out|in)`: which ties of a directed network count as the ties of ego. `both` (the default) is the convention of 3.33.0, Burt's z_ij + z_ji, and every printed number is unchanged. `out` uses only the ties ego sends (z_ij) and reproduces the results printed by versions before 3.33.0 for a binary directed network; `in` uses only the ties ego receives (z_ji), the result of `out` on the transposed network. The formulas of effective size, efficiency, constraint and hierarchy are the same, also with `dyadredundancy` and `dyadconstraint`, and for a valued network (all-ones values give the binary result). The header says which ties were used; `r(direction)` is stored. On an undirected network the option has no effect. Help file and dialog updated. The Mata library and the plugin are unchanged.
+
 ## [3.33.0] - 2026-11-21
 
 ### Results that change

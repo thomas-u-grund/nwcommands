@@ -14,7 +14,7 @@
 {title:Syntax}
 
 {p 8 15 2}
-{cmd:nwburt} [{it:{help netname}}] [, {bf:binary dyadredundancy dyadconstraint replace silent}]
+{cmd:nwburt} [{it:{help netname}}] [, {bf:binary dyadredundancy dyadconstraint replace silent} {opt dir:ection(both|out|in)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -24,6 +24,7 @@
 {synopt:{opt dyadconstraint}}Save dyadic constraint as new network {it:dyadconstraint} (an existing network of that name is replaced){p_end}
 {synopt:{opt replace}}Replace existing {it:_effsize}/{it:_efficiency}/{it:_constraint}/{it:_hierarchy} variables{p_end}
 {synopt:{opt silent}}Suppress summary output{p_end}
+{synopt:{opt dir:ection(string)}}Directed network: {it:both} (default), {it:out} or {it:in}: which ties count as the ties of ego{p_end}
 
 
 {title:Description}
@@ -131,10 +132,28 @@ needs the plugin for a valued network too. The options {opt dyadredundancy} and
 {help nwsimilar}, {help nwdissimilar} and {help nwqap} do, and are practical only for moderate network sizes.
 
 
+{title:Option direction()}
+
+{pstd}
+{opt direction(both)} (the default) is Burt's convention described above: both directions of a tie count, the strength of the tie is
+{it:z_ij} + {it:z_ji}. {opt direction(out)} uses only the ties that ego sends: the contacts of {it:i} are the nodes {it:j} with {it:z_ij} > 0, the proportions
+are {it:p_ij} = {it:z_ij} / sum_{it:k} {it:z_ik}, and a contact {it:q} of ego links to {it:j} by {it:z_qj}. {opt direction(in)} uses only the ties that
+ego receives (the measures of the transposed network: the contacts of {it:i} are the nodes {it:j} with {it:z_ji} > 0). The formulas
+for effective size, efficiency, constraint and hierarchy are the same; with the options {opt dyadredundancy} and {opt dyadconstraint} the two dyadic networks
+follow the same direction (cell ({it:i},{it:j}): ego {it:i}, contact {it:j}). For a valued network the marginal strength of the tie of {it:q} to {it:j}
+is {it:z_qj} divided by the largest tie value that {it:q} sends (receives, with {opt direction(in)}).
+
+{pstd}
+The substantive reading differs by direction. In an advice network, {opt direction(out)} measures the structural holes in the
+advice that ego seeks (ego's own options), {opt direction(in)} those among the people who seek ego's advice (whom ego is available to).
+{opt direction(out)} reproduces the results printed by versions of {cmd:nwcommands} before 3.33.0 for a binary directed network.
+On an {bf:undirected} network the option has no effect (all three values are accepted and give the same results; the line about directed networks is not printed).
+Any other value stops the command with error 198. The stored result {cmd:r(direction)} holds the value.
+
 {title:Network types}
 
 {pstd}
-{bf:Directed:} both directions of a tie count (z_ij + z_ji), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of {cmd:nwcommands}.
+{bf:Directed:} by default both directions of a tie count (z_ij + z_ji; see {opt direction()} for the ties sent or received only), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of {cmd:nwcommands}.
 {bf:Valued:} Burt's weighted measures by default; {opt binary} ignores the values. {bf:Two-mode:} same as for the
 bipartite graph read as a one-mode network. {bf:Signed:} negative and missing values stop the command with an error. See
 {help nwnetworktypes}.{p_end}
@@ -171,6 +190,9 @@ A valued network (weighted measures), and the same network with the values ignor
 {p2col 5 20 24 2: Scalars}{p_end}
 {synopt:{bf:r(nodes)}}number of nodes{p_end}
 {synopt:{bf:r(weighted)}}1 if the weighted measures of a valued network were computed, 0 otherwise{p_end}
+
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(direction)}}{it:both}, {it:out} or {it:in} (the value of {opt direction()}){p_end}
 
 
 {title:References}
