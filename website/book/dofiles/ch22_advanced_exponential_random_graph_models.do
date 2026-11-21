@@ -26,13 +26,6 @@ nwclear
 set obs 100
 generate grp = ceil(_n / 25)
 nwergm simulate 100, edges mutual nodematch(grp) gwesp(.5) directed ///
-    theta(-4 1.5 1.2 .6) seed(12345) mcmcburnin(200000) ///
-    mcmcinterval(20000) generate(art)
-nwsummarize art, detail
-
-nwergm art, edges mutual nodematch(grp) gwesp(.5) seed(12345)
-
-nwergm simulate 100, edges mutual nodematch(grp) gwesp(.5) directed ///
     theta(-4 1.5 1.2 .6) seed(2026) mcmcburnin(200000) mcmcinterval(20000) ///
     nsim(50) generate(art)
 frame create rec edges mutual grp gwesp se_edges se_mutual se_grp se_gwesp
