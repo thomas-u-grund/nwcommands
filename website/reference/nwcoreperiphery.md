@@ -21,6 +21,8 @@ generate(newvarname)
 replace
 measure(string)
 maxiter(int)
+rest:arts(#)
+seed(#)
 silent]
 ```
 
@@ -30,11 +32,13 @@ silent]
 | `replace` | Replace existing variable |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `maxiter(int)` | Maximum number of local-search sweeps before giving up on convergence; default = 100 |
+| `rest:arts(#)` | Number of starts of the local search; default = 1 (the degree-based start only); with more, further searches begin from random partitions and the partition with the highest fitness is kept |
+| `seed(#)` | Random-number seed for the random starts; needs `restarts()` of 2 or more |
 | `silent` | Suppress display of results |
 
 ## Description
 
-`nwcoreperiphery` partitions the nodes of a network into a "core" and a "periphery" using the discrete core-periphery model (Borgatti and Everett 1999). The core-periphery model assumes ties are expected between any pair of nodes where at least one is a core member (core-core and core-periphery ties are both structurally expected), while periphery-periphery ties are not expected at all. `nwcoreperiphery` searches for the 0/1 assignment (0 = periphery, 1 = core) whose implied pattern correlates as highly as possible with the network actually observed, starting from a degree-based seed and then repeatedly trying to flip each node's status in turn, keeping any flip that improves the correlation, until a full sweep produces no further improvement. This is a greedy local search, not an exhaustive search over all 2^n possible partitions, so it can settle on a good but not necessarily globally optimal partition (a different starting partition can give a better core) - the same character of algorithm [nwcommunity](nwcommunity) already uses for modularity maximization.
+`nwcoreperiphery` partitions the nodes of a network into a "core" and a "periphery" using the discrete core-periphery model (Borgatti and Everett 1999). The core-periphery model assumes ties are expected between any pair of nodes where at least one is a core member (core-core and core-periphery ties are both structurally expected), while periphery-periphery ties are not expected at all. `nwcoreperiphery` searches for the 0/1 assignment (0 = periphery, 1 = core) whose implied pattern correlates as highly as possible with the network actually observed, starting from a degree-based seed and then repeatedly trying to flip each node's status in turn, keeping any flip that improves the correlation, until a full sweep produces no further improvement. This is a greedy local search, not an exhaustive search over all 2^n possible partitions, so it can settle on a good but not necessarily globally optimal partition (a different starting partition can give a better core) - the same character of algorithm [nwcommunity](nwcommunity) already uses for modularity maximization. The search is local: it starts from the degree-based partition and the result depends on that start. With `restarts(#)` of 2 or more, the same local search is run from further random starting partitions (every node is in the core with probability one half) and the partition with the highest fitness over all starts is kept, never lower than that of the degree-based start; the number of starts that reached the best fitness is shown and stored in **r(nbest)**. Without `restarts()` the output and the random-number state are unchanged. `restarts()` is available for networks of up to 2,000 nodes.
 
 `generate()` is required and names the new variable which stores, for each node, 1 if it was assigned to the core and 0 if it was assigned to the periphery. With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
@@ -56,6 +60,11 @@ A network with no ties at all is rejected (there is no structure to fit a core-p
 . nwwebuse florentine, nwclear
 . nwcoreperiphery flomarriage, generate(_core)
 ```
+- The best of 50 searches (the degree-based start and 49 random starts):
+
+```stata
+. nwcoreperiphery flomarriage, generate(_core) replace restarts(50) seed(1)
+```
 - The adjacency matrix with the core nodes first and the periphery last ([nwplotmatrix](nwplotmatrix)):
 
 ```stata
@@ -67,6 +76,9 @@ A network with no ties at all is rejected (there is no structure to fit a core-p
 - **Scalars**
 - **r(fitness)** --- correlation between the observed network and the ideal pattern implied by the found partition (-1 to 1; 1 = a perfect discrete core-periphery structure)
 - **r(core)** --- number of nodes assigned to the core
+- **r(restarts)** --- number of starts of the local search (1 = the degree-based start only)
+- **r(beststart)** --- the first start that reached the best fitness (1 = the degree-based start)
+- **r(nbest)** --- number of starts that reached the best fitness
 
 ## References
 
@@ -78,4 +90,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.32.1, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))

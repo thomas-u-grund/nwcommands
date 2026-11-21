@@ -4,6 +4,23 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [3.33.0] - 2026-11-21
+
+### Results that change
+- `nwburt` on a **directed binary network** now uses both directions of every tie, as Burt's measures are defined and as `igraph::constraint()` and the weighted `nwburt` of a valued network do: the tie strength is z_ij + z_ji and the proportions are p_ij = (z_ij + z_ji) / sum_k (z_ik + z_ki). Before, the binary measures used the out-ties only. The printed effective size, efficiency, constraint and hierarchy, and the variables `_effsize`, `_efficiency`, `_constraint`, `_hierarchy`, change for every directed network that is not symmetric; undirected networks and directed networks whose ties are all mutual give the same numbers as before. An all-ones network stored as valued and the same network stored as binary now give identical results. With `dyadredundancy` and `dyadconstraint` the two dyadic networks follow the same definition (their row sums are the node constraint). Small example, 5 actors and 8 directed ties: constraint 0.500, 1.250, 0.500, 1.000, 1.000 before, 0.661, 0.543, 0.482, 0.500, 0.797 now (the values of `igraph::constraint()`).
+- `nwcompare`: for a block model (`nwsbm`), the number of parameters *k* is `e(npar)` plus the free membership proportions, Q - 1 (Q1 - 1 plus Q2 - 1 for a two-mode network), the parameters that the ICL penalty of the block model counts as well. On the Lazega friendship network with 3 blocks *k* is now 11 (before 9: `e(npar)` = 9 omitted the 2 free proportions). AIC and BIC are not shown for the block model, so no other number changes.
+
+### Added
+- `nwcoreperiphery, restarts(#)`: the number of starts of the local search; default 1 (the degree-based start, output and random numbers unchanged). With more starts, further searches begin from random partitions (each actor in the core with probability one half) and the partition with the highest fitness is kept, never lower than that of the degree-based start. `seed(#)` makes the random starts reproducible. The output adds a line with the number of starts and the number that reached the best fitness; `r(restarts)`, `r(beststart)` and `r(nbest)` are stored. Available up to 2,000 nodes. On the Lazega advice network the default search stops at a core of 18 (fitness 0.281096); with `restarts(200) seed(1)` the best partition has a core of 20 (the same 18 plus two lawyers, fitness 0.281280), reached by 128 of the 200 starts. Help file, dialog and test updated.
+- `nwmovie`: the help file and the error messages for a missing `ffmpeg` (or an `ffmpeg` without libx264 or libvpx-vp9) say what to install on Linux (`sudo apt install ffmpeg` on Debian and Ubuntu, `sudo dnf install ffmpeg` with RPM Fusion on Fedora), that Windows and macOS need nothing for `.mp4` and `.webm`, and that `export(.gif)` works everywhere without extra software; the reason (on Linux the viewer's web engine cannot encode video, so a GIF is drawn and `ffmpeg` converts it, with the colours of a 256-colour GIF) is given. The behaviour is unchanged. The install page of the website has a short section on it.
+
+### Help
+- `nwcompare`: the help file states what *k* is for each model class.
+
+The Mata library is unchanged (no lockstep rebuild of the model packages).
+
+Tested on macOS with Stata 17 and Stata 18: the new test, the tests of the touched commands, the core plot tests and the dialog tests. On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new test, the tests of the touched commands, the plot and dialog tests; on Linux also the real `nwmovie` export to `.mp4` and `.webm` with `ffmpeg`.
+
 ## [3.32.1] - 2026-11-20
 
 ### Fixed

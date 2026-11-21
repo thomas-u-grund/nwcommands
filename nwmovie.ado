@@ -690,14 +690,16 @@ program _nwmovie_findffmpeg
 		local _ffok = (_rc == 0 & `"`_ffp'"' != "")
 	}
 	if !`_ffok' {
-		di as error "{p 0 0 2}nwmovie: export(.`ext') on this system needs ffmpeg (the viewer draws a GIF and ffmpeg makes the .`ext' from it), and ffmpeg was not found. Install ffmpeg, or export a .gif file.{p_end}"
+		di as error "{p 0 0 2}nwmovie: export(.`ext') on this system needs ffmpeg (the viewer draws a GIF and ffmpeg makes the .`ext' from it), and ffmpeg was not found.{p_end}"
+		di as error "{p 0 2 2}Install it: Debian or Ubuntu: {bf:sudo apt install ffmpeg}; Fedora: {bf:sudo dnf install ffmpeg} (with the RPM Fusion repository enabled). Windows and macOS need nothing for .mp4 and .webm, and a .gif file needs nothing anywhere: {bf:export(movie.gif)} works without extra software.{p_end}"
 		exit 498
 	}
 	local _enc = cond("`ext'" == "webm", "libvpx-vp9", "libx264")
 	capture shell ffmpeg -hide_banner -encoders 2>/dev/null | grep -c "`_enc'" > "`_ff2'"
 	capture mata: st_local("_ffn", strtrim(subinstr(_nwmovie_slurpfile(st_local("_ff2")), char(10), "")))
 	if _rc | real("`_ffn'") < 1 {
-		di as error "{p 0 0 2}nwmovie: this ffmpeg has no `_enc' encoder, which export(.`ext') needs. Install a full ffmpeg build, or export a .gif file.{p_end}"
+		di as error "{p 0 0 2}nwmovie: this ffmpeg has no `_enc' encoder, which export(.`ext') needs.{p_end}"
+		di as error "{p 0 2 2}Install a full ffmpeg build: Debian or Ubuntu: {bf:sudo apt install ffmpeg}; Fedora: {bf:sudo dnf install ffmpeg} (with the RPM Fusion repository enabled; the ffmpeg-free package of Fedora lacks libx264). A .gif file needs nothing: {bf:export(movie.gif)} works without extra software.{p_end}"
 		exit 498
 	}
 end

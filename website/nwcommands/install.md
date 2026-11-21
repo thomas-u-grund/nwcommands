@@ -39,6 +39,17 @@ installs the core and ends with a hint on how to add the model packages.
 
 shows the core version and which model packages are installed.
 
+## Optional: ffmpeg for movie export on Linux
+
+`nwmovie` writes `.gif` files on every system without extra software. On Windows and macOS it also writes `.mp4` and `.webm` without anything to install. On Linux the viewer's web engine cannot encode video, so `nwmovie` draws a GIF and `ffmpeg` converts it to `.mp4` or `.webm`; install `ffmpeg` once:
+
+```
+sudo apt install ffmpeg      # Debian, Ubuntu
+sudo dnf install ffmpeg      # Fedora, with the RPM Fusion repository enabled
+```
+
+The colours of the video are those of a 256-colour GIF, which is fine for network pictures. Without `ffmpeg`, `nwmovie` says so and stops before it starts; `export(movie.gif)` still works.
+
 ## How large a network can be
 
 The core builds and describes networks of 100,000 nodes, but not every command scales that far. See
@@ -117,5 +128,5 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.32.1/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.33.0/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.

@@ -32,7 +32,8 @@ program define _bk_cmp
 		global bk_maxdiff = `md'
 	}
 	* the command nwburt weights a valued network (kernel 40, cscripts/test_burt_valued.do): compare its two routes on unvalued networks
-	if !strpos(`"`kind'"', "val=1") {
+	* (a directed network always takes the weighted kernel, both directions of a tie, with no Mata route: test_core_3330.do)
+	if !strpos(`"`kind'"', "val=1") & "`directed'" != "true" {
 		global NW_NOFASTKERNELS
 		qui nwburt `net', replace silent
 		foreach v in _effsize _efficiency _constraint _hierarchy {
