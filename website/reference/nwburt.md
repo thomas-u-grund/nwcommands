@@ -14,7 +14,7 @@ Burt's structural-hole measures
 ## Syntax
 
 ```stata
-nwburt [netname] [, binary dyadredundancy dyadconstraint replace silent]
+nwburt [netname] [, binary dyadredundancy dyadconstraint replace silent dir:ection(both|out|in)]
 ```
 
 | | |
@@ -24,6 +24,7 @@ nwburt [netname] [, binary dyadredundancy dyadconstraint replace silent]
 | `dyadconstraint` | Save dyadic constraint as new network *dyadconstraint* (an existing network of that name is replaced) |
 | `replace` | Replace existing *_effsize*/*_efficiency*/*_constraint*/*_hierarchy* variables |
 | `silent` | Suppress summary output |
+| `dir:ection(string)` | Directed network: *both* (default), *out* or *in*: which ties count as the ties of ego |
 
 ## Description
 
@@ -67,9 +68,15 @@ Hierarchy is another quite complex measure that describes the nature of the cons
 
 The four per-node measures are computed from the stored ties (the sum of the squared degrees of the nodes decides the work), so the command also runs on large networks (see **Limits**). The weighted measures of a valued network are computed in the compiled plugin only; without it the command stops with an error and the option `binary` needs the plugin for a valued network too. The options `dyadredundancy` and `dyadconstraint` (defined for ties that are present or absent: they need the option `binary` for a valued network) build the full *n*-by-*n* dyadic networks from the adjacency matrix (via [nwtomata](nwtomata)), as [nwsimilar](nwsimilar), [nwdissimilar](nwdissimilar) and [nwqap](nwqap) do, and are practical only for moderate network sizes.
 
+## Option direction()
+
+`direction(both)` (the default) is Burt's convention described above: both directions of a tie count, the strength of the tie is *z_ij* + *z_ji*. `direction(out)` uses only the ties that ego sends: the contacts of *i* are the nodes *j* with *z_ij* > 0, the proportions are *p_ij* = *z_ij* / sum_*k* *z_ik*, and a contact *q* of ego links to *j* by *z_qj*. `direction(in)` uses only the ties that ego receives (the measures of the transposed network: the contacts of *i* are the nodes *j* with *z_ji* > 0). The formulas for effective size, efficiency, constraint and hierarchy are the same; with the options `dyadredundancy` and `dyadconstraint` the two dyadic networks follow the same direction (cell (*i*,*j*): ego *i*, contact *j*). For a valued network the marginal strength of the tie of *q* to *j* is *z_qj* divided by the largest tie value that *q* sends (receives, with `direction(in)`).
+
+The substantive reading differs by direction. In an advice network, `direction(out)` measures the structural holes in the advice that ego seeks (ego's own options), `direction(in)` those among the people who seek ego's advice (whom ego is available to). `direction(out)` reproduces the results printed by versions of `nwcommands` before 3.33.0 for a binary directed network. On an **undirected** network the option has no effect (all three values are accepted and give the same results; the line about directed networks is not printed). Any other value stops the command with error 198. The stored result `r(direction)` holds the value.
+
 ## Network types
 
-**Directed:** both directions of a tie count (z_ij + z_ji), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of `nwcommands`. **Valued:** Burt's weighted measures by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative and missing values stop the command with an error. See [nwnetworktypes](nwnetworktypes).
+**Directed:** by default both directions of a tie count (z_ij + z_ji; see `direction()` for the ties sent or received only), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of `nwcommands`. **Valued:** Burt's weighted measures by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative and missing values stop the command with an error. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -97,6 +104,9 @@ A valued network (weighted measures), and the same network with the values ignor
 - **r(nodes)** --- number of nodes
 - **r(weighted)** --- 1 if the weighted measures of a valued network were computed, 0 otherwise
 
+- **Macros**
+- **r(direction)** --- *both*, *out* or *in* (the value of `direction()`)
+
 ## References
 
 The weighted measures agree to 1e-10 with `igraph::constraint(graph, weights=)` of the R package igraph (constraint) and with `networkx.effective_size`/`networkx.constraint` of NetworkX (effective size, constraint), and for unvalued undirected networks with `influenceR::ens` of the R package influenceR. `influenceR::constraint` also sums over nodes that are reached only through a contact and are not themselves contacts of ego, and differs from Burt's definition and from `nwburt` for that reason; the R packages igraph and influenceR give a missing value (NaN) for a node without ties where `nwburt` gives 0.
@@ -111,4 +121,4 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ---
 
-*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

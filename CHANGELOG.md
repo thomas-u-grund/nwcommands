@@ -4,10 +4,12 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.34.0] - 2026-11-21
 
 ### Added
-- `nwburt, direction(both|out|in)`: which ties of a directed network count as the ties of ego. `both` (the default) is the convention of 3.33.0, Burt's z_ij + z_ji, and every printed number is unchanged. `out` uses only the ties ego sends (z_ij) and reproduces the results printed by versions before 3.33.0 for a binary directed network; `in` uses only the ties ego receives (z_ji), the result of `out` on the transposed network. The formulas of effective size, efficiency, constraint and hierarchy are the same, also with `dyadredundancy` and `dyadconstraint`, and for a valued network (all-ones values give the binary result). The header says which ties were used; `r(direction)` is stored. On an undirected network the option has no effect. Help file and dialog updated. The Mata library and the plugin are unchanged.
+- `nwburt, direction(both|out|in)`: which ties of a directed network count as the ties of ego. `both` (the default) is the convention of 3.33.0, Burt's z_ij + z_ji, and every printed number is unchanged. `out` uses only the ties ego sends (z_ij) and reproduces the results printed by versions before 3.33.0 for a binary directed network; `in` uses only the ties ego receives (z_ji), the result of `out` on the transposed network. The formulas of effective size, efficiency, constraint and hierarchy are the same, also with `dyadredundancy` and `dyadconstraint`, and for a valued network (all-ones values give the binary result). The header says which ties were used; `r(direction)` is stored. On an undirected network the option has no effect. Help file and dialog updated. The Mata library and the plugin are unchanged (no lockstep rebuild of the model packages).
+
+Tested on macOS with Stata 17 and Stata 18 (the new test, the `nwburt` tests, the valued-network test and the dialog tests; on Stata 18 only these four, plus the earlier brokerage-kernel, plot and dialog tests on Stata 17). On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new test, the `nwburt` tests, the brokerage kernels, the dialog tests and the core plot tests.
 
 ## [3.33.0] - 2026-11-21
 

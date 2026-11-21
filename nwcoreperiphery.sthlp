@@ -126,4 +126,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. {it:S
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

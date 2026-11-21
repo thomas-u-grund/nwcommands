@@ -99,4 +99,4 @@ Stone, L., and A. Roberts. 1990. The checkerboard score and species distribution
 {help nw2set}, {help nw2degree}, {help nw2clustering}, {help nw2project}, {help nwnetworktypes}
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

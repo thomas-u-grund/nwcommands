@@ -115,4 +115,4 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
 	{help nwsummarize}, {help nwset}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
