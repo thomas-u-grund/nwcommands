@@ -54,10 +54,21 @@ program nwburt, rclass
 		// (older plugin, failure, NW_NOFASTKERNELS) leaves the Mata method
 		if `__weighted' {
 			// weighted Burt measures: native kernel 40 (plugin generation 9 or later), no Mata fallback
-			mata: `__burt' = nw_fastburtw(`netobj')
+			mata: `__burt' = nw_fastburtw(`netobj', ("`binary'" != ""))
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
 			if !`__fast' {
 				di "{err}{p 0 0 2}Weighted Burt measures need the native plugin of nwcommands >= 3.6.0; use the {bf:binary} option for the unweighted measures{p_end}"
+				exit 198
+			}
+		}
+		else if "`directed'" == "true" & `__kind' < 2 {
+			// A directed binary network: Burt's measures use both directions of a tie (the proportions
+			// p_ij = (z_ij + z_ji) / sum_k (z_ik + z_ki), as igraph::constraint() and the weighted measures below), so the
+			// weighted kernel runs on the ties set to 1; the out-ties-only kernel 29 would ignore the incoming ties.
+			mata: `__burt' = nw_fastburtw(`netobj', 1)
+			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+			if !`__fast' {
+				di "{err}{p 0 0 2}The Burt measures of a directed network need the native plugin of nwcommands >= 3.6.0{p_end}"
 				exit 198
 			}
 		}
@@ -79,7 +90,7 @@ program nwburt, rclass
 		mata: mata drop `__burt'
 	}
 	else {
-		tempname onenet
+		tempname onenet __burt
 		nwtomata `netname', mat(`onenet')
 		// nwtomata returns the diagonal as missing (this codebase's
 		// standard no-self-loop convention). dyadicredundancy()/
@@ -97,8 +108,16 @@ program nwburt, rclass
 		if `__kind' == 1 mata: `onenet' = (`onenet' :> 0) :* (`onenet' :< .)
 		mata: _diag(`onenet', J(`nodes',1,0))
 
-		mata: __nwburt_dr = dyadicredundancy(`onenet')
-		mata: __nwburt_dc = dyadicconstraint(`onenet')
+		if "`directed'" == "true" {
+			// a directed network: both directions of a tie count (Burt's symmetrised tie strength z_ij + z_ji, as the
+			// summary measures); the dyadic networks and the node summaries come from the same weighted formulas
+			mata: __nwburt_dr = dyadicredundancy_dir(`onenet')
+			mata: __nwburt_dc = dyadicconstraint_dir(`onenet')
+		}
+		else {
+			mata: __nwburt_dr = dyadicredundancy(`onenet')
+			mata: __nwburt_dc = dyadicconstraint(`onenet')
+		}
 
 		if "`dyadredundancy'" != "" {
 			capture nwdrop dyadredundancy
@@ -111,10 +130,26 @@ program nwburt, rclass
 			_nwsyntax `netname'
 		}
 
-		mata: __nwburt_effsize = rowsum(`onenet') - rowsum(__nwburt_dr)
-		mata: __nwburt_efficiency = __nwburt_effsize :/ rowsum(`onenet')
-		mata: __nwburt_constraint = rowsum(__nwburt_dc)
-		mata: __nwburt_h = hierarchy(`onenet', __nwburt_dc)
+		if "`directed'" == "true" {
+			// the node summaries of a directed network from the weighted kernel on the symmetrised ties (as without the dyadic options)
+			mata: `__burt' = nw_fastburtw(`netobj', 1)
+			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+			if !`__fast' {
+				di "{err}{p 0 0 2}The Burt measures of a directed network need the native plugin of nwcommands >= 3.6.0{p_end}"
+				exit 198
+			}
+			mata: __nwburt_effsize = `__burt'[.,1]
+			mata: __nwburt_efficiency = `__burt'[.,2]
+			mata: __nwburt_constraint = `__burt'[.,3]
+			mata: __nwburt_h = `__burt'[.,4]
+			mata: mata drop `__burt'
+		}
+		else {
+			mata: __nwburt_effsize = rowsum(`onenet') - rowsum(__nwburt_dr)
+			mata: __nwburt_efficiency = __nwburt_effsize :/ rowsum(`onenet')
+			mata: __nwburt_constraint = rowsum(__nwburt_dc)
+			mata: __nwburt_h = hierarchy(`onenet', __nwburt_dc)
+		}
 		mata: mata drop __nwburt_dr __nwburt_dc
 	}
 
@@ -146,6 +181,7 @@ program nwburt, rclass
 		di "{hline 40}"
 		di "{txt}    Burt structural hole measures"
 		if `__weighted' di "{txt}{p 4 4 2}(valued ties: Burt's weighted measures; both directions of a directed tie count){p_end}"
+		else if "`directed'" == "true" di "{txt}{p 4 4 2}(directed network: both directions of a tie count){p_end}"
 		sum _effsize _efficiency _constraint _hierarchy
 	}
 	// Drive-by fix (found while writing this command's own Examples
@@ -168,6 +204,8 @@ capture mata: mata drop nw_fastburt()
 capture mata: mata drop nw_fastburtw()
 capture mata: mata drop nw_burtkind()
 capture mata: mata drop dyadicredundancy()
+capture mata: mata drop dyadicredundancy_dir()
+capture mata: mata drop dyadicconstraint_dir()
 capture mata: mata drop dyadicconstraint()
 capture mata: mata drop hierarchy()
 
@@ -199,17 +237,23 @@ real matrix nw_fastburt(pointer (class nw_def scalar) scalar p, real scalar kind
 
 // Weighted Burt measures (kernel 40 of the nwgraph plugin, plugin generation 9 or later): the n x 4 matrix of effective
 // size, efficiency, constraint and hierarchy, or a 0 x 0 matrix when the kernel is not available. No Mata fallback.
-real matrix nw_fastburtw(pointer (class nw_def scalar) scalar p)
+real matrix nw_fastburtw(pointer (class nw_def scalar) scalar p, | real scalar bin)
 {
 	real rowvector aux
 	real scalar st, n
-	real matrix r
+	real matrix r, el
 	real colvector h
 
 	if (st_global("NW_NOFASTKERNELS") != "") return(J(0, 0, .))
 	if (nwg_comb_version() < 9) return(J(0, 0, .))
 	n = p->get_nodes()
-	r = nwg_comb(40, n, p->edgelist(), J(0, 1, .), J(1, 0, .), aux, st)
+	el = p->edgelist()
+	// bin: every positive value is a tie of value 1
+	if (bin != . & bin != 0) {
+		el = select(el, el[., 3] :> 0)
+		if (rows(el) > 0) el[., 3] = J(rows(el), 1, 1)
+	}
+	r = nwg_comb(40, n, el, J(0, 1, .), J(1, 0, .), aux, st)
 	if (st != 0 | rows(r) != n | cols(r) != 5) return(J(0, 0, .))
 	h = r[., 4] :+ editvalue(r[., 5], 1, .)
 	return((r[., 1], r[., 2], r[., 3], h))
@@ -253,6 +297,33 @@ real matrix dyadicconstraint(real matrix net){
 	_editmissing(dyadcon,0)
 	_diag(dyadcon, 0)
 	return(dyadcon)
+}
+
+// Directed networks: Z = A + A' (both directions), p_ij = z_ij / sum_k z_ik, m_jq = z_jq / max_k z_jk. The redundancy of the tie
+// i-j is sum over q (not i, not j) of p_iq m_jq; the constraint of the tie is (p_ij + sum_q p_iq p_qj)^2.
+real matrix dyadicredundancy_dir(real matrix net){
+	real matrix Z, U, P, Mx
+
+	Z = net + net'
+	U = (Z :> 0)
+	P = Z :/ rowsum(Z)
+	_editmissing(P, 0)
+	Mx = Z :/ rowmax(Z)
+	_editmissing(Mx, 0)
+	return(U :* (P * Mx'))
+}
+
+real matrix dyadicconstraint_dir(real matrix net){
+	real matrix Z, U, P, c, dc
+
+	Z = net + net'
+	U = (Z :> 0)
+	P = Z :/ rowsum(Z)
+	_editmissing(P, 0)
+	c = P + P * P
+	dc = U :* (c :* c)
+	_diag(dc, 0)
+	return(dc)
 }
 
 real matrix dyadicredundancy(real matrix net){

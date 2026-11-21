@@ -31,6 +31,8 @@ This command calculates Burt's (1992) effective size, efficiency, constraint and
 
 For a **valued** network (a network that was created with tie values, see [nwnetworktypes](nwnetworktypes)) the measures are Burt's (1992) weighted measures, as in `igraph::constraint(weights=)` of R (igraph) and `effective_size(weight=)` and `constraint(weight=)` of NetworkX: the strength of the relation between *i* and *j* is the sum of both directions, *a_ij* = *z_ij* + *z_ji* (for an undirected network this only doubles every value and changes no result), and the formulas below are applied to these strengths. With the option `binary` the tie values are ignored: every positive value counts as a tie of value 1. On a network that is not valued the option has no effect.
 
+On a **directed** network without tie values, both directions of a tie count as well: the strength of the relation between *i* and *j* is *z_ij* + *z_ji* with *z* = 1 for a tie, so a mutual tie has strength 2 and the proportions are *p_ij* = (*z_ij* + *z_ji*) / sum_*k* (*z_ik* + *z_ki*), as in `igraph::constraint()` of R (igraph). A network that stores the same ties with the value 1 gives the same results.
+
 The dyadic redundancy measure calculates, for each actor in ego's neighborhood, how many of the other actors in the neighborhood are also tied to the other.  The larger the proportion of others in the neighborhood who are tied to a given "alter," the more "redundant" is ego's direct tie.
 
 Dyadic constraint is a measure that indexes the extent to which the relationship between ego and each of the alters in ego's neighborhood "constrains" ego.  A full description is given in Burt's 1992 monograph, and the construction of the measure is somewhat complex.  At the core though, A is constrained by its relationship with B to the extent that A does not have many alternatives (has few other ties except that to B), and A's other alternatives are also tied to B.  If A has few alternatives to exchanging with B, and if those alternative exchange partners are also tied to B, then B is likely to constrain A's behavior.
@@ -67,11 +69,11 @@ The four per-node measures are computed from the stored ties (the sum of the squ
 
 ## Network types
 
-**Directed:** a valued network is symmetrized (z_ij + z_ji); an unvalued one is not: p_ij uses outgoing ties only. **Valued:** Burt's weighted measures by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative and missing values stop the command with an error. See [nwnetworktypes](nwnetworktypes).
+**Directed:** both directions of a tie count (z_ij + z_ji), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of `nwcommands`. **Valued:** Burt's weighted measures by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative and missing values stop the command with an error. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
-The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees, not with *n*^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds, 100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). The options `dyadredundancy` and `dyadconstraint` build *n*-by-*n* networks and take the dense route.
+The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees, not with *n*^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds, 100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). On a directed network the weighted kernel is used. The options `dyadredundancy` and `dyadconstraint` build *n*-by-*n* networks and take the dense route.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -109,4 +111,4 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))

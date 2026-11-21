@@ -33,11 +33,14 @@ namelist holds names of results saved with estimates store; a period (.) stands 
 
 What is shown for each command:
 
-- `nwergm`: `e(ll)`, `e(aic)`, `e(bic)` as stored (for a model with dyad dependence the log likelihood is estimated by bridge sampling or is a pseudolikelihood; a note says which); *k* is `e(df_m)`.
-- `nwlsm`: the posterior mean of the log likelihood, `e(ll_mean)`; there is no AIC or BIC, because the fit is Bayesian.
-- `nwsbm`: the expected complete-data log likelihood `e(PL)`, the number of parameters `e(npar)` and the integrated classification likelihood `e(ICL)`; *N* is the number of actors.
-- `nwsaom`, `nwalaam`: these estimators (method of moments, Monte Carlo) do not store a likelihood, so only *N* and *k* appear.
-- Other estimation commands: `e(ll)`, `e(aic)`, `e(bic)`; AIC and BIC are computed from the log likelihood when the command did not store them.
+- `nwergm`: `e(ll)`, `e(aic)`, `e(bic)` as stored; *k* is `e(df_m)`, the number of coefficients.
+- `nwergm`, dyad dependence: the log likelihood is estimated by bridge sampling or is a pseudolikelihood; a note under the table says which.
+- `nwlsm`: the posterior mean of the log likelihood, `e(ll_mean)`; no AIC or BIC, because the fit is Bayesian; *k* is the number of coefficients in `e(b)` (the latent positions are not counted).
+- `nwsbm`: the expected complete-data log likelihood `e(PL)` and the integrated classification likelihood `e(ICL)`; *N* is the number of actors; AIC and BIC are not shown.
+- `nwsbm`, *k*: `e(npar)` (block parameters, covariate coefficients, a Gaussian variance) plus the free membership proportions, *Q* - 1 for *Q* blocks (*Q1* - 1 plus *Q2* - 1 for two modes), as in the ICL penalty.
+- `nwdynam`, `nwrem`: `e(ll)`; *k* is `e(df_m)` when the command stores it (`nwrem`), otherwise the number of coefficients in `e(b)`; AIC and BIC as stored, or computed from the log likelihood.
+- `nwsaom`, `nwalaam`: these estimators (method of moments, Monte Carlo) do not store a likelihood, so only *N* and *k*, the number of coefficients in `e(b)`, appear.
+- Other estimation commands: `e(ll)`, `e(aic)`, `e(bic)`; *k* is `e(rank)`, else `e(df_m)`, else the number of coefficients; AIC and BIC are computed from the log likelihood when not stored.
 
 ## Remarks
 
@@ -75,4 +78,4 @@ With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))

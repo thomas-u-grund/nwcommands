@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 254
+POSITION 10 10 550 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcoreperiphery - Discrete core-periphery detection")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
   TEXT tx_ed_generate 20 54 260 ., label("Required. Name of the Stata variable that stores core membership")
   EDIT ed_generate 290 54 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing variable")
@@ -26,8 +26,12 @@ BEGIN
   EDIT ed_measure 290 110 190 ., nomem option(measure)
   TEXT tx_sp_maxiter 20 138 260 ., label("Maximum number of local-search sweeps before giving up on convergence; default = 100")
   SPINNER sp_maxiter 290 138 70 ., default(100) max(999999) min(1) nomem option(maxiter)
-  TEXT tx_cx_silent 20 166 260 ., label("Suppress display of results")
-  CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
+  TEXT tx_sp_restarts 20 166 260 ., label("Number of starts (1 = degree-based start only; more adds random starts, the best is kept); default = 1")
+  SPINNER sp_restarts 290 166 70 ., default(1) max(999999) min(1) nomem option(restarts)
+  TEXT tx_ed_seed 20 194 260 ., label("Random-number seed for the random starts (needs restarts of 2 or more)")
+  EDIT ed_seed 290 194 190 ., nomem option(seed)
+  TEXT tx_cx_silent 20 222 260 ., label("Suppress display of results")
+  CHECKBOX cx_silent 290 222 190 ., label("silent") option(silent)
 END
 
 LIST netlist
@@ -50,6 +54,8 @@ BEGIN
 		option main.cx_replace
 		optionarg main.ed_measure
 		optionarg main.sp_maxiter
+		optionarg main.sp_restarts
+		optionarg main.ed_seed
 		option main.cx_silent
 	endoptions
 	stata
