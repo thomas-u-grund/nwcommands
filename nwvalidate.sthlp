@@ -47,4 +47,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 {synopt:{bf:r(validname)}}valid name in case the tryname already exists (otherwise the tryname){p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

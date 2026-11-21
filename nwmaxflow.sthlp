@@ -110,4 +110,4 @@ problems. {it:Journal of the ACM} 19(2), 248-264.
 	{help nwmatching}, {help nwlambda}, {help nwkcomponents}, {help nwbridges}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

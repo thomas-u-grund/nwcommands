@@ -1,4 +1,4 @@
-*! nwcompare: table of the fit statistics stored by nwergm, nwsaom, nwlsm, nwsbm, nwalaam and other estimation commands (3.28.0)
+*! nwcompare: table of the fit statistics stored by nwergm, nwsaom, nwlsm, nwsbm, nwalaam and other estimation commands (3.33.0)
 capture program drop nwcompare
 program nwcompare, rclass
 	version 15
@@ -204,6 +204,12 @@ program _nwcompare_row, rclass
 	else {
 		capture local k = colsof(e(b))
 		if _rc local k = .
+	}
+	// nwsbm: e(npar) counts the block parameters (and the covariate coefficients, the variance); the free membership proportions
+	// (Q - 1 for each mode) are part of the model and of the ICL penalty, so they are added to k
+	if "`cmd'" == "nwsbm" & !missing(`k') {
+		if !missing(e(Q)) local k = `k' + e(Q) - 1
+		if !missing(e(Q2)) local k = `k' + e(Q2) - 1
 	}
 	local aic = e(aic)
 	local bic = e(bic)

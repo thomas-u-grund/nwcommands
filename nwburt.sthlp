@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.1.0  25oct2026 author: Thomas Grund}{...}
+{* *! version 2.2.0  21nov2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##analysis_positions:[NW-2.6.4] Positions, roles and similarity}
 
@@ -42,6 +42,12 @@ For a {bf:valued} network (a network that was created with tie values, see {help
 is the sum of both directions, {it:a_ij} = {it:z_ij} + {it:z_ji} (for an undirected network this only doubles every
 value and changes no result), and the formulas below are applied to these strengths. With the option {opt binary} the
 tie values are ignored: every positive value counts as a tie of value 1. On a network that is not valued the option has no effect.
+
+{pstd}
+On a {bf:directed} network without tie values, both directions of a tie count as well: the strength of the relation between {it:i} and {it:j} is
+{it:z_ij} + {it:z_ji} with {it:z} = 1 for a tie, so a mutual tie has strength 2 and the proportions are
+{it:p_ij} = ({it:z_ij} + {it:z_ji}) / sum_{it:k} ({it:z_ik} + {it:z_ki}), as in {cmd:igraph::constraint()} of R (igraph). A network that stores the same ties
+with the value 1 gives the same results.
 
 {pstd}
 The dyadic redundancy measure calculates, for each actor in ego's neighborhood, how many of the other actors in the neighborhood are also tied to the other.  The larger the proportion of others in the
@@ -128,7 +134,7 @@ needs the plugin for a valued network too. The options {opt dyadredundancy} and
 {title:Network types}
 
 {pstd}
-{bf:Directed:} a valued network is symmetrized (z_ij + z_ji); an unvalued one is not: p_ij uses outgoing ties only.
+{bf:Directed:} both directions of a tie count (z_ij + z_ji), for a valued and for an unvalued network; the measures of a directed network need the compiled plugin of {cmd:nwcommands}.
 {bf:Valued:} Burt's weighted measures by default; {opt binary} ignores the values. {bf:Two-mode:} same as for the
 bipartite graph read as a one-mode network. {bf:Signed:} negative and missing values stop the command with an error. See
 {help nwnetworktypes}.{p_end}
@@ -140,7 +146,7 @@ bipartite graph read as a one-mode network. {bf:Signed:} negative and missing va
 The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
 platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees,
 not with {it:n}^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds,
-100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). The options {opt dyadredundancy} and {opt dyadconstraint} build
+100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). On a directed network the weighted kernel is used. The options {opt dyadredundancy} and {opt dyadconstraint} build
 {it:n}-by-{it:n} networks and take the dense route.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
@@ -190,4 +196,4 @@ University Press.
 	{help nwconstraint}, {help nwbridges}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -136,4 +136,4 @@ change, used as a standard diagnostic for whether panel-wave data is suitable fo
 	{help nwcorrelate}, {help nwcomponents}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

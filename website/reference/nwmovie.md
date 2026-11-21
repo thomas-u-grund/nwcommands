@@ -83,9 +83,18 @@ The current wave's title/counter (or, in event mode, the active-tie count/time r
 - **.webm** --- VP9 or VP8 video, for web pages
 - **.gif** --- an animated image, which needs no video player at all, at the cost of a larger file and fewer colors
 
-`nwmovie` builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is written (at most `timeout()` seconds). The viewer window appears briefly while it works; do not close it. On macOS `nwmovie` first checks that the screen is not locked, because the viewer cannot draw while it is, and stops with r(498) if it is. If the file is not written within `timeout()` seconds, or the export fails, `nwmovie` stops the viewer it started. Nothing beyond `nwcommands` itself needs to be installed: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit on macOS, WebView2 on Windows, WebKitGTK on Linux). A video has 25 frames per second, and its length follows `duration()` (panel mode) or `speed()` (event mode): three waves with the default `duration(800)` give a movie of 1.6 seconds, so give a larger `duration()` for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
+`nwmovie` builds the movie, opens it in the native viewer, which renders and encodes it and closes again, and waits until the file is written (at most `timeout()` seconds). The viewer window appears briefly while it works; do not close it. On macOS `nwmovie` first checks that the screen is not locked, because the viewer cannot draw while it is, and stops with r(498) if it is. If the file is not written within `timeout()` seconds, or the export fails, `nwmovie` stops the viewer it started. Nothing beyond `nwcommands` itself needs to be installed on macOS and Windows: the encoding is done by the web engine the viewer uses, the one that comes with the operating system (WebKit on macOS, WebView2 on Windows); on Linux, **.mp4** and **.webm** need `ffmpeg` (below), and a **.gif** file needs nothing on any system. A video has 25 frames per second, and its length follows `duration()` (panel mode) or `speed()` (event mode): three waves with the default `duration(800)` give a movie of 1.6 seconds, so give a larger `duration()` for a slower one. The frames have the size of the viewer window, at the resolution of the screen.
 
 `export()` needs the native viewer, which is part of the package for all three platforms. If the web engine of a computer cannot encode the requested format (an older WebKitGTK on Linux, for example, may not encode MP4), `nwmovie` stops with a message saying so; export a **.gif** file instead, which every engine can write. On Linux the viewer's web engine cannot encode video reliably, so `export()` draws a GIF and `ffmpeg` makes the **.mp4** or **.webm** from it (25 frames per second); `ffmpeg` with the libx264 (MP4) or libvpx-vp9 (WebM) encoder must be installed, otherwise `nwmovie` stops with r(498) before anything is launched; a **.gif** file needs nothing. If a Windows or macOS engine can record only WebM, an **.mp4** request is converted with `ffmpeg` when that is installed and otherwise written as **.webm** next to the requested name, with a message. On Linux the viewer needs a graphical display; without one `nwmovie` stops with r(498). If the viewer closes or stops responding, `nwmovie` stops with r(498) instead of waiting for `timeout()`. `nwmovie` removes the temporary files it made. The **Export video** button in the interactive view writes MP4 where the engine can and WebM otherwise.
+
+**Installing ffmpeg on Linux.** The web engine of the viewer on Linux (WebKitGTK) cannot encode video, so `export()` draws a GIF and `ffmpeg` converts it to **.mp4** or **.webm**. What to install, by system:
+
+- **Debian, Ubuntu** --- `sudo apt install ffmpeg`
+- **Fedora** --- `sudo dnf install ffmpeg`, with the RPM Fusion repository enabled (the `ffmpeg-free` package of Fedora has no H.264 encoder)
+- **Windows, macOS** --- nothing, for **.mp4**, **.webm** and **.gif**
+- **any system** --- nothing, for **.gif**
+
+The `ffmpeg` of these packages has the libx264 (MP4) and libvpx-vp9 (WebM) encoders that `nwmovie` looks for. Because the video is made from a 256-colour GIF, its colours are those of a GIF: fine for network pictures, but not photographs. If `ffmpeg` is missing, or lacks the encoder, `nwmovie` stops with r(498) before anything is launched and prints these instructions.
 
 ## Network types
 
@@ -146,4 +155,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))

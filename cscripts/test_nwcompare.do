@@ -26,6 +26,7 @@ program fake_sbm, eclass
     ereturn scalar N = 20
     ereturn scalar PL = -88.5
     ereturn scalar npar = 7
+    ereturn scalar Q = 3
     ereturn scalar ICL = -120.25
     ereturn local cmd "nwsbm"
 end
@@ -106,7 +107,7 @@ fake_sbm
 nwcompare lg1 .
 matrix T = r(table)
 chk "nwsbm: PL as log likelihood" `=(abs(T[2,2] + 88.5) < 1e-9)'
-chk "nwsbm: parameters" `=(T[2,3] == 7)'
+chk "nwsbm: parameters (npar + Q - 1)" `=(T[2,3] == 9)'
 chk "nwsbm: ICL" `=(abs(T[2,6] + 120.25) < 1e-9)'
 chk "nwsbm: N" `=(T[2,1] == 20)'
 * results without e(b) (nwsbm) cannot be stored and are lost when another model is restored: only the active results of such a fit are listed

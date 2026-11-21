@@ -127,4 +127,4 @@ degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 	{help nwdegree}, {help nw2set}, {help nw2project}, {help nw2clustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

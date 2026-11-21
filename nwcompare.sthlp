@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  19nov2026 author: Thomas Grund}{...}
+{* *! version 1.1.0  21nov2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##analysis_statmodels:[NW-2.6.7] Statistical tests}
 
@@ -37,11 +37,14 @@
 {pstd}
 What is shown for each command:
 
-{phang2}{cmd:nwergm}: {cmd:e(ll)}, {cmd:e(aic)}, {cmd:e(bic)} as stored (for a model with dyad dependence the log likelihood is estimated by bridge sampling or is a pseudolikelihood; a note says which); {it:k} is {cmd:e(df_m)}.{p_end}
-{phang2}{cmd:nwlsm}: the posterior mean of the log likelihood, {cmd:e(ll_mean)}; there is no AIC or BIC, because the fit is Bayesian.{p_end}
-{phang2}{cmd:nwsbm}: the expected complete-data log likelihood {cmd:e(PL)}, the number of parameters {cmd:e(npar)} and the integrated classification likelihood {cmd:e(ICL)}; {it:N} is the number of actors.{p_end}
-{phang2}{cmd:nwsaom}, {cmd:nwalaam}: these estimators (method of moments, Monte Carlo) do not store a likelihood, so only {it:N} and {it:k} appear.{p_end}
-{phang2}Other estimation commands: {cmd:e(ll)}, {cmd:e(aic)}, {cmd:e(bic)}; AIC and BIC are computed from the log likelihood when the command did not store them.{p_end}
+{phang2}{cmd:nwergm}: {cmd:e(ll)}, {cmd:e(aic)}, {cmd:e(bic)} as stored; {it:k} is {cmd:e(df_m)}, the number of coefficients.{p_end}
+{phang2}{cmd:nwergm}, dyad dependence: the log likelihood is estimated by bridge sampling or is a pseudolikelihood; a note under the table says which.{p_end}
+{phang2}{cmd:nwlsm}: the posterior mean of the log likelihood, {cmd:e(ll_mean)}; no AIC or BIC, because the fit is Bayesian; {it:k} is the number of coefficients in {cmd:e(b)} (the latent positions are not counted).{p_end}
+{phang2}{cmd:nwsbm}: the expected complete-data log likelihood {cmd:e(PL)} and the integrated classification likelihood {cmd:e(ICL)}; {it:N} is the number of actors; AIC and BIC are not shown.{p_end}
+{phang2}{cmd:nwsbm}, {it:k}: {cmd:e(npar)} (block parameters, covariate coefficients, a Gaussian variance) plus the free membership proportions, {it:Q} - 1 for {it:Q} blocks ({it:Q1} - 1 plus {it:Q2} - 1 for two modes), as in the ICL penalty.{p_end}
+{phang2}{cmd:nwdynam}, {cmd:nwrem}: {cmd:e(ll)}; {it:k} is {cmd:e(df_m)} when the command stores it ({cmd:nwrem}), otherwise the number of coefficients in {cmd:e(b)}; AIC and BIC as stored, or computed from the log likelihood.{p_end}
+{phang2}{cmd:nwsaom}, {cmd:nwalaam}: these estimators (method of moments, Monte Carlo) do not store a likelihood, so only {it:N} and {it:k}, the number of coefficients in {cmd:e(b)}, appear.{p_end}
+{phang2}Other estimation commands: {cmd:e(ll)}, {cmd:e(aic)}, {cmd:e(bic)}; {it:k} is {cmd:e(rank)}, else {cmd:e(df_m)}, else the number of coefficients; AIC and BIC are computed from the log likelihood when not stored.{p_end}
 
 {title:Remarks}
 
@@ -88,4 +91,4 @@ coefficients that all of them share by name; the sample models in the example be
 {help nwcoefplot}, {help nwergm}, {help nwsaom}, {help nwlsm}, {help nwsbm}, {help nwalaam}, {help estimates}
 
 {hline}
-{pstd}{it:nwcommands version 3.32.1, 20 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
