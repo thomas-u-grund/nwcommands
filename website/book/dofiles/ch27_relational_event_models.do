@@ -59,7 +59,7 @@ nwload mail, xvars
 rename _nwnode label
 merge 1:1 label using "$nwwebpath/manufacturing_nodes.dta", keep(master ///
     match) nogen
-nwexpand supervisor, name(samesup)
+nwexpand supervisor, name(samesup) network(mail)
 nwsummarize samesup
 
 nwrem mail, nodsnd nidrec covevent(samesup)

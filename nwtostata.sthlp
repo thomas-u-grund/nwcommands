@@ -83,4 +83,4 @@ a message instead of failing half way; use the Mata matrix ({help nwtomata}) for
 	{help nwtomata}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

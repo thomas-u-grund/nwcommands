@@ -303,4 +303,4 @@ without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcop
 copies only the dialog boxes.
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

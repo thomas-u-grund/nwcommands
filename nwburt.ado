@@ -2,9 +2,19 @@
 capture program drop nwburt
 program nwburt, rclass
 	version 12
-	syntax [anything(name=netname)] [, dyadredundancy dyadconstraint BINary replace silent]
+	syntax [anything(name=netname)] [, dyadredundancy dyadconstraint BINary replace silent DIRection(string)]
 
 	_nwsyntax `netname'
+
+	// direction(both|out|in): which ties of a directed network count as the ties of ego (both: Burt's convention,
+	// z_ij + z_ji; out: the ties ego sends; in: the ties ego receives). No effect on an undirected network.
+	if "`direction'" == "" local direction both
+	if !inlist("`direction'", "both", "out", "in") {
+		di "{err}direction() must be {bf:both}, {bf:out} or {bf:in}"
+		exit 198
+	}
+	local __onedir = ("`directed'" == "true" & "`direction'" != "both")
+	local __indir = ("`direction'" == "in")
 
 	// The Valued flag of the network (set when it was created, see nwset/nwfromedge) decides, as for every command
 	// with a weighted form in R: a valued network gets Burt's (1992) weighted measures (native kernel 40) unless
@@ -52,7 +62,20 @@ program nwburt, rclass
 		tempname __burt
 		// native kernel 29 (plugin generation 7 or later) from the stored ties; an n x 4 result is used, anything else
 		// (older plugin, failure, NW_NOFASTKERNELS) leaves the Mata method
-		if `__weighted' {
+		if `__onedir' {
+			// one direction only: out reproduces the out-ties-only kernel 29 of versions before 3.33.0; in is the same
+			// on the transposed ties; a valued network (weighted) goes through nw_burtdir() (the kernels of the weighted
+			// measures symmetrize)
+			if `__weighted' {
+				mata: `__burt' = nw_burtdir(`netobj', `__indir', 0)
+			}
+			else {
+				mata: `__burt' = nw_fastburt(`netobj', `__kind', `__indir')
+				mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
+				if !`__fast' mata: `__burt' = nw_burtdir(`netobj', `__indir', 1)
+			}
+		}
+		else if `__weighted' {
 			// weighted Burt measures: native kernel 40 (plugin generation 9 or later), no Mata fallback
 			mata: `__burt' = nw_fastburtw(`netobj', ("`binary'" != ""))
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
@@ -108,7 +131,11 @@ program nwburt, rclass
 		if `__kind' == 1 mata: `onenet' = (`onenet' :> 0) :* (`onenet' :< .)
 		mata: _diag(`onenet', J(`nodes',1,0))
 
-		if "`directed'" == "true" {
+		// one direction only (direction(out|in)): the dense formulas of versions before 3.33.0 on the out-ties (in: on
+		// the transposed network); the dyadic networks and the node summaries come from them
+		if `__onedir' & `__indir' mata: `onenet' = `onenet''
+
+		if "`directed'" == "true" & !`__onedir' {
 			// a directed network: both directions of a tie count (Burt's symmetrised tie strength z_ij + z_ji, as the
 			// summary measures); the dyadic networks and the node summaries come from the same weighted formulas
 			mata: __nwburt_dr = dyadicredundancy_dir(`onenet')
@@ -130,7 +157,7 @@ program nwburt, rclass
 			_nwsyntax `netname'
 		}
 
-		if "`directed'" == "true" {
+		if "`directed'" == "true" & !`__onedir' {
 			// the node summaries of a directed network from the weighted kernel on the symmetrised ties (as without the dyadic options)
 			mata: `__burt' = nw_fastburtw(`netobj', 1)
 			mata: st_local("__fast", strofreal(rows(`__burt') == `nodes' & cols(`__burt') == 4))
@@ -174,6 +201,7 @@ program nwburt, rclass
 
 	return scalar nodes = `nodes'
 	return scalar weighted = `__weighted'
+	return local direction "`direction'"
 
 	if "`silent'" == "" {
 		di "{hline 40}"
@@ -181,6 +209,8 @@ program nwburt, rclass
 		di "{hline 40}"
 		di "{txt}    Burt structural hole measures"
 		if `__weighted' di "{txt}{p 4 4 2}(valued ties: Burt's weighted measures; both directions of a directed tie count){p_end}"
+		else if "`directed'" == "true" & "`direction'" == "out" di "{txt}{p 4 4 2}(directed network: ties sent by ego only){p_end}"
+		else if "`directed'" == "true" & "`direction'" == "in" di "{txt}{p 4 4 2}(directed network: ties received by ego only){p_end}"
 		else if "`directed'" == "true" di "{txt}{p 4 4 2}(directed network: both directions of a tie count){p_end}"
 		sum _effsize _efficiency _constraint _hierarchy
 	}
@@ -202,6 +232,7 @@ end
 
 capture mata: mata drop nw_fastburt()
 capture mata: mata drop nw_fastburtw()
+capture mata: mata drop nw_burtdir()
 capture mata: mata drop nw_burtkind()
 capture mata: mata drop dyadicredundancy()
 capture mata: mata drop dyadicredundancy_dir()
@@ -213,7 +244,7 @@ mata:
 // Native Burt measures (kernel 29 of the nwgraph plugin): the n x 4 matrix of calculate_burt() (effective size,
 // efficiency, constraint, hierarchy), or a 0 x 0 matrix when the kernel is not available. The global
 // NW_NOFASTKERNELS forces the Mata method.
-real matrix nw_fastburt(pointer (class nw_def scalar) scalar p, real scalar kind)
+real matrix nw_fastburt(pointer (class nw_def scalar) scalar p, real scalar kind, | real scalar indir)
 {
 	real rowvector aux
 	real scalar st, n
@@ -224,6 +255,8 @@ real matrix nw_fastburt(pointer (class nw_def scalar) scalar p, real scalar kind
 	if (nwg_comb_version() < 7) return(J(0, 0, .))
 	n = p->get_nodes()
 	el = p->edgelist()
+	// direction(in): the ties ego receives are the ties of ego in the transposed network
+	if (indir != . & indir != 0) el = el[., (2, 1, 3)]
 	// binary option on a valued network: every positive value is a tie of value 1
 	if (kind == 1) {
 		el = select(el, el[., 3] :> 0)
@@ -257,6 +290,73 @@ real matrix nw_fastburtw(pointer (class nw_def scalar) scalar p, | real scalar b
 	if (st != 0 | rows(r) != n | cols(r) != 5) return(J(0, 0, .))
 	h = r[., 4] :+ editvalue(r[., 5], 1, .)
 	return((r[., 1], r[., 2], r[., 3], h))
+}
+
+// Burt's measures from ONE direction of the ties of a directed network (direction(out) or direction(in) of nwburt;
+// in: the ties of the transposed network). The contacts of ego i are the nodes j with z_ij > 0, p_ij = z_ij / sum_k z_ik,
+// the constraint of i is sum_j (p_ij + sum_q p_iq p_qj)^2, the redundancy of the contact j is sum_q p_iq m_qj with
+// m_qj = z_qj / max_k z_qk (for 0/1 ties m_qj = z_qj: the formulas of kernel 29, which this reproduces), efficiency =
+// effective size / number of contacts, hierarchy as kernel 40. bin: every positive value is a tie of value 1.
+// Columns as nw_fastburt(); a node without contacts has 0, 0, 0 and a missing hierarchy.
+real matrix nw_burtdir(pointer (class nw_def scalar) scalar p, real scalar indir, real scalar bin)
+{
+	real scalar n, m, i, k, kk, a, d, q, jn, jp, piq, es, con, avgc, z, h, j
+	real matrix el, res
+	real colvector cnt, start, s, mx, posn, ind, red, c, c2
+
+	n = p->get_nodes()
+	el = p->edgelist()
+	if (rows(el) > 0) el = select(el, el[., 1] :!= el[., 2] :& el[., 3] :> 0 :& el[., 3] :< .)
+	if (indir != 0) el = el[., (2, 1, 3)]
+	if (bin != 0 & rows(el) > 0) el[., 3] = J(rows(el), 1, 1)
+	if (rows(el) > 0) el = sort(el, (1, 2))
+	m = rows(el)
+	cnt = J(n, 1, 0); s = J(n, 1, 0); mx = J(n, 1, 0)
+	for (k = 1; k <= m; k++) {
+		i = el[k, 1]
+		cnt[i] = cnt[i] + 1
+		s[i] = s[i] + el[k, 3]
+		if (el[k, 3] > mx[i]) mx[i] = el[k, 3]
+	}
+	start = runningsum(cnt) - cnt :+ 1
+	posn = J(n, 1, 0)
+	res = J(n, 4, .)
+	for (i = 1; i <= n; i++) {
+		d = cnt[i]
+		if (d == 0) {
+			res[i, .] = (0, 0, 0, .)
+			continue
+		}
+		a = start[i]
+		ind = J(d, 1, 0); red = J(d, 1, 0)
+		for (k = a; k < a + d; k++) posn[el[k, 2]] = k - a + 1
+		for (k = a; k < a + d; k++) {
+			q = el[k, 2]
+			piq = el[k, 3] / s[i]
+			for (kk = start[q]; kk < start[q] + cnt[q]; kk++) {
+				jn = el[kk, 2]
+				jp = posn[jn]
+				if (jp > 0) {
+					ind[jp] = ind[jp] + piq * (el[kk, 3] / s[q])
+					red[jp] = red[jp] + piq * (el[kk, 3] / mx[q])
+				}
+			}
+		}
+		c = el[|a, 3 \ a + d - 1, 3|] :/ s[i] + ind
+		c2 = c :* c
+		es = d - sum(red)
+		con = sum(c2)
+		avgc = con / d
+		z = sum((c2 :/ avgc) :* ln(c2 :/ avgc))
+		if (d == 1) h = 1
+		else {
+			h = z / (d * ln(d))
+			if (h >= . | h > 1e300 | h < -1e300) h = 1
+		}
+		res[i, .] = (es, es / d, con, h)
+		for (k = a; k < a + d; k++) posn[el[k, 2]] = 0
+	}
+	return(res)
 }
 
 // 0 = every stored tie has the value 1, 1 = some other positive value, 2 = a negative or missing value

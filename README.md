@@ -1,6 +1,6 @@
 # nwcommands
 
-**Version 3.33.0** (21 November 2026)
+**Version 3.34.0** (21 November 2026)
 
 Network analysis for Stata — 138 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular

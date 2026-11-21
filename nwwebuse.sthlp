@@ -107,4 +107,4 @@ https://nwcommands.org/examples{p_end}
 	{help nwuse}, {help nwimport}, {help webuse}
 
 {hline}
-{pstd}{it:nwcommands version 3.33.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 254
+POSITION 10 10 550 282
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwburt - Calculate Burt structural hole measures")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_cx_dyadredundan 20 54 260 ., label("Save dyadic redundancy as new network")
   CHECKBOX cx_dyadredundan 290 54 190 ., label("dyadredundancy") option(dyadredundancy)
   TEXT tx_cx_dyadconstrai 20 82 260 ., label("Save dyadic constraint as new network")
@@ -28,6 +28,15 @@ BEGIN
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
   TEXT tx_cx_silent 20 166 260 ., label("Suppress summary output")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
+  TEXT tx_cb_direction 20 194 260 ., label("Directed network: ties that count (both, out, in)")
+  COMBOBOX cb_direction 290 194 190 ., dropdownlist contents(list_direction) default(both) nomem option(direction)
+END
+
+LIST list_direction
+BEGIN
+	both
+	out
+	in
 END
 
 LIST netlist
@@ -50,6 +59,7 @@ BEGIN
 		option main.cx_binary
 		option main.cx_replace
 		option main.cx_silent
+		optionarg main.cb_direction
 	endoptions
 	stata
 END
