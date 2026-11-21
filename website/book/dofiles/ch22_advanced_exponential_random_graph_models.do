@@ -32,6 +32,22 @@ nwsummarize art, detail
 
 nwergm art, edges mutual nodematch(grp) gwesp(.5) seed(12345)
 
+nwergm simulate 100, edges mutual nodematch(grp) gwesp(.5) directed ///
+    theta(-4 1.5 1.2 .6) seed(2026) mcmcburnin(200000) mcmcinterval(20000) ///
+    nsim(50) generate(art)
+frame create rec edges mutual grp gwesp se_edges se_mutual se_grp se_gwesp
+forvalues k = 1/50 {
+    quietly nwergm art_`k', edges mutual nodematch(grp) gwesp(.5) seed(`k')
+    frame post rec (_b[edges]) (_b[mutual]) (_b[nodematch_grp]) ///
+        (_b[gwesp_.5]) (_se[edges]) (_se[mutual]) (_se[nodematch_grp]) ///
+        (_se[gwesp_.5])
+}
+frame rec: generate cover_edges = abs(edges + 4) < 1.96 * se_edges
+frame rec: generate cover_mutual = abs(mutual - 1.5) < 1.96 * se_mutual
+frame rec: generate cover_grp = abs(grp - 1.2) < 1.96 * se_grp
+frame rec: generate cover_gwesp = abs(gwesp - .6) < 1.96 * se_gwesp
+frame rec: summarize
+
 nwwebuse lazega, nwclear
 quietly nwergm lazega_adv, edges mutual nodematch(office practice) ///
     nodeofactor(status) nodeifactor(status) gwesp(.5) seed(12345)
