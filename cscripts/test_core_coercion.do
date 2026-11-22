@@ -198,4 +198,23 @@ _tcc_log "valued network: only the sign of a tie counts" "nwbalance bval"
 nwset, mat((0,1,1\1,0,.\1,.,0)) name(bmis) undirected
 _tcc_log "1 missing ties treated as 0" "nwbalance bmis"
 
+* ---------------------------------------------------------------- A8. nwdiffuse
+clear
+qui set obs 3
+qui gen toa = cond(_n == 1, 1, cond(_n == 2, 2, .))
+nwset, mat((0,2,1\0,0,0\1,0,0)) name(dv) directed
+_tcc_log "directed network: the exposure of a node comes from the nodes it sends ties to" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace"
+_tcc_log "valued network: tie values ignored, every tie counts as 1" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace"
+_tcc_log "valued network: exposure weighted by the tie values" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace valued"
+_tcc_log "directed network: the exposure of a node comes from the nodes it receives ties from" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace incoming"
+nwset, mat((1,1,0\1,0,1\0,1,0)) name(du) undirected selfloop
+_tcc_log "self-loops ignored" "nwdiffuse exposure du, toa(toa) generate(ex2) replace"
+_tcc_log "undirected network" "nwdiffuse threshold du, toa(toa) generate(th1) replace"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(dm) undirected
+_tcc_log "1 missing ties treated as 0" "nwdiffuse threshold dm, toa(toa) generate(th1) replace"
+_tcc_log "undirected network" "nwdiffuse long du, toa(toa) clear"
+qui set obs 3
+qui gen toa = cond(_n == 1, 1, cond(_n == 2, 2, .))
+_tcc_log "directed network" "nwdiffuse simulate dv, model(cascade) prob(.5) nseeds(1) steps(3) generate(sim1) seed(1) replace"
+
 di "PASS: test_core_coercion"
