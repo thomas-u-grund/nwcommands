@@ -232,7 +232,7 @@ One entry for each chapter. The entries use these headings:
   - Density and degree in two modes: they divide by the size of the other mode (Ex. 2, exercise bank 12.a).
 - **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 3 more are in the [exercise bank](../exercises/).
 
-### Chapter 13. Valued, signed, and multiplex networks
+### Chapter 13. Multiplex, valued, and signed networks
 - **Time:** 2 sessions.
 - **Data:** `lazega`, `gang` (valued), `chesapeake`, `gahuku`, `senate114`, `senate93`.
 - **Builds on:** 6, 8.

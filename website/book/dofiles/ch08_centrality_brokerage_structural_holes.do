@@ -56,7 +56,6 @@ nwbetween lazega_adv, generate(bet) sym
 gsort -bet _nwnode
 list _nwnode bet adv_in adv_out status office in 1/8, clean
 tabstat bet, by(partner) statistics(mean sd n)
-regress bet i.partner yrs_frm
 
 * ============================================================
 * Eigenvector centrality
@@ -101,10 +100,3 @@ rename (brk_coordinator brk_gatekeeper brk_representative brk_consultant ///
     brk_liaison) (coord gatek repr consult liais)
 gsort -liais _nwnode
 list _nwnode office coord gatek repr consult liais in 1/6, clean
-
-nwbrokerage lazega_adv, generate(brs) group(partner)
-egen brs_total = rowtotal(brs_coordinator brs_gatekeeper ///
-    brs_representative brs_consultant)
-generate share_gate = brs_gatekeeper / brs_total
-generate share_rep = brs_representative / brs_total
-tabstat brs_total share_gate share_rep, by(partner) statistics(mean)

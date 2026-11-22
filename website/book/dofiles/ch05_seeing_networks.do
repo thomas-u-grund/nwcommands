@@ -47,8 +47,15 @@ nwplot flomarriage, label(_nwnode) layout(frucht) scheme(s1network) ///
 graph combine g1 g2, cols(2) scheme(s1network) xsize(8) ysize(4)
 
 * ============================================================
+* Matrix plots: an alternative that does not lay out coordinates at all
+* ============================================================
+nwwebuse lazega, nwclear
+nwplotmatrix lazega_adv, group(office) scheme(s1mono)
+
+* ============================================================
 * Mapping attributes to visual channels
 * ============================================================
+nwwebuse florentine, nwclear
 set seed 42
 nwplot flomarriage, label(_nwnode) size(wealth)
 
@@ -99,9 +106,3 @@ nwgenerate chesapeake_log = ln(chesapeake + 1)
 set seed 42
 nwplot chesapeake, arcstyle(straight) edgesize(chesapeake_log, legendoff) ///
     edgefactor(0.5) arrowfactor(0.3) layout(mds)
-
-* ============================================================
-* Matrix plots: an alternative that does not lay out coordinates at all
-* ============================================================
-nwwebuse lazega, nwclear
-nwplotmatrix lazega_adv, group(office) scheme(s1mono)

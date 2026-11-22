@@ -1,6 +1,6 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Chapter 13: Valued, signed, and multiplex networks
+* Chapter 13: Multiplex, valued, and signed networks
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
@@ -22,8 +22,6 @@ set more off
 * Multiplexity: overlap between relations
 * ============================================================
 nwwebuse lazega, nwclear
-nwsummarize lazega_fr
-nwsummarize lazega_cow
 nwtabulate lazega_adv lazega_fr
 
 nwgen nrel = lazega_adv + lazega_cow + lazega_fr
@@ -50,13 +48,7 @@ gsort -btw_bin
 list _nwnode btw_bin btw_wgt in 1/8, clean
 
 nwwebuse chesapeake, nwclear
-nwsummarize chesapeake
-summarize Biomass
-quietly nwdegree chesapeake, binary generate(_outcount _incount)
-summarize _outcount _incount
-
 quietly nwdegree chesapeake, generate(_outflow _inflow)
-summarize _outflow _inflow
 gsort -_outflow
 list _nwnode Biomass _outflow _inflow in 1/5, clean
 

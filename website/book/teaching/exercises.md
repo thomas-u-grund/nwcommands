@@ -247,7 +247,7 @@ chapter. Section, chapter and figure numbers refer to the book.
 *Hint.* Fourteen attendees form $14\cdot 13/2$ pairs. To remove the event, keep every other node with `nwsubset davis if _nwnode != "E8", name(davis13)` (Section 4.9), then `nw2project davis13, project(1) name(w13) stat(count)` and read the `Ties:` line.
 
 
-## Chapter 13: Valued, signed, and multiplex networks
+## Chapter 13: Multiplex, valued, and signed networks
 
 **13.a** (basic) The recode of the gang network into two intensity bands (`intensity`) put the 315 ties into a low band and a high band. From the two `nwtabulate` tables of Section 13.3, compute the share of the 315 ties in each band, and compare them with the shares of the two extreme levels of the original coding (level 1 and level 4). Which distinctions of the original coding does the two-band coding erase, and which does it keep?
 

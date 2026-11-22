@@ -54,12 +54,6 @@ nwdiffuse threshold glasgow1, toa(toa) generate(thresh) lag(1)
 summarize thresh nexp2 nexp3
 
 * ============================================================
-* What a model of change has to explain
-* ============================================================
-nwturnover glasgow1 glasgow2, generate(_turnover) replace formation
-nwturnover glasgow2 glasgow3, generate(_turnover) replace formation
-
-* ============================================================
 * Slicing a genuinely timestamped network
 * ============================================================
 nwclear
@@ -76,3 +70,10 @@ nwset ego alter, edgelist undirected time(wave) name(evolving)
 nwsummarize evolving
 nwattime evolving, at(1) name(snap1)
 nwattime evolving, at(2) name(snap2)
+
+* ============================================================
+* What a model of change has to explain
+* ============================================================
+nwwebuse glasgow, nwclear
+nwturnover glasgow1 glasgow2, generate(_turnover) replace formation
+nwturnover glasgow2 glasgow3, generate(_turnover) replace formation

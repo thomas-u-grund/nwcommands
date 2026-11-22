@@ -43,7 +43,7 @@ random-number seed and can differ slightly from the printed output with other ve
 | Chapter 10: Positions, roles, and structural equivalence | [`ch10_positions_roles_structural_equivalence.do`](ch10_positions_roles_structural_equivalence.do) |
 | Chapter 11: Ego networks | [`ch11_ego_networks.do`](ch11_ego_networks.do) |
 | Chapter 12: Two-mode networks | [`ch12_two_mode_networks.do`](ch12_two_mode_networks.do) |
-| Chapter 13: Valued, signed, and multiplex networks | [`ch13_valued_signed_multiplex_networks.do`](ch13_valued_signed_multiplex_networks.do) |
+| Chapter 13: Multiplex, valued, and signed networks | [`ch13_valued_signed_multiplex_networks.do`](ch13_valued_signed_multiplex_networks.do) |
 | Chapter 14: Networks over time | [`ch14_networks_over_time.do`](ch14_networks_over_time.do) |
 | Chapter 15: Random and structured network generators | [`ch15_random_structured_generators.do`](ch15_random_structured_generators.do) |
 | Chapter 16: Generating networks from attributes and tie probabilities | [`ch16_attribute_based_generators.do`](ch16_attribute_based_generators.do) |
