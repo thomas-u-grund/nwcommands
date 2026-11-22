@@ -206,7 +206,7 @@ def main():
 
     # 10 website
     if not a.skip_website:
-        checks = [("website/index.md", r"\|\s*" + re.escape(ver) + r"\s*\|", "packages table row of the core"),
+        checks = [("website/which-package.md", r"\|\s*" + re.escape(ver) + r"\s*\|", "packages table row of the core"),
                   ("website/nwcommands/index.md", r"version " + re.escape(ver), "core page"),
                   ("website/news.md", r"\*\*nwcommands " + re.escape(ver) + r"[.*]", "news entry"),
                   ("website/citing.md", r"\(version " + re.escape(ver) + r"\)", "citation")]
