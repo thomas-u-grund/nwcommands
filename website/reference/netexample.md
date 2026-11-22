@@ -446,7 +446,7 @@ As for [baerveldt](netexample). Schools 1-7, 9, 11, 12 and 14-18 are the 15 clas
 
 ## Schoch networkdata collection
 
-David Schoch's R package *networkdata* (https://github.com/schochastics/networkdata) is a collection of 989 network data sets (2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). `nwwebuse schoch` loads them. **No data of this collection are part of nwcommands**: the original file of a data set is downloaded from Schoch's repository the first time you ask for it, kept in a cache in your PLUS directory and converted on your computer by R, so **R with the package igraph must be installed** for this one reader (the other data sets of this help file need no R). Every load prints which network was loaded and where the data came from.
+David Schoch's R package *networkdata* (https://github.com/schochastics/networkdata) is a collection of 989 network data sets (2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). `nwwebuse schoch` loads them. **No data of this collection are part of nwcommands**: the original file of a data set is downloaded from Schoch's repository the first time you ask for it, kept in a cache in your PLUS directory and read on your computer with Stata alone (**no R is needed**; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from.
 
 Look at the collection (overview, list of all data sets, one data set) and load a network:
 

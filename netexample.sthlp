@@ -879,8 +879,8 @@ school 23 has 72 rows for 73 pupils and was padded with a zero row and column, a
 David Schoch's R package {it:networkdata} (https://github.com/schochastics/networkdata) is a collection of 989 network data sets
 (2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). {cmd:nwwebuse schoch} loads
 them. {bf:No data of this collection are part of nwcommands}: the original file of a data set is downloaded from Schoch's
-repository the first time you ask for it, kept in a cache in your PLUS directory and converted on your computer by R, so
-{bf:R with the package igraph must be installed} for this one reader (the other data sets of this help file need no R). Every
+repository the first time you ask for it, kept in a cache in your PLUS directory and read on your computer with Stata alone
+({bf:no R is needed}; the option {opt withr} of {cmd:nwnetworkdata} uses R with the package igraph instead). Every
 load prints which network was loaded and where the data came from.
 
 {pstd}

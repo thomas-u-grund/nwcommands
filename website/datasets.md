@@ -20,7 +20,7 @@ The core package ships with example networks, so every tutorial and help example
 
 ## More networks: the Schoch collection
 
-Besides the example data above, `nwwebuse schoch` loads the 989 network data sets (2,274 networks) of David Schoch's R package *networkdata*, for example `nwwebuse schoch karate` or `nwwebuse schoch southern_women`. nwcommands ships none of these data: each one is downloaded from Schoch's repository when you ask for it and converted on your computer, so this one reader needs R with the package igraph. Every load prints which network was loaded and where the data came from. The [Schoch networkdata](schoch/) page describes every data set with its source and references.
+Besides the example data above, `nwwebuse schoch` loads the 989 network data sets (2,274 networks) of David Schoch's R package *networkdata*, for example `nwwebuse schoch karate` or `nwwebuse schoch southern_women`. nwcommands ships none of these data: each one is downloaded from Schoch's repository when you ask for it and read on your computer with Stata alone (no R needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from. The [Schoch networkdata](schoch/) page describes every data set with its source and references.
 
 ## Friendship and social networks over time
 

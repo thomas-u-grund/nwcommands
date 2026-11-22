@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.1.0  22nov2026 author: Thomas Grund}{...}
+{* *! version 1.2.0  22nov2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nwtopical##import:[NW-2.2] Import/Export}
 
@@ -33,24 +33,24 @@ Load one network, or all networks of a data set, as nwcommands networks
 
 {p 8 16 2}
 {cmd:nwnetworkdata} [{cmd:load}] {it:name} [{cmd:,} {opt nwclear} {opt clear} {opt replace} {opt name(newname)}
-{opt el:ement(numlist)} {opt valuea:ttr(varname)} {opt bin:ary} {opt noattrs} {opt from(source)} {opt ref:resh}]
+{opt el:ement(numlist)} {opt valuea:ttr(varname)} {opt bin:ary} {opt noattrs} {opt from(source)} {opt ref:resh} {opt withr}]
 
 
 {phang}
 Load the tie list or the node table, with all attributes, as an ordinary dataset
 
 {p 8 16 2}
-{cmd:nwnetworkdata} {cmd:edges} {it:name} [{cmd:,} {opt clear} {opt el:ement(#)} {opt from(source)}]
+{cmd:nwnetworkdata} {cmd:edges} {it:name} [{cmd:,} {opt clear} {opt el:ement(#)} {opt from(source)} {opt withr}]
 
 {p 8 16 2}
-{cmd:nwnetworkdata} {cmd:nodes} {it:name} [{cmd:,} {opt clear} {opt el:ement(#)} {opt from(source)}]
+{cmd:nwnetworkdata} {cmd:nodes} {it:name} [{cmd:,} {opt clear} {opt el:ement(#)} {opt from(source)} {opt withr}]
 
 
 {phang}
 Load one of the three tables of an ego-centered data set (class {it:egor})
 
 {p 8 16 2}
-{cmd:nwnetworkdata} {cmd:tables} {it:dataname} {cmd:,} {opt tab:le(ego|alter|aatie)} [{opt clear} {opt from(source)}]
+{cmd:nwnetworkdata} {cmd:tables} {it:dataname} {cmd:,} {opt tab:le(ego|alter|aatie)} [{opt clear} {opt from(source)} {opt withr}]
 
 
 {phang}
@@ -76,15 +76,18 @@ Every data set is documented (description, source, references) on
 
 {pstd}
 {bf:This package contains no network data.} When you ask for a network, {cmd:nwnetworkdata} downloads the original file
-({it:dataname}{cmd:.rda}) from the GitHub repository of the R package and keeps it in a cache folder of yours. Stata cannot read
-{cmd:.rda} files, so the file is then converted, on your computer, by a small R script that comes with this command
-({cmd:nwnetworkdata_convert.R}), into csv tables in the cache; the network is built from these with {helpb nwfromedge}.
-{bf:You therefore need R (https://www.r-project.org) with the R package igraph} ({cmd:install.packages("igraph")}).
-{cmd:nwnetworkdata} looks for {cmd:Rscript} in the usual places of a Windows installation and in the path (on macOS and Linux also in
-/usr/local/bin, /opt/homebrew/bin and /usr/bin); another one is chosen with {cmd:global nwnd_rscript "path/to/Rscript"}.
+({it:dataname}{cmd:.rda}) from the GitHub repository of the R package and keeps it in a cache folder of yours. The file is an R
+data file (compressed, in R's serialization format); {cmd:nwnetworkdata} reads it, on your computer, with Stata alone
+({bf:no R is needed}): it decompresses the file, decodes the R data, takes the {it:igraph} objects in it and writes csv tables into the cache;
+the network is built from these with {helpb nwfromedge}. The result is the same as when R and its package igraph do the conversion.
+If the reader meets something it does not handle (which does not happen in the 990 objects of the collection except the {it:egor} object,
+see below) it says so and uses R, if you have it ({cmd:Rscript} is looked for in the usual places of a Windows installation and in the path, on
+macOS and Linux also in /usr/local/bin, /opt/homebrew/bin and /usr/bin; choose another with {cmd:global nwnd_rscript "path/to/Rscript"}); otherwise it
+stops with an error and never guesses. A damaged or truncated file is refused (error 610), as is a file that is larger than
+the limits of the reader. The option {opt withr} converts with R and the R package igraph ({cmd:install.packages("igraph")}) instead; the small R script that does it
+comes with this command ({cmd:nwnetworkdata_convert.R}) and only reads the downloaded file and writes the csv tables.
 The only file shipped in addition to code and help is a catalogue of the names, type and size of the networks, which {cmd:list},
 {cmd:describe} and the name checks use. Only names that are in the catalogue are downloaded, and only from the repository of the R package.
-The R script is a fixed text that only reads the downloaded file and writes the csv tables.
 
 {pstd}
 {it:name} is either the name of a network or the name of a data set. A data set that is a list of networks ({cmd:sampson},
@@ -140,6 +143,10 @@ if empty, {it:https://raw.githubusercontent.com/schochastics/networkdata/main/da
 {cmd:refresh} downloads and converts the data set again, also if it is in the cache.
 
 {phang}
+{cmd:withr} converts with R and the R package igraph instead of the reader without R (a data set that is in the cache and was converted
+before is converted again). It needs {cmd:Rscript}; error 601 if R or igraph is missing.
+
+{phang}
 {cmd:list} options select networks: {cmd:directed}, {cmd:undirected}, {cmd:twomode} (also {cmd:onemode}), {cmd:weighted}, {cmd:multiple}
 (networks with multiple edges), {cmd:loops}, {cmd:temporal} (networks whose edges have a time stamp), {cmd:kind(igraph)} or
 {cmd:kind(list_of_igraph)}, and a text {it:pattern} that has to be part of the name. {cmd:networks} lists networks instead of data sets;
@@ -152,9 +159,9 @@ if empty, {it:https://raw.githubusercontent.com/schochastics/networkdata/main/da
 {pstd}
 The cache is the folder {cmd:nwnd} in your PLUS directory ({cmd:sysdir}; change it with {cmd:global nwnd_cache "folder"}). It holds the
 downloaded {cmd:.rda} files ({cmd:rda}), their csv conversions ({cmd:conv}) and Stata versions of these ({cmd:typed}). A data set that is in the cache
-is not downloaded or converted again, so it can be used {bf:without internet connection and without R}. If a data set
+is not downloaded or converted again, so it can be used {bf:without internet connection}. If a data set
 has to be downloaded and cannot be (no connection, GitHub not reachable), the command stops with error 677 and tells so; if R or igraph is
-missing, it stops with error 601 and shows the message of R. {cmd:nwnetworkdata cache} reports the folder and the number of data sets in it,
+needed (option {opt withr}, or the {it:egor} object) and missing, it stops with error 601 and shows the message of R. {cmd:nwnetworkdata cache} reports the folder and the number of data sets in it,
 {cmd:nwnetworkdata cache clear} deletes them. If the files of the repository change, use {opt refresh}. The catalogue was made from the
 repository as of November 2026 (version 0.2.4); a data set added later is not in {cmd:list}.
 
@@ -170,7 +177,9 @@ parallel edges are summed (weights) or counted (no weights), so that an unweight
 loaded as temporal networks, and the times are in {cmd:nwnetworkdata edges}. Ties with the value 0 are no ties. Two-mode networks (23) are loaded
 with {cmd:twomode} status, the first mode being the {it:igraph} vertices of type {cmd:FALSE}; they are limited to 20,000 nodes as all two-mode
 networks in nwcommands. The object {cmd:gss_egor} (class {it:egor}) holds ego-centered survey data, three tables, no network: it is not loaded by
-{cmd:nwnetworkdata gss_egor} (error 459) but with {cmd:nwnetworkdata tables gss_egor, table(ego)}.
+{cmd:nwnetworkdata gss_egor} (error 459) but with {cmd:nwnetworkdata tables gss_egor, table(ego)}, which is the one use that needs R.
+Node labels from accented letters lose the accent (a letter with an accent becomes the plain letter; the unchanged names are in {cmd:nd_name}); R's own conversion
+gives other labels on other systems.
 
 {pstd}
 {bf:Licence, attribution, citation.} nwnetworkdata only imports; the data are not part of this package and not distributed with it.
@@ -230,6 +239,11 @@ The tie list of that network, with the surface of each match
 Use a local clone of the repository (no download)
 
 	{cmd:. nwnetworkdata source set "C:/data/networkdata/data"}
+
+{pstd}
+Convert with R instead of the reader without R
+
+	{cmd:. nwnetworkdata karate, nwclear withr}
 
 {pstd}
 Name of Rscript, if it is not found

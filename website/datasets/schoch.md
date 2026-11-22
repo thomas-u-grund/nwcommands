@@ -8,7 +8,7 @@ description: "The 2,274 networks of David Schoch's R package networkdata, loadab
 # The networkdata collection (Schoch)
 {: .no_toc }
 
-nwcommands ships none of these networks. `nwwebuse schoch <name>` (or `nwnetworkdata <name>`) downloads the original file from David Schoch's repository <https://github.com/schochastics/networkdata> when you ask for it, keeps it in a cache in your PLUS directory, converts it on your computer (R with the package igraph is needed, only for the first use of a data set) and builds the network.
+nwcommands ships none of these networks. `nwwebuse schoch <name>` (or `nwnetworkdata <name>`) downloads the original file from David Schoch's repository <https://github.com/schochastics/networkdata> when you ask for it, keeps it in a cache in your PLUS directory, reads it on your computer with Stata alone (no R is needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead, and the ego-centered object `gss_egor` falls back to R when R is installed) and builds the network.
 
 **Licence and citation.** The R package is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers the package itself. It documents no licence or permission for the individual data sets, which come from many original sources and may have their own terms. nwcommands ships none of them and downloads them from the source only on request; please check the original source of every data set you use and cite it, together with the collection:
 
