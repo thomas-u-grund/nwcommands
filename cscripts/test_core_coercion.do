@@ -251,4 +251,11 @@ assert _rc == 198
 _tcc_log "valued network: distances count steps" "nwkatz gahuku, alpha(.2) generate(kg) replace"
 _tcc_log "1 missing ties treated as 0" "nwkatz mis, alpha(.2) generate(km) replace"
 
+* ---------------------------------------------------------------- A11. nwsimindex, nwsimmelian
+_tcc_log "directed network: the neighbours of a node are the nodes it sends ties to and the nodes it receives ties from" "nwsimindex dnet, name(si1) replace"
+_tcc_log "undirected network" "nwsimindex unet, name(si2) replace"
+_tcc_log "directed network: only mutual ties are used" "nwsimmelian dnet, name(sm1) nwreplace"
+_tcc_log "undirected network" "nwsimmelian unet, name(sm2) nwreplace"
+_tcc_log "1 missing ties treated as 0" "nwsimindex mis, name(si3) replace"
+
 di "PASS: test_core_coercion"

@@ -3,9 +3,21 @@ program nwsimmelian
 	syntax [anything(name=netname)] [, name(string) nwreplace]
 	unw_defs
 	_nwsyntax `netname'
+	local __wasdir = ("`directed'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
+	}
+	if `__wasdir' {
+		noi di "{txt}{p 4 4 2}(directed network: only mutual ties are used){p_end}"
+	}
+	else {
+		noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	if `__nmiss' > 0 {
+		noi di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
 	}
 	
 	if "`name'" == "" {
