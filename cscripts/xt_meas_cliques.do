@@ -60,7 +60,7 @@ nwclique two, generate(qt) minsize(2) nomatrix
 xa r(cliques) == 1 & qt[1] == 2 & qt[2] == 2
 * directed 3-cycle: symmetrized, one clique of 3
 nwset, mat((0,1,0\0,0,1\1,0,0)) name(cyc) directed
-nwclique cyc, generate(qc)
+nwclique cyc, generate(qc) sym
 xa r(cliques) == 1 & qc == 3 in 1/3
 * valued ties are ties
 nwset, mat((0,2.5,.1\2.5,0,-1\.1,-1,0)) name(v3) undirected

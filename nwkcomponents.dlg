@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 282
+POSITION 10 10 550 310
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwkcomponents - Maximal k-component enumeration")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 188, label("Options")
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
   TEXT tx_sp_k 20 54 260 ., label("Minimum vertex connectivity required; default = 2")
   SPINNER sp_k 290 54 70 ., default(2) max(999999) min(1) nomem option(k)
   TEXT tx_ed_generate 20 82 260 ., label("Required. Variable for each node's largest qualifying k-component size")
@@ -30,6 +30,8 @@ BEGIN
   CHECKBOX cx_force 290 166 190 ., label("force") option(force)
   TEXT tx_cx_nomatrix 20 194 260 ., label("Do not store the k-component matrix (much faster for large networks)")
   CHECKBOX cx_nomatrix 290 194 190 ., label("nomatrix") option(nomatrix)
+  TEXT tx_cx_sym 20 222 260 ., label("directed network: analyse the symmetrized network (default: refused)")
+  CHECKBOX cx_sym 290 222 190 ., label("sym") option(symmetrize)
 END
 
 LIST netlist
@@ -54,6 +56,7 @@ BEGIN
 		option main.cx_silent
 		option main.cx_force
 		option main.cx_nomatrix
+		option main.cx_sym
 	endoptions
 	stata
 END

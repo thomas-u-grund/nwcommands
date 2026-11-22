@@ -134,4 +134,31 @@ nwset, mat((0,1,0,1\0,0,1,0\0,0,0,0\0,0,0,0)) name(dead) directed labs(a,b,c,d)
 nwrandomwalk dead, target(c) generate(rw5) silent
 assert missing(rw5[1]) & rw5[2] == 1 & rw5[3] == 0 & missing(rw5[4])
 
+* ---------------------------------------------------------------- A5. cohesion family: undirected-only measures
+* a directed network with unreciprocated ties is refused (198) unless sym asks for the symmetrized network
+nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(dsym) directed labs(A,B,C)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(unet) undirected labs(A,B,C)
+foreach c in nwcohesion nwclique nwkplex nwnclique nwnclan nwkcomponents {
+	local g generate(gg_`c') replace
+	capture noisily `c' dnet, `g'
+	assert _rc == 198
+	capture confirm variable gg_`c'1
+	_tcc_log "directed network symmetrized" "`c' dnet, `g' sym"
+	_tcc_log "directed network with every tie reciprocated" "`c' dsym, `g'"
+	* the same numbers as on the undirected network
+	qui `c' unet, generate(uu) replace
+	local nu = cond(`"`r(cliques)'"' != "", `"`r(cliques)'"', "x")
+	qui `c' dsym, generate(du) replace
+	local nd = cond(`"`r(cliques)'"' != "", `"`r(cliques)'"', "x")
+	assert "`nu'" == "`nd'"
+}
+capture noisily nwlambda dnet, name(lam1) replace
+assert _rc == 198
+_tcc_log "directed network symmetrized" "nwlambda dnet, name(lam1) replace sym"
+_tcc_log "directed network with every tie reciprocated" "nwlambda dsym, name(lam2) replace"
+* a valued network says that the values are ignored
+_tcc_log "tie values are ignored" "nwclique gahuku, generate(gq) replace"
+_tcc_log "tie values are ignored" "nwlambda gahuku, name(lam3) replace"
+
 di "PASS: test_core_coercion"

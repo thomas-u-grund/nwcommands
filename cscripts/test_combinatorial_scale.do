@@ -48,14 +48,14 @@ program define cs_motifs
 end
 program define cs_lambda
 	capture nwdrop lam
-	nwlambda tn, name(lam)
+	nwlambda tn, name(lam) sym
 	nwtomata lam, mat(LM)
 	mata: R = vec(LM)'
 	mata: mata drop LM
 end
 program define cs_cohesion
 	capture drop coh
-	nwcohesion tn, generate(coh) replace silent
+	nwcohesion tn, sym generate(coh) replace silent
 	mata: R = (st_numscalar("r(blocks)"), vec(st_matrix("r(cohesion_matrix)"))', vec(st_matrix("r(cohesion_levels)"))', st_data(., "coh")')
 end
 program define cs_factions
@@ -67,19 +67,19 @@ end
 program define cs_kplex
 	args k
 	capture drop kp
-	nwkplex tn, k(`k') generate(kp) replace silent
+	nwkplex tn, sym k(`k') generate(kp) replace silent
 	mata: R = (st_numscalar("r(kplexes)"), vec(st_matrix("r(kplex_matrix)"))', st_data(., "kp")')
 end
 program define cs_nclique
 	args n
 	capture drop nc
-	nwnclique tn, n(`n') generate(nc) replace silent minsize(2)
+	nwnclique tn, sym n(`n') generate(nc) replace silent minsize(2)
 	mata: R = (st_numscalar("r(ncliques)"), vec(st_matrix("r(nclique_matrix)"))', st_data(., "nc")')
 end
 program define cs_nclan
 	args n
 	capture drop nc
-	nwnclan tn, n(`n') generate(nc) replace silent minsize(2)
+	nwnclan tn, sym n(`n') generate(nc) replace silent minsize(2)
 	mata: R = (st_numscalar("r(nclans)"), vec(st_matrix("r(nclan_matrix)"))', st_data(., "nc")')
 end
 program define cs_induced
@@ -282,7 +282,7 @@ forvalues it = 1/10 {
 forvalues it = 1/8 {
 	cs_mknet `=10 + mod(`it'*3, 7)' `=0.15 + 0.05*mod(`it',4)' 1 `=4000+`it''
 	foreach k in 2 3 {
-		nwkplex tn, k(`k') generate(kpx) replace silent
+		nwkplex tn, sym k(`k') generate(kpx) replace silent
 		matrix KM = r(kplex_matrix)
 		local nk = r(kplexes)
 		_nwsyntax tn
@@ -290,12 +290,12 @@ forvalues it = 1/8 {
 		mata: for (r=1; r<=rows(K); r++) cs_checkplex(A, K[r,.], `k')
 		mata: st_local("kvar", "kpx")
 		* nomatrix gives the same per-node variable and the same count
-		nwkplex tn, k(`k') generate(kpy) replace silent nomatrix
+		nwkplex tn, sym k(`k') generate(kpy) replace silent nomatrix
 		assert r(kplexes) == `nk'
 		capture assert kpx == kpy | (kpx >= . & kpy >= .)
 		assert _rc == 0
 		* countonly: the same count and a size table that adds up
-		nwkplex tn, k(`k') countonly silent
+		nwkplex tn, sym k(`k') countonly silent
 		assert r(kplexes) == `nk'
 		matrix T = r(size_table)
 		mata: T = st_matrix("T"); assert(sum(T[.,2]) == `nk')
@@ -318,33 +318,33 @@ forvalues it = 1/8 {
 * 3. limits
 * ---------------------------------------------------------------------------------
 cs_mknet 40 0.08 1 7001
-nwnclique tn, n(2) generate(ncq) replace silent minsize(2) countonly
+nwnclique tn, sym n(2) generate(ncq) replace silent minsize(2) countonly
 local total = r(ncliques)
 assert `total' > 3
-capture nwnclique tn, n(2) generate(ncq) replace silent minsize(2) maxcliques(2)
+capture nwnclique tn, sym n(2) generate(ncq) replace silent minsize(2) maxcliques(2)
 if `native' assert _rc == 484
-capture nwnclique tn, n(2) generate(ncq) replace silent minsize(2) maxcliques(`total')
+capture nwnclique tn, sym n(2) generate(ncq) replace silent minsize(2) maxcliques(`total')
 assert _rc == 0
-capture nwnclan tn, n(2) generate(ncq) replace silent minsize(2) maxcliques(1)
+capture nwnclan tn, sym n(2) generate(ncq) replace silent minsize(2) maxcliques(1)
 if `native' assert _rc == 484
 * countonly needs no generate(); the counts of nwnclan and nwnclique agree with the matrices
-nwnclan tn, n(2) countonly silent minsize(2)
+nwnclan tn, sym n(2) countonly silent minsize(2)
 local nclans = r(nclans)
-nwnclan tn, n(2) generate(ncq) replace silent minsize(2)
+nwnclan tn, sym n(2) generate(ncq) replace silent minsize(2)
 assert r(nclans) == `nclans'
-nwnclique tn, n(2) countonly silent minsize(2)
+nwnclique tn, sym n(2) countonly silent minsize(2)
 assert r(ncliques) == `total'
-nwnclique tn, n(2) generate(ncq) replace silent minsize(2) nomatrix
+nwnclique tn, sym n(2) generate(ncq) replace silent minsize(2) nomatrix
 assert r(ncliques) == `total'
 cs_mknet 40 0.08 1 7002
-capture nwkplex tn, k(2) generate(kq) replace silent maxplexes(2)
+capture nwkplex tn, sym k(2) generate(kq) replace silent maxplexes(2)
 if `native' assert _rc == 484
-capture nwkplex tn, k(2) generate(kq) replace silent maxtime(0.000001)
+capture nwkplex tn, sym k(2) generate(kq) replace silent maxtime(0.000001)
 * the limit is checked with the C library's clock(); on Windows it advances in steps of a millisecond or more, and this
 * search can end within the first step, so there it may also finish (rc 0)
 if `native' & "`c(os)'" != "Windows" assert _rc == 484
 if `native' & "`c(os)'" == "Windows" assert inlist(_rc, 0, 484)
-nwkplex tn, k(2) generate(kq) replace silent maxplexes(1e9) nomatrix
+nwkplex tn, sym k(2) generate(kq) replace silent maxplexes(1e9) nomatrix
 assert r(kplexes) > 2
 
 * ---------------------------------------------------------------------------------

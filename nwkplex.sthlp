@@ -16,6 +16,7 @@
 {cmdab: nwkplex}
 [{it:{help netlist}}]
 [{cmd:,}
+{opt sym}
 {opth k(int)}
 {opth gen:erate(newvarname)}
 {opt replace}
@@ -30,6 +31,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
+{synopt:{opt sym}}On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198){p_end}
 {synopt:{opth k(int)}}How many ties each member may miss; default = 2{p_end}
 {synopt:{opth gen:erate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = {it:_kplexnum}; with several networks the variables are
 numbered ({it:newvarname}{bf:1}, {it:newvarname}{bf:2}, ...){p_end}
@@ -81,7 +83,7 @@ variable, not a spurious 0.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored and a note is printed. {bf:Two-mode:} same as for the
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are ignored and a note is printed. {bf:Two-mode:} same as for the
 bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
 

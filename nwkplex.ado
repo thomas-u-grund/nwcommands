@@ -4,7 +4,7 @@ program nwkplex, rclass
 	// temporary names: no scalar or matrix is left behind
 	tempname __nw_kplexmatrix __nw_maxnwkplex __nw_nkplex __nw_nnwkplex __nw_tabnwkplex
 	version 12
-	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace minsize(int -1) MAXPlexes(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
+	syntax [anything(name=netname)][, SYMmetrize k(int 2) GENerate(string) replace minsize(int -1) MAXPlexes(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
 
 	if `k' < 2 {
@@ -44,6 +44,10 @@ program nwkplex, rclass
 				noi di `"`r(msg)'"'
 				local __vndone 1
 			}
+		}
+		_nwsymguard `netname_temp', cmd(nwkplex) `symmetrize' `__vnquiet'
+		if `"`r(msg)'"' != "" {
+			noi di `"`r(msg)'"'
 		}
 
 		local netgenerate "`generate'"

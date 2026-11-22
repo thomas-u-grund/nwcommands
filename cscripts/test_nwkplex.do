@@ -130,7 +130,7 @@ assert _rc != 0
 * misses 0 ties).
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwkplex dnet
+nwkplex dnet, sym
 assert _rc == 0
 assert r(kplexes) == 1
 

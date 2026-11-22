@@ -17,6 +17,7 @@ Edge (line) connectivity matrix between all node pairs
 nwlambda
 [netname]
 [,
+sym
 name(newnetname)
 xvars
 replace
@@ -25,6 +26,7 @@ force]
 
 | | |
 |---|---|
+| `sym` | On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198) |
 | `name(newnetname)` | Name of the new connectivity network; default = *lambda* |
 | `xvars` | Generate Stata variables for the new network |
 | `replace` | Replace an existing network of the same name |
@@ -58,7 +60,7 @@ recovers exactly the two intuitive lambda sets, **A,B,C** and **D,E,F**.
 
 ## Network types
 
-**Directed:** symmetrized. **Valued:** tie values are ignored. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+**Directed:** refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option `sym` analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). **Valued:** tie values are ignored. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -94,4 +96,4 @@ The result is an *n*-by-*n* network and two matrices are held at once: above abo
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

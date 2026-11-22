@@ -170,7 +170,7 @@ assert r(kcomponents) == 0
 * of size 3.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwkcomponents dnet, k(2) generate(_kcompnum)
+nwkcomponents dnet, k(2) generate(_kcompnum) sym
 assert _rc == 0
 assert r(kcomponents) == 1
 
