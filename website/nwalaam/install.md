@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.3.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.4.0:
 
 ```stata
-. net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/v1.3.1/) replace
+. net install nwalaam, from(https://raw.githubusercontent.com/thomas-u-grund/nwalaam/v1.4.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwalaam version
-nwalaam version 1.3.1, 20nov2026
+nwalaam version 1.4.0, 22nov2026
   native plugin           : .../a/alaam_sim_macos.plugin (ships with the package)
   reference               : ALAAMEE (Stivala, Wang and Lomi) and MPNet
   license                 : GNU GPL-3

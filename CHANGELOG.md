@@ -4,7 +4,19 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.35.0] - 2026-11-22
+
+**Summary.** One rule now holds in every command: a command never changes the type of your network by itself. A directed network is analysed as a directed network, a valued network as a valued one, and where a command needs something else (undirected, binary) you ask for it with an option (`sym`, `weak`, `binary`, ...). Every command also prints one line that says how the network was read, and how many missing ties were treated as 0. The release also adds lists of networks and `save()` to `nwgeodesic` and `nwclustering`, `ntimes()` to `nwhomophily` and `nwdyadprob`, and a reader for the data sets of the R package networkdata (`nwwebuse schoch`).
+
+**Results that change, in short (read before you re-run old analyses on directed networks).** Undirected networks give the same numbers as before everywhere.
+- `nwbetween`, `nwcloseness`, `nwevcent`, `nwinduced`, `nwkatz`: a directed network is analysed as it is. Option `sym` restores the old default result (`nwevcent`: option `out` restores the previous out-tie centrality).
+- `nwassortativity`: one pair per tie, sender against receiver. `sym` restores the old result.
+- `nwcomponents` (and `large()`, `components()`, `lgc()` in `nwgenerate`): a directed network gives its strongly connected components. `weak` restores the old result (`large(net, weak)` in `nwgenerate`).
+- `nwrandomwalk`: the walk follows the direction of the ties. `sym` (or `symmetrize`) restores the old result.
+- `nwcohesion`, `nwclique`, `nwkplex`, `nwnclique`, `nwnclan`, `nwkcomponents`, `nwlambda`, `nwspectral`, `nwcoreperiphery`, `nwfactions`: a directed network with unreciprocated ties is refused with error 198 instead of being symmetrized silently. Option `sym` analyses the symmetrized network, with the same numbers as before.
+- `nwbalance`: a pair of nodes with ties of opposite signs in the two directions is refused with error 198 (the sign of the pair is not defined; use `nwsym` with a mode of your choice first).
+
+**Added, in short.** Lists of networks (wildcards allowed) and `save()` in `nwgeodesic` and `nwclustering`; `ntimes()` in `nwhomophily` and `nwdyadprob`; `nwnetworkdata` and `nwwebuse schoch` (needs R with the package igraph, only for this reader); printed notes that say how every network was read; `(N missing ties treated as 0)` notes. The details follow.
 
 ### Results that change
 - `nwbetween`, `nwcloseness` and `nwevcent` recognise whether the network is directed or undirected and say so in the output. A directed network is now analysed as it is: shortest paths follow the direction of the ties (betweenness equals `igraph::betweenness(directed = TRUE)` and `sna::betweenness(gmode = "digraph")`, with the directed standardisation `(N-1)(N-2)`; closeness uses the distances from a node to the nodes it can reach, equals `igraph::closeness(mode = "out", normalized = TRUE)`, and is missing for a node that reaches nobody; weights of a valued network as before). Until 3.34.0 the default symmetrized a directed network first (`nwsym`, mode `max`) and `nosym` gave the directed result. Use the new option `sym` for the previous default result; `nosym` is still accepted and is the same as the default. `sym` together with `nosym` is error 198. Undirected networks give exactly the same numbers as before, and need no symmetrized copy any more (nwbetween and nwcloseness take about 30 to 45 percent less time on 2,000 nodes).

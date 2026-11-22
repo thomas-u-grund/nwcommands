@@ -140,4 +140,4 @@ With a *netlist*, the results are those of the last network. The other results o
 
 ---
 
-*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
