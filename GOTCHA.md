@@ -944,3 +944,11 @@ The `nwcommands-ado*.pkg` chunks are generated from `_pkg_ado.txt`; a command or
 - Mata: a nested subscript `lab[comp[v]]` is "invalid expression" (use a temporary); `x[vec]` on a 1x1 matrix returns a rowvector; avoid one-line `if (...) {a; b}`.
 - Tests that build a symmetric matrix with `nwset, mat()` get a DIRECTED network (all ties reciprocated): fine for the cohesion family (runs as undirected), but directed-default commands (nwcomponents strong, nwassortativity, nwkatz) now need `weak` / `sym` in tests that want the old result.
 - `nwevcent` default on a directed network is the in-tie centrality (igraph); `out` is the former default.
+
+## Lists of networks and save() (nwgeodesic, nwclustering; 3.35 unreleased)
+
+- `nwgeodesic` and `nwclustering` are thin wrappers now: the old command bodies are `_nwgeodesic_single` and `_nwclustering_single`. One network without `save()` is passed through untouched (output, `r()` and variables byte-identical to before: check with a before/after diff of a log). The wrappers loop over the network list, collect the numbers in a Stata matrix (exact doubles), `_return hold` the last network's `r()` and restore it at the end. `noisily` in the single commands overrides `quietly` from the caller: the list mode passes `silent` (clustering) or runs the single command under `capture quietly` and reruns it noisily only to show an error.
+- `postfile` stores numeric variables as `float` unless they are declared `double`: a `save()` file with default types differs from `r()` in the 8th digit.
+- `nwclustering` of a two-mode network stores into the data set by position (`st_store(., ...)`): it fails with r(3200) when the data in memory do not have exactly one row per node (for example after appending the data of several networks). The list mode avoids it with a one-row-per-node copy of the data (`preserve`) and calls `_nw2c_run` directly; the single call keeps its old limit.
+- `_nwmissnote` on a two-mode network read the cells between the two modes as the first block of mode 1 by the second block: wrong when the nodes of the modes are interleaved (`davis` is alphabetical). It selects by node mode now.
+- `nwmixing` takes one network only (`max(1)`), hence no list and no `save()` for the E-I index.
