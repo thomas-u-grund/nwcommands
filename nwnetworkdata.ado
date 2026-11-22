@@ -810,13 +810,18 @@ program _nwnd_load, rclass
 		_nwnd_csv `"`conv'/`obj'_edges.csv"'
 		qui destring nd_elem nd_from nd_to, replace
 		_nwnd_typed `obj', scope(edge) attrs(`"`conv'/`obj'_attrs.csv"')
+		qui sort nd_elem, stable
 		qui save `"`edf'"', replace
 		_nwnd_csv `"`conv'/`obj'_nodes.csv"'
 		qui destring nd_elem nd_id nd_order nd_mode, replace
 		_nwnd_typed `obj', scope(node) attrs(`"`conv'/`obj'_attrs.csv"')
+		qui sort nd_elem, stable
 		qui save `"`ndf'"', replace
 		restore
 	}
+	// the row range of every network in the two tables (sorted by network), so that each network is read as a slice of the table
+	_nwnd_ranges `"`edf'"' __nwnd_erng
+	_nwnd_ranges `"`ndf'"' __nwnd_nrng
 
 	if "`nwclear'" != "" nwclear
 	capture drop _running
@@ -842,7 +847,10 @@ program _nwnd_load, rclass
 			if `nnets' == 1 local target `name'
 			else local target `name'_`=cond(`x_element' > 0, `x_element', 1)'
 		}
-		_nwnd_build, edges(`"`edf'"') nodes(`"`ndf'"') net(`net') elem(`=cond(`x_element' > 0, `x_element', 1)') ///
+		local x_e = cond(`x_element' > 0, `x_element', 1)
+		mata: st_local("x_ef", strofreal(nwnd_range(__nwnd_erng, `x_e', 2))); st_local("x_el", strofreal(nwnd_range(__nwnd_erng, `x_e', 3)))
+		mata: st_local("x_nf", strofreal(nwnd_range(__nwnd_nrng, `x_e', 2))); st_local("x_nl", strofreal(nwnd_range(__nwnd_nrng, `x_e', 3)))
+		_nwnd_build, edges(`"`edf'"') nodes(`"`ndf'"') ef(`x_ef') el(`x_el') nf(`x_nf') nl(`x_nl') net(`net') elem(`x_e') ///
 			n(`x_n') directed(`x_directed') twomode(`x_twomode') weighted(`x_weighted') multi(`x_multi') ///
 			loops(`x_loops') vattrs(`"`x_vattrs'"') named(`x_named') target(`target') `replace' ///
 			valueattr(`"`valueattr'"') `binary' `noattrs'
@@ -861,6 +869,7 @@ program _nwnd_load, rclass
 				"collection: Schoch (2022), doi:10.5281/zenodo.7189928"
 		}
 	}
+	capture mata: mata drop __nwnd_erng __nwnd_nrng
 	if `nnets' > 5 {
 		di as txt "Loaded from Schoch's networkdata collection: `loaded' networks `=word("`loadednets'", 1)' ... `=word("`loadednets'", `loaded')' of the data set {res:`obj'}; " ///
 			"source and citation: {stata nwnetworkdata describe `obj':nwnetworkdata describe `obj'}; collection: Schoch (2022), doi:10.5281/zenodo.7189928"
@@ -873,16 +882,48 @@ program _nwnd_load, rclass
 	return local obj "`obj'"
 end
 
+capture program drop _nwnd_ranges
+program _nwnd_ranges
+	// _nwnd_ranges file matname: Mata matrix (network, first row, last row) of a typed table that is sorted by network
+	args f mname
+	preserve
+	qui use nd_elem using `"`f'"', clear
+	qui count if nd_elem < nd_elem[_n-1] & _n > 1
+	if r(N) > 0 {
+		// not sorted (a table of an older version): sort it once and keep it
+		qui use `"`f'"', clear
+		qui sort nd_elem, stable
+		qui save `"`f'"', replace
+		qui keep nd_elem
+	}
+	qui gen long __r = _n
+	qui collapse (min) __f = __r (max) __l = __r, by(nd_elem)
+	capture mata: mata drop `mname'
+	mata: `mname' = st_data(., ("nd_elem", "__f", "__l"))
+	restore
+end
+
+capture mata: mata drop nwnd_range()
+mata:
+real scalar nwnd_range(real matrix R, real scalar elem, real scalar col)
+{
+	real colvector i
+	i = selectindex(R[., 1] :== elem)
+	if (length(i) == 0) return(0)
+	return(R[i[1], col])
+}
+end
+
 capture program drop _nwnd_build
 program _nwnd_build, rclass
-	syntax , EDGES(string) NODES(string) NET(string) ELEM(integer) N(integer) DIRected(integer) TWOmode(integer) ///
+	syntax , EDGES(string) NODES(string) EF(integer) EL(integer) NF(integer) NL(integer) NET(string) ELEM(integer) N(integer) DIRected(integer) TWOmode(integer) ///
 		WEIGHTed(integer) MULTi(integer) LOOPs(integer) TARGET(string) [VATTRs(string) NAMEd(integer 1) REPlace ///
 		VALUEattr(string) BINary NOattrs]
 	unw_defs
 	// ---- labels and modes of the nodes (kept in Mata across the dataset changes below) ----
 	preserve
-	qui use `"`nodes'"', clear
-	qui keep if nd_elem == `elem'
+	if `nf' > 0 qui use `"`nodes'"' in `nf'/`nl', clear
+	else qui use `"`nodes'"' if 0, clear
 	qui sort nd_order
 	capture mata: mata drop __nwnd_lab
 	mata: __nwnd_lab = st_sdata(., "nd_label")'
@@ -891,8 +932,8 @@ program _nwnd_build, rclass
 	local nn = _N
 	restore
 	// ---- tie list ----
-	qui use `"`edges'"', clear
-	qui keep if nd_elem == `elem'
+	if `ef' > 0 qui use `"`edges'"' in `ef'/`el', clear
+	else qui use `"`edges'"' if 0, clear
 	local mm = _N
 	local valued = `weighted'
 	local valuevar ""
@@ -957,8 +998,8 @@ program _nwnd_build, rclass
 	if "`noattrs'" == "" {
 		tempfile attf
 		preserve
-		qui use `"`nodes'"', clear
-		qui keep if nd_elem == `elem'
+		if `nf' > 0 qui use `"`nodes'"' in `nf'/`nl', clear
+		else qui use `"`nodes'"' if 0, clear
 		qui sort nd_order
 		local keepv nd_label
 		if `named' local keepv `keepv' nd_name
