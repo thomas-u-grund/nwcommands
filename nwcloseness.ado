@@ -106,9 +106,15 @@ program nwcloseness
 			}
 		}
 		if `__fastcl' | `__wcl' {
+			// A network that is undirected and already symmetric needs no symmetrised copy.
+			local __dosymc = ("`symopt'" != "")
+			if `__dosymc' & "`directed'" == "false" {
+				mata: st_local("__issym", strofreal(`netobj'->check_symmetry()))
+				if `__issym' local __dosymc 0
+			}
 			tempname __symnet
 			local __src `netname_temp'
-			if "`symopt'" != "" {
+			if `__dosymc' {
 				nwsym `netname_temp', generate(`__symnet')
 				local __src `__symnet'
 			}
@@ -121,8 +127,15 @@ program nwcloseness
 			}
 			mata: __nwcloseness_far = __nwcloseness_reach[., 1]
 			mata: __nwcloseness_reach = __nwcloseness_reach[., 2]
-			if "`symopt'" != "" {
+			if `__dosymc' {
 				nwdrop `__symnet'
+			}
+			else if "`symopt'" != "" {
+				// the temporary copy was skipped: its nwdrop made the first network in memory current (a by-product,
+				// kept unchanged from earlier versions)
+				unw_defs
+				mata: st_local("__first", tokens(`nws'.get_names())[1])
+				nwcurrent `__first'
 			}
 		}
 		else {

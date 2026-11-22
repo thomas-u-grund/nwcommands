@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+### Changed
+- Speed: `nwbetween` and `nwcloseness` no longer build the symmetrised temporary copy of an undirected network that is already symmetric (the copy was identical to the network). The results are identical to 3.34.0 (compared node by node on binary, valued, directed, undirected, disconnected and standardised cases, with and without `nosym`, `binary`, `legacy`, `alpha()`; tolerance 0), the current network after the call is unchanged (`nwbetween`: the analysed network; `nwcloseness`: the first network in memory, or the untouched current network with `nosym`, restored explicitly), and directed networks and `nosym` behave as before. At 2,000 nodes and 10,000 ties the saving is about 0.06 s for `nwbetween` and 0.1 s for `nwcloseness`. Side effect: because no copy is synchronised with the dataset, the order of the adjacency variables in the dataset after the call can differ from earlier versions (values are the same).
+
 ## [3.34.0] - 2026-11-21
 
 ### Added

@@ -99,7 +99,13 @@ program nwbetween
 		// directly against a minimal, isolated test program (see
 		// nwevcent.ado, which had the identical bug). Fixed to check
 		// `sym' instead.
-		if "`sym'" == "" {
+		// A network that is undirected and already symmetric is its own symmetrised copy: skip the copy (same result, less work).
+		local __dosym = ("`sym'" == "")
+		if `__dosym' & "`directed'" == "false" {
+			mata: st_local("__issym", strofreal(`netobj'->check_symmetry()))
+			if `__issym' local __dosym 0
+		}
+		if `__dosym' {
 			tempname __symnet
 			nwsym `netname_temp', generate(`__symnet')
 			_nwsyntax
@@ -152,8 +158,11 @@ program nwbetween
 			}
 		}
 
-		if "`sym'" == "" {
+		if `__dosym' {
 			nwdrop `__symnet'
+			nwcurrent `oldnetname'
+		}
+		else if "`sym'" == "" {
 			nwcurrent `oldnetname'
 		}
 
