@@ -7,9 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.35.0,
+* nwergm 1.13.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.0.2, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -28,6 +28,11 @@ generate byte first = _n == 1
 generate byte group = inlist(_n, 1, 2)
 nwcontext sw, attribute(group) stat(sum) generate(exposed)
 tabulate exposed if !group
+
+generate byte adopted = group
+replace adopted = 1 if exposed >= 1
+count if adopted
+drop adopted exposed
 
 program diffuse, rclass
     syntax name(name=net), start(varname) [threshold(integer 1) prob(real 1)]
@@ -78,26 +83,6 @@ return list
 * ============================================================
 * An experiment across network structures
 * ============================================================
-program seedgroup
-    syntax name(name=net), size(integer) generate(name)
-    local i = runiformint(1, _N)
-    generate byte `generate' = _n == `i'
-    tempvar u near r
-    generate double `u' = runiform()
-    quietly count if `generate'
-    while r(N) < `size' {
-        local need = `size' - r(N)
-        capture drop `near' `r'
-        quietly nwcontext `net', attribute(`generate') stat(max) ///
-            generate(`near')
-        quietly egen `r' = rank(`u') if `near' == 1 & !`generate', unique
-        quietly count if `r' < .
-        if r(N) == 0 continue, break
-        quietly replace `generate' = 1 if `r' <= `need'
-        quietly count if `generate'
-    }
-end
-
 * setup (not printed in the book):
 capture program drop seedgroup
 program seedgroup
@@ -132,7 +117,12 @@ end
 program experiment, rclass
     nwclear
     quietly `0' name(g)
-    seedgroup g, size(7) generate(group)
+    local i = runiformint(1, _N)
+    quietly generate byte first = _n == `i'
+    quietly nwcontext g, attribute(first) stat(max) generate(near)
+    quietly generate double u = runiform() if near == 1
+    quietly egen pick = rank(u), unique
+    quietly generate byte group = first | pick == 1
     diffuse g, start(group) threshold(1) prob(.5)
     return scalar simple = r(half)
     diffuse g, start(group) threshold(2) prob(.5)

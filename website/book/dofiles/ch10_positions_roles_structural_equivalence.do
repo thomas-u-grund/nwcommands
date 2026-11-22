@@ -7,9 +7,9 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.35.0,
+* nwergm 1.13.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.0.2, the versions the book was printed with.
 * Lines marked "setup" are not printed in the book but are needed to run it.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
@@ -100,7 +100,7 @@ display r(classes)
 * ============================================================
 * Core-periphery structure
 * ============================================================
-nwcoreperiphery lazega_adv, generate(core)
+nwcoreperiphery lazega_adv, generate(core) sym
 tab core status
 quietly nwdegree lazega_adv, generate(adv_out adv_in)
 tabstat adv_in adv_out seniority yrs_frm, by(core) statistics(mean n)
