@@ -290,7 +290,7 @@ capture nwevcent lazega_adv, generate(ev_x) sym out
 assert _rc == 198
 _tcc_log "undirected network" "nwevcent tri, generate(ev_u) replace"
 
-* ---------------------------------------------------------------- A14. undirected binary numbers unchanged (byte-identical to the stored pre-sweep run)
+* ---------------------------------------------------------------- A14. undirected binary numbers unchanged (to 1e-12 against the stored pre-sweep run)
 global tcc_out "`c(tmpdir)'/tcc_golden_new.txt"
 do cscripts/coercion_golden.do
 tempname fa fb
@@ -301,7 +301,19 @@ file read `fa' la
 file read `fb' lb
 while r(eof) == 0 {
 	local ++nl
-	if `"`la'"' != `"`lb'"' {
+	* the label must be identical; the number must agree to 1e-12 (the last bit of a sum can differ between platforms: libm and the order of
+	* summation; the stored file comes from the Mac)
+	gettoken ka va : la
+	gettoken kb vb : lb
+	local va = strtrim(`"`va'"')
+	local vb = strtrim(`"`vb'"')
+	local same = (`"`ka'"' == `"`kb'"')
+	if `same' & `"`va'"' != `"`vb'"' {
+		local xa = real(`"`va'"')
+		local xb = real(`"`vb'"')
+		local same = (!missing(`xa') & !missing(`xb') & reldif(`xa', `xb') < 1e-12)
+	}
+	if !`same' {
 		di as err "FAIL: undirected binary numbers changed at line `nl': {`la'} vs {`lb'}"
 		exit 9
 	}
@@ -310,6 +322,6 @@ while r(eof) == 0 {
 }
 file close `fa'
 file close `fb'
-di "A14 `nl' numbers identical to the pre-sweep run"
+di "A14 `nl' numbers identical to the pre-sweep run (to 1e-12)"
 
 di "PASS: test_core_coercion"
