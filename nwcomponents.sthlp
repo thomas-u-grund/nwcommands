@@ -41,7 +41,9 @@ given){p_end}
 
 {pstd}
 Calculate the components of a network or a list of networks. A component is a set of nodes that are
-only connected among each other. In an undirected network the nodes of a component can reach each other through ties. In a directed network the default components are strongly connected: two nodes belong to the same component if each can reach the other along the direction of the ties ({cmd:igraph::components(mode = "strong")}); with {opt weak} the direction is ignored and the components are the weakly connected ones ({cmd:mode = "weak"}). The output says which kind was computed. Nodes can only belong to one component. Missing ties count as no tie, and the output says how many there were.
+only connected among each other. In an undirected network the nodes of a component can reach each other through ties. In a directed network the default components are strongly connected: two nodes belong to the same component if each can
+reach the other along the direction of the ties ({cmd:igraph::components(mode = "strong")}); with {opt weak} the direction is ignored and the components are the weakly connected ones ({cmd:mode = "weak"}). The output says which kind was
+computed. Nodes can only belong to one component. Missing ties count as no tie, and the output says how many there were.
 
 {pstd}
 {opt generate()} is required and names the new variable that stores the component membership. When

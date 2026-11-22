@@ -65,7 +65,9 @@ Katz centrality already established for an analogous exact random-walk quantity.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} the walk follows the direction of the ties, as {cmd:igraph::random_walk(mode = "out")} does; the hitting time is missing for a node from which the target is not reached with certainty (it can run into a node without outgoing ties or into a part of the network from which the target cannot be reached), and the network must fit into a dense matrix (above that, error 484; {opt sym} is solved on the stored ties); {opt sym} symmetrizes first; the output says which was done. {bf:Valued:} the walk steps with probability w_ij / s_i by default;
+{bf:Directed:} the walk follows the direction of the ties, as {cmd:igraph::random_walk(mode = "out")} does; the hitting time is missing for a node from which the target is not reached with certainty (it can run into a node without outgoing
+ties or into a part of the network from which the target cannot be reached), and the network must fit into a dense matrix (above that, error 484; {opt sym} is solved on the stored ties); {opt sym} symmetrizes first; the output says which
+was done. {bf:Valued:} the walk steps with probability w_ij / s_i by default;
 {opt binary} ignores the values. {bf:Two-mode:} not supported (error 6088); {opt onemode} uses the bipartite graph
 read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 

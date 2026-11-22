@@ -71,7 +71,8 @@ the correlation to rounding error (about 1e-15).
 {title:Network types}
 
 {pstd}
-{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} the tie values are used by default ({opt measure(valued)});
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its
+two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} the tie values are used by default ({opt measure(valued)});
 {opt measure(binary)} uses only the presence of ties. {bf:Two-mode:} not supported (error 6088; use {help nwproject}
 first). {bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 

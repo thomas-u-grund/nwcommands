@@ -90,7 +90,9 @@ recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}}.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are ignored. {bf:Two-mode:} same as for the bipartite graph read
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two
+values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are ignored. {bf:Two-mode:} same as for the bipartite
+graph read
 as a one-mode network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
 

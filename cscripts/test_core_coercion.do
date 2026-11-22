@@ -290,4 +290,26 @@ capture nwevcent lazega_adv, generate(ev_x) sym out
 assert _rc == 198
 _tcc_log "undirected network" "nwevcent tri, generate(ev_u) replace"
 
+* ---------------------------------------------------------------- A14. undirected binary numbers unchanged (byte-identical to the stored pre-sweep run)
+global tcc_out "`c(tmpdir)'/tcc_golden_new.txt"
+do cscripts/coercion_golden.do
+tempname fa fb
+file open `fa' using "cscripts/coercion_golden/undirected_binary.txt", read text
+file open `fb' using "$tcc_out", read text
+local nl 0
+file read `fa' la
+file read `fb' lb
+while r(eof) == 0 {
+	local ++nl
+	if `"`la'"' != `"`lb'"' {
+		di as err "FAIL: undirected binary numbers changed at line `nl': {`la'} vs {`lb'}"
+		exit 9
+	}
+	file read `fa' la
+	file read `fb' lb
+}
+file close `fa'
+file close `fb'
+di "A14 `nl' numbers identical to the pre-sweep run"
+
 di "PASS: test_core_coercion"

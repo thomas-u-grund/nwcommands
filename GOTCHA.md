@@ -933,3 +933,14 @@ The `nwcommands-ado*.pkg` chunks are generated from `_pkg_ado.txt`; a command or
 
 ## nwbetween / nwcloseness / nwevcent: `sym` and `nosym` in one syntax line
 `syntax` cannot declare both `sym` and `nosym` (both would fill the local `sym`). The three commands declare `SYMmetrize nosym`: the option `sym` (abbreviation of `symmetrize`) fills the local `symmetrize`, the old `nosym` fills the local `sym` with the text "nosym". Since 3.35 (unreleased) `nosym` is the default and only accepted for old scripts; the symmetrizing branch runs only when `symmetrize` is given AND the network is directed (an undirected network is never copied). A test of the form `if "`sym'" == ""` from before this change means the opposite of what it reads. `nwevcent` follows the in-ties of a node by default (`A' x = lambda x`, as igraph's `eigen_centrality(directed = TRUE)`; changed in the coercion sweep, before 3.35 it was the out-ties); option `out` gives the out-ties (`A x = lambda x`).
+
+## Coercion sweep (2026-11): helpers and traps
+
+- Shared helpers: `_nwsymguard` (directed asymmetric network without `sym` is error 198; reciprocated directed network runs as undirected with a note; returns `r(msg)`), `_nwmissnote` (returns `r(nmissing)`, prints "(N missing ties treated as 0)" only when N > 0; sparse-safe for one-mode networks), `_nwdirnote`.
+- Helpers are rclass and overwrite `r()`: call them before setting results, copy values into locals.
+- `noisily di` inside a helper called under `quietly` prints nothing: return the text in `r(msg)` and print it in the caller.
+- `_nwsyntax` clobbers caller locals named `valued`, `directed`, `nodes`: copy option flags to other names first.
+- `if cond di ...` on one line is unreliable; use `{ }` blocks.
+- Mata: a nested subscript `lab[comp[v]]` is "invalid expression" (use a temporary); `x[vec]` on a 1x1 matrix returns a rowvector; avoid one-line `if (...) {a; b}`.
+- Tests that build a symmetric matrix with `nwset, mat()` get a DIRECTED network (all ties reciprocated): fine for the cohesion family (runs as undirected), but directed-default commands (nwcomponents strong, nwassortativity, nwkatz) now need `weak` / `sym` in tests that want the old result.
+- `nwevcent` default on a directed network is the in-tie centrality (igraph); `out` is the former default.

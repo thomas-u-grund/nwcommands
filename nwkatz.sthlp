@@ -89,7 +89,9 @@ the same convention the default distance-decay formula already uses.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} {it:_in} and {it:_out} variables; a directed network is analysed as it is in both forms ({it:_out}: distances from a node to the nodes it reaches, or walks that start at it; {it:_in}: those that arrive at it; {opt walks} {it:_in} equals {cmd:igraph::alpha_centrality}); {opt sym} symmetrizes first, and the output says which was done. Missing ties count as no tie and the output says how many there are. {bf:Valued:} {opt walks} weights the walks by the tie values ({opt binary} counts a
+{bf:Directed:} {it:_in} and {it:_out} variables; a directed network is analysed as it is in both forms ({it:_out}: distances from a node to the nodes it reaches, or walks that start at it; {it:_in}: those that arrive at it; {opt walks}
+{it:_in} equals {cmd:igraph::alpha_centrality}); {opt sym} symmetrizes first, and the output says which was done. Missing ties count as no tie and the output says how many there are. {bf:Valued:} {opt walks} weights the walks by the tie
+values ({opt binary} counts a
 tie once); the distance-decay form counts steps (the output says so). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
 network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 

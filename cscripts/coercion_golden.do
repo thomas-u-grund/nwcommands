@@ -21,6 +21,7 @@ nwuse data/florentine, nwappend
 nwset
 qui nwset, detail
 local nets `r(nets)'
+set seed 4711
 nwrandom 40, prob(.12) undirected name(rnd40)
 file open __fh using "$tcc_out", write replace
 foreach n in zachary flomarriage rnd40 {
@@ -40,5 +41,31 @@ foreach n in zachary flomarriage rnd40 {
 	_g __fh clg_`n' `r(cluster_global)'
 	_g __fh cla_`n' `r(cluster_avg)'
 	_gv __fh gcl_`n' gcl_`n' 20
+	* --- nwkatz, nwrandomwalk, nwevcent, nwbalance, nwkcore, nwdegree on the undirected networks
+	capture nwkatz `n', alpha(.3) generate(gk_`n')
+	capture _gv __fh gk_`n' gk_`n' 20
+	capture nwkatz `n', walks alpha(.05) generate(gw_`n')
+	capture _gv __fh gw_`n' gw_`n' 20
+	capture nwevcent `n', generate(ge_`n')
+	capture _gv __fh ge_`n' ge_`n' 20
+	capture nwkcore `n', generate(gkc_`n') silent
+	capture _gv __fh gkc_`n' gkc_`n' 20
+	capture nwdegree `n', generate(gd_`n') silent
+	capture _gv __fh gd_`n' gd_`n' 20
+	capture nwbalance `n'
+	if _rc == 0 {
+		_g __fh bal_`n' `r(balance)'
+		_g __fh balc_`n' `r(closed_triad)'
+	}
+	capture nwclique `n', generate(gq_`n') silent
+	capture _g __fh cliques_`n' `r(cliques)'
+	capture nwcohesion `n', generate(gh_`n') silent
+	capture _gv __fh gh_`n' gh_`n' 20
+	capture nwspectral `n', generate(gsp_`n') silent
+	capture _g __fh algconn_`n' `r(algebraic_connectivity)'
+	capture nwcoreperiphery `n', generate(gcp_`n') silent
+	capture _g __fh cpfit_`n' `r(fitness)'
+	capture nwfactions `n', generate(gfa_`n') silent
+	capture nwmaxflow `n', source(`=1') sink(`=2') silent
 }
 file close __fh

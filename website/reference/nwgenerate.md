@@ -43,7 +43,8 @@ The command generates a network. It can be used either with a) some function ***
 - Generate a lattice network (see [nwlattice](nwlattice)).
 
 - `large(netname)`
-- Extract the largest component as a network. For a directed network this is the largest strongly connected component; add the option `weak` (for example `large(net, weak)`) for the largest weakly connected component (see [nwcomponents](nwcomponents)).
+- Extract the largest component as a network. For a directed network this is the largest strongly connected component; add the option `weak` (for example `large(net, weak)`) for the largest weakly connected component (see
+- [nwcomponents](nwcomponents)).
 
 - `path(netname)`, `ego(nodeid)` `alter(nodeid)` [`length(int)` `sym` `xvars`]
 - Not currently implemented as a shortcut - [nwpath](nwpath) can produce zero, one, or several
