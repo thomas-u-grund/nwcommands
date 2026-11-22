@@ -154,7 +154,7 @@ program nwgenerate
 		
 		qui if "`whichjob'" == "large(" {	
 			tempvar _lgc
-			nwcomponents `sub1', lgc generate(`_lgc')
+			nwcomponents `sub1', lgc generate(`_lgc') `sub2'
 			nwduplicate `sub1',  name(`newnetname')
 			nwkeep `newnetname' if `_lgc' == 1
 		}	

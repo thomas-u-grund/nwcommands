@@ -14,7 +14,7 @@
 
 {p 8 17 2}
 {cmd:nwgeodesic} 
-[{it:{help netname}}]
+[{it:{help netlist}}]
 [{cmd:,}
 {opth unconnected(int)}
 {opth alpha(real)}
@@ -31,7 +31,8 @@
 {opt average}
 {opt gname(string)}
 {opt saving(filename)}
-{opt export(filename[, options])}]
+{opt export(filename[, options])}
+{cmd:save(}{it:filename}[{cmd:, replace}]{cmd:)}]
 
 
 {synoptset 30 tabbed}{...}
@@ -56,6 +57,7 @@ nodes){p_end}
 {synopt:{opt gname(string)}}Name for the graph created by {opt plot}; default = {bf:geodesic} ({opt name()} names the distance network){p_end}
 {synopt:{opt sav:ing(filename)}}Save the graph to a {cmd:.gph} file; an existing file is replaced{p_end}
 {synopt:{opt exp:ort(filename[, options])}}Write the graph with {helpb graph export}; the file extension sets the format{p_end}
+{synopt:{cmd:save(}{it:filename}[{cmd:, replace}]{cmd:)}}Save the results in a Stata data set, one observation per network; an existing file is replaced (with or without {cmd:replace}); see {bf:A list of networks}{p_end}
 
 
 {title:Description}
@@ -114,6 +116,25 @@ valued networks, however, does not explicitly account for the number of steps th
 In contrast, Opsahl et al. (2010) allows giving different weight to longer and shorter paths. When {bf:{it:alpha} = 0}
 the formula above ignores tie weights.
 
+
+{title:A list of networks}
+
+{pstd}
+{cmd:nwgeodesic} takes one network or a list of networks ({it:netlist}; wildcards such as {bf:draw_*} work as in {help nwsummarize}). With a list, every network is analysed with the same options and a table with one row per network is printed
+(nodes, average path length, diameter, radius, share of connected pairs and the average distance over the connected pairs); one line says how the networks were read (directed networks: distances follow the direction of the ties, or the
+symmetrized network with {opt sym}; undirected networks). {bf:r()} holds the results of the last network of the list, exactly as a call for that network alone. The options that make a variable, a network or a graph for one network
+({opt generate()}, {opt name()}, {opt xvars}, {opt plot} with {opt gname()}, {opt saving()} and {opt export()}) are error 198 with a list; call the command once per network for them. The distance network {it:_geodesic} afterwards holds
+the distances of the last network.
+
+{pstd}
+{opt save()} writes a Stata data set with one observation per network (also for one network), in the order of the list, with the variables {bf:name} (network name), {bf:directed} and {bf:valued} (0 or 1), {bf:nodes}, {bf:numpaths},
+{bf:unconnected} (the number of unconnected pairs), {bf:avgpath}, {bf:diameter}, {bf:radius}, {bf:alpha}, {bf:connected} (the share of pairs that are connected), {bf:avgpath_connected} and {bf:diameter_connected} (over the connected
+pairs). {bf:avgpath}, {bf:diameter} and {bf:radius} are missing for a network in which not every pair is connected (the single call stores -1 in {bf:r()}); {bf:avgpath_connected} and {bf:diameter_connected} are missing when
+{opt unconnected()} replaced the distances of the unconnected pairs. All numeric variables are stored as {cmd:double}.
+
+{phang2}{cmd:. nwrandom 30, prob(.12) undirected name(draw) ntimes(20)}{p_end}
+{phang2}{cmd:. nwgeodesic draw_*, save(draws)}{p_end}
+{phang2}{cmd:. use draws, clear}{p_end}
 
 {title:Network types}
 

@@ -36,22 +36,55 @@
   Network name: glasgow1
   Attribute: degree
 ----------------------------------------
-    Ties: 74
-    Assortativity coefficient: .172
+    (directed network: out-degree of the sender against in-degree of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .151
 
 . nwassortativity glasgow1, attribute(alcohol1)
 
   Network name: glasgow1
   Attribute: alcohol1
 ----------------------------------------
-    Ties: 74
-    Assortativity coefficient: .323
+    (directed network: the attribute of the sender against that of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .39
 
 . nwassortativity glasgow1, attribute(sport1)
 
   Network name: glasgow1
   Attribute: sport1
 ----------------------------------------
+    (directed network: the attribute of the sender against that of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .174
+
+. nwassortativity glasgow1, sym
+
+  Network name: glasgow1
+  Attribute: degree
+----------------------------------------
+    (directed network symmetrized: the larger of the two directions of a tie)
+    Ties: 74
+    Assortativity coefficient: .172
+
+. nwassortativity glasgow1, attribute(alcohol1) sym
+
+  Network name: glasgow1
+  Attribute: alcohol1
+----------------------------------------
+    (directed network symmetrized: the larger of the two directions of a tie)
+    Ties: 74
+    Assortativity coefficient: .323
+
+. nwassortativity glasgow1, attribute(sport1) sym
+
+  Network name: glasgow1
+  Attribute: sport1
+----------------------------------------
+    (directed network symmetrized: the larger of the two directions of a tie)
     Ties: 74
     Assortativity coefficient: .069
 
@@ -61,6 +94,7 @@
 
    Network:  glasgow1      Directed: true
    Attribute:  sport1
+    (directed network: the table counts every tie from ego (row) to alter (column))
 
  sport1_ego | sport1_alter
             | not regular     regular        Total
@@ -76,6 +110,7 @@ Total       |          34          79          113
 
    Network:  glasgow1      Directed: true
    Attribute:  smoke1
+    (directed network: the table counts every tie from ego (row) to alter (column))
 
  smoke1_ego | smoke1_alter
             |         non occassional     regular        Total
@@ -92,6 +127,7 @@ Total       |          83          12          18          113
 
    Network:  glasgow1      Directed: true
    Attribute:  smoke1
+    (directed network: the table counts every tie from ego (row) to alter (column))
 
 +----------------+
 | Key            |

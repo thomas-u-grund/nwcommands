@@ -75,7 +75,7 @@ The command also returns the reciprocity of the network.
 {pstd}
 {bf:Directed:} mutual, asymmetric and null dyads; an undirected network has mutual and null dyads only. {bf:Valued:} tie
 values are ignored (every tie counts as present; the command prints a note). {bf:Two-mode:} yes - the null dyads are
-counted over the pairs of nodes from different modes; reciprocity is shown as n/a. {bf:Signed:} not applicable. See
+counted over the pairs of nodes from different modes; reciprocity is shown as n/a. {bf:Signed:} not applicable. {bf:Missing ties:} treated as 0; the output gives their number. See
 {help nwnetworktypes}.{p_end}
 
 

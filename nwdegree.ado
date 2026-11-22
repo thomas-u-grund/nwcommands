@@ -462,6 +462,11 @@ program nwdegree
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{hline 40}"
+			_nwmissnote `netname_temp', quiet
+			if r(nmissing) > 0 {
+				noi di "{txt}{p 2 2 2}(`r(nmissing)' missing ties treated as 0){p_end}"
+			}
+			_nwsyntax `netname_temp'
 			if "`valued'" == "true" {
 				if `__alpha' == 0 {
 					noi di "{txt}  (valued network, tie values not used: degree is the number of ties)"

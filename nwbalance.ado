@@ -63,6 +63,22 @@ program nwbalance
 	}
 	_nwsyntax `netname'
 
+	// a pair of nodes is tied when there is a tie in either direction. When both directions carry a tie of opposite sign
+	// the sign of the pair is not defined (it used to be that of the tie from the node with the lower index, which
+	// depends on the order of the nodes): such a network is refused, and nwsym (mode of your choice) makes the sign explicit
+	local __wasdir = ("`directed'" == "true")
+	local __wasval = ("`valued'" == "true")
+	if `__wasdir' {
+		tempname __nw_conf
+		mata: st_numscalar("`__nw_conf'", nw_balance_conflicts(`netobj'))
+		if scalar(`__nw_conf') > 0 {
+			di "{err}{p 0 0 2}`=scalar(`__nw_conf')' pair(s) of nodes in {bf:`netname'} have a tie in each direction with opposite signs, so the sign of the pair is not defined and the balance of its triads is not defined. Make the sign explicit first, for example with {helpb nwsym} (mode max, min or mean).{p_end}"
+			exit 198
+		}
+	}
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
+
 	tempname __nw_bal
 	mata: `__nw_bal' = `netobj'->calculate_balance()
 	mata: st_store((1::`nodes'), ("`closed'","`balance'"), `__nw_bal')
@@ -83,6 +99,18 @@ program nwbalance
 	noi di "{hline 40}"
 	noi di "{txt}  Network name: {res}`netname'"
 	noi di "{hline 40}"
+	if `__wasdir' {
+		noi di "{txt}{p 4 4 2}(directed network: two nodes are tied when there is a tie in either direction; the sign of a pair is the sign of its tie(s), a pair with opposite signs in the two directions is refused){p_end}"
+	}
+	else {
+		noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	if `__wasval' {
+		noi di "{txt}{p 4 4 2}(valued network: only the sign of a tie counts, not its size){p_end}"
+	}
+	if `__nmiss' > 0 {
+		noi di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+	}
 	noi di "{txt}    Closed triad: {res}`r(closed_triad)'"
 	noi di "{txt}    Balanced triad: {res}`r(balanced_triad)'"
 	noi di "{txt}    Unbalanced triad: {res}`r(unbalanced_triad)'"
@@ -173,5 +201,25 @@ real rowvector nw_balance_null(real matrix A0, real scalar reps, real scalar obs
 		b[r] = mean((s[T[., 1]] :* s[T[., 2]] :* s[T[., 3]]) :> 0)
 	}
 	return((p, mean(b), (reps > 1 ? sqrt(variance(b)) : 0), sum(b :>= obs - 1e-12)))
+}
+end
+
+capture mata: mata drop nw_balance_conflicts()
+mata:
+// number of pairs of nodes with a tie in each direction and opposite signs
+real scalar nw_balance_conflicts(pointer(class nw_def scalar) scalar p)
+{
+	real matrix E
+	real scalar r, c
+	E = p->edgelist()
+	c = 0
+	for (r = 1; r <= rows(E); r++) {
+		if (E[r, 1] < E[r, 2]) {
+			if (p->has_edge(E[r, 2], E[r, 1])) {
+				if (sign(p->edge_weight(E[r, 2], E[r, 1])) != sign(E[r, 3])) c = c + 1
+			}
+		}
+	}
+	return(c)
 }
 end

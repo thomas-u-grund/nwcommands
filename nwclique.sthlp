@@ -16,6 +16,7 @@
 {cmdab: nwclique}
 [{it:{help netlist}}]
 [{cmd:,}
+{opt sym}
 {opth generate(newvarname)}
 {opt replace}
 {opth minsize(int)}
@@ -26,6 +27,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
+{synopt:{opt sym}}On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198){p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest clique size to report; default = 3{p_end}
@@ -69,7 +71,9 @@ With more than one network in the {it:netlist}, a number is appended to the vari
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored (the command prints a note on a valued network).
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two
+values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are ignored (the command prints a note on a valued
+network).
 {bf:Two-mode:} same as for the bipartite graph read as a one-mode network (it has no cliques of three or more nodes).
 {bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 

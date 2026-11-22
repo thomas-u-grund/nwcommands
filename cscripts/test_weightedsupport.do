@@ -352,8 +352,8 @@ _cmpvar c1b R_N1_clo_bin 1e-6 "nwcloseness, binary = igraph::closeness unweighte
 nwcloseness n3, generate(c3 f3 nn3) silent
 _cmpvar c3 R_N3_clo 1e-6 "nwcloseness on shares"
 nwsubset n2 if _n <= 8, name(n2c)
-nwcloseness n2c, generate(c2 f2 nn2) silent
-_cmpvar c2 R_N2s_clo 1e-6 "nwcloseness on a directed valued network (symmetrized)"
+nwcloseness n2c, generate(c2 f2 nn2) silent sym
+_cmpvar c2 R_N2s_clo 1e-6 "nwcloseness on a directed valued network (sym)"
 
 * ---------------------------------------------------------------- (D) betweenness
 di as txt _n "(D) nwbetween"
@@ -393,9 +393,9 @@ _chk `=(scalar(__d) < 1e-6)' "nwevcent, binary = igraph weights = NA, diff `=sca
 nwevcent n1, generate(evw) weighted
 mata: st_numscalar("__d", max(abs(st_data((1, 8), "evw") :/ max(st_data((1, 8), "evw")) - st_matrix("R_N1_evc")')))
 _chk `=(scalar(__d) < 1e-6)' "nwevcent, weighted (synonym) gives the same"
-nwevcent n2, generate(ev2)
+nwevcent n2, generate(ev2) sym
 mata: st_numscalar("__d", max(abs(st_data((1, 9), "ev2") :/ max(st_data((1, 9), "ev2")) - st_matrix("R_N2_evc_sym")')))
-_chk `=(scalar(__d) < 1e-6)' "nwevcent on a directed valued network (symmetrized, max), isolate included, diff `=scalar(__d)'"
+_chk `=(scalar(__d) < 1e-6)' "nwevcent on a directed valued network (sym), isolate included, diff `=scalar(__d)'"
 nwevcent b1, generate(evbb)
 mata: st_numscalar("__d", max(abs(st_data((1, 8), "evbb") :/ max(st_data((1, 8), "evbb")) - st_matrix("R_N1_evc_bin")')))
 _chk `=(scalar(__d) < 1e-6)' "nwevcent on a binary network is unchanged"

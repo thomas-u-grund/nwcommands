@@ -4,7 +4,7 @@ program nwkcomponents, rclass
 	// temporary names: no scalar or matrix is left behind
 	tempname __nw_kcompmatrix __nw_nkcomp
 	version 12
-	syntax [anything(name=netname)][, k(int 2) GENerate(string) replace NOMatrix silent force]
+	syntax [anything(name=netname)][, SYMmetrize k(int 2) GENerate(string) replace NOMatrix silent force]
 	set more off
 
 	if `k' < 1 {
@@ -28,6 +28,10 @@ program nwkcomponents, rclass
 				noi di `"`r(msg)'"'
 				local __vndone 1
 			}
+		}
+		_nwsymguard `netname_temp', cmd(nwkcomponents) `symmetrize' `__vnquiet'
+		if `"`r(msg)'"' != "" {
+			noi di `"`r(msg)'"'
 		}
 		_nwtimeguard, command(nwkcomponents) nodes(`nodes') model(power) base(39) exponent(2.6) alternative(k-components need a vertex-connectivity (max-flow) search at every level. Use nwcomponents or nwkcore for a network of this size, or look at a part of the network (nwsubset).) `force'
 

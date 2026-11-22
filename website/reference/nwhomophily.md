@@ -23,7 +23,8 @@ density(float)
 nodes(integer)
 name(string)
 xvars
-undirected]
+undirected
+ntimes(int)]
 ```
 
 | | |
@@ -35,6 +36,7 @@ undirected]
 | `name(newnetname)` | name of the new random network; default = *homophily* |
 | `xvars` | generate Stata variables for the network |
 | `undirected` | generate an undirected network |
+| `ntimes(int)` | number of networks to be generated, named *name*_1, *name*_2, ...; default = 1; **r(netlist)** lists them |
 
 ## Description
 
@@ -117,4 +119,4 @@ The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

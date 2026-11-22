@@ -84,7 +84,7 @@ assert r(N) == 4
 * giving exactly one maximal clique of size 3.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwclique dnet, generate(_cliquenum)
+nwclique dnet, generate(_cliquenum) sym
 assert _rc == 0
 assert r(cliques) == 1
 

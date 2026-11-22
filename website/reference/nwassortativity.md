@@ -20,7 +20,8 @@ nwassortativity
 attribute(varname)
 weighted
 silent
-binary]
+binary
+sym]
 ```
 
 | | |
@@ -29,6 +30,7 @@ binary]
 | `weighted` | Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally |
 | `silent` | Suppress display of results |
 | `binary` | Ignore the tie values of a valued network (by default they are used) |
+| `sym` | On a directed network, symmetrize first (the larger of the two directions of a tie) and compute the undirected coefficient |
 
 ## Description
 
@@ -36,7 +38,7 @@ binary]
 
 A positive coefficient means nodes tend to be tied to others with a similar value (e.g. high-degree nodes tend to connect to other high-degree nodes) - the network is "assortative". A negative coefficient means the opposite: nodes tend to be tied to others with a dissimilar value (e.g. high-degree "hubs" connecting mostly to low-degree nodes) - the network is "disassortative". A coefficient near zero means no such pattern.
 
-Formally, for every tie *(i,j)*, *x* is the attribute value at *i* and *y* the value at *j*; the coefficient is the ordinary Pearson correlation of *x* and *y* across every tie, counted in both directions (so the result does not depend on which end of a tie is labeled *i* vs *j*). This is exactly Newman's (2002) own *r* for the undirected case, and is computed here the same symmetrized way for directed input too - a tie assortativity measure has no natural directed generalization the same way ordinary clustering/clique measures do not (see [nwclustering](nwclustering)'s own identical reasoning), so a directed network's ties are treated as connections in either direction, matching this package's own established convention elsewhere (e.g. [nwtriads](nwtriads), [nwclique](nwclique)).
+Formally, for every tie *(i,j)*, *x* is the attribute value at *i* and *y* the value at *j*; the coefficient is the ordinary Pearson correlation of *x* and *y* across the ties. On an undirected network every tie is counted in both directions (so the result does not depend on which end of a tie is labeled *i* vs *j*), which is Newman's (2002) *r*. On a directed network every tie is one pair, *x* taken at the sender and *y* at the receiver (Newman 2003, the directed *r* of `igraph::assortativity(directed = TRUE)`): by default the degree of the sender is its out-degree and the degree of the receiver is its in-degree (out-strength and in-strength on a valued network), and with `attribute()` the same attribute is read at both ends. Option `sym` gives the undirected coefficient of the symmetrized network instead (a tie counts in both directions with the larger of its two values). The output says whether the network was analysed as directed, undirected or symmetrized.
 
 Social networks are frequently found to be assortative by degree (popular people know other popular people); many biological and technological networks (e.g. the internet's own router-level topology) are disassortative instead (a few high-degree hubs connect to many low-degree peripheral nodes).
 
@@ -46,7 +48,7 @@ A network with fewer than 2 ties, or one where the attribute (degree, by default
 
 ## Network types
 
-**Directed:** symmetrized. **Valued:** without `attribute()` the node attribute is the strength instead of the degree (`binary` uses the degree); `weighted` also weights each tie by its value (Leung and Chau 2007). **Two-mode:** same as for the bipartite graph read as a one-mode network (the degree assortativity is negative by construction). **Signed:** negative values would distort the weighted correlation. See [nwnetworktypes](nwnetworktypes).
+**Directed:** analysed as it is (sender against receiver); `sym` symmetrizes first, and the output says which. **Valued:** without `attribute()` the node attribute is the strength instead of the degree (`binary` uses the degree); `weighted` also weights each tie by its value (Leung and Chau 2007). **Two-mode:** same as for the bipartite graph read as a one-mode network (the degree assortativity is negative by construction). **Signed:** negative values would distort the weighted correlation. See [nwnetworktypes](nwnetworktypes).
 
 ## Examples
 
@@ -63,11 +65,12 @@ A network with fewer than 2 ties, or one where the attribute (degree, by default
 
 - **Scalars**
 - **r(assortativity)** --- the coefficient itself, in *[-1,1]*
-- **r(ties)** --- number of ties the coefficient was computed over (undirected count)
+- **r(ties)** --- number of ties the coefficient was computed over (arcs of a directed network, unordered pairs of an undirected or symmetrized network)
 
 - **Macros**
 - **r(name)** --- name of the network
 - **r(attribute)** --- attribute used (or "degree" or "strength" for the default)
+- **r(directed)** --- **"true"** for a directed network analysed as it is, **"symmetrized"** with `sym`, **"false"** for an undirected network
 - **r(weighted)** --- **"true"** if `weighted` was specified, **"false"** otherwise
 
 ## References
@@ -82,4 +85,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

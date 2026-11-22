@@ -47,6 +47,8 @@ profiles of all pairs of nodes and save the result as a new network:
    Density:  .993
    Mean outdegree:  16.89
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 ```
 
 `nwdissimilar` offers the distances `euclidean` (the default), `manhatten`, `hamming`, `jaccard` and
@@ -134,12 +136,15 @@ the classic.
 ## One split from the eigenvectors: `nwspectral`
 
 `nwspectral` takes the Fiedler vector, the eigenvector that belongs to the second-smallest eigenvalue of the Laplacian matrix
-of the network. Nodes with the same sign on it are on the same side of the best two-way cut:
+of the network. Nodes with the same sign on it are on the same side of the best two-way cut. The Laplacian is defined for
+undirected networks, and `samplike` is directed with unreciprocated ties, so `nwspectral` stops with an error unless you
+add `sym`, which analyses the symmetrized network (a tie counts in both directions, with the larger of its two values):
 
 ```stata
-. nwspectral samplike, generate(fiedler) bipartition
+. nwspectral samplike, generate(fiedler) bipartition sym
 ----------------------------------------
   Network name: samplike
+    (directed network symmetrized: the larger of the two directions of a tie)
   Connected components: 1
   Algebraic connectivity: 3.403
 

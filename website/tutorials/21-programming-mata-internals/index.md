@@ -433,6 +433,8 @@ matrix of paths of length two, with the node labels taken from the network:
    Density:  .358
    Mean degree:  5.38
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value;
+   minimum and maximum are tie values)
 ```
 
 The values of `paths2` are the number of paths of length two between two nodes, so the network is valued. The

@@ -150,6 +150,59 @@ program _nwdiffuse_setup, rclass
 	mata: __nwdif_count = J(0, 0, .)
 end
 
+// the notes that say how the networks were read: direction, tie values, self-loops, missing ties
+capture program drop _nwdiffuse_notes
+program _nwdiffuse_notes
+	syntax [anything(name=netlist)] [, V(integer 0) OUT(integer 1) S(integer 0)]
+	local __optv = cond(`v', "valued", "")
+	local __opti = cond(`out', "", "incoming")
+	local __opts = cond(`s', "self", "")
+	if "`netlist'" == "" {
+		_nwsyntax, max(1000)
+	}
+	else _nwsyntax `netlist', max(1000)
+	local names "`netname'"
+	local anydir 0
+	local anyval 0
+	local anyloop 0
+	local nmiss 0
+	foreach nm of local names {
+		_nwsyntax `nm', max(1)
+		if "`directed'" == "true" local anydir 1
+		if "`valued'" == "true" local anyval 1
+		if "`selfloops'" == "true" {
+			tempname __lp
+			mata: st_numscalar("`__lp'", sum(`netobj'->edgelist()[., 1] :== `netobj'->edgelist()[., 2]))
+			if scalar(`__lp') > 0 local anyloop 1
+		}
+		_nwmissnote `nm', quiet
+		local nmiss = `nmiss' + r(nmissing)
+	}
+	if `anydir' {
+		if "`__opti'" == "" {
+			di "{txt}{p 2 2 2}(directed network: the exposure of a node comes from the nodes it sends ties to; option {bf:incoming} uses the nodes it receives ties from){p_end}"
+		}
+		else {
+			di "{txt}{p 2 2 2}(directed network: the exposure of a node comes from the nodes it receives ties from){p_end}"
+		}
+	}
+	else {
+		di "{txt}{p 2 2 2}(undirected network){p_end}"
+	}
+	if `anyval' & "`__optv'" == "" {
+		di "{txt}{p 2 2 2}(valued network: tie values ignored, every tie counts as 1; option {bf:valued} weights by the tie values){p_end}"
+	}
+	if `anyval' & "`__optv'" != "" {
+		di "{txt}{p 2 2 2}(valued network: exposure weighted by the tie values){p_end}"
+	}
+	if `anyloop' & "`__opts'" == "" {
+		di "{txt}{p 2 2 2}(self-loops ignored; option {bf:self} counts them){p_end}"
+	}
+	if `nmiss' > 0 {
+		di "{txt}{p 2 2 2}(`nmiss' missing ties treated as 0){p_end}"
+	}
+end
+
 capture program drop _nwdiffuse_newvars
 program _nwdiffuse_newvars
 	args stub t0 t1 replace
@@ -212,6 +265,7 @@ program nwdiffuse_exposure, rclass
 			label variable `count'`t' "Exposure (adopting neighbours), period `t'"
 		}
 	}
+	_nwdiffuse_notes `netlist', v(`=("`valued'" != "")') out(`=("`incoming'" == "")') s(`=("`self'" != "")')
 	di "{txt}Exposure computed for periods {res}`t0'{txt} to {res}`t1'{txt}, lag `lag'; variables {res}`generate'`t0'{txt}...{res}`generate'`t1'"
 	return scalar n = `n'
 	return scalar t0 = `t0'
@@ -264,6 +318,7 @@ program nwdiffuse_threshold, rclass
 		mata: st_store((1::`n'), "`count'", nw_dif_atadoption(__nwdif_count, __nwdif_toa, `t0'))
 		label variable `count' "Number of adopting neighbours at adoption"
 	}
+	_nwdiffuse_notes `netlist', v(`=("`valued'" != "")') out(`=("`incoming'" == "")') s(`=("`self'" != "")')
 	if "`generate'" != "" {
 		quietly summarize `generate'
 		return scalar mean = r(mean)
@@ -450,6 +505,7 @@ program nwdiffuse_long, rclass
 	label variable adopt "Adopts in this period (1) or not yet (0)"
 	label variable exposure "Share of adopting neighbours (lag `lag')"
 	label variable nexposed "Number of adopting neighbours (lag `lag')"
+	_nwdiffuse_notes `netlist', v(`=("`valued'" != "")') out(`=("`incoming'" == "")') s(`=("`self'" != "")')
 	quietly count if adopt == 1
 	di "{txt}Person-period data: {res}`nrows'{txt} rows, {res}`r(N)'{txt} adoptions, exposure lagged by {res}`lag'{txt} period(s)."
 	return scalar rows = `nrows'
@@ -587,6 +643,7 @@ program nwdiffuse_simulate, rclass
 	quietly generate double `generate' = .
 	mata: st_store((1::`n'), "`generate'", __nwdif_toa)
 	label variable `generate' "Simulated period of adoption (seeds: 1)"
+	_nwdiffuse_notes `netlist', v(`vflag') out(`oflag') s(`sflag')
 	quietly summarize `generate'
 	local nad = r(N)
 	local last = r(max)

@@ -164,6 +164,7 @@ more trust than a tie that stands alone. `nwsimmelian` returns the Simmelian tie
 ```stata
 . nwsimmelian samplike, name(strongdir)
 (note: tie values are ignored; this measure is binary)
+    (directed network: only mutual ties are used)
 
 . nwsummarize strongdir
 --------------------------------------------------

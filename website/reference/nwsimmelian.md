@@ -36,7 +36,7 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 
 ## Network types
 
-**Directed:** only mutual ties count. **Valued:** tie values are ignored (no strength threshold) and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+**Directed:** only mutual ties count (the output says so). **Valued:** tie values are ignored (no strength threshold) and a note is printed. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -64,4 +64,4 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

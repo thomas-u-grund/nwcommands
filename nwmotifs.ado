@@ -32,6 +32,7 @@ program nwmotifs, rclass
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
 	}
+	_nwmissnote `netname', `__vnquiet'
 
 	if "`directed'" == "true" {
 		di "{txt}Note: {bf:`netname'} is directed - the 4-node motif census below"

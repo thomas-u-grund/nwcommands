@@ -132,29 +132,29 @@ chk "directed network with mutual ties = undirected network (max abs diff `d6')"
 * ---------------------------------------------------------------------------------------------------------------------
 nwclear
 nwuse "data/lazega.nwdta"
-qui nwcoreperiphery lazega_adv, generate(core) silent
+qui nwcoreperiphery lazega_adv, generate(core) silent sym
 chk "default: core of 18" `=(r(core) == 18)'
 chk "default: fitness .281096" `=(abs(r(fitness) - .2810960301) < 1e-8)'
 chk "default: r(restarts) = 1" `=(r(restarts) == 1)'
-qui nwcoreperiphery lazega_adv, generate(core2) restarts(1) silent
+qui nwcoreperiphery lazega_adv, generate(core2) restarts(1) silent sym
 chk "restarts(1) = default (same core and fitness)" `=(r(core) == 18 & abs(r(fitness) - .2810960301) < 1e-8)'
 qui count if core != core2
 chk "restarts(1) = default (same members)" `=(r(N) == 0)'
 local rseed0 = c(rngstate)
-qui nwcoreperiphery lazega_adv, generate(core3) replace silent
+qui nwcoreperiphery lazega_adv, generate(core3) replace silent sym
 chk "default leaves the random-number state alone" `=("`rseed0'" == c(rngstate))'
 
-qui nwcoreperiphery lazega_adv, generate(core4) replace restarts(200) seed(1) silent
+qui nwcoreperiphery lazega_adv, generate(core4) replace restarts(200) seed(1) silent sym
 local f4 = r(fitness)
 chk "restarts(200): core of 20" `=(r(core) == 20)'
 chk "restarts(200): fitness .281280" `=(abs(r(fitness) - .2812797670) < 1e-8)'
 chk "restarts(200): r(restarts) = 200" `=(r(restarts) == 200)'
 chk "restarts(200): many starts reach the best (r(nbest) = `r(nbest)')" `=(r(nbest) > 30 & r(nbest) <= 200)'
 chk "restarts(200): the best is not worse than the degree-based start" `=(`f4' >= .2810960301)'
-qui nwcoreperiphery lazega_adv, generate(core5) replace restarts(200) seed(1) silent
+qui nwcoreperiphery lazega_adv, generate(core5) replace restarts(200) seed(1) silent sym
 qui count if core4 != core5
 chk "same seed, same result" `=(r(N) == 0)'
-qui nwcoreperiphery lazega_adv, generate(core6) replace restarts(5) seed(2) silent
+qui nwcoreperiphery lazega_adv, generate(core6) replace restarts(5) seed(2) silent sym
 chk "restarts(5): never below one start" `=(r(fitness) >= .2810960301 - 1e-12)'
 
 * the two lawyers that join the core: n41 and n6
@@ -163,11 +163,11 @@ local nadd = r(N)
 qui count if core4 == 0 & core == 1
 chk "restarts(200): the core of 18 plus 2 lawyers, none left out" `=(`nadd' == 2 & r(N) == 0)'
 
-capture nwcoreperiphery lazega_adv, generate(core7) replace restarts(0)
+capture nwcoreperiphery lazega_adv, generate(core7) replace restarts(0) sym
 chk "restarts(0): r(198)" `=(_rc == 198)'
-capture nwcoreperiphery lazega_adv, generate(core7) replace seed(3)
+capture nwcoreperiphery lazega_adv, generate(core7) replace seed(3) sym
 chk "seed() without restarts: r(198)" `=(_rc == 198)'
-capture nwcoreperiphery lazega_adv, generate(core7) replace restarts(3) seed(-1)
+capture nwcoreperiphery lazega_adv, generate(core7) replace restarts(3) seed(-1) sym
 chk "seed(-1): r(198)" `=(_rc == 198)'
 
 * ---------------------------------------------------------------------------------------------------------------------

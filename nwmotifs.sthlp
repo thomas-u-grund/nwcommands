@@ -112,7 +112,7 @@ Grayscale by design, matching every other plot this package produces.
 {pstd}
 {bf:Directed:} every tie is treated as undirected and a note is printed. {bf:Valued:} tie values are ignored and a
 note is printed. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode computation) - the
-bipartite motifs of {cmd:bmotif}. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+bipartite motifs of {cmd:bmotif}. {bf:Signed:} not checked. {bf:Missing ties} (one-mode form): treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

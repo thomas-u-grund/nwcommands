@@ -22,7 +22,8 @@
 {opth name(netname)}
 {opt xvars}
 {opt undirected}
-{opt labs}({it:lab1 lab2 ...})]
+{opt labs}({it:lab1 lab2 ...})
+{opth ntimes(int)}]
 
 
 {synoptset 21 tabbed}{...}
@@ -35,6 +36,7 @@
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opth ntimes(int)}}number of networks to be generated, named {it:name}_1, {it:name}_2, ...; default = 1; {bf:r(netlist)} lists them{p_end}
 
 
 {title:Description}

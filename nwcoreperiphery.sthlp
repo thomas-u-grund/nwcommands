@@ -22,12 +22,14 @@
 {opth maxiter(int)}
 {opt rest:arts(#)}
 {opt seed(#)}
+{opt sym}
 {opt silent}]
 
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
+{synopt:{opt sym}}On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198){p_end}
 {synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores core membership{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
@@ -65,15 +67,16 @@ if it was assigned to the core and 0 if it was assigned to the periphery. With m
 are those of the last network.
 
 {pstd}
-Always operates on the undirected version of the network (the classical model does not distinguish
-incoming from outgoing ties); a directed network is symmetrized automatically - no separate {bf:symmetrize} option is needed or offered
-(unlike {help nwcommunity}, which needs {bf:symmetrize} for a directed network).
+The classical model does not distinguish
+incoming from outgoing ties, so it is defined for an undirected network: a directed network with unreciprocated ties is refused (error 198)
+unless option {opt sym} asks for the symmetrized network (as {help nwcommunity} does); the output says which was done.
 
 
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized automatically. {bf:Valued:} tie values are used by default ({opt measure(valued)});
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its
+two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are used by default ({opt measure(valued)});
 {opt measure(binary)} ignores them. {bf:Two-mode:} not supported (error 6088; use {help nwproject} first). {bf:Signed:}
 not checked. See {help nwnetworktypes}.{p_end}
 

@@ -28,6 +28,8 @@ program nwego, rclass
 	local __vndone 0
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwmissnote `netname_temp', quiet
+		local __nmiss = r(nmissing)
 		if `__vndone' == 0 {
 			_nwvaluednote `netname_temp', `__vnquiet'
 			if r(shown) == 1 {
@@ -82,6 +84,15 @@ program nwego, rclass
 		if "`silent'" == "" {
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
+			if "`directed'" == "true" {
+				noi di "{txt}{p 4 4 2}(directed network: the alters of a node are the nodes it sends ties to and the nodes it receives ties from){p_end}"
+			}
+			else {
+				noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+			}
+			if `__nmiss' > 0 {
+				noi di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+			}
 			noi sum `netsizevar'`k' `netdensvar'`k'
 			noi di " "
 		}

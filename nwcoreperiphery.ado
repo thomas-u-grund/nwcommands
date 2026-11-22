@@ -2,7 +2,7 @@
 capture program drop nwcoreperiphery
 program nwcoreperiphery, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace measure(string) maxiter(int 100) RESTarts(integer 1) SEED(string) silent]
+	syntax [anything(name=netname)][, GENerate(string) replace measure(string) maxiter(int 100) RESTarts(integer 1) SEED(string) silent SYMmetrize]
 	set more off
 
 	if `maxiter' < 1 {
@@ -35,6 +35,8 @@ program nwcoreperiphery, rclass
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 		noi _nw2guard `netname_temp', cmd(nwcoreperiphery)
+		_nwsymguard `netname_temp', cmd(nwcoreperiphery) `symmetrize'
+		local __symmsg `"`r(msg)'"'
 
 		local netmeasure "`measure'"
 		if "`netmeasure'" == "" {
@@ -115,6 +117,9 @@ program nwcoreperiphery, rclass
 		if "`silent'" == "" {
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
+			if `"`__symmsg'"' != "" {
+				noi di `"`__symmsg'"'
+			}
 			noi di "{txt}  Core size: {res}`lcore'{txt}   Fitness: {res}`=strtrim(string(round((`lfit')*1000)/1000,"%9.0g"))'"
 			if `restarts' > 1 noi di "{txt}  Starts: {res}`restarts'{txt}   best fitness reached by {res}`nbest'{txt} of them (first at start {res}`beststart'{txt})"
 			noi tab `netgenerate'`k'

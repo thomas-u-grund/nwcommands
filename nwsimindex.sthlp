@@ -70,7 +70,7 @@ undefined value to 0.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} the neighbours of a node are its out- and in-neighbours. {bf:Valued:} tie values are ignored (every tie
+{bf:Directed:} the neighbours of a node are its out- and in-neighbours (the output says so). {bf:Valued:} tie values are ignored (every tie
 counts as present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
 network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 

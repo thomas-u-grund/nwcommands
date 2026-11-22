@@ -1,5 +1,154 @@
+*! nwgeodesic: one network (the full command, _nwgeodesic_single below) or a list of networks
+*! (one result row per network; save(file) writes them to a data set, as nwsummarize does)
 capture program drop nwgeodesic
 program nwgeodesic
+	version 9
+	// one network and no save(): the single-network command, untouched
+	local __0 `"`0'"'
+	syntax [anything(name=netname)] [, SAVE(string asis) *]
+	if `"`save'"' == "" {
+		_nwsyntax `netname', max(100000)
+		if `networks' <= 1 {
+			_nwgeodesic_single `__0'
+			exit
+		}
+	}
+	else {
+		_nwsyntax `netname', max(100000)
+	}
+	local nets `netname'
+	local nn : word count `nets'
+	local opts `"`options'"'
+	// save(file [, replace]) as in nwsummarize
+	if `"`save'"' != "" {
+		local 0 `"`save'"'
+		capture syntax anything(name=__nwg_file id="file name") [, REPlace]
+		if _rc {
+			di "{err}{p 0 0 2}option {bf:save()}: specify a file name, optionally followed by {bf:, replace}; for example {bf:save(results, replace)}{p_end}"
+			exit 198
+		}
+		local save `__nwg_file'
+	}
+	if `nn' > 1 {
+		// options that make a variable, a network or a graph for ONE network
+		local 0 `", `opts'"'
+		capture syntax [, generate(string) name(string) PLOT xvars saving(string asis) export(string asis) gname(string asis) *]
+		foreach o in generate name plot xvars saving export gname {
+			if `"``o''"' != "" {
+				di "{err}{p 0 0 2}nwgeodesic: option {bf:`o'} makes a variable, network or graph for a single network and cannot be used with a list of networks. Call {bf:nwgeodesic} once per network for it.{p_end}"
+				exit 198
+			}
+		}
+	}
+	tempname R
+	matrix `R' = J(`nn', 12, .)
+	matrix colnames `R' = directed valued nodes numpaths unconnected avgpath diameter radius alpha connected avgpath_connected diameter_connected
+	local i 0
+	local __anysym 0
+	foreach onenet of local nets {
+		local ++i
+		_nwsyntax `onenet', max(1)
+		local dirflag = ("`directed'" == "true")
+		local valflag = ("`valued'" == "true")
+		if `nn' > 1 {
+			capture quietly _nwgeodesic_single `onenet', `opts'
+			if _rc {
+				_nwgeodesic_single `onenet', `opts'
+				exit _rc
+			}
+		}
+		else {
+			_nwgeodesic_single `onenet', `opts'
+		}
+		local unc_given = (`"`opts'"' != "" & regexm(lower(`"`opts'"'), "unconnected[(]"))
+		local __symm = (r(symmetrized) == "true")
+		local __anysym = max(`__anysym', `__symm')
+		matrix `R'[`i', 1] = `dirflag'
+		matrix `R'[`i', 2] = `valflag'
+		matrix `R'[`i', 3] = r(nodes)
+		matrix `R'[`i', 4] = r(numpaths)
+		matrix `R'[`i', 5] = r(unconnected)
+		matrix `R'[`i', 9] = r(alpha)
+		if r(unconnected) != 0 & !`unc_given' {
+			// not defined over all pairs (the single command stores -1): missing here, the connected pairs in the last columns
+			matrix `R'[`i', 10] = r(connected)
+			matrix `R'[`i', 11] = r(avgpath_connected)
+			matrix `R'[`i', 12] = r(diameter_connected)
+		}
+		else {
+			matrix `R'[`i', 6] = r(avgpath)
+			matrix `R'[`i', 7] = r(diameter)
+			matrix `R'[`i', 8] = r(radius)
+			if `unc_given' & r(unconnected) != 0 {
+				matrix `R'[`i', 10] = 1 - r(unconnected) / r(numpaths)
+			}
+			else {
+				matrix `R'[`i', 10] = 1
+				matrix `R'[`i', 11] = r(avgpath)
+				matrix `R'[`i', 12] = r(diameter)
+			}
+		}
+		local nm`i' "`onenet'"
+		capture _return drop _nwg_last
+		_return hold _nwg_last
+	}
+	if `"`save'"' != "" {
+		tempname memhold
+		postfile `memhold' str80 name byte directed byte valued double nodes double numpaths double unconnected double avgpath double diameter double radius double alpha double connected double avgpath_connected double diameter_connected using `"`save'"', replace
+		forvalues k = 1/`nn' {
+			post `memhold' ("`nm`k''") (`R'[`k',1]) (`R'[`k',2]) (`R'[`k',3]) (`R'[`k',4]) (`R'[`k',5]) (`R'[`k',6]) (`R'[`k',7]) (`R'[`k',8]) (`R'[`k',9]) (`R'[`k',10]) (`R'[`k',11]) (`R'[`k',12])
+		}
+		postclose `memhold'
+	}
+	if `nn' > 1 {
+		local w 12
+		forvalues k = 1/`nn' {
+			local w = max(`w', min(30, strlen("`nm`k''")))
+		}
+		local lw = `w' + 2
+		di "{txt}{hline `=`lw' + 66'}"
+		di "{txt}{ralign `lw':Network}{ralign 8:Nodes}{ralign 12:Avg path}{ralign 10:Diameter}{ralign 9:Radius}{ralign 11:Connected}{ralign 12:Avg conn.}"
+		di "{txt}{hline `=`lw' + 66'}"
+		local dirs ""
+		local undirs ""
+		forvalues k = 1/`nn' {
+			local a = `R'[`k',6]
+			local d = `R'[`k',7]
+			local rd = `R'[`k',8]
+			local cn = `R'[`k',10]
+			local ac = `R'[`k',11]
+			local sa = cond(`a' < ., string(`a', "%9.3f"), ".")
+			local sd = cond(`d' < ., string(`d', "%9.3f"), ".")
+			local sr = cond(`rd' < ., string(`rd', "%9.3f"), ".")
+			local sc = string(`cn', "%9.3f")
+			local sac = cond(`ac' < ., string(`ac', "%9.3f"), ".")
+			local ss = abbrev("`nm`k''", `w')
+			di "{txt}{ralign `lw':`ss'}{res}{ralign 8:`=`R'[`k',3]'}{ralign 12:`sa'}{ralign 10:`sd'}{ralign 9:`sr'}{ralign 11:`sc'}{ralign 12:`sac'}"
+			if `R'[`k',1] == 1 local dirs `dirs' `nm`k''
+			else local undirs `undirs' `nm`k''
+		}
+		di "{txt}{hline `=`lw' + 66'}"
+		foreach __l in dirs undirs {
+			local __w : word count ``__l''
+			if `__w' > 6 {
+				local __a : word 1 of ``__l''
+				local __b : word 2 of ``__l''
+				local __z : word `__w' of ``__l''
+				local `__l' "`__a' `__b' ... `__z', `__w' networks"
+			}
+		}
+		if "`dirs'" != "" {
+			if `__anysym' di "{txt}{p 2 2 2}(directed network symmetrized, as option {bf:sym} was given: the larger of the two directions of a tie; `dirs'){p_end}"
+			else di "{txt}{p 2 2 2}(directed network: distances follow the direction of the ties; `dirs'){p_end}"
+		}
+		if "`undirs'" != "" di "{txt}{p 2 2 2}(undirected network: `undirs'){p_end}"
+		di "{txt}{p 2 2 2}(Avg path, Diameter and Radius are missing for a network in which not every pair is connected; Avg conn. is the average distance over the connected pairs; r() holds the results of the last network, {bf:`nm`nn''}){p_end}"
+	}
+	_return restore _nwg_last
+end
+
+capture program drop _nwgeodesic_single
+program _nwgeodesic_single
 	version 9
 	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) BINary xvars unconnected(string) sym symopt(string) generate(string) ///
 		PLOT AVErage GNAME(string asis) SAVing(string asis) EXPort(string asis) *]

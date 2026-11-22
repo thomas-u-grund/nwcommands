@@ -15,7 +15,7 @@ Calculate shortest paths between nodes
 
 ```stata
 nwgeodesic 
-[netname]
+[netlist]
 [,
 unconnected(int)
 alpha(real)
@@ -32,7 +32,8 @@ plot
 average
 gname(string)
 saving(filename)
-export(filename[, options])]
+export(filename[, options])
+save(filename[, replace])]
 ```
 
 | | |
@@ -53,6 +54,7 @@ export(filename[, options])]
 | `gname(string)` | Name for the graph created by `plot`; default = **geodesic** (`name()` names the distance network) |
 | `sav:ing(filename)` | Save the graph to a `.gph` file; an existing file is replaced |
 | `exp:ort(filename[, options])` | Write the graph with `graph export`; the file extension sets the format |
+| `save(`*filename*[`, replace`]`)` | Save the results in a Stata data set, one observation per network; an existing file is replaced (with or without `replace`); see **A list of networks** |
 
 ## Description
 
@@ -75,6 +77,16 @@ where *w_ih* is the weight (value) of the tie between node *i* and node *h*. Whe
 *d_w_alpha(i,j) = min (1 / w_ih + ... + 1 / w_hj)*
 
 which is essentially what Newman (2001) and Brandes (2001) suggested. This simply equates the distance between two nodes with the inverse of the weight of the tie that connects them. Such a solution for dealing with valued networks, however, does not explicitly account for the number of steps that need to be taken to connect to nodes. In contrast, Opsahl et al. (2010) allows giving different weight to longer and shorter paths. When ***alpha* = 0** the formula above ignores tie weights.
+
+## A list of networks
+
+`nwgeodesic` takes one network or a list of networks (*netlist*; wildcards such as **draw_*** work as in [nwsummarize](nwsummarize)). With a list, every network is analysed with the same options and a table with one row per network is printed (nodes, average path length, diameter, radius, share of connected pairs and the average distance over the connected pairs); one line says how the networks were read (directed networks: distances follow the direction of the ties, or the symmetrized network with `sym`; undirected networks). **r()** holds the results of the last network of the list, exactly as a call for that network alone. The options that make a variable, a network or a graph for one network (`generate()`, `name()`, `xvars`, `plot` with `gname()`, `saving()` and `export()`) are error 198 with a list; call the command once per network for them. The distance network *_geodesic* afterwards holds the distances of the last network.
+
+`save()` writes a Stata data set with one observation per network (also for one network), in the order of the list, with the variables **name** (network name), **directed** and **valued** (0 or 1), **nodes**, **numpaths**, **unconnected** (the number of unconnected pairs), **avgpath**, **diameter**, **radius**, **alpha**, **connected** (the share of pairs that are connected), **avgpath_connected** and **diameter_connected** (over the connected pairs). **avgpath**, **diameter** and **radius** are missing for a network in which not every pair is connected (the single call stores -1 in **r()**); **avgpath_connected** and **diameter_connected** are missing when `unconnected()` replaced the distances of the unconnected pairs. All numeric variables are stored as `double`.
+
+- `. nwrandom 30, prob(.12) undirected name(draw) ntimes(20)`
+- `. nwgeodesic draw_*, save(draws)`
+- `. use draws, clear`
 
 ## Network types
 
@@ -166,4 +178,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

@@ -118,7 +118,7 @@ assert r(N) == 4
 * nwnclique/nwclique/nwkplex already apply).
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwnclan dnet, generate(_nclannum)
+nwnclan dnet, generate(_nclannum) sym
 assert _rc == 0
 assert r(nclans) == 1
 

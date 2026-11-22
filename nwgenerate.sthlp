@@ -55,7 +55,8 @@ The command generates a network. It can be used either with a) some function {bf
 
 {phang2}{opth large(netname)}
 {p_end}
-{pmore2}Extract the largest component as a network.
+{pmore2}Extract the largest component as a network. For a directed network this is the largest strongly connected component; add the option {opt weak} (for example {cmd:large(net, weak)}) for the largest weakly connected component (see
+{help nwcomponents}).
 
 {phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}]
 {p_end}

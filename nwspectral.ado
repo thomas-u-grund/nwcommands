@@ -2,7 +2,7 @@
 capture program drop nwspectral
 program nwspectral, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) bipartition measure(string) replace silent force ONEmode ///
+	syntax [anything(name=netname)][, GENerate(string) bipartition measure(string) replace silent force ONEmode SYMmetrize ///
 		PLOT EMBedding NAME(string asis) SAVing(string asis) EXPort(string asis) *]
 	set more off
 
@@ -17,13 +17,12 @@ program nwspectral, rclass
 	}
 
 	_nwsyntax `netname', max(1)
+	// the Laplacian is that of a symmetric matrix: a directed network with unreciprocated ties is refused unless sym
+	_nwsymguard `netname', cmd(nwspectral) `symmetrize'
+	local __symmsg `"`r(msg)'"'
 	if "`plot'" != "" {
 		if "`is2mode'" == "true" {
 			di as err "{p 0 0 2}nwspectral: {bf:plot} is not available for the two-mode network {bf:`netname'}: the eigenvalues belong to the Laplacian of the bipartite graph read as a one-mode graph. Use a one-mode network (for example from {help nw2project}).{p_end}"
-			exit 198
-		}
-		if "`directed'" == "true" {
-			di as err "{p 0 0 2}nwspectral: {bf:plot} needs an undirected network (the Laplacian spectrum is that of a symmetric matrix); {bf:`netname'} is directed. Symmetrize it first with {help nwsym}.{p_end}"
 			exit 198
 		}
 		if "`embedding'" != "" & `nodes' < 3 {
@@ -147,6 +146,9 @@ program nwspectral, rclass
 	if "`silent'" == "" {
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname'"
+		if `"`__symmsg'"' != "" {
+			noi di `"`__symmsg'"'
+		}
 		noi di "{txt}  Connected components: {res}`lcomponents'"
 		noi di "{txt}  Algebraic connectivity: {res}`=strtrim(string(round((`lalgconn')*1000)/1000,"%9.0g"))'"
 		noi sum `netgenerate'

@@ -20,6 +20,7 @@
 [{opt bipartition}
 {opt measure(string)}
 {opt replace}
+{opt sym}
 {opt silent}
 {opt force}
 {opt one:mode}
@@ -33,6 +34,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
+{synopt:{opt sym}}On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198){p_end}
 {synopt:{opth gen:erate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own Fiedler-vector entry{p_end}
 {synopt:{opt bipartition}}Also generate a two-way spectral partition (variable {it:generate()}{bf:sign}) from the sign of the Fiedler vector{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
@@ -54,10 +56,9 @@
 {pstd}
 {cmd:nwspectral} computes the graph Laplacian {bf:L = D - W} (D the diagonal weighted-degree
 matrix, W the adjacency/weight matrix) of a single network and its eigendecomposition - the
-standard starting point for spectral graph analysis. Always computed on the undirected,
-symmetrized network (no {bf:symmetrize} option needed - a directed network is symmetrized
-automatically, the same convention {help nwcommunity} / {help nwkcomponents} already use, since the
-classical Laplacian spectrum results below assume a symmetric matrix).
+standard starting point for spectral graph analysis. The classical Laplacian spectrum
+results below assume a symmetric matrix, so a directed network with unreciprocated ties is refused (error 198) unless
+option {opt sym} asks for the symmetrized network (the same convention as {help nwcommunity} and {help nwkcomponents}); the output says which was done.
 
 {pstd}
 Three classical results are reported directly:
@@ -91,7 +92,8 @@ should not be interpreted as meaningful when {bf:r(algebraic_connectivity)} is (
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized. {bf:Valued:} the tie values are used by default ({opt measure(valued)});
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its
+two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} the tie values are used by default ({opt measure(valued)});
 {opt measure(binary)} uses only the presence of ties. {bf:Two-mode:} not supported (error 6088; use {help nwproject}
 first); {opt onemode} gives the spectrum of the bipartite graph. {bf:Signed:} with negative values the Laplacian is
 not positive semi-definite and the results are not meaningful. See {help nwnetworktypes}.{p_end}
@@ -125,7 +127,7 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 well separated groups, and the number of eigenvalues at 0 is the number of components. {opt embedding} adds a second panel with the second and third eigenvectors, one marker per node.
 {opt name()} names the graph in memory, {opt saving()} writes a {cmd:.gph} file and {opt export()} writes it with {helpb graph export}. Other options go to {helpb twoway} ({helpb graph combine} with
 {opt embedding}) and come last; without {opt plot} they give an error.
-{opt plot} stops with error 198 for a two-mode network and for a directed network (symmetrize it with {help nwsym} first).
+{opt plot} stops with error 198 for a two-mode network; a directed network follows the rule for {opt sym} above.
 
 {phang2}{cmd:. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))}{p_end}
 

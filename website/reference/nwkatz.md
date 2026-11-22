@@ -21,6 +21,7 @@ alpha(real)
 walks
 gen:erate(varname)
 replace
+sym
 nosym
 geodesic_options
 force
@@ -33,7 +34,8 @@ bin:ary]
 | `walks` | switch to the literature's own genuine walk-counting Katz/Bonacich centrality, *(I - alpha*A)^-1 * 1*, instead of this command's own default distance-decay formula (see Description) |
 | `gen:erate`(*`varname`*) | **Required.** Variable name for Katz centrality scores; for a directed network the variables *varname***_out** and *varname***_in** are generated |
 | `replace` | Replace existing variable |
-| `nosym` | Distance-decay form: keep the direction of the ties of a directed network (by default the network is symmetrized); not used with `walks` |
+| `sym` | On a directed network, symmetrize first (the larger of the two directions of a tie); the *_in* and *_out* variables are then equal |
+| `nosym` | The default, accepted for old scripts: a directed network keeps the direction of its ties |
 | *[geodesic_options](nwgeodesic)* | options for calculating distances (forwarded to the internal [nwgeodesic](nwgeodesic) call); not used when `walks` is specified |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise) |
 | `bin:ary` | With `walks`: ignore the tie values of a valued network (by default the walks are weighted by them); the distance-decay form always counts steps |
@@ -54,7 +56,7 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between
 
 ## Network types
 
-**Directed:** *_in* and *_out* variables; the distance-decay form symmetrizes by default (`nosym` keeps the direction), `walks` does not. **Valued:** `walks` weights the walks by the tie values (`binary` counts a tie once); the distance-decay form counts steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** *_in* and *_out* variables; a directed network is analysed as it is in both forms (*_out*: distances from a node to the nodes it reaches, or walks that start at it; *_in*: those that arrive at it; `walks` *_in* equals `igraph::alpha_centrality`); `sym` symmetrizes first, and the output says which was done. Missing ties count as no tie and the output says how many there are. **Valued:** `walks` weights the walks by the tie values (`binary` counts a tie once); the distance-decay form counts steps (the output says so). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -80,4 +82,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

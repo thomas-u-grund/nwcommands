@@ -31,6 +31,7 @@
   Network name: flomarriage
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -45,6 +46,7 @@ can reach (as igraph). Specify unconnected() to give missing paths a length.
   Network name: flomarriage
 ----------------------------------------
     Closeness centrality
+    (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -59,7 +61,7 @@ can reach (as igraph). Specify unconnected() to give missing paths a length.
   Network name: flomarriage
 ----------------------------------------
     Eigenvector centrality
-   (calculated on symmetrized network)
+   (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -83,8 +85,8 @@ can reach (as igraph). Specify unconnected() to give missing paths a length.
 ----------------------------------------
   Katz centrality (shortest-path distance-decay)
   Network name: flomarriage
-       Network has been symmetrized for calculation.
 ----------------------------------------
+    (undirected network)
        Alpha: 1
 
     Variable |        Obs        Mean    Std. dev.       Min        Max

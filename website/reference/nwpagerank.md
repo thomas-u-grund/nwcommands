@@ -46,7 +46,7 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 
 ## Network types
 
-**Directed:** ties are followed in their direction. **Valued:** the surfer follows a tie with probability w_ij / s_i by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** ties are followed in their direction. **Valued:** the surfer follows a tie with probability w_ij / s_i by default; `binary` ignores the values. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -78,4 +78,4 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

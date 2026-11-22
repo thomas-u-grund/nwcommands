@@ -4,7 +4,7 @@ program nwfactions, rclass
 	// temporary names: no scalar or matrix is left behind
 	tempname __faction_fitness
 	version 12
-	syntax [anything(name=netname)][, GROUPS(int 2) GENerate(string) replace measure(string) maxiter(int 100) silent]
+	syntax [anything(name=netname)][, GROUPS(int 2) GENerate(string) replace measure(string) maxiter(int 100) silent SYMmetrize]
 	set more off
 
 	if `groups' < 2 {
@@ -18,6 +18,8 @@ program nwfactions, rclass
 
 	_nwsyntax `netname'
 	_nw2guard `netname', cmd(nwfactions)
+	_nwsymguard `netname', cmd(nwfactions) `symmetrize'
+	local __symmsg `"`r(msg)'"'
 
 	if `groups' > `nodes' {
 		di "{err}groups(`groups') exceeds the number of nodes (`nodes')."
@@ -79,6 +81,9 @@ program nwfactions, rclass
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network name: {res}`netname'"
+		if `"`__symmsg'"' != "" {
+			di `"`__symmsg'"'
+		}
 		di "{txt}  Groups: {res}`groups'{txt}   Fitness: {res}`=strtrim(string(round((`lfit')*1000)/1000,"%9.0g"))'"
 		tab `netgenerate'
 		di " "

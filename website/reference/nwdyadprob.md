@@ -23,7 +23,8 @@ weights(p1, p2,...)
 name(netname)
 xvars
 undirected
-labs(lab1 lab2 ...)]
+labs(lab1 lab2 ...)
+ntimes(int)]
 ```
 
 | | |
@@ -35,6 +36,7 @@ labs(lab1 lab2 ...)]
 | `xvars` | generate Stata variables for the network |
 | `undirected` | generate undirected network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
+| `ntimes(int)` | number of networks to be generated, named *name*_1, *name*_2, ...; default = 1; **r(netlist)** lists them |
 
 ## Description
 
@@ -137,4 +139,4 @@ The result can be nicely plotted in the following way:
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

@@ -74,7 +74,7 @@ assert reldif(dkatz_in[3], 0.5) < 1E-6
 * in/out must be identical to each other once genuinely symmetrized.
 nwclear
 nwset, mat((0,1,1\0,0,0\0,0,0)) name(dirnet3) directed labs(A,B,C)
-nwkatz dirnet3, alpha(0.5) generate(dkatz3)
+nwkatz dirnet3, alpha(0.5) generate(dkatz3) sym
 assert reldif(dkatz3_in[1], 1.0) < 1E-6
 assert reldif(dkatz3_in[2], 0.75) < 1E-6
 assert reldif(dkatz3_in[3], 0.75) < 1E-6

@@ -18,6 +18,7 @@
 [{cmd:,}
 {opt generate}({it:{help newvarlist}})
 {opt replace}
+{opt sym}
 {opt nosym}
 {opt standardize}
 {opt silent}
@@ -33,7 +34,8 @@
 {synoptline}
 {synopt:{opt generate}({it:{help newvarlist}})}{bf:Required.} Variable name for betweenness centrality{p_end}
 {synopt:{opt replace}}allow overwriting an existing variable of the same name{p_end}
-{synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
+{synopt:{opt sym}}on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values{p_end}
+{synopt:{opt nosym}}the default and accepted for backward compatibility: shortest paths follow the direction of the ties{p_end}
 {synopt:{opt standardize}}standardize centrality scores{p_end}
 {synopt:{opt silent}}suppress the summary table of the generated variable{p_end}
 {synopt:{opt weighted}}use the tie values in the shortest paths; redundant on a valued network, where this is the default (kept for compatibility){p_end}
@@ -90,7 +92,7 @@ Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
 {pstd}
 The stored result {bf:r(bw_central)} is Freeman's betweenness centralization, computed from the raw scores whether or not {opt standardize} is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a
 directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's
-sna::centralization(, betweenness). Without {opt nosym} the network is symmetrized first, so the undirected formula applies.
+sna::centralization(, betweenness). With {opt sym} the network is symmetrized first, so the undirected formula applies.
 
 {pstd}
 {opt generate()} is required and names the Stata variable to hold the result (pass {opt replace}
@@ -116,10 +118,10 @@ needs a dense work space of n x n cells for every node and is not usable above a
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized by default; {opt nosym} computes directed betweenness. {bf:Valued:} used by default (paths of
+{bf:Directed:} shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} used by default (paths of
 least cost 1/w^alpha, {opt alpha(1)} by default); {opt binary} counts steps; {opt weighted} is redundant. {bf:Two-mode:}
 two-mode form by default (option {opt onemode} for the one-mode computation). {bf:Signed:} ties of value zero or less,
-including negative ties, count as absent. See {help nwnetworktypes}.{p_end}
+including negative ties, count as absent. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

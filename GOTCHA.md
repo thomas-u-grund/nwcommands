@@ -930,3 +930,25 @@ The `nwcommands-ado*.pkg` chunks are generated from `_pkg_ado.txt`; a command or
 
 - **`nwburt` on a directed binary network does not use kernel 29 or `calculate_burt()` any more.** Both use the out-ties only. Since 3.33.0 a directed network (binary, or valued with `binary`) goes through the weighted kernel 40 on the ties set to 1 (both directions, z_ij + z_ji, as `igraph::constraint()`), and there is no Mata route for it: without the plugin the command stops with r(198). `calculate_burt()` and kernel 29 stay for undirected networks (and are what `cscripts/test_brokerage_kernels.do` compares). The Mata library was not changed for this. The dense route (`dyadredundancy`, `dyadconstraint`) has its own directed functions `dyadicredundancy_dir()` / `dyadicconstraint_dir()` in `nwburt.ado`; its node summaries come from kernel 40, so the two routes agree.
 - **`_constraint` and the other Burt variables are `float`**: compare them with 1e-6, not 1e-12, against a double precision hand computation.
+
+## nwbetween / nwcloseness / nwevcent: `sym` and `nosym` in one syntax line
+`syntax` cannot declare both `sym` and `nosym` (both would fill the local `sym`). The three commands declare `SYMmetrize nosym`: the option `sym` (abbreviation of `symmetrize`) fills the local `symmetrize`, the old `nosym` fills the local `sym` with the text "nosym". Since 3.35 (unreleased) `nosym` is the default and only accepted for old scripts; the symmetrizing branch runs only when `symmetrize` is given AND the network is directed (an undirected network is never copied). A test of the form `if "`sym'" == ""` from before this change means the opposite of what it reads. `nwevcent` follows the in-ties of a node by default (`A' x = lambda x`, as igraph's `eigen_centrality(directed = TRUE)`; changed in the coercion sweep, before 3.35 it was the out-ties); option `out` gives the out-ties (`A x = lambda x`).
+
+## Coercion sweep (2026-11): helpers and traps
+
+- Shared helpers: `_nwsymguard` (directed asymmetric network without `sym` is error 198; reciprocated directed network runs as undirected with a note; returns `r(msg)`), `_nwmissnote` (returns `r(nmissing)`, prints "(N missing ties treated as 0)" only when N > 0; sparse-safe for one-mode networks), `_nwdirnote`.
+- Helpers are rclass and overwrite `r()`: call them before setting results, copy values into locals.
+- `noisily di` inside a helper called under `quietly` prints nothing: return the text in `r(msg)` and print it in the caller.
+- `_nwsyntax` clobbers caller locals named `valued`, `directed`, `nodes`: copy option flags to other names first.
+- `if cond di ...` on one line is unreliable; use `{ }` blocks.
+- Mata: a nested subscript `lab[comp[v]]` is "invalid expression" (use a temporary); `x[vec]` on a 1x1 matrix returns a rowvector; avoid one-line `if (...) {a; b}`.
+- Tests that build a symmetric matrix with `nwset, mat()` get a DIRECTED network (all ties reciprocated): fine for the cohesion family (runs as undirected), but directed-default commands (nwcomponents strong, nwassortativity, nwkatz) now need `weak` / `sym` in tests that want the old result.
+- `nwevcent` default on a directed network is the in-tie centrality (igraph); `out` is the former default.
+
+## Lists of networks and save() (nwgeodesic, nwclustering; 3.35 unreleased)
+
+- `nwgeodesic` and `nwclustering` are thin wrappers now: the old command bodies are `_nwgeodesic_single` and `_nwclustering_single`. One network without `save()` is passed through untouched (output, `r()` and variables byte-identical to before: check with a before/after diff of a log). The wrappers loop over the network list, collect the numbers in a Stata matrix (exact doubles), `_return hold` the last network's `r()` and restore it at the end. `noisily` in the single commands overrides `quietly` from the caller: the list mode passes `silent` (clustering) or runs the single command under `capture quietly` and reruns it noisily only to show an error.
+- `postfile` stores numeric variables as `float` unless they are declared `double`: a `save()` file with default types differs from `r()` in the 8th digit.
+- `nwclustering` of a two-mode network stores into the data set by position (`st_store(., ...)`): it fails with r(3200) when the data in memory do not have exactly one row per node (for example after appending the data of several networks). The list mode avoids it with a one-row-per-node copy of the data (`preserve`) and calls `_nw2c_run` directly; the single call keeps its old limit.
+- `_nwmissnote` on a two-mode network read the cells between the two modes as the first block of mode 1 by the second block: wrong when the nodes of the modes are interleaved (`davis` is alphabetical). It selects by node mode now.
+- `nwmixing` takes one network only (`max(1)`), hence no list and no `save()` for the E-I index.

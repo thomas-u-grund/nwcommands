@@ -21,5 +21,5 @@ nwconcor samplike, generate(block) splits(2)
 tabulate block faction
 
 * 4. Spectral partition
-nwspectral samplike, generate(fiedler) bipartition
+nwspectral samplike, generate(fiedler) bipartition sym
 tabulate fiedlersign faction

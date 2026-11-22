@@ -33,13 +33,13 @@ program define _k2_cmp
 	* cliques at several minimum sizes
 	foreach ms in 1 2 3 4 6 {
 		global NW_NOFASTKERNELS
-		qui nwclique `net', generate(`cf') minsize(`ms') silent replace
+		qui nwclique `net', sym generate(`cf') minsize(`ms') silent replace
 		local nf = r(cliques)
 		matrix Mf = r(clique_matrix)
 		local rf = rowsof(Mf)
 		qui gen double `co' = `cf'
 		global NW_NOFASTKERNELS 1
-		qui nwclique `net', generate(`cf') minsize(`ms') silent replace
+		qui nwclique `net', sym generate(`cf') minsize(`ms') silent replace
 		global NW_NOFASTKERNELS
 		local no = r(cliques)
 		matrix Mo = r(clique_matrix)
@@ -224,7 +224,7 @@ forvalues r = 1/60 {
 	qui nwfromedge a b, name(kn) undirected
 	if mod(`r', 5) == 0 qui nwaddnodes kn, nodenames(ia ib)
 	foreach k in 1 2 3 {
-		qui nwkcomponents kn, k(`k') generate(kc) silent replace force
+		qui nwkcomponents kn, sym k(`k') generate(kc) silent replace force
 		matrix K = r(kcomp_matrix)
 		local sig "`r' `k' `=r(kcomponents)' `=rowsof(K)' `=colsof(K)'"
 		forvalues i = 1/`=rowsof(K)' {

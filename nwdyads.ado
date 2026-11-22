@@ -28,6 +28,7 @@ program _nwdyads1
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
 	}
+	_nwmissnote `netname'
 	mata: __nwdyads_census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
 	mata: st_numscalar("r(_001)", __nwdyads_census[3])

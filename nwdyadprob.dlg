@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 310
+POSITION 10 10 550 338
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwdyadprob - Generate a network based on tie probabilities")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  GROUPBOX gb_opt 10 44 520 244, label("Options")
   TEXT tx_ed_weights 20 54 260 ., label("probabilities p_k for tie weights k")
   EDIT ed_weights 290 54 190 ., nomem option(weights)
   TEXT tx_ed_density 20 82 260 ., label("density of the new network")
@@ -32,6 +32,8 @@ BEGIN
   CHECKBOX cx_xvars 290 194 190 ., label("xvars") option(xvars)
   TEXT tx_cx_undirected 20 222 260 ., label("generate undirected network")
   CHECKBOX cx_undirected 290 222 190 ., label("undirected") option(undirected)
+  TEXT tx_sp_ntimes 20 250 260 ., label("number of networks to be generated; default = 1")
+  SPINNER sp_ntimes 290 250 70 ., default(1) max(999999) min(1) nomem option(ntimes)
 END
 
 LIST netlist
@@ -63,6 +65,7 @@ BEGIN
 		optionarg main.ed_labs
 		option main.cx_xvars
 		option main.cx_undirected
+		optionarg main.sp_ntimes
 	endoptions
 	stata
 END

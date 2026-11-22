@@ -1,0 +1,327 @@
+do unw_core.do
+
+* Coercion sweep (3.35, unreleased): no command treats a network as another type than it is unless the user asks by an
+* option, and every coercion is stated in the output. One section per command (A1, A2, ...). Run from the repository
+* root. References: igraph 2.3.2 (values hard-coded below, 1e-9) and, for undirected binary networks, the numbers of
+* the branch before this sweep (3.34.0 plus the directed betweenness / closeness / evcent change).
+
+local tol 1e-9
+global tcc_out "`c(tmpdir)'/tcc_golden_new.txt"
+set linesize 255
+
+capture program drop _tcc_log
+program _tcc_log
+	* run a command with the log on; every needle must be in its output (needles separated by |), none of the nonneedles
+	args needles cmd
+	tempfile lg
+	qui log using `"`lg'"', text replace name(tcclog)
+	capture noisily `cmd'
+	local rc = _rc
+	qui log close tcclog
+	mata: st_local("__L", stritrim(invtokens(cat(st_local("lg"))')))
+	local __rest `"`needles'"'
+	while `"`__rest'"' != "" {
+		gettoken one __rest : __rest, parse("|")
+		if `"`one'"' == "|" continue
+		if !strpos(`"`__L'"', `"`one'"') {
+			di as err `"FAIL: the output of {`cmd'} does not contain "`one'""'
+			exit 9
+		}
+	}
+	exit `rc'
+end
+
+capture program drop _tcc_near
+program _tcc_near
+	args x ref tol label
+	if abs(`x' - `ref') > `tol' | missing(`x') {
+		di as err "FAIL: `label' (`x' against `ref')"
+		exit 9
+	}
+end
+
+nwuse data/lazega, nwclear
+nwuse data/glasgow, nwappend
+nwuse data/gahuku, nwappend
+nwuse data/davis, nwappend
+qui nwload lazega_adv
+qui gen xa = mod(_n*7, 5) + 1
+
+* ---------------------------------------------------------------- A1. nwassortativity
+nwassortativity lazega_adv
+_tcc_near `r(assortativity)' -0.0301746072337015 `tol' "A1 directed degree assortativity = igraph directed"
+assert `"`r(directed)'"' == "true"
+_tcc_log "directed network: out-degree of the sender against in-degree of the receiver" "nwassortativity lazega_adv"
+nwassortativity lazega_adv, sym
+_tcc_near `r(assortativity)' -0.0801247207887384 `tol' "A1 sym = igraph on the collapsed network"
+_tcc_log "directed network symmetrized" "nwassortativity lazega_adv, sym"
+nwassortativity lazega_adv, attribute(xa)
+_tcc_near `r(assortativity)' -0.00986686920981053 `tol' "A1 directed attribute"
+_tcc_log "the attribute of the sender against that of the receiver" "nwassortativity lazega_adv, attribute(xa)"
+nwassortativity glasgow1
+_tcc_near `r(assortativity)' 0.150880794508067 `tol' "A1 glasgow1 directed"
+_tcc_log "undirected network" "nwassortativity gahuku"
+
+* ---------------------------------------------------------------- A2. nwcomponents
+* igraph::components(mode = "strong") on lazega_fr (3 components, largest 69) and glasgow1 (14, largest 14); weak: 1 and 8
+foreach n in lazega_fr glasgow1 {
+	local ns = cond("`n'" == "lazega_fr", 3, 14)
+	local nw = cond("`n'" == "lazega_fr", 1, 8)
+	nwcomponents `n', generate(cs_`n')
+	assert r(components) == `ns'
+	assert `"`r(connected)'"' == "strong"
+	* same partition as igraph: every igraph component maps to one of ours and the other way round
+	qui gen long ig_`n' = .
+	mata: st_store((1, rows(IG = strtoreal(cat("cscripts/directed_fixture/`n'_strong_igraph.txt")))), "ig_`n'", IG)
+	qui egen byte nn_`n' = group(cs_`n' ig_`n')
+	qui summ nn_`n'
+	assert r(max) == `ns'
+	nwcomponents `n', generate(cw_`n') weak
+	assert r(components) == `nw'
+	assert `"`r(connected)'"' == "weak"
+}
+_tcc_log "directed network: strongly connected components" "nwcomponents lazega_fr, generate(cs2)"
+_tcc_log "directed network: weakly connected components" "nwcomponents lazega_fr, generate(cs3) weak"
+_tcc_log "undirected network" "nwcomponents gahuku, generate(cs4)"
+* a network that is not strongly connected but is weakly connected: path 1>2>3, cycle-free
+nwset, mat((0,1,0\0,0,1\0,0,0)) name(pth) directed
+nwcomponents pth, generate(pc)
+assert r(components) == 3
+nwcomponents pth, generate(pw) weak
+assert r(components) == 1
+* undirected: unchanged (the weak components are the components)
+nwcomponents gahuku, generate(cg)
+assert `"`r(connected)'"' == "undirected"
+* missing ties are reported
+nwset, mat((0,1,.\1,0,0\.,0,0)) name(mis) undirected
+_tcc_log "1 missing ties treated as 0" "nwcomponents mis, generate(mc)"
+nwset, mat((0,1,.\0,0,1\1,0,0)) name(mis2) directed
+_tcc_log "1 missing ties treated as 0" "nwcomponents mis2, generate(mc2)"
+
+* ---------------------------------------------------------------- A3. nwclustering
+* directed clustering: a path a -> i -> b closed by a -> b (hand-computed in R from the matrix); the output says so
+nwclustering lazega_adv, generate(cl1)
+_tcc_near `r(cluster_global)' 0.329310892346777 `tol' "A3 lazega_adv global"
+_tcc_near `r(cluster_avg)' 0.361068395667964 1e-7 "A3 lazega_adv average"
+_tcc_log "directed network: a path a -> i -> b is closed by the tie a -> b" "nwclustering lazega_adv, generate(cl2) replace"
+_tcc_log "directed network symmetrized" "nwclustering lazega_adv, generate(cl2) replace symmetrize"
+nwclustering lazega_adv, generate(cl2) replace symmetrize
+_tcc_near `r(cluster_global)' 0.422925152749491 `tol' "A3 symmetrize = igraph transitivity of the collapsed network"
+_tcc_log "undirected network" "nwclustering gahuku, generate(cl3) replace"
+_tcc_log "valued network: tie values ignored" "nwclustering gahuku, generate(cl3) replace measure(binary)"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(mis3) undirected
+_tcc_log "1 missing ties treated as 0" "nwclustering mis3, generate(cl4) replace"
+clear
+qui nwload davis
+_tcc_log "two-mode network: Opsahl's two-mode clustering of the nodes of mode 2" "nwclustering davis, generate(cl5) replace level(2)"
+_tcc_log "two-mode network read as the one-mode network of the bipartite graph" "nwclustering davis, generate(cl5) replace onemode"
+
+* ---------------------------------------------------------------- A4. nwrandomwalk
+* directed walk: hitting times from the linear system solved in R on the row-normalised matrix (lazega_adv, target n13)
+nwload lazega_adv
+nwrandomwalk lazega_adv, target(n13) generate(rw1) silent
+_tcc_near `=rw1[1]' 33.7515788480639 `tol' "A4 directed hitting time of node 1"
+_tcc_near `=rw1[10]' 35.4957674947171 `tol' "A4 directed hitting time of node 10"
+assert rw1[5] == 0 | rw1[13] == 0
+nwrandomwalk lazega_adv, target(n13) generate(rw2) sym silent
+_tcc_near `=rw2[1]' 38.7312516061468 `tol' "A4 sym = walk on the symmetrized network (results of 3.34.0)"
+_tcc_log "directed network: the walk follows the direction of the ties" "nwrandomwalk lazega_adv, target(n13) generate(rw3)"
+_tcc_log "directed network symmetrized" "nwrandomwalk lazega_adv, target(n13) generate(rw3) replace sym"
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected labs(A,B,C)
+_tcc_log "undirected network" "nwrandomwalk tri, target(A) generate(rw4) replace"
+* a node from which the target is not reached with certainty has a missing hitting time: 1 -> 2 -> 3, 1 -> 4 (4 is a dead end)
+nwset, mat((0,1,0,1\0,0,1,0\0,0,0,0\0,0,0,0)) name(dead) directed labs(a,b,c,d)
+nwrandomwalk dead, target(c) generate(rw5) silent
+assert missing(rw5[1]) & rw5[2] == 1 & rw5[3] == 0 & missing(rw5[4])
+
+* ---------------------------------------------------------------- A5. cohesion family: undirected-only measures
+* a directed network with unreciprocated ties is refused (198) unless sym asks for the symmetrized network
+nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(dsym) directed labs(A,B,C)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(unet) undirected labs(A,B,C)
+foreach c in nwcohesion nwclique nwkplex nwnclique nwnclan nwkcomponents {
+	local g generate(gg_`c') replace
+	capture noisily `c' dnet, `g'
+	assert _rc == 198
+	capture confirm variable gg_`c'1
+	_tcc_log "directed network symmetrized" "`c' dnet, `g' sym"
+	_tcc_log "directed network with every tie reciprocated" "`c' dsym, `g'"
+	* the same numbers as on the undirected network
+	qui `c' unet, generate(uu) replace
+	local nu = cond(`"`r(cliques)'"' != "", `"`r(cliques)'"', "x")
+	qui `c' dsym, generate(du) replace
+	local nd = cond(`"`r(cliques)'"' != "", `"`r(cliques)'"', "x")
+	assert "`nu'" == "`nd'"
+}
+capture noisily nwlambda dnet, name(lam1) replace
+assert _rc == 198
+_tcc_log "directed network symmetrized" "nwlambda dnet, name(lam1) replace sym"
+_tcc_log "directed network with every tie reciprocated" "nwlambda dsym, name(lam2) replace"
+* a valued network says that the values are ignored
+_tcc_log "tie values are ignored" "nwclique gahuku, generate(gq) replace"
+_tcc_log "tie values are ignored" "nwlambda gahuku, name(lam3) replace"
+
+* ---------------------------------------------------------------- A6. nwspectral, nwcoreperiphery, nwfactions
+foreach c in nwspectral nwcoreperiphery nwfactions {
+	local g generate(gs_`c') replace
+	capture noisily `c' dnet, `g'
+	assert _rc == 198
+	_tcc_log "directed network symmetrized" "`c' dnet, `g' sym"
+	_tcc_log "directed network with every tie reciprocated" "`c' dsym, `g'"
+}
+* the symmetrized result is the result on the undirected network
+qui nwcoreperiphery lazega_adv, generate(cpa) sym
+local fa = r(fitness)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(lz) undirected
+qui nwsym lazega_adv, mode(max) generate(lazega_s)
+qui nwcoreperiphery lazega_s, generate(cpb)
+_tcc_near `r(fitness)' `fa' 1e-12 "A6 nwcoreperiphery sym = nwsym max"
+qui nwspectral lazega_adv, generate(spa) sym
+local ac = r(algebraic_connectivity)
+qui nwspectral lazega_s, generate(spb)
+_tcc_near `r(algebraic_connectivity)' `ac' 1e-12 "A6 nwspectral sym = nwsym max"
+
+* ---------------------------------------------------------------- A7. nwbalance
+* mutual pair with opposite signs: the sign of the pair is not defined (error 198, no variable made)
+nwset, mat((0,1,1\-1,0,1\1,1,0)) name(bconf) directed
+capture noisily nwbalance bconf
+assert _rc == 198
+* mutual pair with the same sign and one-way ties: runs, says what a directed network means
+nwset, mat((0,-1,1\-1,0,-1\1,-1,0)) name(bok) directed
+_tcc_log "directed network: two nodes are tied when there is a tie in either direction" "nwbalance bok"
+nwbalance bok
+assert r(closed_triad) == 1 & r(balanced_triad) == 1
+nwset, mat((0,-1,1\-1,0,-1\1,-1,0)) name(bun) undirected
+_tcc_log "undirected network" "nwbalance bun"
+nwset, mat((0,2,3\2,0,-.5\3,-.5,0)) name(bval) undirected
+_tcc_log "valued network: only the sign of a tie counts" "nwbalance bval"
+nwset, mat((0,1,1\1,0,.\1,.,0)) name(bmis) undirected
+_tcc_log "1 missing ties treated as 0" "nwbalance bmis"
+
+* ---------------------------------------------------------------- A8. nwdiffuse
+clear
+qui set obs 3
+qui gen toa = cond(_n == 1, 1, cond(_n == 2, 2, .))
+nwset, mat((0,2,1\0,0,0\1,0,0)) name(dv) directed
+_tcc_log "directed network: the exposure of a node comes from the nodes it sends ties to" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace"
+_tcc_log "valued network: tie values ignored, every tie counts as 1" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace"
+_tcc_log "valued network: exposure weighted by the tie values" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace valued"
+_tcc_log "directed network: the exposure of a node comes from the nodes it receives ties from" "nwdiffuse exposure dv, toa(toa) generate(ex1) replace incoming"
+nwset, mat((1,1,0\1,0,1\0,1,0)) name(du) undirected selfloop
+_tcc_log "self-loops ignored" "nwdiffuse exposure du, toa(toa) generate(ex2) replace"
+_tcc_log "undirected network" "nwdiffuse threshold du, toa(toa) generate(th1) replace"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(dm) undirected
+_tcc_log "1 missing ties treated as 0" "nwdiffuse threshold dm, toa(toa) generate(th1) replace"
+_tcc_log "undirected network" "nwdiffuse long du, toa(toa) clear"
+qui set obs 3
+qui gen toa = cond(_n == 1, 1, cond(_n == 2, 2, .))
+_tcc_log "directed network" "nwdiffuse simulate dv, model(cascade) prob(.5) nseeds(1) steps(3) generate(sim1) seed(1) replace"
+
+* ---------------------------------------------------------------- A9. nwmaxflow
+nwset, mat((0,3,0\0,0,2\0,0,0)) name(mf) directed labs(a,b,c)
+_tcc_log "directed network: flow follows the direction of the ties|valued network: every tie has capacity 1, tie values ignored" "nwmaxflow mf, source(a) sink(c)"
+nwmaxflow mf, source(a) sink(c)
+assert r(maxflow) == 1
+_tcc_log "valued network: the tie values are the capacities" "nwmaxflow mf, source(a) sink(c) weighted"
+nwmaxflow mf, source(a) sink(c) weighted
+assert r(maxflow) == 2
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(mfu) undirected labs(a,b,c)
+_tcc_log "undirected network: a tie carries flow in both directions|every tie has capacity 1" "nwmaxflow mfu, source(a) sink(c)"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(mfm) undirected labs(a,b,c)
+_tcc_log "1 missing ties treated as 0" "nwmaxflow mfm, source(a) sink(c)"
+
+* ---------------------------------------------------------------- A10. nwkatz
+* walks, _in = igraph::alpha_centrality(alpha = .05) on lazega_adv
+nwkatz lazega_adv, walks alpha(.05) generate(kw)
+_tcc_near `=kw_in[1]' 4.89790288087414 `tol' "A10 walks _in node 1 = igraph alpha_centrality"
+_tcc_near `=kw_in[10]' 1.91156653866782 `tol' "A10 walks _in node 10"
+assert kw_in[1] != kw_out[1]
+* distance-decay: the default keeps the direction, sym gives in = out (the results of 3.34.0)
+nwkatz lazega_adv, alpha(.2) generate(kd)
+assert abs(kd_in[1] - kd_out[1]) > 1e-6
+nwkatz lazega_adv, alpha(.2) generate(ks) sym
+_tcc_near `=ks_in[1]' 6.16 `tol' "A10 sym node 1 = result of 3.34.0"
+assert ks_in[1] == ks_out[1]
+_tcc_log "directed network: _out uses the distances" "nwkatz lazega_adv, alpha(.2) generate(kd) replace"
+_tcc_log "directed network symmetrized" "nwkatz lazega_adv, alpha(.2) generate(kd) replace sym"
+_tcc_log "directed network: _out counts the walks" "nwkatz lazega_adv, walks alpha(.05) generate(kw) replace"
+_tcc_log "undirected network" "nwkatz tri, alpha(.2) generate(kt) replace"
+capture nwkatz lazega_adv, alpha(.2) generate(kx) sym nosym
+assert _rc == 198
+_tcc_log "valued network: distances count steps" "nwkatz gahuku, alpha(.2) generate(kg) replace"
+_tcc_log "1 missing ties treated as 0" "nwkatz mis, alpha(.2) generate(km) replace"
+
+* ---------------------------------------------------------------- A11. nwsimindex, nwsimmelian
+_tcc_log "directed network: the neighbours of a node are the nodes it sends ties to and the nodes it receives ties from" "nwsimindex dnet, name(si1) replace"
+_tcc_log "undirected network" "nwsimindex unet, name(si2) replace"
+_tcc_log "directed network: only mutual ties are used" "nwsimmelian dnet, name(sm1) nwreplace"
+_tcc_log "undirected network" "nwsimmelian unet, name(sm2) nwreplace"
+_tcc_log "1 missing ties treated as 0" "nwsimindex mis, name(si3) replace"
+
+* ---------------------------------------------------------------- A12. nwdegree, nwkcore, nwego, nwconstraint: notes
+_tcc_log "1 missing ties treated as 0" "nwdegree mis, generate(dg) replace"
+_tcc_log "directed network: the neighbours of a node are the nodes it sends ties to and the nodes it receives ties from" "nwkcore dnet, generate(kc1) replace"
+_tcc_log "1 missing ties treated as 0" "nwkcore mis, generate(kc2) replace"
+_tcc_log "directed network: the alters of a node are the nodes it sends ties to and the nodes it receives ties from" "nwego dnet, sizevar(es) densvar(ed) replace"
+_tcc_log "directed network: the proportions p_ij come from the out-ties of node i" "nwconstraint dnet, name(cn1) replace"
+_tcc_log "undirected network" "nwconstraint unet, name(cn2) replace"
+
+* ---------------------------------------------------------------- A13. nwevcent: in-ties by default (igraph), out for the other orientation
+* lazega_adv is strongly connected; igraph::eigen_centrality(directed = TRUE) (scaled to a maximum of 1)
+nwevcent lazega_adv, generate(ev_in)
+qui summ ev_in
+local mx = r(max)
+_tcc_near `=ev_in[1] / `mx'' 0.83312022087 1e-8 "A13 default = igraph directed (node 1)"
+_tcc_near `=ev_in[10] / `mx'' 0.138821985164 1e-8 "A13 default = igraph directed (node 10)"
+nwevcent lazega_adv, generate(ev_out) out
+qui summ ev_out
+local mo = r(max)
+* out = the in-tie result on the transposed network (the previous default)
+qui nwtranspose lazega_adv, generate(lazega_t)
+qui nwevcent lazega_t, generate(ev_t)
+qui gen double dd = abs(ev_out - ev_t)
+qui summ dd
+_tcc_near `r(max)' 0 1e-8 "A13 out = default on the transposed network"
+assert abs(ev_in[1] - ev_out[1]) > 1e-4
+_tcc_log "directed network: the centrality of a node comes from the nodes that send ties to it" "nwevcent lazega_adv, generate(ev_in) replace"
+_tcc_log "directed network: the centrality of a node comes from the nodes it sends ties to" "nwevcent lazega_adv, generate(ev_out) replace out"
+_tcc_log "directed network symmetrized" "nwevcent lazega_adv, generate(ev_s) sym"
+capture nwevcent lazega_adv, generate(ev_x) sym out
+assert _rc == 198
+_tcc_log "undirected network" "nwevcent tri, generate(ev_u) replace"
+
+* ---------------------------------------------------------------- A14. undirected binary numbers unchanged (to 1e-12 against the stored pre-sweep run)
+global tcc_out "`c(tmpdir)'/tcc_golden_new.txt"
+do cscripts/coercion_golden.do
+tempname fa fb
+file open `fa' using "cscripts/coercion_golden/undirected_binary.txt", read text
+file open `fb' using "$tcc_out", read text
+local nl 0
+file read `fa' la
+file read `fb' lb
+while r(eof) == 0 {
+	local ++nl
+	* the label must be identical; the number must agree to 1e-12 (the last bit of a sum can differ between platforms: libm and the order of
+	* summation; the stored file comes from the Mac)
+	gettoken ka va : la
+	gettoken kb vb : lb
+	local va = strtrim(`"`va'"')
+	local vb = strtrim(`"`vb'"')
+	local same = (`"`ka'"' == `"`kb'"')
+	if `same' & `"`va'"' != `"`vb'"' {
+		local xa = real(`"`va'"')
+		local xb = real(`"`vb'"')
+		local same = (!missing(`xa') & !missing(`xb') & reldif(`xa', `xb') < 1e-12)
+	}
+	if !`same' {
+		di as err "FAIL: undirected binary numbers changed at line `nl': {`la'} vs {`lb'}"
+		exit 9
+	}
+	file read `fa' la
+	file read `fb' lb
+}
+file close `fa'
+file close `fb'
+di "A14 `nl' numbers identical to the pre-sweep run (to 1e-12)"
+
+di "PASS: test_core_coercion"

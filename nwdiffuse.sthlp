@@ -73,7 +73,9 @@ the cumulative number of adopters before them), not a hazard rate; it is missing
 Observation {it:i} of the data set must hold node {it:i}, as everywhere in nwcommands. Periods are whole numbers.
 The network may be the same in all periods (give one network) or change (give one network for each period,
 in the order of the periods). Directed and undirected, binary and valued networks are allowed; two-mode networks are not.
-Self-loops are ignored unless {opt self} is given.
+Self-loops are ignored unless {opt self} is given. Every call of {cmd:exposure}, {cmd:threshold}, {cmd:long} and {cmd:simulate} says how the network was read: directed (exposure from the nodes a node sends ties to, or from those it
+receives ties from with {opt incoming}) or undirected; for a valued network that the tie values are ignored (or weighted with {opt valued}); that self-loops were ignored when the network has some; and how many missing ties were treated as
+0.
 
 {pstd}
 {cmd:nwdiffuse exposure} creates, for each period {it:t} from {opt t0()} to {opt t1()}, the variable {it:stub}{it:t}

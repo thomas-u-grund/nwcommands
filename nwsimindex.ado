@@ -11,6 +11,9 @@ program nwsimindex, rclass
 	_opts_oneof "common jaccard dice cosine adamicadar" "measure" "`measure'" 6556
 
 	_nwsyntax `netname'
+	local __wasdir = ("`directed'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	_nwvaluednote `netname'
 	if r(shown) == 1 {
 		noi di `"`r(msg)'"'
@@ -58,6 +61,15 @@ program nwsimindex, rclass
 	di "{txt}  Measure: {res}`measure'"
 	di "{txt}  Nodes: {res}`nodes'"
 	di "{hline 40}"
+	if `__wasdir' {
+		di "{txt}{p 4 4 2}(directed network: the neighbours of a node are the nodes it sends ties to and the nodes it receives ties from){p_end}"
+	}
+	else {
+		di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	if `__nmiss' > 0 {
+		di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+	}
 
 	if "`xvars'" != "" {
 		nwload `name'

@@ -37,7 +37,7 @@ end
 
 * required option missing (198)
 _nwchk 198 nwdegree g
-_nwchk 198 nwclique g
+_nwchk 198 nwclique g, sym
 * variable exists (110)
 generate dd = 1
 _nwchk 110 nwdegree g, generate(dd ee)

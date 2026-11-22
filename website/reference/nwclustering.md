@@ -15,7 +15,7 @@ Clustering coefficient (transitivity) of a network
 
 ```stata
 nwclustering
-[netname]
+[netlist]
 [,
 measure(string)
 SYMmetrize
@@ -24,7 +24,8 @@ replace
 silent
 level(#)
 ra
-onemode]
+onemode
+save(filename[, replace])]
 ```
 
 | | |
@@ -37,6 +38,7 @@ onemode]
 | `level(#)` | Two-mode network: the mode (1 or 2) whose nodes get a coefficient; default = *1* |
 | `ra` | Two-mode network: the global coefficient of Robins and Alexander (2004), 4 C4 / L3, as `r(ra)`; `generate()` is then optional |
 | `onemode` | Two-mode network: the one-mode coefficient of the bipartite graph (always 0, the graph has no triangles) instead of the two-mode coefficient of Opsahl (2013), the default |
+| `save(`*filename*[`, replace`]`)` | Save the results in a Stata data set, one observation per network; an existing file is replaced (with or without `replace`); see **A list of networks** |
 
 ## Description
 
@@ -48,7 +50,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mo
 
 ## Network types
 
-**Directed:** `measure(binary)` only; use `symmetrize` for a weighted measure. **Valued:** `measure(arithmetic)` by default on an undirected valued network (`measure(binary)` ignores the values). **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - Opsahl (2013), `ra`: Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the direction of the ties is used: a path a -> i -> b is closed by the tie a -> b (a binary measure; `measure(binary)` only); use `symmetrize` for the undirected coefficient of the symmetrized network, which is also required for a weighted measure. The output says which was done. **Valued:** `measure(arithmetic)` by default on an undirected valued network (`measure(binary)` ignores the values, and the output says so); missing ties count as no tie and the output says how many there are. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - Opsahl (2013), `ra`: Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -63,6 +65,16 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 . nwclustering flomarriage, generate(_clustering)
 . sum _clustering
 ```
+
+## A list of networks
+
+`nwclustering` takes one network or a list of networks (*netlist*; wildcards such as **draw_*** work as in [nwsummarize](nwsummarize)). With a list, every network is analysed with the same options (`measure()`, `symmetrize`, `level()`, `onemode`) and a table with one row per network is printed (nodes, measure, average and global coefficient); one line per kind of network says how it was read (as in the single-network output: directed, undirected, valued with a binary measure, two-mode, missing ties). **r()** holds the results of the last network of the list, exactly as a call for that network alone. A two-mode network of a list needs no `generate()`: the coefficients of its nodes are computed in a temporary variable (a single two-mode network without `save()` still needs `generate()` or `ra`). `generate()` and `ra` are error 198 with a list; call the command once per network for them. Without `save()` nothing changes in the data in memory.
+
+`save()` writes a Stata data set with one observation per network (also for one network), in the order of the list, with the variables **name** (network name), **directed**, **valued** and **twomode** (0 or 1), **nodes**, **measure** (the measure used, as **r(measure)**), **level** (the mode of a two-mode network, missing for a one-mode network), **cluster_global** and **cluster_avg** (for a two-mode network the global coefficient of Opsahl (2013) and the mean of the coefficients of the `level()` mode, **r(C_global)** and **r(C_avg)** of the single call) and **nmissing** (the number of missing ties, treated as 0). All numeric variables are stored as `double`.
+
+- `. nwsmall 30, k(4) prob(.1) undirected name(sw) ntimes(20)`
+- `. nwclustering sw_*, save(clust)`
+- `. use clust, clear`
 
 ## Stored results
 
@@ -89,4 +101,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

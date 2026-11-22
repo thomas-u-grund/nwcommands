@@ -2,7 +2,7 @@
 capture program drop nwcomponents
 program nwcomponents, rclass
 	version 9
-	syntax [anything(name=netname)][, lgc GENerate(string) replace silent listall]
+	syntax [anything(name=netname)][, lgc GENerate(string) replace silent listall WEAK]
 	set more off
 
 	_nwsyntax `netname', max(9999)
@@ -65,7 +65,19 @@ program nwcomponents, rclass
 				local __vndone 1
 			}
 		}
-		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
+		// a directed network is analysed as it is: strongly connected components (mutual reachability along the
+		// direction of the ties; igraph::components(mode = "strong"), sna::component.dist(connected = "strong")).
+		// Option weak ignores the direction of the ties (weakly connected components).
+		local __dirdo = ("`directed'" == "true" & "`weak'" == "")
+		if `__dirdo' {
+			mata: st_store((1::`nodes'),"`generate'`k'", nw_strongcomp(`netobj'))
+		}
+		else {
+			mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
+		}
+		local __wasdir = ("`directed'" == "true")
+		_nwmissnote `netname_temp', quiet
+		local __nmiss = r(nmissing)
 
 		// Stata's tabulate stops at 1,000 distinct values (r(134)) and a matrix row-name list of thousands of
 		// tokens blows the command-line limit, so a network with more components than that (any sparse network of
@@ -92,6 +104,7 @@ program nwcomponents, rclass
 		matrix colnames `__nwcc_m' = size compid share
 
 		return scalar components = `__nwcc_n'
+		return local connected = cond(`__dirdo', "strong", cond("`directed'" == "true", "weak", "undirected"))
 		local lcomp = `__nwcc_n'
 
 		mata: __nwcc_stripe = J(__nwcomponents_comp_number, 2, "")
@@ -109,6 +122,10 @@ program nwcomponents, rclass
 			noi di "{hline 40}"
 			noi di "{txt}  Network name: {res}`netname_temp'"
 			noi di "{txt}  Components: {res}`lcomp'"
+			if `__dirdo' noi di "{txt}{p 4 4 2}(directed network: strongly connected components, nodes that reach each other along the direction of the ties){p_end}"
+			else if `__wasdir' noi di "{txt}{p 4 4 2}(directed network: weakly connected components, the direction of the ties is ignored){p_end}"
+			else noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+			if `__nmiss' > 0 noi di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
 		}
 
 		qui if "`lgc'" != "" {
@@ -135,4 +152,66 @@ program nwcomponents, rclass
 	}
 	capture mata: mata drop __nwcomponents_*
 	capture confirm number 0
+end
+
+capture mata: mata drop nw_strongcomp()
+mata:
+// strongly connected components of a directed network (iterative Tarjan); components are numbered in the order of
+// their lowest node, as the weakly connected components are
+real colvector nw_strongcomp(pointer(class nw_def scalar) scalar p)
+{
+	real scalar n, v, w, k, idx, ncomp, sp, cp, top, m
+	real colvector index, low, onstk, comp, stk, cs, ptr, lab, rp, ci
+	real matrix nb
+
+	n = p->get_nodes()
+	// out-neighbour lists (compressed rows)
+	rp = J(n + 1, 1, 1)
+	for (v = 1; v <= n; v++) rp[v + 1] = rp[v] + rows(p->neighbors(v))
+	ci = J(rp[n + 1] - 1, 1, .)
+	for (v = 1; v <= n; v++) {
+		nb = p->neighbors(v)
+		if (rows(nb) > 0) ci[|rp[v] \ rp[v + 1] - 1|] = nb[., 1]
+	}
+	index = J(n, 1, 0); low = J(n, 1, 0); onstk = J(n, 1, 0); comp = J(n, 1, 0)
+	stk = J(n, 1, 0); cs = J(n, 1, 0); ptr = rp[1::n]
+	idx = 0; ncomp = 0; sp = 0
+	for (v = 1; v <= n; v++) {
+		if (index[v] != 0) continue
+		cp = 1; cs[1] = v
+		idx = idx + 1; index[v] = idx; low[v] = idx; sp = sp + 1; stk[sp] = v; onstk[v] = 1
+		while (cp > 0) {
+			top = cs[cp]
+			if (ptr[top] < rp[top + 1]) {
+				w = ci[ptr[top]]; ptr[top] = ptr[top] + 1
+				if (index[w] == 0) {
+					idx = idx + 1; index[w] = idx; low[w] = idx; sp = sp + 1; stk[sp] = w; onstk[w] = 1
+					cp = cp + 1; cs[cp] = w
+				}
+				else if (onstk[w]) low[top] = min((low[top], index[w]))
+			}
+			else {
+				if (low[top] == index[top]) {
+					ncomp = ncomp + 1
+					do {
+						w = stk[sp]; sp = sp - 1; onstk[w] = 0; comp[w] = ncomp
+					} while (w != top)
+				}
+				cp = cp - 1
+				if (cp > 0) low[cs[cp]] = min((low[cs[cp]], low[top]))
+			}
+		}
+	}
+	// relabel by lowest node
+	lab = J(ncomp, 1, 0); k = 0
+	for (v = 1; v <= n; v++) {
+		w = comp[v]
+		if (lab[w] == 0) {
+			k = k + 1
+			lab[w] = k
+		}
+	}
+	for (v = 1; v <= n; v++) comp[v] = lab[comp[v] ]
+	return(comp)
+}
 end

@@ -37,9 +37,11 @@ silent
 
 `nwsummarize` calculates and displays a variety of network summary statistics. If no netlist is specified, summary statistics are calculated for the current network.
 
+**Missing ties.** To test whether a network has missing ties, do not test **r(missing_edges)** > 0: the count includes the diagonal cells of a network without self-loops, so it equals the number of nodes for a network without any missing tie. Use **r(missing_edges)** - **r(nodes)** > 0 for a one-mode network without self-loops (see the stored results).
+
 ## Network types
 
-**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. The output says that edges and density count every tie with a non-zero value on a valued network, and how many missing ties there are: they are not counted as ties and not as pairs in the density (the measures of `detail` treat them as 0). See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -111,7 +113,7 @@ Counts, minimum, maximum and density of a network held as stored ties are read f
 - **r(dg_central)** --- degree centralization (undirected network, with `detail`)
 - **r(indg_central)** --- indegree centralization (directed network, with `detail`)
 - **r(outdg_central)** --- outdegree centralization (directed network, with `detail`)
-- **r(missing_edges)** --- number of cells of the adjacency matrix without a value (missing); the diagonal of a network without self-loops and the pairs within a mode of a two-mode network count as missing
+- **r(missing_edges)** --- number of cells of the adjacency matrix without a value (missing), including the *n* diagonal cells of a network without self-loops (**r(selfloop)** is **false**) and the pairs within a mode of a two-mode network; it is therefore *n* and not 0 for a network without any missing tie. In an undirected network a missing tie fills two cells. The number of missing off-diagonal cells of a one-mode network without self-loops is **r(missing_edges)** - **r(nodes)**
 - **r(selfloops)** --- number of self-loops
 - **r(nodes1)** --- number of mode-1 nodes (two-mode networks only)
 - **r(nodes2)** --- number of mode-2 nodes (two-mode networks only)
@@ -138,4 +140,4 @@ With a *netlist*, the results are those of the last network. The other results o
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

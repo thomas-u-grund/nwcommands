@@ -18,7 +18,9 @@ nwevcent
 [netname]
 [,
 gen:erate(varname)
+sym
 nosym
+out
 weighted
 replace
 bin:ary]
@@ -27,7 +29,9 @@ bin:ary]
 | | |
 |---|---|
 | `gen:erate`(*`varname`*) | **Required.** Variable name for eigenvector centrality scores |
-| `nosym` | do not symmetrize network before calculation |
+| `sym` | on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values |
+| `out` | on a directed network, the score of a node is built from the nodes it sends ties to (the out-ties) instead of the nodes that send ties to it (the default, as `igraph::eigen_centrality(directed = TRUE)`) |
+| `nosym` | the default and accepted for backward compatibility: the ties of a directed network keep their direction |
 | `weighted` | use the tie values of a valued network; redundant, this is the default (kept for compatibility) |
 | `replace` | replace existing *generate()* variable |
 | `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
@@ -38,11 +42,11 @@ Calculates eigenvector centrality for each node *i* in a netwwork and saves the 
 
 By default, a valued network is calculated on the tie values themselves, so that stronger ties contribute proportionally more, matching the standard weighted generalization of eigenvector centrality (Newman 2004, Bonacich power centrality). Option **binary** instead dichotomizes the network before calculation (any nonzero, non-missing tie value counts as a tie, regardless of magnitude). **weighted** is redundant and has no effect on an unvalued network (there is nothing to weight by).
 
-Eigenvector centrality is only defined for connected networks.
+Eigenvector centrality is only defined for connected networks; for a directed network the (strongly) connected case is the well-defined one: if some nodes cannot be reached from the others along the ties, the scores of the nodes outside the dominant strongly connected part are 0 or tiny, as in igraph (which also needs a strongly connected network for a unique result).
 
 ## Network types
 
-**Directed:** symmetrized by default; `nosym` uses outgoing ties (igraph uses incoming ties). **Valued:** the tie values are used by default (`weighted` is redundant); `binary` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the direction of the ties is used: the score of a node is built from the nodes that send ties to it (the in-ties, as `igraph::eigen_centrality(directed = TRUE)`; checked on the strongly connected Lazega advice network, 1e-8), and `out` builds it from the nodes it sends ties to; `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** the tie values are used by default (`weighted` is redundant); `binary` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -71,4 +75,4 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

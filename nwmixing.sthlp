@@ -95,7 +95,7 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 
 {pstd}
 {bf:Directed:} the mixing table is directional (ego to alter); on an undirected network every tie is counted from both
-ends, as the output notes. {bf:Valued:} tie values are ignored (every tie counts as present; the command prints a note).
+ends, as the output notes. {bf:Valued:} tie values are ignored (every tie counts as present; the command prints a note). {bf:Missing ties:} count as no tie; the output gives their number.
 {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See
 {help nwnetworktypes}.{p_end}
 
