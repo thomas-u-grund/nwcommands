@@ -17,7 +17,7 @@ Items: 1 VERSION file; 2 CHANGELOG top entry = VERSION; 3 version displays (tool
 release, there and inside origin/main after it), locally and on GitHub; 7 working tree clean; 8 branch (develop before, main
 after) and up to date with origin; 9 plugin generation: NWCOMB_VERSION in native/nwcomb.h is not lower than any generation the
 code asks for, and the Linux and Windows binaries were committed (by CI) after the last change in native/; 10 website shows the
-version (packages table, core page, news, citation); 11 models: lib/core_mlib.sha256 of every model clone found equals the core
+version (packages table, core page, release notes, citation); 11 models: lib/core_mlib.sha256 of every model clone found equals the core
 library's hash, and the website shows each model's VERSION.
 """
 import argparse, datetime, glob, hashlib, os, re, subprocess, sys
@@ -208,7 +208,7 @@ def main():
     if not a.skip_website:
         checks = [("website/which-package.md", r"\|\s*" + re.escape(ver) + r"\s*\|", "packages table row of the core"),
                   ("website/nwcommands/index.md", r"version " + re.escape(ver), "core page"),
-                  ("website/news.md", r"\*\*nwcommands " + re.escape(ver) + r"[.*]", "news entry"),
+                  ("website/releases.md", r"\*\*nwcommands " + re.escape(ver) + r"[.*]", "release-notes entry"),
                   ("website/citing.md", r"\(version " + re.escape(ver) + r"\)", "citation")]
         bad = [f"{p} ({w})" for p, pat, w in checks if not re.search(pat, read(p, ""))]
         placeholder = [p for p in ("website/nwcommands/index.md", "website/index.md") if re.search(r"\bDD [A-Z][a-z]+ 20\d\d", read(p, ""))]

@@ -211,7 +211,7 @@ Preconditions: owner has said to release; nothing is pushed or tagged before ste
 4. **CHANGELOG** entry `## [X.Y.Z] - YYYY-MM-DD` (with "Results that change" first when results of existing commands change). Help files and dialogs of changed commands, data-set registrations (B.9), `README.md`, and ROADMAP/ARCHITECTURE (B.14) are part of the same release. If commands were added or removed: edit `_pkg_ado.txt` / `_pkg_hlp.txt` / `_pkg_boot.txt` and regenerate the manifests through `_nwdeploy` (never by hand; never `deploy.sh`, E.15).
 5. **Versions:** `python3 tools/set_version.py X.Y.Z [date]` (also records the library hash: do this AFTER step 3). Then `python3 tools/check_version.py`.
 6. **Tests** (C0): the full core suite with Stata 17 and Stata 18; plugin from `lib/plugins/macos`. Zero `r()` errors, zero NOT RUN. Plus `cscripts/test_xxx.do` for new work.
-7. **Website** (C5) in the same series of commits on `develop`: news, versions, citation pages, data sets. Commit `Release X.Y.Z: ...` (B.2).
+7. **Website** (C5) in the same series of commits on `develop`: release notes, versions, citation pages, data sets. Commit `Release X.Y.Z: ...` (B.2).
 8. **Preflight:** `python3 tools/release_preflight.py` (C10). Fix every FAIL. (If you are not on the branch it expects, or have not pushed, read the message.)
 9. **Push develop** (public action): `git push origin develop`. If `native/` changed, the workflow "Build native plugins" runs (`gh run list --repo thomas-u-grund/nwcommands --limit 3`, `gh run watch <id>`). When it is green it adds the commit `ci: rebuild native plugins [skip ci]` on `develop`; `git pull --rebase origin develop` (or `git pull --ff-only` if you have nothing new). Never push over the bot commit.
 10. **Key tests with the CI-built macOS plugin.** The CI-built macOS binary is not byte-identical to the local build (E.7). Re-run the plugin-dependent tests (`test_fastkernels`, `test_brokerage_kernels`, `test_combinatorial_scale`, `test_k2`, `test_matafast`, plus everything you changed) and the smoke test (C8) on the pulled commit. Preflight again with `--require-pushed`.
@@ -227,7 +227,7 @@ Preconditions: owner has said to release; nothing is pushed or tagged before ste
     Then `sync-master.yml` fast-forwards `master`, and `deploy-site.yml` publishes the website when `website/` changed.
 12. **Tag** (on the `develop` tip, as `promote.sh` does; the tag is then contained in `main`): first `git tag -l vX.Y.Z` must be empty (E.3), then `git tag -a vX.Y.Z -m "nwcommands vX.Y.Z"` and `git push origin vX.Y.Z` (this one tag only, never `--tags`).
 13. **GitHub release:** `awk -v v=X.Y.Z '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md` then `gh release create vX.Y.Z --title "nwcommands X.Y.Z" --notes-file notes.md --repo thomas-u-grund/nwcommands` (the notes are the CHANGELOG entry, "Results that change" first).
-14. **Deploy check:** `gh run list --repo thomas-u-grund/nwcommands --limit 5`: "Deploy documentation site" and "Keep master in sync with main" succeeded; `git ls-remote origin refs/heads/master refs/heads/main` shows the same commit; open https://nwcommands.org/news/ . Run the link check on `website/` (C5).
+14. **Deploy check:** `gh run list --repo thomas-u-grund/nwcommands --limit 5`: "Deploy documentation site" and "Keep master in sync with main" succeeded; `git ls-remote origin refs/heads/master refs/heads/main` shows the same commit; open https://nwcommands.org/releases/ . Run the link check on `website/` (C5).
 15. **Post-release:** `python3 tools/release_preflight.py --post`; fresh-install smoke test from GitHub (C8); book harness (C7); mailing-list announcement if user-visible (owner posts); update the clone `nwcommands_main` (`git pull --ff-only`, owner's working tree) so that it can serve as `NWCORE`.
 
 ### C2. Model package release (nwsaom, nwergm, nwdynam, nwrem)
@@ -261,15 +261,15 @@ Order, as run for 3.3.0, 3.4.0, 3.5.0:
 - A core PATCH that rebuilds the library is still a lockstep batch (C3), and the models get a PATCH too.
 
 ### C5. Website update checklist (after EVERY release of any of the five packages)
-On `develop` of the core, then promote (C1 step 11 without a tag). Done before the tag for coordinated releases (3.4.0 and 3.5.0: one commit "Release X.Y.Z: version, changelog date, website versions and news for the five packages").
-1. `website/news.md`: new dated entry at the top: package(s) and version(s), one line each from the CHANGELOG, link `https://github.com/thomas-u-grund/<pkg>/releases/tag/vX.Y.Z`.
+On `develop` of the core, then promote (C1 step 11 without a tag). Done before the tag for coordinated releases (3.4.0 and 3.5.0: one commit "Release X.Y.Z: version, changelog date, website versions and release notes for the five packages").
+1. `website/releases.md` (page "Release notes", `/releases/`): new dated entry at the top of the list "All releases", headed `### D Month YYYY: <pkg> X.Y.Z` (several packages released together: one entry, all named), with one `<a id="<pkg>-X-Y-Z"></a>` line per package version above the heading, then package(s) and version(s), one line each from the CHANGELOG, link `https://github.com/thomas-u-grund/<pkg>/releases/tag/vX.Y.Z`. Also update the table of current versions at the top and add the version to "Versions by package". `website/news.md` is only for announcements (workshops, talks, the book, teaching material, manuals as announcements): a release goes to `releases.md`, never to `news.md`. The home page News block (`website/index.md`) shows the latest release line (link `releases/`) and the latest announcement (link `news/`).
 2. Version numbers: packages table in `website/index.md` (`| 3.5.0 |`); core: `website/nwcommands/index.md` (two places: "version X.Y.Z" in the intro and "The core is version X.Y.Z (D Month YYYY)" in the status line; **the status line shows the literal placeholder "DD October 2026" on `main` at 3.5.0, fix it with the real date**),
    `website/nwcommands/install.md` ("for example `.../nwcommands/vX.Y.Z/`"), `website/citing.md` (`(version X.Y.Z)`); model: `website/<pkg>/index.md` ("Version" row), `website/<pkg>/install.md` ("For version X.Y.Z" tag example and the `<pkg> version` transcript with its date), `website/<pkg>/citation.md`, `website/citing.md`; statements like "added in version X" in the package's pages; reference pages when commands or options changed.
 3. Data sets: `website/datasets.md` and `website/reference/netexample.md` for new data (B.9).
 4. Reference pages of the core: `python3 website/tools/sthlp_to_markdown.py <core dir> <out dir>` writes `<out dir>/reference/*.md` and an `index.md` from the `.sthlp` files; copy the changed pages into `website/reference/` and review the diff (the converter drops SMCL markup). The converter turns example blocks (colour-tagged or tab-indented Stata input and output, including the old-style 2014 help files with `{hline N}`, `{c |}` and `{col N}`) into one fenced `stata` block as Stata prints them, and keeps hand-added front matter keys (`grand_parent`) of existing pages. The reference pages `nwsaom.md`, `nwergm.md` (and the dynam/rem stubs) in `website/reference/` are separate hand-curated stubs (`nav_exclude: true`); how
    the nwsaom page was last regenerated from `nwsaom.sthlp` is not recorded in the repo (**UNVERIFIED**: the converter reads `*.sthlp` of a directory, so it can be pointed at a model repo and the result merged by hand).
 5. Tutorials/book companion pages that show output: regenerate against the release candidate when output changed (3.4.0 did this); keep the model tutorials shallow (B.12).
-6. Link check: a checker exists only as a session script (`linkcheck.py <website dir>` in the scratch directory; **not in the repo, OPEN**); `cscripts/test_external_links.do` checks the external URLs that ado and help files mention (needs the internet). After the deploy confirm that https://nwcommands.org loads and the news entry is there.
+6. Link check: a checker exists only as a session script (`linkcheck.py <website dir>` in the scratch directory; **not in the repo, OPEN**); `cscripts/test_external_links.do` checks the external URLs that ado and help files mention (needs the internet). After the deploy confirm that https://nwcommands.org loads and the release-notes entry is there.
 7. `python3 tools/release_preflight.py` (checks items 1 and 2 above for the core and for any model clone it finds).
 8. Zenodo and manual (C6), mailing list (owner), `CITATION.cff`/`NOTICE.md` version text (done by `set_version.py`).
 
@@ -297,7 +297,7 @@ Also pin-check an old tagged install once in a while: `net install nwcommands, f
 
 ### C9. When something is wrong after a release
 - Never move or delete a published tag, never force-push, never rewrite `main`. Fix forward with a PATCH release (`X.Y.(Z+1)`) through the normal procedure; add the fix to a regression test and a GOTCHA entry. Examples: core 3.2.0 broke the models (r(3021)) and was repaired by 3.3.0 / 1.0.4 / 1.1.2; 3.3.1 added self-healing library indexing; 3.5.1 repairs the Stata-18-built libraries (B.6).
-- If a release is dangerous to install, tell the owner at once; the owner decides on a GitHub release edit (mark as pre-release or add a warning to the notes: public action, `gh release edit`; **UNVERIFIED** option choice), the mailing-list notice and the website news entry. The patch release is the real remedy.
+- If a release is dangerous to install, tell the owner at once; the owner decides on a GitHub release edit (mark as pre-release or add a warning to the notes: public action, `gh release edit`; **UNVERIFIED** option choice), the mailing-list notice and the website release-notes entry. The patch release is the real remedy.
 - If only the website is wrong: a normal `develop` commit and promote; no release.
 - If a bot commit or a promote conflicts: stop; take `--theirs` only for files under `lib/plugins/` (C1 step 11); anything else is a real conflict for a human.
 - A model release that broke because the core library changed under it: do not hot-patch the library file; rebuild against the final core state (C3) and re-release.
@@ -311,7 +311,7 @@ The starter files change with every release (version stamps), so every release t
 Read-only (no fetch, no writes, no Stata). `python3 tools/release_preflight.py` before a release (run on `develop`); `--require-pushed` after the push; `--post` after the release (branch `main`, tag present and inside `origin/main`); `--models-parent DIR [--model-pattern 'rd_{name}']` to find the model clones (default: next to the core checkout, folder = package name);
 `--no-network` skips `git ls-remote`; `--skip-website`. It prints PASS/FAIL/SKIP per item and exits 1 on any FAIL. Items: VERSION file; CHANGELOG top entry equals VERSION and its date; `tools/check_version.py`; `tools/check_help_index.py`; library hash equals `lib/lnwcommands.mlib.release.sha256`; tag `vX.Y.Z` absent locally and on GitHub (present with `--post`);
 working tree clean (tracked files); branch is `develop` (`main` with `--post`) and relative to its remote (behind or diverged fails, ahead is allowed unless `--require-pushed`); plugin generation (`NWCOMB_VERSION` in `native/nwcomb.h` is not below any `nwg_comb_version() >= k` in the code; the macOS, Linux and Windows binaries were last committed at or after the last commit that touched `native/`);
-the website shows the core version (packages table, core page, news, citation) and has no "DD Month" placeholder; each model clone found: `lib/core_mlib.sha256` equals the core library's hash, and the website shows the model's `VERSION`. It cannot check which Stata version built a library (B.6), nor the compiled generation inside a binary.
+the website shows the core version (packages table, core page, release notes, citation) and has no "DD Month" placeholder; each model clone found: `lib/core_mlib.sha256` equals the core library's hash, and the website shows the model's `VERSION`. It cannot check which Stata version built a library (B.6), nor the compiled generation inside a binary.
 On the state of 2026-10-25 (`origin/main`): `--post` passes everything except the branch (when run from a scratch branch) and the website placeholder (E.14).
 
 ---
@@ -325,13 +325,13 @@ On the state of 2026-10-25 (`origin/main`): `--post` passes everything except th
 - [ ] `python3 tools/set_version.py X.Y.Z [date]`; `python3 tools/check_version.py`
 - [ ] full core suite, Stata 17: 0 errors, 0 NOT RUN; Stata 18: same
 - [ ] `cscripts/test_mata_userspace.do` passes (ado code touches no Mata variable of the user and leaves no global Mata variable behind; GOTCHA "No plain-named globals in Mata"); when a command was added or changed, add it to the test
-- [ ] website: news, packages table, core page (+ real date), install.md, citing.md, datasets, reference pages
+- [ ] website: release notes (and news if an announcement), packages table, core page (+ real date), install.md, citing.md, datasets, reference pages
 - [ ] commit "Release X.Y.Z ..."; `python3 tools/release_preflight.py` all PASS
 - [ ] `git push origin develop`; if `native/` changed: CI green, bot commit pulled, key tests with CI plugin, `--require-pushed`
 - [ ] promote to `main` (`./promote.sh`, or the temporary-branch recipe if `main` is checked out elsewhere)
 - [ ] `git tag -l vX.Y.Z` empty; `git tag -a vX.Y.Z -m "nwcommands vX.Y.Z"`; `git push origin vX.Y.Z`
 - [ ] `gh release create vX.Y.Z --title "nwcommands X.Y.Z" --notes-file notes.md`
-- [ ] deploy and master-sync workflows green; https://nwcommands.org/news/ shows it; links checked; https://nwcommands.org/net/stata.toc is 200 (C11)
+- [ ] deploy and master-sync workflows green; https://nwcommands.org/releases/ shows it; links checked; https://nwcommands.org/net/stata.toc is 200 (C11)
 - [ ] `--post` preflight; fresh-install smoke from GitHub (17 and 18); book harness; announcement (owner)
 
 ### D2. Model package release X.Y.Z (nwsaom, nwergm, nwdynam, nwrem)
@@ -409,5 +409,5 @@ On the state of 2026-10-25 (`origin/main`): `--post` passes everything except th
 | Memory notes | `~/.claude/projects/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/memory/` | feedback and project decisions behind section B | agent sessions |
 | `STATUS_2026-10-25.md`, `INSTRUCTIONS.md`, `INDEX_RELEASE_DOCS.md` | `/Users/tgrund/FILES_NEW/RESEARCH/2026 nwsaom/project_state_2026-10-24/` | where each package stands; how the pieces map | agent sessions |
 | Book harness README, `tools/scale_audit/` | `/Users/tgrund/FILES_NEW/RESEARCH/2026 Book StataPress/tools/README.md`; core `tools/scale_audit/` | book code check (C7); scaling audit | agent sessions |
-| Website | core `website/` | all public docs; news and versions per C5 | agent sessions after every release |
+| Website | core `website/` | all public docs; release notes, news and versions per C5 | agent sessions after every release |
 | Zenodo record | https://doi.org/10.5281/zenodo.23623807 | nwsaom manual (all versions) | owner |

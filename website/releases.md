@@ -1,0 +1,1301 @@
+---
+title: "Release notes"
+nav_order: 12.5
+description: "Release notes of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm: the current version of each package and the dated list of all releases, newest first."
+permalink: /releases/
+---
+
+# Release notes
+{: .no_toc }
+
+The current version of each package and every release, newest first. Each entry links to the release notes on GitHub, which list the results that change; the full change history of a package is in its `CHANGELOG` in the repository. Announcements (workshops, talks, the book, teaching material) are on the [News](../news/) page.
+
+| Package | Current version | Released | Release notes | Package page |
+|---|---|---|---|---|
+| **nwcommands** | 3.35.0 | 22 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
+| **nwsaom** | 1.9.1 | 20 November 2026 | [all releases of nwsaom](https://github.com/thomas-u-grund/nwsaom/releases) | [nwsaom](../nwsaom/) |
+| **nwergm** | 1.13.0 | 22 November 2026 | [all releases of nwergm](https://github.com/thomas-u-grund/nwergm/releases) | [nwergm](../nwergm/) |
+| **nwdynam** | 1.11.0 | 21 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
+| **nwrem** | 1.7.0 | 21 November 2026 | [all releases of nwrem](https://github.com/thomas-u-grund/nwrem/releases) | [nwrem](../nwrem/) |
+| **nwalaam** | 1.4.0 | 22 November 2026 | [all releases of nwalaam](https://github.com/thomas-u-grund/nwalaam/releases) | [nwalaam](../nwalaam/) |
+| **nwlsm** | 1.0.6 | 22 November 2026 | [all releases of nwlsm](https://github.com/thomas-u-grund/nwlsm/releases) | [nwlsm](../nwlsm/) |
+| **nwsbm** | 1.0.2 | 20 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
+
+## Versions by package
+
+- **nwcommands:** [3.35.0](#nwcommands-3-35-0), [3.34.0](#nwcommands-3-34-0), [3.33.0](#nwcommands-3-33-0), [3.32.1](#nwcommands-3-32-1), [3.32.0](#nwcommands-3-32-0), [3.31.0](#nwcommands-3-31-0), [3.30.0](#nwcommands-3-30-0), [3.29.0](#nwcommands-3-29-0), [3.28.0](#nwcommands-3-28-0), [3.27.0](#nwcommands-3-27-0), [3.26.0](#nwcommands-3-26-0), [3.25.1](#nwcommands-3-25-1), [3.25.0](#nwcommands-3-25-0), [3.24.0](#nwcommands-3-24-0), [3.23.0](#nwcommands-3-23-0), [3.22.0](#nwcommands-3-22-0), [3.21.0](#nwcommands-3-21-0), [3.20.1](#nwcommands-3-20-1), [3.20.0](#nwcommands-3-20-0), [3.19.0](#nwcommands-3-19-0), [3.18.0](#nwcommands-3-18-0), [3.17.6](#nwcommands-3-17-6), [3.17.5](#nwcommands-3-17-5), [3.17.4](#nwcommands-3-17-4), [3.17.3](#nwcommands-3-17-3), [3.17.2](#nwcommands-3-17-2), [3.17.1](#nwcommands-3-17-1), [3.17.0](#nwcommands-3-17-0), [3.16.1](#nwcommands-3-16-1), [3.16.0](#nwcommands-3-16-0), [3.15.4](#nwcommands-3-15-4), [3.15.3](#nwcommands-3-15-3), [3.15.2](#nwcommands-3-15-2), [3.15.1](#nwcommands-3-15-1), [3.15.0](#nwcommands-3-15-0), [3.14.1](#nwcommands-3-14-1), [3.14.0](#nwcommands-3-14-0), [3.13.2](#nwcommands-3-13-2), [3.13.1](#nwcommands-3-13-1), [3.13.0](#nwcommands-3-13-0), [3.12.2](#nwcommands-3-12-2), [3.12.1](#nwcommands-3-12-1), [3.11.1](#nwcommands-3-11-1), [3.11.0](#nwcommands-3-11-0), [3.10.0](#nwcommands-3-10-0), [3.9.2](#nwcommands-3-9-2), [3.9.1](#nwcommands-3-9-1), [3.9.0](#nwcommands-3-9-0), [3.8.0](#nwcommands-3-8-0), [3.7.0](#nwcommands-3-7-0), [3.6.0](#nwcommands-3-6-0), [3.5.1](#nwcommands-3-5-1), [3.5.0](#nwcommands-3-5-0), [3.4.0](#nwcommands-3-4-0), [3.3.1](#nwcommands-3-3-1), [3.3.0](#nwcommands-3-3-0), [3.2.0](#nwcommands-3-2-0), [3.1.1](#nwcommands-3-1-1), [3.1.0](#nwcommands-3-1-0), [3.0.0](#nwcommands-3-0-0)
+- **nwsaom:** [1.9.1](#nwsaom-1-9-1), [1.9.0](#nwsaom-1-9-0), [1.8.1](#nwsaom-1-8-1), [1.8.0](#nwsaom-1-8-0), [1.7.1](#nwsaom-1-7-1), [1.7.0](#nwsaom-1-7-0), [1.6.0](#nwsaom-1-6-0), [1.5.19](#nwsaom-1-5-19), [1.5.18](#nwsaom-1-5-18), [1.5.17](#nwsaom-1-5-17), [1.5.16](#nwsaom-1-5-16), [1.5.15](#nwsaom-1-5-15), [1.5.14](#nwsaom-1-5-14), [1.5.13](#nwsaom-1-5-13), [1.5.12](#nwsaom-1-5-12), [1.5.11](#nwsaom-1-5-11), [1.5.10](#nwsaom-1-5-10), [1.5.9](#nwsaom-1-5-9), [1.5.8](#nwsaom-1-5-8), [1.5.7](#nwsaom-1-5-7), [1.5.6](#nwsaom-1-5-6), [1.5.5](#nwsaom-1-5-5), [1.5.4](#nwsaom-1-5-4), [1.5.3](#nwsaom-1-5-3), [1.5.2](#nwsaom-1-5-2), [1.5.1](#nwsaom-1-5-1), [1.5.0](#nwsaom-1-5-0), [1.4.2](#nwsaom-1-4-2), [1.4.1](#nwsaom-1-4-1), [1.4.0](#nwsaom-1-4-0), [1.3.4](#nwsaom-1-3-4), [1.3.3](#nwsaom-1-3-3), [1.3.2](#nwsaom-1-3-2), [1.3.1](#nwsaom-1-3-1), [1.3.0](#nwsaom-1-3-0), [1.2.0](#nwsaom-1-2-0), [1.1.1](#nwsaom-1-1-1), [1.1.0](#nwsaom-1-1-0), [1.0.11](#nwsaom-1-0-11), [1.0.10](#nwsaom-1-0-10), [1.0.9](#nwsaom-1-0-9), [1.0.8](#nwsaom-1-0-8), [1.0.7](#nwsaom-1-0-7), [1.0.6](#nwsaom-1-0-6), [1.0.5](#nwsaom-1-0-5), [1.0.4](#nwsaom-1-0-4), [1.0.3](#nwsaom-1-0-3), [1.0.2](#nwsaom-1-0-2), [1.0.1](#nwsaom-1-0-1), [1.0.0](#nwsaom-1-0-0)
+- **nwergm:** [1.13.0](#nwergm-1-13-0), [1.12.0](#nwergm-1-12-0), [1.11.1](#nwergm-1-11-1), [1.11.0](#nwergm-1-11-0), [1.10.0](#nwergm-1-10-0), [1.8.1](#nwergm-1-8-1), [1.8.0](#nwergm-1-8-0), [1.7.1](#nwergm-1-7-1), [1.7.0](#nwergm-1-7-0), [1.6.0](#nwergm-1-6-0), [1.5.12](#nwergm-1-5-12), [1.5.11](#nwergm-1-5-11), [1.5.10](#nwergm-1-5-10), [1.5.9](#nwergm-1-5-9), [1.5.8](#nwergm-1-5-8), [1.5.7](#nwergm-1-5-7), [1.5.6](#nwergm-1-5-6), [1.5.5](#nwergm-1-5-5), [1.5.4](#nwergm-1-5-4), [1.5.3](#nwergm-1-5-3), [1.5.2](#nwergm-1-5-2), [1.5.1](#nwergm-1-5-1), [1.5.0](#nwergm-1-5-0), [1.4.0](#nwergm-1-4-0), [1.3.7](#nwergm-1-3-7), [1.3.6](#nwergm-1-3-6), [1.3.5](#nwergm-1-3-5), [1.3.3](#nwergm-1-3-3), [1.3.2](#nwergm-1-3-2), [1.3.1](#nwergm-1-3-1), [1.3.0](#nwergm-1-3-0), [1.2.4](#nwergm-1-2-4), [1.2.3](#nwergm-1-2-3), [1.2.2](#nwergm-1-2-2), [1.2.1](#nwergm-1-2-1), [1.2.0](#nwergm-1-2-0), [1.1.4](#nwergm-1-1-4), [1.1.3](#nwergm-1-1-3), [1.1.2](#nwergm-1-1-2), [1.1.1](#nwergm-1-1-1), [1.1.0](#nwergm-1-1-0), [1.0.1](#nwergm-1-0-1), [1.0.0](#nwergm-1-0-0)
+- **nwdynam:** [1.11.0](#nwdynam-1-11-0), [1.10.0](#nwdynam-1-10-0), [1.9.1](#nwdynam-1-9-1), [1.9.0](#nwdynam-1-9-0), [1.8.1](#nwdynam-1-8-1), [1.8.0](#nwdynam-1-8-0), [1.7.0](#nwdynam-1-7-0), [1.6.0](#nwdynam-1-6-0), [1.5.1](#nwdynam-1-5-1), [1.5.0](#nwdynam-1-5-0), [1.4.0](#nwdynam-1-4-0), [1.3.2](#nwdynam-1-3-2), [1.3.1](#nwdynam-1-3-1), [1.3.0](#nwdynam-1-3-0), [1.2.5](#nwdynam-1-2-5), [1.2.4](#nwdynam-1-2-4), [1.2.3](#nwdynam-1-2-3), [1.2.2](#nwdynam-1-2-2), [1.2.1](#nwdynam-1-2-1), [1.2.0](#nwdynam-1-2-0), [1.1.4](#nwdynam-1-1-4), [1.1.3](#nwdynam-1-1-3), [1.1.2](#nwdynam-1-1-2), [1.1.1](#nwdynam-1-1-1), [1.1.0](#nwdynam-1-1-0), [1.0.4](#nwdynam-1-0-4), [1.0.3](#nwdynam-1-0-3), [1.0.2](#nwdynam-1-0-2), [1.0.1](#nwdynam-1-0-1), [1.0.0](#nwdynam-1-0-0)
+- **nwrem:** [1.7.0](#nwrem-1-7-0), [1.6.0](#nwrem-1-6-0), [1.5.1](#nwrem-1-5-1), [1.5.0](#nwrem-1-5-0), [1.4.0](#nwrem-1-4-0), [1.3.0](#nwrem-1-3-0), [1.2.0](#nwrem-1-2-0), [1.1.2](#nwrem-1-1-2), [1.1.1](#nwrem-1-1-1), [1.1.0](#nwrem-1-1-0), [1.0.13](#nwrem-1-0-13), [1.0.12](#nwrem-1-0-12), [1.0.11](#nwrem-1-0-11), [1.0.10](#nwrem-1-0-10), [1.0.9](#nwrem-1-0-9), [1.0.8](#nwrem-1-0-8), [1.0.7](#nwrem-1-0-7), [1.0.6](#nwrem-1-0-6), [1.0.5](#nwrem-1-0-5), [1.0.4](#nwrem-1-0-4), [1.0.3](#nwrem-1-0-3), [1.0.2](#nwrem-1-0-2), [1.0.1](#nwrem-1-0-1), [1.0.0](#nwrem-1-0-0)
+- **nwalaam:** [1.4.0](#nwalaam-1-4-0), [1.3.1](#nwalaam-1-3-1), [1.3.0](#nwalaam-1-3-0), [1.2.0](#nwalaam-1-2-0), [1.1.1](#nwalaam-1-1-1), [1.1.0](#nwalaam-1-1-0), [1.0.0](#nwalaam-1-0-0)
+- **nwlsm:** [1.0.6](#nwlsm-1-0-6), [1.0.5](#nwlsm-1-0-5), [1.0.4](#nwlsm-1-0-4), [1.0.3](#nwlsm-1-0-3), [1.0.2](#nwlsm-1-0-2), [1.0.1](#nwlsm-1-0-1), [1.0.0](#nwlsm-1-0-0), [0.7.0](#nwlsm-0-7-0), [0.6.0](#nwlsm-0-6-0)
+- **nwsbm:** [1.0.2](#nwsbm-1-0-2), [1.0.1](#nwsbm-1-0-1), [1.0.0](#nwsbm-1-0-0), [0.4.0](#nwsbm-0-4-0), [0.3.0](#nwsbm-0-3-0)
+
+## All releases
+
+<a id="nwcommands-3-35-0"></a>
+<a id="nwlsm-1-0-6"></a>
+<a id="nwalaam-1-4-0"></a>
+<a id="nwergm-1-13-0"></a>
+
+### 22 November 2026: nwcommands 3.35.0, nwlsm 1.0.6, nwalaam 1.4.0 and nwergm 1.13.0
+
+**nwcommands 3.35.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.35.0)). A command never changes the type of your network by itself: a directed network is analysed as a directed network, and every command prints one line that says how the network was read (and how many missing ties were treated as 0). Results change for directed networks: `nwbetween`, `nwcloseness`, `nwevcent`, `nwkatz`, `nwinduced`, `nwassortativity`, `nwcomponents` (strongly connected components) and `nwrandomwalk` now follow the direction of the ties, and the cohesion commands, `nwspectral`, `nwcoreperiphery` and `nwfactions` refuse a directed network with unreciprocated ties unless you add `sym`; `nwbalance` refuses opposite-signed mutual pairs. The options `sym`, `weak` and `out` restore the old results; undirected networks give the same numbers as before. New: `nwgeodesic` and `nwclustering` take a list of networks and `save()` one row per network, `nwhomophily` and `nwdyadprob` take `ntimes()`, and `nwwebuse schoch` (command `nwnetworkdata`) reads the 2,274 networks of David Schoch's R package networkdata (needs R with igraph, only for this reader).
+
+**nwlsm 1.0.6** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.6)). Fixes a heap overflow for very small networks, a new default for the number of threads, and a warning for an empty or a complete network.
+
+**nwalaam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.4.0)). New command `nwalaam bootstrap`.
+
+**nwergm 1.13.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.13.0)). `nwergm` flags when the pseudolikelihood or likelihood estimate does not exist (`e(mple_exists)`, `e(mle_exists)`).
+
+<a id="nwlsm-1-0-5"></a>
+
+### 21 November 2026: nwlsm 1.0.5
+
+**nwlsm 1.0.5** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.5)). `estat mcmcdiag` printed means below -999.9999, for example the log-likelihood of a larger network, in scientific notation (-1.55e+03) since 1.0.3: fixed. The Mean and Sd columns now print such values in plain decimals (-1551.82) in the same column width, and the summary line of `nwlsm` no longer prints a posterior mean log-likelihood of -10000 or below in scientific notation. Nothing else changes. Tested on macOS with Stata 17 (the six tests of the package, including a new check that no mean is printed in scientific notation) and on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the same six tests and a by-hand check of `estat mcmcdiag`. Stata 18 was not run. The compiled plugin is unchanged.
+
+<a id="nwlsm-1-0-4"></a>
+
+### 21 November 2026: nwlsm 1.0.4
+
+**nwlsm 1.0.4** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.4)). The Geweke z of `estat mcmcdiag` now equals the one of R's `coda::geweke.diag()` (first 10 percent against the last 50 percent of a chain, spectral density at frequency zero estimated by an autoregression), so the printed z values change from 1.0.3. The output has a table with the z of every chain and a footnote that counts the z values above 1.96. The verdict and flag lines of 1.0.3 are removed: a limit of 1.96 is not a 5 percent test with several chains (in settled runs 16 to 26 percent of the z values exceed it), so the Geweke z is informational only and no test of convergence; the warning for an effective sample size below 100 stays. `r(geweke_flag)` and `r(geweke_crit)` of 1.0.3 no longer exist; new are `r(geweke_z)` (chains by parameters) and `r(geweke_nexceed)`. Tested on macOS with Stata 17 (the new test, the plot, error, edge-covariate and dialog tests, and the dialog assembly test) and on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the same tests and a by-hand check of `estat mcmcdiag`. Stata 18 was not run. The compiled plugin is unchanged. The output of nwlsm tutorial 1 is updated.
+
+<a id="nwergm-1-12-0"></a>
+<a id="nwrem-1-7-0"></a>
+<a id="nwdynam-1-11-0"></a>
+
+### 21 November 2026: nwergm 1.12.0, nwrem 1.7.0 and nwdynam 1.11.0
+
+**nwergm 1.12.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.12.0)). The printed log-likelihood, AIC and BIC of a `method(mcmle)` fit of a model without dyad-dependent terms, and of a directed model whose only dyad-dependent term is `mutual`, are now exact, as `logLik()` of the R package ergm is, and no longer a Monte Carlo value that varies with the seed. The printed values of such models change: for the Lazega reciprocity model of the article the log-likelihood is -1970.51 (before -1971.79), AIC 3953.0 (before 3955.6) and BIC 3992.1 (before 3994.7); `estimates stats` and `lrtest` follow. The option `mcll` gives the old value, and `exactll` gives the exact value also after `method(mple)` of a model with `mutual`. The standard error `e(ll_se)` of a bridge-sampling log-likelihood was too small for chains with long memory (reciprocity models); it is larger now, the log-likelihood itself is unchanged. The numbers on the nwergm tutorial pages 2, 4 and 5 are updated accordingly.
+
+**nwrem 1.7.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.7.0)). New option `covmatch(position|label)` says how the networks of `covevent()` and `riskset()` are matched to the actors of the event network; the default `position` is the behaviour of all earlier versions, so no result changes. Every fit with `covevent()` or `riskset()` now prints a note on how the network was matched and warns when the node labels are in a different order or differ. The help states the matching rule of every kind of covariate and the convention of `frpsndsnd` and `frrecsnd` as in R's relevent, and `estat actors` after a fit with `interval` has a note on the expected totals.
+
+**nwdynam 1.11.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.11.0)). `estat choiceplot` handles ties in the fitted probabilities in one stated way (mid rank of the tie group; a top-k share counts the fraction of the places that the tie group takes), prints a line with the number of events whose realised member ties, and returns `r(N_ties)`. No estimate and no other command changes. Tested on macOS (Stata 17) and, for all three packages, on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new tests and the package tests. Stata 18 was not run for these three releases. The compiled plugins are unchanged, and the three packages still need only nwcommands 3.29.0 or later.
+
+<a id="nwcommands-3-34-0"></a>
+
+### 21 November 2026: nwcommands 3.34.0
+
+**nwcommands 3.34.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.34.0)). New option `direction(both|out|in)` of `nwburt` for directed networks: which ties count as the ties of ego. The default `both` is Burt's convention (the tie strength is z_ij + z_ji) used since 3.33.0, so every printed number is unchanged. `out` uses only the ties that ego sends and reproduces the results of versions before 3.33.0; `in` uses only the ties that ego receives. On the Lazega advice network the mean effective size is 13.99 with `both`, 9.19 with `out` and 8.63 with `in`. The Mata library and the plugin are unchanged, so the model packages need no new release. Tested on macOS with Stata 17 and Stata 18 (the new test, the `nwburt` tests and the dialog tests) and on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the same tests, the brokerage kernels and the core plot tests.
+
+<a id="nwcommands-3-33-0"></a>
+
+### 21 November 2026: nwcommands 3.33.0
+
+**nwcommands 3.33.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.33.0)). Two results change. `nwburt` on a directed network without tie values now uses both directions of every tie, as Burt's measures are defined and as `igraph::constraint()` does (before, only the out-ties); undirected networks and networks with all ties mutual are unchanged. `nwcompare` counts the free membership proportions of a block model (`nwsbm`) in the number of parameters *k* (`e(npar)` plus the number of blocks minus one). New: `nwcoreperiphery` has the option `restarts(#)` (and `seed(#)`): further searches from random starts, the best partition is kept; on the Lazega advice network the default search stops at a core of 18 and 200 starts find a core of 20 with a higher fit. The help of `nwmovie` and its error message say what to install on Linux (`sudo apt install ffmpeg`) to export `.mp4` and `.webm`; `.gif` works everywhere without extra software. The Mata library is unchanged, so the model packages need no new release. Tested on macOS with Stata 17 and Stata 18: the new test, the tests of the touched commands, the plot and dialog tests. On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the same tests; on Linux also the real `nwmovie` export to `.mp4` and `.webm` with `ffmpeg`.
+
+<a id="nwcommands-3-32-1"></a>
+
+### 20 November 2026: nwcommands 3.32.1
+
+**nwcommands 3.32.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.32.1)). A bug fix for `nwtabulate` with the option `attribute()` on an undirected network: the within-group and between-group counts of ties, the table and the E-I index were wrong before (some ties were counted twice and others not at all). They are correct now and change for undirected networks; directed networks are unchanged. If you used `nwtabulate, attribute()` on an undirected network, run it again. `nwbackbone, method(fixedrow) signed` no longer drops a pair of rows with the smallest possible overlap (a missing p-value); on the Davis data it keeps 6 ties instead of 5, as the R package backbone does. `nwbackbone, method(fdsm)` prints a note before it starts when the default number of Monte Carlo draws exceeds one million. `nwdiffuse curve` no longer stops when all adoption times fall in one period and prints a missing rate instead of 1.000e+15 when `t0()` is earlier than the first adoption. `nwcloseness` states on a valued network how the tie values are used. The help files of `nwdiffuse`, `nwcommunity` and `nwcoreperiphery` state the direction of `simulate`, the meaning of the Rate column, what `symmetrize` does and that the core search is local. Tested on macOS (Stata 17): the new test and the tests of the touched commands, the core plot tests and the dialog tests. On Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): the new test, the tests of the touched commands, the plot and dialog tests, and the star and Davis checks pass. Stata 18 was not run.
+
+<a id="nwalaam-1-3-1"></a>
+<a id="nwlsm-1-0-3"></a>
+<a id="nwsbm-1-0-2"></a>
+
+### 20 November 2026: nwalaam 1.3.1, nwlsm 1.0.3 and nwsbm 1.0.2
+
+**nwalaam 1.3.1** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.3.1)). A missing value in a covariate of an effect (`ego()`, `alter()` and the other covariate effects) used to be counted as 0 silently; the fit now stops with error 416 and names the variable. The stochastic approximation no longer stops with error 430 for seeds whose starting values were extreme: it restarts from limited and, if needed, from zero starting values (seeds that converged before give the same estimates). A note reports self-loops of a one-mode network.
+
+**nwlsm 1.0.3** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.3)). `estat mcmcdiag`: the Geweke rule accounts for the number of chains and parameters, so converged runs with several chains are no longer flagged (the printed Geweke z values can differ from 1.0.2), a warning is shown when the smallest effective sample size is below 100, and the tables and titles of the `estat` commands fit within 80 columns.
+
+**nwsbm 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.2)). The line "Lower bound J" and the header of `estat icl` no longer wrap at `set linesize 80`; `maxblocks(0)` is an error instead of meaning the default.
+
+Tested on macOS with Stata 17 (the tests of each package including the new ones, and the dialog assembly test for nwlsm and nwsbm) and on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP), where all test files pass; for nwalaam the chapter ego model was also compared for seeds 1 to 30 against 1.3.0 on Linux (identical estimates, seed 111 now works). Stata 18 was not run.
+
+<a id="nwcommands-3-32-0"></a>
+
+### 20 November 2026: nwcommands 3.32.0
+
+**nwcommands 3.32.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.32.0)). `nwmovie export()` now works on Linux: `.gif` is written by the viewer, `.mp4` and `.webm` are made with `ffmpeg` (the command stops at once, before anything is launched, when `ffmpeg` is missing). On macOS and Windows nothing changes. Failures, stalls and a locked macOS screen end the command with error 498 and stop the viewer; temporary files are removed; two exports at the same time no longer collide; `export()` without `fname()` no longer writes `movie.html`; `nwinstall, remove` works in console Stata. Tested on macOS (Stata 17): the movie, install, plot and dialog tests pass, but the real macOS viewer export was not run for this release because the screen was locked (the macOS code path is unchanged, and an earlier build of the same branch produced an `.mp4` there). The Linux and Windows 11 exports (StataNow 19.5 MP) were tested. Stata 18 was not run.
+
+<a id="nwcommands-3-31-0"></a>
+
+### 20 November 2026: nwcommands 3.31.0
+
+**nwcommands 3.31.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.31.0)). `nwcoefplot, msymbol(list)` sets one marker symbol per model (for example `msymbol(O D T)`), so that a black-and-white print tells the models apart. Tested on macOS (Stata 17), Linux and Windows 11 (both StataNow 19.5 MP): the `nwcoefplot`, plot and dialog tests pass; on Stata 18 (Mac) the quick checks of 3.30.0 passed and 3.31.0 was not rerun.
+
+<a id="nwlsm-1-0-2"></a>
+<a id="nwsaom-1-9-1"></a>
+
+### 20 November 2026: nwlsm 1.0.2 and nwsaom 1.9.1
+
+**nwlsm 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.2)). `edgecov()` with a network, or with a matrix that has a missing diagonal (as the matrix of a network from `nwtomata` has), no longer stops with "edge covariates must not have missing values": the diagonal of a one-mode matrix is not a dyad and is ignored; missing values off the diagonal are still an error.
+
+**nwsaom 1.9.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.9.1)). No change in any command; the dialog test now also covers the plot options of `estat gof`, `estat timetest`, `estat convergence` and `nwsaom meta`.
+
+Tested on macOS (Stata 17) and, for the plot and error-path tests, on Linux (Ubuntu 22.04) and Windows 11 (both StataNow 19.5 MP): for nwlsm the `edgecov()` test (a fit with `edgecov()` of a network and a missing diagonal ran on all three systems), the error-path tests, the plot tests and the dialog plot tests, plus the dialog assembly test on the Mac only; for nwsaom the dialog assembly test and the ado test on the Mac, and the plot test on all three. Stata 18 on the Mac was not run.
+
+<a id="nwcommands-3-30-0"></a>
+
+### 20 November 2026: nwcommands 3.30.0
+
+**nwcommands 3.30.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.30.0)).
+
+- `nwdegree, plot` draws the degree distribution (outdegree and indegree side by side for a directed network); `ccdf` draws P(degree >= k) on log-log axes.
+- `nwgeodesic, plot` draws the histogram of the geodesic distances, `average` marks the mean distance.
+- `nwdiffuse curve, plot(cumulative|new|both)` draws the cumulative proportion, the new adopters per period, or both.
+- `nwspectral, plot` draws the scree plot of the Laplacian eigenvalues with the algebraic connectivity; `embedding` adds a scatter of the second and third eigenvector.
+- `nwtriads, plot expected` writes the expected count of every triad type under the observed count.
+- Dialogs: `name`, `saving` and `export` entries for `nwdendrogram`, `nwplotmatrix` and `nwmixing`, and plot entries in the dialogs of the new plot options.
+- Help files of `nwcoreperiphery`, `nwfactions` and `nwconcor` show the ordered matrix (`nwplotmatrix, sortby() group()`).
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): the tests of the new plot options, the dialog tests and the plot tests of every changed command; on Linux and on Windows the export widths of the new plots (`nwdegree`, `nwgeodesic`, `nwspectral`, `nwdiffuse curve, plot(both)`, `nwtriads` with `expected`) were measured exactly, and Windows was also run from a folder with a space in its name. Stata 18 on the Mac was not run for this release.
+
+<a id="nwergm-1-11-1"></a>
+<a id="nwlsm-1-0-1"></a>
+<a id="nwsbm-1-0-1"></a>
+
+### 20 November 2026: nwergm 1.11.1, nwlsm 1.0.1 and nwsbm 1.0.1
+
+**nwergm 1.11.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.11.1)). A curved fit with an estimated decay that stops with r(498) because a simulated network has a count above `gwcutoff()` now says what happened and what to try. The dialog test also covers the plot options of `estat gof`, `estat mcmcdiag` and `estat posterior`.
+
+**nwlsm 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.1)). The `estat` dialog has a field for the graph name and the `nwlsmselect` dialog one for the graph options; the dialog tests check the commands the dialogs build.
+
+**nwsbm 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.1)). The dialog test checks the command that the `nwsbmplot` dialog builds (`type()`, `name()`, `saving()`, `export()`).
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04) and on Windows 11 (both StataNow 19.5 MP): for nwergm the test of the cutoff message, the plot test and the package test; for nwlsm and nwsbm the plot tests, the error-path tests and the dialog tests. Stata 18 on the Mac was not run.
+
+<a id="nwsaom-1-9-0"></a>
+<a id="nwergm-1-11-0"></a>
+<a id="nwrem-1-6-0"></a>
+
+### 20 November 2026: nwsaom 1.9.0, nwergm 1.11.0 and nwrem 1.6.0
+
+All three need nwcommands 3.29.0 or later for the graph options.
+
+**nwsaom 1.9.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.9.0)).
+
+- New `estat timetest, plot` (RSiena's `plot.sienaTimeTest`) and `nwsaom meta, plot` (RSiena's `plot.sienaMeta`).
+- `estat convergence` lists the t-ratios for convergence and the overall maximum convergence ratio; `plot` draws them with the limit of 0.1 (an extension; RSiena has no such plot).
+- `saving()`, `export()` and graph options for the violin plots of `estat gof`, `estat timetest, plot`, `estat convergence, plot` and `nwsaom meta, plot`; the default pictures of `estat gof` are unchanged.
+
+**nwergm 1.11.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.11.0)).
+
+- `estat gof, plot` draws one panel for every statistic of `gof()`, as `plot(gof())` of R's ergm does (model statistics, degrees, shared partners, triad census, geodesic distances); two-mode networks now get these panels. The default call on a one-mode network draws the same picture as 1.10.0.
+- `saving()`, `export()` and graph options for `estat gof, plot`, `estat mcmcdiag, plot` and `estat posterior, plot()` (there `gsaving()`); `name()` accepts a trailing `, replace`.
+- Fix: `estat gof, plot` after `nwergm ego` ended with r(3499); it now draws the degree distribution of the egos against the simulated draws.
+
+**nwrem 1.6.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.6.0)).
+
+- New `estat rank`, `estat actors` and `estat time` (extensions; relevent has no such methods): the rank of the observed event among all pairs of the risk set, observed against expected events by actor (as sender and as receiver) and over time, with graphs and tables. Works with both likelihoods, `condition()`, `riskset()`, `entry()`/`exit()` and the fixed effects.
+- `name()`, `saving()`, `export()` and graph options in the same way as the other plots of the family. The evaluation runs in the plugin, which is rebuilt for macOS, Linux and Windows.
+
+Tested on macOS (Stata 17): the plot tests and the package tests of nwsaom and nwergm, and the plot, estat and old-plugin tests of nwrem; on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of nwsaom and nwergm. The plot and estat tests of nwrem also pass on Linux and on Windows with the plugins built for this release. Stata 18 on the Mac was not run for these three releases.
+
+<a id="nwdynam-1-10-0"></a>
+<a id="nwalaam-1-3-0"></a>
+
+### 20 November 2026: nwdynam 1.10.0 and nwalaam 1.3.0
+
+**nwdynam 1.10.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.10.0)). Needs nwcommands 3.29.0 or later for the graph options.
+
+- New `estat choiceplot` (choice and choice coordination models): the rank of the realised receiver among the risk set of every event by the fitted probability, with the share of events at rank k or better, mean and median rank and a table of top-k hits.
+- New `estat rateplot` (rate models, with or without intercept): observed against expected events per actor as sender, or per period for the most active actors.
+- `estat outliers`, `estat changepoints`, `estat choiceplot` and `estat rateplot` take `name()`, `saving()`, `export()` and the graph options of `twoway`, in the same way as the plots of the core; default pictures are unchanged; titles of the new plots are black.
+
+**nwalaam 1.3.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.3.0)). The plots need nwcommands 3.29.0 or later.
+
+- New `estat gof, distplot`: histogram of the simulated values of every statistic with the observed value as a red line.
+- `estat gof` and `estat mcmcdiag` take `saving()`, `export()` and graph options, with default graph names.
+- Fix: `estat mcmcdiag, plot` drew the wrong columns of the stored trace in the panels of the differences after `method(sa)` and `method(ee)`.
+
+Tested on macOS (Stata 17), and on Linux and on Windows (StataNow 19.5 MP): the plot tests and the package tests of both packages. Stata 18 on the Mac was not run for these two releases; the compiled plugins are unchanged.
+
+<a id="nwcommands-3-29-0"></a>
+
+### 20 November 2026: nwcommands 3.29.0
+
+**nwcommands 3.29.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.29.0)).
+
+- New `nwcoefplot`: coefficient plot (point estimates with confidence intervals) after `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and any command that leaves `e(b)` and `e(V)`, so the user-written `coefplot` is not needed. Options `level()`, `keep()`, `drop()`, `noconstant`, `eform` (odds ratios or rate ratios where they make sense), one panel for each equation (`byeq`, `mixeq`), and several stored models side by side. Dialog and menu entry.
+- `nwcompare` has a `graph` option (`coefopts()`) that also draws the coefficients of the compared models side by side, and takes `name()`, `saving()`, `export()` and `plot`.
+- A common set of options for the plots of the core: `name()`, `saving()`, `export()` and the graph options of `twoway`, which come last and replace the defaults, now work in the same way in `nwcug`, `nwqap` (graph saving is `gsaving()`), `nwdyads`, `nwtriads`, `nwmotifs`, `nwmixing`, `nwtabulate`, `nwcorrelate`, `nwdiffuse, curve`, `nwplotmatrix` and `nwdendrogram`. Default pictures are unchanged. Titles of new plots are black.
+- `nwcorrelate, noplot` switches off the density plot that is drawn with `permutations()` above 1; `nwdiffuse, curve` accepts `plot` as a synonym of `graph`.
+- Fix: `export(file.png, width(N))` wrote the file but ignored the options after the comma in some calls; the width and other export options now apply.
+- Help files and dialogs list the new options.
+
+The new plots of the model packages (`nwsaom`, `nwergm`, `nwalaam`, `nwdynam`, `nwrem`) come with their own releases and need nwcommands 3.29.0 or later.
+
+Tested on macOS (Stata 17), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): the test files of the new and changed plot commands run clean on all three, and the widths of exported pictures were measured on Linux and Windows, including a Windows folder name with a space.
+
+<a id="nwlsm-1-0-0"></a>
+<a id="nwsbm-1-0-0"></a>
+
+### 20 November 2026: nwlsm 1.0.0 and nwsbm 1.0.0
+
+Both packages reach their first stable release. From 1.0.0 the syntax, the stored results and the options are kept within 1.x.
+
+**nwlsm 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.0)). `nwlsmplot` draws with the same scale on both axes, so distances and circles keep their shape, and labels are placed where the fewest markers are. New options: arrows for directed ties (and `noarrows`), cluster means, circles, certainty, posterior draws, `colors()` with a gray version for print, `label()` and `color()` with numeric or string variables and value-labelled legends, `export()`. Titles are black by default. `nwlsmselect` has a graph of the BIC against the number of clusters, and a dialog.
+
+**nwsbm 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.0.0)). `nwsbmplot` draws the blocked adjacency matrix (also shaded and sorted), the block graph, the ICL against the number of blocks, the expected ties and the membership probabilities, for one-mode and two-mode fits. Options: `blocklabels()`, `actorlabels()`, `colors()` including gray, `nolegend`, `title("")`, `export()`. Titles are black by default. `estat icl` now resolves ties between block numbers as documented (the fewest blocks win).
+
+Both packages were tested on macOS (Stata 17), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP). Every test file of both packages was run on Linux and Windows on the release candidate, and the plot, goodness-of-fit, BIC, tie-break, ordering, error and post-estimation tests were run again on the final commits, with the shipped plugins. The dialog boxes load without error; they have not been inspected on screen on Linux or Windows.
+
+<a id="nwlsm-0-7-0"></a>
+<a id="nwsbm-0-4-0"></a>
+
+### 20 November 2026: nwlsm 0.7.0 and nwsbm 0.4.0
+
+**nwlsm 0.7.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v0.7.0)). `estat bic` computes the BIC of `latentnet` (`bic.ergmm`) and `nwlsmselect` fits the model for several numbers of latent clusters and ranks them by BIC. `estat gof` takes `cutoff()` for valued networks. The passes over all dyads use a persistent team of threads, so `threads()` pays from about 40 actors on, with the same results for any number of threads. With sender, receiver or sociality effects the fit of the positions now starts from four draws by default (`mklstarts()`), because the minimum Kullback-Leibler fit has two local optima there (latentnet ends in the poorer one in 3 of 12 seeds on the Sampson monks); this deviates from `latentnet` on purpose.
+
+**nwsbm 0.4.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v0.4.0)). The degree-corrected model now also fits two-mode networks (as `DcLbm` in `greed`); standard errors of the covariate coefficients (`e(se_beta)`, `e(V_beta)`, conditional on the estimated blocks; the R packages give none); the Bernoulli covariate model is 2.5 to 3 times faster; `greedy` searches node swaps and merges on the exact ICL (as `greed`); `blockvar` fits a variance for every pair of blocks; `orderblocks` numbers the blocks by size.
+
+Both packages were tested on macOS (Stata 17 and 18), on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): every test file of both packages, with the shipped plugins.
+
+<a id="nwcommands-3-28-0"></a>
+<a id="nwergm-1-10-0"></a>
+<a id="nwlsm-0-6-0"></a>
+<a id="nwsbm-0-3-0"></a>
+
+### 19 November 2026: nwcommands 3.28.0, nwergm 1.10.0 and two new packages, nwlsm 0.6.0 and nwsbm 0.3.0
+
+Two packages join the family, a seventh and eighth: **nwlsm 0.6.0** fits latent space models and **nwsbm 0.3.0** fits stochastic block models. Both describe a network that is observed once, by positions or by blocks instead of by local patterns, and both follow R packages. The core and nwergm bring new tools as well.
+
+**nwlsm 0.6.0** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v0.6.0)). Latent space models of Hoff, Raftery and Handcock (2002) after the R package `latentnet`: Euclidean and bilinear models for undirected and directed networks, binary and valued (Poisson, binomial, normal), with edge covariates, random sender, receiver and sociality effects, latent clusters, parallel chains, minimum Kullback-Leibler positions, goodness of fit and posterior predictive checks, plots and dialog boxes. New in this version is the latent space model for social influence of Sweet and Adhikari (2020): the tie model and a model for an outcome of the actors, in which the outcomes of the others enter weighted by their distance in the latent space, are fitted jointly (`influence()`, `estat influence`). Posterior means, log likelihoods and goodness-of-fit statistics agree with `latentnet` 2.12.0 within Monte Carlo error on the test networks. See the [nwlsm section](../nwlsm/) with its [install page](../nwlsm/install/) and a tutorial.
+
+**nwsbm 0.3.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v0.3.0)). Stochastic block models for undirected and directed networks with Bernoulli, Poisson and Gaussian ties, degree correction (Karrer and Newman 2011), latent block models for two-mode networks, dyadic covariates, choice of the number of blocks by the integrated classification likelihood (also the exact criterion of `greed`), parallel starts, `estat` tables, plots and dialog boxes. The number of blocks, the memberships and the criterion agree with the R packages `sbm` 1.0.0, `blockmodels` 1.2.1 and `greed` 0.6.2 on the test networks. See the [nwsbm section](../nwsbm/) with its [install page](../nwsbm/install/) and a tutorial.
+
+**nwergm 1.10.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.10.0)). Two additions. *Bayesian ERGM:* `estimate(bayes)` fits the model by the exchange algorithm with adaptive direction sampling, after R's `Bergm`, with normal priors, posterior summaries (`estat posterior`), convergence diagnostics and a posterior predictive check; see [Bayesian ERGM](../nwergm/bayesian/). *ERGM for egocentrically sampled data:* `nwergm ego` fits the model to a sample of egos and their alters, after R's `ergm.ego`, with design-based standard errors, `estat gof` and simulation; see [Ego-network ERGM](../nwergm/ego/). The estimates of `nwergm ego` agree with `ergm.ego` 1.1.4 on its test data. The plugin has changed, so update the package as a whole. The manual chapters on both are part of the manual of series 1.10. *Correction:* curved terms with an estimated decay (`gwespfree`, `gwdspfree`, `gwnspfree` and the two-mode `bgwdspfree`) used too few shared-partner counts in Monte Carlo and Bayesian fits, which could bias earlier fits of small, clustered networks (nwergm 1.0.0 to 1.8.1); the fits now follow R's `ergm`, with the new option `gwcutoff()` (default 30) and an error when a count exceeds it. Fits of large networks changed by less than the Monte Carlo error in our checks.
+
+**nwcommands 3.28.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.28.0)). New commands: `nwspmatrix` builds a spatial weighting matrix from a network for Stata's `spregress` (it agrees with R's `sna::lnam` to about five digits); `nwdiffuse` computes exposure, thresholds, adoption curves and hazard data for diffusion and contagion (equal to `netdiffuseR` 1.25.1 to nine digits); `nwbackbone` extracts the backbone of valued networks and two-mode projections after the R package `backbone` (global, disparity, LANS and marginal likelihood filters, and the stochastic degree sequence, fixed degree sequence and fixed-margin models for projections; the deterministic methods give the R results); `nwcompare` tabulates N, log likelihood, number of parameters, AIC, BIC and ICL of stored estimation results of `nwergm`, `nwsaom`, `nwlsm`, `nwsbm`, `nwalaam` and Stata's own commands. `nwcommunity` has two new algorithms, `algorithm(leiden)` and `algorithm(infomap)` (undirected two-level map equation); the Leiden and Infomap partitions agree with `igraph`. All have dialog boxes, and the core knows the two new model packages: `nwinstall, models` and `nwinstall, everything` install them, and `nwversion` lists them. See the [reference pages](../reference/) of the new commands.
+
+Tested on macOS with Stata 17, 18 and 19, on Linux (StataNow 19.5 MP) and on Windows (StataNow 19.5 MP): the new tests of the core and the nwergm tests, and for nwlsm and nwsbm their full test files, ran without error on all three systems, and a fresh installation of the core with the seven model packages worked on all three.
+
+<a id="nwalaam-1-2-0"></a>
+
+### 19 November 2026: nwalaam 1.2.0
+
+**nwalaam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.2.0)). Six new effects let the exposure to neighbours with the outcome enter in other forms than a count: `thresholdcontagion(k)`, `fractioncontagion(q)` and `sharecontagion` for the actors with the outcome, and `thresholdexposure(k)`, `fractionexposure(q)` and `shareexposure` for the actors that are exposed but do not have it. The package has 33 effects for undirected and 43 for directed networks. As with every ALAAM effect, a coefficient describes how the outcome is distributed over the network, not the process that produced it. Update the package as a whole (the plugin changed). The manual describes series 1.2.
+
+Tested on macOS with Stata 17 BE (change statistics against their definitions, the new effects, the main test file) and on Linux (Ubuntu 22.04, StataNow 19 MP); Windows is not tested for this version.
+
+<a id="nwergm-1-8-1"></a>
+<a id="nwsaom-1-8-1"></a>
+<a id="nwalaam-1-1-1"></a>
+
+### 18 November 2026: nwergm 1.8.1, nwsaom 1.8.1 and nwalaam 1.1.1
+
+**nwergm 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.8.1)). The help file points to the new package `nwalaam`; no command, term or result changed. The manual describes series 1.8 (the table format, the display options).
+
+**nwsaom 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.8.1)). The rate table of a replayed fit and the rate rows of `estat score` use the same labels as the table printed after the fit. The numbers are unchanged. The manual describes series 1.8.
+
+**nwalaam 1.1.1** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.1.1)). A two-mode network whose nodes are stored in label order now takes the right actors as the outcome mode (before, the header could show the wrong number of actors and a fit could stop with r(430)); the help file says that the equilibrium-expectation standard errors can be too small on larger networks. The first manual of `nwalaam` is written. The manuals of nwdynam 1.9 and nwrem 1.5 on this site name the current patch versions.
+
+Tested on macOS with Stata 17 BE: the quick tests of nwergm (14 tests) and nwsaom (39 tests) and all 10 test files of nwalaam pass.
+
+<a id="nwalaam-1-1-0"></a>
+
+### 18 November 2026: nwalaam 1.1.0
+
+**nwalaam 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.1.0)). The independent runs of `method(ee)` now run in parallel threads, one per core by default; the option `threads(#)` sets the number, and the results are identical for any number of threads. The Karate Club fit with the default settings takes 4 seconds on a computer with 20 threads, against 40 seconds with `threads(1)`, and 9 seconds on a Windows computer with 8 cores, against 62 seconds. The default estimator (stochastic approximation) and all printed numbers are unchanged. Also: the test of the version number now follows the package version, and `method(mple)` carries the pseudo-likelihood title.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP, on Linux (Ubuntu 22.04, StataNow 19.5 MP) and on Windows 11 (StataNow 19.5 MP): all 9 test files pass on each.
+
+<a id="nwalaam-1-0-0"></a>
+<a id="nwcommands-3-27-0"></a>
+
+### 18 November 2026: nwalaam 1.0.0 and nwcommands 3.27.0
+
+A sixth package joins the family: **nwalaam 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.0.0)) fits autologistic actor attribute models (ALAAM), models of a binary outcome on the actors of a network (who smokes, who adopts, which side is taken) given the network around them. It follows ALAAMEE (Python) and MPNet. The default estimator is stochastic approximation, which reproduces the exact maximum likelihood estimates where those can be computed by enumeration (the karate club, a network of 16 actors); the equilibrium-expectation update of ALAAMEE is available as `method(ee)`. There are effects for undirected, directed and two-mode networks, covariates, setting and distance effects, three samplers (toggle, zero-or-one, snowball-conditional), `nwalaam simulate`, `estat gof` and `estat mcmcdiag`. The change statistics agree with ALAAMEE's to rounding error. See the [nwalaam section](../nwalaam/) with its [install page](../nwalaam/install/) and two tutorials.
+
+**nwcommands 3.27.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.27.0)). The core knows the new package: `nwinstall, models` and `nwinstall, everything` install it (and `modelpkg(nwalaam)`, `buildplugin(nwalaam)` and `buildmata(nwalaam)` work), `nwversion` lists it, and a dialog box and a menu entry for it appear under Statistical Models.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suite of nwalaam).
+
+<a id="nwdynam-1-9-1"></a>
+<a id="nwrem-1-5-1"></a>
+
+### 18 November 2026: nwdynam 1.9.1 and nwrem 1.5.1
+
+**nwdynam 1.9.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.9.1)) and **nwrem 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.5.1)). Fix for Stata on a Mac: the console version of StataNow 19.5 reports its operating system as "Unix", so both packages looked for the Linux plugin and stopped with the message that the plugin was too old or could not be loaded. A Mac now always uses the macOS plugin. If you hit this, update with `nwinstall, models`. The plugins themselves are unchanged.
+
+<a id="nwergm-1-8-0"></a>
+<a id="nwsaom-1-8-0"></a>
+<a id="nwrem-1-5-0"></a>
+<a id="nwdynam-1-9-0"></a>
+
+### 17 November 2026: nwergm 1.8.0, nwsaom 1.8.0, nwrem 1.5.0 and nwdynam 1.9.0
+
+Four releases with one change that all users see: **coefficient tables show the full term names by default.** Up to 32 characters are printed without cutting, and the confidence-interval columns are left out when `linesize` is below 100, where a long name does not fit next to them. The option `ci` brings the intervals back (the names are then cut as before); an explicit `level(#)` also shows them; `noci` leaves them out; `ci` together with `noci` stops with r(198). `nopvalues`, `cformat()`, `pformat()` and `sformat()` are passed through. The numbers are unchanged. The tables of `nwsaom` (fit, replay, `ml`, multinet, multiplex, refit), the rate tables and `estat score` follow the same rule; other custom nwsaom tables (`estat importance`, `timetest`, `gof`, `simulate`, `meta`, `bayes`) still cut long names. The tutorial pages show the output of earlier versions and carry a note on this.
+
+- **nwergm 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.8.0)). Also: `nwergm simulate` keeps the data in memory when the draws are on the data's nodes. Fixed: `simulate N` after `set obs` stopped with r(198).
+- **nwsaom 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.8.0)). Fixed: `nwsaom` multiplex with `theta01()` or `theta02()` of the wrong length ended in a Mata error; it now stops with r(198) and a message.
+- **nwrem 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.5.0)). The [manual](../nwrem/manual/) is rebuilt for this version.
+- **nwdynam 1.9.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.9.0)). The [manual](../nwdynam/manual/) is rebuilt for this version.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (the full test suites). On Linux (Ubuntu 22.04, StataNow 19.5 MP), all four passed their full suites (nwergm 88 tests, nwsaom 91, nwrem 23, nwdynam 30); On Windows 11 (StataNow 19.5 MP) all four installed from their tags, their plugins loaded, and the full suites passed (nwergm 88 tests, nwsaom 90, nwrem 23, nwdynam 30) after three test files were corrected for Windows path names (a change to the tests, not to the packages). No plugin changed in these releases.
+
+<a id="nwdynam-1-8-1"></a>
+
+### 16 November 2026: nwdynam 1.8.1
+
+**nwdynam 1.8.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.1)). Fixes. With `netterms()` and a network declared with `eventtime()`, the first fit was correct but every later fit in the same session with the same event network gave wrong estimates; fits are now identical on every call (results are affected only if they came from a second or later fit with an event network whose actor order differs from that of the fitted network). `estat changepoints, plot` works again, and `choice_coordination` with statistics of large values such as `indeg` no longer stops with "flat region".
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (all tests, plus a new test for these fixes). Windows and Linux: not tested for this version; the plugin is the one of 1.8.0.
+
+<a id="nwdynam-1-8-0"></a>
+
+### 16 November 2026: nwdynam 1.8.0
+
+**nwdynam 1.8.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.8.0)). Closer to goldfish, in one release. New: effects through other networks (`netterms()`, with `window`, `weighted` and `ignorerep`), the mixed closures (`mixedtrans` and the others), `tertiusdiff()`, `ignorerep()` for the built-in effects, a time-varying network in `tie()`, windowed rate effects with `intercept`, `tertiuswindow()`, windows and weights in `choice_coordination`, two-mode attribute and closure effects, `opportunities()` with attribute effects (`oppframe()`) and `change()` in two-mode networks. Postestimation, as in goldfish: `estat ic`, `estat eventlik`, `estat eventprob`, `estat outliers` and `estat changepoints` (PELT, AMOC and binary segmentation, a port of the R package changepoint). Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 to 1e-6 on about 700 random and fixed event logs; per-event values agree on 90 logs. **Update the package as a whole:** a plugin older than 1.8.0 is refused with return code 3495.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP and on Linux (Ubuntu 22.04, StataNow 19.5 MP; all 29 tests). The Windows plugin is built by the build workflow and has not been tested yet.
+
+<a id="nwrem-1-4-0"></a>
+
+### 16 November 2026: nwrem 1.4.0
+
+**nwrem 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.4.0)). Closer to relevent. New: the likelihood that uses the waiting times (`interval`, with `starttime()`, `endtime()` and `condition()`), the triadic effects `otpsnd`, `itpsnd`, `ospsnd` and `ispsnd`, the fixed effects `fesnd`, `ferec` and `feint`, six participation shifts (`psabba`, `psabby`, `psabxa`, `psabxb`, `psabxy`, `psabay`), the posterior mode (`postmode`), restricted risk sets (`riskset()`, `entry()`, `exit()`) and several covariates per option. Coefficients agree with the exact maximum of relevent to about 2e-6 on 60 random event logs, standard errors to about 1e-7. The check for effects that are exactly collinear now covers all effects, and fits with the state-dependent dyadic effects are about 1.5 times faster. **Update the package as a whole:** a plugin older than 1.4.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later (3.26.0 for `nwinstall, buildplugin(nwrem)`).
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP and on Linux (Ubuntu 22.04, StataNow 19.5 MP; all 23 tests). The Windows plugin is built by the build workflow and has not been tested yet.
+
+<a id="nwdynam-1-7-0"></a>
+
+### 16 November 2026: nwdynam 1.7.0
+
+**nwdynam 1.7.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.7.0)). Composition change: actors can join or leave the network over the event log. `present(var)` gives who is present at the start, `compchange(net)` the joins and leaves as an event list (value 1 = join, 0 = leave). Absent actors are not candidates in the choice model, do not act in the rate model and are left out of the exposure time, and an event of an absent actor is an error, as in goldfish. Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 on 67 random event logs (one-mode and two-mode, with windows and with time-varying covariates). Fits without composition change are not slower. **Update the package as a whole:** a plugin older than 1.7.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+
+<a id="nwdynam-1-6-0"></a>
+
+### 16 November 2026: nwdynam 1.6.0
+
+**nwdynam 1.6.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.6.0)). Time-varying covariates: `change(variable network)` takes the changes of an actor attribute over the event log, as an event list in which the value is the new value (with `increment`, an increment), and the attribute effects (`same`, `diff`, `sim`, `ego`, `alter`, `egoalterint`, `tertius`) use the value that holds at the time of each event, in the choice, rate, rate-with-intercept and coordination models. Estimates, standard errors and log likelihoods agree with goldfish 1.6.12 on 42 random event logs with changes (coordination standard errors within 6%). Fits without changes are not slower. **Update the package as a whole:** a plugin older than 1.6.0 is refused with return code 3495. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+
+<a id="nwcommands-3-26-0"></a>
+<a id="nwrem-1-3-0"></a>
+
+### 16 November 2026: nwcommands 3.26.0 and nwrem 1.3.0
+
+**nwrem 1.3.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.3.0)). Every fit now runs in a compiled plugin that returns the likelihood, the gradient and the exact Hessian of all 14 effects; the optimizer uses Newton steps. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.03 s (was 0.76 s) and with `frpsndsnd` 0.27 s (was 4.6 s); at 20,000 events among 100 actors `nodsnd nidrec` takes 0.16 s (was 3.7 s). The estimates are the same to the printed digits, with slightly tighter convergence. **Update the package as a whole:** a plugin older than 1.3.0 is refused with return code 3495, and a missing plugin with 601. Requires nwcommands 3.24.0 or later.
+
+**nwcommands 3.26.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.26.0)). `nwinstall, buildplugin(nwrem)` compiles the nwrem plugin on your computer, like those of the other model packages; `buildplugin(all)` covers five packages.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (core: full suite, 258 tests per version, all pass; nwrem: full suite). The Windows and Linux plugins of nwrem are built by the build workflow and have not been tested yet.
+
+<a id="nwdynam-1-5-1"></a>
+
+### 16 November 2026: nwdynam 1.5.1
+
+**nwdynam 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.5.1)). Fits with `submodel(rate) intercept` and choice fits with effects such as `trans` on dense data (thousands of events among few actors) no longer spend up to a thousand likelihood evaluations after the maximum was reached: 5,000 events among 50 actors take 0.1 s instead of 1.5 to 2.6 s. The estimates are the same. The compiled plugins are those of 1.5.0.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). Windows and Linux are not yet tested for this release.
+
+<a id="nwcommands-3-25-1"></a>
+
+### 15 November 2026: nwcommands 3.25.1
+
+**nwcommands 3.25.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.1)). The example data sets `socialevolution` and `socialevolution_nodes` are removed because their redistribution is not permitted by the licence of the original data; the email log `manufacturing` is the example event data. The menu of this site now lists Tutorial 21 directly after Tutorial 20.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 258 tests per version: all pass; `test_nwinstall_ancillary` ends at its movie-export check because the screen was locked, and `test_nwinstall_everything` was run with the model repositories next to the core). The change is data, tests and documentation; the Mata library is unchanged (same hash as 3.25.0). Not tested on Windows or Linux for this release.
+
+<a id="nwdynam-1-5-0"></a>
+
+### 15 November 2026: nwdynam 1.5.0
+
+**nwdynam 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.5.0)). Every fit now runs in the compiled plugin: choice, rate, rate with intercept and choice coordination, with all effects, windows, weighted effects, two-mode networks, `opportunities()` and `tie()`. The slower Mata fit path is gone. Choice coordination is 12 to 14 times faster (1,019 manufacturing emails, `inertia trans`: 31 s instead of 449 s) with the same estimates, and the default rate fit without `intercept` takes under a second instead of a minute. **Update the package as a whole:** a plugin older than 1.5.0 is refused with return code 3495, and a missing plugin with 601. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite). The Windows and Linux plugins are built by the build workflow and have not been tested yet.
+
+<a id="nwrem-1-2-0"></a>
+
+### 15 November 2026: nwrem 1.2.0
+
+**nwrem 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.2.0)). Fits are much faster. The likelihood and its gradient are computed from sums over senders and receivers instead of an n x n softmax per event, and the state-dependent dyadic effects (`frpsndsnd`, `frrecsnd`, `rsndsnd`, `rrecsnd`) are updated only at the rows of the sender and receiver after each event. On the first 14 days of the manufacturing emails (2,738 events, 129 actors) `nodsnd nidrec` takes 0.9 s instead of 20.3 s, and with `covevent()` 1.3 s instead of 35.4 s. In the [benchmark against relevent](/nwrem/speed/) nwrem is faster in every cell where both finished. The estimates are the same as before (coefficients to about 1e-11). Effects that are exactly collinear with earlier effects, for example `ntdegsnd` together with `nodsnd` and `nidsnd`, are now found before the optimizer runs, left out (coefficient 0, listed in `e(unidentified)`) instead of being run on a flat ridge. Requires nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full test suite) and on Linux (Ubuntu 22.04) with StataNow 19.5 MP. Windows is not yet tested for this release.
+
+<a id="nwdynam-1-4-0"></a>
+
+### 15 November 2026: nwdynam 1.4.0
+
+**nwdynam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.4.0)). `nwdynam, submodel(rate) intercept` is fast: the first 14 days of the manufacturing emails (2,738 events) fit in a fraction of a second instead of not finishing, and 50,000 events among 1,000 actors take a few seconds. The estimate is found by Newton-Raphson and equals the converged maximum to 12 digits (fits made with earlier versions agreed with it to about 5 digits). Needs nwcommands 3.24.0 or later.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP, and on Linux (Ubuntu 22.04) with StataNow 19.5 MP, where the native plugin is used and agrees with the Mata evaluator. The Windows plugin is built by the build workflow; until it is tested there, that platform may use the Mata evaluator, which is fast as well.
+
+<a id="nwcommands-3-25-0"></a>
+
+### 14 November 2026: nwcommands 3.25.0
+
+**nwcommands 3.25.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.25.0)). Temporal networks are no longer flattened silently: `nwsave` and `nwuse` (also `nwwebuse` and `nwappend`) keep the event times, snapshot times and intervals of a network declared with `time()`, `interval()` or `eventtime()`, `nwduplicate` and `nwdropnodes` keep them, `nwtoedge, time` lists one row per event, and `nwexport` and `nwimport` write and read the times of an edge list (`type(edgelist)`). Formats that cannot hold times (Pajek, UCINET, GML) now refuse a temporal network unless you ask for the aggregate, instead of writing the ties without telling you; `nwtoedge` and `nwload` of a temporal network say that the ties are aggregated over all times. Two new example data sets for `nwwebuse`, `manufacturing` and `manufacturing_nodes` (50,233 emails among 144 employees of a manufacturing company, with times in days). `nwmovie, export()` stops the viewer it started when the file is not written, and on macOS stops at once when the screen is locked. Commands that showed their own error message no longer print a second line ("invalid syntax") after it; the return codes are unchanged. The model packages are not re-released: nwsaom 1.7.1, nwergm 1.7.1, nwdynam 1.3.2 and nwrem 1.1.2 work with this core.
+
+Tested on macOS with Stata 17 BE, Stata 18 BE and StataNow 19.5 MP (full core suite, 259 tests per version; two tests need the model repositories next to the core and an unlocked screen and were run separately), on Windows 11 with StataNow 19.5 MP (254 of 259 tests ran clean; the other five end with the known Stata teardown crash after their checks) and on Linux (Ubuntu 22.04) with StataNow 19.5 MP: not yet tested for this release.
+
+<a id="nwcommands-3-24-0"></a>
+<a id="nwsaom-1-7-1"></a>
+<a id="nwergm-1-7-1"></a>
+<a id="nwdynam-1-3-2"></a>
+<a id="nwrem-1-1-2"></a>
+
+### 13 November 2026: nwcommands 3.24.0, nwsaom 1.7.1, nwergm 1.7.1, nwdynam 1.3.2 and nwrem 1.1.2
+
+**nwcommands 3.24.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.24.0)). A public, read-only Mata interface: 21 `nwapi_*()` functions give your own Mata code a small, stable view of the networks in memory (properties, adjacency matrix, edge list, degrees, neighbors), documented in `help nwapi`; their names and result shapes stay the same within a major version. Tutorial 21 shows how to use them. On Linux, `nwplot, interactive` and `nwmovie` now say which library is missing and how to install it, and in console Stata the viewer commands print the file path instead of stopping. Also fixed: a stray "invalid syntax" line after some error messages, and temporary file names when the temporary directory has no trailing slash.
+
+**nwsaom 1.7.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.7.1)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwergm 1.7.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.7.1)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwdynam 1.3.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.3.2)). Rebuilt for nwcommands 3.24.0; no other change.
+
+**nwrem 1.1.2** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.2)). Rebuilt for nwcommands 3.24.0; no other change.
+
+All five packages were tested on macOS with Stata 17, 18 and 19 (the full test suites), on Windows 11 with Stata 19 and on Linux (Ubuntu 22.04) with Stata 19. On Linux, in console Stata, the tests that need the Stata GUI cannot run.
+
+<a id="nwcommands-3-23-0"></a>
+<a id="nwsaom-1-7-0"></a>
+<a id="nwergm-1-7-0"></a>
+<a id="nwdynam-1-3-1"></a>
+<a id="nwrem-1-1-1"></a>
+
+### 13 November 2026: nwcommands 3.23.0, nwsaom 1.7.0, nwergm 1.7.0, nwdynam 1.3.1 and nwrem 1.1.1
+
+**nwcommands 3.23.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.23.0)). Two new commands: `nwregular` finds the classes of regularly equivalent nodes, and `nwegoplot` draws the ego network of one node. New options: `nwbalance, reps()` compares the share of balanced triads with random signs, `nwturnover, formation` compares the ties formed between two waves with all pairs that had no tie, `nwcug, stat()` takes a command without the `##net##` placeholder, and `nwclustering` works without `generate()`. `nwbrokerage`, `nwmodularity` and `nwtabulate` take string variables in their categorical options, and `nwplot` places labels by a variable (`mlabvposition()`). `nwcug` and `nwcorrelate` print their results as Stata's own tests do. Results change in a few places: a Stata variable that already exists now stops a command with r(110) everywhere (about 40 commands used r(99)), and other uses of r(99) give the codes of `help nwerrorcodes`; a tie observed at several times in a temporal network keeps all of them, so `nwattime` finds ties that come and go; and a node size saved by the interactive view comes back at the size it had (`nwplot, importcoords()`). Also fixed: `nwsummarize, save(file, replace)`, the `nwqap` table, `nwdendrogram` on trees of about 50 nodes or more, and `nwinstall` now says when a part of the package could not be downloaded.
+
+**nwsaom 1.7.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.7.0)). A model with several behaviors takes the selection effects of every behavior and works with `estat gof`, `estat simulate`, `estat importance`, `estat timetest` and `estat score`; several behaviors can be combined with composition change, structural zeros and ones, endowment and creation effects and non-directed networks. Effects that compare categories take string variables. Fixed effects no longer count against the convergence criterion, as in RSiena, and a string variable in an effect that needs numbers is refused with a message.
+
+**nwergm 1.7.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.7.0)). `offset()` works with curved terms, as in R (the weight and the decay of a curved term can be fixed together or one at a time), and the categorical terms (`nodematch()`, `nodefactor()`, `nodemix()` and the others) take string variables. An option given twice now says how to give it once.
+
+**nwdynam 1.3.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.3.1)). Rebuilt for nwcommands 3.23.0; no other change.
+
+**nwrem 1.1.1** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.1)). Rebuilt for nwcommands 3.23.0; the help now says how directed and undirected event networks are read. No change in results.
+
+All five packages were tested on macOS with Stata 17, 18 and 19 (the full test suites) and on Linux (Ubuntu 22.04) with Stata 19; all five were also tested on Windows 11 with Stata 19 (nwdynam after the release). On Linux, in console Stata, the tests that need the Stata GUI (dialogs, the menu installer, `view`) cannot run.
+
+<a id="nwcommands-3-22-0"></a>
+<a id="nwsaom-1-6-0"></a>
+<a id="nwergm-1-6-0"></a>
+<a id="nwdynam-1-3-0"></a>
+<a id="nwrem-1-1-0"></a>
+
+### 13 November 2026: nwcommands 3.22.0, nwsaom 1.6.0, nwergm 1.6.0, nwdynam 1.3.0 and nwrem 1.1.0
+
+**nwcommands 3.22.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.22.0)). Event networks keep a value per event (`nwset sender receiver value, eventtime(time)`). `nwuse` and `nwwebuse` bring every network back exactly as saved, in its saved node order and direction, so results that depend on the order of the nodes (model estimates for a given seed, random layouts, listings) can differ from earlier releases; the ties and attributes are the same. Results also change for `nwcontext, mode(either)` (a neighbour tied both ways counts once), `nwqap` with an attribute, `nwtoedge` of two-mode networks (the mode-1 node is always `_ego`), `nwexport` of binary networks (written without tie values) and `nwpath` with ego equal to alter (a path of length 0). Many fixes: error codes follow `help nwerrorcodes`, network names longer than 32 characters are refused, refused requests no longer lose or change networks, and event data with missing values are refused.
+
+**nwsaom 1.6.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.6.0)). `nwsaom` without options (or with `level()`) redisplays the last fit and `estimates replay` works; `estat simulate` and `nwsaom simulate` accept `generate(..., replace)`. Simulations after a fit with composition change (`present()`, `joinat()`/`leaveat()`), a behavior or `groups()` now let only the active actors act, as the fit does, so `estat simulate`, `estat gof` and `estat mems` results change for such fits. `estat` after `estimates restore` of an earlier fit stops with a message instead of using the later model. The manual for version 1.6 keeps the DOI of all versions.
+
+**nwergm 1.6.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.6.0)). `triangle` is accepted on directed networks, as in R; covariate options take variable ranges and wildcards; `nwergm` without arguments redisplays the last fit. Results change for `estat gof` after `method(mple)` (the default interval is 1,024, as R's `gof.ergm`) and for geometrically weighted terms with a decay of about 30 or more (now computed as in R).
+
+**nwdynam 1.3.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.3.0)). Event values are used as in goldfish: the value of an event is added to the tie, and the weighted effects sum the values (they can now be combined with their own window). Covariates are matched to the actors by their node labels; events or covariates with missing values are refused; `nwdynam` without arguments redisplays the last fit, with the new option `level()`.
+
+**nwrem 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.1.0)). Covariates are matched to the actors by their node labels; events or covariates with missing values are refused with a clear message; `nwrem` without arguments redisplays the last fit, with the new option `level()`.
+
+All five were tested on macOS with Stata 17, 18 and 19 (the full test suites), and all except nwdynam also on Windows with Stata 19; the Linux plugins are built in the same way but were not tested in Stata.
+
+<a id="nwsaom-1-5-19"></a>
+
+### 12 November 2026: nwsaom 1.5.19
+
+**nwsaom 1.5.19** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.19)). `rates()` of `estat simulate` and `nwsaom simulate` after a non-directed fit of the joint, force or agree type is now on the scale of `e(rates)` (the rates printed by the fit, RSiena's scale); before, the values were taken as rates per actor. `nwsaom simulate` with a single effect (for example a two-mode network with `outdegree theta(-1)`) and fits that fix the only parameter no longer stop with an error.
+
+<a id="nwsaom-1-5-18"></a>
+
+### 12 November 2026: nwsaom 1.5.18
+
+**nwsaom 1.5.18** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.18)). `estat gof`, `estat simulate` and `estat mems` after a non-directed fit with `waves()` or with a behavior now simulate the fitted non-directed model (symmetric networks); before, they used directed ministeps, so these goodness-of-fit results and simulations change. The estimates do not change. `estat simulate` and `nwsaom simulate` now work after two-mode fits of any size (larger networks stopped with "options too long").
+
+<a id="nwcommands-3-21-0"></a>
+<a id="nwsaom-1-5-17"></a>
+<a id="nwergm-1-5-12"></a>
+<a id="nwdynam-1-2-5"></a>
+<a id="nwrem-1-0-13"></a>
+
+### 12 November 2026: nwcommands 3.21.0, nwsaom 1.5.17, nwergm 1.5.12, nwdynam 1.2.5 and nwrem 1.0.13
+
+**nwcommands 3.21.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.21.0)), **nwsaom 1.5.17** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.17)), **nwergm 1.5.12** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.12)), **nwdynam 1.2.5** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.5)) and **nwrem 1.0.13** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.13)). Fixes of problems found while checking the help files against the code. Results change for `nwdyadprob ..., density()`, which now uses the tie values of the weight network as probabilities, as documented (values above 1 were flattened), and for `nwsaom estat mems` after an undirected fit, which now simulates undirected networks like `estat gof` and `estat simulate`. Core: `nwgenerate ... = sym()` works, `nwnclique`, `nwnclan` and `nwkplex` with `nomatrix` no longer fail when one set is found, `nwfromedge` and `nw2fromedge` no longer change or drop the data on an error, `nwattime` keeps two-mode networks two-mode, options that were accepted and ignored now work (`nwplotmatrix, labelopt() legendopt()`, `nwgeodesic, noreplace`, `animate, mag()` and others), and several commands no longer leave results or scalars behind. nwsaom: `simulate, gen()` is accepted, `multiplex` names its cross effects as everywhere else and honours `detail`, `estat gof` after `groups()` includes the behaviour, `meta, rates` includes `wave1()`/`wave2()` fits. nwergm, nwdynam and nwrem: clearer messages and checks.
+
+<a id="nwcommands-3-20-1"></a>
+<a id="nwsaom-1-5-16"></a>
+<a id="nwergm-1-5-11"></a>
+<a id="nwdynam-1-2-4"></a>
+<a id="nwrem-1-0-12"></a>
+
+### 12 November 2026: nwcommands 3.20.1, nwsaom 1.5.16, nwergm 1.5.11, nwdynam 1.2.4 and nwrem 1.0.12
+
+**nwcommands 3.20.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.20.1)), **nwsaom 1.5.16** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.16)), **nwergm 1.5.11** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.11)), **nwdynam 1.2.4** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.4)) and **nwrem 1.0.12** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.12)). The help files describe what the commands do now, without notes on earlier versions; a few descriptions that no longer matched the commands are corrected (valued networks in `nwevcent`, `nwbetween` and `nwgeodesic`), and the layout of the help files is repaired: in some of them (for example `nwburt`, `nwclique`, `nwergm`) the sections ran together from some point on or words were missing in the help Viewer, and stored results and some paragraphs did not wrap at the window width. All help files were also checked against the code: options, defaults, stored results and examples that did not match are corrected (in nwdynam, for example, the default effects; in nwergm, when `edges` may be left out), the network types are described in one short section, and the sections follow one order. In nwsaom and nwergm, messages printed by the Mata library also wrap between words now. A few bugs are fixed: `nwexpand ... if` (and `nwhomophily`) no longer delete observations from the data, `nwbridges` gives a symmetric result on an undirected network, `weights()` of `nwring`, `nwsmall`, `nwpref` and `nwdyadprob` need not sum to one, and `nwergm simulate` accepts a geometrically weighted term with decay 0. Other results do not change.
+
+<a id="nwcommands-3-20-0"></a>
+
+### 12 November 2026: nwcommands 3.20.0
+
+**nwcommands 3.20.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.20.0)). `nwplot` can draw a map under a network placed by longitude and latitude (`basemap()`, with the new example data `usmap`), and the interactive page saves a do-file (`nwedit_plot.do`) that redraws the edited picture in Stata, so that hand-made changes can be repeated. `nwdyads, plot` and `nwtriads, plot` draw the dyad and triad census as small pictures with counts. `nwsummarize` reports the mean degree, `nwgeodesic` reports distances over the connected pairs when some pairs are unconnected, and `nwplotmatrix, group()` writes the group names. The data set `lazega` has numeric, labeled versions of office, practice and status (`officenum`, `practicenum`, `partner`).
+
+<a id="nwergm-1-5-10"></a>
+<a id="nwsaom-1-5-15"></a>
+<a id="nwrem-1-0-11"></a>
+<a id="nwdynam-1-2-3"></a>
+
+### 11 November 2026: nwergm 1.5.10, nwsaom 1.5.15, nwrem 1.0.11 and nwdynam 1.2.3
+
+**nwergm 1.5.10** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.10)), **nwsaom 1.5.15** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.15)), **nwrem 1.0.11** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.11)) and **nwdynam 1.2.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.3)). Long notes, warnings and error messages wrap between words instead of being cut in the middle of a word. Results do not change.
+
+<a id="nwcommands-3-19-0"></a>
+
+### 11 November 2026: nwcommands 3.19.0
+
+**nwcommands 3.19.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.19.0)). The example data sets now come from [nwcommands.org/examples](https://nwcommands.org/examples/) (GitHub stays the fallback), so their addresses in the output are short. Two fixes: a row with a missing receiver in an edge list now keeps that person as a node without ties (an isolate), with the right number of ties; and `nwimport` reads Pajek files without vertex lines. Long notes and messages wrap between words instead of being cut in the middle of a word. Results do not change.
+
+<a id="nwcommands-3-18-0"></a>
+
+### 11 November 2026: nwcommands 3.18.0
+
+**nwcommands 3.18.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.18.0)). New example data set `baerveldt19`: all 19 schools of the Dutch Social Behavior study that the Siena project distributes, 990 pupils, with friendship at two waves, shared ethnicity, gender and delinquency ([data sets](../datasets/#baerveldt19-all-19-dutch-secondary-schools)). The data set `baerveldt` (15 of the schools) is unchanged. No command changes.
+
+<a id="nwergm-1-5-9"></a>
+<a id="nwsaom-1-5-14"></a>
+
+### 10 November 2026: nwergm 1.5.9 and nwsaom 1.5.14
+
+**nwergm 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.9)). `estat gof` after a two-mode fit counts the degrees and shared partners of each mode correctly when the nodes of the two modes are stored mixed (as in the Davis data, sorted by name). Before, the first n1 nodes were taken as the first mode, which gave wrong degree and shared-partner tables for such networks. Estimates, model statistics and geodesic distances were not affected.
+
+**nwsaom 1.5.14** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.14)). After a fit that has not converged, the hint to type `nwsaom refit` also follows the convergence table printed with `detail`. Results do not change.
+
+<a id="nwergm-1-5-8"></a>
+
+### 10 November 2026: nwergm 1.5.8
+
+**nwergm 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.8)). `estat gof, plot` draws the observed distribution as a red line with circle markers, as in nwsaom's goodness-of-fit plots. Results do not change.
+
+<a id="nwsaom-1-5-13"></a>
+
+### 10 November 2026: nwsaom 1.5.13
+
+**nwsaom 1.5.13** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.13)). `nwsaom refit` now also works after `nwsaom multinet`, and a `multinet` fit that has not converged says to type `nwsaom refit`.
+
+<a id="nwsaom-1-5-12"></a>
+
+### 10 November 2026: nwsaom 1.5.12
+
+**nwsaom 1.5.12** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.12)). New command **`nwsaom refit`**: it runs the last fit again, starting from its estimates (RSiena's `prevAns`), without typing them into `theta0()`; `maxruns(#)` repeats it until the fit has converged. A fit that has not converged now says to type `nwsaom refit`. `estat gof` explains what "rejected" means. [Tutorial 2](../nwsaom/tutorial-2-convergence/) shows the new command.
+
+Update with `nwinstall, modelpkg(nwsaom)`.
+
+<a id="nwsaom-1-5-11"></a>
+
+### 9 November 2026: nwsaom 1.5.11
+
+**nwsaom 1.5.11** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.11)). In the tables of `nwsaom describe`, `nwsaom meta`, `nwsaom bayes` and the `estat` commands, the top and bottom rules now meet the column bar, as in Stata's own tables. Estimates and stored results do not change.
+
+Update with `nwinstall, modelpkg(nwsaom)`.
+
+<a id="nwsaom-1-5-10"></a>
+
+### 9 November 2026: nwsaom 1.5.10
+
+**nwsaom 1.5.10** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.10)). The output of `nwsaom describe`, `nwsaom meta`, `estat score`, `estat timetest` and `estat simulate` is laid out as Stata's own tables. Estimates and stored results do not change.
+
+Update with `nwinstall, modelpkg(nwsaom)`.
+
+<a id="nwergm-1-5-7"></a>
+
+### 9 November 2026: nwergm 1.5.7
+
+**nwergm 1.5.7** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.7)). The notes printed after a fit stay within 80 columns: the Monte Carlo standard error of the log-likelihood has a line of its own, and the notes on pseudolikelihood, curved terms, constraints and missing dyads are shorter and wrap at word boundaries. Results do not change.
+
+Update with `nwinstall, modelpkg(nwergm)`.
+
+<a id="nwergm-1-5-6"></a>
+
+### 9 November 2026: nwergm 1.5.6
+
+**nwergm 1.5.6** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.6)). The headers of `estat mcmcdiag` end where the table ends, and `estat gof` names the number of simulated networks in the title of each table. Results do not change.
+
+Update with `nwinstall, modelpkg(nwergm)`.
+
+<a id="nwergm-1-5-5"></a>
+
+### 9 November 2026: nwergm 1.5.5
+
+**nwergm 1.5.5** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.5)). `estat mcmcdiag` prints a shorter report: the sample size, burn-in, interval and acceptance rate, and one table with the mean, standard deviation, autocorrelation, effective sample size and Geweke test of every statistic. The new options `heidel` and `report` add the Heidelberger-Welch test and the full report of R's `mcmc.diagnostics()`. The tables of `estat gof` are laid out as Stata's own tables. Estimates and stored results do not change.
+
+Update with `nwinstall, modelpkg(nwergm)`.
+
+<a id="nwsaom-1-5-9"></a>
+<a id="nwdynam-1-2-2"></a>
+
+### 9 November 2026: nwsaom 1.5.9 and nwdynam 1.2.2
+
+**nwsaom 1.5.9** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.9)) and **nwdynam 1.2.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.2)). The Windows plugins are compiled with optimisation: on Windows a fit takes about half the time, with the same results. Both packages pass their full test suites on Windows. Nothing changes on macOS or Linux.
+
+Update with `nwinstall, everything` (or `nwinstall, modelpkg(nwsaom)` and `nwinstall, modelpkg(nwdynam)`).
+
+<a id="nwcommands-3-17-6"></a>
+
+### 9 November 2026: nwcommands 3.17.6
+
+**nwcommands 3.17.6** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.6)). The number fields of the dialogs (such as the number of nodes of `nwrandom`) accept only numbers: text is refused with a message before the command runs.
+
+<a id="nwcommands-3-17-5"></a>
+
+### 9 November 2026: nwcommands 3.17.5
+
+**nwcommands 3.17.5** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.5)). The dialogs were checked against the syntax of every command and corrected: among other things, the name of a new network is passed to the command again, `nwrandom` and the other generators ask for the number of nodes, and the dialogs say which fields are required. `nwinstall, buildplugin()` now also builds the plugins on Windows, with Microsoft's free C compiler; if it is missing, the command says what to install.
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
+<a id="nwcommands-3-17-4"></a>
+
+### 9 November 2026: nwcommands 3.17.4
+
+**nwcommands 3.17.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.4)). The first run of all test suites on Windows: `nwsaom`, `nwergm` and `nwrem` passed every test; in the core, `nwsummarize, save()` failed on Windows with a quoted file name and is fixed, and eight tests that assumed macOS now also run on Windows. With these changes, all 347 tests of the five packages pass on Windows (Stata 19 MP).
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
+<a id="nwergm-1-5-4"></a>
+
+### 9 November 2026: nwergm 1.5.4
+
+**nwergm 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.4)). Starting values given in `init()` are now used by Monte Carlo maximum likelihood under constraints such as `degrees` or `bd()`, as in R's `ergm()`. Before, such fits started from zero whatever `init()` said. Coefficients without a given value still start at zero. Fits without `init()` are unchanged.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwergm-1-5-3"></a>
+
+### 9 November 2026: nwergm 1.5.3
+
+**nwergm 1.5.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.3)). Faster Monte Carlo fits for models with many coefficients, and faster statistics for large networks, with the same results.
+- **Many coefficients.** The spectral density that gives the effective sample size and the convergence test of Monte Carlo maximum likelihood is computed with less work. Three iterations of `edges mutual sender receiver` (200 coefficients) on a directed network of 100 nodes take less than half the time.
+- **Large networks.** From 500 nodes on, the statistics of the empty network are computed once per model. On a bipartite network of 3,000 nodes with `bdsp1()` the statistics take 0.01 seconds instead of 38, in the fit, `estat gof` and `estat mcmcdiag`.
+- **Results.** Every result for a given seed is the same as in 1.5.2.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwcommands-3-17-3"></a>
+
+### 9 November 2026: nwcommands 3.17.3
+
+**nwcommands 3.17.3** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.3)). `nwinstall` now puts the line that builds the Network Analysis menu into the `profile.do` that Stata reads at every start: an existing one in your home folder, PERSONAL or SITE, otherwise a new one in `%USERPROFILE%` on Windows, `~/Documents/Stata` on macOS or PERSONAL on Unix. Before, it used the current folder, so after an installation from a project folder the menu did not come back at the next start. If that happened to you, run `nwinstall, gui` once and delete the `profile.do` that the earlier installation left in that folder.
+
+Update with `net install nwcommands, from(https://nwcommands.org/net/) replace` followed by `nwinstall, all`.
+
+<a id="nwsaom-1-5-8"></a>
+
+### 9 November 2026: nwsaom 1.5.8
+
+**nwsaom 1.5.8** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.8)). The output tables are laid out as those of Stata's own commands: plain rules above and below, a capitalised first column, `df` and `Prob > chi2` in the tests, and titles that state the null hypothesis. Only the display changes; estimates, tests and stored results are the same as in 1.5.7.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwsaom-1-5-7"></a>
+
+### 9 November 2026: nwsaom 1.5.7
+
+**nwsaom 1.5.7** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.7)). The statistic of the quadratic shape effect of a behavior is now that of the centred values, as in RSiena. Before, nwsaom used the raw values; the estimates were the same, but the noise reduction of Phase 2 worked poorly for this effect, and co-evolution fits with it met the convergence criterion less often than in RSiena. They now converge as often as in RSiena. An audit of all behavior effects found no other such difference. The manual's listings were rerun, and the [speed page](../nwsaom/speed/) shows the benchmark with this version. Network-only models are unchanged.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwsaom-1-5-6"></a>
+
+### 9 November 2026: nwsaom 1.5.6
+
+**nwsaom 1.5.6** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.6)). Co-evolution models now start the outdegree effect at RSiena's value computed from the data, and `nwsaom multinet` starts each network's outdegree effect and the behavior's linear shape effect at RSiena's values. Before, these effects started at 0, so the noise reduction of Phase 2 introduced in 1.5.3 was estimated in the wrong place, and fewer of these fits met the convergence criterion than in RSiena. Network-only models are unchanged.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwsaom-1-5-5"></a>
+
+### 8 November 2026: nwsaom 1.5.5
+
+**nwsaom 1.5.5** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.5)). In co-evolution models with several behaviors, the standard errors of the behavior rates in the rate table were labelled with the names of the rates; they are now labelled `se`. The manual's output listings were rerun with this version. Estimates are unchanged from 1.5.4.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwergm-1-5-2"></a>
+
+### 8 November 2026: nwergm 1.5.2
+
+**nwergm 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.2)). Faster Monte Carlo fits with the default proposal, SPDyad, and the same results. The terms `gwesp`, `gwdsp`, `esp` and `dsp` now read their shared-partner counts from the proposal's cache, as R `ergm` does, and the cache is faster for networks of up to 2,048 nodes. Default fits of the Lazega advice model take 2.0 instead of 5.1 seconds, Faux Mesa High 0.9 instead of 1.5 seconds.
+- **Results.** Every result for a given seed is the same as in 1.5.1.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwergm-1-5-1"></a>
+
+### 8 November 2026: nwergm 1.5.1
+
+**nwergm 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.1)). The effective sample size, the burn-in test and the convergence test of Monte Carlo maximum likelihood are now computed as R `ergm` computes them, from the multivariate autoregressive spectral density of the estimating equations. Up to 1.5.0 a scalar approximation let the convergence test pass earlier than R's, so that fits simulated less; fits now make about as many proposals as R's (Lazega 9.9 million against R's 9.1, Faux Mesa High 8.1 against 7.8) and take correspondingly longer.
+- **Results that change.** Every seeded MCMC result changes within simulation error.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwsaom-1-5-4"></a>
+
+### 8 November 2026: nwsaom 1.5.4
+
+**nwsaom 1.5.4** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.4)). Phase 1 now falls back to finite differences as RSiena does: when the derivative estimate still has a non-positive diagonal element after Phase 1 has been doubled to 200 simulations, Phase 1 is run again with finite differences (common random numbers), and only a parameter whose derivative is still not positive is kept at its starting value. The output says when this happens. Fits that do not need it are unchanged, to the last digit.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwergm-1-5-0"></a>
+
+### 8 November 2026: nwergm 1.5.0
+
+**nwergm 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.5.0)). The default MCMC proposal is now R `ergm`'s SPDyad (`MCMC.prop = ~sparse + .triadic`), which mixes much better on models with strong triadic effects (Faux Mesa High: effective sample size 74 per 1,000 draws, R 76, against 17 with tie/no-tie steps); `mcmcprop(sparse)` gives the earlier proposal.
+- **Results that change.** Every seeded MCMC result changes within simulation error.
+- Also: `nwergm simulate` after a fit reproduces its seed, and `output(stats)` chains are up to 50 times faster.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwsaom-1-5-3"></a>
+
+### 8 November 2026: nwsaom 1.5.3
+
+**nwsaom 1.5.3** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.3)). The estimation algorithm now follows RSiena's defaults in every respect that a comparison with the source of RSiena 1.6.14 found to differ.
+- **RSiena's defaults.** Phase 2 corrects each simulated statistic by its regression on its score (RSiena's default `dolby` option), repeats a subphase whose steps oscillate, and keeps rates positive by RSiena's rule; Phase 1 has RSiena's length, max(50, 7 + 3p) simulations for p parameters. `nwsaom multinet` and `nwsaom multiplex` use RSiena's phase lengths by default (1,000 Phase 3 simulations instead of 200).
+- **Results that change.** Estimates and standard errors change within simulation error; the same seed takes a different path to the same estimates. Fits take 10 to 30 percent longer, because Phase 2 does the work RSiena's does.
+
+Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwergm-1-4-0"></a>
+
+### 8 November 2026: nwergm 1.4.0
+
+**nwergm 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.4.0)). Large models and faster checks after a fit.
+- **Models with one coefficient per node.** `sender`, `receiver` and factor terms with many levels work with hundreds or thousands of coefficients: up to 8,192 terms in the compiled sampler, a sparse pseudolikelihood (400 nodes, 799 coefficients: 1.2 seconds instead of 504), and postestimation in Stata/BE beyond its matrix limit of 800. The help file has a new section on what to expect from such models.
+- **Faster after a fit.** `estat gof` on a network of 1,000 nodes takes 33 instead of 216 seconds, on the Lazega lawyers 2.2 instead of 7.2 seconds (identical output); `nwergm simulate` and the fit by stochastic approximation are faster too. Ordinary fits take the time of 1.3.7; on the eight benchmark models nwergm is 2.8 to 10.2 times faster than R's `ergm` ([Speed compared with R](../nwergm/speed/)).
+- **Results that change.** Monte Carlo fits of models with more than 64 statistics now get a real step length (every earlier version used 1), so their iterations differ; smaller models give the results of 1.3.7. `estat gof` and `nwergm simulate` after a curved fit (`gwespfree()` and similar) work; they stopped with an error before.
+
+Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwsaom-1-5-2"></a>
+
+### 8 November 2026: nwsaom 1.5.2
+
+**nwsaom 1.5.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.2)). Faster: fits with closure effects (`gwesp()` and its variants, `gwdspff()`, `transrectrip`, `transties`, `balance`, ...) run 2 to 3.5 times as fast (a realistic model on 200 actors: 16 instead of 56 seconds), and `estat gof` takes a quarter to two thirds of the time. The results are those of 1.5.1 (up to differences in the last digits from the compiler of the new build machine). Update with `nwinstall, models` or `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/) replace`.
+
+<a id="nwcommands-3-17-2"></a>
+
+### 6 November 2026: nwcommands 3.17.2
+
+**nwcommands 3.17.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.2)). The `nwmovie` dialog can now export a movie as an MP4 or WebM video or an animated GIF (the `export()` option of 3.16.0), with `replace` and `timeout()`, and has a `nosign` checkbox. Results of the commands do not change.
+
+<a id="nwergm-1-3-7"></a>
+
+### 6 November 2026: nwergm 1.3.7
+
+**nwergm 1.3.7** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.7)). Bug fix: `nwergm simulate` gave the simulated networks the wrong node names when the starting network does not store its nodes as n1, n2, ... (the lawyers' networks store n1, n10, n11, ...), so per-node results such as each lawyer's degree in the draws were attached to the wrong lawyer; statistics of whole networks were not affected. The draws now carry the node names of the basis or fitted network. Also, `nwergm simulate, basis()` after a fit now starts the chain at the basis network, as R's `simulate()` does. Update with `nwinstall, models` or `net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/) replace`.
+
+<a id="nwcommands-3-17-1"></a>
+
+### 6 November 2026: nwcommands 3.17.1
+
+**nwcommands 3.17.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.1)). The dialogs of `nwrandom`, `nwcug` and `nwpermute` offer the degree options of 3.17.0. New on this site: random networks with given degrees in [Tutorial 6](/tutorials/06-generating-networks/) and the CUG test that holds the degrees fixed in [Tutorial 18](/tutorials/18-testing/). Results of the commands do not change.
+
+<a id="nwcommands-3-17-0"></a>
+
+### 6 November 2026: nwcommands 3.17.0
+
+**nwcommands 3.17.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.17.0)). Random networks with given degrees for one-mode networks. `nwcug ..., condition(degrees)` tests a statistic against random networks with exactly the degrees of the observed one (directed: out- and in-degrees), `nwpermute ..., swap` rewires a network and keeps every node's degree, and `nwrandom` draws a network from a list of degrees with `degree()` or `outdegree()` and `indegree()`. Results agree with R's igraph.
+
+<a id="nwcommands-3-16-1"></a>
+
+### 6 November 2026: nwcommands 3.16.1
+
+**nwcommands 3.16.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.1)). `nwmovie` and `nwplot, interactive` failed after an installation from the internet ("required file not found"), because the installer left their page templates and viewer in the working directory. `nwinstall` now puts them into the installation folder; if you installed before, run `nwinstall, all` once. Also corrects the `nwaltergen` help file: the number of contacts who adopted is `sum(alter.adopted)`; `count()` counts contacts with a non-missing value.
+
+<a id="nwcommands-3-16-0"></a>
+
+### 5 November 2026: nwcommands 3.16.0
+
+**nwcommands 3.16.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.16.0)). `nwmovie, export(filename)` writes a network movie as an MP4 or WebM video or an animated GIF straight from a do-file, without opening the interactive view; nothing beyond the package is needed on Windows, macOS or Linux. The movie view has a new *Export video* button. In the viewer on Windows and Linux, *Export PNG*, *Save nodes*, *Save edges* and *Export GIF* now open a save dialog (they did nothing before), and the viewer starts on Windows again.
+
+<a id="nwcommands-3-15-4"></a>
+
+### 4 November 2026: nwcommands 3.15.4
+
+**nwcommands 3.15.4** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.4)). Corrects the 3.15.2 change to `nwload`: after one of the loaded network's variables had been renamed, loading another network stopped with error 110. `nwload` now marks the variables it creates and replaces only those (and the variables of a network declared from your own variables), so only a variable of your own with a node's name stops it.
+
+<a id="nwcommands-3-15-3"></a>
+
+### 4 November 2026: nwcommands 3.15.3
+
+**nwcommands 3.15.3** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.3)). `nwplot` drew some ties not at all when edge widths varied (`edgesize()`): ties were matched to their width class by an exact comparison of decimal numbers. Plots of valued networks may now show ties that were missing before.
+
+<a id="nwcommands-3-15-2"></a>
+
+### 4 November 2026: nwcommands 3.15.2
+
+**nwcommands 3.15.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.2)). Two mistakes that used to pass without an error are now caught. `nwset` refuses repeated node labels (`labs(A,A,B)` was accepted and the labels were quietly replaced by `n1`, `n2`, ...), and `nwload` says when it replaces the variables of the network loaded before and stops instead of overwriting a variable of your own that has a node's name (option `overwrite` to allow it).
+
+<a id="nwsaom-1-5-1"></a>
+
+### 4 November 2026: nwsaom 1.5.1
+
+**nwsaom 1.5.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.1)). A model that names no variable of the data now leaves the data in memory alone. Fitting a network with other node names than the rows of the data (one class of a stacked data set, say) used to extend the data by its nodes and re-sort them.
+
+<a id="nwcommands-3-15-1"></a>
+
+### 4 November 2026: nwcommands 3.15.1
+
+**nwcommands 3.15.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.1)). Fixes the data set `baerveldt`, whose nodes were listed in text order (`n1`, `n10`, ...) instead of the order of the pupils' numbers. The nodes are now named `p01`, `p02`, ... Fetch the data again with `nwwebuse baerveldt, nwclear` if you used 3.15.0.
+
+<a id="nwcommands-3-15-0"></a>
+
+### 4 November 2026: nwcommands 3.15.0
+
+**nwcommands 3.15.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.15.0)). New command `nwstack`: it puts several networks side by side in one block-diagonal network, with no ties between them, and with `group()` creates a variable that numbers the networks. This is the data structure of `nwsaom, groups()` for joint models of several groups, such as the classes of a school. The new example data `baerveldt` and `baerveldt_pupils` hold 15 Dutch school classes (45 networks of their own sizes, and the pupils' attributes), from the Dutch Social Behavior study of Baerveldt and colleagues. Load them with `nwwebuse baerveldt`.
+
+<a id="nwcommands-3-14-1"></a>
+
+### 4 November 2026: nwcommands 3.14.1
+
+**nwcommands 3.14.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.14.1)). Fix for `nwuse`: a file saved with `nwsave` from networks of different sizes was read back with every network at the size of the largest one, the smaller networks padded with isolates, which changed their density and every statistic that depends on the number of nodes. Each network now comes back with its own nodes. The node attributes of a file stay one table for all its networks, so keep the attributes of different groups in separate files.
+
+<a id="nwsaom-1-5-0"></a>
+
+### 3 November 2026: nwsaom 1.5.0
+
+**nwsaom 1.5.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.5.0)). Works with nwcommands 3.6.0 and later. New option `uncentered(varlist)` keeps the raw values of single covariates (RSiena's `centered = FALSE`). `groups()` can be combined with `netbeh()`, checked against `siena07`. Joint models with many actors and a per-actor behavior covariate such as `behfrom()` now run: the 810-pupil, 15-class Dutch school data of Baerveldt, which Snijders's multi-group script uses, fit in about two minutes and agree with RSiena. `nwsaom meta` leaves out fixed effects. The plugin is rebuilt (build 153); update it with `nwinstall, nwsaom` or `net install nwsaom, replace`.
+
+<a id="nwcommands-3-14-0"></a>
+
+### 3 November 2026: nwcommands 3.14.0
+
+**nwcommands 3.14.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.14.0)). Results that change: the permutation and simulation tests report Monte Carlo p-values that are never 0. `nwmixing`, `nwcug`, `nwcorrelate` (now two-sided) and `nwqap` count the observed value as one more draw of the null, so with 500 permutations the smallest p-value is .002 (one-sided) or .004 (two-sided) instead of 0; the tutorials on homophily and on testing show the new values. New: if a Mata library does not load in your Stata (for example error r(3499) because the shipped library was built by a newer Stata), `nwinstall, buildmata(all)` rebuilds the libraries of the core and of the installed model packages with your own Stata; it clears the data and the Mata objects in memory, so save first. See [Installing nwcommands](../nwcommands/install/#rebuilding-the-mata-libraries-on-your-own-computer). The `db nwplot` dialog is wider.
+
+<a id="nwcommands-3-13-2"></a>
+
+### 2 November 2026: nwcommands 3.13.2
+
+**nwcommands 3.13.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.2)). Fix for path highlighting: `nwplot, edgecolor()` on an undirected network colored only one direction of a directed colors network, so the path stored by `nwpath, generate()` showed two of its three ties (in the picture and on the interactive page). Every tie of the path is now colored.
+
+<a id="nwcommands-3-13-1"></a>
+
+### 1 November 2026: nwcommands 3.13.1
+
+**nwcommands 3.13.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.1)). Fix for the offline install: `nwinstall, localcopy all` now copies the compiled plugins and the `nwinstall, buildplugin()` routine, which it had skipped. The [installation page](/nwcommands/install/) now has links to the zip files of all five packages and the three commands for installing from them on a computer without internet access.
+
+<a id="nwcommands-3-13-0"></a>
+<a id="nwsaom-1-4-2"></a>
+<a id="nwergm-1-3-6"></a>
+<a id="nwdynam-1-2-1"></a>
+
+### 31 October 2026: nwcommands 3.13.0, nwsaom 1.4.2, nwergm 1.3.6 and nwdynam 1.2.1 (plugins you can compile yourself)
+
+**nwcommands 3.13.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.13.0)). If the shipped plugin of a package does not work on your computer (another operating system or processor than the one it was built for, or a file that does not load), `nwinstall, buildplugin(nwsaom)` fetches the C source, compiles it with the compiler of your computer (macOS and Linux; a C compiler and `make` are needed) and installs the plugin. `buildplugin(nwcommands)`, `buildplugin(nwergm)`, `buildplugin(nwdynam)` and `buildplugin(all)` work the same way. The C source of all plugins is now also part of the packages: `net get nwsaom, from(https://nwcommands.org/net/)` copies it. See [installation](/nwcommands/install/).
+
+**nwsaom 1.4.2**, **nwergm 1.3.6** and **nwdynam 1.2.1** ship the C source of their plugins, and the messages that report a missing plugin point to `nwinstall, buildplugin()`. In nwsaom, `nwsaom meta` and the postestimation commands (`estat score`, `timetest`, `importance`, `gof`, `simulate`) print Stata-style tables; the numbers are unchanged. The manuals and articles describe the new routine.
+
+<a id="nwcommands-3-12-2"></a>
+<a id="nwsaom-1-4-1"></a>
+
+### 31 October 2026: nwcommands 3.12.2 and nwsaom 1.4.1
+
+**nwcommands 3.12.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.2)). Bug fix: `generate()` no longer deletes a variable of yours whose name starts with the new name. Stata's `drop` accepts abbreviations, so `nwfactions, generate(fac)` used to remove a variable called `faction`. 29 commands are fixed.
+
+**nwsaom 1.4.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.4.1)). Works with nwcommands 3.6.0 and later.
+
+- **`waves()` is the documented way to give the waves**, with a list of networks, a wildcard (`waves(friend*)`) or a range. `wave1()` and `wave2()` still work.
+- **`degree` and `density`** are accepted as names of the `outdegree` effect, so output for undirected networks no longer says "outdegree".
+- **`nwsaom describe`** prints Stata-style tables.
+- **`estat mems`** also works after a fit with `waves()` of two waves.
+- The tutorials and the article on the [literature page](/literature/) are updated.
+- **Nineteen core tutorials in a logical order.** New: reproducible workflow, brokerage and structural holes, triads/dyads/motifs, positions and equivalence, valued networks, networks over time; cohesion and subgroups, homophily and mixing, and testing hypotheses are also new. The existing tutorials are renumbered; the old addresses redirect. The first ERGM tutorial now sits in the [nwergm section](/nwergm/tutorial-1-first-ergm/).
+
+<a id="nwsaom-1-4-0"></a>
+
+### 30 October 2026: nwsaom 1.4.0
+
+**nwsaom 1.4.0: several groups with several behaviors** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.4.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Several groups, several behaviors.** `groups()` now works with several co-evolving behaviors (`behavior(a1 a2 a3 : ... | b1 b2 b3 : ...)`). Every behavior has its own mean and similarity mean in each group and its own rate in each period of each group, as in RSiena. A model with alcohol use and smoking in three groups agrees with RSiena 1.6.14 in the effects of the network and of both behaviors and in all rates.
+- **Manual for version 1.4.** The chapter on several groups is updated; the counts of RSiena's effects now state only how many of its 1,201 effects `nwsaom` implements.
+
+<a id="nwsaom-1-3-4"></a>
+
+### 28 October 2026: nwsaom 1.3.4
+
+**nwsaom 1.3.4: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.4)). Dialogs only; the commands and estimates are unchanged.
+
+- **Simulation dialog.** New dialog `db nwsaom_simulate`, opened by the button "Simulate..." on the last tab ("Related") of the main dialog. It simulates the last fitted model (`estat simulate`) or a model you specify yourself, with `theta()` and `rates()`. It creates one network called `sim` by default.
+- **Network type.** A new drop-down "Network type" in the main dialog (set from the first wave you choose) greys out the effects that do not apply to directed, undirected or two-mode networks.
+- **Buttons and commands.** The buttons that open the related dialogs work without an error message, and the commands built by the dialogs have single blanks between options and none before a closing bracket.
+
+<a id="nwergm-1-3-5"></a>
+
+### 28 October 2026: nwergm 1.3.5
+
+**nwergm 1.3.5: dialog boxes** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.5)). Dialogs only; the commands and estimates are unchanged.
+
+- **Buttons.** The buttons "Simulate networks..." and "Postestimation and goodness of fit..." in the main dialog opened their dialogs with an error message from Stata; they work now.
+- **Cleaner commands.** The commands built by the dialogs no longer have a blank before a closing bracket, and the terms are separated by one blank (`edges mutual gwesp(0.5)`).
+- **Terms.** The geometrically weighted terms (`gwesp`, `gwdsp`, `gwnsp`, `gwdegree` and their relatives) are now on the Triads and Degree tabs.
+- **Simulate from the last fit.** The simulate dialog starts with the choice "Use the model of the last nwergm fit", which is on after a fit.
+- **Network type.** A new "Type" drop-down (set automatically when you choose a network) greys out the terms that do not apply, for example the directed terms on an undirected network.
+
+<a id="nwsaom-1-3-3"></a>
+
+### 28 October 2026: nwsaom 1.3.3
+
+**nwsaom 1.3.3: fix for the main dialog box** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.3)). In all earlier versions the OK button of the main nwsaom dialog (`db nwsaom`) did nothing: no command and no message appeared. This is fixed. The commands, estimates, the plugin and the Mata libraries are unchanged. Typing the command was never affected.
+
+<a id="nwcommands-3-12-1"></a>
+<a id="nwsaom-1-3-2"></a>
+<a id="nwergm-1-3-3"></a>
+
+### 28 October 2026: nwcommands 3.12.1, nwsaom 1.3.2 and nwergm 1.3.3
+
+**nwcommands 3.12.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.12.1)), **nwsaom 1.3.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.2)) and **nwergm 1.3.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.3)). Menus and dialog boxes only; no change in commands or estimates.
+
+- **Menu.** Under "Network Analysis" > "Statistical Models" there is now one entry for nwsaom and one for nwergm instead of one long list. The other dialogs of the two packages open from buttons inside their main dialogs.
+- **Dialog boxes.** The main nwsaom dialog has a group "Related dialogs" with buttons for Bayesian estimation, several networks, multiplex networks, postestimation, describing the data and the meta-analysis. The main nwergm dialog has buttons for simulation and for postestimation and goodness of fit. The describe dialog of nwsaom has the missing field for two-mode networks.
+
+<a id="nwsaom-1-3-1"></a>
+
+### 28 October 2026: nwsaom 1.3.1
+
+**nwsaom 1.3.1: one cosmetic fix** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.1)). With structural zeros and ones, `nwsaom` no longer prints a stray line with the number of fixed dyads before the results. Nothing else changes: the estimates, the plugin and the Mata libraries are the same as in 1.3.0.
+
+<a id="nwsaom-1-3-0"></a>
+
+### 28 October 2026: nwsaom 1.3.0 and the manual for version 1.3
+
+**nwsaom 1.3.0: structural zeros and ones, more for several groups** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.3.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Structural zeros and ones.** The values 10 and 11 in the wave networks (RSiena's codes for dyads that cannot change, fixed at 0 or 1) are now accepted and handled as RSiena does, for directed, undirected and two-mode networks with any number of waves, together with missing data, composition change, endowment and creation effects, rate covariates, one or several behaviors and `nwsaom multinet`. The postestimation commands work for such fits. The option `structural()` with a matrix still works as a deprecated alternative.
+- **Several groups.** `estat gof`, `estat simulate`, `nwsaom simulate` and `estat importance` now work per group. The centered degree effects, `avdeg` and the `ownx` effects use per-group constants, as RSiena does. `joinat()` and `leaveat()`, `behrate()` and undirected networks work with groups, and `gwaves()` without `groups()` stops with an error.
+- **Manual for version 1.3.** The chapters on several groups and on structural zeros and ones are updated.
+
+<a id="nwcommands-3-11-1"></a>
+
+### 27 October 2026: nwcommands 3.11.1
+
+**nwcommands 3.11.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.1)). The four model packages are unchanged by this release.
+
+- **Your own Stata matrices and scalars are no longer overwritten.** `nwcomponents`, `nwkcore`, `nwconcor`, `nwcommunity`, `nwmodularity`, `nwplot` and `nwqap` worked in matrices and scalars with plain names such as `comp_id`, `comp_sizeid`, `components` or `pvalues`. A matrix or scalar of yours with the same name was replaced or removed. They now use private temporary names; the results in `r()` and `e()` are unchanged.
+- **`nwplot` with `components()` no longer stops with error 3301** when the data set has more or fewer rows than the network has nodes.
+
+<a id="nwcommands-3-11-0"></a>
+
+### 27 October 2026: nwcommands 3.11.0
+
+**nwcommands 3.11.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.11.0)). The four model packages are unchanged by this release (they work with it and with 3.10.0).
+
+- **Commands no longer overwrite or delete your own Mata variables.** About 30 commands (among them `nwplot`, `nwcommunity`, `nwcomponents`, `nwcloseness`, `nwqap`, `nwburt`) used short global Mata names such as `Coord`, `M`, `temp` or `reach` for their own work; a variable of yours with the same name was replaced and often deleted. They now use private names and remove them again.
+- **A Mata variable called `nw` no longer breaks nwcommands.** A variable of that name in your own Mata session replaced the list of networks that nwcommands keeps, and the next command stopped with "type mismatch: exp.exp: transmorphic found where struct expected" (only `mata: mata clear` helped). The list is now stored under the name `__nw`, so your own `nw`, `A`, `D` or `p` are safe.
+- **Only for programmers:** a script that addresses the list directly must now write `__nw.nws.pdefs[1]` instead of `nw.nws.pdefs[1]`. Scripts that use `r(netobj)` or `_nwsyntax` need no change; strings from `r(netobj)` that a script saved before the upgrade must be created again.
+
+<a id="nwergm-1-3-2"></a>
+
+### 27 October 2026: nwergm 1.3.2
+
+**nwergm 1.3.2: housekeeping** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.2)). No change in the commands or the estimates.
+
+- **README.** The manual's address on Zenodo (all versions) is given, with the advice to cite it together with the package version printed by `nwergm version`.
+- **Development scripts.** The benchmark preparation script no longer depends on the internal name of the core's network registry.
+
+<a id="nwsaom-1-2-0"></a>
+
+### 27 October 2026: nwsaom 1.2.0 and the manual for version 1.2
+
+**nwsaom 1.2.0: several groups at once** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.2.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **Joint estimation of several groups.** The new option `groups(varname)` fits one model to several groups (for example school classes) with shared effects and one rate per period of each group, as RSiena's `sienaGroupCreate()` with `siena07()` does. `gwaves()` allows different numbers of waves in different groups. It works with actor, dyadic and changing covariates, rate covariates, interactions, composition change, missing data and a co-evolving behavior, and `estat timetest` and `estat score` work after such a fit. Estimates, rates and standard errors agree with RSiena 1.6.14. Not yet available with groups: maximum likelihood and Bayesian estimation, `estat gof`, `estat simulate` and `estat importance`, two-mode and undirected networks, `multinet`, several behaviors and a few effects with group-pooled constants.
+- **Composition change.** An actor who leaves at an observation now acts in the period that starts at its last wave, as in RSiena's `sienaCompositionChange()`. A network effect of the dependent behavior now skips ties whose behavior value was missing at the start of the period (`behegox`, `behaltx`, `behegoplusalt`, `behsim`), as RSiena does.
+- **Two-mode tools.** `nwsaom describe` reports two-mode networks correctly (actors, events, attendances), and `nwsaom simulate` and `estat simulate` work for two-mode models. `nwsaom meta, rates` now combines the rate parameters.
+- **Manual for version 1.2.** The manual has a new chapter on several groups and the meta-analysis, with worked examples. The new tutorials 7 to 14 of the nwsaom section cover composition change and missing data, covariates over time, undirected and two-mode networks, endowment and creation effects, simulation, estimation options and speed, meta-analysis, and several groups.
+
+<a id="nwsaom-1-1-1"></a>
+
+### 27 October 2026: nwsaom 1.1.1
+
+**nwsaom 1.1.1: faster estimation** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.1)). Works with nwcommands 3.6.0 and later. Results are unchanged: with a fixed seed every estimate, standard error and statistic is identical to that of 1.1.0.
+
+- **Faster.** Estimation with the compiled plugin is faster, most of all for two-mode networks (the two-mode benchmark model is about three times as fast) and for fits that need many Robbins-Monro steps. On the 28 benchmark models nwsaom is now 1.5 to 9.0 times as fast as RSiena 1.6.14 on one thread (median 2.1), and no model is slower.
+- **Speed against RSiena.** On one thread nwsaom 1.1.1 was faster than RSiena in all 28 models of our benchmark (median 2.1 times, 1.5 to 9.0), but only 1.5 to 1.8 times for large networks; see [Speed compared with R](../nwsaom/speed/).
+- **Older plugin files.** A plugin binary that has not been rebuilt yet works with the new library and gives the same numbers, only more slowly.
+
+<a id="nwergm-1-3-1"></a>
+
+### 26 October 2026: nwergm 1.3.1
+
+**nwergm 1.3.1: corrections** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.1)). No estimate changes.
+
+- **`estat mcmcdiag`.** With `quietly` the command now prints nothing (a stray row was printed before). The header shows the thinning interval of the final sample and, when the adaptive sampler spaced the draws further apart than requested, a line `Requested interval`. The note at the end of the report now advises `mcmleeffectivesize()` (and `mcmcsamplesize()` or `mcmcinterval()` for fixed-size samples).
+- **Documentation.** The README is updated and the manual for the 1.3 series is in the repository. The speed statement is corrected: on the eight benchmark models nwergm 1.3 is 2.9 to 9.4 times faster than R's `ergm` 4.12.0, and 1.2.3 was slower than R on six of the eight.
+
+<a id="nwergm-1-3-0"></a>
+
+### 26 October 2026: nwergm 1.3.0
+
+**nwergm 1.3.0: faster, R's sampling defaults** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.3.0)). It works with nwcommands 3.6.0 and later.
+
+- **Results that change slightly.** The default Monte Carlo maximum likelihood fit now uses R's adaptive sample size and R's convergence test (as in `ergm`'s `MCMLE.effectiveSize` and its default termination), instead of a fixed 3,000 draws per iteration. A default fit therefore uses different draws and its estimates differ a little from those of 1.2.x. Over 20 seeds the mean estimates agree with R's within 0.04 of an R standard error on five models. The option `mcmleeffectivesize(0)` restores the algorithm of 1.2.3.
+- **Faster.** On the eight benchmark models, nwergm is 2.9 to 9.4 times faster than R's `ergm` 4.12.0 (median of seven fits, same networks, default settings, R and nwergm run in turn, one fit at a time, on an idle machine; 1.2.3 was slower than R on six of the eight). Your times depend on the model and the machine. The compiled sampling kernels are faster, and the Windows plug-in is built with optimisation.
+
+<a id="nwdynam-1-2-0"></a>
+<a id="nwrem-1-0-10"></a>
+
+### 26 October 2026: nwdynam 1.2.0 and nwrem 1.0.10
+
+- **nwdynam 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.2.0)). When the compiled plugin file is missing for your platform, a fit of the original structural effect set (choice and rate sub-models) now prints one warning line and runs on the slower Mata engine, as nwergm does; before, the fallback was silent. Results are unchanged.
+- **nwrem 1.0.10** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.10)). The speed statement in the help is replaced by timings of 26 October 2026 against R's relevent: the ratio of the times ranged from 0.75 to 36 over five effect sets and 200 to 20,000 events; nwrem is slower with the recency effects at up to 1,000 events. See [nwrem and R's relevent](/nwrem/r-relevent/). No change in results.
+
+<a id="nwcommands-3-10-0"></a>
+
+### 26 October 2026: nwcommands 3.10.0 (valued layouts, faster similarities, two-mode nwcug)
+
+**nwcommands 3.10.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.10.0)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.1.0, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).
+
+- **Results that change: plots of valued networks.** `nwplot` and `nwmovie` (layouts `kk` and `frucht`, the defaults) now use the tie values as strengths, as `igraph::plot()` does: strongly tied nodes lie closer together. The option `binary` restores the earlier positions. Binary networks, two-mode networks, signed networks and the other layouts are not affected.
+- **`nwcug` works on two-mode networks** (it stopped with an error before) with four null models: density, the degrees of mode 1, of mode 2, or of both.
+- **Faster:** `nwcorrelate` and `nwsimilar, type(pearson)` (24 times faster at 5,000 nodes, same numbers), the other types of `nwsimilar` and `nwdissimilar`, and `nwdissimilar, type(manhatten)` (minutes before). New: `nwcommunity, algorithm(dirtlpa)` for two-mode networks (the repeated label propagation of Beckett, 2016). The compiled plug-in has to be the new one: `nwinstall` fetches it; without it the commands give the same numbers, slowly (`algorithm(dirtlpa)` stops with a message).
+- **Windows:** the compiled plug-in is built with optimisation, and all counters in it are 64 bits wide. The compiled kernels now also have a test that runs without Stata on Linux, macOS and Windows.
+
+<a id="nwsaom-1-1-0"></a>
+
+### 26 October 2026: nwsaom 1.1.0 and the manual for version 1.1
+
+**nwsaom 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.1.0)). Works with nwcommands 3.6.0 and later; no new core needed.
+
+- **A warning when `nwsaom` has to use the slow Mata engine.** If the compiled plugin cannot be used (its file is missing for your platform, it is older than the model needs, or the model is outside what the plugin covers), `nwsaom` now prints one line before the estimation starts that says why, as `nwergm` already did. Before, the fit ran for a very long time without a message. The results do not change.
+- **Manual for version 1.1.** The nwsaom manual is relabelled and brought up to date: installation with `nwinstall`, the rule that tie values must be 0 or 1, the warning, and the changes of the releases since the last manual. It is archived at Zenodo under the same DOI of all versions, [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); cite it with that DOI and the exact package version from `nwsaom version`.
+
+<a id="nwcommands-3-9-2"></a>
+
+### 26 October 2026: nwcommands 3.9.2 (the menu is installed once)
+
+**nwcommands 3.9.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.2)). The four model packages are unchanged by this release (they work with it; their current versions are nwsaom 1.0.11, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9).
+
+- **`nwinstall, everything` (and `all`) set up the "Network Analysis" menu and the dialog boxes, and never twice:** the start-up line in `profile.do` is written once (the older `nwinstall, downloadoff` counts as the same line), a menu you built yourself is respected, and running the command again shows each entry once. New option `nogui` leaves the menu out; `nwinstall, dupcheck` lists dialog files that exist in two folders. `nwinstall, remove` now also removes the numbered packages. No command or result differs from 3.9.1.
+
+<a id="nwsaom-1-0-11"></a>
+<a id="nwergm-1-2-4"></a>
+<a id="nwdynam-1-1-4"></a>
+<a id="nwrem-1-0-9"></a>
+
+### 26 October 2026: nwsaom 1.0.11, nwergm 1.2.4, nwdynam 1.1.4 and nwrem 1.0.9 (help files corrected)
+
+**nwsaom 1.0.11**, **nwergm 1.2.4**, **nwdynam 1.1.4** and **nwrem 1.0.9** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.4)). Help text and README only; no change in results, no new core needed (they work with nwcommands 3.6.0 and later).
+
+- **nwergm:** the help file now describes the software as it is: the sampler, the change statistics and the pseudolikelihood design matrix run in a compiled plugin, the Mata implementation is a slow fallback used for tests and comparison, a valued network is fitted as the binary graph with one note, 125 of the 139 terms of `ergm` 4.12.0 are implemented, and the page range of Geyer and Thompson (1992) is 657-683. The timing ratios of an earlier benchmark are removed: speed relative to R depends on the model.
+- **nwsaom, nwdynam, nwrem:** references to development scripts and internal notes removed from the help files; install lines in the README start with `nwinstall`.
+
+<a id="nwcommands-3-9-1"></a>
+
+### 26 October 2026: nwcommands 3.9.1 (a short install address)
+
+**nwcommands 3.9.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.1)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **The core now installs from a short address:** `net install nwcommands, from(https://nwcommands.org/net/) replace`, then `nwinstall, everything`. The long GitHub address (`https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/`) keeps working, and so do the tagged addresses of older releases. Nothing else changes: no command, result or plug-in differs from 3.9.0.
+
+<a id="nwcommands-3-9-0"></a>
+
+### 26 October 2026: nwcommands 3.9.0 (plots show tie values, signs and the two modes)
+
+**nwcommands 3.9.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **nwcommands 3.9.0. The default pictures of `nwplot`, `nwmovie` and `nwplotmatrix` change for valued, signed and two-mode networks, and `nwturnover` changes on two-mode networks; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.9.0).**
+  - *Valued networks.* `nwplot` draws the tie values as edge widths (`binary` gives the old picture). *Signed networks.* Positive ties are solid navy, negative ties dashed cranberry, with a legend (`nosign` gives the old colours); the width follows the absolute value. *Two-mode networks.* The two modes get different symbols and colours and a legend unless `color()` or `symbol()` is given.
+  - *`nwplotmatrix`* has a colour legend by default and, for a two-mode network, groups the nodes by mode with a line between the modes. *`nwturnover`* on a two-mode network counts only the ties between the modes (the cells inside a mode were counted as ties present in both networks, so the counts and the Jaccard index were wrong).
+  - *Also.* `nwdyadprob` with `density()` and neither a weight network nor `mat()` stops with a message; `nwaltergen, wmean` notes that the weights of a signed network keep their signs; `nwplot ... if ..., edgesize()` works. *Speed.* `nwgeodesic ..., force` on an unvalued network no longer takes the slow Mata route: 0.03 s instead of 37 s at 600 nodes, same distances.
+
+<a id="nwcommands-3-8-0"></a>
+
+### 26 October 2026: nwcommands 3.8.0 (bipartite motifs, and a two-mode network gets its two-mode form)
+
+**nwcommands 3.8.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.8.0)). The four model packages are unchanged (nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8 work with it).
+
+- **nwcommands 3.8.0. Results change for two-mode networks; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.8.0).**
+  - *A network declares itself two-mode, and the commands follow.* A command that has a two-mode form of the same concept uses it automatically on a two-mode network, and the option `onemode` gives the one-mode computation of the bipartite graph. `nwdegree`, `nwclustering` and `nwmotifs` use the two-mode degree, the two-mode clustering coefficients and the bipartite motifs; `nwcloseness` and `nwbetween` give the normalisations of Borgatti and Everett by default (`twomode` is still accepted). `nw2degree`, `nw2clustering` and `nw2motifs` remain as aliases with the same options and results. One-mode networks and calls with `onemode` give what 3.7.0 gave. The rule is explained on the page on [two-mode networks](/nwcommands/two-mode/).
+  - *Bipartite motifs.* `nwmotifs` (and `nw2motifs`) on a two-mode network counts the 17 bipartite motifs of two to five nodes (44 with `sixnode`) of Simmons et al. (2019) and the positions of every node in them. The counts equal `bmotif` in R; on the 5,092 + 455 company directors the five-node set takes 0.04 s, where `bmotif` needs 54 s (see the [size page](/nwcommands/size-limits/)). Update the plugin with `nwinstall`.
+
+<a id="nwcommands-3-7-0"></a>
+<a id="nwsaom-1-0-10"></a>
+<a id="nwergm-1-2-3"></a>
+<a id="nwdynam-1-1-3"></a>
+<a id="nwrem-1-0-8"></a>
+
+### 26 October 2026: nwcommands 3.7.0, nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3 and nwrem 1.0.8 (faster valued and two-mode commands, valued closeness at any size)
+
+**nwcommands 3.7.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.7.0)), **nwsaom 1.0.10** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.10)), **nwergm 1.2.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.3)), **nwdynam 1.1.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.1.3)), **nwrem 1.0.8** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.8))
+
+- **nwcommands 3.7.0. Results change in a few cases; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.7.0).**
+  - *Compiled kernels.* The weighted betweenness of `nwbetween` (1,000 nodes: 0.13 s instead of 111 s; 10,000 nodes 15 s), the two-mode community search of `nwcommunity` (27 times faster on the 5,092 + 455 company directors), the maximum-weight matching of `nwmatching` (the directors take 0.2 s; the Mata routine could not do it), the tie swapping of `nwpermute, swap` and the weighted walk of `nwpagerank` now run in the compiled plugin. Results equal the earlier code and R's `igraph`. The timings are on the [size page](/nwcommands/size-limits/). Update the plugin with `nwinstall`.
+  - *Valued closeness at any size.* `nwcloseness` and `nwgeodesic` on a valued network of more than 100 nodes used to count steps silently; they now compute least-cost distances (1,000 nodes 0.15 s, 10,000 nodes 14 s). A platform whose plugin is not yet updated stops with error 198 unless `force` or `binary` is given.
+  - *Two-mode level labels in files.* `nwexport` and `nwimport` keep the labels of the two modes (Pajek, GML, edge list); a rectangular UCINET matrix with equal numbers of rows and columns is read as a two-mode network.
+  - *Fixes.* `nwshared` on a directed network now requires the option `undirected`, as its help says (error 198); the random starting orders of the two-mode search and of `nwpermute, swap` come from a generator of their own, so the same `set seed` gives the same result on every platform but not the draws of earlier versions; the error text of `nwinduced` is plain.
+- **nwsaom 1.0.10, nwergm 1.2.3, nwdynam 1.1.3, nwrem 1.0.8.** Audit fixes; they work with nwcommands 3.6.0 and later. *nwsaom* refuses real shares in a network declared as 0/1 (as RSiena) and accepts a 0/1 network made with a value variable; *nwergm* fits a valued network as the binary graph, with one note (as `ergm` does), and `edgecov()` works with a two-mode covariate network; *nwdynam* `tie()` counts a tie only when its value is greater than 0 (as `goldfish`); *nwrem* refuses a two-mode `covevent()` network and missing tie values with a clear message. The messages that asked for a "native plugin of protocol N" now ask to update nwcommands and nwsaom.
+
+<a id="nwcommands-3-6-0"></a>
+<a id="nwsaom-1-0-9"></a>
+<a id="nwergm-1-2-2"></a>
+<a id="nwdynam-1-1-2"></a>
+<a id="nwrem-1-0-7"></a>
+
+### 26 October 2026: nwcommands 3.6.0, nwsaom 1.0.9, nwergm 1.2.2, nwdynam 1.1.2 and nwrem 1.0.7 (valued networks, two-mode networks, nwburt, nwinstall everything)
+
+**nwcommands 3.6.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.6.0)), **nwsaom 1.0.9** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.9)), **nwergm 1.2.2** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.2)), **nwdynam 1.1.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.1.2)) and **nwrem 1.0.7** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.7)). **Update all five together:** the core Mata library changed, and a model package needs the core version that it was built against.
+
+- **nwcommands 3.6.0. Results change; read the "Results that change" list in the [release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.6.0) before you re-run old analyses.**
+  - *Valued networks.* A network is valued if it was created with tie values (`nwfromedge` with a value variable, an import with values, `nwset` from a matrix with other values than 0 and 1); the flag is no longer worked out again from the values. On a valued network the commands that have a weighted form in R now use the tie values by default (`nwdegree`, `nw2degree`, `nwgeodesic`, `nwcloseness`, `nwbetween`, `nwevcent`, `nwpagerank`, `nwrandomwalk`, `nwpath`, `nwmatching`, `nwassortativity`, `nwkatz`, `nwinduced`); the option `binary` gives the earlier result, and binary networks give the same results as before. See [Valued networks](/nwcommands/valued-networks/).
+  - *Two-mode networks.* The flag, the modes and the level labels survive `nwdropnodes`, `nwkeepnodes`, `nwsubset` and the other commands that derive a network. Commands that cannot say anything about a two-mode network stop with one message (error 6088). `nwcommunity` and `nwmodularity` use Barber's bipartite modularity, `nwsimilar` and `nwdissimilar` compare nodes within a mode, `nwpermute` permutes within the modes, edge lists, Pajek, UCINET and GML files keep the modes, and there are new measures: `nw2nested`, `nw2clustering, ra`, `nw2project, stat(newman)`, `nw2degree, raw`. See [Two-mode networks](/nwcommands/two-mode/) and [the network types each command supports](/nwcommands/network-types/).
+  - *nwburt on valued networks* now computes Burt's weighted measures, as `igraph` does; before, effective size could be negative. These measures run in the compiled plugin (a new plugin generation); `binary` ignores the values.
+  - *Fixes to results:* standardised `nwdegree`, the betweenness centralisation, `nwcloseness` on a network that is not connected (now as in `igraph`, option `legacy` for the old values), Jaccard similarity, `nwutility` with `benefit()` and `cost()`, and `nwkatz` with extra observations.
+  - *Install everything in one step:* `nwinstall, everything` installs the core and the four model packages. Stata 17 or later is required (tested with Stata 17 and 18; the Mata libraries are built with Stata 17). The data set `usair_full` (549 airports) is new; see [Data sets](/datasets/).
+- **nwsaom 1.0.9, nwergm 1.2.2, nwdynam 1.1.2, nwrem 1.0.7.** Rebuilt for core 3.6.0; they need nwcommands 3.6.0 or later. No change in results.
+
+<a id="nwcommands-3-5-1"></a>
+<a id="nwsaom-1-0-8"></a>
+<a id="nwergm-1-2-1"></a>
+<a id="nwdynam-1-1-1"></a>
+<a id="nwrem-1-0-6"></a>
+
+### 25 October 2026 (late night): nwcommands 3.5.1, nwsaom 1.0.8, nwergm 1.2.1, nwdynam 1.1.1 and nwrem 1.0.6 (fix for Stata 17)
+
+**nwcommands 3.5.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.5.1)), **nwsaom 1.0.8** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.8)), **nwergm 1.2.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.1)), **nwdynam 1.1.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.1.1)) and **nwrem 1.0.6** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.6)). **If you use Stata 17, update all five.** The Mata libraries of the releases earlier today were built with Stata 18 and Stata 17 ignored them (`nws_create() not found`, r(3499)). They are now built with Stata 17, which works in Stata 17 and 18. nwcommands is tested with Stata 17 and 18; older versions are not tested. The core prints a clear message with the reinstall steps when the library is missing, too new or an old copy is in your PLUS folder. No change to results. If you have an older install, run `ado uninstall nwcommands` (and the model packages) first, then reinstall as on the [install page](/nwcommands/install/).
+
+<a id="nwcommands-3-5-0"></a>
+<a id="nwergm-1-2-0"></a>
+<a id="nwdynam-1-1-0"></a>
+<a id="nwrem-1-0-5"></a>
+<a id="nwsaom-1-0-7"></a>
+
+### 25 October 2026 (night): nwcommands 3.5.0, nwergm 1.2.0, nwdynam 1.1.0, nwrem 1.0.5 and nwsaom 1.0.7
+
+**nwcommands 3.5.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.5.0)), **nwergm 1.2.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.2.0)), **nwdynam 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.1.0)), **nwrem 1.0.5** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.5)) and **nwsaom 1.0.7** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.7)). Several of these change results; read the release notes before you re-run old analyses.
+- **nwcommands 3.5.0.** Three new real signed-network data sets (`senate114`, `senate93` from the US Senate, and the 16 tribes of the Gahuku-Gama, `gahuku`; see [Data sets](/datasets/)). Fixed: saving and reloading an undirected signed network turned its negative ties into 0, so `nwbalance` called every triad balanced; undirected networks built from a list that names each pair once now keep their negative ties. Equal-sized classes in `r(core_sizeid)`, `r(comm_sizeid)` and `r(block_sizeid)`, and equal values in several plots, now come in the same order under every seed. Error messages that were hidden inside `quietly` blocks are shown.
+- **nwergm 1.2.0.** The MCMC defaults now follow R's `ergm` (interval 1024, burn-in 16 times the interval; the old fast settings are `mcmcburnin(3000) mcmcinterval(50)`). Chains mix much better (for the Lazega advice model the smallest effective sample size goes from 21 to about 340), and estimates agree with R, but fits take longer.
+- **nwdynam 1.1.0.** Events with the same time are treated as simultaneous, as in goldfish (new option `sequential` for the old way); before, tied events were ordered by the state of the random-number generator. Results change only for data with tied event times.
+- **nwrem 1.0.5.** Events with the same time keep the order of the event list (before, ties were ordered by the random-number generator). Results change only for data with tied event times.
+- **nwsaom 1.0.7.** `nwsaom version` finds the plugin at the start of a session.
+
+<a id="nwcommands-3-4-0"></a>
+<a id="nwsaom-1-0-6"></a>
+<a id="nwergm-1-1-4"></a>
+<a id="nwdynam-1-0-4"></a>
+<a id="nwrem-1-0-4"></a>
+
+### 25 October 2026 (evening): nwcommands 3.4.0, nwsaom 1.0.6, nwergm 1.1.4, nwdynam 1.0.4 and nwrem 1.0.4
+
+**nwcommands 3.4.0**, **nwsaom 1.0.6**, **nwergm 1.1.4**, **nwdynam 1.0.4** and **nwrem 1.0.4** (release notes: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.4.0), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.6), [nwergm](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.1.4), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.0.4), [nwrem](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.4)). **Update all five together** (`net install` the core, then `nwinstall, models`): the core Mata library changed, and the model packages are rebuilt for it. First, the core: ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.4.0)). Faster: `nwclustering`, `nwtriads`, `nwevcent`, `nwburt`, `nwsimmelian`, `nwconstraint`, `nwpagerank`, `nwclique` and `nwkcomponents` (with `k(2)`) run in the compiled graph plugin, with identical results (for example `nwtriads` at 100,000 nodes: 73 s to 1 s; `nwburt`: 26 s to 0.2 s; `nwkcomponents, k(2)` at 20,000 nodes: 67 s to 1 s); the page [How large a network can I analyze?](/nwcommands/size-limits/) has the new numbers and a section that compares the core with R's igraph. Two new two-mode example data sets, `davis` (Southern women) and `ftdirectors_se` (company directors in Sweden), with a [new tutorial](/tutorials/15-two-mode-networks/). `nwplot, interactive` has `fname()` to write the page to a chosen file, the shape drop-down shows "mixed" for mixed groups, and a layout brought back with `importcoords()` is drawn with the proportions of the view; `nwmovie, noopen` no longer opens the viewer; `nwplot, force` works. Stray Stata messages such as `(N real changes made)` no longer appear in the output of core commands, and some printed numbers no longer show floating point noise. `nwsave` of a two-mode network writes only the ties between the modes (1.2 MB instead of 2.6 GB for 5,092 + 455 nodes); files from earlier versions still load. Help files and dialog boxes are up to date, with a new dialog for `nwpagerank` and new tabs for `nwplot` (interactive, more options). A page with a [live interactive example](/book/interactive/) goes with the book *Network Analysis with Stata*. The Linux and Windows plugins are rebuilt by the plugin workflow for the release; until a platform has the new plugin the commands use the Mata code and are as slow as before. The Mata library is unchanged, so the model packages need no new release.
+
+<a id="nwcommands-3-3-1"></a>
+<a id="nwsaom-1-0-5"></a>
+<a id="nwergm-1-1-3"></a>
+<a id="nwdynam-1-0-3"></a>
+<a id="nwrem-1-0-3"></a>
+
+### 25 October 2026: nwcommands 3.3.1, nwsaom 1.0.5, nwergm 1.1.3, nwdynam 1.0.3 and nwrem 1.0.3
+
+**nwcommands 3.3.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.3.1)), **nwsaom 1.0.5** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.5)), **nwergm 1.1.3** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.1.3)), **nwdynam 1.0.3** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.0.3)) and **nwrem 1.0.3** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.3)). Maintenance release: the model libraries are now indexed automatically, so a model command works right after installing it, even in the same Stata session. The core has a check at release time that warns when its Mata library changed and the model packages must be rebuilt in step. No change to results.
+
+<a id="nwcommands-3-3-0"></a>
+<a id="nwsaom-1-0-4"></a>
+<a id="nwergm-1-1-2"></a>
+
+### 25 October 2026: nwcommands 3.3.0, nwsaom 1.0.4 and nwergm 1.1.2
+
+**nwcommands 3.3.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.3.0)), **nwsaom 1.0.4** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.4)) and **nwergm 1.1.2** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.1.2)). Networks of 100,000 nodes: more commands work at that size, and commands that cannot are refused at once with a message and an alternative; a new page, [How large a network can I analyze?](/nwcommands/size-limits/), says which commands suit which size. **Update all three together** (`net install` the core, then `nwinstall, models`): the model packages are rebuilt for core 3.3.0 and older model packages stop with r(3021) after the core is updated. nwergm 1.1.2 also fixes goodness of fit for two-mode fits, a failure with 5,000-node networks, and two-mode simulation output.
+
+<a id="nwdynam-1-0-2"></a>
+<a id="nwrem-1-0-2"></a>
+
+### 25 October 2026: nwdynam 1.0.2 and nwrem 1.0.2
+
+**nwdynam 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.0.2)) and **nwrem 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.2)). The version is shown at the bottom of each help file, as in the other packages.
+
+<a id="nwcommands-3-2-0"></a>
+
+### 25 October 2026: nwcommands 3.2.0
+
+**nwcommands 3.2.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.2.0)). Networks of up to 100,000 nodes now work in the import, storage and most analysis commands, and many commands are much faster (for example `nwcomponents` 27 s to 0.5 s at 100,000 nodes). Several wrong results are fixed, so some results change: `nwcommunity` (Louvain) now finds the right communities above about 1,500 nodes and gives better partitions on small networks; `nwtabulate, attribute()` p-values are no longer biased; `nwmixing, permutations()` no longer overwrites a valued network; `nwrecode` and `nwdichotomize` no longer permute the result when labels are not in alphabetical order; node labels are no longer damaged above about 900 nodes. New options `maxcliques()`, `maxplexes()`, `maxtime()`, `countonly`, `nomatrix` and `force`, and memory guards that refuse at once with a message. Nothing is installed from SSC behind your back. `nwinstall, gui` adds the nwsaom and nwergm dialogs to the Statistical Models menu when those packages are installed.
+
+<a id="nwsaom-1-0-3"></a>
+
+### 25 October 2026: nwsaom 1.0.3
+
+**nwsaom 1.0.3** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.3)). Dialog boxes for every option and effect (`db nwsaom`, `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat`). A co-evolution fit whose behavior rate grows without bound (for example with the `behrate` effects `avexposure` or `avtinexposuredist2` on unsuitable data) now stops with return code 498 and a message, as RSiena does, instead of running for hours. The version is shown at the bottom of each help file. The manual is updated.
+
+<a id="nwergm-1-1-1"></a>
+
+### 25 October 2026: nwergm 1.1.1
+
+**nwergm 1.1.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.1.1)). Dialog boxes for every term and option (`db nwergm`, `db nwergm_simulate`, `db nwergm_estat`; nine tabs, with a section selector inside the crowded tabs). Four fixes: `estat gof` with `b1degree`/`b2degree` after a two-mode fit; `obsconstraints(b1degrees)` and `(b2degrees)` no longer crash Stata; `constraints(observed)` and `obsconstraints(observed)` follow R; `mcmletermination(none)` no longer fails for some seeds. The version is shown at the bottom of each help file.
+
+<a id="nwcommands-3-1-1"></a>
+
+### 24 October 2026: nwcommands 3.1.1
+
+**nwcommands 3.1.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.1.1)). `nwinstall` no longer deletes a user's `profile.do` when the edit fails (Mac and Linux); help text for the `s50` example data corrected.
+
+<a id="nwcommands-3-1-0"></a>
+
+### 24 October 2026: nwcommands 3.1.0
+
+**nwcommands 3.1.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.1.0)). The core is now free software under the GNU General Public License, version 3. `nwinstall, gui` installs the "Network Analysis" menu. Neighbor lists are returned in sorted order, independent of earlier session state. The release branch is `main`; `master` is kept as a copy.
+
+<a id="nwsaom-1-0-2"></a>
+
+### 24 October 2026: nwsaom 1.0.2
+
+**nwsaom 1.0.2** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.2)). Behavior centring with missing behavior data now follows RSiena (mean of the wave means of the observed values). The convergence message states RSiena's two criteria on separate lines.
+
+<a id="nwergm-1-1-0"></a>
+
+### 24 October 2026: nwergm 1.1.0
+
+**nwergm 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.1.0)). The operator terms of ergm (`operators()`), the term `balance`, curved two-mode terms and `altkstar` with an estimated decay; `seed()` is reproducible across sessions. 125 of the 139 terms of ergm 4.12.0.
+
+<a id="nwcommands-3-0-0"></a>
+
+### 24 October 2026: nwcommands 3.0.0
+
+**nwcommands 3.0.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.0.0), [all releases](https://github.com/thomas-u-grund/nwcommands/releases)). The core now contains only the core. The model commands `nwsaom`, `nwergm`, `nwdynam` and `nwrem` moved to packages of their own; install them with `nwinstall, models`. Scripts that call these commands need the model packages installed, so this is a breaking change. New: `nwinstall, models` and `nwversion`, which shows the version of the core and of the installed model packages.
+
+<a id="nwsaom-1-0-1"></a>
+
+### 24 October 2026: nwsaom 1.0.1
+
+**nwsaom 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.1), [all releases](https://github.com/thomas-u-grund/nwsaom/releases)). The help file documents `nwsaom version` and the stored results that report the version.
+
+<a id="nwsaom-1-0-0"></a>
+
+### 24 October 2026: nwsaom 1.0.0
+
+**nwsaom 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwsaom/releases/tag/v1.0.0)). First release of nwsaom as a package of its own: stochastic actor-oriented models with method of moments, maximum likelihood and Bayesian estimation, compared with RSiena and multiSiena.
+
+<a id="nwergm-1-0-1"></a>
+
+### 24 October 2026: nwergm 1.0.1
+
+**nwergm 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.0.1), [all releases](https://github.com/thomas-u-grund/nwergm/releases)). The help file documents `nwergm version` and the stored results that report the version.
+
+<a id="nwergm-1-0-0"></a>
+
+### 24 October 2026: nwergm 1.0.0
+
+**nwergm 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.0.0)). First release of nwergm as a package of its own: exponential random graph models for directed, undirected and bipartite networks, about 110 of the 139 ergm terms, maximum pseudolikelihood and Monte Carlo maximum likelihood.
+
+<a id="nwdynam-1-0-1"></a>
+
+### 24 October 2026: nwdynam 1.0.1
+
+**nwdynam 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.0.1), [all releases](https://github.com/thomas-u-grund/nwdynam/releases)). The help file documents `nwdynam version` and the stored results that report the version.
+
+<a id="nwdynam-1-0-0"></a>
+
+### 24 October 2026: nwdynam 1.0.0
+
+**nwdynam 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.0.0)). First release of nwdynam as a package of its own: dynamic network actor models with rate and choice submodels for event data, compared with goldfish.
+
+<a id="nwrem-1-0-1"></a>
+
+### 24 October 2026: nwrem 1.0.1
+
+**nwrem 1.0.1** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.1), [all releases](https://github.com/thomas-u-grund/nwrem/releases)). The help file documents `nwrem version` and the stored results that report the version.
+
+<a id="nwrem-1-0-0"></a>
+
+### 24 October 2026: nwrem 1.0.0
+
+**nwrem 1.0.0** ([release notes](https://github.com/thomas-u-grund/nwrem/releases/tag/v1.0.0)). First release of nwrem as a package of its own: relational event models for event data, estimated by partial likelihood and compared with relevent.
+
+### Earlier
+
+nwcommands 2.0.0 (25 August 2026) was the last release with the four model families inside the core. The original releases, 1.x, date from 2014 and 2015.
