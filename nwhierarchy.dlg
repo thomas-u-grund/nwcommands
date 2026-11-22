@@ -52,7 +52,7 @@ END
 LIST list_type
 BEGIN
 	euclidean
-	manhatten
+	manhattan
 	hamming
 	jaccard
 	nonmatches
