@@ -125,9 +125,9 @@ foreach d in flomarriage glasgow3 gahuku gang {
 		_fxs `=r(`s')' "`d'|nwmotifs|`s'" 0 "`d': nwmotifs `s' as 3.7.0"
 	}
 	* onemode on a one-mode network changes nothing
-	nwcloseness `d', generate(c9 f9 n9) onemode silent
+	nwcloseness `d', generate(c9 f9 n9) onemode silent sym
 	_same c1 c9 0 "`d': onemode on a one-mode network (closeness)"
-	nwbetween `d', generate(b9) onemode silent
+	nwbetween `d', generate(b9) onemode silent sym
 	_same b1 b9 0 "`d': onemode on a one-mode network (betweenness)"
 }
 di as txt "1. one-mode networks (undirected, directed, valued): nwdegree, nwclustering, nwcloseness, nwbetween, nwmotifs equal 3.7.0 exactly"

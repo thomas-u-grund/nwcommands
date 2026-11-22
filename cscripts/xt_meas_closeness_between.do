@@ -89,8 +89,8 @@ nwcloseness dp3, generate(cz fz nz) nosym
 xa reldif(cz[1], 2/3) < 1e-7 & reldif(cz[2], 1) < 1e-7
 xa cz[3] == .
 * the default is the same as nosym (distances follow the direction of the ties)
-nwcloseness dp3, generate(cd fd nd)
-xa reldif(cd[1], 2/3) < 1e-7 & reldif(cd[2], 1) < 1e-7 & cd[3] == .
+nwcloseness dp3, generate(cdd fdd ndd)
+xa reldif(cdd[1], 2/3) < 1e-7 & reldif(cdd[2], 1) < 1e-7 & cdd[3] == .
 di "(2) closeness edge cases: ok"
 
 * ---------------------------------------------------------------- (3) closeness: valued, and fast route = slow route
