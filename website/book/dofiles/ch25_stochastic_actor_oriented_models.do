@@ -19,16 +19,17 @@ clear all
 set more off
 
 * ============================================================
+* Looking at the data first
+* ============================================================
+nwwebuse glasgow, nwclear
+nwsaom describe, waves(glasgow1 glasgow2 glasgow3) behavior(alcohol1 ///
+    alcohol2 alcohol3)
+
+* ============================================================
 * The objective function and the choice probability
 * ============================================================
 nwwebuse glasgow, nwclear
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)
-
-* ============================================================
-* Looking at the data first
-* ============================================================
-nwsaom describe, waves(glasgow1 glasgow2 glasgow3) behavior(alcohol1 ///
-    alcohol2 alcohol3)
 
 * ============================================================
 * Building up a real model on Glasgow
