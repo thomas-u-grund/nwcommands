@@ -13548,6 +13548,21 @@ void nwf_add(string scalar name)
 	p->nws.add(name)
 }
 
+// nwdrop.ado: drop the listed networks; returns the number of networks left (what the nwset call that followed returned in r(networks))
+real scalar nwf_drop(string scalar list)
+{
+	pointer(class `NWs' scalar) scalar p
+	string rowvector t
+	real scalar i
+
+	p = findexternal("__nw")
+	t = tokens(list)
+	for (i = 1; i <= cols(t); i++) {
+		p->nws.drop(t[i])
+	}
+	return(p->nws.get_number())
+}
+
 // nwset.ado, nwset, mat(M) name(N) with default node labels: everything that nwset does before the optional symmetrisation, in one
 // statement. Returns 0 when the network was registered (local id is its index), else a code and NOTHING has been changed, and the
 // caller takes the general route: 9 no registry, 1 matrix not square or empty, 2 name in use, 3 labels not unique.
