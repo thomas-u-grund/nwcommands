@@ -116,4 +116,22 @@ qui nwload davis
 _tcc_log "two-mode network: Opsahl's two-mode clustering of the nodes of mode 2" "nwclustering davis, generate(cl5) replace level(2)"
 _tcc_log "two-mode network read as the one-mode network of the bipartite graph" "nwclustering davis, generate(cl5) replace onemode"
 
+* ---------------------------------------------------------------- A4. nwrandomwalk
+* directed walk: hitting times from the linear system solved in R on the row-normalised matrix (lazega_adv, target n13)
+nwload lazega_adv
+nwrandomwalk lazega_adv, target(n13) generate(rw1) silent
+_tcc_near `=rw1[1]' 33.7515788480639 `tol' "A4 directed hitting time of node 1"
+_tcc_near `=rw1[10]' 35.4957674947171 `tol' "A4 directed hitting time of node 10"
+assert rw1[5] == 0 | rw1[13] == 0
+nwrandomwalk lazega_adv, target(n13) generate(rw2) sym silent
+_tcc_near `=rw2[1]' 38.7312516061468 `tol' "A4 sym = walk on the symmetrized network (results of 3.34.0)"
+_tcc_log "directed network: the walk follows the direction of the ties" "nwrandomwalk lazega_adv, target(n13) generate(rw3)"
+_tcc_log "directed network symmetrized" "nwrandomwalk lazega_adv, target(n13) generate(rw3) replace sym"
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected labs(A,B,C)
+_tcc_log "undirected network" "nwrandomwalk tri, target(A) generate(rw4) replace"
+* a node from which the target is not reached with certainty has a missing hitting time: 1 -> 2 -> 3, 1 -> 4 (4 is a dead end)
+nwset, mat((0,1,0,1\0,0,1,0\0,0,0,0\0,0,0,0)) name(dead) directed labs(a,b,c,d)
+nwrandomwalk dead, target(c) generate(rw5) silent
+assert missing(rw5[1]) & rw5[2] == 1 & rw5[3] == 0 & missing(rw5[4])
+
 di "PASS: test_core_coercion"

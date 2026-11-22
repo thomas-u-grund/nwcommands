@@ -22,7 +22,8 @@ gen:erate(newvarname)
 [replace
 silent
 bin:ary
-one:mode]
+one:mode
+sym:metrize]
 ```
 
 | | |
@@ -32,6 +33,7 @@ one:mode]
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 | `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
+| `sym:metrize` | On a directed network, walk on the symmetrized network (the larger of the two directions of a tie) instead of along the direction of the ties |
 | `one:mode` | Two-mode network: read the bipartite graph as a one-mode graph (a two-mode network is refused without it, error 6088) |
 
 ## Description
@@ -44,11 +46,11 @@ Solved EXACTLY via the standard linear system this quantity satisfies (not simul
 
 ## Network types
 
-**Directed:** the network is symmetrized. **Valued:** the walk steps with probability w_ij / s_i by default; `binary` ignores the values. **Two-mode:** not supported (error 6088); `onemode` uses the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the walk follows the direction of the ties, as `igraph::random_walk(mode = "out")` does; the hitting time is missing for a node from which the target is not reached with certainty (it can run into a node without outgoing ties or into a part of the network from which the target cannot be reached), and the network must fit into a dense matrix (above that, error 484; `sym` is solved on the stored ties); `sym` symmetrizes first; the output says which was done. **Valued:** the walk steps with probability w_ij / s_i by default; `binary` ignores the values. **Two-mode:** not supported (error 6088); `onemode` uses the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
-Up to 1,500 nodes the hitting times come from the dense linear system (LU decomposition). Above that the system, which is symmetric and positive definite for the walk on the symmetrized network, is solved by conjugate gradients on the stored ties (relative residual 1e-13; the result agrees with the dense solution to better than 1e-13 relative, and the dense route is still the fallback if the iteration does not converge). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 0.15 seconds and 0.2 GB (65 seconds and 4 GB with the dense solution).
+Up to 1,500 nodes the hitting times come from the dense linear system (LU decomposition). Above that the system, which is symmetric and positive definite for the walk on an undirected or symmetrized network, is solved by conjugate gradients on the stored ties (relative residual 1e-13; the result agrees with the dense solution to better than 1e-13 relative, and the dense route is still the fallback if the iteration does not converge). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 0.15 seconds and 0.2 GB (65 seconds and 4 GB with the dense solution).
 
 ## Examples
 
@@ -64,6 +66,7 @@ Up to 1,500 nodes the hitting times come from the dense linear system (LU decomp
 - **Macros**
 - **r(target)** --- the target node requested
 - **r(generate)** --- name of the generated hitting-time variable
+- **r(directed)** --- **"true"** (directed network walked as it is), **"symmetrized"** (with `symmetrize`) or **"false"** (undirected)
 
 ## References
 
@@ -75,4 +78,4 @@ Lovasz, L. (1993). Random walks on graphs: A survey. *Combinatorics, Paul Erdos 
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))
