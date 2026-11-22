@@ -12,7 +12,7 @@ permalink: /book/teaching/outlines/
 Three outlines, each built on the reading paths of *Getting started*. A week assumes one lecture and one
 computer lab of about 90 minutes each; a workshop day assumes about six hours. For each week or day the outline
 gives the chapters, the core idea, a demonstration with the data set and the commands the chapter uses, and
-exercises to assign. Exercises are cited as "Ch. 8, Ex. 3", numbered as in the book. The
+exercises to assign. Exercises are cited as "Ch. 8, Ex. 2", numbered as in the book. The
 [chapter notes](../chapter-notes/) list all exercises of each chapter by level, so you can swap one for another.
 
 The demonstrations are taken from the chapters' own examples. The [do-files of the book](../../dofiles/)
@@ -38,9 +38,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** the four-person network `mini`, typed with `input` and declared with `nwset`; then
   `nwwebuse lazega, nwclear`, `nwsummarize lazega_adv` and `nwsym`, which turns the 892 advice arcs into 700 edges;
   the eight-lawyer subset with `nwsubset` and its edge list with `nwtoedge`.
-- **Exercises:** Ch. 1, Ex. 2 (attribute or relation); Ch. 1, Ex. 6 (influence and its rivals for a correlation
+- **Exercises:** Ch. 1, exercise bank 1.a (attribute or relation); Ch. 1, Ex. 3 (influence and its rivals for a correlation
   among friends); Ch. 2, Ex. 3 (density of the work network by hand, before and after symmetrizing);
-  Ch. 2, Ex. 7 (mutual pairs from the numbers of arcs and edges).
+  Ch. 2, exercise bank 2.b (mutual pairs from the numbers of arcs and edges).
 
 ### Week 2. From a question to network data in Stata
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week02_question_to_data.pptx) · [PDF](/book/teaching/slides/courseA_week02_question_to_data.pdf)
@@ -53,7 +53,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   through `reshape long` to `nwfromedge`; `nwset, mat()`, `nwimport`, wildcards over several networks,
   `nwsave`, `nwuse`, `nwsubset` and `nwsymmetrize`.
 - **Exercises:** Ch. 3, Ex. 2 (AND rule, OR rule and arcs by hand); Ch. 3, Ex. 3 (the two rules on the advice
-  network); Ch. 4, Ex. 1 (declare a five-person network from a matrix); Ch. 4, Ex. 6 (directed, union and
+  network); Ch. 4, Ex. 1 (declare a five-person network from a matrix); Ch. 4, exercise bank 4.b (directed, union and
   intersection versions of the survey network).
 
 ### Week 3. Pictures of networks
@@ -66,8 +66,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   layouts, and with `size(wealth)`; `nwplot lazega_adv, color(office)`; `nwplotmatrix lazega_adv, group(office)`;
   the busiest US airports on a map with `nodexy()` and `basemap(usmap)`; the Chesapeake Bay food web with
   `edgesize()` on log flows; an interactive page with `generate(x y)`.
-- **Exercises:** Ch. 5, Ex. 1 (one network, three layouts); Ch. 5, Ex. 5 (matrix plot by status);
-  Ch. 5, Ex. 10 (which display for which question).
+- **Exercises:** Ch. 5, Ex. 1 (one network, three layouts); Ch. 5, Ex. 4 (matrix plot by status);
+  Ch. 5, Ex. 5 (which display for which question).
 
 ### Week 4. Describing a whole network
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week04_describing_a_whole_network.pptx) · [PDF](/book/teaching/slides/courseA_week04_describing_a_whole_network.pdf)
@@ -78,8 +78,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwdyads lazega_adv`, `nwtriads lazega_adv`, `nwmixing lazega_adv, attribute(office)` and
   `attribute(status)`, which print the E-I index with a permutation p-value, and `nwassortativity`; the gang's
   birthplace groups with `nwmixing gang, attribute(Birthplace)`; the Glasgow girls as a contrast in size.
-- **Exercises:** Ch. 6, Ex. 2 (reciprocity of pairs and of arcs); Ch. 6, Ex. 5 (the work network beside advice
-  and friendship); Ch. 6, Ex. 7 (gender and the expected E-I index); Ch. 6, Ex. 11 (density or mean degree).
+- **Exercises:** Ch. 6, exercise bank 6.a (reciprocity of pairs and of arcs); Ch. 6, Ex. 3 (the work network beside advice
+  and friendship); Ch. 6, Ex. 4 (gender and the expected E-I index); Ch. 6, exercise bank 6.f (density or mean degree).
 
 ### Week 5. Paths and reachability
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week05_paths_reachability.pptx) · [PDF](/book/teaching/slides/courseA_week05_paths_reachability.pdf)
@@ -90,8 +90,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwpath lazega_adv` between two lawyers, `nwgeodesic lazega_adv`; `nwreach flomarriage` and
   `nwgeodesic flomarriage, unconnected(16)` for the isolated Pucci family; `nwgeodesic glasgow1` on a network with
   unreachable pairs.
-- **Exercises:** Ch. 7, Ex. 1 (the reachability matrix and Pucci); Ch. 7, Ex. 3 (distances among the Glasgow
-  girls); Ch. 7, Ex. 6 (one pair of lawyers in both directions); Ch. 7, Ex. 10 (what an average distance says about a
+- **Exercises:** Ch. 7, Ex. 1 (the reachability matrix and Pucci); Ch. 7, exercise bank 7.b (distances among the Glasgow
+  girls); Ch. 7, exercise bank 7.c (one pair of lawyers in both directions); Ch. 7, Ex. 6 (what an average distance says about a
   rumor).
 
 ### Week 6. Centrality and brokerage
@@ -102,8 +102,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** the Florentine table of degree, closeness, betweenness, effective size and constraint; on
   the advice network `nwdegree, generate(adv_out adv_in)`, `nwcloseness` with and without `sym`, `nwbetween`,
   `nwevcent`, `nwburt`, `nwbrokerage, group(officenum)`, `nwbridges` and `nwsimmelian`.
-- **Exercises:** Ch. 8, Ex. 3 (a star network by hand); Ch. 8, Ex. 4 (closeness under two penalties);
-  Ch. 8, Ex. 7 (tenure as a rival source of a high in-degree); Ch. 8, Ex. 11 (whom to brief first).
+- **Exercises:** Ch. 8, Ex. 2 (a star network by hand); Ch. 8, Ex. 3 (closeness under two penalties);
+  Ch. 8, exercise bank 8.c (tenure as a rival source of a high in-degree); Ch. 8, Ex. 5 (whom to brief first).
 
 ### Week 7. Cohesive groups and communities
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week07_cohesion_communities.pptx) · [PDF](/book/teaching/slides/courseA_week07_cohesion_communities.pdf)
@@ -116,8 +116,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   seed(12345) symmetrize`, the same with `leiden` and `infomap` for comparison, and `nwmodularity lazega_adv,
   group(officenum) symmetrize`; the gang and the macaque
   cortex as further cases.
-- **Exercises:** Ch. 9, Ex. 1 (k-components against k-cores); Ch. 9, Ex. 4 (communities of the co-work network);
-  Ch. 9, Ex. 5 (label propagation under four seeds); Ch. 9, Ex. 7 (what a cohesion result stands for).
+- **Exercises:** Ch. 9, Ex. 1 (k-components against k-cores); Ch. 9, exercise bank 9.a (communities of the co-work network);
+  Ch. 9, exercise bank 9.b (label propagation under four seeds); Ch. 9, Ex. 5 (what a cohesion result stands for).
 
 ### Week 8. Positions and roles
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week08_positions_roles.pptx) · [PDF](/book/teaching/slides/courseA_week08_positions_roles.pdf)
@@ -129,8 +129,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   `nwhierarchy` with single and Ward linkage, and `nwcoreperiphery` with `nwplotmatrix lazega_adv, sortby(core)
   group(core)`; `nwdendrogram` on the Florentine families. CONCOR needs a number of blocks in advance; Chapter 23's
   stochastic block model chooses it from the data.
-- **Exercises:** Ch. 10, Ex. 3 (structural equivalence by hand); Ch. 10, Ex. 4 (Ward and CONCOR as two-group
-  splits); Ch. 10, Ex. 7 (is the core just the busiest lawyers?); Ch. 10, Ex. 8 (who could replace lawyer n17).
+- **Exercises:** Ch. 10, Ex. 2 (structural equivalence by hand); Ch. 10, Ex. 3 (Ward and CONCOR as two-group
+  splits); Ch. 10, Ex. 4 (is the core just the busiest lawyers?); Ch. 10, Ex. 5 (who could replace lawyer n17).
 
 ### Week 9. Ego networks
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week09_ego_networks.pptx) · [PDF](/book/teaching/slides/courseA_week09_ego_networks.pdf)
@@ -145,8 +145,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwego lazega_adv, sizevar(egosize) densvar(egodens)`, `nwegoplot`, and `nwaltergen` with
   `proportion()` and `diversity()`; exposure to smoking friends in the Glasgow data with `nwaltergen` and
   `regress`; the same measures from survey data with `collapse`.
-- **Exercises:** Ch. 11, Ex. 1 (ego density and effective size by hand); Ch. 11, Ex. 4 (ego density against
-  constraint); Ch. 11, Ex. 6 (the exposure regression one wave later); Ch. 11, Ex. 9 (which ego measure for a
+- **Exercises:** Ch. 11, Ex. 1 (ego density and effective size by hand); Ch. 11, Ex. 3 (ego density against
+  constraint); Ch. 11, Ex. 4 (the exposure regression one wave later); Ch. 11, Ex. 6 (which ego measure for a
   question about promotion).
 
 ### Week 10. Baselines
@@ -158,7 +158,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** the density sweep with `nwrandom`; `nwcug lazega_adv, stat(nwclustering)
   rname(cluster_global) reps(1000) seed(12345) condition(density) plot`, then the same test of reciprocity with
   `stat(nwdyads) rname(reciprocity)` under density, dyad-census and degree conditioning.
-- **Exercises:** Ch. 15, Ex. 3 (the transitivity chance leads you to expect); Ch. 15, Ex. 7 (how often a small
+- **Exercises:** Ch. 15, exercise bank 15.a (the transitivity chance leads you to expect); Ch. 15, Ex. 5 (how often a small
   random graph has no closed triads); Ch. 18, Ex. 3 (the friendship network's null mean); Ch. 18, Ex. 5 (clustering
   inside the Boston office).
 
@@ -172,7 +172,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   `nwmixing lazega_adv, attribute(office) permutations(1000)`; `nwqap lazega_adv lazega_fr office practice status,
   permutations(500) plot`, the same with `qapspp`, and `predict()`; `nwqap glasgow2 glasgow1 smoke1 sport1`.
 - **Exercises:** Ch. 19, Ex. 2 (the smallest possible p-value); Ch. 19, Ex. 4 (advice and co-work); Ch. 20, Ex. 1
-  (fitted tie probabilities by hand); Ch. 20, Ex. 5 (the advice model without friendship).
+  (fitted tie probabilities by hand); Ch. 20, Ex. 4 (the advice model without friendship).
 
 ### Week 12. One complete analysis, and reporting it
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the deck is shared with Course B, Week 12)
@@ -185,8 +185,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   model of Chapter 29. The ERGMs that follow are easier after Chapter 21, so present their results here (associates
   do not favor partners; being asked follows seniority) and leave the code to course B. From Chapter 30,
   stored results after `nwcug` (`return list`) and `nwqap` (`ereturn list`).
-- **Exercises:** Ch. 29, Ex. 1 (density ratios from the status table); Ch. 29, Ex. 7 (could an all-partner core be
-  chance?); Ch. 30, Ex. 1 (the construction decisions of Chapter 29); Ch. 30, Ex. 4 (how many
+- **Exercises:** Ch. 29, Ex. 1 (density ratios from the status table); Ch. 29, exercise bank 29.c (could an all-partner core be
+  chance?); Ch. 30, Ex. 1 (the construction decisions of Chapter 29); Ch. 30, Ex. 3 (how many
   lawyers their degrees alone identify).
 
 ## B. Statistical models for networks (12 weeks)
@@ -211,9 +211,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   not the model's typical outcome.
 - **Demonstration:** `nwrandom 71, density(.179)` with `set seed`, `nwring`, `nwlattice`, `nwsmall` and `nwpref`;
   the same generators through `nwgen`; a small-world sweep over rewiring probabilities with `nwgeodesic`.
-- **Exercises:** Ch. 15, Ex. 2 (predict transitivity and reciprocity, then draw); Ch. 15, Ex. 6 (degree
-  distributions of a random and a preferential-attachment network); Ch. 15, Ex. 8 (evidence against preferential
-  attachment); Ch. 15, Ex. 9 (what a small-world claim needs).
+- **Exercises:** Ch. 15, Ex. 2 (predict transitivity and reciprocity, then draw); Ch. 15, Ex. 4 (degree
+  distributions of a random and a preferential-attachment network); Ch. 15, exercise bank 15.c (evidence against preferential
+  attachment); Ch. 15, Ex. 6 (what a small-world claim needs).
 
 ### Week 2. Networks from attributes
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week02_networks_from_attributes.pptx) · [PDF](/book/teaching/slides/courseB_week02_networks_from_attributes.pdf)
@@ -224,8 +224,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwexpand` for same-group networks, `nwgen` for tie probabilities and `nwdyadprob` to draw;
   `nwhomophily` with `nwmixing` to check recovery; `nwtoedge`, `logit`, `predict` and `nwfromedge` for the
   estimated generator.
-- **Exercises:** Ch. 16, Ex. 2 (the odds factor of a homophily coefficient); Ch. 16, Ex. 3 (the E-I index that
-  ignores status); Ch. 16, Ex. 4 (the homophily sweep for office); Ch. 16, Ex. 9 (preference or opportunity).
+- **Exercises:** Ch. 16, exercise bank 16.a (the odds factor of a homophily coefficient); Ch. 16, Ex. 2 (the E-I index that
+  ignores status); Ch. 16, Ex. 3 (the homophily sweep for office); Ch. 16, Ex. 5 (preference or opportunity).
 
 ### Week 3. Null models
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week10_baselines.pptx) · [PDF](/book/teaching/slides/courseA_week10_baselines.pdf) (the same deck as Course A, Week 10)
@@ -249,7 +249,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   practice status, permutations(500) plot`, `qapspp`, `mode(receiver absdist)`, `type(regress)` on a valued
   outcome, and `predict()`; the Glasgow model with an earlier wave as predictor.
 - **Exercises:** Ch. 19, Ex. 5 (is advice sorted by gender?); Ch. 20, Ex. 2 (odds ratio and the p-value floor);
-  Ch. 20, Ex. 4 (the Glasgow model with fewer predictors); Ch. 20, Ex. 9 (what is wrong with ordinary standard
+  Ch. 20, Ex. 3 (the Glasgow model with fewer predictors); Ch. 20, Ex. 6 (what is wrong with ordinary standard
   errors).
 
 ### Week 5. ERGM I: dependence and change statistics
@@ -262,7 +262,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Demonstration:** `nwergm lazega_adv, edges seed(12345)`; then `nodematch(office practice)`,
   `nodeofactor(status)` and `nodeifactor(status)`; then `mutual`; `estat mcmcdiag` after the fit.
 - **Exercises:** Ch. 21, Ex. 1 (what the office coefficient says about a pair); Ch. 21, Ex. 2 (why the
-  normalizing constant cannot be computed); Ch. 21, Ex. 3 (homophily on gender); Ch. 21, Ex. 7 (two MCMC intervals).
+  normalizing constant cannot be computed); Ch. 21, Ex. 3 (homophily on gender); Ch. 21, exercise bank 21.c (two MCMC intervals).
 
 ### Week 6. ERGM II: closure, comparison and fit
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week06_ergm2_closure_fit.pptx) · [PDF](/book/teaching/slides/courseB_week06_ergm2_closure_fit.pdf)
@@ -271,8 +271,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   a verdict on the model. Fit is judged on statistics the model does not contain.
 - **Demonstration:** the final model with `gwesp(.5)`; `estat mcmcdiag, plot`; `estimates store` and `lrtest`;
   `estat gof, gof(model distance odegree idegree espartners) seed(12345) plot`; `predict, frame(pr) pr`.
-- **Exercises:** Ch. 21, Ex. 4 (goodness of fit with 300 draws); Ch. 21, Ex. 6 (other gwesp decays and
-  gwodegree); Ch. 21, Ex. 9 (co-work as a rival to closure); Ch. 21, Ex. 10 (a statistic for unreachable pairs).
+- **Exercises:** Ch. 21, exercise bank 21.a (goodness of fit with 300 draws); Ch. 21, Ex. 4 (other gwesp decays and
+  gwodegree); Ch. 21, Ex. 5 (co-work as a rival to closure); Ch. 21, Ex. 6 (a statistic for unreachable pairs).
 
 ### Week 7. ERGM III: simulation, degeneracy and missing data
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pptx) · [PDF](/book/teaching/slides/courseB_week07_ergm3_simulation_degeneracy.pdf)
@@ -295,7 +295,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   effects(density contagion sender receiver) seed(12345)`, its pseudolikelihood start with `mple`, and `estat gof`;
   a cross-sectional association, not influence. Homework: Ch. 24, Ex. 4 and 5.
 - **Exercises:** Ch. 22, Ex. 1 (why `mutual` has no meaning in an undirected network); Ch. 22, Ex. 2 (why a
-  triangle count degenerates); Ch. 22, Ex. 4 (simulate with the gwesp coefficient at 0.3); Ch. 22, Ex. 6 (ten
+  triangle count degenerates); Ch. 22, exercise bank 22.a (simulate with the gwesp coefficient at 0.3); Ch. 22, exercise bank 22.b (ten
   missing dyads).
 
 ### Week 8. Change between waves
@@ -310,8 +310,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   `nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)`.
 - **Optional:** Section 14.6, adoption over the waves: `nwdiffuse curve`, `exposure` and `threshold` on smoking
   in the three Glasgow waves, which leads to the co-evolution model of Week 9.
-- **Exercises:** Ch. 14, Ex. 2 (Jaccard index and persistence by hand); Ch. 14, Ex. 7 (formed ties against all
-  pairs without a tie); Ch. 25, Ex. 1 (the counts of `nwsaom describe`); Ch. 25, Ex. 7 (what the rate counts).
+- **Exercises:** Ch. 14, exercise bank 14.a (Jaccard index and persistence by hand); Ch. 14, Ex. 5 (formed ties against all
+  pairs without a tie); Ch. 25, Ex. 1 (the counts of `nwsaom describe`); Ch. 25, Ex. 4 (what the rate counts).
 
 ### Week 9. Stochastic actor-oriented models
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week09_saom.pptx) · [PDF](/book/teaching/slides/courseB_week09_saom.pdf)
@@ -324,8 +324,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   with `behavior(alcohol1 alcohol2 alcohol3)`, `behsim` and `avalt`.
 - **Pointer:** with one wave only, `nwalaam` (the optional block of Week 7) describes how an attribute and the
   ties around each actor line up, and cannot separate selection from influence (Chapter 24).
-- **Exercises:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, Ex. 3 (homophily in sport); Ch. 25,
-  Ex. 5 (`avsim` in place of `avalt`); Ch. 25, Ex. 8 (a teacher's seating plan).
+- **Exercises:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, exercise bank 25.a (homophily in sport); Ch. 25,
+  Ex. 5 (`avsim` in place of `avalt`); Ch. 25, Ex. 5 (a teacher's seating plan).
 
 ### Week 10. SAOM: adequacy, estimators and several groups
 - **Slides:** [PowerPoint](/book/teaching/slides/courseB_week10_saom_advanced.pptx) · [PDF](/book/teaching/slides/courseB_week10_saom_advanced.pdf)
@@ -350,8 +350,8 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   `nwrem chat, nodsnd nidrec`; the company emails (`keep if t < 14`) with `nwrem mail` and `frpsndsnd`,
   `rsndsnd` and `covevent(samesup)` after `nwload mail, xvars` and `nwexpand supervisor`; `nwdynam mail,
   submodel(rate)`, `nwdynam mail, inertia recip indeg same(branch)` and `submodel(rate) intercept`.
-- **Exercises:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 4 (recency of
-  receipt); Ch. 28, Ex. 3 (an expected waiting time); Ch. 28, Ex. 8 (which of five models for which question).
+- **Exercises:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 3 (recency of
+  receipt); Ch. 28, Ex. 2 (an expected waiting time); Ch. 28, Ex. 6 (which of five models for which question).
 
 ### Week 12. One complete analysis, and reporting it
 - **Slides:** [PowerPoint](/book/teaching/slides/courseA_week12_complete_analysis.pptx) · [PDF](/book/teaching/slides/courseA_week12_complete_analysis.pdf) (the same deck as Course A, Week 12)
@@ -364,9 +364,9 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
   whose choices carry the status effect; seniority rank next to partnership (`nodeicov()`, `nodeocov()`); the
   sensitivity run without the two most active
   lawyers (`nwdrop`); stored results from Chapter 30.
-- **Exercises:** Ch. 29, Ex. 2 (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
-  Ch. 29, Ex. 3 (the mixing model and the status-match model are the same model); Ch. 29, Ex. 6 (a sensitivity
-  check of your own choice); Ch. 29, Ex. 9 (deference or competence); Ch. 30, Ex. 5
+- **Exercises:** Ch. 29, exercise bank 29.a (odds ratios of the ERGM, and why QAP and ERGM are not two confirmations);
+  Ch. 29, Ex. 2 (the mixing model and the status-match model are the same model); Ch. 29, Ex. 4 (a sensitivity
+  check of your own choice); Ch. 29, Ex. 6 (deference or competence); Ch. 30, Ex. 4
   (a do-file that collects results without retyping them).
 
 ## C. Workshop or summer school (5 days)
@@ -387,8 +387,8 @@ afternoon the next.
 - **Demonstration:** `nwwebuse lazega, nwclear`, `nwsummarize lazega_*`, `nwsym` and `nwdyads`; the survey
   example from `reshape long` to `nwfromedge`; `nwplot flomarriage` in three layouts; `nwplot lazega_adv,
   color(office)`; an interactive page.
-- **Exercises:** Ch. 1, Ex. 5 (cause, outcome or context); Ch. 2, Ex. 3 (density by hand before and after
-  symmetrizing); Ch. 4, Ex. 4 (wildcards, `nwsave` and `nwuse`); Ch. 5, Ex. 1 (one network, three layouts).
+- **Exercises:** Ch. 1, exercise bank 1.c (cause, outcome or context); Ch. 2, Ex. 3 (density by hand before and after
+  symmetrizing); Ch. 4, Ex. 3 (wildcards, `nwsave` and `nwuse`); Ch. 5, Ex. 1 (one network, three layouts).
 
 ### Day 2. Describing networks and positions in them
 - **Slides:** [PowerPoint](/book/teaching/slides/courseC_day2_describing_positions.pptx) · [PDF](/book/teaching/slides/courseC_day2_describing_positions.pdf)
@@ -398,8 +398,8 @@ afternoon the next.
   group sizes would produce. Reachability comes before distance. A centrality measure follows a mechanism.
 - **Demonstration:** `nwdyads`, `nwtriads` and `nwmixing` on `lazega_adv`; `nwgeodesic` and `nwpath`;
   `nwdegree`, `nwcloseness`, `nwbetween`, `nwburt` and `nwbrokerage, group(officenum)`.
-- **Exercises:** Ch. 6, Ex. 7 (gender and the expected E-I index); Ch. 7, Ex. 3 (distances among the Glasgow
-  girls); Ch. 8, Ex. 4 (closeness under two penalties); Ch. 8, Ex. 6 (sought or broker?).
+- **Exercises:** Ch. 6, Ex. 4 (gender and the expected E-I index); Ch. 7, exercise bank 7.b (distances among the Glasgow
+  girls); Ch. 8, Ex. 3 (closeness under two penalties); Ch. 8, Ex. 4 (sought or broker?).
 
 ### Day 3. Groups, positions and ego networks
 - **Slides:** [PowerPoint](/book/teaching/slides/courseC_day3_groups_positions_ego.pptx) · [PDF](/book/teaching/slides/courseC_day3_groups_positions_ego.pdf)
@@ -409,8 +409,8 @@ afternoon the next.
   the same ties. A partition proposed by an algorithm is not by itself a social group.
 - **Demonstration:** `nwkcore`, `nwkcomponents` and `nwcommunity, algorithm(louvain)` with `nwmodularity`;
   `nwconcor` and `nwhierarchy` with `tab` against office and status; `nwego`, `nwegoplot` and `nwaltergen`.
-- **Exercises:** Ch. 9, Ex. 4 (communities of the co-work network); Ch. 10, Ex. 4 (Ward and CONCOR as two-group
-  splits); Ch. 11, Ex. 4 (ego density against constraint).
+- **Exercises:** Ch. 9, exercise bank 9.a (communities of the co-work network); Ch. 10, Ex. 3 (Ward and CONCOR as two-group
+  splits); Ch. 11, Ex. 3 (ego density against constraint).
 
 ### Day 4. Inference for one network
 - **Slides:** [PowerPoint](/book/teaching/slides/courseC_day4_inference.pptx) · [PDF](/book/teaching/slides/courseC_day4_inference.pdf)
@@ -423,7 +423,7 @@ afternoon the next.
   `nwcorrelate lazega_adv lazega_fr, permutations(1000)`; `nwqap lazega_adv lazega_fr office practice status,
   permutations(500) plot`.
 - **Exercises:** Ch. 18, Ex. 3 (the friendship network's null mean); Ch. 19, Ex. 4 (advice and co-work);
-  Ch. 20, Ex. 5 (the advice model without friendship); Ch. 20, Ex. 7 (homophily or shared office).
+  Ch. 20, Ex. 4 (the advice model without friendship); Ch. 20, Ex. 5 (homophily or shared office).
 
 ### Day 5. A first network model
 - **Slides:** morning (ERGM): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_am.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_am.pdf); afternoon, panel option (Chapters 14 and 25): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_panel.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_panel.pdf); afternoon, capstone option (Chapter 29): [PowerPoint](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pptx) · [PDF](/book/teaching/slides/courseC_day5_first_model_pm_capstone.pdf)
@@ -437,7 +437,7 @@ afternoon the next.
   option, `nwturnover`, `nwsaom describe` and `nwsaom` on the Glasgow waves; for the capstone option, the QAP and
   ERGM models of Chapter 29.
 - **Exercises:** Ch. 21, Ex. 1 (what the office coefficient says about a pair); Ch. 21, Ex. 3 (homophily on
-  gender); then Ch. 25, Ex. 3 (homophily in sport) for the panel option, or Ch. 29, Ex. 4 (a step or a slope:
+  gender); then Ch. 25, exercise bank 25.a (homophily in sport) for the panel option, or Ch. 29, Ex. 3 (a step or a slope:
   seniority in odds ratios) for the capstone option.
 - **Optional:** participants whose outcome is an attribute of the actors (smoking, adoption, a rating) and who
   have a single observation of the network can read Chapter 24, Section 24.4 on `nwalaam`, which is the one-wave
