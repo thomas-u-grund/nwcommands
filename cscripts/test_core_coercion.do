@@ -258,4 +258,12 @@ _tcc_log "directed network: only mutual ties are used" "nwsimmelian dnet, name(s
 _tcc_log "undirected network" "nwsimmelian unet, name(sm2) nwreplace"
 _tcc_log "1 missing ties treated as 0" "nwsimindex mis, name(si3) replace"
 
+* ---------------------------------------------------------------- A12. nwdegree, nwkcore, nwego, nwconstraint: notes
+_tcc_log "1 missing ties treated as 0" "nwdegree mis, generate(dg) replace"
+_tcc_log "directed network: the neighbours of a node are the nodes it sends ties to and the nodes it receives ties from" "nwkcore dnet, generate(kc1) replace"
+_tcc_log "1 missing ties treated as 0" "nwkcore mis, generate(kc2) replace"
+_tcc_log "directed network: the alters of a node are the nodes it sends ties to and the nodes it receives ties from" "nwego dnet, sizevar(es) densvar(ed) replace"
+_tcc_log "directed network: the proportions p_ij come from the out-ties of node i" "nwconstraint dnet, name(cn1) replace"
+_tcc_log "undirected network" "nwconstraint unet, name(cn2) replace"
+
 di "PASS: test_core_coercion"

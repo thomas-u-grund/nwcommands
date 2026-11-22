@@ -46,6 +46,17 @@ program nwconstraint
 	// tier (docs/PERFORMANCE_BENCHMARKS.md). calculate_constraint_dyadic()
 	// (unw_core.do) computes the identical dense n-by-n result directly
 	// from the sparse edge list, O(sum of degree^2) instead of O(n^3).
+	if "`directed'" == "true" {
+		di "{txt}{p 4 4 2}(directed network: the proportions p_ij come from the out-ties of node i; nwburt uses both directions){p_end}"
+	}
+	else {
+		di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	_nwmissnote `netname', quiet
+	if r(nmissing) > 0 {
+		di "{txt}{p 4 4 2}(`r(nmissing)' missing ties treated as 0){p_end}"
+	}
+
 	tempname c
 	// small networks: the same native kernel, its cells put into the n x n matrix (only when the matrix is not large)
 	local __fast 0
