@@ -21,8 +21,9 @@ mata:
 // number of missing ties of a network (undirected: pairs); 0 when there are none
 real scalar nw_missing_ties(pointer(class nw_def scalar) scalar p)
 {
-	real scalar m, n, k
+	real scalar m, n
 	real matrix E
+	real rowvector md
 	pointer(real matrix) scalar e
 
 	m = p->get_missing_edges()
@@ -32,9 +33,9 @@ real scalar nw_missing_ties(pointer(class nw_def scalar) scalar p)
 		// only the cells between the two modes count (the within-mode blocks are structurally empty); small networks
 		e = p->get_matrix()
 		E = (*e :>= .)
-		k = p->get_nodes_mode1()
-		E = E[|1,k+1 \ k,n|]
-		return(sum(E))
+		// the nodes of the two modes need not be in blocks (davis: alphabetical order)
+		md = strtoreal(p->get_modes())
+		return(sum(E[selectindex(md :== 1), selectindex(md :== 2)]))
 	}
 	// the count of the network holds the diagonal of a network without self-loops; an undirected tie fills two cells
 	if (p->is_selfloop() == "false") m = m - n
