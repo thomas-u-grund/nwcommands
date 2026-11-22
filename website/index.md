@@ -21,7 +21,7 @@ network models, from the Stata command line or from dialog boxes.
 ## News
 
 - **Latest release, 22 November 2026.** nwcommands 3.35.1 (documentation only: the Schoch data sets page is rewritten, licence wording of the data set readers). Before it, on the same day: nwcommands 3.35.0, nwlsm 1.0.6, nwalaam 1.4.0 and nwergm 1.13.0; [release notes](releases/).
-- **Sunbelt 2027, Montreal.** Workshops on network analysis with Stata are planned; [details will be posted here](news/).
+- **Sunbelt 2027, Montreal (21 to 26 June 2027).** Workshops on network analysis with Stata are planned; [details are on the news page](news/), conference information on the [Sunbelt 2027 website](https://www.insna.org/events/sunbelt-2027-montreal).
 - **Teaching.** [Slides for every week and day of the three course outlines](book/teaching/outlines/) (two 12-week courses and a five-day workshop) and [workshop slides](book/teaching/workshop/) for three three-hour sessions, in PowerPoint and PDF with speaker notes, free to use.
 
 All releases: [Release notes](releases/), with the current version of every package. Announcements: [News](news/). nwcommands is a family of eight packages, the core and seven model packages; which one you need is on [Which package do I need?](which-package/), together with the versions.
