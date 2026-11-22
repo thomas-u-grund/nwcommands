@@ -39,6 +39,7 @@
         {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "describe using https://nwcommands.org/examples/senate93.nwdta":describe}
         {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
         {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
+        {help netexample##schoch:schoch (collection)}{col 29}{stata "nwwebuse schoch":overview} | 989 network data sets of the R package networkdata
 
 {hline}
 
@@ -870,6 +871,50 @@ As for {help netexample##baerveldt:baerveldt}. Schools 1-7, 9, 11, 12 and 14-18 
 unchanged; schools 8, 10, 13 and 19 are Siena schools 10, 13, 16 and 23. Gender is 1 for girls and 2 for boys (the shares
 by school agree with Snijders and Baerveldt 2003; the Siena file page states the opposite). The ethnicity file of Siena
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
+
+{marker schoch}{...}
+{title:Schoch networkdata collection}
+
+{pstd}
+David Schoch's R package {it:networkdata} (https://github.com/schochastics/networkdata) is a collection of 989 network data sets
+(2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). {cmd:nwwebuse schoch} loads
+them. {bf:No data of this collection are part of nwcommands}: the original file of a data set is downloaded from Schoch's
+repository the first time you ask for it, kept in a cache in your PLUS directory and converted on your computer by R, so
+{bf:R with the package igraph must be installed} for this one reader (the other data sets of this help file need no R). Every
+load prints which network was loaded and where the data came from.
+
+{pstd}
+Look at the collection (overview, list of all data sets, one data set) and load a network:
+
+	{cmd:. nwwebuse schoch}
+	{cmd:. nwwebuse schoch list}
+	{cmd:. nwwebuse schoch describe karate}
+	{cmd:. nwwebuse schoch karate, nwclear}
+
+{pstd}
+Zachary's karate club (34 nodes, 78 ties, undirected) and the Southern women (two-mode: 32 nodes, 18 women and 14 events, 89 ties):
+
+	{cmd:. nwwebuse schoch karate, nwclear}
+	{cmd:. nwwebuse schoch southern_women, nwclear}
+
+{pstd}
+The ten directed networks of the Sampson monks ({cmd:sampson_1} to {cmd:sampson_10}), or only the third:
+
+	{cmd:. nwwebuse schoch sampson, nwclear}
+	{cmd:. nwwebuse schoch sampson, nwclear element(3)}
+
+{pstd}
+The networks of Game of Thrones ({cmd:got}, one per season), 54 tennis networks ({cmd:atp}) and a valued network of dolphins ({cmd:dolphins_1}):
+
+	{cmd:. nwwebuse schoch got, nwclear}
+	{cmd:. nwwebuse schoch atp, nwclear}
+	{cmd:. nwwebuse schoch dolphins_1, nwclear}
+
+{pstd}
+{bf:Source, licence and citation.} The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch). The
+individual data sets come from many sources and carry their own terms of use; the package states no licence for them. Cite the collection:
+Schoch, D. (2022), {it:networkdata: Repository of Network Datasets}, doi:10.5281/zenodo.7189928, and the original source of each data set as
+{cmd:nwnetworkdata describe} {it:name} and the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} give it. See {help nwnetworkdata}.
 
 {hline}
 {pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

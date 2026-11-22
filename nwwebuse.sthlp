@@ -24,10 +24,19 @@ Load network data over the web
 Load a network from Schoch's collection {it:networkdata} (needs R with the package igraph)
 
 {p 8 16 2}
-{cmd:nwwebuse} {cmd:schoch} {it:name} [{cmd:,} {it:options}]{break}
-{cmd:nwwebuse} {it:name}{cmd:, schoch} [{it:options}]{break}
-{cmd:nwwebuse} {cmd:schoch} [{cmd:, list}]{break}
-{cmd:nwwebuse} {cmd:schoch} {c -(}{cmd:list}|{cmd:describe} {it:name}{c )-}
+{cmd:nwwebuse} {cmd:schoch} {it:name} [{cmd:,} {it:options}]
+
+{p 8 16 2}
+{cmd:nwwebuse} {it:name}{cmd:, schoch} [{it:options}]
+
+{p 8 16 2}
+{cmd:nwwebuse} {cmd:schoch} [{cmd:, list}]
+
+{p 8 16 2}
+{cmd:nwwebuse} {cmd:schoch} {cmd:list}
+
+{p 8 16 2}
+{cmd:nwwebuse} {cmd:schoch} {cmd:describe} {it:name}
 
 
 {phang}

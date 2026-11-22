@@ -196,31 +196,45 @@ https://doi.org/10.5281/zenodo.7189928. The tennis networks ({cmd:atp}, {cmd:wta
 {marker examples}{...}
 {title:Examples}
 
-{pstd}What is there?{p_end}
-{phang2}{cmd:. nwnetworkdata list}{p_end}
-{phang2}{cmd:. nwnetworkdata list, twomode}{p_end}
-{phang2}{cmd:. nwnetworkdata list sampson, networks}{p_end}
-{phang2}{cmd:. nwnetworkdata describe karate}{p_end}
+{pstd}
+What is there?
 
-{pstd}Load Zachary's karate club and a two-mode network{p_end}
-{phang2}{cmd:. nwnetworkdata karate, nwclear}{p_end}
-{phang2}{cmd:. nwnetworkdata southern_women, nwclear}{p_end}
+	{cmd:. nwnetworkdata list}
+	{cmd:. nwnetworkdata list, twomode}
+	{cmd:. nwnetworkdata list sampson, networks}
+	{cmd:. nwnetworkdata describe karate}
 
-{pstd}Load the ten Sampson monastery networks, or just the third{p_end}
-{phang2}{cmd:. nwnetworkdata sampson, nwclear}{p_end}
-{phang2}{cmd:. nwnetworkdata sampson_3, nwclear}{p_end}
+{pstd}
+Load Zachary's karate club and a two-mode network
 
-{pstd}Tennis 1968, with the player attributes age, hand and country in the dataset{p_end}
-{phang2}{cmd:. nwnetworkdata atp, nwclear element(1)}{p_end}
+	{cmd:. nwnetworkdata karate, nwclear}
+	{cmd:. nwnetworkdata southern_women, nwclear}
 
-{pstd}The tie list of that network, with the surface of each match{p_end}
-{phang2}{cmd:. nwnetworkdata edges atp_1, clear}{p_end}
+{pstd}
+Load the ten Sampson monastery networks, or just the third
 
-{pstd}Use a local clone of the repository (no download){p_end}
-{phang2}{cmd:. nwnetworkdata source set "C:/data/networkdata/data"}{p_end}
+	{cmd:. nwnetworkdata sampson, nwclear}
+	{cmd:. nwnetworkdata sampson_3, nwclear}
 
-{pstd}Name of Rscript, if it is not found{p_end}
-{phang2}{cmd:. global nwnd_rscript "C:/Program Files/R/R-4.3.0/bin/Rscript.exe"}{p_end}
+{pstd}
+Tennis 1968, with the player attributes age, hand and country in the dataset
+
+	{cmd:. nwnetworkdata atp, nwclear element(1)}
+
+{pstd}
+The tie list of that network, with the surface of each match
+
+	{cmd:. nwnetworkdata edges atp_1, clear}
+
+{pstd}
+Use a local clone of the repository (no download)
+
+	{cmd:. nwnetworkdata source set "C:/data/networkdata/data"}
+
+{pstd}
+Name of Rscript, if it is not found
+
+	{cmd:. global nwnd_rscript "C:/Program Files/R/R-4.3.0/bin/Rscript.exe"}
 
 
 {title:See also}
