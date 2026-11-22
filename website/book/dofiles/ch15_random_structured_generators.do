@@ -19,43 +19,7 @@ clear all
 set more off
 
 * ============================================================
-* What density does by itself
-* ============================================================
-matrix R = J(6, 5, .)
-local i = 0
-foreach d in .02 .05 .1 .179 .3 .5 {
-    local ++i
-    set seed 12345
-    quietly nwrandom 71, density(`d') name(r)
-    quietly nwsummarize r, detail
-    matrix R[`i', 1] = (`d', r(reciprocity), r(transitivity))
-    quietly nwgeodesic r, name(geo_r)
-    local path = cond(r(avgpath) < 0, ., r(avgpath))
-    matrix R[`i', 4] = (1 - r(unconnected) / r(numpaths), `path')
-    nwdrop r geo_r
-}
-matrix colnames R = density reciprocity transitivity reachable avgpath
-matlist R, format(%12.3f) names(columns)
-
-matrix S = J(4, 3, .)
-local i = 0
-foreach n in 71 142 284 710 {
-    local ++i
-    set seed 12345
-    local d = 12.56 / (`n' - 1)
-    quietly nwrandom `n', density(`d') name(r)
-    quietly nwsummarize r, detail
-    matrix S[`i', 1] = (`d', r(transitivity))
-    quietly nwgeodesic r, name(geo_r)
-    matrix S[`i', 3] = r(avgpath)
-    nwdrop r geo_r
-}
-matrix rownames S = 71 142 284 710
-matrix colnames S = density transitivity avgpath
-matlist S, format(%12.3f) rowtitle(nodes)
-
-* ============================================================
-* Random graphs
+* A random graph as a baseline
 * ============================================================
 nwwebuse lazega, nwclear
 nwsummarize lazega_adv, detail
@@ -76,6 +40,52 @@ use draws, clear
 format transitivity %5.3f
 list name transitivity, noobs sep(5) abbreviate(12)
 restore
+
+* ============================================================
+* What density and size do by themselves
+* ============================================================
+matrix R = J(6, 5, .)
+local i = 0
+foreach d in .02 .05 .1 .179 .3 .5 {
+    local ++i
+    set seed 12345
+    quietly nwrandom 71, density(`d') name(sweep)
+    quietly nwsummarize sweep, detail
+    matrix R[`i', 1] = (`d', r(reciprocity), r(transitivity))
+    quietly nwgeodesic sweep, name(geo_sweep)
+    local path = cond(r(avgpath) < 0, ., r(avgpath))
+    matrix R[`i', 4] = (1 - r(unconnected) / r(numpaths), `path')
+    nwdrop sweep geo_sweep
+}
+matrix colnames R = density reciprocity transitivity reachable avgpath
+matlist R, format(%12.3f) names(columns)
+
+matrix S = J(4, 3, .)
+local i = 0
+foreach n in 71 142 284 710 {
+    local ++i
+    set seed 12345
+    local d = 12.56 / (`n' - 1)
+    quietly nwrandom `n', density(`d') name(sweep)
+    quietly nwsummarize sweep, detail
+    matrix S[`i', 1] = (`d', r(transitivity))
+    quietly nwgeodesic sweep, name(geo_sweep)
+    matrix S[`i', 3] = r(avgpath)
+    nwdrop sweep geo_sweep
+}
+matrix rownames S = 71 142 284 710
+matrix colnames S = density transitivity avgpath
+matlist S, format(%12.3f) rowtitle(nodes)
+
+* ============================================================
+* One command for every generator: nwgen
+* ============================================================
+set seed 12345
+nwgen g_random = random(71), density(.179)
+nwgen g_ring = ring(20), k(4)
+nwgen g_lattice = lattice(5 6)
+nwgen g_small = small(50), k(4) prob(.1)
+nwgen g_pref = pref(100), m(2)
 
 * ============================================================
 * Rings and grids
@@ -127,6 +137,7 @@ restore
 * ============================================================
 * Preferential attachment
 * ============================================================
+nwwebuse lazega, nwclear
 quietly nwdegree lazega_adv, generate(_outdeg _indeg)
 summarize _outdeg _indeg
 set seed 12345
