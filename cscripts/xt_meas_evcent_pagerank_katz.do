@@ -75,9 +75,9 @@ xa e1[1] == .
 nwset, mat((0,1,0\0,0,1\1,0,0)) name(cyc) directed
 nwevcent cyc, generate(ec) nosym
 xa reldif(ec[1], 1/sqrt(3)) < 1e-6 & reldif(ec[3], 1/sqrt(3)) < 1e-6
-* directed out-star symmetrized (default) = undirected star
+* directed out-star symmetrized (sym) = undirected star
 nwset, mat((0,1,1,1\0,0,0,0\0,0,0,0\0,0,0,0)) name(dstar) directed
-nwevcent dstar, generate(eds)
+nwevcent dstar, generate(eds) sym
 xa reldif(eds[1], 1/sqrt(2)) < 1e-6 & reldif(eds[2], 1/sqrt(6)) < 1e-6
 * a valued star whose ties all have the value 2.5: the same vector as the binary star
 nwset, mat((0,2.5,2.5,2.5\2.5,0,0,0\2.5,0,0,0\2.5,0,0,0)) name(vstar) undirected

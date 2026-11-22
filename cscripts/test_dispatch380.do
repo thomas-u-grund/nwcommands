@@ -113,11 +113,11 @@ foreach d in flomarriage glasgow3 gahuku gang {
 	_fxv cl "`d'|nwclustering|cl" 0 "`d': nwclustering as 3.7.0"
 	_fxs `=r(cluster_avg)' "`d'|nwclustering|avg" 0 "`d': nwclustering average as 3.7.0"
 	_fxs `=r(cluster_global)' "`d'|nwclustering|glob" 0 "`d': nwclustering global as 3.7.0"
-	nwcloseness `d', generate(c1 f1 n1) silent
+	nwcloseness `d', generate(c1 f1 n1) silent sym
 	foreach v in c1 f1 n1 {
 		_fxv `v' "`d'|nwcloseness|`v'" 0 "`d': nwcloseness `v' as 3.7.0" float
 	}
-	nwbetween `d', generate(b1) silent
+	nwbetween `d', generate(b1) silent sym
 	_fxv b1 "`d'|nwbetween|b1" 0 "`d': nwbetween as 3.7.0" float
 	_fxs `=r(bw_central)' "`d'|nwbetween|central" 1e-7 "`d': nwbetween centralisation as 3.7.0 (3.7.0 used float scores)"
 	nwmotifs `d', silent

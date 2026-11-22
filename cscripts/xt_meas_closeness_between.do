@@ -80,14 +80,17 @@ nwset, mat((0,1,0,0\1,0,1,0\0,1,0,0\0,0,0,0)) name(piso) undirected
 nwcloseness piso, generate(ci fi ni)
 xa ci[4] == .
 xa reldif(ci[1], 2/3) < 1e-7 & reldif(ci[2], 1) < 1e-7
-* directed path 1 -> 2 -> 3: default symmetrizes (= undirected path 3)
+* directed path 1 -> 2 -> 3: sym symmetrizes (= undirected path 3)
 nwset, mat((0,1,0\0,0,1\0,0,0)) name(dp3) directed
-nwcloseness dp3, generate(cy fy ny)
+nwcloseness dp3, generate(cy fy ny) sym
 xa reldif(cy[1], 2/3) < 1e-7 & reldif(cy[2], 1) < 1e-7 & reldif(cy[3], 2/3) < 1e-7
 * nosym: out-distances (igraph::closeness(mode = "out", normalized = TRUE)): 2/3, 1, NaN
 nwcloseness dp3, generate(cz fz nz) nosym
 xa reldif(cz[1], 2/3) < 1e-7 & reldif(cz[2], 1) < 1e-7
 xa cz[3] == .
+* the default is the same as nosym (distances follow the direction of the ties)
+nwcloseness dp3, generate(cd fd nd)
+xa reldif(cd[1], 2/3) < 1e-7 & reldif(cd[2], 1) < 1e-7 & cd[3] == .
 di "(2) closeness edge cases: ok"
 
 * ---------------------------------------------------------------- (3) closeness: valued, and fast route = slow route
@@ -183,15 +186,17 @@ mata: U8 = U8 + U8'
 nwset, mat(U8) name(u8) undirected
 nwbetween u8, generate(bu)
 xt_cmp bu "(0,0,10,12,12,0,6,0)" 1e-7
-* D8: igraph::betweenness(D, directed=TRUE) = 7 1.5 1.5 3 12.5 11.5 6 0 (nosym);
-*     igraph::betweenness(as_undirected(D, mode="collapse")) = 3 0 3 5 5 10 6 0 (default, symmetrized)
+* D8: igraph::betweenness(D, directed=TRUE) = 7 1.5 1.5 3 12.5 11.5 6 0 (default and nosym);
+*     igraph::betweenness(as_undirected(D, mode="collapse")) = 3 0 3 5 5 10 6 0 (sym, symmetrized)
 mata: D8 = J(8,8,0)
 mata: E = (1,2\2,1\2,3\3,1\3,4\4,5\5,6\6,4\6,7\7,8\8,7\1,5)
 mata: for (k = 1; k <= rows(E); k++) D8[E[k,1], E[k,2]] = 1
 nwset, mat(D8) name(d8) directed
 nwbetween d8, generate(bdn) nosym
 xt_cmp bdn "(7,1.5,1.5,3,12.5,11.5,6,0)" 1e-7
-nwbetween d8, generate(bds)
+nwbetween d8, generate(bdd)
+xt_cmp bdd "(7,1.5,1.5,3,12.5,11.5,6,0)" 1e-7
+nwbetween d8, generate(bds) sym
 xt_cmp bds "(3,0,3,5,5,10,6,0)" 1e-7
 * the symmetrized helper network is gone again
 capture nwname d8_symmetrized

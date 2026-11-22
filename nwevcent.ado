@@ -1,8 +1,9 @@
 capture program drop nwevcent
 program nwevcent
 	version 9
-	syntax [anything(name=netname)] , [nosym weighted BINary GENerate(string) replace]
+	syntax [anything(name=netname)] , [SYMmetrize nosym weighted BINary GENerate(string) replace]
 	_nwsyntax `netname'
+	local __wasdir = ("`directed'" == "true")
 	_nwdatasync `netname'
 
 	// generate() is required (suite-wide generate()-required style
@@ -13,17 +14,14 @@ program nwevcent
 		di "{err}option {bf:generate()} required."
 		exit 198
 	}
-	// Per Stata's own [P] syntax convention for a "no"-prefixed toggle:
-	// declaring `nosym' in the option list makes Stata define a local
-	// named after the STEM - `sym', not `nosym' - set to the literal
-	// string "nosym" when the caller passes the option, empty
-	// otherwise. `nosym' itself is never populated at all. (Confirmed
-	// directly against a minimal, isolated test program before touching
-	// this file - this is genuine, general `syntax' behavior, not
-	// specific to this command.) This is therefore already correct as
-	// originally written; left exactly as-is (`sym' empty -> symmetrize
-	// by default, `sym' == "nosym" -> skip symmetrizing).
-	local nosym = ("`sym'" != "")
+	// `nosym' (accepted so that old scripts run; it is the default) stores "nosym" in the local `sym'; sym takes the
+	// larger of the two directions of each tie of a directed network first. An undirected network needs no copy.
+	if "`sym'" != "" & "`symmetrize'" != "" {
+		di "{err}Options {bf:sym} and {bf:nosym} cannot be combined."
+		exit 198
+	}
+	local __symdo = ("`symmetrize'" != "" & `__wasdir')
+	local nosym = (1 - `__symdo')
 
 	local getvalued = 0
 	if "`binary'" != "" & "`weighted'" != "" {
@@ -59,12 +57,19 @@ program nwevcent
 	di "{txt}  Network name: {res}`netname'"
 	di "{hline 40}"
 	di "{txt}    Eigenvector centrality"
-	if `nosym' == 0 {
-		di "{txt}   (calculated on symmetrized network)"
+	if `__symdo' {
+		di "{txt}{p 3 3 2}(directed network symmetrized: the larger of the two directions of a tie){p_end}"
+	}
+	else if `__wasdir' {
+		di "{txt}{p 3 3 2}(directed network: the direction of the ties is used){p_end}"
+	}
+	else {
+		di "{txt}{p 3 3 2}(undirected network){p_end}"
 	}
 	if `getvalued' == 1 {
 		di "{txt}   (calculated on tie values, not dichotomized)"
 	}
+	qui nwcurrent `netname'
 	mata: st_rclear()
 	sum `generate'
 

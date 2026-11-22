@@ -19,6 +19,7 @@ nwbetween
 [,
 generate(newvarlist)
 replace
+sym
 nosym
 standardize
 silent
@@ -34,7 +35,8 @@ onemode]
 |---|---|
 | `generate`(*`newvarlist`*) | **Required.** Variable name for betweenness centrality |
 | `replace` | allow overwriting an existing variable of the same name |
-| `nosym` | do not symmetrize network before calculation of shortest paths |
+| `sym` | on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values |
+| `nosym` | the default and accepted for backward compatibility: shortest paths follow the direction of the ties |
 | `standardize` | standardize centrality scores |
 | `silent` | suppress the summary table of the generated variable |
 | `weighted` | use the tie values in the shortest paths; redundant on a valued network, where this is the default (kept for compatibility) |
@@ -64,7 +66,7 @@ Directed network: *Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))*
 
 Undirected network: *Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)*
 
-The stored result **r(bw_central)** is Freeman's betweenness centralization, computed from the raw scores whether or not `standardize` is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). Without `nosym` the network is symmetrized first, so the undirected formula applies.
+The stored result **r(bw_central)** is Freeman's betweenness centralization, computed from the raw scores whether or not `standardize` is given: sum(max - Between_i) / ((N-1)^2*(N-2)) for a directed network (raw scores count ordered pairs) and sum(max - Between_i) / ((N-1)^2*(N-2)/2) for an undirected network (raw scores count unordered pairs). It equals 1 for a star and agrees with R's sna::centralization(, betweenness). With `sym` the network is symmetrized first, so the undirected formula applies.
 
 `generate()` is required and names the Stata variable to hold the result (pass `replace` to allow overwriting an existing variable of that name). When betweenness centrality is calculated for more than one network at the same time (e.g. **nwbetween glasgow1 glasgow2, generate(bw)**), the command generates one variable per network, named *varname_netname* (e.g. *bw_glasgow1*, *bw_glasgow2*).
 
@@ -82,7 +84,7 @@ The default (unweighted) mode of `nwbetween` transparently uses a compiled nativ
 
 ## Network types
 
-**Directed:** symmetrized by default; `nosym` computes directed betweenness. **Valued:** used by default (paths of least cost 1/w^alpha, `alpha(1)` by default); `binary` counts steps; `weighted` is redundant. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation). **Signed:** ties of value zero or less, including negative ties, count as absent. See [nwnetworktypes](nwnetworktypes).
+**Directed:** shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** used by default (paths of least cost 1/w^alpha, `alpha(1)` by default); `binary` counts steps; `weighted` is redundant. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation). **Signed:** ties of value zero or less, including negative ties, count as absent. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -105,4 +107,4 @@ Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted 
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

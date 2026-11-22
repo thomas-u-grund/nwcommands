@@ -6,6 +6,12 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Results that change
+- `nwbetween`, `nwcloseness` and `nwevcent` recognise whether the network is directed or undirected and say so in the output. A directed network is now analysed as it is: shortest paths follow the direction of the ties (betweenness equals `igraph::betweenness(directed = TRUE)` and `sna::betweenness(gmode = "digraph")`, with the directed standardisation `(N-1)(N-2)`; closeness uses the distances from a node to the nodes it can reach, equals `igraph::closeness(mode = "out", normalized = TRUE)`, and is missing for a node that reaches nobody; weights of a valued network as before). Until 3.34.0 the default symmetrized a directed network first (`nwsym`, mode `max`) and `nosym` gave the directed result. Use the new option `sym` for the previous default result; `nosym` is still accepted and is the same as the default. `sym` together with `nosym` is error 198. Undirected networks give exactly the same numbers as before, and need no symmetrized copy any more (nwbetween and nwcloseness take about 30 to 45 percent less time on 2,000 nodes).
+- Printed notes: `(directed network: shortest paths follow the direction of the ties)` (`nwbetween`), `(directed network: distances follow the direction of the ties)` (`nwcloseness`), `(directed network: the direction of the ties is used)` (`nwevcent`), `(directed network symmetrized: the larger of the two directions of a tie)` (all three with `sym`), `(undirected network)` (all three).
+- The analysed network is the current network after `nwbetween`, `nwcloseness` and `nwevcent` in every mode (3.34.0: `nwcloseness` made the first network of the list current as a by-product when it symmetrized and left the current network unchanged with `nosym`; `nwevcent` and `nwbetween` with `nosym` never changed it). After a call with a list of networks the last network of the list is current.
+- Dialogs of the three commands: the `nosym` check box is replaced by a `sym` check box.
+
 ### Changed
 - Help: `nwsummarize` says exactly what `r(missing_edges)` counts (all cells without a value, including the diagonal cells of a network without self-loops, and both cells of a missing tie in an undirected network), how to get the number of missing off-diagonal cells (`r(missing_edges)` - `r(nodes)`) and warns against testing `r(missing_edges)` > 0.
 

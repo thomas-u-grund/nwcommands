@@ -17,6 +17,7 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opt gen:erate}({it:{help varname}})
+{opt sym}
 {opt nosym}
 {opt weighted}
 {opt replace}
@@ -26,7 +27,8 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt gen:erate}({it:{help varname}})}{bf:Required.} Variable name for eigenvector centrality scores{p_end}
-{synopt:{opt nosym}}do not symmetrize network before calculation{p_end}
+{synopt:{opt sym}}on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values{p_end}
+{synopt:{opt nosym}}the default and accepted for backward compatibility: the ties of a directed network keep their direction{p_end}
 {synopt:{opt weighted}}use the tie values of a valued network; redundant, this is the default (kept for compatibility){p_end}
 {synopt:{opt replace}}replace existing {it:generate()} variable{p_end}
 {synopt:{opt bin:ary}}Ignore the tie values of a valued network (by default they are used){p_end}
@@ -55,7 +57,7 @@ Eigenvector centrality is only defined for connected networks.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized by default; {opt nosym} uses outgoing ties (igraph uses incoming ties). {bf:Valued:} the
+{bf:Directed:} the direction of the ties is used: the score of a node is built from the nodes it sends ties to (igraph's {cmd:eigen_centrality(directed = TRUE)} uses the ties a node receives); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} the
 tie values are used by default ({opt weighted} is redundant); {opt binary} ignores them. {bf:Two-mode:} same as for
 the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 

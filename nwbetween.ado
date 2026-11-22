@@ -1,7 +1,7 @@
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted BINary alpha(real 1) force TWOmode ONEmode]
+	syntax [anything(name=netname)], [replace GENerate(string) SYMmetrize nosym standardize silent weighted BINary alpha(real 1) force TWOmode ONEmode]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -25,6 +25,14 @@ program nwbetween
 	// Fixed by adding a real replace option and making the guard gate
 	// the drop, matching the working convention used elsewhere in this
 	// package (e.g. nwdegree, nwkatz).
+	// `nosym' (the default since the measure follows the direction of ties; accepted so that old scripts run) stores
+	// "nosym" in the local `sym'; `symmetrize' (abbreviation sym) asks for the symmetrised network
+	local __nosym = ("`sym'" != "")
+	local __sym = ("`symmetrize'" != "")
+	if `__nosym' & `__sym' {
+		di "{err}Options {bf:sym} and {bf:nosym} cannot be combined."
+		exit 198
+	}
 	_nwsyntax `netname', max(9999)
 	local totalnetworks = `networks'
 	if "`binary'" != "" & "`weighted'" != "" {
@@ -88,18 +96,11 @@ program nwbetween
 		if _rc capture drop `netgenerate'
 		generate double `netgenerate' = .
 
-		// Per Stata's own [P] syntax convention for a "no"-prefixed
-		// toggle: declaring `nosym' in the option list makes Stata
-		// define a local named after the STEM - `sym', not `nosym' -
-		// set to the literal string "nosym" when the caller passes
-		// the option, empty otherwise. `nosym' itself is never
-		// populated at all, so checking it here always evaluated
-		// true regardless of whether the option was passed, making
-		// `nosym' a silent no-op ever since it was added - confirmed
-		// directly against a minimal, isolated test program (see
-		// nwevcent.ado, which had the identical bug). Fixed to check
-		// `sym' instead.
-		if "`sym'" == "" {
+		// a directed network is analysed as it is (shortest paths follow the direction of the ties); sym asks for the
+		// larger of the two directions of each tie first. An undirected network needs no copy.
+		local __wasdir = ("`directed'" == "true")
+		local __symdo = (`__sym' & `__wasdir')
+		if `__symdo' {
 			tempname __symnet
 			nwsym `netname_temp', generate(`__symnet')
 			_nwsyntax
@@ -152,10 +153,10 @@ program nwbetween
 			}
 		}
 
-		if "`sym'" == "" {
+		if `__symdo' {
 			nwdrop `__symnet'
-			nwcurrent `oldnetname'
 		}
+		nwcurrent `oldnetname'
 
 		mata: st_rclear()
 
@@ -163,6 +164,15 @@ program nwbetween
 		noi di "{txt}  Network name: {res}`netname_temp'"
 		noi di "{hline 40}"
 		noi di "{txt}    Betweenness centrality"
+		if `__symdo' {
+			noi di "{txt}{p 4 4 2}(directed network symmetrized: the larger of the two directions of a tie){p_end}"
+		}
+		else if `__wasdir' {
+			noi di "{txt}{p 4 4 2}(directed network: shortest paths follow the direction of the ties){p_end}"
+		}
+		else {
+			noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+		}
 		if `__wtd' {
 			noi di "{txt}{p 4 4 2}(shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha'){p_end}"
 		}
@@ -179,7 +189,7 @@ program nwbetween
 		// its maximum, (n-1)^2 (n-2) for raw directed scores (ordered
 		// pairs) and (n-1)^2 (n-2) / 2 for raw undirected scores
 		// (unordered pairs). `directed' describes the network that was
-		// actually analysed (the symmetrised copy unless nosym).
+		// actually analysed (the symmetrised copy with sym).
 		// The centralisation is taken from the raw scores, so undo
 		// standardize if it was requested.
 		local bwdiv = 1

@@ -18,6 +18,7 @@
 [{cmd:,}
 {opt unconnected(#|max)}
 {opt generate}({it:{help varname:var1 var2 var3}})
+{opt sym}
 {opt nosym}
 {opt replace}
 {opt silent}
@@ -34,7 +35,8 @@
 {synopt:{opt unconnected(#|max)}}defines the length of the (non-existent) path between two unconnected nodes{p_end}
 {synopt:{opt legacy}}on an unconnected network, use (nodes - 1) / farness instead of the number of reachable nodes / farness{p_end}
 {synopt:{opt generate}({it:{help varname:var1 var2 var3}})}{bf:Required.} Exactly 3 variable names to save closeness, farness and nearness scores, in that order{p_end}
-{synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
+{synopt:{opt sym}}on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values{p_end}
+{synopt:{opt nosym}}the default and accepted for backward compatibility: distances follow the direction of the ties{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3}; required if they already exist{p_end}
 {synopt:{opt silent}}Do not display the summary of the new variables{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to {help nwgeodesic}{p_end}
@@ -91,7 +93,7 @@ network is never reduced to step counts silently: without the native plugin a ne
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized by default; {opt nosym} keeps the direction. {bf:Valued:} tie values are used by default
+{bf:Directed:} distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's {cmd:closeness(mode = "out")}); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} tie values are used by default
 (least-cost distances of {help nwgeodesic}, cost 1/w); {opt binary} counts steps; options of {help nwgeodesic} such as
 {opt alpha()} are passed on. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode
 computation), {opt twomode} is a synonym of the default. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
