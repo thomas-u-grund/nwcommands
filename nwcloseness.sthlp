@@ -96,7 +96,7 @@ network is never reduced to step counts silently: without the native plugin a ne
 {bf:Directed:} distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's {cmd:closeness(mode = "out")}); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} tie values are used by default
 (least-cost distances of {help nwgeodesic}, cost 1/w); {opt binary} counts steps; options of {help nwgeodesic} such as
 {opt alpha()} are passed on. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode
-computation), {opt twomode} is a synonym of the default. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+computation), {opt twomode} is a synonym of the default. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

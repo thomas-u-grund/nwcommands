@@ -79,6 +79,8 @@ program nwcloseness
 	local __lastnet ""
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwmissnote `netname_temp', quiet
+		local __nmiss = r(nmissing)
 		// a directed network is analysed as it is (distances follow the direction of the ties); sym takes the larger of
 		// the two directions of each tie first; an undirected network needs no copy
 		local __lastnet `netname_temp'
@@ -94,6 +96,9 @@ program nwcloseness
 		}
 		else {
 			local __notes `"`__notes' "`__lab'undirected network""'
+		}
+		if `__nmiss' > 0 {
+			local __notes `"`__notes' "`__lab'`__nmiss' missing ties treated as 0""'
 		}
 		if "`twomode'" != "" & "`is2mode'" != "true" {
 			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."

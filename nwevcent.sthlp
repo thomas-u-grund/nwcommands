@@ -64,7 +64,7 @@ the dominant strongly connected part are 0 or tiny, as in igraph (which also nee
 1e-8), and {opt out} builds it from the nodes it sends ties to; {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the
 network was analysed as directed, undirected or symmetrized. {bf:Valued:} the
 tie values are used by default ({opt weighted} is redundant); {opt binary} ignores them. {bf:Two-mode:} same as for
-the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+the bipartite graph read as a one-mode network. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

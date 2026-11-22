@@ -70,7 +70,7 @@ scalability discipline this package's own sparse-backend commands ({help nwkcore
 {pstd}
 {bf:Directed:} ties are followed in their direction. {bf:Valued:} the surfer follows a tie with probability w_ij / s_i
 by default; {opt binary} ignores the values. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
-network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+network. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

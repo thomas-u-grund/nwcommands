@@ -4,6 +4,8 @@ program nwevcent
 	syntax [anything(name=netname)] , [SYMmetrize nosym OUT weighted BINary GENerate(string) replace]
 	_nwsyntax `netname'
 	local __wasdir = ("`directed'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	_nwdatasync `netname'
 
 	// generate() is required (suite-wide generate()-required style
@@ -77,6 +79,9 @@ program nwevcent
 	}
 	else {
 		di "{txt}{p 3 3 2}(undirected network){p_end}"
+	}
+	if `__nmiss' > 0 {
+		di "{txt}{p 3 3 2}(`__nmiss' missing ties treated as 0){p_end}"
 	}
 	if `getvalued' == 1 {
 		di "{txt}   (calculated on tie values, not dichotomized)"

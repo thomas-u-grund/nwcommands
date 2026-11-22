@@ -121,7 +121,7 @@ needs a dense work space of n x n cells for every node and is not usable above a
 {bf:Directed:} shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} used by default (paths of
 least cost 1/w^alpha, {opt alpha(1)} by default); {opt binary} counts steps; {opt weighted} is redundant. {bf:Two-mode:}
 two-mode form by default (option {opt onemode} for the one-mode computation). {bf:Signed:} ties of value zero or less,
-including negative ties, count as absent. See {help nwnetworktypes}.{p_end}
+including negative ties, count as absent. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}

@@ -57,6 +57,8 @@ program nwbetween
 
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwmissnote `netname_temp', quiet
+		local __nmiss = r(nmissing)
 		if "`twomode'" != "" & "`is2mode'" != "true" {
 			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
 			exit 198
@@ -172,6 +174,9 @@ program nwbetween
 		}
 		else {
 			noi di "{txt}{p 4 4 2}(undirected network){p_end}"
+		}
+		if `__nmiss' > 0 {
+			noi di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
 		}
 		if `__wtd' {
 			noi di "{txt}{p 4 4 2}(shortest paths weighted by tie values: step cost 1/value^alpha, alpha = `alpha'){p_end}"
