@@ -13,6 +13,11 @@ A short list, kept small on purpose. It names what to cite for the software and 
 ## About nwcommands and the models
 
 - Grund, T. U. (2027). *Network Analysis with Stata: Concepts, Methods, and Applications.* Stata Press, College Station, TX. Forthcoming.
+
+## Technical manuals
+
+These manuals document the model packages: syntax, options, stored results and worked examples. They are technical reference documentation, deposited at Zenodo so that each version can be cited and found; they are not peer-reviewed publications. Each DOI leads to the latest manual.
+
 - Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 - Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.23661331](https://doi.org/10.5281/zenodo.23661331)
 - Grund, T. U. (2026). *nwalaam: Autologistic actor attribute models in Stata. Manual.* Zenodo (all versions). [doi:10.5281/zenodo.24397901](https://doi.org/10.5281/zenodo.24397901)
