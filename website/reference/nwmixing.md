@@ -64,7 +64,7 @@ The `plot` option draws the table with a built-in bar plot (the same plot the us
 
 ## Network types
 
-**Directed:** the mixing table is directional (ego to alter); on an undirected network every tie is counted from both ends, as the output notes. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the mixing table is directional (ego to alter); on an undirected network every tie is counted from both ends, as the output notes. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Missing ties:** count as no tie; the output gives their number. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -104,4 +104,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

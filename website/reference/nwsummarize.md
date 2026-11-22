@@ -41,7 +41,7 @@ silent
 
 ## Network types
 
-**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:**, **Valued:** the summaries reflect direction and tie values. **Two-mode:** yes - shows the two levels with sizes and labels; the density is the ties over the pairs from different modes. **Signed:** negative values are not treated specially. The output says that edges and density count every tie with a non-zero value on a valued network, and how many missing ties there are: they are not counted as ties and not as pairs in the density (the measures of `detail` treat them as 0). See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -140,4 +140,4 @@ With a *netlist*, the results are those of the last network. The other results o
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

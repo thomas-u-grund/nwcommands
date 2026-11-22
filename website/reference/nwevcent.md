@@ -46,7 +46,7 @@ Eigenvector centrality is only defined for connected networks; for a directed ne
 
 ## Network types
 
-**Directed:** the direction of the ties is used: the score of a node is built from the nodes that send ties to it (the in-ties, as `igraph::eigen_centrality(directed = TRUE)`; checked on the strongly connected Lazega advice network, 1e-8), and `out` builds it from the nodes it sends ties to; `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** the tie values are used by default (`weighted` is redundant); `binary` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the direction of the ties is used: the score of a node is built from the nodes that send ties to it (the in-ties, as `igraph::eigen_centrality(directed = TRUE)`; checked on the strongly connected Lazega advice network, 1e-8), and `out` builds it from the nodes it sends ties to; `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** the tie values are used by default (`weighted` is redundant); `binary` ignores them. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not checked. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 

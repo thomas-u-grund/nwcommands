@@ -84,7 +84,7 @@ The default (unweighted) mode of `nwbetween` transparently uses a compiled nativ
 
 ## Network types
 
-**Directed:** shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** used by default (paths of least cost 1/w^alpha, `alpha(1)` by default); `binary` counts steps; `weighted` is redundant. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation). **Signed:** ties of value zero or less, including negative ties, count as absent. See [nwnetworktypes](nwnetworktypes).
+**Directed:** shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** used by default (paths of least cost 1/w^alpha, `alpha(1)` by default); `binary` counts steps; `weighted` is redundant. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation). **Signed:** ties of value zero or less, including negative ties, count as absent. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 

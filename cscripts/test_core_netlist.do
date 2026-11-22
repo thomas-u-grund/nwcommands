@@ -4,6 +4,8 @@ do unw_core.do
 
 * Lists of networks (core 3.35.0, unreleased). Run from the repository root. PASS marker at the end.
 *   B  nwgeodesic and nwclustering: a list of networks, save(file) one row per network, r() = last network
+*   C  nwmixing notes, ntimes() of nwdyadprob and nwhomophily, nwsummarize notes, the missing-ties note of nwbetween, nwcloseness,
+*      nwevcent, nwpagerank, nwdyads and nwmotifs
 set linesize 255
 local tol 1e-12
 tempfile fg fc fd
@@ -18,6 +20,43 @@ program _tn_near
 	}
 end
 * value of variable v in row k of the result data set held in frame res (-> scalar __tnv)
+* run a command with the log on; every needle (separated by |) must be in the output
+capture program drop _tn_log
+program _tn_log
+	args needles cmd
+	tempfile lg
+	qui log using `"`lg'"', text replace name(tnlog)
+	capture noisily `cmd'
+	local rc = _rc
+	qui log close tnlog
+	mata: st_local("__L", stritrim(invtokens(cat(st_local("lg"))')))
+	local __rest `"`needles'"'
+	while `"`__rest'"' != "" {
+		gettoken one __rest : __rest, parse("|")
+		if `"`one'"' == "|" continue
+		if !strpos(`"`__L'"', `"`one'"') {
+			di as err `"FAIL: the output of {`cmd'} does not contain "`one'""'
+			exit 9
+		}
+	}
+	exit `rc'
+end
+* the output must NOT contain the text
+capture program drop _tn_not
+program _tn_not
+	args needle cmd
+	tempfile lg
+	qui log using `"`lg'"', text replace name(tnlog)
+	capture noisily `cmd'
+	local rc = _rc
+	qui log close tnlog
+	mata: st_local("__L", stritrim(invtokens(cat(st_local("lg"))')))
+	if strpos(`"`__L'"', `"`needle'"') {
+		di as err `"FAIL: the output of {`cmd'} contains "`needle'""'
+		exit 9
+	}
+	exit `rc'
+end
 capture program drop _tn_get
 program _tn_get
 	args v k
@@ -248,5 +287,102 @@ foreach stub in draw sw {
 		_tn_near `r(cluster_avg)' `=scalar(__tnv)' `tol' "`stub'_`i' clustering avg"
 	}
 }
+
+
+* ---------------------------------------------------------------- C. small items
+nwclear
+local m0 "0,1,1,0,0,0\1,0,1,1,0,0\1,1,0,1,0,0\0,1,1,0,1,0\0,0,0,1,0,1\0,0,0,0,1,0"
+local mm "0,1,1,0,.,0\1,0,1,1,0,0\1,1,0,1,0,0\0,1,1,0,1,0\.,0,0,1,0,1\0,0,0,0,1,0"
+local d0 "0,1,1,0,0,0\0,0,1,1,0,0\1,0,0,1,0,0\0,0,1,0,1,0\0,0,0,0,0,1\0,0,0,0,1,0"
+local dm "0,1,1,0,.,0\0,0,1,1,0,0\1,0,0,1,0,0\0,0,1,0,1,0\.,0,0,0,0,1\0,0,0,0,1,0"
+local v0 "0,2,3,0,0,0\2,0,1,4,0,0\3,1,0,1,0,0\0,4,1,0,5,0\0,0,0,5,0,1\0,0,0,0,1,0"
+local vm "0,2,3,0,.,0\2,0,1,4,0,0\3,1,0,1,0,0\0,4,1,0,5,0\.,0,0,5,0,1\0,0,0,0,1,0"
+nwset, mat((`m0')) name(u0) undirected
+nwset, mat((`mm')) name(um) undirected
+nwset, mat((`d0')) name(d0) directed
+nwset, mat((`dm')) name(dm) directed
+nwset, mat((`v0')) name(v0) undirected
+nwset, mat((`vm')) name(vm) undirected
+gen grp = mod(_n, 2)
+gen xv = _n
+
+* C1. nwmixing: how the table is read, missing ties
+_tn_log "(undirected network)" "nwmixing u0, attribute(grp) permutations(1)"
+_tn_not "missing ties treated" "nwmixing u0, attribute(grp) permutations(1)"
+_tn_log "(directed network: the table counts every tie from ego (row) to alter (column))" "nwmixing d0, attribute(grp) permutations(1)"
+_tn_log "(1 missing ties treated as 0)|(undirected network)" "nwmixing um, attribute(grp) permutations(1)"
+_tn_log "(2 missing ties treated as 0)" "nwmixing dm, attribute(grp) permutations(1)"
+qui nwmixing u0, attribute(grp) permutations(1)
+local ei0 = r(EI_index)
+qui nwmixing um, attribute(grp) permutations(1)
+assert reldif(r(EI_index), `ei0') < 1e-12
+* nwmixing takes one network
+capture nwmixing u0 um, attribute(grp)
+assert _rc != 0
+
+* C2. ntimes() of nwdyadprob and nwhomophily (as nwrandom, nwsmall, nwring, nwpref)
+nwdyadprob v0, name(dpn) ntimes(5)
+assert wordcount("`r(netlist)'") == 5
+forvalues i = 1/5 {
+	qui nwsummarize dpn_`i'
+	assert r(nodes) == 6
+}
+capture nwsummarize dpn_6
+assert _rc != 0
+nwdyadprob, mat(J(6,6,.4)) name(dpm) ntimes(3) undirected
+assert "`r(netlist)'" == "dpm_1 dpm_2 dpm_3"
+nwdyadprob, mat(J(6,6,.4)) name(dp1)
+qui nwsummarize dp1
+assert r(nodes) == 6
+capture nwdyadprob, mat(J(6,6,.4)) name(dpx) ntimes(0)
+assert _rc == 198
+nwhomophily grp, homophily(1) density(.3) name(hom) ntimes(4) undirected
+assert "`r(netlist)'" == "hom_1 hom_2 hom_3 hom_4"
+nwgeodesic hom_*, save("`fd'")
+_tn_load "`fd'"
+frame res: assert _N == 4
+nwhomophily grp, homophily(1) density(.3) name(hom1) undirected
+qui nwsummarize hom1
+assert r(nodes) == 6
+
+* C3. nwsummarize: valued note, missing-ties note
+_tn_log "(valued network: edges and density count every tie with a non-zero value; minimum and maximum are tie values)" "nwsummarize v0"
+_tn_log "(1 missing ties are not counted as ties and not as pairs in the density)|(valued network" "nwsummarize vm"
+_tn_log "(1 missing ties are not counted as ties and not as pairs in the density; the measures of detail treat them as 0)" "nwsummarize um, detail"
+_tn_not "missing ties" "nwsummarize u0"
+_tn_not "valued network" "nwsummarize u0"
+_tn_not "missing ties" "nwsummarize um, silent"
+nwsummarize u0 um, save("`fd'")
+_tn_load "`fd'"
+frame res: assert _N == 2
+
+* C4. the missing-ties note of nwbetween, nwcloseness, nwevcent, nwpagerank, nwdyads, nwmotifs: printed with a missing tie and
+* never without one; the results are the results of the same network with 0 in place of the missing tie
+foreach p in u d {
+	if "`p'" == "d" local k 2
+	else local k 1
+	_tn_log "(`k' missing ties treated as 0)" "nwbetween `p'm, generate(bm) replace"
+	_tn_not "missing ties" "nwbetween `p'0, generate(b0) replace"
+	_tn_log "(`k' missing ties treated as 0)" "nwcloseness `p'm, generate(cm fm nm) replace"
+	_tn_not "missing ties" "nwcloseness `p'0, generate(c0 f0 n0) replace"
+	_tn_log "(`k' missing ties treated as 0)" "nwevcent `p'm, generate(em) replace"
+	_tn_not "missing ties" "nwevcent `p'0, generate(e0) replace"
+	_tn_log "(`k' missing ties treated as 0)" "nwpagerank `p'm, generate(pm) replace"
+	_tn_not "missing ties" "nwpagerank `p'0, generate(p0) replace"
+	_tn_log "(`k' missing ties treated as 0)" "nwdyads `p'm"
+	_tn_not "missing ties" "nwdyads `p'0"
+	foreach pair in "b0 bm" "c0 cm" "e0 em" "p0 pm" {
+		tokenize `pair'
+		qui count if abs(`1' - `2') > 1e-9 | missing(`1') != missing(`2')
+		assert r(N) == 0
+	}
+}
+_tn_log "(1 missing ties treated as 0)" "nwmotifs um"
+_tn_not "missing ties" "nwmotifs u0"
+_tn_not "missing ties" "nwmotifs um, silent"
+qui nwmotifs u0
+local mo0 = r(_4_1)
+qui nwmotifs um
+di "motif census of the network with a missing tie equals that with 0: r(_4_1) = `mo0' = `r(_4_1)'"
 
 di "PASS: test_core_netlist"

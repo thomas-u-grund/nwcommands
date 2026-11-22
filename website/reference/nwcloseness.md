@@ -68,7 +68,7 @@ On a valued network the distances are least-cost distances (cost 1/w^alpha, `alp
 
 ## Network types
 
-**Directed:** distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's `closeness(mode = "out")`); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** tie values are used by default (least-cost distances of [nwgeodesic](nwgeodesic), cost 1/w); `binary` counts steps; options of [nwgeodesic](nwgeodesic) such as `alpha()` are passed on. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation), `twomode` is a synonym of the default. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's `closeness(mode = "out")`); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** tie values are used by default (least-cost distances of [nwgeodesic](nwgeodesic), cost 1/w); `binary` counts steps; options of [nwgeodesic](nwgeodesic) such as `alpha()` are passed on. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation), `twomode` is a synonym of the default. **Signed:** not checked. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
