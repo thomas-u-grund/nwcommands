@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 198
+POSITION 10 10 550 226
 
 SCRIPT PREINIT
 BEGIN
@@ -17,13 +17,15 @@ DIALOG main, title("nwassortativity - Newman's assortativity coefficient")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 104, label("Options")
+  GROUPBOX gb_opt 10 44 520 132, label("Options")
   TEXT tx_vr_attribute 20 54 260 ., label("Numeric node attribute to correlate across ties; default = degree")
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_cx_silent 20 82 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 82 190 ., label("silent") option(silent)
   TEXT tx_cx_binary 20 110 260 ., label("Ignore the tie values of a valued network (default: use them)")
   CHECKBOX cx_binary 290 110 190 ., label("binary") option(binary)
+  TEXT tx_cx_sym 20 138 260 ., label("symmetrize a directed network first")
+  CHECKBOX cx_sym 290 138 190 ., label("sym") option(symmetrize)
 END
 
 LIST netlist
@@ -44,6 +46,7 @@ BEGIN
 		optionarg main.vr_attribute
 		option main.cx_silent
 		option main.cx_binary
+		option main.cx_sym
 	endoptions
 	stata
 END

@@ -19,7 +19,8 @@
 {opth generate(newvarname)}
 {opt replace}
 {opt silent}
-{opt listall}]
+{opt listall}
+{opt weak}]
 
 
 {synoptset 25 tabbed}{...}
@@ -29,6 +30,7 @@
 given){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
+{synopt:{opt weak}}On a directed network, ignore the direction of the ties (weakly connected components); the default is strongly connected components{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt listall}}Print the full table of components; by default at most the first 30 rows are printed, with a note. Results in {cmd:r()} are unchanged{p_end}
 
@@ -39,7 +41,7 @@ given){p_end}
 
 {pstd}
 Calculate the components of a network or a list of networks. A component is a set of nodes that are
-only connected among each other. All calculations are performed on the undirected network. Nodes can only belong to one component. 
+only connected among each other. In an undirected network the nodes of a component can reach each other through ties. In a directed network the default components are strongly connected: two nodes belong to the same component if each can reach the other along the direction of the ties ({cmd:igraph::components(mode = "strong")}); with {opt weak} the direction is ignored and the components are the weakly connected ones ({cmd:mode = "weak"}). The output says which kind was computed. Nodes can only belong to one component. Missing ties count as no tie, and the output says how many there were.
 
 {pstd}
 {opt generate()} is required and names the new variable that stores the component membership. When
@@ -52,7 +54,7 @@ results are those of the last network.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} weak components (the direction is ignored). {bf:Valued:} tie values are ignored (every tie counts as
+{bf:Directed:} strongly connected components; {opt weak} ignores the direction. {bf:Valued:} tie values are ignored (every tie counts as
 present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode network.
 {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
@@ -101,6 +103,9 @@ present; the command prints a note). {bf:Two-mode:} same as for the bipartite gr
 {p2col 5 20 24 2: Scalars}{p_end}
 {synopt:{bf:r(components)}}number of components{p_end}
 	  
+{p2col 5 20 24 2: Macros}{p_end}
+{synopt:{bf:r(connected)}}{bf:strong} (directed network, default), {bf:weak} (directed network with {opt weak}) or {bf:undirected}{p_end}
+
 {p2col 5 20 24 2: Matrices}{p_end}
 {synopt:{bf:r(comp_sizeid)}}distribution over components: one row per component with the columns size, compid (component id) and share{p_end}
 

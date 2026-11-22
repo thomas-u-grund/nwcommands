@@ -55,7 +55,7 @@ program nwplot, rclass
 		// calls further down this file (see that fix's own comment for
 		// the full explanation); this is a second, independent call
 		// site hitting the identical issue, fixed the same way.
-		qui nwcomponents `netname', lgc generate(`lgc_var')
+		qui nwcomponents `netname', lgc weak generate(`lgc_var')
 		local if_lgc = " `lgc_var' == 1"
 	}
 	
@@ -1221,9 +1221,9 @@ program nwplot, rclass
 		// removed, since deleting unrelated dead code is out of scope
 		// for this fix.
 		tempvar _component
-		qui nwcomponents `netname', generate(`_component')
+		qui nwcomponents `netname', weak generate(`_component')
 		if "`lgc'" != "" {
-			qui nwcomponents `netname', lgc generate(`_component') replace
+			qui nwcomponents `netname', lgc weak generate(`_component') replace
 			replace `_component' = 1 - `_component'
 			local components = 1
 		}

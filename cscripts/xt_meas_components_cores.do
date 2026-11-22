@@ -64,8 +64,11 @@ nwclear
 clear
 * 1 -> 2 <- 3: one weak component (help: the direction is ignored)
 nwset, mat((0,1,0\0,0,0\0,1,0)) name(dw) directed
-nwcomponents dw, generate(cw)
+nwcomponents dw, generate(cw) weak
 xa r(components) == 1
+* the default of a directed network is strong components: every node of 1 -> 2 <- 3 is alone
+nwcomponents dw, generate(cs) replace
+xa r(components) == 3
 * valued with a negative and a non-integer value: the same partition as the binary network
 nwset, mat((0,-2,0,0\-2,0,0,0\0,0,0,.3\0,0,.3,0)) name(vd) undirected
 nwcomponents vd, generate(cv)
