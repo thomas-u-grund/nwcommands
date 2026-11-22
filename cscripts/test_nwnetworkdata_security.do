@@ -72,19 +72,22 @@ global nwnd_cache "`c(tmpdir)'/nwnd`dollar'(touch `canary')"
 capture nwnetworkdata load karate, nwclear
 assert _rc == 198
 global nwnd_cache ""
-* an (empty) local file karate.rda gets the conversion as far as the R location: a missing Rscript is r(601), not a shell error
+* a local file karate.rda that is not an .rda file: refused by the reader without R (r(610)), nothing else happens
 local fake "`c(tmpdir)'/nwnd_fake_rda"
 capture mkdir "`fake'"
 file open `fh' using "`fake'/karate.rda", write text replace
 file write `fh' "not an rda file" _n
 file close `fh'
 global nwnd_cache "`c(tmpdir)'/nwnd_fake_cache"
-global nwnd_rscript "/no/such/Rscript"
 capture nwnetworkdata load karate, nwclear from("`fake'")
+assert _rc == 610
+* the conversion with R (option withr): a missing Rscript is r(601), not a shell error
+global nwnd_rscript "/no/such/Rscript"
+capture nwnetworkdata load karate, nwclear from("`fake'") withr
 assert _rc == 601
 global nwnd_rscript ""
 * R is found, but the file is not a valid .rda: r(601) with the message of R, nothing else happens
-capture nwnetworkdata load karate, nwclear from("`fake'")
+capture nwnetworkdata load karate, nwclear from("`fake'") withr
 assert inlist(_rc, 601)
 global nwnd_cache ""
 capture erase "`fake'/karate.rda"

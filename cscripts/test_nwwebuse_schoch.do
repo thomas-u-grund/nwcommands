@@ -1,8 +1,9 @@
 cscript
 
 * nwwebuse schoch / nwnetworkdata: networks of David Schoch's R package networkdata, read at run time from his GitHub repository.
-* Needs internet and R with the package igraph for the first use of a data set (the data are cached afterwards): the test is skipped
-* with a message when they are missing. Checks sizes and types, the one-line statement of what was loaded and from where, and the overview.
+* Needs internet for the first use of a data set (the data are cached afterwards): the test is skipped with a message when it is missing.
+* R is NOT needed: the reader works with Stata alone (global nwnd_rscript below points to a file that does not exist, so any use of R
+* would stop the test). Checks sizes and types, the one-line statement of what was loaded and from where, and the overview.
 
 do unw_core.do
 
@@ -12,6 +13,7 @@ capture noisily nwwebuse schoch
 assert _rc == 0
 capture noisily nwwebuse schoch, list
 assert _rc == 0
+global nwnd_rscript "/no/such/Rscript"
 tempfile lg
 local oldls = c(linesize)
 set linesize 250
@@ -23,8 +25,9 @@ log using `"`lg'"', text replace name(schoch_t)
 capture noisily nwwebuse schoch karate, nwclear
 local rc = _rc
 log close schoch_t
-if inlist(`rc', 601, 677) {
-	di "SKIP test_nwwebuse_schoch: no R with igraph or no connection (rc `rc')"
+if inlist(`rc', 677) {
+	global nwnd_rscript ""
+	di "SKIP test_nwwebuse_schoch: no connection (rc `rc')"
 	exit
 }
 assert `rc' == 0
@@ -37,15 +40,18 @@ tempname fh
 file open `fh' using `"`lg'"', read text
 local found 0
 local origin 0
+local noR 0
 file read `fh' line
 while r(eof) == 0 {
 	if strpos(`"`macval(line)'"', "Loaded from Schoch's networkdata collection: karate (34 nodes, 78 ties, undirected, one-mode, binary)") local found 1
 	if strpos(`"`macval(line)'"', "(data read from cache (") | strpos(`"`macval(line)'"', "(data read downloaded now") local origin 1
+	if strpos(`"`macval(line)'"', "read without R") local noR 1
 	file read `fh' line
 }
 file close `fh'
 assert `found' == 1
 assert `origin' == 1
+assert `noR' == 1
 di "=== karate: 34 nodes, 78 ties, undirected, statement of source and origin present ==="
 
 * a second load comes from the cache and says so
@@ -93,5 +99,6 @@ nwwebuse schoch describe karate
 assert "`r(obj)'" == "karate"
 nwwebuse schoch, list
 
+global nwnd_rscript ""
 set linesize `oldls'
 di "PASS test_nwwebuse_schoch"

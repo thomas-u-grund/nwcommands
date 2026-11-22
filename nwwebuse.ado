@@ -54,7 +54,7 @@ program nwwebuse
 		}
 		// no name (or ", list"): what the collection offers and how to see all of it
 		if `"`anything'"' == "" {
-			di as txt "{p 0 0 2}Schoch's networkdata collection (R package networkdata, 990 R objects = 2,274 networks), loaded with {bf:nwwebuse schoch} {it:name}; the data are not part of nwcommands and are downloaded from Schoch's repository when you ask for a network (R with the package igraph is needed for the first use of a data set).{p_end}"
+			di as txt "{p 0 0 2}Schoch's networkdata collection (R package networkdata, 990 R objects = 2,274 networks), loaded with {bf:nwwebuse schoch} {it:name}; the data are not part of nwcommands and are downloaded from Schoch's repository when you ask for a network (no R is needed).{p_end}"
 			di as txt "{p 2 2 2}{bf:nwwebuse schoch list}{space 17}all data sets ({bf:nwnetworkdata list} has filters: directed, undirected, twomode, weighted, ...){p_end}"
 			di as txt "{p 2 2 2}{bf:nwwebuse schoch describe} {it:name}{space 5}type, size, attributes; source and citation{p_end}"
 			di as txt "{p 2 2 2}{bf:nwwebuse schoch karate}{space 11}Zachary's karate club (34 nodes){p_end}"
