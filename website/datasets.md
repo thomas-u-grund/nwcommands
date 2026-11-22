@@ -1,6 +1,7 @@
 ---
 title: "Data sets"
 nav_order: 11
+has_children: true
 description: "The example networks that ship with nwcommands: what they are, where they come from, how to load them and which tutorials use them."
 permalink: /datasets/
 ---
@@ -16,6 +17,10 @@ The core package ships with example networks, so every tutorial and help example
 ```
 
 `nwclear` removes networks already in memory first. `help netexample` in Stata lists the same data sets with their variable codings. The node and tie counts below were checked by loading each data set with the current core.
+
+## More networks: the Schoch collection
+
+Besides the example data above, `nwwebuse schoch` loads the 989 network data sets (2,274 networks) of David Schoch's R package *networkdata*, for example `nwwebuse schoch karate` or `nwwebuse schoch southern_women`. nwcommands ships none of these data: each one is downloaded from Schoch's repository when you ask for it and converted on your computer, so this one reader needs R with the package igraph. Every load prints which network was loaded and where the data came from. The [Schoch networkdata](schoch/) page describes every data set with its source and references.
 
 ## Friendship and social networks over time
 
