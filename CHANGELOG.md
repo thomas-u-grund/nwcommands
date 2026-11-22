@@ -6,7 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [3.35.1] - 2026-11-22
 
-Documentation only. The page of the Schoch data sets is rewritten as an overview in our own words with links to the documentation of the networkdata package (the descriptions of the collection are not reproduced any more); the licence note of the Schoch reader and of `netexample` says that the MIT licence of the package covers the package itself, that no licence is documented for the individual data sets and that users should check and cite the original sources. No command changes.
+Documentation only. No command changes.
+
+### Changed
+- The page of the Schoch data sets is rewritten as an overview in our own words with links to the documentation of the networkdata package (the descriptions of the collection are not reproduced any more).
+- The licence note of the Schoch reader (`nwnetworkdata`, `nwwebuse schoch`) and of `netexample` says that the MIT licence of the package covers the package itself, that no licence is documented for the individual data sets and that users should check and cite the original sources.
 
 ## [3.35.0] - 2026-11-22
 
