@@ -266,4 +266,28 @@ _tcc_log "directed network: the alters of a node are the nodes it sends ties to 
 _tcc_log "directed network: the proportions p_ij come from the out-ties of node i" "nwconstraint dnet, name(cn1) replace"
 _tcc_log "undirected network" "nwconstraint unet, name(cn2) replace"
 
+* ---------------------------------------------------------------- A13. nwevcent: in-ties by default (igraph), out for the other orientation
+* lazega_adv is strongly connected; igraph::eigen_centrality(directed = TRUE) (scaled to a maximum of 1)
+nwevcent lazega_adv, generate(ev_in)
+qui summ ev_in
+local mx = r(max)
+_tcc_near `=ev_in[1] / `mx'' 0.83312022087 1e-8 "A13 default = igraph directed (node 1)"
+_tcc_near `=ev_in[10] / `mx'' 0.138821985164 1e-8 "A13 default = igraph directed (node 10)"
+nwevcent lazega_adv, generate(ev_out) out
+qui summ ev_out
+local mo = r(max)
+* out = the in-tie result on the transposed network (the previous default)
+qui nwtranspose lazega_adv, generate(lazega_t)
+qui nwevcent lazega_t, generate(ev_t)
+qui gen double dd = abs(ev_out - ev_t)
+qui summ dd
+_tcc_near `r(max)' 0 1e-8 "A13 out = default on the transposed network"
+assert abs(ev_in[1] - ev_out[1]) > 1e-4
+_tcc_log "directed network: the centrality of a node comes from the nodes that send ties to it" "nwevcent lazega_adv, generate(ev_in) replace"
+_tcc_log "directed network: the centrality of a node comes from the nodes it sends ties to" "nwevcent lazega_adv, generate(ev_out) replace out"
+_tcc_log "directed network symmetrized" "nwevcent lazega_adv, generate(ev_s) sym"
+capture nwevcent lazega_adv, generate(ev_x) sym out
+assert _rc == 198
+_tcc_log "undirected network" "nwevcent tri, generate(ev_u) replace"
+
 di "PASS: test_core_coercion"

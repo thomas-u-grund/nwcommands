@@ -19,6 +19,7 @@
 {opt gen:erate}({it:{help varname}})
 {opt sym}
 {opt nosym}
+{opt out}
 {opt weighted}
 {opt replace}
 {opt bin:ary}]
@@ -28,6 +29,7 @@
 {synoptline}
 {synopt:{opt gen:erate}({it:{help varname}})}{bf:Required.} Variable name for eigenvector centrality scores{p_end}
 {synopt:{opt sym}}on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values{p_end}
+{synopt:{opt out}}on a directed network, the score of a node is built from the nodes it sends ties to (the out-ties) instead of the nodes that send ties to it (the default, as {cmd:igraph::eigen_centrality(directed = TRUE)}){p_end}
 {synopt:{opt nosym}}the default and accepted for backward compatibility: the ties of a directed network keep their direction{p_end}
 {synopt:{opt weighted}}use the tie values of a valued network; redundant, this is the default (kept for compatibility){p_end}
 {synopt:{opt replace}}replace existing {it:generate()} variable{p_end}
@@ -51,13 +53,13 @@ magnitude). {bf:weighted} is redundant and has no effect on an unvalued network 
 to weight by).
 
 {pstd}
-Eigenvector centrality is only defined for connected networks.
+Eigenvector centrality is only defined for connected networks; for a directed network the (strongly) connected case is the well-defined one: if some nodes cannot be reached from the others along the ties, the scores of the nodes outside the dominant strongly connected part are 0 or tiny, as in igraph (which also needs a strongly connected network for a unique result).
 
 
 {title:Network types}
 
 {pstd}
-{bf:Directed:} the direction of the ties is used: the score of a node is built from the nodes it sends ties to (igraph's {cmd:eigen_centrality(directed = TRUE)} uses the ties a node receives); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} the
+{bf:Directed:} the direction of the ties is used: the score of a node is built from the nodes that send ties to it (the in-ties, as {cmd:igraph::eigen_centrality(directed = TRUE)}; checked on the strongly connected Lazega advice network, 1e-8), and {opt out} builds it from the nodes it sends ties to; {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} the
 tie values are used by default ({opt weighted} is redundant); {opt binary} ignores them. {bf:Two-mode:} same as for
 the bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 

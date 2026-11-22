@@ -1,7 +1,7 @@
 capture program drop nwevcent
 program nwevcent
 	version 9
-	syntax [anything(name=netname)] , [SYMmetrize nosym weighted BINary GENerate(string) replace]
+	syntax [anything(name=netname)] , [SYMmetrize nosym OUT weighted BINary GENerate(string) replace]
 	_nwsyntax `netname'
 	local __wasdir = ("`directed'" == "true")
 	_nwdatasync `netname'
@@ -22,6 +22,13 @@ program nwevcent
 	}
 	local __symdo = ("`symmetrize'" != "" & `__wasdir')
 	local nosym = (1 - `__symdo')
+	// a directed network without sym: the centrality of a node comes from the nodes that point to it (the in-ties,
+	// as igraph::eigen_centrality(directed = TRUE)); option out turns this round (centrality from the nodes it points to)
+	if "`out'" != "" & `__symdo' {
+		di "{err}Options {bf:sym} and {bf:out} cannot be combined."
+		exit 198
+	}
+	local __transp = (`__wasdir' & !`__symdo' & "`out'" == "")
 
 	local getvalued = 0
 	if "`binary'" != "" & "`weighted'" != "" {
@@ -51,7 +58,7 @@ program nwevcent
 	if `__exists' drop `generate'
 	qui generate double `generate' = .
 
-	mata: st_store((1::`nodes'),"`generate'", nw_evcentrality(`netobj',`nosym',`getvalued'))
+	mata: st_store((1::`nodes'),"`generate'", nw_evcentrality(`netobj',`nosym',`getvalued',`__transp'))
 
 	di "{hline 40}"
 	di "{txt}  Network name: {res}`netname'"
@@ -61,7 +68,12 @@ program nwevcent
 		di "{txt}{p 3 3 2}(directed network symmetrized: the larger of the two directions of a tie){p_end}"
 	}
 	else if `__wasdir' {
-		di "{txt}{p 3 3 2}(directed network: the direction of the ties is used){p_end}"
+		if `__transp' {
+			di "{txt}{p 3 3 2}(directed network: the centrality of a node comes from the nodes that send ties to it){p_end}"
+		}
+		else {
+			di "{txt}{p 3 3 2}(directed network: the centrality of a node comes from the nodes it sends ties to){p_end}"
+		}
 	}
 	else {
 		di "{txt}{p 3 3 2}(undirected network){p_end}"
@@ -171,14 +183,12 @@ mata:
 	same order, as the per-node neighbour loops this replaced; the products are then summed per node by
 	one panelsum() call per iteration instead of an interpreted loop over all nodes and neighbours.
 */
-real matrix nw_evcentrality_edges(pointer (class nw_def scalar) scalar thisnw, real scalar nosym, real scalar getvalued)
+real matrix nw_evcentrality_edges(real matrix el, real scalar n, real scalar nosym, real scalar getvalued)
 {
-	real matrix el, both
+	real matrix both
 	real colvector key, p, w, wn, dup
-	real scalar n, m
+	real scalar m
 
-	n = thisnw->get_nodes()
-	el = thisnw->edgelist()
 	if (rows(el) == 0) return(J(0, 3, 0))
 	el = select(el, el[.,1] :!= el[.,2])
 	if (rows(el) == 0) return(J(0, 3, 0))
@@ -218,23 +228,31 @@ real colvector nw_evcentrality_matvec(real matrix E, real colvector v, real scal
 	return(out)
 }
 
-real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw, real scalar nosym, real scalar getvalued)
+real matrix function nw_evcentrality(pointer (class nw_def scalar) scalar thisnw, real scalar nosym, real scalar getvalued, | real scalar transp)
 {
+	real matrix el0
 	real scalar n, iter, maxiter, tol, norm, shift, st
 	real colvector x, y
 	real matrix E, r
 	real rowvector aux
 
 	n = thisnw->get_nodes()
+	el0 = thisnw->edgelist()
+	if (args() >= 4) {
+		if (transp & rows(el0) > 0) {
+			el0 = (el0[., 2], el0[., 1], el0[., 3])
+			el0 = el0[order(el0[., (1, 2)], (1, 2)), .]
+		}
+	}
 	// native kernel 28 (plugin generation 6 or later): the same iteration on the same effective tie list, in C.
 	// Set the global NW_NOFASTKERNELS to force the Mata path.
 	if (st_global("NW_NOFASTKERNELS") == "") {
 		if (nwg_comb_version() >= 6) {
-			r = nwg_comb(28, n, thisnw->edgelist(), J(0, 1, .), (nosym, getvalued), aux, st)
+			r = nwg_comb(28, n, el0, J(0, 1, .), (nosym, getvalued), aux, st)
 			if (st == 0 & rows(r) == n & cols(r) == 1) return(r)
 		}
 	}
-	E = nw_evcentrality_edges(thisnw, nosym, getvalued)
+	E = nw_evcentrality_edges(el0, n, nosym, getvalued)
 	x = J(n, 1, 1) :/ sqrt(n)
 
 	// An all-isolates (or entirely empty, or all-non-positive-weight)

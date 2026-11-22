@@ -59,7 +59,7 @@ end
 set linesize 120
 local NS "directed network: shortest paths follow the direction of the ties"
 local NC "directed network: distances follow the direction of the ties"
-local NE "directed network: the direction of the ties is used"
+local NE "directed network: the centrality of a node comes from the nodes that send ties to it"
 local SY "directed network symmetrized: the larger of the two directions of a tie"
 local UN "undirected network"
 
