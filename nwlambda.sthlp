@@ -16,6 +16,7 @@
 {cmdab: nwlambda}
 [{it:{help netname}}]
 [{cmd:,}
+{opt sym}
 {opth name(newnetname)}
 {opt xvars}
 {opt replace}
@@ -24,6 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
+{synopt:{opt sym}}On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198){p_end}
 {synopt:{opth name(newnetname)}}Name of the new connectivity network; default = {it:lambda}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
@@ -88,7 +90,9 @@ recovers exactly the two intuitive lambda sets, {bf:{A,B,C}} and {bf:{D,E,F}}.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized. {bf:Valued:} tie values are ignored. {bf:Two-mode:} same as for the bipartite graph read
+{bf:Directed:} refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option {opt sym} analyses the symmetrized network (a tie counts in both directions, with the larger of its two
+values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). {bf:Valued:} tie values are ignored. {bf:Two-mode:} same as for the bipartite
+graph read
 as a one-mode network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
 
@@ -137,4 +141,4 @@ The result is an {it:n}-by-{it:n} network and two matrices are held at once: abo
 	{help nwkcomponents}, {help nwcohesion}, {help nwhierarchy}, {help nwclique}, {help nwkplex}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -1,6 +1,6 @@
 capture program drop nwdyadprob
 program nwdyadprob
-	syntax [anything(name=weightnet)],  [ weights(string) density(string) mat(string) name(string) labs(passthru) xvars undirected]
+	syntax [anything(name=weightnet)],  [ weights(string) density(string) mat(string) name(string) labs(passthru) xvars undirected ntimes(integer 1)]
 	
 	unw_defs
 
@@ -25,6 +25,28 @@ program nwdyadprob
 		local name = r(validname)
 	}
 	
+	// ntimes(): that many networks, named name_1, name_2, ... (as nwrandom, nwsmall, nwring and nwpref); r(netlist) lists them
+	if `ntimes' < 1 {
+		di "{err}{p 0 0 2}Option {bf:ntimes()} must be 1 or larger.{p_end}"
+		exit 198
+	}
+	if `ntimes' != 1 {
+		qui nwset
+		local oldnetlist `r(nets)'
+		forvalues i = 1/`ntimes' {
+			if mod(`i', 25) == 0 {
+				di in smcl as txt "...`i'"
+			}
+			nwdyadprob `weightnet', weights(`weights') density(`density') mat(`mat') name(`name'_`i') `labs' `xvars' `undirected'
+		}
+		qui nwset
+		local newnetlist `r(nets)'
+		local netlist : list newnetlist - oldnetlist
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`netlist'")
+		exit
+	}
+
 	tempname m
 	if "`mat'" == "" {
 		local mat = "`m'"

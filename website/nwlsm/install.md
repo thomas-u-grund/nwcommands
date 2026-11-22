@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.5:
+Every release is tagged on GitHub and each tag has its own address. For version 1.0.6:
 
 ```stata
-. net install nwlsm, from(https://raw.githubusercontent.com/thomas-u-grund/nwlsm/v1.0.5/) replace
+. net install nwlsm, from(https://raw.githubusercontent.com/thomas-u-grund/nwlsm/v1.0.6/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwlsm version
-nwlsm version 1.0.5, 21nov2026
+nwlsm version 1.0.6, 22nov2026
   native plugin           : .../l/lsm_sim_macos.plugin (ships with the package)
   reference               : latentnet (Krivitsky and Handcock)
   license                 : GNU GPL-3
@@ -102,7 +102,7 @@ The build **clears the data and the Mata objects in memory** (save first), and i
 ## Requirements
 
 - Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19, and on Linux and Windows with Stata 19 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested).
-- The core `nwcommands`, as above. No R and no other software.
+- The core `nwcommands`, as above. No R and no other software (R with the package igraph is needed only by the Schoch data reader of the core, `nwwebuse schoch`).
 
 ## Next
 

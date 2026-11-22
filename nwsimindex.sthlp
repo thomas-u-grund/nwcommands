@@ -70,7 +70,7 @@ undefined value to 0.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} the neighbours of a node are its out- and in-neighbours. {bf:Valued:} tie values are ignored (every tie
+{bf:Directed:} the neighbours of a node are its out- and in-neighbours (the output says so). {bf:Valued:} tie values are ignored (every tie
 counts as present; the command prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
 network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 
@@ -119,4 +119,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Netw
 	{help nwsimilar}, {help nw2project}, {help nwkcore}, {help nwburt}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

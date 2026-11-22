@@ -8,7 +8,7 @@ gen x = _n
 gen y = 1
 gen value = 1
 nwset x y value, edgelist
-nwcomponents, generate(_component)
+nwcomponents, generate(_component) weak
 
 assert         r(components) == 1
 
@@ -32,7 +32,7 @@ gen y = 1
 gen value = 1
 replace value = 0 in 4
 nwset x y value, edgelist
-nwcomponents, generate(_component) replace
+nwcomponents, generate(_component) replace weak
 assert         r(components) == 2
 
 qui {
@@ -50,15 +50,15 @@ _assert_streq `"`: rowfullnames C_comp_sizeid'"' `"comp1 comp2"'
 _assert_streq `"`: colfullnames C_comp_sizeid'"' `"size compid share"'
 mat drop C_comp_sizeid T_comp_sizeid
 
-nwcomponents, lgc generate(_lgc)
+nwcomponents, lgc generate(_lgc) weak
 assert _lgc[1] == 1
 assert _lgc[4] == 0
 
-nwcomponents, lgc generate(mylgc)
+nwcomponents, lgc generate(mylgc) weak
 assert mylgc[1] == 1
 assert mylgc[4] == 0
 
-nwcomponents,  generate(mycomp)
+nwcomponents,  generate(mycomp) weak
 assert mycomp[4] == 2
 
 capture nwcomponents,  generate(mycomp)

@@ -153,6 +153,7 @@ first mode, `project(2)` would keep the events:
    Mean degree:  15.44
    Temporal: false
    Provenance:  projected from network davis, mode 1 (woman), stat=minmax
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum are tie values)
 ```
 
 The projection is an ordinary network, and all one-mode commands work on it. It has 139 ties, the tie values go up to 7 shared events, and almost
@@ -325,6 +326,8 @@ four-cycles over the number of three-paths, .468 here. Say which one you report.
 
 ```stata
 . nwclustering davis, generate(clo)
+    (two-mode network: Opsahl's two-mode clustering of the nodes of mode 1 (level(1)), 4-paths closed by a 6-cycle;
+    measure binary)
 
 . display r(C_global)
 .7718968
@@ -398,6 +401,7 @@ Motif 6 is the four-cycle: two women who attended the same two events. There are
   Network name: davis
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
     (standardized by the largest possible value in a two-mode network, Borgatti and Everett 1997)
 
 . nwbetween davis, generate(bw1) onemode silent
@@ -405,6 +409,7 @@ Motif 6 is the four-cycle: two women who attended the same two events. There are
   Network name: davis
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
 . summarize bw bw1
 
@@ -612,6 +617,7 @@ shared directors:
    Mean degree:  3.34
    Temporal: false
    Provenance:  projected from network ftdirectors_se, mode 2 (company), stat=minmax
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum are tie values)
 ```
 
 Only 759 of the 103,285 possible pairs of companies share a director (density .007). The components of the

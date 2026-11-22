@@ -12,6 +12,16 @@ Announcements (workshops, talks, the book, teaching material) and software relea
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
 
+## 22 November 2026: nwcommands 3.35.0, nwlsm 1.0.6, nwalaam 1.4.0 and nwergm 1.13.0
+
+**nwcommands 3.35.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.35.0)). A command never changes the type of your network by itself: a directed network is analysed as a directed network, and every command prints one line that says how the network was read (and how many missing ties were treated as 0). Results change for directed networks: `nwbetween`, `nwcloseness`, `nwevcent`, `nwkatz`, `nwinduced`, `nwassortativity`, `nwcomponents` (strongly connected components) and `nwrandomwalk` now follow the direction of the ties, and the cohesion commands, `nwspectral`, `nwcoreperiphery` and `nwfactions` refuse a directed network with unreciprocated ties unless you add `sym`; `nwbalance` refuses opposite-signed mutual pairs. The options `sym`, `weak` and `out` restore the old results; undirected networks give the same numbers as before. New: `nwgeodesic` and `nwclustering` take a list of networks and `save()` one row per network, `nwhomophily` and `nwdyadprob` take `ntimes()`, and `nwwebuse schoch` (command `nwnetworkdata`) reads the 2,274 networks of David Schoch's R package networkdata (needs R with igraph, only for this reader).
+
+**nwlsm 1.0.6** ([release notes](https://github.com/thomas-u-grund/nwlsm/releases/tag/v1.0.6)). Fixes a heap overflow for very small networks, a new default for the number of threads, and a warning for an empty or a complete network.
+
+**nwalaam 1.4.0** ([release notes](https://github.com/thomas-u-grund/nwalaam/releases/tag/v1.4.0)). New command `nwalaam bootstrap`.
+
+**nwergm 1.13.0** ([release notes](https://github.com/thomas-u-grund/nwergm/releases/tag/v1.13.0)). `nwergm` flags when the pseudolikelihood or likelihood estimate does not exist (`e(mple_exists)`, `e(mle_exists)`).
+
 ## 22 November 2026: Workshops at Sunbelt 2027 in Montreal
 
 Workshops on network analysis with Stata and nwcommands are planned for the Sunbelt conference of the International Network for Social Network Analysis (INSNA) in Montreal in 2027. Dates, topics and how to register will be posted here as soon as they are fixed. The [workshop slides](../book/teaching/workshop/) of the three-session workshop are already available.

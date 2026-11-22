@@ -33,11 +33,11 @@ The command can be used to generate Stata variables with some function *netfcn1*
 
 *netfcn1* is one of:
 
-- `between(netname)` [, `nosym`]
-- Calculate the betweenness centrality of network nodes (see [nwbetween](nwbetween)).
+- `between(netname)` [, `sym` `nosym`]
+- Calculate the betweenness centrality of network nodes (see [nwbetween](nwbetween)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
 
-- `closeness(netname)` [, `unconnected(integer)` `nosym`]
-- Calculate the closeness centrality of network nodes (see [nwcloseness](nwcloseness)).
+- `closeness(netname)` [, `unconnected(integer)` `sym` `nosym`]
+- Calculate the closeness centrality of network nodes (see [nwcloseness](nwcloseness)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
 
 - `clustering(netname)`
 - Calculate the clustering coefficient of network nodes (see [nwclustering](nwclustering)).
@@ -161,4 +161,4 @@ Generate a new network with a network function:
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

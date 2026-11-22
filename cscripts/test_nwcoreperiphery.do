@@ -67,7 +67,7 @@ assert _rc != 0
 * for a symmetrize option the way nwcommunity does.
 nwclear
 nwset, mat((0,1,1,0,0,0\0,0,1,1,0,0\0,0,0,0,1,0\0,0,0,0,0,0\0,0,0,0,0,1\0,0,0,0,0,0)) name(dnet) directed labs(A,B,C,D,E,F)
-nwcoreperiphery dnet, generate(_core) replace
+nwcoreperiphery dnet, generate(_core) replace sym
 assert _rc == 0
 assert r(fitness) >= -1 & r(fitness) <= 1
 

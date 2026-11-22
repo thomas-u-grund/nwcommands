@@ -29,9 +29,13 @@ mata: assert(S[2,1] == 1 & S[1,2] == 1)
 nwtomata d, mat(D)
 mata: _editmissing(D, 0)
 mata: assert(D[2,1] == 0)
-nwgen l = large(d)
+* a directed network: the largest component is a strong one by default (nodes 1, 2, 3 are a path, so 1 node), weak with the option
+nwgen l = large(d, weak)
 nwsummarize l
 assert r(nodes) == 3
+nwgen l1 = large(d)
+nwsummarize l1
+assert r(nodes) == 1
 nwsummarize d
 assert r(nodes) == 5
 di "PASS nwgenerate"

@@ -56,7 +56,7 @@ The command also returns the reciprocity of the network.
 
 ## Network types
 
-**Directed:** mutual, asymmetric and null dyads; an undirected network has mutual and null dyads only. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity is shown as n/a. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+**Directed:** mutual, asymmetric and null dyads; an undirected network has mutual and null dyads only. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** yes - the null dyads are counted over the pairs of nodes from different modes; reciprocity is shown as n/a. **Signed:** not applicable. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -110,4 +110,4 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

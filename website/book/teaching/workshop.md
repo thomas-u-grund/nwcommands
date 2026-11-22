@@ -139,8 +139,8 @@ Send participants this list:
   then `regress` on the new variables; from Chapter 11, exposure to smoking friends in the Glasgow data with
   `nwaltergen frsmoke = proportion(alter.smoker1==1), net(glasgow1)`, after coding `smoker1` from `smoke1` as the
   chapter does, and a regression of later smoking on it.
-- **Points to make:** say whether ties are counted in their direction (`nwcloseness` symmetrizes unless `nosym` is
-  given); closeness needs a rule for unreachable pairs (`unconnected()`); `nwkatz` sums over shortest-path
+- **Points to make:** say whether ties are counted in their direction (`nwcloseness` and `nwbetween` follow the direction
+  of the ties of a directed network; the option `sym` symmetrizes); closeness needs a rule for unreachable pairs (`unconnected()`); `nwkatz` sums over shortest-path
   distances unless `walks` is given.
 - **R equivalents:** `degree()`, `closeness()`, `betweenness()`, `constraint()`, `sna::brokerage()`,
   `make_ego_graph()`.

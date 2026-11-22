@@ -19,6 +19,7 @@ nwcloseness
 [,
 unconnected(#|max)
 generate(var1 var2 var3)
+sym
 nosym
 replace
 silent
@@ -34,7 +35,8 @@ legacy]
 | `unconnected(#\|max)` | defines the length of the (non-existent) path between two unconnected nodes |
 | `legacy` | on an unconnected network, use (nodes - 1) / farness instead of the number of reachable nodes / farness |
 | `generate`(*`var1 var2 var3`*) | **Required.** Exactly 3 variable names to save closeness, farness and nearness scores, in that order |
-| `nosym` | do not symmetrize network before calculation of shortest paths |
+| `sym` | on a directed network, symmetrize first: a tie counts in both directions with the larger of its two values |
+| `nosym` | the default and accepted for backward compatibility: distances follow the direction of the ties |
 | `replace` | overwrite existing *var1, var2, var3*; required if they already exist |
 | `silent` | Do not display the summary of the new variables |
 | `force` | Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise); also passed on to [nwgeodesic](nwgeodesic) |
@@ -66,7 +68,7 @@ On a valued network the distances are least-cost distances (cost 1/w^alpha, `alp
 
 ## Network types
 
-**Directed:** symmetrized by default; `nosym` keeps the direction. **Valued:** tie values are used by default (least-cost distances of [nwgeodesic](nwgeodesic), cost 1/w); `binary` counts steps; options of [nwgeodesic](nwgeodesic) such as `alpha()` are passed on. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation), `twomode` is a synonym of the default. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's `closeness(mode = "out")`); `sym` symmetrizes first (the larger of the two directions of a tie); `nosym` is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. **Valued:** tie values are used by default (least-cost distances of [nwgeodesic](nwgeodesic), cost 1/w); `binary` counts steps; options of [nwgeodesic](nwgeodesic) such as `alpha()` are passed on. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation), `twomode` is a synonym of the default. **Signed:** not checked. **Missing ties:** treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -88,4 +90,4 @@ The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

@@ -46,7 +46,7 @@ clique, or a co-clique relationship (between individuals who belong to a specifi
 {title:Network types}
 
 {pstd}
-{bf:Directed:} only mutual ties count. {bf:Valued:} tie values are ignored (no strength threshold) and a note is
+{bf:Directed:} only mutual ties count (the output says so). {bf:Valued:} tie values are ignored (no strength threshold) and a note is
 printed. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} not applicable. See
 {help nwnetworktypes}.{p_end}
 
@@ -82,4 +82,4 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 	{help nwshared}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

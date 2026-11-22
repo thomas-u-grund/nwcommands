@@ -42,7 +42,7 @@ A share of balanced triads cannot be judged by itself: it depends on the share o
 
 ## Network types
 
-**Directed:** a pair counts as tied when either direction has a tie; for a mutual dyad the sign of i->j is used. **Valued:** only the sign of each value is used. **Two-mode:** same as for the bipartite graph read as a one-mode network (no triangles: counts 0, balance missing). **Signed:** the purpose of the command. See [nwnetworktypes](nwnetworktypes).
+**Directed:** a pair counts as tied when either direction has a tie. When both directions carry a tie of opposite sign the sign of the pair is not defined and the command stops with error 198 (make the sign explicit first, for example with [nwsym](nwsym)); a mutual pair with equal signs, or a single tie, gives the sign of the pair. The output says how a directed network is read. Missing ties count as no tie and the output says how many there are. **Valued:** only the sign of each value is used. **Two-mode:** same as for the bipartite graph read as a one-mode network (no triangles: counts 0, balance missing). **Signed:** the purpose of the command. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -91,4 +91,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

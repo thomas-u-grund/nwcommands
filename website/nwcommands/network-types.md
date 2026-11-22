@@ -14,6 +14,21 @@ Every network carries a *valued* flag, a *two-mode* flag and a *directed* flag, 
 1. TOC
 {:toc}
 
+## A command never changes the type of your network by itself
+
+A directed network stays directed, a valued network stays valued and a two-mode network stays two-mode. A command reads the network as it is: a directed network is analysed with the direction of its ties, a valued network with the tie values where the measure has a weighted form, a two-mode network with its two modes. A conversion happens only when you ask for it with an option, and every command prints one line that says how the network was read, for example `(directed network: shortest paths follow the direction of the ties)`, `(directed network symmetrized: the larger of the two directions of a tie)`, `(undirected network)` or `(valued network: tie values ignored, every tie counts as 1)`. A network with missing ties adds `(N missing ties treated as 0)`.
+
+Some measures are defined for undirected networks only (cohesive subgroups such as cliques and k-plexes, the Fiedler vector, the core-periphery model). A directed network with unreciprocated ties stops these commands with error 198 until you ask for the conversion with `sym`.
+
+| What you want | Option | Where |
+|---|---|---|
+| Treat a directed network as undirected (the larger of the two directions of a tie) | `sym` (also `symmetrize`) | betweenness, closeness, eigenvector centrality, Katz, assortativity, random walk, cliques, k-plexes, n-cliques, n-clans, k-components, `nwcohesion`, `nwlambda`, `nwspectral`, `nwcoreperiphery`, `nwfactions`, `nwinduced` |
+| Ignore the tie values of a valued network | `binary` | the commands with a Valued column entry `V` |
+| Weakly instead of strongly connected components of a directed network | `weak` | `nwcomponents`, `large()` of `nwgenerate` |
+| Eigenvector centrality from the out-ties instead of the in-ties | `out` | `nwevcent` |
+| Read a two-mode network as the one-mode network of its bipartite graph | `onemode` | the commands with a two-mode form (`nwdegree`, `nwbetween`, `nwcloseness`, `nwclustering`, `nwmotifs`, ...) |
+| Use a signed or other symmetrizing rule of your own | `nwsym` first, with the mode of your choice | any command; `nwbalance` asks for it when two opposite ties disagree in sign |
+
 ## Symbols
 
 | Column | Symbol | Meaning |
@@ -35,7 +50,7 @@ Every network carries a *valued* flag, a *two-mode* flag and a *directed* flag, 
 | Two-mode | `-` | not applicable |
 | Directed | `D` | uses the direction of the ties |
 | Directed | `S` | symmetrizes (by default or automatically) |
-| Directed | `P` | requires the option symmetrize (error otherwise) |
+| Directed | `P` | requires the option sym (error otherwise); a directed network whose ties are all reciprocated is analysed as an undirected one |
 | Directed | `U` | undirected networks only, or two-mode (undirected by construction) |
 | Directed | `-` | not applicable |
 | C plug-in | `●` | the command uses the compiled plug-in when it is available; without it, Mata gives the same result |
@@ -125,11 +140,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwgeodesic` | + | V | G | S | ● | ○ | valued: step cost 1/w^alpha; alpha(-1) reads values as lengths; nosym for directed; Valued network above 100 nodes: plug-in only (no Mata version). |
-| `nwpath` | + | V | G | S |  | ● | least cost path; r(path_cost) |
+| `nwgeodesic` | + | V | G | D | ● | ○ | valued: step cost 1/w^alpha; alpha(-1) reads values as lengths; a directed network is used as directed, sym symmetrizes it first; Valued network above 100 nodes: plug-in only (no Mata version). |
+| `nwpath` | + | V | G | D |  | ● | least cost path; a directed network is used as directed, sym symmetrizes it first; r(path_cost) |
 | `nwreach` | + | N | G | S | ● | ○ | reachability network |
 | `nwmaxflow` | + | O | G | D |  | ● | weighted: values are capacities |
-| `nwrandomwalk` | + | V | O | S |  | ● | hitting times; directed networks treated as undirected |
+| `nwrandomwalk` | + | V | O | D |  | ● | hitting times; a directed network: the walk follows the direction of the ties (step probability w_ij / out-strength), a node from which the target is not reached with certainty has a missing hitting time; sym gives the walk on the symmetrized network |
 | `nwmatching` | + | V | Q | U | ● | ○ | maximum matching between the modes; valued: largest total value |
 
 ## Centrality, brokerage and structural holes
@@ -138,13 +153,13 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwdegree` | + | V | N | D |  | ● | valued: strength; alpha(); in- and out-degree for directed; two-mode form (ties / size of the other mode, raw) by default, onemode forces the one-mode degree |
 | `nw2degree` | + | V | Q | U |  | ● | alias of nwdegree on a two-mode network: degree / size of the other mode; raw gives the count |
-| `nwbetween` | + | V | N | S | ● | ○ | nosym for directed; two-mode form by default: Borgatti-Everett standardisation (twomode is a synonym), onemode forces the one-mode betweenness |
-| `nwcloseness` | + | V | N | S | ● | ○ | two-mode form by default: Borgatti-Everett normalisation (twomode is a synonym), onemode forces the one-mode closeness; Valued network above 100 nodes: plug-in only (no Mata version). |
-| `nwevcent` | + | V | G | S | ● | ○ | principal eigenvector of the bipartite adjacency matrix |
+| `nwbetween` | + | V | N | D | ● | ○ | a directed network: shortest paths follow the direction of the ties; sym gives the result for the symmetrized network (nosym is accepted and is the default); two-mode form by default: Borgatti-Everett standardisation (twomode is a synonym), onemode forces the one-mode betweenness |
+| `nwcloseness` | + | V | N | D | ● | ○ | a directed network: distances follow the direction of the ties; sym gives the result for the symmetrized network (nosym is accepted and is the default); two-mode form by default: Borgatti-Everett normalisation (twomode is a synonym), onemode forces the one-mode closeness; Valued network above 100 nodes: plug-in only (no Mata version). |
+| `nwevcent` | + | V | G | D | ● | ○ | a directed network: the centrality of a node comes from the nodes that send ties to it (out gives the other direction); sym gives the symmetrized result; principal eigenvector of the bipartite adjacency matrix on a two-mode network |
 | `nwpagerank` | + | V | G | D | ● | ○ |  |
-| `nwkatz` | + | V | G | D | ● | ○ | walks option weights walks; otherwise steps |
-| `nwinduced` | + | V | R | D | ● | ○ | induced centrality; measure(degree) not for directed |
-| `nwassortativity` | + | V | G | S |  | ● | valued: attribute is the strength; value negative by construction for a two-mode network |
+| `nwkatz` | + | V | G | D | ● | ○ | a directed network: distances (or walks) follow the direction of the ties, _out and _in differ; sym gives the symmetrized result (nosym is accepted and is the default); walks option weights walks; otherwise steps |
+| `nwinduced` | + | V | R | D | ● | ○ | induced centrality; betweenness, closeness and evcent follow the direction as the commands do (sym symmetrizes first); measure(degree) not for directed |
+| `nwassortativity` | + | V | G | D |  | ● | a directed network: one pair per tie, the value at the sender against the value at the receiver; sym gives the symmetrized result; valued: attribute is the strength; value negative by construction for a two-mode network |
 | `nwbrokerage` | + | N | G | D |  | ● | Gould-Fernandez roles |
 | `nwburt` | + | V | G | D | ● | ○ | values are investments; no binary mode; not symmetrized; Valued network: plug-in only (no Mata version). |
 | `nwconstraint` | + | V | G | D | ● | ○ | values are investments; not symmetrized |
@@ -154,26 +169,26 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 | Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `nwcomponents` | + | N | G | S |  | ● | weak connectivity |
+| `nwcomponents` | + | N | G | D |  | ● | a directed network: strongly connected components (weak gives the weakly connected components) |
 | `nwbridges` | + | N | G | D |  | ● | type(): local, global, arcs, edges |
-| `nwclique` | + | N | G | S | ● | ○ | no clique of three or more nodes in a bipartite graph |
-| `nwcohesion` | + | N | G | S | ● | ○ | Moody-White hierarchy |
-| `nwkcomponents` | + | N | G | S | ● | ○ |  |
+| `nwclique` | + | N | G | P | ● | ○ | no clique of three or more nodes in a bipartite graph; a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwcohesion` | + | N | G | P | ● | ○ | Moody-White hierarchy; a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwkcomponents` | + | N | G | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
 | `nwkcore` | + | N | G | S |  | ● | union of in- and out-neighbours |
-| `nwkplex` | + | N | G | S | ● | ○ |  |
-| `nwnclan` | + | N | G | S | ● | ○ |  |
-| `nwnclique` | + | N | G | S | ● | ○ |  |
-| `nwlambda` | + | I | G | S | ● | ○ | edge-disjoint paths; nwmaxflow, weighted for capacities |
+| `nwkplex` | + | N | G | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwnclan` | + | N | G | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwnclique` | + | N | G | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwlambda` | + | I | G | P | ● | ○ | edge-disjoint paths; nwmaxflow, weighted for capacities; a directed network with unreciprocated ties is refused (error 198) unless sym |
 | `nwsimmelian` | + | N | G | D | ● | ○ | needs triangles: all 0 in a bipartite graph |
 | `nwshared` | + | N | G | P |  | ● | requires the option `undirected` on a directed network (error 198 otherwise) |
 | `nwclustering` | + | O | N | D | ● | ○ | measure(); weighted not for directed; two-mode form (Opsahl 2013; ra: Robins-Alexander 2004) by default, onemode forces the one-mode coefficient |
 | `nw2clustering` | + | O | Q | U | ● | ○ | alias of nwclustering on a two-mode network: Opsahl 2013; ra: Robins-Alexander 2004 |
 | `nw2motifs` | + | N | Q | U | only |  | alias of nwmotifs on a two-mode network: bipartite motifs of Simmons et al. (bmotif): 17 motifs, 44 with sixnode, node positions; counts ties above zero; Bipartite motifs need the plug-in of core 3.9.0. |
 | `nw2nested` | + | I | Q | U |  | ● | NODF and C-score |
-| `nwbalance` | + | I | G | D | ● | ○ | signed networks; a bipartite graph has no triangle; only the sign of a tie value enters |
+| `nwbalance` | + | I | G | D | ● | ○ | signed networks; a bipartite graph has no triangle; only the sign of a tie value enters; a directed network: a pair is tied when there is a tie in either direction, a pair with opposite signs in the two directions is refused (error 198) |
 | `nwcommunity` | + | O | N | P | ● | ○ | two-mode: Barber modularity; onemode for Newman; algorithm(dirtlpa) (Beckett 2016, two-mode, plug-in only) |
 | `nwmodularity` | + | O | N | P |  | ● | two-mode: Barber modularity; onemode for Newman |
-| `nwspectral` | + | O | O | S |  | ● | Fiedler vector, algebraic connectivity |
+| `nwspectral` | + | O | O | P |  | ● | Fiedler vector, algebraic connectivity; a directed network with unreciprocated ties is refused (error 198) unless sym |
 
 ## Positions, similarity and equivalence
 
@@ -186,8 +201,8 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwhierarchy` | + | O | R | - |  | ● | hierarchical clustering of the profiles |
 | `nwdendrogram` | + | - | - | - |  |  | draws the result of nwhierarchy; it reads no network and does not stop on a two-mode network (nwhierarchy does) |
 | `nwconcor` | + | O | R | D |  | ● | CONCOR blockmodel |
-| `nwcoreperiphery` | + | O | R | S |  | ● | discrete core-periphery model |
-| `nwfactions` | + | O | R | S | ● | ○ |  |
+| `nwcoreperiphery` | + | O | R | P |  | ● | discrete core-periphery model; a directed network with unreciprocated ties is refused (error 198) unless sym |
+| `nwfactions` | + | O | R | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
 
 ## Null models and statistical helpers
 

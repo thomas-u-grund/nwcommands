@@ -23,13 +23,23 @@ program nwkatz
 	// applies", since the two modes need genuinely different defaults
 	// (1 for the pre-existing distance-decay formula, 0.9/rho for the
 	// walk-counting one - see below).
-	syntax [anything(name=netname)] , [ alpha(real -999999) walks BINary GENerate(string) replace nosym force *]
-	if "`sym'" == "" {
-		local symopt "sym"
+	syntax [anything(name=netname)] , [ alpha(real -999999) walks BINary GENerate(string) replace SYMmetrize nosym force *]
+	// nosym (accepted for old scripts) is the default: a directed network is analysed as it is; sym symmetrizes first
+	// (the larger of the two directions of a tie). Declaring both: `nosym' fills the local `sym', `symmetrize' its own.
+	if "`sym'" != "" & "`symmetrize'" != "" {
+		di "{err}Options {bf:sym} and {bf:nosym} cannot be combined."
+		exit 198
 	}
 
 	_nwsyntax `netname', max(1)
 	local origdirected "`directed'"
+	local __wasval = ("`valued'" == "true")
+	local symopt ""
+	if "`symmetrize'" != "" & "`directed'" == "true" {
+		local symopt "sym"
+	}
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	_nwdatasync `netname'
 	if "`walks'" == "" {
 		_nwtimeguard, command(nwkatz) nodes(`nodes') model(bfs) netobj(`netobj') rate(6.6e8) alternative(The Katz centrality of the distance sums needs one breadth-first search from every node. Compute it for a part of the network (nwsubset), or use nwdegree, nwpagerank or nwevcent, which scale to millions of ties.) `force'
@@ -99,6 +109,8 @@ program nwkatz
 		mata: _editmissing(`__nwkatz_M', 0)
 		// walks on a valued network count weighted walks (igraph::alpha_centrality uses the weights); binary: tie present or not
 		if "`binary'" != "" mata: `__nwkatz_M' = (`__nwkatz_M' :!= 0)
+		// sym: the larger of the two directions of a tie
+		if "`symopt'" != "" mata: `__nwkatz_M' = `__nwkatz_M' :+ (`__nwkatz_M'' :> `__nwkatz_M') :* (`__nwkatz_M'' :- `__nwkatz_M')
 		mata: `__nwkatz_rho' = max(abs(eigenvalues(`__nwkatz_M')))
 		mata: st_numscalar("__nwkatz_rho", `__nwkatz_rho')
 		local rho = __nwkatz_rho
@@ -303,10 +315,31 @@ program nwkatz
 		di "{txt}  Katz centrality (shortest-path distance-decay)"
 	}
 	di "{txt}  Network name: {res}`original'"
-	if "`walks'" == "" & "`sym'" == "" {
-		di "{txt}	Network has been symmetrized for calculation.{txt}"
-	}
 	di "{hline 40}"
+	if "`symopt'" != "" {
+		di "{txt}{p 4 4 2}(directed network symmetrized: the larger of the two directions of a tie; the _out and _in variables are equal){p_end}"
+	}
+	else if "`origdirected'" == "true" & "`walks'" != "" {
+		di "{txt}{p 4 4 2}(directed network: _out counts the walks that start at a node, _in the walks that end at it){p_end}"
+	}
+	else if "`origdirected'" == "true" {
+		di "{txt}{p 4 4 2}(directed network: _out uses the distances from a node to the nodes it reaches, _in the distances from the nodes that reach it){p_end}"
+	}
+	else {
+		di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	if `__wasval' & "`walks'" == "" {
+		di "{txt}{p 4 4 2}(valued network: distances count steps, tie values ignored){p_end}"
+	}
+	else if `__wasval' & "`binary'" != "" {
+		di "{txt}{p 4 4 2}(valued network: tie values ignored, every tie counts as 1){p_end}"
+	}
+	else if `__wasval' {
+		di "{txt}{p 4 4 2}(valued network: walks weighted by the tie values){p_end}"
+	}
+	if `__nmiss' > 0 {
+		di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+	}
 	di "{txt}	Alpha: {res}`=strtrim(string(round((`alpha')*1000)/1000,"%9.0g"))'"
 	if "`walks'" != "" {
 		di "{txt}	Spectral radius (rho): {res}`=strtrim(string(round((`rho')*1000)/1000,"%9.0g"))'"

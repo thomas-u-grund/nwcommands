@@ -74,13 +74,13 @@ assert d_iso[1] == 0
 assert d_iso[2] == 0
 
 nwgen d_betw = between(dirstar)
-* nwbetween auto-symmetrizes by default (its own "nosym" option skips
-* this - not passed here), so this comes out identical to the
-* undirected star's own betweenness below (A=3, leaves=0) - verified
-* directly rather than assumed, confirming the shortcut reaches
-* nwbetween correctly with its own established default behaviour.
-assert d_betw[1] == 3
+* nwbetween follows the direction of the ties of a directed network: nobody lies between two others on a directed star;
+* with sym (the larger of the two directions) the star's centre has the undirected star's betweenness (A=3, leaves=0)
+assert d_betw[1] == 0
 assert d_betw[2] == 0
+nwbetween dirstar, generate(d_betw_sym) sym silent
+assert d_betw_sym[1] == 3
+assert d_betw_sym[2] == 0
 
 * replace: the directed "degree(" branch combines two nwdegree-
 * generated temp variables into the target via a plain "gen", which

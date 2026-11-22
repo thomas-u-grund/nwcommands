@@ -29,6 +29,9 @@ f _nwtimeguard.ado
 f _nwstrcat.ado
 f _nwcensusplot.ado
 f _nwvaluednote.ado
+f _nwdirnote.ado
+f _nwmissnote.ado
+f _nwsymguard.ado
 f _nwwlayout.ado
 f _nw2guard.ado
 f _nwedgelabs.ado
@@ -117,6 +120,9 @@ f nwmodularity.ado
 f nwmotifs.ado
 f nwmovie.ado
 f nwmoviexy.ado
+f nwnetworkdata.ado
+f nwnetworkdata_catalogue.ado
+f nwnetworkdata_convert.ado
 f nwname.ado
 f nwnclan.ado
 f nwnclique.ado

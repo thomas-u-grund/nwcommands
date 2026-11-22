@@ -36,8 +36,38 @@ program nwwebuse
 	// old-format dataset remains hosted at $nwwebpath - removed outright
 	// rather than reviving a triply-obsolete path with no current use
 	// case.
-	syntax anything [, * nwclear]
+	syntax anything [, * nwclear SCHoch]
 	_nwlibcheck
+
+	// Schoch's networkdata collection (github.com/schochastics/networkdata): "nwwebuse schoch karate" or
+	// "nwwebuse karate, schoch". The data are not part of nwcommands; the command nwnetworkdata
+	// downloads them from the author's repository (options such as name() and element() are passed on).
+	if word(`"`anything'"',1) == "schoch" {
+		local anything = trim(substr(trim(`"`anything'"'), 7, .))
+		local schoch schoch
+	}
+	if "`schoch'" != "" {
+		capture which nwnetworkdata
+		if _rc {
+			di as err "{p 0 0 2}the command {bf:nwnetworkdata} was not found; it is part of nwcommands (reinstall the core, see {help nwinstall}){p_end}"
+			exit 111
+		}
+		// no name (or ", list"): what the collection offers and how to see all of it
+		if `"`anything'"' == "" {
+			di as txt "{p 0 0 2}Schoch's networkdata collection (R package networkdata, 990 R objects = 2,274 networks), loaded with {bf:nwwebuse schoch} {it:name}; the data are not part of nwcommands and are downloaded from Schoch's repository when you ask for a network (R with the package igraph is needed for the first use of a data set).{p_end}"
+			di as txt "{p 2 2 2}{bf:nwwebuse schoch list}{space 17}all data sets ({bf:nwnetworkdata list} has filters: directed, undirected, twomode, weighted, ...){p_end}"
+			di as txt "{p 2 2 2}{bf:nwwebuse schoch describe} {it:name}{space 5}type, size, attributes; source and citation{p_end}"
+			di as txt "{p 2 2 2}{bf:nwwebuse schoch karate}{space 11}Zachary's karate club (34 nodes){p_end}"
+			di as txt "{p 2 2 2}{bf:nwwebuse schoch southern_women}{space 3}two-mode: 18 women, 14 events{p_end}"
+			di as txt "{p 2 2 2}{bf:nwwebuse schoch sampson}{space 9}10 directed networks of monks ({bf:element(3)} for one){p_end}"
+			di as txt "{p 0 0 2}Help: {help nwnetworkdata}; cite Schoch (2022), doi:10.5281/zenodo.7189928, and the original source of the data set.{p_end}"
+			exit
+		}
+		if "`nwclear'" != "" local options `options' nwclear
+		if trim(`"`options'"') != "" nwnetworkdata `anything', `options'
+		else nwnetworkdata `anything'
+		exit
+	}
 
 	`nwclear'
 	capture drop _running

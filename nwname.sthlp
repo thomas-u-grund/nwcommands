@@ -89,7 +89,7 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
 {synopt:{bf:r(nodes1)}}number of mode-1 nodes (two-mode networks only){p_end}
 {synopt:{bf:r(nodes2)}}number of mode-2 nodes (two-mode networks only){p_end}
 {synopt:{bf:r(selfloops)}}number of self-loops{p_end}
-{synopt:{bf:r(missing_edges)}}number of missing (undefined) dyads{p_end}
+{synopt:{bf:r(missing_edges)}}number of cells of the adjacency matrix without a value, including the diagonal cells of a network without self-loops (see {help nwsummarize}){p_end}
 
 {p2col 5 30 34 2: Macros}{p_end}
 {synopt:{bf:r(netname)}}name of the network{p_end}
@@ -115,4 +115,4 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
 	{help nwsummarize}, {help nwset}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

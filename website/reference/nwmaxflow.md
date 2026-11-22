@@ -42,7 +42,7 @@ For a DIRECTED network, capacities are directional (a tie A->B only lets flow mo
 
 ## Network types
 
-**Directed:** directions are used. **Valued:** each tie has capacity 1 by default; `weighted` uses the tie values as capacities. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** a negative capacity has no meaning. See [nwnetworktypes](nwnetworktypes).
+**Directed:** directions are used. **Valued:** each tie has capacity 1 by default and the output says so; `weighted` uses the tie values as capacities (the default of `igraph::max_flow` is to use a `capacity` edge attribute when present). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** a negative capacity has no meaning. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -78,4 +78,4 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

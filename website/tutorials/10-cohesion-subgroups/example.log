@@ -85,6 +85,8 @@
    Density:  .392
    Mean degree:  6.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 
 . 
 . * 3. Dense cores: k-cores, cliques and k-plexes
@@ -92,6 +94,7 @@
 (note: tie values are ignored; this measure is binary)
 ----------------------------------------
   Network name: likes
+    (undirected network)
   Max coreness (degeneracy): 5
 
       kcore |      Freq.     Percent        Cum.

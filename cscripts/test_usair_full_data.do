@@ -27,7 +27,7 @@ assert name == "Hartsfield Jackson Atlanta International Airport" if _nwnode == 
 assert city == "Atlanta" if _nwnode == "ATL"
 
 * three connected components: 541, 4 and 4 airports
-nwcomponents usair_full, generate(comp)
+nwcomponents usair_full, generate(comp) weak
 qui tab comp
 assert r(r) == 3
 qui count if comp == 1

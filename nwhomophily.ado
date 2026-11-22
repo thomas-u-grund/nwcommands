@@ -8,7 +8,7 @@ program def nwhomophily
 	// has no stub()-equivalent option of its own to forward it to either -
 	// wiring up a real implementation would mean extending nwdyadprob
 	// too, out of scope for a moderate-severity doc/dead-option fix.
-	syntax varlist(min=1), homophily(string) density(real) [mode(string) nodes(string) name(string) xvars undirected]
+	syntax varlist(min=1), homophily(string) density(real) [mode(string) nodes(string) name(string) xvars undirected ntimes(integer 1)]
 	_nwlibcheck
 	
 	local vc = wordcount("`varlist'")
@@ -82,8 +82,13 @@ program def nwhomophily
 		mata: mata drop `__temp'
 	}
 	mata: `__temp0' = exp(`__temp0')
-	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected' `xvars'
+	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected' `xvars' ntimes(`ntimes')
+	local __nwh_list `r(netlist)'
 	mata: mata drop `__temp0'
+	if `ntimes' != 1 {
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`__nwh_list'")
+	}
 	// `__temp' is already dropped at the end of the loop above (every
 	// iteration cleans up after itself) - this used to be a second,
 	// redundant drop of the same already-gone variable, crashing with

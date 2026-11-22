@@ -16,6 +16,12 @@ Load network data over the web
 ```stata
 Load network data over the web
 nwwebuse ["]filename["] [, nwclear]
+Load a network from Schoch's collection networkdata (needs R with the package igraph)
+nwwebuse schoch name [, options]
+nwwebuse name, schoch [options]
+nwwebuse schoch [, list]
+nwwebuse schoch list
+nwwebuse schoch describe name
 Report URL from which datasets will be obtained
 nwwebuse query
 Specify URL from which network dataset will be obtained
@@ -29,6 +35,8 @@ nwwebuse set
 `nwwebuse` *filename* loads the specified network dataset, obtaining it over the web and [sets all networks](nwset) in this dataset. By default, datasets are obtained from *https://nwcommands.org/examples*, a copy of the `data` folder of the nwcommands repository on GitHub. If the website cannot be reached, `nwwebuse` loads the same file from GitHub (*https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data*).
 
 Several [network datasets](netexample) are available from this source. If *filename* is specified without a suffix, `.dta` is assumed.
+
+`nwwebuse` `schoch` *name* loads one of the networks of the R package *networkdata* by David Schoch (*https://github.com/schochastics/networkdata*), for example `nwwebuse schoch karate`. The data are not part of nwcommands: `nwnetworkdata` downloads them from Schoch's repository the first time you ask for a data set and keeps them in a cache, and converts them with R, so **R with the package igraph is needed** for this one reader (the other data sets of `nwwebuse` need no R). Every load prints which network was loaded and where the data come from. Cite the collection and the original source of each data set; see [nwnetworkdata](nwnetworkdata) and [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/). `nwwebuse schoch` alone gives an overview; `nwwebuse schoch list` lists all data sets and `nwwebuse schoch describe` *name* shows one. Options (for example `name()`, `element()`) are passed to `nwnetworkdata`.
 
 `nwwebuse` `query` reports the URL from which network datasets will be obtained.
 
@@ -68,4 +76,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

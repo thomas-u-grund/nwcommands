@@ -17,6 +17,7 @@ Maximal n-clique enumeration
 nwnclique
 [netlist]
 [,
+sym
 n(int)
 gen:erate(newvarname)
 replace
@@ -30,6 +31,7 @@ silent]
 
 | | |
 |---|---|
+| `sym` | On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198) |
 | `n(int)` | Maximum geodesic distance allowed between any two members; default = 2 |
 | `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-n-clique membership size; with several networks the variables are numbered (*newvarname***1**, *newvarname***2**, ...) |
 | `replace` | Replace existing variable |
@@ -50,7 +52,7 @@ Like cliques, n-cliques genuinely overlap - a node can belong to several at once
 
 ## Network types
 
-**Directed:** symmetrized. **Valued:** tie values are ignored (the command prints a note on a valued network); `n()` counts steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:** refused (error 198) when some ties are not reciprocated, because the measure is defined for undirected networks; option `sym` analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). **Valued:** tie values are ignored (the command prints a note on a valued network); `n()` counts steps. **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -92,4 +94,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

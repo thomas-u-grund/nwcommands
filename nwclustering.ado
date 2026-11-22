@@ -1,5 +1,174 @@
+*! nwclustering: one network (the full command, _nwclustering_single below) or a list of networks
+*! (one result row per network; save(file) writes them to a data set, as nwsummarize does)
 capture program drop nwclustering
 program nwclustering
+	version 9
+	local __0 `"`0'"'
+	syntax [anything(name=netname)] [, SAVE(string asis) *]
+	_nwsyntax `netname', max(100000)
+	if `"`save'"' == "" & `networks' <= 1 {
+		_nwclustering_single `__0'
+		exit
+	}
+	local nets `netname'
+	local nn : word count `nets'
+	local opts `"`options'"'
+	if `"`save'"' != "" {
+		local 0 `"`save'"'
+		capture syntax anything(name=__nwc_file id="file name") [, REPlace]
+		if _rc {
+			di "{err}{p 0 0 2}option {bf:save()}: specify a file name, optionally followed by {bf:, replace}; for example {bf:save(results, replace)}{p_end}"
+			exit 198
+		}
+		local save `__nwc_file'
+	}
+	// the options that matter here
+	local 0 `", `opts'"'
+	syntax [, measure(string) SYMmetrize GENerate(string) replace silent level(int 1) RA ONEmode]
+	if `nn' > 1 {
+		if "`generate'" != "" | "`ra'" != "" {
+			local o = cond("`generate'" != "", "generate()", "ra")
+			di "{err}{p 0 0 2}nwclustering: option {bf:`o'} makes variables or a coefficient for a single network and cannot be used with a list of networks. Call {bf:nwclustering} once per network for it.{p_end}"
+			exit 198
+		}
+	}
+	tempname R
+	matrix `R' = J(`nn', 8, .)
+	matrix colnames `R' = directed valued twomode nodes level cluster_global cluster_avg nmissing
+	tempvar tvloc
+	local i 0
+	local showtab = (`nn' > 1)
+	foreach onenet of local nets {
+		local ++i
+		_nwsyntax `onenet', max(1)
+		local dirflag = ("`directed'" == "true")
+		local valflag = ("`valued'" == "true")
+		local tmflag = ("`is2mode'" == "true" & "`onemode'" == "")
+		local nnodes = `nodes'
+		_nwmissnote `onenet', quiet
+		local nmiss = r(nmissing)
+		if `tmflag' & "`generate'" == "" {
+			// two-mode clustering of the nodes of mode level(); a temporary variable takes the local coefficients, in a
+			// copy of the data set with one row per node (the rows are the nodes by position)
+			local showtab 1
+			local __m "`measure'"
+			if "`__m'" == "" local __m = cond("`valued'" == "true", "arithmetic", "binary")
+			_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`__m'" 6556
+			if !inlist(`level', 1, 2) {
+				di "{err}level() must be 1 or 2"
+				exit 198
+			}
+			preserve
+			qui {
+				drop _all
+				set obs `nnodes'
+				gen double `tvloc' = .
+			}
+			mata: st_rclear()
+			mata: _nw2c_run(`netobj', `nnodes', `level', "`__m'", "`tvloc'")
+			mata: st_global("r(measure)", "`__m'")
+			local g = r(C_global)
+			local a = r(C_avg)
+			local mm "`r(measure)'"
+			restore
+			local lv = `level'
+		}
+		else if `tmflag' {
+			_nwclustering_single `onenet', `opts'
+			local g = r(C_global)
+			local a = r(C_avg)
+			local mm "`r(measure)'"
+			local lv = `level'
+		}
+		else {
+			if `nn' > 1 {
+				if "`silent'" == "" local sil silent
+				else local sil ""
+				capture quietly _nwclustering_single `onenet', `opts' `sil'
+				if _rc {
+					_nwclustering_single `onenet', `opts'
+					exit _rc
+				}
+			}
+			else {
+				_nwclustering_single `onenet', `opts'
+			}
+			local g = r(cluster_global)
+			local a = r(cluster_avg)
+			local mm "`r(measure)'"
+			local lv = .
+		}
+		matrix `R'[`i', 1] = `dirflag'
+		matrix `R'[`i', 2] = `valflag'
+		matrix `R'[`i', 3] = `tmflag'
+		matrix `R'[`i', 4] = `nnodes'
+		matrix `R'[`i', 5] = `lv'
+		matrix `R'[`i', 6] = `g'
+		matrix `R'[`i', 7] = `a'
+		matrix `R'[`i', 8] = `nmiss'
+		local nm`i' "`onenet'"
+		local ms`i' "`mm'"
+		capture _return drop _nwc_last
+		_return hold _nwc_last
+	}
+	if `"`save'"' != "" {
+		tempname memhold
+		postfile `memhold' str80 name byte directed byte valued byte twomode double nodes str10 measure double level double cluster_global double cluster_avg double nmissing using `"`save'"', replace
+		forvalues k = 1/`nn' {
+			post `memhold' ("`nm`k''") (`R'[`k',1]) (`R'[`k',2]) (`R'[`k',3]) (`R'[`k',4]) ("`ms`k''") (`R'[`k',5]) (`R'[`k',6]) (`R'[`k',7]) (`R'[`k',8])
+		}
+		postclose `memhold'
+	}
+	if `showtab' & "`silent'" == "" {
+		local w 12
+		forvalues k = 1/`nn' {
+			local w = max(`w', min(30, strlen("`nm`k''")))
+		}
+		local lw = `w' + 2
+		di "{txt}{hline `=`lw' + 44'}"
+		di "{txt}{ralign `lw':Network}{ralign 8:Nodes}{ralign 12:Measure}{ralign 11:Average}{ralign 11:Global}"
+		di "{txt}{hline `=`lw' + 44'}"
+		local dnets ""
+		local unets ""
+		local vnets ""
+		local tnets ""
+		local mnets ""
+		forvalues k = 1/`nn' {
+			local ss = abbrev("`nm`k''", `w')
+			local sa = cond(`R'[`k',7] < ., string(`R'[`k',7], "%9.3f"), ".")
+			local sg = cond(`R'[`k',6] < ., string(`R'[`k',6], "%9.3f"), ".")
+			di "{txt}{ralign `lw':`ss'}{res}{ralign 8:`=`R'[`k',4]'}{ralign 12:`ms`k''}{ralign 11:`sa'}{ralign 11:`sg'}"
+			if `R'[`k',3] == 1 local tnets `tnets' `nm`k''
+			else if `R'[`k',1] == 1 local dnets `dnets' `nm`k''
+			else local unets `unets' `nm`k''
+			if `R'[`k',2] == 1 & "`ms`k''" == "binary" & `R'[`k',3] == 0 local vnets `vnets' `nm`k''
+			if `R'[`k',8] > 0 local mnets `mnets' `nm`k'' (`=`R'[`k',8]')
+		}
+		di "{txt}{hline `=`lw' + 44'}"
+		foreach __l in dnets unets vnets tnets mnets {
+			local __w : word count ``__l''
+			if `__w' > 6 {
+				local __a : word 1 of ``__l''
+				local __b : word 2 of ``__l''
+				local __z : word `__w' of ``__l''
+				local `__l' "`__a' `__b' ... `__z', `__w' networks"
+			}
+		}
+		if "`dnets'" != "" {
+			if "`symmetrize'" != "" di "{txt}{p 2 2 2}(directed network symmetrized, as option {bf:symmetrize} was given: the larger of the two directions of a tie; `dnets'){p_end}"
+			else di "{txt}{p 2 2 2}(directed network: a path a -> i -> b is closed by the tie a -> b, the direction of the ties is used; `dnets'){p_end}"
+		}
+		if "`unets'" != "" di "{txt}{p 2 2 2}(undirected network: `unets'){p_end}"
+		if "`vnets'" != "" di "{txt}{p 2 2 2}(valued network: tie values ignored, every tie counts as 1; `vnets'){p_end}"
+		if "`tnets'" != "" di "{txt}{p 2 2 2}(two-mode network: Opsahl's two-mode clustering of the nodes of mode `level', 4-paths closed by a 6-cycle; `tnets'){p_end}"
+		if "`mnets'" != "" di "{txt}{p 2 2 2}(missing ties treated as 0: `mnets'){p_end}"
+		di "{txt}{p 2 2 2}(r() holds the results of the last network, {bf:`nm`nn''}){p_end}"
+	}
+	_return restore _nwc_last
+end
+
+capture program drop _nwclustering_single
+program _nwclustering_single
 	version 9
 	syntax [anything(name=netname)][, measure(string) SYMmetrize GENerate(string) replace silent level(int 1) RA ONEmode]
 	set more off
@@ -7,6 +176,10 @@ program nwclustering
 	unw_defs
 
 	_nwsyntax `netname', max(1)
+	local __wasdir = ("`directed'" == "true")
+	local __wasval = ("`valued'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	// A two-mode network gets the two-mode clustering coefficients (Opsahl 2013, tnet::clustering_tm; ra: Robins and Alexander 2004) by
 	// default; onemode computes the one-mode coefficient of the bipartite graph.  nw2clustering is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
@@ -17,6 +190,10 @@ program nwclustering
 			noi di "{txt}{p 0 0 2}note: two-mode clustering is used; the following option(s) have no two-mode form and were ignored:{bf:`__ign'} ({bf:onemode} gives the one-mode computation){p_end}"
 		}
 		_nwclustering_two `netname', measure(`measure') level(`level') generate(`generate') `replace' `ra'
+		if "`generate'" != "" {
+			local __m2 = r(measure)
+			noi di "{txt}{p 4 4 2}(two-mode network: Opsahl's two-mode clustering of the nodes of mode `level' ({bf:level(`level')}), 4-paths closed by a 6-cycle; measure `__m2'" cond("`__m2'" == "binary" & "`valued'" == "true", ", tie values ignored", "") "){p_end}"
+		}
 		capture confirm number 1
 		exit
 	}
@@ -170,6 +347,24 @@ program nwclustering
 			noi di "{txt}  Symmetrized: {res}true"
 		}
 		noi di "{hline 40}"
+		if "`symmetrize'" != "" & `__wasdir' {
+			di "{txt}{p 4 4 2}(directed network symmetrized: the larger of the two directions of a tie){p_end}"
+		}
+		else if `__wasdir' {
+			di "{txt}{p 4 4 2}(directed network: a path a -> i -> b is closed by the tie a -> b, the direction of the ties is used){p_end}"
+		}
+		else {
+			di "{txt}{p 4 4 2}(undirected network){p_end}"
+		}
+		if "`measure'" == "binary" & `__wasval' {
+			di "{txt}{p 4 4 2}(valued network: tie values ignored, every tie counts as 1){p_end}"
+		}
+		if "`is2mode'" == "true" {
+			di "{txt}{p 4 4 2}(two-mode network read as the one-mode network of the bipartite graph){p_end}"
+		}
+		if `__nmiss' > 0 {
+			di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+		}
 		noi di "{txt}    Measure: {res}`measure'"
 		noi di "{txt}    Average clustering coefficient: {res}`=strtrim(string(round((`r(cluster_avg)')*1000)/1000,"%9.0g"))'"
 		noi di "{txt}    Global clustering coefficient: {res}`=strtrim(string(round((`r(cluster_global)')*1000)/1000,"%9.0g"))'"

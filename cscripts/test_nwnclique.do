@@ -82,7 +82,7 @@ assert r(N) == 4
 * size 3 at n=2.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwnclique dnet, generate(_ncliquenum)
+nwnclique dnet, generate(_ncliquenum) sym
 assert _rc == 0
 assert r(ncliques) == 1
 

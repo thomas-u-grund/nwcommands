@@ -37,6 +37,8 @@ from the numbers. Give `nwfromedge` a third variable, the tie value, and the net
    Density:  .417
    Mean outdegree:  1.25
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum
+   are tie values)
 ```
 
 (The five rows are Ann → Bob 12, Ann → Cy 1, Bob → Cy 5, Cy → Dee 2 and Dee → Ann 7; the full input is in the
@@ -64,6 +66,8 @@ values 0 (no tie) to 3:
    Density:  .392
    Mean degree:  6.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum
+   are tie values)
 ```
 
 ## Commands that use the values
@@ -138,6 +142,7 @@ value *w* costs 1/*w*^alpha. `nwbetween` prints this in its heading:
   Network name: likes
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
     (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = 1)
 
 . nwbetween likes, generate(bbtw) binary silent

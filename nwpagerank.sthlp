@@ -70,7 +70,7 @@ scalability discipline this package's own sparse-backend commands ({help nwkcore
 {pstd}
 {bf:Directed:} ties are followed in their direction. {bf:Valued:} the surfer follows a tie with probability w_ij / s_i
 by default; {opt binary} ignores the values. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
-network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+network. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
@@ -110,4 +110,4 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 	{help nwevcent}, {help nwrandomwalk}, {help nwbetween}, {help nwcloseness}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

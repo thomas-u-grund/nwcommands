@@ -77,7 +77,7 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 ## Network types
 
-**Directed:** every tie is treated as undirected and a note is printed. **Valued:** tie values are ignored and a note is printed. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - the bipartite motifs of `bmotif`. **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** every tie is treated as undirected and a note is printed. **Valued:** tie values are ignored and a note is printed. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - the bipartite motifs of `bmotif`. **Signed:** not checked. **Missing ties** (one-mode form): treated as 0; the output gives their number. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -141,4 +141,4 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

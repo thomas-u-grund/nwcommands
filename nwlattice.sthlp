@@ -80,4 +80,4 @@ binary). {bf:Two-mode:} not applicable (the network is one-mode). {bf:Signed:} n
 	{help nwpref}, {help nwrandom}, {help nwring}, {help nwsmall}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

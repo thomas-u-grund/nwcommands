@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 254
+POSITION 10 10 550 282
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwcomponents - Calculate network components / largest compon
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_cx_lgc 20 54 260 ., label("Calculate membership to largest component")
   CHECKBOX cx_lgc 290 54 190 ., label("lgc") option(lgc)
   TEXT tx_ed_generate 20 82 260 ., label("Required. Name of the Stata variable that stores information about components (component membership")
@@ -28,6 +28,8 @@ BEGIN
   CHECKBOX cx_silent 290 138 190 ., label("silent") option(silent)
   TEXT tx_cx_listall 20 166 260 ., label("Show the full table of components (default: first 30)")
   CHECKBOX cx_listall 290 166 190 ., label("listall") option(listall)
+  TEXT tx_cx_weak 20 194 260 ., label("directed network: weakly connected components (ignore the direction of the ties; default strong)")
+  CHECKBOX cx_weak 290 194 190 ., label("weak") option(weak)
 END
 
 LIST netlist
@@ -51,6 +53,7 @@ BEGIN
 		option main.cx_replace
 		option main.cx_silent
 		option main.cx_listall
+		option main.cx_weak
 	endoptions
 	stata
 END

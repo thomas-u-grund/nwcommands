@@ -88,16 +88,19 @@ capture confirm variable myclose
 assert _rc != 0
 di "=== replace guard / generate() validation REGRESSION VERIFIED ==="
 
-* missing_test finding, centrality group: directed-network default
-* (symmetrized) vs nosym were never compared - locks in the fix already
-* in place (nosym is opt-OUT of the documented default symmetrization,
-* not a pure no-op).
+* directed network: the default follows the direction of the ties (distances from the node), nosym is accepted and
+* the same, sym takes the larger of the two directions first (the 3.34.0 default)
 nwclear
 nwset, mat((0,1,1\0,0,0\0,0,0)) name(startest) directed labs(A,B,C)
 nwcloseness startest, generate(c1 f1 n1)
-assert reldif(c1[2], .6666667) < 1E-6
+assert missing(c1[2])
 nwcloseness startest, generate(c2 f2 n2) nosym replace
 assert missing(c2[2])
+assert c1[1] == c2[1]
+nwcloseness startest, generate(c3 f3 n3) sym replace
+assert reldif(c3[2], .6666667) < 1E-6
+capture noisily nwcloseness startest, generate(c4 f4 n4) sym nosym replace
+assert _rc == 198
 di "=== directed default-vs-nosym REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via

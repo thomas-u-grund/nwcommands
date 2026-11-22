@@ -31,9 +31,11 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym replace force silent BINary TWOmode ONEmode legacy *]
-	if "`sym'" == "" {
-		local symopt "sym"
+	syntax [anything(name=netname)] [, GENerate(string) SYMmetrize nosym replace force silent BINary TWOmode ONEmode legacy *]
+	// `nosym' (accepted so that old scripts run; it is the default) stores "nosym" in the local `sym'
+	if "`sym'" != "" & "`symmetrize'" != "" {
+		di "{err}Options {bf:sym} and {bf:nosym} cannot be combined."
+		exit 198
 	}
 	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
@@ -73,8 +75,31 @@ program nwcloseness
 	
 	set more off
 	local __anyvalued 0
+	local __notes ""
+	local __lastnet ""
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
+		_nwmissnote `netname_temp', quiet
+		local __nmiss = r(nmissing)
+		// a directed network is analysed as it is (distances follow the direction of the ties); sym takes the larger of
+		// the two directions of each tie first; an undirected network needs no copy
+		local __lastnet `netname_temp'
+		local symopt ""
+		local __lab ""
+		if `networks' > 1 local __lab "`netname_temp': "
+		if "`directed'" == "true" & "`symmetrize'" != "" {
+			local symopt "sym"
+			local __notes `"`__notes' "`__lab'directed network symmetrized: the larger of the two directions of a tie""'
+		}
+		else if "`directed'" == "true" {
+			local __notes `"`__notes' "`__lab'directed network: distances follow the direction of the ties""'
+		}
+		else {
+			local __notes `"`__notes' "`__lab'undirected network""'
+		}
+		if `__nmiss' > 0 {
+			local __notes `"`__notes' "`__lab'`__nmiss' missing ties treated as 0""'
+		}
 		if "`twomode'" != "" & "`is2mode'" != "true" {
 			noi di "{err}Option {bf:twomode} needs a two-mode network; `netname_temp' is one-mode."
 			exit 198
@@ -233,12 +258,17 @@ program nwcloseness
 		
 		local k = `k' + 1	
 	}
+	// the analysed network (the last one of a list) is the current network
+	qui nwcurrent `__lastnet'
 	mata: st_rclear()
 	if "`silent'" == "" {
 		di "{hline 40}"
 		di "{txt}  Network name: {res}`netname'"
 		di "{hline 40}"
 		di "{txt}    Closeness centrality"
+		foreach __n of local __notes {
+			di "{txt}{p 4 4 2}(`__n'){p_end}"
+		}
 		if "`__anyvalued'" == "1" {
 			local __wa 1
 			if regexm(`"`options'"', "alpha\(([^)]*)\)") local __wa = strtrim(regexs(1))

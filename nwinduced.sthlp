@@ -31,6 +31,7 @@
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt bin:ary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt sym}}Symmetrize a directed network first (the larger of the two directions of a tie); not for {bf:degree}{p_end}
 
 {p2colreset}{...}
 
@@ -77,8 +78,11 @@ being aware of before running this against a large network with {opt measure(bet
 {title:Network types}
 
 {pstd}
-{bf:Directed:} {opt betweenness}, {opt closeness} and {opt evcent} use directions; {cmd:measure(degree)} stops with an
-error. {bf:Valued:} {opt betweenness}, {opt closeness} and {opt evcent} use the tie values, as the commands do;
+{bf:Directed:} {opt betweenness}, {opt closeness} and {opt evcent} analyse a directed network as it is, as the commands
+{helpb nwbetween}, {helpb nwcloseness} and {helpb nwevcent} do (shortest paths and distances follow the direction of the
+ties; {opt evcent} uses the in-ties), for the full network and for every network without one node; the endogenous
+centrality equals the result of the command itself. Option {opt sym} symmetrizes a directed network first (the larger
+of the two directions of a tie). {cmd:measure(degree)} stops with an error on a directed network. {bf:Valued:} {opt betweenness}, {opt closeness} and {opt evcent} use the tie values, as the commands do;
 {opt degree} counts ties; {opt binary} ignores the values. {bf:Two-mode:} not supported (error 6088; use
 {help nwproject} first). {bf:Signed:} as in the chosen measure. See {help nwnetworktypes}.{p_end}
 
@@ -139,4 +143,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwneighbor}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

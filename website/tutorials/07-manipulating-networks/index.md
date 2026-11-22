@@ -188,6 +188,8 @@ instead of a Stata variable:
    Density:  .833
    Mean outdegree:  1.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
        1   2   3
     +-------------+
   1 |  .   1   3  |
@@ -213,6 +215,8 @@ instead of a Stata variable:
    Density:  .833
    Mean outdegree:  1.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
         1    2    3
     +----------------+
   1 |   .   10   30  |
@@ -250,6 +254,8 @@ else becomes 0:
    Density:  1
    Mean outdegree:  2.00
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
          1     2     3
     +-------------------+
   1 |    .   150    40  |

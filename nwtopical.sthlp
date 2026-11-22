@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.34.0  21nov2026}{...}
+{* *! version 3.35.0  22nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -51,6 +51,7 @@
 {p2col:    {bf:{help nwexport }}}Export a network as a Pajek, UCINET, GML or edge list file{p_end}
 {p2col:    {bf:{help nwfromedge }}}Import network data from an edge list{p_end}
 {p2col:    {bf:{help nwimport }}}Import a network from a Pajek, UCINET, GML or edge list file{p_end}
+{p2col:    {bf:{help nwnetworkdata }}}Import the networks of the R package networkdata (Schoch) from GitHub{p_end}
 {p2col:    {bf:{help nwsave }}}Save network data in a file{p_end}
 {p2col:    {bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:    {bf:{help nwtoedge }}}Convert a network to an edge list{p_end}
@@ -207,14 +208,14 @@
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
-{p2col:    {bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for spregress{p_end}
+{p2col:    {bf:{help nwspmatrix }}}Spatial weighting matrix from a network, for {cmd:spregress}{p_end}
 {p2col:    {bf:{help nwutility }}}Utility scores of Jackson and Wolinsky (1996){p_end}
 
 {marker analysis_other}{...}
 {p 11 11 2}{bf:{it:Other analysis tools}}{p_end}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
-{p2col:    {bf:{help nwdiffuse }}}Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
+{p2col:    {bf:{help nwdiffuse }}}Diffusion and contagion on a network: exposure, thresholds, adoption curve, hazard data, simulation{p_end}
 {p2col:    {bf:{help nwnode }}}Check whether a node exists in a network{p_end}
 {p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
 {p2col:    {bf:{help nwvalue }}}Return a tie value{p_end}
@@ -283,4 +284,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

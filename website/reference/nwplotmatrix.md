@@ -101,4 +101,4 @@ One box (five points) is drawn for every pair of nodes, so memory and time grow 
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

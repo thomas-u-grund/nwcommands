@@ -62,6 +62,8 @@ program nwinf
 	syntax [anything(name=netname)], [id(string) mat matonly detail silent]
 	_nwsyntax `netname', max(1)
 	local localdirected `directed'
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	
 	// BUGFIX: was `thisname' throughout - undefined anywhere in this
 	// file (confirmed via grep), so it was always empty, and each of
@@ -210,6 +212,13 @@ program nwinf
 				di "{txt}   Indegree centralization: {res}`=strtrim(string(round((`r(indg_central)')*1000)/1000,"%9.0g"))'"
 				di "{txt}   Outdegree centralization: {res}`=strtrim(string(round((`r(outdg_central)')*1000)/1000,"%9.0g"))'"
 			}
+		}
+		if "`r(valued)'" == "true" {
+			di "{txt}{p 3 3 2}(valued network: edges and density count every tie with a non-zero value; minimum and maximum are tie values){p_end}"
+		}
+		if `__nmiss' > 0 {
+			if "`detail'" != "" di "{txt}{p 3 3 2}(`__nmiss' missing ties are not counted as ties and not as pairs in the density; the measures of detail treat them as 0){p_end}"
+			else di "{txt}{p 3 3 2}(`__nmiss' missing ties are not counted as ties and not as pairs in the density){p_end}"
 		}
 	}
 	

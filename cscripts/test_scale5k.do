@@ -94,7 +94,15 @@ forvalues s = 1/40 {
         local matched1 = r(matched)
     }
     else {
-        quietly nwbalance net, generate(b1 bb1 bc1)
+        * a directed signed network with a pair of opposite-signed ties in the two directions is refused (the sign of the
+        * pair is not defined): the comparison then runs on the symmetrized network (nwsym, mode max); kind 1 is the directed valued +- network
+        local bnet net
+        if `kind' == 1 {
+            capture nwdrop netu
+            quietly nwsym net, mode(max) generate(netu)
+            local bnet netu
+        }
+        quietly nwbalance `bnet', generate(b1 bb1 bc1)
         local clo1 = r(closed_triad)
         local bal1 = r(balanced_triad)
     }
@@ -106,7 +114,7 @@ forvalues s = 1/40 {
             assert m1 == m2
         }
         else {
-            quietly nwbalance net, generate(b2 bb2 bc2)
+            quietly nwbalance `bnet', generate(b2 bb2 bc2)
             assert r(closed_triad) == `clo1' & r(balanced_triad) == `bal1'
             assert bb1 == bb2 & bc1 == bc2
             capture assert (b1 == b2) | (missing(b1) & missing(b2))

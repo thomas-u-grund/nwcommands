@@ -22,7 +22,8 @@
 {opth name(netname)}
 {opt xvars}
 {opt undirected}
-{opt labs}({it:lab1 lab2 ...})]
+{opt labs}({it:lab1 lab2 ...})
+{opth ntimes(int)}]
 
 
 {synoptset 21 tabbed}{...}
@@ -35,6 +36,7 @@
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opth ntimes(int)}}number of networks to be generated, named {it:name}_1, {it:name}_2, ...; default = 1; {bf:r(netlist)} lists them{p_end}
 
 
 {title:Description}
@@ -170,4 +172,4 @@ The result can be nicely plotted in the following way:
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -58,13 +58,8 @@ assert bc3[3] == 4
 assert bc3[4] == 3
 assert bc3[5] == 0
 
-// same directed path, without nosym: nwbetween symmetrizes into a
-// temporary *_symmetrized network, computes betweenness there, then must
-// drop the temporary network and restore the original as current - this
-// cleanup step used to reference a clobbered local (_nwsyntax with no
-// arguments overwrites the caller's `netname') and crashed the moment
-// nosym was fixed to actually take the symmetrizing branch; both are
-// fixed together here.
+// same directed path, default (the same as nosym) and sym (the symmetrized copy is temporary: it must be dropped
+// again and the original network must stay the current network)
 nwbetween dirpath, generate(bc4)
 nwset, detail
 assert `"`r(nets)'"' == `" dirpath"'
@@ -73,6 +68,14 @@ assert bc4[2] == 3
 assert bc4[3] == 4
 assert bc4[4] == 3
 assert bc4[5] == 0
+nwbetween dirpath, generate(bc5) sym
+nwset, detail
+assert `"`r(nets)'"' == `" dirpath"'
+assert bc5[1] == 0
+assert bc5[2] == 3
+assert bc5[3] == 4
+assert bc5[4] == 3
+assert bc5[5] == 0
 
 * --- netlist (multi-network) support: harmonisation-phase fix. This
 * command's own doc has always described this behavior ("In case,

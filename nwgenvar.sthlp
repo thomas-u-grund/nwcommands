@@ -49,13 +49,13 @@ each node in a network.
 {pstd}
 {it:netfcn1} is one of:
  
-{phang2}{opth between(netname)} [, {opt nosym}]
+{phang2}{opth between(netname)} [, {opt sym} {opt nosym}]
 {p_end}
-{pmore2}Calculate the betweenness centrality of network nodes (see {help nwbetween}).
+{pmore2}Calculate the betweenness centrality of network nodes (see {help nwbetween}). A directed network is analysed as it is; {opt sym} symmetrizes it first; {opt nosym} is accepted and is the default.
  
-{phang2}{opth closeness(netname)} [, {opth unconnected(integer)} {opt nosym}]
+{phang2}{opth closeness(netname)} [, {opth unconnected(integer)} {opt sym} {opt nosym}]
 {p_end}
-{pmore2}Calculate the closeness centrality of network nodes (see {help nwcloseness}).
+{pmore2}Calculate the closeness centrality of network nodes (see {help nwcloseness}). A directed network is analysed as it is; {opt sym} symmetrizes it first; {opt nosym} is accepted and is the default.
 
 {phang2}{opth clustering(netname)}
 {p_end}
@@ -218,4 +218,4 @@ Generate a new network with a network function:
 	{cmd:. nwsummarize newnet}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

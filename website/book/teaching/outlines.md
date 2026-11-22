@@ -100,7 +100,7 @@ Each week has a deck with speaker notes, a hands-on slide for each block and the
 - **Core idea:** name the mechanism (activity, access, control, prestige) before choosing the measure. Say whether
   ties are counted in their direction. A score measures position, not power or influence.
 - **Demonstration:** the Florentine table of degree, closeness, betweenness, effective size and constraint; on
-  the advice network `nwdegree, generate(adv_out adv_in)`, `nwcloseness` with and without `nosym`, `nwbetween`,
+  the advice network `nwdegree, generate(adv_out adv_in)`, `nwcloseness` with and without `sym`, `nwbetween`,
   `nwevcent`, `nwburt`, `nwbrokerage, group(officenum)`, `nwbridges` and `nwsimmelian`.
 - **Exercises:** Ch. 8, Ex. 3 (a star network by hand); Ch. 8, Ex. 4 (closeness under two penalties);
   Ch. 8, Ex. 7 (tenure as a rival source of a high in-degree); Ch. 8, Ex. 11 (whom to brief first).

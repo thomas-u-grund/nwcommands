@@ -120,7 +120,7 @@ assert r(N) == 6
 * collapses to a full undirected triangle - one block, level 2.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed
-nwcohesion dnet, generate(_cohesion)
+nwcohesion dnet, generate(_cohesion) sym
 assert _rc == 0
 assert r(blocks) == 1
 count if _cohesion == 2

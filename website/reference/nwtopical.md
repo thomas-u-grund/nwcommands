@@ -54,6 +54,7 @@ search_exclude: false
 - **[nwexport](nwexport)** --- Export a network as a Pajek, UCINET, GML or edge list file
 - **[nwfromedge](nwfromedge)** --- Import network data from an edge list
 - **[nwimport](nwimport)** --- Import a network from a Pajek, UCINET, GML or edge list file
+- **[nwnetworkdata](nwnetworkdata)** --- Import the networks of the R package networkdata (Schoch) from GitHub
 - **[nwsave](nwsave)** --- Save network data in a file
 - **[nwset](nwset)** --- Declare data to be network data
 - **[nwtoedge](nwtoedge)** --- Convert a network to an edge list
@@ -199,13 +200,13 @@ search_exclude: false
 - **[nwcorrelate](nwcorrelate)** --- Correlate networks and variables
 - **[nwcug](nwcug)** --- Conditional Uniform Graph (CUG) test
 - **[nwqap](nwqap)** --- Multivariate QAP regression
-- **[nwspmatrix](nwspmatrix)** --- Spatial weighting matrix from a network, for spregress
+- **[nwspmatrix](nwspmatrix)** --- Spatial weighting matrix from a network, for `spregress`
 - **[nwutility](nwutility)** --- Utility scores of Jackson and Wolinsky (1996)
 
 - ***Other analysis tools***
 
 - **[nwcontext](nwcontext)** --- Create a context variable
-- **[nwdiffuse](nwdiffuse)** --- Diffusion and contagion: exposure, thresholds, adoption curve, hazard data, simulation
+- **[nwdiffuse](nwdiffuse)** --- Diffusion and contagion on a network: exposure, thresholds, adoption curve, hazard data, simulation
 - **[nwnode](nwnode)** --- Check whether a node exists in a network
 - **[nwturnover](nwturnover)** --- Tie turnover/stability between two waves of the same network
 - **[nwvalue](nwvalue)** --- Return a tie value
@@ -265,4 +266,4 @@ The statistical network models are separate packages that need the core. Install
 
 ---
 
-*nwcommands version 3.29.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

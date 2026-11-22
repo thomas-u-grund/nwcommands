@@ -8,6 +8,9 @@ summarize sport1 smoke1 alcohol1
 nwassortativity glasgow1
 nwassortativity glasgow1, attribute(alcohol1)
 nwassortativity glasgow1, attribute(sport1)
+nwassortativity glasgow1, sym
+nwassortativity glasgow1, attribute(alcohol1) sym
+nwassortativity glasgow1, attribute(sport1) sym
 
 * 2. Mixing tables for a categorical attribute
 nwmixing glasgow1, attribute(sport1) permutations(500)

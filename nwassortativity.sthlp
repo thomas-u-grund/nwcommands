@@ -19,7 +19,8 @@
 {opt attribute(varname)}
 {opt weighted}
 {opt silent}
-{opt binary}]
+{opt binary}
+{opt sym}]
 
 
 {synoptset 25 tabbed}{...}
@@ -29,6 +30,7 @@
 {synopt:{opt weighted}}Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt binary}}Ignore the tie values of a valued network (by default they are used){p_end}
+{synopt:{opt sym}}On a directed network, symmetrize first (the larger of the two directions of a tie) and compute the undirected coefficient{p_end}
 
 {p2colreset}{...}
 
@@ -52,14 +54,15 @@ coefficient near zero means no such pattern.
 
 {pstd}
 Formally, for every tie {it:(i,j)}, {it:x} is the attribute value at {it:i} and {it:y} the value at
-{it:j}; the coefficient is the ordinary Pearson correlation of {it:x} and {it:y} across every tie,
-counted in both directions (so the result does not depend on which end of a tie is labeled {it:i} vs
-{it:j}). This is exactly Newman's (2002) own {it:r} for the undirected case, and is computed here the
-same symmetrized way for directed input too - a tie assortativity measure has no natural directed
-generalization the same way ordinary clustering/clique measures do not (see {help nwclustering}'s
-own identical reasoning), so a directed network's ties are treated as connections in either
-direction, matching this package's own established convention elsewhere (e.g. {help nwtriads},
-{help nwclique}).
+{it:j}; the coefficient is the ordinary Pearson correlation of {it:x} and {it:y} across the ties. On an
+undirected network every tie is counted in both directions (so the result does not depend on which end of
+a tie is labeled {it:i} vs {it:j}), which is Newman's (2002) {it:r}. On a directed network every tie is
+one pair, {it:x} taken at the sender and {it:y} at the receiver (Newman 2003, the directed {it:r} of
+{cmd:igraph::assortativity(directed = TRUE)}): by default the degree of the sender is its out-degree
+and the degree of the receiver is its in-degree (out-strength and in-strength on a valued network), and
+with {opt attribute()} the same attribute is read at both ends. Option {opt sym} gives the undirected
+coefficient of the symmetrized network instead (a tie counts in both directions with the larger of its
+two values). The output says whether the network was analysed as directed, undirected or symmetrized.
 
 {pstd}
 Social networks are frequently found to be assortative by degree (popular people know other popular
@@ -83,7 +86,7 @@ missing rather than a spurious value.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} symmetrized. {bf:Valued:} without {opt attribute()} the node attribute is the strength instead of the
+{bf:Directed:} analysed as it is (sender against receiver); {opt sym} symmetrizes first, and the output says which. {bf:Valued:} without {opt attribute()} the node attribute is the strength instead of the
 degree ({opt binary} uses the degree); {opt weighted} also weights each tie by its value (Leung and Chau 2007).
 {bf:Two-mode:} same as for the bipartite graph read as a one-mode network (the degree assortativity is negative by
 construction). {bf:Signed:} negative values would distort the weighted correlation. See {help nwnetworktypes}.{p_end}
@@ -104,11 +107,12 @@ construction). {bf:Signed:} negative values would distort the weighted correlati
 {synoptset 20 tabbed}{...}
 {p2col 5 20 24 2: Scalars}{p_end}
 {synopt:{bf:r(assortativity)}}the coefficient itself, in {it:[-1,1]}{p_end}
-{synopt:{bf:r(ties)}}number of ties the coefficient was computed over (undirected count){p_end}
+{synopt:{bf:r(ties)}}number of ties the coefficient was computed over (arcs of a directed network, unordered pairs of an undirected or symmetrized network){p_end}
 
 {p2col 5 20 24 2: Macros}{p_end}
 {synopt:{bf:r(name)}}name of the network{p_end}
 {synopt:{bf:r(attribute)}}attribute used (or "degree" or "strength" for the default){p_end}
+{synopt:{bf:r(directed)}}{bf:"true"} for a directed network analysed as it is, {bf:"symmetrized"} with {opt sym}, {bf:"false"} for an undirected network{p_end}
 {synopt:{bf:r(weighted)}}{bf:"true"} if {opt weighted} was specified, {bf:"false"} otherwise{p_end}
 
 
@@ -127,4 +131,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 	{help nwdegree}, {help nwclustering}, {help nwmixing}, {help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

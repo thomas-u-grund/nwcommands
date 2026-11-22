@@ -4,7 +4,7 @@ program nwnclique, rclass
 	// temporary names: no scalar or matrix is left behind
 	tempname __nw_maxnwnclique __nw_ncliquematrix __nw_nncliq __nw_nnwnclique __nw_tabnwnclique
 	version 12
-	syntax [anything(name=netname)][, n(int 2) GENerate(string) replace minsize(int 3) MAXcliques(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
+	syntax [anything(name=netname)][, SYMmetrize n(int 2) GENerate(string) replace minsize(int 3) MAXcliques(real 100000) COUNTonly NOMatrix MAXTime(real 60) silent]
 	set more off
 
 	if `n' < 2 {
@@ -41,6 +41,10 @@ program nwnclique, rclass
 				noi di `"`r(msg)'"'
 				local __vndone 1
 			}
+		}
+		_nwsymguard `netname_temp', cmd(nwnclique) `symmetrize' `__vnquiet'
+		if `"`r(msg)'"' != "" {
+			noi di `"`r(msg)'"'
 		}
 
 		if "`generate'" == "" & "`countonly'" == "" {

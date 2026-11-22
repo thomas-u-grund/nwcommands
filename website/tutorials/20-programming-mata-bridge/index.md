@@ -190,6 +190,8 @@ two-step paths between each pair, from the squared matrix:
    Density:  .358
    Mean degree:  5.38
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value;
+   minimum and maximum are tie values)
 ```
 
 Two details. `_nwsyntax` (a helper that looks up a network, see Section 4) leaves the node names of the original network in the

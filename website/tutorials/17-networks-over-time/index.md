@@ -123,9 +123,9 @@ ordinary static network, to which every other command applies:
 . nwturnover t1 t2, generate(stab_t12)
 ----------------------------------------
   Networks: t1 -> t2
-  Stable: 0  Formed: 2  Dissolved: 1
-  Jaccard index: 0
-  Persistence: 0
+  Stable: 1  Formed: 1  Dissolved: 1
+  Jaccard index: .333
+  Persistence: .5
 ```
 
 In this toy example (the five ties are listed in the script) a tie is active in the wave in which it is recorded

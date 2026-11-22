@@ -113,6 +113,7 @@ file /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_96418.000002 saved as .
   Network name: friends
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
 . list name dept age deg btw, noobs
 

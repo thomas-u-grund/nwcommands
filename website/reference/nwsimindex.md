@@ -54,7 +54,7 @@ The similarity of a node with itself is not defined and is set to missing, as ar
 
 ## Network types
 
-**Directed:** the neighbours of a node are its out- and in-neighbours. **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the neighbours of a node are its out- and in-neighbours (the output says so). **Valued:** tie values are ignored (every tie counts as present; the command prints a note). **Two-mode:** same as for the bipartite graph read as a one-mode network. **Signed:** not applicable. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -91,4 +91,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))

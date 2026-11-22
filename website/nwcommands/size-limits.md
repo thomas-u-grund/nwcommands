@@ -174,9 +174,9 @@ unless noted):
 
 - degree, number of components and coreness (k-core): identical;
 - local clustering: equal to 1e-9 or better; global transitivity: identical to 14 digits;
-- betweenness (undirected, and directed with `nosym`) and closeness: the same values up to about 1e-7 relative error,
-  because nwcommands stores betweenness in single precision; the closeness is igraph's normalized closeness. Note that
-  `nwcloseness` and `nwbetween` symmetrize a directed network by default;
+- betweenness (undirected and directed) and closeness: the same values up to about 1e-7 relative error,
+  because nwcommands stores betweenness in single precision; the closeness is igraph's normalized closeness. A
+  directed network is analysed with the direction of its ties, as igraph does (option `sym` symmetrizes it first);
 - PageRank (damping .85): largest difference 1e-11;
 - triad census: all 16 counts identical, checked at 1,000 and 5,000 nodes only;
 - mean distance and diameter of all-pairs geodesics: identical at 1,000 and 20,000 nodes. When some pairs are not
@@ -192,7 +192,7 @@ unless noted):
 | Measure | 5,000 nodes | 20,000 nodes | 100,000 nodes |
 |---|---|---|---|
 | Betweenness (undirected) | 1.74 / 2.00 | 28.7 / 33.4 | refused by the guard / over 120 s |
-| Betweenness (directed, `nosym`) | 0.90 / 1.19 | 18.5 / 23.5 | refused / over 120 s |
+| Betweenness (directed) | 0.90 / 1.19 | 18.5 / 23.5 | refused / over 120 s |
 | Closeness (undirected) | 0.66 / 0.61 | 10.2 / 12.0 | refused / over 120 s |
 | All-pairs geodesics (directed) | 0.60 / 0.64 | 10.7 / 12.0 | refused / not run (an 80 GB matrix) |
 | Louvain communities | 0.13 / 0.095 | 0.56 / 0.46 | 6.98 / 23.6 (one run each) |

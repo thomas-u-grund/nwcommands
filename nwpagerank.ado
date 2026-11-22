@@ -14,6 +14,8 @@ program nwpagerank, rclass
 	}
 
 	_nwsyntax `netname'
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 
 	// generate() is required (suite-wide generate()-required style
 	// decision, 2026-09-05): nwpagerank's whole purpose is producing
@@ -72,6 +74,7 @@ program nwpagerank, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`netname'"
 		di "{txt}  Damping: {res}`damping'"
+		if `__nmiss' > 0 di "{txt}{p 2 2 2}(`__nmiss' missing ties treated as 0){p_end}"
 		if `__wtd' di "{txt}{p 2 2 2}(valued network: ties followed in proportion to their values; {bf:binary} ignores the values){p_end}"
 		di "{hline 40}"
 		summarize `generate'

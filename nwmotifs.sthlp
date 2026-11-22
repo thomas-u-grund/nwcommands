@@ -112,7 +112,7 @@ Grayscale by design, matching every other plot this package produces.
 {pstd}
 {bf:Directed:} every tie is treated as undirected and a note is printed. {bf:Valued:} tie values are ignored and a
 note is printed. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode computation) - the
-bipartite motifs of {cmd:bmotif}. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
+bipartite motifs of {cmd:bmotif}. {bf:Signed:} not checked. {bf:Missing ties} (one-mode form): treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
@@ -188,4 +188,4 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
     {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.34.0, 21 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -2,7 +2,7 @@
 capture program drop nwclique
 program nwclique, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace minsize(int 3) NOMatrix silent]
+	syntax [anything(name=netname)][, SYMmetrize GENerate(string) replace minsize(int 3) NOMatrix silent]
 	set more off
 
 	if `minsize' < 1 {
@@ -26,6 +26,10 @@ program nwclique, rclass
 				noi di `"`r(msg)'"'
 				local __vndone 1
 			}
+		}
+		_nwsymguard `netname_temp', cmd(nwclique) `symmetrize' `__vnquiet'
+		if `"`r(msg)'"' != "" {
+			noi di `"`r(msg)'"'
 		}
 
 		if "`generate'" == "" {
