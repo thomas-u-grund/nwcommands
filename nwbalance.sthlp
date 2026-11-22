@@ -66,7 +66,7 @@ the observed one. With 500 draws, 0 of 500 means a p-value below about 0.002, no
 {title:Network types}
 
 {pstd}
-{bf:Directed:} a pair counts as tied when either direction has a tie; for a mutual dyad the sign of i->j is used.
+{bf:Directed:} a pair counts as tied when either direction has a tie. When both directions carry a tie of opposite sign the sign of the pair is not defined and the command stops with error 198 (make the sign explicit first, for example with {help nwsym}); a mutual pair with equal signs, or a single tie, gives the sign of the pair. The output says how a directed network is read. Missing ties count as no tie and the output says how many there are.
 {bf:Valued:} only the sign of each value is used. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
 network (no triangles: counts 0, balance missing). {bf:Signed:} the purpose of the command. See
 {help nwnetworktypes}.{p_end}

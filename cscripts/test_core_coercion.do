@@ -181,4 +181,21 @@ local ac = r(algebraic_connectivity)
 qui nwspectral lazega_s, generate(spb)
 _tcc_near `r(algebraic_connectivity)' `ac' 1e-12 "A6 nwspectral sym = nwsym max"
 
+* ---------------------------------------------------------------- A7. nwbalance
+* mutual pair with opposite signs: the sign of the pair is not defined (error 198, no variable made)
+nwset, mat((0,1,1\-1,0,1\1,1,0)) name(bconf) directed
+capture noisily nwbalance bconf
+assert _rc == 198
+* mutual pair with the same sign and one-way ties: runs, says what a directed network means
+nwset, mat((0,-1,1\-1,0,-1\1,-1,0)) name(bok) directed
+_tcc_log "directed network: two nodes are tied when there is a tie in either direction" "nwbalance bok"
+nwbalance bok
+assert r(closed_triad) == 1 & r(balanced_triad) == 1
+nwset, mat((0,-1,1\-1,0,-1\1,-1,0)) name(bun) undirected
+_tcc_log "undirected network" "nwbalance bun"
+nwset, mat((0,2,3\2,0,-.5\3,-.5,0)) name(bval) undirected
+_tcc_log "valued network: only the sign of a tie counts" "nwbalance bval"
+nwset, mat((0,1,1\1,0,.\1,.,0)) name(bmis) undirected
+_tcc_log "1 missing ties treated as 0" "nwbalance bmis"
+
 di "PASS: test_core_coercion"
