@@ -452,6 +452,7 @@ One entry for each chapter. The entries use these headings:
   - Forgetting who is at risk. The girls who smoked in the first wave have no rows in the hazard data (Ex. 1).
   - Reading the spatial lag as the effect of one friend. With a row-normalized matrix it multiplies the average of
     the friends' outcomes, and a girl without friends has a lag of 0 (Ex. 2).
+  - Using one network for all waves when the ties change. A baseline network is a legitimate design for exposure through that network and misrepresents changing exposure; the estimand and the observation schedule decide.
   - Trusting the standard errors of a plain logistic regression on rows of girls who are tied to each other.
   - Treating the two codings of a binary outcome in the autologistic model as mirror images. Contagion counts ties
     between actors who have the outcome, so the litigation coding of Ex. 5 does not converge when the corporate
@@ -550,6 +551,7 @@ One entry for each chapter. The entries use these headings:
 - **Where students get stuck:**
   - Treating the removal of names as anonymization. Structural re-identifiability has no analogue in ordinary data
     sets and must be assessed on its own terms.
+  - Taking a postestimation result as valid because the command ran. `test` after `nwqap` prints a joint chi-squared computed from a diagonal matrix of permutation variances; the inference to report is the permutation p-values.
   - Expecting rerun plotting code to reproduce a figure. Unless the coordinates were saved, it will not.
   - Citing a moving development version of the software instead of a specific, tagged one.
   - Reading tail p-values: with the plus-one correction a tail p-value is (count + 1)/(*R* + 1) (exercise bank 30.a).
