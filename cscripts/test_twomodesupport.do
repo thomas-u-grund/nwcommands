@@ -377,7 +377,7 @@ _load tm
 nwuse data/davis, nwappend
 foreach t in jac prs euc man crs mch ham nonm dham djac {
 	local sim = cond("`t'" == "jac", "jaccard", cond("`t'" == "prs", "pearson", cond("`t'" == "crs", "crossproduct", cond("`t'" == "mch", "matches", cond("`t'" == "ham", "hamming", "")))))
-	local dis = cond("`t'" == "euc", "euclidean", cond("`t'" == "man", "manhatten", cond("`t'" == "nonm", "nonmatches", cond("`t'" == "dham", "hamming", cond("`t'" == "djac", "jaccard", "")))))
+	local dis = cond("`t'" == "euc", "euclidean", cond("`t'" == "man", "manhattan", cond("`t'" == "nonm", "nonmatches", cond("`t'" == "dham", "hamming", cond("`t'" == "djac", "jaccard", "")))))
 	if "`sim'" != "" {
 		nwsimilar tm, type(`sim') name(sim_`t')
 		_cmpnet sim_`t' R_t_`t' 10 1e-9 "nwsimilar type(`sim') on the toy: equals R, missing between the modes"

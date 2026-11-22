@@ -55,6 +55,7 @@ program nwhierarchy, rclass
 			if `nodes' > 2000 {
 				di "{txt}{p 0 0 2}(note: clustering `nodes' nodes with Stata's clustermat takes minutes){p_end}"
 			}
+			if "`type'" == "manhatten" local type "manhattan"
 			nwdissimilar `netname', type(`type') context(`context') name(_temp_dissimilar)
 			nwtomatafast _temp_dissimilar
 			mata: st_matrix("`dismat'", `r(mata)')

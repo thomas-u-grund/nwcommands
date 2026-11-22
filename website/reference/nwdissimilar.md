@@ -48,7 +48,7 @@ The Euclidean distance between two tie vectors is equal to the square root of th
 
 *D_ij = sqrt(sum((i_outvec :- j_outvec):^2) + sum((i_invec :- j_invec):^2))*
 
-**Manhatten distance:**
+**Manhattan distance:**
 
 This distance is simply the sum of the absolute difference between the actor's ties to each alter, summed across the alters.
 
@@ -74,7 +74,7 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes *i* and *j* hav
 
 ## Network types
 
-**Directed:** `context()` restricts the comparison to incoming or outgoing ties. **Valued:** **euclidean** and **manhatten** use the tie values, **hamming**, **jaccard** and **nonmatches** only their presence. **Two-mode:** yes - a node is compared with the nodes of its own mode over the other mode; pairs across modes are missing. **Signed:** negative values enter like any value. See [nwnetworktypes](nwnetworktypes).
+**Directed:** `context()` restricts the comparison to incoming or outgoing ties. **Valued:** **euclidean** and **manhattan** use the tie values, **hamming**, **jaccard** and **nonmatches** only their presence. **Two-mode:** yes - a node is compared with the nodes of its own mode over the other mode; pairs across modes are missing. **Signed:** negative values enter like any value. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 

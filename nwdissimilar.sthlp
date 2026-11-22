@@ -40,7 +40,7 @@
 {p2col:{it:type}}{p_end}
 {p2line}
 {p2col:{cmd: euclidean}}Calculate Euclidean distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: manhatten}}Calculate Manhattan distance between the tie vectors of two nodes (the name of the type is spelled {bf:manhatten}){p_end}
+{p2col:{cmd: manhattan}}Calculate Manhattan distance between the tie vectors of two nodes (the older spelling {bf:manhatten} is still accepted){p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: jaccard}}Calculate the Jaccard distance (1 minus the Jaccard coefficient) of the tie vectors of two nodes; with {cmd:context(both)} the out- and in-neighbours are pooled{p_end}
 {p2col:{cmd: nonmatches}}Calculate percentage of non-matches in tie vectors of two nodes{p_end}
@@ -79,7 +79,7 @@ all the other actors (D, E, F, etc.), and summed.  The square root of the sum is
 
 
 {pstd}
-{bf:Manhattan distance} (type {bf:manhatten}):
+{bf:Manhattan distance:}
 
 {pstd}
 This distance is simply the sum of the absolute difference between the actor's ties to each alter, summed across the alters.
@@ -126,7 +126,7 @@ from these alters.
 
 {pstd}
 {bf:Directed:} {opt context()} restricts the comparison to incoming or outgoing ties. {bf:Valued:} {bf:euclidean} and
-{bf:manhatten} use the tie values, {bf:hamming}, {bf:jaccard} and {bf:nonmatches} only their presence. {bf:Two-mode:}
+{bf:manhattan} use the tie values, {bf:hamming}, {bf:jaccard} and {bf:nonmatches} only their presence. {bf:Two-mode:}
 yes - a node is compared with the nodes of its own mode over the other mode; pairs across modes are missing.
 {bf:Signed:} negative values enter like any value. See {help nwnetworktypes}.{p_end}
 
