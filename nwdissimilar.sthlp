@@ -40,7 +40,7 @@
 {p2col:{it:type}}{p_end}
 {p2line}
 {p2col:{cmd: euclidean}}Calculate Euclidean distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: manhatten}}Calculate Manhatten distance between the tie vectors of two nodes{p_end}
+{p2col:{cmd: manhatten}}Calculate Manhattan distance between the tie vectors of two nodes (the name of the type is spelled {bf:manhatten}){p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: jaccard}}Calculate the Jaccard distance (1 minus the Jaccard coefficient) of the tie vectors of two nodes; with {cmd:context(both)} the out- and in-neighbours are pooled{p_end}
 {p2col:{cmd: nonmatches}}Calculate percentage of non-matches in tie vectors of two nodes{p_end}
@@ -79,7 +79,7 @@ all the other actors (D, E, F, etc.), and summed.  The square root of the sum is
 
 
 {pstd}
-{bf:Manhatten distance:}
+{bf:Manhattan distance} (type {bf:manhatten}):
 
 {pstd}
 This distance is simply the sum of the absolute difference between the actor's ties to each alter, summed across the alters.

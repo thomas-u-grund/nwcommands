@@ -62,8 +62,10 @@ with a ring-lattice where each node has {it:k} neighbors on each side. Next, the
 are rewired in one of two ways:
 
 {pstd}
-1) When option {bf:prob()} is specified, each tie of the ring-lattice has a certain probability to get rewired. All non-existent ties
-are valid as rewirings (including the ones produced through previous rewirings).
+1) When option {bf:prob()} is specified, each tie of the ring-lattice has a certain probability to get rewired. A tie is rewired to a node
+chosen at random among the nodes that are farther than {it:k} steps away on the ring (so never to the node itself or to a node inside the band of the ring-lattice) and to which the node has no tie
+at that moment. Ties of the original ring-lattice are therefore never rewiring targets, not even after a previous rewiring removed them; ties
+produced by previous rewirings already exist and are not picked again.
 
 {pstd}
 2) When option {bf:shortcuts()} is specified, an exact number of ties of the ring-lattice gets rewired. In this algorithm, only ties 
