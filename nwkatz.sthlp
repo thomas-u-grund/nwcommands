@@ -20,6 +20,7 @@
 {opt walks}
 {opt gen:erate}({it:{help varname}})
 {opt replace}
+{opt sym}
 {opt nosym}
 {it:{help nwgeodesic:geodesic_options}}
 {opt force}
@@ -35,7 +36,8 @@ Description){p_end}
 {synopt:{opt gen:erate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores; for a directed network
 the variables {it:varname}{bf:_out} and {it:varname}{bf:_in} are generated{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
-{synopt:{opt nosym}}Distance-decay form: keep the direction of the ties of a directed network (by default the network is symmetrized); not used with {opt walks}{p_end}
+{synopt:{opt sym}}On a directed network, symmetrize first (the larger of the two directions of a tie); the {it:_in} and {it:_out} variables are then equal{p_end}
+{synopt:{opt nosym}}The default, accepted for old scripts: a directed network keeps the direction of its ties{p_end}
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
 {synopt:{opt force}}Run the command although its estimated time is more than 2 minutes (it stops with r(484) otherwise){p_end}
@@ -87,9 +89,8 @@ the same convention the default distance-decay formula already uses.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} {it:_in} and {it:_out} variables; the distance-decay form symmetrizes by default ({opt nosym} keeps the
-direction), {opt walks} does not. {bf:Valued:} {opt walks} weights the walks by the tie values ({opt binary} counts a
-tie once); the distance-decay form counts steps. {bf:Two-mode:} same as for the bipartite graph read as a one-mode
+{bf:Directed:} {it:_in} and {it:_out} variables; a directed network is analysed as it is in both forms ({it:_out}: distances from a node to the nodes it reaches, or walks that start at it; {it:_in}: those that arrive at it; {opt walks} {it:_in} equals {cmd:igraph::alpha_centrality}); {opt sym} symmetrizes first, and the output says which was done. Missing ties count as no tie and the output says how many there are. {bf:Valued:} {opt walks} weights the walks by the tie values ({opt binary} counts a
+tie once); the distance-decay form counts steps (the output says so). {bf:Two-mode:} same as for the bipartite graph read as a one-mode
 network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
 

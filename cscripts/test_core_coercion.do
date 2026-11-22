@@ -230,4 +230,25 @@ _tcc_log "undirected network: a tie carries flow in both directions|every tie ha
 nwset, mat((0,1,.\1,0,1\.,1,0)) name(mfm) undirected labs(a,b,c)
 _tcc_log "1 missing ties treated as 0" "nwmaxflow mfm, source(a) sink(c)"
 
+* ---------------------------------------------------------------- A10. nwkatz
+* walks, _in = igraph::alpha_centrality(alpha = .05) on lazega_adv
+nwkatz lazega_adv, walks alpha(.05) generate(kw)
+_tcc_near `=kw_in[1]' 4.89790288087414 `tol' "A10 walks _in node 1 = igraph alpha_centrality"
+_tcc_near `=kw_in[10]' 1.91156653866782 `tol' "A10 walks _in node 10"
+assert kw_in[1] != kw_out[1]
+* distance-decay: the default keeps the direction, sym gives in = out (the results of 3.34.0)
+nwkatz lazega_adv, alpha(.2) generate(kd)
+assert abs(kd_in[1] - kd_out[1]) > 1e-6
+nwkatz lazega_adv, alpha(.2) generate(ks) sym
+_tcc_near `=ks_in[1]' 6.16 `tol' "A10 sym node 1 = result of 3.34.0"
+assert ks_in[1] == ks_out[1]
+_tcc_log "directed network: _out uses the distances" "nwkatz lazega_adv, alpha(.2) generate(kd) replace"
+_tcc_log "directed network symmetrized" "nwkatz lazega_adv, alpha(.2) generate(kd) replace sym"
+_tcc_log "directed network: _out counts the walks" "nwkatz lazega_adv, walks alpha(.05) generate(kw) replace"
+_tcc_log "undirected network" "nwkatz tri, alpha(.2) generate(kt) replace"
+capture nwkatz lazega_adv, alpha(.2) generate(kx) sym nosym
+assert _rc == 198
+_tcc_log "valued network: distances count steps" "nwkatz gahuku, alpha(.2) generate(kg) replace"
+_tcc_log "1 missing ties treated as 0" "nwkatz mis, alpha(.2) generate(km) replace"
+
 di "PASS: test_core_coercion"
