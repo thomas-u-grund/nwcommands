@@ -136,4 +136,4 @@ https://nwcommands.org/examples{p_end}
 	{help nwuse}, {help nwimport}, {help webuse}
 
 {hline}
-{pstd}{it:nwcommands version 3.35.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.35.1, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -88,4 +88,4 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

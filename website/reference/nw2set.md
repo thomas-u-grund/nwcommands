@@ -131,4 +131,4 @@ A two-mode network is stored as one dense matrix over the nodes of both modes (t
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
