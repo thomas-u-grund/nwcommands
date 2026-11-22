@@ -22,7 +22,8 @@
 {opth nodes(integer)}
 {opth name(string)}
 {opt xvars}
-{opt undirected}]
+{opt undirected}
+{opth ntimes(int)}]
 
 
 {synoptset 25 tabbed}{...}
@@ -35,6 +36,7 @@
 {synopt:{opth name(newnetname)}}name of the new random network; default = {it:homophily}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate an undirected network{p_end}
+{synopt:{opth ntimes(int)}}number of networks to be generated, named {it:name}_1, {it:name}_2, ...; default = 1; {bf:r(netlist)} lists them{p_end}
 
 
 {title:Description}
