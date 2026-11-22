@@ -7,6 +7,10 @@ program nwclustering
 	unw_defs
 
 	_nwsyntax `netname', max(1)
+	local __wasdir = ("`directed'" == "true")
+	local __wasval = ("`valued'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 	// A two-mode network gets the two-mode clustering coefficients (Opsahl 2013, tnet::clustering_tm; ra: Robins and Alexander 2004) by
 	// default; onemode computes the one-mode coefficient of the bipartite graph.  nw2clustering is an alias of this form.
 	if "`is2mode'" == "true" & "`onemode'" == "" {
@@ -17,6 +21,10 @@ program nwclustering
 			noi di "{txt}{p 0 0 2}note: two-mode clustering is used; the following option(s) have no two-mode form and were ignored:{bf:`__ign'} ({bf:onemode} gives the one-mode computation){p_end}"
 		}
 		_nwclustering_two `netname', measure(`measure') level(`level') generate(`generate') `replace' `ra'
+		if "`generate'" != "" {
+			local __m2 = r(measure)
+			noi di "{txt}{p 4 4 2}(two-mode network: Opsahl's two-mode clustering of the nodes of mode `level' ({bf:level(`level')}), 4-paths closed by a 6-cycle; measure `__m2'" cond("`__m2'" == "binary" & "`valued'" == "true", ", tie values ignored", "") "){p_end}"
+		}
 		capture confirm number 1
 		exit
 	}
@@ -170,6 +178,24 @@ program nwclustering
 			noi di "{txt}  Symmetrized: {res}true"
 		}
 		noi di "{hline 40}"
+		if "`symmetrize'" != "" & `__wasdir' {
+			di "{txt}{p 4 4 2}(directed network symmetrized: the larger of the two directions of a tie){p_end}"
+		}
+		else if `__wasdir' {
+			di "{txt}{p 4 4 2}(directed network: a path a -> i -> b is closed by the tie a -> b, the direction of the ties is used){p_end}"
+		}
+		else {
+			di "{txt}{p 4 4 2}(undirected network){p_end}"
+		}
+		if "`measure'" == "binary" & `__wasval' {
+			di "{txt}{p 4 4 2}(valued network: tie values ignored, every tie counts as 1){p_end}"
+		}
+		if "`is2mode'" == "true" {
+			di "{txt}{p 4 4 2}(two-mode network read as the one-mode network of the bipartite graph){p_end}"
+		}
+		if `__nmiss' > 0 {
+			di "{txt}{p 4 4 2}(`__nmiss' missing ties treated as 0){p_end}"
+		}
 		noi di "{txt}    Measure: {res}`measure'"
 		noi di "{txt}    Average clustering coefficient: {res}`=strtrim(string(round((`r(cluster_avg)')*1000)/1000,"%9.0g"))'"
 		noi di "{txt}    Global clustering coefficient: {res}`=strtrim(string(round((`r(cluster_global)')*1000)/1000,"%9.0g"))'"

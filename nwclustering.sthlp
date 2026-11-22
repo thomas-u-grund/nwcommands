@@ -74,8 +74,8 @@ same command under another name and takes the same options.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} {opt measure(binary)} only; use {opt symmetrize} for a weighted measure. {bf:Valued:}
-{opt measure(arithmetic)} by default on an undirected valued network ({opt measure(binary)} ignores the values).
+{bf:Directed:} the direction of the ties is used: a path a -> i -> b is closed by the tie a -> b (a binary measure; {opt measure(binary)} only); use {opt symmetrize} for the undirected coefficient of the symmetrized network, which is also required for a weighted measure. The output says which was done. {bf:Valued:}
+{opt measure(arithmetic)} by default on an undirected valued network ({opt measure(binary)} ignores the values, and the output says so); missing ties count as no tie and the output says how many there are.
 {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode computation) - Opsahl (2013), {opt ra}:
 Robins and Alexander (2004). {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 

@@ -48,7 +48,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mo
 
 ## Network types
 
-**Directed:** `measure(binary)` only; use `symmetrize` for a weighted measure. **Valued:** `measure(arithmetic)` by default on an undirected valued network (`measure(binary)` ignores the values). **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - Opsahl (2013), `ra`: Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the direction of the ties is used: a path a -> i -> b is closed by the tie a -> b (a binary measure; `measure(binary)` only); use `symmetrize` for the undirected coefficient of the symmetrized network, which is also required for a weighted measure. The output says which was done. **Valued:** `measure(arithmetic)` by default on an undirected valued network (`measure(binary)` ignores the values, and the output says so); missing ties count as no tie and the output says how many there are. **Two-mode:** two-mode form by default (option `onemode` for the one-mode computation) - Opsahl (2013), `ra`: Robins and Alexander (2004). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -89,4 +89,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

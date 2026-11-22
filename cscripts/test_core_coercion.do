@@ -6,6 +6,7 @@ do unw_core.do
 * the branch before this sweep (3.34.0 plus the directed betweenness / closeness / evcent change).
 
 local tol 1e-9
+global tcc_out "`c(tmpdir)'/tcc_golden_new.txt"
 set linesize 255
 
 capture program drop _tcc_log
@@ -42,6 +43,7 @@ end
 nwuse data/lazega, nwclear
 nwuse data/glasgow, nwappend
 nwuse data/gahuku, nwappend
+nwuse data/davis, nwappend
 qui nwload lazega_adv
 qui gen xa = mod(_n*7, 5) + 1
 
@@ -95,5 +97,23 @@ nwset, mat((0,1,.\1,0,0\.,0,0)) name(mis) undirected
 _tcc_log "1 missing ties treated as 0" "nwcomponents mis, generate(mc)"
 nwset, mat((0,1,.\0,0,1\1,0,0)) name(mis2) directed
 _tcc_log "1 missing ties treated as 0" "nwcomponents mis2, generate(mc2)"
+
+* ---------------------------------------------------------------- A3. nwclustering
+* directed clustering: a path a -> i -> b closed by a -> b (hand-computed in R from the matrix); the output says so
+nwclustering lazega_adv, generate(cl1)
+_tcc_near `r(cluster_global)' 0.329310892346777 `tol' "A3 lazega_adv global"
+_tcc_near `r(cluster_avg)' 0.361068395667964 1e-7 "A3 lazega_adv average"
+_tcc_log "directed network: a path a -> i -> b is closed by the tie a -> b" "nwclustering lazega_adv, generate(cl2) replace"
+_tcc_log "directed network symmetrized" "nwclustering lazega_adv, generate(cl2) replace symmetrize"
+nwclustering lazega_adv, generate(cl2) replace symmetrize
+_tcc_near `r(cluster_global)' 0.422925152749491 `tol' "A3 symmetrize = igraph transitivity of the collapsed network"
+_tcc_log "undirected network" "nwclustering gahuku, generate(cl3) replace"
+_tcc_log "valued network: tie values ignored" "nwclustering gahuku, generate(cl3) replace measure(binary)"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(mis3) undirected
+_tcc_log "1 missing ties treated as 0" "nwclustering mis3, generate(cl4) replace"
+clear
+qui nwload davis
+_tcc_log "two-mode network: Opsahl's two-mode clustering of the nodes of mode 2" "nwclustering davis, generate(cl5) replace level(2)"
+_tcc_log "two-mode network read as the one-mode network of the bipartite graph" "nwclustering davis, generate(cl5) replace onemode"
 
 di "PASS: test_core_coercion"
