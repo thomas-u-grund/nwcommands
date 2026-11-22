@@ -53,6 +53,9 @@ the clustering measures:
 ----------------------------------------
   Network name: samplike
 ----------------------------------------
+    (directed network: a path a -> i -> b is closed by the tie a -> b, the direction of
+    the ties is used)
+    (valued network: tie values ignored, every tie counts as 1)
     Measure: binary
     Average clustering coefficient: .44
     Global clustering coefficient: .407
@@ -101,10 +104,13 @@ The node-level values can be saved with `nwclustering`:
 ----------------------------------------
   Network name: samplike
 ----------------------------------------
+    (directed network: a path a -> i -> b is closed by the tie a -> b, the direction of
+    the ties is used)
+    (valued network: tie values ignored, every tie counts as 1)
     Measure: binary
     Average clustering coefficient: .44
     Global clustering coefficient: .407
- 
+
 
 . summarize clu
 
@@ -163,6 +169,8 @@ which D is disliked by A and B and liked by C:
 ----------------------------------------
   Network name: signed
 ----------------------------------------
+    (undirected network)
+    (valued network: only the sign of a tie counts, not its size)
     Closed triad: 4
     Balanced triad: 2
     Unbalanced triad: 2

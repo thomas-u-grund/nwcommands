@@ -136,7 +136,7 @@ Network 2: glasgow3
   Static graph view: t1
   Source network: mynet (snapshot)
   At: 1
-  Ties: 1
+  Ties: 2
 
 . nwattime mynet, at(2) name(t2)
 ----------------------------------------
@@ -172,9 +172,9 @@ Network 2: glasgow3
 . nwturnover t1 t2, generate(stab_t12)
 ----------------------------------------
   Networks: t1 -> t2
-  Stable: 0  Formed: 2  Dissolved: 1
-  Jaccard index: 0
-  Persistence: 0
+  Stable: 1  Formed: 1  Dissolved: 1
+  Jaccard index: .333
+  Persistence: .5
  
 
 . 

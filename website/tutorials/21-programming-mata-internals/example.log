@@ -399,6 +399,8 @@ r16  10
    Density:  .358
    Mean degree:  5.38
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value;
+   minimum and maximum are tie values)
 
 . mata: mata drop P x
 

@@ -58,6 +58,7 @@ new distance network shows every pairwise distance directly:
    Density:  2.49
    Mean degree:  13.12
    Temporal: false
+   (15 missing ties are not counted as ties and not as pairs in the density)
 [symmetric]
          1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
      +---------------------------------------------------------------------------------+
@@ -165,6 +166,7 @@ observations:
 . nwego flomarriage, sizevar(egosize) densvar(egodensity)
 ----------------------------------------
   Network name: flomarriage
+    (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------

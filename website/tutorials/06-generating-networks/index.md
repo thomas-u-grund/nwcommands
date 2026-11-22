@@ -83,6 +83,8 @@ weight `3` about 70%:
    Density:  .181
    Mean degree:  2.53
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 ```
 
 ## Small-world networks (Watts–Strogatz)
@@ -290,6 +292,7 @@ is .19; the random network with their degrees has .13:
 ----------------------------------------
   Network name: flomarriage
 ----------------------------------------
+    (undirected network)
     Measure: binary
     Average clustering coefficient: .218
     Global clustering coefficient: .191
@@ -298,6 +301,7 @@ is .19; the random network with their degrees has .13:
 ----------------------------------------
   Network name: floran
 ----------------------------------------
+    (undirected network)
     Measure: binary
     Average clustering coefficient: .118
     Global clustering coefficient: .128

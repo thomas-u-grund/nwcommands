@@ -42,7 +42,8 @@ and alcohol use (`alcohol1`: 1 to 5). The script is [`example.do`](example.do), 
 ## A number across ties: assortativity
 
 `nwassortativity` takes a numeric node attribute and computes the correlation between its value at one end of
-a tie and its value at the other end (Newman's assortativity coefficient). It runs from -1 (ties join
+a tie and its value at the other end (Newman's assortativity coefficient). On a directed network the ends are the
+sender and the receiver of a tie. It runs from -1 (ties join
 *dissimilar* nodes) to +1 (ties join *similar* nodes). Without `attribute()` the attribute is the node's own
 degree: do popular pupils befriend other popular pupils?
 
@@ -52,30 +53,39 @@ degree: do popular pupils befriend other popular pupils?
   Network name: glasgow1
   Attribute: degree
 ----------------------------------------
-    Ties: 74
-    Assortativity coefficient: .172
+    (directed network: out-degree of the sender against in-degree of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .151
 
 . nwassortativity glasgow1, attribute(alcohol1)
 
   Network name: glasgow1
   Attribute: alcohol1
 ----------------------------------------
-    Ties: 74
-    Assortativity coefficient: .323
+    (directed network: the attribute of the sender against that of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .39
 
 . nwassortativity glasgow1, attribute(sport1)
 
   Network name: glasgow1
   Attribute: sport1
 ----------------------------------------
-    Ties: 74
-    Assortativity coefficient: .069
+    (directed network: the attribute of the sender against that of the receiver, one
+    pair per tie)
+    Ties: 113
+    Assortativity coefficient: .174
 ```
 
-Pupils who drink more tend to be tied to others who drink more (.32), pupils with many ties are mildly
-tied to others with many ties (.17), and sport hardly matters (.07). Note `Ties: 74`: the network has 113 arcs,
-but the coefficient treats a directed network's ties as connections in either direction, so a mutual
-friendship counts once. The command gives a coefficient but no p-value; for a test see
+Pupils who drink more tend to name pupils who drink more (.39), pupils who name many friends tend to name pupils
+whom many others name (.15), and sport matters less (.17). The network is directed with 113 arcs, and the
+coefficient is computed over those 113 arcs: one pair per arc, the value at the sender against the value at the
+receiver (`Ties: 113`); for the default attribute that is the out-degree of the sender against the in-degree of the
+receiver. The option `sym` symmetrizes the network first (a friendship in either direction counts once) and gives
+the symmetrized variant on 74 ties: .17 for degree, .32 for alcohol and .07 for sport. The command gives a
+coefficient but no p-value; for a test see
 [Tutorial 18](../18-testing/).
 
 ## A category across ties: mixing tables and the E-I index
@@ -90,6 +100,7 @@ categories. Its p-value comes from permuting the network (QAP) while keeping the
 
    Network:  glasgow1      Directed: true
    Attribute:  sport1
+    (directed network: the table counts every tie from ego (row) to alter (column))
 
  sport1_ego | sport1_alter
             | not regular     regular        Total
@@ -114,6 +125,7 @@ Smoking has three categories:
 
    Network:  glasgow1      Directed: true
    Attribute:  smoke1
+    (directed network: the table counts every tie from ego (row) to alter (column))
 
  smoke1_ego | smoke1_alter
             |         non occassional     regular        Total

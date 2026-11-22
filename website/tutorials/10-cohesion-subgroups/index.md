@@ -90,6 +90,8 @@ The ties of `samplike` are valued, a liking rank from 1 to 3, and symmetrizing k
    Density:  .392
    Mean degree:  6.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 ```
 
 The commands in the next section use only whether a tie exists, not its value, and tell you so
@@ -111,6 +113,7 @@ These definitions pick out *parts* of the network that are especially dense, and
 (note: tie values are ignored; this measure is binary)
 ----------------------------------------
   Network name: likes
+    (undirected network)
   Max coreness (degeneracy): 5
 
       kcore |      Freq.     Percent        Cum.

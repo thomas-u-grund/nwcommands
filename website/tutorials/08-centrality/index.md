@@ -49,6 +49,7 @@ measure of "brokerage" rather than direct connectivity:
   Network name: flomarriage
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -67,6 +68,7 @@ can reach (as igraph). Specify unconnected() to give missing paths a length.
   Network name: flomarriage
 ----------------------------------------
     Closeness centrality
+    (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -97,7 +99,7 @@ raw neighbor count:
   Network name: flomarriage
 ----------------------------------------
     Eigenvector centrality
-   (calculated on symmetrized network)
+   (undirected network)
 
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
@@ -133,8 +135,8 @@ penalizing each by how far away it is:
 ----------------------------------------
   Katz centrality (shortest-path distance-decay)
   Network name: flomarriage
-       Network has been symmetrized for calculation.
 ----------------------------------------
+    (undirected network)
        Alpha: 1
 
     Variable |        Obs        Mean    Std. dev.       Min        Max

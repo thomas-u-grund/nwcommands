@@ -184,6 +184,8 @@ r16  10
    Density:  .358
    Mean degree:  5.38
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value;
+   minimum and maximum are tie values)
 
 . nwtomata flomarriage, mat(A)
 
@@ -364,6 +366,8 @@ directed = true, valued = false, nodes = 50
    Density:  .288
    Mean outdegree:  4.89
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value;
+   minimum and maximum are tie values)
 
 . nwtomata samplike, mat(S)
 

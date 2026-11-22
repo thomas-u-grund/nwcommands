@@ -53,6 +53,7 @@ Sorted by:
   _hierarchy |         15    .2800012      .44961          0          1
 
 . nwconstraint flomarriage, name(floconstraint)
+    (undirected network)
 
 . nwsummarize floconstraint
 --------------------------------------------------
@@ -69,6 +70,8 @@ Sorted by:
    Density:  .458
    Mean outdegree:  6.88
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 
 . nwdegree flomarriage, generate(deg)
 ----------------------------------------
@@ -96,6 +99,7 @@ Sorted by:
   Network name: flomarriage
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
 . sort _nwnode
 
@@ -183,6 +187,7 @@ Sorted by:
 . * 4. Hierarchy and Simmelian ties
 . nwsimmelian likes, name(strong)
 (note: tie values are ignored; this measure is binary)
+    (undirected network)
 
 . nwsummarize strong
 --------------------------------------------------
@@ -199,9 +204,12 @@ Sorted by:
    Density:  .373
    Mean degree:  6.33
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 
 . nwsimmelian samplike, name(strongdir)
 (note: tie values are ignored; this measure is binary)
+    (directed network: only mutual ties are used)
 
 . nwsummarize strongdir
 --------------------------------------------------
@@ -218,3 +226,5 @@ Sorted by:
    Density:  .105
    Mean outdegree:  1.78
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)

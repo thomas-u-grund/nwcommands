@@ -19,6 +19,8 @@
    Density:  .288
    Mean outdegree:  4.89
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 
 . 
 . * 1. How different are two nodes' tie profiles?
@@ -43,6 +45,8 @@
    Density:  .993
    Mean outdegree:  16.89
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and
+   maximum are tie values)
 
 . 
 . * 2. Hierarchical clustering of the nodes
@@ -95,9 +99,10 @@ file dendrogram_sampson.svg saved as SVG format
 
 . 
 . * 4. Spectral partition
-. nwspectral samplike, generate(fiedler) bipartition
+. nwspectral samplike, generate(fiedler) bipartition sym
 ----------------------------------------
   Network name: samplike
+    (directed network symmetrized: the larger of the two directions of a tie)
   Connected components: 1
   Algebraic connectivity: 3.403
 

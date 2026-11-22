@@ -21,6 +21,8 @@
    Density:  .392
    Mean degree:  6.67
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum
+   are tie values)
 
 . 
 . * 2. A network from an edge list with a value variable
@@ -53,6 +55,8 @@
    Density:  .417
    Mean outdegree:  1.25
    Temporal: false
+   (valued network: edges and density count every tie with a non-zero value; minimum and maximum
+   are tie values)
 
 . 
 . * 3. Degree is strength for a valued network
@@ -133,6 +137,7 @@
   Network name: likes
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
     (shortest paths weighted by tie values: step cost 1/value^alpha, alpha = 1)
 
 . nwbetween likes, generate(bbtw) binary silent
@@ -140,6 +145,7 @@
   Network name: likes
 ----------------------------------------
     Betweenness centrality
+    (undirected network)
 
 . correlate wbtw bbtw
 (obs=18)
