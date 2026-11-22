@@ -18,7 +18,7 @@ The DOIs of the manuals below are the ones of all versions of the manual: each a
 
 **nwcommands (core).** The core has no DOI. Cite the repository and the version:
 
-> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.35.0) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
+> Grund, T. U. (2026). *nwcommands: Network Analysis in Stata* (version 3.35.1) [Computer software]. [https://github.com/thomas-u-grund/nwcommands](https://github.com/thomas-u-grund/nwcommands)
 
 **nwsaom.** Cite the manual. It has a DOI:
 

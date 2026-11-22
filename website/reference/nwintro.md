@@ -155,4 +155,4 @@ None of the figures on this page are promises for every possible network shape o
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

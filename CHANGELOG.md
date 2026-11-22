@@ -4,6 +4,14 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [3.35.1] - 2026-11-22
+
+Documentation only. No command changes.
+
+### Changed
+- The page of the Schoch data sets is rewritten as an overview in our own words with links to the documentation of the networkdata package (the descriptions of the collection are not reproduced any more).
+- The licence note of the Schoch reader (`nwnetworkdata`, `nwwebuse schoch`) and of `netexample` says that the MIT licence of the package covers the package itself, that no licence is documented for the individual data sets and that users should check and cite the original sources.
+
 ## [3.35.0] - 2026-11-22
 
 **Summary.** One rule now holds in every command: a command never changes the type of your network by itself. A directed network is analysed as a directed network, a valued network as a valued one, and where a command needs something else (undirected, binary) you ask for it with an option (`sym`, `weak`, `binary`, ...). Every command also prints one line that says how the network was read, and how many missing ties were treated as 0. The release also adds lists of networks and `save()` to `nwgeodesic` and `nwclustering`, `ntimes()` to `nwhomophily` and `nwdyadprob`, and a reader for the data sets of the R package networkdata (`nwwebuse schoch`).

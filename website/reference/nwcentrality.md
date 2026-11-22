@@ -34,4 +34,4 @@ Each measure below is computed by its own dedicated command - for example, degre
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

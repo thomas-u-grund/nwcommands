@@ -88,4 +88,4 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

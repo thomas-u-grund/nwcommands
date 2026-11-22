@@ -144,4 +144,4 @@ Above 20,000 nodes in both modes together the command stops at once with r(484).
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

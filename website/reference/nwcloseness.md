@@ -90,4 +90,4 @@ The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))

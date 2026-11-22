@@ -78,4 +78,4 @@ Lovasz, L. (1993). Random walks on graphs: A survey. *Combinatorics, Paul Erdos 
 
 ---
 
-*nwcommands version 3.35.0, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
