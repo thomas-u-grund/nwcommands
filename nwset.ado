@@ -764,17 +764,12 @@ if "`overwrite'" != "" local replace "replace"
 			if (_rc != 0) mata: `nw' = nws_create()
 		}
 
-		mata: st_rclear()
-		mata: st_numscalar("r(networks)", `nws'.get_number())
-		mata: st_global("r(names)", `nws'.get_names())
-		mata: `nws'.add("`name'")
+		// registry statements batched into compiled functions (nwf_add(), nwf_create_edge(), nwf_create_finish() in
+		// unw_core.do): each interactive Mata statement costs time proportional to the number of stored networks
+		mata: nwf_add("`name'")
 		
 		_nwsyntax `name'
-		mata: `netobj'->create_by_name_sparse(`__nwnodenames')
-		mata: `netobj'->set_name("`name'")
-		mata: `netobj'->set_edge_take(`__nwnew')
-		mata: `netobj'->set_directed("`undirected'" == "")
-		mata: `netobj'->set_selfloop("`selfloop'" == "selfloop")
+		mata: nwf_create_edge(`id', `__nwnodenames', `__nwnew', "`name'", "`undirected'" == "", "`selfloop'" == "selfloop")
 	
 		if "`nodenames'" != "" {
 			mata: `netobj'->set_nodenames(`nodenames')
@@ -810,9 +805,9 @@ if "`overwrite'" != "" local replace "replace"
 		}
 		
 		// check if network is valued or not
-		mata: `netobj'->set_valued(`netobj'->check_valued())
-		if "`__optvalued'" != "" mata: `netobj'->set_valued(1)
-		if "`__optunvalued'" != "" mata: `netobj'->set_valued(0)
+		local __nwset_valmode 0
+		if "`__optvalued'" != "" local __nwset_valmode 1
+		if "`__optunvalued'" != "" local __nwset_valmode 2
 
 		// If the new network lists the nodes already in the data in a
 		// different order (labs(), nodenames(), varlist), reorder the
@@ -820,9 +815,8 @@ if "`overwrite'" != "" local replace "replace"
 		// _nwdatasync does not re-sort the rows under the networks
 		// already in memory.  Ties are unchanged (nodes keep their
 		// labels).  See nw_align_to_rows() in unw_core.do.
-		if "`bipartite'" == "" {
-			mata: nw_align_to_rows(`netobj', "`nw_nodename'", `nws'.pdefs)
-		}
+		// set_valued(check_valued()), the valued()/unvalued() override and (one-mode) the alignment, in one statement
+		mata: nwf_create_finish(`id', `__nwset_valmode', "`bipartite'" == "", "`nw_nodename'")
 		
 		_nwdatasync
 	}

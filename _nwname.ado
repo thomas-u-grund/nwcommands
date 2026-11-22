@@ -137,37 +137,8 @@ program _nwname
 		}
 	}
 
-	mata: st_numscalar("r(id)", `id')
-	mata: st_global("r(netname)", __nw.nws.pdefs[`id']->get_name())
-	// Naming consistency (moderate-severity pass, information_census
-	// group): nwdyads/nwtriads use `r(name)' for the identical "which
-	// network is this result about" concept; nwname used `r(netname)'
-	// only. Added as an alias rather than renaming, so existing callers
-	// of either name keep working.
-	mata: st_global("r(name)", __nw.nws.pdefs[`id']->get_name())
-	mata: st_global("r(vars)", __nw.nws.pdefs[`id']->get_nodesvar_string())
-	mata: st_numscalar("r(nodes)", __nw.nws.pdefs[`id']->get_nodes())
-	mata: st_global("r(mode2)", __nw.nws.pdefs[`id']->is_2mode())
-	mata: st_global("r(selfloop)", __nw.nws.pdefs[`id']->is_selfloop())
-	mata: st_numscalar("r(selfloops)", __nw.nws.pdefs[`id']->get_selfloops_number())
-	mata: st_global("r(directed)", __nw.nws.pdefs[`id']->is_directed())
-	mata: st_global("r(valued)", __nw.nws.pdefs[`id']->is_valued())
-	mata: st_global("r(title)", __nw.nws.pdefs[`id']->get_label())
-	mata: st_global("r(caption)", __nw.nws.pdefs[`id']->get_caption())
-	mata: st_numscalar("r(missing_edges)", __nw.nws.pdefs[`id']->get_missing_edges())
-	//!! Should r(labs) have real labels?
-	mata: st_global("r(labs)", nw_labs_string(__nw.nws.pdefs[`id']->get_nodenames()))
-	mata: st_global("r(modes)", __nw.nws.pdefs[`id']->get_modes_labeled_string())
-	mata: st_numscalar("r(nodes1)", __nw.nws.pdefs[`id']->get_nodes_mode1())
-	mata: st_numscalar("r(nodes2)", __nw.nws.pdefs[`id']->get_nodes_mode2())
-	mata: st_global("r(mode1desc)", __nw.nws.pdefs[`id']->get_description_mode1())
-	mata: st_global("r(mode2desc)", __nw.nws.pdefs[`id']->get_description_mode2())
-	mata: st_global("r(provenance)", __nw.nws.pdefs[`id']->get_provenance())
-	mata: st_global("r(temporal)", __nw.nws.pdefs[`id']->is_temporal())
-	mata: st_global("r(temporaltype)", __nw.nws.pdefs[`id']->get_temporal_type())
-	mata: st_global("r(timevar)", __nw.nws.pdefs[`id']->get_timevar())
-	mata: st_global("r(startvar)", __nw.nws.pdefs[`id']->get_startvar())
-	mata: st_global("r(endvar)", __nw.nws.pdefs[`id']->get_endvar())
-	mata: st_global("r(eventtimevar)", __nw.nws.pdefs[`id']->get_eventtimevar())
+	// all r() results in one Mata statement (nwf_nwname_ret() in unw_core.do); nwdyads/nwtriads use r(name) for the same
+	// concept as r(netname), which is kept as an alias
+	mata: nwf_nwname_ret(`id')
 end
 
