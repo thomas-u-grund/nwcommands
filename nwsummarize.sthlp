@@ -53,7 +53,7 @@ number of nodes for a network without any missing tie. Use {bf:r(missing_edges)}
 {pstd}
 {bf:Directed:}, {bf:Valued:} the summaries reflect direction and tie values. {bf:Two-mode:} yes - shows the two levels
 with sizes and labels; the density is the ties over the pairs from different modes. {bf:Signed:} negative values are
-not treated specially. See {help nwnetworktypes}.{p_end}
+not treated specially. The output says that edges and density count every tie with a non-zero value on a valued network, and how many missing ties there are: they are not counted as ties and not as pairs in the density (the measures of {opt detail} treat them as 0). See {help nwnetworktypes}.{p_end}
 
 
 {title:Limits}
