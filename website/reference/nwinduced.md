@@ -31,6 +31,7 @@ bin:ary]
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
 | `bin:ary` | Ignore the tie values of a valued network (by default they are used) |
+| `sym` | Symmetrize a directed network first (the larger of the two directions of a tie); not for **degree** |
 
 ## Description
 
@@ -48,7 +49,7 @@ The real computational cost is the leave-one-out reconstruction: computing induc
 
 ## Network types
 
-**Directed:** `betweenness`, `closeness` and `evcent` use directions; `measure(degree)` stops with an error. **Valued:** `betweenness`, `closeness` and `evcent` use the tie values, as the commands do; `degree` counts ties; `binary` ignores the values. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** as in the chosen measure. See [nwnetworktypes](nwnetworktypes).
+**Directed:** `betweenness`, `closeness` and `evcent` analyse a directed network as it is, as the commands [nwbetween](nwbetween), [nwcloseness](nwcloseness) and [nwevcent](nwevcent) do (shortest paths and distances follow the direction of the ties; `evcent` uses the in-ties), for the full network and for every network without one node; the endogenous centrality equals the result of the command itself. Option `sym` symmetrizes a directed network first (the larger of the two directions of a tie). `measure(degree)` stops with an error on a directed network. **Valued:** `betweenness`, `closeness` and `evcent` use the tie values, as the commands do; `degree` counts ties; `binary` ignores the values. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** as in the chosen measure. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -93,4 +94,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 
 ---
 
-*nwcommands version 3.25.0, 14 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

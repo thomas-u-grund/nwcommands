@@ -49,7 +49,7 @@ two modes, so density is the number of ties divided by $$n_1 n_2$$.
 ### Symmetrization
 
 `nwsym` turns a directed network into an undirected one by combining $$A_{ij}$$ and $$A_{ji}$$ with `mode()`: `max` (default; a tie exists if either direction has one), `min` (only if both do), `sum`, or `mean` $$=(A_{ij}+A_{ji})/2$$; a missing direction counts as 0,
-so that in a signed network $$-1$$ against no tie becomes 0 under `max` (Chapter 13). `nwissymmetric` (and `nwsym, check`) tests whether $$A=A^{\top}$$. Commands that say “symmetrized by default” use `max`.
+so that in a signed network $$-1$$ against no tie becomes 0 under `max` (Chapter 13). `nwissymmetric` (and `nwsym, check`) tests whether $$A=A^{\top}$$. Commands that symmetrize a directed network when you give them the option `sym` use `max`: the larger of the two directions of a tie.
 
 ### Dichotomizing and collapsing
 
@@ -143,8 +143,7 @@ $$
 F_i = \sum_{j\neq i} d(i,j),\qquad \text{nearness}_i = \frac{1}{F_i},\qquad C_C(i) = \frac{n-1}{F_i},
 $$
 
-the three variables named in `generate()` (Sabidussi 1966) (Chapter 8). A directed network is symmetrized first (by the maximum) unless `nosym` is given,
-in which case $$d(i,j)$$ follows the direction of the ties. On a valued network the distances are the weighted distances above (with `binary` they are steps). In a connected network $$C_C$$ lies between 0 and 1 and equals 1 for a node tied to everybody.
+the three variables named in `generate()` (Sabidussi 1966) (Chapter 8). A directed network is analysed as it is: $$d(i,j)$$ follows the direction of the ties, and the distances are those from a node to the nodes it can reach. With the option `sym` the network is symmetrized first (by the maximum). On a valued network the distances are the weighted distances above (with `binary` they are steps). In a connected network $$C_C$$ lies between 0 and 1 and equals 1 for a node tied to everybody.
 If some nodes cannot be reached, `nwcloseness` prints a warning and, as igraph does, defines $$C_C(i)=R_i/F_i$$, where $$R_i$$ is the number of other nodes that $$i$$ can reach, so that closeness stays at most 1; a node in a small component is then compared only with the few nodes it reaches and can score high. Use `unconnected(`$$c$$`)` (for example $$c=n$$, or `max`) to give unreachable pairs a distance and obtain $$(n-1)/F_i$$ over all nodes; the option `legacy` returns $$(n-1)/F_i$$ with the finite distances only, which can exceed 1. An isolate, or a node that reaches nobody, has $$F_i=0$$ and missing nearness and closeness.
 
 ### Flow, connectivity and random walks
@@ -192,23 +191,23 @@ $$
 
 where $$g_{jk}$$ is the number of shortest paths between $$j$$ and $$k$$, and $$g_{jk}(i)$$ the number of
 those passing through $$i$$ (Chapter 8); the sum is computed by the algorithm of Brandes (2001). In a directed network the sum runs over all ordered pairs $$(j,k)$$, so a path from $$j$$ to $$k$$ and one from $$k$$ to $$j$$ both count. By default
-`nwbetween` symmetrizes first (it then works with unordered pairs); with `nosym` directions are respected. The option `standardize` divides by the largest value a node can reach, $$(n-1)(n-2)/2$$ for unordered and
-&#8203;$$(n-1)(n-2)$$ for ordered pairs (after the default symmetrization an originally directed network is therefore divided by $$(n-1)(n-2)/2$$). On a valued network the shortest paths minimize the sum of $$A_{ij}^{-a}$$
+`nwbetween` respects the directions of the ties of a directed network; with the option `sym` it symmetrizes first (and then works with unordered pairs; `nosym` is accepted and is the default). The option `standardize` divides by the largest value a node can reach, $$(n-1)(n-2)/2$$ for unordered and
+&#8203;$$(n-1)(n-2)$$ for ordered pairs (with `sym` an originally directed network is therefore divided by $$(n-1)(n-2)/2$$). On a valued network the shortest paths minimize the sum of $$A_{ij}^{-a}$$
 along the path (Opsahl et al. 2010; $$a$$ is `alpha()`, default 1; for $$a=1$$ this is igraph with `weights = 1/w`) and ties with a value of 0 or below are ignored; with `binary` the network is dichotomized. Path lengths are compared with a relative tolerance of $$10^{-10}$$ (as in igraph), so that paths of equal length are counted as tied even when floating-point sums differ in the last digits. (The option `weighted` is accepted and redundant.) A node scores high when many pairs depend on it to connect.
-Freeman's betweenness centralization, returned in `r(bw_central)`, is $$\sum_i(\max_k C_B(k)-C_B(i))$$ divided by its maximum, $$(n-1)^2(n-2)/2$$ for the raw scores of an undirected network and $$(n-1)^2(n-2)$$ for the raw scores of a directed network analysed with `nosym`; a star has the value 1.
+Freeman's betweenness centralization, returned in `r(bw_central)`, is $$\sum_i(\max_k C_B(k)-C_B(i))$$ divided by its maximum, $$(n-1)^2(n-2)/2$$ for the raw scores of an undirected network and $$(n-1)^2(n-2)$$ for the raw scores of a directed network analysed as it is (without `sym`); a star has the value 1.
 
 ### Eigenvector centrality
 
 &#8203;$$x_i = \frac{1}{\lambda}\sum_j A_{ij} x_j$$; $$x$$ is the eigenvector of $$A$$ associated with its largest eigenvalue $$\lambda$$
 (Chapter 8). `nwevcent` returns $$x$$ scaled to *unit Euclidean length*, $$\sum_i x_i^2=1$$, so that a score is not comparable with programs that scale the maximum to 1 (igraph's default: divide by $$\max_i x_i$$).
-For a star on $$n$$ nodes the centre has score $$1/\sqrt2$$. By default a directed network is symmetrized by the maximum (`nosym` prevents this) and a valued network uses the tie values (`binary` dichotomizes it);
-the eigenvector is found by power iteration. With `nosym` on a directed network the formula above is used as written: a node is central when the nodes *it sends ties to* are central, which is the transpose of the convention of igraph. In a network that is not connected the score is that of the component with the largest eigenvalue, and the nodes in the other components are
+For a star on $$n$$ nodes the centre has score $$1/\sqrt2$$. A directed network is analysed as it is (the option `sym` symmetrizes it by the maximum) and a valued network uses the tie values (`binary` dichotomizes it);
+the eigenvector is found by power iteration. On a directed network the default is the in-tie version, as in igraph: a node is central when the nodes *that send ties to it* are central, $$x_i = \frac{1}{\lambda}\sum_j A_{ji} x_j$$; the option `out` gives the formula above as written (a node is central when the nodes *it sends ties to* are central). In a network that is not connected the score is that of the component with the largest eigenvalue, and the nodes in the other components are
 (numerically) 0. In words: a node is central when it is tied to nodes that are themselves central.
 
 ### Distance-decay (Katz-family) centrality
 
 `nwkatz`: $$\text{nwkatz}(i) = \sum_{j\neq i} \alpha^{d(i,j)}$$, summed over the nodes $$j\neq i$$ reachable from $$i$$; the default is $$\alpha=1$$, for which the score is the number of nodes reachable from $$i$$.
-A directed network is symmetrized first unless `nosym` is given; then two variables are returned, `_out` (distances along ties sent by $$i$$) and `_in` (distances along ties received by $$i$$).
+A directed network is analysed as it is (the option `sym` symmetrizes it first, and `nosym` is accepted and is the default); then two variables are returned, `_out` (distances along ties sent by $$i$$) and `_in` (distances along ties received by $$i$$).
 This is a shortest-path-distance measure, distinct from the walk-counting Katz measure (Katz 1953; Bonacich 1972),
 which the option `walks` computes:
 
@@ -371,7 +370,7 @@ to each common neighbor $$h$$ are combined: `min` or `max` (over all these value
 
 ### Assortativity
 
-`nwassortativity` computes the Pearson correlation, over all ordered pairs $$(i,j)$$ of tied nodes, between the attribute $$x_i$$ of one end and $$x_j$$ of the other (Newman 2002): every tie contributes both $$(x_i,x_j)$$ and $$(x_j,x_i)$$, so the result does not depend on the order of the ends. The attribute is a numeric variable (`attribute()`); without it the node's degree is used on a binary network (the number of distinct neighbors, in or out) and its strength, the sum of the tie values, on a valued network (`binary` gives the degree). Directed networks are treated as undirected for this purpose. On a binary network, or with `binary`, each tie counts once; on a valued network each pair is weighted by the tie value (Leung and Chau 2007), with $$r_w=\sum_{ij}w_{ij}(x_i-\bar x)(x_j-\bar y)/\sqrt{\cdot}$$ and weighted means and variances. A coefficient of $$+1$$ means ties join equal values, $$-1$$ opposite values (Chapter 6).
+`nwassortativity` computes the Pearson correlation, over all ordered pairs $$(i,j)$$ of tied nodes, between the attribute $$x_i$$ of one end and $$x_j$$ of the other (Newman 2002): every tie contributes both $$(x_i,x_j)$$ and $$(x_j,x_i)$$, so the result does not depend on the order of the ends. The attribute is a numeric variable (`attribute()`); without it the node's degree is used on a binary network and its strength, the sum of the tie values, on a valued network (`binary` gives the degree). A directed network is analysed as it is (Newman 2003): every tie, one pair, contributes the value at the sender against the value at the receiver, so the default is the out-degree of the sender against the in-degree of the receiver (out- and in-strength on a valued network) and the correlation is taken over the arcs. The option `sym` symmetrizes the network first and gives the undirected variant described above. On a binary network, or with `binary`, each tie counts once; on a valued network each pair is weighted by the tie value (Leung and Chau 2007), with $$r_w=\sum_{ij}w_{ij}(x_i-\bar x)(x_j-\bar y)/\sqrt{\cdot}$$ and weighted means and variances. A coefficient of $$+1$$ means ties join equal values, $$-1$$ opposite values (Chapter 6).
 
 ### E-I index and mixing table
 

@@ -159,7 +159,7 @@ One entry for each chapter. The entries use these headings:
   - Leaving unreachable pairs to a hidden rule. Changing the rule changes the closeness of every node not fully
     connected to the rest (Ex. 4).
   - Assuming `nwkatz` is the walk-counting Katz measure of textbooks. By default it sums over shortest-path
-    distances; the option `walks` gives the textbook version.
+    distances (along the direction of the ties of a directed network); the option `walks` gives the textbook version.
   - Reading a high score as power or influence. What a position is worth needs outcome data.
   - Reading brokerage role counts without the grouping variable in mind. A binary grouping cannot produce a
     liaison, and counts grow with the number of two-paths, so compare shares as well.
