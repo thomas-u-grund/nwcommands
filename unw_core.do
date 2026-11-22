@@ -13483,6 +13483,28 @@ void nwf_nwname_ret(real scalar id)
 	st_global("r(eventtimevar)", n->get_eventtimevar())
 }
 
+// _nwname.ado, a call without any new...() option: resolve netname and id (as the statements in _nwname.ado do) and set all r() results
+void nwf_nwname_plain(string scalar netname, string scalar sid)
+{
+	pointer(class `NWs' scalar) scalar p
+	real scalar id
+
+	p = findexternal("__nw")
+	st_rclear()
+	if (netname == "" & sid == "") {
+		id = p->nws.get_number()
+	}
+	else if (sid == "") {
+		id = p->nws.get_index_of(netname)
+	}
+	else {
+		id = strtoreal(sid)
+	}
+	st_local("netname", p->nws.pdefs[id]->get_name())
+	st_local("id", strofreal(id))
+	nwf_nwname_ret(id)
+}
+
 // _nwsyntax.ado, named network: r(id) from the name; when found, also the locals of nwf_syntax_info() (local __nwsx_info is then 1)
 void nwf_syntax_named(string scalar name)
 {
@@ -13524,6 +13546,44 @@ void nwf_add(string scalar name)
 	st_numscalar("r(networks)", p->nws.get_number())
 	st_global("r(names)", p->nws.get_names())
 	p->nws.add(name)
+}
+
+// nwset.ado, nwset, mat(M) name(N) with default node labels: everything that nwset does before the optional symmetrisation, in one
+// statement. Returns 0 when the network was registered (local id is its index), else a code and NOTHING has been changed, and the
+// caller takes the general route: 9 no registry, 1 matrix not square or empty, 2 name in use, 3 labels not unique.
+real scalar nwf_nwset_mat(real matrix m, string scalar name, string scalar prefix, real scalar directed, real scalar selfloop, string scalar nodenamevar)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+	string rowvector lab
+	real matrix edge
+	real scalar k, id
+
+	p = findexternal("__nw")
+	if (p == NULL) return(9)
+	if (eltype(*p) != "class") return(9)
+	k = rows(m)
+	if (k != cols(m) | k == 0) return(1)
+	if (rows(p->nws.names) > 0) {
+		if (first_index_match(p->nws.names, name) > 0) return(2)
+	}
+	lab = (J(k, 1, prefix) + get_node_suffix(k))'
+	lab = nw_rowlabels_or(lab, nodenamevar, p->nws.pdefs)
+	if (cols(lab) != rows(uniqrows(vec(lab)))) return(3)
+	edge = m
+	st_rclear()
+	st_numscalar("r(networks)", p->nws.get_number())
+	st_global("r(names)", p->nws.get_names())
+	p->nws.add(name)
+	id = cols(p->nws.pdefs)
+	st_local("id", strofreal(id))
+	n = p->nws.pdefs[id]
+	n->create_by_name_sparse(lab)
+	n->set_name(name)
+	n->set_edge_take(edge)
+	n->set_directed(directed)
+	n->set_selfloop(selfloop)
+	return(0)
 }
 
 // nwset.ado: fill the network just added (index id) from the labels and the edge matrix (edge is taken, as set_edge_take() does)

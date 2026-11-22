@@ -24,6 +24,15 @@ program _nwname
 
 	unw_defs
 	
+	// the common call has no new...() option: everything in one Mata statement (nwf_nwname_plain() in unw_core.do)
+	if "`newname'`newdirected'`newvalued'`new2mode'`newlabsfromvar'`newtitle'`newcaption'`newselfloop'`newmodes'`newmode1desc'`newmode2desc'`newprovenance'" == "" {
+		local nets = wordcount("`netname'")
+		if `nets' <= 1 {
+			mata: nwf_nwname_plain("`netname'", "`id'")
+			exit
+		}
+	}
+
 	mata: st_rclear()
 	
 	local nets wordcount("`netname'")

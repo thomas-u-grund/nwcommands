@@ -386,6 +386,27 @@ if "`overwrite'" != "" local replace "replace"
 	set more off
 	unw_defs
 
+	// Quick route for the commonest call, nwset, mat(M) name(N) [undirected selfloop valued unvalued] (nwrandom and the
+	// generators use it for every network): registered by one compiled function (nwf_nwset_mat() in unw_core.do) instead of
+	// about thirty Mata statements, each of which costs time proportional to the number of stored networks. The function
+	// changes nothing and returns a code when anything is unusual (name in use, not square, ...): then the general route below runs.
+	if `"`mat'"' != "" & `"`name'"' != "" & `"`varlist'`nodenames'`bipartite'`twomode'`biprownames'`labs'`vars'`keeporiginal'`xvars'`clear'`nwclear'`edgelist'`labsfromvar'`edgelabs'`detail'`time'`interval'`eventtime'`replace'"' == "" {
+		capture confirm matrix `mat'
+		if _rc != 0 {
+			local __nwset_fast 9
+			mata: st_local("__nwset_fast", strofreal(nwf_nwset_mat(`mat', "`name'", "`cDftNodepref'", "`undirected'" == "", "`selfloop'" == "selfloop", "`nw_nodename'")))
+			if "`__nwset_fast'" == "0" {
+				if "`undirected'" != "" nwsym `name'
+				local __nwset_valmode 0
+				if "`__optvalued'" != "" local __nwset_valmode 1
+				if "`__optunvalued'" != "" local __nwset_valmode 2
+				mata: nwf_create_finish(`id', `__nwset_valmode', 1, "`nw_nodename'")
+				_nwdatasync
+				exit
+			}
+		}
+	}
+
 	// `clear'/`nwclear' used to `exit' unconditionally, even when the
 	// same call also carried a creation request (a non-empty varlist -
 	// edgelist/twomode/bipartite/temporal forms - or mat()). That made
