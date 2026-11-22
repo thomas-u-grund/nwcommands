@@ -20,10 +20,11 @@ network models, from the Stata command line or from dialog boxes.
 
 ## News
 
+- **Sunbelt 2027, Montreal.** Workshops on network analysis with Stata are planned; [details will be posted here](news/).
 - **21 November 2026.** nwcommands 3.34.0 (`nwburt` gets `direction()`), nwergm 1.12.0, nwrem 1.7.0, nwdynam 1.11.0 and nwlsm 1.0.5; the manuals of the model packages are updated.
 - **Teaching.** [Slides for every week and day of the three course outlines](book/teaching/outlines/) (two 12-week courses and a five-day workshop) and [workshop slides](book/teaching/workshop/) for three three-hour sessions, in PowerPoint and PDF with speaker notes, free to use.
 
-All releases: [Releases and news](news/). nwcommands is a family of eight packages, the core and seven model packages; which one you need is on [Which package do I need?](which-package/), together with the versions.
+All news and releases: [News](news/). nwcommands is a family of eight packages, the core and seven model packages; which one you need is on [Which package do I need?](which-package/), together with the versions.
 
 ## Install in two steps
 {: #install-in-two-steps }
