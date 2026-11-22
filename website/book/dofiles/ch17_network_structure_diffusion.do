@@ -25,8 +25,7 @@ nwclear
 set seed 12345
 nwsmall 200, k(3) prob(.05) undirected name(sw)
 generate byte first = _n == 1
-nwcontext sw, attribute(first) stat(max) generate(near)
-generate byte group = first | near
+generate byte group = inlist(_n, 1, 2)
 nwcontext sw, attribute(group) stat(sum) generate(exposed)
 tabulate exposed if !group
 
@@ -155,3 +154,25 @@ gsort -network rewire
 format simple complex %6.1f
 format reached %4.2f
 list, noobs
+
+* ============================================================
+* What a simulated diffusion establishes
+* ============================================================
+nwwebuse lazega, nwclear
+nwsym lazega_adv, mode(max) generate(advsym)
+quietly nwdegree advsym, generate(deg)
+egen rankdeg = rank(-deg), unique
+generate byte hubs = rankdeg <= 3
+frame create lawyers str6 seeds half reached
+set seed 12345
+forvalues k = 1/20 {
+    quietly diffuse advsym, start(hubs) threshold(3) prob(.5)
+    frame post lawyers ("hubs") (r(half)) (r(share) >= .5)
+    generate double u = runiform()
+    quietly egen rnd_rank = rank(u), unique
+    generate byte rnd = rnd_rank <= 3
+    quietly diffuse advsym, start(rnd) threshold(3) prob(.5)
+    frame post lawyers ("random") (r(half)) (r(share) >= .5)
+    drop u rnd_rank rnd
+}
+frame lawyers: tabstat half reached, by(seeds) statistics(mean) format(%4.2f)

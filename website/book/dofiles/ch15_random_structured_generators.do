@@ -23,30 +23,14 @@ set more off
 * ============================================================
 nwwebuse lazega, nwclear
 set seed 12345
-nwrandom 71, density(.179) name(rand71)
-quietly nwsummarize lazega_adv rand71, detail save(cmp)
+quietly nwrandom 71, density(.179) ntimes(5) name(rand)
+quietly nwsummarize lazega_adv rand_*, detail save(cmp)
 preserve
 use cmp, clear
 format reciprocity transitivity indg_central outdg_central %5.3f
 list name reciprocity transitivity indg_central outdg_central, noobs ///
     abbreviate(14)
 restore
-foreach g in lazega_adv rand71 {
-    quietly nwgeodesic `g', name(path_`g')
-    display "`g': average shortest path " %5.3f r(avgpath)
-}
-
-set seed 1
-quietly nwrandom 71, density(.179) ntimes(20) name(draw)
-set seed 1
-quietly nwrandom 16, density(.125) undirected ntimes(20) name(small)
-quietly nwsummarize draw_* small_*, detail save(draws)
-preserve
-use draws, clear
-tabstat transitivity, by(nodes) statistics(mean sd min max) format(%5.3f)
-count if nodes == 16 & transitivity == 0
-restore
-nwdrop draw_* small_*
 
 * ============================================================
 * What density and size do by themselves
@@ -83,20 +67,9 @@ frame bysize: format density transitivity avgpath %5.3f
 frame bysize: list, noobs
 
 * ============================================================
-* One command for every generator: nwgen
-* ============================================================
-set seed 12345
-nwgen g_random = random(71), density(.179)
-nwgen g_ring = ring(20), k(4)
-nwgen g_lattice = lattice(5 6)
-nwgen g_small = small(50), k(4) prob(.1)
-nwgen g_pref = pref(100), m(2)
-
-* ============================================================
 * Rings and grids
 * ============================================================
 nwring 40, k(2) undirected
-nwplot ring, layout(circle) title("ring lattice") name(ringplot, replace)
 
 nwlattice 4 4, undirected
 nwplot lattice, layout(grid)
@@ -106,6 +79,7 @@ nwplot lattice, layout(grid)
 * ============================================================
 set seed 12345
 nwsmall 40, k(2) prob(.1) undirected
+nwplot ring, layout(circle) title("ring lattice") name(ringplot, replace)
 nwplot small, layout(circle) title("small world, prob(.1)") ///
     name(smallplot, replace)
 graph combine ringplot smallplot, cols(2) scheme(s1network) xsize(8) ysize(4)
@@ -140,18 +114,31 @@ frame sw: twoway (connected C prob, lcolor(black) mcolor(black) ///
 nwclear
 set seed 12345
 nwpref 71, m0(7) m(6) undirected name(pref71)
-quietly nwsummarize pref71, detail
-display "ties " r(edges) ", density " %5.3f r(density) ", transitivity " ///
-    %5.3f r(transitivity)
-quietly nwdegree pref71, generate(_degree)
-nwplot pref71, size(_degree) name(prefplot, replace)
-histogram _degree, discrete frequency xtitle("degree") scheme(s1network) ///
-    name(prefhist, replace)
-graph combine prefplot prefhist, cols(2) scheme(s1network) xsize(8) ysize(4)
 set seed 12345
 nwrandom 71, density(.163) undirected name(rand163)
-quietly nwsummarize rand163, detail
-display "ties " r(edges) ", density " %5.3f r(density) ", transitivity " ///
-    %5.3f r(transitivity)
-quietly nwdegree rand163, generate(_degree_rand)
-summarize _degree _degree_rand
+quietly nwsummarize pref71 rand163, detail save(cmp2)
+preserve
+use cmp2, clear
+format density transitivity %5.3f
+list name edges density transitivity, noobs abbreviate(12)
+restore
+quietly nwdegree pref71, generate(deg_pref)
+quietly nwdegree rand163, generate(deg_rand)
+summarize deg_pref deg_rand
+histogram deg_pref, discrete frequency xtitle("degree") ///
+    title("preferential attachment") xscale(range(0 35)) xlabel(0(10)30) ///
+    ylabel(0(5)15) scheme(s1network) name(hpref, replace)
+histogram deg_rand, discrete frequency xtitle("degree") ///
+    title("random graph") xscale(range(0 35)) xlabel(0(10)30) ///
+    ylabel(0(5)15) scheme(s1network) name(hrand, replace)
+graph combine hpref hrand, cols(2) scheme(s1network) xsize(8) ysize(4)
+
+* ============================================================
+* One command for every generator: nwgen
+* ============================================================
+set seed 12345
+nwgen g_random = random(71), density(.179)
+nwgen g_ring = ring(20), k(4)
+nwgen g_lattice = lattice(5 6)
+nwgen g_small = small(50), k(4) prob(.1)
+nwgen g_pref = pref(100), m(2)

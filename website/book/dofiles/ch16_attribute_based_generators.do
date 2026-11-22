@@ -19,33 +19,26 @@ clear all
 set more off
 
 * ============================================================
-* Tie probabilities from group membership
+* Tie probabilities for every pair
 * ============================================================
 nwwebuse lazega, nwclear
 nwexpand practice, name(samepractice)
-preserve
-nwtoedge lazega_adv samepractice, full
-drop if _ego == _alter
-tabulate samepractice, summarize(lazega_adv) means
-restore
-
-nwgen blockprob = .115 + .128 * samepractice
+nwgen blockprob = .01 + .07 * samepractice
 set seed 12345
 nwdyadprob blockprob, name(blocks)
-nwsummarize blocks, detail
+quietly nwsummarize blocks, detail
+display "arcs " r(arcs) ", density " %5.3f r(density)
 quietly nwmixing blocks, attribute(practice) permutations(1)
-display "E-I index by practice, block draw:  " %6.3f r(EI_index)
-quietly nwmixing lazega_adv, attribute(practice) permutations(1)
-display "E-I index by practice, observed:    " %6.3f r(EI_index)
+display "E-I index by practice: " %6.3f r(EI_index)
 nwplot blocks, color(practice) symbol(practice) legendopt(off)
 
 * ============================================================
 * Homophily networks
 * ============================================================
 set seed 12345
-quietly nwhomophily practice, density(.179) homophily(3) name(plus3)
+quietly nwhomophily practice, density(.05) homophily(3) name(plus3)
 set seed 12345
-quietly nwhomophily practice, density(.179) homophily(-3) name(minus3)
+quietly nwhomophily practice, density(.05) homophily(-3) name(minus3)
 quietly nwmixing plus3, attribute(practice) permutations(1)
 display "homophily(3):   E-I index = " %6.3f r(EI_index)
 quietly nwmixing minus3, attribute(practice) permutations(1)
@@ -59,42 +52,19 @@ graph combine hplus hminus, cols(2) scheme(s1network) xsize(8) ysize(4)
 * ============================================================
 * Does the measure recover what was built in?
 * ============================================================
-capture program drop sweep
-program sweep
-    args h reps
-    tempname S
-    matrix `S' = J(`reps', 1, .)
-    forvalues r = 1/`reps' {
-        capture nwdrop tmp
-        quietly nwhomophily practice, density(.179) homophily(`h') name(tmp)
-        quietly nwmixing tmp, attribute(practice) permutations(1)
-        matrix `S'[`r', 1] = r(EI_index)
-    }
-    preserve
-    clear
-    quietly svmat `S'
-    quietly summarize `S'1
-    display "homophily(`h'): mean E-I = " %6.3f r(mean) "  min " %6.3f ///
-        r(min) "  max " %6.3f r(max)
-    restore
-end
+frame create rec homophily ei
 set seed 12345
 foreach h in 0 .5 1 2 3 {
-    sweep `h' 20
+    forvalues k = 1/20 {
+        quietly nwhomophily practice, density(.179) homophily(`h') name(tmp)
+        quietly nwmixing tmp, attribute(practice) permutations(1)
+        frame post rec (`h') (r(EI_index))
+        nwdrop tmp
+    }
 }
-
-* ============================================================
-* Sorting without sorters
-* ============================================================
-foreach var in practice office {
-    set seed 12345
-    quietly nwhomophily `var', density(.179) homophily(0) name(zero_`var')
-    quietly nwmixing zero_`var', attribute(`var') permutations(1)
-    display "`var', homophily(0):  E-I index = " %6.3f r(EI_index)
-    quietly nwmixing lazega_adv, attribute(`var') permutations(1)
-    display "`var', observed advice network:  E-I index = " %6.3f r(EI_index)
-}
-tabulate office
+frame rec: collapse (mean) mean=ei (min) min=ei (max) max=ei, by(homophily)
+frame rec: format mean min max %6.3f
+frame rec: list, noobs
 
 * ============================================================
 * All the attributes at once
@@ -112,21 +82,17 @@ predict p
 nwfromedge _ego _alter p, name(attrprob)
 restore
 
-matrix A = J(20, 4, .)
+frame create attr reciprocity transitivity ei_office ei_practice
 set seed 12345
 forvalues r = 1/20 {
-    capture nwdrop attrdraw
     quietly nwdyadprob attrprob, name(attrdraw)
     quietly nwsummarize attrdraw, detail
-    matrix A[`r', 1] = (r(reciprocity), r(transitivity))
+    local rec = r(reciprocity)
+    local tra = r(transitivity)
     quietly nwmixing attrdraw, attribute(office) permutations(1)
-    matrix A[`r', 3] = r(EI_index)
+    local eio = r(EI_index)
     quietly nwmixing attrdraw, attribute(practice) permutations(1)
-    matrix A[`r', 4] = r(EI_index)
+    frame post attr (`rec') (`tra') (`eio') (r(EI_index))
+    nwdrop attrdraw
 }
-matrix colnames A = reciprocity transitivity EI_office EI_practice
-preserve
-clear
-quietly svmat A, names(col)
-summarize
-restore
+frame attr: summarize
