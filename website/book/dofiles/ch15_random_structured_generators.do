@@ -22,60 +22,65 @@ set more off
 * A random graph as a baseline
 * ============================================================
 nwwebuse lazega, nwclear
-nwsummarize lazega_adv, detail
-nwgeodesic lazega_adv, name(geo_adv)
-
 set seed 12345
 nwrandom 71, density(.179) name(rand71)
-nwsummarize rand71, detail
-nwgeodesic rand71, name(geo_rand)
+quietly nwsummarize lazega_adv rand71, detail save(cmp)
+preserve
+use cmp, clear
+format reciprocity transitivity indg_central outdg_central %5.3f
+list name reciprocity transitivity indg_central outdg_central, noobs ///
+    abbreviate(14)
+restore
+foreach g in lazega_adv rand71 {
+    quietly nwgeodesic `g', name(path_`g')
+    display "`g': average shortest path " %5.3f r(avgpath)
+}
 
 set seed 1
-quietly nwrandom 71, density(.179) ntimes(5) name(draw)
+quietly nwrandom 71, density(.179) ntimes(20) name(draw)
 set seed 1
-quietly nwrandom 16, density(.125) undirected ntimes(10) name(small)
+quietly nwrandom 16, density(.125) undirected ntimes(20) name(small)
 quietly nwsummarize draw_* small_*, detail save(draws)
 preserve
 use draws, clear
-format transitivity %5.3f
-list name transitivity, noobs sep(5) abbreviate(12)
+tabstat transitivity, by(nodes) statistics(mean sd min max) format(%5.3f)
+count if nodes == 16 & transitivity == 0
 restore
+nwdrop draw_* small_*
 
 * ============================================================
 * What density and size do by themselves
 * ============================================================
-matrix R = J(6, 5, .)
-local i = 0
+frame create bydens density reciprocity transitivity
+set seed 12345
 foreach d in .02 .05 .1 .179 .3 .5 {
-    local ++i
-    set seed 12345
-    quietly nwrandom 71, density(`d') name(sweep)
-    quietly nwsummarize sweep, detail
-    matrix R[`i', 1] = (`d', r(reciprocity), r(transitivity))
-    quietly nwgeodesic sweep, name(geo_sweep)
-    local path = cond(r(avgpath) < 0, ., r(avgpath))
-    matrix R[`i', 4] = (1 - r(unconnected) / r(numpaths), `path')
-    nwdrop sweep geo_sweep
+    forvalues k = 1/20 {
+        quietly nwrandom 71, density(`d') name(tmp)
+        quietly nwsummarize tmp, detail
+        frame post bydens (`d') (r(reciprocity)) (r(transitivity))
+        nwdrop tmp
+    }
 }
-matrix colnames R = density reciprocity transitivity reachable avgpath
-matlist R, format(%12.3f) names(columns)
+frame bydens: collapse (mean) reciprocity transitivity, by(density)
+frame bydens: format reciprocity transitivity %5.3f
+frame bydens: list, noobs
 
-matrix S = J(4, 3, .)
-local i = 0
+frame create bysize nodes density transitivity avgpath
+set seed 12345
 foreach n in 71 142 284 710 {
-    local ++i
-    set seed 12345
     local d = 12.56 / (`n' - 1)
-    quietly nwrandom `n', density(`d') name(sweep)
-    quietly nwsummarize sweep, detail
-    matrix S[`i', 1] = (`d', r(transitivity))
-    quietly nwgeodesic sweep, name(geo_sweep)
-    matrix S[`i', 3] = r(avgpath)
-    nwdrop sweep geo_sweep
+    forvalues k = 1/20 {
+        quietly nwrandom `n', density(`d') name(tmp)
+        quietly nwsummarize tmp, detail
+        local t = r(transitivity)
+        quietly nwgeodesic tmp, name(pathnet)
+        frame post bysize (`n') (`d') (`t') (r(avgpath))
+        nwdrop tmp pathnet
+    }
 }
-matrix rownames S = 71 142 284 710
-matrix colnames S = density transitivity avgpath
-matlist S, format(%12.3f) rowtitle(nodes)
+frame bysize: collapse (mean) density transitivity avgpath, by(nodes)
+frame bysize: format density transitivity avgpath %5.3f
+frame bysize: list, noobs
 
 * ============================================================
 * One command for every generator: nwgen
@@ -105,41 +110,34 @@ nwplot small, layout(circle) title("small world, prob(.1)") ///
     name(smallplot, replace)
 graph combine ringplot smallplot, cols(2) scheme(s1network) xsize(8) ysize(4)
 
-preserve
-matrix W = J(14, 3, 0)
-local i = 0
+frame create sw prob clustering avgpath
 set seed 12345
-foreach p in 0 .0001 .0002 .0005 .001 .002 .005 .01 .02 .05 .1 .2 .5 1 {
-    local ++i
-    matrix W[`i', 1] = `p'
-    forvalues r = 1/20 {
-        quietly nwsmall 500, k(5) prob(`p') undirected name(sw)
-        quietly nwclustering sw
-        matrix W[`i', 2] = W[`i', 2] + r(cluster_global) / 20
-        quietly nwgeodesic sw, name(geo_sw)
-        matrix W[`i', 3] = W[`i', 3] + r(avgpath) / 20
-        nwdrop sw geo_sw
+foreach p in 0 .001 .003 .01 .03 .1 .3 1 {
+    forvalues k = 1/20 {
+        quietly nwsmall 500, k(5) prob(`p') undirected name(tmp)
+        quietly nwclustering tmp
+        local c = r(cluster_global)
+        quietly nwgeodesic tmp, name(pathnet)
+        frame post sw (`p') (`c') (r(avgpath))
+        nwdrop tmp pathnet
     }
 }
-matrix colnames W = prob clustering avgpath
-matlist W, format(%12.4f) names(columns)
-clear
-quietly svmat W, names(col)
-generate C = clustering / clustering[1]
-generate L = avgpath / avgpath[1]
-twoway (connected C prob, lcolor(black) mcolor(black) msymbol(O)) ///
-    (connected L prob, lcolor(gs8) mcolor(gs8) msymbol(D)) if prob > 0, ///
-    xscale(log) xlabel(.0001 .001 .01 .1 1) xtitle("rewiring probability") ///
+frame sw: collapse (mean) clustering avgpath, by(prob)
+frame sw: format clustering avgpath %6.3f
+frame sw: list, noobs
+frame sw: generate C = clustering / clustering[1]
+frame sw: generate L = avgpath / avgpath[1]
+frame sw: twoway (connected C prob, lcolor(black) mcolor(black) ///
+    msymbol(O)) (connected L prob, lcolor(gs8) mcolor(gs8) msymbol(D)) if ///
+    prob > 0, xscale(log) xlabel(.001 .01 .1 1) ///
+    xtitle("rewiring probability") ///
     ytitle("share of the value in the ring") scheme(s1network) ///
     legend(order(1 "clustering" 2 "average path") rows(1))
-restore
 
 * ============================================================
 * Preferential attachment
 * ============================================================
-nwwebuse lazega, nwclear
-quietly nwdegree lazega_adv, generate(_outdeg _indeg)
-summarize _outdeg _indeg
+nwclear
 set seed 12345
 nwpref 71, m0(7) m(6) undirected name(pref71)
 quietly nwsummarize pref71, detail
@@ -150,3 +148,10 @@ nwplot pref71, size(_degree) name(prefplot, replace)
 histogram _degree, discrete frequency xtitle("degree") scheme(s1network) ///
     name(prefhist, replace)
 graph combine prefplot prefhist, cols(2) scheme(s1network) xsize(8) ysize(4)
+set seed 12345
+nwrandom 71, density(.163) undirected name(rand163)
+quietly nwsummarize rand163, detail
+display "ties " r(edges) ", density " %5.3f r(density) ", transitivity " ///
+    %5.3f r(transitivity)
+quietly nwdegree rand163, generate(_degree_rand)
+summarize _degree _degree_rand
