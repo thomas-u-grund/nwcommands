@@ -49,7 +49,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data, on the manufacturing email data of the tutorials and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood, gradient and Hessian of every fit (macOS, Linux, Windows); the optimization runs in Mata |
 | Speed | Faster than goldfish in every timed cell: 7 to 119 times against its `default_c` engine and 12 to 1,637 times against its default engine (choice and rate models, every fit in the compiled plug-in); see [Speed compared with goldfish](speed/) |
-| Version | 1.11.0 (21 November 2026) |
+| Version | 1.11.1 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section

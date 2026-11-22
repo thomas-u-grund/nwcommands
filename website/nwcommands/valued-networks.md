@@ -65,7 +65,7 @@ A few details. `nwgeodesic` computes weighted distances for networks of up to 10
 
 These use the values already, with an option of their own (`measure()`, `stat()`, ...). The default for a valued network is the weighted form; `measure(binary)` or the option named in the table gives the binary form.
 
-`nwclustering` (Opsahl and Panzarasa 2009; `measure(binary)`), `nwconstraint`, `nwconcor`, `nwcoreperiphery`, `nwfactions`, `nwcommunity`, `nwmodularity`, `nwspectral` (`measure(binary)`), `nwdissimilar` and `nwhierarchy` (`euclidean` and `manhatten` use the values), `nwsimilar` (`pearson`, `crossproduct`), `nwcorrelate`, `nwcontext`, `nw2project` (`stat()`), `nw2clustering`, `nwqap`, `nwmaxflow` (`weighted`: the values are capacities, as `capacity` is in igraph).
+`nwclustering` (Opsahl and Panzarasa 2009; `measure(binary)`), `nwconstraint`, `nwconcor`, `nwcoreperiphery`, `nwfactions`, `nwcommunity`, `nwmodularity`, `nwspectral` (`measure(binary)`), `nwdissimilar` and `nwhierarchy` (`euclidean` and `manhattan` use the values), `nwsimilar` (`pearson`, `crossproduct`), `nwcorrelate`, `nwcontext`, `nw2project` (`stat()`), `nw2clustering`, `nwqap`, `nwmaxflow` (`weighted`: the values are capacities, as `capacity` is in igraph).
 
 ## Commands that look only at presence
 

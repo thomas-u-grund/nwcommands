@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.9.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.9.2:
 
 ```stata
-. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.1/) replace
+. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.2/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwsaom version
-nwsaom version 1.9.1, 20nov2026
+nwsaom version 1.9.2, 22nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../saom_sim_macos.plugin (plugin build 156)
   compared with           : R RSiena 1.6.14
@@ -137,7 +137,7 @@ libraries are the better choice when they load; a build with your own Stata is t
 - Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19; Linux and Windows with Stata 19 passed the full suite of 1.8.0 (the Mata libraries are built with Stata 17, the oldest tested
   version; Stata 16 and older are untested). The plugin exchanges data with Mata through frames. The examples used Stata/BE 18.
 - The core `nwcommands`, as above.
-- No R and no other software (R with the package igraph is needed only by the Schoch data reader of the core, `nwwebuse schoch`).
+- No R and no other software (not even for the networkdata reader of the core, `nwwebuse networkdata`).
 
 ## Next
 

@@ -1,20 +1,23 @@
 *! Date        : 22nov2026
-*! Version     : 1.1.0
+*! Version     : 1.2.0
 *! Author      : Thomas Grund (nwcommands)
 *! Purpose     : import the networks of David Schoch's R package networkdata (MIT licence) into nwcommands
 *
 * nwnetworkdata ships NO network data. It downloads the original .rda file of a data set from the GitHub repository
-* schochastics/networkdata when it is asked for it, keeps it in a cache folder of the user, converts it on the user's
-* computer with R (nwnetworkdata_convert.R; needs R and the R package igraph) into csv tables, and builds the network
-* with nwfromedge. The only file that comes with this package besides code is nwnetworkdata_catalogue.csv: the names,
-* type and size of the networks (metadata, to list and to check what is requested).
+* schochastics/networkdata when it is asked for it, keeps it in a cache folder of the user, reads it on the user's computer with
+* Stata alone (nwnetworkdata_rda.ado: no R needed) into csv tables, and builds the network with nwfromedge. Option withr converts with R
+* and the R package igraph instead (nwnetworkdata_convert.R), which is also the fallback when the reader without R meets an object
+* it does not handle (then a note says so; it never guesses). The only file that comes with this package besides code is
+* nwnetworkdata_catalogue.csv: the names, type and size of the networks (metadata, to list and to check what is requested).
 * Please cite: David Schoch (2022) networkdata: Repository of Network Datasets. https://doi.org/10.5281/zenodo.7189928
 * and the original source of the data set (see help nwnetworkdata; every data set is documented on https://nwcommands.org/datasets/schoch/).
 *
 * Safety: the name of a data set is checked against the catalogue (and may only contain letters, digits, _ and .) before anything is
-* downloaded or any program is started; from() / nwnetworkdata source accept only the official repository (https) or an existing local
-* folder; every path that is handed to the shell is checked for characters that a shell or batch file would interpret; the R script
-* is fixed text (it is not built from data) and only loads the .rda file into a fresh environment and reads it.
+* downloaded or read; from() / nwnetworkdata source accept only the official repository (https) or an existing local folder. The reader
+* without R starts no program and executes nothing: it checks every length against the data that are left, caps the sizes and the
+* nesting depth, and verifies the checksum of the compressed file. For the conversion with R, every path that is handed to the shell is
+* checked for characters that a shell or batch file would interpret; the R script is fixed text (it is not built from data) and only
+* loads the .rda file into a fresh environment and reads it.
 
 capture program drop nwnetworkdata
 program nwnetworkdata, rclass
@@ -248,15 +251,26 @@ end
 
 capture program drop _nwnd_prepare
 program _nwnd_prepare
-	// _nwnd_prepare obj, src() cache() [refresh]: download <obj>.rda, convert it with R; local nwnd_conv = folder with the csv files
-	syntax anything(name=obj), SRC(string) CACHE(string) [REFresh]
+	// _nwnd_prepare obj, src() cache() [refresh withr]: download <obj>.rda, read it (without R: nwnetworkdata_rda; with R: withr, or when
+	// the built-in reader meets something it does not handle); local nwnd_conv = folder with the csv files, nwnd_origin = how the data were obtained
+	syntax anything(name=obj), SRC(string) CACHE(string) [REFresh WITHR]
 	// whitelist (callers take obj from the catalogue; checked again here because it is part of file names and shell commands)
 	_nwnd_checkname `obj'
 	_nwnd_checksrc `"`src'"'
 	_nwnd_checkpath "cache folder" `"`cache'"'
 	local conv `"`cache'/conv"'
+	// how the csv tables of this data set were made (kept in <obj>.how next to them): "without R" or "with R"
+	local how ""
+	capture confirm file `"`conv'/`obj'.how"'
+	if !_rc {
+		tempname fhh
+		file open `fhh' using `"`conv'/`obj'.how"', read text
+		file read `fhh' line
+		file close `fhh'
+		if inlist(`"`line'"', "without R", "with R") local how `"`line'"'
+	}
 	capture confirm file `"`conv'/`obj'_index.csv"'
-	if !_rc & "`refresh'" == "" {
+	if !_rc & "`refresh'" == "" & "`withr'" == "" {
 		c_local nwnd_conv `"`conv'"'
 		// how the data were obtained, reported by the loader (no silent source): the download date is kept in <obj>.date next to the file
 		if substr(`"`src'"', 1, 8) == "https://" {
@@ -269,9 +283,9 @@ program _nwnd_prepare
 				file close `fh'
 				local odate "downloaded `line'"
 			}
-			c_local nwnd_origin `"from cache (`odate')"'
+			c_local nwnd_origin `"from cache (`odate'`=cond("`how'" != "", "; read " + "`how'", "")')"'
 		}
-		else c_local nwnd_origin `"from the local folder `src'"'
+		else c_local nwnd_origin `"from the local folder `src'`=cond("`how'" != "", "; read " + "`how'", "")'"'
 		exit
 	}
 	// 1. the original file
@@ -296,7 +310,7 @@ program _nwnd_prepare
 				file write `fhd' `"`c(current_date)'"' _n
 				file close `fhd'
 			}
-			c_local nwnd_origin `"downloaded now from `src'/`obj'.rda and converted with R"'
+			local got `"downloaded now from `src'/`obj'.rda"'
 		}
 		else {
 			local odate "(download date not recorded)"
@@ -308,11 +322,11 @@ program _nwnd_prepare
 				file close `fh'
 				local odate "downloaded `line'"
 			}
-			c_local nwnd_origin `"from cache (`odate'), converted now with R"'
+			local got `"from cache (`odate')"'
 		}
 	}
 	else {
-		c_local nwnd_origin `"from the local folder `src', converted now with R"'
+		local got `"from the local folder `src'"'
 		local rda `"`src'/`obj'.rda"'
 		capture confirm file `"`rda'"'
 		if _rc {
@@ -320,16 +334,72 @@ program _nwnd_prepare
 			exit 601
 		}
 	}
-	// 2. the conversion (R + igraph), on this computer
+	_nwnd_checkpath "data file" `"`rda'"'
+	_nwnd_checkpath "output folder" `"`conv'"'
 	capture mkdir `"`cache'"'
 	capture mkdir `"`conv'"'
+	capture quietly erase `"`conv'/`obj'_index.csv"'
+	capture quietly erase `"`conv'/`obj'.how"'
+	// 2. the conversion into csv tables: with Stata only (nwnetworkdata_rda), or with R and igraph
+	if "`withr'" == "" {
+		global NWND_MSG ""
+		capture which nwnetworkdata_rda
+		if _rc {
+			local rc 9001
+			global NWND_MSG "the file nwnetworkdata_rda.ado was not found; reinstall nwcommands"
+		}
+		else {
+			capture nwnetworkdata_rda `"`rda'"' `"`conv'"'
+			local rc = _rc
+			if `rc' != 0 & !inlist(`rc', 9001, 9002) {
+				global NWND_MSG "unexpected error r(`rc') in the reader"
+				local rc 9001
+			}
+		}
+		if `rc' == 0 {
+			_nwnd_how `"`conv'/`obj'.how"' "without R"
+			c_local nwnd_conv `"`conv'"'
+			c_local nwnd_reconv 1
+			c_local nwnd_origin `"`got'; read without R"'
+			exit
+		}
+		if `rc' == 9002 {
+			di as err `"{p 0 0 2}{bf:`obj'.rda} could not be read: $NWND_MSG. If the file in the cache is damaged, use {bf:refresh} to download it again.{p_end}"'
+			exit 610
+		}
+		// 9001: a valid file with something that the reader without R does not handle: R is used, if there is one
+		di as txt `"{p 0 0 2}(the reader without R cannot handle {bf:`obj'}: $NWND_MSG; trying R){p_end}"'
+	}
+	_nwnd_withr `obj', rda(`"`rda'"') conv(`"`conv'"') cache(`"`cache'"')
+	_nwnd_how `"`conv'/`obj'.how"' "with R"
+	c_local nwnd_conv `"`conv'"'
+	c_local nwnd_reconv 1
+	c_local nwnd_origin `"`got'; converted now with R"'
+end
+
+capture program drop _nwnd_how
+program _nwnd_how
+	args f text
+	tempname fhw
+	capture file open `fhw' using `"`f'"', write text replace
+	if !_rc {
+		file write `fhw' `"`text'"' _n
+		file close `fhw'
+	}
+end
+
+capture program drop _nwnd_withr
+program _nwnd_withr
+	// the conversion with R and the package igraph (nwnetworkdata_convert.R, run with Rscript on this computer)
+	syntax anything(name=obj), RDA(string) CONV(string) CACHE(string)
+	local rda `"`rda'"'
+	local conv `"`conv'"'
 	local script `"$nwnd_converter"'
 	if `"`script'"' == "" {
 		local script `"`cache'/_nwnd_convert.R"'
 		_nwnd_locate nwnetworkdata_convert `"`script'"'
 	}
 	_nwnd_rscript
-	capture quietly erase `"`conv'/`obj'_index.csv"'
 	tempfile rlog
 	// every path that is handed to the shell (R, script, data file, output folder, log) has passed the character check
 	_nwnd_checkpath "R script" `"`script'"'
@@ -338,7 +408,7 @@ program _nwnd_prepare
 	_nwnd_checkpath "temporary file" `"`rlog'"'
 	if c(os) == "Windows" {
 		// a batch file avoids the quoting problems of cmd.exe with paths that contain blanks
-		local bat `"`cache'/_nwnd_run.bat"'
+		local bat `"`conv'/_nwnd_run.bat"'
 		local rsw = subinstr(`"`nwnd_rs'"', "/", "\", .)
 		local scw = subinstr(`"`script'"', "/", "\", .)
 		local rdw = subinstr(`"`rda'"', "/", "\", .)
@@ -356,7 +426,7 @@ program _nwnd_prepare
 	}
 	capture confirm file `"`conv'/`obj'_index.csv"'
 	if _rc {
-		di as err `"{p 0 0 2}the conversion of {bf:`obj'.rda} with R failed. nwnetworkdata needs R (https://www.r-project.org) with the package igraph. R used: {bf:`nwnd_rs'} (set another with {bf:global nwnd_rscript "path/to/Rscript"}).{p_end}"'
+		di as err `"{p 0 0 2}the conversion of {bf:`obj'.rda} with R failed. R with the package igraph is needed for this (https://www.r-project.org). R used: {bf:`nwnd_rs'} (set another with {bf:global nwnd_rscript "path/to/Rscript"}).{p_end}"'
 		capture {
 			file open __nwnd_fh using `"`rlog'"', read text
 			file read __nwnd_fh line
@@ -370,7 +440,6 @@ program _nwnd_prepare
 		}
 		exit 601
 	}
-	c_local nwnd_conv `"`conv'"'
 end
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -577,21 +646,21 @@ end
 // ---------------------------------------------------------------------------------------------------------------
 capture program drop _nwnd_edges
 program _nwnd_edges, rclass
-	syntax anything(name=name) [, from(string) Element(integer 0) REFresh clear]
-	_nwnd_table `name', what(edges) from(`"`from'"') element(`element') `refresh' `clear'
+	syntax anything(name=name) [, from(string) Element(integer 0) REFresh WITHR clear]
+	_nwnd_table `name', what(edges) from(`"`from'"') element(`element') `refresh' `withr' `clear'
 	return add
 end
 
 capture program drop _nwnd_nodes
 program _nwnd_nodes, rclass
-	syntax anything(name=name) [, from(string) Element(integer 0) REFresh clear]
-	_nwnd_table `name', what(nodes) from(`"`from'"') element(`element') `refresh' `clear'
+	syntax anything(name=name) [, from(string) Element(integer 0) REFresh WITHR clear]
+	_nwnd_table `name', what(nodes) from(`"`from'"') element(`element') `refresh' `withr' `clear'
 	return add
 end
 
 capture program drop _nwnd_table
 program _nwnd_table, rclass
-	syntax anything(name=name), WHAT(string) [from(string) Element(integer 0) REFresh clear]
+	syntax anything(name=name), WHAT(string) [from(string) Element(integer 0) REFresh WITHR clear]
 	_nwnd_checkname `name'
 	if _N > 0 & c(changed) & "`clear'" == "" error 4
 	preserve
@@ -609,7 +678,7 @@ program _nwnd_table, rclass
 	if `element' == 0 & `el' > 0 & "`obj'" != "`name'" local element = `el'
 	restore
 	_nwnd_source `"`from'"'
-	_nwnd_prepare `obj', src(`"`nwnd_src'"') cache(`"`nwnd_cache'"') `refresh'
+	_nwnd_prepare `obj', src(`"`nwnd_src'"') cache(`"`nwnd_cache'"') `refresh' `withr'
 	local conv `"`nwnd_conv'"'
 	_nwnd_csv `"`conv'/`obj'_`what'.csv"'
 	qui destring nd_elem, replace
@@ -629,7 +698,7 @@ end
 
 capture program drop _nwnd_tables
 program _nwnd_tables, rclass
-	syntax anything(name=name) [, from(string) TABle(string) REFresh clear]
+	syntax anything(name=name) [, from(string) TABle(string) REFresh WITHR clear]
 	if _N > 0 & c(changed) & "`clear'" == "" error 4
 	if "`table'" == "" local table "ego"
 	if !inlist("`table'", "ego", "alter", "aatie") {
@@ -647,7 +716,7 @@ program _nwnd_tables, rclass
 		exit 459
 	}
 	_nwnd_source `"`from'"'
-	_nwnd_prepare `name', src(`"`nwnd_src'"') cache(`"`nwnd_cache'"') `refresh'
+	_nwnd_prepare `name', src(`"`nwnd_src'"') cache(`"`nwnd_cache'"') `refresh' `withr'
 	capture confirm file `"`nwnd_conv'/`name'_`table'.csv"'
 	if _rc {
 		di as err "{p 0 0 2}{bf:`name'} is not an egor object{p_end}"
@@ -664,7 +733,7 @@ end
 capture program drop _nwnd_load
 program _nwnd_load, rclass
 	syntax anything(name=request) [, from(string) NWClear clear REPlace NAme(string) Element(numlist integer >0) ///
-		VALUEattr(string) BINary REFresh NOattrs]
+		VALUEattr(string) BINary REFresh WITHR NOattrs]
 	if _N > 0 & c(changed) & "`clear'" == "" & "`nwclear'" == "" {
 		di as err "{p 0 0 2}no; data in memory would be lost (specify {bf:clear} or {bf:nwclear}){p_end}"
 		exit 4
@@ -718,7 +787,7 @@ program _nwnd_load, rclass
 	_nwnd_source `"`from'"'
 	local src `"`nwnd_src'"'
 	local cache `"`nwnd_cache'"'
-	_nwnd_prepare `obj', src(`"`src'"') cache(`"`cache'"') `refresh'
+	_nwnd_prepare `obj', src(`"`src'"') cache(`"`cache'"') `refresh' `withr'
 	local conv `"`nwnd_conv'"'
 	local nwnd_origin_msg `"`nwnd_origin'"'
 	tempfile idx
@@ -735,19 +804,24 @@ program _nwnd_load, rclass
 	local edf `"`cache'/typed/`obj'_edges.dta"'
 	local ndf `"`cache'/typed/`obj'_nodes.dta"'
 	capture confirm file `"`edf'"'
-	local need = _rc | ("`refresh'" != "") | !fileexists(`"`ndf'"')
+	local need = _rc | ("`refresh'" != "") | ("`withr'" != "") | ("`nwnd_reconv'" != "") | !fileexists(`"`ndf'"')
 	if `need' {
 		preserve
 		_nwnd_csv `"`conv'/`obj'_edges.csv"'
 		qui destring nd_elem nd_from nd_to, replace
 		_nwnd_typed `obj', scope(edge) attrs(`"`conv'/`obj'_attrs.csv"')
+		qui sort nd_elem, stable
 		qui save `"`edf'"', replace
 		_nwnd_csv `"`conv'/`obj'_nodes.csv"'
 		qui destring nd_elem nd_id nd_order nd_mode, replace
 		_nwnd_typed `obj', scope(node) attrs(`"`conv'/`obj'_attrs.csv"')
+		qui sort nd_elem, stable
 		qui save `"`ndf'"', replace
 		restore
 	}
+	// the row range of every network in the two tables (sorted by network), so that each network is read as a slice of the table
+	_nwnd_ranges `"`edf'"' __nwnd_erng
+	_nwnd_ranges `"`ndf'"' __nwnd_nrng
 
 	if "`nwclear'" != "" nwclear
 	capture drop _running
@@ -773,7 +847,10 @@ program _nwnd_load, rclass
 			if `nnets' == 1 local target `name'
 			else local target `name'_`=cond(`x_element' > 0, `x_element', 1)'
 		}
-		_nwnd_build, edges(`"`edf'"') nodes(`"`ndf'"') net(`net') elem(`=cond(`x_element' > 0, `x_element', 1)') ///
+		local x_e = cond(`x_element' > 0, `x_element', 1)
+		mata: st_local("x_ef", strofreal(nwnd_range(__nwnd_erng, `x_e', 2))); st_local("x_el", strofreal(nwnd_range(__nwnd_erng, `x_e', 3)))
+		mata: st_local("x_nf", strofreal(nwnd_range(__nwnd_nrng, `x_e', 2))); st_local("x_nl", strofreal(nwnd_range(__nwnd_nrng, `x_e', 3)))
+		_nwnd_build, edges(`"`edf'"') nodes(`"`ndf'"') ef(`x_ef') el(`x_el') nf(`x_nf') nl(`x_nl') net(`net') elem(`x_e') ///
 			n(`x_n') directed(`x_directed') twomode(`x_twomode') weighted(`x_weighted') multi(`x_multi') ///
 			loops(`x_loops') vattrs(`"`x_vattrs'"') named(`x_named') target(`target') `replace' ///
 			valueattr(`"`valueattr'"') `binary' `noattrs'
@@ -786,14 +863,15 @@ program _nwnd_load, rclass
 			// ties: a directed network stores each tie once, an undirected or two-mode network in both directions (a loop once)
 			mata: __nwnd_el = `netobj'->edgelist(); st_local("__nm", strofreal(`=cond("`directed'" == "true", "rows(__nwnd_el)", "(rows(__nwnd_el) + sum(__nwnd_el[., 1] :== __nwnd_el[., 2])) / 2")'))
 			mata: mata drop __nwnd_el
-			di as txt "Loaded from Schoch's networkdata collection: {res:`lastnet'} (`nodes' nodes, `__nm' ties, " ///
+			di as txt "Loaded from the networkdata collection (David Schoch): {res:`lastnet'} (`nodes' nodes, `__nm' ties, " ///
 				"`=cond("`directed'" == "true", "directed", "undirected")', `=cond("`is2mode'" == "true", "two-mode", "one-mode")', " ///
 				"`=cond("`valued'" == "true", "valued", "binary")'); source and citation: {stata nwnetworkdata describe `obj':nwnetworkdata describe `obj'}; " ///
 				"collection: Schoch (2022), doi:10.5281/zenodo.7189928"
 		}
 	}
+	capture mata: mata drop __nwnd_erng __nwnd_nrng
 	if `nnets' > 5 {
-		di as txt "Loaded from Schoch's networkdata collection: `loaded' networks `=word("`loadednets'", 1)' ... `=word("`loadednets'", `loaded')' of the data set {res:`obj'}; " ///
+		di as txt "Loaded from the networkdata collection (David Schoch): `loaded' networks `=word("`loadednets'", 1)' ... `=word("`loadednets'", `loaded')' of the data set {res:`obj'}; " ///
 			"source and citation: {stata nwnetworkdata describe `obj':nwnetworkdata describe `obj'}; collection: Schoch (2022), doi:10.5281/zenodo.7189928"
 	}
 	di as txt "(data read `nwnd_origin_msg'; the data are not part of nwcommands: please cite the collection and the original source of the data set)"
@@ -804,16 +882,48 @@ program _nwnd_load, rclass
 	return local obj "`obj'"
 end
 
+capture program drop _nwnd_ranges
+program _nwnd_ranges
+	// _nwnd_ranges file matname: Mata matrix (network, first row, last row) of a typed table that is sorted by network
+	args f mname
+	preserve
+	qui use nd_elem using `"`f'"', clear
+	qui count if nd_elem < nd_elem[_n-1] & _n > 1
+	if r(N) > 0 {
+		// not sorted (a table of an older version): sort it once and keep it
+		qui use `"`f'"', clear
+		qui sort nd_elem, stable
+		qui save `"`f'"', replace
+		qui keep nd_elem
+	}
+	qui gen long __r = _n
+	qui collapse (min) __f = __r (max) __l = __r, by(nd_elem)
+	capture mata: mata drop `mname'
+	mata: `mname' = st_data(., ("nd_elem", "__f", "__l"))
+	restore
+end
+
+capture mata: mata drop nwnd_range()
+mata:
+real scalar nwnd_range(real matrix R, real scalar elem, real scalar col)
+{
+	real colvector i
+	i = selectindex(R[., 1] :== elem)
+	if (length(i) == 0) return(0)
+	return(R[i[1], col])
+}
+end
+
 capture program drop _nwnd_build
 program _nwnd_build, rclass
-	syntax , EDGES(string) NODES(string) NET(string) ELEM(integer) N(integer) DIRected(integer) TWOmode(integer) ///
+	syntax , EDGES(string) NODES(string) EF(integer) EL(integer) NF(integer) NL(integer) NET(string) ELEM(integer) N(integer) DIRected(integer) TWOmode(integer) ///
 		WEIGHTed(integer) MULTi(integer) LOOPs(integer) TARGET(string) [VATTRs(string) NAMEd(integer 1) REPlace ///
 		VALUEattr(string) BINary NOattrs]
 	unw_defs
 	// ---- labels and modes of the nodes (kept in Mata across the dataset changes below) ----
 	preserve
-	qui use `"`nodes'"', clear
-	qui keep if nd_elem == `elem'
+	if `nf' > 0 qui use `"`nodes'"' in `nf'/`nl', clear
+	else qui use `"`nodes'"' if 0, clear
 	qui sort nd_order
 	capture mata: mata drop __nwnd_lab
 	mata: __nwnd_lab = st_sdata(., "nd_label")'
@@ -822,8 +932,8 @@ program _nwnd_build, rclass
 	local nn = _N
 	restore
 	// ---- tie list ----
-	qui use `"`edges'"', clear
-	qui keep if nd_elem == `elem'
+	if `ef' > 0 qui use `"`edges'"' in `ef'/`el', clear
+	else qui use `"`edges'"' if 0, clear
 	local mm = _N
 	local valued = `weighted'
 	local valuevar ""
@@ -853,7 +963,12 @@ program _nwnd_build, rclass
 		}
 		else {
 			// parallel edges are summed (weights) or counted (unweighted: the tie value is their number)
-			qui collapse (sum) __v, by(__a __b)
+			// summed in the order of the rows of the table, so that the result does not depend on how Stata sorts equal keys
+			qui gen long __o = _n
+			qui sort __a __b __o
+			qui by __a __b: replace __v = sum(__v)
+			qui by __a __b: keep if _n == _N
+			qui drop __o
 			qui count if __v > 1 & !`valued'
 			if r(N) > 0 local valued 1
 		}
@@ -883,8 +998,8 @@ program _nwnd_build, rclass
 	if "`noattrs'" == "" {
 		tempfile attf
 		preserve
-		qui use `"`nodes'"', clear
-		qui keep if nd_elem == `elem'
+		if `nf' > 0 qui use `"`nodes'"' in `nf'/`nl', clear
+		else qui use `"`nodes'"' if 0, clear
 		qui sort nd_order
 		local keepv nd_label
 		if `named' local keepv `keepv' nd_name

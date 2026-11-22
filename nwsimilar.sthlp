@@ -59,9 +59,9 @@ This command calculates the similarities between all nodes {it:i} and {it:j} and
 are regarding the ties they have to other nodes (tie vectors). 
 
 {pstd}
-By default, the similarity is calculated based on both incoming and outgoing ties ({bf:mode(both)}). With {bf:mode(incoming)} the similarity
-between two nodes {it:i} and {it:j} is calculated only based on the ties they receive (columns). Option {bf:mode(outgoing)} only considers outgoing ties (rows) when calculating the similarity
-between nodes. Practially, option {bf:mode(both)} stacks the vector of outgoing and incoming ties.
+By default, the similarity is calculated based on both incoming and outgoing ties ({bf:context(both)}). With {bf:context(incoming)} the similarity
+between two nodes {it:i} and {it:j} is calculated only based on the ties they receive (columns). Option {bf:context(outgoing)} only considers outgoing ties (rows) when calculating the similarity
+between nodes. Practially, option {bf:context(both)} stacks the vector of outgoing and incoming ties.
 
 
 {pstd}
@@ -123,7 +123,7 @@ its source network, so it can be compared with the source network node for node.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} {opt mode()} restricts the comparison to incoming or outgoing ties. {bf:Valued:} {opt pearson} and
+{bf:Directed:} {opt context()} restricts the comparison to incoming or outgoing ties. {bf:Valued:} {opt pearson} and
 {opt crossproduct} use the tie values; {opt hamming}, {opt jaccard} and {opt matches} use only the presence of ties.
 {bf:Two-mode:} yes - a node is compared with the nodes of its own mode over the other mode; pairs from different modes
 are missing. {bf:Signed:} negative values are not treated specially. See {help nwnetworktypes}.{p_end}
@@ -149,7 +149,7 @@ about 12,900 nodes the command stops at once with r(484) and a message with the 
 {cmd:. nwwebuse florentine}
 {cmd:. nwsimilar flomarriage}
 
-{cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
+{cmd:. nwsimilar flomarriage, type(hamming) context(outgoing)}
 
 
 {title:See also}
@@ -157,4 +157,4 @@ about 12,900 nodes the command stops at once with r(484) and a message with the 
 	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}, {help nwregular}
 
 {hline}
-{pstd}{it:nwcommands version 3.35.1, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.36.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

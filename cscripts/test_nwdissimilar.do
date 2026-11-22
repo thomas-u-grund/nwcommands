@@ -72,7 +72,7 @@ assert `"`r(labs)'"' == "A,B,C,D"
 * --- all 5 documented dissimilarity types must run cleanly and
 * produce a symmetric, zero-diagonal result (structural properties
 * that must hold regardless of the specific formula).
-foreach t in euclidean manhatten nonmatches jaccard hamming {
+foreach t in euclidean manhattan nonmatches jaccard hamming {
 	nwclear
 	nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
 	nwdissimilar net1, type(`t')
@@ -126,3 +126,17 @@ assert _rc == 0
 * _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwdissimilar nonexistent
 assert _rc == 482
+
+* the old spelling manhatten is still accepted and gives the same result as manhattan
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
+nwdissimilar net1, type(manhattan) name(dm_new)
+nwdissimilar net1, type(manhatten) name(dm_old)
+nwtomatafast dm_new
+mata: Dnew = `r(mata)'
+nwtomatafast dm_old
+mata: Dold = `r(mata)'
+mata: assert(Dnew == Dold)
+mata: mata drop Dnew Dold
+capture nwdissimilar net1, type(manhaten) name(dm_bad)
+assert _rc == 6556

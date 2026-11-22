@@ -20,7 +20,11 @@ program nwdissimilar
 		local type = "euclidean"
 	}
 
-	_opts_oneof "euclidean manhatten nonmatches jaccard hamming" "type" "`type'" 6556
+	// the type is spelled manhattan; the old spelling manhatten is still accepted
+	if "`type'" == "manhatten" {
+		local type "manhattan"
+	}
+	_opts_oneof "euclidean manhattan nonmatches jaccard hamming" "type" "`type'" 6556
 	_opts_oneof "incoming outgoing both" "context" "`context'" 6556
 	
 	if "`name'" == "" {
@@ -88,7 +92,7 @@ program nwdissimilar
 	// two-mode: a node is compared with the other nodes of its OWN mode, over the nodes of the other mode (see
 	// nwsimilar); pairs of nodes from different modes are not compared (missing)
 	if "`otheris2mode'" == "true" {
-		local __t2 = cond("`type'" == "hamming", "dhamming", cond("`type'" == "jaccard", "djaccard", "`type'"))
+		local __t2 = cond("`type'" == "hamming", "dhamming", cond("`type'" == "jaccard", "djaccard", cond("`type'" == "manhattan", "manhatten", "`type'")))
 		mata: __nwdissim = nw_twomode_profile(`srcmata', strtoreal(`othernetobj'->get_modes())', "`__t2'")
 		if `__nwdis_usenames' {
 			nwset, mat(__nwdissim) name(`name') selfloop undirected nodenames(`__nwdis_names') `vars'
@@ -104,13 +108,13 @@ program nwdissimilar
 		exit
 	}
 	// native kernel (plugin generation 12 or later): the same cells from the sparse tie lists; an older plugin leaves the Mata functions
-	local __code = cond("`type'" == "euclidean", 6, cond("`type'" == "manhatten", 7, cond("`type'" == "nonmatches", 8, cond("`type'" == "jaccard", 9, 10))))
+	local __code = cond("`type'" == "euclidean", 6, cond("`type'" == "manhattan", 7, cond("`type'" == "nonmatches", 8, cond("`type'" == "jaccard", 9, 10))))
 	mata: __nwdissim = nw_dissimnative(`othernetobj', `__code', `dtype')
 	mata: st_local("__fast", strofreal(rows(__nwdissim) > 0))
 	if !`__fast' & "`type'" == "euclidean" {
 		mata: __nwdissim = euclidean_dissimilarity(`srcmata', `dtype')
 	}
-	if !`__fast' & "`type'" == "manhatten" {
+	if !`__fast' & "`type'" == "manhattan" {
 		mata: __nwdissim = manhatten_dissimilarity(`srcmata', `dtype')
 	}
 	if !`__fast' & "`type'" == "nonmatches" {
@@ -155,7 +159,7 @@ capture mata mata drop hamming_dissimilarity()
 	verification methodology this mirrors): each was an O(n^3)
 	explicit-loop comparison of two full length-n vectors per (i,j)
 	pair - confirmed as one of the nwtomata-dependent family excluded
-	from the n=10,000 benchmark tier. `manhatten' (sum of ABSOLUTE
+	from the n=10,000 benchmark tier. `manhattan' (sum of ABSOLUTE
 	differences over RAW, non-binarized tie values) has no equivalent
 	O(1)-per-pair closed form the way squared-difference/match-count
 	do (Euclidean reduces to dot products; Hamming/matches/jaccard

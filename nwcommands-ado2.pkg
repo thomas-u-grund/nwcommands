@@ -3,7 +3,7 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 2)
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 22nov2026
-d Version: 3.35.1
+d Version: 3.36.0
 f nwdiffuse.ado
 f nwdissimilar.ado
 f nwdrop.ado
@@ -49,6 +49,7 @@ f nwmoviexy.ado
 f nwnetworkdata.ado
 f nwnetworkdata_catalogue.ado
 f nwnetworkdata_convert.ado
+f nwnetworkdata_rda.ado
 f nwname.ado
 f nwnclan.ado
 f nwnclique.ado

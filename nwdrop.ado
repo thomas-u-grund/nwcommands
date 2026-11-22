@@ -7,11 +7,9 @@ program nwdrop
 	_nwsyntax `netname', max(9999)
 
 	if `"`if'"' == "" & `"`in'"' == "" {
-		foreach netname_temp in `netname' {
-			mata: `nws'.drop("`netname_temp'")
-		}
-		qui nwset
-		if r(networks) == 0 {
+		// one compiled function drops the networks and counts the rest (nwf_drop() in unw_core.do)
+		mata: st_local("__nwdrop_left", strofreal(nwf_drop(`"`netname'"')))
+		if `__nwdrop_left' == 0 {
 			capture mata: mata drop `nw'
 		}
 	}

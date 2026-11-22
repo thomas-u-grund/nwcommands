@@ -56,11 +56,13 @@ program _nwdatasync_work
 	tempname nodename
 	tempname nodeindex
 
-	mata: `nodename' = (`netobj'->get_nodenames())'
-	// a local, not r(nodes): the r() results of the caller are not changed
-	mata: st_local("__nwds_nodes", strofreal(`netobj'->get_nodes()))
+	// a local, not r(nodes): the r() results of the caller are not changed (the node count _nwsyntax just read from
+	// the same network). The Mata copy of the node names is made only where it is used: the quick route below
+	// needs none, and every Mata statement costs time proportional to the number of stored networks.
+	local __nwds_nodes `nodes'
 
 	if "`overwrite'" != "" {
+		mata: `nodename' = (`netobj'->get_nodenames())'
 		capture drop `nw_nodename'
 		qui getmata `nw_nodename' = `nodename', force replace
 		// the two capture mata drops right above are pure best-effort
@@ -133,7 +135,6 @@ program _nwdatasync_work
 			}
 			// leaves _rc clean, as the full route does (see the note at the end of this program): a capture that
 			// succeeds sets _rc to 0. nwname, used for that on the full route, costs 0.06 s at 100,000 nodes
-			capture mata: mata drop `nodename'
 			capture confirm number 0
 			exit
 		}
@@ -149,6 +150,7 @@ program _nwdatasync_work
 		//set obs `r(nodes)'
 	//}
 
+	mata: `nodename' = (`netobj'->get_nodenames())'
 	qui getmata `nw_nodename' = `nodename', force replace
 	
 	_nwsyntax `netname'

@@ -51,7 +51,7 @@ profiles of all pairs of nodes and save the result as a new network:
    maximum are tie values)
 ```
 
-`nwdissimilar` offers the distances `euclidean` (the default), `manhatten`, `hamming`, `jaccard` and
+`nwdissimilar` offers the distances `euclidean` (the default), `manhattan`, `hamming`, `jaccard` and
 `nonmatches`; with `context(incoming)` or `context(outgoing)` only one direction of ties is compared. `nwsimilar` gives
 the correlation of tie profiles: here it runs from -.39 (opposite profiles) to .95 (almost the same ties). The
 results are ordinary networks, so they can be plotted, listed or analyzed like any other.

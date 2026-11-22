@@ -1,6 +1,6 @@
 cscript
 
-* nwnetworkdata / nwwebuse schoch: input checks. No internet and no R needed: every call below must stop with a clean error
+* nwnetworkdata / nwwebuse networkdata: input checks. No internet and no R needed: every call below must stop with a clean error
 * BEFORE anything is downloaded or any program is started. The canary file would be created if a shell command were built
 * from a name or a path.
 
@@ -14,7 +14,7 @@ tempname fh
 foreach bad in "karate; touch `canary'" "karate && touch `canary'" "karate|touch `canary'" "../karate" "karate/../x" "ka rate" {
 	capture nwnetworkdata load `"`bad'"', nwclear
 	assert inlist(_rc, 198, 111)
-	capture nwwebuse schoch `"`bad'"', nwclear
+	capture nwwebuse networkdata `"`bad'"', nwclear
 	assert inlist(_rc, 198, 111)
 	capture nwnetworkdata describe `"`bad'"'
 	assert inlist(_rc, 198, 111)
@@ -72,19 +72,22 @@ global nwnd_cache "`c(tmpdir)'/nwnd`dollar'(touch `canary')"
 capture nwnetworkdata load karate, nwclear
 assert _rc == 198
 global nwnd_cache ""
-* an (empty) local file karate.rda gets the conversion as far as the R location: a missing Rscript is r(601), not a shell error
+* a local file karate.rda that is not an .rda file: refused by the reader without R (r(610)), nothing else happens
 local fake "`c(tmpdir)'/nwnd_fake_rda"
 capture mkdir "`fake'"
 file open `fh' using "`fake'/karate.rda", write text replace
 file write `fh' "not an rda file" _n
 file close `fh'
 global nwnd_cache "`c(tmpdir)'/nwnd_fake_cache"
-global nwnd_rscript "/no/such/Rscript"
 capture nwnetworkdata load karate, nwclear from("`fake'")
+assert _rc == 610
+* the conversion with R (option withr): a missing Rscript is r(601), not a shell error
+global nwnd_rscript "/no/such/Rscript"
+capture nwnetworkdata load karate, nwclear from("`fake'") withr
 assert _rc == 601
 global nwnd_rscript ""
 * R is found, but the file is not a valid .rda: r(601) with the message of R, nothing else happens
-capture nwnetworkdata load karate, nwclear from("`fake'")
+capture nwnetworkdata load karate, nwclear from("`fake'") withr
 assert inlist(_rc, 601)
 global nwnd_cache ""
 capture erase "`fake'/karate.rda"
@@ -107,6 +110,6 @@ assert _rc != 0
 * the catalogue of names still lists, without R and without internet
 nwnetworkdata list karate
 assert r(n_objects) == 2
-nwwebuse schoch
-nwwebuse schoch describe karate
+nwwebuse networkdata
+nwwebuse networkdata describe karate
 di "PASS test_nwnetworkdata_security"

@@ -13,11 +13,30 @@ program _nwsyntax
 	}
 	
 	local networks_count = 1
-	if "`anything'" == ""  & "`current'" == ""{
-		capture mata: st_local("_temp", `nws'.get_current_name())
-		capture mata: st_numscalar("r(id)",`nws'.get_index_of_current())
+	local __nwsx_info ""
+	// fast path: one word that is exactly the name of a stored network (no wildcard, range or abbreviation) needs no nwunab
+	local __nwsx_fast 0
+	if "`anything'" != "" & "`current'" == "" & "`min'" == "" {
+		if `: word count `anything'' == 1 & ("`max'" == "." | real("`max'") >= 1) {
+			if !(strpos("`anything'", "*") | strpos("`anything'", "?") | strpos("`anything'", "~") | strpos("`anything'", "-") | strpos("`anything'", "$")) {
+				capture mata: nwf_syntax_named("`anything'", 1)
+				if _rc == 0 {
+					capture confirm number `r(id)'
+					if _rc == 0 {
+						if `r(id)' > 0 {
+							local _temp "`anything'"
+							local lastnet "`anything'"
+							local __nwsx_fast 1
+						}
+					}
+				}
+			}
+		}
 	}
-	else {
+	if "`anything'" == ""  & "`current'" == ""{
+		capture mata: nwf_syntax_current()
+	}
+	else if `__nwsx_fast' == 0 {
 		capture nwunab _temp : `anything', max(`max') `min'
 		local networks_count : word count `_temp'
 		capture local lastnet : word `networks_count' of `_temp'
@@ -31,7 +50,7 @@ program _nwsyntax
 		// runs. Confirmed via a minimal repro independent of any other
 		// bug: `nwclear' then `_nwsyntax somenetwork' in a single
 		// session reproduces this on its own.
-		capture mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
+		capture mata: nwf_syntax_named("`lastnet'")
 	}
 
 	// BUGFIX: first_index_match() returns a plain 0 (not a Mata error) for
@@ -57,8 +76,8 @@ program _nwsyntax
 	// Stata; both sides are textually substituted before evaluation)
 	// produced a malformed "==0 invalid name" syntax error instead of
 	// ever reaching this command's own clean message.
-	local __nwsyntax_ok = 0
-	if _rc == 0 {
+	local __nwsyntax_ok = `__nwsx_fast'
+	if `__nwsx_fast' == 0 & _rc == 0 {
 		capture confirm number `r(id)'
 		if _rc == 0 {
 			if `r(id)' > 0 {
@@ -83,16 +102,8 @@ program _nwsyntax
 	    exit `errNWsNotFound'
 	}
 
-	mata: st_local("directed", `nws'.pdefs[`r(id)']->is_directed())
-	mata: st_local("valued", `nws'.pdefs[`r(id)']->is_valued())
-	mata: st_local("nodes", strofreal(`nws'.pdefs[`r(id)']->get_nodes()))
-	mata: st_local("selfloops", `nws'.pdefs[`r(id)']->is_selfloop())
-	mata: st_local("is2mode", `nws'.pdefs[`r(id)']->is_2mode())
-	mata: st_local("istemporal", `nws'.pdefs[`r(id)']->is_temporal())
-	mata: st_local("temporaltype", `nws'.pdefs[`r(id)']->get_temporal_type())
-	mata: st_local("datasync", strofreal(`nws'.get_datasync()))
-    // "" when the label string would approach the macro length limit (see nw_labs_string() in unw_core.do)
-    mata: st_local("labs", nw_labs_string(`nws'.pdefs[`r(id)']->get_nodenames()))
+	// one Mata statement instead of nine (nwf_syntax_info() in unw_core.do)
+	if "`__nwsx_info'" == "" mata: nwf_syntax_info(`r(id)')
 
 	c_local `other'selfloops "`selfloops'"
 	c_local `other'nodes "`nodes'"

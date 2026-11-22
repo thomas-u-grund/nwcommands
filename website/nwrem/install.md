@@ -38,10 +38,10 @@ If you used `nwinstall, everything` above, the model packages are already instal
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.7.0:
+Every release is tagged on GitHub and each tag has its own address. For version 1.7.1:
 
 ```stata
-. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.7.0/) replace
+. net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/v1.7.1/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
@@ -51,7 +51,7 @@ version produced the results.
 
 ```stata
 . nwrem version
-nwrem version 1.7.0, 21nov2026
+nwrem version 1.7.1, 22nov2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../m/rem_sim_macos.plugin (ships with the package, no separate version number)
   compared with           : R relevent 1.2-1
@@ -104,7 +104,7 @@ libraries are the better choice when they load; a build with your own Stata is t
 ## Requirements
 
 - Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19 and on Linux and Windows with Stata 19 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested). The examples on this site used Stata/BE 18.
-- The core `nwcommands`, as above. No R and no other software (R with the package igraph is needed only by the Schoch data reader of the core, `nwwebuse schoch`).
+- The core `nwcommands`, as above. No R and no other software (not even for the networkdata reader of the core, `nwwebuse networkdata`).
 
 ## Next
 

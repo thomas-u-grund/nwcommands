@@ -10,7 +10,7 @@ permalink: /nwcommands/install/
 {: .no_toc }
 
 Requirements: Stata 17 or later. The packages are tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough. The Mata
-libraries are built with Stata 17, and older versions are untested. No other software is needed, with one exception: the reader for Schoch's networkdata collection (`nwnetworkdata`, `nwwebuse schoch`) converts the data it downloads with R and needs R with the package igraph; everything else in nwcommands runs without R.
+libraries are built with Stata 17, and older versions are untested. No other software is needed: nwcommands runs without R, also the reader for the networkdata collection (R package by David Schoch; `nwnetworkdata`, `nwwebuse networkdata`), which reads the data it downloads with Stata alone (an option can use R with the package igraph instead).
 
 ## Everything: the core and the seven model packages
 
@@ -128,5 +128,5 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.35.1/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.36.0/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.

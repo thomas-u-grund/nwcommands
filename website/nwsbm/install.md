@@ -102,7 +102,7 @@ The build **clears the data and the Mata objects in memory** (save first), and i
 ## Requirements
 
 - Stata 17 or later; Stata/BE is enough. Tested on macOS with Stata 17, 18 and 19, and on Linux and Windows with Stata 19 (the Mata libraries are built with Stata 17, the oldest tested version; Stata 16 and older are untested).
-- The core `nwcommands`, as above. No R and no other software (R with the package igraph is needed only by the Schoch data reader of the core, `nwwebuse schoch`).
+- The core `nwcommands`, as above. No R and no other software (not even for the networkdata reader of the core, `nwwebuse networkdata`).
 
 ## Next
 

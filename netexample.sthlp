@@ -16,62 +16,40 @@
 {p_end}
 {hline}
 
-        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "describe using https://nwcommands.org/examples/gang.dta":describe}
+        {it:Longitudinal social networks}
         {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "describe using https://nwcommands.org/examples/glasgow.dta":describe}
-        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "describe using https://nwcommands.org/examples/florentine.dta":describe}
-        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "describe using https://nwcommands.org/examples/usstates.nwdta":describe}
-        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "describe using https://nwcommands.org/examples/klas12b.nwdta":describe}
         {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "describe using https://nwcommands.org/examples/hpotter.nwdta":describe}
-        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "describe using https://nwcommands.org/examples/macaque.nwdta":describe}
-        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "describe using https://nwcommands.org/examples/chesapeake.nwdta":describe}
-        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "describe using https://nwcommands.org/examples/usair.nwdta":describe}
-        {help netexample##usair:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "describe using https://nwcommands.org/examples/usair_full.nwdta":describe}
-        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "describe using https://nwcommands.org/examples/lazega.nwdta":describe}
-        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "describe using https://nwcommands.org/examples/s50.nwdta":describe}
-        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "describe using https://nwcommands.org/examples/sampson.nwdta":describe}
-        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
-        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
         {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
-        {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
+        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "describe using https://nwcommands.org/examples/klas12b.nwdta":describe}
+        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "describe using https://nwcommands.org/examples/s50.nwdta":describe}
+        {it:One-time social networks}
+        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "describe using https://nwcommands.org/examples/florentine.dta":describe}
+        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "describe using https://nwcommands.org/examples/gang.dta":describe}
+        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "describe using https://nwcommands.org/examples/lazega.nwdta":describe}
+        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
+        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "describe using https://nwcommands.org/examples/sampson.nwdta":describe}
+        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "describe using https://nwcommands.org/examples/usstates.nwdta":describe}
+        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
+        {it:Two-mode networks}
         {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
         {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
+        {it:Signed networks}
+        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
+        {help netexample##baerveldt19:baerveldt19}{col 29}{stata "nwwebuse baerveldt19":use} | {stata "describe using https://nwcommands.org/examples/baerveldt19.nwdta":describe}
+        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
         {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "describe using https://nwcommands.org/examples/senate114.nwdta":describe}
         {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "describe using https://nwcommands.org/examples/senate93.nwdta":describe}
-        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
-        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
-        {help netexample##schoch:schoch (collection)}{col 29}{stata "nwwebuse schoch":overview} | 989 network data sets of the R package networkdata
+        {it:Event data}
+        {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
+        {it:Networks that are not social}
+        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "describe using https://nwcommands.org/examples/chesapeake.nwdta":describe}
+        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "describe using https://nwcommands.org/examples/macaque.nwdta":describe}
+        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "describe using https://nwcommands.org/examples/usair.nwdta":describe}
+        {help netexample##usair_full:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "describe using https://nwcommands.org/examples/usair_full.nwdta":describe}
+        {help netexample##usmap:usmap}{col 29}(a map for {cmd:basemap(usmap)}, not a network) | {stata "describe using https://nwcommands.org/examples/usmap.dta":describe}
+        {it:The networkdata collection (not shipped)}
 
 {hline}
-
-{marker gang}
-{title:Gang data}
-
-{pstd}
-{bf:Networks:} {it:gang}{p_end}
-{pstd}
-{bf:Vertex attributes:} {it:Age, Birthplace, Residence, Arrests, Convictions, Prison, Music}.
-
-{pstd}
-This is a dataset of co-offending in a London-based youth gang. Data were collected by 
-James Densley and Thomas Grund. The data has been used in Grund & Densley (2012) and Grund & Densley (2014). 
-
-{pmore}
-Network tie values:
-
-		= 1 (hang out together)
-		= 2 (co-offend together)
-		= 3 (co-offend together, serious crime)
-		= 4 (co-offend together, serious crime, kin)
-		
-{pmore}
-{bf:References}
-
-{pmore}
-Grund, T. and Densley, J. (2014) Ethnic Homophily and Triad Closure: Mapping Internal Gang Structure Using Exponential Random Graph Models. Journal of Contemporary Criminal Justice. online first
-
-{pmore}
-Grund, T. and Densley, J. (2012) Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang. European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
-
 
 {marker glasgow}
 {title:Glasgow data}
@@ -133,56 +111,54 @@ Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis an
 {pmore}
 Pearson, Michael, Steglich, Christian, and Snijders, Tom. Homophily and assimilation among sport-active adolescent substance users. Connections 27(1), 47-63. 2006.
 
-
-
-{marker florentine}
-{title:Florentine data}
+{marker hpotter}
+{title:Harry Potter data}
 
 {pstd}
-{bf:Networks:} {it:flomarriage} and {it:flobusiness}{p_end}
+{bf:Networks:} {it:hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6} (directed){p_end}
 {pstd}
-{bf:Vertex attributes:} {it:wealth} and {it:priorates}
+{bf:Vertex attributes:}
+{it:schoolyear, gender, and house}
 
 {pstd}
-This is a dataset of marriage and business ties among Renaissance Florentine families. The data is originally from Padgett
-(1994). Breiger & Pattison (1986), in their discussion of local role analysis, use a subset of data on the social
-relations among Renaissance Florentine families (person aggregates) collected by John Padgett from historical documents. The
-relations are marriage alliances (flomarriage between the families) and business relationships (recorded financial ties such
-as loans, credits and joint partnerships).
-
-{pstd}
-As Breiger & Pattison point out, the original data are symmetrically coded. This is perhaps acceptable perhaps for marital
-ties. Vertex information is provided on (1) {it:wealth} each family's net wealth in 1427 (in thousands of lira); (2) 
-the number of {it:priorates} (seats on the civic council) held between 1282- 1344.
-
-{pstd}
-Substantively, the data include families who were locked in a struggle for political control of the city of Florence around
-1430. Two factions were dominant in this struggle: one revolved around the infamous Medicis (9), the other around the powerful Strozzis (15).
+Goele Bossaert and Nadine Meidert have coded the support ties between 64 characters in the well-known books about Harry Potter. They analyzed this by Siena; their findings were published in
 
 {pmore}
-{bf:References}
+{bf:Reference}
 
 {pmore}
-Padgett, John F. 1994. Marriage and Elite Structure in Renaissance Florence, 1282-1500. Paper delivered to the Social Science History Association.
+Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal
+of Applied Sciences, Vol. 3 No. 2, pp. 174-185.
+http://dx.doi.org/10.4236/ojapps.2013.32024
+
+{marker kapferer}
+{title:Kapferer tailor shop data}
+
+{pstd}
+{bf:Networks:} {it:kapferer_t1} (39 nodes), {it:kapferer_t2} (43 nodes) - both undirected{p_end}
+{pstd}
+{bf:Vertex attributes:} none
+
+{pstd}
+Bruce Kapferer's 1972 study of sociation among workers at a Zambian tailor shop, observed at two
+time points around a labor dispute (an unsuccessful attempt to unionize) - {it:kapferer_t1} is the
+"before" network, {it:kapferer_t2} the "after" one. The two networks do NOT share a common node
+set (workers left and joined the shop between observations, a real and deliberate feature of the
+original study, not a data-quality issue) - they are two independent networks, not a two-wave panel
+on the same actors the way {help netexample##s50:s50} / {help netexample##klas12b:klas12b} are.
 
 {pmore}
-Breiger R. and Pattison P. (1986). Cumulated social roles: The duality of persons and their algebras, Social Networks, 8, 215-256.
+{bf:Reference}
+
+{pmore}
+Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester University Press.
+
+{pmore}
+Distributed with R's own {cmd:ergm} package as {cmd:data(kapferer)} (part of the Statnet Project).
 
 
 
-
-{marker usstates}
-{title:US states data}
-
-{pstd}
-{bf:Networks:} {it:usstates} (undirected){p_end}
-{pstd}
-{bf:Vertex attributes:} none - vertex labels are the two-letter state abbreviations.
-
-{pstd}
-A tie between two US states means they share a land border. 50 states, 107 border ties.
-
-
+{hline}
 
 {marker klas12b}
 {title:Klas12b data}
@@ -297,110 +273,101 @@ http://dx.doi.org/10.1016/j.socnet.2009.02.004.
 Steglich, Christian, and Knecht, Andrea (2009), Die statistische Analyse dynamischer Netzwerkdaten. In: Christian Stegbauer and Roger Häußling (Eds.), Handbuch der Netzwerkforschung, Wiesbaden (Verlag
 für Sozialwissenschaften).
 
-
-
-
-
-{marker hpotter}
-{title:Harry Potter data}
+{marker s50}
+{title:s50 data}
 
 {pstd}
-{bf:Networks:} {it:hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6} (directed){p_end}
+{bf:Networks:} {it:s50_w1, s50_w2, s50_w3} (directed - friendship nominations among the same 50
+girls at three time points){p_end}
 {pstd}
-{bf:Vertex attributes:}
-{it:schoolyear, gender, and house}
+{bf:Vertex attributes:} {it:alcohol1, alcohol2, alcohol3, smoke1, smoke2, smoke3}
 
 {pstd}
-Goele Bossaert and Nadine Meidert have coded the support ties between 64 characters in the well-known books about Harry Potter. They analyzed this by Siena; their findings were published in
+This is the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as the
+"s50" example data with the RSiena software, the single most commonly used teaching dataset for
+Stochastic Actor-Oriented Models (SAOM, {help nwsaom}); its networks are the same as those of the
+{help netexample##glasgow:Glasgow data}, which in addition has the sport variable. The study is
+described there. {it:alcohol1-3} (1 = never to 5 = more than once a week) and
+{it:smoke1-3} (1 = non-smoker to 3 = regular smoker) are each girl's own self-reported behavior
+at the matching wave. Node labels are plain sequential ids (1-50).
 
 {pmore}
-{bf:Reference}
+{bf:References}
 
 {pmore}
-Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal
-of Applied Sciences, Vol. 3 No. 2, pp. 174-185.
-http://dx.doi.org/10.4236/ojapps.2013.32024
-
-
-
-{marker macaque}
-{title:Macaque cortical network data}
-
-{pstd}
-{bf:Networks:} {it:macaque}{p_end}
-{pstd}
-{bf:Vertex attributes:} none - vertex names are the cortical area labels themselves (V1, V2, MT, FEF, and so on).
-
-{pstd}
-This is a directed network of 45 visuotactile areas of the macaque cerebral cortex, with a tie from
-area {it:i} to area {it:j} whenever a projection from {it:i} to {it:j} is documented in the neuroanatomical
-literature. Not a social network: included as a worked example of a real, published, non-social
-directed network of comparable size to this package's other bundled examples.
+Michell, L., and A. Amos 1997. Girls, pecking order and smoking. Social Science and Medicine, 44, 1861 - 1869.
 
 {pmore}
-{bf:Reference}
+Pearson, M.A., and L. Michell. 2000. Smoke Rings: Social network analysis of friendship groups, smoking and drug-taking. Drugs: education, prevention and policy, 7, 21-37.
 
 {pmore}
-Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European
-Journal of Neuroscience, 23(7), 1919-1930.
-
-
-
-{marker chesapeake}
-{title:Chesapeake Bay food web data}
-
-{pstd}
-{bf:Networks:} {it:chesapeake} (directed, valued - tie value is carbon flux){p_end}
-{pstd}
-{bf:Vertex attributes:} {it:ECO} and {it:Biomass}{p_end}
-
-{pstd}
-This is a food web of the Chesapeake Bay mesohaline ecosystem: 39 compartments (mostly species,
-plus a handful of bookkeeping compartments - Input, Output, Respiration, and two organic-carbon
-pools), with a directed, valued tie from compartment {it:i} to compartment {it:j} whenever carbon
-flows from {it:i} to {it:j}. {it:ECO} codes the compartment type (1 = living organism, 2 = nonliving
-organic pool, 3 = Input, 4 = Output, 5 = Respiration); {it:Biomass} is each compartment's standing
-biomass. A handful of species names are truncated at 25 characters in the original source data
-(e.g. "heterotrophic microflagel"), inherited as-is from that source rather than silently
-guessed at. Not a social network: included as a worked example of a real, published food web of
-comparable size to this package's other bundled examples.
+Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking. Connections, 25(2), 59-76.
 
 {pmore}
-{bf:Reference}
+Distributed with the RSiena software/package (part of the Siena/RSiena project,
+https://www.stats.ox.ac.uk/~snijders/siena/).
 
-{pmore}
-Baird, D. and Ulanowicz, R.E. (1989). The seasonal dynamics of the Chesapeake Bay ecosystem. Ecological Monographs, 59, 329-364.
-
-
-
-{marker usair}
-{title:US airports data}
+{marker florentine}
+{title:Florentine data}
 
 {pstd}
-{bf:Networks:} {it:usair}{p_end}
+{bf:Networks:} {it:flomarriage} and {it:flobusiness}{p_end}
 {pstd}
-{bf:Vertex attributes:} {it:Name, City, Lat, Lon, degree}{p_end}
+{bf:Vertex attributes:} {it:wealth} and {it:priorates}
 
 {pstd}
-This is a directed network of the 50 busiest US airports (by direct-route degree) and the direct
-routes between them, built from OpenFlights' airport and route databases. A tie from airport
-{it:i} to airport {it:j} means at least one airline flew a direct, no-stop route from {it:i} to
-{it:j} at the time OpenFlights' route data was current. Restricted to the top 50 airports by
-degree, not the full set of several hundred US airports OpenFlights covers, to keep this network
-at a size comparable to this package's other example networks - {it:degree} itself records each
-airport's own direct-route degree in the {it:full}, unrestricted US network, not just within this
-50-airport subset, so it will not generally match {help nwdegree:nwdegree}'s own count computed
-on {it:usair} as loaded. Not a social network: included as a worked example of a real,
-non-social, directed transportation network. The outlines of the US states, for drawing the airports on a
-map, are in {bf:usmap} (not a network): {cmd:nwplot usair, nodexy(Lon Lat) basemap(usmap)} (see {help nwplot}).
+This is a dataset of marriage and business ties among Renaissance Florentine families. The data is originally from Padgett
+(1994). Breiger & Pattison (1986), in their discussion of local role analysis, use a subset of data on the social
+relations among Renaissance Florentine families (person aggregates) collected by John Padgett from historical documents. The
+relations are marriage alliances (flomarriage between the families) and business relationships (recorded financial ties such
+as loans, credits and joint partnerships).
+
+{pstd}
+As Breiger & Pattison point out, the original data are symmetrically coded. This is perhaps acceptable perhaps for marital
+ties. Vertex information is provided on (1) {it:wealth} each family's net wealth in 1427 (in thousands of lira); (2) 
+the number of {it:priorates} (seats on the civic council) held between 1282- 1344.
+
+{pstd}
+Substantively, the data include families who were locked in a struggle for political control of the city of Florence around
+1430. Two factions were dominant in this struggle: one revolved around the infamous Medicis (9), the other around the powerful Strozzis (15).
 
 {pmore}
-{bf:Reference}
+{bf:References}
 
 {pmore}
-OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.
+Padgett, John F. 1994. Marriage and Elite Structure in Renaissance Florence, 1282-1500. Paper delivered to the Social Science History Association.
 
+{pmore}
+Breiger R. and Pattison P. (1986). Cumulated social roles: The duality of persons and their algebras, Social Networks, 8, 215-256.
 
+{marker gang}
+{title:Gang data}
+
+{pstd}
+{bf:Networks:} {it:gang}{p_end}
+{pstd}
+{bf:Vertex attributes:} {it:Age, Birthplace, Residence, Arrests, Convictions, Prison, Music}.
+
+{pstd}
+This is a dataset of co-offending in a London-based youth gang. Data were collected by 
+James Densley and Thomas Grund. The data has been used in Grund & Densley (2012) and Grund & Densley (2014). 
+
+{pmore}
+Network tie values:
+
+		= 1 (hang out together)
+		= 2 (co-offend together)
+		= 3 (co-offend together, serious crime)
+		= 4 (co-offend together, serious crime, kin)
+		
+{pmore}
+{bf:References}
+
+{pmore}
+Grund, T. and Densley, J. (2014) Ethnic Homophily and Triad Closure: Mapping Internal Gang Structure Using Exponential Random Graph Models. Journal of Contemporary Criminal Justice. online first
+
+{pmore}
+Grund, T. and Densley, J. (2012) Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang. European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
 
 {marker lazega}
 {title:Lazega lawyers data}
@@ -441,78 +408,6 @@ Networks, 19, 375-397.
 Distributed with R's own {cmd:ergm.multi} package as {cmd:data(Lazega)} (part of the Statnet
 Project).
 
-
-
-{marker s50}
-{title:s50 data}
-
-{pstd}
-{bf:Networks:} {it:s50_w1, s50_w2, s50_w3} (directed - friendship nominations among the same 50
-girls at three time points){p_end}
-{pstd}
-{bf:Vertex attributes:} {it:alcohol1, alcohol2, alcohol3, smoke1, smoke2, smoke3}
-
-{pstd}
-This is the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as the
-"s50" example data with the RSiena software, the single most commonly used teaching dataset for
-Stochastic Actor-Oriented Models (SAOM, {help nwsaom}); its networks are the same as those of the
-{help netexample##glasgow:Glasgow data}, which in addition has the sport variable. The study is
-described there. {it:alcohol1-3} (1 = never to 5 = more than once a week) and
-{it:smoke1-3} (1 = non-smoker to 3 = regular smoker) are each girl's own self-reported behavior
-at the matching wave. Node labels are plain sequential ids (1-50).
-
-{pmore}
-{bf:References}
-
-{pmore}
-Michell, L., and A. Amos 1997. Girls, pecking order and smoking. Social Science and Medicine, 44, 1861 - 1869.
-
-{pmore}
-Pearson, M.A., and L. Michell. 2000. Smoke Rings: Social network analysis of friendship groups, smoking and drug-taking. Drugs: education, prevention and policy, 7, 21-37.
-
-{pmore}
-Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking. Connections, 25(2), 59-76.
-
-{pmore}
-Distributed with the RSiena software/package (part of the Siena/RSiena project,
-https://www.stats.ox.ac.uk/~snijders/siena/).
-
-
-
-{marker sampson}
-{title:Sampson monastery data}
-
-{pstd}
-{bf:Networks:} {it:samplk1, samplk2, samplk3} (directed, valued - positive-affect ranking among
-the same 18 monks at three time points), {it:samplike} (directed, valued - the same monks' own
-final-wave "liking" ranking, the relation most commonly used on its own in ERGM teaching){p_end}
-{pstd}
-{bf:Vertex attributes:} {it:faction, cloisterville}
-
-{pstd}
-This is Samuel Sampson's classic monastery study: 18 novice monks at a New England monastery,
-each asked to rank their top three (later four) choices on several relations across the training
-period leading up to a political crisis that split the monastery into factions. Every tie value is
-1/2/3, ranking that choice's own strength (1 = highest). {it:faction} is each monk's own
-eventually-revealed group - {it:Loyal} (supported the group in power), {it:Turks} (the opposition),
-or {it:Outcasts} (aligned with neither) - the single most commonly cited example of using ERGM/SNA
-methods to recover real-world faction structure from network data alone. {it:cloisterville}
-flags the handful of monks who transferred in from a minor seminary already called "Cloisterville"
-rather than entering directly. Node labels are the monks' own (pseudonymous, as originally
-published) first names.
-
-{pmore}
-{bf:Reference}
-
-{pmore}
-Sampson, S.F. (1969). Crisis in a Cloister. Unpublished doctoral dissertation, Cornell University.
-
-{pmore}
-Distributed with R's own {cmd:ergm} package as {cmd:data(samplk)}/{cmd:data(sampson)} (part of the
-Statnet Project).
-
-
-
 {marker mesa}
 {title:Mesa High data}
 
@@ -549,7 +444,48 @@ Software, 24(3).
 Distributed with R's own {cmd:ergm} package as {cmd:data(faux.mesa.high)} (part of the Statnet
 Project).
 
+{marker sampson}
+{title:Sampson monastery data}
 
+{pstd}
+{bf:Networks:} {it:samplk1, samplk2, samplk3} (directed, valued - positive-affect ranking among
+the same 18 monks at three time points), {it:samplike} (directed, valued - the same monks' own
+final-wave "liking" ranking, the relation most commonly used on its own in ERGM teaching){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:faction, cloisterville}
+
+{pstd}
+This is Samuel Sampson's classic monastery study: 18 novice monks at a New England monastery,
+each asked to rank their top three (later four) choices on several relations across the training
+period leading up to a political crisis that split the monastery into factions. Every tie value is
+1/2/3, ranking that choice's own strength (1 = highest). {it:faction} is each monk's own
+eventually-revealed group - {it:Loyal} (supported the group in power), {it:Turks} (the opposition),
+or {it:Outcasts} (aligned with neither) - the single most commonly cited example of using ERGM/SNA
+methods to recover real-world faction structure from network data alone. {it:cloisterville}
+flags the handful of monks who transferred in from a minor seminary already called "Cloisterville"
+rather than entering directly. Node labels are the monks' own (pseudonymous, as originally
+published) first names.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Sampson, S.F. (1969). Crisis in a Cloister. Unpublished doctoral dissertation, Cornell University.
+
+{pmore}
+Distributed with R's own {cmd:ergm} package as {cmd:data(samplk)}/{cmd:data(sampson)} (part of the
+Statnet Project).
+
+{marker usstates}
+{title:US states data}
+
+{pstd}
+{bf:Networks:} {it:usstates} (undirected){p_end}
+{pstd}
+{bf:Vertex attributes:} none - vertex labels are the two-letter state abbreviations.
+
+{pstd}
+A tie between two US states means they share a land border. 50 states, 107 border ties.
 
 {marker zachary}
 {title:Zachary karate club data}
@@ -578,86 +514,6 @@ of Anthropological Research, 33, 452-473.
 {pmore}
 Distributed with R's own {cmd:igraphdata} package as {cmd:data(karate)}.
 
-
-
-{marker kapferer}
-{title:Kapferer tailor shop data}
-
-{pstd}
-{bf:Networks:} {it:kapferer_t1} (39 nodes), {it:kapferer_t2} (43 nodes) - both undirected{p_end}
-{pstd}
-{bf:Vertex attributes:} none
-
-{pstd}
-Bruce Kapferer's 1972 study of sociation among workers at a Zambian tailor shop, observed at two
-time points around a labor dispute (an unsuccessful attempt to unionize) - {it:kapferer_t1} is the
-"before" network, {it:kapferer_t2} the "after" one. The two networks do NOT share a common node
-set (workers left and joined the shop between observations, a real and deliberate feature of the
-original study, not a data-quality issue) - they are two independent networks, not a two-wave panel
-on the same actors the way {help netexample##s50:s50} / {help netexample##klas12b:klas12b} are.
-
-{pmore}
-{bf:Reference}
-
-{pmore}
-Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester University Press.
-
-{pmore}
-Distributed with R's own {cmd:ergm} package as {cmd:data(kapferer)} (part of the Statnet Project).
-
-
-
-{hline}
-{marker manufacturing}
-{title:Manufacturing company emails (events)}
-
-{pstd}
-{bf:Loaded as:} a plain (not pre-declared) Stata dataset, unlike the ready-made networks above.
-{cmd:nwwebuse manufacturing} loads three variables, {it:sender}, {it:receiver} and {it:t}, one row per
-email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
-
-{phang2}{cmd:. nwwebuse manufacturing, nwclear}{p_end}
-{phang2}{cmd:. nwset sender receiver, eventtime(t) name(mail)}{p_end}
-
-{pstd}
-{bf:Vertex attributes:} a companion dataset, {cmd:manufacturing_nodes.dta} ({cmd:nwwebuse}
-{cmd:manufacturing_nodes}), holds {it:label}, {it:supervisor}, {it:level} and {it:division} for the 154
-employees (144 of them send or receive an email in the data). {it:supervisor} is the direct
-supervisor (empty for the CEO, E86), {it:level} the number of steps to the CEO in the reporting
-hierarchy (0 = CEO) and {it:division} the branch of the CEO that the employee belongs to. After
-{cmd:nwset} the node-level dataset carries each employee's label in {cmd:_nwnode}; rename it to
-{cmd:label}, merge, then rename back:{p_end}
-
-{phang2}{cmd:. rename _nwnode label}{p_end}
-{phang2}{cmd:. merge 1:1 label using manufacturing_nodes, keep(master match) nogen}{p_end}
-{phang2}{cmd:. rename label _nwnode}{p_end}
-
-{pstd}
-The emails were sent in a mid-sized manufacturing company between January and 30 September 2010
-({it:t} is the time in days since 1 January 2010, 00:00). Only the metadata are given (who wrote to
-whom and when), no content. This is a derived subset of the original data: only emails with exactly
-one recipient, and only the 154 employees whose supervisor is known, were kept; emails to oneself were
-removed and the employee identifiers were prefixed with {it:E}. The file is a large event history
-(144 actors); for a small subset, for example to try {help nwrem} or {help nwdynam}, keep the first
-two weeks with {cmd:keep if t < 14}: 2,738 emails among 129 employees.
-
-{pmore}
-{bf:Source}
-
-{pmore}
-Michalski, R. (2020). Manufacturing company email metadata and corporate hierarchy. Harvard
-Dataverse, V2, doi:10.7910/DVN/6Z3CGX. Related paper: Nurek, M. and Michalski, R. (2020).
-Combining machine learning and social network analysis to reveal the organizational structures.
-Applied Sciences, 10(5), 1699.
-
-{pmore}
-{bf:Licence}
-
-{pmore}
-The original data are released under CC0 1.0 (public-domain dedication,
-http://creativecommons.org/publicdomain/zero/1.0). Attribution is not required but is given here.
-
-{hline}
 {marker davis}
 {title:Southern women (two-mode)}
 
@@ -706,107 +562,6 @@ were renamed, "NA" became missing, and age and the number of employees were made
 {pmore}
 Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global Network of Directors.
 In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
-
-{hline}
-
-{marker senate114}
-{title:US Senate, signed co-sponsorship (signed)}
-
-{pstd}
-{bf:Networks:} {it:senate114} (file senate114), {it:senate93} (file senate93){p_end}
-
-{pstd}
-Signed networks of the US Senate, undirected, with ties of +1 and -1 (no tie is 0). {it:senate114}
-(114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties. {it:senate93}
-(93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. A positive tie means that
-two senators co-sponsored significantly more bills together than expected by chance, a negative tie
-significantly fewer. Nodes are named by surname and initial. Attributes: {it:state} and {it:party}
-(D, R, I; one senator of the 93rd Senate has the party C, Conservative). Use them with {helpb nwbalance}
-(in the 114th Senate 97.3 percent of the closed triads are balanced, in the 93rd 55.0 percent) and for
-signed degrees.
-
-{pstd}
-The signs are not observed likes and dislikes. They are inferred from the co-sponsorship of bills by a
-statistical model (the stochastic degree sequence model), and the 114th network is dense (75 percent of
-all pairs carry a tie).
-
-{pmore}
-{bf:Source and licence}
-
-{pmore}
-Neal, Z. P. (2020). A Sign of the Times: Dataset of US Congress signed network backbones from
-co-sponsorship data, 1973-2016. figshare, doi:10.6084/m9.figshare.8096429. Licensed under CC BY 4.0
-(https://creativecommons.org/licenses/by/4.0/). Described in Neal, Z. P. (2020). A sign of the times?
-Weak and strong polarization in the U.S. Congress, 1973-2016. Social Networks 60, 103-112,
-doi:10.1016/j.socnet.2018.07.007. The method is that of Neal, Z. P. (2014). The backbone of bipartite
-projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other
-co-behaviors. Social Networks 39, 84-97, doi:10.1016/j.socnet.2014.06.001.
-
-{pmore}
-These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd and the 114th
-Congress were kept (the sheets S93 and S114 of the workbook); of the original columns only the tie sign
-and, from the row labels, the senator's name, state and party were kept; the result is stored in the
-nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the
-code.
-
-{hline}
-
-{marker usair_full}
-{title:Full US airport network (usair_full)}
-
-{pstd}
-{bf:Networks:} {it:usair_full}{p_end}
-{pstd}
-{bf:Vertex attributes:} {it:iata, name, city, lat, lon, _outdegree, _indegree, _degree}{p_end}
-
-{pstd}
-The unrestricted counterpart of {it:usair}: every US airport with at least one scheduled non-stop
-domestic route in OpenFlights' route database, 549 airports and 5,450 directed routes. A tie from
-airport {it:i} to airport {it:j} means that the route database lists at least one route from {it:i}
-to {it:j}. The network has three connected components (541, 4 and 4 airports), so it is a real
-example of a larger network that is not connected: use {help nwcloseness:nwcloseness} with
-{cmd:unconnected(max)}. The route data are from about 2014 (the supplier stopped updating them in
-June 2014).
-
-{pmore}
-{bf:Source and licence}
-
-{pmore}
-OpenFlights, Airport Database and Route Database, https://openflights.org/data. "The OpenFlights
-Airport, Airline, Plane and Route Databases are made available under the Open Database License."
-(ODbL 1.0, https://opendatacommons.org/licenses/odbl/1-0/); "Any rights in individual contents of the
-database are licensed under the Database Contents License." The airport data derive from OurAirports
-and DAFIF and the route data from Airline Route Mapper. This is a derived database, adapted by Thomas
-U. Grund: only US airports with an IATA code were used, duplicate routes over airlines were merged,
-airports without a route were dropped, and only the columns named above were kept. It is made
-available under the ODbL 1.0 with attribution to OpenFlights; derived databases must again be
-offered under the ODbL. It is not covered by the GPL-3 of the code.
-
-{hline}
-
-{marker gahuku}
-{title:Gahuku-Gama tribes (signed)}
-
-{pstd}
-{bf:Networks:} {it:gahuku}{p_end}
-
-{pstd}
-Alliances (positive) and enmities (negative) among 16 tribes of the Eastern Central Highlands of New
-Guinea, undirected: 16 nodes, 29 positive and 29 negative ties. Nodes are named by tribe; there are no
-attributes. Of the 68 closed triads 59 are balanced; only 2 violate weak balance (7 of the 9 unbalanced
-triads have three negative ties), so the network is a standard example for strong versus weak balance
-({helpb nwbalance}).
-
-{pmore}
-{bf:Source and licence}
-
-{pmore}
-Read, K. E. (1954). Cultures of the Central Highlands, New Guinea. Southwestern Journal of
-Anthropology 10(1), 1-43, doi:10.1086/soutjanth.10.1.3629074. Analysed by Hage, P. and Harary, F.
-(1983). Structural Models in Anthropology. Cambridge: Cambridge University Press. The data have no
-licence statement of their own, so no licence is asserted here: they are facts about which tribes are
-allied and which are enemies, not covered by the GPL-3 of this package, and are redistributed with
-citation of the sources. The ties come from the version distributed with the R package signnet.
 
 {hline}
 
@@ -872,43 +627,280 @@ unchanged; schools 8, 10, 13 and 19 are Siena schools 10, 13, 16 and 23. Gender 
 by school agree with Snijders and Baerveldt 2003; the Siena file page states the opposite). The ethnicity file of Siena
 school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
 
-{marker schoch}{...}
-{title:Schoch networkdata collection}
+{marker gahuku}
+{title:Gahuku-Gama tribes (signed)}
+
+{pstd}
+{bf:Networks:} {it:gahuku}{p_end}
+
+{pstd}
+Alliances (positive) and enmities (negative) among 16 tribes of the Eastern Central Highlands of New
+Guinea, undirected: 16 nodes, 29 positive and 29 negative ties. Nodes are named by tribe; there are no
+attributes. Of the 68 closed triads 59 are balanced; only 2 violate weak balance (7 of the 9 unbalanced
+triads have three negative ties), so the network is a standard example for strong versus weak balance
+({helpb nwbalance}).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Read, K. E. (1954). Cultures of the Central Highlands, New Guinea. Southwestern Journal of
+Anthropology 10(1), 1-43, doi:10.1086/soutjanth.10.1.3629074. Analysed by Hage, P. and Harary, F.
+(1983). Structural Models in Anthropology. Cambridge: Cambridge University Press. The data have no
+licence statement of their own, so no licence is asserted here: they are facts about which tribes are
+allied and which are enemies, not covered by the GPL-3 of this package, and are redistributed with
+citation of the sources. The ties come from the version distributed with the R package signnet.
+
+{hline}
+
+{marker senate114}
+{title:US Senate, signed co-sponsorship (signed)}
+
+{pstd}
+{bf:Networks:} {it:senate114} (file senate114), {it:senate93} (file senate93){p_end}
+
+{pstd}
+Signed networks of the US Senate, undirected, with ties of +1 and -1 (no tie is 0). {it:senate114}
+(114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties. {it:senate93}
+(93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. A positive tie means that
+two senators co-sponsored significantly more bills together than expected by chance, a negative tie
+significantly fewer. Nodes are named by surname and initial. Attributes: {it:state} and {it:party}
+(D, R, I; one senator of the 93rd Senate has the party C, Conservative). Use them with {helpb nwbalance}
+(in the 114th Senate 97.3 percent of the closed triads are balanced, in the 93rd 55.0 percent) and for
+signed degrees.
+
+{pstd}
+The signs are not observed likes and dislikes. They are inferred from the co-sponsorship of bills by a
+statistical model (the stochastic degree sequence model), and the 114th network is dense (75 percent of
+all pairs carry a tie).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+Neal, Z. P. (2020). A Sign of the Times: Dataset of US Congress signed network backbones from
+co-sponsorship data, 1973-2016. figshare, doi:10.6084/m9.figshare.8096429. Licensed under CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Described in Neal, Z. P. (2020). A sign of the times?
+Weak and strong polarization in the U.S. Congress, 1973-2016. Social Networks 60, 103-112,
+doi:10.1016/j.socnet.2018.07.007. The method is that of Neal, Z. P. (2014). The backbone of bipartite
+projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other
+co-behaviors. Social Networks 39, 84-97, doi:10.1016/j.socnet.2014.06.001.
+
+{pmore}
+These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd and the 114th
+Congress were kept (the sheets S93 and S114 of the workbook); of the original columns only the tie sign
+and, from the row labels, the senator's name, state and party were kept; the result is stored in the
+nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the
+code.
+
+{hline}
+
+{marker manufacturing}
+{title:Manufacturing company emails (events)}
+
+{pstd}
+{bf:Loaded as:} a plain (not pre-declared) Stata dataset, unlike the ready-made networks above.
+{cmd:nwwebuse manufacturing} loads three variables, {it:sender}, {it:receiver} and {it:t}, one row per
+email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
+
+{phang2}{cmd:. nwwebuse manufacturing, nwclear}{p_end}
+{phang2}{cmd:. nwset sender receiver, eventtime(t) name(mail)}{p_end}
+
+{pstd}
+{bf:Vertex attributes:} a companion dataset, {cmd:manufacturing_nodes.dta} ({cmd:nwwebuse}
+{cmd:manufacturing_nodes}), holds {it:label}, {it:supervisor}, {it:level} and {it:division} for the 154
+employees (144 of them send or receive an email in the data). {it:supervisor} is the direct
+supervisor (empty for the CEO, E86), {it:level} the number of steps to the CEO in the reporting
+hierarchy (0 = CEO) and {it:division} the branch of the CEO that the employee belongs to. After
+{cmd:nwset} the node-level dataset carries each employee's label in {cmd:_nwnode}; rename it to
+{cmd:label}, merge, then rename back:{p_end}
+
+{phang2}{cmd:. rename _nwnode label}{p_end}
+{phang2}{cmd:. merge 1:1 label using manufacturing_nodes, keep(master match) nogen}{p_end}
+{phang2}{cmd:. rename label _nwnode}{p_end}
+
+{pstd}
+The emails were sent in a mid-sized manufacturing company between January and 30 September 2010
+({it:t} is the time in days since 1 January 2010, 00:00). Only the metadata are given (who wrote to
+whom and when), no content. This is a derived subset of the original data: only emails with exactly
+one recipient, and only the 154 employees whose supervisor is known, were kept; emails to oneself were
+removed and the employee identifiers were prefixed with {it:E}. The file is a large event history
+(144 actors); for a small subset, for example to try {help nwrem} or {help nwdynam}, keep the first
+two weeks with {cmd:keep if t < 14}: 2,738 emails among 129 employees.
+
+{pmore}
+{bf:Source}
+
+{pmore}
+Michalski, R. (2020). Manufacturing company email metadata and corporate hierarchy. Harvard
+Dataverse, V2, doi:10.7910/DVN/6Z3CGX. Related paper: Nurek, M. and Michalski, R. (2020).
+Combining machine learning and social network analysis to reveal the organizational structures.
+Applied Sciences, 10(5), 1699.
+
+{pmore}
+{bf:Licence}
+
+{pmore}
+The original data are released under CC0 1.0 (public-domain dedication,
+http://creativecommons.org/publicdomain/zero/1.0). Attribution is not required but is given here.
+
+{hline}
+
+{marker chesapeake}
+{title:Chesapeake Bay food web data}
+
+{pstd}
+{bf:Networks:} {it:chesapeake} (directed, valued - tie value is carbon flux){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:ECO} and {it:Biomass}{p_end}
+
+{pstd}
+This is a food web of the Chesapeake Bay mesohaline ecosystem: 39 compartments (mostly species,
+plus a handful of bookkeeping compartments - Input, Output, Respiration, and two organic-carbon
+pools), with a directed, valued tie from compartment {it:i} to compartment {it:j} whenever carbon
+flows from {it:i} to {it:j}. {it:ECO} codes the compartment type (1 = living organism, 2 = nonliving
+organic pool, 3 = Input, 4 = Output, 5 = Respiration); {it:Biomass} is each compartment's standing
+biomass. A handful of species names are truncated at 25 characters in the original source data
+(e.g. "heterotrophic microflagel"), inherited as-is from that source rather than silently
+guessed at. Not a social network: included as a worked example of a real, published food web of
+comparable size to this package's other bundled examples.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Baird, D. and Ulanowicz, R.E. (1989). The seasonal dynamics of the Chesapeake Bay ecosystem. Ecological Monographs, 59, 329-364.
+
+{marker macaque}
+{title:Macaque cortical network data}
+
+{pstd}
+{bf:Networks:} {it:macaque}{p_end}
+{pstd}
+{bf:Vertex attributes:} none - vertex names are the cortical area labels themselves (V1, V2, MT, FEF, and so on).
+
+{pstd}
+This is a directed network of 45 visuotactile areas of the macaque cerebral cortex, with a tie from
+area {it:i} to area {it:j} whenever a projection from {it:i} to {it:j} is documented in the neuroanatomical
+literature. Not a social network: included as a worked example of a real, published, non-social
+directed network of comparable size to this package's other bundled examples.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European
+Journal of Neuroscience, 23(7), 1919-1930.
+
+{marker usair}
+{title:US airports data}
+
+{pstd}
+{bf:Networks:} {it:usair}{p_end}
+{pstd}
+{bf:Vertex attributes:} {it:Name, City, Lat, Lon, degree}{p_end}
+
+{pstd}
+This is a directed network of the 50 busiest US airports (by direct-route degree) and the direct
+routes between them, built from OpenFlights' airport and route databases. A tie from airport
+{it:i} to airport {it:j} means at least one airline flew a direct, no-stop route from {it:i} to
+{it:j} at the time OpenFlights' route data was current. Restricted to the top 50 airports by
+degree, not the full set of several hundred US airports OpenFlights covers, to keep this network
+at a size comparable to this package's other example networks - {it:degree} itself records each
+airport's own direct-route degree in the {it:full}, unrestricted US network, not just within this
+50-airport subset, so it will not generally match {help nwdegree:nwdegree}'s own count computed
+on {it:usair} as loaded. Not a social network: included as a worked example of a real,
+non-social, directed transportation network. The outlines of the US states, for drawing the airports on a
+map, are in {bf:usmap} (not a network): {cmd:nwplot usair, nodexy(Lon Lat) basemap(usmap)} (see {help nwplot}).
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.
+
+{marker usair_full}
+{title:Full US airport network (usair_full)}
+
+{pstd}
+{bf:Networks:} {it:usair_full}{p_end}
+{pstd}
+{bf:Vertex attributes:} {it:iata, name, city, lat, lon, _outdegree, _indegree, _degree}{p_end}
+
+{pstd}
+The unrestricted counterpart of {it:usair}: every US airport with at least one scheduled non-stop
+domestic route in OpenFlights' route database, 549 airports and 5,450 directed routes. A tie from
+airport {it:i} to airport {it:j} means that the route database lists at least one route from {it:i}
+to {it:j}. The network has three connected components (541, 4 and 4 airports), so it is a real
+example of a larger network that is not connected: use {help nwcloseness:nwcloseness} with
+{cmd:unconnected(max)}. The route data are from about 2014 (the supplier stopped updating them in
+June 2014).
+
+{pmore}
+{bf:Source and licence}
+
+{pmore}
+OpenFlights, Airport Database and Route Database, https://openflights.org/data. "The OpenFlights
+Airport, Airline, Plane and Route Databases are made available under the Open Database License."
+(ODbL 1.0, https://opendatacommons.org/licenses/odbl/1-0/); "Any rights in individual contents of the
+database are licensed under the Database Contents License." The airport data derive from OurAirports
+and DAFIF and the route data from Airline Route Mapper. This is a derived database, adapted by Thomas
+U. Grund: only US airports with an IATA code were used, duplicate routes over airlines were merged,
+airports without a route were dropped, and only the columns named above were kept. It is made
+available under the ODbL 1.0 with attribution to OpenFlights; derived databases must again be
+offered under the ODbL. It is not covered by the GPL-3 of the code.
+
+{hline}
+
+{marker usmap}
+{title:US state outlines (usmap, a map)}
+
+{pstd}
+The borders of the 50 US states and the District of Columbia as lines, for drawing a network with longitude and latitude under
+{cmd:nwplot ..., nodexy(Lon Lat) basemap(usmap)}. A plain Stata file in the format of {cmd:spshape2dta} ({it:_ID}, {it:_X} longitude, {it:_Y} latitude,
+{it:shape_order}, {it:state}); rows with a missing {it:_X} separate the lines. It is not loaded with {cmd:nwwebuse}: give the name to {cmd:basemap()}.
+
+{pstd}
+Source and licence: US Census Bureau, cartographic boundary file {it:cb_2018_us_state_20m} (2018, scale 1:20,000,000); a work of the US federal government and so
+in the public domain. Converted with {cmd:spshape2dta}; Puerto Rico left out.
+
+{marker networkdata}{...}
+{title:The networkdata collection}
 
 {pstd}
 David Schoch's R package {it:networkdata} (https://github.com/schochastics/networkdata) is a collection of 989 network data sets
-(2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). {cmd:nwwebuse schoch} loads
+(2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). {cmd:nwwebuse networkdata} loads
 them. {bf:No data of this collection are part of nwcommands}: the original file of a data set is downloaded from Schoch's
-repository the first time you ask for it, kept in a cache in your PLUS directory and converted on your computer by R, so
-{bf:R with the package igraph must be installed} for this one reader (the other data sets of this help file need no R). Every
+repository the first time you ask for it, kept in a cache in your PLUS directory and read on your computer with Stata alone
+({bf:no R is needed}; the option {opt withr} of {cmd:nwnetworkdata} uses R with the package igraph instead). Every
 load prints which network was loaded and where the data came from.
 
 {pstd}
 Look at the collection (overview, list of all data sets, one data set) and load a network:
 
-	{cmd:. nwwebuse schoch}
-	{cmd:. nwwebuse schoch list}
-	{cmd:. nwwebuse schoch describe karate}
-	{cmd:. nwwebuse schoch karate, nwclear}
+	{cmd:. nwwebuse networkdata}
+	{cmd:. nwwebuse networkdata list}
+	{cmd:. nwwebuse networkdata describe karate}
+	{cmd:. nwwebuse networkdata karate, nwclear}
 
 {pstd}
 Zachary's karate club (34 nodes, 78 ties, undirected) and the Southern women (two-mode: 32 nodes, 18 women and 14 events, 89 ties):
 
-	{cmd:. nwwebuse schoch karate, nwclear}
-	{cmd:. nwwebuse schoch southern_women, nwclear}
+	{cmd:. nwwebuse networkdata karate, nwclear}
+	{cmd:. nwwebuse networkdata southern_women, nwclear}
 
 {pstd}
 The ten directed networks of the Sampson monks ({cmd:sampson_1} to {cmd:sampson_10}), or only the third:
 
-	{cmd:. nwwebuse schoch sampson, nwclear}
-	{cmd:. nwwebuse schoch sampson, nwclear element(3)}
+	{cmd:. nwwebuse networkdata sampson, nwclear}
+	{cmd:. nwwebuse networkdata sampson, nwclear element(3)}
 
 {pstd}
 The networks of Game of Thrones ({cmd:got}, one per season), 54 tennis networks ({cmd:atp}) and a valued network of dolphins ({cmd:dolphins_1}):
 
-	{cmd:. nwwebuse schoch got, nwclear}
-	{cmd:. nwwebuse schoch atp, nwclear}
-	{cmd:. nwwebuse schoch dolphins_1, nwclear}
+	{cmd:. nwwebuse networkdata got, nwclear}
+	{cmd:. nwwebuse networkdata atp, nwclear}
+	{cmd:. nwwebuse networkdata dolphins_1, nwclear}
 
 {pstd}
 {bf:Source, licence and citation.} The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers
@@ -917,4 +909,4 @@ Schoch, D. (2022), {it:networkdata: Repository of Network Datasets}, doi:10.5281
 {cmd:nwnetworkdata describe} {it:name} and the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} give it. See {help nwnetworkdata}.
 
 {hline}
-{pstd}{it:nwcommands version 3.35.1, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.36.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

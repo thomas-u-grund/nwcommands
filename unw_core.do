@@ -13420,6 +13420,224 @@ end
 
 /* -------------------------------------------------------------------- */
 /*
+	Registry readers that return many properties of one network in ONE Mata statement.
+	Every interactive Mata statement that names a class member or a library function costs time proportional to the
+	number of live network objects (about 0.5 microseconds per stored network and statement: the identifiers are resolved
+	against all class instances); the same calls inside a compiled function are free. _nwsyntax.ado used nine such
+	statements and _nwname.ado twenty-six for every command call, which made creating k networks cost O(k^2).
+	Each function does exactly what the statements it replaces did, in the same order.
+*/
+mata:
+// the locals that _nwsyntax.ado sets from the network with index id (its former nine separate statements)
+void nwf_syntax_info(real scalar id)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+
+	p = findexternal("__nw")
+	n = p->nws.pdefs[id]
+	st_local("directed", n->is_directed())
+	st_local("valued", n->is_valued())
+	st_local("nodes", strofreal(n->get_nodes()))
+	st_local("selfloops", n->is_selfloop())
+	st_local("is2mode", n->is_2mode())
+	st_local("istemporal", n->is_temporal())
+	st_local("temporaltype", n->get_temporal_type())
+	st_local("datasync", strofreal(p->nws.get_datasync()))
+	st_local("labs", nw_labs_string(n->get_nodenames()))
+}
+
+// the r() results that _nwname.ado returns for the network with index id (its former statements, in the same order)
+void nwf_nwname_ret(real scalar id)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+
+	p = findexternal("__nw")
+	n = p->nws.pdefs[id]
+	st_numscalar("r(id)", id)
+	st_global("r(netname)", n->get_name())
+	st_global("r(name)", n->get_name())
+	st_global("r(vars)", n->get_nodesvar_string())
+	st_numscalar("r(nodes)", n->get_nodes())
+	st_global("r(mode2)", n->is_2mode())
+	st_global("r(selfloop)", n->is_selfloop())
+	st_numscalar("r(selfloops)", n->get_selfloops_number())
+	st_global("r(directed)", n->is_directed())
+	st_global("r(valued)", n->is_valued())
+	st_global("r(title)", n->get_label())
+	st_global("r(caption)", n->get_caption())
+	st_numscalar("r(missing_edges)", n->get_missing_edges())
+	st_global("r(labs)", nw_labs_string(n->get_nodenames()))
+	st_global("r(modes)", n->get_modes_labeled_string())
+	st_numscalar("r(nodes1)", n->get_nodes_mode1())
+	st_numscalar("r(nodes2)", n->get_nodes_mode2())
+	st_global("r(mode1desc)", n->get_description_mode1())
+	st_global("r(mode2desc)", n->get_description_mode2())
+	st_global("r(provenance)", n->get_provenance())
+	st_global("r(temporal)", n->is_temporal())
+	st_global("r(temporaltype)", n->get_temporal_type())
+	st_global("r(timevar)", n->get_timevar())
+	st_global("r(startvar)", n->get_startvar())
+	st_global("r(endvar)", n->get_endvar())
+	st_global("r(eventtimevar)", n->get_eventtimevar())
+}
+
+// _nwname.ado, a call without any new...() option: resolve netname and id (as the statements in _nwname.ado do) and set all r() results
+void nwf_nwname_plain(string scalar netname, string scalar sid)
+{
+	pointer(class `NWs' scalar) scalar p
+	real scalar id
+
+	p = findexternal("__nw")
+	st_rclear()
+	if (netname == "" & sid == "") {
+		id = p->nws.get_number()
+	}
+	else if (sid == "") {
+		id = p->nws.get_index_of(netname)
+	}
+	else {
+		id = strtoreal(sid)
+	}
+	st_local("netname", p->nws.pdefs[id]->get_name())
+	st_local("id", strofreal(id))
+	nwf_nwname_ret(id)
+}
+
+// _nwsyntax.ado, named network: r(id) from the name; when found, also the locals of nwf_syntax_info() (local __nwsx_info is then 1)
+void nwf_syntax_named(string scalar name, | real scalar setlist)
+{
+	pointer(class `NWs' scalar) scalar p
+	real scalar id
+
+	p = findexternal("__nw")
+	id = first_index_match(p->nws.names, name)
+	st_numscalar("r(id)", id)
+	if (id > 0) {
+		// the r() values nwunab leaves behind for a single exact name (commands read r(netlist) and r(networks) after _nwsyntax)
+		if (setlist == 1) {
+			st_global("r(netlist)", name)
+			st_global("r(networks)", "1")
+		}
+		nwf_syntax_info(id)
+		st_local("__nwsx_info", "1")
+	}
+}
+
+// _nwsyntax.ado, no network named: the current network (locals _temp, r(id), and when found those of nwf_syntax_info())
+void nwf_syntax_current()
+{
+	pointer(class `NWs' scalar) scalar p
+	real scalar id
+
+	p = findexternal("__nw")
+	st_local("_temp", p->nws.get_current_name())
+	id = p->nws.get_index_of_current()
+	st_numscalar("r(id)", id)
+	if (id > 0) {
+		nwf_syntax_info(id)
+		st_local("__nwsx_info", "1")
+	}
+}
+
+// nwset.ado: the registry statements before a network is added (r(networks), r(names)) and the add itself
+void nwf_add(string scalar name)
+{
+	pointer(class `NWs' scalar) scalar p
+
+	p = findexternal("__nw")
+	st_rclear()
+	st_numscalar("r(networks)", p->nws.get_number())
+	st_global("r(names)", p->nws.get_names())
+	p->nws.add(name)
+}
+
+// nwdrop.ado: drop the listed networks; returns the number of networks left (what the nwset call that followed returned in r(networks))
+real scalar nwf_drop(string scalar list)
+{
+	pointer(class `NWs' scalar) scalar p
+	string rowvector t
+	real scalar i
+
+	p = findexternal("__nw")
+	t = tokens(list)
+	for (i = 1; i <= cols(t); i++) {
+		p->nws.drop(t[i])
+	}
+	return(p->nws.get_number())
+}
+
+// nwset.ado, nwset, mat(M) name(N) with default node labels: everything that nwset does before the optional symmetrisation, in one
+// statement. Returns 0 when the network was registered (local id is its index), else a code and NOTHING has been changed, and the
+// caller takes the general route: 9 no registry, 1 matrix not square or empty, 2 name in use, 3 labels not unique.
+real scalar nwf_nwset_mat(real matrix m, string scalar name, string scalar prefix, real scalar directed, real scalar selfloop, string scalar nodenamevar)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+	string rowvector lab
+	real matrix edge
+	real scalar k, id
+
+	p = findexternal("__nw")
+	if (p == NULL) return(9)
+	if (eltype(*p) != "class") return(9)
+	k = rows(m)
+	if (k != cols(m) | k == 0) return(1)
+	if (rows(p->nws.names) > 0) {
+		if (first_index_match(p->nws.names, name) > 0) return(2)
+	}
+	lab = (J(k, 1, prefix) + get_node_suffix(k))'
+	lab = nw_rowlabels_or(lab, nodenamevar, p->nws.pdefs)
+	if (cols(lab) != rows(uniqrows(vec(lab)))) return(3)
+	edge = m
+	st_rclear()
+	st_numscalar("r(networks)", p->nws.get_number())
+	st_global("r(names)", p->nws.get_names())
+	p->nws.add(name)
+	id = cols(p->nws.pdefs)
+	st_local("id", strofreal(id))
+	n = p->nws.pdefs[id]
+	n->create_by_name_sparse(lab)
+	n->set_name(name)
+	n->set_edge_take(edge)
+	n->set_directed(directed)
+	n->set_selfloop(selfloop)
+	return(0)
+}
+
+// nwset.ado: fill the network just added (index id) from the labels and the edge matrix (edge is taken, as set_edge_take() does)
+void nwf_create_edge(real scalar id, string rowvector nodenames, real matrix edge, string scalar name, real scalar directed, real scalar selfloop)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+
+	p = findexternal("__nw")
+	n = p->nws.pdefs[id]
+	n->create_by_name_sparse(nodenames)
+	n->set_name(name)
+	n->set_edge_take(edge)
+	n->set_directed(directed)
+	n->set_selfloop(selfloop)
+}
+
+// nwset.ado: valued flag (valmode 1: valued(), 2: unvalued() override) and the alignment of the node labels to the data rows
+void nwf_create_finish(real scalar id, real scalar valmode, real scalar align, string scalar nodenamevar)
+{
+	pointer(class `NWs' scalar) scalar p
+	pointer(class `NWdef' scalar) scalar n
+
+	p = findexternal("__nw")
+	n = p->nws.pdefs[id]
+	n->set_valued(n->check_valued())
+	if (valmode == 1) n->set_valued(1)
+	if (valmode == 2) n->set_valued(0)
+	if (align) nw_align_to_rows(n, nodenamevar, p->nws.pdefs)
+}
+end
+
+/* -------------------------------------------------------------------- */
+/*
 	Shared network-layout primitives (distance/circlelayout/kklayout).
 
 	Canonical home for these three: they are used by nwplot.ado's own
