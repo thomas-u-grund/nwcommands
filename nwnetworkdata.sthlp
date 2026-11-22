@@ -174,9 +174,9 @@ networks in nwcommands. The object {cmd:gss_egor} (class {it:egor}) holds ego-ce
 
 {pstd}
 {bf:Licence, attribution, citation.} nwnetworkdata only imports; the data are not part of this package and not distributed with it.
-The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch). It states no licence for the individual
-data sets, which come from many sources (the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} gives the source and references as written in the documentation of the R package): please read
-the terms of the original sources, cite them, and cite the collection: David Schoch (2022), {it:networkdata: Repository of Network Datasets},
+The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers the package itself. It documents no licence or permission for the individual
+data sets, which come from many original sources and may have their own terms (the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} gives an overview and links to the documentation of the R package): please check
+the original sources, cite them, and cite the collection: David Schoch (2022), {it:networkdata: Repository of Network Datasets},
 https://doi.org/10.5281/zenodo.7189928. The tennis networks ({cmd:atp}, {cmd:wta}) were compiled from data of Jeff Sackmann
 (https://github.com/JeffSackmann), whom the author asks users to credit.
 

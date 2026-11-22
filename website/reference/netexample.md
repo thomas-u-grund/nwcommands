@@ -475,7 +475,7 @@ The networks of Game of Thrones (`got`, one per season), 54 tennis networks (`at
 . nwwebuse schoch atp, nwclear
 . nwwebuse schoch dolphins_1, nwclear
 ```
-**Source, licence and citation.** The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch). The individual data sets come from many sources and carry their own terms of use; the package states no licence for them. Cite the collection: Schoch, D. (2022), *networkdata: Repository of Network Datasets*, doi:10.5281/zenodo.7189928, and the original source of each data set as `nwnetworkdata describe` *name* and the page [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/) give it. See [nwnetworkdata](nwnetworkdata).
+**Source, licence and citation.** The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers the package itself. It documents no licence or permission for the individual data sets, which come from many original sources and may have their own terms; please check the original sources. Cite the collection: Schoch, D. (2022), *networkdata: Repository of Network Datasets*, doi:10.5281/zenodo.7189928, and the original source of each data set as `nwnetworkdata describe` *name* and the page [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/) give it. See [nwnetworkdata](nwnetworkdata).
 
 ---
 
