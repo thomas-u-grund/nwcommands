@@ -4,6 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+### Changed
+- Help: `nwsummarize` says exactly what `r(missing_edges)` counts (all cells without a value, including the diagonal cells of a network without self-loops, and both cells of a missing tie in an undirected network), how to get the number of missing off-diagonal cells (`r(missing_edges)` - `r(nodes)`) and warns against testing `r(missing_edges)` > 0.
+
 ## [3.34.0] - 2026-11-21
 
 ### Added
