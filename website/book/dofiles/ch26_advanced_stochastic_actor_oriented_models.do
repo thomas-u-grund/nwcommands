@@ -47,6 +47,11 @@ quietly nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip ///
     seed(4)
 estat simulate, nsim(100) seed(5)
 
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
+
 capture program drop mutualties
 program mutualties, rclass
     args netname
@@ -54,12 +59,9 @@ program mutualties, rclass
     mata: st_numscalar("__mut", sum(MM :* MM') / 2)
     return scalar stat = scalar(__mut)
 end
+quietly nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip ///
+    seed(4)
 estat mems, effect(reciprocity) macro(mutualties) nsim(100) seed(1)
-
-nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
-    transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
-nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
-    transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
 
 * ============================================================
 * Which estimator?
@@ -115,10 +117,10 @@ matrix cmp = (SEj', SEm')'
 matrix rownames cmp = joint meta
 matrix colnames cmp = outdegree reciprocity transtrip
 matrix list cmp, format(%7.3f)
-
+* setup (not printed in the book):
 quietly nwsaom, waves(w1 w2) groups(school) behavior(delinq1 delinq2) ///
-    outdegree reciprocity gwesp(.69) outactivity inpop inact reciact ///
-    interact(reciprocity#gwesp) egox(gender nact) uncentered(nact) ///
-    netbeh(egoxaltx) behegox behaltx dyadcov(Eth) linear quadratic ///
-    beheff(totalt outdeg) behfrom(gender) seed(1235)
+        outdegree reciprocity gwesp(.69) outactivity inpop inact reciact ///
+        interact(reciprocity#gwesp) egox(gender nact) uncentered(nact) ///
+        netbeh(egoxaltx) behegox behaltx dyadcov(Eth) linear quadratic ///
+        beheff(totalt outdeg) behfrom(gender) seed(1235)
 nwsaom refit, k3(3000)
