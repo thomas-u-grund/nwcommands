@@ -256,4 +256,4 @@ Name of Rscript, if it is not found
 	{help nwwebuse}, {help netexample}, {help nwfromedge}, {help nwimport}, {help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.35.1, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.36.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

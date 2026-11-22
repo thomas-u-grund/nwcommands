@@ -4,9 +4,24 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.36.0] - 2026-11-22
 
-**Schoch's networkdata collection (`nwnetworkdata`, `nwwebuse schoch`) needs no R any more.** The reader now decompresses and decodes the downloaded `.rda` files with Stata alone (gzip and bzip2, R's serialization format, igraph objects and lists of igraph objects) and gives the same networks as the conversion with R and the package igraph: the same nodes, ties, tie values, directed, valued and two-mode status, node names and node and tie attributes (checked on all 990 data sets of the collection). Nothing is shipped or hosted: the files are still downloaded from Schoch's repository when you ask for a data set. A damaged, truncated or oversized file is refused with a clear message (error 610), nothing is executed, and the reader stops at the limits it checks (size of the file and of the decompressed data, number of elements, nesting). The conversion with R remains available with the new option `withr`, and is used (after a note) if the reader without R meets an object it does not handle; this is the case only for the ego-centered object `gss_egor` (`nwnetworkdata tables`). Node labels made from names with accented letters now lose the accent in every system (R's own conversion gives different labels on different systems); the unchanged names are in `nd_name`. The first use of a very large list of networks (`animal_12`, 244 networks) takes several seconds; every other data set loads in about a second or less.
+**Summary.** Creating many networks is much faster, Schoch's networkdata collection needs no R any more, and two small corrections to commands and help files. The core Mata library is rebuilt, so the model packages are rebuilt with it (update all packages together, `nwinstall, models`).
+
+### Faster
+- **Creating, naming and dropping networks no longer slows down as more networks are stored.** Creating 1,000 random networks of 50 nodes (`nwrandom`) took 112 s and now takes 18 s, and creating a network from a matrix with `nwset, mat()` is faster still (1,000 networks in about 6 s); the time per network no longer grows with the number of networks in memory. Every command that stores a result network benefits (`nwrandom`, `nwload`, `nwreplace`, `nwgenerate`, ...); dropping 100 of 1,000 stored networks takes 0.3 s instead of 4 s. Loading a whole list of 244 networks from Schoch's collection (`nwnetworkdata animal_12`) takes about 13 s instead of about 49 s, and the data sets `atp` and `wta` about 1.7 s instead of 8 s. Results are unchanged.
+
+### Added
+- **Schoch's networkdata collection (`nwnetworkdata`, `nwwebuse schoch`) needs no R any more.** The reader now decompresses and decodes the downloaded `.rda` files with Stata alone (gzip and bzip2, R's serialization format, igraph objects and lists of igraph objects) and gives the same networks as the conversion with R and the package igraph: the same nodes, ties, tie values, directed, valued and two-mode status, node names and node and tie attributes (checked on all 990 data sets of the collection). Nothing is shipped or hosted: the files are still downloaded from Schoch's repository when you ask for a data set. A damaged, truncated or oversized file is refused with a clear message (error 610), nothing is executed, and the reader stops at the limits it checks (size of the file and of the decompressed data, number of elements, nesting). The conversion with R remains available with the new option `withr`, and is used (after a note) if the reader without R meets an object it does not handle; this is the case only for the ego-centered object `gss_egor` (`nwnetworkdata tables`). Node labels made from names with accented letters now lose the accent in every system (R's own conversion gives different labels on different systems); the unchanged names are in `nd_name`. The first use of a very large list of networks (`animal_12`, 244 networks) takes several seconds; every other data set loads in about a second or less.
+
+### Changed
+- `nwdissimilar` spells the distance type `manhattan`; the earlier spelling `manhatten` is still accepted, with the same result. `nwhierarchy`, the dialog boxes, the help files and the website follow.
+- Help: `nwsmall` describes the rewiring targets of `prob()` as the command picks them (outside the ring band, no existing tie); `nwsimilar` names `context()` as the main option.
+- `nwfromedge ..., undirected` symmetrizes the network once instead of three times (same result).
+
+### Rebuilt
+- The core Mata library is rebuilt (new compiled registry functions). `nwsaom`, `nwergm` and the other model packages are rebuilt for this version and require core 3.36.0 or later.
+
 ## [3.35.1] - 2026-11-22
 
 Documentation only. No command changes.

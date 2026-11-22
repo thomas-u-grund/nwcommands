@@ -267,4 +267,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.35.1, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.36.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
