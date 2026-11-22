@@ -13506,7 +13506,7 @@ void nwf_nwname_plain(string scalar netname, string scalar sid)
 }
 
 // _nwsyntax.ado, named network: r(id) from the name; when found, also the locals of nwf_syntax_info() (local __nwsx_info is then 1)
-void nwf_syntax_named(string scalar name)
+void nwf_syntax_named(string scalar name, | real scalar setlist)
 {
 	pointer(class `NWs' scalar) scalar p
 	real scalar id
@@ -13515,6 +13515,11 @@ void nwf_syntax_named(string scalar name)
 	id = first_index_match(p->nws.names, name)
 	st_numscalar("r(id)", id)
 	if (id > 0) {
+		// the r() values nwunab leaves behind for a single exact name (commands read r(netlist) and r(networks) after _nwsyntax)
+		if (setlist == 1) {
+			st_global("r(netlist)", name)
+			st_global("r(networks)", "1")
+		}
 		nwf_syntax_info(id)
 		st_local("__nwsx_info", "1")
 	}

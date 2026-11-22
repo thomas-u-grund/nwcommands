@@ -19,7 +19,7 @@ program _nwsyntax
 	if "`anything'" != "" & "`current'" == "" & "`min'" == "" {
 		if `: word count `anything'' == 1 & ("`max'" == "." | real("`max'") >= 1) {
 			if !(strpos("`anything'", "*") | strpos("`anything'", "?") | strpos("`anything'", "~") | strpos("`anything'", "-") | strpos("`anything'", "$")) {
-				capture mata: nwf_syntax_named("`anything'")
+				capture mata: nwf_syntax_named("`anything'", 1)
 				if _rc == 0 {
 					capture confirm number `r(id)'
 					if _rc == 0 {
@@ -27,8 +27,6 @@ program _nwsyntax
 							local _temp "`anything'"
 							local lastnet "`anything'"
 							local __nwsx_fast 1
-							// the r() values that nwunab leaves behind (commands read r(netlist) and r(networks) after _nwsyntax)
-							mata: st_global("r(netlist)", "`anything'"); st_global("r(networks)", "1")
 						}
 					}
 				}
