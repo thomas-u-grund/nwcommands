@@ -922,7 +922,12 @@ program _nwnd_build, rclass
 		}
 		else {
 			// parallel edges are summed (weights) or counted (unweighted: the tie value is their number)
-			qui collapse (sum) __v, by(__a __b)
+			// summed in the order of the rows of the table, so that the result does not depend on how Stata sorts equal keys
+			qui gen long __o = _n
+			qui sort __a __b __o
+			qui by __a __b: replace __v = sum(__v)
+			qui by __a __b: keep if _n == _N
+			qui drop __o
 			qui count if __v > 1 & !`valued'
 			if r(N) > 0 local valued 1
 		}
