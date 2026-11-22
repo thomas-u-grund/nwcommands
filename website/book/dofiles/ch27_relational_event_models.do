@@ -36,8 +36,6 @@ input sender receiver t
 end
 nwset sender receiver, eventtime(t) name(chat)
 
-nwrem chat, nodsnd nidrec
-
 * ============================================================
 * A real event log: company emails
 * ============================================================
