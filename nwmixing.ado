@@ -52,6 +52,8 @@ program nwmixing
 	// elsewhere in this package (`directed'/`valued' etc: the string
 	// "true" or empty).
 	local undirected = cond("`directed'" == "false", "true", "")
+	_nwmissnote `netname', quiet
+	local __nwmix_nmiss = r(nmissing)
 	_nwdatasync `netname'
 	
 	tempvar att
@@ -118,6 +120,15 @@ program nwmixing
 		di
 		di"{txt}       The network is undirected."
 		di"{txt}       The table shows two entries for each edge."
+	}
+	if "`undirected'" != "" {
+		di "{txt}{p 4 4 2}(undirected network){p_end}"
+	}
+	else {
+		di "{txt}{p 4 4 2}(directed network: the table counts every tie from ego (row) to alter (column)){p_end}"
+	}
+	if `__nwmix_nmiss' > 0 {
+		di "{txt}{p 4 4 2}(`__nwmix_nmiss' missing ties treated as 0){p_end}"
 	}
 	tempname tableres tablecol tablerow
 	// tab cuts value labels at 9 characters, so with no tab options the table is printed by hand below
