@@ -4,12 +4,12 @@ parent: "Command reference"
 grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
-description: "Import the networks of the R package networkdata (Schoch) from GitHub"
+description: "Import the networks of the networkdata collection (R package by David Schoch) from GitHub"
 ---
 
 # `nwnetworkdata`
 
-Import the networks of the R package networkdata (Schoch) from GitHub
+Import the networks of the networkdata collection (R package by David Schoch) from GitHub
 
 ## Syntax
 

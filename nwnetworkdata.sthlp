@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 23 29 2}{...}
-{p2col :nwnetworkdata {hline 2}}Import the networks of the R package networkdata (Schoch) from GitHub{p_end}
+{p2col :nwnetworkdata {hline 2}}Import the networks of the networkdata collection (R package by David Schoch) from GitHub{p_end}
 {p2colreset}{...}
 
 

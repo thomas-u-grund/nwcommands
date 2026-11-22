@@ -1,6 +1,6 @@
 cscript
 
-* nwnetworkdata / nwwebuse schoch without R: the reader that is written in Stata (nwnetworkdata_rda.ado).
+* nwnetworkdata / nwwebuse networkdata without R: the reader that is written in Stata (nwnetworkdata_rda.ado).
 * Part A needs neither R nor an internet connection: small .rda files are built here (an igraph object in R's serialization format,
 *   uncompressed and gzip-wrapped) and read with the reader; then corrupt, truncated, oversized and malicious variants, which must all stop
 *   with a clean error (r(9002) / r(610)), never hang, never produce a network.

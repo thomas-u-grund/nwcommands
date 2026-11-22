@@ -55,7 +55,7 @@ The core and the model packages `nwsaom`, `nwergm` and `nwdynam` ship compiled p
   The event data `manufacturing` (50,233 emails among 144 employees of a manufacturing company, 2010, with the
   reporting hierarchy in `manufacturing_nodes`) are a subset of Michalski 2020, doi:10.7910/DVN/6Z3CGX, CC0 1.0.
   The 989 network data sets (2,274 networks) of the R package networkdata (Schoch 2022, doi:10.5281/zenodo.7189928, MIT)
-  can be loaded with `nwwebuse schoch <name>` (`nwwebuse schoch` for an overview). No data of that collection are shipped:
+  can be loaded with `nwwebuse networkdata <name>` (`nwwebuse networkdata` for an overview). No data of that collection are shipped:
   they are downloaded when asked for and read with Stata alone (no R needed; option `withr` uses R with the package igraph instead).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own

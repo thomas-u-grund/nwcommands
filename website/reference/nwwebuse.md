@@ -16,12 +16,12 @@ Load network data over the web
 ```stata
 Load network data over the web
 nwwebuse ["]filename["] [, nwclear]
-Load a network from Schoch's collection networkdata (no R needed)
-nwwebuse schoch name [, options]
-nwwebuse name, schoch [options]
-nwwebuse schoch [, list]
-nwwebuse schoch list
-nwwebuse schoch describe name
+Load a network from the networkdata collection (R package by David Schoch; no R needed)
+nwwebuse networkdata name [, options]
+nwwebuse name, networkdata [options]
+nwwebuse networkdata [, list]
+nwwebuse networkdata list
+nwwebuse networkdata describe name
 Report URL from which datasets will be obtained
 nwwebuse query
 Specify URL from which network dataset will be obtained
@@ -36,7 +36,7 @@ nwwebuse set
 
 Several [network datasets](netexample) are available from this source. If *filename* is specified without a suffix, `.dta` is assumed.
 
-`nwwebuse` `schoch` *name* loads one of the networks of the R package *networkdata* by David Schoch (*https://github.com/schochastics/networkdata*), for example `nwwebuse schoch karate`. The data are not part of nwcommands: `nwnetworkdata` downloads them from Schoch's repository the first time you ask for a data set and keeps them in a cache, and reads them with Stata alone (**no R is needed**; the option `withr` of `nwnetworkdata` converts with R and the package igraph instead). Every load prints which network was loaded and where the data come from. Cite the collection and the original source of each data set; see [nwnetworkdata](nwnetworkdata) and [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/). `nwwebuse schoch` alone gives an overview; `nwwebuse schoch list` lists all data sets and `nwwebuse schoch describe` *name* shows one. Options (for example `name()`, `element()`) are passed to `nwnetworkdata`.
+`nwwebuse` `networkdata` *name* loads one of the networks of the R package *networkdata* by David Schoch (*https://github.com/schochastics/networkdata*), for example `nwwebuse networkdata karate`. The data are not part of nwcommands: `nwnetworkdata` downloads them from the author's repository the first time you ask for a data set and keeps them in a cache, and reads them with Stata alone (**no R is needed**; the option `withr` of `nwnetworkdata` converts with R and the package igraph instead). Every load prints which network was loaded and where the data come from. Cite the collection and the original source of each data set; see [nwnetworkdata](nwnetworkdata) and [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/). `nwwebuse networkdata` alone gives an overview; `nwwebuse networkdata list` lists all data sets and `nwwebuse networkdata describe` *name* shows one. Options (for example `name()`, `element()`) are passed to `nwnetworkdata`.
 
 `nwwebuse` `query` reports the URL from which network datasets will be obtained.
 

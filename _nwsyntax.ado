@@ -27,6 +27,8 @@ program _nwsyntax
 							local _temp "`anything'"
 							local lastnet "`anything'"
 							local __nwsx_fast 1
+							// the r() values that nwunab leaves behind (commands read r(netlist) and r(networks) after _nwsyntax)
+							mata: st_global("r(netlist)", "`anything'"); st_global("r(networks)", "1")
 						}
 					}
 				}

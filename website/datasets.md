@@ -18,29 +18,13 @@ The core package ships with example networks, so every tutorial and help example
 
 `nwclear` removes networks already in memory first. `help netexample` in Stata lists the same data sets with their variable codings. The node and tie counts below were checked by loading each data set with the current core.
 
-## More networks: the Schoch collection
-
-Besides the example data above, `nwwebuse schoch` loads the 989 network data sets (2,274 networks) of David Schoch's R package *networkdata*, for example `nwwebuse schoch karate` or `nwwebuse schoch southern_women`. nwcommands ships none of these data: each one is downloaded from Schoch's repository when you ask for it and read on your computer with Stata alone (no R needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from. The [Schoch networkdata](schoch/) page describes every data set with its source and references.
-
-## Friendship and social networks over time
+## Longitudinal social networks
 
 ### glasgow: Teenage Friends and Lifestyle Study
 - **What:** 50 girls from a school in the West of Scotland, friendship nominations (up to twelve best friends) at three waves, directed. Networks `glasgow1`, `glasgow2`, `glasgow3` (113, 116 and 122 ties). Attributes: smoking, alcohol use and sport at each wave.
 - **Source:** an excerpt of the Teenage Friends and Lifestyle Study. Michell, L. and Amos, A. (1997), *Social Science & Medicine* 44, 1861-1869; Pearson, M. and Michell, L. (2000), *Drugs: Education, Prevention and Policy* 7, 21-37; Pearson, M. and West, P. (2003), *Connections* 25(2), 59-76.
 - **Load:** `nwwebuse glasgow`
 - **Used in:** [nwsaom tutorials 1](../nwsaom/tutorial-1-first-saom/), [4](../nwsaom/tutorial-4-selection-influence/), [5](../nwsaom/tutorial-5-testing-comparing/), [6](../nwsaom/tutorial-6-beyond/), [7](../nwsaom/tutorial-7-composition-missing/), [9](../nwsaom/tutorial-9-undirected-twomode/), [10](../nwsaom/tutorial-10-endowment-interaction-rate/), [11](../nwsaom/tutorial-11-simulation/), [12](../nwsaom/tutorial-12-estimation-speed/) and [14](../nwsaom/tutorial-14-several-groups/) (as csv files, the 50 pupils cut into three groups).
-
-### s50
-- **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
-- **Source:** the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as `s50` with RSiena; the networks are the same as in `glasgow` above (the tie counts agree at all three waves), which also has the sport variable. References as for `glasgow`.
-- **Load:** `nwwebuse s50`
-- **Used in:** [Tutorial 19 (longitudinal models: an overview)](../tutorials/19-intro-longitudinal-models/).
-
-### klas12b: a Dutch school class
-- **What:** 26 students (17 girls, 9 boys) in their first year of secondary school, friendship at four waves three months apart, directed. Networks `klas12b_wave1` to `klas12b_wave4`, plus `klas12b_primary` (same primary school). Attributes: delinquency (four waves), alcohol (waves 2-4), sex, age, ethnicity, religion, school advice.
-- **Source:** collected by Andrea Knecht (supervised by Chris Baerveldt, University of Utrecht), 2003-2004. Knecht, A. (2008), *Friendship Selection and Friends' Influence*, PhD dissertation, University of Utrecht. Knecht, Snijders, Baerveldt, Steglich and Raub, "Friendship and delinquency: selection and influence processes in early adolescence", *Social Development*, [doi:10.1111/j.1467-9507.2009.00564.x](https://doi.org/10.1111/j.1467-9507.2009.00564.x).
-- **Load:** `nwwebuse klas12b`
-- **Used in:** [nwsaom tutorial 8](../nwsaom/tutorial-8-covariates/) (changing and dyadic covariates).
 
 ### hpotter: peer support in the Harry Potter books
 - **What:** support ties among 64 characters in each of the six books (`hpbook1` to `hpbook6`), directed. Attributes: school year, gender, house.
@@ -54,7 +38,31 @@ Besides the example data above, `nwwebuse schoch` loads the 989 network data set
 - **Load:** `nwwebuse kapferer`
 - **Used in:** [nwergm tutorial 3](../nwergm/tutorial-3-diagnostics/).
 
-## One-time networks
+### klas12b: a Dutch school class
+- **What:** 26 students (17 girls, 9 boys) in their first year of secondary school, friendship at four waves three months apart, directed. Networks `klas12b_wave1` to `klas12b_wave4`, plus `klas12b_primary` (same primary school). Attributes: delinquency (four waves), alcohol (waves 2-4), sex, age, ethnicity, religion, school advice.
+- **Source:** collected by Andrea Knecht (supervised by Chris Baerveldt, University of Utrecht), 2003-2004. Knecht, A. (2008), *Friendship Selection and Friends' Influence*, PhD dissertation, University of Utrecht. Knecht, Snijders, Baerveldt, Steglich and Raub, "Friendship and delinquency: selection and influence processes in early adolescence", *Social Development*, [doi:10.1111/j.1467-9507.2009.00564.x](https://doi.org/10.1111/j.1467-9507.2009.00564.x).
+- **Load:** `nwwebuse klas12b`
+- **Used in:** [nwsaom tutorial 8](../nwsaom/tutorial-8-covariates/) (changing and dyadic covariates).
+
+### s50
+- **What:** 50 actors, friendship at three waves, directed. Networks `s50_w1`, `s50_w2`, `s50_w3` (113, 116 and 122 ties, the same counts as `glasgow`). Attributes: alcohol and smoking at each wave. This is the 50-actor example that RSiena calls `s50`.
+- **Source:** the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as `s50` with RSiena; the networks are the same as in `glasgow` above (the tie counts agree at all three waves), which also has the sport variable. References as for `glasgow`.
+- **Load:** `nwwebuse s50`
+- **Used in:** [Tutorial 19 (longitudinal models: an overview)](../tutorials/19-intro-longitudinal-models/).
+
+## One-time social networks
+
+### florentine: Florentine families
+- **What:** 16 Renaissance Florentine families, marriage ties (`flomarriage`, undirected, 20 ties) and business ties (`flobusiness`, undirected, 15 ties). Attributes: wealth and number of priorates.
+- **Source:** Padgett, J. F. (1994), *Marriage and Elite Structure in Renaissance Florence, 1282-1500*, paper delivered to the Social Science History Association; Breiger, R. and Pattison, P. (1986), "Cumulated social roles", *Social Networks* 8, 215-256.
+- **Load:** `nwwebuse florentine`
+- **Used in:** the core tutorials [3](../tutorials/03-importing-exporting/), [6](../tutorials/07-manipulating-networks/) and [7](../tutorials/08-centrality/).
+
+### gang: a London street gang
+- **What:** 54 members of a youth gang, undirected, 133 ties (the reference lists tie types from hanging out to co-offending). Attributes: age, birthplace, residence, arrests, convictions, prison, music.
+- **Source:** collected by James Densley and Thomas Grund. Grund, T. and Densley, J. (2012), *European Journal of Criminology* 9(3), 388-406; Grund, T. and Densley, J. (2014), *Journal of Contemporary Criminal Justice*.
+- **Load:** `nwwebuse gang`
+- **Used in:** examples in the [command reference](../reference/nwplot).
 
 ### lazega: lawyers in a corporate law firm
 - **What:** 71 lawyers, three directed networks: advice (`lazega_adv`, 892 ties), co-work (`lazega_cow`) and friendship (`lazega_fr`, 575 ties). Attributes: age, gender, office, practice, school, seniority, status, years with the firm; office, practice and status also as numbers with value labels (`officenum`, `practicenum`, `partner`).
@@ -68,34 +76,22 @@ Besides the example data above, `nwwebuse schoch` loads the 989 network data set
 - **Load:** `nwwebuse mesa`
 - **Used in:** [nwergm tutorial 2](../nwergm/tutorial-2-terms/).
 
-### florentine: Florentine families
-- **What:** 16 Renaissance Florentine families, marriage ties (`flomarriage`, undirected, 20 ties) and business ties (`flobusiness`, undirected, 15 ties). Attributes: wealth and number of priorates.
-- **Source:** Padgett, J. F. (1994), *Marriage and Elite Structure in Renaissance Florence, 1282-1500*, paper delivered to the Social Science History Association; Breiger, R. and Pattison, P. (1986), "Cumulated social roles", *Social Networks* 8, 215-256.
-- **Load:** `nwwebuse florentine`
-- **Used in:** the core tutorials [3](../tutorials/03-importing-exporting/), [6](../tutorials/07-manipulating-networks/) and [7](../tutorials/08-centrality/).
-
 ### sampson: Sampson's monastery
 - **What:** 18 novice monks; ranked choices (1 to 3, valued, directed) at three times (`samplk1` to `samplk3`) and a liking ranking (`samplike`, 88 ties). Attributes: faction (Loyal, Turks, Outcasts) and "Cloisterville".
 - **Source:** Sampson, S. F. (1969), *Crisis in a Cloister*, unpublished doctoral dissertation, Cornell University.
 - **Load:** `nwwebuse sampson`
 - **Used in:** [nwlsm tutorial 2](../nwlsm/tutorial-2-bic-clusters/); listed in the [`netexample` reference](../reference/netexample).
 
-### zachary: karate club
-- **What:** 34 members of a university karate club, undirected: `zachary_bin` (binary) and `zachary_val` (valued, 78 ties, values up to 7). Attribute: the faction each member joined after the split.
-- **Source:** Zachary, W. W. (1977), "An information flow model for conflict and fission in small groups", *Journal of Anthropological Research* 33, 452-473.
-- **Load:** `nwwebuse zachary`
-- **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
-
-### gang: a London street gang
-- **What:** 54 members of a youth gang, undirected, 133 ties (the reference lists tie types from hanging out to co-offending). Attributes: age, birthplace, residence, arrests, convictions, prison, music.
-- **Source:** collected by James Densley and Thomas Grund. Grund, T. and Densley, J. (2012), *European Journal of Criminology* 9(3), 388-406; Grund, T. and Densley, J. (2014), *Journal of Contemporary Criminal Justice*.
-- **Load:** `nwwebuse gang`
-- **Used in:** examples in the [command reference](../reference/nwplot).
-
 ### usstates: US state borders
 - **What:** 50 US states, undirected, 107 ties (two states share a land border). Node labels are the two-letter abbreviations.
 - **Source:** see `help netexample`.
 - **Load:** `nwwebuse usstates`
+- **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
+
+### zachary: karate club
+- **What:** 34 members of a university karate club, undirected: `zachary_bin` (binary) and `zachary_val` (valued, 78 ties, values up to 7). Attribute: the faction each member joined after the split.
+- **Source:** Zachary, W. W. (1977), "An information flow model for conflict and fission in small groups", *Journal of Anthropological Research* 33, 452-473.
+- **Load:** `nwwebuse zachary`
 - **Used in:** listed in the [`netexample` reference](../reference/netexample); no tutorial yet.
 
 ## Two-mode (affiliation) networks
@@ -120,22 +116,6 @@ Both data sets are two-mode networks: nodes of the first mode (people, `_nwmode`
 ## Signed networks
 
 These networks are valued networks whose ties are +1 (positive: alliance, co-operation) or -1 (negative: enmity, opposition); no tie is 0. They are the examples for `nwbalance` (strong structural balance) and for the positive, negative and signed degree (`nwrecode` the positive and the negative part, then `nwdegree`). Load one of them with `nwclear` if other networks are in memory.
-
-### senate114 and senate93: US Senate co-sponsorship
-- **What:** signed networks of the US Senate, undirected. `senate114` (114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties (3,696 of 4,950 pairs); `senate93` (93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. Network `senate114` or `senate93`. Attributes: `state` and `party` (D, R, I; the 93rd Senate also has one senator with the party C, Conservative). Node names are the senators' surname and initial. A positive tie means that two senators co-sponsored significantly more bills together than expected by chance, a negative tie significantly fewer.
-- **Balance:** of the 74,140 closed triads of `senate114`, 72,139 (97.3 percent) are balanced; of the 25,355 closed triads of `senate93` only 13,947 (55.0 percent). In the 114th Senate 95 percent of the ties between senators of the same party are positive and 97 percent of the ties between parties are negative. The two numbers describe two cross sections and are not a test of how balance changes.
-- **Source:** Neal, Z. P. (2020), *A Sign of the Times: Dataset of US Congress signed network backbones from co-sponsorship data, 1973-2016*, figshare, https://doi.org/10.6084/m9.figshare.8096429, licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/); described in Neal, Z. P. (2020), "A sign of the times? Weak and strong polarization in the U.S. Congress, 1973-2016", *Social Networks* 60, 103-112, https://doi.org/10.1016/j.socnet.2018.07.007; the method is that of Neal, Z. P. (2014), "The backbone of bipartite projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other co-behaviors", *Social Networks* 39, 84-97, https://doi.org/10.1016/j.socnet.2014.06.001.
-- **Changes (derived data set):** These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd (1973-74) and the 114th (2015-16) Congress were kept (the two sheets S93 and S114 of the workbook); of the original columns only the tie sign (+1, -1; no tie is 0) and, from the row labels "Name (ST-P)", the senator's name, state and party were kept; the result is stored in the nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the code. Caveat: the signs are not observed likes and dislikes. They are inferred from bill co-sponsorship by a statistical model (the stochastic degree sequence model): +1 means two senators co-sponsored more bills together than expected by chance, -1 that they co-sponsored fewer.
-- **Caveat:** the networks are dense (75 percent of all pairs in the 114th Senate carry a tie) and the signs come from a model, so a high share of balanced triads is partly built in; treat the data as an example of a signed network and not as a measurement of friendship.
-- **Load:** `nwwebuse senate114` and `nwwebuse senate93`
-- **Used in:** no tutorial yet; examples for `nwbalance` and the signed degree.
-
-### gahuku: Gahuku-Gama tribes
-- **What:** alliances (positive, *rova*) and enmities (negative, *hina*) among 16 tribes of the Eastern Central Highlands of New Guinea, undirected: 16 nodes, 29 positive and 29 negative ties (58 of 120 pairs). Network `gahuku`; the nodes are named by tribe (Alika, Asaro, Gahuk, Gama, Gavev, Geham, Kohik, Kotun, Masil, Nagad, Nagam, Notoh, Ove, Seuve, Uheto, Ukudz); no attributes.
-- **Balance:** 68 closed triads, 59 balanced and 9 unbalanced in the strong sense; only 2 of them violate weak balance (7 of the 9 have three negative ties, which weak balance allows), so the network has three camps rather than two. Signed degree (positive minus negative) runs from -3 to 7.
-- **Source and licence:** Read, K. E. (1954), "Cultures of the Central Highlands, New Guinea", *Southwestern Journal of Anthropology* 10(1), 1-43, https://doi.org/10.1086/soutjanth.10.1.3629074; the signed network of the 16 tribes was analysed by Hage, P. and Harary, F. (1983), *Structural Models in Anthropology*, Cambridge University Press. The data have no licence statement of their own, so no licence is asserted here: they are facts (which of the 16 tribes are allied and which are enemies), not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The ties are taken from the version distributed with the R package signnet (data set tribes), which cites the UCINET data file gama.dat.
-- **Load:** `nwwebuse gahuku`
-- **Used in:** no tutorial yet; the small example for strong and weak balance.
 
 ### baerveldt: Dutch school classes
 - **What:** 15 classes of 33 to 91 pupils (810 in all) of the lower middle level of Dutch secondary schools, observed twice (third and fourth year, about a year apart). The file `baerveldt` holds 45 networks, three for each class *k*: `class*k*_w1` and `class*k*_w2` (directed friendship at the two waves) and `class*k*_ethn` (whether two pupils share an ethnic background). The plain data set `baerveldt_pupils` has, for the 810 pupils, `class`, `pupil` (number within the class), `gender`, `delinq1` and `delinq2` (self-reported delinquency), `school` and `nact` (log of the class size).
@@ -164,6 +144,22 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
   ```
 - **Used in:** the book *Network Analysis with Stata* (Chapter 26, joint models of several groups).
 
+### gahuku: Gahuku-Gama tribes
+- **What:** alliances (positive, *rova*) and enmities (negative, *hina*) among 16 tribes of the Eastern Central Highlands of New Guinea, undirected: 16 nodes, 29 positive and 29 negative ties (58 of 120 pairs). Network `gahuku`; the nodes are named by tribe (Alika, Asaro, Gahuk, Gama, Gavev, Geham, Kohik, Kotun, Masil, Nagad, Nagam, Notoh, Ove, Seuve, Uheto, Ukudz); no attributes.
+- **Balance:** 68 closed triads, 59 balanced and 9 unbalanced in the strong sense; only 2 of them violate weak balance (7 of the 9 have three negative ties, which weak balance allows), so the network has three camps rather than two. Signed degree (positive minus negative) runs from -3 to 7.
+- **Source and licence:** Read, K. E. (1954), "Cultures of the Central Highlands, New Guinea", *Southwestern Journal of Anthropology* 10(1), 1-43, https://doi.org/10.1086/soutjanth.10.1.3629074; the signed network of the 16 tribes was analysed by Hage, P. and Harary, F. (1983), *Structural Models in Anthropology*, Cambridge University Press. The data have no licence statement of their own, so no licence is asserted here: they are facts (which of the 16 tribes are allied and which are enemies), not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The ties are taken from the version distributed with the R package signnet (data set tribes), which cites the UCINET data file gama.dat.
+- **Load:** `nwwebuse gahuku`
+- **Used in:** no tutorial yet; the small example for strong and weak balance.
+
+### senate114 and senate93: US Senate co-sponsorship
+- **What:** signed networks of the US Senate, undirected. `senate114` (114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties (3,696 of 4,950 pairs); `senate93` (93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. Network `senate114` or `senate93`. Attributes: `state` and `party` (D, R, I; the 93rd Senate also has one senator with the party C, Conservative). Node names are the senators' surname and initial. A positive tie means that two senators co-sponsored significantly more bills together than expected by chance, a negative tie significantly fewer.
+- **Balance:** of the 74,140 closed triads of `senate114`, 72,139 (97.3 percent) are balanced; of the 25,355 closed triads of `senate93` only 13,947 (55.0 percent). In the 114th Senate 95 percent of the ties between senators of the same party are positive and 97 percent of the ties between parties are negative. The two numbers describe two cross sections and are not a test of how balance changes.
+- **Source:** Neal, Z. P. (2020), *A Sign of the Times: Dataset of US Congress signed network backbones from co-sponsorship data, 1973-2016*, figshare, https://doi.org/10.6084/m9.figshare.8096429, licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/); described in Neal, Z. P. (2020), "A sign of the times? Weak and strong polarization in the U.S. Congress, 1973-2016", *Social Networks* 60, 103-112, https://doi.org/10.1016/j.socnet.2018.07.007; the method is that of Neal, Z. P. (2014), "The backbone of bipartite projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other co-behaviors", *Social Networks* 39, 84-97, https://doi.org/10.1016/j.socnet.2014.06.001.
+- **Changes (derived data set):** These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd (1973-74) and the 114th (2015-16) Congress were kept (the two sheets S93 and S114 of the workbook); of the original columns only the tie sign (+1, -1; no tie is 0) and, from the row labels "Name (ST-P)", the senator's name, state and party were kept; the result is stored in the nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the code. Caveat: the signs are not observed likes and dislikes. They are inferred from bill co-sponsorship by a statistical model (the stochastic degree sequence model): +1 means two senators co-sponsored more bills together than expected by chance, -1 that they co-sponsored fewer.
+- **Caveat:** the networks are dense (75 percent of all pairs in the 114th Senate carry a tie) and the signs come from a model, so a high share of balanced triads is partly built in; treat the data as an example of a signed network and not as a measurement of friendship.
+- **Load:** `nwwebuse senate114` and `nwwebuse senate93`
+- **Used in:** no tutorial yet; examples for `nwbalance` and the signed degree.
+
 ## Event data
 
 ### manufacturing: emails in a manufacturing company
@@ -179,25 +175,20 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
 
 These show that the commands work on any network.
 
-### macaque: cortical areas of the macaque
-- **What:** 45 visuotactile areas of the macaque cortex, directed, 463 ties (a projection from one area to another).
-- **Source:** Negyessy, L., Nepusz, T., Kocsis, L. and Bazso, F. (2006), *European Journal of Neuroscience* 23(7), 1919-1930.
-- **Load:** `nwwebuse macaque`
-
 ### chesapeake: a food web
 - **What:** 39 compartments of the Chesapeake Bay ecosystem, directed and valued (carbon flow), 176 ties. Attributes: compartment type and biomass.
 - **Source:** Baird, D. and Ulanowicz, R. E. (1989), "The seasonal dynamics of the Chesapeake Bay ecosystem", *Ecological Monographs* 59, 329-364.
 - **Load:** `nwwebuse chesapeake`
 
+### macaque: cortical areas of the macaque
+- **What:** 45 visuotactile areas of the macaque cortex, directed, 463 ties (a projection from one area to another).
+- **Source:** Negyessy, L., Nepusz, T., Kocsis, L. and Bazso, F. (2006), *European Journal of Neuroscience* 23(7), 1919-1930.
+- **Load:** `nwwebuse macaque`
+
 ### usair: US airports
 - **What:** the 50 busiest US airports, directed, direct routes between them. Attributes: name, city, latitude, longitude, degree in the full US network.
 - **Source and licence:** OpenFlights airport and route databases, [openflights.org/data](https://openflights.org/data), made available under the [Open Database License (ODbL 1.0)](https://opendatacommons.org/licenses/odbl/1-0/). This is a derived database, adapted by Thomas U. Grund (see `usair_full` below for the changes); it is offered under the ODbL, not under the GPL-3 of the code.
 - **Load:** `nwwebuse usair`
-
-### usmap: outlines of the US states (a map, not a network)
-- **What:** the borders of the 50 US states and the District of Columbia as lines, for drawing a network with longitude and latitude under `nwplot ..., nodexy(Lon Lat) basemap(usmap)`. A plain Stata file in the format of `spshape2dta` (`_ID`, `_X` longitude, `_Y` latitude, `shape_order`, `state`); rows with a missing `_X` separate the lines. The Aleutian islands west of 180 degrees are shifted by 360 degrees (to longitudes below -180) so that Alaska stays in one piece.
-- **Source and licence:** US Census Bureau, cartographic boundary file `cb_2018_us_state_20m` (2018, scale 1:20,000,000), [census.gov/geographies/mapping-files](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html); a work of the US federal government and so in the public domain. Converted with `spshape2dta`; Puerto Rico left out.
-- **Load:** not loaded with `nwwebuse`; give the name to `basemap()`.
 
 ### usair_full: the full US airport network
 - **What:** every US airport with at least one scheduled non-stop domestic route in OpenFlights' route database: 549 airports and 5,450 directed routes (density 0.018). Network `usair_full`, node names are the IATA codes (ATL, DEN, ...). Attributes: `iata`, `name`, `city`, `lat`, `lon` and the out-, in- and total degree (`_outdegree`, `_indegree`, `_degree`). The network falls into three connected components: 541 airports, an Alaska/Aleutian seaplane cluster of 4 and a San Juan Islands seaplane cluster of 4. A real example of a larger, messier network: Anchorage has by far the largest betweenness, and closeness needs `unconnected(max)`.
@@ -206,6 +197,11 @@ These show that the commands work on any network.
 - **Licence and redistribution:** this derived database is made available under the Open Database License 1.0 (ODbL), with attribution to OpenFlights (openflights.org); any database derived from it must again be offered under the ODbL and kept open. It is not covered by the GPL-3 of the code.
 - **Load:** `nwwebuse usair_full`
 - **Used in:** the book *Network Analysis with Stata* (performance appendix); examples for the centrality commands, `nwcomponents` and `nwcloseness, unconnected(max)`.
+
+### usmap: outlines of the US states (a map, not a network)
+- **What:** the borders of the 50 US states and the District of Columbia as lines, for drawing a network with longitude and latitude under `nwplot ..., nodexy(Lon Lat) basemap(usmap)`. A plain Stata file in the format of `spshape2dta` (`_ID`, `_X` longitude, `_Y` latitude, `shape_order`, `state`); rows with a missing `_X` separate the lines. The Aleutian islands west of 180 degrees are shifted by 360 degrees (to longitudes below -180) so that Alaska stays in one piece.
+- **Source and licence:** US Census Bureau, cartographic boundary file `cb_2018_us_state_20m` (2018, scale 1:20,000,000), [census.gov/geographies/mapping-files](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html); a work of the US federal government and so in the public domain. Converted with `spshape2dta`; Puerto Rico left out.
+- **Load:** not loaded with `nwwebuse`; give the name to `basemap()`.
 
 ## Data sets used by RSiena and where to find them
 
@@ -225,3 +221,7 @@ The Siena project describes and distributes its example data at [stats.ox.ac.uk/
 | Lazega lawyers | yes: `nwwebuse lazega` |
 
 Please check the terms of use on the Siena page before you reuse these data.
+
+## More networks: the networkdata collection
+
+Besides the example data shipped with nwcommands (above), `nwwebuse networkdata` loads the 989 network data sets (2,274 networks) of David Schoch's R package *networkdata*, for example `nwwebuse networkdata karate` or `nwwebuse networkdata southern_women`. nwcommands ships none of these data: each one is downloaded from Schoch's repository when you ask for it and read on your computer with Stata alone (no R needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from. The [Schoch networkdata](schoch/) page describes every data set with its source and references.

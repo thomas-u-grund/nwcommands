@@ -10,7 +10,7 @@ permalink: /nwcommands/install/
 {: .no_toc }
 
 Requirements: Stata 17 or later. The packages are tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough. The Mata
-libraries are built with Stata 17, and older versions are untested. No other software is needed: nwcommands runs without R, also the reader for Schoch's networkdata collection (`nwnetworkdata`, `nwwebuse schoch`), which reads the data it downloads with Stata alone (an option can use R with the package igraph instead).
+libraries are built with Stata 17, and older versions are untested. No other software is needed: nwcommands runs without R, also the reader for the networkdata collection (R package by David Schoch; `nwnetworkdata`, `nwwebuse networkdata`), which reads the data it downloads with Stata alone (an option can use R with the package igraph instead).
 
 ## Everything: the core and the seven model packages
 

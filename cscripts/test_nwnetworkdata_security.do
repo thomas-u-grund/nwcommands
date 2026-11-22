@@ -1,6 +1,6 @@
 cscript
 
-* nwnetworkdata / nwwebuse schoch: input checks. No internet and no R needed: every call below must stop with a clean error
+* nwnetworkdata / nwwebuse networkdata: input checks. No internet and no R needed: every call below must stop with a clean error
 * BEFORE anything is downloaded or any program is started. The canary file would be created if a shell command were built
 * from a name or a path.
 
@@ -14,7 +14,7 @@ tempname fh
 foreach bad in "karate; touch `canary'" "karate && touch `canary'" "karate|touch `canary'" "../karate" "karate/../x" "ka rate" {
 	capture nwnetworkdata load `"`bad'"', nwclear
 	assert inlist(_rc, 198, 111)
-	capture nwwebuse schoch `"`bad'"', nwclear
+	capture nwwebuse networkdata `"`bad'"', nwclear
 	assert inlist(_rc, 198, 111)
 	capture nwnetworkdata describe `"`bad'"'
 	assert inlist(_rc, 198, 111)
@@ -110,6 +110,6 @@ assert _rc != 0
 * the catalogue of names still lists, without R and without internet
 nwnetworkdata list karate
 assert r(n_objects) == 2
-nwwebuse schoch
-nwwebuse schoch describe karate
+nwwebuse networkdata
+nwwebuse networkdata describe karate
 di "PASS test_nwnetworkdata_security"

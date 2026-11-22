@@ -15,51 +15,40 @@ Example network data sets
 
 - The datasets listed are in [Stata network file-format](nwsave) and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); `describe` shows the variables of a data set without loading it.
 
-- [gang](netexample)`use` | `describe`
-- [glasgow](netexample)`use` | `describe`
-- [florentine](netexample)`use` | `describe`
-- [usstates](netexample)`use` | `describe`
-- [klas12b](netexample)`use` | `describe`
-- [hpotter](netexample)`use` | `describe`
-- [macaque](netexample)`use` | `describe`
-- [chesapeake](netexample)`use` | `describe`
-- [usair](netexample)`use` | `describe`
-- [usair_full](netexample)`use` | `describe`
-- [lazega](netexample)`use` | `describe`
-- [s50](netexample)`use` | `describe`
-- [sampson](netexample)`use` | `describe`
-- [mesa](netexample)`use` | `describe`
-- [zachary](netexample)`use` | `describe`
-- [kapferer](netexample)`use` | `describe`
-- [manufacturing](netexample)`use` | `describe`
-- [davis](netexample)`use` | `describe`
-- [ftdirectors_se](netexample)`use` | `describe`
-- [senate114](netexample)`use` | `describe`
-- [senate93](netexample)`use` | `describe`
-- [gahuku](netexample)`use` | `describe`
-- [baerveldt](netexample)`use` | `describe`
-- [schoch (collection)](netexample)`overview` | 989 network data sets of the R package networkdata
+- *Longitudinal social networks*
+  - [glasgow](netexample)`use` | `describe`
+  - [hpotter](netexample)`use` | `describe`
+  - [kapferer](netexample)`use` | `describe`
+  - [klas12b](netexample)`use` | `describe`
+  - [s50](netexample)`use` | `describe`
+- *One-time social networks*
+  - [florentine](netexample)`use` | `describe`
+  - [gang](netexample)`use` | `describe`
+  - [lazega](netexample)`use` | `describe`
+  - [mesa](netexample)`use` | `describe`
+  - [sampson](netexample)`use` | `describe`
+  - [usstates](netexample)`use` | `describe`
+  - [zachary](netexample)`use` | `describe`
+- *Two-mode networks*
+  - [davis](netexample)`use` | `describe`
+  - [ftdirectors_se](netexample)`use` | `describe`
+- *Signed networks*
+  - [baerveldt](netexample)`use` | `describe`
+  - [baerveldt19](netexample)`use` | `describe`
+  - [gahuku](netexample)`use` | `describe`
+  - [senate114](netexample)`use` | `describe`
+  - [senate93](netexample)`use` | `describe`
+- *Event data*
+  - [manufacturing](netexample)`use` | `describe`
+- *Networks that are not social*
+  - [chesapeake](netexample)`use` | `describe`
+  - [macaque](netexample)`use` | `describe`
+  - [usair](netexample)`use` | `describe`
+  - [usair_full](netexample)`use` | `describe`
+  - [usmap](netexample) (a map for `basemap(usmap)`, not a network) | `describe`
+- *The networkdata collection (not shipped)*
+  - [networkdata (collection)](netexample)`overview` | 989 network data sets of the R package networkdata
 
-## Gang data
-
-**Networks:** *gang*
-
-**Vertex attributes:** *Age, Birthplace, Residence, Arrests, Convictions, Prison, Music*.
-
-This is a dataset of co-offending in a London-based youth gang. Data were collected by James Densley and Thomas Grund. The data has been used in Grund & Densley (2012) and Grund & Densley (2014).
-
-Network tie values:
-
-- = 1 (hang out together)
-- = 2 (co-offend together)
-- = 3 (co-offend together, serious crime)
-- = 4 (co-offend together, serious crime, kin)
-
-**References**
-
-Grund, T. and Densley, J. (2014) Ethnic Homophily and Triad Closure: Mapping Internal Gang Structure Using Exponential Random Graph Models. Journal of Contemporary Criminal Justice. online first
-
-Grund, T. and Densley, J. (2012) Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang. European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
 
 ## Glasgow data
 
@@ -100,31 +89,31 @@ Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis an
 
 Pearson, Michael, Steglich, Christian, and Snijders, Tom. Homophily and assimilation among sport-active adolescent substance users. Connections 27(1), 47-63. 2006.
 
-## Florentine data
+## Harry Potter data
 
-**Networks:** *flomarriage* and *flobusiness*
+**Networks:** *hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6* (directed)
 
-**Vertex attributes:** *wealth* and *priorates*
+**Vertex attributes:** *schoolyear, gender, and house*
 
-This is a dataset of marriage and business ties among Renaissance Florentine families. The data is originally from Padgett (1994). Breiger & Pattison (1986), in their discussion of local role analysis, use a subset of data on the social relations among Renaissance Florentine families (person aggregates) collected by John Padgett from historical documents. The relations are marriage alliances (flomarriage between the families) and business relationships (recorded financial ties such as loans, credits and joint partnerships).
+Goele Bossaert and Nadine Meidert have coded the support ties between 64 characters in the well-known books about Harry Potter. They analyzed this by Siena; their findings were published in
 
-As Breiger & Pattison point out, the original data are symmetrically coded. This is perhaps acceptable perhaps for marital ties. Vertex information is provided on (1) *wealth* each family's net wealth in 1427 (in thousands of lira); (2) the number of *priorates* (seats on the civic council) held between 1282- 1344.
+**Reference**
 
-Substantively, the data include families who were locked in a struggle for political control of the city of Florence around 1430. Two factions were dominant in this struggle: one revolved around the infamous Medicis (9), the other around the powerful Strozzis (15).
+Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal of Applied Sciences, Vol. 3 No. 2, pp. 174-185. http://dx.doi.org/10.4236/ojapps.2013.32024
 
-**References**
+## Kapferer tailor shop data
 
-Padgett, John F. 1994. Marriage and Elite Structure in Renaissance Florence, 1282-1500. Paper delivered to the Social Science History Association.
+**Networks:** *kapferer_t1* (39 nodes), *kapferer_t2* (43 nodes) - both undirected
 
-Breiger R. and Pattison P. (1986). Cumulated social roles: The duality of persons and their algebras, Social Networks, 8, 215-256.
+**Vertex attributes:** none
 
-## US states data
+Bruce Kapferer's 1972 study of sociation among workers at a Zambian tailor shop, observed at two time points around a labor dispute (an unsuccessful attempt to unionize) - *kapferer_t1* is the "before" network, *kapferer_t2* the "after" one. The two networks do NOT share a common node set (workers left and joined the shop between observations, a real and deliberate feature of the original study, not a data-quality issue) - they are two independent networks, not a two-wave panel on the same actors the way [s50](netexample) / [klas12b](netexample) are.
 
-**Networks:** *usstates* (undirected)
+**Reference**
 
-**Vertex attributes:** none - vertex labels are the two-letter state abbreviations.
+Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester University Press.
 
-A tie between two US states means they share a land border. 50 states, 107 border ties.
+Distributed with R's own `ergm` package as `data(kapferer)` (part of the Statnet Project).
 
 ## Klas12b data
 
@@ -203,70 +192,6 @@ Snijders, T.A.B., Steglich, C.E.G., and van de Bunt, G.G. (2010). Introduction t
 
 Steglich, Christian, and Knecht, Andrea (2009), Die statistische Analyse dynamischer Netzwerkdaten. In: Christian Stegbauer and Roger Häußling (Eds.), Handbuch der Netzwerkforschung, Wiesbaden (Verlag für Sozialwissenschaften).
 
-## Harry Potter data
-
-**Networks:** *hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6* (directed)
-
-**Vertex attributes:** *schoolyear, gender, and house*
-
-Goele Bossaert and Nadine Meidert have coded the support ties between 64 characters in the well-known books about Harry Potter. They analyzed this by Siena; their findings were published in
-
-**Reference**
-
-Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal of Applied Sciences, Vol. 3 No. 2, pp. 174-185. http://dx.doi.org/10.4236/ojapps.2013.32024
-
-## Macaque cortical network data
-
-**Networks:** *macaque*
-
-**Vertex attributes:** none - vertex names are the cortical area labels themselves (V1, V2, MT, FEF, and so on).
-
-This is a directed network of 45 visuotactile areas of the macaque cerebral cortex, with a tie from area *i* to area *j* whenever a projection from *i* to *j* is documented in the neuroanatomical literature. Not a social network: included as a worked example of a real, published, non-social directed network of comparable size to this package's other bundled examples.
-
-**Reference**
-
-Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European Journal of Neuroscience, 23(7), 1919-1930.
-
-## Chesapeake Bay food web data
-
-**Networks:** *chesapeake* (directed, valued - tie value is carbon flux)
-
-**Vertex attributes:** *ECO* and *Biomass*
-
-This is a food web of the Chesapeake Bay mesohaline ecosystem: 39 compartments (mostly species, plus a handful of bookkeeping compartments - Input, Output, Respiration, and two organic-carbon pools), with a directed, valued tie from compartment *i* to compartment *j* whenever carbon flows from *i* to *j*. *ECO* codes the compartment type (1 = living organism, 2 = nonliving organic pool, 3 = Input, 4 = Output, 5 = Respiration); *Biomass* is each compartment's standing biomass. A handful of species names are truncated at 25 characters in the original source data (e.g. "heterotrophic microflagel"), inherited as-is from that source rather than silently guessed at. Not a social network: included as a worked example of a real, published food web of comparable size to this package's other bundled examples.
-
-**Reference**
-
-Baird, D. and Ulanowicz, R.E. (1989). The seasonal dynamics of the Chesapeake Bay ecosystem. Ecological Monographs, 59, 329-364.
-
-## US airports data
-
-**Networks:** *usair*
-
-**Vertex attributes:** *Name, City, Lat, Lon, degree*
-
-This is a directed network of the 50 busiest US airports (by direct-route degree) and the direct routes between them, built from OpenFlights' airport and route databases. A tie from airport *i* to airport *j* means at least one airline flew a direct, no-stop route from *i* to *j* at the time OpenFlights' route data was current. Restricted to the top 50 airports by degree, not the full set of several hundred US airports OpenFlights covers, to keep this network at a size comparable to this package's other example networks - *degree* itself records each airport's own direct-route degree in the *full*, unrestricted US network, not just within this 50-airport subset, so it will not generally match [nwdegree](nwdegree)'s own count computed on *usair* as loaded. Not a social network: included as a worked example of a real, non-social, directed transportation network. The outlines of the US states, for drawing the airports on a map, are in **usmap** (not a network): `nwplot usair, nodexy(Lon Lat) basemap(usmap)` (see [nwplot](nwplot)).
-
-**Reference**
-
-OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.
-
-## Lazega lawyers data
-
-**Networks:** *lazega_adv, lazega_cow, lazega_fr* (directed - advice, co-work, and friendship ties among the same 71 lawyers)
-
-**Vertex attributes:** *age, gender, office, officenum, practice, practicenum, school, seniority, status, partner, yrs_frm*
-
-This is Emmanuel Lazega's corporate law partnership network: three ties among 71 lawyers at a Northeastern US corporate law firm - *lazega_adv* ("Who do you go to for professional advice?"), *lazega_cow* ("Who do you work with?"), and *lazega_fr* ("Who is a personal friend?"). One of the standard multiplex/multi-relational ERGM and SAOM teaching networks, widely used to illustrate same-office/same-practice/same-status homophily. *status* is *partner* or *associate*; *practice* is *litigation* or *corporate*; *office* is the lawyer's own Boston/Hartford/ Providence location; *school* is *Harvard/Yale*, *UConnecticut*, or *other*; *seniority* is each lawyer's own rank by years since joining the firm; *yrs_frm* is years with the firm. *officenum* (1 Boston, 2 Hartford, 3 Providence), *practicenum* (1 corporate, 2 litigation) and *partner* (1 partner, 0 associate) hold office, practice and status as numbers with value labels, for commands that need numeric groups. Node labels are plain sequential ids (1-71) - the original data anonymizes the lawyers themselves.
-
-**Reference**
-
-Lazega, E. (2001). The Collegial Phenomenon: The Social Mechanisms of Cooperation Among Peers in a Corporate Law Partnership. Oxford University Press.
-
-Lazega, E. and van Duijn, M. (1997). Position in formal structure, personal characteristics and choices of advisors in a law firm: A logistic regression model for dyadic network data. Social Networks, 19, 375-397.
-
-Distributed with R's own `ergm.multi` package as `data(Lazega)` (part of the Statnet Project).
-
 ## s50 data
 
 **Networks:** *s50_w1, s50_w2, s50_w3* (directed - friendship nominations among the same 50 girls at three time points)
@@ -285,19 +210,60 @@ Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis an
 
 Distributed with the RSiena software/package (part of the Siena/RSiena project, https://www.stats.ox.ac.uk/~snijders/siena/).
 
-## Sampson monastery data
+## Florentine data
 
-**Networks:** *samplk1, samplk2, samplk3* (directed, valued - positive-affect ranking among the same 18 monks at three time points), *samplike* (directed, valued - the same monks' own final-wave "liking" ranking, the relation most commonly used on its own in ERGM teaching)
+**Networks:** *flomarriage* and *flobusiness*
 
-**Vertex attributes:** *faction, cloisterville*
+**Vertex attributes:** *wealth* and *priorates*
 
-This is Samuel Sampson's classic monastery study: 18 novice monks at a New England monastery, each asked to rank their top three (later four) choices on several relations across the training period leading up to a political crisis that split the monastery into factions. Every tie value is 1/2/3, ranking that choice's own strength (1 = highest). *faction* is each monk's own eventually-revealed group - *Loyal* (supported the group in power), *Turks* (the opposition), or *Outcasts* (aligned with neither) - the single most commonly cited example of using ERGM/SNA methods to recover real-world faction structure from network data alone. *cloisterville* flags the handful of monks who transferred in from a minor seminary already called "Cloisterville" rather than entering directly. Node labels are the monks' own (pseudonymous, as originally published) first names.
+This is a dataset of marriage and business ties among Renaissance Florentine families. The data is originally from Padgett (1994). Breiger & Pattison (1986), in their discussion of local role analysis, use a subset of data on the social relations among Renaissance Florentine families (person aggregates) collected by John Padgett from historical documents. The relations are marriage alliances (flomarriage between the families) and business relationships (recorded financial ties such as loans, credits and joint partnerships).
+
+As Breiger & Pattison point out, the original data are symmetrically coded. This is perhaps acceptable perhaps for marital ties. Vertex information is provided on (1) *wealth* each family's net wealth in 1427 (in thousands of lira); (2) the number of *priorates* (seats on the civic council) held between 1282- 1344.
+
+Substantively, the data include families who were locked in a struggle for political control of the city of Florence around 1430. Two factions were dominant in this struggle: one revolved around the infamous Medicis (9), the other around the powerful Strozzis (15).
+
+**References**
+
+Padgett, John F. 1994. Marriage and Elite Structure in Renaissance Florence, 1282-1500. Paper delivered to the Social Science History Association.
+
+Breiger R. and Pattison P. (1986). Cumulated social roles: The duality of persons and their algebras, Social Networks, 8, 215-256.
+
+## Gang data
+
+**Networks:** *gang*
+
+**Vertex attributes:** *Age, Birthplace, Residence, Arrests, Convictions, Prison, Music*.
+
+This is a dataset of co-offending in a London-based youth gang. Data were collected by James Densley and Thomas Grund. The data has been used in Grund & Densley (2012) and Grund & Densley (2014).
+
+Network tie values:
+
+- = 1 (hang out together)
+- = 2 (co-offend together)
+- = 3 (co-offend together, serious crime)
+- = 4 (co-offend together, serious crime, kin)
+
+**References**
+
+Grund, T. and Densley, J. (2014) Ethnic Homophily and Triad Closure: Mapping Internal Gang Structure Using Exponential Random Graph Models. Journal of Contemporary Criminal Justice. online first
+
+Grund, T. and Densley, J. (2012) Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang. European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
+
+## Lazega lawyers data
+
+**Networks:** *lazega_adv, lazega_cow, lazega_fr* (directed - advice, co-work, and friendship ties among the same 71 lawyers)
+
+**Vertex attributes:** *age, gender, office, officenum, practice, practicenum, school, seniority, status, partner, yrs_frm*
+
+This is Emmanuel Lazega's corporate law partnership network: three ties among 71 lawyers at a Northeastern US corporate law firm - *lazega_adv* ("Who do you go to for professional advice?"), *lazega_cow* ("Who do you work with?"), and *lazega_fr* ("Who is a personal friend?"). One of the standard multiplex/multi-relational ERGM and SAOM teaching networks, widely used to illustrate same-office/same-practice/same-status homophily. *status* is *partner* or *associate*; *practice* is *litigation* or *corporate*; *office* is the lawyer's own Boston/Hartford/ Providence location; *school* is *Harvard/Yale*, *UConnecticut*, or *other*; *seniority* is each lawyer's own rank by years since joining the firm; *yrs_frm* is years with the firm. *officenum* (1 Boston, 2 Hartford, 3 Providence), *practicenum* (1 corporate, 2 litigation) and *partner* (1 partner, 0 associate) hold office, practice and status as numbers with value labels, for commands that need numeric groups. Node labels are plain sequential ids (1-71) - the original data anonymizes the lawyers themselves.
 
 **Reference**
 
-Sampson, S.F. (1969). Crisis in a Cloister. Unpublished doctoral dissertation, Cornell University.
+Lazega, E. (2001). The Collegial Phenomenon: The Social Mechanisms of Cooperation Among Peers in a Corporate Law Partnership. Oxford University Press.
 
-Distributed with R's own `ergm` package as `data(samplk)`/`data(sampson)` (part of the Statnet Project).
+Lazega, E. and van Duijn, M. (1997). Position in formal structure, personal characteristics and choices of advisors in a law firm: A logistic regression model for dyadic network data. Social Networks, 19, 375-397.
+
+Distributed with R's own `ergm.multi` package as `data(Lazega)` (part of the Statnet Project).
 
 ## Mesa High data
 
@@ -315,6 +281,28 @@ Hunter, D.R., Handcock, M.S., Butts, C.T., Goodreau, S.M., and Morris, M. (2008)
 
 Distributed with R's own `ergm` package as `data(faux.mesa.high)` (part of the Statnet Project).
 
+## Sampson monastery data
+
+**Networks:** *samplk1, samplk2, samplk3* (directed, valued - positive-affect ranking among the same 18 monks at three time points), *samplike* (directed, valued - the same monks' own final-wave "liking" ranking, the relation most commonly used on its own in ERGM teaching)
+
+**Vertex attributes:** *faction, cloisterville*
+
+This is Samuel Sampson's classic monastery study: 18 novice monks at a New England monastery, each asked to rank their top three (later four) choices on several relations across the training period leading up to a political crisis that split the monastery into factions. Every tie value is 1/2/3, ranking that choice's own strength (1 = highest). *faction* is each monk's own eventually-revealed group - *Loyal* (supported the group in power), *Turks* (the opposition), or *Outcasts* (aligned with neither) - the single most commonly cited example of using ERGM/SNA methods to recover real-world faction structure from network data alone. *cloisterville* flags the handful of monks who transferred in from a minor seminary already called "Cloisterville" rather than entering directly. Node labels are the monks' own (pseudonymous, as originally published) first names.
+
+**Reference**
+
+Sampson, S.F. (1969). Crisis in a Cloister. Unpublished doctoral dissertation, Cornell University.
+
+Distributed with R's own `ergm` package as `data(samplk)`/`data(sampson)` (part of the Statnet Project).
+
+## US states data
+
+**Networks:** *usstates* (undirected)
+
+**Vertex attributes:** none - vertex labels are the two-letter state abbreviations.
+
+A tie between two US states means they share a land border. 50 states, 107 border ties.
+
 ## Zachary karate club data
 
 **Networks:** *zachary_bin* (undirected, binary), *zachary_val* (undirected, valued - the same ties, weighted by the number of contexts the two members interacted in outside the club)
@@ -329,19 +317,71 @@ Zachary, W.W. (1977). An information flow model for conflict and fission in smal
 
 Distributed with R's own `igraphdata` package as `data(karate)`.
 
-## Kapferer tailor shop data
+## Southern women (two-mode)
 
-**Networks:** *kapferer_t1* (39 nodes), *kapferer_t2* (43 nodes) - both undirected
+**Networks:** *davis*
 
-**Vertex attributes:** none
-
-Bruce Kapferer's 1972 study of sociation among workers at a Zambian tailor shop, observed at two time points around a labor dispute (an unsuccessful attempt to unionize) - *kapferer_t1* is the "before" network, *kapferer_t2* the "after" one. The two networks do NOT share a common node set (workers left and joined the shop between observations, a real and deliberate feature of the original study, not a data-quality issue) - they are two independent networks, not a two-wave panel on the same actors the way [s50](netexample) / [klas12b](netexample) are.
+18 women and the 14 social events they attended in 1936 in a Southern US town ("Old City"): 32 nodes (mode 1 *woman*, mode 2 *event*) and 89 ties. Women are labeled by first name, events *E1* to *E14*. Attributes: *surname* and *title* (Miss or Mrs) of the women, *eventdate* of the events. The attendance matrix is the classic one distributed with many network programs; the data have no licence of their own and contain only the facts of who attended which event.
 
 **Reference**
 
-Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester University Press.
+Davis, A., Gardner, B. B., and Gardner, M. R. (1941). Deep South: A Social Anthropological Study of Caste and Class. Chicago: University of Chicago Press.
 
-Distributed with R's own `ergm` package as `data(kapferer)` (part of the Statnet Project).
+## Company directors in Sweden (two-mode)
+
+**Networks:** *ftdirectors_se*
+
+5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes (mode 1 *director*, mode 2 *company*) and 5,669 ties. Identifiers are anonymous. Attributes of the directors: *gender* and *age*; of the companies: *sector*, *industry* and *employees*. Missing values are empty or missing.
+
+**Source and licence**
+
+Evtushenko, A. and Gastner, M. T. (2019). Data set discussed in "Beyond Fortune 500: Women in a Global Network of Directors". Zenodo, doi:10.5281/zenodo.3553442. Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). The original data come from the company profiles of the Financial Times web site (retrieved 17 September 2016). This is a derived subset: only companies located in Sweden and all of their directors were kept, and only the columns named above; identifiers were renamed, "NA" became missing, and age and the number of employees were made numeric.
+
+Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global Network of Directors. In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
+
+## Dutch school classes (baerveldt)
+
+**Networks:** *class1_w1*, *class1_w2*, *class1_ethn*, *class2_w1*, ... *class15_ethn* (45 networks)
+
+Fifteen classes of 33 to 91 pupils (810 in all) of the lower middle level of Dutch secondary schools, observed in the third and fourth year, about one year apart. For the first class, *class1_w1* and *class1_w2* are the directed friendship networks at the two waves and *class1_ethn* says for each pair of pupils whether they share an ethnic background; the other classes follow the same pattern. Each network has the pupils of its own class as nodes; stack them with [nwstack](nwstack) for a joint model of several groups (`nwsaom`, option `groups()`). The attributes of all 810 pupils are in the plain data set `baerveldt_pupils` (variables *class*, *pupil* (number within the class), *gender*, *delinq1*, *delinq2* (delinquency at the two waves), *school* and *nact*, the logarithm of the class size). It is loaded with `nwwebuse baerveldt_pupils, nwclear` or merged by *class* and *pupil*.
+
+**Source and licence**
+
+Baerveldt, C., Voelker, B. and Van Rossem, R. (2008). Revisiting selection and influence: an inquiry into the friendship networks of high school students and their association with delinquency. Canadian Journal of Criminology and Criminal Justice 50, 559-587, doi:10.3138/cjccj.50.5.559; Houtzager, B. and Baerveldt, C. (1999). Social Behavior and Personality 27(2), 177-192; Snijders, T. A. B. and Baerveldt, C. (2003). Journal of Mathematical Sociology 27, 123-151. The data are those of the Dutch Social Behavior study, distributed on the data pages of the Siena project. They have no licence statement of their own, so no licence is asserted here: they are facts about friendships and self-reported behavior, not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The files were converted to the nwcommands format, 15 classes were kept, and *nact* was added. All 19 schools of the study are in [baerveldt19](netexample).
+
+## Dutch secondary schools, all 19 (baerveldt19)
+
+**Networks:** *school1_w1*, *school1_w2*, *school1_ethn*, *school2_w1*, ... *school19_ethn* (57 networks)
+
+All 19 schools of the Dutch Social Behavior study that the Siena project distributes (the data set [baerveldt](netexample) has 15 of them). In each school, all pupils in the year of the intermediate track (MAVO) were surveyed in the third year (1994/95) and again in the fourth: 31 to 91 pupils per school, 990 in all. The pupils could name anyone in their year, so a group is a school year, not a classroom. For the first school, *school1_w1* and *school1_w2* are the directed networks at the two waves (a pupil names another in answer to either of two questions, who helps you when you are depressed and whom do you help, up to 12 names each; the study calls this tie friendship) and *school1_ethn* says for each pair of pupils whether their parents were born in the same country. The schools are numbered 1 to 19 in the order of the Siena file numbers. Stack them with [nwstack](nwstack): `nwstack school*_w1, name(w1) group(school)`. The attributes of the 990 pupils are in the plain data set `baerveldt19_pupils`: *school* (1 to 19), *pupil* (number within the school), *gender* (1 girls, 2 boys), *delinq1*, *delinq2* (the self-reported number of 23 minor offenses in the last twelve months, as ln(1+x) rounded to 0 to 4), *siena* (the school's number in the Siena files) and *nact* (the logarithm of the number of pupils in the school). Merge them by *school* and *pupil*.
+
+**Source and licence**
+
+As for [baerveldt](netexample). Schools 1-7, 9, 11, 12 and 14-18 are the 15 classes of `baerveldt`, unchanged; schools 8, 10, 13 and 19 are Siena schools 10, 13, 16 and 23. Gender is 1 for girls and 2 for boys (the shares by school agree with Snijders and Baerveldt 2003; the Siena file page states the opposite). The ethnicity file of Siena school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
+
+## Gahuku-Gama tribes (signed)
+
+**Networks:** *gahuku*
+
+Alliances (positive) and enmities (negative) among 16 tribes of the Eastern Central Highlands of New Guinea, undirected: 16 nodes, 29 positive and 29 negative ties. Nodes are named by tribe; there are no attributes. Of the 68 closed triads 59 are balanced; only 2 violate weak balance (7 of the 9 unbalanced triads have three negative ties), so the network is a standard example for strong versus weak balance ([nwbalance](nwbalance)).
+
+**Source and licence**
+
+Read, K. E. (1954). Cultures of the Central Highlands, New Guinea. Southwestern Journal of Anthropology 10(1), 1-43, doi:10.1086/soutjanth.10.1.3629074. Analysed by Hage, P. and Harary, F. (1983). Structural Models in Anthropology. Cambridge: Cambridge University Press. The data have no licence statement of their own, so no licence is asserted here: they are facts about which tribes are allied and which are enemies, not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The ties come from the version distributed with the R package signnet.
+
+## US Senate, signed co-sponsorship (signed)
+
+**Networks:** *senate114* (file senate114), *senate93* (file senate93)
+
+Signed networks of the US Senate, undirected, with ties of +1 and -1 (no tie is 0). *senate114* (114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties. *senate93* (93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. A positive tie means that two senators co-sponsored significantly more bills together than expected by chance, a negative tie significantly fewer. Nodes are named by surname and initial. Attributes: *state* and *party* (D, R, I; one senator of the 93rd Senate has the party C, Conservative). Use them with [nwbalance](nwbalance) (in the 114th Senate 97.3 percent of the closed triads are balanced, in the 93rd 55.0 percent) and for signed degrees.
+
+The signs are not observed likes and dislikes. They are inferred from the co-sponsorship of bills by a statistical model (the stochastic degree sequence model), and the 114th network is dense (75 percent of all pairs carry a tie).
+
+**Source and licence**
+
+Neal, Z. P. (2020). A Sign of the Times: Dataset of US Congress signed network backbones from co-sponsorship data, 1973-2016. figshare, doi:10.6084/m9.figshare.8096429. Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Described in Neal, Z. P. (2020). A sign of the times? Weak and strong polarization in the U.S. Congress, 1973-2016. Social Networks 60, 103-112, doi:10.1016/j.socnet.2018.07.007. The method is that of Neal, Z. P. (2014). The backbone of bipartite projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other co-behaviors. Social Networks 39, 84-97, doi:10.1016/j.socnet.2014.06.001.
+
+These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd and the 114th Congress were kept (the sheets S93 and S114 of the workbook); of the original columns only the tie sign and, from the row labels, the senator's name, state and party were kept; the result is stored in the nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the code.
 
 ## Manufacturing company emails (events)
 
@@ -366,41 +406,41 @@ Michalski, R. (2020). Manufacturing company email metadata and corporate hierarc
 
 The original data are released under CC0 1.0 (public-domain dedication, http://creativecommons.org/publicdomain/zero/1.0). Attribution is not required but is given here.
 
-## Southern women (two-mode)
+## Chesapeake Bay food web data
 
-**Networks:** *davis*
+**Networks:** *chesapeake* (directed, valued - tie value is carbon flux)
 
-18 women and the 14 social events they attended in 1936 in a Southern US town ("Old City"): 32 nodes (mode 1 *woman*, mode 2 *event*) and 89 ties. Women are labeled by first name, events *E1* to *E14*. Attributes: *surname* and *title* (Miss or Mrs) of the women, *eventdate* of the events. The attendance matrix is the classic one distributed with many network programs; the data have no licence of their own and contain only the facts of who attended which event.
+**Vertex attributes:** *ECO* and *Biomass*
+
+This is a food web of the Chesapeake Bay mesohaline ecosystem: 39 compartments (mostly species, plus a handful of bookkeeping compartments - Input, Output, Respiration, and two organic-carbon pools), with a directed, valued tie from compartment *i* to compartment *j* whenever carbon flows from *i* to *j*. *ECO* codes the compartment type (1 = living organism, 2 = nonliving organic pool, 3 = Input, 4 = Output, 5 = Respiration); *Biomass* is each compartment's standing biomass. A handful of species names are truncated at 25 characters in the original source data (e.g. "heterotrophic microflagel"), inherited as-is from that source rather than silently guessed at. Not a social network: included as a worked example of a real, published food web of comparable size to this package's other bundled examples.
 
 **Reference**
 
-Davis, A., Gardner, B. B., and Gardner, M. R. (1941). Deep South: A Social Anthropological Study of Caste and Class. Chicago: University of Chicago Press.
+Baird, D. and Ulanowicz, R.E. (1989). The seasonal dynamics of the Chesapeake Bay ecosystem. Ecological Monographs, 59, 329-364.
 
-## Company directors in Sweden (two-mode)
+## Macaque cortical network data
 
-**Networks:** *ftdirectors_se*
+**Networks:** *macaque*
 
-5,092 directors and the 455 Swedish listed companies on whose boards they sit: 5,547 nodes (mode 1 *director*, mode 2 *company*) and 5,669 ties. Identifiers are anonymous. Attributes of the directors: *gender* and *age*; of the companies: *sector*, *industry* and *employees*. Missing values are empty or missing.
+**Vertex attributes:** none - vertex names are the cortical area labels themselves (V1, V2, MT, FEF, and so on).
 
-**Source and licence**
+This is a directed network of 45 visuotactile areas of the macaque cerebral cortex, with a tie from area *i* to area *j* whenever a projection from *i* to *j* is documented in the neuroanatomical literature. Not a social network: included as a worked example of a real, published, non-social directed network of comparable size to this package's other bundled examples.
 
-Evtushenko, A. and Gastner, M. T. (2019). Data set discussed in "Beyond Fortune 500: Women in a Global Network of Directors". Zenodo, doi:10.5281/zenodo.3553442. Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). The original data come from the company profiles of the Financial Times web site (retrieved 17 September 2016). This is a derived subset: only companies located in Sweden and all of their directors were kept, and only the columns named above; identifiers were renamed, "NA" became missing, and age and the number of employees were made numeric.
+**Reference**
 
-Evtushenko, A. and Gastner, M. T. (2020). Beyond Fortune 500: Women in a Global Network of Directors. In Cherifi, H. et al. (eds.), Complex Networks and Their Applications VIII, vol. 1, 586-598. Springer.
+Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European Journal of Neuroscience, 23(7), 1919-1930.
 
-## US Senate, signed co-sponsorship (signed)
+## US airports data
 
-**Networks:** *senate114* (file senate114), *senate93* (file senate93)
+**Networks:** *usair*
 
-Signed networks of the US Senate, undirected, with ties of +1 and -1 (no tie is 0). *senate114* (114th Congress, 2015-16): 100 senators, 1,435 positive and 2,261 negative ties. *senate93* (93rd Congress, 1973-74): 101 senators, 581 positive and 1,858 negative ties. A positive tie means that two senators co-sponsored significantly more bills together than expected by chance, a negative tie significantly fewer. Nodes are named by surname and initial. Attributes: *state* and *party* (D, R, I; one senator of the 93rd Senate has the party C, Conservative). Use them with [nwbalance](nwbalance) (in the 114th Senate 97.3 percent of the closed triads are balanced, in the 93rd 55.0 percent) and for signed degrees.
+**Vertex attributes:** *Name, City, Lat, Lon, degree*
 
-The signs are not observed likes and dislikes. They are inferred from the co-sponsorship of bills by a statistical model (the stochastic degree sequence model), and the 114th network is dense (75 percent of all pairs carry a tie).
+This is a directed network of the 50 busiest US airports (by direct-route degree) and the direct routes between them, built from OpenFlights' airport and route databases. A tie from airport *i* to airport *j* means at least one airline flew a direct, no-stop route from *i* to *j* at the time OpenFlights' route data was current. Restricted to the top 50 airports by degree, not the full set of several hundred US airports OpenFlights covers, to keep this network at a size comparable to this package's other example networks - *degree* itself records each airport's own direct-route degree in the *full*, unrestricted US network, not just within this 50-airport subset, so it will not generally match [nwdegree](nwdegree)'s own count computed on *usair* as loaded. Not a social network: included as a worked example of a real, non-social, directed transportation network. The outlines of the US states, for drawing the airports on a map, are in **usmap** (not a network): `nwplot usair, nodexy(Lon Lat) basemap(usmap)` (see [nwplot](nwplot)).
 
-**Source and licence**
+**Reference**
 
-Neal, Z. P. (2020). A Sign of the Times: Dataset of US Congress signed network backbones from co-sponsorship data, 1973-2016. figshare, doi:10.6084/m9.figshare.8096429. Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Described in Neal, Z. P. (2020). A sign of the times? Weak and strong polarization in the U.S. Congress, 1973-2016. Social Networks 60, 103-112, doi:10.1016/j.socnet.2018.07.007. The method is that of Neal, Z. P. (2014). The backbone of bipartite projections: Inferring relationships from co-authorship, co-sponsorship, co-attendance and other co-behaviors. Social Networks 39, 84-97, doi:10.1016/j.socnet.2014.06.001.
-
-These files are a derived subset, adapted by Thomas U. Grund: only the Senates of the 93rd and the 114th Congress were kept (the sheets S93 and S114 of the workbook); of the original columns only the tie sign and, from the row labels, the senator's name, state and party were kept; the result is stored in the nwcommands network file format. The files stay under CC BY 4.0; they are not covered by the GPL-3 of the code.
+OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.
 
 ## Full US airport network (usair_full)
 
@@ -414,66 +454,44 @@ The unrestricted counterpart of *usair*: every US airport with at least one sche
 
 OpenFlights, Airport Database and Route Database, https://openflights.org/data. "The OpenFlights Airport, Airline, Plane and Route Databases are made available under the Open Database License." (ODbL 1.0, https://opendatacommons.org/licenses/odbl/1-0/); "Any rights in individual contents of the database are licensed under the Database Contents License." The airport data derive from OurAirports and DAFIF and the route data from Airline Route Mapper. This is a derived database, adapted by Thomas U. Grund: only US airports with an IATA code were used, duplicate routes over airlines were merged, airports without a route were dropped, and only the columns named above were kept. It is made available under the ODbL 1.0 with attribution to OpenFlights; derived databases must again be offered under the ODbL. It is not covered by the GPL-3 of the code.
 
-## Gahuku-Gama tribes (signed)
+## US state outlines (usmap, a map)
 
-**Networks:** *gahuku*
-
-Alliances (positive) and enmities (negative) among 16 tribes of the Eastern Central Highlands of New Guinea, undirected: 16 nodes, 29 positive and 29 negative ties. Nodes are named by tribe; there are no attributes. Of the 68 closed triads 59 are balanced; only 2 violate weak balance (7 of the 9 unbalanced triads have three negative ties), so the network is a standard example for strong versus weak balance ([nwbalance](nwbalance)).
+The borders of the 50 US states and the District of Columbia as lines, for drawing a network with longitude and latitude under `nwplot ..., nodexy(Lon Lat) basemap(usmap)`. A plain Stata file in the format of `spshape2dta` (*_ID*, *_X* longitude, *_Y* latitude, *shape_order*, *state*); rows with a missing *_X* separate the lines. It is not loaded with `nwwebuse`: give the name to `basemap()`.
 
 **Source and licence**
 
-Read, K. E. (1954). Cultures of the Central Highlands, New Guinea. Southwestern Journal of Anthropology 10(1), 1-43, doi:10.1086/soutjanth.10.1.3629074. Analysed by Hage, P. and Harary, F. (1983). Structural Models in Anthropology. Cambridge: Cambridge University Press. The data have no licence statement of their own, so no licence is asserted here: they are facts about which tribes are allied and which are enemies, not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The ties come from the version distributed with the R package signnet.
+US Census Bureau, cartographic boundary file *cb_2018_us_state_20m* (2018, scale 1:20,000,000); a work of the US federal government and so in the public domain. Converted with `spshape2dta`; Puerto Rico left out.
 
-## Dutch school classes (baerveldt)
+## The networkdata collection
 
-**Networks:** *class1_w1*, *class1_w2*, *class1_ethn*, *class2_w1*, ... *class15_ethn* (45 networks)
-
-Fifteen classes of 33 to 91 pupils (810 in all) of the lower middle level of Dutch secondary schools, observed in the third and fourth year, about one year apart. For the first class, *class1_w1* and *class1_w2* are the directed friendship networks at the two waves and *class1_ethn* says for each pair of pupils whether they share an ethnic background; the other classes follow the same pattern. Each network has the pupils of its own class as nodes; stack them with [nwstack](nwstack) for a joint model of several groups (`nwsaom`, option `groups()`). The attributes of all 810 pupils are in the plain data set `baerveldt_pupils` (variables *class*, *pupil* (number within the class), *gender*, *delinq1*, *delinq2* (delinquency at the two waves), *school* and *nact*, the logarithm of the class size). It is loaded with `nwwebuse baerveldt_pupils, nwclear` or merged by *class* and *pupil*.
-
-**Source and licence**
-
-Baerveldt, C., Voelker, B. and Van Rossem, R. (2008). Revisiting selection and influence: an inquiry into the friendship networks of high school students and their association with delinquency. Canadian Journal of Criminology and Criminal Justice 50, 559-587, doi:10.3138/cjccj.50.5.559; Houtzager, B. and Baerveldt, C. (1999). Social Behavior and Personality 27(2), 177-192; Snijders, T. A. B. and Baerveldt, C. (2003). Journal of Mathematical Sociology 27, 123-151. The data are those of the Dutch Social Behavior study, distributed on the data pages of the Siena project. They have no licence statement of their own, so no licence is asserted here: they are facts about friendships and self-reported behavior, not covered by the GPL-3 of this package, and are redistributed with citation of the sources. The files were converted to the nwcommands format, 15 classes were kept, and *nact* was added. All 19 schools of the study are in [baerveldt19](netexample).
-
-## Dutch secondary schools, all 19 (baerveldt19)
-
-**Networks:** *school1_w1*, *school1_w2*, *school1_ethn*, *school2_w1*, ... *school19_ethn* (57 networks)
-
-All 19 schools of the Dutch Social Behavior study that the Siena project distributes (the data set [baerveldt](netexample) has 15 of them). In each school, all pupils in the year of the intermediate track (MAVO) were surveyed in the third year (1994/95) and again in the fourth: 31 to 91 pupils per school, 990 in all. The pupils could name anyone in their year, so a group is a school year, not a classroom. For the first school, *school1_w1* and *school1_w2* are the directed networks at the two waves (a pupil names another in answer to either of two questions, who helps you when you are depressed and whom do you help, up to 12 names each; the study calls this tie friendship) and *school1_ethn* says for each pair of pupils whether their parents were born in the same country. The schools are numbered 1 to 19 in the order of the Siena file numbers. Stack them with [nwstack](nwstack): `nwstack school*_w1, name(w1) group(school)`. The attributes of the 990 pupils are in the plain data set `baerveldt19_pupils`: *school* (1 to 19), *pupil* (number within the school), *gender* (1 girls, 2 boys), *delinq1*, *delinq2* (the self-reported number of 23 minor offenses in the last twelve months, as ln(1+x) rounded to 0 to 4), *siena* (the school's number in the Siena files) and *nact* (the logarithm of the number of pupils in the school). Merge them by *school* and *pupil*.
-
-**Source and licence**
-
-As for [baerveldt](netexample). Schools 1-7, 9, 11, 12 and 14-18 are the 15 classes of `baerveldt`, unchanged; schools 8, 10, 13 and 19 are Siena schools 10, 13, 16 and 23. Gender is 1 for girls and 2 for boys (the shares by school agree with Snijders and Baerveldt 2003; the Siena file page states the opposite). The ethnicity file of Siena school 23 has 72 rows for 73 pupils and was padded with a zero row and column, as the Siena data page describes.
-
-## Schoch networkdata collection
-
-David Schoch's R package *networkdata* (https://github.com/schochastics/networkdata) is a collection of 989 network data sets (2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). `nwwebuse schoch` loads them. **No data of this collection are part of nwcommands**: the original file of a data set is downloaded from Schoch's repository the first time you ask for it, kept in a cache in your PLUS directory and read on your computer with Stata alone (**no R is needed**; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from.
+David Schoch's R package *networkdata* (https://github.com/schochastics/networkdata) is a collection of 989 network data sets (2,274 networks: a data set can be a list of networks, for example the waves of a longitudinal study). `nwwebuse networkdata` loads them. **No data of this collection are part of nwcommands**: the original file of a data set is downloaded from Schoch's repository the first time you ask for it, kept in a cache in your PLUS directory and read on your computer with Stata alone (**no R is needed**; the option `withr` of `nwnetworkdata` uses R with the package igraph instead). Every load prints which network was loaded and where the data came from.
 
 Look at the collection (overview, list of all data sets, one data set) and load a network:
 
 ```stata
-. nwwebuse schoch
-. nwwebuse schoch list
-. nwwebuse schoch describe karate
-. nwwebuse schoch karate, nwclear
+. nwwebuse networkdata
+. nwwebuse networkdata list
+. nwwebuse networkdata describe karate
+. nwwebuse networkdata karate, nwclear
 ```
 Zachary's karate club (34 nodes, 78 ties, undirected) and the Southern women (two-mode: 32 nodes, 18 women and 14 events, 89 ties):
 
 ```stata
-. nwwebuse schoch karate, nwclear
-. nwwebuse schoch southern_women, nwclear
+. nwwebuse networkdata karate, nwclear
+. nwwebuse networkdata southern_women, nwclear
 ```
 The ten directed networks of the Sampson monks (`sampson_1` to `sampson_10`), or only the third:
 
 ```stata
-. nwwebuse schoch sampson, nwclear
-. nwwebuse schoch sampson, nwclear element(3)
+. nwwebuse networkdata sampson, nwclear
+. nwwebuse networkdata sampson, nwclear element(3)
 ```
 The networks of Game of Thrones (`got`, one per season), 54 tennis networks (`atp`) and a valued network of dolphins (`dolphins_1`):
 
 ```stata
-. nwwebuse schoch got, nwclear
-. nwwebuse schoch atp, nwclear
-. nwwebuse schoch dolphins_1, nwclear
+. nwwebuse networkdata got, nwclear
+. nwwebuse networkdata atp, nwclear
+. nwwebuse networkdata dolphins_1, nwclear
 ```
 **Source, licence and citation.** The R package networkdata is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers the package itself. It documents no licence or permission for the individual data sets, which come from many original sources and may have their own terms; please check the original sources. Cite the collection: Schoch, D. (2022), *networkdata: Repository of Network Datasets*, doi:10.5281/zenodo.7189928, and the original source of each data set as `nwnetworkdata describe` *name* and the page [nwcommands.org/datasets/schoch](https://nwcommands.org/datasets/schoch/) give it. See [nwnetworkdata](nwnetworkdata).
 

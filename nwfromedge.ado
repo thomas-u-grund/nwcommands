@@ -486,8 +486,7 @@ program nwfromedge
 		qui use `"`__nwfe_userdata'"', clear
 	}
 	
-	// (an undirected network is requested explicitly: the symmetrization below does it, no check needed first)
-	if "`forcedirected'" == "" & "`directed'" == "" & "`forceundirected'" == "" & "`undirected'" == ""{
+	if "`forcedirected'" == "" & "`directed'" == ""{
 		nwsym, check 
 		if "`r(is_symmetric)'" == "true" {
 			nwsym

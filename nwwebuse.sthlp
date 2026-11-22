@@ -21,22 +21,22 @@ Load network data over the web
 
 
 {phang}
-Load a network from Schoch's collection {it:networkdata} (no R needed)
+Load a network from the networkdata collection (R package by David Schoch; no R needed)
 
 {p 8 16 2}
-{cmd:nwwebuse} {cmd:schoch} {it:name} [{cmd:,} {it:options}]
+{cmd:nwwebuse} {cmd:networkdata} {it:name} [{cmd:,} {it:options}]
 
 {p 8 16 2}
-{cmd:nwwebuse} {it:name}{cmd:, schoch} [{it:options}]
+{cmd:nwwebuse} {it:name}{cmd:, networkdata} [{it:options}]
 
 {p 8 16 2}
-{cmd:nwwebuse} {cmd:schoch} [{cmd:, list}]
+{cmd:nwwebuse} {cmd:networkdata} [{cmd:, list}]
 
 {p 8 16 2}
-{cmd:nwwebuse} {cmd:schoch} {cmd:list}
+{cmd:nwwebuse} {cmd:networkdata} {cmd:list}
 
 {p 8 16 2}
-{cmd:nwwebuse} {cmd:schoch} {cmd:describe} {it:name}
+{cmd:nwwebuse} {cmd:networkdata} {cmd:describe} {it:name}
 
 
 {phang}
@@ -74,14 +74,14 @@ the website cannot be reached, {cmd:nwwebuse} loads the same file from GitHub
 Several {help netexample:network datasets} are available from this source. If {it:filename} is specified without a suffix, {cmd:.dta} is assumed.
 
 {pstd}
-{cmd:nwwebuse} {cmd:schoch} {it:name} loads one of the networks of the R package {it:networkdata} by David Schoch
-({it:https://github.com/schochastics/networkdata}), for example {cmd:nwwebuse schoch karate}. The data are not part of
-nwcommands: {cmd:nwnetworkdata} downloads them from Schoch's repository the first time you ask for a data set and keeps
+{cmd:nwwebuse} {cmd:networkdata} {it:name} loads one of the networks of the R package {it:networkdata} by David Schoch
+({it:https://github.com/schochastics/networkdata}), for example {cmd:nwwebuse networkdata karate}. The data are not part of
+nwcommands: {cmd:nwnetworkdata} downloads them from the author's repository the first time you ask for a data set and keeps
 them in a cache, and reads them with Stata alone ({bf:no R is needed}; the option {opt withr} of {cmd:nwnetworkdata} converts with R
 and the package igraph instead). Every load prints which network was loaded and where the data come from. Cite the collection and the original
 source of each data set; see {help nwnetworkdata} and {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch}.
-{cmd:nwwebuse schoch} alone gives an overview; {cmd:nwwebuse schoch list} lists all data sets and {cmd:nwwebuse schoch describe} {it:name}
-shows one. Options (for example {cmd:name()}, {cmd:element()}) are passed to {cmd:nwnetworkdata}.
+{cmd:nwwebuse networkdata} alone gives an overview; {cmd:nwwebuse networkdata list} lists all data sets and {cmd:nwwebuse networkdata describe} {it:name}
+shows one. Options (for example {cmd:name()}, {cmd:element()}) are passed to {cmd:nwnetworkdata}. ({cmd:schoch} is still accepted in place of {cmd:networkdata}.)
 
 {pstd}
 {cmd:nwwebuse} {cmd:query} reports the URL from which network datasets will be obtained.

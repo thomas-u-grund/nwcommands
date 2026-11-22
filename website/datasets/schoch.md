@@ -1,14 +1,14 @@
 ---
-title: "Schoch networkdata"
+title: "The networkdata collection"
 parent: "Data sets"
 permalink: /datasets/schoch/
-description: "The 2,274 networks of David Schoch's R package networkdata, loadable with nwwebuse schoch: what they are, where they come from, how to cite them."
+description: "The 2,274 networks of David Schoch's R package networkdata, loadable with nwwebuse networkdata: what they are, where they come from, how to cite them."
 ---
 
-# The networkdata collection (Schoch)
+# The networkdata collection
 {: .no_toc }
 
-nwcommands ships none of these networks. `nwwebuse schoch <name>` (or `nwnetworkdata <name>`) downloads the original file from David Schoch's repository <https://github.com/schochastics/networkdata> when you ask for it, keeps it in a cache in your PLUS directory, reads it on your computer with Stata alone (no R is needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead, and the ego-centered object `gss_egor` falls back to R when R is installed) and builds the network.
+nwcommands ships none of these networks. `nwwebuse networkdata <name>` (or `nwnetworkdata <name>`) downloads the original file from David Schoch's repository <https://github.com/schochastics/networkdata> when you ask for it, keeps it in a cache in your PLUS directory, reads it on your computer with Stata alone (no R is needed; the option `withr` of `nwnetworkdata` uses R with the package igraph instead, and the ego-centered object `gss_egor` falls back to R when R is installed) and builds the network.
 
 **Licence and citation.** The R package is distributed under the MIT licence (Copyright (c) 2019 David Schoch), which covers the package itself. It documents no licence or permission for the individual data sets, which come from many original sources and may have their own terms. nwcommands ships none of them and downloads them from the source only on request; please check the original source of every data set you use and cite it, together with the collection:
 
@@ -19,10 +19,10 @@ For the tennis networks `atp` and `wta` the package asks to give credit to Jeff 
 This page is our own overview: the descriptions are written by us, not copied from the package, and have not been checked against the original sources. The official documentation of every data set is in the package reference at <https://schochastics.github.io/networkdata/reference/> (one page per data set, for example [karate](https://schochastics.github.io/networkdata/reference/karate.html)). The package says that many of the data sets were assembled automatically and may contain errors.
 
 ```stata
-. nwwebuse schoch list
-. nwwebuse schoch describe karate
-. nwwebuse schoch karate, nwclear
-. nwwebuse schoch sampson, nwclear element(3)
+. nwwebuse networkdata list
+. nwwebuse networkdata describe karate
+. nwwebuse networkdata karate, nwclear
+. nwwebuse networkdata sampson, nwclear element(3)
 ```
 
 A data set that is a *list of networks* (waves, seasons, groups) is loaded with all its networks, called `name_1`, `name_2`, ...; `element()` loads some of them. Sizes are nodes and ties as stored in R (parallel ties counted separately). "Type" gives the properties of the networks as listed in the catalogue; "some networks only" means that the property holds for some elements of a list.
@@ -975,7 +975,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ants_1`: directed, multiple edges; 16 nodes, 200 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Cole (1981), *Science* 212
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ants_1.html>
-- **Load:** `nwwebuse schoch ants_1`
+- **Load:** `nwwebuse networkdata ants_1`
 
 ### ants_2: Ant Colony (II)
 {: #ants_2 }
@@ -983,7 +983,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ants_2`: directed, multiple edges; 13 nodes, 361 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Cole (1981), *Science* 212
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ants_2.html>
-- **Load:** `nwwebuse schoch ants_2`
+- **Load:** `nwwebuse networkdata ants_2`
 
 ### bible: Nouns in the King's James Bible
 {: #bible }
@@ -991,7 +991,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bible`: undirected, valued; 1773 nodes, 9131 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Harrison, BibleViz project, http://chrisharrison.net/projects/bibleviz/index.html
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bible.html>
-- **Load:** `nwwebuse schoch bible`
+- **Load:** `nwwebuse networkdata bible`
 
 ### bkfrab: Bernard/Killworth - Fraternity (interaction)
 {: #bkfrab }
@@ -999,7 +999,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bkfrab`: undirected, valued; 58 nodes, 967 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2; (1982), *Social Science Research* 11
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bkfrab.html>
-- **Load:** `nwwebuse schoch bkfrab`
+- **Load:** `nwwebuse networkdata bkfrab`
 
 ### bkfrac: Bernard/Killworth - Fraternity (rankings)
 {: #bkfrac }
@@ -1007,7 +1007,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bkfrac`: directed, valued; 58 nodes, 3306 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bkfrac.html>
-- **Load:** `nwwebuse schoch bkfrac`
+- **Load:** `nwwebuse networkdata bkfrac`
 
 ### bkoffb: Bernard/Killworth - Office (interaction)
 {: #bkoffb }
@@ -1015,7 +1015,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bkoffb`: undirected, valued; 40 nodes, 238 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bkoffb.html>
-- **Load:** `nwwebuse schoch bkoffb`
+- **Load:** `nwwebuse networkdata bkoffb`
 
 ### bkoffc: Bernard/Killworth - Office (rankings)
 {: #bkoffc }
@@ -1023,7 +1023,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bkoffc`: directed, valued; 40 nodes, 1558 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bkoffc.html>
-- **Load:** `nwwebuse schoch bkoffc`
+- **Load:** `nwwebuse networkdata bkoffc`
 
 ### bktecb: Bernard/Killworth - Tech company (interaction)
 {: #bktecb }
@@ -1031,7 +1031,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bktecb`: undirected, valued; 34 nodes, 175 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bktecb.html>
-- **Load:** `nwwebuse schoch bktecb`
+- **Load:** `nwwebuse networkdata bktecb`
 
 ### bktecc: Bernard/Killworth - Tech company (rankings)
 {: #bktecc }
@@ -1039,7 +1039,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bktecc`: directed, valued; 34 nodes, 1122 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Bernard, Killworth and Sailer (1980), *Social Networks* 2
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bktecc.html>
-- **Load:** `nwwebuse schoch bktecc`
+- **Load:** `nwwebuse networkdata bktecc`
 
 ### bott: Preschool
 {: #bott }
@@ -1047,7 +1047,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `bott`: directed, valued, multiple edges; 11 nodes, 256 ties. Vertex attributes: age, gender; edge attributes: weight, relation.
 - **Source:** Bott (1928), *Genetic Psychology Monographs* 4
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/bott.html>
-- **Load:** `nwwebuse schoch bott`
+- **Load:** `nwwebuse networkdata bott`
 
 ### ceos_clubs: Ceo's and Clubs
 {: #ceos_clubs }
@@ -1055,7 +1055,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ceos_clubs`: two-mode; 41 nodes, 98 ties (modes 26 and 15). Vertex attributes: type; edge attributes: none.
 - **Source:** Galaskiewicz (1985), *Social Organization of an Urban Grants Economy*, Academic Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ceos_clubs.html>
-- **Load:** `nwwebuse schoch ceos_clubs`
+- **Load:** `nwwebuse networkdata ceos_clubs`
 
 ### crime: St. Louis Crimes
 {: #crime }
@@ -1063,7 +1063,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `crime`: two-mode, valued; 1427 nodes, 1487 ties (modes 870 and 557). Vertex attributes: type, gender; edge attributes: weight.
 - **Source:** UCINET collection
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/crime.html>
-- **Load:** `nwwebuse schoch crime`
+- **Load:** `nwwebuse networkdata crime`
 
 ### dolphins_1: Dolphins (I)
 {: #dolphins_1 }
@@ -1071,7 +1071,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `dolphins_1`: undirected, valued, loops; 13 nodes, 45 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Connor, Smolker and Richards (1992), in Harcourt and de Waal (eds.), *Coalitions and Alliances in Humans and Other Animals*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/dolphins_1.html>
-- **Load:** `nwwebuse schoch dolphins_1`
+- **Load:** `nwwebuse networkdata dolphins_1`
 
 ### dolphins_2: Dolphins (II)
 {: #dolphins_2 }
@@ -1079,7 +1079,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `dolphins_2`: undirected; 62 nodes, 159 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Lusseau et al. (2003), *Behavioral Ecology and Sociobiology* 54
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/dolphins_2.html>
-- **Load:** `nwwebuse schoch dolphins_2`
+- **Load:** `nwwebuse networkdata dolphins_2`
 
 ### eies_messages: EIES (Messages)
 {: #eies_messages }
@@ -1087,7 +1087,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `eies_messages`: directed, valued, loops; 32 nodes, 460 ties. Vertex attributes: Citations, Discipline; edge attributes: weight.
 - **Source:** Freeman and Freeman (1979), *Social Science Research Reports* 46, University of California, Irvine
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/eies_messages.html>
-- **Load:** `nwwebuse schoch eies_messages`
+- **Load:** `nwwebuse networkdata eies_messages`
 
 ### eies_relations: EIES (relations)
 {: #eies_relations }
@@ -1095,7 +1095,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `eies_relations`: directed, edge time stamps; 32 nodes, 768 ties. Vertex attributes: Citations, Discipline; edge attributes: rank_1, rank_2, time.
 - **Source:** Freeman and Freeman (1979), *Social Science Research Reports* 46
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/eies_relations.html>
-- **Load:** `nwwebuse schoch eies_relations`
+- **Load:** `nwwebuse networkdata eies_relations`
 
 ### ffe_elite: French Financial Elite (elite)
 {: #ffe_elite }
@@ -1103,7 +1103,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ffe_elite`: directed; 28 nodes, 330 ties. Vertex attributes: birthdate, birthplace, cabinet, clubs, eliteprom, elitevote, ena, enayear, fathers_lev, finance_min, igyear, inspec_gen, masons, na, normal_sch, party, polytech, polyyear, prestige, religion, sciencepoly, socialreg, topboards, university, vertex_names, zipcode; edge attributes: edgevalue, na.
 - **Source:** Kadushin (1995), *American Sociological Review* 60
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ffe_elite.html>
-- **Load:** `nwwebuse schoch ffe_elite`
+- **Load:** `nwwebuse networkdata ffe_elite`
 
 ### ffe_friends: French Financial Elite (friendships)
 {: #ffe_friends }
@@ -1111,7 +1111,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ffe_friends`: undirected; 28 nodes, 66 ties. Vertex attributes: birthdate, birthplace, cabinet, clubs, eliteprom, elitevote, ena, enayear, fathers_lev, finance_min, igyear, inspec_gen, masons, na, normal_sch, party, polytech, polyyear, prestige, religion, sciencepoly, socialreg, topboards, university, vertex_names, zipcode; edge attributes: none.
 - **Source:** Kadushin (1995), *American Sociological Review* 60
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ffe_friends.html>
-- **Load:** `nwwebuse schoch ffe_friends`
+- **Load:** `nwwebuse networkdata ffe_friends`
 
 ### ffe_influence: French Financial Elite (influence)
 {: #ffe_influence }
@@ -1119,7 +1119,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ffe_influence`: directed; 28 nodes, 100 ties. Vertex attributes: birthdate, birthplace, cabinet, clubs, eliteprom, elitevote, ena, enayear, fathers_lev, finance_min, igyear, inspec_gen, masons, na, normal_sch, party, polytech, polyyear, prestige, religion, sciencepoly, socialreg, topboards, university, vertex_names, zipcode; edge attributes: edgevalue, na.
 - **Source:** Kadushin (1995), *American Sociological Review* 60
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ffe_influence.html>
-- **Load:** `nwwebuse schoch ffe_influence`
+- **Load:** `nwwebuse networkdata ffe_influence`
 
 ### flo_business: Florentine Families (Business)
 {: #flo_business }
@@ -1127,7 +1127,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `flo_business`: undirected; 16 nodes, 15 ties. Vertex attributes: wealth, priors, ties; edge attributes: none.
 - **Source:** Breiger and Pattison (1986), *Social Networks* 8
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/flo_business.html>
-- **Load:** `nwwebuse schoch flo_business`
+- **Load:** `nwwebuse networkdata flo_business`
 
 ### flo_marriage: Florentine Families (Marriage)
 {: #flo_marriage }
@@ -1135,7 +1135,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `flo_marriage`: undirected; 16 nodes, 20 ties. Vertex attributes: wealth, priors, ties; edge attributes: none.
 - **Source:** Breiger and Pattison (1986), *Social Networks* 8
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/flo_marriage.html>
-- **Load:** `nwwebuse schoch flo_marriage`
+- **Load:** `nwwebuse networkdata flo_marriage`
 
 ### fraternity: Newcomb Fraternity
 {: #fraternity }
@@ -1143,7 +1143,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** 15 networks `fraternity_1` ... `fraternity_15`: directed; 17 nodes, 272 ties each. Vertex attributes: none; edge attributes: rank.
 - **Source:** Newcomb (1961), *The Acquaintance Process*, Holt, Rinehart and Winston
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/fraternity.html>
-- **Load:** `nwwebuse schoch fraternity`
+- **Load:** `nwwebuse networkdata fraternity`
 
 ### giraffe: Giraffe Affiliation
 {: #giraffe }
@@ -1151,7 +1151,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `giraffe`: directed, valued, multiple edges; 6 nodes, 90 ties. Vertex attributes: none; edge attributes: weight, relation.
 - **Source:** Bradshaw et al. (2007), *Journal of Comparative Psychology* 121
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/giraffe.html>
-- **Load:** `nwwebuse schoch giraffe`
+- **Load:** `nwwebuse networkdata giraffe`
 
 ### hall: Residence Hall Friendship
 {: #hall }
@@ -1159,7 +1159,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `hall`: directed, valued; 217 nodes, 2672 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Freeman, Webster and Kirke (1998), *Social Networks* 20
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/hall.html>
-- **Load:** `nwwebuse schoch hall`
+- **Load:** `nwwebuse networkdata hall`
 
 ### hens: Hens Pecking order
 {: #hens }
@@ -1167,7 +1167,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `hens`: directed; 32 nodes, 496 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Guhl (1953), Kansas State College Technical Bulletin 73
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/hens.html>
-- **Load:** `nwwebuse schoch hens`
+- **Load:** `nwwebuse networkdata hens`
 
 ### highschool_boys: Friendships among High School Boys
 {: #highschool_boys }
@@ -1175,7 +1175,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `highschool_boys`: directed, multiple edges, edge time stamps; 70 nodes, 506 ties. Vertex attributes: none; edge attributes: time.
 - **Source:** Coleman (1964), *Introduction to Mathematical Sociology*, Free Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/highschool_boys.html>
-- **Load:** `nwwebuse schoch highschool_boys`
+- **Load:** `nwwebuse networkdata highschool_boys`
 
 ### ht_advice: High-tech Managers (Advice)
 {: #ht_advice }
@@ -1183,7 +1183,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ht_advice`: directed; 21 nodes, 190 ties. Vertex attributes: age, tenure, level, dept; edge attributes: none.
 - **Source:** Krackhardt (1987), *Social Networks* 9
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ht_advice.html>
-- **Load:** `nwwebuse schoch ht_advice`
+- **Load:** `nwwebuse networkdata ht_advice`
 
 ### ht_friends: High-tech Managers (Friendships)
 {: #ht_friends }
@@ -1191,7 +1191,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ht_friends`: directed; 21 nodes, 102 ties. Vertex attributes: age, tenure, level, dept; edge attributes: none.
 - **Source:** Krackhardt (1987), *Social Networks* 9
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ht_friends.html>
-- **Load:** `nwwebuse schoch ht_friends`
+- **Load:** `nwwebuse networkdata ht_friends`
 
 ### ht_reports: High-tech Managers (Reports to)
 {: #ht_reports }
@@ -1199,7 +1199,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `ht_reports`: directed; 21 nodes, 20 ties. Vertex attributes: age, tenure, level, dept; edge attributes: none.
 - **Source:** Krackhardt (1987), *Social Networks* 9
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ht_reports.html>
-- **Load:** `nwwebuse schoch ht_reports`
+- **Load:** `nwwebuse networkdata ht_reports`
 
 ### insna: INSNA Teacher Student
 {: #insna }
@@ -1207,7 +1207,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `insna`: directed; 60 nodes, 94 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Reitz and White (1989), in Freeman, White and Romney (eds.), *Research Methods in Social Network Analysis*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/insna.html>
-- **Load:** `nwwebuse schoch insna`
+- **Load:** `nwwebuse networkdata insna`
 
 ### jazz: Collaboration in Jazz
 {: #jazz }
@@ -1215,7 +1215,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `jazz`: undirected; 198 nodes, 2742 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Gleiser and Danon (2003), *Advances in Complex Systems* 6
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/jazz.html>
-- **Load:** `nwwebuse schoch jazz`
+- **Load:** `nwwebuse networkdata jazz`
 
 ### jpr: Joint Senate Press Releases
 {: #jpr }
@@ -1223,7 +1223,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `jpr`: undirected; 92 nodes, 477 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Grimmer, Harvard University
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/jpr.html>
-- **Load:** `nwwebuse schoch jpr`
+- **Load:** `nwwebuse networkdata jpr`
 
 ### kangaroo: Kangaroo
 {: #kangaroo }
@@ -1231,7 +1231,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `kangaroo`: undirected, valued, loops; 17 nodes, 105 ties. Vertex attributes: ss_rank, ps_rank, gender; edge attributes: weight.
 - **Source:** Grant (1973), *Animal Behaviour* 21
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/kangaroo.html>
-- **Load:** `nwwebuse schoch kangaroo`
+- **Load:** `nwwebuse networkdata kangaroo`
 
 ### karate: Karate Club (binary)
 {: #karate }
@@ -1239,7 +1239,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `karate`: undirected; 34 nodes, 78 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Zachary (1977), *Journal of Anthropological Research* 33
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/karate.html>
-- **Load:** `nwwebuse schoch karate`
+- **Load:** `nwwebuse networkdata karate`
 
 ### karate_weight: Karate Club (weighted)
 {: #karate_weight }
@@ -1247,7 +1247,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `karate_weight`: undirected, multiple edges; 34 nodes, 231 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Zachary (1977), *Journal of Anthropological Research* 33
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/karate_weight.html>
-- **Load:** `nwwebuse schoch karate_weight`
+- **Load:** `nwwebuse networkdata karate_weight`
 
 ### law_advice: Law Firm (Advice)
 {: #law_advice }
@@ -1255,7 +1255,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `law_advice`: directed; 71 nodes, 892 ties. Vertex attributes: status, gender, office, seniority, age, practice, law_school; edge attributes: none.
 - **Source:** Lazega (2001), *The Collegial Phenomenon*, Oxford University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/law_advice.html>
-- **Load:** `nwwebuse schoch law_advice`
+- **Load:** `nwwebuse networkdata law_advice`
 
 ### law_cowork: Law Firm (Co-work)
 {: #law_cowork }
@@ -1263,7 +1263,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `law_cowork`: directed; 71 nodes, 1104 ties. Vertex attributes: status, gender, office, seniority, age, practice, law_school; edge attributes: none.
 - **Source:** Lazega (2001), *The Collegial Phenomenon*, Oxford University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/law_cowork.html>
-- **Load:** `nwwebuse schoch law_cowork`
+- **Load:** `nwwebuse networkdata law_cowork`
 
 ### law_friends: Law Firm (Friendship)
 {: #law_friends }
@@ -1271,7 +1271,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `law_friends`: directed; 71 nodes, 575 ties. Vertex attributes: status, gender, office, seniority, age, practice, law_school; edge attributes: none.
 - **Source:** Lazega (2001), *The Collegial Phenomenon*, Oxford University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/law_friends.html>
-- **Load:** `nwwebuse schoch law_friends`
+- **Load:** `nwwebuse networkdata law_friends`
 
 ### literary: Swedish Literary Criticism
 {: #literary }
@@ -1279,7 +1279,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `literary`: undirected; 15 nodes, 17 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Rosengren (1968), *Sociological Aspects of the Literary System*, Natur och Kultur
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/literary.html>
-- **Load:** `nwwebuse schoch literary`
+- **Load:** `nwwebuse networkdata literary`
 
 ### macaque: Macaque Dominance
 {: #macaque }
@@ -1287,7 +1287,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `macaque`: directed, valued; 62 nodes, 1187 ties. Vertex attributes: lineage; edge attributes: weight.
 - **Source:** Takahata (1991), in Fedigan and Asquith (eds.), *The Monkeys of Arashiyama*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/macaque.html>
-- **Load:** `nwwebuse schoch macaque`
+- **Load:** `nwwebuse networkdata macaque`
 
 ### mine: Kapferer - Mine
 {: #mine }
@@ -1295,7 +1295,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `mine`: undirected; 15 nodes, 25 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Kapferer (1969), in Mitchell (ed.), *Social Networks in Urban Situations*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/mine.html>
-- **Load:** `nwwebuse schoch mine`
+- **Load:** `nwwebuse networkdata mine`
 
 ### miserables: Les Miserables co-appearances
 {: #miserables }
@@ -1303,7 +1303,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `miserables`: undirected, valued; 77 nodes, 254 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Knuth (1993), *The Stanford GraphBase*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/miserables.html>
-- **Load:** `nwwebuse schoch miserables`
+- **Load:** `nwwebuse networkdata miserables`
 
 ### netsci: Netscience Coauthorship
 {: #netsci }
@@ -1311,7 +1311,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `netsci`: undirected, valued; 1589 nodes, 2742 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Newman (2006), *Physical Review E* 74
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/netsci.html>
-- **Load:** `nwwebuse schoch netsci`
+- **Load:** `nwwebuse networkdata netsci`
 
 ### physicians: Innovations among Physicians
 {: #physicians }
@@ -1319,7 +1319,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `physicians`: directed; 246 nodes, 1099 ties. Vertex attributes: city, adoption_date, med_sch_yr, meetings, jours, free_time, discuss, clubs, friends, community, patients, proximity, specialty; edge attributes: relation.
 - **Source:** Coleman (1964), *Introduction to Mathematical Sociology*, Free Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/physicians.html>
-- **Load:** `nwwebuse schoch physicians`
+- **Load:** `nwwebuse networkdata physicians`
 
 ### polblogs: Political Blogs
 {: #polblogs }
@@ -1327,7 +1327,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `polblogs`: directed, loops; 1490 nodes, 19025 ties. Vertex attributes: pol; edge attributes: none.
 - **Source:** Adamic and Glance (2005), WWW-2005 Workshop on the Weblogging Ecosystem
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/polblogs.html>
-- **Load:** `nwwebuse schoch polblogs`
+- **Load:** `nwwebuse networkdata polblogs`
 
 ### polbooks: Political Books
 {: #polbooks }
@@ -1335,7 +1335,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `polbooks`: directed; 105 nodes, 441 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Krebs, unpublished, http://www.orgnet.com/
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/polbooks.html>
-- **Load:** `nwwebuse schoch polbooks`
+- **Load:** `nwwebuse networkdata polbooks`
 
 ### pony: Pony
 {: #pony }
@@ -1343,7 +1343,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `pony`: directed, multiple edges; 17 nodes, 761 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Clutton-Brock, Greenwood and Powell (1976), *Zeitschrift fuer Tierpsychologie* 41
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/pony.html>
-- **Load:** `nwwebuse schoch pony`
+- **Load:** `nwwebuse networkdata pony`
 
 ### protein: Protein-Protein Interactions (probably yeast)
 {: #protein }
@@ -1351,7 +1351,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `protein`: undirected, multiple edges, loops; 2114 nodes, 4480 ties. Vertex attributes: number, group, lethality; edge attributes: none.
 - **Source:** Jeong et al. (2001), *Nature* 411
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/protein.html>
-- **Load:** `nwwebuse schoch protein`
+- **Load:** `nwwebuse networkdata protein`
 
 ### rhesus: Rhesus Monkey Grooming
 {: #rhesus }
@@ -1359,7 +1359,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `rhesus`: directed, valued; 16 nodes, 111 ties. Vertex attributes: gender; edge attributes: weight.
 - **Source:** Sade (1972), *Folia Primatologica* 18
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/rhesus.html>
-- **Load:** `nwwebuse schoch rhesus`
+- **Load:** `nwwebuse networkdata rhesus`
 
 ### sampson: Monastery
 {: #sampson }
@@ -1367,7 +1367,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** 10 networks `sampson_1` ... `sampson_10`: directed; 18 nodes, 39-58 ties each. Vertex attributes: none; edge attributes: rank.
 - **Source:** Sampson (1969), *Crisis in a Cloister*, PhD thesis, Cornell University
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/sampson.html>
-- **Load:** `nwwebuse schoch sampson`
+- **Load:** `nwwebuse networkdata sampson`
 
 ### sheep: Bighorn Sheep Dominance
 {: #sheep }
@@ -1375,7 +1375,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `sheep`: directed, valued; 28 nodes, 250 ties. Vertex attributes: age; edge attributes: weight.
 - **Source:** Hass (1991), *Journal of Zoology* 225
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/sheep.html>
-- **Load:** `nwwebuse schoch sheep`
+- **Load:** `nwwebuse networkdata sheep`
 
 ### sn_auth: Social Networks Coauthors
 {: #sn_auth }
@@ -1383,7 +1383,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `sn_auth`: undirected, valued; 475 nodes, 625 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** McCarty, INSNA conference data set
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/sn_auth.html>
-- **Load:** `nwwebuse schoch sn_auth`
+- **Load:** `nwwebuse networkdata sn_auth`
 
 ### southern_women: Davis - Southern Women
 {: #southern_women }
@@ -1391,7 +1391,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `southern_women`: two-mode; 32 nodes, 89 ties (modes 18 and 14). Vertex attributes: type; edge attributes: none.
 - **Source:** Davis, Gardner and Gardner (1941), *Deep South*, University of Chicago Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/southern_women.html>
-- **Load:** `nwwebuse schoch southern_women`
+- **Load:** `nwwebuse networkdata southern_women`
 
 ### surfersb: Windsurfers (Interactions)
 {: #surfersb }
@@ -1399,7 +1399,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `surfersb`: undirected, valued, loops; 43 nodes, 378 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Freeman, Freeman and Michaelson (1988), *Journal of Social and Biological Structures* 11
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/surfersb.html>
-- **Load:** `nwwebuse schoch surfersb`
+- **Load:** `nwwebuse networkdata surfersb`
 
 ### surfersc: Windsurfers (Closeness)
 {: #surfersc }
@@ -1407,7 +1407,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `surfersc`: undirected, valued; 43 nodes, 897 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Freeman, Freeman and Michaelson (1988), *Journal of Social and Biological Structures* 11
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/surfersc.html>
-- **Load:** `nwwebuse schoch surfersc`
+- **Load:** `nwwebuse networkdata surfersc`
 
 ### tailor_social: Kapferer - Tailor-Shop (social)
 {: #tailor_social }
@@ -1415,7 +1415,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `tailor_social`: undirected, edge time stamps; 39 nodes, 278 ties. Vertex attributes: none; edge attributes: time.
 - **Source:** Kapferer (1972), *Strategy and Transaction in an African Factory*, Manchester University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/tailor_social.html>
-- **Load:** `nwwebuse schoch tailor_social`
+- **Load:** `nwwebuse networkdata tailor_social`
 
 ### tailor_work: Kapferer - Tailor-Shop (work)
 {: #tailor_work }
@@ -1423,7 +1423,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `tailor_work`: directed, edge time stamps; 39 nodes, 211 ties. Vertex attributes: none; edge attributes: time.
 - **Source:** Kapferer (1972), *Strategy and Transaction in an African Factory*, Manchester University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/tailor_work.html>
-- **Load:** `nwwebuse schoch tailor_work`
+- **Load:** `nwwebuse networkdata tailor_work`
 
 ### taro: Taro Exchange
 {: #taro }
@@ -1431,7 +1431,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `taro`: undirected; 22 nodes, 39 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Hage and Harary (1983), *Structural Models in Anthropology*, Cambridge University Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/taro.html>
-- **Load:** `nwwebuse schoch taro`
+- **Load:** `nwwebuse networkdata taro`
 
 ### train: Madrid Train Bombing
 {: #train }
@@ -1439,7 +1439,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `train`: undirected, valued, multiple edges; 70 nodes, 486 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Hayes (2006), *American Scientist* 94
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/train.html>
-- **Load:** `nwwebuse schoch train`
+- **Load:** `nwwebuse networkdata train`
 
 ### wiring: Bank Wiring Room
 {: #wiring }
@@ -1447,7 +1447,7 @@ Classic network data sets of the UCINET collection, as distributed by the Univer
 - **Structure:** `wiring`: undirected; 14 nodes, 32 ties. Vertex attributes: none; edge attributes: sign.
 - **Source:** Roethlisberger and Dickson (1939), *Management and the Worker*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/wiring.html>
-- **Load:** `nwwebuse schoch wiring`
+- **Load:** `nwwebuse networkdata wiring`
 
 
 ## KONECT networks
@@ -1461,7 +1461,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `arenas_email`: undirected; 1133 nodes, 5451 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Guimera et al. (2003), *Physical Review E* 68
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/arenas_email.html>
-- **Load:** `nwwebuse schoch arenas_email`
+- **Load:** `nwwebuse networkdata arenas_email`
 
 ### arenas_meta: Arenas Metabolic
 {: #arenas_meta }
@@ -1469,7 +1469,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `arenas_meta`: undirected, multiple edges, loops; 453 nodes, 4596 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Duch and Arenas (2005), *Physical Review E* 72
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/arenas_meta.html>
-- **Load:** `nwwebuse schoch arenas_meta`
+- **Load:** `nwwebuse networkdata arenas_meta`
 
 ### brunson_club_membership: Brunson Club Membership
 {: #brunson_club_membership }
@@ -1477,7 +1477,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `brunson_club_membership`: two-mode; 40 nodes, 95 ties (modes 25 and 15). Vertex attributes: type; edge attributes: none.
 - **Source:** Faust (1997), *Social Networks* 19
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/brunson_club_membership.html>
-- **Load:** `nwwebuse schoch brunson_club_membership`
+- **Load:** `nwwebuse networkdata brunson_club_membership`
 
 ### brunson_corporate_leadership: Brunson Corporate Leadership
 {: #brunson_corporate_leadership }
@@ -1485,7 +1485,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `brunson_corporate_leadership`: two-mode; 44 nodes, 99 ties (modes 20 and 24). Vertex attributes: type; edge attributes: none.
 - **Source:** Barnes and Burkett (2010), INSNA *Connections* 30
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/brunson_corporate_leadership.html>
-- **Load:** `nwwebuse schoch brunson_corporate_leadership`
+- **Load:** `nwwebuse networkdata brunson_corporate_leadership`
 
 ### brunson_revolution: Brunson Revolution
 {: #brunson_revolution }
@@ -1493,7 +1493,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `brunson_revolution`: two-mode; 141 nodes, 160 ties (modes 136 and 5). Vertex attributes: type; edge attributes: none.
 - **Source:** original data via https://github.com/corybrunson/triadic
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/brunson_revolution.html>
-- **Load:** `nwwebuse schoch brunson_revolution`
+- **Load:** `nwwebuse networkdata brunson_revolution`
 
 ### brunson_south_africa: Brunson South Africa
 {: #brunson_south_africa }
@@ -1501,7 +1501,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `brunson_south_africa`: two-mode; 11 nodes, 13 ties (modes 6 and 5). Vertex attributes: type; edge attributes: none.
 - **Source:** Hobson (1919), *The Evolution of Modern Capitalism*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/brunson_south_africa.html>
-- **Load:** `nwwebuse schoch brunson_south_africa`
+- **Load:** `nwwebuse networkdata brunson_south_africa`
 
 ### chicagoroad: Road Transportation Network Chicago
 {: #chicagoroad }
@@ -1509,7 +1509,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `chicagoroad`: undirected; 1467 nodes, 1298 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Eash et al. (1983), *Transportation Research Record* 994
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/chicagoroad.html>
-- **Load:** `nwwebuse schoch chicagoroad`
+- **Load:** `nwwebuse networkdata chicagoroad`
 
 ### dnc_corecipient: DNC Email (Corecipients)
 {: #dnc_corecipient }
@@ -1517,7 +1517,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `dnc_corecipient`: undirected, valued, multiple edges; 906 nodes, 12085 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Pickhardt, http://www.rene-pickhardt.de/
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/dnc_corecipient.html>
-- **Load:** `nwwebuse schoch dnc_corecipient`
+- **Load:** `nwwebuse networkdata dnc_corecipient`
 
 ### dnc_temporalGraph: DNC Email (Temporal)
 {: #dnc_temporalGraph }
@@ -1525,7 +1525,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `dnc_temporalGraph`: directed, multiple edges, edge time stamps; 1891 nodes, 37421 ties. Vertex attributes: none; edge attributes: timestamp.
 - **Source:** Pickhardt, http://www.rene-pickhardt.de/
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/dnc_temporalGraph.html>
-- **Load:** `nwwebuse schoch dnc_temporalGraph`
+- **Load:** `nwwebuse networkdata dnc_temporalGraph`
 
 ### euroroad: Road network Europe
 {: #euroroad }
@@ -1533,7 +1533,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `euroroad`: undirected; 1174 nodes, 1417 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Subelj and Bajec (2011), *European Physical Journal B* 81
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/euroroad.html>
-- **Load:** `nwwebuse schoch euroroad`
+- **Load:** `nwwebuse networkdata euroroad`
 
 ### f2f_hypertext: Face-2-face contacts at Hypertext
 {: #f2f_hypertext }
@@ -1541,7 +1541,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `f2f_hypertext`: undirected, multiple edges, edge time stamps; 113 nodes, 20818 ties. Vertex attributes: none; edge attributes: timestamp.
 - **Source:** Isella et al. (2011), *J. Theoretical Biology* 271
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/f2f_hypertext.html>
-- **Load:** `nwwebuse schoch f2f_hypertext`
+- **Load:** `nwwebuse networkdata f2f_hypertext`
 
 ### f2f_infectious: Face-2-face contacts at Infectious
 {: #f2f_infectious }
@@ -1549,7 +1549,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `f2f_infectious`: undirected, multiple edges, edge time stamps; 410 nodes, 17298 ties. Vertex attributes: none; edge attributes: timestamp.
 - **Source:** Isella et al. (2011), *J. Theoretical Biology* 271
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/f2f_infectious.html>
-- **Load:** `nwwebuse schoch f2f_infectious`
+- **Load:** `nwwebuse networkdata f2f_infectious`
 
 ### maayan_faa: FAA Preferred Routes
 {: #maayan_faa }
@@ -1557,7 +1557,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `maayan_faa`: directed; 1226 nodes, 2613 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Federal Aviation Administration, Preferred Routes Database
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/maayan_faa.html>
-- **Load:** `nwwebuse schoch maayan_faa`
+- **Load:** `nwwebuse networkdata maayan_faa`
 
 ### maayan_pdzbase: Maayan Pdzbase
 {: #maayan_pdzbase }
@@ -1565,7 +1565,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `maayan_pdzbase`: undirected, loops; 212 nodes, 244 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Beuming et al. (2005), *Bioinformatics* 21
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/maayan_pdzbase.html>
-- **Load:** `nwwebuse schoch maayan_pdzbase`
+- **Load:** `nwwebuse networkdata maayan_pdzbase`
 
 ### petster: Petster Friendships
 {: #petster }
@@ -1573,7 +1573,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `petster`: undirected; 1858 nodes, 12534 ties. Vertex attributes: pet_name, joined, pet_species, pet_coloring, pet_gender, pet_birthday, pet_age, hometown, pet_favorite_toy, pet_favorite_activity, pet_favorite_food; edge attributes: none.
 - **Source:** KONECT, http://konect.cc/
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/petster.html>
-- **Load:** `nwwebuse schoch petster`
+- **Load:** `nwwebuse networkdata petster`
 
 ### powergrid: Powergrid
 {: #powergrid }
@@ -1581,7 +1581,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `powergrid`: undirected; 4941 nodes, 6594 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Watts and Strogatz (1998), *Nature* 393
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/powergrid.html>
-- **Load:** `nwwebuse schoch powergrid`
+- **Load:** `nwwebuse networkdata powergrid`
 
 ### radoslaw_email: Radoslaw - Email Network
 {: #radoslaw_email }
@@ -1589,7 +1589,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `radoslaw_email`: directed, valued, loops; 167 nodes, 5784 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Michalski, Palus and Kazienko (2011), *Lecture Notes in Business Information Processing* 87
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/radoslaw_email.html>
-- **Load:** `nwwebuse schoch radoslaw_email`
+- **Load:** `nwwebuse networkdata radoslaw_email`
 
 ### ucforum: UC forum (2-mode)
 {: #ucforum }
@@ -1597,7 +1597,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `ucforum`: two-mode, valued; 1421 nodes, 7089 ties (modes 899 and 522). Vertex attributes: type; edge attributes: weight.
 - **Source:** Opsahl and Panzarasa (2011), *Social Networks* 34
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ucforum.html>
-- **Load:** `nwwebuse schoch ucforum`
+- **Load:** `nwwebuse networkdata ucforum`
 
 ### ucsocial: UC forum (messages sent)
 {: #ucsocial }
@@ -1605,7 +1605,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `ucsocial`: directed, valued; 1899 nodes, 20296 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Opsahl and Panzarasa (2009), *Social Networks* 31
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/ucsocial.html>
-- **Load:** `nwwebuse schoch ucsocial`
+- **Load:** `nwwebuse networkdata ucsocial`
 
 ### unicodelang: Unicodelang
 {: #unicodelang }
@@ -1613,7 +1613,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `unicodelang`: two-mode, valued; 868 nodes, 38 ties (modes 254 and 614). Vertex attributes: type; edge attributes: weight.
 - **Source:** Unicode CLDR territory-language data
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/unicodelang.html>
-- **Load:** `nwwebuse schoch unicodelang`
+- **Load:** `nwwebuse networkdata unicodelang`
 
 ### usa_borders: USA Bordering States
 {: #usa_borders }
@@ -1621,7 +1621,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `usa_borders`: undirected; 49 nodes, 107 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Knuth (2008), *The Art of Computer Programming* vol. 4
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/usa_borders.html>
-- **Load:** `nwwebuse schoch usa_borders`
+- **Load:** `nwwebuse networkdata usa_borders`
 
 ### usflights: US Flights 2010
 {: #usflights }
@@ -1629,7 +1629,7 @@ Networks that the package took from the Koblenz Network Collection (KONECT, <htt
 - **Structure:** `usflights`: directed, valued; 1574 nodes, 28236 ties. Vertex attributes: none; edge attributes: weight.
 - **Source:** Opsahl (2011), *Why Anchorage is not (that) important*
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/usflights.html>
-- **Load:** `nwwebuse schoch usflights`
+- **Load:** `nwwebuse networkdata usflights`
 
 
 ## Miscellaneous networks
@@ -1643,7 +1643,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** `adjnoun`: undirected; 112 nodes, 425 ties. Vertex attributes: id, value; edge attributes: none.
 - **Source:** Newman (2006), *Physical Review E* 74
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/adjnoun.html>
-- **Load:** `nwwebuse schoch adjnoun`
+- **Load:** `nwwebuse networkdata adjnoun`
 
 ### atp: ATP Tennis (1968-2021)
 {: #atp }
@@ -1651,7 +1651,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 54 networks `atp_1` ... `atp_54`: directed, valued, multiple edges, loops (some networks only); 345-597 nodes, 1213-3892 ties each. Vertex attributes: age, hand, country; edge attributes: surface, weight.
 - **Source:** Jeff Sackmann's tennis data, https://github.com/JeffSackmann (credit requested)
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/atp.html>
-- **Load:** `nwwebuse schoch atp`
+- **Load:** `nwwebuse networkdata atp`
 
 ### cent_lit: Centrality literature network
 {: #cent_lit }
@@ -1659,14 +1659,14 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** `cent_lit`: directed; 129 nodes, 613 ties. Vertex attributes: none; edge attributes: none.
 - **Source:** Hummon, Doreian and Freeman (1990), *Knowledge* 11
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/cent_lit.html>
-- **Load:** `nwwebuse schoch cent_lit`
+- **Load:** `nwwebuse networkdata cent_lit`
 
 ### clique_graph: Illustrating cliques
 {: #clique_graph }
 - **What:** A small constructed graph that illustrates cliques and cores.
 - **Structure:** `clique_graph`: undirected; 30 nodes, 47 ties. Vertex attributes: none; edge attributes: none.
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/clique_graph.html>
-- **Load:** `nwwebuse schoch clique_graph`
+- **Load:** `nwwebuse networkdata clique_graph`
 
 ### coleman: Coleman's High School Friendship Data
 {: #coleman }
@@ -1674,14 +1674,14 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 2 networks `coleman_1` ... `coleman_2`: directed; 73 nodes, 243-263 ties each. Vertex attributes: none; edge attributes: none.
 - **Source:** Coleman (1964), *Introduction to Mathematical Sociology*, Free Press
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/coleman.html>
-- **Load:** `nwwebuse schoch coleman`
+- **Load:** `nwwebuse networkdata coleman`
 
 ### core_graph: Illustrating core-periphery
 {: #core_graph }
 - **What:** A constructed graph that illustrates a core-periphery structure.
 - **Structure:** `core_graph`: undirected; 100 nodes, 578 ties. Vertex attributes: none; edge attributes: none.
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/core_graph.html>
-- **Load:** `nwwebuse schoch core_graph`
+- **Load:** `nwwebuse networkdata core_graph`
 
 ### cosponsor: Senat 2015 Bill cosponsorship
 {: #cosponsor }
@@ -1689,7 +1689,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** `cosponsor`: two-mode; 3984 nodes, 26392 ties (modes 110 and 3874). Vertex attributes: type, party; edge attributes: none.
 - **Source:** GovTrack.us
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/cosponsor.html>
-- **Load:** `nwwebuse schoch cosponsor`
+- **Load:** `nwwebuse networkdata cosponsor`
 
 ### football_triad: Simplified football results
 {: #football_triad }
@@ -1697,7 +1697,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 112 networks `football_triad_1` ... `football_triad_112`: directed; 6-28 nodes, 20-273 ties each. Vertex attributes: none; edge attributes: none.
 - **Source:** soccerverse.com
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/football_triad.html>
-- **Load:** `nwwebuse schoch football_triad`
+- **Load:** `nwwebuse networkdata football_triad`
 
 ### glasgow129: Teenage Friends and Lifestyle Study data
 {: #glasgow129 }
@@ -1705,7 +1705,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 3 networks `glasgow129_1` ... `glasgow129_3`: directed, loops (some networks only); 129 nodes, 445-464 ties each. Vertex attributes: alcohol, tobacco, cannabis, age, money, romantic, familysmoking, sex_F; edge attributes: friendship_level.
 - **Source:** Glasgow data page of the RSiena project, https://www.stats.ox.ac.uk/~snijders/siena/Glasgow_data.htm
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/glasgow129.html>
-- **Load:** `nwwebuse schoch glasgow129`
+- **Load:** `nwwebuse networkdata glasgow129`
 
 ### got: Game of Thrones Interactions
 {: #got }
@@ -1713,14 +1713,14 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 7 networks `got_1` ... `got_7`: undirected, valued; 81-172 nodes, 398-667 ties each. Vertex attributes: none; edge attributes: weight.
 - **Source:** Beveridge and Chemers (2018); https://github.com/mathbeveridge/gameofthrones/
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/got.html>
-- **Load:** `nwwebuse schoch got`
+- **Load:** `nwwebuse networkdata got`
 
 ### greys: Grey's Anatomy Hook-ups
 {: #greys }
 - **What:** Romantic and sexual relations among characters of the television series Grey's Anatomy.
 - **Structure:** `greys`: undirected; 54 nodes, 57 ties. Vertex attributes: sex, race, birthyear, position, season, sign; edge attributes: none.
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/greys.html>
-- **Load:** `nwwebuse schoch greys`
+- **Load:** `nwwebuse networkdata greys`
 
 ### gss_egor: General Social Survey 2004 Egocentric Network Data
 {: #gss_egor }
@@ -1734,7 +1734,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 4 networks `knecht_1` ... `knecht_4`: directed, loops (some networks only); 26 nodes, 91-133 ties each. Vertex attributes: deli, alcohol, gender, age, ethnic, religion; edge attributes: none.
 - **Source:** Knecht (2006), PhD thesis, Utrecht University
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/knecht.html>
-- **Load:** `nwwebuse schoch knecht`
+- **Load:** `nwwebuse networkdata knecht`
 
 ### s50: 50-actor excerpt from the Teenage Friends and Lifestyle Study data
 {: #s50 }
@@ -1742,7 +1742,7 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 3 networks `s50_1` ... `s50_3`: undirected; 50 nodes, 74-81 ties each. Vertex attributes: smoke; edge attributes: none.
 - **Source:** RSiena data page, https://www.stats.ox.ac.uk/~snijders/siena/siena_datasets.htm
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/s50.html>
-- **Load:** `nwwebuse schoch s50`
+- **Load:** `nwwebuse networkdata s50`
 
 ### starwars: Star Wars Episode 1-7
 {: #starwars }
@@ -1750,14 +1750,14 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 7 networks `starwars_1` ... `starwars_7`: undirected, valued; 20-38 nodes, 55-135 ties each. Vertex attributes: height, mass, hair_color, skin_color, eye_color, birth_year, sex, homeworld, species; edge attributes: weight.
 - **Source:** https://github.com/evelinag/StarWars-social-network
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/starwars.html>
-- **Load:** `nwwebuse schoch starwars`
+- **Load:** `nwwebuse networkdata starwars`
 
 ### us_flights: Flights within the US
 {: #us_flights }
 - **What:** Flights between US airports; undirected.
 - **Structure:** `us_flights`: undirected; 276 nodes, 2682 ties. Vertex attributes: city, state, country, latitude, longitude; edge attributes: none.
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/us_flights.html>
-- **Load:** `nwwebuse schoch us_flights`
+- **Load:** `nwwebuse networkdata us_flights`
 
 ### wta: WTA Tennis (1968-2021)
 {: #wta }
@@ -1765,4 +1765,4 @@ Data sets from various sources that fit none of the groups above.
 - **Structure:** 54 networks `wta_1` ... `wta_54`: directed, valued, multiple edges, loops (some networks only); 152-2513 nodes, 249-18901 ties each. Vertex attributes: age, hand, country; edge attributes: surface, weight.
 - **Source:** Jeff Sackmann's tennis data, https://github.com/JeffSackmann (credit requested)
 - **Upstream page:** <https://schochastics.github.io/networkdata/reference/wta.html>
-- **Load:** `nwwebuse schoch wta`
+- **Load:** `nwwebuse networkdata wta`

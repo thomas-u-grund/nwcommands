@@ -863,7 +863,7 @@ program _nwnd_load, rclass
 			// ties: a directed network stores each tie once, an undirected or two-mode network in both directions (a loop once)
 			mata: __nwnd_el = `netobj'->edgelist(); st_local("__nm", strofreal(`=cond("`directed'" == "true", "rows(__nwnd_el)", "(rows(__nwnd_el) + sum(__nwnd_el[., 1] :== __nwnd_el[., 2])) / 2")'))
 			mata: mata drop __nwnd_el
-			di as txt "Loaded from Schoch's networkdata collection: {res:`lastnet'} (`nodes' nodes, `__nm' ties, " ///
+			di as txt "Loaded from the networkdata collection (David Schoch): {res:`lastnet'} (`nodes' nodes, `__nm' ties, " ///
 				"`=cond("`directed'" == "true", "directed", "undirected")', `=cond("`is2mode'" == "true", "two-mode", "one-mode")', " ///
 				"`=cond("`valued'" == "true", "valued", "binary")'); source and citation: {stata nwnetworkdata describe `obj':nwnetworkdata describe `obj'}; " ///
 				"collection: Schoch (2022), doi:10.5281/zenodo.7189928"
@@ -871,7 +871,7 @@ program _nwnd_load, rclass
 	}
 	capture mata: mata drop __nwnd_erng __nwnd_nrng
 	if `nnets' > 5 {
-		di as txt "Loaded from Schoch's networkdata collection: `loaded' networks `=word("`loadednets'", 1)' ... `=word("`loadednets'", `loaded')' of the data set {res:`obj'}; " ///
+		di as txt "Loaded from the networkdata collection (David Schoch): `loaded' networks `=word("`loadednets'", 1)' ... `=word("`loadednets'", `loaded')' of the data set {res:`obj'}; " ///
 			"source and citation: {stata nwnetworkdata describe `obj':nwnetworkdata describe `obj'}; collection: Schoch (2022), doi:10.5281/zenodo.7189928"
 	}
 	di as txt "(data read `nwnd_origin_msg'; the data are not part of nwcommands: please cite the collection and the original source of the data set)"
