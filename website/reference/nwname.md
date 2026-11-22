@@ -82,7 +82,7 @@ This changes the name of the network *flobusiness* into *flob*. This could also 
 - **r(nodes1)** --- number of mode-1 nodes (two-mode networks only)
 - **r(nodes2)** --- number of mode-2 nodes (two-mode networks only)
 - **r(selfloops)** --- number of self-loops
-- **r(missing_edges)** --- number of missing (undefined) dyads
+- **r(missing_edges)** --- number of cells of the adjacency matrix without a value, including the diagonal cells of a network without self-loops (see [nwsummarize](nwsummarize))
 
 - **Macros**
 - **r(netname)** --- name of the network

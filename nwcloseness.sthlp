@@ -63,6 +63,11 @@ The closeness centrality for node {it:i} is defined in the following way:
 with: {it:dist_ik} being the length of the shortest path from node {it:i} to node {it:k} (see {help nwgeodesic})
 
 {pstd}
+{bf:Directed networks.} By default the closeness centrality of a directed network is calculated on the symmetrized network, in which the tie between two nodes has the larger of the two
+directions' values ({cmd:nwsym} with {cmd:mode(max)}); the result is the closeness of an undirected network and does not distinguish the direction of the ties. Option {opt nosym} analyses the
+directed network itself, with distances that follow the direction of the ties. On an undirected network {opt nosym} changes nothing.
+
+{pstd}
 Closeness as defined above ((nodes - 1) / farness) is only defined for a connected network. When the network is unconnected (or, for a directed network, not strongly connected) the command prints a
 warning and, as in R's igraph, takes the sum of the distances over the nodes that {it:i} can reach and divides the {it:number of those nodes} by it: {it:closeness_i = reach_i / farness_i}. This equals
 the formula above for a connected network and never exceeds 1. Farness and nearness are the plain sum of finite distances and its inverse. A node that reaches no other node gets a missing

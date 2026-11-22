@@ -49,6 +49,11 @@ magnitude). {bf:weighted} is redundant and has no effect on an unvalued network 
 to weight by).
 
 {pstd}
+{bf:Directed networks.} By default the eigenvector centrality of a directed network is calculated on the symmetrized network, in which the tie between two nodes has the larger of the two
+directions' values; the result is the eigenvector centrality of an undirected network. Option {opt nosym} analyses the directed network itself, with the outgoing
+ties of each node. On an undirected network {opt nosym} changes nothing.
+
+{pstd}
 Eigenvector centrality is only defined for connected networks.
 
 

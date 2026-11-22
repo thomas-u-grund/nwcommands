@@ -60,6 +60,11 @@ edge cost is {it:(1/weight)^alpha}: a STRONGER tie is a SHORTER effective distan
 strength). See the References section below for the full citation.
 
 {pstd}
+{bf:Directed networks.} By default the betweenness centrality of a directed network is calculated on the symmetrized network, in which the tie between two nodes has the larger of the two
+directions' values ({cmd:nwsym} with {cmd:mode(max)}); the result is the betweenness of an undirected network and does not distinguish the direction of the ties. Option {opt nosym} analyses the
+directed network itself, with shortest paths that follow the direction of the ties. On an undirected network {opt nosym} changes nothing.
+
+{pstd}
 The betweenness centrality for node {it:i} is equal to the number of shortest paths from all vertices to all 
 others that pass through node {it:i}. A node with high betweenness centrality has a large influence on the 
 transfer of items through the network, under the assumption that item transfer follows the shortest paths. 

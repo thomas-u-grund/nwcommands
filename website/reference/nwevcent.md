@@ -38,6 +38,8 @@ Calculates eigenvector centrality for each node *i* in a netwwork and saves the 
 
 By default, a valued network is calculated on the tie values themselves, so that stronger ties contribute proportionally more, matching the standard weighted generalization of eigenvector centrality (Newman 2004, Bonacich power centrality). Option **binary** instead dichotomizes the network before calculation (any nonzero, non-missing tie value counts as a tie, regardless of magnitude). **weighted** is redundant and has no effect on an unvalued network (there is nothing to weight by).
 
+**Directed networks.** By default the eigenvector centrality of a directed network is calculated on the symmetrized network, in which the tie between two nodes has the larger of the two directions' values; the result is the eigenvector centrality of an undirected network. Option `nosym` analyses the directed network itself, with the outgoing ties of each node. On an undirected network `nosym` changes nothing.
+
 Eigenvector centrality is only defined for connected networks.
 
 ## Network types
