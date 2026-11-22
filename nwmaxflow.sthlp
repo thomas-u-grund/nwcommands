@@ -64,8 +64,8 @@ handling.
 {title:Network types}
 
 {pstd}
-{bf:Directed:} directions are used. {bf:Valued:} each tie has capacity 1 by default; {opt weighted} uses the tie
-values as capacities. {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} a
+{bf:Directed:} directions are used. {bf:Valued:} each tie has capacity 1 by default and the output says so; {opt weighted} uses the tie
+values as capacities (the default of {cmd:igraph::max_flow} is to use a {cmd:capacity} edge attribute when present). {bf:Two-mode:} same as for the bipartite graph read as a one-mode network. {bf:Signed:} a
 negative capacity has no meaning. See {help nwnetworktypes}.{p_end}
 
 

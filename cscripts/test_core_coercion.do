@@ -217,4 +217,17 @@ qui set obs 3
 qui gen toa = cond(_n == 1, 1, cond(_n == 2, 2, .))
 _tcc_log "directed network" "nwdiffuse simulate dv, model(cascade) prob(.5) nseeds(1) steps(3) generate(sim1) seed(1) replace"
 
+* ---------------------------------------------------------------- A9. nwmaxflow
+nwset, mat((0,3,0\0,0,2\0,0,0)) name(mf) directed labs(a,b,c)
+_tcc_log "directed network: flow follows the direction of the ties|valued network: every tie has capacity 1, tie values ignored" "nwmaxflow mf, source(a) sink(c)"
+nwmaxflow mf, source(a) sink(c)
+assert r(maxflow) == 1
+_tcc_log "valued network: the tie values are the capacities" "nwmaxflow mf, source(a) sink(c) weighted"
+nwmaxflow mf, source(a) sink(c) weighted
+assert r(maxflow) == 2
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(mfu) undirected labs(a,b,c)
+_tcc_log "undirected network: a tie carries flow in both directions|every tie has capacity 1" "nwmaxflow mfu, source(a) sink(c)"
+nwset, mat((0,1,.\1,0,1\.,1,0)) name(mfm) undirected labs(a,b,c)
+_tcc_log "1 missing ties treated as 0" "nwmaxflow mfm, source(a) sink(c)"
+
 di "PASS: test_core_coercion"

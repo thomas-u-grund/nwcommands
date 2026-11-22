@@ -28,16 +28,16 @@ real scalar nw_missing_ties(pointer(class nw_def scalar) scalar p)
 	m = p->get_missing_edges()
 	if (m == 0) return(0)
 	n = p->get_nodes()
-	e = p->get_matrix()
-	E = (*e :>= .)
 	if (p->is_2mode() == "true") {
-		// count only the cells between the two modes (the within-mode blocks are structurally empty)
+		// only the cells between the two modes count (the within-mode blocks are structurally empty); small networks
+		e = p->get_matrix()
+		E = (*e :>= .)
 		k = p->get_nodes_mode1()
 		E = E[|1,k+1 \ k,n|]
 		return(sum(E))
 	}
-	m = sum(E)
-	if (p->is_selfloop() == "false") m = m - sum(diagonal(E))
+	// the count of the network holds the diagonal of a network without self-loops; an undirected tie fills two cells
+	if (p->is_selfloop() == "false") m = m - n
 	if (p->is_directed() == "false") m = m / 2
 	return(floor(m))
 }

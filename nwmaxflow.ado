@@ -4,6 +4,10 @@ program nwmaxflow, rclass
 	version 12
 	syntax [anything(name=netname)], SOURCE(string) SINK(string) [WEIGHTed GENerate(string) replace]
 	_nwsyntax `netname'
+	local __wasdir = ("`directed'" == "true")
+	local __wasval = ("`valued'" == "true")
+	_nwmissnote `netname', quiet
+	local __nmiss = r(nmissing)
 
 	qui nwnode `netname', ego(`source')
 	local srcid `r(nodeid)'
@@ -66,6 +70,24 @@ program nwmaxflow, rclass
 	di "{txt}  Source: {res}`source'{txt}   Sink: {res}`sink'"
 	di "{txt}  Max flow: {res}`=__nwmaxflow_value'{txt}   Min-cut edges: {res}`=__nwmaxflow_cutedges'"
 	di "{hline 40}"
+	if `__wasdir' {
+		di "{txt}{p 2 2 2}(directed network: flow follows the direction of the ties){p_end}"
+	}
+	else {
+		di "{txt}{p 2 2 2}(undirected network: a tie carries flow in both directions){p_end}"
+	}
+	if `__wasval' & !`val' {
+		di "{txt}{p 2 2 2}(valued network: every tie has capacity 1, tie values ignored; option {bf:weighted} uses the tie values as capacities){p_end}"
+	}
+	else if `__wasval' {
+		di "{txt}{p 2 2 2}(valued network: the tie values are the capacities){p_end}"
+	}
+	else {
+		di "{txt}{p 2 2 2}(every tie has capacity 1){p_end}"
+	}
+	if `__nmiss' > 0 {
+		di "{txt}{p 2 2 2}(`__nmiss' missing ties treated as 0){p_end}"
+	}
 	if "`generate'" != "" {
 		di "{txt}{p 0 0 2}(`generate' == 1 marks the source side of the minimum cut; every existing tie from a 1 to a 0 is a cut edge){p_end}"
 	}
