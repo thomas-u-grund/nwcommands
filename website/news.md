@@ -1,16 +1,20 @@
 ---
-title: "Releases and news"
+title: "News"
 nav_order: 12
-description: "Dated list of releases of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm, and changes to this site."
+description: "News about nwcommands and the book: workshops and other announcements, and the dated list of releases of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm."
 permalink: /news/
 ---
 
-# Releases and news
+# News
 {: .no_toc }
 
-Newest first. Announcements also go to the [nwcommands mailing list](https://groups.google.com/g/nwcommands). The full change history of each package is in its `CHANGELOG`, and every release has notes on GitHub.
+Announcements (workshops, talks, the book, teaching material) and software releases, newest first. Announcements also go to the [nwcommands mailing list](https://groups.google.com/g/nwcommands). The full change history of each package is in its `CHANGELOG`, and every release has notes on GitHub.
 
 All releases: [nwcommands](https://github.com/thomas-u-grund/nwcommands/releases), [nwsaom](https://github.com/thomas-u-grund/nwsaom/releases), [nwergm](https://github.com/thomas-u-grund/nwergm/releases), [nwdynam](https://github.com/thomas-u-grund/nwdynam/releases), [nwrem](https://github.com/thomas-u-grund/nwrem/releases), [nwalaam](https://github.com/thomas-u-grund/nwalaam/releases), [nwlsm](https://github.com/thomas-u-grund/nwlsm/releases), [nwsbm](https://github.com/thomas-u-grund/nwsbm/releases).
+
+## 22 November 2026: Workshops at Sunbelt 2027 in Montreal
+
+Workshops on network analysis with Stata and nwcommands are planned for the Sunbelt conference of the International Network for Social Network Analysis (INSNA) in Montreal in 2027. Dates, topics and how to register will be posted here as soon as they are fixed. The [workshop slides](../book/teaching/workshop/) of the three-session workshop are already available.
 
 ## 21 November 2026: nwlsm 1.0.5
 
