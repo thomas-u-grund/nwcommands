@@ -9,9 +9,9 @@ description: "How to cite nwdynam, and the original papers and software it build
 # How to cite
 
 **nwdynam.** Cite the package by its repository and report the version that produced your results, as printed by
-`nwdynam version` (for example "nwdynam 1.11.0"). To cite the software:
+`nwdynam version` (for example "nwdynam 1.11.1"). To cite the software:
 
-> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models (version 1.11.0).* GitHub. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
+> Grund, T. U. (2026). *nwdynam: a Stata package for dynamic network actor models (version 1.11.1).* GitHub. [https://github.com/thomas-u-grund/nwdynam](https://github.com/thomas-u-grund/nwdynam)
 
 Cite the manual, which has a DOI:
 
