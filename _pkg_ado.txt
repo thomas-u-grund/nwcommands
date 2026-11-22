@@ -120,6 +120,9 @@ f nwmodularity.ado
 f nwmotifs.ado
 f nwmovie.ado
 f nwmoviexy.ado
+f nwnetworkdata.ado
+f nwnetworkdata_catalogue.ado
+f nwnetworkdata_convert.ado
 f nwname.ado
 f nwnclan.ado
 f nwnclique.ado

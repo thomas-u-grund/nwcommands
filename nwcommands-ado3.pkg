@@ -4,6 +4,12 @@ d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 21nov2026
 d Version: 3.34.0
+f nwspmatrix.ado
+f nwstack.ado
+f nwsubset.ado
+f nwsummarize.ado
+f nwsym.ado
+f nwsymmetrize.ado
 f nwsync.ado
 f nwtabulate.ado
 f nwtoedge.ado
