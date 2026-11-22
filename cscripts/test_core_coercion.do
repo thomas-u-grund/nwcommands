@@ -161,4 +161,24 @@ _tcc_log "directed network with every tie reciprocated" "nwlambda dsym, name(lam
 _tcc_log "tie values are ignored" "nwclique gahuku, generate(gq) replace"
 _tcc_log "tie values are ignored" "nwlambda gahuku, name(lam3) replace"
 
+* ---------------------------------------------------------------- A6. nwspectral, nwcoreperiphery, nwfactions
+foreach c in nwspectral nwcoreperiphery nwfactions {
+	local g generate(gs_`c') replace
+	capture noisily `c' dnet, `g'
+	assert _rc == 198
+	_tcc_log "directed network symmetrized" "`c' dnet, `g' sym"
+	_tcc_log "directed network with every tie reciprocated" "`c' dsym, `g'"
+}
+* the symmetrized result is the result on the undirected network
+qui nwcoreperiphery lazega_adv, generate(cpa) sym
+local fa = r(fitness)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(lz) undirected
+qui nwsym lazega_adv, mode(max) generate(lazega_s)
+qui nwcoreperiphery lazega_s, generate(cpb)
+_tcc_near `r(fitness)' `fa' 1e-12 "A6 nwcoreperiphery sym = nwsym max"
+qui nwspectral lazega_adv, generate(spa) sym
+local ac = r(algebraic_connectivity)
+qui nwspectral lazega_s, generate(spb)
+_tcc_near `r(algebraic_connectivity)' `ac' 1e-12 "A6 nwspectral sym = nwsym max"
+
 di "PASS: test_core_coercion"

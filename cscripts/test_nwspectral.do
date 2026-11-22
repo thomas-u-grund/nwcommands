@@ -61,7 +61,7 @@ assert reldif(r(algebraic_connectivity), 3) < 1E-6
 * symmetrizes to the same K3 above, giving the identical spectrum.
 nwclear
 nwset, mat((0,1,0\0,0,1\1,0,0)) directed name(dnet)
-nwspectral dnet, generate(_fiedler) silent
+nwspectral dnet, generate(_fiedler) silent sym
 assert _rc == 0
 assert reldif(r(algebraic_connectivity), 3) < 1E-6
 

@@ -23,11 +23,13 @@ measure(string)
 maxiter(int)
 rest:arts(#)
 seed(#)
+sym
 silent]
 ```
 
 | | |
 |---|---|
+| `sym` | On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198) |
 | `generate(newvarname)` | **Required.** Name of the Stata variable that stores core membership |
 | `replace` | Replace existing variable |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
@@ -42,11 +44,11 @@ silent]
 
 `generate()` is required and names the new variable which stores, for each node, 1 if it was assigned to the core and 0 if it was assigned to the periphery. With more than one network in the *netlist*, a number is appended to the name (*newvarname***1**, *newvarname***2**, ...) and the stored results are those of the last network.
 
-Always operates on the undirected version of the network (the classical model does not distinguish incoming from outgoing ties); a directed network is symmetrized automatically - no separate **symmetrize** option is needed or offered (unlike [nwcommunity](nwcommunity), which needs **symmetrize** for a directed network).
+The classical model does not distinguish incoming from outgoing ties, so it is defined for an undirected network: a directed network with unreciprocated ties is refused (error 198) unless option `sym` asks for the symmetrized network (as [nwcommunity](nwcommunity) does); the output says which was done.
 
 ## Network types
 
-**Directed:** symmetrized automatically. **Valued:** tie values are used by default (`measure(valued)`); `measure(binary)` ignores them. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
+**Directed:** refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option `sym` analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). **Valued:** tie values are used by default (`measure(valued)`); `measure(binary)` ignores them. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** not checked. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -90,4 +92,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.33.0, 21 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

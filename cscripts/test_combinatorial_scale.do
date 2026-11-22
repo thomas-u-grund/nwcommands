@@ -61,7 +61,7 @@ end
 program define cs_factions
 	args g ms
 	capture drop fac
-	nwfactions tn, groups(`g') measure(`ms') generate(fac) replace silent
+	nwfactions tn, sym groups(`g') measure(`ms') generate(fac) replace silent
 	mata: R = (st_data(., "fac")', st_numscalar("r(fitness)"))
 end
 program define cs_kplex

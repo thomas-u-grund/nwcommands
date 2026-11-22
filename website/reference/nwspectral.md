@@ -21,6 +21,7 @@ gen:erate(newvarname)
 [bipartition
 measure(string)
 replace
+sym
 silent
 force
 one:mode
@@ -33,6 +34,7 @@ export(filename[, options])]
 
 | | |
 |---|---|
+| `sym` | On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198) |
 | `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own Fiedler-vector entry |
 | `bipartition` | Also generate a two-way spectral partition (variable *generate()***sign**) from the sign of the Fiedler vector |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
@@ -48,7 +50,7 @@ export(filename[, options])]
 
 ## Description
 
-`nwspectral` computes the graph Laplacian **L = D - W** (D the diagonal weighted-degree matrix, W the adjacency/weight matrix) of a single network and its eigendecomposition - the standard starting point for spectral graph analysis. Always computed on the undirected, symmetrized network (no **symmetrize** option needed - a directed network is symmetrized automatically, the same convention [nwcommunity](nwcommunity) / [nwkcomponents](nwkcomponents) already use, since the classical Laplacian spectrum results below assume a symmetric matrix).
+`nwspectral` computes the graph Laplacian **L = D - W** (D the diagonal weighted-degree matrix, W the adjacency/weight matrix) of a single network and its eigendecomposition - the standard starting point for spectral graph analysis. The classical Laplacian spectrum results below assume a symmetric matrix, so a directed network with unreciprocated ties is refused (error 198) unless option `sym` asks for the symmetrized network (the same convention as [nwcommunity](nwcommunity) and [nwkcomponents](nwkcomponents)); the output says which was done.
 
 Three classical results are reported directly:
 
@@ -60,7 +62,7 @@ For a network with more than one connected component, the Fiedler value is 0 and
 
 ## Network types
 
-**Directed:** symmetrized. **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first); `onemode` gives the spectrum of the bipartite graph. **Signed:** with negative values the Laplacian is not positive semi-definite and the results are not meaningful. See [nwnetworktypes](nwnetworktypes).
+**Directed:** refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option `sym` analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first); `onemode` gives the spectrum of the bipartite graph. **Signed:** with negative values the Laplacian is not positive semi-definite and the results are not meaningful. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -78,7 +80,7 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 
 ## Drawing the spectrum
 
-`plot` draws the Laplacian eigenvalues in ascending order, the values of **r(eigenvalues)**; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. `embedding` adds a second panel with the second and third eigenvectors, one marker per node. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` (`graph combine` with `embedding`) and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network and for a directed network (symmetrize it with [nwsym](nwsym) first).
+`plot` draws the Laplacian eigenvalues in ascending order, the values of **r(eigenvalues)**; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. `embedding` adds a second panel with the second and third eigenvectors, one marker per node. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` (`graph combine` with `embedding`) and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network; a directed network follows the rule for `sym` above.
 
 - `. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))`
 
@@ -103,4 +105,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. *Statistics and Compu
 
 ---
 
-*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))

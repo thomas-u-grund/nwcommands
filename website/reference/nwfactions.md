@@ -22,11 +22,13 @@ gen:erate(newvarname)
 replace
 measure(binary|valued)
 maxiter(int)
+sym
 silent]
 ```
 
 | | |
 |---|---|
+| `sym` | On a directed network, analyse the symmetrized network (a tie counts in both directions, with the larger of its two values); without it a directed network with unreciprocated ties is refused (error 198) |
 | `groups(int)` | Number of factions to partition nodes into; must be between 2 and the number of nodes; default = 2 |
 | `gen:erate(newvarname)` | **Required.** Name of the Stata variable that stores each node's faction membership (1..`groups()`) |
 | `replace` | Replace existing variable |
@@ -44,7 +46,7 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 ## Network types
 
-**Directed:** symmetrized. **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:** refused (error 198) when some ties are not reciprocated, because the measure is defined for an undirected network; option `sym` analyses the symmetrized network (a tie counts in both directions, with the larger of its two values) and the output says so. A directed network whose ties are all reciprocated is the same as an undirected one and is analysed as such (the output says so). **Valued:** the tie values are used by default (`measure(valued)`); `measure(binary)` uses only the presence of ties. **Two-mode:** not supported (error 6088; use [nwproject](nwproject) first). **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -82,4 +84,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 
 ---
 
-*nwcommands version 3.30.0, 20 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.34.0, 21 November 2026* ([check your installed version](nwversion))
