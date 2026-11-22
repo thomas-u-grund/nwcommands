@@ -141,3 +141,25 @@ assert _rc == 110
 nwinduced replacenet, measure(degree) generate(rep1) replace silent
 assert _rc == 0
 di "=== failure-path REGRESSION VERIFIED ==="
+
+* --- a directed network is analysed as it is: the endogenous centrality equals the direct call,
+* with sym the direct call with sym (lazega_adv: directed, 71 nodes)
+nwclear
+nwuse data/lazega, nwclear
+foreach m in betweenness closeness evcent {
+	local cmd = cond("`m'" == "betweenness", "nwbetween", cond("`m'" == "closeness", "nwcloseness", "nwevcent"))
+	local gen = cond("`m'" == "closeness", "dc dcf dcn", "dc")
+	local gens = cond("`m'" == "closeness", "sc scf scn", "sc")
+	capture drop dc dcf dcn sc scf scn
+	qui `cmd' lazega_adv, generate(`gen') replace
+	qui nwinduced lazega_adv, measure(`m') generate(ind_`m') replace silent
+	qui count if abs(ind_`m'_endog - dc) > 1e-5*(1+abs(dc)) & !missing(dc)
+	assert r(N) == 0
+	qui count if missing(ind_`m'_endog) != missing(dc)
+	assert r(N) == 0
+	qui `cmd' lazega_adv, generate(`gens') sym replace
+	qui nwinduced lazega_adv, measure(`m') generate(inds_`m') replace silent sym
+	qui count if abs(inds_`m'_endog - sc) > 1e-5*(1+abs(sc)) & !missing(sc)
+	assert r(N) == 0
+	di "=== nwinduced `m' on directed lazega_adv = direct call (default and sym) ==="
+}

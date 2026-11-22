@@ -1,25 +1,23 @@
 capture program drop nwinduced
 program nwinduced, rclass
 	version 12
-	syntax [anything(name=netname)], MEASURE(string) [GENerate(string) replace silent BINary]
+	syntax [anything(name=netname)], MEASURE(string) [GENerate(string) replace silent BINary SYMmetrize]
 
 	_opts_oneof "degree betweenness closeness evcent" "measure" "`measure'" 6556
 
 	_nwsyntax `netname', max(1)
 	_nw2guard `netname', cmd(nwinduced)
 
-	// Directed networks are supported for betweenness/closeness/evcent
-	// (each already produces exactly one clean per-node output
-	// variable under generate() regardless of directedness - confirmed
-	// directly, not assumed). Only measure(degree) is restricted:
-	// nwdegree itself splits into two separate variables
-	// (_outdegree/_indegree) on a directed network, so "induced degree"
-	// would force a choice between separate in-/out-degree induced
-	// scores with no single obviously-right answer without a real
-	// design decision - disclosed clearly rather than silently guessed
-	// at (docs/INDUCED_CENTRALITY_ROADMAP.md's own scope-question 2).
+	// A directed network is analysed as it is, exactly as the command of the chosen measure does it:
+	// nwbetween and nwcloseness follow the direction of the ties, nwevcent uses the in-ties (nwbetween,
+	// nwcloseness and nwevcent are called on the network and on every network without one node; the
+	// result for the full network equals the direct call). Option sym passes sym to that command: the
+	// directed network is symmetrized (the larger of the two directions of a tie) before the measure is
+	// computed, which gives the result of 3.34.0 and earlier. measure(degree) is refused for a directed
+	// network: nwdegree gives two variables (_outdegree, _indegree) and induced degree would need a
+	// choice between them.
 	if "`directed'" == "true" & "`measure'" == "degree" {
-		di as err "{p 0 0 2}nwinduced, measure(degree) does not support directed networks - nwdegree itself splits into separate outdegree/indegree variables when directed, and induced degree would need a choice between them with no single obviously-right answer. measure(betweenness/closeness/evcent) all support directed networks directly. Use the undirected version or one of these measures.{p_end}"
+		di as err "{p 0 0 2}nwinduced, measure(degree) does not support directed networks - nwdegree itself splits into separate outdegree/indegree variables when directed, and induced degree would need a choice between them with no single obviously-right answer. measure(betweenness/closeness/evcent) all support directed networks directly. Use the undirected version, or one of these measures.{p_end}"
 		exit 198
 	}
 
@@ -67,6 +65,9 @@ program nwinduced, rclass
 	// binary ignores them.  The degree measure is the number of ties.
 	if "`binary'" != "" | "`measure'" == "degree" {
 		local measureopt "`measureopt' binary"
+	}
+	if "`symmetrize'" != "" & "`measure'" != "degree" {
+		local measureopt "`measureopt' symmetrize"
 	}
 	local origname `netname'
 	local n `nodes'
