@@ -74,7 +74,7 @@ General Public License, version 3.
 | [**nwsaom**](../nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.9.2 |
 | [**nwergm**](../nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.15.1 |
 | [**nwdynam**](../nwdynam/) | Dynamic network actor models (DyNAM) for event data ([Manual](https://doi.org/10.5281/zenodo.24398099)) | R package `goldfish` | 1.11.1 |
-| [**nwrem**](../nwrem/) | Relational event models (REM) for event data ([Manual](https://doi.org/10.5281/zenodo.24398012)) | R package `relevent` | 1.7.1 |
+| [**nwrem**](../nwrem/) | Relational event models (REM) for event data ([Manual](https://doi.org/10.5281/zenodo.24398012)) | R package `relevent` | 1.7.2 |
 | [**nwalaam**](../nwalaam/) | Autologistic actor attribute models (ALAAM) for a binary outcome on the actors of one network ([Manual](https://doi.org/10.5281/zenodo.24397901)) | ALAAMEE (Python) and MPNet |1.4.0 |
 | [**nwlsm**](../nwlsm/) | Latent space models for the ties of a network, and for social influence ([Manual](https://doi.org/10.5281/zenodo.24398243)) | R package `latentnet` |1.0.6 |
 | [**nwsbm**](../nwsbm/) | Stochastic block models and latent block models: which actors play the same role ([Manual](https://doi.org/10.5281/zenodo.24398296)) | R packages `sbm`, `blockmodels` and `greed` |1.0.2 |

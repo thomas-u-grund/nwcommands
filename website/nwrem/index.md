@@ -47,7 +47,7 @@ the sister package that splits each event into the choice of the actor and the c
 | Not implemented | MCMC and BSIR estimation, risk-set sampling, simulation, goodness-of-fit residuals, time-varying covariates |
 | Engine | a compiled plugin for the likelihood, gradient and Hessian (macOS, Linux, Windows); the optimization runs in Mata |
 | Speed | Faster than relevent in every timed cell: 22 to 3,560 times when relevent computes its Hessian (as nwrem always does), 16 to 2,208 times without; the smallest ratios are with recency effects; see [Speed compared with relevent](speed/) |
-| Version | 1.7.1 (22 November 2026) |
+| Version | 1.7.2 (23 November 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
