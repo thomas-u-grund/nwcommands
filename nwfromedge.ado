@@ -188,7 +188,11 @@ program nwfromedge
 		replace `fromvar' = `_fromvarid'
 		replace `tovar' = `_tovarid'
 		// a pair listed more than once: the last row counts, as with numeric ids
-		bysort `fromvar' `tovar' (`_roworder'): keep if _n == _N
+		// (one keep for all rows: `by: keep' runs keep once per group, which is slow in Stata 19 when many networks are stored)
+		tempvar _lastrow
+		bysort `fromvar' `tovar' (`_roworder'): gen byte `_lastrow' = (_n == _N)
+		keep if `_lastrow'
+		drop `_lastrow'
 	}
 
 	// `labprefix' (renamed from `prefix' during harmonisation, to avoid

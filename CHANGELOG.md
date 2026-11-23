@@ -4,6 +4,10 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
+## [Unreleased]
+
+- `nwfromedge` (when a pair is listed more than once and node names are used) and the networkdata reader (`nwwebuse networkdata`, `nwnetworkdata`) no longer run `keep` once per group (`by ...: keep if _n == _N`): in Stata 19 every such `keep` costs more the more networks are stored, so reading a data set with hundreds of networks slowed down as it went. One `keep` now does the same work; the networks are unchanged. Reading `animal_12` (244 networks) in Stata 19.5 MP on a Mac: 96 s to 33 s; on Linux about 80 s before.
+
 ## [3.36.0] - 2026-11-22
 
 **Summary.** Creating many networks is much faster, the networkdata collection needs no R any more, and two small corrections to commands and help files. The core Mata library is rebuilt, so the model packages are rebuilt with it (update all packages together, `nwinstall, models`).
