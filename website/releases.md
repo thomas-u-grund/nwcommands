@@ -19,7 +19,7 @@ The current version of each package and every release, newest first. Each entry 
 | **nwrem** | 1.7.2 | 23 November 2026 | [all releases of nwrem](https://github.com/thomas-u-grund/nwrem/releases) | [nwrem](../nwrem/) |
 | **nwalaam** | 1.4.0 | 22 November 2026 | [all releases of nwalaam](https://github.com/thomas-u-grund/nwalaam/releases) | [nwalaam](../nwalaam/) |
 | **nwlsm** | 1.0.6 | 22 November 2026 | [all releases of nwlsm](https://github.com/thomas-u-grund/nwlsm/releases) | [nwlsm](../nwlsm/) |
-| **nwsbm** | 1.0.2 | 20 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
+| **nwsbm** | 1.1.0 | 23 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
 
 ## Versions by package
 
@@ -30,9 +30,17 @@ The current version of each package and every release, newest first. Each entry 
 - **nwrem:** [1.7.2](#nwrem-1-7-2), [1.7.1](#nwrem-1-7-1), [1.7.0](#nwrem-1-7-0), [1.6.0](#nwrem-1-6-0), [1.5.1](#nwrem-1-5-1), [1.5.0](#nwrem-1-5-0), [1.4.0](#nwrem-1-4-0), [1.3.0](#nwrem-1-3-0), [1.2.0](#nwrem-1-2-0), [1.1.2](#nwrem-1-1-2), [1.1.1](#nwrem-1-1-1), [1.1.0](#nwrem-1-1-0), [1.0.13](#nwrem-1-0-13), [1.0.12](#nwrem-1-0-12), [1.0.11](#nwrem-1-0-11), [1.0.10](#nwrem-1-0-10), [1.0.9](#nwrem-1-0-9), [1.0.8](#nwrem-1-0-8), [1.0.7](#nwrem-1-0-7), [1.0.6](#nwrem-1-0-6), [1.0.5](#nwrem-1-0-5), [1.0.4](#nwrem-1-0-4), [1.0.3](#nwrem-1-0-3), [1.0.2](#nwrem-1-0-2), [1.0.1](#nwrem-1-0-1), [1.0.0](#nwrem-1-0-0)
 - **nwalaam:** [1.4.0](#nwalaam-1-4-0), [1.3.1](#nwalaam-1-3-1), [1.3.0](#nwalaam-1-3-0), [1.2.0](#nwalaam-1-2-0), [1.1.1](#nwalaam-1-1-1), [1.1.0](#nwalaam-1-1-0), [1.0.0](#nwalaam-1-0-0)
 - **nwlsm:** [1.0.6](#nwlsm-1-0-6), [1.0.5](#nwlsm-1-0-5), [1.0.4](#nwlsm-1-0-4), [1.0.3](#nwlsm-1-0-3), [1.0.2](#nwlsm-1-0-2), [1.0.1](#nwlsm-1-0-1), [1.0.0](#nwlsm-1-0-0), [0.7.0](#nwlsm-0-7-0), [0.6.0](#nwlsm-0-6-0)
-- **nwsbm:** [1.0.2](#nwsbm-1-0-2), [1.0.1](#nwsbm-1-0-1), [1.0.0](#nwsbm-1-0-0), [0.4.0](#nwsbm-0-4-0), [0.3.0](#nwsbm-0-3-0)
+- **nwsbm:** [1.1.0](#nwsbm-1-1-0), [1.0.2](#nwsbm-1-0-2), [1.0.1](#nwsbm-1-0-1), [1.0.0](#nwsbm-1-0-0), [0.4.0](#nwsbm-0-4-0), [0.3.0](#nwsbm-0-3-0)
 
 ## All releases
+
+<a id="nwsbm-1-1-0"></a>
+
+### 23 November 2026: nwsbm 1.1.0
+
+**nwsbm 1.1.0** ([release notes](https://github.com/thomas-u-grund/nwsbm/releases/tag/v1.1.0)). Results that change: the default number of random starts for the plain one-mode Bernoulli model (no covariates, no degree correction, no `icl(exact)`) with up to 500 actors is now `restarts(2)` instead of `restarts(10)`, so fits of such networks with default settings can differ from earlier versions; `restarts(10)` gives the earlier search. All other models and larger networks are unchanged. The fits are about twice as fast. On 1,056 simulated networks 2 random starts chose the same number of blocks as 10 in 99.7% of them, and an independent replication on 192 networks gave the same number of blocks and ICL as 20 restarts in all of them. `fast` is faster still but less reliable (a lower ICL by more than 0.5 in 5 of the 192 networks), so it is not the default; compare it with a fit without it when the result matters.
+
+Tested on macOS with Stata 17; on Linux (Ubuntu 22.04) the restarts comparison was replicated. Windows and Stata 18 were not run.
 
 <a id="nwergm-1-15-0"></a>
 

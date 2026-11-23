@@ -77,4 +77,4 @@ General Public License, version 3.
 | [**nwrem**](../nwrem/) | Relational event models (REM) for event data ([Manual](https://doi.org/10.5281/zenodo.24398012)) | R package `relevent` | 1.7.2 |
 | [**nwalaam**](../nwalaam/) | Autologistic actor attribute models (ALAAM) for a binary outcome on the actors of one network ([Manual](https://doi.org/10.5281/zenodo.24397901)) | ALAAMEE (Python) and MPNet |1.4.0 |
 | [**nwlsm**](../nwlsm/) | Latent space models for the ties of a network, and for social influence ([Manual](https://doi.org/10.5281/zenodo.24398243)) | R package `latentnet` |1.0.6 |
-| [**nwsbm**](../nwsbm/) | Stochastic block models and latent block models: which actors play the same role ([Manual](https://doi.org/10.5281/zenodo.24398296)) | R packages `sbm`, `blockmodels` and `greed` |1.0.2 |
+| [**nwsbm**](../nwsbm/) | Stochastic block models and latent block models: which actors play the same role ([Manual](https://doi.org/10.5281/zenodo.24398296)) | R packages `sbm`, `blockmodels` and `greed` |1.1.0 |
