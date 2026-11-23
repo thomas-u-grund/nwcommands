@@ -178,11 +178,14 @@ the core, so you decide separately when to move each one.
 To pin a specific release instead of tracking the latest, point `from()` at the release tag:
 
 ```stata
-. net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.0.0/) replace
-. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.0.1/) replace
+. net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.36.1/) replace
+. nwinstall, all from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.36.1)
+. net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/v1.9.2/) replace
 ```
 
-(or `nwinstall, models release(v1.0.1)` for the model packages). See `help net` for the general
+(the first line of the core installs only the start package; the second installs the commands of that release, and without `from()` it would install the current one)
+
+(or `nwinstall, models release(v1.9.2)` for the model packages). See `help net` for the general
 mechanism.
 
 ## No internet access or admin rights?
