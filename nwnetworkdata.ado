@@ -576,7 +576,9 @@ program _nwnd_list, rclass
 		qui bysort obj: egen int nnets = count(n)
 		qui bysort obj: egen long nmin = min(n)
 		qui bysort obj: egen long nmax = max(n)
-		qui bysort obj: keep if _n == 1
+		qui bysort obj: gen byte __first = (_n == 1)
+		qui keep if __first
+		qui drop __first
 		qui gen str21 nodes = cond(nmin == nmax, string(nmin), string(nmin) + "-" + string(nmax))
 		sort obj
 		format obj %-26s
@@ -967,7 +969,10 @@ program _nwnd_build, rclass
 			qui gen long __o = _n
 			qui sort __a __b __o
 			qui by __a __b: replace __v = sum(__v)
-			qui by __a __b: keep if _n == _N
+			// one keep for all rows: `by: keep' runs keep once per group, slow in Stata 19 when many networks are stored
+			qui by __a __b: gen byte __last = (_n == _N)
+			qui keep if __last
+			qui drop __last
 			qui drop __o
 			qui count if __v > 1 & !`valued'
 			if r(N) > 0 local valued 1

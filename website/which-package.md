@@ -70,7 +70,7 @@ General Public License, version 3.
 
 | Package | What it does | Follows | Version |
 |---|---|---|---|
-| [**nwcommands**](../nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.36.0 |
+| [**nwcommands**](../nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.36.1 |
 | [**nwsaom**](../nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([Manual](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.9.2 |
 | [**nwergm**](../nwergm/) | Exponential random graph models (ERGM) for one network ([Manual](https://doi.org/10.5281/zenodo.23661331)) | R package `ergm` (statnet) | 1.16.0 |
 | [**nwdynam**](../nwdynam/) | Dynamic network actor models (DyNAM) for event data ([Manual](https://doi.org/10.5281/zenodo.24398099)) | R package `goldfish` | 1.11.1 |
