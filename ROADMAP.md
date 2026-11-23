@@ -78,6 +78,12 @@ scale.
   and after fitting nwrem or nwdynam.
 - Full blockmodeling (image matrices, stochastic block models, goodness-of-fit) building on the
   existing structural-equivalence engine.
+- Next major core release: a cheaper network registry. Creating a network costs a little more for every network
+  already stored (about 4 ms per network with 1000 stored, about 23 ms through `nwset, mat()`), so a loop that creates
+  thousands of networks, such as `nwergm simulate` with a large `nsim()` or a permutation study that stores every draw,
+  slows down as it goes. Planned: slim the stored network definition (it has 44 member variables, and every
+  interactive Mata statement pays for each of them once per stored network), a bulk create that adds many networks
+  in one call, and a shorter `nwset, mat()` path. This changes the Mata library, so it ships with a rebuild of all model packages.
 - A general induced-subgraph extraction primitive, for any future feature that needs a real
   standalone subgraph object rather than per-node neighbor aggregation.
 
