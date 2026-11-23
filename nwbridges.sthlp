@@ -96,4 +96,4 @@ University Press.
 	{help nwburt}, {help nwpath}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.0, 22 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
