@@ -128,5 +128,12 @@ Use `nwinstall, modelpkg(nwsaom nwergm)` in place of `models` to install only so
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. The short address `https://nwcommands.org/net/` always serves the current release; if it is not reachable, `https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/` serves the same files. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.36.1/`.
+To install a particular release of the core, put its tag in both lines:
+
+```stata
+. net install nwcommands, from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.36.1/) replace
+. nwinstall, all from(https://raw.githubusercontent.com/thomas-u-grund/nwcommands/v3.36.1)
+```
+
+The first line installs only the start package (`nwinstall` and the landing help topics); the second installs the commands, help files and dialogs of that release. Without `from()` the second line installs the current release, whatever tag the first line named. A model package at a given release needs only its own line, `net install nwergm, from(.../nwergm/v1.16.0/) replace`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release.
