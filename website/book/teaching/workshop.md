@@ -30,7 +30,7 @@ them.
   [PDF](/book/teaching/slides/session3_relational_events.pdf)
 
 Every demonstration uses the data and the commands of the book's chapters. Exercises are cited as
-"Ch. 8, Ex. 3", numbered as in the book. The R column of Appendix C of the book (*Commands by task, with R and
+"Ch. 8, Ex. 2", numbered as in the book. The R column of Appendix C of the book (*Commands by task, with R and
 Python equivalents*) gives the R functions quoted below.
 
 1. TOC
@@ -102,7 +102,7 @@ Send participants this list:
   `nwsubset lazega_adv if office == "Hartford", name(hartford)`; `nwsymmetrize` with `mode(min)` and `mode(max)`.
 - **R equivalents (Appendix C):** `graph_from_data_frame()`, `graph_from_adjacency_matrix()`, `read_graph()`,
   `write_graph()`.
-- **Hands-on:** Ch. 4, Ex. 1 (declare a five-person network from a matrix); Ch. 4, Ex. 4 (wildcards, `nwsave`,
+- **Hands-on:** Ch. 4, Ex. 1 (declare a five-person network from a matrix); Ch. 4, Ex. 3 (wildcards, `nwsave`,
   `nwuse` and `nwname`).
 - **Read afterwards:** Chapter 4; Chapter 3 on construction decisions (the OR and AND rules).
 
@@ -120,7 +120,7 @@ Send participants this list:
   ```
   and from Chapter 5 an interactive page with `nwplot ..., interactive` and coordinates kept with `generate(x y)`.
 - **R equivalents:** `plot()`, `reciprocity()`, `dyad_census()`, `triad_census()`, `assortativity_nominal()`.
-- **Hands-on:** Ch. 5, Ex. 4 (status as color, practice as symbol); Ch. 6, Ex. 5 (the work network beside advice
+- **Hands-on:** Ch. 5, Ex. 3 (status as color, practice as symbol); Ch. 6, Ex. 3 (the work network beside advice
   and friendship).
 - **Read afterwards:** Chapters 5 and 6.
 
@@ -144,8 +144,8 @@ Send participants this list:
   distances unless `walks` is given.
 - **R equivalents:** `degree()`, `closeness()`, `betweenness()`, `constraint()`, `sna::brokerage()`,
   `make_ego_graph()`.
-- **Hands-on:** Ch. 8, Ex. 7 (tenure as a rival source of a high in-degree); Ch. 8, Ex. 10 (does the status
-  difference in constraint survive?); if time allows, Ch. 11, Ex. 6 (the exposure regression one wave later).
+- **Hands-on:** Ch. 8, exercise bank 8.c (tenure as a rival source of a high in-degree); Ch. 8, exercise bank 8.f (does the status
+  difference in constraint survive?); if time allows, Ch. 11, Ex. 4 (the exposure regression one wave later).
 - **Read afterwards:** Chapters 7, 8 and 11.
 
 ### 5. Permutation tests, QAP and CUG (35 min)
@@ -164,7 +164,7 @@ Send participants this list:
   smaller than 2/(*R*+1); a QAP table has no z column, because its p-values come from refitting the model on
   permuted networks.
 - **R equivalents:** `sna::cug.test()`, `sna::qaptest()`, `sna::netlm()`.
-- **Hands-on:** Ch. 19, Ex. 4 (advice and co-work); Ch. 20, Ex. 5 (the advice model without friendship);
+- **Hands-on:** Ch. 19, Ex. 4 (advice and co-work); Ch. 20, Ex. 4 (the advice model without friendship);
   Ch. 18, Ex. 3 (the friendship network's null mean).
 - **Read afterwards:** Chapters 18, 19 and 20.
 
@@ -232,7 +232,7 @@ Send participants this list:
 - **Points to make:** a converged MCMLE is not a verdict on the model, so read the effective sample sizes; good
   fit on the model's own statistics is guaranteed, so look at the other panels (the final advice model misses the
   spread of the out-degrees and the pairs at distance 2); a coefficient does not move only its own statistic.
-- **Hands-on:** Ch. 21, Ex. 9 (co-work as a rival to closure); Ch. 22, Ex. 4 (simulate with the gwesp coefficient
+- **Hands-on:** Ch. 21, Ex. 5 (co-work as a rival to closure); Ch. 22, exercise bank 22.a (simulate with the gwesp coefficient
   at 0.3).
 - **Read afterwards:** Chapter 22.
 
@@ -257,7 +257,7 @@ Send participants this list:
   `nwwebuse s50` loads the 50-actor example that RSiena calls `s50` (networks `s50_w1` to `s50_w3`), the same
   pupils as `glasgow`.
 - **R equivalent:** `RSiena::siena()`.
-- **Hands-on:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, Ex. 3 (homophily in sport, and
+- **Hands-on:** Ch. 25, Ex. 2 (the second period and a restart); Ch. 25, exercise bank 25.a (homophily in sport, and
   goodness of fit with two seeds).
 - **Read afterwards:** Chapter 25.
 
@@ -286,7 +286,7 @@ Send participants this list:
 - **Points to make:** each score test is conditional on the effects already in the model, so free one effect at a
   time; a behavior must change often enough to identify a co-evolution model (alcohol use works in these data,
   smoking gives very imprecise behavior estimates).
-- **Hands-on:** Ch. 26, Ex. 3 (free outdegree activity, then rerun `estat score` and `estat gof`); Ch. 25, Ex. 5
+- **Hands-on:** Ch. 26, Ex. 3 (free outdegree activity, then rerun `estat score` and `estat gof`); Ch. 25, Ex. 3
   (`avsim` in place of `avalt`).
 - **Read afterwards:** Chapter 26.
 
@@ -325,7 +325,7 @@ Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing 
 - **Goal:** the model compares the observed pair with all 129 × 128 = 16,512 ordered pairs at each event; there
   is no intercept. Fit `nodsnd nidrec`, add inertia (`frpsndsnd`), compare frequency with recency
   (`rsndsnd`) by AIC, add a pair covariate (`covevent()`, same supervisor), and read the display (`ci`).
-- **Hands-on:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 4 (recency of
+- **Hands-on:** Ch. 27, Ex. 2 (the risk set and the log likelihood of equal weights); Ch. 27, Ex. 3 (recency of
   receipt).
 - **Read afterwards:** Chapter 27.
 
@@ -333,13 +333,13 @@ Session 1 and no part of Session 2. It uses the e-mail log of the manufacturing 
 - **Goal:** two sub-models. The rate model says who acts next (with an intercept: how long it takes), the choice
   model whom the actor chooses. The same effect name means different things in the two. Fit `nwdynam` (choice),
   `submodel(rate)`, `same()` on a branch variable, and the rate with an intercept.
-- **Hands-on:** Ch. 28, Ex. 3 (an expected waiting time); Ch. 28, Ex. 7 (`choice_coordination` on the
+- **Hands-on:** Ch. 28, Ex. 2 (an expected waiting time); Ch. 28, Ex. 5 (`choice_coordination` on the
   undirected log).
 - **Read afterwards:** Chapter 28.
 
 ### 4. Comparing the two models (20 min)
 - **Goal:** the same log in `nwrem` and `nwdynam`; the coefficients are not comparable in size; which model
-  answers which question (Ch. 28, Ex. 8).
+  answers which question (Ch. 28, Ex. 6).
 
 ### 5. Postestimation: fit, outliers, change points (25 min)
 - **Goal:** `estat ic`, `estat eventprob` (350,464 rows for 2,738 events and 128 candidates), `estat outliers`

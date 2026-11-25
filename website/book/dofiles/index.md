@@ -23,8 +23,8 @@ net install nwcommands, from(https://nwcommands.org/net/)
 nwinstall, everything
 ```
 
-The do-files were checked against the versions the book was printed with: nwcommands 3.34.0, nwergm 1.12.0,
-nwlsm 1.0.5, nwsbm 1.0.2, nwalaam 1.3.1, nwsaom 1.9.1, nwrem 1.7.0 and nwdynam 1.11.0. Results of the model chapters (21 to 28) depend on the
+The do-files were checked against the versions the book was printed with: nwcommands 3.37.1, nwergm 1.16.1,
+nwlsm 1.0.6, nwsbm 1.1.0, nwalaam 1.4.0, nwsaom 1.9.2, nwrem 1.7.2 and nwdynam 1.11.1. Results of the model chapters (21 to 28) depend on the
 random-number seed and can differ slightly from the printed output with other versions.
 
 **All files at once:** [nwbook_dofiles.zip](nwbook_dofiles.zip)
@@ -43,7 +43,7 @@ random-number seed and can differ slightly from the printed output with other ve
 | Chapter 10: Positions, roles, and structural equivalence | [`ch10_positions_roles_structural_equivalence.do`](ch10_positions_roles_structural_equivalence.do) |
 | Chapter 11: Ego networks | [`ch11_ego_networks.do`](ch11_ego_networks.do) |
 | Chapter 12: Two-mode networks | [`ch12_two_mode_networks.do`](ch12_two_mode_networks.do) |
-| Chapter 13: Valued, signed, and multiplex networks | [`ch13_valued_signed_multiplex_networks.do`](ch13_valued_signed_multiplex_networks.do) |
+| Chapter 13: Multiplex, valued, and signed networks | [`ch13_valued_signed_multiplex_networks.do`](ch13_valued_signed_multiplex_networks.do) |
 | Chapter 14: Networks over time | [`ch14_networks_over_time.do`](ch14_networks_over_time.do) |
 | Chapter 15: Random and structured network generators | [`ch15_random_structured_generators.do`](ch15_random_structured_generators.do) |
 | Chapter 16: Generating networks from attributes and tie probabilities | [`ch16_attribute_based_generators.do`](ch16_attribute_based_generators.do) |

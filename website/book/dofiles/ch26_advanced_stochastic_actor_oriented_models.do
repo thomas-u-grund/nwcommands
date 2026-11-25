@@ -7,10 +7,10 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
-* Lines marked "setup" are not printed in the book but are needed to run it.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.37.1,
+* nwergm 1.16.1, nwsaom 1.9.2, nwrem 1.7.2, nwdynam 1.11.1, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.1.0, the versions the book was printed with.
+* Lines marked "setup" are not printed in the book but are needed to run it; lines marked "run" are fits that the text summarizes.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
 * --------------------------------------------------------------------------
@@ -47,6 +47,11 @@ quietly nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip ///
     seed(4)
 estat simulate, nsim(100) seed(5)
 
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
+nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
+    transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
+
 capture program drop mutualties
 program mutualties, rclass
     args netname
@@ -54,12 +59,9 @@ program mutualties, rclass
     mata: st_numscalar("__mut", sum(MM :* MM') / 2)
     return scalar stat = scalar(__mut)
 end
+quietly nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity transtrip ///
+    seed(4)
 estat mems, effect(reciprocity) macro(mutualties) nsim(100) seed(1)
-
-nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
-    transtrip theta(-2.3 2 0.5) rates(5) nsim(100) seed(7)
-nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ///
-    transtrip theta(-2.3 0 0.5) rates(5) nsim(100) seed(7)
 
 * ============================================================
 * Which estimator?
@@ -115,10 +117,10 @@ matrix cmp = (SEj', SEm')'
 matrix rownames cmp = joint meta
 matrix colnames cmp = outdegree reciprocity transtrip
 matrix list cmp, format(%7.3f)
-
+* run, not printed in the book:
 quietly nwsaom, waves(w1 w2) groups(school) behavior(delinq1 delinq2) ///
-    outdegree reciprocity gwesp(.69) outactivity inpop inact reciact ///
-    interact(reciprocity#gwesp) egox(gender nact) uncentered(nact) ///
-    netbeh(egoxaltx) behegox behaltx dyadcov(Eth) linear quadratic ///
-    beheff(totalt outdeg) behfrom(gender) seed(1235)
+        outdegree reciprocity gwesp(.69) outactivity inpop inact reciact ///
+        interact(reciprocity#gwesp) egox(gender nact) uncentered(nact) ///
+        netbeh(egoxaltx) behegox behaltx dyadcov(Eth) linear quadratic ///
+        beheff(totalt outdeg) behfrom(gender) seed(1235)
 nwsaom refit, k3(3000)

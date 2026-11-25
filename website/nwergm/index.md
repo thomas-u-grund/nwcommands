@@ -6,8 +6,7 @@ permalink: /nwergm/
 description: "nwergm: exponential random graph models (ERGM) for Stata, after R's ergm, with Bayesian estimation and ERGMs for egocentric data. Installation, tutorials, a map of the terms, a guide for ergm users and how to cite."
 ---
 
-# nwergm
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwergm.png' | relative_url }}" alt="nwergm" width="212" height="76"></h1>
 
 Exponential random graph models (ERGM) for Stata: why a network looks the way it does, and which
 local patterns (reciprocity, clustering, homophily) build it.

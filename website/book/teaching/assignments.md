@@ -152,7 +152,7 @@ The questions do not give the results. Every assignment ends with an open questi
 - **Questions:**
   1. In a loop over the schools, collect size, density, mean degree, reciprocity (`nwdyads`) and the Jaccard index
      between the waves (`nwturnover`) into a results data set with `postfile`, using stored results instead of
-     retyped numbers (as in Chapter 30, Ex. 5). Which schools are dense? Does the ranking change with mean degree?
+     retyped numbers (as in Chapter 30, Ex. 4). Which schools are dense? Does the ranking change with mean degree?
   2. Check whether the waves contain missing ties, and how the measures you use treat them.
   3. Test the reciprocity of the first wave in each school with `nwcug, stat(nwdyads) rname(reciprocity)
      condition(density)`, with a modest `reps()`. Then repeat the test for one school with `condition(census)`

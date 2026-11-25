@@ -39,8 +39,8 @@ One entry for each chapter. The entries use these headings:
   - Calling any data set with several units a network, although it has nothing on who is connected to whom.
   - Telling attributes from relations: the hints ask whether a quantity can be written down for one unit without
     mentioning any other unit.
-  - Keeping a score apart from the idea it stands for: what betweenness counts is not yet brokerage (Ex. 11).
-- **Exercises:** 12. Basic 6 (1–6); applied 4 (7–10); open 2 (11, 12).
+  - Keeping a score apart from the idea it stands for: what betweenness counts is not yet brokerage (exercise bank 1.f).
+- **Exercises:** 6. Basic 3 (1–3); applied 2 (4–5); open 1 (6). 6 more are in the [exercise bank](../exercises/).
 
 ### Chapter 2. What is a network?
 - **Time:** 1 session.
@@ -56,8 +56,8 @@ One entry for each chapter. The entries use these headings:
     two look isolated; in the whole firm the density is 0.179 and nobody is isolated.
   - Reading the adjacency matrix the wrong way round. Rows are senders and columns receivers here; a source with
     the opposite convention flips every arrow without an error message.
-  - Counting mutual pairs: a mutual pair holds two arcs but becomes one edge (Ex. 7).
-- **Exercises:** 8. Basic 4 (1–4); applied 3 (5–7); open 1 (8).
+  - Counting mutual pairs: a mutual pair holds two arcs but becomes one edge (exercise bank 2.b).
+- **Exercises:** 6. Basic 3 (1–3); applied 2 (4–5); open 1 (6). 2 more are in the [exercise bank](../exercises/).
 
 ### Chapter 3. From a research question to a network and a method
 - **Time:** 1 session.
@@ -71,8 +71,8 @@ One entry for each chapter. The entries use these headings:
   - Asking an ego-network design to answer a whole-network question. Closeness, betweenness and communities cannot
     be recovered from ego data.
   - The reconciliation rules: the AND rule keeps the mutual pairs, the OR rule the mutual and the one-sided pairs
-    (Ex. 2, 3, 8). For the lawyers' friendship reports they give 74 and 501 edges.
-- **Exercises:** 10. Basic 3 (1–3); applied 6 (4–9); open 1 (10).
+    (Ex. 2, Ex. 3, exercise bank 3.d). For the lawyers' friendship reports they give 74 and 501 edges.
+- **Exercises:** 6. Basic 3 (1–3); applied 2 (4–5); open 1 (6). 4 more are in the [exercise bank](../exercises/).
 
 ## Part II. Describing and positioning networks
 
@@ -94,7 +94,7 @@ One entry for each chapter. The entries use these headings:
   - Expecting `clear` to remove networks. It removes the data in memory, not the declared networks; use `nwclear`.
   - Typing a matrix for `nwset, mat()`: row *i*, column *j* holds the arc from *i* to *j*, and rows are separated by
     a backslash (Ex. 1).
-- **Exercises:** 8. Basic 3 (1–3); applied 4 (4–7); open 1 (8).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 2 more are in the [exercise bank](../exercises/).
 
 ### Chapter 5. Seeing networks
 - **Time:** 1–2 sessions, most of it in the lab.
@@ -111,8 +111,8 @@ One entry for each chapter. The entries use these headings:
     upside down.
   - Moving nodes on a page with real coordinates. Recolor and resize, but leave the nodes.
   - Reproducing an interactive page: the saved do-file needs the same data and the same node order as when the page
-    was written (Ex. 8).
-- **Exercises:** 11. Basic 3 (1–3); applied 7 (4–10); open 1 (11).
+    was written (exercise bank 5.d).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 5 more are in the [exercise bank](../exercises/).
 
 ### Chapter 6. Describing networks
 - **Time:** 1–2 sessions.
@@ -127,12 +127,12 @@ One entry for each chapter. The entries use these headings:
   - Reading the smallest permutation p-value as a precise value. With 100 permutations it is 0.02, so the honest
     report is p ≤ 0.02.
   - Mixing relations in one comparison: transitivity is 0.33, 0.36 or 0.19 depending on the relation of the firm.
-  - Reciprocity of pairs and of arcs count different things (Ex. 2).
-- **Exercises:** 12. Basic 4 (1–4); applied 6 (5–10); open 2 (11, 12).
+  - Reciprocity of pairs and of arcs count different things (exercise bank 6.a).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 6 more are in the [exercise bank](../exercises/).
 
 ### Chapter 7. Paths, distance, and reachability
 - **Time:** 1 session.
-- **Data:** `lazega`, `florentine`, `glasgow`; `usair` in Ex. 8.
+- **Data:** `lazega`, `florentine`, `glasgow`; `usair` in exercise bank 7.d.
 - **Builds on:** 4, 6.
 - **Commands:** `nwgeodesic` (with `unconnected()`), `nwpath`, `nwreach`, `nwneighbor`, `nwrandom`, `nwtriads`.
 - **Where students get stuck:**
@@ -142,9 +142,9 @@ One entry for each chapter. The entries use these headings:
   - Treating distance as symmetric in a directed network. From `n59` to `n23` the advice distance is four; back it
     is three.
   - Comparing averages taken over different sets of pairs: for a network with unreachable pairs, `nwgeodesic`
-    reports the share of connected pairs and the average over those pairs (Ex. 3).
-  - Reading a short average distance as a small world. That needs clustering and a random baseline as well (Ex. 8).
-- **Exercises:** 10. Basic 4 (1–4); applied 4 (5–8); open 2 (9, 10).
+    reports the share of connected pairs and the average over those pairs (exercise bank 7.b).
+  - Reading a short average distance as a small world. That needs clustering and a random baseline as well (exercise bank 7.d).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 4 more are in the [exercise bank](../exercises/).
 
 ### Chapter 8. Centrality, brokerage, and structural holes
 - **Time:** 2 sessions.
@@ -157,13 +157,13 @@ One entry for each chapter. The entries use these headings:
     centrality answer a question about the structure, not about who asks whom. Directed closeness correlates .96
     with out-degree. Use in-degree for "who is sought".
   - Leaving unreachable pairs to a hidden rule. Changing the rule changes the closeness of every node not fully
-    connected to the rest (Ex. 4).
+    connected to the rest (Ex. 3).
   - Assuming `nwkatz` is the walk-counting Katz measure of textbooks. By default it sums over shortest-path
     distances (along the direction of the ties of a directed network); the option `walks` gives the textbook version.
   - Reading a high score as power or influence. What a position is worth needs outcome data.
   - Reading brokerage role counts without the grouping variable in mind. A binary grouping cannot produce a
     liaison, and counts grow with the number of two-paths, so compare shares as well.
-- **Exercises:** 12. Basic 4 (1, 2, 3, 8); applied 6 (4–7, 9, 10); open 2 (11, 12).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 6 more are in the [exercise bank](../exercises/).
 
 ### Chapter 9. Cohesion, subgroups, and communities
 - **Time:** 2 sessions.
@@ -181,7 +181,7 @@ One entry for each chapter. The entries use these headings:
     than ties in either direction (`mode(max)`).
   - Taking a k-core for a group that is hard to pull apart. A k-core is a minimum-degree condition; only
     k-components and the cohesion hierarchy test connectivity (Ex. 1).
-- **Exercises:** 8. Basic 2 (1, 2); applied 4 (3–6); open 2 (7, 8).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 2 more are in the [exercise bank](../exercises/).
 
 ### Chapter 10. Positions, roles, and structural equivalence
 - **Time:** 2 sessions.
@@ -199,8 +199,8 @@ One entry for each chapter. The entries use these headings:
   - Reading pooled Jaccard similarity as a directed comparison; use `nwdissimilar` when direction matters.
   - Expecting exact regular equivalence to find roles in dense data: one class for all 71 lawyers in the advice
     network, one class per lawyer in the friendship network.
-  - Structural equivalence by hand: a tie between the two actors compared does not count (Ex. 1, 3).
-- **Exercises:** 10. Basic 3 (1–3); applied 6 (4–9); open 1 (10).
+  - Structural equivalence by hand: a tie between the two actors compared does not count (Ex. 1, 2).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 4 more are in the [exercise bank](../exercises/).
 
 ### Chapter 11. Ego networks
 - **Time:** 1 session.
@@ -215,7 +215,7 @@ One entry for each chapter. The entries use these headings:
   - Reading composition as preference without a baseline of what the setting makes available.
   - Forgetting which network a command uses. `nwaltergen` without `net()` takes the most recently created network.
   - Applying `diversity()` to a continuous variable such as tenure or age.
-- **Exercises:** 10. Basic 3 (1–3); applied 5 (4–8); open 2 (9, 10).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 4 more are in the [exercise bank](../exercises/).
 
 ### Chapter 12. Two-mode networks
 - **Time:** 1–2 sessions.
@@ -229,10 +229,10 @@ One entry for each chapter. The entries use these headings:
     how every command treats a two-mode network.
   - Reading a dense binary projection as informative: 91% of all pairs of the Southern women are tied in it.
   - Letting large groups dominate a projection. A group of *m* members produces *m*(*m*−1)/2 projected ties.
-  - Density and degree in two modes: they divide by the size of the other mode (Ex. 2, 3).
-- **Exercises:** 9. Basic 4 (1–4); applied 4 (5–8); open 1 (9).
+  - Density and degree in two modes: they divide by the size of the other mode (Ex. 2, exercise bank 12.a).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 3 more are in the [exercise bank](../exercises/).
 
-### Chapter 13. Valued, signed, and multiplex networks
+### Chapter 13. Multiplex, valued, and signed networks
 - **Time:** 2 sessions.
 - **Data:** `lazega`, `gang` (valued), `chesapeake`, `gahuku`, `senate114`, `senate93`.
 - **Builds on:** 6, 8.
@@ -246,8 +246,8 @@ One entry for each chapter. The entries use these headings:
   - Quoting a balance percentage without a baseline. With 39% positive ties, random signs already give 49%
     balanced triads; say whether the strong or the weak version is meant.
   - Reading inferred signs as likes and dislikes. The Senate signs compare co-sponsorship with what chance would
-    give (Ex. 11).
-- **Exercises:** 14. Basic 5 (1, 2, 5, 6, 7); applied 8 (3, 4, 8–13); open 1 (14).
+    give (Ex. 6).
+- **Exercises:** 7. Basic 3 (1, 3, 4); applied 3 (2, 5, 6); open 1 (7). 7 more are in the [exercise bank](../exercises/).
 
 ### Chapter 14. Networks over time
 - **Time:** 1 session; the section on adoption over the waves (Section 14.6) adds about half a session.
@@ -264,14 +264,14 @@ One entry for each chapter. The entries use these headings:
   - Using a movie in place of turnover statistics. An animation shows where change happened, not how much.
   - Reading turnover as the speed of the process: ties formed and dissolved within an interval are never seen.
   - Jaccard index and persistence have different denominators: all ties present in either wave, or the ties of the
-    first wave (Ex. 2).
+    first wave (exercise bank 14.a).
   - Counting exposure in the same wave as the adoption. With `lag(1)` a girl is exposed only by friends who adopted
     in an earlier wave, so exposure is missing for the first wave. Adoption is permanent in the data: a girl who
     stops smoking is still an adopter.
   - Using one network for all waves of the adoption data. The friendship network of the first wave stands for all
     three here; that is acceptable for friendships named in one survey and wrong when ties form or end between
     waves.
-- **Exercises:** 8. Basic 3 (1–3); applied 4 (4–7); open 1 (8).
+- **Exercises:** 6. Basic 1 (1); applied 4 (2–5); open 1 (6). 2 more are in the [exercise bank](../exercises/).
 
 ## Part III. Simulating networks
 
@@ -287,8 +287,8 @@ One entry for each chapter. The entries use these headings:
   - Forgetting `set seed`, so that nothing downstream is reproducible.
   - Overlooking defaults: `nwlattice` and `nwsmall` produce directed networks unless `undirected` is specified.
   - Predicting chance levels: in a random graph every possible tie is present with the same probability, so the
-    expected transitivity is about the density (Ex. 2, 3).
-- **Exercises:** 9. Basic 4 (1–4); applied 4 (5–8); open 1 (9).
+    expected transitivity is about the density (Ex. 2, exercise bank 15.a).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 3 more are in the [exercise bank](../exercises/).
 
 ### Chapter 16. Generating networks from attributes and tie probabilities
 - **Time:** 1–2 sessions.
@@ -305,8 +305,8 @@ One entry for each chapter. The entries use these headings:
   - Judging an estimated generator by what it was fitted to. Only features outside the model, such as reciprocity
     and transitivity, test it.
   - Expected E-I values: they follow from the group sizes, as one minus twice the share of within-group pairs
-    (Ex. 3).
-- **Exercises:** 10. Basic 3 (1–3); applied 6 (4–9); open 1 (10).
+    (Ex. 2).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 4 more are in the [exercise bank](../exercises/).
 
 ### Chapter 17. Network structure and diffusion
 - **Time:** 2 sessions. Students write and modify small Stata programs.
@@ -326,7 +326,7 @@ One entry for each chapter. The entries use these headings:
     starting groups.
   - Using the wrong direction of ties. `nwcontext` counts the neighbors a node sends ties to unless `mode()` says
     otherwise; use `mode(incoming)` for a process that travels from sender to receiver.
-- **Exercises:** 6. Basic 2 (1, 2); applied 3 (3–5); open 1 (6).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6).
 
 ## Part IV. Statistical inference for networks
 
@@ -343,7 +343,7 @@ One entry for each chapter. The entries use these headings:
     sorting and a few very busy lawyers all in play.
   - Comparing tests with different conditioning without noticing. The calls differ by one word.
   - Choosing the p-value column: a claim that a statistic is larger than chance concerns one tail (Ex. 1).
-- **Exercises:** 6. Basic 3 (1–3); applied 2 (4, 5); open 1 (6).
+- **Exercises:** 6. Basic 3 (1–3); applied 2 (4–5); open 1 (6).
 
 ### Chapter 19. Permutation inference and comparing networks
 - **Time:** 1 session.
@@ -356,7 +356,7 @@ One entry for each chapter. The entries use these headings:
     observed one.
   - Using too few permutations. The two-sided p-value cannot be smaller than 2/(*R*+1); a value at that floor means
     more permutations are needed if a finer value matters (Ex. 2).
-- **Exercises:** 6. Basic 3 (1–3); applied 2 (4, 5); open 1 (6).
+- **Exercises:** 6. Basic 3 (1–3); applied 2 (4–5); open 1 (6).
 
 ### Chapter 20. QAP regression
 - **Time:** 1 session.
@@ -372,7 +372,7 @@ One entry for each chapter. The entries use these headings:
   - Not reporting the routine and the number of permutations when predictors are correlated.
   - Turning a logit coefficient into a probability: add the coefficients that apply to the constant, then apply
     1/(1+e<sup>−x</sup>) (Ex. 1).
-- **Exercises:** 9. Basic 2 (1, 2); applied 6 (3–8); open 1 (9).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 3 more are in the [exercise bank](../exercises/).
 
 ### Chapter 21. Exponential random graph models
 - **Time:** 2–3 sessions.
@@ -387,7 +387,7 @@ One entry for each chapter. The entries use these headings:
     still misses the spread of the out-degrees and the number of pairs at distance 2.
   - Reading a coefficient: it compares the conditional log-odds of one tie for two pairs that differ only in that
     term, with every other tie held fixed (Ex. 1).
-- **Exercises:** 10. Basic 2 (1, 2); applied 7 (3–9); open 1 (10).
+- **Exercises:** 6. Basic 2 (1–2); applied 3 (3–5); open 1 (6). 4 more are in the [exercise bank](../exercises/).
 
 ### Chapter 22. Advanced exponential random graph models
 - **Time:** 2 sessions.
@@ -410,7 +410,7 @@ One entry for each chapter. The entries use these headings:
     with any other number of nodes it replaces the data, so run it between `preserve` and `restore`.
   - Coding a missing dyad as a non-tie. Leave it missing; `nwergm` then leaves it out of the likelihood, which
     assumes the dyads are missing at random.
-- **Exercises:** 7. Basic 2 (1, 2); applied 5 (3–7). Ex. 7 belongs to the section on the Bayesian ERGM (Section
+- **Exercises:** 5. Basic 2 (1–2); applied 3 (3–5). 2 more are in the [exercise bank](../exercises/).
   22.7).
 
 ### Chapter 23. Latent space and block models
@@ -435,7 +435,7 @@ One entry for each chapter. The entries use these headings:
   - Reporting the fit of a model of independent ties as if dependence did not matter. Both models assume independence
     given the hidden structure; the distance panel of `estat gof` fits here, but shared partners have not been
     checked.
-- **Exercises:** 5. Basic 2 (1, 2); applied 2 (3, 4); open 1 (5).
+- **Exercises:** 5. Basic 2 (1–2); applied 2 (3–4); open 1 (5).
 
 ### Chapter 24. Influence and contagion
 - **Time:** 2 sessions. The section on the autologistic model is the longest and can be set as reading.
@@ -452,12 +452,13 @@ One entry for each chapter. The entries use these headings:
   - Forgetting who is at risk. The girls who smoked in the first wave have no rows in the hazard data (Ex. 1).
   - Reading the spatial lag as the effect of one friend. With a row-normalized matrix it multiplies the average of
     the friends' outcomes, and a girl without friends has a lag of 0 (Ex. 2).
+  - Using one network for all waves when the ties change. A baseline network is a legitimate design for exposure through that network and misrepresents changing exposure; the estimand and the observation schedule decide.
   - Trusting the standard errors of a plain logistic regression on rows of girls who are tied to each other.
   - Treating the two codings of a binary outcome in the autologistic model as mirror images. Contagion counts ties
     between actors who have the outcome, so the litigation coding of Ex. 5 does not converge when the corporate
     coding of Ex. 4 does.
   - Comparing contagion coefficients across networks with different numbers of ties (Ex. 4).
-- **Exercises:** 6. Basic 2 (1, 2); applied 2 (3, 4); open 2 (5, 6).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6).
 
 ### Chapter 25. Stochastic actor-oriented models
 - **Time:** 2 sessions.
@@ -473,8 +474,8 @@ One entry for each chapter. The entries use these headings:
   - Fitting an SAOM to data that is not a panel. `nwsaom` needs two or more waves on the same actors, with joiners
     and leavers declared through `present()`.
   - Comparing coefficients of `avsim` and `avalt`, which measure influence on different scales; compare signs and
-    p-values (Ex. 5).
-- **Exercises:** 9. Basic 3 (1, 4, 7); applied 4 (2, 3, 5, 6); open 2 (8, 9).
+    p-values (Ex. 3).
+- **Exercises:** 6. Basic 2 (1, 4); applied 2 (2–3); open 2 (5–6). 3 more are in the [exercise bank](../exercises/).
 
 ### Chapter 26. Advanced stochastic actor-oriented models
 - **Time:** 2 sessions.
@@ -492,7 +493,7 @@ One entry for each chapter. The entries use these headings:
     other. It then records the overlap.
   - Reporting the standard errors of a joint model without a heterogeneity check. They are too small when the
     groups do not share their effects.
-- **Exercises:** 5. Basic 1 (1); applied 2 (2, 3); open 2 (4, 5).
+- **Exercises:** 5. Basic 1 (1); applied 2 (2–3); open 2 (4–5).
 
 ### Chapter 27. Relational event models
 - **Time:** 1–2 sessions.
@@ -505,11 +506,11 @@ One entry for each chapter. The entries use these headings:
   - Quoting a single `nodsnd` or `nidrec` coefficient as stable; both shift with the other effects in the model.
   - Building a `covevent()` network from the event rows. It needs one row per actor, from `nwload` with `xvars`.
   - The risk set: at each event every ordered pair of actors is at risk, 129 × 128 for the email log (Ex. 2).
-- **Exercises:** 8. Basic 3 (1–3); applied 3 (4–6); open 2 (7, 8).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 2 more are in the [exercise bank](../exercises/).
 
 ### Chapter 28. The Dynamic Network Actor Model
 - **Time:** 1–2 sessions.
-- **Data:** `manufacturing`; the toy log of Chapter 27 in Ex. 2.
+- **Data:** `manufacturing`; the toy log of Chapter 27 in exercise bank 28.a.
 - **Builds on:** 27.
 - **Commands:** `nwset ..., eventtime() directed`, `nwdynam` (`submodel(rate)`, the choice sub-model, `intercept`,
   `inertia`, `recip`, `indeg`, `outdeg`, `same()`), `nwload ..., xvars`.
@@ -520,14 +521,14 @@ One entry for each chapter. The entries use these headings:
     and the choice sub-model never has an intercept.
   - Declaring the event network without `directed`. `nwdynam` then stops; only `choice_coordination` needs an
     undirected network.
-- **Exercises:** 8. Basic 3 (1–3); applied 3 (4–6); open 2 (7, 8).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 2 more are in the [exercise bank](../exercises/).
 
 ## Part V. Doing network research
 
 ### Chapter 29. A complete network analysis
 - **Time:** 2 sessions.
-- **Data:** `lazega`; `gang` in Ex. 8.
-- **Builds on:** 6, 18, 20, 21; 9 and 22 for Ex. 7.
+- **Data:** `lazega`; `gang` in Ex. 5.
+- **Builds on:** 6, 18, 20, 21; 9 and 22 for exercise bank 29.c.
 - **Commands:** no new commands; the chapter combines `nwtoedge`, `nwdegree`, `nwqap`, `nwergm` (with
   `nodemix()`, `nodeicov()` and `nodeocov()`), `lincom`, `estat`, `nwdrop` and `estimates table`.
 - **Where students get stuck:**
@@ -539,21 +540,22 @@ One entry for each chapter. The entries use these headings:
     asking a partner.
   - Reading a status effect as an effect of the title when partnership and seniority rank overlap.
   - Choosing the sensitivity runs after seeing the results. State them with the expectations.
-- **Exercises:** 9. Basic 4 (1–4); applied 3 (5–7); open 2 (8, 9).
+- **Exercises:** 6. Basic 3 (1–3); applied 1 (4); open 2 (5–6). 3 more are in the [exercise bank](../exercises/).
 
 ### Chapter 30. Reproducible and responsible network research
 - **Time:** 1 session.
-- **Data:** `lazega`; `glasgow` in Ex. 5.
+- **Data:** `lazega`; `glasgow` in Ex. 4.
 - **Builds on:** 3, 5, 18, 29.
-- **Commands:** stored results of `nwcug` and `nwqap` (`return list`, `ereturn list`); in Ex. 5, `postfile` to
+- **Commands:** stored results of `nwcug` and `nwqap` (`return list`, `ereturn list`); in Ex. 4, `postfile` to
   collect results.
 - **Where students get stuck:**
   - Treating the removal of names as anonymization. Structural re-identifiability has no analogue in ordinary data
     sets and must be assessed on its own terms.
+  - Taking a postestimation result as valid because the command ran. `test` after `nwqap` prints a joint chi-squared computed from a diagonal matrix of permutation variances; the inference to report is the permutation p-values.
   - Expecting rerun plotting code to reproduce a figure. Unless the coordinates were saved, it will not.
   - Citing a moving development version of the software instead of a specific, tagged one.
-  - Reading tail p-values: with the plus-one correction a tail p-value is (count + 1)/(*R* + 1) (Ex. 3).
-- **Exercises:** 7. Basic 3 (1–3); applied 2 (4, 5); open 2 (6, 7).
+  - Reading tail p-values: with the plus-one correction a tail p-value is (count + 1)/(*R* + 1) (exercise bank 30.a).
+- **Exercises:** 6. Basic 2 (1–2); applied 2 (3–4); open 2 (5–6). 1 more are in the [exercise bank](../exercises/).
 
 ## Appendices
 

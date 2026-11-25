@@ -1,0 +1,28 @@
+// Package logos
+h1.pkg-logo { margin-bottom: 0.6rem; }
+h1.pkg-logo img { max-width: 100%; height: auto; }
+
+.pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.pkg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  background-image: none !important;
+  text-decoration: none !important;
+  &:hover { border-color: $link-color; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+}
+
+.pkg-card-logo img { max-width: 100%; height: auto; display: block; }
+.pkg-card-text { color: $body-text-color; font-size: 0.8rem; line-height: 1.35; }
+
+a.pkg-inline { background-image: none !important; }
+a.pkg-inline img { max-width: none; vertical-align: middle; }

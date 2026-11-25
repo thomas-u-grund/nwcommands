@@ -6,8 +6,7 @@ permalink: /nwrem/
 description: "nwrem: relational event models (REM) for Stata, written from Butts (2008) and cross-checked with the R package relevent. Installation, worked tutorials, a guide for relevent users and how to cite."
 ---
 
-# nwrem
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwrem.png' | relative_url }}" alt="nwrem" width="196" height="76"></h1>
 
 Relational event models (REM) for Stata: why this sender and this receiver, in a stream of timestamped events.
 {: .fs-6 .fw-300 }

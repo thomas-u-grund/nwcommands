@@ -82,6 +82,7 @@ The [course outlines](outlines/) turn these paths into three formats:
   chapters it builds on, the commands it teaches, where students typically get stuck, and its exercises by level.
 - [Assignments with other data](assignments/): problem sets that apply the book's methods to data sets that
   `nwwebuse` loads but the chapters do not use as their main example.
+- [Exercise bank](exercises/): about 85 more exercises with hints, by chapter, that are not printed in the book.
 
 ## Exercises and hints
 

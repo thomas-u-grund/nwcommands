@@ -7,10 +7,10 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
-* Lines marked "setup" are not printed in the book but are needed to run it.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.37.1,
+* nwergm 1.16.1, nwsaom 1.9.2, nwrem 1.7.2, nwdynam 1.11.1, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.1.0, the versions the book was printed with.
+* Lines marked "setup" are not printed in the book but are needed to run it; lines marked "run" are fits that the text summarizes.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
 * --------------------------------------------------------------------------
@@ -19,16 +19,17 @@ clear all
 set more off
 
 * ============================================================
+* Looking at the data first
+* ============================================================
+nwwebuse glasgow, nwclear
+nwsaom describe, waves(glasgow1 glasgow2 glasgow3) behavior(alcohol1 ///
+    alcohol2 alcohol3)
+
+* ============================================================
 * The objective function and the choice probability
 * ============================================================
 nwwebuse glasgow, nwclear
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)
-
-* ============================================================
-* Looking at the data first
-* ============================================================
-nwsaom describe, waves(glasgow1 glasgow2 glasgow3) behavior(alcohol1 ///
-    alcohol2 alcohol3)
 
 * ============================================================
 * Building up a real model on Glasgow

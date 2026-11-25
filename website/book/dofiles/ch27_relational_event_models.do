@@ -7,10 +7,10 @@
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
-* Lines marked "setup" are not printed in the book but are needed to run it.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.37.1,
+* nwergm 1.16.1, nwsaom 1.9.2, nwrem 1.7.2, nwdynam 1.11.1, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.1.0, the versions the book was printed with.
+* Lines marked "setup" are not printed in the book but are needed to run it; lines marked "run" are fits that the text summarizes.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
 * --------------------------------------------------------------------------
@@ -35,8 +35,6 @@ input sender receiver t
 1 3 10
 end
 nwset sender receiver, eventtime(t) name(chat)
-
-nwrem chat, nodsnd nidrec
 
 * ============================================================
 * A real event log: company emails
@@ -68,3 +66,12 @@ nwrem mail, nodsnd nidrec frpsndsnd covevent(samesup)
 nwrem mail, nodsnd nidrec rsndsnd covevent(samesup)
 
 estat actors, role(sender) title("") scheme(s1network)
+* run, not printed in the book:
+nwwebuse manufacturing, nwclear
+keep if t < 14
+generate long seq = _n
+sort t seq
+by t: replace t = t + (_n - 1)/1e6
+nwset sender receiver, eventtime(t) name(mailw)
+nwrem mailw, nodsnd nidrec interval
+estat time
