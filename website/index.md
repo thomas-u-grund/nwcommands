@@ -5,8 +5,7 @@ description: "nwcommands: network analysis for Stata. Import, generate, describe
 permalink: /
 ---
 
-# nwcommands
-{: .fs-9 }
+<h1><img src="{{ '/assets/images/nwcommands-logo.png' | relative_url }}" alt="nwcommands" width="480"></h1>
 
 Network analysis in Stata: import, generate, describe, analyze and plot networks, and fit statistical
 network models, from the Stata command line or from dialog boxes.
