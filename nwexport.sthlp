@@ -61,6 +61,10 @@ new network file is saved in the working directory. When no {opt fname} is speci
 matrix, edge list with the modes of both nodes, GML attribute {cmd:nwmode}; level labels are kept except in UCINET DL.
 {bf:Signed:} not checked. {bf:Temporal:} see below. See {help nwnetworktypes}.{p_end}
 
+{pstd}
+{bf:What a format cannot hold.} {cmd:type(edgelist)} lists ties only, so isolated nodes are not in the file. A Pajek file read back with
+{help nwimport} has no tie where the network had a missing tie value. {help nwsave} keeps both.{p_end}
+
 {marker temporal}{...}
 {title:Temporal networks}
 
@@ -81,9 +85,13 @@ with {cmd:type(edgelist)}, {opt aggregate} writes the aggregated tie list instea
 {title:Limits}
 
 {pstd}
-Every format is written from the ties only and in blocks. Measured in Stata/BE, random directed network with 10 ties per
-node: 1,000 / 5,000 / 20,000 nodes in 0.1 / 0.3 / 1.4 seconds (edge list, Pajek, UCINET). Within a Pajek, UCINET or GML file the ties are
+Every format is written from the ties only and in blocks. Within a Pajek, UCINET or GML file the ties are
 ordered by the label of the alter, then of the ego.
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwexport} stores no results of its own in {cmd:r()}.
 
  {title:See also}
  

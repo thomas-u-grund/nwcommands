@@ -50,7 +50,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 
 {title:Examples}
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwnode flobusiness, ego(medici)}
 
 

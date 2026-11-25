@@ -14,7 +14,11 @@
 {p 8 17 2}
 {cmdab: nwvalidate} 
 {it:{help netname}}
+[{cmd:,}
+{opt self(netname)}]
 
+{synoptset 20 tabbed}{...}
+{synopt:{opt self(netname)}}if the checked name equals this name (for example the current name of the network that is renamed), it counts as free: {bf:r(validname)} is the name itself and {bf:r(exists)} is "false"{p_end}
 {p2colreset}{...}
 	
 {title:Description}
@@ -34,7 +38,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 {title:Examples}
 
 	{cmd:. nwclear}
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwvalidate flobusiness}
 	{cmd:. return list}
 

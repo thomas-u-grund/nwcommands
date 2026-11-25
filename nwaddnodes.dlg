@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 132, label("Options")
   TEXT tx_ed_nodenames 20 54 260 ., label("Node identifiers separated by comma")
   EDIT ed_nodenames 290 54 190 ., nomem option(nodenames)
-  TEXT tx_ed_mode 20 82 260 ., label("two-mode networks only: mode (1 or 2) each new node belongs to; required if two-mode")
+  TEXT tx_ed_mode 20 82 260 ., label("Two-mode: mode (1 or 2) of new nodes (required)")
   EDIT ed_mode 290 82 190 ., nomem option(mode)
   TEXT tx_cb_generate 20 110 260 ., label("Save as new network")
   COMBOBOX cb_generate 290 110 190 ., dropdown contents(netlist) nomem option(generate)
@@ -43,7 +43,7 @@ PROGRAM command
 BEGIN
 	// number fields: refuse text before the command runs
 	if main.ed_mode.isneq("") & !main.ed_mode.isnumlist() {
-		stopbox stop "two-mode networks only: mode (1 or 2) each new node belon...: enter a number (or numbers)."
+		stopbox stop "Mode of the new nodes: enter 1 or 2."
 	}
 	require main.ed_nodenames
 	put "nwaddnodes " main.cb_net

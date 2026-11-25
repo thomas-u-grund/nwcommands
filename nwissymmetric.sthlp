@@ -43,7 +43,7 @@ compared, not only the presence of ties. {bf:Two-mode:} same as for the bipartit
 
 {title:Examples}
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwissymmetric flomarriage}
 	{cmd:. return list}
 

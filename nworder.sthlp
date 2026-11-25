@@ -89,7 +89,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 {title:Examples}
 
 {pstd}Setup{p_end}
-{phang2}{cmd:. nwwebuse florentine}
+{phang2}{cmd:. nwwebuse florentine, nwclear}
 
 {pstd}Describe the networks{p_end}
 {phang2}{cmd:. nwds}

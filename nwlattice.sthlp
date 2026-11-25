@@ -61,11 +61,11 @@ binary). {bf:Two-mode:} not applicable (the network is one-mode). {bf:Signed:} n
 	
 	{cmd:. nwclear}
 	{cmd:. nwlattice 4 4}
-	{cmd:. nwplot, label(_nodeid)}
+	{cmd:. nwplot, label(_nwnode)}
 	
 	{cmd:. nwclear}
 	{cmd:. nwlattice 4 4, xwrap ywrap}
-	{cmd:. nwplot, layout(grid) label(_nodeid)}
+	{cmd:. nwplot, layout(grid) label(_nwnode)}
 
 {title:Stored results}
 

@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwconcor}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opth splits(int)}
 {opt measure(string)}
 {opth maxiter(int)}
@@ -87,8 +87,7 @@ specially. See {help nwnetworktypes}.{p_end}
 
 {pstd}
 Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each
-iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds,
-2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000
+iteration. Above 2,000 nodes the command prints a note; above 6,000
 nodes it stops with r(484) unless {opt force} is given. The correlation matrix is dense after the first iteration, so there
 is no sparse form of the method.
 

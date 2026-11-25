@@ -16,9 +16,9 @@
 {cmdab: nwbrokerage}
 [{it:{help netlist}}]
 {cmd:,}
+{opth generate(newvarname)}
 {opth group(varname)}
-[{opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt silent}]
 
 

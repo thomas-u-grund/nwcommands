@@ -135,12 +135,11 @@ yes - a node is compared with the nodes of its own mode over the other mode; pai
 
 {pstd}
 When the native plugin of your platform has this kernel, the cells are formed from the stored ties and not from
-dense matrix products: 5,000 nodes of the same network take 0.4 seconds for every type (1.0 to 1.2 seconds with the Mata code). The results are those of the Mata code
+dense matrix products. The results are those of the Mata code
 (differences below 1e-13). A network with missing tie values, and a platform whose plugin lacks this kernel, use the Mata code.
 
 {pstd}
-The result is a dense {it:n}-by-{it:n} valued network. About 8 matrices of that size are held at once (10,000 nodes: 4 seconds and
-6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000
+The result is a dense {it:n}-by-{it:n} valued network. About 8 matrices of that size are held at once (10,000 nodes: 6.3 GB). Above about 13,700 nodes the command stops at once with r(484) and a message with the memory needed (25.6 GB at 20,000
 nodes); option {opt force} runs it anyway. The node labels of the new network are the labels of the source network at any size.
 
 

@@ -62,7 +62,7 @@ any other value below {opt threshold()}. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-See {help nwrecode}: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, random directed network with 10 ties per node.
+See {help nwrecode}.
 
 
 {title:Examples}

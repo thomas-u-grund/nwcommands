@@ -1,6 +1,7 @@
 capture program drop nwuse
 program nwuse
-	syntax anything [, nwclear nwappend force *]
+	syntax anything [, nwclear nwappend force clear *]
+	local __changed = c(changed)
 	unw_defs
 	// anything keeps the quotes of a quoted file name (paths with spaces)
 	local basename `anything'
@@ -16,6 +17,11 @@ program nwuse
 	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
 		exit 999
+	}
+
+	if `__changed' & (_N > 0 | c(k) > 0) & "`nwclear'`nwappend'`clear'" == "" {
+		di "{err}{p 0 0 2}no; data in memory would be lost. Save them first, or specify option {bf:clear}, {bf:nwclear} or {bf:nwappend}.{p_end}"
+		exit 4
 	}
 
 	qui if "`nwappend'" != "" {

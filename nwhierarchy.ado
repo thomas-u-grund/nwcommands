@@ -80,6 +80,17 @@ program nwhierarchy, rclass
 	// the resulting role/position variable is available as an ordinary
 	// Stata variable in one call, mirroring nwcomponents' own
 	// component-id-variable output shape exactly.
+	// clustermat, add needs exactly one observation per node: further observations are set aside and put back
+	local __rest 0
+	if "`add'" != "" & _N > `nodes' {
+		tempfile __all __more
+		qui save `__all'
+		qui drop in 1/`nodes'
+		qui save `__more'
+		qui use `__all', clear
+		qui keep in 1/`nodes'
+		local __rest 1
+	}
 	if `groups' > 0 {
 		local nwhier_clustername "_nwhierarchy_role"
 		capture cluster drop `nwhier_clustername'
@@ -109,6 +120,7 @@ program nwhierarchy, rclass
 	else {
 		clustermat `linkage' `dismat', `options' `add' `clear'
 	}
+	if `__rest' qui append using `__more'
 	qui nwload `netname', labelonly
 end
 

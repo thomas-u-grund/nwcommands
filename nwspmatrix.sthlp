@@ -62,7 +62,7 @@ Values must not be negative. Self-loops are removed.
 
 {phang}
 {opt direction()} applies to directed networks only (an undirected network is symmetric already).
-{cmd:out} (default): {it:W}{sub:ij} refers to the tie from {it:i} to {it:j}, so node {it:i} is influenced by the
+{cmd:out} (default): {it:W_ij} refers to the tie from {it:i} to {it:j}, so node {it:i} is influenced by the
 nodes it names. {cmd:in}: the transpose, so node {it:i} is influenced by the nodes that name it.
 {cmd:symmetric}: a tie in either direction counts (the larger of the two values with valued weights).
 {cmd:mutual}: only reciprocated ties count (the smaller of the two values).

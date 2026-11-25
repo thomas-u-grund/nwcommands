@@ -44,7 +44,7 @@ One name per node goes into a Stata macro. When the {it:nodes} names do not fit 
 {title:Examples}
 
 	{cmd:. nwclear}
-	{cmd:. nwwebuse gang}
+	{cmd:. nwwebuse gang, nwclear}
 	{cmd:. nwvalidvars 10, stub(g)}
 	{cmd:. return list}
 

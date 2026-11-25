@@ -33,6 +33,10 @@ program _nwexpnetexp
 	local stataVars = 0
 	local netexp_mata ""
 	
+	// minus and not: tell the sign (-a, !a) from the subtraction (a-1) before the operators are spaced out
+	local exp = subinstr(`"`exp'"', "~=", "!=", .)
+	mata: st_local("exp", _nwexp_signs(st_local("exp")))
+
 	// replace all operators
 	local exp = subinstr(`"`exp'"',"**"," matmult ",.)
 	local exp = subinstr(`"`exp'"',"^"," :^ ",.)
@@ -45,9 +49,6 @@ program _nwexpnetexp
 	local exp = subinstr(`"`exp'"',":smequ"," :<= ",.)	
 	local exp = subinstr(`"`exp'"',"*"," :* ",.)
 	local exp = subinstr(`"`exp'"',"/"," :/ ",.)
-	local exp = subinstr(`"`exp'"',"(-"," (J(matanodes , matanodes , mataminus1) * ",.)
-	local exp = subinstr(`"`exp'"',"- "," :- ",.)
-	local exp = subinstr(`"`exp'"',"mataminus1","-1",.)
 	local exp = subinstr(`"`exp'"',"+"," :+ ",.)
 	local exp = subinstr(`"`exp'"',"&"," :& ",.)
 	local exp = subinstr(`"`exp'"',"|"," :| ",.)
@@ -69,7 +70,7 @@ program _nwexpnetexp
 
 	forvalues i = 1/`exp_words' {
 		local x `"``i''"'
-		local operators = "op round( exp( abs( sqrt( log( ln( J , * :^ :!= :: [ ] :& :| :> :< :>= :<= :* :/ :== & | :- :+ ( )"
+		local operators = "op round( exp( abs( sqrt( log( ln( J , * :^ :!= :: [ ] :& :| :> :< :>= :<= :* :/ :== & | :- :+ ( ) - !"
 		local isoperator_match : list operators & x
 		local isoperator = wordcount("`isoperator_match'")		
 		
@@ -163,3 +164,32 @@ end*/
 
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+
+capture mata: mata drop _nwexp_signs()
+mata:
+// A binary minus becomes " :- ", a sign " - " (Mata's own unary minus); a "!" that is not part of "!=" becomes " ! ".
+// Text in double quotes and exponents (1e-5) stay as they are.
+string scalar _nwexp_signs(string scalar s)
+{
+	string scalar out, c, prev
+	real scalar i, n, inq
+
+	out = ""
+	prev = ""
+	inq = 0
+	n = strlen(s)
+	for (i = 1; i <= n; i++) {
+		c = substr(s, i, 1)
+		if (c == char(34)) inq = !inq
+		if (!inq & c == "-") {
+			if (i > 2 & regexm(substr(s, 1, i - 1), "(^|[^A-Za-z_0-9])[0-9][0-9.]*[eE]$")) out = out + c
+			else if (prev == "" | strpos("(,+-*/^=<>&|![:", prev) > 0) out = out + " - "
+			else out = out + " :- "
+		}
+		else if (!inq & c == "!" & substr(s, i + 1, 1) != "=") out = out + " ! "
+		else out = out + c
+		if (c != " ") prev = c
+	}
+	return(out)
+}
+end

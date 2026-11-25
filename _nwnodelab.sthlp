@@ -38,7 +38,7 @@ This command is mostly used for programming with networks.
 
 {title:Examples}
 
-   {cmd:. nwwebuse florentine}
+   {cmd:. nwwebuse florentine, nwclear}
    {cmd:. _nwnodelab flomarriage, nodeid(9) detail}
    
 		{hline 40}

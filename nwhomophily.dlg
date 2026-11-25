@@ -24,7 +24,7 @@ BEGIN
   EDIT ed_density 290 82 100 ., numonly nomem option(density)
   TEXT tx_ed_mode 20 110 260 ., label("Mode used to generate probabilities for ties")
   EDIT ed_mode 290 110 190 ., nomem option(mode)
-  TEXT tx_ed_nodes 20 138 260 ., label("Number of nodes; default = number of valid cases of the variable")
+  TEXT tx_ed_nodes 20 138 260 ., label("Number of nodes; default = nonmissing cases")
   EDIT ed_nodes 290 138 190 ., nomem option(nodes)
   TEXT tx_ed_name 20 166 260 ., label("name of the new random network")
   EDIT ed_name 290 166 190 ., nomem option(name)
@@ -50,7 +50,7 @@ BEGIN
 		stopbox stop "Degree of homophily for each variable in varlist: enter a number (or numbers)."
 	}
 	if main.ed_nodes.isneq("") & !main.ed_nodes.isnumlist() {
-		stopbox stop "Number of nodes: enter a number (or numbers)."
+		stopbox stop "Number of nodes: enter a number."
 	}
 	require main.vl_vars
 	require main.ed_homophily

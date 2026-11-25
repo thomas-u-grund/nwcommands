@@ -34,7 +34,7 @@ is specified in such a case, by default, the nwcommands apply the command to the
 {pstd}
 The {it:current network} is simply the last network that has been {help nwset:set},
 {help nwtopical##import:imported}
-or {help nwtopical##generators:generated}. This is a convenient way to way access the latest
+or {help nwtopical##generator:generated}. This is a convenient way to way access the latest
 network one worked with. 
 
 {pstd}
@@ -51,7 +51,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 
 {title:Examples}
 
-	{com}. nwwebuse florentine
+	{com}. nwwebuse florentine, nwclear
 	{com}. nwcurrent
 	{res}{hline 40}
 	{txt}   Current network: {res} flomarriage

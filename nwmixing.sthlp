@@ -82,6 +82,7 @@ attribute and tie placement", and reports a two-sided p-value.
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. {opt plotoptions()} and {opt eiplotoptions()} remain the
 way to pass options to the two graphs ({opt twoway_options} cannot be used here: other options go to {helpb tabulate}).
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))}{p_end}
 
 {title:Remarks on plot}
@@ -103,15 +104,12 @@ ends, as the output notes. {bf:Valued:} tie values are ignored (every tie counts
 {title:Limits}
 
 {pstd}
-The mixing table counts ties, so only the ties are listed (not all dyads). Measured in Stata/BE, random directed network with
-10 ties per node: 5,000 nodes 0.3 seconds. The significance test
-({opt permutations()}) permutes the attribute on the dense adjacency matrix; its running time at 5,000 nodes has not been
-measured.
+The mixing table counts ties, so only the ties are listed (not all dyads). The significance test
+({opt permutations()}) permutes the attribute on the dense adjacency matrix.
 
 {pstd}
 The permutations of {opt permutations()} act on the stored ties of a network that is held that way (a tie (u,v) lands in the cell
-(inv u, inv v) of the permuted matrix, O(ties) per draw). 20,000 nodes
-with 20 permutations: 1.2 seconds.
+(inv u, inv v) of the permuted matrix, O(ties) per draw).
 
 
 {title:Examples}

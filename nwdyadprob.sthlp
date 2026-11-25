@@ -82,8 +82,7 @@ always creates a one-mode network. {bf:Signed:} not checked. See {help nwnetwork
 {title:Limits}
 
 {pstd}
-With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command: 20,000 nodes
-3.1 seconds. {opt density()} weights all dyads and is refused above 7,071 nodes.
+With {opt mat()} the probabilities are an {it:n}-by-{it:n} matrix held by you plus three copies in the command. {opt density()} weights all dyads and is refused above 7,071 nodes.
 
 
 {title:Example}
@@ -145,7 +144,7 @@ As an example, we want that in the final network 1) ties between nodes with the 
 are overrepresented and 2) ties between nodes with the same race are underrepresented. This generates
 tie probabilitities according to this request.  
 	
-	{cmd:. nwgen dyadweight = exp(5 * same_gender) * exp((-5) * same_race)}
+	{cmd:. nwgen dyadweight = exp(5 * same_gender) * exp(-5 * same_race)}
 
 {pstd}
 Check out the tie values created in this way:

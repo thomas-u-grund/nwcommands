@@ -24,6 +24,7 @@ program nwreach
 	// Unlike this, every sibling command in the group (nwgeodesic/
 	// nwpath/nwbridges) requires `nwreplace' before overwriting an
 	// existing target name - now matches that convention.
+	_nwtargetcheck `name', source(`reachnet') given(0)
 	capture _nwsyntax `name', other(_check)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}{p 0 0 2}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}.{p_end}"
@@ -40,4 +41,5 @@ program nwreach
 	if "`xvars'" != "" {
 		nwload `name'
 	}
+	mata: st_rclear()
 end

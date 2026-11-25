@@ -42,7 +42,7 @@ One can also change the entire adjaceny matrix of a network with an existing Mat
 {pstd}
 Only replace dyad (2,1) to a constant:
 
-	{bf:. nwset, mat((0,0,1\1,0,0\1,10)) name(mynet)}
+	{bf:. nwset, mat((0,0,1\1,0,0\1,1,0)) name(mynet)}
 	{bf:. nwreplace mynet[2,1] = 55}
 
 {pstd}
@@ -89,6 +89,12 @@ more on network expressions {help netexp:here}.
 
 {pstd}
 Set a subnetwork to a constant:
+
+{pmore}
+{bf:. nwclear}
+
+{pmore}
+{bf:. nwrandom 6, prob(.2) name(mynet)}
 
 {pmore}
 {bf:. nwreplace mynet[(1::4),(1::4)] = 55}
@@ -189,6 +195,7 @@ acts in the same way as the ifego condition.
  {pstd}	
  Both {bf:ifego} and {bf:ifalter} can be combined (and could even be combined with the normal {bf:if} condition as well).
 	
+	{bf:. nwclear}
 	{bf:. nwrandom 6, prob(1) name(mynet)}
 	{bf:. nwreplace mynet = 5 * mynet ifego _n > 3 ifalter _n > 3 }
 	{bf:. nwsummarize mynet, matonly}
@@ -207,6 +214,11 @@ acts in the same way as the ifego condition.
 {pstd}	
 All network expressions, network subsetting and network conditions can be combined with each other. 
 
+	{bf:. nwclear}
+	{bf:. nwrandom 10, prob(.2) name(first)}
+	{bf:. nwrandom 10, prob(.2) name(second)}
+	{bf:. nwrandom 10, prob(.2) name(third)}
+	{bf:. nwload first}
 	{bf:. gen attr= _n * 2}
 	{bf:. nwreplace first[(1::3),(1::3)]  = exp(second) * attr ifego _n >= 5 ifalter attr < 4 if third == 1}
 

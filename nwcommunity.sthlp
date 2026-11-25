@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwcommunity}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt measure(string)}
 {opt SYMmetrize}
 {opth resolution(real)}
@@ -85,8 +85,8 @@ systematically collapses even simple, cleanly-separated community structure into
 
 {pstd}
 On dense networks {bf:algorithm(labelprop)} can collapse to a single community; compare the reported modularity with that of {bf:algorithm(louvain)} before relying on it. Louvain is deterministic and
-ignores {opt seed()}. The two-mode search draws its random starting orders from the seed: the same {opt seed()} (or {cmd:set seed}) gives the same communities, whatever the platform; the search runs
-in the native plugin, about 25 times faster than the Mata code that is used on a platform without it, and the two reach the same modularity up to the luck of the random starts (Southern
+ignores {opt seed()}. The two-mode search draws its random starting orders from the seed: the same {opt seed()} (or {cmd:set seed}) gives the same communities, whatever the platform; the search runs in the native plugin (a platform without it uses
+Mata code), and the two reach the same modularity up to the luck of the random starts (Southern
 women: identical, 0.3455).
 
 {pstd}
@@ -130,7 +130,7 @@ is driven by an actual modularity-gain comparison, not a plain vote count.
 the label propagation {bf:LPAwb+} of Beckett (2016) in its repeated form {bf:DIRT_LPA+} (R: {cmd:bipartite::DIRT_LPA_wb_plus}, {cmd:bipartite::computeModules(method = "Beckett")}): it needs the native
 plugin (a clear message asks for an update otherwise), is reproducible with {opt seed()}, takes the weights of a valued network, does not use {opt resolution()} or {opt starts()} (it uses {opt reps()}
 and {opt minmodules()}), and is much slower than the Louvain search because of the repeated runs (the Southern women find the best known modularity 0.3455 with both; on the 5,092 directors and 455
-boards of {cmd:ftdirectors_se} {bf:dirtlpa} reaches 0.95110 in 12 seconds with the default {opt reps()}, 30 starts of the Louvain search 0.95101 in 0.2 seconds). The merge step evaluates Barber's
+boards of {cmd:ftdirectors_se} {bf:dirtlpa} reaches 0.95110 with the default {opt reps()}, 30 starts of the Louvain search 0.95101). The merge step evaluates Barber's
 modularity of the labels exactly; the R function evaluates it with a trace in which the modules of the two sides are matched by position, which agrees with the exact value whenever the two sets of
 labels appear in the same order.
 
@@ -148,15 +148,12 @@ is for two-mode networks only. {bf:Signed:} not checked. See {help nwnetworktype
 
 {pstd}
 Louvain runs in a kernel of the native plugin on the stored ties (a platform without the plugin uses
-the Mata code, which gives the same communities, on the dense matrix). Measured in Stata/BE, random undirected network with
-10 ties drawn per node: 1,000 nodes 0.08 seconds, 3,000 nodes 0.08 seconds (14 communities, modularity 0.18), 10,000
-nodes 0.24 seconds (0.2 GB). Above 1,000 communities (a sparse network of a few thousand nodes) the table of community sizes is not
+the Mata code, which gives the same communities, on the dense matrix). With 10 ties drawn per node, 10,000 nodes need about 0.2 GB. Above 1,000 communities (a sparse network of a few thousand nodes) the table of community sizes is not
 printed; the sizes are in {bf:r(comm_sizeid)}, ordered by size and then by community number.
 
 {pstd}
 Label propagation runs on the stored ties too (the same partitions for the same {opt seed()}).
-Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,000 nodes
-1.9 seconds and 0.3 GB.
+With 10 ties drawn per node, 20,000 nodes need about 0.3 GB.
 
 
 {title:Examples}
@@ -168,9 +165,7 @@ Measured in Stata/BE, random undirected network with 10 ties drawn per node: 20,
 	{cmd:. nwcommunity flomarriage, algorithm(infomap) trials(20) seed(1) generate(_community) replace}
 
 {pstd}
-Leiden and Infomap run in Mata on the stored ties and are meant for networks of up to a few thousand nodes. Measured in
-Stata/BE with the default {opt trials(10)}: 1,000 nodes 0.9 seconds (Leiden) and 2 seconds (Infomap); 5,000 nodes with
-33,000 ties 3.7 and 9.5 seconds (Louvain: 0.15 seconds). Both need a one-mode network: a two-mode network requires
+Leiden and Infomap run in Mata on the stored ties and are meant for networks of up to a few thousand nodes. They are much slower than Louvain. Both need a one-mode network: a two-mode network requires
 {opt onemode}, a directed network {opt symmetrize}. Infomap is the undirected two-level map equation only: there is no
 directed map equation, no hierarchical (multilevel) partition and no coarse tuning. Leiden optimises modularity only (no
 constant Potts model). On the Zachary karate club, planted-partition networks and the three Lazega law-firm networks the

@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwbetween}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opt generate}({it:{help newvarlist}})
-{opt replace}
+[{opt replace}
 {opt sym}
 {opt nosym}
 {opt standardize}
@@ -108,17 +108,16 @@ generates one variable per network, named {it:varname_netname} (e.g. {it:bw_glas
 The default (unweighted) mode of {cmd:nwbetween} transparently uses a compiled native (C)
 implementation of the same algorithm when one is available for the current platform (currently:
 macOS), falling back to an identical, fully-supported Mata implementation everywhere else -
-there is nothing to configure and no difference in the result, only in how fast it is computed
-(a native run at 10,000 nodes was measured faster than the Mata implementation at
-just 1,000). The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same
-result as the Mata routine: 1,000 nodes with 3,000 valued ties take 0.13 seconds (Mata: 111 seconds), 10,000 nodes 15 seconds; the Mata routine
+there is nothing to configure and no difference in the result, only in how fast it is computed. The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same
+result as the Mata routine; the Mata routine
 needs a dense work space of n x n cells for every node and is not usable above a few hundred nodes.
 
 
 {title:Network types}
 
 {pstd}
-{bf:Directed:} shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} used by default (paths of
+{bf:Directed:} shortest paths follow the direction of the ties (the directed betweenness of igraph and sna); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward
+compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} used by default (paths of
 least cost 1/w^alpha, {opt alpha(1)} by default); {opt binary} counts steps; {opt weighted} is redundant. {bf:Two-mode:}
 two-mode form by default (option {opt onemode} for the one-mode computation). {bf:Signed:} ties of value zero or less,
 including negative ties, count as absent. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
@@ -127,8 +126,7 @@ including negative ties, count as absent. {bf:Missing ties:} treated as 0; the o
 {title:Limits}
 
 {pstd}
-Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. Measured in Stata/BE on a random directed network with 10 ties per
-node: 10,000 nodes 7.6 seconds, 20,000 nodes 29 seconds, 100,000 nodes about 15 minutes (estimated). When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the
+Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the
 command stops at once with r(484) and a message; option {opt force} runs it anyway.
 
 

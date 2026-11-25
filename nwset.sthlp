@@ -149,9 +149,10 @@ In this dummy example, we create 5 new variables v1-v5 and set a network from th
 are no ties).
 
 	{cmd:. nwclear}
-	{cmd:. forvalues i = 1/5} {
-	{cmd:     gen v = 0}
-	{cmd:  }}
+	{cmd:. set obs 5}
+	{cmd:. forvalues i = 1/5 {c -(}}
+	{cmd:.     generate v`i' = 0}
+	{cmd:. {c )-}}
 	{cmd:. nwset v*}
 
 {pstd}

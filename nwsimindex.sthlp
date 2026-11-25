@@ -78,12 +78,10 @@ network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-The result is a dense {it:n}-by-{it:n} valued network. Measured in Stata/BE, random undirected network with 10 ties per
-node: 5,000 nodes 0.8 seconds and 1.3 GB.
+The result is a dense {it:n}-by-{it:n} valued network. At 5,000 nodes it needs about 1.3 GB.
 
 {pstd}
-The result is a dense {it:n}-by-{it:n} valued network. About 5 matrices of that size are held at once (10,000 nodes: 2.8 seconds and
-4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes);
+The result is a dense {it:n}-by-{it:n} valued network. About 5 matrices of that size are held at once (10,000 nodes: 4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes);
 option {opt force} runs it anyway.
 
 

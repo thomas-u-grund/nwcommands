@@ -74,7 +74,7 @@ The dependent variable is {it:y_ij}, indicating the network relationship between
 {marker independentvariables}{...}
 {pstd}Independent variables can be other {help netname:networks} or normal {help varname:variables}.  
 Normal variables are expanded to networks of the same size as the dependent network using 
-{help nwexpand}. The default {bf:mode} is {bf:"same"} (see {help nwexpand##mode:here} for other modes.
+{help nwexpand}. The default {bf:mode} is {bf:"same"} (see {help nwexpand##expand_mode:here} for other modes.
 When more than one {help varname} is specified as independent variable, different modes can be 
 selected for each variable, e.g. {bf:mode(same dist invdist)} chooses mode {bf:"dist"} for the 
 second {help varname} that appears as independent variable.{p_end}   
@@ -195,19 +195,18 @@ use {help nwproject} first). {bf:Signed:} not checked. See {help nwnetworktypes}
 {title:Limits}
 
 {pstd}
-The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10
-ties per node, {cmd:type(regress)}, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB.
+The regression runs on one observation for every dyad, in Stata memory. With {cmd:type(regress)}, 5,000 nodes need about 3 GB and 10,000 nodes about 11.6 GB.
 Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
 
 {pstd}
 QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of {it:n}-by-{it:n}
-(10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a
+(10,000 nodes: 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a
 message with the memory needed (48 GB at 20,000 nodes); option {opt force} runs it anyway.
 
 
 {title:Examples}
 
-	{cmd:. nwwebuse glasgow}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}
 
@@ -243,7 +242,8 @@ time1 (smoke1). There is no effect for both having scored the same on sport1.
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
 replace the defaults. 
 
-{phang2}{cmd:. nwqap wdv iv1 iv2, plot export(qap.png, width(1200))}{p_end}
+{phang2}{cmd:. nwwebuse glasgow, nwclear}{p_end}
+{phang2}{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, plot export(qap.png, width(1200))}{p_end}
 
 {title:Stored results}
 

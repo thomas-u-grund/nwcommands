@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_cx_lgc 20 54 260 ., label("Calculate membership to largest component")
   CHECKBOX cx_lgc 290 54 190 ., label("lgc") option(lgc)
-  TEXT tx_ed_generate 20 82 260 ., label("Required. Name of the Stata variable that stores information about components (component membership")
+  TEXT tx_ed_generate 20 82 260 ., label("Required. Variable for component membership")
   EDIT ed_generate 290 82 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 110 260 ., label("Replace existing variable")
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
@@ -28,7 +28,7 @@ BEGIN
   CHECKBOX cx_silent 290 138 190 ., label("silent") option(silent)
   TEXT tx_cx_listall 20 166 260 ., label("Show the full table of components (default: first 30)")
   CHECKBOX cx_listall 290 166 190 ., label("listall") option(listall)
-  TEXT tx_cx_weak 20 194 260 ., label("directed network: weakly connected components (ignore the direction of the ties; default strong)")
+  TEXT tx_cx_weak 20 194 260 ., label("Directed: weakly connected (default: strongly)")
   CHECKBOX cx_weak 290 194 190 ., label("weak") option(weak)
 END
 

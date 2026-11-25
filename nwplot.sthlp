@@ -191,9 +191,9 @@ file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} fil
 		{p_end}
 {p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up
 proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout; on a valued network the distances follow the tie values (see
-{help nwplot##valuedlayout:Valued networks and layouts}). Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a
-plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred
-nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override
+{help nwplot##valuedlayout:Valued networks and layouts}). Its own cost grows with both node count and {opt iterations()}, so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows
+(full 1000 iterations up to a few hundred
+nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call reasonably fast. Give an explicit {opt iterations()} to override
 this scaling{p_end}
 {p2col:{cmd: hierarchy}}Sugiyama-style layered/hierarchical layout - assigns nodes to top-down layers by longest path from sources and orders each layer to reduce edge crossings; meant for directed,
 roughly acyclic networks (org charts, dependency/citation graphs, event sequences). An undirected network, or one with cycles, still plots (no error, no crash) but degrades to a less meaningful
@@ -206,7 +206,7 @@ two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode
 		{p_end}
 {p2col:{cmd: nodexy}}use coordinates given in {opt nodexy()}; only needed to send options.
 		{p_end}
-{p2col:{cmd: _layoutfunction}}advanced user-written layout function (see {help nwplot##layoutfunction:here}).
+{p2col:{cmd: _layoutfunction}}advanced user-written layout function: option {opt _layoutfunction(fcn[, args])} names a Mata function that is called with the adjacency matrix (and {it:args}) and returns the coordinates, one row per node.
 		{p_end}
 
 
@@ -257,7 +257,8 @@ One can change the layout where nodes should be plotted:
 	{cmd:. nwplot, layout(grid, columns(20))}
 	{cmd:. nwplot, layout(kk)}
 	{cmd:. nwplot, layout(hierarchy)}
-	{cmd:. nwplot, layout(bipartite)}
+	{cmd:. nwwebuse davis, nwclear}
+	{cmd:. nwplot davis, layout(bipartite)}
 	{cmd:. nwplot, layout(bipartite, vertical)}
 
 {pstd}
@@ -273,8 +274,9 @@ instead of re-deriving a fresh, unrelated layout for each one:
 	{cmd:. nwplot, nodexy(xcoord ycoord)}
 
 	{cmd:. * fixed coordinates across two waves of the same network}
-	{cmd:. nwplot wave1, generate(x1 y1)}
-	{cmd:. nwplot wave2, nodexy(x1 y1)}
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwplot glasgow1, generate(x1 y1)}
+	{cmd:. nwplot glasgow2, nodexy(x1 y1)}
 
 {pstd}
 When the coordinates are longitude and latitude, {opt basemap()} draws a map under the network. The
@@ -467,6 +469,7 @@ stand to the left of their column and those of the second mode to the right:
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these
 underlying scatter plots. Here, the color and symbol of nodes is overwritten.
 
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwplot flomarriage, scatteropt(mfcolor(green) msymbol(D))}
 	{cmd:. nwplot flomarriage, lineopt(lwidth(10) lcolor(green))}
 	
@@ -492,7 +495,8 @@ scalable vector formats: the plot stays crisp at any zoom level or print size, a
 standard vector-graphics editors (e.g. Adobe Illustrator, Inkscape) for further touch-up - node/edge/label
 elements remain separate, editable objects rather than a fixed-resolution image.
 
-	{cmd:. nwplot flomarriage, export("flomarriage.svg")}
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwplot flomarriage, export("flomarriage.svg") replace}
 	{cmd:. nwplot flomarriage, export("flomarriage.pdf") replace}
 
 {pstd}
@@ -500,7 +504,7 @@ Raster formats (PNG, TIF, ...) are also supported the same way; {opt exportopt()
 through to the underlying {help graph export} call, most commonly {cmd:width()}/{cmd:height()} to control
 resolution:
 
-	{cmd:. nwplot flomarriage, export("flomarriage.png") exportopt(width(2000))}
+	{cmd:. nwplot flomarriage, export("flomarriage.png") replace exportopt(width(2000))}
 
 {pstd}
 The graph itself is unaffected by {opt export()} - it remains the normal, currently active Stata graph
@@ -522,7 +526,7 @@ directions counts with its larger value. {opt binary} lays the nodes out as for 
 note, as {cmd:igraph::plot()} does ({cmd:layout_with_fr()} and
 {cmd:layout_with_kk()} refuse non-positive weights). Two-mode networks, and the layouts {cmd:mds}, {cmd:mdsclassical},
 {cmd:hierarchy}, {cmd:bipartite}, {cmd:circle} and {cmd:grid}, do not use the values. {cmd:kk} with values needs the
-shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
+shortest weighted paths and runs in Mata rather than in compiled code.
 
 
 {title:Network types}
@@ -539,8 +543,7 @@ dashed cranberry, positive solid navy ({opt nosign}). See {help nwnetworktypes}.
 {pstd}
 {bf:Limits of layout(kk).} The layout needs the distance between every pair of nodes, so memory and time grow with the
 square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run
-in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes
-4 seconds in total, 5,000 nodes 21 seconds and 2.2 GB. Above a few thousand nodes
+in compiled code. With 10 ties drawn per node, 5,000 nodes need about 2.2 GB. Above a few thousand nodes
 use {opt layout(circle)}, {opt layout(grid)} or {opt layout(frucht)}.
 
 {pstd}

@@ -22,7 +22,7 @@ BEGIN
   CHECKBOX cx_mat 290 54 190 ., label("mat") option(mat)
   TEXT tx_cx_matonly 20 82 260 ., label("Only display adjacency matrix of the network")
   CHECKBOX cx_matonly 290 82 190 ., label("matonly") option(matonly)
-  TEXT tx_cx_detail 20 110 260 ., label("Calculate additional network measures, e.g. centralization, transitivity")
+  TEXT tx_cx_detail 20 110 260 ., label("More measures (centralization, transitivity, ...)")
   CHECKBOX cx_detail 290 110 190 ., label("detail") option(detail)
   TEXT tx_ed_save 20 138 260 ., label("Save network measures in file")
   EDIT ed_save 290 138 190 ., nomem option(save)

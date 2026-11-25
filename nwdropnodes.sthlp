@@ -105,8 +105,7 @@ mode are dropped the network stays two-mode with an empty level. {bf:Temporal:} 
 {title:Limits}
 
 {pstd}
-A network held as stored ties stays so: the ties between the remaining nodes are the new network. Measured in Stata/BE, random
-directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB.
+A network held as stored ties stays so: the ties between the remaining nodes are the new network. With 10 ties per node, 20,000 nodes need about 0.3 GB.
 The node labels of the remaining network are passed on in Mata.
 
 {title:See also}

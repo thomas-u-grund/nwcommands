@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwevcent}
 [{it:{help netname}}]
-[{cmd:,}
+{cmd:,}
 {opt gen:erate}({it:{help varname}})
-{opt sym}
+[{opt sym}
 {opt nosym}
 {opt out}
 {opt weighted}
@@ -72,8 +72,7 @@ the bipartite graph read as a one-mode network. {bf:Signed:} not checked. {bf:Mi
 {pstd}
 The power iteration runs in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
 and in Mata otherwise; both give the same result (they differ by less than 1e-10 relative).
-Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.05 seconds, 20,000 nodes 0.1 seconds,
-100,000 nodes 0.5 seconds (the Mata route needs 0.6, 2.6 and 14 seconds).{p_end}
+{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 

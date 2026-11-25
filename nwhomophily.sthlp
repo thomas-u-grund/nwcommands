@@ -150,8 +150,7 @@ ties are 0/1. {bf:Two-mode:} not applicable. {bf:Signed:} not applicable. See {h
 
 {pstd}
 The tie probabilities are an {it:n}-by-{it:n} matrix and the ties are drawn with these weights from the list of all dyads
-({help nwdyadprob}), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, density
-0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more
+({help nwdyadprob}), so the time and the memory grow with the square of the number of nodes. At density 0.0001, 5,000 nodes need about 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more
 than 50,000,000 dyads), before any matrix is built.
 
 

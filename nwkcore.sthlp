@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwkcore}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth gen:erate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt silent}]
 
 {synoptset 25 tabbed}{...}

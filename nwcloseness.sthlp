@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwcloseness} 
 [{it:{help netlist}}]
-[{cmd:,}
-{opt unconnected(#|max)}
+{cmd:,}
 {opt generate}({it:{help varname:var1 var2 var3}})
+[{opt unconnected(#|max)}
 {opt sym}
 {opt nosym}
 {opt replace}
@@ -86,14 +86,15 @@ of the network to each name: {it:var11, var21, var31} for the first network, {it
 {pstd}
 On a valued network the distances are least-cost distances (cost 1/w^alpha, {opt alpha(#)}, default 1; {opt alpha(-1)} reads the values as lengths as {it:igraph::closeness} with weights does) and
 closeness is the number of nodes a node can reach divided by the sum of these distances ({it:igraph::closeness} with {it:normalized = TRUE}). A kernel of the native plugin computes them for every node
-without the n x n distance matrix: 1,000 nodes with 3,000 ties take 0.15 seconds, 10,000 nodes 14 seconds (the Mata routine needs 3 seconds at 300 nodes and grows with the cube of the size). A valued
+without the n x n distance matrix. A valued
 network is never reduced to step counts silently: without the native plugin a network of more than 100 nodes stops with r(198) unless {opt force} or {opt binary} is given.
 
 
 {title:Network types}
 
 {pstd}
-{bf:Directed:} distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's {cmd:closeness(mode = "out")}); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} tie values are used by default
+{bf:Directed:} distances follow the direction of the ties (distances from the node to the nodes it can reach, as igraph's {cmd:closeness(mode = "out")}); {opt sym} symmetrizes first (the larger of the two directions of a tie); {opt nosym} is the
+default and is accepted for backward compatibility. The output says whether the network was analysed as directed, undirected or symmetrized. {bf:Valued:} tie values are used by default
 (least-cost distances of {help nwgeodesic}, cost 1/w); {opt binary} counts steps; options of {help nwgeodesic} such as
 {opt alpha()} are passed on. {bf:Two-mode:} two-mode form by default (option {opt onemode} for the one-mode
 computation), {opt twomode} is a synonym of the default. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output gives their number. See {help nwnetworktypes}.{p_end}
@@ -104,12 +105,10 @@ computation), {opt twomode} is a synonym of the default. {bf:Signed:} not checke
 {pstd}
 Without {it:geodesic_options} the sums of the distances come from one breadth-first search per node over the stored ties in
 the plugin (no matrix of distances); a platform whose plugin lacks this kernel, or any {it:geodesic_options}
-({opt alpha()}, {opt unconnected()}, ...), takes the route over the matrix of {help nwgeodesic}. Measured in Stata/BE on a
-random directed network with 10 ties per node: 10,000 nodes 2.4 seconds, 20,000 nodes 9.9 seconds and 0.35 GB (98 seconds and
-6.4 GB through the matrix); the time grows with the number of nodes times the number of ties.
+({opt alpha()}, {opt unconnected()}, ...), takes the route over the matrix of {help nwgeodesic}, which needs much more memory. Without {it:geodesic_options} the time grows with the number of nodes times the number of ties.
 
 {pstd}
-The estimate for a network of 100,000 nodes with 10 ties per node is 5 minutes (measured: 302 seconds, 0.6 GB). When the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per
+A network of 100,000 nodes with 10 ties per node needs about 0.6 GB. When the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per
 node) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
 
 

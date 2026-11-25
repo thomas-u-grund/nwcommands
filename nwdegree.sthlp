@@ -15,10 +15,10 @@
 {p 8 17 2}
 {cmdab: nwdegree} 
 [{it:{help netname}}]
-[{cmd:,}
-{opth alpha(real)}
-{opth ties(varlist)}
+{cmd:,}
 {opt generate}({it:{help varlist:varlist}})
+[{opth alpha(real)}
+{opth ties(varlist)}
 {opt replace}
 {opt silent}
 {opt isolates}
@@ -29,7 +29,6 @@
 {opt outputoff}
 {opt onemode}
 {opt raw}
-
 {opt binary}
 {opt plot}
 {opt ccdf}
@@ -148,14 +147,14 @@ the size of the other mode, {opt raw} the count. {bf:Signed:} not checked. See {
 {pstd}
 In the following example, the degree distributions for in- and outdegree are saved in Stata matrices {it:matindeg} and {it:matoutdeg}:
 
-	{cmd:. nwwebuse glasgow}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwdegree glasgow1, generate(_outdegree _indegree) in(matcell(matindeg)) out(matcell(matoutdeg))}
 	{cmd:. mat list matindeg}
 	
 {pstd}
 The next example saves the out- and indegree centrality in the variables {it:myout} and {it:myin} and the information about isolates in {it:myisolate}.
 
-	{cmd:. nwdegree glasgow1, generate(myout myin mysiolate) isolates}
+	{cmd:. nwdegree glasgow1, generate(myout myin myisolate) isolates}
 
 
 {title:Drawing the distribution}
@@ -169,8 +168,8 @@ With {opt plot}, the options that are not listed here are options of {helpb twow
 table, as always, and {opt name()}, {opt saving()}, {opt export()} and {opt ccdf} give an error.
 {opt plot} needs one network: a two-mode network (use {cmd:histogram} of the variable of {help nw2degree}), a valued network whose degree is the strength (use {opt binary} or {opt alpha(0)}) and a list of networks stop with error 198.
 
-{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) plot export(degree.png, width(1000))}{p_end}
-{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) plot ccdf name(ccdf)}{p_end}
+{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) replace plot export(degree.png, width(1000))}{p_end}
+{phang2}{cmd:. nwdegree glasgow1, generate(myout myin) replace plot ccdf name(ccdf)}{p_end}
 
 {title:Stored results}
 

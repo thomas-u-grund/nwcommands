@@ -53,6 +53,7 @@ program _nwname
 	}
 	
 	if "`newname'" != "" {
+		_nwreservedname `"`newname'"'
 		mata: nw_assert_netname(st_local("newname"))
 		nwvalidate `newname'
 		if "`r(exists)'" == "true" {

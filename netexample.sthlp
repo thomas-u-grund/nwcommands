@@ -12,40 +12,40 @@
 
 {title:Example networks}
 
-{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); {cmd:describe} shows the variables of a data set without loading it.
+{pstd}The datasets listed are in {help nwsave:Stata network file-format} and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); {cmd:describe} shows the variables of a data set without loading it.
 {p_end}
 {hline}
 
         {it:Longitudinal social networks}
-        {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "describe using https://nwcommands.org/examples/glasgow.dta":describe}
-        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "describe using https://nwcommands.org/examples/hpotter.nwdta":describe}
-        {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
-        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "describe using https://nwcommands.org/examples/klas12b.nwdta":describe}
-        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "describe using https://nwcommands.org/examples/s50.nwdta":describe}
+        {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow, nwclear":use} | {stata "describe using https://nwcommands.org/examples/glasgow.dta":describe}
+        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter, nwclear":use} | {stata "describe using https://nwcommands.org/examples/hpotter.nwdta":describe}
+        {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer, nwclear":use} | {stata "describe using https://nwcommands.org/examples/kapferer.nwdta":describe}
+        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b, nwclear":use} | {stata "describe using https://nwcommands.org/examples/klas12b.nwdta":describe}
+        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50, nwclear":use} | {stata "describe using https://nwcommands.org/examples/s50.nwdta":describe}
         {it:One-time social networks}
-        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "describe using https://nwcommands.org/examples/florentine.dta":describe}
-        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "describe using https://nwcommands.org/examples/gang.dta":describe}
-        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "describe using https://nwcommands.org/examples/lazega.nwdta":describe}
-        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
-        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "describe using https://nwcommands.org/examples/sampson.nwdta":describe}
-        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "describe using https://nwcommands.org/examples/usstates.nwdta":describe}
-        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
+        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine, nwclear":use} | {stata "describe using https://nwcommands.org/examples/florentine.dta":describe}
+        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang, nwclear":use} | {stata "describe using https://nwcommands.org/examples/gang.dta":describe}
+        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega, nwclear":use} | {stata "describe using https://nwcommands.org/examples/lazega.nwdta":describe}
+        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa, nwclear":use} | {stata "describe using https://nwcommands.org/examples/mesa.nwdta":describe}
+        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson, nwclear":use} | {stata "describe using https://nwcommands.org/examples/sampson.nwdta":describe}
+        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates, nwclear":use} | {stata "describe using https://nwcommands.org/examples/usstates.nwdta":describe}
+        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary, nwclear":use} | {stata "describe using https://nwcommands.org/examples/zachary.nwdta":describe}
         {it:Two-mode networks}
-        {help netexample##davis:davis}{col 29}{stata "nwwebuse davis":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
-        {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
+        {help netexample##davis:davis}{col 29}{stata "nwwebuse davis, nwclear":use} | {stata "describe using https://nwcommands.org/examples/davis.nwdta":describe}
+        {help netexample##ftdirectors_se:ftdirectors_se}{col 29}{stata "nwwebuse ftdirectors_se, nwclear":use} | {stata "describe using https://nwcommands.org/examples/ftdirectors_se.nwdta":describe}
         {it:Signed networks}
-        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
-        {help netexample##baerveldt19:baerveldt19}{col 29}{stata "nwwebuse baerveldt19":use} | {stata "describe using https://nwcommands.org/examples/baerveldt19.nwdta":describe}
-        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
-        {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114":use} | {stata "describe using https://nwcommands.org/examples/senate114.nwdta":describe}
-        {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93":use} | {stata "describe using https://nwcommands.org/examples/senate93.nwdta":describe}
+        {help netexample##baerveldt:baerveldt}{col 29}{stata "nwwebuse baerveldt, nwclear":use} | {stata "describe using https://nwcommands.org/examples/baerveldt.nwdta":describe}
+        {help netexample##baerveldt19:baerveldt19}{col 29}{stata "nwwebuse baerveldt19, nwclear":use} | {stata "describe using https://nwcommands.org/examples/baerveldt19.nwdta":describe}
+        {help netexample##gahuku:gahuku}{col 29}{stata "nwwebuse gahuku, nwclear":use} | {stata "describe using https://nwcommands.org/examples/gahuku.nwdta":describe}
+        {help netexample##senate114:senate114}{col 29}{stata "nwwebuse senate114, nwclear":use} | {stata "describe using https://nwcommands.org/examples/senate114.nwdta":describe}
+        {help netexample##senate114:senate93}{col 29}{stata "nwwebuse senate93, nwclear":use} | {stata "describe using https://nwcommands.org/examples/senate93.nwdta":describe}
         {it:Event data}
-        {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
+        {help netexample##manufacturing:manufacturing}{col 29}{stata "nwwebuse manufacturing, nwclear":use} | {stata "describe using https://nwcommands.org/examples/manufacturing.dta":describe}
         {it:Networks that are not social}
-        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "describe using https://nwcommands.org/examples/chesapeake.nwdta":describe}
-        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "describe using https://nwcommands.org/examples/macaque.nwdta":describe}
-        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "describe using https://nwcommands.org/examples/usair.nwdta":describe}
-        {help netexample##usair_full:usair_full}{col 29}{stata "nwwebuse usair_full":use} | {stata "describe using https://nwcommands.org/examples/usair_full.nwdta":describe}
+        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake, nwclear":use} | {stata "describe using https://nwcommands.org/examples/chesapeake.nwdta":describe}
+        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque, nwclear":use} | {stata "describe using https://nwcommands.org/examples/macaque.nwdta":describe}
+        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair, nwclear":use} | {stata "describe using https://nwcommands.org/examples/usair.nwdta":describe}
+        {help netexample##usair_full:usair_full}{col 29}{stata "nwwebuse usair_full, nwclear":use} | {stata "describe using https://nwcommands.org/examples/usair_full.nwdta":describe}
         {help netexample##usmap:usmap}{col 29}(a map for {cmd:basemap(usmap)}, not a network) | {stata "describe using https://nwcommands.org/examples/usmap.dta":describe}
         {it:The networkdata collection (not shipped)}
 
@@ -878,7 +878,7 @@ load prints which network was loaded and where the data came from.
 {pstd}
 Look at the collection (overview, list of all data sets, one data set) and load a network:
 
-	{cmd:. nwwebuse networkdata}
+	{cmd:. nwwebuse networkdata, nwclear}
 	{cmd:. nwwebuse networkdata list}
 	{cmd:. nwwebuse networkdata describe karate}
 	{cmd:. nwwebuse networkdata karate, nwclear}

@@ -4,6 +4,7 @@ program nw2fromedge
 	syntax varlist(min=2 max=3) [if] [, xvars name(string) REPLACE * ]
 
 	// a name in use is refused before anything else (nwfromedge would find it only after it has replaced the data)
+	if `"`name'"' != "" _nwreservedname `"`name'"'
 	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	if "`name'" != "" & "`replace'" == "" {
 		qui nwvalidate `name'

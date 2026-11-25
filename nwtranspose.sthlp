@@ -49,8 +49,7 @@ two-mode network is symmetric). {bf:Signed:} values are kept as they are. See {h
 {title:Limits}
 
 {pstd}
-A network held as stored ties is transposed tie by tie. Measured in Stata/BE on a random directed network with 10 ties per node:
-20,000 nodes 0.2 seconds.
+A network held as stored ties is transposed tie by tie.
 
 
 {title:Examples}

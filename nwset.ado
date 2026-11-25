@@ -5,6 +5,7 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite RE
 	// _nwsyntax (called below) redefines the locals valued/directed: keep the options
 	local __optvalued "`valued'"
 	// a network name must be a valid Stata name of at most 32 characters (refused before anything is changed)
+	if `"`name'"' != "" _nwreservedname `"`name'"'
 	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	local __optunvalued "`unvalued'"
 // `overwrite' was declared here but never actually connected to any
@@ -446,7 +447,8 @@ if "`overwrite'" != "" local replace "replace"
 		// documented to do (drop all networks, leave the Stata dataset
 		// untouched) - confirmed directly - so `netonly' was pure
 		// vestigial cruft, not a missing feature to add.
-		nwdrop _all
+		// with no network loaded there is nothing to drop (nwdrop _all stops with "not found")
+		capture nwdrop _all
 		exit
 	}
 	if "`nwclear'" != "" & "`varlist'`mat'" == "" {
@@ -456,7 +458,8 @@ if "`overwrite'" != "" local replace "replace"
 	if "`clear'" != "" {
 		// same fix as the standalone-form branch above (`netonly' was
 		// never a real nwdrop option).
-		nwdrop _all
+		// with no network loaded there is nothing to drop (nwdrop _all stops with "not found")
+		capture nwdrop _all
 	}
 	if "`nwclear'" != "" {
 		nwclear
@@ -560,6 +563,12 @@ if "`overwrite'" != "" local replace "replace"
 
 		// set network from varlist
 		if ("`varlist'" != "") {
+			// matrix columns are numeric; a string variable became a column of missing ties
+			capture confirm numeric variable `varlist'
+			if _rc {
+				di "{err}{p 0 0 2}The variables of an adjacency matrix must be numeric (for a list of ties use option {bf:edgelist}).{p_end}"
+				exit 109
+			}
 			mata: `__nwnew' = check_bipartite(st_data(.,"`varlist'"), "`bipartite'")
 			mata: `__modes' = J(rows(`__nwnew'), 1, 2)
 			

@@ -70,9 +70,7 @@ other functions can change in any release without notice. Do not use them in cod
 
 {pstd}
 {cmd:nwapi_version()} returns the generation of the interface as a whole number ({cmd:1} for nwcommands 3.x); test it in a
-program that needs the functions: {cmd:assert(nwapi_version() >= 1)}. The functions of this help file exist from
-nwcommands 3.24 on; an older installation does not know them (Mata stops with r(3499), "function not found").
-{help nwversion} shows the version of the package.
+program that needs the functions: {cmd:assert(nwapi_version() >= 1)}. {help nwversion} shows the version of the package.
 
 {title:Conventions}
 

@@ -58,7 +58,6 @@ f nwkcore.dlg
 f nwrename.dlg
 f nwsimindex.dlg
 f nwcug.dlg
-f nwplot_color_opt.dlg
 f nwplot.dlg
 f nwneighbor.dlg
 f nwclear.dlg
@@ -84,3 +83,4 @@ f nwspmatrix.dlg
 f nw_edges_size.dlg
 f nwcontext.dlg
 f nw2toedge.dlg
+f nwds.dlg

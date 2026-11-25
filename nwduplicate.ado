@@ -6,6 +6,10 @@ program nwduplicate
 	_nwsyntax `netname', max(1)
 
 	local name_given = ("`name'" != "")
+	if `name_given' {
+		_nwreservedname `name'
+		mata: nw_assert_netname(st_local("name"))
+	}
 	if "`name'" == "" {
 		local name "`netname'_copy"
 	}

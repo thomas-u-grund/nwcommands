@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nw2degree}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt silent}
 {opt alpha(#)}
 {opt binary}

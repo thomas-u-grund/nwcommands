@@ -103,9 +103,7 @@ not positive semi-definite and the results are not meaningful. See {help nwnetwo
 
 {pstd}
 The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are
-returned, so the work grows with the cube of the number of nodes and the memory with its square. Measured in Stata/BE,
-random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 nodes 14 seconds, 3,000 nodes 50 seconds,
-5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds (and about 3 GB). Above 2,000 nodes the command prints a note;
+returned, so the work grows with the cube of the number of nodes and the memory with its square. At 10,000 nodes it needs about 3 GB. Above 2,000 nodes the command prints a note;
 above 6,000 nodes it stops with r(484) unless {opt force} is given. There is no exact shortcut for the returned
 spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
 
@@ -129,7 +127,7 @@ well separated groups, and the number of eigenvalues at 0 is the number of compo
 {opt embedding}) and come last; without {opt plot} they give an error.
 {opt plot} stops with error 198 for a two-mode network; a directed network follows the rule for {opt sym} above.
 
-{phang2}{cmd:. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))}{p_end}
+{phang2}{cmd:. nwspectral flomarriage, generate(_fiedler) replace plot embedding export(spectrum.png, width(1100))}{p_end}
 
 {title:Stored results}
 

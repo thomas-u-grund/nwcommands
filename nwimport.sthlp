@@ -88,7 +88,7 @@ The following network formats are supported:
 {pmore}{help nwimport##matrix:- Raw adjacency matrix}{p_end}
 {pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
 {pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
-{pmore}{help nwimport##gml:- GML}{p_end}
+{pmore}{help nwimport##import_type:- GML}{p_end}
 
 {pstd}
 {it:{help filename}} can also be a URL, so networks can be imported directly from the internet

@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwmatching}
 [{it:{help netname}}]
-[{cmd:,}
+{cmd:,}
 {opth gen:erate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt silent}
 {opt bin:ary}]
 
@@ -73,22 +73,27 @@ network and finds the largest matching between the modes. {bf:Signed:} negative 
 {pstd}
 The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as the Mata code, so
 the same matching comes out) by a kernel of the native plugin; a platform without the plugin uses
-the Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000
-mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the Mata code did not
-finish in 180 seconds and used 4 GB).
+the Mata code, which builds two (n+2)-by-(n+2) matrices and needs much more memory and time.
 
 {pstd}
 The matching of largest total tie value (valued networks) is computed by the Hungarian method in a kernel of the native plugin, with the same
 result as the Mata routine (the same matching also when several matchings have the same total value, up to 1,500 nodes in the larger
-mode; beyond that a matching of the same total value). Measured: two modes of 300 nodes 0.013 seconds (Mata 0.33 seconds); 455 and 5,092 nodes
-0.2 seconds, which the Mata routine cannot do (it needs a dense matrix of the larger mode squared).
+mode; beyond that a matching of the same total value). The Mata routine cannot handle large modes such as 455 and 5,092 nodes (it needs a dense matrix of the larger mode squared).
 
 
 {title:Examples}
 
+	{cmd:. nwclear}
+	{cmd:. input str8 person str8 org}
+	{cmd:.   Anna Acme}
+	{cmd:.   Anna Beta}
+	{cmd:.   Ben Acme}
+	{cmd:.   Carl Beta}
+	{cmd:.   Carl Gamma}
+	{cmd:. end}
 	{cmd:. nwset person org, twomode name(assign)}
 	{cmd:. nwmatching assign, generate(_match)}
-	{cmd:. list person _match if _match > 0}
+	{cmd:. list _nwnode _match if _match > 0}
 
 
 {title:Stored results}

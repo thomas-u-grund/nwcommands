@@ -47,7 +47,8 @@ to which one wants to collapse is specified in option {bf:project()}.
 {pstd}
 For example, this loads a two-mode network and projects it onto level 1:
 
-	{cmd:. nw2project mynet, project(1) name(myproject1)}
+	{cmd:. nwwebuse davis, nwclear}
+	{cmd:. nw2project davis, project(1) name(myproject1)}
 
 {pstd}
 By default, a one-mode projection on one level generates ties between nodes (on this level) when they

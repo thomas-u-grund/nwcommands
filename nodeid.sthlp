@@ -45,6 +45,7 @@ use {help _nwnodeid}.
 
     For example, 
 	
+     {com}. nwwebuse florentine, nwclear
      {com}. _nwnodelab, nodeid(9) detail
      {res}
      {hline 40}

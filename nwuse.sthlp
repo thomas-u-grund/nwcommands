@@ -18,7 +18,8 @@
 [{cmd:,}
 {cmd:nwclear}
 {cmd:nwappend}
-{opt force}]
+{opt force}
+{opt clear}]
 
 {p 8 17 2}
 {cmdab: nwwebuse}
@@ -32,6 +33,7 @@
 {synoptline}
 {synopt:{opt nwclear}}clear memory before loading dataset{p_end}
 {synopt:{opt nwappend}}append to existing data{p_end}
+{synopt:{opt clear}}load even though the data in memory have changed and were not saved; without {opt clear}, {opt nwclear} or {opt nwappend} the command stops{p_end}
 {synopt:{opt force}}when combined with {opt nwappend}, if the incoming data contains a network with the same name as one already in memory, auto-renumber the incoming network to a fresh name instead
 of erroring - unlike {opt replace} elsewhere in this group (e.g. {help nwset}), which overwrites the existing network in place under the same name, {opt force} leaves the existing network
 untouched{p_end}
@@ -54,8 +56,7 @@ happen to be symmetric, and a two-mode network keeps the node order it was saved
 {pstd}
 The command works the same for every network type (see {help nwnetworktypes}); files of two-mode networks that list
 every pair of nodes also load. A temporal network (event, snapshot or interval network, see {help nwset}) comes back with
-its times, and with its type and the names of its time variables, exactly as {help nwsave} wrote them; a file written
-without times (by an earlier version, or of a network that is not temporal) loads as a network that is not temporal.{p_end}
+its times, and with its type and the names of its time variables, exactly as {help nwsave} wrote them; a file that holds no times loads as a network that is not temporal.{p_end}
 
 
 {title:Limits}
@@ -78,7 +79,7 @@ variables.
 {pstd}
 One can bring the data back with:
 	
-        {cmd:. nwuse mynets}
+        {cmd:. nwuse mynets, nwclear}
 		
 {pstd}
 This load the Florentine dataset from the internet and appends it to the existing data.

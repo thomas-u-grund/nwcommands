@@ -39,10 +39,6 @@ valid name, the command stops with an error (r(198)) and the network is not chan
 The command works the same for every network type (see {help nwnetworktypes}).{p_end}
 
 
-{title:Limits}
-
-{pstd}
-20,000 nodes: 0.13 seconds in Stata/BE.
 
 
 {title:Examples}

@@ -53,7 +53,7 @@ baseline for a pattern that may follow from the degrees alone (see {help nwcug} 
 where they are. For a one-mode network, {opt swap} uses the native plugin; the exchanges are
 drawn from the seed ({cmd:set seed}).
 
-	{cmd:. nwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwpermute glasgow1, swap generate(glasgow1_swapped)}
 
 {pstd}
@@ -112,8 +112,7 @@ keeps both degree sequences ({cmd:bipartite::swap.web}). See {help nwnetworktype
 {title:Limits}
 
 {pstd}
-A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds
-in Stata/BE.
+A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed.
 
 
 {title:Example}

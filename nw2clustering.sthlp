@@ -15,10 +15,10 @@
 {p 8 17 2}
 {cmdab: nw2clustering}
 [{it:{help netname}}]
-[{cmd:,}
-{opt measure(string)}
+{cmd:,}
+{c -(}{opth generate(newvarname)} | {opt ra}{c )-}
+[{opt measure(string)}
 {opth level(int)}
-{opth generate(newvarname)}
 {opt replace}
 {opt ra}]
 
@@ -81,14 +81,22 @@ Robins and Alexander (2004). {bf:Signed:} not checked. See {help nwnetworktypes}
 {pstd}
 The 4-paths around each node are enumerated in compiled code and the closing 6-cycle is tested with a marker array
 instead of a copy of the neighbour list per path. The work grows with, for
-each node, the square of its number of alters times the squares of their numbers of other egos. Measured in Stata/BE on a
-random two-mode network with N mode-1 nodes, N/2 mode-2 nodes and 10 ties drawn per mode-1 node: N = 300 / 1,000 /
-5,000 take 0.09 / 0.25 / 1.4 seconds. Memory is
+each node, the square of its number of alters times the squares of their numbers of other egos. Memory is
 proportional to the number of ties.
 
 
 {title:Examples}
 
+	{cmd:. nwclear}
+	{cmd:. input str4 ego str4 alter}
+	{cmd:.   a x}
+	{cmd:.   b x}
+	{cmd:.   b y}
+	{cmd:.   c y}
+	{cmd:.   c z}
+	{cmd:.   a z}
+	{cmd:.   d z}
+	{cmd:. end}
 	{cmd:. nwset ego alter, twomode name(bip)}
 	{cmd:. nw2clustering bip, generate(_clustering2_lev1)}
 	{cmd:. sum _clustering2_lev1}

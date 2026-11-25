@@ -118,8 +118,7 @@ default unless {bf:netonly} is specified.
 {title:Limits}
 
 {pstd}
-{cmd:nwkeepnodes} works through {help nwdropnodes}: a network held as stored ties stays so (20,000 nodes keeping 5: 2.3 seconds in
-Stata/BE).
+{cmd:nwkeepnodes} works through {help nwdropnodes}: a network held as stored ties stays so.
 
 {title:See also}
    

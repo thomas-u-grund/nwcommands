@@ -21,6 +21,7 @@ program nwgenerate
 	local fcn_opt = "`options'"
 	local newnetname = trim("`newnetname'")
 	// the new network's name must be a valid Stata name of at most 32 characters
+	if wordcount(`"`newnetname'"') == 1 _nwreservedname `newnetname'
 	if wordcount(`"`newnetname'"') == 1 mata: nw_assert_netname(st_local("newnetname"))
 	
 	unw_defs
@@ -56,6 +57,11 @@ program nwgenerate
 	// no varfcn or netfcn
 	if `netfcn' == 0 {
 		local netexp : subinstr local netexp "=" " "
+		capture confirm number `=trim(`"`netexp'"')'
+		if !_rc {
+			di "{err}{p 0 0 2}A number alone has no size: use a network in the expression (for example {bf:nwgen b = 2 * a}), or {help nwrandom}.{p_end}"
+			exit 198
+		}
 		capture _nwname `newnetname'
 		if _rc == 0 & (strpos("`options'", "replace")==0){
 			// Error-code coherence pass: the identical "already exists,

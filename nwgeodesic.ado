@@ -235,6 +235,7 @@ program _nwgeodesic_single
 		_nwsyntax `symnet', max(1)
 		local symmetrized "true"
 	}
+	_nwtargetcheck `name', source(`origname') given(0)
 	capture _nwsyntax `name', other(_check)
 	local name_exists = (_rc == 0)
 	// noreplace: also the default network _geodesic is not overwritten
@@ -339,6 +340,9 @@ program _nwgeodesic_single
 		mata: _diag((*`netobj'->get_matrix()), __nwgeodesic_d)
 		mata: mata drop __nwgeodesic_d
 	}
+
+	// distances above 1 make the result a valued network
+	mata: `netobj'->set_valued(`netobj'->check_valued())
 
 	mata: st_numscalar("r(nodes)", `nodes')
 	mata: st_numscalar("r(numpaths)", `nodes' * (`nodes' - 1))

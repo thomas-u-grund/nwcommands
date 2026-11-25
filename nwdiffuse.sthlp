@@ -115,7 +115,7 @@ period. A step uses the network given for it (the single network, or the {it:s}t
 
 {phang2}{cmd:cascade}: independent cascade. A node that adopted in the previous period passes the behaviour on to each of its
 (not yet adopted) neighbours with probability {opt prob()}, once; it never tries again. A node influenced by {it:c} such
-neighbours adopts with probability 1-(1-{opt prob()}){sup:{it:c}}. Tie values are ignored.{p_end}
+neighbours adopts with probability 1-(1-{opt prob()})^{it:c}. Tie values are ignored.{p_end}
 {phang2}{cmd:threshold}: a node adopts when the number of its adopting neighbours (the sum of tie values with {opt valued}) reaches its threshold.{p_end}
 {phang2}{cmd:fraction}: a node adopts when the share of its adopting neighbours reaches its threshold. A node without neighbours never adopts this way.{p_end}
 
@@ -136,6 +136,8 @@ single network). The default direction is that a node is influenced by the nodes
 {opt export()} are all absent), {opt saving()} writes a {cmd:.gph} file and {opt export()} writes the graph with {helpb graph export}; the file extension sets the format and {cmd:width()} and the other
 {cmd:graph export} options follow a comma. A graph or file of the same name is replaced. Other options go to {helpb twoway} and come last. {opt saving()} and {opt export()} need {opt graph} or {opt plot}.
 
+{phang2}{cmd:. nwwebuse glasgow, nwclear}{p_end}
+{phang2}{cmd:. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))}{p_end}
 {phang2}{cmd:. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))}{p_end}
 
 {title:Remarks}
@@ -150,7 +152,7 @@ The simulations are not a port of {cmd:rdiffnet()}; they implement the textbook 
 
 {pstd}
 {bf:Limits.} The network is held as a dense matrix, so the commands are meant for networks up to a few thousand nodes
-(3,000 nodes with 40 simulated steps take about a second; memory grows with the square of the number of nodes, and with
+(memory grows with the square of the number of nodes, and with
 one matrix for each period when the network changes). Exposure variables use one variable for each period. The time of adoption must be known
 exactly (no interval censoring); adoption cannot be undone (no recovery or forgetting); a node must not adopt before {opt t0()}.
 

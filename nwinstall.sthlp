@@ -208,7 +208,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 {pstd}
 New to nwcommands? The full install is two commands:
 
-	{cmd:. net install nwcommands, from(https://nwcommands.org/net/) replace}{p_end}
+	{cmd:. net install nwcommands, from(https://nwcommands.org/net/) replace}
 	{cmd:. nwinstall, everything}
 
 {pstd}
@@ -294,7 +294,7 @@ In that case Stata will not find it automatically, so add it to your ado path ev
 	{cmd:. adopath ++ "D:\my_ado"}
 
 {pstd}
-or make that permanent by adding the same line to your own {cmd:profile.do} (see {help profiles}).
+or make that permanent by adding the same line to your own {cmd:profile.do} (see {help profile}).
 
 {pstd}
 {opt localcopy} accepts the same {opt ado}/{opt help}/{opt dialog}/{opt all}

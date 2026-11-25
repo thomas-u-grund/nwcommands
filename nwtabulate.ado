@@ -181,7 +181,8 @@ program nwtab2
 	mata: `__nwtable' = st_matrix("`tableres'")
 	mata: `__nwcol' = st_matrix("`tablecol'")
 	mata: `__nwrow' = st_matrix("`tablerow'")
-	mata: `__nwinternal' = sum(diagonal(`__nwtable'))
+	// internal = the cells whose row and column are the same value: tabulate drops empty rows and columns, so the diagonal is not
+	mata: `__nwinternal' = sum(`__nwtable' :* ((`__nwrow' * J(1, cols(`__nwtable'), 1)) :== (J(rows(`__nwtable'), 1, 1) * `__nwcol')))
 	mata: `__nwexternal' = sum(`__nwtable') - `__nwinternal'
 	mata: `__nwei_index' = (`__nwexternal' - `__nwinternal') / (`__nwexternal' + `__nwinternal')
 	
@@ -303,6 +304,13 @@ program nwtab3
 	
 	qui keep if `netname' != 0 & `netname' != .
 	tempname tableres tablecol tablerow
+	if "`directed'" != "true" {
+		tempvar __lo __hi
+		qui gen double `__lo' = min(`attribute'`nw_ego', `attribute'`nw_alter') if !missing(`attribute'`nw_ego', `attribute'`nw_alter')
+		qui gen double `__hi' = max(`attribute'`nw_ego', `attribute'`nw_alter') if !missing(`attribute'`nw_ego', `attribute'`nw_alter')
+		qui replace `attribute'`nw_ego' = `__lo' if !missing(`__lo')
+		qui replace `attribute'`nw_alter' = `__hi' if !missing(`__hi')
+	}
 	if "`directed'" == "true" {
 		tabulate `attribute'`nw_ego' `attribute'`nw_alter'  , matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
 	}
@@ -320,7 +328,8 @@ program nwtab3
 	mata: `__nwtable' = st_matrix("`tableres'")
 	mata: `__nwcol' = st_matrix("`tablecol'")
 	mata: `__nwrow' = st_matrix("`tablerow'")
-	mata: `__nwinternal' = sum(diagonal(`__nwtable'))
+	// internal = the cells whose row and column are the same value: tabulate drops empty rows and columns, so the diagonal is not
+	mata: `__nwinternal' = sum(`__nwtable' :* ((`__nwrow' * J(1, cols(`__nwtable'), 1)) :== (J(rows(`__nwtable'), 1, 1) * `__nwcol')))
 	mata: `__nwexternal' = sum(`__nwtable') - `__nwinternal'
 	mata: `__nwei_index' = (`__nwexternal' - `__nwinternal') / (`__nwexternal' + `__nwinternal')
 	

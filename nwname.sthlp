@@ -68,7 +68,7 @@ same for every network type. See {help nwnetworktypes}.{p_end}
 {pstd}
 This loads the Florentine data and returns various information about the {it:flobusiness} network.
 	
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwname flobusiness}
 	{cmd:. return list}
 

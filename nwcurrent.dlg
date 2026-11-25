@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_ed_id 20 54 260 ., label("Original network ID of the network to make the current network")
+  TEXT tx_ed_id 20 54 260 ., label("ID of the network to make current")
   EDIT ed_id 290 54 190 ., nomem option(id)
 END
 
@@ -37,7 +37,7 @@ PROGRAM command
 BEGIN
 	// number fields: refuse text before the command runs
 	if main.ed_id.isneq("") & !main.ed_id.isnumlist() {
-		stopbox stop "Original network ID of the network to make the current ne...: enter a number (or numbers)."
+		stopbox stop "Network ID: enter a number."
 	}
 	put "nwcurrent " main.cb_net
 	beginoptions

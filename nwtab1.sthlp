@@ -32,7 +32,7 @@ The command makes use of the normal {help tabulate} command, hence, all
 
 {title:Example}
 	
-   {cmd:. nwwebuse gang}
+   {cmd:. nwwebuse gang, nwclear}
    {cmd:. nwtabulate gang}
 {res}
 {txt}   Network:  {res}gang{txt}{col 24}Directed: {res}false{txt}

@@ -14,6 +14,37 @@ program nwrandom
 		exit 198
 	}
 	
+	if `ntimes' < 1 {
+		di "{err}Option {bf:ntimes()} must be 1 or more."
+		exit 198
+	}
+	capture confirm integer number `nodes'
+	if !_rc {
+		if `nodes' < 1 local __badn 1
+	}
+	else local __badn 1
+	if "`__badn'" == "1" {
+		di "{err}The number of nodes must be a whole number of 1 or more."
+		exit 198
+	}
+	if `"`prob'"' != "" & `"`density'"' != "" {
+		di "{err}Specify only one of {bf:prob()} and {bf:density()}."
+		exit 198
+	}
+	// prob() may be a number or a matrix of tie probabilities; density() is a share of the possible ties
+	foreach __o in prob density {
+		if `"``__o''"' != "" {
+			tempname __rng
+			mata: `__rng' = (``__o'')
+			mata: st_local("__inr", strofreal(missing(`__rng') == 0 & min(`__rng') >= 0 & max(`__rng') <= 1))
+			mata: mata drop `__rng'
+			if "`__inr'" != "1" {
+				di "{err}Option {bf:`__o'()} must lie between 0 and 1."
+				exit 198
+			}
+		}
+	}
+
 	// Generate valid network name and valid varlist
 	// BUGFIX: an unspecified name() has always been documented/expected
 	// to auto-rename on collision ("random", "random_1", ...) rather than

@@ -99,7 +99,7 @@ values. {bf:Two-mode:} not applicable - the command always creates a one-mode ne
 
 {pstd}
 Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives
-the same network). 20,000 nodes with {opt k(5)}: 1 second. {opt weights()} uses the matrix.
+the same network). {opt weights()} uses the matrix.
 
 
 {title:Examples}

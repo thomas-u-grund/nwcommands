@@ -6,6 +6,33 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+**Summary.** Fixes from a test of the commands at their limits: input checks, error messages, help files and dialog boxes. The core Mata library and the plugins are unchanged.
+
+### Results that change
+- `nwtabulate network, attribute()`: the **E-I index** counted only the diagonal of the table as internal ties and could have the wrong sign. When every tie joins different groups it is now +1 (before: -1). Recompute E-I values and their p-values obtained with earlier versions.
+- `nwtabulate network, attribute()` on an **undirected** network: the table no longer depends on the order of the nodes. Each tie is entered with the lower attribute value as the row, so cells can differ from earlier versions.
+- `nwgeodesic`: the distance network is marked as valued when it holds distances above 1.
+
+### Behaviour that changes
+- `nwuse` (and `nwwebuse`) no longer discards data with unsaved changes: use the new option `clear`, or `nwclear`; `nwappend` keeps the data.
+- `nwreplace` rejects `in` (before: ignored, so every tie was replaced).
+- A result may no longer overwrite the input network (`nwcorrelate`, `nwreach`, `nwshared`, `nwgeodesic`); an existing network needs `replace` or `nwreplace` where the command offers it (new for `nwcorrelate`).
+- `nwdrop` with a condition that selects every node is refused.
+- `nwset` refuses string variables read as a matrix; two columns of names are an edge list (option `edgelist`).
+- Stata's reserved words (such as `_all`, `_n`, `if`, `byte`) are refused as network names.
+- `nwgenerate` refuses a number alone (`nwgen b = 2`).
+- Impossible input is refused with a message: `nwrandom`, `nwlattice`, `nwpref`, `nwqap`.
+
+### Fixed
+- `nwset ..., clear` works when no network is loaded.
+- `nwimport`: file names with other characters give a valid network name; an edge list with a single line can be read.
+- Network expressions with `-` and `!` written without spaces (`nwgen c = 1-a`), and `~=`.
+- `nwplot, export(file, replace)` through the shared export helper and in the path read by `nwplot`; `size()` with a string variable gives a message.
+- `nwhierarchy` and `nwegoplot` when the data have more observations than the network has nodes.
+- Clearer messages: `nwrename`, `nwcorrelate` with a constant network, `nwfromedge` with empty data or a string tie value, commands with no network loaded. `nwdrop` without a name says which network it drops; `nwpref` says when `m()` exceeds `m0()`; `nwconstraint` warns about negative tie values.
+- Help files: broken examples and links, raw markup, missing options and required options; text about earlier versions and old timings removed.
+- Dialog boxes: missing fields, missing required-input checks, overlapping and cut-off labels, options without effect removed, network boxes that need two networks now add the second.
+
 ## [3.36.1] - 2026-11-23
 
 - `nwfromedge` (when a pair is listed more than once and node names are used) and the networkdata reader (`nwwebuse networkdata`, `nwnetworkdata`) no longer run `keep` once per group (`by ...: keep if _n == _N`): in Stata 19 every such `keep` costs more the more networks are stored, so reading a data set with hundreds of networks slowed down as it went. One `keep` now does the same work; the networks are unchanged. Reading `animal_12` (244 networks) in Stata 19.5 MP on a Mac: 96 s to 33 s; on Linux about 80 s before.

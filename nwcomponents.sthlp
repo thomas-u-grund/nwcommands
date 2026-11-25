@@ -15,8 +15,9 @@
 {p 8 17 2}
 {cmdab: nwcomponents} 
 [{it:{help netlist}}]
-[, {opt lgc}
+{cmd:,}
 {opth generate(newvarname)}
+[{opt lgc}
 {opt replace}
 {opt silent}
 {opt listall}
@@ -90,7 +91,7 @@ present; the command prints a note). {bf:Two-mode:} same as for the bipartite gr
  {title:Limits}
 
  {pstd}
- The components are found from the stored ties (10,000 nodes: 0.04 seconds). A network with more than 1,000 components (any sparse network
+ The components are found from the stored ties. A network with more than 1,000 components (any sparse network
  of a few thousand nodes) has its component sizes counted in Mata; the
  table is not printed above 1,000 components, and {bf:r(comp_sizeid)} holds the sizes ordered by size and then by component number.
 

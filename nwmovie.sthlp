@@ -46,7 +46,7 @@ file without opening the interactive view; the format follows the extension: {bf
 {help nwmovie##export:Remarks}{p_end}
 {synopt:{opt replace}}with {opt export()}: overwrite an existing file{p_end}
 {synopt:{opth time:out(int)}}with {opt export()}: seconds to wait for the file; default 600{p_end}
-{synopt:{opt layout}({it:{help nwplot##layout:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave
+{synopt:{opt layout}({it:{help nwplot##layout_options:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave
 transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
 {synopt:{opt fixedlayout}}{bf:panel mode}: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see
 Description below){p_end}

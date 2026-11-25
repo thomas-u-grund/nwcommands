@@ -54,7 +54,7 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 
 	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwunab nets : glasg*}
-	{cmd:. di `nets'}
+	{cmd:. di "`nets'"}
 	     {txt}glasgow1 glasgow2 glasgow3
 
 

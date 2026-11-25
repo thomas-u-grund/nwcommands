@@ -36,6 +36,7 @@ program nwshared
 	if "`name'" == "" {
 		local name "_shared"
 	}
+	_nwtargetcheck `name', source(`netname') given(0)
 	nwvalidate `name'
 	local name_exists = "`r(exists)'"
 	if "`r(exists)'" == "true" & "`nwreplace'" == "" {

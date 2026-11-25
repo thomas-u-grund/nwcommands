@@ -102,8 +102,7 @@ as a one-mode network. {bf:Signed:} not applicable. See {help nwnetworktypes}.{p
 The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): {it:n}-1 maximum flows on the
 sparse network instead of {it:n}({it:n}-1)/2, each stopped as soon as it reaches the smaller degree of the two ends.
 The result is a dense {it:n}-by-{it:n} valued network, which is what takes the memory: it is held twice while the network is
-registered (20,000 nodes: 30 seconds and 6.5 GB).
-Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds.
+registered (20,000 nodes: 6.5 GB).
 
 
 {title:Examples}

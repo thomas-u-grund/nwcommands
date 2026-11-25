@@ -120,7 +120,7 @@ Many commands work like the Stata commands they are named after. The full list o
 {center:{c |} {help tabulate}     {c |} {help nwtabulate}     {c |} Tabulate networks             {c |}}
 {center:{c |} {help correlate}    {c |} {help nwcorrelate}    {c |} Correlate networks            {c |}}
 {center:{c |} {help expand}       {c |} {help nwexpand}       {c |} Expand variable to network    {c |}}
-{center:{c |} {help syntax}       {c |} {help _nwsyntax}      {c |} Parse network syntax          {c |}}
+{center:{c |} {help syntax}       {c |} {help nwprogramming##syntax:_nwsyntax}      {c |} Parse network syntax          {c |}}
 {center:{c BLC}{hline 14}{c BT}{hline 16}{c BT}{hline 31}{c BRC}}
 
 

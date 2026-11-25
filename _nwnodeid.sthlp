@@ -38,7 +38,7 @@ taken as the {help nodeid} itself (an error is thrown when it is larger than the
 
 {title:Examples}
 
-   {cmd:. nwwebuse florentine}
+   {cmd:. nwwebuse florentine, nwclear}
    {cmd:. _nwnodeid flomarriage, nodelab(medici) detail}
    
 		{hline 40}

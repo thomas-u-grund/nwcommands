@@ -78,8 +78,7 @@ network (no triangles: counts 0, balance missing). {bf:Signed:} the purpose of t
 {pstd}
 Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of
 nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses
-Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per
-node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
+Mata code, with the same results.
 
 {title:Examples}
 

@@ -47,7 +47,7 @@ behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
 {synopt:{opt selfloop}}keep the ties of a node with itself (rows with {it:fromid} = {it:toid}); by default they are dropped{p_end}
 {synopt:{opt keeporiginal}}generate variable {it:_nodeoriginal} with the original identifier of each node (from {it:fromid}/{it:toid}) on the node's row{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
-{synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid} / {help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named
+{synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {it:fromid} / {it:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named
 {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
 {synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is
 about the {it:network}, not Stata variables{p_end}
@@ -101,7 +101,7 @@ To keep a node without ties (an isolate), give it a row of its own with the othe
 for string identifiers, {cmd:.} for numeric ones): the node is created, the row adds no tie. A row with both
 identifiers missing is ignored. For example, the rows {cmd:Anna Sophie} and {cmd:Fion ""} make a network of three
 nodes with one tie, {it:Fion} an isolate.
-					
+
 {pstd}
 This automatically generates the relevant meta-information for the network and makes it available for other programs under the {help netname} {it:mynet}. In case no {bf:name()}
 is specified, the command tries to come up with a suitable name for the new network. It tries the name of the variable
@@ -116,8 +116,8 @@ After a network has been declared, one can refer to it by its {help netname}, ju
 {pstd}
 Or alternatively, this calculates the {help nwbetween:betweenness centrality} of the nodes in {it:mynet}.
 
-	{cmd:. nwbetween mynet}			
-			 
+	{cmd:. nwbetween mynet, generate(between)}			
+
 {pstd}
 By default, {bf:nwfromedge} recognizes if a network is directed or undirected, i.e. for each 
 dyad entry (i,j) there is also a dyad entry (j,i). However, this automatic detection
@@ -161,10 +161,10 @@ with no extra step needed. This
 only works because {cmd:nwtoedge} itself produced this particular edgelist; in an edgelist typed in by
 hand or imported from an external source, give each isolate a row with a missing other identifier.
 
-	
-	
+
+
 {title:Also see}
-	
+
 	{help nwtoedge}, {help nwuse}, {help nwsave}, {help nwwebuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
 
 {hline}

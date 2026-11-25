@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwpagerank}
 [{it:{help netname}}]
-[{cmd:,}
+{cmd:,}
 {opth gen:erate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt damp:ing(real)}
 {opt maxiter(int)}
 {opt tol(real)}
@@ -78,8 +78,7 @@ network. {bf:Signed:} not checked. {bf:Missing ties:} treated as 0; the output g
 {pstd}
 The power iteration runs in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
 and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations.
-Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.03 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes
-0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds). The weighted walk is about twice as fast as its Mata route (10,000 nodes with 30,000 ties: 0.05 against 0.09 seconds).{p_end}
+{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
@@ -89,7 +88,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwpagerank flomarriage, generate(_pagerank)}
 	{cmd:. gsort -_pagerank}
-	{cmd:. list _name _pagerank in 1/5}
+	{cmd:. list _nwnode _pagerank in 1/5}
 
 
 {title:Stored results}

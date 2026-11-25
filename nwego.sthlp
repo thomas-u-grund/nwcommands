@@ -15,10 +15,9 @@
 {p 8 17 2}
 {cmdab: nwego}
 [{it:{help netlist}}]
-[{cmd:,}
-{opth sizevar(newvarname)}
-{opth densvar(newvarname)}
-{opt replace}
+{cmd:,}
+{opth sizevar(newvarname)} {opth densvar(newvarname)}
+[{opt replace}
 {opt silent}]
 
 

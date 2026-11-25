@@ -115,8 +115,7 @@ and the level labels are kept. {bf:Signed:} negative values are recoded like any
 
 {pstd}
 The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties.
-Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3
-seconds. A rule that gives the empty dyads a
+A rule that gives the empty dyads a
 value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
 
 
@@ -124,8 +123,7 @@ value, or turns ties into missing values, recodes the whole matrix (guarded at 2
 {title:Examples}
 
 {pstd}Setup{p_end}
-{phang2}{cmd:. nwwebuse gang}{p_end}
-{phang2}{cmd:. nwwebuse glasgow}
+{phang2}{cmd:. nwwebuse gang, nwclear}{p_end}
 
 {pstd}List the network adjacency matrix{p_end}
 {phang2}{cmd:. nwsummarize gang, mat}
@@ -153,11 +151,11 @@ to 2, and store the results in {cmd:nx2}{p_end}
 {pstd}For {it:glasgow1}, {it:glasgow2}, and {it:glasgow3}, change dyad values 1 to 99 and store the
     transformed networks in {it:new_glasgow1}, {it:new_glasgow2}, and {it:new_glasgow3}.
 {p_end}
-{phang2}{cmd:. nwrecode glasgow1-glasgow3 (1=99) ,}
-           {cmd:prefix(new) test}{p_end}
+{phang2}{cmd:. nwwebuse glasgow, nwclear}{p_end}
+{phang2}{cmd:. nwrecode glasgow1-glasgow3 (1=99), prefix(new) test}{p_end}
 
 {pstd}List the network adjacency matrices{p_end}
-{phang2}{cmd:. nwsummarize glasgow1-3 new_glasgow1-3, mat}
+{phang2}{cmd:. nwsummarize glasgow1-glasgow3 newglasgow1-newglasgow3, mat}
 
 
 {title:See also}

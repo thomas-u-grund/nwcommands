@@ -11,6 +11,17 @@ program nwlattice
 	if (wordcount("`dims'") > 1) {
 		local rows = word("`dims'",2)
 	}
+	foreach __d in `cols' `rows' {
+		capture confirm integer number `__d'
+		if !_rc {
+			if `__d' < 1 local __baddim 1
+		}
+		else local __baddim 1
+	}
+	if "`__baddim'" == "1" | `ntimes' < 1 {
+		di "{err}The numbers of columns and rows, and {bf:ntimes()}, must be whole numbers of 1 or more."
+		exit 198
+	}
 	local nodes = `cols' * `rows'
 	
 	// Check if this is the first network in this Stata session

@@ -125,10 +125,10 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 
 {pstd}Load the {help netexample:Florentine network dataset} that is stored at
 https://nwcommands.org/examples{p_end}
-{phang2}{cmd:. nwwebuse florentine}
+{phang2}{cmd:. nwwebuse florentine, nwclear}
 
 {pstd}Equivalent to above command{p_end}
-{phang2}{cmd:. nwwebuse https://nwcommands.org/examples/florentine}{p_end}
+{phang2}{cmd:. nwwebuse https://nwcommands.org/examples/florentine, nwclear}{p_end}
 
 
 {title:See also}

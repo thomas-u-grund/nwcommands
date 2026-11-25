@@ -54,13 +54,11 @@ printed. {bf:Two-mode:} same as for the bipartite graph read as a one-mode netwo
 {title:Limits}
 
 {pstd}
-The mutual ties and the mutual neighbours they share are found from the tie lists. Measured in Stata/BE, random undirected
-network with 10 ties drawn per node: 20,000 nodes need 1.2 GB.
+The mutual ties and the mutual neighbours they share are found from the tie lists. With 10 ties drawn per node, 20,000 nodes need about 1.2 GB.
 
 {pstd}
 The mutual ties that have a mutual neighbour in common are found in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
-platform has it, and in Mata otherwise; both give the same network. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.08 seconds,
-20,000 nodes 0.2 seconds, 100,000 nodes 0.8 seconds (the Mata route needs 0.5, 2.0 and 11.6 seconds). A network with self-loops takes the Mata route.{p_end}
+platform has it, and in Mata otherwise; both give the same network. A network with self-loops takes the Mata route.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 

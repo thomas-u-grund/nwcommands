@@ -132,9 +132,7 @@ reference within the Monte Carlo error. Not implemented: the SDSM variant with e
 (sparsification: {cmd:backbone_from_unweighted} in R), and bipartite networks with tie values.
 
 {pstd}
-{bf:Limits.} The p-values are computed for all pairs of nodes at once and held in memory as {it:n} x {it:n} matrices. The one-mode methods
-take under a second for 2,000 nodes. The two-mode methods
-with 3,000 persons and 600 events take 6 to 10 seconds (Stata 17 on a recent Mac; {cmd:sdsm} is the slowest). Beyond a few thousand nodes of the projected mode
+{bf:Limits.} The p-values are computed for all pairs of nodes at once and held in memory as {it:n} x {it:n} matrices. Beyond a few thousand nodes of the projected mode
 memory runs out first. {cmd:fdsm} needs one projection per random network and
 becomes slow beyond a few hundred nodes at the default number of networks.
 
@@ -173,11 +171,14 @@ binary one-mode network see {help nwdichotomize} for the opposite direction (val
 {pstd}Keep the ties of a valued network with a value above 3, with their values{p_end}
 {phang2}{cmd:. nwbackbone w, method(global) threshold(3) keepvalues generate(wg)}{p_end}
 
+{pstd}Load a two-mode network (women by social events){p_end}
+{phang2}{cmd:. nwwebuse davis, nwclear}{p_end}
+
 {pstd}Backbone of the projection of a two-mode network (persons by events) onto the persons{p_end}
-{phang2}{cmd:. nwbackbone affiliations, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)}{p_end}
+{phang2}{cmd:. nwbackbone davis, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)}{p_end}
 
 {pstd}Fixed degree sequence model with 2,000 random networks{p_end}
-{phang2}{cmd:. nwbackbone affiliations, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)}{p_end}
+{phang2}{cmd:. nwbackbone davis, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)}{p_end}
 
 {title:References}
 

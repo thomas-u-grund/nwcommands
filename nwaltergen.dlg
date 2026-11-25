@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 164
+POSITION 10 10 550 304
 
 SCRIPT PREINIT
 BEGIN
@@ -15,18 +15,47 @@ END
 
 DIALOG main, title("nwaltergen - Generate a variable from alter/neighbor attributes")
 BEGIN
-  GROUPBOX gb_opt 10 10 520 104, label("Options")
-  TEXT tx_cb_net 20 20 260 ., label("Network to use; default = the current network")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem option(net)
-  TEXT tx_cx_replace 20 48 260 ., label("Replace existing variable")
-  CHECKBOX cx_replace 290 48 190 ., label("replace") option(replace)
-  TEXT tx_sp_hop 20 76 260 ., label("Aggregate over nodes exactly this many (unweighted) steps away, instead of direc")
-  SPINNER sp_hop 290 76 70 ., default(1) max(999999) min(1) nomem option(hop)
+  TEXT tx_ed_newvar 20 20 260 ., label("New variable:")
+  EDIT ed_newvar 290 20 190 ., nomem error("New variable")
+  TEXT tx_cb_stat 20 48 260 ., label("Statistic over the alters:")
+  COMBOBOX cb_stat 290 48 190 ., dropdownlist contents(list_stat) nomem
+  TEXT tx_vr_src 20 76 260 ., label("Attribute variable of the alters:")
+  VARNAME vr_src 290 76 190 ., nomem error("Attribute variable of the alters")
+  TEXT tx_cb_op 20 104 260 ., label("proportion: comparison")
+  COMBOBOX cb_op 290 104 70 ., dropdownlist contents(list_op) nomem
+  TEXT tx_ed_value 20 132 260 ., label("proportion: value (a number)")
+  EDIT ed_value 290 132 100 ., nomem error("proportion: value")
+  GROUPBOX gb_opt 10 156 520 104, label("Options")
+  TEXT tx_cb_net 20 174 260 ., label("Network; default = current network")
+  COMBOBOX cb_net 290 174 190 ., dropdown contents(netlist) nomem option(net)
+  TEXT tx_cx_replace 20 202 260 ., label("Replace existing variable")
+  CHECKBOX cx_replace 290 202 190 ., label("replace") option(replace)
+  TEXT tx_sp_hop 20 230 260 ., label("Distance of the alters in steps; default = 1")
+  SPINNER sp_hop 290 230 70 ., default(1) max(999999) min(1) nomem option(hop)
 END
 
 LIST netlist
 BEGIN
 	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_stat
+BEGIN
+	mean
+	wmean
+	sum
+	min
+	max
+	sd
+	count
+	diversity
+	proportion
+END
+
+LIST list_op
+BEGIN
+	==
+	!=
 END
 
 PROGRAM initialize
@@ -37,7 +66,16 @@ END
 
 PROGRAM command
 BEGIN
-	put "nwaltergen"
+	require main.ed_newvar
+	require main.vr_src
+	if main.cb_stat.iseq("proportion") {
+		require main.ed_value
+	}
+	put "nwaltergen " main.ed_newvar " = " main.cb_stat "(alter." main.vr_src
+	if main.cb_stat.iseq("proportion") {
+		put main.cb_op main.ed_value
+	}
+	put ")"
 	beginoptions
 		optionarg main.cb_net
 		option main.cx_replace

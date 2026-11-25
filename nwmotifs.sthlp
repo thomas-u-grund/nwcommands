@@ -123,8 +123,7 @@ stars, paths, 4-cycles, triangles with a pendant tie, diamonds and complete 4-se
 degrees, the triangles on each tie and the common neighbours of node pairs (time proportional to the number of ties
 times the largest degree), and turned into counts of {it:induced} subgraphs with the exact inclusion relations between
 the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the
-enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take
-0.007 / 0.015 / 0.06 seconds. Counts are exact up to the
+enumeration. Counts are exact up to the
 size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of
 four-node sets).
 

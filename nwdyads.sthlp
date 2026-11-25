@@ -82,13 +82,12 @@ counted over the pairs of nodes from different modes; reciprocity is shown as n/
 {title:Limits}
 
 {pstd}
-A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB
-in Stata/BE.
+A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes need about 0.2 GB.
 
 
 {title:Examples}
 	
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{com}. nwdyads flomarriage
 	{res}
 	{txt}    Dyad census: {res} flomarriage{txt}
@@ -99,7 +98,7 @@ in Stata/BE.
 
 	{com}. nwdyads flomarriage, plot
 
-	{com}. nwwebuse glasgow
+	{com}. nwwebuse glasgow, nwclear
 	{com}. nwdyads glasgow3
 	{res}
 	{txt}    Dyad census: {res} glasgow3{txt}
@@ -116,6 +115,7 @@ in Stata/BE.
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
 replace the defaults. 
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwdyads flomarriage, plot export(dyads.png, width(1200))}{p_end}
 
 {title:Stored results}

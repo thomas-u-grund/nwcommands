@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwcohesion}
 [{it:{help netlist}}]
-[{cmd:,}
-{opt sym}
+{cmd:,}
 {opth generate(newvarname)}
+[{opt sym}
 {opt replace}
 {opt silent}
 {opt force}]
@@ -88,14 +88,12 @@ treated specially. See {help nwnetworktypes}.{p_end}
 {pstd}
 The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single
 {help nwkcomponents} call, since every block found is searched again at the next connectivity level; the time grows
-with the number of nodes squared times the connectivity level of the deepest block. Measured in Stata/BE on a random
-network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 /
-1.4 seconds.
+with the number of nodes squared times the connectivity level of the deepest block.
 {cmd:r(cohesion_matrix)} has one row per block and one column per node. On a platform whose plugin file has not been
-built yet, a Mata routine runs instead (same results, about 20 seconds at 300 nodes).
+built yet, a Mata routine runs instead (same results, much slower).
 
 {pstd}
-Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 27 seconds and 2.9 GB. When the estimated time is more than 2 minutes (about
+With 10 ties drawn per node, 20,000 nodes need about 2.9 GB. When the estimated time is more than 2 minutes (about
 40,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway.
 
 

@@ -86,9 +86,7 @@ for the bipartite graph read as a one-mode network (no triangles; transitivity 0
 {pstd}
 The census is counted in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it,
 and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, {it:Social Networks} 23: 237-243): triads with at least two ties are
-enumerated from the neighbours of each node, the empty triads {bf:_003} are obtained by subtraction. Measured in Stata/BE,
-random directed network with 10 ties per node: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 1 second
-(the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads {bf:r(_003)} is an exact integer.{p_end}
+enumerated from the neighbours of each node, the empty triads {bf:_003} are obtained by subtraction. A network with self-loops always takes the Mata route. The count of empty triads {bf:r(_003)} is an exact integer.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
@@ -129,6 +127,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
 replace the defaults. 
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwtriads flomarriage, plot export(triads.png, width(1200))}{p_end}
 
 {title:Expected counts}
@@ -143,6 +142,7 @@ asymmetric and k null dyads
 The formula is exact, not an approximation by simulation. {helpb nwcug} compares one statistic at a time with a null distribution; {opt expected} shows all types at once, without simulation.
 A two-mode and a valued network stop with error 198 ({helpb nwdichotomize} first). {opt expected} needs {opt plot}.
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwtriads flomarriage, plot expected export(triads_expected.png, width(1100))}{p_end}
 
 {title:Stored results}

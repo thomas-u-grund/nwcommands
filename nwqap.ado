@@ -17,6 +17,11 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local type = "logit"
 	}
 	
+	if `permutations' < 1 {
+		di "{err}Option {bf:permutations()} must be 1 or more."
+		exit 198
+	}
+
 	// Get general information.
 	local vars = wordcount("`formula'")
 	if (`vars' < 1) {
@@ -126,6 +131,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		}
 	}
 		
+	local __dups : list dups formula
+	if "`__dups'" != "" {
+		di "{err}{p 0 0 2}{bf:`__dups'} appears more than once in the model.{p_end}"
+		exit 198
+	}
+
 	preserve
 	drop _all
 	local obs = `nodes' * `nodes'

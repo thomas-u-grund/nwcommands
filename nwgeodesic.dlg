@@ -20,37 +20,37 @@ BEGIN
   GROUPBOX gb_opt 10 44 1030 358, label("Options")
   TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite existing network")
   CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
-  TEXT tx_cx_force 20 82 260 ., label("force distance calculation on a valued network exceeding 100 nodes (potentially ")
+  TEXT tx_cx_force 20 82 260 ., label("Allow large valued networks without the plugin")
   CHECKBOX cx_force 290 82 190 ., label("force") option(force)
-  TEXT tx_cx_noreplace 20 110 260 ., label("Do not replace an existing distance network of that name")
+  TEXT tx_cx_noreplace 20 110 260 ., label("Do not replace an existing distance network")
   CHECKBOX cx_noreplace 290 110 190 ., label("noreplace") option(noreplace)
-  TEXT tx_ed_name 20 138 260 ., label("Name of the new distance network; default = _geodesic")
+  TEXT tx_ed_name 20 138 260 ., label("Name of distance network; default = _geodesic")
   EDIT ed_name 290 138 190 ., nomem option(name)
   TEXT tx_ed_alpha 20 166 260 ., label("Deal with valued networks")
   EDIT ed_alpha 290 166 100 ., numonly nomem option(alpha)
   TEXT tx_cx_xvars 530 54 260 ., label("Generate Stata variables for the network")
   CHECKBOX cx_xvars 800 54 190 ., label("xvars") option(xvars)
-  TEXT tx_ed_unconnected 530 82 260 ., label("Define the length of the path between two unconnected nodes")
+  TEXT tx_ed_unconnected 530 82 260 ., label("Path length between unconnected nodes")
   EDIT ed_unconnected 800 82 190 ., nomem option(unconnected)
   TEXT tx_cx_sym 530 110 260 ., label("Calculate distances from symmetrized network")
   CHECKBOX cx_sym 800 110 190 ., label("sym") option(sym)
-  TEXT tx_ed_symopt 530 138 260 ., label("Options controlling the symmetrization when sym is specified (see nwsym)")
+  TEXT tx_ed_symopt 530 138 260 ., label("Options for sym (see help nwsym)")
   EDIT ed_symopt 800 138 190 ., nomem option(symopt)
-  TEXT tx_ed_generate 530 166 260 ., label("Name of the Stata variable that stores each node's eccentricity")
+  TEXT tx_ed_generate 530 166 260 ., label("Variable for each node's eccentricity")
   EDIT ed_generate 800 166 190 ., nomem option(generate)
-  TEXT tx_cx_binary 530 194 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  TEXT tx_cx_binary 530 194 260 ., label("Ignore tie values of a valued network")
   CHECKBOX cx_binary 290 194 190 ., label("binary") option(binary)
   TEXT tx_plot 20 222 260 ., label("Draw a histogram of the geodesic distances")
   CHECKBOX cx_plot 290 222 190 ., label("plot") option(plot)
   TEXT tx_average 20 250 260 ., label("plot: dashed line at the mean distance")
   CHECKBOX cx_average 290 250 190 ., label("average") option(average)
-  TEXT tx_gname 20 278 260 ., label("name for the graph created by plot; default = geodesic")
+  TEXT tx_gname 20 278 260 ., label("Name of the plot graph; default = geodesic")
   EDIT ed_gname 290 278 190 ., nomem option(gname)
   TEXT tx_saving 20 306 260 ., label("Save the graph to a file (.gph)")
   FILE fi_saving 290 306 190 ., save nomem option(saving)
   TEXT tx_export 20 334 260 ., label("Export the graph to a file (.png, .pdf, ...)")
   FILE fi_export 290 334 190 ., save nomem option(export)
-  TEXT tx_ed_save 20 362 260 ., label("With several networks: save one row per network in this file")
+  TEXT tx_ed_save 20 362 260 ., label("Several networks: save one row each to this file")
   EDIT ed_save 290 362 190 ., nomem option(save)
 END
 
@@ -69,7 +69,7 @@ PROGRAM command
 BEGIN
 	// number fields: refuse text before the command runs
 	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
-		stopbox stop "Deal with valued networks: enter a number (or numbers)."
+		stopbox stop "alpha: enter a number."
 	}
 	put "nwgeodesic " main.cb_net
 	beginoptions

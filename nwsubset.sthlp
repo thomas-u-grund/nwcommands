@@ -63,7 +63,7 @@ modes and the level labels are kept for the remaining nodes. {bf:Temporal:} the 
 {title:Limits}
 
 {pstd}
-A network held as stored ties keeps the ties between the remaining nodes without an {it:n}-by-{it:n} matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for {help nwdrop}, {help nwkeep},
+A network held as stored ties keeps the ties between the remaining nodes without an {it:n}-by-{it:n} matrix. The same holds for {help nwdrop}, {help nwkeep},
 {help nwdropnodes} and {help nwkeepnodes}.
 
 {title:See also}

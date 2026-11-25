@@ -63,9 +63,8 @@ listed in the table below. The motif table equals {cmd:bmotif::mcount} and the p
 directors, a subsample of them and 34 random networks.
 
 {pstd}
-The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network: the 5,092 directors and 455 firms of {cmd:ftdirectors_se} (5,669 ties) take 0.04 seconds for
-the motifs and positions up to five nodes, and 0.05 seconds with {opt sixnode}; a random network of 1,000 and 150 nodes with 14,800 ties takes 0.05 and 0.9 seconds. (The R function takes about a
-minute for the five-node set on the directors.) The time with {opt sixnode} grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are exact up
+The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network. The time with {opt sixnode} grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are
+exact up
 to 9 x 10^15. The command stops with a message when the plugin of the installed copy is older than the command or missing for the platform: update the installation
 ({cmd:net install nwcommands, replace}) and restart Stata.
 
@@ -203,16 +202,16 @@ as absent. See {help nwnetworktypes}.{p_end}
 {phang2}{cmd:. nw2fromedge p g, name(toy)}{p_end}
 {phang2}{cmd:. nw2motifs toy, normalise}{p_end}
 
-{pstd}Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:{p_end}
-
-{phang2}{cmd:. nwuse davis, nwclear}{p_end}
-{phang2}{cmd:. nw2motifs davis, generate(np) posnorm(sizeclass) silent}{p_end}
-{phang2}{cmd:. summarize np1-np6}{p_end}
-
 {pstd}All 44 motifs of the toy network, with the position counts in a matrix:{p_end}
 
 {phang2}{cmd:. nw2motifs toy, sixnode matrix(P) silent}{p_end}
 {phang2}{cmd:. matrix list r(motifs)}{p_end}
+
+{pstd}Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:{p_end}
+
+{phang2}{cmd:. nwwebuse davis, nwclear}{p_end}
+{phang2}{cmd:. nw2motifs davis, generate(np) posnorm(sizeclass) silent}{p_end}
+{phang2}{cmd:. summarize np1-np6}{p_end}
 
 
 {marker results}{...}

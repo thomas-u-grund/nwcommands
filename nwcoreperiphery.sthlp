@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwcoreperiphery}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt measure(string)}
 {opth maxiter(int)}
 {opt rest:arts(#)}
@@ -85,9 +85,7 @@ not checked. See {help nwnetworktypes}.{p_end}
 
 {pstd}
 Above 2,000 nodes the search runs on the stored ties (the sums of the correlation with the ideal pattern are taken from the ties;
-the cores found are those of the matrix version, the fitness equal up to rounding in the last digits). Measured in Stata/BE on a
-random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds and 0.2 GB,
-20,000 nodes 0.6 seconds.
+the cores found are those of the matrix version, the fitness equal up to rounding in the last digits).
 
 {pstd}
 A network with no ties at all is rejected (there is no structure to fit a core-periphery pattern to); an isolate is assigned

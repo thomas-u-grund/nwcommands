@@ -72,7 +72,7 @@ negative capacity has no meaning. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} capacity and flow matrices: 100,000 nodes with 10 ties per node take 1.7 seconds. The result (flow value, source side of
+A network held as stored ties is handled arc by arc, without {it:n}-by-{it:n} capacity and flow matrices. The result (flow value, source side of
 the minimum cut, number of cut ties) is the same as that of the matrix route.
 
 

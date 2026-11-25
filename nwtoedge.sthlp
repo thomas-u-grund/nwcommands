@@ -58,7 +58,8 @@ directed{p_end}
 {title:Description}
 
 {pstd}
-{cmd:nwtoedge} makes an edgelist from a network or a list of networks. 
+{cmd:nwtoedge} makes an edgelist from a network or a list of networks. The edgelist {bf:replaces the data in memory}, also data with unsaved
+changes: save them first.
 
 {pstd}
 An edgelist of a single network {help netname} produced by {cmd:nwtoedge} is a set of three variables representing
@@ -84,7 +85,7 @@ generates new variables that match the attributes of the receiver of a tie (alte
 {pstd}
 For example, 
 
-	{cmd:. nwwebuse glasgow1}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{com}. nwtoedge glasgow1, egovars(sport1)
 	{com}. list
 {txt}
@@ -126,12 +127,20 @@ and {it:_alter} (or the names in {opt ego()} and {opt alter()}), {it:_time} (eve
 interval network lists each tie once. {help nwset} with {cmd:eventtime()}, {cmd:time()} or {cmd:interval()} turns the rows into the network again. {opt time}
 cannot be combined with {opt aggregate} or with the options of the list of ties above (except {opt ego()} and {opt alter()}); error 198.{p_end}
 
+	{cmd:. nwclear}
+	{cmd:. input from to when}
+	{cmd:.   1 2 1}
+	{cmd:.   2 3 2}
+	{cmd:.   1 2 3}
+	{cmd:. end}
+	{cmd:. nwset from to, eventtime(when) name(calls) directed}
 	{cmd:. nwtoedge calls, time}
 	{cmd:. nwset _ego _alter, eventtime(_time) name(calls2) directed}
 
 {pstd}
 The command can also transform two (or more) networks in edgelists at the same time. 
 
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwtoedge glasgow1 glasgow2}
 	
 {pstd}
@@ -178,6 +187,7 @@ directions, so the signed comparison is preserved correctly for both.
 
 	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(same)}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(dist)}
 
 
@@ -192,10 +202,9 @@ with the data, so {help nwfromedge} restores isolates. See {help nwnetworktypes}
 
 {pstd}
 The list of {it:all} dyads (without {opt compress}) has one row for every pair of nodes, so its size grows with the
-square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 nodes
-(1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072
+square of the number of nodes. 5,000 nodes (25,000,000 rows) need about 3.2 GB; above 50,000,000 rows (7,072
 nodes, 10,000 for an undirected network) the command stops with an error that recommends {opt compress}. With
-{opt compress} only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds.
+{opt compress} only the ties are listed.
 For a two-mode network {opt compress} lists only the ties between the two modes (as {help nw2toedge} does), never the pairs of nodes inside one mode.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}

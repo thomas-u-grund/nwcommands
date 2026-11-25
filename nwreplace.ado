@@ -48,6 +48,10 @@ program nwreplace, rclass
 	local ifegopos = strpos(`"`nonet'"', " ifego ")
 	local ifalterpos = strpos(`"`nonet'"'," ifalter ")
 	
+	if (`inpos' != 0) {
+		di "{err}{p 0 0 2}{bf:nwreplace} does not allow {bf:in}; select ties with {bf:if} (for example {bf:if _n <= 2}), {bf:ifego} or {bf:ifalter}.{p_end}"
+		exit 101
+	}
 	if (`inpos' == 0) { 
 		local inpos = "" 
 	}

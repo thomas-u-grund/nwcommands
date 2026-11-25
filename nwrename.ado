@@ -25,7 +25,9 @@ program nwrename
 	if _rc != 0 {
 		local renamerc = _rc
 		restore
-		di "{err}{p 0 0 2}Cannot rename: the target name already exists as a network. Specify a different name.{p_end}"
+		if `renamerc' == 110 di "{err}{p 0 0 2}Cannot rename: the new name is already the name of a network.{p_end}"
+		else if `renamerc' == 111 di "{err}{p 0 0 2}Cannot rename: no network with the old name.{p_end}"
+		else di "{err}{p 0 0 2}Cannot rename. Syntax: {bf:nwrename} {it:oldname newname}; a name is a valid Stata name.{p_end}"
 		exit `renamerc'
 	}
 	local oldnames "`r(oldnames)'"

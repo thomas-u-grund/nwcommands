@@ -48,7 +48,7 @@ The value of one cell of a network held as stored ties is read from the sparse i
 
 {title:Examples}
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwvalue flobusiness, ego("medici") alter("pazzi")}
 	{cmd:. nwvalue flobusiness, egoid(2) alterid(9)}
 	{cmd:. nwvalue flobusiness[2,9]}

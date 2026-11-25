@@ -13,7 +13,7 @@ BEGIN
 	program initialize
 END
 
-DIALOG main, title("nwutility - Calculate utility scores according to Jackson and Wollinsky...")
+DIALOG main, title("nwutility - Utility scores (Jackson and Wolinsky 1996)")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
@@ -22,9 +22,9 @@ BEGIN
   EDIT ed_benefit 290 54 100 ., numonly nomem option(benefit)
   TEXT tx_ed_cost 20 82 260 ., label("cost of connection; default = 1")
   EDIT ed_cost 290 82 100 ., numonly nomem option(cost)
-  TEXT tx_cb_intrvalue 20 110 260 ., label("Intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair")
+  TEXT tx_cb_intrvalue 20 110 260 ., label("Value w_ij of a connection; default = 1")
   COMBOBOX cb_intrvalue 290 110 190 ., dropdown contents(netlist) nomem option(intrvalue)
-  TEXT tx_cb_intrcost 20 138 260 ., label("Per-dyad cost y_ij, replacing the constant cost for direct connections; default = cost for every tied pair")
+  TEXT tx_cb_intrcost 20 138 260 ., label("Cost y_ij of a direct tie; default = cost")
   COMBOBOX cb_intrcost 290 138 190 ., dropdown contents(netlist) nomem option(intrcost)
   TEXT tx_cx_force 20 166 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 166 190 ., label("force") option(force)
